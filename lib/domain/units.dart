@@ -76,6 +76,14 @@ class ParamPresentation {
   /// Formats a canonical value for display in the preferred unit.
   String format(double canonical) =>
       toDisplay(canonical).toStringAsFixed(decimals);
+
+  /// Formats the change between two canonical values in the display unit,
+  /// always prefixed with an explicit sign (e.g. "+0.2", "-0.1", "0.0").
+  String formatChange(double current, double previous) {
+    final delta = toDisplay(current) - toDisplay(previous);
+    final s = delta.toStringAsFixed(decimals);
+    return delta > 0 ? '+$s' : s;
+  }
 }
 
 /// Builds the presentation for a parameter given its stored unit/decimals and

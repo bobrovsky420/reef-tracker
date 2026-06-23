@@ -9,7 +9,6 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
-import '../../widgets/zone_chip.dart';
 
 /// Home screen: active-tank selector + grid of parameter status tiles.
 class DashboardScreen extends ConsumerWidget {
@@ -126,18 +125,11 @@ class _ParameterTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 15)),
-                  ),
-                  ZoneChip(zone, compact: true),
-                ],
-              ),
+              Text(name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 15)),
               const Spacer(),
               if (latest == null)
                 Text(l.noReadings,
@@ -158,7 +150,7 @@ class _ParameterTile extends StatelessWidget {
                     Text(pres.unitLabel,
                         style: TextStyle(color: Theme.of(context).hintColor)),
                     const Spacer(),
-                    _TrendIcon(history: history),
+                    _ChangeIndicator(history: history, pres: pres),
                   ],
                 ),
               const SizedBox(height: 4),
@@ -175,20 +167,31 @@ class _ParameterTile extends StatelessWidget {
   }
 }
 
-class _TrendIcon extends StatelessWidget {
-  const _TrendIcon({required this.history});
+/// Shows the trend direction and numeric change versus the previous reading.
+class _ChangeIndicator extends StatelessWidget {
+  const _ChangeIndicator({required this.history, required this.pres});
   final List<Reading> history;
+  final ParamPresentation pres;
 
   @override
   Widget build(BuildContext context) {
     if (history.length < 2) return const SizedBox.shrink();
+    final hint = Theme.of(context).hintColor;
     final diff = history[0].value - history[1].value;
-    if (diff.abs() < 1e-9) {
-      return Icon(Icons.trending_flat,
-          size: 18, color: Theme.of(context).hintColor);
-    }
-    return Icon(diff > 0 ? Icons.trending_up : Icons.trending_down,
-        size: 18, color: Theme.of(context).hintColor);
+    final IconData icon = diff.abs() < 1e-9
+        ? Icons.trending_flat
+        : (diff > 0 ? Icons.trending_up : Icons.trending_down);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: hint),
+        const SizedBox(width: 2),
+        Text(
+          pres.formatChange(history[0].value, history[1].value),
+          style: TextStyle(fontSize: 12, color: hint),
+        ),
+      ],
+    );
   }
 }
 
