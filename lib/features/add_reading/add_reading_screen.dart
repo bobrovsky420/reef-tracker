@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../widgets/zone_chip.dart';
 
@@ -61,6 +62,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
   Future<void> _save(List<TrackedParameter> params) async {
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
+    final prefs = ref.read(unitPrefsProvider);
     final entries = <TrackedParameter, double>{};
     for (final p in params) {
       final text = _controllers[p.id]?.text.trim() ?? '';
@@ -72,7 +74,8 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
                 'Invalid number for ${kParameterByKey[p.paramKey]?.name ?? p.paramKey}')));
         return;
       }
-      entries[p] = value;
+      // Store canonically (e.g. °C, SG) regardless of the display unit.
+      entries[p] = presentationOf(p, prefs).toCanonical(value);
     }
     if (entries.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +116,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
             return const Center(
                 child: Text('No tracked parameters to record.'));
           }
+          final prefs = ref.watch(unitPrefsProvider);
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -129,7 +133,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              for (final p in params) _paramRow(p),
+              for (final p in params) _paramRow(p, prefs),
               const SizedBox(height: 8),
               TextField(
                 controller: _noteCtrl,
@@ -157,13 +161,15 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     );
   }
 
-  Widget _paramRow(TrackedParameter p) {
+  Widget _paramRow(TrackedParameter p, UnitPrefs prefs) {
     final def = kParameterByKey[p.paramKey];
+    final pres = presentationOf(p, prefs);
     final ctrl = _controllerFor(p.id);
     final text = ctrl.text.trim();
     final value = double.tryParse(text.replaceAll(',', '.'));
-    final zone =
-        value != null ? boundsOf(p).classify(value) : Zone.unknown;
+    final zone = value != null
+        ? boundsOf(p).classify(pres.toCanonical(value))
+        : Zone.unknown;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -182,7 +188,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
                   decimal: true, signed: true),
               decoration: InputDecoration(
                 isDense: true,
-                suffixText: p.unit,
+                suffixText: pres.unitLabel,
                 border: const OutlineInputBorder(),
               ),
             ),

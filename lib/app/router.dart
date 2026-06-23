@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../data/database.dart';
 import '../features/add_reading/add_reading_screen.dart';
+import '../features/calculator/salinity_calculator_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
@@ -48,6 +49,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/calculator/salinity',
+      builder: (context, state) => const SalinityCalculatorScreen(),
     ),
   ],
 );

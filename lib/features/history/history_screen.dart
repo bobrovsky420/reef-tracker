@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../widgets/zone_chip.dart';
 
@@ -42,6 +43,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         .cast<TrackedParameter?>()
         .firstWhere((t) => true, orElse: () => null);
     final readingsAsync = ref.watch(paramReadingsProvider(widget.paramKey));
+    final prefs = ref.watch(unitPrefsProvider);
+    final pres = param != null
+        ? presentationOf(param, prefs)
+        : presentationForKey(
+            widget.paramKey, kParameterByKey[widget.paramKey]?.unit ?? '',
+            prefs);
 
     return Scaffold(
       appBar: AppBar(title: Text(def?.name ?? widget.paramKey)),
@@ -69,13 +76,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
                               child: _Chart(
-                                  readings: data,
-                                  param: param,
-                                  paramKey: widget.paramKey),
+                                  readings: data, param: param, pres: pres),
                             ),
                           ),
                           const Divider(),
-                          ..._readingsList(context, data, param),
+                          ..._readingsList(context, data, param, pres),
                         ],
                       ),
               ),
@@ -100,8 +105,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     );
   }
 
-  List<Widget> _readingsList(
-      BuildContext context, List<Reading> data, TrackedParameter? param) {
+  List<Widget> _readingsList(BuildContext context, List<Reading> data,
+      TrackedParameter? param, ParamPresentation pres) {
     final bounds = param != null ? boundsOf(param) : const ZoneBounds();
     final reversed = data.reversed.toList(); // newest first
     return [
@@ -121,8 +126,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           },
           child: ListTile(
             leading: ZoneChip(bounds.classify(r.value), compact: true),
-            title: Text(
-                '${formatParamValue(widget.paramKey, r.value)} ${param?.unit ?? ''}'),
+            title: Text('${pres.format(r.value)} ${pres.unitLabel}'),
             subtitle: Text(
               DateFormat.yMMMEd().add_jm().format(r.takenAt) +
                   (r.note != null ? '\n${r.note}' : ''),
@@ -130,16 +134,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             isThreeLine: r.note != null,
             trailing: IconButton(
               icon: const Icon(Icons.edit),
-              onPressed: () => _editReading(context, r),
+              onPressed: () => _editReading(context, r, pres),
             ),
           ),
         ),
     ];
   }
 
-  Future<void> _editReading(BuildContext context, Reading r) async {
-    final ctrl = TextEditingController(
-        text: formatParamValue(widget.paramKey, r.value));
+  Future<void> _editReading(
+      BuildContext context, Reading r, ParamPresentation pres) async {
+    final ctrl = TextEditingController(text: pres.format(r.value));
     final newValue = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -149,6 +153,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           autofocus: true,
           keyboardType:
               const TextInputType.numberWithOptions(decimal: true, signed: true),
+          decoration: InputDecoration(suffixText: pres.unitLabel),
         ),
         actions: [
           TextButton(
@@ -157,7 +162,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           FilledButton(
             onPressed: () {
               final v = double.tryParse(ctrl.text.replaceAll(',', '.'));
-              Navigator.pop(ctx, v);
+              Navigator.pop(ctx, v == null ? null : pres.toCanonical(v));
             },
             child: const Text('Save'),
           ),
@@ -172,22 +177,31 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
 class _Chart extends StatelessWidget {
   const _Chart(
-      {required this.readings, required this.param, required this.paramKey});
+      {required this.readings, required this.param, required this.pres});
 
   final List<Reading> readings;
   final TrackedParameter? param;
-  final String paramKey;
+  final ParamPresentation pres;
 
   @override
   Widget build(BuildContext context) {
+    // Plot everything in the user's display unit.
     final spots = [
       for (final r in readings)
-        FlSpot(r.takenAt.millisecondsSinceEpoch.toDouble(), r.value),
+        FlSpot(r.takenAt.millisecondsSinceEpoch.toDouble(),
+            pres.toDisplay(r.value)),
     ];
     final p = param;
-    final bounds = p != null ? boundsOf(p) : const ZoneBounds();
+    final canonical = p != null ? boundsOf(p) : const ZoneBounds();
+    double? d(double? v) => v == null ? null : pres.toDisplay(v);
+    final bounds = ZoneBounds(
+      amberLow: d(canonical.amberLow),
+      greenLow: d(canonical.greenLow),
+      greenHigh: d(canonical.greenHigh),
+      amberHigh: d(canonical.amberHigh),
+    );
 
-    final values = readings.map((r) => r.value).toList();
+    final values = spots.map((s) => s.y).toList();
     double minY = values.reduce((a, b) => a < b ? a : b);
     double maxY = values.reduce((a, b) => a > b ? a : b);
     // Include bounds in the visible range so zone bands are meaningful.
@@ -226,8 +240,7 @@ class _Chart extends StatelessWidget {
               showTitles: true,
               reservedSize: 44,
               getTitlesWidget: (v, meta) => Text(
-                v.toStringAsFixed(
-                    (kParameterByKey[paramKey]?.decimals ?? 1).clamp(0, 1)),
+                v.toStringAsFixed(pres.decimals.clamp(0, 2)),
                 style: const TextStyle(fontSize: 10),
               ),
             ),

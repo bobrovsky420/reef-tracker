@@ -6,6 +6,7 @@ import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/setup_type.dart';
+import '../../domain/units.dart';
 import '../../domain/zones.dart';
 
 /// Per-tank parameter management: enable/disable, reorder, edit zones, add from
@@ -25,6 +26,7 @@ class ManageParametersScreen extends ConsumerWidget {
       );
     }
     final type = SetupType.fromName(tank.setupType);
+    final prefs = ref.watch(unitPrefsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -63,10 +65,11 @@ class ManageParametersScreen extends ConsumerWidget {
               final param = tracked[i];
               final def = kParameterByKey[param.paramKey];
               final bounds = boundsOf(param);
+              final pres = presentationOf(param, prefs);
               return ListTile(
                 key: ValueKey(param.id),
                 title: Text(def?.name ?? param.paramKey),
-                subtitle: Text(_boundsSummary(bounds, param.unit)),
+                subtitle: Text(_boundsSummary(bounds, pres)),
                 leading: Switch(
                   value: param.enabled,
                   onChanged: (v) => ref.read(dbProvider).updateTrackedParameter(
@@ -164,10 +167,10 @@ class ManageParametersScreen extends ConsumerWidget {
   }
 }
 
-String _boundsSummary(ZoneBounds b, String unit) {
+String _boundsSummary(ZoneBounds b, ParamPresentation pres) {
   if (b.isEmpty) return 'No boundaries set';
-  String f(double? v) => v == null ? '∞' : v.toString();
-  return 'OK ${f(b.greenLow)}–${f(b.greenHigh)} $unit  •  red <${f(b.amberLow)} / >${f(b.amberHigh)}';
+  String f(double? v) => v == null ? '∞' : pres.format(v);
+  return 'OK ${f(b.greenLow)}–${f(b.greenHigh)} ${pres.unitLabel}  •  red <${f(b.amberLow)} / >${f(b.amberHigh)}';
 }
 
 /// Editor for a single tracked parameter's unit + four zone boundaries.
@@ -183,15 +186,29 @@ class ParameterEditScreen extends ConsumerStatefulWidget {
 
 class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _unit =
-      TextEditingController(text: widget.param.unit);
-  late final _amberLow = _ctrl(widget.param.amberLow);
-  late final _greenLow = _ctrl(widget.param.greenLow);
-  late final _greenHigh = _ctrl(widget.param.greenHigh);
-  late final _amberHigh = _ctrl(widget.param.amberHigh);
+  late final TextEditingController _unit;
+  late final TextEditingController _amberLow;
+  late final TextEditingController _greenLow;
+  late final TextEditingController _greenHigh;
+  late final TextEditingController _amberHigh;
+  late final ParamPresentation _pres;
 
-  TextEditingController _ctrl(double? v) =>
-      TextEditingController(text: v?.toString() ?? '');
+  @override
+  void initState() {
+    super.initState();
+    // Edit boundaries in the user's display unit; values are stored canonically.
+    _pres = presentationOf(widget.param, ref.read(unitPrefsProvider));
+    _unit = TextEditingController(text: widget.param.unit);
+    _amberLow = _ctrl(widget.param.amberLow);
+    _greenLow = _ctrl(widget.param.greenLow);
+    _greenHigh = _ctrl(widget.param.greenHigh);
+    _amberHigh = _ctrl(widget.param.amberHigh);
+  }
+
+  TextEditingController _ctrl(double? canonical) => TextEditingController(
+      text: canonical == null
+          ? ''
+          : _pres.toDisplay(canonical).toStringAsFixed(_pres.decimals));
 
   @override
   void dispose() {
@@ -203,8 +220,15 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     super.dispose();
   }
 
+  /// Parsed display value, or null if blank.
   double? _parse(TextEditingController c) =>
       c.text.trim().isEmpty ? null : double.tryParse(c.text.replaceAll(',', '.'));
+
+  /// Parsed value converted back to canonical storage units, or null if blank.
+  double? _canon(TextEditingController c) {
+    final v = _parse(c);
+    return v == null ? null : _pres.toCanonical(v);
+  }
 
   String? _validateOrder() {
     final a = _parse(_amberLow);
@@ -229,11 +253,12 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
       return;
     }
     await ref.read(dbProvider).updateTrackedParameter(widget.param.copyWith(
-          unit: _unit.text.trim(),
-          amberLow: Value(_parse(_amberLow)),
-          greenLow: Value(_parse(_greenLow)),
-          greenHigh: Value(_parse(_greenHigh)),
-          amberHigh: Value(_parse(_amberHigh)),
+          // Temp/salinity unit follows app settings; keep stored canonical unit.
+          unit: _pres.unitFollowsSettings ? widget.param.unit : _unit.text.trim(),
+          amberLow: Value(_canon(_amberLow)),
+          greenLow: Value(_canon(_greenLow)),
+          greenHigh: Value(_canon(_greenHigh)),
+          amberHigh: Value(_canon(_amberHigh)),
         ));
     if (mounted) context.pop();
   }
@@ -252,10 +277,19 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
               Text(def!.help!, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 16),
             ],
-            TextFormField(
-              controller: _unit,
-              decoration: const InputDecoration(labelText: 'Unit'),
-            ),
+            if (_pres.unitFollowsSettings)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.straighten),
+                title: Text('Unit: ${_pres.unitLabel}'),
+                subtitle: const Text(
+                    'Set in Settings. Boundaries below use this unit.'),
+              )
+            else
+              TextFormField(
+                controller: _unit,
+                decoration: const InputDecoration(labelText: 'Unit'),
+              ),
             const SizedBox(height: 24),
             _ZoneLegendRow(),
             const SizedBox(height: 8),
@@ -265,7 +299,8 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
             _boundField(_amberHigh, 'Red above (amber high)', Zone.red),
             const SizedBox(height: 8),
             Text(
-              'Leave a field blank to mean "no limit on that side".',
+              'Values are in ${_pres.unitLabel}. Leave a field blank to mean '
+              '"no limit on that side".',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 24),

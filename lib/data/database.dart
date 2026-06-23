@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/presets.dart';
 import '../domain/setup_type.dart';
+import '../domain/units.dart';
 import '../domain/zones.dart';
 
 /// Re-export drift's [Value] wrapper so UI code building companions/copyWith
@@ -287,6 +288,16 @@ class AppDatabase extends _$AppDatabase {
         ..where((s) => s.key.equals(_kActiveTankKey)))
       .watchSingleOrNull()
       .map((row) => row?.value == null ? null : int.tryParse(row!.value!));
+
+  /// Generic settings access (used for unit preferences, etc.).
+  Stream<String?> watchSetting(String key) =>
+      (select(settings)..where((s) => s.key.equals(key)))
+          .watchSingleOrNull()
+          .map((row) => row?.value);
+
+  Future<void> setSetting(String key, String? value) =>
+      into(settings).insertOnConflictUpdate(
+          SettingsCompanion.insert(key: key, value: Value(value)));
 }
 
 LazyDatabase _open() {
@@ -304,3 +315,8 @@ ZoneBounds boundsOf(TrackedParameter p) => ZoneBounds(
       greenHigh: p.greenHigh,
       amberHigh: p.amberHigh,
     );
+
+/// Convenience: resolve how to present a tracked parameter's values given the
+/// user's unit preferences.
+ParamPresentation presentationOf(TrackedParameter p, UnitPrefs prefs) =>
+    presentationForKey(p.paramKey, p.unit, prefs);

@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/database.dart';
+import '../domain/units.dart';
+
+const kTempUnitKey = 'temp_unit';
+const kSalinityUnitKey = 'salinity_unit';
 
 /// The singleton app database.
 final dbProvider = Provider<AppDatabase>((ref) {
@@ -52,4 +56,23 @@ final paramReadingsProvider =
   final tank = ref.watch(activeTankProvider);
   if (tank == null) return Stream.value(const []);
   return ref.watch(dbProvider).watchParamReadings(tank.id, paramKey);
+});
+
+/// Preferred temperature display unit (default Celsius).
+final tempUnitProvider = StreamProvider<TempUnit>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kTempUnitKey)
+    .map((v) => TempUnit.fromName(v)));
+
+/// Preferred salinity display unit (default ppt).
+final salinityUnitProvider = StreamProvider<SalinityUnit>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kSalinityUnitKey)
+    .map((v) => SalinityUnit.fromName(v)));
+
+/// Combined unit preferences, reactive to settings changes.
+final unitPrefsProvider = Provider<UnitPrefs>((ref) {
+  final temp = ref.watch(tempUnitProvider).value ?? TempUnit.celsius;
+  final salinity = ref.watch(salinityUnitProvider).value ?? SalinityUnit.ppt;
+  return UnitPrefs(temp: temp, salinity: salinity);
 });

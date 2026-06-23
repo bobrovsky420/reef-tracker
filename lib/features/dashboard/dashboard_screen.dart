@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../widgets/zone_chip.dart';
 
@@ -67,6 +68,7 @@ class _DashboardBody extends ConsumerWidget {
         final enabled = tracked.where((t) => t.enabled).toList();
         if (enabled.isEmpty) return const _NoParamsView();
         final readings = readingsAsync.value ?? const [];
+        final prefs = ref.watch(unitPrefsProvider);
 
         // Latest two readings per parameter (for value + trend).
         final byParam = <String, List<Reading>>{};
@@ -86,7 +88,8 @@ class _DashboardBody extends ConsumerWidget {
           itemBuilder: (context, i) {
             final param = enabled[i];
             final history = byParam[param.paramKey] ?? const [];
-            return _ParameterTile(param: param, history: history);
+            return _ParameterTile(
+                param: param, history: history, prefs: prefs);
           },
         );
       },
@@ -95,10 +98,12 @@ class _DashboardBody extends ConsumerWidget {
 }
 
 class _ParameterTile extends StatelessWidget {
-  const _ParameterTile({required this.param, required this.history});
+  const _ParameterTile(
+      {required this.param, required this.history, required this.prefs});
 
   final TrackedParameter param;
   final List<Reading> history;
+  final UnitPrefs prefs;
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +112,7 @@ class _ParameterTile extends StatelessWidget {
     final latest = history.isNotEmpty ? history.first : null;
     final bounds = boundsOf(param);
     final zone = latest != null ? bounds.classify(latest.value) : Zone.unknown;
+    final pres = presentationOf(param, prefs);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -139,14 +145,14 @@ class _ParameterTile extends StatelessWidget {
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      formatParamValue(param.paramKey, latest.value),
+                      pres.format(latest.value),
                       style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: zone.color),
                     ),
                     const SizedBox(width: 4),
-                    Text(param.unit,
+                    Text(pres.unitLabel,
                         style: TextStyle(color: Theme.of(context).hintColor)),
                     const Spacer(),
                     _TrendIcon(history: history),
