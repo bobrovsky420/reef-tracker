@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import 'app/providers.dart';
 import 'app/router.dart';
@@ -22,6 +23,12 @@ class ReefTrackerApp extends ConsumerWidget {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      // Keep intl date/number formatting in sync with the resolved app locale
+      // so DateFormat(...) renders dates in the selected language.
+      builder: (context, child) {
+        Intl.defaultLocale = Localizations.localeOf(context).toLanguageTag();
+        return child ?? const SizedBox.shrink();
+      },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: seed),
         useMaterial3: true,

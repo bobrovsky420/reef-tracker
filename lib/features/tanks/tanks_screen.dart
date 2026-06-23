@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
@@ -37,9 +38,13 @@ class TanksScreen extends ConsumerWidget {
                 leading: Icon(isActive ? Icons.water_drop : Icons.water_drop_outlined,
                     color: isActive ? Theme.of(context).colorScheme.primary : null),
                 title: Text(t.name),
-                subtitle: Text(
-                  '${l.setupLabel(type)}${t.volumeLiters != null ? ' • ${l.litersSuffix(t.volumeLiters!.toStringAsFixed(0))}' : ''}',
-                ),
+                subtitle: Text([
+                  l.setupLabel(type),
+                  if (t.volumeLiters != null)
+                    l.litersSuffix(t.volumeLiters!.toStringAsFixed(0)),
+                  if (t.startDate != null)
+                    l.sinceDate(DateFormat.yMMMd().format(t.startDate!)),
+                ].join(' • ')),
                 trailing: PopupMenuButton<String>(
                   onSelected: (v) async {
                     switch (v) {
@@ -118,6 +123,7 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
       text: widget.tank?.volumeLiters?.toStringAsFixed(0) ?? '');
   late SetupType _type =
       widget.tank != null ? SetupType.fromName(widget.tank!.setupType) : SetupType.mixed;
+  late DateTime? _startDate = widget.tank?.startDate;
   bool _saving = false;
 
   bool get _isEdit => widget.tank != null;
@@ -127,6 +133,16 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
     _name.dispose();
     _volume.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickStartDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _startDate = picked);
   }
 
   Future<void> _save() async {
@@ -139,12 +155,14 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
         name: _name.text.trim(),
         setupType: _type.name,
         volumeLiters: Value(volume),
+        startDate: Value(_startDate),
       ));
     } else {
       await db.createTankWithPreset(
         name: _name.text.trim(),
         type: _type,
         volumeLiters: volume,
+        startDate: _startDate,
       );
     }
     if (mounted) context.pop();
@@ -188,6 +206,30 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
               decoration: InputDecoration(labelText: l.volumeOptional),
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.event),
+              title: Text(l.startDate),
+              subtitle: Text(_startDate == null
+                  ? l.notSet
+                  : DateFormat.yMMMd().format(_startDate!)),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_startDate != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: l.clear,
+                      onPressed: () => setState(() => _startDate = null),
+                    ),
+                  TextButton(
+                    onPressed: _pickStartDate,
+                    child: Text(_startDate == null ? l.setDate : l.change),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(

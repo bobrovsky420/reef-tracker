@@ -136,6 +136,23 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get startDate => 'Data uruchomienia';
+
+  @override
+  String get notSet => 'Nie ustawiono';
+
+  @override
+  String get setDate => 'Ustaw';
+
+  @override
+  String get clear => 'Wyczyść';
+
+  @override
+  String sinceDate(Object date) {
+    return 'od $date';
+  }
+
+  @override
   String get parameters => 'Parametry';
 
   @override

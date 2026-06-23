@@ -136,6 +136,23 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get startDate => 'Дата запуска';
+
+  @override
+  String get notSet => 'Не задано';
+
+  @override
+  String get setDate => 'Задать';
+
+  @override
+  String get clear => 'Очистить';
+
+  @override
+  String sinceDate(Object date) {
+    return 'с $date';
+  }
+
+  @override
   String get parameters => 'Параметры';
 
   @override

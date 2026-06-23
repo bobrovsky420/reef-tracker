@@ -326,6 +326,36 @@ abstract class AppLocalizations {
   /// **'{value} L'**
   String litersSuffix(Object value);
 
+  /// No description provided for @startDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get startDate;
+
+  /// No description provided for @notSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get notSet;
+
+  /// No description provided for @setDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get setDate;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @sinceDate.
+  ///
+  /// In en, this message translates to:
+  /// **'since {date}'**
+  String sinceDate(Object date);
+
   /// No description provided for @parameters.
   ///
   /// In en, this message translates to:

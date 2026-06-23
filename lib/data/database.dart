@@ -25,6 +25,9 @@ class Tanks extends Table {
   /// Stored as [SetupType.name].
   TextColumn get setupType => text()();
   RealColumn get volumeLiters => real().nullable()();
+
+  /// When the aquarium was set up/started (optional, user-editable).
+  DateTimeColumn get startDate => dateTime().nullable()();
   DateTimeColumn get createdAt =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -71,11 +74,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(tanks, tanks.startDate);
+          }
+        },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
         },
@@ -100,12 +108,14 @@ class AppDatabase extends _$AppDatabase {
     required String name,
     required SetupType type,
     double? volumeLiters,
+    DateTime? startDate,
   }) async {
     return transaction(() async {
       final tankId = await into(tanks).insert(TanksCompanion.insert(
         name: name,
         setupType: type.name,
         volumeLiters: Value(volumeLiters),
+        startDate: Value(startDate),
       ));
       await _seedTrackedParameters(tankId, type);
       await setActiveTank(tankId);

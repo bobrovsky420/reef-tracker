@@ -42,6 +42,11 @@
   "volumeOptional": "Objem (litry, nepovinné)",
   "createAquarium": "Vytvořit akvárium",
   "litersSuffix": "{value} l",
+  "startDate": "Datum spuštění",
+  "notSet": "Nenastaveno",
+  "setDate": "Nastavit",
+  "clear": "Vymazat",
+  "sinceDate": "od {date}",
 
   "parameters": "Parametry",
   "noActiveAquarium": "Žádné aktivní akvárium.",

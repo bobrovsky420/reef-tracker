@@ -136,6 +136,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get startDate => 'Start date';
+
+  @override
+  String get notSet => 'Not set';
+
+  @override
+  String get setDate => 'Set';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
+  String sinceDate(Object date) {
+    return 'since $date';
+  }
+
+  @override
   String get parameters => 'Parameters';
 
   @override

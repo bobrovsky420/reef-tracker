@@ -42,6 +42,11 @@
   "volumeOptional": "Объём (литры, необязательно)",
   "createAquarium": "Создать аквариум",
   "litersSuffix": "{value} л",
+  "startDate": "Дата запуска",
+  "notSet": "Не задано",
+  "setDate": "Задать",
+  "clear": "Очистить",
+  "sinceDate": "с {date}",
 
   "parameters": "Параметры",
   "noActiveAquarium": "Нет активного аквариума.",

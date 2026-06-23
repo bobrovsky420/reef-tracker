@@ -136,6 +136,23 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get startDate => 'Startdatum';
+
+  @override
+  String get notSet => 'Nicht festgelegt';
+
+  @override
+  String get setDate => 'Festlegen';
+
+  @override
+  String get clear => 'Entfernen';
+
+  @override
+  String sinceDate(Object date) {
+    return 'seit $date';
+  }
+
+  @override
   String get parameters => 'Parameter';
 
   @override

@@ -136,6 +136,23 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get startDate => 'Datum spuštění';
+
+  @override
+  String get notSet => 'Nenastaveno';
+
+  @override
+  String get setDate => 'Nastavit';
+
+  @override
+  String get clear => 'Vymazat';
+
+  @override
+  String sinceDate(Object date) {
+    return 'od $date';
+  }
+
+  @override
   String get parameters => 'Parametry';
 
   @override

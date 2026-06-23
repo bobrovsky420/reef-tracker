@@ -42,6 +42,11 @@
   "volumeOptional": "Volumen (Liter, optional)",
   "createAquarium": "Aquarium erstellen",
   "litersSuffix": "{value} l",
+  "startDate": "Startdatum",
+  "notSet": "Nicht festgelegt",
+  "setDate": "Festlegen",
+  "clear": "Entfernen",
+  "sinceDate": "seit {date}",
 
   "parameters": "Parameter",
   "noActiveAquarium": "Kein aktives Aquarium.",
