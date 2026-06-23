@@ -49,8 +49,9 @@ const List<ParameterDef> kReefParameters = [
     decimals: 1,
     help: 'Carbonate hardness. Keep stable — avoid swings.',
   ),
-  ParameterDef(key: 'calcium', name: 'Calcium', unit: 'ppm', decimals: 0),
-  ParameterDef(key: 'magnesium', name: 'Magnesium', unit: 'ppm', decimals: 0),
+  ParameterDef(key: 'calcium', name: 'Calcium (Ca)', unit: 'ppm', decimals: 0),
+  ParameterDef(
+      key: 'magnesium', name: 'Magnesium (Mg)', unit: 'ppm', decimals: 0),
   ParameterDef(
     key: 'nitrate',
     name: 'Nitrate (NO₃)',

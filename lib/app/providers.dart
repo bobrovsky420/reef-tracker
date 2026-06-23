@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/database.dart';
@@ -5,6 +6,7 @@ import '../domain/units.dart';
 
 const kTempUnitKey = 'temp_unit';
 const kSalinityUnitKey = 'salinity_unit';
+const kLocaleKey = 'locale';
 
 /// The singleton app database.
 final dbProvider = Provider<AppDatabase>((ref) {
@@ -75,4 +77,16 @@ final unitPrefsProvider = Provider<UnitPrefs>((ref) {
   final temp = ref.watch(tempUnitProvider).value ?? TempUnit.celsius;
   final salinity = ref.watch(salinityUnitProvider).value ?? SalinityUnit.ppt;
   return UnitPrefs(temp: temp, salinity: salinity);
+});
+
+/// Stored language code ('system' / 'en' / 'cs'), defaulting to 'system'.
+final localeCodeProvider = StreamProvider<String>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kLocaleKey)
+    .map((v) => v ?? 'system'));
+
+/// The locale override for MaterialApp, or null to follow the system locale.
+final localeProvider = Provider<Locale?>((ref) {
+  final code = ref.watch(localeCodeProvider).value ?? 'system';
+  return code == 'system' ? null : Locale(code);
 });

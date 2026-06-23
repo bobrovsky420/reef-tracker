@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../domain/zones.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/l10n_helpers.dart';
 
 /// A small colored pill showing a zone's status (OK / Attention / Act now).
 class ZoneChip extends StatelessWidget {
@@ -27,7 +29,7 @@ class ZoneChip extends StatelessWidget {
           if (!compact) ...[
             const SizedBox(width: 4),
             Text(
-              zone.label,
+              AppLocalizations.of(context).zoneLabel(zone),
               style: TextStyle(
                   color: color, fontWeight: FontWeight.w600, fontSize: 12),
             ),

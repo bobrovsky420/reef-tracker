@@ -5,9 +5,10 @@ import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
-import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
+import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
 import '../../widgets/zone_chip.dart';
 
 /// Home screen: active-tank selector + grid of parameter status tiles.
@@ -16,6 +17,7 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final tanksAsync = ref.watch(tanksProvider);
 
     return Scaffold(
@@ -23,12 +25,12 @@ class DashboardScreen extends ConsumerWidget {
         title: const _TankSelector(),
         actions: [
           IconButton(
-            tooltip: 'Manage parameters',
+            tooltip: l.manageParameters,
             icon: const Icon(Icons.tune),
             onPressed: () => context.push('/parameters'),
           ),
           IconButton(
-            tooltip: 'Settings',
+            tooltip: l.settings,
             icon: const Icon(Icons.settings),
             onPressed: () => context.push('/settings'),
           ),
@@ -36,7 +38,7 @@ class DashboardScreen extends ConsumerWidget {
       ),
       body: tanksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tanks) {
           if (tanks.isEmpty) return const _NoTanksView();
           return const _DashboardBody();
@@ -47,7 +49,7 @@ class DashboardScreen extends ConsumerWidget {
           : FloatingActionButton.extended(
               onPressed: () => context.push('/add-reading'),
               icon: const Icon(Icons.add),
-              label: const Text('Add reading'),
+              label: Text(l.addReading),
             ),
     );
   }
@@ -58,19 +60,20 @@ class _DashboardBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final trackedAsync = ref.watch(trackedParametersProvider);
     final readingsAsync = ref.watch(tankReadingsProvider);
 
     return trackedAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
       data: (tracked) {
         final enabled = tracked.where((t) => t.enabled).toList();
         if (enabled.isEmpty) return const _NoParamsView();
         final readings = readingsAsync.value ?? const [];
         final prefs = ref.watch(unitPrefsProvider);
 
-        // Latest two readings per parameter (for value + trend).
+        // Latest readings per parameter (for value + trend).
         final byParam = <String, List<Reading>>{};
         for (final r in readings) {
           (byParam[r.paramKey] ??= []).add(r); // already newest-first
@@ -107,8 +110,8 @@ class _ParameterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final def = kParameterByKey[param.paramKey];
-    final name = def?.name ?? param.paramKey;
+    final l = AppLocalizations.of(context);
+    final name = l.paramName(param.paramKey);
     final latest = history.isNotEmpty ? history.first : null;
     final bounds = boundsOf(param);
     final zone = latest != null ? bounds.classify(latest.value) : Zone.unknown;
@@ -137,7 +140,7 @@ class _ParameterTile extends StatelessWidget {
               ),
               const Spacer(),
               if (latest == null)
-                Text('No readings',
+                Text(l.noReadings,
                     style: TextStyle(color: Theme.of(context).hintColor))
               else
                 Row(
@@ -160,9 +163,7 @@ class _ParameterTile extends StatelessWidget {
                 ),
               const SizedBox(height: 4),
               Text(
-                latest == null
-                    ? '—'
-                    : _relativeTime(latest.takenAt),
+                latest == null ? '—' : _relativeTime(l, latest.takenAt),
                 style: TextStyle(
                     fontSize: 11, color: Theme.of(context).hintColor),
               ),
@@ -191,12 +192,12 @@ class _TrendIcon extends StatelessWidget {
   }
 }
 
-String _relativeTime(DateTime t) {
+String _relativeTime(AppLocalizations l, DateTime t) {
   final d = DateTime.now().difference(t);
-  if (d.inMinutes < 1) return 'just now';
-  if (d.inMinutes < 60) return '${d.inMinutes} min ago';
-  if (d.inHours < 24) return '${d.inHours} h ago';
-  if (d.inDays < 7) return '${d.inDays} d ago';
+  if (d.inMinutes < 1) return l.timeJustNow;
+  if (d.inMinutes < 60) return l.timeMinAgo(d.inMinutes);
+  if (d.inHours < 24) return l.timeHoursAgo(d.inHours);
+  if (d.inDays < 7) return l.timeDaysAgo(d.inDays);
   return DateFormat.yMMMd().format(t);
 }
 
@@ -206,9 +207,10 @@ class _TankSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final tanks = ref.watch(tanksProvider).value ?? const [];
     final active = ref.watch(activeTankProvider);
-    if (tanks.isEmpty) return const Text('ReefTracker');
+    if (tanks.isEmpty) return Text(l.appTitle);
 
     return PopupMenuButton<int>(
       onSelected: (id) {
@@ -234,12 +236,12 @@ class _TankSelector extends ConsumerWidget {
             ),
           ),
         const PopupMenuDivider(),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: -1,
           child: Row(children: [
-            Icon(Icons.edit, size: 18),
-            SizedBox(width: 8),
-            Text('Manage tanks'),
+            const Icon(Icons.edit, size: 18),
+            const SizedBox(width: 8),
+            Text(l.manageTanks),
           ]),
         ),
       ],
@@ -247,7 +249,7 @@ class _TankSelector extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Flexible(
-            child: Text(active?.name ?? 'ReefTracker',
+            child: Text(active?.name ?? l.appTitle,
                 overflow: TextOverflow.ellipsis),
           ),
           const Icon(Icons.arrow_drop_down),
@@ -262,6 +264,7 @@ class _NoTanksView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -270,18 +273,15 @@ class _NoTanksView extends StatelessWidget {
           children: [
             const Icon(Icons.water, size: 64),
             const SizedBox(height: 16),
-            Text('Welcome to ReefTracker',
+            Text(l.welcomeTitle,
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            const Text(
-              'Create your first aquarium to start tracking water parameters.',
-              textAlign: TextAlign.center,
-            ),
+            Text(l.welcomeBody, textAlign: TextAlign.center),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () => context.push('/tanks/new'),
               icon: const Icon(Icons.add),
-              label: const Text('Add aquarium'),
+              label: Text(l.addAquarium),
             ),
           ],
         ),
@@ -295,6 +295,7 @@ class _NoParamsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -303,13 +304,12 @@ class _NoParamsView extends StatelessWidget {
           children: [
             const Icon(Icons.tune, size: 56),
             const SizedBox(height: 16),
-            const Text('No parameters are being tracked for this tank.',
-                textAlign: TextAlign.center),
+            Text(l.noParamsTracked, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: () => context.push('/parameters'),
               icon: const Icon(Icons.add),
-              label: const Text('Choose parameters'),
+              label: Text(l.chooseParameters),
             ),
           ],
         ),

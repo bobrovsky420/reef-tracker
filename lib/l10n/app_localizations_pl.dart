@@ -1,0 +1,426 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Polish (`pl`).
+class AppLocalizationsPl extends AppLocalizations {
+  AppLocalizationsPl([String locale = 'pl']) : super(locale);
+
+  @override
+  String get appTitle => 'ReefTracker';
+
+  @override
+  String get settings => 'Ustawienia';
+
+  @override
+  String get manageParameters => 'Zarządzaj parametrami';
+
+  @override
+  String get addReading => 'Dodaj pomiar';
+
+  @override
+  String get addAquarium => 'Dodaj akwarium';
+
+  @override
+  String get manageTanks => 'Zarządzaj akwariami';
+
+  @override
+  String get chooseParameters => 'Wybierz parametry';
+
+  @override
+  String get cancel => 'Anuluj';
+
+  @override
+  String get save => 'Zapisz';
+
+  @override
+  String get delete => 'Usuń';
+
+  @override
+  String get apply => 'Zastosuj';
+
+  @override
+  String get change => 'Zmień';
+
+  @override
+  String errorWith(Object message) {
+    return 'Błąd: $message';
+  }
+
+  @override
+  String get welcomeTitle => 'Witamy w ReefTracker';
+
+  @override
+  String get welcomeBody =>
+      'Utwórz swoje pierwsze akwarium, aby rozpocząć śledzenie parametrów wody.';
+
+  @override
+  String get noParamsTracked =>
+      'Dla tego akwarium nie są śledzone żadne parametry.';
+
+  @override
+  String get noReadings => 'Brak pomiarów';
+
+  @override
+  String get timeJustNow => 'przed chwilą';
+
+  @override
+  String timeMinAgo(int count) {
+    return '$count min temu';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    return '$count godz. temu';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    return '$count dni temu';
+  }
+
+  @override
+  String get aquariums => 'Akwaria';
+
+  @override
+  String get noAquariumsYet => 'Brak akwariów.';
+
+  @override
+  String get makeActive => 'Ustaw jako aktywne';
+
+  @override
+  String get edit => 'Edytuj';
+
+  @override
+  String deleteTankTitle(Object name) {
+    return 'Usunąć „$name”?';
+  }
+
+  @override
+  String get deleteTankBody =>
+      'Spowoduje to trwałe usunięcie akwarium i wszystkich jego pomiarów.';
+
+  @override
+  String get newAquarium => 'Nowe akwarium';
+
+  @override
+  String get editAquarium => 'Edytuj akwarium';
+
+  @override
+  String get name => 'Nazwa';
+
+  @override
+  String get nameHint => 'np. Rafa w salonie';
+
+  @override
+  String get enterAName => 'Wpisz nazwę';
+
+  @override
+  String get setupType => 'Typ zbiornika';
+
+  @override
+  String get presetSeedNote =>
+      'Dla tego typu zbiornika zostaną ustawione domyślne parametry i granice stref. Możesz je dostroić w dowolnym momencie.';
+
+  @override
+  String get volumeOptional => 'Objętość (litry, opcjonalnie)';
+
+  @override
+  String get createAquarium => 'Utwórz akwarium';
+
+  @override
+  String litersSuffix(Object value) {
+    return '$value l';
+  }
+
+  @override
+  String get parameters => 'Parametry';
+
+  @override
+  String get noActiveAquarium => 'Brak aktywnego akwarium.';
+
+  @override
+  String reapplyPreset(Object type) {
+    return 'Zastosuj ponownie preset $type';
+  }
+
+  @override
+  String reapplyPresetTitle(Object type) {
+    return 'Zastosować ponownie preset $type?';
+  }
+
+  @override
+  String get reapplyPresetBody =>
+      'Spowoduje to nadpisanie granic zielona/pomarańczowa/czerwona wszystkich śledzonych parametrów domyślnymi wartościami presetu. Twoje pomiary zostaną zachowane.';
+
+  @override
+  String get presetApplied => 'Preset zastosowany.';
+
+  @override
+  String get noBoundariesSet => 'Nie ustawiono granic';
+
+  @override
+  String boundsSummary(
+    Object greenLow,
+    Object greenHigh,
+    Object unit,
+    Object amberLow,
+    Object amberHigh,
+  ) {
+    return 'OK $greenLow–$greenHigh $unit  •  czerwona <$amberLow / >$amberHigh';
+  }
+
+  @override
+  String get editZones => 'Edytuj strefy';
+
+  @override
+  String get addParameter => 'Dodaj parametr';
+
+  @override
+  String get allParametersAdded => 'Wszystkie parametry są już dodane.';
+
+  @override
+  String unitWithValue(Object unit) {
+    return 'Jednostka: $unit';
+  }
+
+  @override
+  String get unitFromSettingsNote =>
+      'Ustawiane w Ustawieniach. Poniższe granice używają tej jednostki.';
+
+  @override
+  String get unit => 'Jednostka';
+
+  @override
+  String get boundAmberLow => 'Czerwona poniżej (pomarańczowa dolna)';
+
+  @override
+  String get boundGreenLow => 'Zielona od (OK dolna)';
+
+  @override
+  String get boundGreenHigh => 'Zielona do (OK górna)';
+
+  @override
+  String get boundAmberHigh => 'Czerwona powyżej (pomarańczowa górna)';
+
+  @override
+  String boundsUnitNote(Object unit) {
+    return 'Wartości w $unit. Puste pole oznacza „brak limitu po tej stronie”.';
+  }
+
+  @override
+  String get enterANumber => 'Wpisz liczbę';
+
+  @override
+  String get boundsOrderError =>
+      'Granice muszą rosnąć: pomarańczowa dolna ≤ zielona dolna ≤ zielona górna ≤ pomarańczowa górna.';
+
+  @override
+  String get measuredAt => 'Zmierzono';
+
+  @override
+  String get noteOptional => 'Notatka (opcjonalnie)';
+
+  @override
+  String get saveReadings => 'Zapisz pomiary';
+
+  @override
+  String invalidNumberFor(Object name) {
+    return 'Nieprawidłowa liczba dla $name';
+  }
+
+  @override
+  String get enterAtLeastOneValue => 'Wpisz co najmniej jedną wartość.';
+
+  @override
+  String savedReadings(int count) {
+    return 'Zapisano pomiarów: $count.';
+  }
+
+  @override
+  String get noTrackedToRecord => 'Brak śledzonych parametrów do zapisania.';
+
+  @override
+  String get rangeWeek => '7 dni';
+
+  @override
+  String get rangeMonth => '30 dni';
+
+  @override
+  String get rangeQuarter => '90 dni';
+
+  @override
+  String get rangeAll => 'Wszystko';
+
+  @override
+  String get noReadingsInRange => 'Brak pomiarów w tym zakresie.';
+
+  @override
+  String get editValue => 'Edytuj wartość';
+
+  @override
+  String get unitsSection => 'Jednostki';
+
+  @override
+  String get toolsSection => 'Narzędzia';
+
+  @override
+  String get aboutSection => 'O aplikacji';
+
+  @override
+  String get languageSection => 'Język';
+
+  @override
+  String get temperature => 'Temperatura';
+
+  @override
+  String get salinity => 'Zasolenie';
+
+  @override
+  String get unitUsedAcrossApp => 'Jednostka używana w całej aplikacji';
+
+  @override
+  String get salinityCalculator => 'Kalkulator zasolenia';
+
+  @override
+  String get salinityCalculatorSubtitle =>
+      'Przelicz ppt ↔ gęstość względna (SG)';
+
+  @override
+  String get aboutAppName => 'O aplikacji ReefTracker';
+
+  @override
+  String get aboutDescription =>
+      'Offline\'owy tracker parametrów akwarium morskiego z historią, wykresami czasowymi i strefami zdrowia zielona/pomarańczowa/czerwona.';
+
+  @override
+  String get language => 'Język';
+
+  @override
+  String get languageSystem => 'Domyślny systemu';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageCzech => 'Čeština';
+
+  @override
+  String get languageGerman => 'Deutsch';
+
+  @override
+  String get languageRussian => 'Русский';
+
+  @override
+  String get languagePolish => 'Polski';
+
+  @override
+  String get calculatorIntro =>
+      'Przelicz między praktycznym zasoleniem (ppt) a gęstością względną (SG). Wpisuj w dowolne pole.';
+
+  @override
+  String get specificGravity => 'Gęstość względna';
+
+  @override
+  String get referencePoints => 'Punkty odniesienia';
+
+  @override
+  String get refSeawater => '• Naturalna woda morska ≈ 35 ppt ≈ 1,0264 SG';
+
+  @override
+  String get refReefTarget => '• Typowy cel dla rafy ≈ 35 ppt (1,025–1,027 SG)';
+
+  @override
+  String get refFormulaNote =>
+      'SG odniesione do 25 °C. Przeliczenie to przybliżenie liniowe: SG = 1 + ppt × 0,0264/35.';
+
+  @override
+  String get zoneOk => 'OK';
+
+  @override
+  String get zoneAttention => 'Uwaga';
+
+  @override
+  String get zoneActNow => 'Działaj teraz';
+
+  @override
+  String get zoneUnknown => '—';
+
+  @override
+  String get setupFishOnly => 'Tylko ryby / FOWLR';
+
+  @override
+  String get setupSoft => 'Koralowce miękkie';
+
+  @override
+  String get setupLps => 'LPS';
+
+  @override
+  String get setupSps => 'SPS';
+
+  @override
+  String get setupMixed => 'Rafa mieszana';
+
+  @override
+  String get paramTemperature => 'Temperatura';
+
+  @override
+  String get paramPh => 'pH';
+
+  @override
+  String get paramSalinity => 'Zasolenie';
+
+  @override
+  String get paramAlkalinity => 'Zasadowość (KH)';
+
+  @override
+  String get paramCalcium => 'Wapń (Ca)';
+
+  @override
+  String get paramMagnesium => 'Magnez (Mg)';
+
+  @override
+  String get paramNitrate => 'Azotan (NO₃)';
+
+  @override
+  String get paramPhosphate => 'Fosforan (PO₄)';
+
+  @override
+  String get paramAmmonia => 'Amoniak (NH₃/₄)';
+
+  @override
+  String get paramNitrite => 'Azotyn (NO₂)';
+
+  @override
+  String get paramOrp => 'ORP';
+
+  @override
+  String get paramPotassium => 'Potas';
+
+  @override
+  String get paramStrontium => 'Stront';
+
+  @override
+  String get paramIodine => 'Jod';
+
+  @override
+  String get helpTemperature =>
+      'Temperatura wody. Stabilność jest ważniejsza niż dokładna wartość.';
+
+  @override
+  String get helpSalinity => 'Gęstość względna. ~1,026 SG ≈ 35 ppt.';
+
+  @override
+  String get helpAlkalinity =>
+      'Twardość węglanowa. Utrzymuj stabilną — unikaj wahań.';
+
+  @override
+  String get helpNitrate =>
+      'Składnik odżywczy. Koralowce potrzebują go trochę; nadmiar sprzyja glonom.';
+
+  @override
+  String get helpAmmonia =>
+      'Toksyczny. W dojrzałym akwarium powinien być praktycznie zerowy.';
+}

@@ -8,6 +8,8 @@ import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
+import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
 import '../../widgets/zone_chip.dart';
 
 enum _Range {
@@ -19,6 +21,19 @@ enum _Range {
   const _Range(this.label, this.days);
   final String label;
   final int? days;
+}
+
+String _rangeLabel(AppLocalizations l, _Range r) {
+  switch (r) {
+    case _Range.week:
+      return l.rangeWeek;
+    case _Range.month:
+      return l.rangeMonth;
+    case _Range.quarter:
+      return l.rangeQuarter;
+    case _Range.all:
+      return l.rangeAll;
+  }
 }
 
 /// Time-series history + readings list for one parameter of the active tank.
@@ -36,7 +51,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final def = kParameterByKey[widget.paramKey];
+    final l = AppLocalizations.of(context);
     final tracked = ref.watch(trackedParametersProvider).value ?? const [];
     final TrackedParameter? param = tracked
         .where((t) => t.paramKey == widget.paramKey)
@@ -51,10 +66,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             prefs);
 
     return Scaffold(
-      appBar: AppBar(title: Text(def?.name ?? widget.paramKey)),
+      appBar: AppBar(title: Text(l.paramName(widget.paramKey))),
       body: readingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (all) {
           final cutoff = _range.days == null
               ? null
@@ -68,7 +83,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               _rangeSelector(),
               Expanded(
                 child: data.isEmpty
-                    ? const Center(child: Text('No readings in this range.'))
+                    ? Center(child: Text(l.noReadingsInRange))
                     : ListView(
                         children: [
                           SizedBox(
@@ -92,12 +107,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 
   Widget _rangeSelector() {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(8),
       child: SegmentedButton<_Range>(
         segments: [
           for (final r in _Range.values)
-            ButtonSegment(value: r, label: Text(r.label)),
+            ButtonSegment(value: r, label: Text(_rangeLabel(l, r))),
         ],
         selected: {_range},
         onSelectionChanged: (s) => setState(() => _range = s.first),
@@ -143,11 +159,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   Future<void> _editReading(
       BuildContext context, Reading r, ParamPresentation pres) async {
+    final l = AppLocalizations.of(context);
     final ctrl = TextEditingController(text: pres.format(r.value));
     final newValue = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit value'),
+        title: Text(l.editValue),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -157,14 +174,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(ctx), child: Text(l.cancel)),
           FilledButton(
             onPressed: () {
               final v = double.tryParse(ctrl.text.replaceAll(',', '.'));
               Navigator.pop(ctx, v == null ? null : pres.toCanonical(v));
             },
-            child: const Text('Save'),
+            child: Text(l.save),
           ),
         ],
       ),

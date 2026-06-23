@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/units.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Two-way salinity converter: ppt <-> specific gravity (SG).
 /// Editing either field updates the other live.
@@ -47,25 +48,23 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Salinity calculator')),
+      appBar: AppBar(title: Text(l.salinityCalculator)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            'Convert between practical salinity (ppt) and specific gravity (SG). '
-            'Type in either field.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text(l.calculatorIntro,
+              style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 24),
           TextField(
             controller: _pptCtrl,
             keyboardType:
                 const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Salinity',
+            decoration: InputDecoration(
+              labelText: l.salinity,
               suffixText: 'ppt',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
             onChanged: _onPptChanged,
           ),
@@ -77,31 +76,31 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
             controller: _sgCtrl,
             keyboardType:
                 const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Specific gravity',
+            decoration: InputDecoration(
+              labelText: l.specificGravity,
               suffixText: 'SG',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
             onChanged: _onSgChanged,
           ),
           const SizedBox(height: 24),
           Card(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: const Padding(
-              padding: EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Reference points',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Text('• Natural seawater ≈ 35 ppt ≈ 1.0264 SG'),
-                  Text('• Typical reef target ≈ 35 ppt (1.025–1.027 SG)'),
-                  SizedBox(height: 8),
+                  Text(l.referencePoints,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(l.refSeawater),
+                  Text(l.refReefTarget),
+                  const SizedBox(height: 8),
                   Text(
-                    'SG is referenced at 25 °C. Conversion is a linear '
-                    'approximation: SG = 1 + ppt × 0.0264/35.',
-                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                    l.refFormulaNote,
+                    style: const TextStyle(
+                        fontSize: 12, fontStyle: FontStyle.italic),
                   ),
                 ],
               ),

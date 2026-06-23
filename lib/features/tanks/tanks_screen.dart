@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/setup_type.dart';
+import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
 
 /// Lists all aquariums with add / edit / delete / switch actions.
 class TanksScreen extends ConsumerWidget {
@@ -12,17 +14,18 @@ class TanksScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final tanksAsync = ref.watch(tanksProvider);
     final active = ref.watch(activeTankProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Aquariums')),
+      appBar: AppBar(title: Text(l.aquariums)),
       body: tanksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tanks) {
           if (tanks.isEmpty) {
-            return const Center(child: Text('No aquariums yet.'));
+            return Center(child: Text(l.noAquariumsYet));
           }
           return ListView.builder(
             itemCount: tanks.length,
@@ -35,7 +38,7 @@ class TanksScreen extends ConsumerWidget {
                     color: isActive ? Theme.of(context).colorScheme.primary : null),
                 title: Text(t.name),
                 subtitle: Text(
-                  '${type.label}${t.volumeLiters != null ? ' • ${t.volumeLiters!.toStringAsFixed(0)} L' : ''}',
+                  '${l.setupLabel(type)}${t.volumeLiters != null ? ' • ${l.litersSuffix(t.volumeLiters!.toStringAsFixed(0))}' : ''}',
                 ),
                 trailing: PopupMenuButton<String>(
                   onSelected: (v) async {
@@ -50,10 +53,10 @@ class TanksScreen extends ConsumerWidget {
                   },
                   itemBuilder: (context) => [
                     if (!isActive)
-                      const PopupMenuItem(
-                          value: 'activate', child: Text('Make active')),
-                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                      PopupMenuItem(
+                          value: 'activate', child: Text(l.makeActive)),
+                    PopupMenuItem(value: 'edit', child: Text(l.edit)),
+                    PopupMenuItem(value: 'delete', child: Text(l.delete)),
                   ],
                 ),
                 onTap: () => ref.read(dbProvider).setActiveTank(t.id),
@@ -65,28 +68,28 @@ class TanksScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/tanks/new'),
         icon: const Icon(Icons.add),
-        label: const Text('Add aquarium'),
+        label: Text(l.addAquarium),
       ),
     );
   }
 
   Future<void> _confirmDelete(
       BuildContext context, WidgetRef ref, Tank tank) async {
+    final l = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete "${tank.name}"?'),
-        content: const Text(
-            'This permanently deletes the aquarium and all of its readings.'),
+        title: Text(l.deleteTankTitle(tank.name)),
+        content: Text(l.deleteTankBody),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
             style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l.delete),
           ),
         ],
       ),
@@ -149,8 +152,9 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'Edit aquarium' : 'New aquarium')),
+      appBar: AppBar(title: Text(_isEdit ? l.editAquarium : l.newAquarium)),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -158,34 +162,30 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
           children: [
             TextFormField(
               controller: _name,
-              decoration: const InputDecoration(
-                  labelText: 'Name', hintText: 'e.g. Living room reef'),
+              decoration: InputDecoration(
+                  labelText: l.name, hintText: l.nameHint),
               textCapitalization: TextCapitalization.sentences,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+                  (v == null || v.trim().isEmpty) ? l.enterAName : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<SetupType>(
               initialValue: _type,
-              decoration: const InputDecoration(labelText: 'Setup type'),
+              decoration: InputDecoration(labelText: l.setupType),
               items: [
                 for (final t in SetupType.values)
-                  DropdownMenuItem(value: t, child: Text(t.label)),
+                  DropdownMenuItem(value: t, child: Text(l.setupLabel(t))),
               ],
               onChanged: (v) => setState(() => _type = v ?? _type),
             ),
             const SizedBox(height: 8),
             if (!_isEdit)
-              Text(
-                'Default parameters and zone boundaries will be set up for this '
-                'setup type. You can fine-tune them anytime.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text(l.presetSeedNote,
+                  style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 16),
             TextFormField(
               controller: _volume,
-              decoration: const InputDecoration(
-                  labelText: 'Volume (litres, optional)'),
+              decoration: InputDecoration(labelText: l.volumeOptional),
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
             ),
@@ -198,7 +198,7 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.save),
-              label: Text(_isEdit ? 'Save' : 'Create aquarium'),
+              label: Text(_isEdit ? l.save : l.createAquarium),
             ),
           ],
         ),

@@ -8,6 +8,8 @@ import '../../domain/parameter_catalog.dart';
 import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
+import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
 
 /// Per-tank parameter management: enable/disable, reorder, edit zones, add from
 /// the catalog, and re-apply the setup-type preset.
@@ -16,13 +18,14 @@ class ManageParametersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final tank = ref.watch(activeTankProvider);
     final trackedAsync = ref.watch(trackedParametersProvider);
 
     if (tank == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Parameters')),
-        body: const Center(child: Text('No active aquarium.')),
+        appBar: AppBar(title: Text(l.parameters)),
+        body: Center(child: Text(l.noActiveAquarium)),
       );
     }
     final type = SetupType.fromName(tank.setupType);
@@ -30,7 +33,7 @@ class ManageParametersScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parameters'),
+        title: Text(l.parameters),
         actions: [
           PopupMenuButton<String>(
             onSelected: (v) async {
@@ -41,14 +44,14 @@ class ManageParametersScreen extends ConsumerWidget {
             itemBuilder: (context) => [
               PopupMenuItem(
                   value: 'preset',
-                  child: Text('Re-apply ${type.label} preset')),
+                  child: Text(l.reapplyPreset(l.setupLabel(type)))),
             ],
           ),
         ],
       ),
       body: trackedAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tracked) {
           return ReorderableListView.builder(
             padding: const EdgeInsets.only(bottom: 88),
@@ -63,13 +66,12 @@ class ManageParametersScreen extends ConsumerWidget {
             },
             itemBuilder: (context, i) {
               final param = tracked[i];
-              final def = kParameterByKey[param.paramKey];
               final bounds = boundsOf(param);
               final pres = presentationOf(param, prefs);
               return ListTile(
                 key: ValueKey(param.id),
-                title: Text(def?.name ?? param.paramKey),
-                subtitle: Text(_boundsSummary(bounds, pres)),
+                title: Text(l.paramName(param.paramKey)),
+                subtitle: Text(_boundsSummary(l, bounds, pres)),
                 leading: Switch(
                   value: param.enabled,
                   onChanged: (v) => ref.read(dbProvider).updateTrackedParameter(
@@ -80,7 +82,7 @@ class ManageParametersScreen extends ConsumerWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit),
-                      tooltip: 'Edit zones',
+                      tooltip: l.editZones,
                       onPressed: () => context.push(
                           '/parameters/${param.id}/edit',
                           extra: param),
@@ -100,19 +102,20 @@ class ManageParametersScreen extends ConsumerWidget {
         onPressed: () => _addParameter(context, ref, tank.id, type,
             trackedAsync.value ?? const []),
         icon: const Icon(Icons.add),
-        label: const Text('Add parameter'),
+        label: Text(l.addParameter),
       ),
     );
   }
 
   Future<void> _addParameter(BuildContext context, WidgetRef ref, int tankId,
       SetupType type, List<TrackedParameter> tracked) async {
+    final l = AppLocalizations.of(context);
     final existing = tracked.map((e) => e.paramKey).toSet();
     final available =
         kReefParameters.where((p) => !existing.contains(p.key)).toList();
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All parameters are already added.')),
+        SnackBar(content: Text(l.allParametersAdded)),
       );
       return;
     }
@@ -124,7 +127,7 @@ class ManageParametersScreen extends ConsumerWidget {
         children: [
           for (final p in available)
             ListTile(
-              title: Text(p.name),
+              title: Text(l.paramName(p.key)),
               trailing: Text(p.unit,
                   style: TextStyle(color: Theme.of(ctx).hintColor)),
               onTap: () => Navigator.pop(ctx, p.key),
@@ -139,20 +142,19 @@ class ManageParametersScreen extends ConsumerWidget {
 
   Future<void> _confirmApplyPreset(BuildContext context, WidgetRef ref,
       int tankId, SetupType type) async {
+    final l = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Re-apply ${type.label} preset?'),
-        content: const Text(
-            'This overwrites the green/amber/red boundaries of all tracked '
-            'parameters with the preset defaults. Your readings are kept.'),
+        title: Text(l.reapplyPresetTitle(l.setupLabel(type))),
+        content: Text(l.reapplyPresetBody),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(l.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Apply')),
+              child: Text(l.apply)),
         ],
       ),
     );
@@ -160,17 +162,20 @@ class ManageParametersScreen extends ConsumerWidget {
       await ref.read(dbProvider).applyPreset(tankId, type);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preset applied.')),
+          SnackBar(content: Text(l.presetApplied)),
         );
       }
     }
   }
 }
 
-String _boundsSummary(ZoneBounds b, ParamPresentation pres) {
-  if (b.isEmpty) return 'No boundaries set';
+String _boundsSummary(
+    AppLocalizations l, ZoneBounds b, ParamPresentation pres) {
+  if (b.isEmpty) return l.noBoundariesSet;
   String f(double? v) => v == null ? '∞' : pres.format(v);
-  return 'OK ${f(b.greenLow)}–${f(b.greenHigh)} ${pres.unitLabel}  •  red <${f(b.amberLow)} / >${f(b.amberHigh)}';
+  return l.boundsSummary(
+      f(b.greenLow), f(b.greenHigh), pres.unitLabel, f(b.amberLow),
+      f(b.amberHigh));
 }
 
 /// Editor for a single tracked parameter's unit + four zone boundaries.
@@ -230,26 +235,25 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     return v == null ? null : _pres.toCanonical(v);
   }
 
-  String? _validateOrder() {
-    final a = _parse(_amberLow);
-    final g = _parse(_greenLow);
-    final gh = _parse(_greenHigh);
-    final ah = _parse(_amberHigh);
-    final seq = [a, g, gh, ah].whereType<double>().toList();
+  bool _orderOk() {
+    final seq = [
+      _parse(_amberLow),
+      _parse(_greenLow),
+      _parse(_greenHigh),
+      _parse(_amberHigh),
+    ].whereType<double>().toList();
     for (var i = 1; i < seq.length; i++) {
-      if (seq[i] < seq[i - 1]) {
-        return 'Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.';
-      }
+      if (seq[i] < seq[i - 1]) return false;
     }
-    return null;
+    return true;
   }
 
   Future<void> _save() async {
+    final l = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
-    final orderError = _validateOrder();
-    if (orderError != null) {
+    if (!_orderOk()) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(orderError)));
+          .showSnackBar(SnackBar(content: Text(l.boundsOrderError)));
       return;
     }
     await ref.read(dbProvider).updateTrackedParameter(widget.param.copyWith(
@@ -265,49 +269,48 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final def = kParameterByKey[widget.param.paramKey];
+    final l = AppLocalizations.of(context);
+    final help = l.paramHelp(widget.param.paramKey);
     return Scaffold(
-      appBar: AppBar(title: Text(def?.name ?? widget.param.paramKey)),
+      appBar: AppBar(title: Text(l.paramName(widget.param.paramKey))),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (def?.help != null) ...[
-              Text(def!.help!, style: Theme.of(context).textTheme.bodySmall),
+            if (help != null) ...[
+              Text(help, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 16),
             ],
             if (_pres.unitFollowsSettings)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.straighten),
-                title: Text('Unit: ${_pres.unitLabel}'),
-                subtitle: const Text(
-                    'Set in Settings. Boundaries below use this unit.'),
+                title: Text(l.unitWithValue(_pres.unitLabel)),
+                subtitle: Text(l.unitFromSettingsNote),
               )
             else
               TextFormField(
                 controller: _unit,
-                decoration: const InputDecoration(labelText: 'Unit'),
+                decoration: InputDecoration(labelText: l.unit),
               ),
             const SizedBox(height: 24),
-            _ZoneLegendRow(),
+            const _ZoneLegendRow(),
             const SizedBox(height: 8),
-            _boundField(_amberLow, 'Red below (amber low)', Zone.red),
-            _boundField(_greenLow, 'Green from (OK low)', Zone.green),
-            _boundField(_greenHigh, 'Green to (OK high)', Zone.green),
-            _boundField(_amberHigh, 'Red above (amber high)', Zone.red),
+            _boundField(_amberLow, l.boundAmberLow, Zone.red),
+            _boundField(_greenLow, l.boundGreenLow, Zone.green),
+            _boundField(_greenHigh, l.boundGreenHigh, Zone.green),
+            _boundField(_amberHigh, l.boundAmberHigh, Zone.red),
             const SizedBox(height: 8),
             Text(
-              'Values are in ${_pres.unitLabel}. Leave a field blank to mean '
-              '"no limit on that side".',
+              l.boundsUnitNote(_pres.unitLabel),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save),
-              label: const Text('Save'),
+              label: Text(l.save),
             ),
           ],
         ),
@@ -316,6 +319,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
   }
 
   Widget _boundField(TextEditingController c, String label, Zone zone) {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextFormField(
@@ -331,7 +335,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
         validator: (v) {
           if (v == null || v.trim().isEmpty) return null;
           return double.tryParse(v.replaceAll(',', '.')) == null
-              ? 'Enter a number'
+              ? l.enterANumber
               : null;
         },
       ),
@@ -340,8 +344,11 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
 }
 
 class _ZoneLegendRow extends StatelessWidget {
+  const _ZoneLegendRow();
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     Widget dot(Zone z, String label) => Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -353,9 +360,9 @@ class _ZoneLegendRow extends StatelessWidget {
     return Wrap(
       spacing: 16,
       children: [
-        dot(Zone.green, 'OK'),
-        dot(Zone.amber, 'Attention'),
-        dot(Zone.red, 'Act now'),
+        dot(Zone.green, l.zoneOk),
+        dot(Zone.amber, l.zoneAttention),
+        dot(Zone.red, l.zoneActNow),
       ],
     );
   }

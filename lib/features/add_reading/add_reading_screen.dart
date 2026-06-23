@@ -5,9 +5,10 @@ import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
-import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
+import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
 import '../../widgets/zone_chip.dart';
 
 /// Lets the user enter values for any subset of tracked parameters at one time.
@@ -60,6 +61,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
   }
 
   Future<void> _save(List<TrackedParameter> params) async {
+    final l = AppLocalizations.of(context);
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
     final prefs = ref.read(unitPrefsProvider);
@@ -70,8 +72,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
       final value = double.tryParse(text.replaceAll(',', '.'));
       if (value == null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                'Invalid number for ${kParameterByKey[p.paramKey]?.name ?? p.paramKey}')));
+            content: Text(l.invalidNumberFor(l.paramName(p.paramKey)))));
         return;
       }
       // Store canonically (e.g. °C, SG) regardless of the display unit.
@@ -79,7 +80,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     }
     if (entries.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter at least one value.')));
+          SnackBar(content: Text(l.enterAtLeastOneValue)));
       return;
     }
     setState(() => _saving = true);
@@ -95,26 +96,26 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
       );
     }
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Saved ${entries.length} reading(s).')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.savedReadings(entries.length))));
       context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final trackedAsync = ref.watch(trackedParametersProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add reading')),
+      appBar: AppBar(title: Text(l.addReading)),
       body: trackedAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tracked) {
           final params = tracked.where((t) => t.enabled).toList();
           if (params.isEmpty) {
-            return const Center(
-                child: Text('No tracked parameters to record.'));
+            return Center(child: Text(l.noTrackedToRecord));
           }
           final prefs = ref.watch(unitPrefsProvider);
           return ListView(
@@ -123,12 +124,12 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.schedule),
-                  title: const Text('Measured at'),
+                  title: Text(l.measuredAt),
                   subtitle:
                       Text(DateFormat.yMMMEd().add_jm().format(_takenAt)),
                   trailing: TextButton(
                     onPressed: _pickDateTime,
-                    child: const Text('Change'),
+                    child: Text(l.change),
                   ),
                 ),
               ),
@@ -137,9 +138,9 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: _noteCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Note (optional)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l.noteOptional,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 2,
               ),
@@ -152,7 +153,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.save),
-                label: const Text('Save readings'),
+                label: Text(l.saveReadings),
               ),
             ],
           );
@@ -162,7 +163,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
   }
 
   Widget _paramRow(TrackedParameter p, UnitPrefs prefs) {
-    final def = kParameterByKey[p.paramKey];
+    final l = AppLocalizations.of(context);
     final pres = presentationOf(p, prefs);
     final ctrl = _controllerFor(p.id);
     final text = ctrl.text.trim();
@@ -177,7 +178,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
         children: [
           Expanded(
             flex: 3,
-            child: Text(def?.name ?? p.paramKey,
+            child: Text(l.paramName(p.paramKey),
                 style: const TextStyle(fontWeight: FontWeight.w500)),
           ),
           Expanded(

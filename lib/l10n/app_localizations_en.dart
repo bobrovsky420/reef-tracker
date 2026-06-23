@@ -1,0 +1,426 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get appTitle => 'ReefTracker';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get manageParameters => 'Manage parameters';
+
+  @override
+  String get addReading => 'Add reading';
+
+  @override
+  String get addAquarium => 'Add aquarium';
+
+  @override
+  String get manageTanks => 'Manage tanks';
+
+  @override
+  String get chooseParameters => 'Choose parameters';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get change => 'Change';
+
+  @override
+  String errorWith(Object message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String get welcomeTitle => 'Welcome to ReefTracker';
+
+  @override
+  String get welcomeBody =>
+      'Create your first aquarium to start tracking water parameters.';
+
+  @override
+  String get noParamsTracked =>
+      'No parameters are being tracked for this tank.';
+
+  @override
+  String get noReadings => 'No readings';
+
+  @override
+  String get timeJustNow => 'just now';
+
+  @override
+  String timeMinAgo(int count) {
+    return '$count min ago';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    return '$count h ago';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    return '$count d ago';
+  }
+
+  @override
+  String get aquariums => 'Aquariums';
+
+  @override
+  String get noAquariumsYet => 'No aquariums yet.';
+
+  @override
+  String get makeActive => 'Make active';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String deleteTankTitle(Object name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String get deleteTankBody =>
+      'This permanently deletes the aquarium and all of its readings.';
+
+  @override
+  String get newAquarium => 'New aquarium';
+
+  @override
+  String get editAquarium => 'Edit aquarium';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get nameHint => 'e.g. Living room reef';
+
+  @override
+  String get enterAName => 'Enter a name';
+
+  @override
+  String get setupType => 'Setup type';
+
+  @override
+  String get presetSeedNote =>
+      'Default parameters and zone boundaries will be set up for this setup type. You can fine-tune them anytime.';
+
+  @override
+  String get volumeOptional => 'Volume (litres, optional)';
+
+  @override
+  String get createAquarium => 'Create aquarium';
+
+  @override
+  String litersSuffix(Object value) {
+    return '$value L';
+  }
+
+  @override
+  String get parameters => 'Parameters';
+
+  @override
+  String get noActiveAquarium => 'No active aquarium.';
+
+  @override
+  String reapplyPreset(Object type) {
+    return 'Re-apply $type preset';
+  }
+
+  @override
+  String reapplyPresetTitle(Object type) {
+    return 'Re-apply $type preset?';
+  }
+
+  @override
+  String get reapplyPresetBody =>
+      'This overwrites the green/amber/red boundaries of all tracked parameters with the preset defaults. Your readings are kept.';
+
+  @override
+  String get presetApplied => 'Preset applied.';
+
+  @override
+  String get noBoundariesSet => 'No boundaries set';
+
+  @override
+  String boundsSummary(
+    Object greenLow,
+    Object greenHigh,
+    Object unit,
+    Object amberLow,
+    Object amberHigh,
+  ) {
+    return 'OK $greenLow–$greenHigh $unit  •  red <$amberLow / >$amberHigh';
+  }
+
+  @override
+  String get editZones => 'Edit zones';
+
+  @override
+  String get addParameter => 'Add parameter';
+
+  @override
+  String get allParametersAdded => 'All parameters are already added.';
+
+  @override
+  String unitWithValue(Object unit) {
+    return 'Unit: $unit';
+  }
+
+  @override
+  String get unitFromSettingsNote =>
+      'Set in Settings. Boundaries below use this unit.';
+
+  @override
+  String get unit => 'Unit';
+
+  @override
+  String get boundAmberLow => 'Red below (amber low)';
+
+  @override
+  String get boundGreenLow => 'Green from (OK low)';
+
+  @override
+  String get boundGreenHigh => 'Green to (OK high)';
+
+  @override
+  String get boundAmberHigh => 'Red above (amber high)';
+
+  @override
+  String boundsUnitNote(Object unit) {
+    return 'Values are in $unit. Leave a field blank to mean \"no limit on that side\".';
+  }
+
+  @override
+  String get enterANumber => 'Enter a number';
+
+  @override
+  String get boundsOrderError =>
+      'Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.';
+
+  @override
+  String get measuredAt => 'Measured at';
+
+  @override
+  String get noteOptional => 'Note (optional)';
+
+  @override
+  String get saveReadings => 'Save readings';
+
+  @override
+  String invalidNumberFor(Object name) {
+    return 'Invalid number for $name';
+  }
+
+  @override
+  String get enterAtLeastOneValue => 'Enter at least one value.';
+
+  @override
+  String savedReadings(int count) {
+    return 'Saved $count reading(s).';
+  }
+
+  @override
+  String get noTrackedToRecord => 'No tracked parameters to record.';
+
+  @override
+  String get rangeWeek => '7d';
+
+  @override
+  String get rangeMonth => '30d';
+
+  @override
+  String get rangeQuarter => '90d';
+
+  @override
+  String get rangeAll => 'All';
+
+  @override
+  String get noReadingsInRange => 'No readings in this range.';
+
+  @override
+  String get editValue => 'Edit value';
+
+  @override
+  String get unitsSection => 'Units';
+
+  @override
+  String get toolsSection => 'Tools';
+
+  @override
+  String get aboutSection => 'About';
+
+  @override
+  String get languageSection => 'Language';
+
+  @override
+  String get temperature => 'Temperature';
+
+  @override
+  String get salinity => 'Salinity';
+
+  @override
+  String get unitUsedAcrossApp => 'Unit used across the app';
+
+  @override
+  String get salinityCalculator => 'Salinity calculator';
+
+  @override
+  String get salinityCalculatorSubtitle =>
+      'Convert ppt ↔ specific gravity (SG)';
+
+  @override
+  String get aboutAppName => 'About ReefTracker';
+
+  @override
+  String get aboutDescription =>
+      'Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get languageSystem => 'System default';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageCzech => 'Čeština';
+
+  @override
+  String get languageGerman => 'Deutsch';
+
+  @override
+  String get languageRussian => 'Русский';
+
+  @override
+  String get languagePolish => 'Polski';
+
+  @override
+  String get calculatorIntro =>
+      'Convert between practical salinity (ppt) and specific gravity (SG). Type in either field.';
+
+  @override
+  String get specificGravity => 'Specific gravity';
+
+  @override
+  String get referencePoints => 'Reference points';
+
+  @override
+  String get refSeawater => '• Natural seawater ≈ 35 ppt ≈ 1.0264 SG';
+
+  @override
+  String get refReefTarget => '• Typical reef target ≈ 35 ppt (1.025–1.027 SG)';
+
+  @override
+  String get refFormulaNote =>
+      'SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.';
+
+  @override
+  String get zoneOk => 'OK';
+
+  @override
+  String get zoneAttention => 'Attention';
+
+  @override
+  String get zoneActNow => 'Act now';
+
+  @override
+  String get zoneUnknown => '—';
+
+  @override
+  String get setupFishOnly => 'Fish-only / FOWLR';
+
+  @override
+  String get setupSoft => 'Soft coral';
+
+  @override
+  String get setupLps => 'LPS';
+
+  @override
+  String get setupSps => 'SPS';
+
+  @override
+  String get setupMixed => 'Mixed reef';
+
+  @override
+  String get paramTemperature => 'Temperature';
+
+  @override
+  String get paramPh => 'pH';
+
+  @override
+  String get paramSalinity => 'Salinity';
+
+  @override
+  String get paramAlkalinity => 'Alkalinity';
+
+  @override
+  String get paramCalcium => 'Calcium (Ca)';
+
+  @override
+  String get paramMagnesium => 'Magnesium (Mg)';
+
+  @override
+  String get paramNitrate => 'Nitrate (NO₃)';
+
+  @override
+  String get paramPhosphate => 'Phosphate (PO₄)';
+
+  @override
+  String get paramAmmonia => 'Ammonia (NH₃/₄)';
+
+  @override
+  String get paramNitrite => 'Nitrite (NO₂)';
+
+  @override
+  String get paramOrp => 'ORP';
+
+  @override
+  String get paramPotassium => 'Potassium';
+
+  @override
+  String get paramStrontium => 'Strontium';
+
+  @override
+  String get paramIodine => 'Iodine';
+
+  @override
+  String get helpTemperature =>
+      'Water temperature. Stability matters more than the exact value.';
+
+  @override
+  String get helpSalinity => 'Specific gravity. ~1.026 SG ≈ 35 ppt.';
+
+  @override
+  String get helpAlkalinity =>
+      'Carbonate hardness. Keep stable — avoid swings.';
+
+  @override
+  String get helpNitrate =>
+      'A nutrient. Corals need a little; too much fuels algae.';
+
+  @override
+  String get helpAmmonia =>
+      'Toxic. Should read effectively zero in a cycled tank.';
+}

@@ -1,0 +1,890 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_cs.dart';
+import 'app_localizations_de.dart';
+import 'app_localizations_en.dart';
+import 'app_localizations_pl.dart';
+import 'app_localizations_ru.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('cs'),
+    Locale('de'),
+    Locale('en'),
+    Locale('pl'),
+    Locale('ru'),
+  ];
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefTracker'**
+  String get appTitle;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @manageParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage parameters'**
+  String get manageParameters;
+
+  /// No description provided for @addReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Add reading'**
+  String get addReading;
+
+  /// No description provided for @addAquarium.
+  ///
+  /// In en, this message translates to:
+  /// **'Add aquarium'**
+  String get addAquarium;
+
+  /// No description provided for @manageTanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage tanks'**
+  String get manageTanks;
+
+  /// No description provided for @chooseParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose parameters'**
+  String get chooseParameters;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @change.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get change;
+
+  /// No description provided for @errorWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String errorWith(Object message);
+
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to ReefTracker'**
+  String get welcomeTitle;
+
+  /// No description provided for @welcomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first aquarium to start tracking water parameters.'**
+  String get welcomeBody;
+
+  /// No description provided for @noParamsTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'No parameters are being tracked for this tank.'**
+  String get noParamsTracked;
+
+  /// No description provided for @noReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'No readings'**
+  String get noReadings;
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min ago'**
+  String timeMinAgo(int count);
+
+  /// No description provided for @timeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h ago'**
+  String timeHoursAgo(int count);
+
+  /// No description provided for @timeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d ago'**
+  String timeDaysAgo(int count);
+
+  /// No description provided for @aquariums.
+  ///
+  /// In en, this message translates to:
+  /// **'Aquariums'**
+  String get aquariums;
+
+  /// No description provided for @noAquariumsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No aquariums yet.'**
+  String get noAquariumsYet;
+
+  /// No description provided for @makeActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Make active'**
+  String get makeActive;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @deleteTankTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?'**
+  String deleteTankTitle(Object name);
+
+  /// No description provided for @deleteTankBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes the aquarium and all of its readings.'**
+  String get deleteTankBody;
+
+  /// No description provided for @newAquarium.
+  ///
+  /// In en, this message translates to:
+  /// **'New aquarium'**
+  String get newAquarium;
+
+  /// No description provided for @editAquarium.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit aquarium'**
+  String get editAquarium;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @nameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Living room reef'**
+  String get nameHint;
+
+  /// No description provided for @enterAName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get enterAName;
+
+  /// No description provided for @setupType.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup type'**
+  String get setupType;
+
+  /// No description provided for @presetSeedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Default parameters and zone boundaries will be set up for this setup type. You can fine-tune them anytime.'**
+  String get presetSeedNote;
+
+  /// No description provided for @volumeOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume (litres, optional)'**
+  String get volumeOptional;
+
+  /// No description provided for @createAquarium.
+  ///
+  /// In en, this message translates to:
+  /// **'Create aquarium'**
+  String get createAquarium;
+
+  /// No description provided for @litersSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} L'**
+  String litersSuffix(Object value);
+
+  /// No description provided for @parameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Parameters'**
+  String get parameters;
+
+  /// No description provided for @noActiveAquarium.
+  ///
+  /// In en, this message translates to:
+  /// **'No active aquarium.'**
+  String get noActiveAquarium;
+
+  /// No description provided for @reapplyPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-apply {type} preset'**
+  String reapplyPreset(Object type);
+
+  /// No description provided for @reapplyPresetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-apply {type} preset?'**
+  String reapplyPresetTitle(Object type);
+
+  /// No description provided for @reapplyPresetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This overwrites the green/amber/red boundaries of all tracked parameters with the preset defaults. Your readings are kept.'**
+  String get reapplyPresetBody;
+
+  /// No description provided for @presetApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset applied.'**
+  String get presetApplied;
+
+  /// No description provided for @noBoundariesSet.
+  ///
+  /// In en, this message translates to:
+  /// **'No boundaries set'**
+  String get noBoundariesSet;
+
+  /// No description provided for @boundsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'OK {greenLow}–{greenHigh} {unit}  •  red <{amberLow} / >{amberHigh}'**
+  String boundsSummary(
+    Object greenLow,
+    Object greenHigh,
+    Object unit,
+    Object amberLow,
+    Object amberHigh,
+  );
+
+  /// No description provided for @editZones.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit zones'**
+  String get editZones;
+
+  /// No description provided for @addParameter.
+  ///
+  /// In en, this message translates to:
+  /// **'Add parameter'**
+  String get addParameter;
+
+  /// No description provided for @allParametersAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'All parameters are already added.'**
+  String get allParametersAdded;
+
+  /// No description provided for @unitWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit: {unit}'**
+  String unitWithValue(Object unit);
+
+  /// No description provided for @unitFromSettingsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Set in Settings. Boundaries below use this unit.'**
+  String get unitFromSettingsNote;
+
+  /// No description provided for @unit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get unit;
+
+  /// No description provided for @boundAmberLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Red below (amber low)'**
+  String get boundAmberLow;
+
+  /// No description provided for @boundGreenLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Green from (OK low)'**
+  String get boundGreenLow;
+
+  /// No description provided for @boundGreenHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Green to (OK high)'**
+  String get boundGreenHigh;
+
+  /// No description provided for @boundAmberHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Red above (amber high)'**
+  String get boundAmberHigh;
+
+  /// No description provided for @boundsUnitNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Values are in {unit}. Leave a field blank to mean \"no limit on that side\".'**
+  String boundsUnitNote(Object unit);
+
+  /// No description provided for @enterANumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number'**
+  String get enterANumber;
+
+  /// No description provided for @boundsOrderError.
+  ///
+  /// In en, this message translates to:
+  /// **'Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.'**
+  String get boundsOrderError;
+
+  /// No description provided for @measuredAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured at'**
+  String get measuredAt;
+
+  /// No description provided for @noteOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get noteOptional;
+
+  /// No description provided for @saveReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'Save readings'**
+  String get saveReadings;
+
+  /// No description provided for @invalidNumberFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid number for {name}'**
+  String invalidNumberFor(Object name);
+
+  /// No description provided for @enterAtLeastOneValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter at least one value.'**
+  String get enterAtLeastOneValue;
+
+  /// No description provided for @savedReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {count} reading(s).'**
+  String savedReadings(int count);
+
+  /// No description provided for @noTrackedToRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'No tracked parameters to record.'**
+  String get noTrackedToRecord;
+
+  /// No description provided for @rangeWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'7d'**
+  String get rangeWeek;
+
+  /// No description provided for @rangeMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'30d'**
+  String get rangeMonth;
+
+  /// No description provided for @rangeQuarter.
+  ///
+  /// In en, this message translates to:
+  /// **'90d'**
+  String get rangeQuarter;
+
+  /// No description provided for @rangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get rangeAll;
+
+  /// No description provided for @noReadingsInRange.
+  ///
+  /// In en, this message translates to:
+  /// **'No readings in this range.'**
+  String get noReadingsInRange;
+
+  /// No description provided for @editValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit value'**
+  String get editValue;
+
+  /// No description provided for @unitsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Units'**
+  String get unitsSection;
+
+  /// No description provided for @toolsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get toolsSection;
+
+  /// No description provided for @aboutSection.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutSection;
+
+  /// No description provided for @languageSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageSection;
+
+  /// No description provided for @temperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get temperature;
+
+  /// No description provided for @salinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Salinity'**
+  String get salinity;
+
+  /// No description provided for @unitUsedAcrossApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit used across the app'**
+  String get unitUsedAcrossApp;
+
+  /// No description provided for @salinityCalculator.
+  ///
+  /// In en, this message translates to:
+  /// **'Salinity calculator'**
+  String get salinityCalculator;
+
+  /// No description provided for @salinityCalculatorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert ppt ↔ specific gravity (SG)'**
+  String get salinityCalculatorSubtitle;
+
+  /// No description provided for @aboutAppName.
+  ///
+  /// In en, this message translates to:
+  /// **'About ReefTracker'**
+  String get aboutAppName;
+
+  /// No description provided for @aboutDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.'**
+  String get aboutDescription;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get languageSystem;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageCzech.
+  ///
+  /// In en, this message translates to:
+  /// **'Čeština'**
+  String get languageCzech;
+
+  /// No description provided for @languageGerman.
+  ///
+  /// In en, this message translates to:
+  /// **'Deutsch'**
+  String get languageGerman;
+
+  /// No description provided for @languageRussian.
+  ///
+  /// In en, this message translates to:
+  /// **'Русский'**
+  String get languageRussian;
+
+  /// No description provided for @languagePolish.
+  ///
+  /// In en, this message translates to:
+  /// **'Polski'**
+  String get languagePolish;
+
+  /// No description provided for @calculatorIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert between practical salinity (ppt) and specific gravity (SG). Type in either field.'**
+  String get calculatorIntro;
+
+  /// No description provided for @specificGravity.
+  ///
+  /// In en, this message translates to:
+  /// **'Specific gravity'**
+  String get specificGravity;
+
+  /// No description provided for @referencePoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference points'**
+  String get referencePoints;
+
+  /// No description provided for @refSeawater.
+  ///
+  /// In en, this message translates to:
+  /// **'• Natural seawater ≈ 35 ppt ≈ 1.0264 SG'**
+  String get refSeawater;
+
+  /// No description provided for @refReefTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'• Typical reef target ≈ 35 ppt (1.025–1.027 SG)'**
+  String get refReefTarget;
+
+  /// No description provided for @refFormulaNote.
+  ///
+  /// In en, this message translates to:
+  /// **'SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.'**
+  String get refFormulaNote;
+
+  /// No description provided for @zoneOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get zoneOk;
+
+  /// No description provided for @zoneAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Attention'**
+  String get zoneAttention;
+
+  /// No description provided for @zoneActNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Act now'**
+  String get zoneActNow;
+
+  /// No description provided for @zoneUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'—'**
+  String get zoneUnknown;
+
+  /// No description provided for @setupFishOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Fish-only / FOWLR'**
+  String get setupFishOnly;
+
+  /// No description provided for @setupSoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft coral'**
+  String get setupSoft;
+
+  /// No description provided for @setupLps.
+  ///
+  /// In en, this message translates to:
+  /// **'LPS'**
+  String get setupLps;
+
+  /// No description provided for @setupSps.
+  ///
+  /// In en, this message translates to:
+  /// **'SPS'**
+  String get setupSps;
+
+  /// No description provided for @setupMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed reef'**
+  String get setupMixed;
+
+  /// No description provided for @paramTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get paramTemperature;
+
+  /// No description provided for @paramPh.
+  ///
+  /// In en, this message translates to:
+  /// **'pH'**
+  String get paramPh;
+
+  /// No description provided for @paramSalinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Salinity'**
+  String get paramSalinity;
+
+  /// No description provided for @paramAlkalinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Alkalinity'**
+  String get paramAlkalinity;
+
+  /// No description provided for @paramCalcium.
+  ///
+  /// In en, this message translates to:
+  /// **'Calcium (Ca)'**
+  String get paramCalcium;
+
+  /// No description provided for @paramMagnesium.
+  ///
+  /// In en, this message translates to:
+  /// **'Magnesium (Mg)'**
+  String get paramMagnesium;
+
+  /// No description provided for @paramNitrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrate (NO₃)'**
+  String get paramNitrate;
+
+  /// No description provided for @paramPhosphate.
+  ///
+  /// In en, this message translates to:
+  /// **'Phosphate (PO₄)'**
+  String get paramPhosphate;
+
+  /// No description provided for @paramAmmonia.
+  ///
+  /// In en, this message translates to:
+  /// **'Ammonia (NH₃/₄)'**
+  String get paramAmmonia;
+
+  /// No description provided for @paramNitrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrite (NO₂)'**
+  String get paramNitrite;
+
+  /// No description provided for @paramOrp.
+  ///
+  /// In en, this message translates to:
+  /// **'ORP'**
+  String get paramOrp;
+
+  /// No description provided for @paramPotassium.
+  ///
+  /// In en, this message translates to:
+  /// **'Potassium'**
+  String get paramPotassium;
+
+  /// No description provided for @paramStrontium.
+  ///
+  /// In en, this message translates to:
+  /// **'Strontium'**
+  String get paramStrontium;
+
+  /// No description provided for @paramIodine.
+  ///
+  /// In en, this message translates to:
+  /// **'Iodine'**
+  String get paramIodine;
+
+  /// No description provided for @helpTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Water temperature. Stability matters more than the exact value.'**
+  String get helpTemperature;
+
+  /// No description provided for @helpSalinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Specific gravity. ~1.026 SG ≈ 35 ppt.'**
+  String get helpSalinity;
+
+  /// No description provided for @helpAlkalinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbonate hardness. Keep stable — avoid swings.'**
+  String get helpAlkalinity;
+
+  /// No description provided for @helpNitrate.
+  ///
+  /// In en, this message translates to:
+  /// **'A nutrient. Corals need a little; too much fuels algae.'**
+  String get helpNitrate;
+
+  /// No description provided for @helpAmmonia.
+  ///
+  /// In en, this message translates to:
+  /// **'Toxic. Should read effectively zero in a cycled tank.'**
+  String get helpAmmonia;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['cs', 'de', 'en', 'pl', 'ru'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'cs':
+      return AppLocalizationsCs();
+    case 'de':
+      return AppLocalizationsDe();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'pl':
+      return AppLocalizationsPl();
+    case 'ru':
+      return AppLocalizationsRu();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}
