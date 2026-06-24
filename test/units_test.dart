@@ -22,6 +22,36 @@ void main() {
     });
   });
 
+  group('volume conversion', () {
+    test('US gallon reference and round trips', () {
+      expect(gallonsToLiters(1), closeTo(3.785411784, 1e-9));
+      expect(litersToGallons(3.785411784), closeTo(1, 1e-9));
+      expect(volumeToCanonical(volumeToDisplay(200, VolumeUnit.gallons),
+              VolumeUnit.gallons),
+          closeTo(200, 1e-9));
+    });
+
+    test('litres unit is identity', () {
+      expect(volumeToDisplay(200, VolumeUnit.liters), 200);
+      expect(volumeToCanonical(200, VolumeUnit.liters), 200);
+    });
+
+    test('formatVolume trims whole numbers and rounds to one decimal', () {
+      expect(formatVolume(200, VolumeUnit.liters), '200');
+      expect(formatVolume(200.5, VolumeUnit.liters), '200.5');
+      // 200 L ≈ 52.8 gal
+      expect(formatVolume(200, VolumeUnit.gallons), '52.8');
+      // 3.785411784 L = exactly 1 gal -> no decimals
+      expect(formatVolume(gallonsToLiters(50), VolumeUnit.gallons), '50');
+    });
+
+    test('fromName defaults to litres', () {
+      expect(VolumeUnit.fromName(null), VolumeUnit.liters);
+      expect(VolumeUnit.fromName('gallons'), VolumeUnit.gallons);
+      expect(VolumeUnit.fromName('bogus'), VolumeUnit.liters);
+    });
+  });
+
   group('presentationFor', () {
     test('temperature follows prefs and converts', () {
       final f = presentationFor('temperature', '°C', 1,

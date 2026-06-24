@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../domain/ratio.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
@@ -23,6 +24,11 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const _TankSelector(),
         actions: [
+          IconButton(
+            tooltip: l.waterChanges,
+            icon: const Icon(Icons.water_drop_outlined),
+            onPressed: () => context.push('/water-changes'),
+          ),
           IconButton(
             tooltip: l.manageParameters,
             icon: const Icon(Icons.tune),
@@ -78,7 +84,12 @@ class _DashboardBody extends ConsumerWidget {
           (byParam[r.paramKey] ??= []).add(r); // already newest-first
         }
 
-        return GridView.builder(
+        final ratio = latestRatio(
+          byParam[kNitrateKey] ?? const [],
+          byParam[kPhosphateKey] ?? const [],
+        );
+
+        final grid = GridView.builder(
           padding: const EdgeInsets.all(12),
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 230,
@@ -94,7 +105,68 @@ class _DashboardBody extends ConsumerWidget {
                 param: param, history: history, prefs: prefs);
           },
         );
+
+        if (ratio == null) return grid;
+        return Column(
+          children: [
+            _RatioCard(ratio: ratio),
+            Expanded(child: grid),
+          ],
+        );
       },
+    );
+  }
+}
+
+/// Banner card on the dashboard showing the latest PO₄ : NO₃ ratio. Tapping it
+/// opens the ratio history graph.
+class _RatioCard extends StatelessWidget {
+  const _RatioCard({required this.ratio});
+
+  final RatioPoint ratio;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final hint = Theme.of(context).hintColor;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push('/ratio'),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l.ratioLabel,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 15)),
+                      const SizedBox(height: 4),
+                      Text(
+                        l.ratioBreakdown(
+                            formatRatio(ratio.phosphate),
+                            formatRatio(ratio.nitrate)),
+                        style: TextStyle(fontSize: 12, color: hint),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  formatRatioOneToN(ratio.ratio),
+                  style: const TextStyle(
+                      fontSize: 28, fontWeight: FontWeight.bold),
+                ),
+                Icon(Icons.chevron_right, color: hint),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

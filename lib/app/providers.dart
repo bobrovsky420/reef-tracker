@@ -6,6 +6,7 @@ import '../domain/units.dart';
 
 const kTempUnitKey = 'temp_unit';
 const kSalinityUnitKey = 'salinity_unit';
+const kVolumeUnitKey = 'volume_unit';
 const kLocaleKey = 'locale';
 const kChartRangeKey = 'chart_range';
 
@@ -53,6 +54,13 @@ final tankReadingsProvider = StreamProvider<List<Reading>>((ref) {
   return ref.watch(dbProvider).watchReadingsForTank(tank.id);
 });
 
+/// Water changes for the active tank (newest first).
+final waterChangesProvider = StreamProvider<List<WaterChange>>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return Stream.value(const []);
+  return ref.watch(dbProvider).watchWaterChanges(tank.id);
+});
+
 /// Readings for a single parameter of the active tank (oldest first).
 final paramReadingsProvider =
     StreamProvider.family<List<Reading>, String>((ref, paramKey) {
@@ -73,11 +81,18 @@ final salinityUnitProvider = StreamProvider<SalinityUnit>((ref) => ref
     .watchSetting(kSalinityUnitKey)
     .map((v) => SalinityUnit.fromName(v)));
 
+/// Preferred volume display unit (default litres).
+final volumeUnitProvider = StreamProvider<VolumeUnit>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kVolumeUnitKey)
+    .map((v) => VolumeUnit.fromName(v)));
+
 /// Combined unit preferences, reactive to settings changes.
 final unitPrefsProvider = Provider<UnitPrefs>((ref) {
   final temp = ref.watch(tempUnitProvider).value ?? TempUnit.celsius;
   final salinity = ref.watch(salinityUnitProvider).value ?? SalinityUnit.ppt;
-  return UnitPrefs(temp: temp, salinity: salinity);
+  final volume = ref.watch(volumeUnitProvider).value ?? VolumeUnit.liters;
+  return UnitPrefs(temp: temp, salinity: salinity, volume: volume);
 });
 
 /// Stored language code ('system' / 'en' / 'cs'), defaulting to 'system'.

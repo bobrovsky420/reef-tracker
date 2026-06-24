@@ -1,4 +1,5 @@
 import '../domain/setup_type.dart';
+import '../domain/units.dart';
 import '../domain/zones.dart';
 import 'app_localizations.dart';
 
@@ -69,6 +70,18 @@ extension L10nDomain on AppLocalizations {
         return setupSps;
       case SetupType.mixed:
         return setupMixed;
+    }
+  }
+
+  /// A canonical litre value formatted with its localized unit suffix in the
+  /// user's preferred volume [unit] (e.g. "200 L" or "53 gal").
+  String volumeWithUnit(double liters, VolumeUnit unit) {
+    final value = formatVolume(liters, unit);
+    switch (unit) {
+      case VolumeUnit.liters:
+        return litersSuffix(value);
+      case VolumeUnit.gallons:
+        return gallonsSuffix(value);
     }
   }
 

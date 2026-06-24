@@ -1413,6 +1413,315 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
   }
 }
 
+class $WaterChangesTable extends WaterChanges
+    with TableInfo<$WaterChangesTable, WaterChange> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WaterChangesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _changedAtMeta = const VerificationMeta(
+    'changedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> changedAt = GeneratedColumn<DateTime>(
+    'changed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountLitersMeta = const VerificationMeta(
+    'amountLiters',
+  );
+  @override
+  late final GeneratedColumn<double> amountLiters = GeneratedColumn<double>(
+    'amount_liters',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, tankId, changedAt, amountLiters];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'water_changes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WaterChange> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('changed_at')) {
+      context.handle(
+        _changedAtMeta,
+        changedAt.isAcceptableOrUnknown(data['changed_at']!, _changedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_changedAtMeta);
+    }
+    if (data.containsKey('amount_liters')) {
+      context.handle(
+        _amountLitersMeta,
+        amountLiters.isAcceptableOrUnknown(
+          data['amount_liters']!,
+          _amountLitersMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WaterChange map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WaterChange(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      changedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}changed_at'],
+      )!,
+      amountLiters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount_liters'],
+      ),
+    );
+  }
+
+  @override
+  $WaterChangesTable createAlias(String alias) {
+    return $WaterChangesTable(attachedDatabase, alias);
+  }
+}
+
+class WaterChange extends DataClass implements Insertable<WaterChange> {
+  final int id;
+  final int tankId;
+  final DateTime changedAt;
+
+  /// Volume of water exchanged, in litres. Optional.
+  final double? amountLiters;
+  const WaterChange({
+    required this.id,
+    required this.tankId,
+    required this.changedAt,
+    this.amountLiters,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tank_id'] = Variable<int>(tankId);
+    map['changed_at'] = Variable<DateTime>(changedAt);
+    if (!nullToAbsent || amountLiters != null) {
+      map['amount_liters'] = Variable<double>(amountLiters);
+    }
+    return map;
+  }
+
+  WaterChangesCompanion toCompanion(bool nullToAbsent) {
+    return WaterChangesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      changedAt: Value(changedAt),
+      amountLiters: amountLiters == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountLiters),
+    );
+  }
+
+  factory WaterChange.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WaterChange(
+      id: serializer.fromJson<int>(json['id']),
+      tankId: serializer.fromJson<int>(json['tankId']),
+      changedAt: serializer.fromJson<DateTime>(json['changedAt']),
+      amountLiters: serializer.fromJson<double?>(json['amountLiters']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tankId': serializer.toJson<int>(tankId),
+      'changedAt': serializer.toJson<DateTime>(changedAt),
+      'amountLiters': serializer.toJson<double?>(amountLiters),
+    };
+  }
+
+  WaterChange copyWith({
+    int? id,
+    int? tankId,
+    DateTime? changedAt,
+    Value<double?> amountLiters = const Value.absent(),
+  }) => WaterChange(
+    id: id ?? this.id,
+    tankId: tankId ?? this.tankId,
+    changedAt: changedAt ?? this.changedAt,
+    amountLiters: amountLiters.present ? amountLiters.value : this.amountLiters,
+  );
+  WaterChange copyWithCompanion(WaterChangesCompanion data) {
+    return WaterChange(
+      id: data.id.present ? data.id.value : this.id,
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      changedAt: data.changedAt.present ? data.changedAt.value : this.changedAt,
+      amountLiters: data.amountLiters.present
+          ? data.amountLiters.value
+          : this.amountLiters,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WaterChange(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('changedAt: $changedAt, ')
+          ..write('amountLiters: $amountLiters')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, tankId, changedAt, amountLiters);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WaterChange &&
+          other.id == this.id &&
+          other.tankId == this.tankId &&
+          other.changedAt == this.changedAt &&
+          other.amountLiters == this.amountLiters);
+}
+
+class WaterChangesCompanion extends UpdateCompanion<WaterChange> {
+  final Value<int> id;
+  final Value<int> tankId;
+  final Value<DateTime> changedAt;
+  final Value<double?> amountLiters;
+  const WaterChangesCompanion({
+    this.id = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.changedAt = const Value.absent(),
+    this.amountLiters = const Value.absent(),
+  });
+  WaterChangesCompanion.insert({
+    this.id = const Value.absent(),
+    required int tankId,
+    required DateTime changedAt,
+    this.amountLiters = const Value.absent(),
+  }) : tankId = Value(tankId),
+       changedAt = Value(changedAt);
+  static Insertable<WaterChange> custom({
+    Expression<int>? id,
+    Expression<int>? tankId,
+    Expression<DateTime>? changedAt,
+    Expression<double>? amountLiters,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tankId != null) 'tank_id': tankId,
+      if (changedAt != null) 'changed_at': changedAt,
+      if (amountLiters != null) 'amount_liters': amountLiters,
+    });
+  }
+
+  WaterChangesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? tankId,
+    Value<DateTime>? changedAt,
+    Value<double?>? amountLiters,
+  }) {
+    return WaterChangesCompanion(
+      id: id ?? this.id,
+      tankId: tankId ?? this.tankId,
+      changedAt: changedAt ?? this.changedAt,
+      amountLiters: amountLiters ?? this.amountLiters,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (changedAt.present) {
+      map['changed_at'] = Variable<DateTime>(changedAt.value);
+    }
+    if (amountLiters.present) {
+      map['amount_liters'] = Variable<double>(amountLiters.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WaterChangesCompanion(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('changedAt: $changedAt, ')
+          ..write('amountLiters: $amountLiters')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1634,6 +1943,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TrackedParametersTable trackedParameters =
       $TrackedParametersTable(this);
   late final $ReadingsTable readings = $ReadingsTable(this);
+  late final $WaterChangesTable waterChanges = $WaterChangesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -1643,6 +1953,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     tanks,
     trackedParameters,
     readings,
+    waterChanges,
     settings,
   ];
   @override
@@ -1660,6 +1971,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('readings', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('water_changes', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -1722,6 +2040,24 @@ final class $$TanksTableReferences
     ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_readingsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$WaterChangesTable, List<WaterChange>>
+  _waterChangesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.waterChanges,
+    aliasName: 'tanks__id__water_changes__tank_id',
+  );
+
+  $$WaterChangesTableProcessedTableManager get waterChangesRefs {
+    final manager = $$WaterChangesTableTableManager(
+      $_db,
+      $_db.waterChanges,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_waterChangesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -1807,6 +2143,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$ReadingsTableFilterComposer(
             $db: $db,
             $table: $db.readings,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> waterChangesRefs(
+    Expression<bool> Function($$WaterChangesTableFilterComposer f) f,
+  ) {
+    final $$WaterChangesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.waterChanges,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WaterChangesTableFilterComposer(
+            $db: $db,
+            $table: $db.waterChanges,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1936,6 +2297,31 @@ class $$TanksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> waterChangesRefs<T extends Object>(
+    Expression<T> Function($$WaterChangesTableAnnotationComposer a) f,
+  ) {
+    final $$WaterChangesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.waterChanges,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WaterChangesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.waterChanges,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -1954,6 +2340,7 @@ class $$TanksTableTableManager
           PrefetchHooks Function({
             bool trackedParametersRefs,
             bool readingsRefs,
+            bool waterChangesRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -2006,12 +2393,17 @@ class $$TanksTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({trackedParametersRefs = false, readingsRefs = false}) {
+              ({
+                trackedParametersRefs = false,
+                readingsRefs = false,
+                waterChangesRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (trackedParametersRefs) db.trackedParameters,
                     if (readingsRefs) db.readings,
+                    if (waterChangesRefs) db.waterChanges,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -2054,6 +2446,27 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (waterChangesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          WaterChange
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._waterChangesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).waterChangesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -2074,7 +2487,11 @@ typedef $$TanksTableProcessedTableManager =
       $$TanksTableUpdateCompanionBuilder,
       (Tank, $$TanksTableReferences),
       Tank,
-      PrefetchHooks Function({bool trackedParametersRefs, bool readingsRefs})
+      PrefetchHooks Function({
+        bool trackedParametersRefs,
+        bool readingsRefs,
+        bool waterChangesRefs,
+      })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
     TrackedParametersCompanion Function({
@@ -2830,6 +3247,300 @@ typedef $$ReadingsTableProcessedTableManager =
       Reading,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$WaterChangesTableCreateCompanionBuilder =
+    WaterChangesCompanion Function({
+      Value<int> id,
+      required int tankId,
+      required DateTime changedAt,
+      Value<double?> amountLiters,
+    });
+typedef $$WaterChangesTableUpdateCompanionBuilder =
+    WaterChangesCompanion Function({
+      Value<int> id,
+      Value<int> tankId,
+      Value<DateTime> changedAt,
+      Value<double?> amountLiters,
+    });
+
+final class $$WaterChangesTableReferences
+    extends BaseReferences<_$AppDatabase, $WaterChangesTable, WaterChange> {
+  $$WaterChangesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('water_changes__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$WaterChangesTableFilterComposer
+    extends Composer<_$AppDatabase, $WaterChangesTable> {
+  $$WaterChangesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get changedAt => $composableBuilder(
+    column: $table.changedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amountLiters => $composableBuilder(
+    column: $table.amountLiters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WaterChangesTableOrderingComposer
+    extends Composer<_$AppDatabase, $WaterChangesTable> {
+  $$WaterChangesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get changedAt => $composableBuilder(
+    column: $table.changedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amountLiters => $composableBuilder(
+    column: $table.amountLiters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WaterChangesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WaterChangesTable> {
+  $$WaterChangesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get changedAt =>
+      $composableBuilder(column: $table.changedAt, builder: (column) => column);
+
+  GeneratedColumn<double> get amountLiters => $composableBuilder(
+    column: $table.amountLiters,
+    builder: (column) => column,
+  );
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WaterChangesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WaterChangesTable,
+          WaterChange,
+          $$WaterChangesTableFilterComposer,
+          $$WaterChangesTableOrderingComposer,
+          $$WaterChangesTableAnnotationComposer,
+          $$WaterChangesTableCreateCompanionBuilder,
+          $$WaterChangesTableUpdateCompanionBuilder,
+          (WaterChange, $$WaterChangesTableReferences),
+          WaterChange,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$WaterChangesTableTableManager(_$AppDatabase db, $WaterChangesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WaterChangesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WaterChangesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WaterChangesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> tankId = const Value.absent(),
+                Value<DateTime> changedAt = const Value.absent(),
+                Value<double?> amountLiters = const Value.absent(),
+              }) => WaterChangesCompanion(
+                id: id,
+                tankId: tankId,
+                changedAt: changedAt,
+                amountLiters: amountLiters,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int tankId,
+                required DateTime changedAt,
+                Value<double?> amountLiters = const Value.absent(),
+              }) => WaterChangesCompanion.insert(
+                id: id,
+                tankId: tankId,
+                changedAt: changedAt,
+                amountLiters: amountLiters,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$WaterChangesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable: $$WaterChangesTableReferences
+                                    ._tankIdTable(db),
+                                referencedColumn: $$WaterChangesTableReferences
+                                    ._tankIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$WaterChangesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WaterChangesTable,
+      WaterChange,
+      $$WaterChangesTableFilterComposer,
+      $$WaterChangesTableOrderingComposer,
+      $$WaterChangesTableAnnotationComposer,
+      $$WaterChangesTableCreateCompanionBuilder,
+      $$WaterChangesTableUpdateCompanionBuilder,
+      (WaterChange, $$WaterChangesTableReferences),
+      WaterChange,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -2973,6 +3684,8 @@ class $AppDatabaseManager {
       $$TrackedParametersTableTableManager(_db, _db.trackedParameters);
   $$ReadingsTableTableManager get readings =>
       $$ReadingsTableTableManager(_db, _db.readings);
+  $$WaterChangesTableTableManager get waterChanges =>
+      $$WaterChangesTableTableManager(_db, _db.waterChanges);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

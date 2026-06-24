@@ -6,8 +6,10 @@ import '../features/calculator/salinity_calculator_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
+import '../features/ratio/ratio_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
+import '../features/water_change/water_change_screen.dart';
 
 final appRouter = GoRouter(
   routes: [
@@ -45,6 +47,14 @@ final appRouter = GoRouter(
       path: '/history/:paramKey',
       builder: (context, state) =>
           HistoryScreen(paramKey: state.pathParameters['paramKey']!),
+    ),
+    GoRoute(
+      path: '/ratio',
+      builder: (context, state) => const RatioScreen(),
+    ),
+    GoRoute(
+      path: '/water-changes',
+      builder: (context, state) => const WaterChangeScreen(),
     ),
     GoRoute(
       path: '/settings',

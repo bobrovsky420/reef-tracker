@@ -125,7 +125,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Pro tento typ nádrže se nastaví výchozí parametry a hranice zón. Kdykoli je můžete doladit.';
 
   @override
-  String get volumeOptional => 'Objem (litry, nepovinné)';
+  String get volumeOptional => 'Objem (nepovinné)';
 
   @override
   String get createAquarium => 'Vytvořit akvárium';
@@ -133,6 +133,11 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String litersSuffix(Object value) {
     return '$value l';
+  }
+
+  @override
+  String gallonsSuffix(Object value) {
+    return '$value gal';
   }
 
   @override
@@ -298,6 +303,45 @@ class AppLocalizationsCs extends AppLocalizations {
   String get deleteAllTogether => 'Vše společně';
 
   @override
+  String get ratioLabel => 'PO₄ : NO₃';
+
+  @override
+  String get ratioTitle => 'Poměr PO₄ : NO₃';
+
+  @override
+  String get ratioNoData =>
+      'Zaznamenejte dusičnany i fosforečnany, abyste viděli jejich poměr.';
+
+  @override
+  String ratioBreakdown(Object po4, Object no3) {
+    return 'PO₄ $po4 · NO₃ $no3';
+  }
+
+  @override
+  String get waterChanges => 'Výměny vody';
+
+  @override
+  String get recordWaterChange => 'Zaznamenat výměnu vody';
+
+  @override
+  String get changedAt => 'Datum výměny';
+
+  @override
+  String get amountLitersOptional => 'Množství (volitelné)';
+
+  @override
+  String get noWaterChanges => 'Zatím žádné výměny vody.';
+
+  @override
+  String get amountNotRecorded => 'Množství nezaznamenáno';
+
+  @override
+  String get deleteWaterChangeTitle => 'Smazat výměnu vody?';
+
+  @override
+  String get deleteWaterChangeBody => 'Tímto trvale smažete tuto výměnu vody.';
+
+  @override
   String get unitsSection => 'Jednotky';
 
   @override
@@ -316,6 +360,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get salinity => 'Salinita';
 
   @override
+  String get volume => 'Objem';
+
+  @override
   String get unitUsedAcrossApp => 'Jednotka používaná v celé aplikaci';
 
   @override
@@ -324,6 +371,44 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get salinityCalculatorSubtitle =>
       'Převod ppt ↔ specifická hustota (SG)';
+
+  @override
+  String get backupSection => 'Záloha';
+
+  @override
+  String get backupExport => 'Exportovat zálohu';
+
+  @override
+  String get backupExportSubtitle =>
+      'Uložit všechna akvária a měření do souboru';
+
+  @override
+  String get backupImport => 'Obnovit ze zálohy';
+
+  @override
+  String get backupImportSubtitle => 'Nahradit všechna data souborem zálohy';
+
+  @override
+  String get backupRestoreConfirmTitle => 'Obnovit zálohu?';
+
+  @override
+  String get backupRestoreConfirmBody =>
+      'Tímto se všechna stávající akvária, parametry a měření nahradí obsahem souboru zálohy. Tuto akci nelze vrátit zpět.';
+
+  @override
+  String get restore => 'Obnovit';
+
+  @override
+  String get backupRestored => 'Záloha obnovena';
+
+  @override
+  String get backupExportFailed => 'Zálohu se nepodařilo exportovat';
+
+  @override
+  String get backupImportFailed => 'Zálohu se nepodařilo obnovit';
+
+  @override
+  String get backupInvalidFile => 'Tento soubor není platná záloha ReefTracker';
 
   @override
   String get aboutAppName => 'O aplikaci ReefTracker';

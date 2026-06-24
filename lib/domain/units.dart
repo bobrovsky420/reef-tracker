@@ -26,15 +26,30 @@ enum SalinityUnit {
           orElse: () => SalinityUnit.ppt);
 }
 
-/// User's preferred display units. Defaults: Celsius and ppt.
+/// Volume display unit. Canonical storage is always litres.
+enum VolumeUnit {
+  liters('L'),
+  gallons('gal');
+
+  const VolumeUnit(this.symbol);
+  final String symbol;
+
+  static VolumeUnit fromName(String? n) =>
+      VolumeUnit.values.firstWhere((e) => e.name == n,
+          orElse: () => VolumeUnit.liters);
+}
+
+/// User's preferred display units. Defaults: Celsius, ppt, and litres.
 class UnitPrefs {
   const UnitPrefs({
     this.temp = TempUnit.celsius,
     this.salinity = SalinityUnit.ppt,
+    this.volume = VolumeUnit.liters,
   });
 
   final TempUnit temp;
   final SalinityUnit salinity;
+  final VolumeUnit volume;
 }
 
 // --- Temperature (canonical = Celsius) -------------------------------------
@@ -52,6 +67,30 @@ const double sgPerPpt = 0.0264 / 35; // ≈ 0.00075428...
 
 double pptToSg(double ppt) => 1 + ppt * sgPerPpt;
 double sgToPpt(double sg) => (sg - 1) / sgPerPpt;
+
+// --- Volume (canonical = litres) -------------------------------------------
+
+const double litersPerUsGallon = 3.785411784; // US liquid gallon
+
+double litersToGallons(double l) => l / litersPerUsGallon;
+double gallonsToLiters(double g) => g * litersPerUsGallon;
+
+/// Converts a canonical litre value into [unit] for display.
+double volumeToDisplay(double liters, VolumeUnit unit) =>
+    unit == VolumeUnit.gallons ? litersToGallons(liters) : liters;
+
+/// Converts a value typed in [unit] back to canonical litres for storage.
+double volumeToCanonical(double display, VolumeUnit unit) =>
+    unit == VolumeUnit.gallons ? gallonsToLiters(display) : display;
+
+/// Formats a canonical litre value as a bare number string in [unit] (whole
+/// numbers without decimals, otherwise one decimal place).
+String formatVolume(double liters, VolumeUnit unit) {
+  final v = volumeToDisplay(liters, unit);
+  return v == v.roundToDouble()
+      ? v.toStringAsFixed(0)
+      : v.toStringAsFixed(1);
+}
 
 /// How to present a parameter's value: the unit label, decimals, and the
 /// conversions between canonical storage and the user's display unit.

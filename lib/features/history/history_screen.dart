@@ -11,6 +11,7 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/zone_chip.dart';
+import '../water_change/water_change_markers.dart';
 
 enum _Range {
   week('7d', 7),
@@ -65,6 +66,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         .cast<TrackedParameter?>()
         .firstWhere((t) => true, orElse: () => null);
     final readingsAsync = ref.watch(paramReadingsProvider(widget.paramKey));
+    final waterChanges = ref.watch(waterChangesProvider).value ?? const [];
     final prefs = ref.watch(unitPrefsProvider);
     final pres = param != null
         ? presentationOf(param, prefs)
@@ -98,7 +100,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
                               child: _Chart(
-                                  readings: data, param: param, pres: pres),
+                                  readings: data,
+                                  param: param,
+                                  pres: pres,
+                                  waterChanges: waterChanges),
                             ),
                           ),
                           const Divider(),
@@ -270,11 +275,15 @@ enum _DeleteChoice { one, all, cancel }
 
 class _Chart extends StatelessWidget {
   const _Chart(
-      {required this.readings, required this.param, required this.pres});
+      {required this.readings,
+      required this.param,
+      required this.pres,
+      required this.waterChanges});
 
   final List<Reading> readings;
   final TrackedParameter? param;
   final ParamPresentation pres;
+  final List<WaterChange> waterChanges;
 
   @override
   Widget build(BuildContext context) {
@@ -330,6 +339,14 @@ class _Chart extends StatelessWidget {
         maxX: maxX,
         rangeAnnotations: RangeAnnotations(
           horizontalRangeAnnotations: _zoneBands(bounds, minY, maxY),
+        ),
+        extraLinesData: ExtraLinesData(
+          verticalLines: waterChangeLines(
+            changes: waterChanges,
+            minX: minX,
+            maxX: maxX,
+            color: waterChangeMarkerColor(context),
+          ),
         ),
         gridData: const FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),

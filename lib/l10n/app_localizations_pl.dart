@@ -125,7 +125,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Dla tego typu zbiornika zostaną ustawione domyślne parametry i granice stref. Możesz je dostroić w dowolnym momencie.';
 
   @override
-  String get volumeOptional => 'Objętość (litry, opcjonalnie)';
+  String get volumeOptional => 'Objętość (opcjonalnie)';
 
   @override
   String get createAquarium => 'Utwórz akwarium';
@@ -133,6 +133,11 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String litersSuffix(Object value) {
     return '$value l';
+  }
+
+  @override
+  String gallonsSuffix(Object value) {
+    return '$value gal';
   }
 
   @override
@@ -299,6 +304,46 @@ class AppLocalizationsPl extends AppLocalizations {
   String get deleteAllTogether => 'Wszystkie razem';
 
   @override
+  String get ratioLabel => 'PO₄ : NO₃';
+
+  @override
+  String get ratioTitle => 'Stosunek PO₄ : NO₃';
+
+  @override
+  String get ratioNoData =>
+      'Zapisz azotany i fosforany, aby zobaczyć ich stosunek.';
+
+  @override
+  String ratioBreakdown(Object po4, Object no3) {
+    return 'PO₄ $po4 · NO₃ $no3';
+  }
+
+  @override
+  String get waterChanges => 'Podmiany wody';
+
+  @override
+  String get recordWaterChange => 'Zapisz podmianę wody';
+
+  @override
+  String get changedAt => 'Data podmiany';
+
+  @override
+  String get amountLitersOptional => 'Ilość (opcjonalnie)';
+
+  @override
+  String get noWaterChanges => 'Brak podmian wody.';
+
+  @override
+  String get amountNotRecorded => 'Ilość nie zapisana';
+
+  @override
+  String get deleteWaterChangeTitle => 'Usunąć podmianę wody?';
+
+  @override
+  String get deleteWaterChangeBody =>
+      'Spowoduje to trwałe usunięcie tej podmiany wody.';
+
+  @override
   String get unitsSection => 'Jednostki';
 
   @override
@@ -317,6 +362,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get salinity => 'Zasolenie';
 
   @override
+  String get volume => 'Objętość';
+
+  @override
   String get unitUsedAcrossApp => 'Jednostka używana w całej aplikacji';
 
   @override
@@ -325,6 +373,46 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get salinityCalculatorSubtitle =>
       'Przelicz ppt ↔ gęstość względna (SG)';
+
+  @override
+  String get backupSection => 'Kopia zapasowa';
+
+  @override
+  String get backupExport => 'Eksportuj kopię';
+
+  @override
+  String get backupExportSubtitle =>
+      'Zapisz wszystkie akwaria i pomiary do pliku';
+
+  @override
+  String get backupImport => 'Przywróć z kopii';
+
+  @override
+  String get backupImportSubtitle =>
+      'Zastąp wszystkie dane plikiem kopii zapasowej';
+
+  @override
+  String get backupRestoreConfirmTitle => 'Przywrócić kopię zapasową?';
+
+  @override
+  String get backupRestoreConfirmBody =>
+      'Spowoduje to zastąpienie wszystkich obecnych akwariów, parametrów i pomiarów zawartością pliku kopii zapasowej. Tej operacji nie można cofnąć.';
+
+  @override
+  String get restore => 'Przywróć';
+
+  @override
+  String get backupRestored => 'Kopia zapasowa przywrócona';
+
+  @override
+  String get backupExportFailed => 'Nie udało się wyeksportować kopii';
+
+  @override
+  String get backupImportFailed => 'Nie udało się przywrócić kopii';
+
+  @override
+  String get backupInvalidFile =>
+      'Ten plik nie jest prawidłową kopią zapasową ReefTracker';
 
   @override
   String get aboutAppName => 'O aplikacji ReefTracker';

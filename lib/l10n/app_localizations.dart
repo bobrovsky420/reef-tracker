@@ -311,7 +311,7 @@ abstract class AppLocalizations {
   /// No description provided for @volumeOptional.
   ///
   /// In en, this message translates to:
-  /// **'Volume (litres, optional)'**
+  /// **'Volume (optional)'**
   String get volumeOptional;
 
   /// No description provided for @createAquarium.
@@ -325,6 +325,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{value} L'**
   String litersSuffix(Object value);
+
+  /// No description provided for @gallonsSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} gal'**
+  String gallonsSuffix(Object value);
 
   /// No description provided for @startDate.
   ///
@@ -602,6 +608,78 @@ abstract class AppLocalizations {
   /// **'All together'**
   String get deleteAllTogether;
 
+  /// No description provided for @ratioLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PO₄ : NO₃'**
+  String get ratioLabel;
+
+  /// No description provided for @ratioTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PO₄ : NO₃ ratio'**
+  String get ratioTitle;
+
+  /// No description provided for @ratioNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'Record both nitrate and phosphate to see their ratio.'**
+  String get ratioNoData;
+
+  /// No description provided for @ratioBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'PO₄ {po4} · NO₃ {no3}'**
+  String ratioBreakdown(Object po4, Object no3);
+
+  /// No description provided for @waterChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Water changes'**
+  String get waterChanges;
+
+  /// No description provided for @recordWaterChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Record water change'**
+  String get recordWaterChange;
+
+  /// No description provided for @changedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed at'**
+  String get changedAt;
+
+  /// No description provided for @amountLitersOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount (optional)'**
+  String get amountLitersOptional;
+
+  /// No description provided for @noWaterChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'No water changes yet.'**
+  String get noWaterChanges;
+
+  /// No description provided for @amountNotRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount not recorded'**
+  String get amountNotRecorded;
+
+  /// No description provided for @deleteWaterChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete water change?'**
+  String get deleteWaterChangeTitle;
+
+  /// No description provided for @deleteWaterChangeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes this water change.'**
+  String get deleteWaterChangeBody;
+
   /// No description provided for @unitsSection.
   ///
   /// In en, this message translates to:
@@ -638,6 +716,12 @@ abstract class AppLocalizations {
   /// **'Salinity'**
   String get salinity;
 
+  /// No description provided for @volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get volume;
+
   /// No description provided for @unitUsedAcrossApp.
   ///
   /// In en, this message translates to:
@@ -655,6 +739,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Convert ppt ↔ specific gravity (SG)'**
   String get salinityCalculatorSubtitle;
+
+  /// No description provided for @backupSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backupSection;
+
+  /// No description provided for @backupExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup'**
+  String get backupExport;
+
+  /// No description provided for @backupExportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save all aquariums and readings to a file'**
+  String get backupExportSubtitle;
+
+  /// No description provided for @backupImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from backup'**
+  String get backupImport;
+
+  /// No description provided for @backupImportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all data with a backup file'**
+  String get backupImportSubtitle;
+
+  /// No description provided for @backupRestoreConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup?'**
+  String get backupRestoreConfirmTitle;
+
+  /// No description provided for @backupRestoreConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This replaces all current aquariums, parameters, and readings with the contents of the backup file. This cannot be undone.'**
+  String get backupRestoreConfirmBody;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored'**
+  String get backupRestored;
+
+  /// No description provided for @backupExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not export the backup'**
+  String get backupExportFailed;
+
+  /// No description provided for @backupImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore the backup'**
+  String get backupImportFailed;
+
+  /// No description provided for @backupInvalidFile.
+  ///
+  /// In en, this message translates to:
+  /// **'That file isn\'t a valid ReefTracker backup'**
+  String get backupInvalidFile;
 
   /// No description provided for @aboutAppName.
   ///

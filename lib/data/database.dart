@@ -58,6 +58,17 @@ class Readings extends Table {
   TextColumn get note => text().nullable()();
 }
 
+/// A logged water change for a tank (date/time + optional volume).
+class WaterChanges extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+  DateTimeColumn get changedAt => dateTime()();
+
+  /// Volume of water exchanged, in litres. Optional.
+  RealColumn get amountLiters => real().nullable()();
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -69,12 +80,13 @@ class Settings extends Table {
 
 const _kActiveTankKey = 'active_tank_id';
 
-@DriftDatabase(tables: [Tanks, TrackedParameters, Readings, Settings])
+@DriftDatabase(
+    tables: [Tanks, TrackedParameters, Readings, WaterChanges, Settings])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -82,6 +94,9 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.addColumn(tanks, tanks.startDate);
+          }
+          if (from < 3) {
+            await m.createTable(waterChanges);
           }
         },
         beforeOpen: (details) async {
@@ -292,6 +307,35 @@ class AppDatabase extends _$AppDatabase {
             ..where((r) => r.tankId.equals(tankId) & r.takenAt.equals(takenAt)))
           .go();
 
+  // --- Water changes -------------------------------------------------------
+
+  /// Water changes for a tank, newest first.
+  Stream<List<WaterChange>> watchWaterChanges(int tankId) =>
+      (select(waterChanges)
+            ..where((w) => w.tankId.equals(tankId))
+            ..orderBy([
+              (w) => OrderingTerm(
+                  expression: w.changedAt, mode: OrderingMode.desc)
+            ]))
+          .watch();
+
+  Future<void> insertWaterChange({
+    required int tankId,
+    required DateTime changedAt,
+    double? amountLiters,
+  }) =>
+      into(waterChanges).insert(WaterChangesCompanion.insert(
+        tankId: tankId,
+        changedAt: changedAt,
+        amountLiters: Value(amountLiters),
+      ));
+
+  Future<void> updateWaterChange(WaterChange change) =>
+      update(waterChanges).replace(change);
+
+  Future<void> deleteWaterChange(int id) =>
+      (delete(waterChanges)..where((w) => w.id.equals(id))).go();
+
   // --- Settings ------------------------------------------------------------
 
   Future<void> setActiveTank(int? tankId) =>
@@ -322,6 +366,52 @@ class AppDatabase extends _$AppDatabase {
   Future<void> setSetting(String key, String? value) =>
       into(settings).insertOnConflictUpdate(
           SettingsCompanion.insert(key: key, value: Value(value)));
+
+  // --- Backup --------------------------------------------------------------
+
+  /// All tanks across the database (insertion order).
+  Future<List<Tank>> getAllTanks() => select(tanks).get();
+
+  /// Every tracked parameter row, across all tanks.
+  Future<List<TrackedParameter>> getAllTrackedParameters() =>
+      select(trackedParameters).get();
+
+  /// Every reading, across all tanks.
+  Future<List<Reading>> getAllReadings() => select(readings).get();
+
+  /// Every water change, across all tanks.
+  Future<List<WaterChange>> getAllWaterChanges() => select(waterChanges).get();
+
+  /// Every settings key/value pair.
+  Future<List<Setting>> getAllSettings() => select(settings).get();
+
+  /// Replaces the entire database contents with the supplied rows, preserving
+  /// the original primary keys (so foreign-key links stay intact). Runs in a
+  /// single transaction: on any error nothing is changed.
+  Future<void> restoreFromBackup({
+    required List<TanksCompanion> tankRows,
+    required List<TrackedParametersCompanion> paramRows,
+    required List<ReadingsCompanion> readingRows,
+    required List<WaterChangesCompanion> waterChangeRows,
+    required List<SettingsCompanion> settingRows,
+  }) async {
+    await transaction(() async {
+      // Delete children before parents to satisfy foreign keys.
+      await delete(readings).go();
+      await delete(waterChanges).go();
+      await delete(trackedParameters).go();
+      await delete(settings).go();
+      await delete(tanks).go();
+      // Insert parents before children, preserving ids.
+      await batch((b) {
+        b.insertAll(tanks, tankRows);
+        b.insertAll(trackedParameters, paramRows);
+        b.insertAll(readings, readingRows);
+        b.insertAll(waterChanges, waterChangeRows);
+        b.insertAll(settings, settingRows);
+      });
+    });
+  }
 }
 
 LazyDatabase _open() {

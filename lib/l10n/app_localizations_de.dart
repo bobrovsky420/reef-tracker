@@ -125,7 +125,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Für diesen Beckentyp werden Standardparameter und Zonengrenzen eingerichtet. Du kannst sie jederzeit anpassen.';
 
   @override
-  String get volumeOptional => 'Volumen (Liter, optional)';
+  String get volumeOptional => 'Volumen (optional)';
 
   @override
   String get createAquarium => 'Aquarium erstellen';
@@ -133,6 +133,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String litersSuffix(Object value) {
     return '$value l';
+  }
+
+  @override
+  String gallonsSuffix(Object value) {
+    return '$value gal';
   }
 
   @override
@@ -299,6 +304,46 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteAllTogether => 'Alle zusammen';
 
   @override
+  String get ratioLabel => 'PO₄ : NO₃';
+
+  @override
+  String get ratioTitle => 'PO₄ : NO₃-Verhältnis';
+
+  @override
+  String get ratioNoData =>
+      'Erfasse Nitrat und Phosphat, um ihr Verhältnis zu sehen.';
+
+  @override
+  String ratioBreakdown(Object po4, Object no3) {
+    return 'PO₄ $po4 · NO₃ $no3';
+  }
+
+  @override
+  String get waterChanges => 'Wasserwechsel';
+
+  @override
+  String get recordWaterChange => 'Wasserwechsel erfassen';
+
+  @override
+  String get changedAt => 'Gewechselt am';
+
+  @override
+  String get amountLitersOptional => 'Menge (optional)';
+
+  @override
+  String get noWaterChanges => 'Noch keine Wasserwechsel.';
+
+  @override
+  String get amountNotRecorded => 'Menge nicht erfasst';
+
+  @override
+  String get deleteWaterChangeTitle => 'Wasserwechsel löschen?';
+
+  @override
+  String get deleteWaterChangeBody =>
+      'Dadurch wird dieser Wasserwechsel dauerhaft gelöscht.';
+
+  @override
   String get unitsSection => 'Einheiten';
 
   @override
@@ -317,6 +362,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get salinity => 'Salinität';
 
   @override
+  String get volume => 'Volumen';
+
+  @override
   String get unitUsedAcrossApp => 'In der gesamten App verwendete Einheit';
 
   @override
@@ -325,6 +373,47 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get salinityCalculatorSubtitle =>
       'Umrechnung ppt ↔ spezifisches Gewicht (SG)';
+
+  @override
+  String get backupSection => 'Sicherung';
+
+  @override
+  String get backupExport => 'Sicherung exportieren';
+
+  @override
+  String get backupExportSubtitle =>
+      'Alle Aquarien und Messwerte in eine Datei speichern';
+
+  @override
+  String get backupImport => 'Aus Sicherung wiederherstellen';
+
+  @override
+  String get backupImportSubtitle =>
+      'Alle Daten durch eine Sicherungsdatei ersetzen';
+
+  @override
+  String get backupRestoreConfirmTitle => 'Sicherung wiederherstellen?';
+
+  @override
+  String get backupRestoreConfirmBody =>
+      'Dadurch werden alle aktuellen Aquarien, Parameter und Messwerte durch den Inhalt der Sicherungsdatei ersetzt. Dies kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get restore => 'Wiederherstellen';
+
+  @override
+  String get backupRestored => 'Sicherung wiederhergestellt';
+
+  @override
+  String get backupExportFailed => 'Sicherung konnte nicht exportiert werden';
+
+  @override
+  String get backupImportFailed =>
+      'Sicherung konnte nicht wiederhergestellt werden';
+
+  @override
+  String get backupInvalidFile =>
+      'Diese Datei ist keine gültige ReefTracker-Sicherung';
 
   @override
   String get aboutAppName => 'Über ReefTracker';

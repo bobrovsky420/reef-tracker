@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/setup_type.dart';
+import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
@@ -18,6 +19,7 @@ class TanksScreen extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final tanksAsync = ref.watch(tanksProvider);
     final active = ref.watch(activeTankProvider);
+    final volumeUnit = ref.watch(unitPrefsProvider).volume;
 
     return Scaffold(
       appBar: AppBar(title: Text(l.aquariums)),
@@ -41,7 +43,7 @@ class TanksScreen extends ConsumerWidget {
                 subtitle: Text([
                   l.setupLabel(type),
                   if (t.volumeLiters != null)
-                    l.litersSuffix(t.volumeLiters!.toStringAsFixed(0)),
+                    l.volumeWithUnit(t.volumeLiters!, volumeUnit),
                   if (t.startDate != null)
                     l.sinceDate(DateFormat.yMMMd().format(t.startDate!)),
                 ].join(' • ')),
@@ -119,14 +121,25 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name =
       TextEditingController(text: widget.tank?.name ?? '');
-  late final TextEditingController _volume = TextEditingController(
-      text: widget.tank?.volumeLiters?.toStringAsFixed(0) ?? '');
+  late final TextEditingController _volume;
   late SetupType _type =
       widget.tank != null ? SetupType.fromName(widget.tank!.setupType) : SetupType.mixed;
   late DateTime? _startDate = widget.tank?.startDate;
   bool _saving = false;
 
+  /// The volume unit captured when the screen opened, used for both the
+  /// initial field value and the conversion back to canonical litres on save.
+  late final VolumeUnit _volumeUnit = ref.read(unitPrefsProvider).volume;
+
   bool get _isEdit => widget.tank != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final liters = widget.tank?.volumeLiters;
+    _volume = TextEditingController(
+        text: liters == null ? '' : formatVolume(liters, _volumeUnit));
+  }
 
   @override
   void dispose() {
@@ -149,7 +162,9 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
-    final volume = double.tryParse(_volume.text.replaceAll(',', '.'));
+    final typed = double.tryParse(_volume.text.replaceAll(',', '.'));
+    final volume =
+        typed == null ? null : volumeToCanonical(typed, _volumeUnit);
     if (_isEdit) {
       await db.updateTank(widget.tank!.copyWith(
         name: _name.text.trim(),
@@ -203,7 +218,9 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _volume,
-              decoration: InputDecoration(labelText: l.volumeOptional),
+              decoration: InputDecoration(
+                  labelText: l.volumeOptional,
+                  suffixText: _volumeUnit.symbol),
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
             ),

@@ -125,7 +125,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Для этого типа аквариума будут заданы параметры по умолчанию и границы зон. Их можно настроить в любой момент.';
 
   @override
-  String get volumeOptional => 'Объём (литры, необязательно)';
+  String get volumeOptional => 'Объём (необязательно)';
 
   @override
   String get createAquarium => 'Создать аквариум';
@@ -133,6 +133,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String litersSuffix(Object value) {
     return '$value л';
+  }
+
+  @override
+  String gallonsSuffix(Object value) {
+    return '$value гал';
   }
 
   @override
@@ -299,6 +304,46 @@ class AppLocalizationsRu extends AppLocalizations {
   String get deleteAllTogether => 'Все вместе';
 
   @override
+  String get ratioLabel => 'PO₄ : NO₃';
+
+  @override
+  String get ratioTitle => 'Соотношение PO₄ : NO₃';
+
+  @override
+  String get ratioNoData =>
+      'Запишите нитраты и фосфаты, чтобы увидеть их соотношение.';
+
+  @override
+  String ratioBreakdown(Object po4, Object no3) {
+    return 'PO₄ $po4 · NO₃ $no3';
+  }
+
+  @override
+  String get waterChanges => 'Подмены воды';
+
+  @override
+  String get recordWaterChange => 'Записать подмену воды';
+
+  @override
+  String get changedAt => 'Дата подмены';
+
+  @override
+  String get amountLitersOptional => 'Количество (необязательно)';
+
+  @override
+  String get noWaterChanges => 'Пока нет подмен воды.';
+
+  @override
+  String get amountNotRecorded => 'Объём не указан';
+
+  @override
+  String get deleteWaterChangeTitle => 'Удалить подмену воды?';
+
+  @override
+  String get deleteWaterChangeBody =>
+      'Это безвозвратно удалит эту подмену воды.';
+
+  @override
   String get unitsSection => 'Единицы';
 
   @override
@@ -317,6 +362,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get salinity => 'Солёность';
 
   @override
+  String get volume => 'Объём';
+
+  @override
   String get unitUsedAcrossApp => 'Единица, используемая во всём приложении';
 
   @override
@@ -324,6 +372,46 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get salinityCalculatorSubtitle => 'Перевод ppt ↔ удельный вес (SG)';
+
+  @override
+  String get backupSection => 'Резервная копия';
+
+  @override
+  String get backupExport => 'Экспортировать копию';
+
+  @override
+  String get backupExportSubtitle =>
+      'Сохранить все аквариумы и измерения в файл';
+
+  @override
+  String get backupImport => 'Восстановить из копии';
+
+  @override
+  String get backupImportSubtitle =>
+      'Заменить все данные файлом резервной копии';
+
+  @override
+  String get backupRestoreConfirmTitle => 'Восстановить копию?';
+
+  @override
+  String get backupRestoreConfirmBody =>
+      'Все текущие аквариумы, параметры и измерения будут заменены содержимым файла резервной копии. Это действие нельзя отменить.';
+
+  @override
+  String get restore => 'Восстановить';
+
+  @override
+  String get backupRestored => 'Резервная копия восстановлена';
+
+  @override
+  String get backupExportFailed => 'Не удалось экспортировать копию';
+
+  @override
+  String get backupImportFailed => 'Не удалось восстановить копию';
+
+  @override
+  String get backupInvalidFile =>
+      'Этот файл не является корректной резервной копией ReefTracker';
 
   @override
   String get aboutAppName => 'О приложении ReefTracker';
