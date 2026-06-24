@@ -304,19 +304,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get deleteAllTogether => 'Все вместе';
 
   @override
-  String get ratioLabel => 'PO₄ : NO₃';
+  String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override
-  String get ratioTitle => 'Соотношение PO₄ : NO₃';
+  String get ratioPo4No3Title => 'Соотношение PO₄ : NO₃';
+
+  @override
+  String get ratioMgCaLabel => 'Mg : Ca';
+
+  @override
+  String get ratioMgCaTitle => 'Соотношение Mg : Ca';
 
   @override
   String get ratioNoData =>
-      'Запишите нитраты и фосфаты, чтобы увидеть их соотношение.';
+      'Запишите оба параметра, чтобы увидеть их соотношение.';
 
   @override
-  String ratioBreakdown(Object po4, Object no3) {
-    return 'PO₄ $po4 · NO₃ $no3';
-  }
+  String get dashboardSection => 'Панель';
+
+  @override
+  String get showRatioPo4No3 => 'Показывать соотношение PO₄ : NO₃';
+
+  @override
+  String get showRatioMgCa => 'Показывать соотношение Mg : Ca';
 
   @override
   String get waterChanges => 'Подмены воды';
@@ -378,6 +388,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get deleteCarbonChangeBody =>
       'Это безвозвратно удалит эту замену угля.';
+
+  @override
+  String get equipmentCleaning => 'Чистка оборудования';
+
+  @override
+  String get recordEquipmentCleaning => 'Записать чистку оборудования';
+
+  @override
+  String get deleteEquipmentCleaningTitle => 'Удалить чистку оборудования?';
+
+  @override
+  String get deleteEquipmentCleaningBody =>
+      'Это безвозвратно удалит эту чистку оборудования.';
 
   @override
   String get unitsSection => 'Единицы';

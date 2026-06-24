@@ -92,10 +92,15 @@
   "deleteOnlyThis": "Pouze tuto hodnotu",
   "deleteAllTogether": "Vše společně",
 
-  "ratioLabel": "PO₄ : NO₃",
-  "ratioTitle": "Poměr PO₄ : NO₃",
-  "ratioNoData": "Zaznamenejte dusičnany i fosforečnany, abyste viděli jejich poměr.",
-  "ratioBreakdown": "PO₄ {po4} · NO₃ {no3}",
+  "ratioPo4No3Label": "PO₄ : NO₃",
+  "ratioPo4No3Title": "Poměr PO₄ : NO₃",
+  "ratioMgCaLabel": "Mg : Ca",
+  "ratioMgCaTitle": "Poměr Mg : Ca",
+  "ratioNoData": "Zaznamenejte oba parametry, abyste viděli jejich poměr.",
+
+  "dashboardSection": "Přehled",
+  "showRatioPo4No3": "Zobrazit poměr PO₄ : NO₃",
+  "showRatioMgCa": "Zobrazit poměr Mg : Ca",
 
   "waterChanges": "Výměny vody",
   "recordWaterChange": "Zaznamenat výměnu vody",
@@ -117,6 +122,10 @@
   "gramsSuffix": "{value} g",
   "deleteCarbonChangeTitle": "Smazat výměnu uhlí?",
   "deleteCarbonChangeBody": "Tímto trvale smažete tuto výměnu uhlí.",
+  "equipmentCleaning": "Čištění vybavení",
+  "recordEquipmentCleaning": "Zaznamenat čištění vybavení",
+  "deleteEquipmentCleaningTitle": "Smazat čištění vybavení?",
+  "deleteEquipmentCleaningBody": "Tímto trvale smažete toto čištění vybavení.",
 
   "unitsSection": "Jednotky",
   "toolsSection": "Nástroje",

@@ -92,10 +92,15 @@
   "deleteOnlyThis": "Nur diesen Wert",
   "deleteAllTogether": "Alle zusammen",
 
-  "ratioLabel": "PO₄ : NO₃",
-  "ratioTitle": "PO₄ : NO₃-Verhältnis",
-  "ratioNoData": "Erfasse Nitrat und Phosphat, um ihr Verhältnis zu sehen.",
-  "ratioBreakdown": "PO₄ {po4} · NO₃ {no3}",
+  "ratioPo4No3Label": "PO₄ : NO₃",
+  "ratioPo4No3Title": "PO₄ : NO₃-Verhältnis",
+  "ratioMgCaLabel": "Mg : Ca",
+  "ratioMgCaTitle": "Mg : Ca-Verhältnis",
+  "ratioNoData": "Erfasse beide Parameter, um ihr Verhältnis zu sehen.",
+
+  "dashboardSection": "Dashboard",
+  "showRatioPo4No3": "PO₄ : NO₃-Verhältnis anzeigen",
+  "showRatioMgCa": "Mg : Ca-Verhältnis anzeigen",
 
   "waterChanges": "Wasserwechsel",
   "recordWaterChange": "Wasserwechsel erfassen",
@@ -117,6 +122,10 @@
   "gramsSuffix": "{value} g",
   "deleteCarbonChangeTitle": "Kohlewechsel löschen?",
   "deleteCarbonChangeBody": "Dadurch wird dieser Kohlewechsel dauerhaft gelöscht.",
+  "equipmentCleaning": "Gerätereinigung",
+  "recordEquipmentCleaning": "Gerätereinigung erfassen",
+  "deleteEquipmentCleaningTitle": "Gerätereinigung löschen?",
+  "deleteEquipmentCleaningBody": "Dadurch wird diese Gerätereinigung dauerhaft gelöscht.",
 
   "unitsSection": "Einheiten",
   "toolsSection": "Werkzeuge",

@@ -34,6 +34,7 @@ class BackupData {
     required this.readings,
     required this.waterChanges,
     required this.carbonChanges,
+    required this.equipmentCleanings,
     required this.settings,
   });
 
@@ -42,6 +43,7 @@ class BackupData {
   final List<ReadingsCompanion> readings;
   final List<WaterChangesCompanion> waterChanges;
   final List<CarbonChangesCompanion> carbonChanges;
+  final List<EquipmentCleaningsCompanion> equipmentCleanings;
   final List<SettingsCompanion> settings;
 }
 
@@ -53,6 +55,7 @@ String encodeBackup({
   required List<Reading> readings,
   required List<WaterChange> waterChanges,
   required List<CarbonChange> carbonChanges,
+  required List<EquipmentCleaning> equipmentCleanings,
   required List<Setting> settings,
 }) {
   final map = <String, dynamic>{
@@ -65,6 +68,8 @@ String encodeBackup({
     'readings': readings.map(_readingToJson).toList(),
     'waterChanges': waterChanges.map(_waterChangeToJson).toList(),
     'carbonChanges': carbonChanges.map(_carbonChangeToJson).toList(),
+    'equipmentCleanings':
+        equipmentCleanings.map(_equipmentCleaningToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
   return const JsonEncoder.withIndent('  ').convert(map);
@@ -110,6 +115,11 @@ BackupData decodeBackup(String jsonString) {
         : _listOfMaps(decoded['carbonChanges'])
             .map(_carbonChangeFromJson)
             .toList();
+    final equipmentCleanings = decoded['equipmentCleanings'] == null
+        ? <EquipmentCleaningsCompanion>[]
+        : _listOfMaps(decoded['equipmentCleanings'])
+            .map(_equipmentCleaningFromJson)
+            .toList();
     final settings =
         _listOfMaps(decoded['settings']).map(_settingFromJson).toList();
     return BackupData(
@@ -118,6 +128,7 @@ BackupData decodeBackup(String jsonString) {
       readings: readings,
       waterChanges: waterChanges,
       carbonChanges: carbonChanges,
+      equipmentCleanings: equipmentCleanings,
       settings: settings,
     );
   } catch (_) {
@@ -134,6 +145,7 @@ Future<void> exportBackup(AppDatabase db) async {
     readings: await db.getAllReadings(),
     waterChanges: await db.getAllWaterChanges(),
     carbonChanges: await db.getAllCarbonChanges(),
+    equipmentCleanings: await db.getAllEquipmentCleanings(),
     settings: await db.getAllSettings(),
   );
 
@@ -268,6 +280,22 @@ CarbonChangesCompanion _carbonChangeFromJson(Map<String, dynamic> m) =>
       tankId: Value(m['tankId'] as int),
       changedAt: Value(_date(m['changedAt'])),
       grams: Value((m['grams'] as num?)?.toDouble()),
+      note: Value(m['note'] as String?),
+    );
+
+Map<String, dynamic> _equipmentCleaningToJson(EquipmentCleaning c) => {
+      'id': c.id,
+      'tankId': c.tankId,
+      'cleanedAt': c.cleanedAt.millisecondsSinceEpoch,
+      'note': c.note,
+    };
+
+EquipmentCleaningsCompanion _equipmentCleaningFromJson(
+        Map<String, dynamic> m) =>
+    EquipmentCleaningsCompanion(
+      id: Value(m['id'] as int),
+      tankId: Value(m['tankId'] as int),
+      cleanedAt: Value(_date(m['cleanedAt'])),
       note: Value(m['note'] as String?),
     );
 

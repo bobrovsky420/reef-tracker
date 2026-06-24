@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../data/database.dart';
+import '../domain/ratio.dart';
 import '../features/actions/actions_screen.dart';
 import '../features/add_reading/add_reading_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
@@ -49,8 +50,15 @@ final appRouter = GoRouter(
           HistoryScreen(paramKey: state.pathParameters['paramKey']!),
     ),
     GoRoute(
-      path: '/ratio',
-      builder: (context, state) => const RatioScreen(),
+      path: '/ratio/:type',
+      builder: (context, state) {
+        final type = state.pathParameters['type'];
+        final kind = RatioKind.values
+            .where((k) => k.name == type)
+            .cast<RatioKind?>()
+            .firstWhere((k) => true, orElse: () => null);
+        return RatioScreen(kind: kind ?? RatioKind.po4no3);
+      },
     ),
     GoRoute(
       path: '/actions',

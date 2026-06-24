@@ -4,14 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
-import '../../data/database.dart';
 import '../../domain/ratio.dart';
 import '../../l10n/app_localizations.dart';
-import '../actions/water_change_markers.dart';
+import '../../l10n/l10n_helpers.dart';
 
-/// Time-series graph of the PO₄ : NO₃ ratio for the active tank.
+/// Time-series graph of a [RatioKind] for the active tank.
 class RatioScreen extends ConsumerWidget {
-  const RatioScreen({super.key});
+  const RatioScreen({super.key, required this.kind});
+
+  final RatioKind kind;
 
   /// Time ranges mirroring the parameter history screen.
   static const _ranges = <(String, int?)>[
@@ -42,18 +43,18 @@ class RatioScreen extends ConsumerWidget {
         .firstWhere((r) => r.$1 == rangeKey, orElse: () => _ranges[1])
         .$2;
 
-    final nitrateAsync = ref.watch(paramReadingsProvider(kNitrateKey));
-    final phosphateAsync = ref.watch(paramReadingsProvider(kPhosphateKey));
-    final waterChanges = ref.watch(waterChangesProvider).value ?? const [];
+    final numeratorAsync = ref.watch(paramReadingsProvider(kind.numeratorKey));
+    final denominatorAsync =
+        ref.watch(paramReadingsProvider(kind.denominatorKey));
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.ratioTitle)),
-      body: (nitrateAsync.isLoading || phosphateAsync.isLoading)
+      appBar: AppBar(title: Text(l.ratioScreenTitle(kind))),
+      body: (numeratorAsync.isLoading || denominatorAsync.isLoading)
           ? const Center(child: CircularProgressIndicator())
           : Builder(builder: (context) {
-              final nitrate = nitrateAsync.value ?? const [];
-              final phosphate = phosphateAsync.value ?? const [];
-              final all = computeRatioSeries(nitrate, phosphate);
+              final numerator = numeratorAsync.value ?? const [];
+              final denominator = denominatorAsync.value ?? const [];
+              final all = computeRatioSeries(numerator, denominator);
               final cutoff = days == null
                   ? null
                   : DateTime.now().subtract(Duration(days: days));
@@ -87,13 +88,11 @@ class RatioScreen extends ConsumerWidget {
                                 child: Padding(
                                   padding:
                                       const EdgeInsets.fromLTRB(8, 16, 16, 8),
-                                  child: _RatioChart(
-                                      points: data,
-                                      waterChanges: waterChanges),
+                                  child: _RatioChart(kind: kind, points: data),
                                 ),
                               ),
                               const Divider(),
-                              ..._pointsList(context, l, data),
+                              ..._pointsList(context, data),
                             ],
                           ),
                   ),
@@ -103,17 +102,13 @@ class RatioScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _pointsList(
-      BuildContext context, AppLocalizations l, List<RatioPoint> data) {
+  List<Widget> _pointsList(BuildContext context, List<RatioPoint> data) {
     final reversed = data.reversed.toList(); // newest first
     return [
       for (final p in reversed)
         ListTile(
-          title: Text(formatRatioOneToN(p.ratio)),
-          subtitle: Text(
-            l.ratioBreakdown(
-                formatRatio(p.phosphate), formatRatio(p.nitrate)),
-          ),
+          title: Text(formatRatioValue(kind, p.ratio)),
+          subtitle: Text(ratioBreakdown(kind, p)),
           trailing: Text(
             DateFormat.yMMMEd().format(p.time),
             style: TextStyle(
@@ -125,18 +120,19 @@ class RatioScreen extends ConsumerWidget {
 }
 
 class _RatioChart extends StatelessWidget {
-  const _RatioChart({required this.points, required this.waterChanges});
+  const _RatioChart({required this.kind, required this.points});
 
+  final RatioKind kind;
   final List<RatioPoint> points;
-  final List<WaterChange> waterChanges;
 
   @override
   Widget build(BuildContext context) {
-    // Plot the `N` of the `1 : N` ratio (NO₃/PO₄), matching how it is shown.
+    // Plot the value implied by the display form (e.g. the `N` of `1 : N`).
     final spots = [
       for (final p in points)
-        if (p.ratio > 0)
-          FlSpot(p.time.millisecondsSinceEpoch.toDouble(), 1 / p.ratio),
+        if (ratioChartY(kind, p.ratio).isFinite)
+          FlSpot(p.time.millisecondsSinceEpoch.toDouble(),
+              ratioChartY(kind, p.ratio)),
     ];
 
     if (spots.isEmpty) {
@@ -146,7 +142,9 @@ class _RatioChart extends StatelessWidget {
     final values = spots.map((s) => s.y).toList();
     double minY = values.reduce((a, b) => a < b ? a : b);
     double maxY = values.reduce((a, b) => a > b ? a : b);
-    final pad = (maxY - minY).abs() < 1e-9 ? (maxY.abs() * 0.1 + 0.01) : (maxY - minY) * 0.12;
+    final pad = (maxY - minY).abs() < 1e-9
+        ? (maxY.abs() * 0.1 + 0.01)
+        : (maxY - minY) * 0.12;
     minY = (minY - pad).clamp(0, double.infinity);
     maxY += pad;
 
@@ -169,14 +167,6 @@ class _RatioChart extends StatelessWidget {
         maxY: maxY,
         minX: minX,
         maxX: maxX,
-        extraLinesData: ExtraLinesData(
-          verticalLines: waterChangeLines(
-            changes: waterChanges,
-            minX: minX,
-            maxX: maxX,
-            color: waterChangeMarkerColor(context),
-          ),
-        ),
         gridData: const FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(

@@ -1,3 +1,4 @@
+import '../domain/ratio.dart';
 import '../domain/setup_type.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
@@ -82,6 +83,26 @@ extension L10nDomain on AppLocalizations {
         return litersSuffix(value);
       case VolumeUnit.gallons:
         return gallonsSuffix(value);
+    }
+  }
+
+  /// Short label for a ratio card/segment (e.g. "PO₄ : NO₃", "Mg : Ca").
+  String ratioCardLabel(RatioKind kind) {
+    switch (kind) {
+      case RatioKind.po4no3:
+        return ratioPo4No3Label;
+      case RatioKind.mgca:
+        return ratioMgCaLabel;
+    }
+  }
+
+  /// Full title for a ratio screen (e.g. "PO₄ : NO₃ ratio").
+  String ratioScreenTitle(RatioKind kind) {
+    switch (kind) {
+      case RatioKind.po4no3:
+        return ratioPo4No3Title;
+      case RatioKind.mgca:
+        return ratioMgCaTitle;
     }
   }
 

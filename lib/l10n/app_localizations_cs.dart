@@ -303,19 +303,29 @@ class AppLocalizationsCs extends AppLocalizations {
   String get deleteAllTogether => 'Vše společně';
 
   @override
-  String get ratioLabel => 'PO₄ : NO₃';
+  String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override
-  String get ratioTitle => 'Poměr PO₄ : NO₃';
+  String get ratioPo4No3Title => 'Poměr PO₄ : NO₃';
+
+  @override
+  String get ratioMgCaLabel => 'Mg : Ca';
+
+  @override
+  String get ratioMgCaTitle => 'Poměr Mg : Ca';
 
   @override
   String get ratioNoData =>
-      'Zaznamenejte dusičnany i fosforečnany, abyste viděli jejich poměr.';
+      'Zaznamenejte oba parametry, abyste viděli jejich poměr.';
 
   @override
-  String ratioBreakdown(Object po4, Object no3) {
-    return 'PO₄ $po4 · NO₃ $no3';
-  }
+  String get dashboardSection => 'Přehled';
+
+  @override
+  String get showRatioPo4No3 => 'Zobrazit poměr PO₄ : NO₃';
+
+  @override
+  String get showRatioMgCa => 'Zobrazit poměr Mg : Ca';
 
   @override
   String get waterChanges => 'Výměny vody';
@@ -375,6 +385,19 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get deleteCarbonChangeBody => 'Tímto trvale smažete tuto výměnu uhlí.';
+
+  @override
+  String get equipmentCleaning => 'Čištění vybavení';
+
+  @override
+  String get recordEquipmentCleaning => 'Zaznamenat čištění vybavení';
+
+  @override
+  String get deleteEquipmentCleaningTitle => 'Smazat čištění vybavení?';
+
+  @override
+  String get deleteEquipmentCleaningBody =>
+      'Tímto trvale smažete toto čištění vybavení.';
 
   @override
   String get unitsSection => 'Jednotky';

@@ -18,12 +18,14 @@ class ActionsScreen extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final water = ref.watch(waterChangesProvider).value ?? const [];
     final carbon = ref.watch(carbonChangesProvider).value ?? const [];
+    final equipment = ref.watch(equipmentCleaningsProvider).value ?? const [];
     final unit = ref.watch(unitPrefsProvider).volume;
     final hasTank = ref.watch(activeTankProvider) != null;
 
     final entries = <_Entry>[
       ...water.map(_WaterEntry.new),
       ...carbon.map(_CarbonEntry.new),
+      ...equipment.map(_EquipmentEntry.new),
     ]..sort((a, b) => b.time.compareTo(a.time));
 
     return Scaffold(
@@ -49,7 +51,7 @@ class ActionsScreen extends ConsumerWidget {
       _Entry e, VolumeUnit unit) {
     final IconData icon;
     final String title;
-    final String value;
+    final String? value;
     final String? note;
     switch (e) {
       case _WaterEntry(:final data):
@@ -66,9 +68,15 @@ class ActionsScreen extends ConsumerWidget {
             ? l.gramsSuffix(_formatGrams(data.grams!))
             : l.weightNotRecorded;
         note = data.note;
+      case _EquipmentEntry(:final data):
+        icon = Icons.cleaning_services_outlined;
+        title = l.equipmentCleaning;
+        value = null;
+        note = data.note;
     }
     final hasNote = note != null && note.isNotEmpty;
     final date = DateFormat.yMMMEd().add_jm().format(e.time);
+    final subtitle = value == null ? date : '$value • $date';
 
     return Dismissible(
       key: ValueKey(e.key),
@@ -83,7 +91,7 @@ class ActionsScreen extends ConsumerWidget {
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
-        subtitle: Text('$value • $date${hasNote ? '\n$note' : ''}'),
+        subtitle: Text('$subtitle${hasNote ? '\n$note' : ''}'),
         isThreeLine: hasNote,
         trailing: IconButton(
           icon: const Icon(Icons.edit),
@@ -111,6 +119,11 @@ class ActionsScreen extends ConsumerWidget {
               title: Text(l.recordCarbonChange),
               onTap: () => Navigator.pop(ctx, _Kind.carbon),
             ),
+            ListTile(
+              leading: const Icon(Icons.cleaning_services_outlined),
+              title: Text(l.recordEquipmentCleaning),
+              onTap: () => Navigator.pop(ctx, _Kind.equipment),
+            ),
           ],
         ),
       ),
@@ -121,6 +134,8 @@ class ActionsScreen extends ConsumerWidget {
         await _editWater(context, ref, null);
       case _Kind.carbon:
         await _editCarbon(context, ref, null);
+      case _Kind.equipment:
+        await _editEquipment(context, ref, null);
     }
   }
 
@@ -130,6 +145,8 @@ class ActionsScreen extends ConsumerWidget {
         return _editWater(context, ref, data);
       case _CarbonEntry(:final data):
         return _editCarbon(context, ref, data);
+      case _EquipmentEntry(:final data):
+        return _editEquipment(context, ref, data);
     }
   }
 
@@ -207,11 +224,44 @@ class ActionsScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _editEquipment(
+      BuildContext context, WidgetRef ref, EquipmentCleaning? existing) async {
+    final tank = ref.read(activeTankProvider);
+    if (tank == null) return;
+    final l = AppLocalizations.of(context);
+    final result = await showDialog<_ActionResult>(
+      context: context,
+      builder: (ctx) => _ActionDialog(
+        title: l.recordEquipmentCleaning,
+        initialTime: existing?.cleanedAt ?? DateTime.now(),
+        initialNote: existing?.note,
+      ),
+    );
+    if (result == null) return;
+    final db = ref.read(dbProvider);
+    if (existing == null) {
+      await db.insertEquipmentCleaning(
+        tankId: tank.id,
+        cleanedAt: result.time,
+        note: result.note,
+      );
+    } else {
+      await db.updateEquipmentCleaning(existing.copyWith(
+        cleanedAt: result.time,
+        note: Value(result.note),
+      ));
+    }
+  }
+
   Future<bool> _confirmDelete(
       BuildContext context, WidgetRef ref, AppLocalizations l, _Entry e) async {
     final (String titleText, String bodyText) = switch (e) {
       _WaterEntry() => (l.deleteWaterChangeTitle, l.deleteWaterChangeBody),
       _CarbonEntry() => (l.deleteCarbonChangeTitle, l.deleteCarbonChangeBody),
+      _EquipmentEntry() => (
+          l.deleteEquipmentCleaningTitle,
+          l.deleteEquipmentCleaningBody
+        ),
     };
     final ok = await showDialog<bool>(
       context: context,
@@ -235,6 +285,8 @@ class ActionsScreen extends ConsumerWidget {
         await db.deleteWaterChange(data.id);
       case _CarbonEntry(:final data):
         await db.deleteCarbonChange(data.id);
+      case _EquipmentEntry(:final data):
+        await db.deleteEquipmentCleaning(data.id);
     }
     return true;
   }
@@ -243,7 +295,7 @@ class ActionsScreen extends ConsumerWidget {
 String _formatGrams(double g) =>
     g == g.roundToDouble() ? g.toStringAsFixed(0) : g.toStringAsFixed(1);
 
-enum _Kind { water, carbon }
+enum _Kind { water, carbon, equipment }
 
 sealed class _Entry {
   DateTime get time;
@@ -268,6 +320,15 @@ class _CarbonEntry extends _Entry {
   String get key => 'c${data.id}';
 }
 
+class _EquipmentEntry extends _Entry {
+  _EquipmentEntry(this.data);
+  final EquipmentCleaning data;
+  @override
+  DateTime get time => data.cleanedAt;
+  @override
+  String get key => 'e${data.id}';
+}
+
 class _ActionResult {
   const _ActionResult(this.time, this.value, this.note);
   final DateTime time;
@@ -280,16 +341,19 @@ class _ActionResult {
 class _ActionDialog extends StatefulWidget {
   const _ActionDialog({
     required this.title,
-    required this.valueLabel,
-    required this.valueSuffix,
+    this.valueLabel,
+    this.valueSuffix,
     required this.initialTime,
-    required this.initialValue,
+    this.initialValue = '',
     required this.initialNote,
   });
 
   final String title;
-  final String valueLabel;
-  final String valueSuffix;
+
+  /// Label for the optional numeric value field. When null the value field is
+  /// hidden entirely (e.g. equipment cleaning records only a date + note).
+  final String? valueLabel;
+  final String? valueSuffix;
   final DateTime initialTime;
   final String initialValue;
   final String? initialNote;
@@ -349,21 +413,24 @@ class _ActionDialogState extends State<_ActionDialog> {
               child: Text(l.change),
             ),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _valueCtrl,
-            autofocus: true,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: widget.valueLabel,
-              suffixText: widget.valueSuffix,
-              border: const OutlineInputBorder(),
+          if (widget.valueLabel != null) ...[
+            const SizedBox(height: 8),
+            TextField(
+              controller: _valueCtrl,
+              autofocus: true,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: widget.valueLabel,
+                suffixText: widget.valueSuffix,
+                border: const OutlineInputBorder(),
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 12),
           TextField(
             controller: _noteCtrl,
+            autofocus: widget.valueLabel == null,
             decoration: InputDecoration(
               labelText: l.noteOptional,
               border: const OutlineInputBorder(),

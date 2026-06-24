@@ -2120,6 +2120,307 @@ class CarbonChangesCompanion extends UpdateCompanion<CarbonChange> {
   }
 }
 
+class $EquipmentCleaningsTable extends EquipmentCleanings
+    with TableInfo<$EquipmentCleaningsTable, EquipmentCleaning> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EquipmentCleaningsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _cleanedAtMeta = const VerificationMeta(
+    'cleanedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> cleanedAt = GeneratedColumn<DateTime>(
+    'cleaned_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, tankId, cleanedAt, note];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'equipment_cleanings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EquipmentCleaning> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('cleaned_at')) {
+      context.handle(
+        _cleanedAtMeta,
+        cleanedAt.isAcceptableOrUnknown(data['cleaned_at']!, _cleanedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cleanedAtMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EquipmentCleaning map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EquipmentCleaning(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      cleanedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}cleaned_at'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+    );
+  }
+
+  @override
+  $EquipmentCleaningsTable createAlias(String alias) {
+    return $EquipmentCleaningsTable(attachedDatabase, alias);
+  }
+}
+
+class EquipmentCleaning extends DataClass
+    implements Insertable<EquipmentCleaning> {
+  final int id;
+  final int tankId;
+  final DateTime cleanedAt;
+
+  /// Free-text note (e.g. the equipment cleaned). Optional.
+  final String? note;
+  const EquipmentCleaning({
+    required this.id,
+    required this.tankId,
+    required this.cleanedAt,
+    this.note,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tank_id'] = Variable<int>(tankId);
+    map['cleaned_at'] = Variable<DateTime>(cleanedAt);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    return map;
+  }
+
+  EquipmentCleaningsCompanion toCompanion(bool nullToAbsent) {
+    return EquipmentCleaningsCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      cleanedAt: Value(cleanedAt),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+    );
+  }
+
+  factory EquipmentCleaning.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EquipmentCleaning(
+      id: serializer.fromJson<int>(json['id']),
+      tankId: serializer.fromJson<int>(json['tankId']),
+      cleanedAt: serializer.fromJson<DateTime>(json['cleanedAt']),
+      note: serializer.fromJson<String?>(json['note']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tankId': serializer.toJson<int>(tankId),
+      'cleanedAt': serializer.toJson<DateTime>(cleanedAt),
+      'note': serializer.toJson<String?>(note),
+    };
+  }
+
+  EquipmentCleaning copyWith({
+    int? id,
+    int? tankId,
+    DateTime? cleanedAt,
+    Value<String?> note = const Value.absent(),
+  }) => EquipmentCleaning(
+    id: id ?? this.id,
+    tankId: tankId ?? this.tankId,
+    cleanedAt: cleanedAt ?? this.cleanedAt,
+    note: note.present ? note.value : this.note,
+  );
+  EquipmentCleaning copyWithCompanion(EquipmentCleaningsCompanion data) {
+    return EquipmentCleaning(
+      id: data.id.present ? data.id.value : this.id,
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      cleanedAt: data.cleanedAt.present ? data.cleanedAt.value : this.cleanedAt,
+      note: data.note.present ? data.note.value : this.note,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EquipmentCleaning(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('cleanedAt: $cleanedAt, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, tankId, cleanedAt, note);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EquipmentCleaning &&
+          other.id == this.id &&
+          other.tankId == this.tankId &&
+          other.cleanedAt == this.cleanedAt &&
+          other.note == this.note);
+}
+
+class EquipmentCleaningsCompanion extends UpdateCompanion<EquipmentCleaning> {
+  final Value<int> id;
+  final Value<int> tankId;
+  final Value<DateTime> cleanedAt;
+  final Value<String?> note;
+  const EquipmentCleaningsCompanion({
+    this.id = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.cleanedAt = const Value.absent(),
+    this.note = const Value.absent(),
+  });
+  EquipmentCleaningsCompanion.insert({
+    this.id = const Value.absent(),
+    required int tankId,
+    required DateTime cleanedAt,
+    this.note = const Value.absent(),
+  }) : tankId = Value(tankId),
+       cleanedAt = Value(cleanedAt);
+  static Insertable<EquipmentCleaning> custom({
+    Expression<int>? id,
+    Expression<int>? tankId,
+    Expression<DateTime>? cleanedAt,
+    Expression<String>? note,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tankId != null) 'tank_id': tankId,
+      if (cleanedAt != null) 'cleaned_at': cleanedAt,
+      if (note != null) 'note': note,
+    });
+  }
+
+  EquipmentCleaningsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? tankId,
+    Value<DateTime>? cleanedAt,
+    Value<String?>? note,
+  }) {
+    return EquipmentCleaningsCompanion(
+      id: id ?? this.id,
+      tankId: tankId ?? this.tankId,
+      cleanedAt: cleanedAt ?? this.cleanedAt,
+      note: note ?? this.note,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (cleanedAt.present) {
+      map['cleaned_at'] = Variable<DateTime>(cleanedAt.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EquipmentCleaningsCompanion(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('cleanedAt: $cleanedAt, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -2343,6 +2644,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReadingsTable readings = $ReadingsTable(this);
   late final $WaterChangesTable waterChanges = $WaterChangesTable(this);
   late final $CarbonChangesTable carbonChanges = $CarbonChangesTable(this);
+  late final $EquipmentCleaningsTable equipmentCleanings =
+      $EquipmentCleaningsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -2354,6 +2657,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     readings,
     waterChanges,
     carbonChanges,
+    equipmentCleanings,
     settings,
   ];
   @override
@@ -2385,6 +2689,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('carbon_changes', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('equipment_cleanings', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2483,6 +2794,27 @@ final class $$TanksTableReferences
     ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_carbonChangesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$EquipmentCleaningsTable, List<EquipmentCleaning>>
+  _equipmentCleaningsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.equipmentCleanings,
+        aliasName: 'tanks__id__equipment_cleanings__tank_id',
+      );
+
+  $$EquipmentCleaningsTableProcessedTableManager get equipmentCleaningsRefs {
+    final manager = $$EquipmentCleaningsTableTableManager(
+      $_db,
+      $_db.equipmentCleanings,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _equipmentCleaningsRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2618,6 +2950,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$CarbonChangesTableFilterComposer(
             $db: $db,
             $table: $db.carbonChanges,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> equipmentCleaningsRefs(
+    Expression<bool> Function($$EquipmentCleaningsTableFilterComposer f) f,
+  ) {
+    final $$EquipmentCleaningsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.equipmentCleanings,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquipmentCleaningsTableFilterComposer(
+            $db: $db,
+            $table: $db.equipmentCleanings,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2797,6 +3154,32 @@ class $$TanksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> equipmentCleaningsRefs<T extends Object>(
+    Expression<T> Function($$EquipmentCleaningsTableAnnotationComposer a) f,
+  ) {
+    final $$EquipmentCleaningsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.equipmentCleanings,
+          getReferencedColumn: (t) => t.tankId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$EquipmentCleaningsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.equipmentCleanings,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -2817,6 +3200,7 @@ class $$TanksTableTableManager
             bool readingsRefs,
             bool waterChangesRefs,
             bool carbonChangesRefs,
+            bool equipmentCleaningsRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -2874,6 +3258,7 @@ class $$TanksTableTableManager
                 readingsRefs = false,
                 waterChangesRefs = false,
                 carbonChangesRefs = false,
+                equipmentCleaningsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -2882,6 +3267,7 @@ class $$TanksTableTableManager
                     if (readingsRefs) db.readings,
                     if (waterChangesRefs) db.waterChanges,
                     if (carbonChangesRefs) db.carbonChanges,
+                    if (equipmentCleaningsRefs) db.equipmentCleanings,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -2966,6 +3352,27 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (equipmentCleaningsRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          EquipmentCleaning
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._equipmentCleaningsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).equipmentCleaningsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -2991,6 +3398,7 @@ typedef $$TanksTableProcessedTableManager =
         bool readingsRefs,
         bool waterChangesRefs,
         bool carbonChangesRefs,
+        bool equipmentCleaningsRefs,
       })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
@@ -4375,6 +4783,314 @@ typedef $$CarbonChangesTableProcessedTableManager =
       CarbonChange,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$EquipmentCleaningsTableCreateCompanionBuilder =
+    EquipmentCleaningsCompanion Function({
+      Value<int> id,
+      required int tankId,
+      required DateTime cleanedAt,
+      Value<String?> note,
+    });
+typedef $$EquipmentCleaningsTableUpdateCompanionBuilder =
+    EquipmentCleaningsCompanion Function({
+      Value<int> id,
+      Value<int> tankId,
+      Value<DateTime> cleanedAt,
+      Value<String?> note,
+    });
+
+final class $$EquipmentCleaningsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $EquipmentCleaningsTable,
+          EquipmentCleaning
+        > {
+  $$EquipmentCleaningsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('equipment_cleanings__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$EquipmentCleaningsTableFilterComposer
+    extends Composer<_$AppDatabase, $EquipmentCleaningsTable> {
+  $$EquipmentCleaningsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get cleanedAt => $composableBuilder(
+    column: $table.cleanedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EquipmentCleaningsTableOrderingComposer
+    extends Composer<_$AppDatabase, $EquipmentCleaningsTable> {
+  $$EquipmentCleaningsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get cleanedAt => $composableBuilder(
+    column: $table.cleanedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EquipmentCleaningsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EquipmentCleaningsTable> {
+  $$EquipmentCleaningsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get cleanedAt =>
+      $composableBuilder(column: $table.cleanedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EquipmentCleaningsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EquipmentCleaningsTable,
+          EquipmentCleaning,
+          $$EquipmentCleaningsTableFilterComposer,
+          $$EquipmentCleaningsTableOrderingComposer,
+          $$EquipmentCleaningsTableAnnotationComposer,
+          $$EquipmentCleaningsTableCreateCompanionBuilder,
+          $$EquipmentCleaningsTableUpdateCompanionBuilder,
+          (EquipmentCleaning, $$EquipmentCleaningsTableReferences),
+          EquipmentCleaning,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$EquipmentCleaningsTableTableManager(
+    _$AppDatabase db,
+    $EquipmentCleaningsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EquipmentCleaningsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EquipmentCleaningsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EquipmentCleaningsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> tankId = const Value.absent(),
+                Value<DateTime> cleanedAt = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+              }) => EquipmentCleaningsCompanion(
+                id: id,
+                tankId: tankId,
+                cleanedAt: cleanedAt,
+                note: note,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int tankId,
+                required DateTime cleanedAt,
+                Value<String?> note = const Value.absent(),
+              }) => EquipmentCleaningsCompanion.insert(
+                id: id,
+                tankId: tankId,
+                cleanedAt: cleanedAt,
+                note: note,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$EquipmentCleaningsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable:
+                                    $$EquipmentCleaningsTableReferences
+                                        ._tankIdTable(db),
+                                referencedColumn:
+                                    $$EquipmentCleaningsTableReferences
+                                        ._tankIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$EquipmentCleaningsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EquipmentCleaningsTable,
+      EquipmentCleaning,
+      $$EquipmentCleaningsTableFilterComposer,
+      $$EquipmentCleaningsTableOrderingComposer,
+      $$EquipmentCleaningsTableAnnotationComposer,
+      $$EquipmentCleaningsTableCreateCompanionBuilder,
+      $$EquipmentCleaningsTableUpdateCompanionBuilder,
+      (EquipmentCleaning, $$EquipmentCleaningsTableReferences),
+      EquipmentCleaning,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -4522,6 +5238,8 @@ class $AppDatabaseManager {
       $$WaterChangesTableTableManager(_db, _db.waterChanges);
   $$CarbonChangesTableTableManager get carbonChanges =>
       $$CarbonChangesTableTableManager(_db, _db.carbonChanges);
+  $$EquipmentCleaningsTableTableManager get equipmentCleanings =>
+      $$EquipmentCleaningsTableTableManager(_db, _db.equipmentCleanings);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

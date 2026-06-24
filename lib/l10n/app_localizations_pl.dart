@@ -304,19 +304,28 @@ class AppLocalizationsPl extends AppLocalizations {
   String get deleteAllTogether => 'Wszystkie razem';
 
   @override
-  String get ratioLabel => 'PO₄ : NO₃';
+  String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override
-  String get ratioTitle => 'Stosunek PO₄ : NO₃';
+  String get ratioPo4No3Title => 'Stosunek PO₄ : NO₃';
 
   @override
-  String get ratioNoData =>
-      'Zapisz azotany i fosforany, aby zobaczyć ich stosunek.';
+  String get ratioMgCaLabel => 'Mg : Ca';
 
   @override
-  String ratioBreakdown(Object po4, Object no3) {
-    return 'PO₄ $po4 · NO₃ $no3';
-  }
+  String get ratioMgCaTitle => 'Stosunek Mg : Ca';
+
+  @override
+  String get ratioNoData => 'Zapisz oba parametry, aby zobaczyć ich stosunek.';
+
+  @override
+  String get dashboardSection => 'Pulpit';
+
+  @override
+  String get showRatioPo4No3 => 'Pokaż stosunek PO₄ : NO₃';
+
+  @override
+  String get showRatioMgCa => 'Pokaż stosunek Mg : Ca';
 
   @override
   String get waterChanges => 'Podmiany wody';
@@ -378,6 +387,19 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get deleteCarbonChangeBody =>
       'Spowoduje to trwałe usunięcie tej wymiany węgla.';
+
+  @override
+  String get equipmentCleaning => 'Czyszczenie sprzętu';
+
+  @override
+  String get recordEquipmentCleaning => 'Zapisz czyszczenie sprzętu';
+
+  @override
+  String get deleteEquipmentCleaningTitle => 'Usunąć czyszczenie sprzętu?';
+
+  @override
+  String get deleteEquipmentCleaningBody =>
+      'Spowoduje to trwałe usunięcie tego czyszczenia sprzętu.';
 
   @override
   String get unitsSection => 'Jednostki';

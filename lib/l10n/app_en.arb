@@ -108,11 +108,15 @@
   "deleteOnlyThis": "Only this value",
   "deleteAllTogether": "All together",
 
-  "ratioLabel": "PO₄ : NO₃",
-  "ratioTitle": "PO₄ : NO₃ ratio",
-  "ratioNoData": "Record both nitrate and phosphate to see their ratio.",
-  "ratioBreakdown": "PO₄ {po4} · NO₃ {no3}",
-  "@ratioBreakdown": { "placeholders": { "po4": {}, "no3": {} } },
+  "ratioPo4No3Label": "PO₄ : NO₃",
+  "ratioPo4No3Title": "PO₄ : NO₃ ratio",
+  "ratioMgCaLabel": "Mg : Ca",
+  "ratioMgCaTitle": "Mg : Ca ratio",
+  "ratioNoData": "Record both parameters to see their ratio.",
+
+  "dashboardSection": "Dashboard",
+  "showRatioPo4No3": "Show PO₄ : NO₃ ratio",
+  "showRatioMgCa": "Show Mg : Ca ratio",
 
   "waterChanges": "Water changes",
   "recordWaterChange": "Record water change",
@@ -135,6 +139,10 @@
   "@gramsSuffix": { "placeholders": { "value": {} } },
   "deleteCarbonChangeTitle": "Delete carbon change?",
   "deleteCarbonChangeBody": "This permanently deletes this carbon change.",
+  "equipmentCleaning": "Equipment cleaning",
+  "recordEquipmentCleaning": "Record equipment cleaning",
+  "deleteEquipmentCleaningTitle": "Delete equipment cleaning?",
+  "deleteEquipmentCleaningBody": "This permanently deletes this equipment cleaning.",
 
   "unitsSection": "Units",
   "toolsSection": "Tools",

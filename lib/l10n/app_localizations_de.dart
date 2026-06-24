@@ -304,19 +304,29 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteAllTogether => 'Alle zusammen';
 
   @override
-  String get ratioLabel => 'PO₄ : NO₃';
+  String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override
-  String get ratioTitle => 'PO₄ : NO₃-Verhältnis';
+  String get ratioPo4No3Title => 'PO₄ : NO₃-Verhältnis';
+
+  @override
+  String get ratioMgCaLabel => 'Mg : Ca';
+
+  @override
+  String get ratioMgCaTitle => 'Mg : Ca-Verhältnis';
 
   @override
   String get ratioNoData =>
-      'Erfasse Nitrat und Phosphat, um ihr Verhältnis zu sehen.';
+      'Erfasse beide Parameter, um ihr Verhältnis zu sehen.';
 
   @override
-  String ratioBreakdown(Object po4, Object no3) {
-    return 'PO₄ $po4 · NO₃ $no3';
-  }
+  String get dashboardSection => 'Dashboard';
+
+  @override
+  String get showRatioPo4No3 => 'PO₄ : NO₃-Verhältnis anzeigen';
+
+  @override
+  String get showRatioMgCa => 'Mg : Ca-Verhältnis anzeigen';
 
   @override
   String get waterChanges => 'Wasserwechsel';
@@ -378,6 +388,19 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get deleteCarbonChangeBody =>
       'Dadurch wird dieser Kohlewechsel dauerhaft gelöscht.';
+
+  @override
+  String get equipmentCleaning => 'Gerätereinigung';
+
+  @override
+  String get recordEquipmentCleaning => 'Gerätereinigung erfassen';
+
+  @override
+  String get deleteEquipmentCleaningTitle => 'Gerätereinigung löschen?';
+
+  @override
+  String get deleteEquipmentCleaningBody =>
+      'Dadurch wird diese Gerätereinigung dauerhaft gelöscht.';
 
   @override
   String get unitsSection => 'Einheiten';

@@ -76,11 +76,11 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `parameter_catalog.dart` | `kReefParameters` — the master list (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP, K, Sr, I) with default units, plus `kParameterByKey` lookup and `formatParamValue`. |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
-| `ratio.dart` | PO₄ : NO₃ ratio math (see Features). |
+| `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. |
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 4**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 5**
 
 | Table | Key columns |
 |-------|-------------|
@@ -89,6 +89,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `Readings` | id, tankId (FK cascade), paramKey, value (canonical), takenAt, note? |
 | `WaterChanges` | id, tankId (FK cascade), changedAt, amountLiters?, note? |
 | `CarbonChanges` | id, tankId (FK cascade), changedAt, grams?, note? |
+| `EquipmentCleanings` | id, tankId (FK cascade), cleanedAt, note? |
 | `Settings` | key (PK), value? — generic kv store |
 
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
@@ -96,10 +97,11 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 **Migrations** (`MigrationStrategy`): v2 added `Tanks.startDate` via `addColumn`;
 v3 added the `WaterChanges` table via `createTable`; v4 added `WaterChanges.note`
-(`addColumn`) and the `CarbonChanges` table (`createTable`). Foreign keys are
-enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you add/change a
-table or column you must bump `schemaVersion` and add the matching migration**,
-then run `dart run build_runner build`.
+(`addColumn`) and the `CarbonChanges` table (`createTable`); v5 added the
+`EquipmentCleanings` table (`createTable`, guarded by `_tableExists`). Foreign
+keys are enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
+add/change a table or column you must bump `schemaVersion` and add the matching
+migration**, then run `dart run build_runner build`.
 
 > ⚠️ **`createTable`/`createAll` build from the _current_ table definition, not
 > the historical one.** So when a user upgrades across several versions at once,
@@ -123,8 +125,8 @@ Notable DB behavior:
 JSON document, `format: "reeftracker-backup"`, `version` (`kBackupVersion = 1`).
 DateTimes serialized as epoch millis. `encodeBackup` dumps every table;
 `decodeBackup` validates the format/version guard and is **forward-tolerant**
-(older backups without the `waterChanges` / `carbonChanges` keys decode to empty
-lists).
+(older backups without the `waterChanges` / `carbonChanges` /
+`equipmentCleanings` keys decode to empty lists).
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
 **replaces the entire database in one transaction**, preserving primary keys so
@@ -138,7 +140,8 @@ All app state is Riverpod providers over the singleton `dbProvider`:
   (resolves id → tank, falls back to first tank).
 - `trackedParametersProvider`, `tankReadingsProvider` (newest-first),
   `paramReadingsProvider(paramKey)` family (oldest-first, chart-friendly),
-  `waterChangesProvider`, `carbonChangesProvider` (both newest-first).
+  `waterChangesProvider`, `carbonChangesProvider`, `equipmentCleaningsProvider`
+  (all newest-first).
 - Unit prefs: `tempUnitProvider`, `salinityUnitProvider`, `volumeUnitProvider`,
   combined `unitPrefsProvider`.
 - `localeCodeProvider` / `localeProvider` (null = follow system).
@@ -154,7 +157,7 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 | `/parameters`, `/parameters/:id/edit` | Manage tracked parameters & zone bounds |
 | `/add-reading` | Log a batch of readings |
 | `/history/:paramKey` | Single-parameter history graph |
-| `/ratio` | PO₄ : NO₃ ratio history graph |
+| `/ratio/:type` | Ratio history graph (`type` = `po4no3` or `mgca`) |
 | `/actions` | Combined action log (water changes + carbon changes) |
 | `/settings` | Units, language, backup/restore |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
@@ -170,8 +173,11 @@ All app state is Riverpod providers over the singleton `dbProvider`:
   value **colored by its zone**, the display unit, a trend `_ChangeIndicator`
   (up/down/flat + delta vs. previous reading), and a relative timestamp.
   Tapping a tile opens that parameter's history.
-- Optional `_RatioCard` banner at the top showing the latest PO₄ : NO₃ ratio
-  (only when both NO₃ and PO₄ have readings); tap opens `/ratio`.
+- Optional `_RatioCard` banner(s) at the top, one per `RatioKind` (PO₄ : NO₃ and
+  Mg : Ca). A card shows only when its ratio is enabled in Settings **and** both
+  of its parameters have readings; tap opens `/ratio/<kind>`. Visibility toggles
+  are persisted in Settings (`show_ratio_po4_no3` / `show_ratio_mg_ca`, default
+  on; `showRatioPo4No3Provider` / `showRatioMgCaProvider`).
 - Empty states: `_NoTanksView` (welcome + add aquarium) and `_NoParamsView`.
 
 ### History graph (`history/history_screen.dart`)
@@ -181,17 +187,22 @@ Per-parameter `fl_chart` line chart with **zone bands** drawn as
 selector, and water-change markers (see below). Values are presented in the user's
 units while bounds/zones stay canonical.
 
-### PO₄ : NO₃ ratio (`domain/ratio.dart` + `features/ratio/ratio_screen.dart`)
+### Parameter ratios (`domain/ratio.dart` + `features/ratio/ratio_screen.dart`)
 
-Reef keepers target a phosphate-to-nitrate balance.
-- `latestRatio(...)` → the current ratio from the newest NO₃ and PO₄ (null if
-  either missing or NO₃ = 0).
-- `computeRatioSeries(...)` builds a time series: at each timestamp where either
-  parameter was measured, the most recent value of the *other* is carried
-  forward, so a point exists whenever both have ≥1 reading.
-- Displayed in the conventional reef form `1 : N` (N = NO₃/PO₄) via
-  `formatRatioOneToN`; the chart plots N. `formatRatio`/`formatRatioN` scale
-  precision to magnitude.
+Generic over a `RatioKind` enum (each carries numerator/denominator param keys,
+display symbols, and a `RatioDisplay` form). Current kinds: `po4no3` (PO₄ : NO₃,
+shown as `1 : N`) and `mgca` (Mg : Ca, shown as `N : 1`).
+- `latestRatio(numerator, denominator)` → current ratio (= numerator/denominator)
+  from the newest reading of each (null if either missing or denominator = 0).
+- `computeRatioSeries(numerator, denominator)` builds a time series: at each
+  timestamp where either parameter was measured, the most recent value of the
+  *other* is carried forward, so a point exists whenever both have ≥1 reading.
+- `formatRatioValue(kind, ratio)` renders per the kind's `RatioDisplay`;
+  `ratioChartY(kind, ratio)` maps a ratio to its plotted Y (PO₄ : NO₃ plots the
+  inverse N). `ratioBreakdown` shows the raw inputs. `formatRatio`/`formatRatioN`
+  scale precision to magnitude. Localized labels/titles via `ratioCardLabel` /
+  `ratioScreenTitle` in `l10n_helpers.dart`. The single `RatioScreen` renders any
+  kind. Adding a ratio = add a `RatioKind` value + its ARB label/title keys.
 
 ### Actions log (`features/actions/`)
 
@@ -199,15 +210,18 @@ A single combined log of tank maintenance actions for the active tank, newest
 first.
 
 - `actions_screen.dart` — merges `waterChangesProvider` + `carbonChangesProvider`
-  into one sorted list (`_Entry` sealed type: `_WaterEntry` / `_CarbonEntry`).
-  Each row: type icon, type name, value (litres in the display volume unit, or
-  grams), optional note, timestamp; swipe-to-delete and an edit button. The FAB
-  opens a bottom sheet to choose which action to add. A shared `_ActionDialog`
-  (date/time picker + optional numeric value with a unit suffix + optional note)
-  drives both add and edit for either type.
+  + `equipmentCleaningsProvider` into one sorted list (`_Entry` sealed type:
+  `_WaterEntry` / `_CarbonEntry` / `_EquipmentEntry`). Each row: type icon, type
+  name, value (litres in the display volume unit, or grams; none for equipment
+  cleaning), optional note, timestamp; swipe-to-delete and an edit button. The
+  FAB opens a bottom sheet to choose which action to add. A shared
+  `_ActionDialog` (date/time picker + **optional** numeric value with a unit
+  suffix + optional note) drives both add and edit for every type; when its
+  `valueLabel` is null the numeric field is hidden (equipment cleaning).
   - **Water change**: optional litres (converted to/from the display volume
     unit) + note (e.g. salt brand).
   - **Carbon change**: optional weight in grams + note (e.g. brand).
+  - **Equipment cleaning**: date/time + optional note only (e.g. which gear).
 - `water_change_markers.dart` — `waterChangeLines(...)` builds dashed
   `VerticalLine`s rendered on **every** time-series graph (history and ratio) via
   `extraLinesData`, so water changes line up visually with parameter movements.

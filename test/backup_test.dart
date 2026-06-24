@@ -98,6 +98,20 @@ void main() {
         note: null,
       ),
     ];
+    final equipmentCleanings = [
+      EquipmentCleaning(
+        id: 40,
+        tankId: 1,
+        cleanedAt: DateTime.fromMillisecondsSinceEpoch(1700007000000),
+        note: 'Cleaned skimmer',
+      ),
+      EquipmentCleaning(
+        id: 41,
+        tankId: 2,
+        cleanedAt: DateTime.fromMillisecondsSinceEpoch(1700008000000),
+        note: null,
+      ),
+    ];
     final settings = [
       const Setting(key: 'temp_unit', value: 'fahrenheit'),
       const Setting(key: 'active_tank_id', value: '1'),
@@ -112,6 +126,7 @@ void main() {
         readings: readings,
         waterChanges: waterChanges,
         carbonChanges: carbonChanges,
+        equipmentCleanings: equipmentCleanings,
         settings: settings,
       );
       final data = decodeBackup(json);
@@ -160,13 +175,20 @@ void main() {
       expect(data.carbonChanges[1].grams.value, isNull);
       expect(data.carbonChanges[1].note.value, isNull);
 
+      final e0 = data.equipmentCleanings[0];
+      expect(e0.id.value, 40);
+      expect(e0.tankId.value, 1);
+      expect(e0.cleanedAt.value, equipmentCleanings[0].cleanedAt);
+      expect(e0.note.value, 'Cleaned skimmer');
+      expect(data.equipmentCleanings[1].note.value, isNull);
+
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
       expect(data.settings[0].value.value, 'fahrenheit');
       expect(data.settings[2].value.value, isNull);
     });
 
-    test('tolerates older backups without water/carbon-change sections', () {
+    test('tolerates older backups without later action sections', () {
       final json = encodeBackup(
         schemaVersion: 2,
         tanks: tanks,
@@ -174,15 +196,19 @@ void main() {
         readings: readings,
         waterChanges: waterChanges,
         carbonChanges: carbonChanges,
+        equipmentCleanings: equipmentCleanings,
         settings: settings,
       )
           .replaceFirst(
               RegExp(r',\s*"waterChanges": \[.*?\]', dotAll: true), '')
           .replaceFirst(
-              RegExp(r',\s*"carbonChanges": \[.*?\]', dotAll: true), '');
+              RegExp(r',\s*"carbonChanges": \[.*?\]', dotAll: true), '')
+          .replaceFirst(
+              RegExp(r',\s*"equipmentCleanings": \[.*?\]', dotAll: true), '');
       final data = decodeBackup(json);
       expect(data.waterChanges, isEmpty);
       expect(data.carbonChanges, isEmpty);
+      expect(data.equipmentCleanings, isEmpty);
       expect(data.readings.length, 2);
     });
 
@@ -203,6 +229,7 @@ void main() {
         readings: const [],
         waterChanges: const [],
         carbonChanges: const [],
+        equipmentCleanings: const [],
         settings: const [],
       ).replaceFirst('"version": 1', '"version": 999');
       expect(

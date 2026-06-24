@@ -92,10 +92,15 @@
   "deleteOnlyThis": "Только это значение",
   "deleteAllTogether": "Все вместе",
 
-  "ratioLabel": "PO₄ : NO₃",
-  "ratioTitle": "Соотношение PO₄ : NO₃",
-  "ratioNoData": "Запишите нитраты и фосфаты, чтобы увидеть их соотношение.",
-  "ratioBreakdown": "PO₄ {po4} · NO₃ {no3}",
+  "ratioPo4No3Label": "PO₄ : NO₃",
+  "ratioPo4No3Title": "Соотношение PO₄ : NO₃",
+  "ratioMgCaLabel": "Mg : Ca",
+  "ratioMgCaTitle": "Соотношение Mg : Ca",
+  "ratioNoData": "Запишите оба параметра, чтобы увидеть их соотношение.",
+
+  "dashboardSection": "Панель",
+  "showRatioPo4No3": "Показывать соотношение PO₄ : NO₃",
+  "showRatioMgCa": "Показывать соотношение Mg : Ca",
 
   "waterChanges": "Подмены воды",
   "recordWaterChange": "Записать подмену воды",
@@ -117,6 +122,10 @@
   "gramsSuffix": "{value} г",
   "deleteCarbonChangeTitle": "Удалить замену угля?",
   "deleteCarbonChangeBody": "Это безвозвратно удалит эту замену угля.",
+  "equipmentCleaning": "Чистка оборудования",
+  "recordEquipmentCleaning": "Записать чистку оборудования",
+  "deleteEquipmentCleaningTitle": "Удалить чистку оборудования?",
+  "deleteEquipmentCleaningBody": "Это безвозвратно удалит эту чистку оборудования.",
 
   "unitsSection": "Единицы",
   "toolsSection": "Инструменты",

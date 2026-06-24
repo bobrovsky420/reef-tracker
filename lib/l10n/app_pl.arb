@@ -92,10 +92,15 @@
   "deleteOnlyThis": "Tylko tę wartość",
   "deleteAllTogether": "Wszystkie razem",
 
-  "ratioLabel": "PO₄ : NO₃",
-  "ratioTitle": "Stosunek PO₄ : NO₃",
-  "ratioNoData": "Zapisz azotany i fosforany, aby zobaczyć ich stosunek.",
-  "ratioBreakdown": "PO₄ {po4} · NO₃ {no3}",
+  "ratioPo4No3Label": "PO₄ : NO₃",
+  "ratioPo4No3Title": "Stosunek PO₄ : NO₃",
+  "ratioMgCaLabel": "Mg : Ca",
+  "ratioMgCaTitle": "Stosunek Mg : Ca",
+  "ratioNoData": "Zapisz oba parametry, aby zobaczyć ich stosunek.",
+
+  "dashboardSection": "Pulpit",
+  "showRatioPo4No3": "Pokaż stosunek PO₄ : NO₃",
+  "showRatioMgCa": "Pokaż stosunek Mg : Ca",
 
   "waterChanges": "Podmiany wody",
   "recordWaterChange": "Zapisz podmianę wody",
@@ -117,6 +122,10 @@
   "gramsSuffix": "{value} g",
   "deleteCarbonChangeTitle": "Usunąć wymianę węgla?",
   "deleteCarbonChangeBody": "Spowoduje to trwałe usunięcie tej wymiany węgla.",
+  "equipmentCleaning": "Czyszczenie sprzętu",
+  "recordEquipmentCleaning": "Zapisz czyszczenie sprzętu",
+  "deleteEquipmentCleaningTitle": "Usunąć czyszczenie sprzętu?",
+  "deleteEquipmentCleaningBody": "Spowoduje to trwałe usunięcie tego czyszczenia sprzętu.",
 
   "unitsSection": "Jednostki",
   "toolsSection": "Narzędzia",

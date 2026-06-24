@@ -87,6 +87,18 @@ class CarbonChanges extends Table {
   TextColumn get note => text().nullable()();
 }
 
+/// A logged equipment cleaning for a tank (date/time + optional note, e.g.
+/// which piece of equipment was cleaned).
+class EquipmentCleanings extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+  DateTimeColumn get cleanedAt => dateTime()();
+
+  /// Free-text note (e.g. the equipment cleaned). Optional.
+  TextColumn get note => text().nullable()();
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -104,13 +116,14 @@ const _kActiveTankKey = 'active_tank_id';
   Readings,
   WaterChanges,
   CarbonChanges,
+  EquipmentCleanings,
   Settings
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -133,6 +146,11 @@ class AppDatabase extends _$AppDatabase {
             }
             if (!await _tableExists('carbon_changes')) {
               await m.createTable(carbonChanges);
+            }
+          }
+          if (from < 5) {
+            if (!await _tableExists('equipment_cleanings')) {
+              await m.createTable(equipmentCleanings);
             }
           }
         },
@@ -423,6 +441,35 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteCarbonChange(int id) =>
       (delete(carbonChanges)..where((c) => c.id.equals(id))).go();
 
+  // --- Equipment cleanings -------------------------------------------------
+
+  /// Equipment cleanings for a tank, newest first.
+  Stream<List<EquipmentCleaning>> watchEquipmentCleanings(int tankId) =>
+      (select(equipmentCleanings)
+            ..where((c) => c.tankId.equals(tankId))
+            ..orderBy([
+              (c) => OrderingTerm(
+                  expression: c.cleanedAt, mode: OrderingMode.desc)
+            ]))
+          .watch();
+
+  Future<void> insertEquipmentCleaning({
+    required int tankId,
+    required DateTime cleanedAt,
+    String? note,
+  }) =>
+      into(equipmentCleanings).insert(EquipmentCleaningsCompanion.insert(
+        tankId: tankId,
+        cleanedAt: cleanedAt,
+        note: Value(note),
+      ));
+
+  Future<void> updateEquipmentCleaning(EquipmentCleaning cleaning) =>
+      update(equipmentCleanings).replace(cleaning);
+
+  Future<void> deleteEquipmentCleaning(int id) =>
+      (delete(equipmentCleanings)..where((c) => c.id.equals(id))).go();
+
   // --- Settings ------------------------------------------------------------
 
   Future<void> setActiveTank(int? tankId) =>
@@ -473,6 +520,10 @@ class AppDatabase extends _$AppDatabase {
   Future<List<CarbonChange>> getAllCarbonChanges() =>
       select(carbonChanges).get();
 
+  /// Every equipment cleaning, across all tanks.
+  Future<List<EquipmentCleaning>> getAllEquipmentCleanings() =>
+      select(equipmentCleanings).get();
+
   /// Every settings key/value pair.
   Future<List<Setting>> getAllSettings() => select(settings).get();
 
@@ -485,6 +536,7 @@ class AppDatabase extends _$AppDatabase {
     required List<ReadingsCompanion> readingRows,
     required List<WaterChangesCompanion> waterChangeRows,
     required List<CarbonChangesCompanion> carbonChangeRows,
+    required List<EquipmentCleaningsCompanion> equipmentCleaningRows,
     required List<SettingsCompanion> settingRows,
   }) async {
     await transaction(() async {
@@ -492,6 +544,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(readings).go();
       await delete(waterChanges).go();
       await delete(carbonChanges).go();
+      await delete(equipmentCleanings).go();
       await delete(trackedParameters).go();
       await delete(settings).go();
       await delete(tanks).go();
@@ -502,6 +555,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(readings, readingRows);
         b.insertAll(waterChanges, waterChangeRows);
         b.insertAll(carbonChanges, carbonChangeRows);
+        b.insertAll(equipmentCleanings, equipmentCleaningRows);
         b.insertAll(settings, settingRows);
       });
     });

@@ -608,29 +608,53 @@ abstract class AppLocalizations {
   /// **'All together'**
   String get deleteAllTogether;
 
-  /// No description provided for @ratioLabel.
+  /// No description provided for @ratioPo4No3Label.
   ///
   /// In en, this message translates to:
   /// **'PO₄ : NO₃'**
-  String get ratioLabel;
+  String get ratioPo4No3Label;
 
-  /// No description provided for @ratioTitle.
+  /// No description provided for @ratioPo4No3Title.
   ///
   /// In en, this message translates to:
   /// **'PO₄ : NO₃ ratio'**
-  String get ratioTitle;
+  String get ratioPo4No3Title;
+
+  /// No description provided for @ratioMgCaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mg : Ca'**
+  String get ratioMgCaLabel;
+
+  /// No description provided for @ratioMgCaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mg : Ca ratio'**
+  String get ratioMgCaTitle;
 
   /// No description provided for @ratioNoData.
   ///
   /// In en, this message translates to:
-  /// **'Record both nitrate and phosphate to see their ratio.'**
+  /// **'Record both parameters to see their ratio.'**
   String get ratioNoData;
 
-  /// No description provided for @ratioBreakdown.
+  /// No description provided for @dashboardSection.
   ///
   /// In en, this message translates to:
-  /// **'PO₄ {po4} · NO₃ {no3}'**
-  String ratioBreakdown(Object po4, Object no3);
+  /// **'Dashboard'**
+  String get dashboardSection;
+
+  /// No description provided for @showRatioPo4No3.
+  ///
+  /// In en, this message translates to:
+  /// **'Show PO₄ : NO₃ ratio'**
+  String get showRatioPo4No3;
+
+  /// No description provided for @showRatioMgCa.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Mg : Ca ratio'**
+  String get showRatioMgCa;
 
   /// No description provided for @waterChanges.
   ///
@@ -745,6 +769,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This permanently deletes this carbon change.'**
   String get deleteCarbonChangeBody;
+
+  /// No description provided for @equipmentCleaning.
+  ///
+  /// In en, this message translates to:
+  /// **'Equipment cleaning'**
+  String get equipmentCleaning;
+
+  /// No description provided for @recordEquipmentCleaning.
+  ///
+  /// In en, this message translates to:
+  /// **'Record equipment cleaning'**
+  String get recordEquipmentCleaning;
+
+  /// No description provided for @deleteEquipmentCleaningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete equipment cleaning?'**
+  String get deleteEquipmentCleaningTitle;
+
+  /// No description provided for @deleteEquipmentCleaningBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes this equipment cleaning.'**
+  String get deleteEquipmentCleaningBody;
 
   /// No description provided for @unitsSection.
   ///

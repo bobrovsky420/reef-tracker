@@ -84,11 +84,6 @@ class _DashboardBody extends ConsumerWidget {
           (byParam[r.paramKey] ??= []).add(r); // already newest-first
         }
 
-        final ratio = latestRatio(
-          byParam[kNitrateKey] ?? const [],
-          byParam[kPhosphateKey] ?? const [],
-        );
-
         final grid = GridView.builder(
           padding: const EdgeInsets.all(12),
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -106,10 +101,25 @@ class _DashboardBody extends ConsumerWidget {
           },
         );
 
-        if (ratio == null) return grid;
+        // Ratio cards (above the grid), each shown only when enabled in
+        // settings and both of its parameters have readings.
+        final shown = {
+          RatioKind.po4no3: ref.watch(showRatioPo4No3Provider).value ?? true,
+          RatioKind.mgca: ref.watch(showRatioMgCaProvider).value ?? true,
+        };
+        final ratioCards = <Widget>[
+          for (final kind in RatioKind.values)
+            if (shown[kind] ?? true)
+              if (latestRatio(byParam[kind.numeratorKey] ?? const [],
+                      byParam[kind.denominatorKey] ?? const [])
+                  case final RatioPoint r)
+                _RatioCard(kind: kind, ratio: r),
+        ];
+
+        if (ratioCards.isEmpty) return grid;
         return Column(
           children: [
-            _RatioCard(ratio: ratio),
+            ...ratioCards,
             Expanded(child: grid),
           ],
         );
@@ -118,11 +128,12 @@ class _DashboardBody extends ConsumerWidget {
   }
 }
 
-/// Banner card on the dashboard showing the latest PO₄ : NO₃ ratio. Tapping it
-/// opens the ratio history graph.
+/// Banner card on the dashboard showing the latest value of a [RatioKind].
+/// Tapping it opens that ratio's history graph.
 class _RatioCard extends StatelessWidget {
-  const _RatioCard({required this.ratio});
+  const _RatioCard({required this.kind, required this.ratio});
 
+  final RatioKind kind;
   final RatioPoint ratio;
 
   @override
@@ -134,7 +145,7 @@ class _RatioCard extends StatelessWidget {
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => context.push('/ratio'),
+          onTap: () => context.push('/ratio/${kind.name}'),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -143,21 +154,19 @@ class _RatioCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l.ratioLabel,
+                      Text(l.ratioCardLabel(kind),
                           style: const TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 15)),
                       const SizedBox(height: 4),
                       Text(
-                        l.ratioBreakdown(
-                            formatRatio(ratio.phosphate),
-                            formatRatio(ratio.nitrate)),
+                        ratioBreakdown(kind, ratio),
                         style: TextStyle(fontSize: 12, color: hint),
                       ),
                     ],
                   ),
                 ),
                 Text(
-                  formatRatioOneToN(ratio.ratio),
+                  formatRatioValue(kind, ratio.ratio),
                   style: const TextStyle(
                       fontSize: 28, fontWeight: FontWeight.bold),
                 ),
