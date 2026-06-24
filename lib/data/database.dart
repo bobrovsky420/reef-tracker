@@ -278,6 +278,20 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteReading(int id) =>
       (delete(readings)..where((r) => r.id.equals(id))).go();
 
+  /// Readings saved together with the same timestamp for a tank (i.e. entered
+  /// in one go on the add-reading screen), including the one being inspected.
+  Future<List<Reading>> readingsAt(int tankId, DateTime takenAt) =>
+      (select(readings)
+            ..where((r) => r.tankId.equals(tankId) & r.takenAt.equals(takenAt)))
+          .get();
+
+  /// Deletes every reading saved together at [takenAt] for [tankId].
+  /// Returns the number of rows removed.
+  Future<int> deleteReadingsAt(int tankId, DateTime takenAt) =>
+      (delete(readings)
+            ..where((r) => r.tankId.equals(tankId) & r.takenAt.equals(takenAt)))
+          .go();
+
   // --- Settings ------------------------------------------------------------
 
   Future<void> setActiveTank(int? tankId) =>

@@ -98,6 +98,13 @@
   "rangeAll": "All",
   "noReadingsInRange": "No readings in this range.",
   "editValue": "Edit value",
+  "deleteMeasurementTitle": "Delete measurement?",
+  "deleteMeasurementBody": "This permanently deletes this value.",
+  "deleteTogetherTitle": "Delete measurement",
+  "deleteTogetherBody": "This value was entered together with {count} other measurement(s). Delete only this value, or all values entered together?",
+  "@deleteTogetherBody": { "placeholders": { "count": { "type": "int" } } },
+  "deleteOnlyThis": "Only this value",
+  "deleteAllTogether": "All together",
 
   "unitsSection": "Units",
   "toolsSection": "Tools",

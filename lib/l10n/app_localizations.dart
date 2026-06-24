@@ -566,6 +566,42 @@ abstract class AppLocalizations {
   /// **'Edit value'**
   String get editValue;
 
+  /// No description provided for @deleteMeasurementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete measurement?'**
+  String get deleteMeasurementTitle;
+
+  /// No description provided for @deleteMeasurementBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes this value.'**
+  String get deleteMeasurementBody;
+
+  /// No description provided for @deleteTogetherTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete measurement'**
+  String get deleteTogetherTitle;
+
+  /// No description provided for @deleteTogetherBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This value was entered together with {count} other measurement(s). Delete only this value, or all values entered together?'**
+  String deleteTogetherBody(int count);
+
+  /// No description provided for @deleteOnlyThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Only this value'**
+  String get deleteOnlyThis;
+
+  /// No description provided for @deleteAllTogether.
+  ///
+  /// In en, this message translates to:
+  /// **'All together'**
+  String get deleteAllTogether;
+
   /// No description provided for @unitsSection.
   ///
   /// In en, this message translates to:

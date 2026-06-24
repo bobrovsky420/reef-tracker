@@ -84,6 +84,12 @@
   "rangeAll": "Vše",
   "noReadingsInRange": "V tomto rozsahu nejsou žádná měření.",
   "editValue": "Upravit hodnotu",
+  "deleteMeasurementTitle": "Smazat měření?",
+  "deleteMeasurementBody": "Tímto trvale smažete tuto hodnotu.",
+  "deleteTogetherTitle": "Smazat měření",
+  "deleteTogetherBody": "Tato hodnota byla zadána společně s {count} dalšími měřeními. Smazat pouze tuto hodnotu, nebo všechny hodnoty zadané společně?",
+  "deleteOnlyThis": "Pouze tuto hodnotu",
+  "deleteAllTogether": "Vše společně",
 
   "unitsSection": "Jednotky",
   "toolsSection": "Nástroje",

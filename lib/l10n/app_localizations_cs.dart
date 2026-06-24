@@ -278,6 +278,26 @@ class AppLocalizationsCs extends AppLocalizations {
   String get editValue => 'Upravit hodnotu';
 
   @override
+  String get deleteMeasurementTitle => 'Smazat měření?';
+
+  @override
+  String get deleteMeasurementBody => 'Tímto trvale smažete tuto hodnotu.';
+
+  @override
+  String get deleteTogetherTitle => 'Smazat měření';
+
+  @override
+  String deleteTogetherBody(int count) {
+    return 'Tato hodnota byla zadána společně s $count dalšími měřeními. Smazat pouze tuto hodnotu, nebo všechny hodnoty zadané společně?';
+  }
+
+  @override
+  String get deleteOnlyThis => 'Pouze tuto hodnotu';
+
+  @override
+  String get deleteAllTogether => 'Vše společně';
+
+  @override
   String get unitsSection => 'Jednotky';
 
   @override

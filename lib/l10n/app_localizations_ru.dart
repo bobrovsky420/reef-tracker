@@ -278,6 +278,27 @@ class AppLocalizationsRu extends AppLocalizations {
   String get editValue => 'Изменить значение';
 
   @override
+  String get deleteMeasurementTitle => 'Удалить измерение?';
+
+  @override
+  String get deleteMeasurementBody =>
+      'Это безвозвратно удалит данное значение.';
+
+  @override
+  String get deleteTogetherTitle => 'Удалить измерение';
+
+  @override
+  String deleteTogetherBody(int count) {
+    return 'Это значение было введено вместе с ещё $count измерениями. Удалить только это значение или все значения, введённые вместе?';
+  }
+
+  @override
+  String get deleteOnlyThis => 'Только это значение';
+
+  @override
+  String get deleteAllTogether => 'Все вместе';
+
+  @override
   String get unitsSection => 'Единицы';
 
   @override

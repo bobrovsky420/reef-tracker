@@ -84,6 +84,12 @@
   "rangeAll": "Wszystko",
   "noReadingsInRange": "Brak pomiarów w tym zakresie.",
   "editValue": "Edytuj wartość",
+  "deleteMeasurementTitle": "Usunąć pomiar?",
+  "deleteMeasurementBody": "Spowoduje to trwałe usunięcie tej wartości.",
+  "deleteTogetherTitle": "Usuń pomiar",
+  "deleteTogetherBody": "Ta wartość została wprowadzona razem z {count} innymi pomiarami. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?",
+  "deleteOnlyThis": "Tylko tę wartość",
+  "deleteAllTogether": "Wszystkie razem",
 
   "unitsSection": "Jednostki",
   "toolsSection": "Narzędzia",

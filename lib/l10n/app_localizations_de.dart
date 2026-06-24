@@ -278,6 +278,27 @@ class AppLocalizationsDe extends AppLocalizations {
   String get editValue => 'Wert bearbeiten';
 
   @override
+  String get deleteMeasurementTitle => 'Messung löschen?';
+
+  @override
+  String get deleteMeasurementBody =>
+      'Dadurch wird dieser Wert dauerhaft gelöscht.';
+
+  @override
+  String get deleteTogetherTitle => 'Messung löschen';
+
+  @override
+  String deleteTogetherBody(int count) {
+    return 'Dieser Wert wurde zusammen mit $count weiteren Messungen erfasst. Nur diesen Wert oder alle zusammen erfassten Werte löschen?';
+  }
+
+  @override
+  String get deleteOnlyThis => 'Nur diesen Wert';
+
+  @override
+  String get deleteAllTogether => 'Alle zusammen';
+
+  @override
   String get unitsSection => 'Einheiten';
 
   @override

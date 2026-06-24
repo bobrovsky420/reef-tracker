@@ -84,6 +84,12 @@
   "rangeAll": "Все",
   "noReadingsInRange": "Нет измерений в этом диапазоне.",
   "editValue": "Изменить значение",
+  "deleteMeasurementTitle": "Удалить измерение?",
+  "deleteMeasurementBody": "Это безвозвратно удалит данное значение.",
+  "deleteTogetherTitle": "Удалить измерение",
+  "deleteTogetherBody": "Это значение было введено вместе с ещё {count} измерениями. Удалить только это значение или все значения, введённые вместе?",
+  "deleteOnlyThis": "Только это значение",
+  "deleteAllTogether": "Все вместе",
 
   "unitsSection": "Единицы",
   "toolsSection": "Инструменты",

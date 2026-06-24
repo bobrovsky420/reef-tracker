@@ -84,6 +84,12 @@
   "rangeAll": "Alle",
   "noReadingsInRange": "Keine Messungen in diesem Zeitraum.",
   "editValue": "Wert bearbeiten",
+  "deleteMeasurementTitle": "Messung löschen?",
+  "deleteMeasurementBody": "Dadurch wird dieser Wert dauerhaft gelöscht.",
+  "deleteTogetherTitle": "Messung löschen",
+  "deleteTogetherBody": "Dieser Wert wurde zusammen mit {count} weiteren Messungen erfasst. Nur diesen Wert oder alle zusammen erfassten Werte löschen?",
+  "deleteOnlyThis": "Nur diesen Wert",
+  "deleteAllTogether": "Alle zusammen",
 
   "unitsSection": "Einheiten",
   "toolsSection": "Werkzeuge",

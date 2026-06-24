@@ -136,10 +136,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: const Icon(Icons.delete, color: Colors.white),
           ),
-          confirmDismiss: (_) async {
-            await ref.read(dbProvider).deleteReading(r.id);
-            return true;
-          },
+          confirmDismiss: (_) => _confirmDelete(context, r),
           child: ListTile(
             leading: ZoneChip(bounds.classify(r.value), compact: true),
             title: Text('${pres.format(r.value)} ${pres.unitLabel}'),
@@ -189,7 +186,78 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       await ref.read(dbProvider).updateReading(r.copyWith(value: newValue));
     }
   }
+
+  /// Handles a swipe-to-delete. When the reading was saved together with other
+  /// measurements (same timestamp), asks whether to delete just this value or
+  /// the whole batch. Returns true if the swiped row should be dismissed.
+  Future<bool> _confirmDelete(BuildContext context, Reading r) async {
+    final l = AppLocalizations.of(context);
+    final db = ref.read(dbProvider);
+    final tank = ref.read(activeTankProvider);
+    if (tank == null) return false;
+
+    final siblings = await db.readingsAt(tank.id, r.takenAt);
+    final others = siblings.length - 1;
+    if (!context.mounted) return false;
+
+    if (others <= 0) {
+      // A standalone measurement: simple confirmation.
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l.deleteMeasurementTitle),
+          content: Text(l.deleteMeasurementBody),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(l.cancel)),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(l.delete)),
+          ],
+        ),
+      );
+      if (ok == true) {
+        await db.deleteReading(r.id);
+        return true;
+      }
+      return false;
+    }
+
+    // Saved together with other measurements: offer a choice.
+    final choice = await showDialog<_DeleteChoice>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.deleteTogetherTitle),
+        content: Text(l.deleteTogetherBody(others)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, _DeleteChoice.cancel),
+              child: Text(l.cancel)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, _DeleteChoice.one),
+              child: Text(l.deleteOnlyThis)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, _DeleteChoice.all),
+              child: Text(l.deleteAllTogether)),
+        ],
+      ),
+    );
+    switch (choice) {
+      case _DeleteChoice.one:
+        await db.deleteReading(r.id);
+        return true;
+      case _DeleteChoice.all:
+        await db.deleteReadingsAt(tank.id, r.takenAt);
+        return true;
+      case _DeleteChoice.cancel:
+      case null:
+        return false;
+    }
+  }
 }
+
+enum _DeleteChoice { one, all, cancel }
 
 class _Chart extends StatelessWidget {
   const _Chart(
