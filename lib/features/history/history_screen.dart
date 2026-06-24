@@ -36,6 +36,14 @@ String _rangeLabel(AppLocalizations l, _Range r) {
   }
 }
 
+/// Resolves a stored range label back to its [_Range], defaulting to month.
+_Range _rangeFromLabel(String? label) {
+  for (final r in _Range.values) {
+    if (r.label == label) return r;
+  }
+  return _Range.month;
+}
+
 /// Time-series history + readings list for one parameter of the active tank.
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key, required this.paramKey});
@@ -47,11 +55,10 @@ class HistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
-  _Range _range = _Range.month;
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final range = _rangeFromLabel(ref.watch(chartRangeProvider).value);
     final tracked = ref.watch(trackedParametersProvider).value ?? const [];
     final TrackedParameter? param = tracked
         .where((t) => t.paramKey == widget.paramKey)
@@ -71,16 +78,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (all) {
-          final cutoff = _range.days == null
+          final cutoff = range.days == null
               ? null
-              : DateTime.now().subtract(Duration(days: _range.days!));
+              : DateTime.now().subtract(Duration(days: range.days!));
           final data = cutoff == null
               ? all
               : all.where((r) => r.takenAt.isAfter(cutoff)).toList();
 
           return Column(
             children: [
-              _rangeSelector(),
+              _rangeSelector(range),
               Expanded(
                 child: data.isEmpty
                     ? Center(child: Text(l.noReadingsInRange))
@@ -106,7 +113,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     );
   }
 
-  Widget _rangeSelector() {
+  Widget _rangeSelector(_Range range) {
     final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(8),
@@ -115,8 +122,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           for (final r in _Range.values)
             ButtonSegment(value: r, label: Text(_rangeLabel(l, r))),
         ],
-        selected: {_range},
-        onSelectionChanged: (s) => setState(() => _range = s.first),
+        selected: {range},
+        // Persist the choice so it carries over to every graph and session.
+        onSelectionChanged: (s) =>
+            ref.read(dbProvider).setSetting(kChartRangeKey, s.first.label),
       ),
     );
   }
@@ -299,8 +308,18 @@ class _Chart extends StatelessWidget {
     minY -= pad;
     maxY += pad;
 
-    final minX = spots.first.x;
-    final maxX = spots.last.x;
+    final isSingle = spots.length == 1;
+    final double minX;
+    final double maxX;
+    if (isSingle) {
+      // Center a lone measurement instead of pinning it to the left edge.
+      const halfWindowMs = 12 * 60 * 60 * 1000; // 12h either side
+      minX = spots.first.x - halfWindowMs;
+      maxX = spots.first.x + halfWindowMs;
+    } else {
+      minX = spots.first.x;
+      maxX = spots.last.x;
+    }
     final spanMs = (maxX - minX).abs();
 
     return LineChart(
@@ -308,7 +327,7 @@ class _Chart extends StatelessWidget {
         minY: minY,
         maxY: maxY,
         minX: minX,
-        maxX: maxX == minX ? minX + 1 : maxX,
+        maxX: maxX,
         rangeAnnotations: RangeAnnotations(
           horizontalRangeAnnotations: _zoneBands(bounds, minY, maxY),
         ),
@@ -333,9 +352,26 @@ class _Chart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 28,
-              interval: maxX == minX ? null : spanMs / 3,
+              // For a single reading, emit exactly one centered label;
+              // otherwise label both ends plus well-spaced interior ticks.
+              minIncluded: !isSingle,
+              maxIncluded: !isSingle,
+              interval: isSingle ? spanMs : spanMs / 4,
               getTitlesWidget: (v, meta) {
-                final d = DateTime.fromMillisecondsSinceEpoch(v.toInt());
+                if (!isSingle) {
+                  // Drop interval ticks that crowd (and visually duplicate)
+                  // the fixed first/last date labels at the edges.
+                  final atEdge =
+                      (v - minX).abs() < 1 || (maxX - v).abs() < 1;
+                  if (!atEdge) {
+                    final gap = spanMs * 0.15;
+                    if ((v - minX) < gap || (maxX - v) < gap) {
+                      return const SizedBox.shrink();
+                    }
+                  }
+                }
+                final d = DateTime.fromMillisecondsSinceEpoch(
+                    isSingle ? spots.first.x.toInt() : v.toInt());
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(DateFormat.Md().format(d),

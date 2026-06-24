@@ -7,6 +7,7 @@ import '../domain/units.dart';
 const kTempUnitKey = 'temp_unit';
 const kSalinityUnitKey = 'salinity_unit';
 const kLocaleKey = 'locale';
+const kChartRangeKey = 'chart_range';
 
 /// The singleton app database.
 final dbProvider = Provider<AppDatabase>((ref) {
@@ -90,3 +91,10 @@ final localeProvider = Provider<Locale?>((ref) {
   final code = ref.watch(localeCodeProvider).value ?? 'system';
   return code == 'system' ? null : Locale(code);
 });
+
+/// The history-chart time range, stored as the range's label ('7d', '30d',
+/// '90d', 'All'). Shared across every parameter graph. Defaults to '30d'.
+final chartRangeProvider = StreamProvider<String>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kChartRangeKey)
+    .map((v) => v ?? '30d'));
