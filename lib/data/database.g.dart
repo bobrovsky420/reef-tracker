@@ -1466,8 +1466,23 @@ class $WaterChangesTable extends WaterChanges
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
   @override
-  List<GeneratedColumn> get $columns => [id, tankId, changedAt, amountLiters];
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tankId,
+    changedAt,
+    amountLiters,
+    note,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1508,6 +1523,12 @@ class $WaterChangesTable extends WaterChanges
         ),
       );
     }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
     return context;
   }
 
@@ -1533,6 +1554,10 @@ class $WaterChangesTable extends WaterChanges
         DriftSqlType.double,
         data['${effectivePrefix}amount_liters'],
       ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
     );
   }
 
@@ -1549,11 +1574,15 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
 
   /// Volume of water exchanged, in litres. Optional.
   final double? amountLiters;
+
+  /// Free-text note (e.g. salt brand). Optional.
+  final String? note;
   const WaterChange({
     required this.id,
     required this.tankId,
     required this.changedAt,
     this.amountLiters,
+    this.note,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1563,6 +1592,9 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
     map['changed_at'] = Variable<DateTime>(changedAt);
     if (!nullToAbsent || amountLiters != null) {
       map['amount_liters'] = Variable<double>(amountLiters);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
     }
     return map;
   }
@@ -1575,6 +1607,7 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
       amountLiters: amountLiters == null && nullToAbsent
           ? const Value.absent()
           : Value(amountLiters),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
     );
   }
 
@@ -1588,6 +1621,7 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
       tankId: serializer.fromJson<int>(json['tankId']),
       changedAt: serializer.fromJson<DateTime>(json['changedAt']),
       amountLiters: serializer.fromJson<double?>(json['amountLiters']),
+      note: serializer.fromJson<String?>(json['note']),
     );
   }
   @override
@@ -1598,6 +1632,7 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
       'tankId': serializer.toJson<int>(tankId),
       'changedAt': serializer.toJson<DateTime>(changedAt),
       'amountLiters': serializer.toJson<double?>(amountLiters),
+      'note': serializer.toJson<String?>(note),
     };
   }
 
@@ -1606,11 +1641,13 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
     int? tankId,
     DateTime? changedAt,
     Value<double?> amountLiters = const Value.absent(),
+    Value<String?> note = const Value.absent(),
   }) => WaterChange(
     id: id ?? this.id,
     tankId: tankId ?? this.tankId,
     changedAt: changedAt ?? this.changedAt,
     amountLiters: amountLiters.present ? amountLiters.value : this.amountLiters,
+    note: note.present ? note.value : this.note,
   );
   WaterChange copyWithCompanion(WaterChangesCompanion data) {
     return WaterChange(
@@ -1620,6 +1657,7 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
       amountLiters: data.amountLiters.present
           ? data.amountLiters.value
           : this.amountLiters,
+      note: data.note.present ? data.note.value : this.note,
     );
   }
 
@@ -1629,13 +1667,14 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
           ..write('id: $id, ')
           ..write('tankId: $tankId, ')
           ..write('changedAt: $changedAt, ')
-          ..write('amountLiters: $amountLiters')
+          ..write('amountLiters: $amountLiters, ')
+          ..write('note: $note')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, tankId, changedAt, amountLiters);
+  int get hashCode => Object.hash(id, tankId, changedAt, amountLiters, note);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1643,7 +1682,8 @@ class WaterChange extends DataClass implements Insertable<WaterChange> {
           other.id == this.id &&
           other.tankId == this.tankId &&
           other.changedAt == this.changedAt &&
-          other.amountLiters == this.amountLiters);
+          other.amountLiters == this.amountLiters &&
+          other.note == this.note);
 }
 
 class WaterChangesCompanion extends UpdateCompanion<WaterChange> {
@@ -1651,17 +1691,20 @@ class WaterChangesCompanion extends UpdateCompanion<WaterChange> {
   final Value<int> tankId;
   final Value<DateTime> changedAt;
   final Value<double?> amountLiters;
+  final Value<String?> note;
   const WaterChangesCompanion({
     this.id = const Value.absent(),
     this.tankId = const Value.absent(),
     this.changedAt = const Value.absent(),
     this.amountLiters = const Value.absent(),
+    this.note = const Value.absent(),
   });
   WaterChangesCompanion.insert({
     this.id = const Value.absent(),
     required int tankId,
     required DateTime changedAt,
     this.amountLiters = const Value.absent(),
+    this.note = const Value.absent(),
   }) : tankId = Value(tankId),
        changedAt = Value(changedAt);
   static Insertable<WaterChange> custom({
@@ -1669,12 +1712,14 @@ class WaterChangesCompanion extends UpdateCompanion<WaterChange> {
     Expression<int>? tankId,
     Expression<DateTime>? changedAt,
     Expression<double>? amountLiters,
+    Expression<String>? note,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (tankId != null) 'tank_id': tankId,
       if (changedAt != null) 'changed_at': changedAt,
       if (amountLiters != null) 'amount_liters': amountLiters,
+      if (note != null) 'note': note,
     });
   }
 
@@ -1683,12 +1728,14 @@ class WaterChangesCompanion extends UpdateCompanion<WaterChange> {
     Value<int>? tankId,
     Value<DateTime>? changedAt,
     Value<double?>? amountLiters,
+    Value<String?>? note,
   }) {
     return WaterChangesCompanion(
       id: id ?? this.id,
       tankId: tankId ?? this.tankId,
       changedAt: changedAt ?? this.changedAt,
       amountLiters: amountLiters ?? this.amountLiters,
+      note: note ?? this.note,
     );
   }
 
@@ -1707,6 +1754,9 @@ class WaterChangesCompanion extends UpdateCompanion<WaterChange> {
     if (amountLiters.present) {
       map['amount_liters'] = Variable<double>(amountLiters.value);
     }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
     return map;
   }
 
@@ -1716,7 +1766,355 @@ class WaterChangesCompanion extends UpdateCompanion<WaterChange> {
           ..write('id: $id, ')
           ..write('tankId: $tankId, ')
           ..write('changedAt: $changedAt, ')
-          ..write('amountLiters: $amountLiters')
+          ..write('amountLiters: $amountLiters, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CarbonChangesTable extends CarbonChanges
+    with TableInfo<$CarbonChangesTable, CarbonChange> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CarbonChangesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _changedAtMeta = const VerificationMeta(
+    'changedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> changedAt = GeneratedColumn<DateTime>(
+    'changed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _gramsMeta = const VerificationMeta('grams');
+  @override
+  late final GeneratedColumn<double> grams = GeneratedColumn<double>(
+    'grams',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, tankId, changedAt, grams, note];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'carbon_changes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CarbonChange> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('changed_at')) {
+      context.handle(
+        _changedAtMeta,
+        changedAt.isAcceptableOrUnknown(data['changed_at']!, _changedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_changedAtMeta);
+    }
+    if (data.containsKey('grams')) {
+      context.handle(
+        _gramsMeta,
+        grams.isAcceptableOrUnknown(data['grams']!, _gramsMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CarbonChange map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CarbonChange(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      changedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}changed_at'],
+      )!,
+      grams: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}grams'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+    );
+  }
+
+  @override
+  $CarbonChangesTable createAlias(String alias) {
+    return $CarbonChangesTable(attachedDatabase, alias);
+  }
+}
+
+class CarbonChange extends DataClass implements Insertable<CarbonChange> {
+  final int id;
+  final int tankId;
+  final DateTime changedAt;
+
+  /// Weight of carbon used, in grams. Optional.
+  final double? grams;
+
+  /// Free-text note (e.g. brand). Optional.
+  final String? note;
+  const CarbonChange({
+    required this.id,
+    required this.tankId,
+    required this.changedAt,
+    this.grams,
+    this.note,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tank_id'] = Variable<int>(tankId);
+    map['changed_at'] = Variable<DateTime>(changedAt);
+    if (!nullToAbsent || grams != null) {
+      map['grams'] = Variable<double>(grams);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    return map;
+  }
+
+  CarbonChangesCompanion toCompanion(bool nullToAbsent) {
+    return CarbonChangesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      changedAt: Value(changedAt),
+      grams: grams == null && nullToAbsent
+          ? const Value.absent()
+          : Value(grams),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+    );
+  }
+
+  factory CarbonChange.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CarbonChange(
+      id: serializer.fromJson<int>(json['id']),
+      tankId: serializer.fromJson<int>(json['tankId']),
+      changedAt: serializer.fromJson<DateTime>(json['changedAt']),
+      grams: serializer.fromJson<double?>(json['grams']),
+      note: serializer.fromJson<String?>(json['note']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tankId': serializer.toJson<int>(tankId),
+      'changedAt': serializer.toJson<DateTime>(changedAt),
+      'grams': serializer.toJson<double?>(grams),
+      'note': serializer.toJson<String?>(note),
+    };
+  }
+
+  CarbonChange copyWith({
+    int? id,
+    int? tankId,
+    DateTime? changedAt,
+    Value<double?> grams = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+  }) => CarbonChange(
+    id: id ?? this.id,
+    tankId: tankId ?? this.tankId,
+    changedAt: changedAt ?? this.changedAt,
+    grams: grams.present ? grams.value : this.grams,
+    note: note.present ? note.value : this.note,
+  );
+  CarbonChange copyWithCompanion(CarbonChangesCompanion data) {
+    return CarbonChange(
+      id: data.id.present ? data.id.value : this.id,
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      changedAt: data.changedAt.present ? data.changedAt.value : this.changedAt,
+      grams: data.grams.present ? data.grams.value : this.grams,
+      note: data.note.present ? data.note.value : this.note,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CarbonChange(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('changedAt: $changedAt, ')
+          ..write('grams: $grams, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, tankId, changedAt, grams, note);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CarbonChange &&
+          other.id == this.id &&
+          other.tankId == this.tankId &&
+          other.changedAt == this.changedAt &&
+          other.grams == this.grams &&
+          other.note == this.note);
+}
+
+class CarbonChangesCompanion extends UpdateCompanion<CarbonChange> {
+  final Value<int> id;
+  final Value<int> tankId;
+  final Value<DateTime> changedAt;
+  final Value<double?> grams;
+  final Value<String?> note;
+  const CarbonChangesCompanion({
+    this.id = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.changedAt = const Value.absent(),
+    this.grams = const Value.absent(),
+    this.note = const Value.absent(),
+  });
+  CarbonChangesCompanion.insert({
+    this.id = const Value.absent(),
+    required int tankId,
+    required DateTime changedAt,
+    this.grams = const Value.absent(),
+    this.note = const Value.absent(),
+  }) : tankId = Value(tankId),
+       changedAt = Value(changedAt);
+  static Insertable<CarbonChange> custom({
+    Expression<int>? id,
+    Expression<int>? tankId,
+    Expression<DateTime>? changedAt,
+    Expression<double>? grams,
+    Expression<String>? note,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tankId != null) 'tank_id': tankId,
+      if (changedAt != null) 'changed_at': changedAt,
+      if (grams != null) 'grams': grams,
+      if (note != null) 'note': note,
+    });
+  }
+
+  CarbonChangesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? tankId,
+    Value<DateTime>? changedAt,
+    Value<double?>? grams,
+    Value<String?>? note,
+  }) {
+    return CarbonChangesCompanion(
+      id: id ?? this.id,
+      tankId: tankId ?? this.tankId,
+      changedAt: changedAt ?? this.changedAt,
+      grams: grams ?? this.grams,
+      note: note ?? this.note,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (changedAt.present) {
+      map['changed_at'] = Variable<DateTime>(changedAt.value);
+    }
+    if (grams.present) {
+      map['grams'] = Variable<double>(grams.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CarbonChangesCompanion(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('changedAt: $changedAt, ')
+          ..write('grams: $grams, ')
+          ..write('note: $note')
           ..write(')'))
         .toString();
   }
@@ -1944,6 +2342,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $TrackedParametersTable(this);
   late final $ReadingsTable readings = $ReadingsTable(this);
   late final $WaterChangesTable waterChanges = $WaterChangesTable(this);
+  late final $CarbonChangesTable carbonChanges = $CarbonChangesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -1954,6 +2353,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     trackedParameters,
     readings,
     waterChanges,
+    carbonChanges,
     settings,
   ];
   @override
@@ -1978,6 +2378,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('water_changes', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('carbon_changes', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2058,6 +2465,24 @@ final class $$TanksTableReferences
     ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_waterChangesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$CarbonChangesTable, List<CarbonChange>>
+  _carbonChangesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.carbonChanges,
+    aliasName: 'tanks__id__carbon_changes__tank_id',
+  );
+
+  $$CarbonChangesTableProcessedTableManager get carbonChangesRefs {
+    final manager = $$CarbonChangesTableTableManager(
+      $_db,
+      $_db.carbonChanges,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_carbonChangesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2168,6 +2593,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$WaterChangesTableFilterComposer(
             $db: $db,
             $table: $db.waterChanges,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> carbonChangesRefs(
+    Expression<bool> Function($$CarbonChangesTableFilterComposer f) f,
+  ) {
+    final $$CarbonChangesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.carbonChanges,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CarbonChangesTableFilterComposer(
+            $db: $db,
+            $table: $db.carbonChanges,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2322,6 +2772,31 @@ class $$TanksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> carbonChangesRefs<T extends Object>(
+    Expression<T> Function($$CarbonChangesTableAnnotationComposer a) f,
+  ) {
+    final $$CarbonChangesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.carbonChanges,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CarbonChangesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.carbonChanges,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -2341,6 +2816,7 @@ class $$TanksTableTableManager
             bool trackedParametersRefs,
             bool readingsRefs,
             bool waterChangesRefs,
+            bool carbonChangesRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -2397,6 +2873,7 @@ class $$TanksTableTableManager
                 trackedParametersRefs = false,
                 readingsRefs = false,
                 waterChangesRefs = false,
+                carbonChangesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -2404,6 +2881,7 @@ class $$TanksTableTableManager
                     if (trackedParametersRefs) db.trackedParameters,
                     if (readingsRefs) db.readings,
                     if (waterChangesRefs) db.waterChanges,
+                    if (carbonChangesRefs) db.carbonChanges,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -2467,6 +2945,27 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (carbonChangesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          CarbonChange
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._carbonChangesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).carbonChangesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -2491,6 +2990,7 @@ typedef $$TanksTableProcessedTableManager =
         bool trackedParametersRefs,
         bool readingsRefs,
         bool waterChangesRefs,
+        bool carbonChangesRefs,
       })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
@@ -3253,6 +3753,7 @@ typedef $$WaterChangesTableCreateCompanionBuilder =
       required int tankId,
       required DateTime changedAt,
       Value<double?> amountLiters,
+      Value<String?> note,
     });
 typedef $$WaterChangesTableUpdateCompanionBuilder =
     WaterChangesCompanion Function({
@@ -3260,6 +3761,7 @@ typedef $$WaterChangesTableUpdateCompanionBuilder =
       Value<int> tankId,
       Value<DateTime> changedAt,
       Value<double?> amountLiters,
+      Value<String?> note,
     });
 
 final class $$WaterChangesTableReferences
@@ -3305,6 +3807,11 @@ class $$WaterChangesTableFilterComposer
 
   ColumnFilters<double> get amountLiters => $composableBuilder(
     column: $table.amountLiters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3356,6 +3863,11 @@ class $$WaterChangesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TanksTableOrderingComposer get tankId {
     final $$TanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3399,6 +3911,9 @@ class $$WaterChangesTableAnnotationComposer
     column: $table.amountLiters,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
 
   $$TanksTableAnnotationComposer get tankId {
     final $$TanksTableAnnotationComposer composer = $composerBuilder(
@@ -3456,11 +3971,13 @@ class $$WaterChangesTableTableManager
                 Value<int> tankId = const Value.absent(),
                 Value<DateTime> changedAt = const Value.absent(),
                 Value<double?> amountLiters = const Value.absent(),
+                Value<String?> note = const Value.absent(),
               }) => WaterChangesCompanion(
                 id: id,
                 tankId: tankId,
                 changedAt: changedAt,
                 amountLiters: amountLiters,
+                note: note,
               ),
           createCompanionCallback:
               ({
@@ -3468,11 +3985,13 @@ class $$WaterChangesTableTableManager
                 required int tankId,
                 required DateTime changedAt,
                 Value<double?> amountLiters = const Value.absent(),
+                Value<String?> note = const Value.absent(),
               }) => WaterChangesCompanion.insert(
                 id: id,
                 tankId: tankId,
                 changedAt: changedAt,
                 amountLiters: amountLiters,
+                note: note,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3539,6 +4058,321 @@ typedef $$WaterChangesTableProcessedTableManager =
       $$WaterChangesTableUpdateCompanionBuilder,
       (WaterChange, $$WaterChangesTableReferences),
       WaterChange,
+      PrefetchHooks Function({bool tankId})
+    >;
+typedef $$CarbonChangesTableCreateCompanionBuilder =
+    CarbonChangesCompanion Function({
+      Value<int> id,
+      required int tankId,
+      required DateTime changedAt,
+      Value<double?> grams,
+      Value<String?> note,
+    });
+typedef $$CarbonChangesTableUpdateCompanionBuilder =
+    CarbonChangesCompanion Function({
+      Value<int> id,
+      Value<int> tankId,
+      Value<DateTime> changedAt,
+      Value<double?> grams,
+      Value<String?> note,
+    });
+
+final class $$CarbonChangesTableReferences
+    extends BaseReferences<_$AppDatabase, $CarbonChangesTable, CarbonChange> {
+  $$CarbonChangesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('carbon_changes__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$CarbonChangesTableFilterComposer
+    extends Composer<_$AppDatabase, $CarbonChangesTable> {
+  $$CarbonChangesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get changedAt => $composableBuilder(
+    column: $table.changedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get grams => $composableBuilder(
+    column: $table.grams,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CarbonChangesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CarbonChangesTable> {
+  $$CarbonChangesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get changedAt => $composableBuilder(
+    column: $table.changedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get grams => $composableBuilder(
+    column: $table.grams,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CarbonChangesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CarbonChangesTable> {
+  $$CarbonChangesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get changedAt =>
+      $composableBuilder(column: $table.changedAt, builder: (column) => column);
+
+  GeneratedColumn<double> get grams =>
+      $composableBuilder(column: $table.grams, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CarbonChangesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CarbonChangesTable,
+          CarbonChange,
+          $$CarbonChangesTableFilterComposer,
+          $$CarbonChangesTableOrderingComposer,
+          $$CarbonChangesTableAnnotationComposer,
+          $$CarbonChangesTableCreateCompanionBuilder,
+          $$CarbonChangesTableUpdateCompanionBuilder,
+          (CarbonChange, $$CarbonChangesTableReferences),
+          CarbonChange,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$CarbonChangesTableTableManager(_$AppDatabase db, $CarbonChangesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CarbonChangesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CarbonChangesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CarbonChangesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> tankId = const Value.absent(),
+                Value<DateTime> changedAt = const Value.absent(),
+                Value<double?> grams = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+              }) => CarbonChangesCompanion(
+                id: id,
+                tankId: tankId,
+                changedAt: changedAt,
+                grams: grams,
+                note: note,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int tankId,
+                required DateTime changedAt,
+                Value<double?> grams = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+              }) => CarbonChangesCompanion.insert(
+                id: id,
+                tankId: tankId,
+                changedAt: changedAt,
+                grams: grams,
+                note: note,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CarbonChangesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable: $$CarbonChangesTableReferences
+                                    ._tankIdTable(db),
+                                referencedColumn: $$CarbonChangesTableReferences
+                                    ._tankIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CarbonChangesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CarbonChangesTable,
+      CarbonChange,
+      $$CarbonChangesTableFilterComposer,
+      $$CarbonChangesTableOrderingComposer,
+      $$CarbonChangesTableAnnotationComposer,
+      $$CarbonChangesTableCreateCompanionBuilder,
+      $$CarbonChangesTableUpdateCompanionBuilder,
+      (CarbonChange, $$CarbonChangesTableReferences),
+      CarbonChange,
       PrefetchHooks Function({bool tankId})
     >;
 typedef $$SettingsTableCreateCompanionBuilder =
@@ -3686,6 +4520,8 @@ class $AppDatabaseManager {
       $$ReadingsTableTableManager(_db, _db.readings);
   $$WaterChangesTableTableManager get waterChanges =>
       $$WaterChangesTableTableManager(_db, _db.waterChanges);
+  $$CarbonChangesTableTableManager get carbonChanges =>
+      $$CarbonChangesTableTableManager(_db, _db.carbonChanges);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

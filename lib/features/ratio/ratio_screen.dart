@@ -7,7 +7,7 @@ import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/ratio.dart';
 import '../../l10n/app_localizations.dart';
-import '../water_change/water_change_markers.dart';
+import '../actions/water_change_markers.dart';
 
 /// Time-series graph of the PO₄ : NO₃ ratio for the active tank.
 class RatioScreen extends ConsumerWidget {

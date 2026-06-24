@@ -342,6 +342,41 @@ class AppLocalizationsCs extends AppLocalizations {
   String get deleteWaterChangeBody => 'Tímto trvale smažete tuto výměnu vody.';
 
   @override
+  String get actions => 'Úkony';
+
+  @override
+  String get noActions => 'Zatím žádné úkony.';
+
+  @override
+  String get addAction => 'Přidat úkon';
+
+  @override
+  String get waterChange => 'Výměna vody';
+
+  @override
+  String get carbonChange => 'Výměna uhlí';
+
+  @override
+  String get recordCarbonChange => 'Zaznamenat výměnu uhlí';
+
+  @override
+  String get weightOptional => 'Hmotnost (volitelné)';
+
+  @override
+  String get weightNotRecorded => 'Hmotnost nezaznamenána';
+
+  @override
+  String gramsSuffix(Object value) {
+    return '$value g';
+  }
+
+  @override
+  String get deleteCarbonChangeTitle => 'Smazat výměnu uhlí?';
+
+  @override
+  String get deleteCarbonChangeBody => 'Tímto trvale smažete tuto výměnu uhlí.';
+
+  @override
   String get unitsSection => 'Jednotky';
 
   @override

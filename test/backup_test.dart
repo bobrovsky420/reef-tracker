@@ -72,12 +72,30 @@ void main() {
         tankId: 1,
         changedAt: DateTime.fromMillisecondsSinceEpoch(1700003000000),
         amountLiters: 25.0,
+        note: 'Tropic Marin salt',
       ),
       WaterChange(
         id: 21,
         tankId: 2,
         changedAt: DateTime.fromMillisecondsSinceEpoch(1700004000000),
         amountLiters: null,
+        note: null,
+      ),
+    ];
+    final carbonChanges = [
+      CarbonChange(
+        id: 30,
+        tankId: 1,
+        changedAt: DateTime.fromMillisecondsSinceEpoch(1700005000000),
+        grams: 200.0,
+        note: 'ROWAphos',
+      ),
+      CarbonChange(
+        id: 31,
+        tankId: 2,
+        changedAt: DateTime.fromMillisecondsSinceEpoch(1700006000000),
+        grams: null,
+        note: null,
       ),
     ];
     final settings = [
@@ -93,6 +111,7 @@ void main() {
         params: params,
         readings: readings,
         waterChanges: waterChanges,
+        carbonChanges: carbonChanges,
         settings: settings,
       );
       final data = decodeBackup(json);
@@ -128,7 +147,18 @@ void main() {
       expect(w0.tankId.value, 1);
       expect(w0.changedAt.value, waterChanges[0].changedAt);
       expect(w0.amountLiters.value, 25.0);
+      expect(w0.note.value, 'Tropic Marin salt');
       expect(data.waterChanges[1].amountLiters.value, isNull);
+      expect(data.waterChanges[1].note.value, isNull);
+
+      final c0 = data.carbonChanges[0];
+      expect(c0.id.value, 30);
+      expect(c0.tankId.value, 1);
+      expect(c0.changedAt.value, carbonChanges[0].changedAt);
+      expect(c0.grams.value, 200.0);
+      expect(c0.note.value, 'ROWAphos');
+      expect(data.carbonChanges[1].grams.value, isNull);
+      expect(data.carbonChanges[1].note.value, isNull);
 
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
@@ -136,17 +166,23 @@ void main() {
       expect(data.settings[2].value.value, isNull);
     });
 
-    test('tolerates older backups without a water-changes section', () {
+    test('tolerates older backups without water/carbon-change sections', () {
       final json = encodeBackup(
         schemaVersion: 2,
         tanks: tanks,
         params: params,
         readings: readings,
         waterChanges: waterChanges,
+        carbonChanges: carbonChanges,
         settings: settings,
-      ).replaceFirst(RegExp(r',\s*"waterChanges": \[.*?\]', dotAll: true), '');
+      )
+          .replaceFirst(
+              RegExp(r',\s*"waterChanges": \[.*?\]', dotAll: true), '')
+          .replaceFirst(
+              RegExp(r',\s*"carbonChanges": \[.*?\]', dotAll: true), '');
       final data = decodeBackup(json);
       expect(data.waterChanges, isEmpty);
+      expect(data.carbonChanges, isEmpty);
       expect(data.readings.length, 2);
     });
 
@@ -166,6 +202,7 @@ void main() {
         params: const [],
         readings: const [],
         waterChanges: const [],
+        carbonChanges: const [],
         settings: const [],
       ).replaceFirst('"version": 1', '"version": 999');
       expect(

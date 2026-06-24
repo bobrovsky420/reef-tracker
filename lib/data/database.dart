@@ -58,7 +58,7 @@ class Readings extends Table {
   TextColumn get note => text().nullable()();
 }
 
-/// A logged water change for a tank (date/time + optional volume).
+/// A logged water change for a tank (date/time + optional volume + note).
 class WaterChanges extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -67,6 +67,24 @@ class WaterChanges extends Table {
 
   /// Volume of water exchanged, in litres. Optional.
   RealColumn get amountLiters => real().nullable()();
+
+  /// Free-text note (e.g. salt brand). Optional.
+  TextColumn get note => text().nullable()();
+}
+
+/// A logged activated-carbon change for a tank (date/time + optional weight
+/// in grams + note, e.g. the brand).
+class CarbonChanges extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+  DateTimeColumn get changedAt => dateTime()();
+
+  /// Weight of carbon used, in grams. Optional.
+  RealColumn get grams => real().nullable()();
+
+  /// Free-text note (e.g. brand). Optional.
+  TextColumn get note => text().nullable()();
 }
 
 /// Simple key/value store for app-wide settings (e.g. active tank).
@@ -80,13 +98,19 @@ class Settings extends Table {
 
 const _kActiveTankKey = 'active_tank_id';
 
-@DriftDatabase(
-    tables: [Tanks, TrackedParameters, Readings, WaterChanges, Settings])
+@DriftDatabase(tables: [
+  Tanks,
+  TrackedParameters,
+  Readings,
+  WaterChanges,
+  CarbonChanges,
+  Settings
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,11 +122,41 @@ class AppDatabase extends _$AppDatabase {
           if (from < 3) {
             await m.createTable(waterChanges);
           }
+          if (from < 4) {
+            // `createTable` builds a table from its CURRENT definition. When
+            // upgrading straight from a schema before v3, the createTable above
+            // already creates water_changes WITH the `note` column, so adding
+            // it again would throw "duplicate column name: note". Guard against
+            // that (and any partially-applied state) by checking first.
+            if (!await _columnExists('water_changes', 'note')) {
+              await m.addColumn(waterChanges, waterChanges.note);
+            }
+            if (!await _tableExists('carbon_changes')) {
+              await m.createTable(carbonChanges);
+            }
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
         },
       );
+
+  /// Whether a table with [name] currently exists (used to keep migrations
+  /// idempotent across multi-version upgrades).
+  Future<bool> _tableExists(String name) async {
+    final rows = await customSelect(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+      variables: [Variable<String>(name)],
+    ).get();
+    return rows.isNotEmpty;
+  }
+
+  /// Whether [table] currently has a column named [column].
+  Future<bool> _columnExists(String table, String column) async {
+    if (!await _tableExists(table)) return false;
+    final rows = await customSelect("PRAGMA table_info('$table')").get();
+    return rows.any((r) => r.read<String>('name') == column);
+  }
 
   // --- Tanks ---------------------------------------------------------------
 
@@ -323,11 +377,13 @@ class AppDatabase extends _$AppDatabase {
     required int tankId,
     required DateTime changedAt,
     double? amountLiters,
+    String? note,
   }) =>
       into(waterChanges).insert(WaterChangesCompanion.insert(
         tankId: tankId,
         changedAt: changedAt,
         amountLiters: Value(amountLiters),
+        note: Value(note),
       ));
 
   Future<void> updateWaterChange(WaterChange change) =>
@@ -335,6 +391,37 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteWaterChange(int id) =>
       (delete(waterChanges)..where((w) => w.id.equals(id))).go();
+
+  // --- Carbon changes ------------------------------------------------------
+
+  /// Activated-carbon changes for a tank, newest first.
+  Stream<List<CarbonChange>> watchCarbonChanges(int tankId) =>
+      (select(carbonChanges)
+            ..where((c) => c.tankId.equals(tankId))
+            ..orderBy([
+              (c) => OrderingTerm(
+                  expression: c.changedAt, mode: OrderingMode.desc)
+            ]))
+          .watch();
+
+  Future<void> insertCarbonChange({
+    required int tankId,
+    required DateTime changedAt,
+    double? grams,
+    String? note,
+  }) =>
+      into(carbonChanges).insert(CarbonChangesCompanion.insert(
+        tankId: tankId,
+        changedAt: changedAt,
+        grams: Value(grams),
+        note: Value(note),
+      ));
+
+  Future<void> updateCarbonChange(CarbonChange change) =>
+      update(carbonChanges).replace(change);
+
+  Future<void> deleteCarbonChange(int id) =>
+      (delete(carbonChanges)..where((c) => c.id.equals(id))).go();
 
   // --- Settings ------------------------------------------------------------
 
@@ -382,6 +469,10 @@ class AppDatabase extends _$AppDatabase {
   /// Every water change, across all tanks.
   Future<List<WaterChange>> getAllWaterChanges() => select(waterChanges).get();
 
+  /// Every activated-carbon change, across all tanks.
+  Future<List<CarbonChange>> getAllCarbonChanges() =>
+      select(carbonChanges).get();
+
   /// Every settings key/value pair.
   Future<List<Setting>> getAllSettings() => select(settings).get();
 
@@ -393,12 +484,14 @@ class AppDatabase extends _$AppDatabase {
     required List<TrackedParametersCompanion> paramRows,
     required List<ReadingsCompanion> readingRows,
     required List<WaterChangesCompanion> waterChangeRows,
+    required List<CarbonChangesCompanion> carbonChangeRows,
     required List<SettingsCompanion> settingRows,
   }) async {
     await transaction(() async {
       // Delete children before parents to satisfy foreign keys.
       await delete(readings).go();
       await delete(waterChanges).go();
+      await delete(carbonChanges).go();
       await delete(trackedParameters).go();
       await delete(settings).go();
       await delete(tanks).go();
@@ -408,6 +501,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(trackedParameters, paramRows);
         b.insertAll(readings, readingRows);
         b.insertAll(waterChanges, waterChangeRows);
+        b.insertAll(carbonChanges, carbonChangeRows);
         b.insertAll(settings, settingRows);
       });
     });

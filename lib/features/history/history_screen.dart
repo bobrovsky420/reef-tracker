@@ -11,7 +11,7 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/zone_chip.dart';
-import '../water_change/water_change_markers.dart';
+import '../actions/water_change_markers.dart';
 
 enum _Range {
   week('7d', 7),

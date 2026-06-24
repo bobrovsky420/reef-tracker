@@ -343,6 +343,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'This permanently deletes this water change.';
 
   @override
+  String get actions => 'Actions';
+
+  @override
+  String get noActions => 'No actions yet.';
+
+  @override
+  String get addAction => 'Add action';
+
+  @override
+  String get waterChange => 'Water change';
+
+  @override
+  String get carbonChange => 'Carbon change';
+
+  @override
+  String get recordCarbonChange => 'Record carbon change';
+
+  @override
+  String get weightOptional => 'Weight (optional)';
+
+  @override
+  String get weightNotRecorded => 'Weight not recorded';
+
+  @override
+  String gramsSuffix(Object value) {
+    return '$value g';
+  }
+
+  @override
+  String get deleteCarbonChangeTitle => 'Delete carbon change?';
+
+  @override
+  String get deleteCarbonChangeBody =>
+      'This permanently deletes this carbon change.';
+
+  @override
   String get unitsSection => 'Units';
 
   @override

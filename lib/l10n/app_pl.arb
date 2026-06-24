@@ -106,6 +106,18 @@
   "deleteWaterChangeTitle": "Usunąć podmianę wody?",
   "deleteWaterChangeBody": "Spowoduje to trwałe usunięcie tej podmiany wody.",
 
+  "actions": "Czynności",
+  "noActions": "Brak czynności.",
+  "addAction": "Dodaj czynność",
+  "waterChange": "Podmiana wody",
+  "carbonChange": "Wymiana węgla",
+  "recordCarbonChange": "Zapisz wymianę węgla",
+  "weightOptional": "Waga (opcjonalnie)",
+  "weightNotRecorded": "Waga nie zapisana",
+  "gramsSuffix": "{value} g",
+  "deleteCarbonChangeTitle": "Usunąć wymianę węgla?",
+  "deleteCarbonChangeBody": "Spowoduje to trwałe usunięcie tej wymiany węgla.",
+
   "unitsSection": "Jednostki",
   "toolsSection": "Narzędzia",
   "aboutSection": "O aplikacji",

@@ -25,9 +25,9 @@ class DashboardScreen extends ConsumerWidget {
         title: const _TankSelector(),
         actions: [
           IconButton(
-            tooltip: l.waterChanges,
-            icon: const Icon(Icons.water_drop_outlined),
-            onPressed: () => context.push('/water-changes'),
+            tooltip: l.actions,
+            icon: const Icon(Icons.history),
+            onPressed: () => context.push('/actions'),
           ),
           IconButton(
             tooltip: l.manageParameters,

@@ -344,6 +344,42 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dadurch wird dieser Wasserwechsel dauerhaft gelöscht.';
 
   @override
+  String get actions => 'Maßnahmen';
+
+  @override
+  String get noActions => 'Noch keine Maßnahmen.';
+
+  @override
+  String get addAction => 'Maßnahme hinzufügen';
+
+  @override
+  String get waterChange => 'Wasserwechsel';
+
+  @override
+  String get carbonChange => 'Kohlewechsel';
+
+  @override
+  String get recordCarbonChange => 'Kohlewechsel erfassen';
+
+  @override
+  String get weightOptional => 'Gewicht (optional)';
+
+  @override
+  String get weightNotRecorded => 'Gewicht nicht erfasst';
+
+  @override
+  String gramsSuffix(Object value) {
+    return '$value g';
+  }
+
+  @override
+  String get deleteCarbonChangeTitle => 'Kohlewechsel löschen?';
+
+  @override
+  String get deleteCarbonChangeBody =>
+      'Dadurch wird dieser Kohlewechsel dauerhaft gelöscht.';
+
+  @override
   String get unitsSection => 'Einheiten';
 
   @override

@@ -344,6 +344,42 @@ class AppLocalizationsPl extends AppLocalizations {
       'Spowoduje to trwałe usunięcie tej podmiany wody.';
 
   @override
+  String get actions => 'Czynności';
+
+  @override
+  String get noActions => 'Brak czynności.';
+
+  @override
+  String get addAction => 'Dodaj czynność';
+
+  @override
+  String get waterChange => 'Podmiana wody';
+
+  @override
+  String get carbonChange => 'Wymiana węgla';
+
+  @override
+  String get recordCarbonChange => 'Zapisz wymianę węgla';
+
+  @override
+  String get weightOptional => 'Waga (opcjonalnie)';
+
+  @override
+  String get weightNotRecorded => 'Waga nie zapisana';
+
+  @override
+  String gramsSuffix(Object value) {
+    return '$value g';
+  }
+
+  @override
+  String get deleteCarbonChangeTitle => 'Usunąć wymianę węgla?';
+
+  @override
+  String get deleteCarbonChangeBody =>
+      'Spowoduje to trwałe usunięcie tej wymiany węgla.';
+
+  @override
   String get unitsSection => 'Jednostki';
 
   @override

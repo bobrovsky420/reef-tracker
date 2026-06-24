@@ -106,6 +106,18 @@
   "deleteWaterChangeTitle": "Smazat výměnu vody?",
   "deleteWaterChangeBody": "Tímto trvale smažete tuto výměnu vody.",
 
+  "actions": "Úkony",
+  "noActions": "Zatím žádné úkony.",
+  "addAction": "Přidat úkon",
+  "waterChange": "Výměna vody",
+  "carbonChange": "Výměna uhlí",
+  "recordCarbonChange": "Zaznamenat výměnu uhlí",
+  "weightOptional": "Hmotnost (volitelné)",
+  "weightNotRecorded": "Hmotnost nezaznamenána",
+  "gramsSuffix": "{value} g",
+  "deleteCarbonChangeTitle": "Smazat výměnu uhlí?",
+  "deleteCarbonChangeBody": "Tímto trvale smažete tuto výměnu uhlí.",
+
   "unitsSection": "Jednotky",
   "toolsSection": "Nástroje",
   "aboutSection": "O aplikaci",

@@ -26,6 +26,7 @@ and no account.
 | Routing            | `go_router` |
 | i18n / formatting  | Flutter `gen-l10n` (ARB files) + `intl` |
 | Backup I/O         | `share_plus` (export via OS share sheet) + `file_picker` (import) |
+| App metadata       | `package_info_plus` (real version/build for the About box) |
 
 ## Architecture overview
 
@@ -64,6 +65,7 @@ converted only for display/input.**
 Volume is *not* a tracked parameter — it is a property of a tank
 (`volumeLiters`) and of a water change (`amountLiters`). The US gallon is
 `3.785411784 L`. Salinity ↔ SG is linear, anchored at 35 ppt = 1.0264 SG @ 25 °C.
+Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Domain layer (`lib/domain/`) — static, no DB migrations
 
@@ -78,24 +80,34 @@ Volume is *not* a tracked parameter — it is a property of a tank
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 3**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 4**
 
 | Table | Key columns |
 |-------|-------------|
 | `Tanks` | id, name, setupType, volumeLiters?, startDate?, createdAt |
 | `TrackedParameters` | id, tankId (FK cascade), paramKey, unit, enabled, displayOrder, + 4 zone bounds (amberLow/greenLow/greenHigh/amberHigh) |
 | `Readings` | id, tankId (FK cascade), paramKey, value (canonical), takenAt, note? |
-| `WaterChanges` | id, tankId (FK cascade), changedAt, amountLiters? |
+| `WaterChanges` | id, tankId (FK cascade), changedAt, amountLiters?, note? |
+| `CarbonChanges` | id, tankId (FK cascade), changedAt, grams?, note? |
 | `Settings` | key (PK), value? — generic kv store |
 
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
 `volume_unit`, `locale`, `chart_range`.
 
 **Migrations** (`MigrationStrategy`): v2 added `Tanks.startDate` via `addColumn`;
-v3 added the `WaterChanges` table via `createTable`. Foreign keys are enabled in
-`beforeOpen` (`PRAGMA foreign_keys = ON`). **When you add/change a table or
-column you must bump `schemaVersion` and add the matching migration**, then run
-`dart run build_runner build`.
+v3 added the `WaterChanges` table via `createTable`; v4 added `WaterChanges.note`
+(`addColumn`) and the `CarbonChanges` table (`createTable`). Foreign keys are
+enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you add/change a
+table or column you must bump `schemaVersion` and add the matching migration**,
+then run `dart run build_runner build`.
+
+> ⚠️ **`createTable`/`createAll` build from the _current_ table definition, not
+> the historical one.** So when a user upgrades across several versions at once,
+> an earlier `createTable(x)` step already creates `x` with columns that a later
+> step then tries to `addColumn` — throwing `duplicate column`. The v4 step
+> guards against this with the idempotent `_tableExists` / `_columnExists`
+> helpers (skip `addColumn`/`createTable` when the target already exists).
+> Prefer that pattern for every new column/table migration.
 
 Notable DB behavior:
 - `createTankWithPreset` seeds `TrackedParameters` from the setup-type preset and
@@ -111,7 +123,8 @@ Notable DB behavior:
 JSON document, `format: "reeftracker-backup"`, `version` (`kBackupVersion = 1`).
 DateTimes serialized as epoch millis. `encodeBackup` dumps every table;
 `decodeBackup` validates the format/version guard and is **forward-tolerant**
-(older backups without the `waterChanges` key decode to an empty list).
+(older backups without the `waterChanges` / `carbonChanges` keys decode to empty
+lists).
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
 **replaces the entire database in one transaction**, preserving primary keys so
@@ -125,7 +138,7 @@ All app state is Riverpod providers over the singleton `dbProvider`:
   (resolves id → tank, falls back to first tank).
 - `trackedParametersProvider`, `tankReadingsProvider` (newest-first),
   `paramReadingsProvider(paramKey)` family (oldest-first, chart-friendly),
-  `waterChangesProvider`.
+  `waterChangesProvider`, `carbonChangesProvider` (both newest-first).
 - Unit prefs: `tempUnitProvider`, `salinityUnitProvider`, `volumeUnitProvider`,
   combined `unitPrefsProvider`.
 - `localeCodeProvider` / `localeProvider` (null = follow system).
@@ -142,7 +155,7 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 | `/add-reading` | Log a batch of readings |
 | `/history/:paramKey` | Single-parameter history graph |
 | `/ratio` | PO₄ : NO₃ ratio history graph |
-| `/water-changes` | Water-change log |
+| `/actions` | Combined action log (water changes + carbon changes) |
 | `/settings` | Units, language, backup/restore |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
@@ -151,7 +164,7 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 ### Dashboard (`dashboard_screen.dart`) — home
 
 - App-bar `_TankSelector` popup to switch active tank or jump to manage-tanks;
-  app-bar actions for water changes, manage parameters, settings; FAB to add a
+  app-bar actions for the action log, manage parameters, settings; FAB to add a
   reading.
 - Grid of `_ParameterTile`s (enabled tracked params only): each shows the latest
   value **colored by its zone**, the display unit, a trend `_ChangeIndicator`
@@ -180,13 +193,25 @@ Reef keepers target a phosphate-to-nitrate balance.
   `formatRatioOneToN`; the chart plots N. `formatRatio`/`formatRatioN` scale
   precision to magnitude.
 
-### Water changes (`features/water_change/`)
+### Actions log (`features/actions/`)
 
-- `water_change_screen.dart` — list with add/edit/delete via a dialog (date/time
-  picker + optional litres, converted to/from the display volume unit).
+A single combined log of tank maintenance actions for the active tank, newest
+first.
+
+- `actions_screen.dart` — merges `waterChangesProvider` + `carbonChangesProvider`
+  into one sorted list (`_Entry` sealed type: `_WaterEntry` / `_CarbonEntry`).
+  Each row: type icon, type name, value (litres in the display volume unit, or
+  grams), optional note, timestamp; swipe-to-delete and an edit button. The FAB
+  opens a bottom sheet to choose which action to add. A shared `_ActionDialog`
+  (date/time picker + optional numeric value with a unit suffix + optional note)
+  drives both add and edit for either type.
+  - **Water change**: optional litres (converted to/from the display volume
+    unit) + note (e.g. salt brand).
+  - **Carbon change**: optional weight in grams + note (e.g. brand).
 - `water_change_markers.dart` — `waterChangeLines(...)` builds dashed
   `VerticalLine`s rendered on **every** time-series graph (history and ratio) via
-  `extraLinesData`, so changes line up visually with parameter movements.
+  `extraLinesData`, so water changes line up visually with parameter movements.
+  (Carbon changes are logged only; they are not drawn on graphs.)
 
 ### Manage parameters (`manage_parameters_screen.dart`)
 
@@ -208,7 +233,8 @@ setup type drives which parameters are seeded.
 
 Unit selectors (temp/salinity/volume), language selector, and **Backup &
 Restore** (export → share sheet, import → file picker → full replace). Link to
-the salinity calculator.
+the salinity calculator. The About box shows the live app version via
+`appVersionProvider` (`package_info_plus`), never a hardcoded string.
 
 ### Salinity calculator (`calculator/salinity_calculator_screen.dart`)
 

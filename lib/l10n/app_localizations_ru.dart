@@ -344,6 +344,42 @@ class AppLocalizationsRu extends AppLocalizations {
       'Это безвозвратно удалит эту подмену воды.';
 
   @override
+  String get actions => 'Действия';
+
+  @override
+  String get noActions => 'Пока нет действий.';
+
+  @override
+  String get addAction => 'Добавить действие';
+
+  @override
+  String get waterChange => 'Подмена воды';
+
+  @override
+  String get carbonChange => 'Замена угля';
+
+  @override
+  String get recordCarbonChange => 'Записать замену угля';
+
+  @override
+  String get weightOptional => 'Вес (необязательно)';
+
+  @override
+  String get weightNotRecorded => 'Вес не указан';
+
+  @override
+  String gramsSuffix(Object value) {
+    return '$value г';
+  }
+
+  @override
+  String get deleteCarbonChangeTitle => 'Удалить замену угля?';
+
+  @override
+  String get deleteCarbonChangeBody =>
+      'Это безвозвратно удалит эту замену угля.';
+
+  @override
   String get unitsSection => 'Единицы';
 
   @override

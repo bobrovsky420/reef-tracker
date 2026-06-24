@@ -106,6 +106,18 @@
   "deleteWaterChangeTitle": "Wasserwechsel löschen?",
   "deleteWaterChangeBody": "Dadurch wird dieser Wasserwechsel dauerhaft gelöscht.",
 
+  "actions": "Maßnahmen",
+  "noActions": "Noch keine Maßnahmen.",
+  "addAction": "Maßnahme hinzufügen",
+  "waterChange": "Wasserwechsel",
+  "carbonChange": "Kohlewechsel",
+  "recordCarbonChange": "Kohlewechsel erfassen",
+  "weightOptional": "Gewicht (optional)",
+  "weightNotRecorded": "Gewicht nicht erfasst",
+  "gramsSuffix": "{value} g",
+  "deleteCarbonChangeTitle": "Kohlewechsel löschen?",
+  "deleteCarbonChangeBody": "Dadurch wird dieser Kohlewechsel dauerhaft gelöscht.",
+
   "unitsSection": "Einheiten",
   "toolsSection": "Werkzeuge",
   "aboutSection": "Über",

@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../data/database.dart';
+import '../features/actions/actions_screen.dart';
 import '../features/add_reading/add_reading_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
@@ -9,7 +10,6 @@ import '../features/manage_parameters/manage_parameters_screen.dart';
 import '../features/ratio/ratio_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
-import '../features/water_change/water_change_screen.dart';
 
 final appRouter = GoRouter(
   routes: [
@@ -53,8 +53,8 @@ final appRouter = GoRouter(
       builder: (context, state) => const RatioScreen(),
     ),
     GoRoute(
-      path: '/water-changes',
-      builder: (context, state) => const WaterChangeScreen(),
+      path: '/actions',
+      builder: (context, state) => const ActionsScreen(),
     ),
     GoRoute(
       path: '/settings',

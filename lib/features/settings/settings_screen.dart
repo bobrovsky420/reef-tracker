@@ -121,7 +121,7 @@ class SettingsScreen extends ConsumerWidget {
           AboutListTile(
             icon: const Icon(Icons.info_outline),
             applicationName: l.appTitle,
-            applicationVersion: '1.0.0',
+            applicationVersion: ref.watch(appVersionProvider).value ?? '',
             aboutBoxChildren: [Text(l.aboutDescription)],
             child: Text(l.aboutAppName),
           ),
@@ -180,6 +180,7 @@ class SettingsScreen extends ConsumerWidget {
         paramRows: data.params,
         readingRows: data.readings,
         waterChangeRows: data.waterChanges,
+        carbonChangeRows: data.carbonChanges,
         settingRows: data.settings,
       );
       if (context.mounted) _snack(context, l.backupRestored);

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../data/database.dart';
 import '../domain/units.dart';
@@ -9,6 +10,13 @@ const kSalinityUnitKey = 'salinity_unit';
 const kVolumeUnitKey = 'volume_unit';
 const kLocaleKey = 'locale';
 const kChartRangeKey = 'chart_range';
+
+/// The app's version + build number from the running package (e.g. "0.3.1+4"),
+/// so the About box always reflects the actual installed build.
+final appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return '${info.version}+${info.buildNumber}';
+});
 
 /// The singleton app database.
 final dbProvider = Provider<AppDatabase>((ref) {
@@ -59,6 +67,13 @@ final waterChangesProvider = StreamProvider<List<WaterChange>>((ref) {
   final tank = ref.watch(activeTankProvider);
   if (tank == null) return Stream.value(const []);
   return ref.watch(dbProvider).watchWaterChanges(tank.id);
+});
+
+/// Activated-carbon changes for the active tank (newest first).
+final carbonChangesProvider = StreamProvider<List<CarbonChange>>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return Stream.value(const []);
+  return ref.watch(dbProvider).watchCarbonChanges(tank.id);
 });
 
 /// Readings for a single parameter of the active tank (oldest first).

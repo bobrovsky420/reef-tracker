@@ -106,6 +106,18 @@
   "deleteWaterChangeTitle": "Удалить подмену воды?",
   "deleteWaterChangeBody": "Это безвозвратно удалит эту подмену воды.",
 
+  "actions": "Действия",
+  "noActions": "Пока нет действий.",
+  "addAction": "Добавить действие",
+  "waterChange": "Подмена воды",
+  "carbonChange": "Замена угля",
+  "recordCarbonChange": "Записать замену угля",
+  "weightOptional": "Вес (необязательно)",
+  "weightNotRecorded": "Вес не указан",
+  "gramsSuffix": "{value} г",
+  "deleteCarbonChangeTitle": "Удалить замену угля?",
+  "deleteCarbonChangeBody": "Это безвозвратно удалит эту замену угля.",
+
   "unitsSection": "Единицы",
   "toolsSection": "Инструменты",
   "aboutSection": "О приложении",

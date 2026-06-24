@@ -680,6 +680,72 @@ abstract class AppLocalizations {
   /// **'This permanently deletes this water change.'**
   String get deleteWaterChangeBody;
 
+  /// No description provided for @actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get actions;
+
+  /// No description provided for @noActions.
+  ///
+  /// In en, this message translates to:
+  /// **'No actions yet.'**
+  String get noActions;
+
+  /// No description provided for @addAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add action'**
+  String get addAction;
+
+  /// No description provided for @waterChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Water change'**
+  String get waterChange;
+
+  /// No description provided for @carbonChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbon change'**
+  String get carbonChange;
+
+  /// No description provided for @recordCarbonChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Record carbon change'**
+  String get recordCarbonChange;
+
+  /// No description provided for @weightOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight (optional)'**
+  String get weightOptional;
+
+  /// No description provided for @weightNotRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight not recorded'**
+  String get weightNotRecorded;
+
+  /// No description provided for @gramsSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} g'**
+  String gramsSuffix(Object value);
+
+  /// No description provided for @deleteCarbonChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete carbon change?'**
+  String get deleteCarbonChangeTitle;
+
+  /// No description provided for @deleteCarbonChangeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes this carbon change.'**
+  String get deleteCarbonChangeBody;
+
   /// No description provided for @unitsSection.
   ///
   /// In en, this message translates to:

@@ -33,6 +33,7 @@ class BackupData {
     required this.params,
     required this.readings,
     required this.waterChanges,
+    required this.carbonChanges,
     required this.settings,
   });
 
@@ -40,6 +41,7 @@ class BackupData {
   final List<TrackedParametersCompanion> params;
   final List<ReadingsCompanion> readings;
   final List<WaterChangesCompanion> waterChanges;
+  final List<CarbonChangesCompanion> carbonChanges;
   final List<SettingsCompanion> settings;
 }
 
@@ -50,6 +52,7 @@ String encodeBackup({
   required List<TrackedParameter> params,
   required List<Reading> readings,
   required List<WaterChange> waterChanges,
+  required List<CarbonChange> carbonChanges,
   required List<Setting> settings,
 }) {
   final map = <String, dynamic>{
@@ -61,6 +64,7 @@ String encodeBackup({
     'trackedParameters': params.map(_paramToJson).toList(),
     'readings': readings.map(_readingToJson).toList(),
     'waterChanges': waterChanges.map(_waterChangeToJson).toList(),
+    'carbonChanges': carbonChanges.map(_carbonChangeToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
   return const JsonEncoder.withIndent('  ').convert(map);
@@ -94,12 +98,17 @@ BackupData decodeBackup(String jsonString) {
         _listOfMaps(decoded['trackedParameters']).map(_paramFromJson).toList();
     final readings =
         _listOfMaps(decoded['readings']).map(_readingFromJson).toList();
-    // Water changes were added in a later app version; older backups omit the
-    // key entirely, so default to an empty list rather than failing.
+    // Water and carbon changes were added in later app versions; older backups
+    // omit the keys entirely, so default to empty lists rather than failing.
     final waterChanges = decoded['waterChanges'] == null
         ? <WaterChangesCompanion>[]
         : _listOfMaps(decoded['waterChanges'])
             .map(_waterChangeFromJson)
+            .toList();
+    final carbonChanges = decoded['carbonChanges'] == null
+        ? <CarbonChangesCompanion>[]
+        : _listOfMaps(decoded['carbonChanges'])
+            .map(_carbonChangeFromJson)
             .toList();
     final settings =
         _listOfMaps(decoded['settings']).map(_settingFromJson).toList();
@@ -108,6 +117,7 @@ BackupData decodeBackup(String jsonString) {
       params: params,
       readings: readings,
       waterChanges: waterChanges,
+      carbonChanges: carbonChanges,
       settings: settings,
     );
   } catch (_) {
@@ -123,6 +133,7 @@ Future<void> exportBackup(AppDatabase db) async {
     params: await db.getAllTrackedParameters(),
     readings: await db.getAllReadings(),
     waterChanges: await db.getAllWaterChanges(),
+    carbonChanges: await db.getAllCarbonChanges(),
     settings: await db.getAllSettings(),
   );
 
@@ -231,6 +242,7 @@ Map<String, dynamic> _waterChangeToJson(WaterChange w) => {
       'tankId': w.tankId,
       'changedAt': w.changedAt.millisecondsSinceEpoch,
       'amountLiters': w.amountLiters,
+      'note': w.note,
     };
 
 WaterChangesCompanion _waterChangeFromJson(Map<String, dynamic> m) =>
@@ -239,6 +251,24 @@ WaterChangesCompanion _waterChangeFromJson(Map<String, dynamic> m) =>
       tankId: Value(m['tankId'] as int),
       changedAt: Value(_date(m['changedAt'])),
       amountLiters: Value((m['amountLiters'] as num?)?.toDouble()),
+      note: Value(m['note'] as String?),
+    );
+
+Map<String, dynamic> _carbonChangeToJson(CarbonChange c) => {
+      'id': c.id,
+      'tankId': c.tankId,
+      'changedAt': c.changedAt.millisecondsSinceEpoch,
+      'grams': c.grams,
+      'note': c.note,
+    };
+
+CarbonChangesCompanion _carbonChangeFromJson(Map<String, dynamic> m) =>
+    CarbonChangesCompanion(
+      id: Value(m['id'] as int),
+      tankId: Value(m['tankId'] as int),
+      changedAt: Value(_date(m['changedAt'])),
+      grams: Value((m['grams'] as num?)?.toDouble()),
+      note: Value(m['note'] as String?),
     );
 
 Map<String, dynamic> _settingToJson(Setting s) => {
