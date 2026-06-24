@@ -1,5 +1,9 @@
 # ReefTracker
 
+## Design documentation
+
+[DESIGN.md](DESIGN.md) is the high-level map of the app's architecture and most important features. **Keep it up to date: after any change that alters the design, update the relevant section of `DESIGN.md` in the same change.** This includes new or changed database tables/migrations, new screens or routes, new domain rules, new features, or changes to the layering/state model. Skip updates for purely cosmetic or trivial edits that don't affect the design (wording tweaks, styling, refactors with no behavioral or structural effect).
+
 ## Localization
 
 This app is fully localized. **Whenever you add or change any user-facing text, you MUST update the translations for every existing language — no language may be left out of sync.**
