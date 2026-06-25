@@ -10,8 +10,6 @@ const kSalinityUnitKey = 'salinity_unit';
 const kVolumeUnitKey = 'volume_unit';
 const kLocaleKey = 'locale';
 const kChartRangeKey = 'chart_range';
-const kShowRatioPo4No3Key = 'show_ratio_po4_no3';
-const kShowRatioMgCaKey = 'show_ratio_mg_ca';
 
 /// The app's version + build number from the running package (e.g. "0.3.1+4"),
 /// so the About box always reflects the actual installed build.
@@ -139,14 +137,15 @@ final chartRangeProvider = StreamProvider<String>((ref) => ref
     .watchSetting(kChartRangeKey)
     .map((v) => v ?? '30d'));
 
-/// Whether the PO₄ : NO₃ ratio card is shown on the dashboard (default true).
-final showRatioPo4No3Provider = StreamProvider<bool>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kShowRatioPo4No3Key)
-    .map((v) => v != 'false'));
-
-/// Whether the Mg : Ca ratio card is shown on the dashboard (default true).
-final showRatioMgCaProvider = StreamProvider<bool>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kShowRatioMgCaKey)
-    .map((v) => v != 'false'));
+/// Per-tank dashboard ratio-card settings (visibility + order) for the active
+/// tank, keyed by [RatioKind.name]. Missing entries fall back to defaults
+/// (visible, ordered after measurements) via `ratioRowVisible`/`ratioRowOrder`.
+final ratioSettingsProvider =
+    StreamProvider<Map<String, RatioVisibility>>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return Stream.value(const {});
+  return ref
+      .watch(dbProvider)
+      .watchRatioVisibilities(tank.id)
+      .map((rows) => {for (final r in rows) r.ratioKey: r});
+});

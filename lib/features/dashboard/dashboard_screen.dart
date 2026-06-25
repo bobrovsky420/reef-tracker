@@ -73,10 +73,9 @@ class _DashboardBody extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
       data: (tracked) {
-        final enabled = tracked.where((t) => t.enabled).toList();
-        if (enabled.isEmpty) return const _NoParamsView();
         final readings = readingsAsync.value ?? const [];
         final prefs = ref.watch(unitPrefsProvider);
+        final ratioSettings = ref.watch(ratioSettingsProvider).value ?? const {};
 
         // Latest readings per parameter (for value + trend).
         final byParam = <String, List<Reading>>{};
@@ -84,7 +83,38 @@ class _DashboardBody extends ConsumerWidget {
           (byParam[r.paramKey] ??= []).add(r); // already newest-first
         }
 
-        final grid = GridView.builder(
+        // Build all dashboard cards — measurement tiles and ratio tiles — into
+        // one list sharing a single display order, then render them together so
+        // ratios look and reorder exactly like measurements.
+        final items = <({double order, Widget tile})>[];
+        for (final param in tracked.where((t) => t.enabled)) {
+          items.add((
+            order: param.displayOrder.toDouble(),
+            tile: _ParameterTile(
+                param: param,
+                history: byParam[param.paramKey] ?? const [],
+                prefs: prefs),
+          ));
+        }
+        for (final kind in RatioKind.values) {
+          final row = ratioSettings[kind.name];
+          if (!ratioRowVisible(row)) continue;
+          final series = computeRatioSeries(
+            (byParam[kind.numeratorKey] ?? const []).reversed.toList(),
+            (byParam[kind.denominatorKey] ?? const []).reversed.toList(),
+          );
+          if (series.isEmpty) continue;
+          items.add((
+            order: ratioRowOrder(kind, row),
+            tile: _RatioTile(
+                kind: kind, points: series, bounds: ratioBounds(kind, row)),
+          ));
+        }
+        items.sort((a, b) => a.order.compareTo(b.order));
+
+        if (items.isEmpty) return const _NoParamsView();
+
+        return GridView.builder(
           padding: const EdgeInsets.all(12),
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 230,
@@ -92,90 +122,105 @@ class _DashboardBody extends ConsumerWidget {
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
-          itemCount: enabled.length,
-          itemBuilder: (context, i) {
-            final param = enabled[i];
-            final history = byParam[param.paramKey] ?? const [];
-            return _ParameterTile(
-                param: param, history: history, prefs: prefs);
-          },
-        );
-
-        // Ratio cards (above the grid), each shown only when enabled in
-        // settings and both of its parameters have readings.
-        final shown = {
-          RatioKind.po4no3: ref.watch(showRatioPo4No3Provider).value ?? true,
-          RatioKind.mgca: ref.watch(showRatioMgCaProvider).value ?? true,
-        };
-        final ratioCards = <Widget>[
-          for (final kind in RatioKind.values)
-            if (shown[kind] ?? true)
-              if (latestRatio(byParam[kind.numeratorKey] ?? const [],
-                      byParam[kind.denominatorKey] ?? const [])
-                  case final RatioPoint r)
-                _RatioCard(kind: kind, ratio: r),
-        ];
-
-        if (ratioCards.isEmpty) return grid;
-        return Column(
-          children: [
-            ...ratioCards,
-            Expanded(child: grid),
-          ],
+          itemCount: items.length,
+          itemBuilder: (context, i) => items[i].tile,
         );
       },
     );
   }
 }
 
-/// Banner card on the dashboard showing the latest value of a [RatioKind].
-/// Tapping it opens that ratio's history graph.
-class _RatioCard extends StatelessWidget {
-  const _RatioCard({required this.kind, required this.ratio});
+/// Dashboard tile for a [RatioKind], laid out identically to [_ParameterTile]:
+/// title, the latest ratio value colored by its health zone, a trend indicator,
+/// and a relative timestamp. Tapping it opens that ratio's history graph.
+class _RatioTile extends StatelessWidget {
+  const _RatioTile(
+      {required this.kind, required this.points, required this.bounds});
 
   final RatioKind kind;
-  final RatioPoint ratio;
+
+  /// Non-empty ratio series (oldest first).
+  final List<RatioPoint> points;
+  final ZoneBounds bounds;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final hint = Theme.of(context).hintColor;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => context.push('/ratio/${kind.name}'),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(l.ratioCardLabel(kind),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 15)),
-                      const SizedBox(height: 4),
-                      Text(
-                        ratioBreakdown(kind, ratio),
-                        style: TextStyle(fontSize: 12, color: hint),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  formatRatioValue(kind, ratio.ratio),
+    final latest = points.last;
+    final zone = ratioZone(kind, bounds, latest.ratio);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/ratio/${kind.name}'),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l.ratioCardLabel(kind),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 28, fontWeight: FontWeight.bold),
-                ),
-                Icon(Icons.chevron_right, color: hint),
-              ],
-            ),
+                      fontWeight: FontWeight.w600, fontSize: 15)),
+              const Spacer(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    formatRatioValue(kind, latest.ratio),
+                    style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: zone.color),
+                  ),
+                  const Spacer(),
+                  _RatioChangeIndicator(kind: kind, points: points),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _relativeTime(l, latest.time),
+                style:
+                    TextStyle(fontSize: 11, color: hint),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Trend arrow + change of the displayed ratio versus the previous point,
+/// mirroring [_ChangeIndicator] for measurements.
+class _RatioChangeIndicator extends StatelessWidget {
+  const _RatioChangeIndicator({required this.kind, required this.points});
+  final RatioKind kind;
+  final List<RatioPoint> points;
+
+  @override
+  Widget build(BuildContext context) {
+    if (points.length < 2) return const SizedBox.shrink();
+    final hint = Theme.of(context).hintColor;
+    final now = ratioChartY(kind, points.last.ratio);
+    final prev = ratioChartY(kind, points[points.length - 2].ratio);
+    if (!now.isFinite || !prev.isFinite) return const SizedBox.shrink();
+    final diff = now - prev;
+    final icon = diff.abs() < 1e-9
+        ? Icons.trending_flat
+        : (diff > 0 ? Icons.trending_up : Icons.trending_down);
+    final sign = diff > 0 ? '+' : (diff < 0 ? '−' : '');
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: hint),
+        const SizedBox(width: 2),
+        Text('$sign${formatRatioN(diff.abs())}',
+            style: TextStyle(fontSize: 12, color: hint)),
+      ],
     );
   }
 }

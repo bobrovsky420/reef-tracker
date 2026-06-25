@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../domain/ratio.dart';
+import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
@@ -46,6 +47,8 @@ class RatioScreen extends ConsumerWidget {
     final numeratorAsync = ref.watch(paramReadingsProvider(kind.numeratorKey));
     final denominatorAsync =
         ref.watch(paramReadingsProvider(kind.denominatorKey));
+    final bounds =
+        ratioBounds(kind, ref.watch(ratioSettingsProvider).value?[kind.name]);
 
     return Scaffold(
       appBar: AppBar(title: Text(l.ratioScreenTitle(kind))),
@@ -88,7 +91,10 @@ class RatioScreen extends ConsumerWidget {
                                 child: Padding(
                                   padding:
                                       const EdgeInsets.fromLTRB(8, 16, 16, 8),
-                                  child: _RatioChart(kind: kind, points: data),
+                                  child: _RatioChart(
+                                      kind: kind,
+                                      points: data,
+                                      bounds: bounds),
                                 ),
                               ),
                               const Divider(),
@@ -120,10 +126,12 @@ class RatioScreen extends ConsumerWidget {
 }
 
 class _RatioChart extends StatelessWidget {
-  const _RatioChart({required this.kind, required this.points});
+  const _RatioChart(
+      {required this.kind, required this.points, required this.bounds});
 
   final RatioKind kind;
   final List<RatioPoint> points;
+  final ZoneBounds bounds;
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +150,18 @@ class _RatioChart extends StatelessWidget {
     final values = spots.map((s) => s.y).toList();
     double minY = values.reduce((a, b) => a < b ? a : b);
     double maxY = values.reduce((a, b) => a > b ? a : b);
+    // Include the zone bounds in the visible range so the bands are meaningful.
+    for (final b in [
+      bounds.amberLow,
+      bounds.greenLow,
+      bounds.greenHigh,
+      bounds.amberHigh
+    ]) {
+      if (b != null) {
+        minY = b < minY ? b : minY;
+        maxY = b > maxY ? b : maxY;
+      }
+    }
     final pad = (maxY - minY).abs() < 1e-9
         ? (maxY.abs() * 0.1 + 0.01)
         : (maxY - minY) * 0.12;
@@ -167,6 +187,9 @@ class _RatioChart extends StatelessWidget {
         maxY: maxY,
         minX: minX,
         maxX: maxX,
+        rangeAnnotations: RangeAnnotations(
+          horizontalRangeAnnotations: _zoneBands(bounds, minY, maxY),
+        ),
         gridData: const FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
@@ -223,5 +246,33 @@ class _RatioChart extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Green/amber/red bands from the kind's recommended bounds (chart-Y space).
+  List<HorizontalRangeAnnotation> _zoneBands(
+      ZoneBounds b, double minY, double maxY) {
+    final bands = <HorizontalRangeAnnotation>[];
+    Color c(Zone z) => z.color.withValues(alpha: 0.10);
+    if (b.greenLow != null || b.greenHigh != null) {
+      bands.add(HorizontalRangeAnnotation(
+          y1: b.greenLow ?? minY, y2: b.greenHigh ?? maxY, color: c(Zone.green)));
+    }
+    if (b.amberLow != null && b.greenLow != null) {
+      bands.add(HorizontalRangeAnnotation(
+          y1: b.amberLow!, y2: b.greenLow!, color: c(Zone.amber)));
+    }
+    if (b.amberHigh != null && b.greenHigh != null) {
+      bands.add(HorizontalRangeAnnotation(
+          y1: b.greenHigh!, y2: b.amberHigh!, color: c(Zone.amber)));
+    }
+    if (b.amberLow != null) {
+      bands.add(HorizontalRangeAnnotation(
+          y1: minY, y2: b.amberLow!, color: c(Zone.red)));
+    }
+    if (b.amberHigh != null) {
+      bands.add(HorizontalRangeAnnotation(
+          y1: b.amberHigh!, y2: maxY, color: c(Zone.red)));
+    }
+    return bands;
   }
 }

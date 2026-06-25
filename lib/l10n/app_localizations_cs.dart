@@ -319,13 +319,9 @@ class AppLocalizationsCs extends AppLocalizations {
       'Zaznamenejte oba parametry, abyste viděli jejich poměr.';
 
   @override
-  String get dashboardSection => 'Přehled';
-
-  @override
-  String get showRatioPo4No3 => 'Zobrazit poměr PO₄ : NO₃';
-
-  @override
-  String get showRatioMgCa => 'Zobrazit poměr Mg : Ca';
+  String ratioBoundsNote(Object metric) {
+    return 'Hranice zón používají $metric, hodnotu zobrazenou na kartě.';
+  }
 
   @override
   String get waterChanges => 'Výměny vody';

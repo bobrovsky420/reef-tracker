@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-06-24
+
+### Added
+- Ratio cards now have **editable per-tank zone bounds** (red/amber/green),
+  edited the same way as measurement parameters (Manage Parameters → edit).
+  Bounds default to the recommended ranges and are included in backup/restore.
+
+## [0.4.1] - 2026-06-24
+
+### Added
+- Recommended red/amber/green health zones for the ratio cards (PO₄ : NO₃ green
+  ≈ 50–150 / a ~100:1 NO₃:PO₄ target; Mg : Ca green ≈ 2.9–3.3 / ≈3:1): ratio
+  values are now color-coded and the ratio graphs show zone bands.
+
+### Changed
+- The Mg : Ca ratio is now shown as a single number (Mg ÷ Ca, to one decimal)
+  instead of `N : 1`.
+- Ratio cards are now full dashboard cards, identical in size and appearance to
+  the measurement cards, and live in the same grid.
+- Ratio card show/hide moved from app Settings to the Manage Parameters screen
+  (in the same reorderable list as measurements) and is stored **per tank**
+  (`RatioVisibilities` table, included in backup/restore). Ratio cards can now be
+  **reordered** alongside measurements via a shared display order.
+
 ## [0.4.0] - 2026-06-24
 
 ### Added

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/ratio.dart';
 import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
@@ -30,6 +31,7 @@ class ManageParametersScreen extends ConsumerWidget {
     }
     final type = SetupType.fromName(tank.setupType);
     final prefs = ref.watch(unitPrefsProvider);
+    final ratioSettings = ref.watch(ratioSettingsProvider).value ?? const {};
 
     return Scaffold(
       appBar: AppBar(
@@ -53,47 +55,43 @@ class ManageParametersScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tracked) {
+          // One reorderable list holding both measurements and ratio cards,
+          // ordered by their shared display order.
+          final items = <_DashItem>[
+            for (final p in tracked) _ParamItem(p),
+            for (final kind in RatioKind.values)
+              _RatioItem(kind, ratioSettings[kind.name]),
+          ]..sort((a, b) => a.order.compareTo(b.order));
+
           return ReorderableListView.builder(
             padding: const EdgeInsets.only(bottom: 88),
-            itemCount: tracked.length,
+            itemCount: items.length,
             // ignore: deprecated_member_use
             onReorder: (oldIndex, newIndex) {
-              final ids = tracked.map((e) => e.id).toList();
               if (newIndex > oldIndex) newIndex -= 1;
-              final moved = ids.removeAt(oldIndex);
-              ids.insert(newIndex, moved);
-              ref.read(dbProvider).reorderTrackedParameters(ids);
+              final reordered = [...items];
+              reordered.insert(newIndex, reordered.removeAt(oldIndex));
+              final paramOrders = <({int id, int order})>[];
+              final ratioOrders = <({String key, int order})>[];
+              for (var i = 0; i < reordered.length; i++) {
+                final it = reordered[i];
+                switch (it) {
+                  case _ParamItem():
+                    paramOrders.add((id: it.param.id, order: i));
+                  case _RatioItem():
+                    ratioOrders.add((key: it.kind.name, order: i));
+                }
+              }
+              ref.read(dbProvider).applyDashboardOrder(tank.id,
+                  paramOrders: paramOrders, ratioOrders: ratioOrders);
             },
             itemBuilder: (context, i) {
-              final param = tracked[i];
-              final bounds = boundsOf(param);
-              final pres = presentationOf(param, prefs);
-              return ListTile(
-                key: ValueKey(param.id),
-                title: Text(l.paramName(param.paramKey)),
-                subtitle: Text(_boundsSummary(l, bounds, pres)),
-                leading: Switch(
-                  value: param.enabled,
-                  onChanged: (v) => ref.read(dbProvider).updateTrackedParameter(
-                      param.copyWith(enabled: v)),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      tooltip: l.editZones,
-                      onPressed: () => context.push(
-                          '/parameters/${param.id}/edit',
-                          extra: param),
-                    ),
-                    ReorderableDragStartListener(
-                      index: i,
-                      child: const Icon(Icons.drag_handle),
-                    ),
-                  ],
-                ),
-              );
+              final item = items[i];
+              return switch (item) {
+                _ParamItem() =>
+                  _paramRow(context, ref, item.param, prefs, i),
+                _RatioItem() => _ratioRow(context, ref, tank.id, item, i),
+              };
             },
           );
         },
@@ -103,6 +101,69 @@ class ManageParametersScreen extends ConsumerWidget {
             trackedAsync.value ?? const []),
         icon: const Icon(Icons.add),
         label: Text(l.addParameter),
+      ),
+    );
+  }
+
+  Widget _paramRow(BuildContext context, WidgetRef ref, TrackedParameter param,
+      UnitPrefs prefs, int index) {
+    final l = AppLocalizations.of(context);
+    final pres = presentationOf(param, prefs);
+    return ListTile(
+      key: ValueKey('p${param.id}'),
+      title: Text(l.paramName(param.paramKey)),
+      subtitle: Text(_boundsSummary(l, boundsOf(param), pres)),
+      leading: Switch(
+        value: param.enabled,
+        onChanged: (v) => ref
+            .read(dbProvider)
+            .updateTrackedParameter(param.copyWith(enabled: v)),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: l.editZones,
+            onPressed: () =>
+                context.push('/parameters/${param.id}/edit', extra: param),
+          ),
+          ReorderableDragStartListener(
+            index: index,
+            child: const Icon(Icons.drag_handle),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ratioRow(BuildContext context, WidgetRef ref, int tankId,
+      _RatioItem item, int index) {
+    final l = AppLocalizations.of(context);
+    final kind = item.kind;
+    final bounds = ratioBounds(kind, item.row);
+    return ListTile(
+      key: ValueKey('r${kind.name}'),
+      title: Text(l.ratioCardLabel(kind)),
+      subtitle: Text(_ratioBoundsSummary(l, kind, bounds)),
+      leading: Switch(
+        value: ratioRowVisible(item.row),
+        onChanged: (v) =>
+            ref.read(dbProvider).setRatioVisible(tankId, kind.name, v),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: l.editZones,
+            onPressed: () => context.push('/ratio/${kind.name}/edit'),
+          ),
+          ReorderableDragStartListener(
+            index: index,
+            child: const Icon(Icons.drag_handle),
+          ),
+        ],
       ),
     );
   }
@@ -169,6 +230,27 @@ class ManageParametersScreen extends ConsumerWidget {
   }
 }
 
+/// An item in the unified manage list: either a tracked parameter or a ratio
+/// card. Both expose a shared display [order] used for sorting/reordering.
+sealed class _DashItem {
+  double get order;
+}
+
+class _ParamItem extends _DashItem {
+  _ParamItem(this.param);
+  final TrackedParameter param;
+  @override
+  double get order => param.displayOrder.toDouble();
+}
+
+class _RatioItem extends _DashItem {
+  _RatioItem(this.kind, this.row);
+  final RatioKind kind;
+  final RatioVisibility? row;
+  @override
+  double get order => ratioRowOrder(kind, row);
+}
+
 String _boundsSummary(
     AppLocalizations l, ZoneBounds b, ParamPresentation pres) {
   if (b.isEmpty) return l.noBoundariesSet;
@@ -176,6 +258,14 @@ String _boundsSummary(
   return l.boundsSummary(
       f(b.greenLow), f(b.greenHigh), pres.unitLabel, f(b.amberLow),
       f(b.amberHigh));
+}
+
+/// Bounds summary for a ratio card, formatted in the kind's displayed metric.
+String _ratioBoundsSummary(AppLocalizations l, RatioKind kind, ZoneBounds b) {
+  if (b.isEmpty) return l.noBoundariesSet;
+  String f(double? v) => v == null ? '∞' : formatRatioBound(kind, v);
+  return l.boundsSummary(
+      f(b.greenLow), f(b.greenHigh), '', f(b.amberLow), f(b.amberHigh));
 }
 
 /// Editor for a single tracked parameter's unit + four zone boundaries.

@@ -89,22 +89,6 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const Divider(),
-          _SectionHeader(l.dashboardSection),
-          SwitchListTile(
-            secondary: const Icon(Icons.percent),
-            title: Text(l.showRatioPo4No3),
-            value: ref.watch(showRatioPo4No3Provider).value ?? true,
-            onChanged: (v) =>
-                db.setSetting(kShowRatioPo4No3Key, v ? 'true' : 'false'),
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.percent),
-            title: Text(l.showRatioMgCa),
-            value: ref.watch(showRatioMgCaProvider).value ?? true,
-            onChanged: (v) =>
-                db.setSetting(kShowRatioMgCaKey, v ? 'true' : 'false'),
-          ),
-          const Divider(),
           _SectionHeader(l.toolsSection),
           ListTile(
             leading: const Icon(Icons.calculate_outlined),
@@ -198,6 +182,7 @@ class SettingsScreen extends ConsumerWidget {
         waterChangeRows: data.waterChanges,
         carbonChangeRows: data.carbonChanges,
         equipmentCleaningRows: data.equipmentCleanings,
+        ratioVisibilityRows: data.ratioVisibilities,
         settingRows: data.settings,
       );
       if (context.mounted) _snack(context, l.backupRestored);

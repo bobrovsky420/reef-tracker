@@ -319,13 +319,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get ratioNoData => 'Zapisz oba parametry, aby zobaczyć ich stosunek.';
 
   @override
-  String get dashboardSection => 'Pulpit';
-
-  @override
-  String get showRatioPo4No3 => 'Pokaż stosunek PO₄ : NO₃';
-
-  @override
-  String get showRatioMgCa => 'Pokaż stosunek Mg : Ca';
+  String ratioBoundsNote(Object metric) {
+    return 'Granice stref używają $metric, wartości pokazanej na karcie.';
+  }
 
   @override
   String get waterChanges => 'Podmiany wody';

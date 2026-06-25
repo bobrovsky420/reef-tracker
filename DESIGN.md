@@ -90,6 +90,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `WaterChanges` | id, tankId (FK cascade), changedAt, amountLiters?, note? |
 | `CarbonChanges` | id, tankId (FK cascade), changedAt, grams?, note? |
 | `EquipmentCleanings` | id, tankId (FK cascade), cleanedAt, note? |
+| `RatioVisibilities` | tankId + ratioKey (composite PK), tankId FK cascade, visible, displayOrder, amberLow?/greenLow?/greenHigh?/amberHigh? — per-tank ratio-card visibility, dashboard position (shared order space with `TrackedParameters.displayOrder`), and editable zone bounds; a missing row (or all-null bounds) = visible, ordered last, default zones |
 | `Settings` | key (PK), value? — generic kv store |
 
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
@@ -98,8 +99,11 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 **Migrations** (`MigrationStrategy`): v2 added `Tanks.startDate` via `addColumn`;
 v3 added the `WaterChanges` table via `createTable`; v4 added `WaterChanges.note`
 (`addColumn`) and the `CarbonChanges` table (`createTable`); v5 added the
-`EquipmentCleanings` table (`createTable`, guarded by `_tableExists`). Foreign
-keys are enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
+`EquipmentCleanings` table (`createTable`, guarded by `_tableExists`); v6 added
+the `RatioVisibilities` table (`createTable`, guarded by `_tableExists`); v7
+added `RatioVisibilities.displayOrder` (`addColumn`, guarded by `_columnExists`);
+v8 added `RatioVisibilities` zone-bound columns (`addColumn` ×4, guarded).
+Foreign keys are enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
 add/change a table or column you must bump `schemaVersion` and add the matching
 migration**, then run `dart run build_runner build`.
 
@@ -126,7 +130,7 @@ JSON document, `format: "reeftracker-backup"`, `version` (`kBackupVersion = 1`).
 DateTimes serialized as epoch millis. `encodeBackup` dumps every table;
 `decodeBackup` validates the format/version guard and is **forward-tolerant**
 (older backups without the `waterChanges` / `carbonChanges` /
-`equipmentCleanings` keys decode to empty lists).
+`equipmentCleanings` / `ratioVisibilities` keys decode to empty lists).
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
 **replaces the entire database in one transaction**, preserving primary keys so
@@ -158,6 +162,7 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 | `/add-reading` | Log a batch of readings |
 | `/history/:paramKey` | Single-parameter history graph |
 | `/ratio/:type` | Ratio history graph (`type` = `po4no3` or `mgca`) |
+| `/ratio/:type/edit` | Edit a ratio card's per-tank zone bounds |
 | `/actions` | Combined action log (water changes + carbon changes) |
 | `/settings` | Units, language, backup/restore |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
@@ -169,15 +174,17 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 - App-bar `_TankSelector` popup to switch active tank or jump to manage-tanks;
   app-bar actions for the action log, manage parameters, settings; FAB to add a
   reading.
-- Grid of `_ParameterTile`s (enabled tracked params only): each shows the latest
-  value **colored by its zone**, the display unit, a trend `_ChangeIndicator`
-  (up/down/flat + delta vs. previous reading), and a relative timestamp.
-  Tapping a tile opens that parameter's history.
-- Optional `_RatioCard` banner(s) at the top, one per `RatioKind` (PO₄ : NO₃ and
-  Mg : Ca). A card shows only when its ratio is enabled in Settings **and** both
-  of its parameters have readings; tap opens `/ratio/<kind>`. Visibility toggles
-  are persisted in Settings (`show_ratio_po4_no3` / `show_ratio_mg_ca`, default
-  on; `showRatioPo4No3Provider` / `showRatioMgCaProvider`).
+- One grid mixing `_ParameterTile`s (enabled tracked params) and `_RatioTile`s
+  (visible ratio cards), ordered together by a **shared display order**
+  (`TrackedParameters.displayOrder` and `RatioVisibilities.displayOrder` live in
+  the same integer space). Both tile types are the same size/layout: latest value
+  **colored by its zone**, a trend indicator (delta vs. previous), and a relative
+  timestamp; tapping opens the parameter history or `/ratio/<kind>`.
+- A ratio tile shows only when its card is visible **and** both of its parameters
+  have readings. Visibility + order are set in the **Manage Parameters** screen
+  (ratios and measurements share one reorderable list) and stored **per tank** in
+  `RatioVisibilities` (`ratioSettingsProvider` → `Map<RatioKind.name,
+  RatioVisibility>`, resolved with `ratioRowVisible` / `ratioRowOrder`).
 - Empty states: `_NoTanksView` (welcome + add aquarium) and `_NoParamsView`.
 
 ### History graph (`history/history_screen.dart`)
@@ -191,7 +198,8 @@ units while bounds/zones stay canonical.
 
 Generic over a `RatioKind` enum (each carries numerator/denominator param keys,
 display symbols, and a `RatioDisplay` form). Current kinds: `po4no3` (PO₄ : NO₃,
-shown as `1 : N`) and `mgca` (Mg : Ca, shown as `N : 1`).
+shown as `1 : N`) and `mgca` (Mg : Ca, shown as a single number = Mg/Ca to one
+decimal). `RatioDisplay` = `oneToN` | `decimal`.
 - `latestRatio(numerator, denominator)` → current ratio (= numerator/denominator)
   from the newest reading of each (null if either missing or denominator = 0).
 - `computeRatioSeries(numerator, denominator)` builds a time series: at each
@@ -202,7 +210,17 @@ shown as `1 : N`) and `mgca` (Mg : Ca, shown as `N : 1`).
   inverse N). `ratioBreakdown` shows the raw inputs. `formatRatio`/`formatRatioN`
   scale precision to magnitude. Localized labels/titles via `ratioCardLabel` /
   `ratioScreenTitle` in `l10n_helpers.dart`. The single `RatioScreen` renders any
-  kind. Adding a ratio = add a `RatioKind` value + its ARB label/title keys.
+  kind.
+- **Health zones:** each `RatioKind` carries recommended red/amber/green
+  `defaultBounds` (in displayed-metric space; `RatioKindZones` extension) from
+  reef guidance — PO₄ : NO₃ green ≈ 50–150 (a ~100:1 NO₃:PO₄ target), Mg : Ca
+  green ≈ 2.9–3.3 (≈3:1). Bounds are **editable per tank** via `RatioEditScreen`
+  (`/ratio/:type/edit`), stored on the `RatioVisibilities` row; `ratioBounds(kind,
+  row)` resolves the effective bounds (row when set, else defaults).
+  `ratioZone(kind, bounds, ratio)` colors the dashboard tile and `RatioScreen`
+  draws the same bands as `RangeAnnotations`.
+- Adding a ratio = add a `RatioKind` value (with symbols, display form, and
+  `defaultBounds`) + its ARB label/title keys.
 
 ### Actions log (`features/actions/`)
 
@@ -229,8 +247,14 @@ first.
 
 ### Manage parameters (`manage_parameters_screen.dart`)
 
-Toggle which catalog parameters are tracked for the active tank, reorder them
-(`displayOrder`), and edit each one's zone bounds (`ParameterEditScreen`).
+One reorderable list (`_DashItem` sealed type: `_ParamItem` | `_RatioItem`)
+mixing tracked parameters and ratio cards, ordered by their shared
+`displayOrder`. Toggle which parameters are tracked / which ratio cards are
+shown, drag to reorder either, and edit a parameter's zone bounds
+(`ParameterEditScreen`). Reordering writes the new combined order back via
+`applyDashboardOrder` (params → `TrackedParameters`, ratios →
+`RatioVisibilities`). Each row has an edit button: parameters open
+`ParameterEditScreen`, ratios open `RatioEditScreen` (per-tank zone bounds).
 Re-applying a setup-type preset is available.
 
 ### Add reading (`add_reading_screen.dart`)

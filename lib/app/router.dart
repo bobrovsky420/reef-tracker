@@ -8,6 +8,7 @@ import '../features/calculator/salinity_calculator_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
+import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
@@ -51,14 +52,13 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/ratio/:type',
-      builder: (context, state) {
-        final type = state.pathParameters['type'];
-        final kind = RatioKind.values
-            .where((k) => k.name == type)
-            .cast<RatioKind?>()
-            .firstWhere((k) => true, orElse: () => null);
-        return RatioScreen(kind: kind ?? RatioKind.po4no3);
-      },
+      builder: (context, state) =>
+          RatioScreen(kind: _ratioKind(state.pathParameters['type'])),
+    ),
+    GoRoute(
+      path: '/ratio/:type/edit',
+      builder: (context, state) =>
+          RatioEditScreen(kind: _ratioKind(state.pathParameters['type'])),
     ),
     GoRoute(
       path: '/actions',
@@ -74,3 +74,11 @@ final appRouter = GoRouter(
     ),
   ],
 );
+
+/// Resolves a `:type` path segment to a [RatioKind], defaulting to po4no3.
+RatioKind _ratioKind(String? type) {
+  for (final k in RatioKind.values) {
+    if (k.name == type) return k;
+  }
+  return RatioKind.po4no3;
+}

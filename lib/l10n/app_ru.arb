@@ -97,10 +97,8 @@
   "ratioMgCaLabel": "Mg : Ca",
   "ratioMgCaTitle": "Соотношение Mg : Ca",
   "ratioNoData": "Запишите оба параметра, чтобы увидеть их соотношение.",
+  "ratioBoundsNote": "Границы зон используют {metric} — значение, показанное на карточке.",
 
-  "dashboardSection": "Панель",
-  "showRatioPo4No3": "Показывать соотношение PO₄ : NO₃",
-  "showRatioMgCa": "Показывать соотношение Mg : Ca",
 
   "waterChanges": "Подмены воды",
   "recordWaterChange": "Записать подмену воды",

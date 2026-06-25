@@ -320,13 +320,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Erfasse beide Parameter, um ihr Verhältnis zu sehen.';
 
   @override
-  String get dashboardSection => 'Dashboard';
-
-  @override
-  String get showRatioPo4No3 => 'PO₄ : NO₃-Verhältnis anzeigen';
-
-  @override
-  String get showRatioMgCa => 'Mg : Ca-Verhältnis anzeigen';
+  String ratioBoundsNote(Object metric) {
+    return 'Die Zonengrenzen verwenden $metric, den auf der Karte angezeigten Wert.';
+  }
 
   @override
   String get waterChanges => 'Wasserwechsel';

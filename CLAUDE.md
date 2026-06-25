@@ -21,6 +21,10 @@ The version lives in [pubspec.yaml](pubspec.yaml) as `major.minor.patch+build`. 
 
 Always increment the `+build` number by 1 on any version change (it must stay monotonic for Android).
 
+## Changelog
+
+[CHANGELOG.md](CHANGELOG.md) follows [Keep a Changelog](https://keepachangelog.com/) format. **Update it with every change that affects users or behavior, in the same change.** Add entries under the appropriate version heading, grouped into `Added` / `Changed` / `Fixed` / `Removed`. When the version is bumped (see above), add a new `## [<version>] - <date>` section for it; otherwise record entries under the most recent version section. Skip purely internal edits with no user-facing or behavioral effect (formatting, comments).
+
 ## Localization
 
 This app is fully localized. **Whenever you add or change any user-facing text, you MUST update the translations for every existing language — no language may be left out of sync.**

@@ -99,6 +99,31 @@ class EquipmentCleanings extends Table {
   TextColumn get note => text().nullable()();
 }
 
+/// Per-tank visibility of a dashboard ratio card, keyed by [RatioKind.name]
+/// (e.g. `po4no3`, `mgca`). A missing row means the card is visible (default),
+/// so only explicit hide/show choices are stored.
+@DataClassName('RatioVisibility')
+class RatioVisibilities extends Table {
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+  TextColumn get ratioKey => text()();
+  BoolColumn get visible => boolean().withDefault(const Constant(true))();
+
+  /// Dashboard position, shared with `TrackedParameters.displayOrder`. Defaults
+  /// high so ratio cards sit after measurements until the user reorders them.
+  IntColumn get displayOrder => integer().withDefault(const Constant(1000))();
+
+  /// Per-tank zone bounds (in the displayed-metric space). Null on all four =
+  /// fall back to the kind's recommended defaults.
+  RealColumn get amberLow => real().nullable()();
+  RealColumn get greenLow => real().nullable()();
+  RealColumn get greenHigh => real().nullable()();
+  RealColumn get amberHigh => real().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {tankId, ratioKey};
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -117,13 +142,14 @@ const _kActiveTankKey = 'active_tank_id';
   WaterChanges,
   CarbonChanges,
   EquipmentCleanings,
+  RatioVisibilities,
   Settings
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -151,6 +177,29 @@ class AppDatabase extends _$AppDatabase {
           if (from < 5) {
             if (!await _tableExists('equipment_cleanings')) {
               await m.createTable(equipmentCleanings);
+            }
+          }
+          if (from < 6) {
+            if (!await _tableExists('ratio_visibilities')) {
+              await m.createTable(ratioVisibilities);
+            }
+          }
+          if (from < 7) {
+            if (!await _columnExists('ratio_visibilities', 'display_order')) {
+              await m.addColumn(
+                  ratioVisibilities, ratioVisibilities.displayOrder);
+            }
+          }
+          if (from < 8) {
+            for (final col in {
+              'amber_low': ratioVisibilities.amberLow,
+              'green_low': ratioVisibilities.greenLow,
+              'green_high': ratioVisibilities.greenHigh,
+              'amber_high': ratioVisibilities.amberHigh,
+            }.entries) {
+              if (!await _columnExists('ratio_visibilities', col.key)) {
+                await m.addColumn(ratioVisibilities, col.value);
+              }
             }
           }
         },
@@ -470,6 +519,110 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteEquipmentCleaning(int id) =>
       (delete(equipmentCleanings)..where((c) => c.id.equals(id))).go();
 
+  // --- Ratio cards ---------------------------------------------------------
+
+  /// Stored per-tank ratio-card settings (visibility + dashboard order). Rows
+  /// are absent for ratios left at their defaults (visible, ordered last).
+  Stream<List<RatioVisibility>> watchRatioVisibilities(int tankId) =>
+      (select(ratioVisibilities)..where((r) => r.tankId.equals(tankId)))
+          .watch();
+
+  Future<RatioVisibility?> _ratioRow(int tankId, String ratioKey) =>
+      (select(ratioVisibilities)
+            ..where((r) =>
+                r.tankId.equals(tankId) & r.ratioKey.equals(ratioKey)))
+          .getSingleOrNull();
+
+  /// Sets whether a ratio card is shown for [tankId], leaving its order intact.
+  Future<void> setRatioVisible(
+      int tankId, String ratioKey, bool visible) async {
+    final existing = await _ratioRow(tankId, ratioKey);
+    if (existing == null) {
+      await into(ratioVisibilities).insert(RatioVisibilitiesCompanion.insert(
+        tankId: tankId,
+        ratioKey: ratioKey,
+        visible: Value(visible),
+      ));
+    } else {
+      await (update(ratioVisibilities)
+            ..where((r) =>
+                r.tankId.equals(tankId) & r.ratioKey.equals(ratioKey)))
+          .write(RatioVisibilitiesCompanion(visible: Value(visible)));
+    }
+  }
+
+  /// Sets the per-tank zone bounds for a ratio card (creating the row if
+  /// needed), leaving visibility and order intact.
+  Future<void> setRatioBounds(
+    int tankId,
+    String ratioKey, {
+    required double? amberLow,
+    required double? greenLow,
+    required double? greenHigh,
+    required double? amberHigh,
+  }) async {
+    final existing = await _ratioRow(tankId, ratioKey);
+    if (existing == null) {
+      await into(ratioVisibilities).insert(RatioVisibilitiesCompanion.insert(
+        tankId: tankId,
+        ratioKey: ratioKey,
+        amberLow: Value(amberLow),
+        greenLow: Value(greenLow),
+        greenHigh: Value(greenHigh),
+        amberHigh: Value(amberHigh),
+      ));
+    } else {
+      await (update(ratioVisibilities)
+            ..where((r) =>
+                r.tankId.equals(tankId) & r.ratioKey.equals(ratioKey)))
+          .write(RatioVisibilitiesCompanion(
+        amberLow: Value(amberLow),
+        greenLow: Value(greenLow),
+        greenHigh: Value(greenHigh),
+        amberHigh: Value(amberHigh),
+      ));
+    }
+  }
+
+  /// Persists a new combined dashboard order across measurements and ratio
+  /// cards (they share one order space). [paramOrders] gives tracked-parameter
+  /// id → order; [ratioOrders] gives ratio key → order.
+  Future<void> applyDashboardOrder(
+    int tankId, {
+    required List<({int id, int order})> paramOrders,
+    required List<({String key, int order})> ratioOrders,
+  }) async {
+    await transaction(() async {
+      await batch((b) {
+        for (final p in paramOrders) {
+          b.update(
+            trackedParameters,
+            TrackedParametersCompanion(displayOrder: Value(p.order)),
+            where: (t) => t.id.equals(p.id),
+          );
+        }
+      });
+      for (final r in ratioOrders) {
+        final existing = await _ratioRow(tankId, r.key);
+        if (existing == null) {
+          await into(ratioVisibilities).insert(
+            RatioVisibilitiesCompanion.insert(
+              tankId: tankId,
+              ratioKey: r.key,
+              displayOrder: Value(r.order),
+            ),
+          );
+        } else {
+          await (update(ratioVisibilities)
+                ..where((t) =>
+                    t.tankId.equals(tankId) & t.ratioKey.equals(r.key)))
+              .write(
+                  RatioVisibilitiesCompanion(displayOrder: Value(r.order)));
+        }
+      }
+    });
+  }
+
   // --- Settings ------------------------------------------------------------
 
   Future<void> setActiveTank(int? tankId) =>
@@ -524,6 +677,10 @@ class AppDatabase extends _$AppDatabase {
   Future<List<EquipmentCleaning>> getAllEquipmentCleanings() =>
       select(equipmentCleanings).get();
 
+  /// Every ratio-visibility override, across all tanks.
+  Future<List<RatioVisibility>> getAllRatioVisibilities() =>
+      select(ratioVisibilities).get();
+
   /// Every settings key/value pair.
   Future<List<Setting>> getAllSettings() => select(settings).get();
 
@@ -537,6 +694,7 @@ class AppDatabase extends _$AppDatabase {
     required List<WaterChangesCompanion> waterChangeRows,
     required List<CarbonChangesCompanion> carbonChangeRows,
     required List<EquipmentCleaningsCompanion> equipmentCleaningRows,
+    required List<RatioVisibilitiesCompanion> ratioVisibilityRows,
     required List<SettingsCompanion> settingRows,
   }) async {
     await transaction(() async {
@@ -545,6 +703,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(waterChanges).go();
       await delete(carbonChanges).go();
       await delete(equipmentCleanings).go();
+      await delete(ratioVisibilities).go();
       await delete(trackedParameters).go();
       await delete(settings).go();
       await delete(tanks).go();
@@ -556,6 +715,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(waterChanges, waterChangeRows);
         b.insertAll(carbonChanges, carbonChangeRows);
         b.insertAll(equipmentCleanings, equipmentCleaningRows);
+        b.insertAll(ratioVisibilities, ratioVisibilityRows);
         b.insertAll(settings, settingRows);
       });
     });

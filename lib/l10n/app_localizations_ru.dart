@@ -320,13 +320,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Запишите оба параметра, чтобы увидеть их соотношение.';
 
   @override
-  String get dashboardSection => 'Панель';
-
-  @override
-  String get showRatioPo4No3 => 'Показывать соотношение PO₄ : NO₃';
-
-  @override
-  String get showRatioMgCa => 'Показывать соотношение Mg : Ca';
+  String ratioBoundsNote(Object metric) {
+    return 'Границы зон используют $metric — значение, показанное на карточке.';
+  }
 
   @override
   String get waterChanges => 'Подмены воды';

@@ -35,6 +35,7 @@ class BackupData {
     required this.waterChanges,
     required this.carbonChanges,
     required this.equipmentCleanings,
+    required this.ratioVisibilities,
     required this.settings,
   });
 
@@ -44,6 +45,7 @@ class BackupData {
   final List<WaterChangesCompanion> waterChanges;
   final List<CarbonChangesCompanion> carbonChanges;
   final List<EquipmentCleaningsCompanion> equipmentCleanings;
+  final List<RatioVisibilitiesCompanion> ratioVisibilities;
   final List<SettingsCompanion> settings;
 }
 
@@ -56,6 +58,7 @@ String encodeBackup({
   required List<WaterChange> waterChanges,
   required List<CarbonChange> carbonChanges,
   required List<EquipmentCleaning> equipmentCleanings,
+  required List<RatioVisibility> ratioVisibilities,
   required List<Setting> settings,
 }) {
   final map = <String, dynamic>{
@@ -70,6 +73,8 @@ String encodeBackup({
     'carbonChanges': carbonChanges.map(_carbonChangeToJson).toList(),
     'equipmentCleanings':
         equipmentCleanings.map(_equipmentCleaningToJson).toList(),
+    'ratioVisibilities':
+        ratioVisibilities.map(_ratioVisibilityToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
   return const JsonEncoder.withIndent('  ').convert(map);
@@ -120,6 +125,12 @@ BackupData decodeBackup(String jsonString) {
         : _listOfMaps(decoded['equipmentCleanings'])
             .map(_equipmentCleaningFromJson)
             .toList();
+    // Ratio visibility was added later; older backups omit the key.
+    final ratioVisibilities = decoded['ratioVisibilities'] == null
+        ? <RatioVisibilitiesCompanion>[]
+        : _listOfMaps(decoded['ratioVisibilities'])
+            .map(_ratioVisibilityFromJson)
+            .toList();
     final settings =
         _listOfMaps(decoded['settings']).map(_settingFromJson).toList();
     return BackupData(
@@ -129,6 +140,7 @@ BackupData decodeBackup(String jsonString) {
       waterChanges: waterChanges,
       carbonChanges: carbonChanges,
       equipmentCleanings: equipmentCleanings,
+      ratioVisibilities: ratioVisibilities,
       settings: settings,
     );
   } catch (_) {
@@ -146,6 +158,7 @@ Future<void> exportBackup(AppDatabase db) async {
     waterChanges: await db.getAllWaterChanges(),
     carbonChanges: await db.getAllCarbonChanges(),
     equipmentCleanings: await db.getAllEquipmentCleanings(),
+    ratioVisibilities: await db.getAllRatioVisibilities(),
     settings: await db.getAllSettings(),
   );
 
@@ -297,6 +310,32 @@ EquipmentCleaningsCompanion _equipmentCleaningFromJson(
       tankId: Value(m['tankId'] as int),
       cleanedAt: Value(_date(m['cleanedAt'])),
       note: Value(m['note'] as String?),
+    );
+
+Map<String, dynamic> _ratioVisibilityToJson(RatioVisibility r) => {
+      'tankId': r.tankId,
+      'ratioKey': r.ratioKey,
+      'visible': r.visible,
+      'displayOrder': r.displayOrder,
+      'amberLow': r.amberLow,
+      'greenLow': r.greenLow,
+      'greenHigh': r.greenHigh,
+      'amberHigh': r.amberHigh,
+    };
+
+RatioVisibilitiesCompanion _ratioVisibilityFromJson(Map<String, dynamic> m) =>
+    RatioVisibilitiesCompanion(
+      tankId: Value(m['tankId'] as int),
+      ratioKey: Value(m['ratioKey'] as String),
+      visible: Value(m['visible'] as bool),
+      // displayOrder/bounds were added later; older backups omit them.
+      displayOrder: m['displayOrder'] == null
+          ? const Value.absent()
+          : Value(m['displayOrder'] as int),
+      amberLow: Value((m['amberLow'] as num?)?.toDouble()),
+      greenLow: Value((m['greenLow'] as num?)?.toDouble()),
+      greenHigh: Value((m['greenHigh'] as num?)?.toDouble()),
+      amberHigh: Value((m['amberHigh'] as num?)?.toDouble()),
     );
 
 Map<String, dynamic> _settingToJson(Setting s) => {

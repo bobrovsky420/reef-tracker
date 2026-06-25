@@ -97,10 +97,8 @@
   "ratioMgCaLabel": "Mg : Ca",
   "ratioMgCaTitle": "Poměr Mg : Ca",
   "ratioNoData": "Zaznamenejte oba parametry, abyste viděli jejich poměr.",
+  "ratioBoundsNote": "Hranice zón používají {metric}, hodnotu zobrazenou na kartě.",
 
-  "dashboardSection": "Přehled",
-  "showRatioPo4No3": "Zobrazit poměr PO₄ : NO₃",
-  "showRatioMgCa": "Zobrazit poměr Mg : Ca",
 
   "waterChanges": "Výměny vody",
   "recordWaterChange": "Zaznamenat výměnu vody",

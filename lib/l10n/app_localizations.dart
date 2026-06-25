@@ -638,23 +638,11 @@ abstract class AppLocalizations {
   /// **'Record both parameters to see their ratio.'**
   String get ratioNoData;
 
-  /// No description provided for @dashboardSection.
+  /// No description provided for @ratioBoundsNote.
   ///
   /// In en, this message translates to:
-  /// **'Dashboard'**
-  String get dashboardSection;
-
-  /// No description provided for @showRatioPo4No3.
-  ///
-  /// In en, this message translates to:
-  /// **'Show PO₄ : NO₃ ratio'**
-  String get showRatioPo4No3;
-
-  /// No description provided for @showRatioMgCa.
-  ///
-  /// In en, this message translates to:
-  /// **'Show Mg : Ca ratio'**
-  String get showRatioMgCa;
+  /// **'Zone limits use {metric}, the value shown on the card.'**
+  String ratioBoundsNote(Object metric);
 
   /// No description provided for @waterChanges.
   ///

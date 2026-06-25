@@ -112,6 +112,20 @@ void main() {
         note: null,
       ),
     ];
+    final ratioVisibilities = [
+      const RatioVisibility(
+        tankId: 1,
+        ratioKey: 'mgca',
+        visible: false,
+        displayOrder: 3,
+        amberLow: 2.6,
+        greenLow: 2.9,
+        greenHigh: 3.3,
+        amberHigh: 3.6,
+      ),
+      const RatioVisibility(
+          tankId: 2, ratioKey: 'po4no3', visible: true, displayOrder: 1000),
+    ];
     final settings = [
       const Setting(key: 'temp_unit', value: 'fahrenheit'),
       const Setting(key: 'active_tank_id', value: '1'),
@@ -127,6 +141,7 @@ void main() {
         waterChanges: waterChanges,
         carbonChanges: carbonChanges,
         equipmentCleanings: equipmentCleanings,
+        ratioVisibilities: ratioVisibilities,
         settings: settings,
       );
       final data = decodeBackup(json);
@@ -182,6 +197,18 @@ void main() {
       expect(e0.note.value, 'Cleaned skimmer');
       expect(data.equipmentCleanings[1].note.value, isNull);
 
+      final rv0 = data.ratioVisibilities[0];
+      expect(rv0.tankId.value, 1);
+      expect(rv0.ratioKey.value, 'mgca');
+      expect(rv0.visible.value, false);
+      expect(rv0.displayOrder.value, 3);
+      expect(rv0.greenLow.value, 2.9);
+      expect(rv0.amberHigh.value, 3.6);
+      expect(data.ratioVisibilities[1].ratioKey.value, 'po4no3');
+      expect(data.ratioVisibilities[1].visible.value, true);
+      expect(data.ratioVisibilities[1].displayOrder.value, 1000);
+      expect(data.ratioVisibilities[1].greenLow.value, isNull);
+
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
       expect(data.settings[0].value.value, 'fahrenheit');
@@ -197,6 +224,7 @@ void main() {
         waterChanges: waterChanges,
         carbonChanges: carbonChanges,
         equipmentCleanings: equipmentCleanings,
+        ratioVisibilities: ratioVisibilities,
         settings: settings,
       )
           .replaceFirst(
@@ -204,11 +232,14 @@ void main() {
           .replaceFirst(
               RegExp(r',\s*"carbonChanges": \[.*?\]', dotAll: true), '')
           .replaceFirst(
-              RegExp(r',\s*"equipmentCleanings": \[.*?\]', dotAll: true), '');
+              RegExp(r',\s*"equipmentCleanings": \[.*?\]', dotAll: true), '')
+          .replaceFirst(
+              RegExp(r',\s*"ratioVisibilities": \[.*?\]', dotAll: true), '');
       final data = decodeBackup(json);
       expect(data.waterChanges, isEmpty);
       expect(data.carbonChanges, isEmpty);
       expect(data.equipmentCleanings, isEmpty);
+      expect(data.ratioVisibilities, isEmpty);
       expect(data.readings.length, 2);
     });
 
@@ -230,6 +261,7 @@ void main() {
         waterChanges: const [],
         carbonChanges: const [],
         equipmentCleanings: const [],
+        ratioVisibilities: const [],
         settings: const [],
       ).replaceFirst('"version": 1', '"version": 999');
       expect(

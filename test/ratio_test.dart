@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/ratio.dart';
+import 'package:reeftracker/domain/zones.dart';
 
 Reading _r(String key, double value, int msEpoch) => Reading(
       id: msEpoch,
@@ -79,14 +80,59 @@ void main() {
       expect(formatRatioValue(RatioKind.po4no3, 1 / 3), '1 : 3.0');
     });
 
-    test('Mg : Ca renders as N : 1 (N = Mg/Ca)', () {
-      expect(formatRatioValue(RatioKind.mgca, 3.12), '3.1 : 1'); // 1300 / 416
-      expect(formatRatioValue(RatioKind.mgca, 3.0), '3.0 : 1');
+    test('Mg : Ca renders as a single number to one decimal', () {
+      expect(formatRatioValue(RatioKind.mgca, 3.12), '3.1'); // 1300 / 416
+      expect(formatRatioValue(RatioKind.mgca, 3.0), '3.0');
+      expect(formatRatioValue(RatioKind.mgca, 12.34), '12.3');
     });
 
-    test('returns a dash for non-positive or non-finite ratios', () {
+    test('returns a dash for undefined ratios', () {
       expect(formatRatioValue(RatioKind.po4no3, 0), '—');
       expect(formatRatioValue(RatioKind.mgca, double.infinity), '—');
+    });
+  });
+
+  group('ratioBounds', () {
+    test('falls back to the kind default when no row or no bounds', () {
+      expect(ratioBounds(RatioKind.mgca, null).greenLow,
+          RatioKind.mgca.defaultBounds.greenLow);
+      final blank = const RatioVisibility(
+          tankId: 1, ratioKey: 'mgca', visible: true, displayOrder: 1000);
+      expect(ratioBounds(RatioKind.mgca, blank).greenHigh,
+          RatioKind.mgca.defaultBounds.greenHigh);
+    });
+
+    test('uses the row bounds when set', () {
+      final row = const RatioVisibility(
+        tankId: 1,
+        ratioKey: 'mgca',
+        visible: true,
+        displayOrder: 1000,
+        amberLow: 2.0,
+        greenLow: 2.5,
+        greenHigh: 3.5,
+        amberHigh: 4.0,
+      );
+      final b = ratioBounds(RatioKind.mgca, row);
+      expect(b.greenLow, 2.5);
+      expect(b.amberHigh, 4.0);
+    });
+  });
+
+  group('ratioZone', () {
+    test('PO₄ : NO₃ classifies on N = NO₃/PO₄ (green ~100)', () {
+      final b = RatioKind.po4no3.defaultBounds;
+      // ratio = PO4/NO3; N = 1/ratio. Green band N in [50, 150].
+      expect(ratioZone(RatioKind.po4no3, b, 1 / 100), Zone.green); // N = 100
+      expect(ratioZone(RatioKind.po4no3, b, 1 / 40), Zone.amber); // N = 40
+      expect(ratioZone(RatioKind.po4no3, b, 1 / 300), Zone.red); // N = 300
+    });
+
+    test('Mg : Ca classifies on Mg/Ca (green ~3.1)', () {
+      final b = RatioKind.mgca.defaultBounds;
+      expect(ratioZone(RatioKind.mgca, b, 3.1), Zone.green);
+      expect(ratioZone(RatioKind.mgca, b, 2.7), Zone.amber);
+      expect(ratioZone(RatioKind.mgca, b, 2.4), Zone.red);
     });
   });
 

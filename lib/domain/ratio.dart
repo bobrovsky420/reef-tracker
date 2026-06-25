@@ -1,4 +1,5 @@
 import '../data/database.dart';
+import 'zones.dart';
 
 /// Stable parameter keys used to compute the supported ratios.
 const String kPhosphateKey = 'phosphate';
@@ -11,14 +12,14 @@ enum RatioDisplay {
   /// `1 : N`, where N = denominator/numerator (e.g. PO₄ : NO₃ ≈ 1 : 100).
   oneToN,
 
-  /// `N : 1`, where N = numerator/denominator (e.g. Mg : Ca ≈ 3 : 1).
-  nToOne,
+  /// A single number = numerator/denominator, to one decimal (e.g. Mg : Ca ≈ 3.1).
+  decimal,
 }
 
 /// A ratio between two tracked parameters that can be shown on the dashboard.
 enum RatioKind {
   po4no3(kPhosphateKey, kNitrateKey, 'PO₄', 'NO₃', RatioDisplay.oneToN),
-  mgca(kMagnesiumKey, kCalciumKey, 'Mg', 'Ca', RatioDisplay.nToOne);
+  mgca(kMagnesiumKey, kCalciumKey, 'Mg', 'Ca', RatioDisplay.decimal);
 
   const RatioKind(this.numeratorKey, this.denominatorKey, this.numeratorSymbol,
       this.denominatorSymbol, this.display);
@@ -28,6 +29,28 @@ enum RatioKind {
   final String numeratorSymbol;
   final String denominatorSymbol;
   final RatioDisplay display;
+}
+
+extension RatioKindZones on RatioKind {
+  /// Recommended red/amber/green bounds expressed in the *displayed* metric
+  /// space (the value [ratioChartY] plots): for PO₄ : NO₃ that is N = NO₃/PO₄
+  /// (a ~100:1 NO₃:PO₄ "Redfield-style" target is widely recommended; lopsided
+  /// ratios feed cyano/dinos), for Mg : Ca that is Mg/Ca (≈3:1, natural
+  /// seawater ≈3.1). Used to color the cards and draw the graph zone bands.
+  ZoneBounds get defaultBounds {
+    switch (this) {
+      case RatioKind.po4no3:
+        return const ZoneBounds(
+            amberLow: 25, greenLow: 50, greenHigh: 150, amberHigh: 250);
+      case RatioKind.mgca:
+        return const ZoneBounds(
+            amberLow: 2.6, greenLow: 2.9, greenHigh: 3.3, amberHigh: 3.6);
+    }
+  }
+
+  /// Default display order, placing ratio cards after measurements until the
+  /// user reorders them.
+  int get defaultOrder => 1000 + index;
 }
 
 /// A single point of a ratio time series. [ratio] is numerator/denominator.
@@ -127,9 +150,31 @@ String formatRatioValue(RatioKind kind, double ratio) {
     case RatioDisplay.oneToN:
       if (!ratio.isFinite || ratio <= 0) return '—';
       return '1 : ${formatRatioN(1 / ratio)}';
-    case RatioDisplay.nToOne:
-      if (!ratio.isFinite || ratio <= 0) return '—';
-      return '${formatRatioN(ratio)} : 1';
+    case RatioDisplay.decimal:
+      if (!ratio.isFinite) return '—';
+      return ratio.toStringAsFixed(1);
+  }
+}
+
+/// A short, language-neutral label for the value the zones classify (the
+/// displayed metric): e.g. "NO₃ ÷ PO₄" for PO₄ : NO₃, "Mg ÷ Ca" for Mg : Ca.
+String ratioMetricLabel(RatioKind kind) {
+  switch (kind.display) {
+    case RatioDisplay.oneToN:
+      return '${kind.denominatorSymbol} ÷ ${kind.numeratorSymbol}';
+    case RatioDisplay.decimal:
+      return '${kind.numeratorSymbol} ÷ ${kind.denominatorSymbol}';
+  }
+}
+
+/// Formats a zone-bound value [v] (expressed in the displayed metric space,
+/// e.g. N for `1 : N`) the same way the ratio itself is shown.
+String formatRatioBound(RatioKind kind, double v) {
+  switch (kind.display) {
+    case RatioDisplay.oneToN:
+      return v == 0 ? '—' : formatRatioValue(kind, 1 / v);
+    case RatioDisplay.decimal:
+      return formatRatioValue(kind, v);
   }
 }
 
@@ -138,10 +183,41 @@ double ratioChartY(RatioKind kind, double ratio) {
   switch (kind.display) {
     case RatioDisplay.oneToN:
       return ratio > 0 ? 1 / ratio : double.nan;
-    case RatioDisplay.nToOne:
+    case RatioDisplay.decimal:
       return ratio;
   }
 }
+
+/// The effective zone bounds for [kind] on a tank: the per-tank row's bounds
+/// when set, otherwise the kind's recommended defaults. (A row with no bounds
+/// at all — e.g. created only to toggle visibility — falls back to defaults.)
+ZoneBounds ratioBounds(RatioKind kind, RatioVisibility? row) {
+  if (row == null) return kind.defaultBounds;
+  final b = ZoneBounds(
+    amberLow: row.amberLow,
+    greenLow: row.greenLow,
+    greenHigh: row.greenHigh,
+    amberHigh: row.amberHigh,
+  );
+  return b.isEmpty ? kind.defaultBounds : b;
+}
+
+/// Health zone for a [ratio] of [kind], classifying the displayed metric
+/// against [bounds].
+Zone ratioZone(RatioKind kind, ZoneBounds bounds, double ratio) {
+  final y = ratioChartY(kind, ratio);
+  if (!y.isFinite) return Zone.unknown;
+  return bounds.classify(y);
+}
+
+/// Whether a ratio card is shown, from its per-tank settings row (a missing
+/// row means visible — the default).
+bool ratioRowVisible(RatioVisibility? row) => row?.visible ?? true;
+
+/// The dashboard display order of a ratio card from its settings row, falling
+/// back to the kind's default order when no row exists yet.
+double ratioRowOrder(RatioKind kind, RatioVisibility? row) =>
+    (row?.displayOrder ?? kind.defaultOrder).toDouble();
 
 /// A compact "Symbol value · Symbol value" breakdown of a ratio point's inputs.
 String ratioBreakdown(RatioKind kind, RatioPoint p) =>

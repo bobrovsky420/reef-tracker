@@ -2421,6 +2421,538 @@ class EquipmentCleaningsCompanion extends UpdateCompanion<EquipmentCleaning> {
   }
 }
 
+class $RatioVisibilitiesTable extends RatioVisibilities
+    with TableInfo<$RatioVisibilitiesTable, RatioVisibility> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RatioVisibilitiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _ratioKeyMeta = const VerificationMeta(
+    'ratioKey',
+  );
+  @override
+  late final GeneratedColumn<String> ratioKey = GeneratedColumn<String>(
+    'ratio_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _visibleMeta = const VerificationMeta(
+    'visible',
+  );
+  @override
+  late final GeneratedColumn<bool> visible = GeneratedColumn<bool>(
+    'visible',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("visible" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1000),
+  );
+  static const VerificationMeta _amberLowMeta = const VerificationMeta(
+    'amberLow',
+  );
+  @override
+  late final GeneratedColumn<double> amberLow = GeneratedColumn<double>(
+    'amber_low',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _greenLowMeta = const VerificationMeta(
+    'greenLow',
+  );
+  @override
+  late final GeneratedColumn<double> greenLow = GeneratedColumn<double>(
+    'green_low',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _greenHighMeta = const VerificationMeta(
+    'greenHigh',
+  );
+  @override
+  late final GeneratedColumn<double> greenHigh = GeneratedColumn<double>(
+    'green_high',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amberHighMeta = const VerificationMeta(
+    'amberHigh',
+  );
+  @override
+  late final GeneratedColumn<double> amberHigh = GeneratedColumn<double>(
+    'amber_high',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    tankId,
+    ratioKey,
+    visible,
+    displayOrder,
+    amberLow,
+    greenLow,
+    greenHigh,
+    amberHigh,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ratio_visibilities';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RatioVisibility> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('ratio_key')) {
+      context.handle(
+        _ratioKeyMeta,
+        ratioKey.isAcceptableOrUnknown(data['ratio_key']!, _ratioKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ratioKeyMeta);
+    }
+    if (data.containsKey('visible')) {
+      context.handle(
+        _visibleMeta,
+        visible.isAcceptableOrUnknown(data['visible']!, _visibleMeta),
+      );
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
+    if (data.containsKey('amber_low')) {
+      context.handle(
+        _amberLowMeta,
+        amberLow.isAcceptableOrUnknown(data['amber_low']!, _amberLowMeta),
+      );
+    }
+    if (data.containsKey('green_low')) {
+      context.handle(
+        _greenLowMeta,
+        greenLow.isAcceptableOrUnknown(data['green_low']!, _greenLowMeta),
+      );
+    }
+    if (data.containsKey('green_high')) {
+      context.handle(
+        _greenHighMeta,
+        greenHigh.isAcceptableOrUnknown(data['green_high']!, _greenHighMeta),
+      );
+    }
+    if (data.containsKey('amber_high')) {
+      context.handle(
+        _amberHighMeta,
+        amberHigh.isAcceptableOrUnknown(data['amber_high']!, _amberHighMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {tankId, ratioKey};
+  @override
+  RatioVisibility map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RatioVisibility(
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      ratioKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ratio_key'],
+      )!,
+      visible: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}visible'],
+      )!,
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
+      amberLow: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amber_low'],
+      ),
+      greenLow: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}green_low'],
+      ),
+      greenHigh: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}green_high'],
+      ),
+      amberHigh: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amber_high'],
+      ),
+    );
+  }
+
+  @override
+  $RatioVisibilitiesTable createAlias(String alias) {
+    return $RatioVisibilitiesTable(attachedDatabase, alias);
+  }
+}
+
+class RatioVisibility extends DataClass implements Insertable<RatioVisibility> {
+  final int tankId;
+  final String ratioKey;
+  final bool visible;
+
+  /// Dashboard position, shared with `TrackedParameters.displayOrder`. Defaults
+  /// high so ratio cards sit after measurements until the user reorders them.
+  final int displayOrder;
+
+  /// Per-tank zone bounds (in the displayed-metric space). Null on all four =
+  /// fall back to the kind's recommended defaults.
+  final double? amberLow;
+  final double? greenLow;
+  final double? greenHigh;
+  final double? amberHigh;
+  const RatioVisibility({
+    required this.tankId,
+    required this.ratioKey,
+    required this.visible,
+    required this.displayOrder,
+    this.amberLow,
+    this.greenLow,
+    this.greenHigh,
+    this.amberHigh,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['tank_id'] = Variable<int>(tankId);
+    map['ratio_key'] = Variable<String>(ratioKey);
+    map['visible'] = Variable<bool>(visible);
+    map['display_order'] = Variable<int>(displayOrder);
+    if (!nullToAbsent || amberLow != null) {
+      map['amber_low'] = Variable<double>(amberLow);
+    }
+    if (!nullToAbsent || greenLow != null) {
+      map['green_low'] = Variable<double>(greenLow);
+    }
+    if (!nullToAbsent || greenHigh != null) {
+      map['green_high'] = Variable<double>(greenHigh);
+    }
+    if (!nullToAbsent || amberHigh != null) {
+      map['amber_high'] = Variable<double>(amberHigh);
+    }
+    return map;
+  }
+
+  RatioVisibilitiesCompanion toCompanion(bool nullToAbsent) {
+    return RatioVisibilitiesCompanion(
+      tankId: Value(tankId),
+      ratioKey: Value(ratioKey),
+      visible: Value(visible),
+      displayOrder: Value(displayOrder),
+      amberLow: amberLow == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amberLow),
+      greenLow: greenLow == null && nullToAbsent
+          ? const Value.absent()
+          : Value(greenLow),
+      greenHigh: greenHigh == null && nullToAbsent
+          ? const Value.absent()
+          : Value(greenHigh),
+      amberHigh: amberHigh == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amberHigh),
+    );
+  }
+
+  factory RatioVisibility.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RatioVisibility(
+      tankId: serializer.fromJson<int>(json['tankId']),
+      ratioKey: serializer.fromJson<String>(json['ratioKey']),
+      visible: serializer.fromJson<bool>(json['visible']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
+      amberLow: serializer.fromJson<double?>(json['amberLow']),
+      greenLow: serializer.fromJson<double?>(json['greenLow']),
+      greenHigh: serializer.fromJson<double?>(json['greenHigh']),
+      amberHigh: serializer.fromJson<double?>(json['amberHigh']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'tankId': serializer.toJson<int>(tankId),
+      'ratioKey': serializer.toJson<String>(ratioKey),
+      'visible': serializer.toJson<bool>(visible),
+      'displayOrder': serializer.toJson<int>(displayOrder),
+      'amberLow': serializer.toJson<double?>(amberLow),
+      'greenLow': serializer.toJson<double?>(greenLow),
+      'greenHigh': serializer.toJson<double?>(greenHigh),
+      'amberHigh': serializer.toJson<double?>(amberHigh),
+    };
+  }
+
+  RatioVisibility copyWith({
+    int? tankId,
+    String? ratioKey,
+    bool? visible,
+    int? displayOrder,
+    Value<double?> amberLow = const Value.absent(),
+    Value<double?> greenLow = const Value.absent(),
+    Value<double?> greenHigh = const Value.absent(),
+    Value<double?> amberHigh = const Value.absent(),
+  }) => RatioVisibility(
+    tankId: tankId ?? this.tankId,
+    ratioKey: ratioKey ?? this.ratioKey,
+    visible: visible ?? this.visible,
+    displayOrder: displayOrder ?? this.displayOrder,
+    amberLow: amberLow.present ? amberLow.value : this.amberLow,
+    greenLow: greenLow.present ? greenLow.value : this.greenLow,
+    greenHigh: greenHigh.present ? greenHigh.value : this.greenHigh,
+    amberHigh: amberHigh.present ? amberHigh.value : this.amberHigh,
+  );
+  RatioVisibility copyWithCompanion(RatioVisibilitiesCompanion data) {
+    return RatioVisibility(
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      ratioKey: data.ratioKey.present ? data.ratioKey.value : this.ratioKey,
+      visible: data.visible.present ? data.visible.value : this.visible,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
+      amberLow: data.amberLow.present ? data.amberLow.value : this.amberLow,
+      greenLow: data.greenLow.present ? data.greenLow.value : this.greenLow,
+      greenHigh: data.greenHigh.present ? data.greenHigh.value : this.greenHigh,
+      amberHigh: data.amberHigh.present ? data.amberHigh.value : this.amberHigh,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RatioVisibility(')
+          ..write('tankId: $tankId, ')
+          ..write('ratioKey: $ratioKey, ')
+          ..write('visible: $visible, ')
+          ..write('displayOrder: $displayOrder, ')
+          ..write('amberLow: $amberLow, ')
+          ..write('greenLow: $greenLow, ')
+          ..write('greenHigh: $greenHigh, ')
+          ..write('amberHigh: $amberHigh')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    tankId,
+    ratioKey,
+    visible,
+    displayOrder,
+    amberLow,
+    greenLow,
+    greenHigh,
+    amberHigh,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RatioVisibility &&
+          other.tankId == this.tankId &&
+          other.ratioKey == this.ratioKey &&
+          other.visible == this.visible &&
+          other.displayOrder == this.displayOrder &&
+          other.amberLow == this.amberLow &&
+          other.greenLow == this.greenLow &&
+          other.greenHigh == this.greenHigh &&
+          other.amberHigh == this.amberHigh);
+}
+
+class RatioVisibilitiesCompanion extends UpdateCompanion<RatioVisibility> {
+  final Value<int> tankId;
+  final Value<String> ratioKey;
+  final Value<bool> visible;
+  final Value<int> displayOrder;
+  final Value<double?> amberLow;
+  final Value<double?> greenLow;
+  final Value<double?> greenHigh;
+  final Value<double?> amberHigh;
+  final Value<int> rowid;
+  const RatioVisibilitiesCompanion({
+    this.tankId = const Value.absent(),
+    this.ratioKey = const Value.absent(),
+    this.visible = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+    this.amberLow = const Value.absent(),
+    this.greenLow = const Value.absent(),
+    this.greenHigh = const Value.absent(),
+    this.amberHigh = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RatioVisibilitiesCompanion.insert({
+    required int tankId,
+    required String ratioKey,
+    this.visible = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+    this.amberLow = const Value.absent(),
+    this.greenLow = const Value.absent(),
+    this.greenHigh = const Value.absent(),
+    this.amberHigh = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : tankId = Value(tankId),
+       ratioKey = Value(ratioKey);
+  static Insertable<RatioVisibility> custom({
+    Expression<int>? tankId,
+    Expression<String>? ratioKey,
+    Expression<bool>? visible,
+    Expression<int>? displayOrder,
+    Expression<double>? amberLow,
+    Expression<double>? greenLow,
+    Expression<double>? greenHigh,
+    Expression<double>? amberHigh,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (tankId != null) 'tank_id': tankId,
+      if (ratioKey != null) 'ratio_key': ratioKey,
+      if (visible != null) 'visible': visible,
+      if (displayOrder != null) 'display_order': displayOrder,
+      if (amberLow != null) 'amber_low': amberLow,
+      if (greenLow != null) 'green_low': greenLow,
+      if (greenHigh != null) 'green_high': greenHigh,
+      if (amberHigh != null) 'amber_high': amberHigh,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RatioVisibilitiesCompanion copyWith({
+    Value<int>? tankId,
+    Value<String>? ratioKey,
+    Value<bool>? visible,
+    Value<int>? displayOrder,
+    Value<double?>? amberLow,
+    Value<double?>? greenLow,
+    Value<double?>? greenHigh,
+    Value<double?>? amberHigh,
+    Value<int>? rowid,
+  }) {
+    return RatioVisibilitiesCompanion(
+      tankId: tankId ?? this.tankId,
+      ratioKey: ratioKey ?? this.ratioKey,
+      visible: visible ?? this.visible,
+      displayOrder: displayOrder ?? this.displayOrder,
+      amberLow: amberLow ?? this.amberLow,
+      greenLow: greenLow ?? this.greenLow,
+      greenHigh: greenHigh ?? this.greenHigh,
+      amberHigh: amberHigh ?? this.amberHigh,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (ratioKey.present) {
+      map['ratio_key'] = Variable<String>(ratioKey.value);
+    }
+    if (visible.present) {
+      map['visible'] = Variable<bool>(visible.value);
+    }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
+    if (amberLow.present) {
+      map['amber_low'] = Variable<double>(amberLow.value);
+    }
+    if (greenLow.present) {
+      map['green_low'] = Variable<double>(greenLow.value);
+    }
+    if (greenHigh.present) {
+      map['green_high'] = Variable<double>(greenHigh.value);
+    }
+    if (amberHigh.present) {
+      map['amber_high'] = Variable<double>(amberHigh.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RatioVisibilitiesCompanion(')
+          ..write('tankId: $tankId, ')
+          ..write('ratioKey: $ratioKey, ')
+          ..write('visible: $visible, ')
+          ..write('displayOrder: $displayOrder, ')
+          ..write('amberLow: $amberLow, ')
+          ..write('greenLow: $greenLow, ')
+          ..write('greenHigh: $greenHigh, ')
+          ..write('amberHigh: $amberHigh, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -2646,6 +3178,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CarbonChangesTable carbonChanges = $CarbonChangesTable(this);
   late final $EquipmentCleaningsTable equipmentCleanings =
       $EquipmentCleaningsTable(this);
+  late final $RatioVisibilitiesTable ratioVisibilities =
+      $RatioVisibilitiesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -2658,6 +3192,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     waterChanges,
     carbonChanges,
     equipmentCleanings,
+    ratioVisibilities,
     settings,
   ];
   @override
@@ -2696,6 +3231,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('equipment_cleanings', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('ratio_visibilities', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2814,6 +3356,27 @@ final class $$TanksTableReferences
 
     final cache = $_typedResult.readTableOrNull(
       _equipmentCleaningsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RatioVisibilitiesTable, List<RatioVisibility>>
+  _ratioVisibilitiesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.ratioVisibilities,
+        aliasName: 'tanks__id__ratio_visibilities__tank_id',
+      );
+
+  $$RatioVisibilitiesTableProcessedTableManager get ratioVisibilitiesRefs {
+    final manager = $$RatioVisibilitiesTableTableManager(
+      $_db,
+      $_db.ratioVisibilities,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _ratioVisibilitiesRefsTable($_db),
     );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
@@ -2975,6 +3538,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$EquipmentCleaningsTableFilterComposer(
             $db: $db,
             $table: $db.equipmentCleanings,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> ratioVisibilitiesRefs(
+    Expression<bool> Function($$RatioVisibilitiesTableFilterComposer f) f,
+  ) {
+    final $$RatioVisibilitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ratioVisibilities,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RatioVisibilitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.ratioVisibilities,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3180,6 +3768,32 @@ class $$TanksTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> ratioVisibilitiesRefs<T extends Object>(
+    Expression<T> Function($$RatioVisibilitiesTableAnnotationComposer a) f,
+  ) {
+    final $$RatioVisibilitiesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.ratioVisibilities,
+          getReferencedColumn: (t) => t.tankId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RatioVisibilitiesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.ratioVisibilities,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -3201,6 +3815,7 @@ class $$TanksTableTableManager
             bool waterChangesRefs,
             bool carbonChangesRefs,
             bool equipmentCleaningsRefs,
+            bool ratioVisibilitiesRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -3259,6 +3874,7 @@ class $$TanksTableTableManager
                 waterChangesRefs = false,
                 carbonChangesRefs = false,
                 equipmentCleaningsRefs = false,
+                ratioVisibilitiesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -3268,6 +3884,7 @@ class $$TanksTableTableManager
                     if (waterChangesRefs) db.waterChanges,
                     if (carbonChangesRefs) db.carbonChanges,
                     if (equipmentCleaningsRefs) db.equipmentCleanings,
+                    if (ratioVisibilitiesRefs) db.ratioVisibilities,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -3373,6 +3990,27 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (ratioVisibilitiesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          RatioVisibility
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._ratioVisibilitiesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).ratioVisibilitiesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3399,6 +4037,7 @@ typedef $$TanksTableProcessedTableManager =
         bool waterChangesRefs,
         bool carbonChangesRefs,
         bool equipmentCleaningsRefs,
+        bool ratioVisibilitiesRefs,
       })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
@@ -5091,6 +5730,398 @@ typedef $$EquipmentCleaningsTableProcessedTableManager =
       EquipmentCleaning,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$RatioVisibilitiesTableCreateCompanionBuilder =
+    RatioVisibilitiesCompanion Function({
+      required int tankId,
+      required String ratioKey,
+      Value<bool> visible,
+      Value<int> displayOrder,
+      Value<double?> amberLow,
+      Value<double?> greenLow,
+      Value<double?> greenHigh,
+      Value<double?> amberHigh,
+      Value<int> rowid,
+    });
+typedef $$RatioVisibilitiesTableUpdateCompanionBuilder =
+    RatioVisibilitiesCompanion Function({
+      Value<int> tankId,
+      Value<String> ratioKey,
+      Value<bool> visible,
+      Value<int> displayOrder,
+      Value<double?> amberLow,
+      Value<double?> greenLow,
+      Value<double?> greenHigh,
+      Value<double?> amberHigh,
+      Value<int> rowid,
+    });
+
+final class $$RatioVisibilitiesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $RatioVisibilitiesTable,
+          RatioVisibility
+        > {
+  $$RatioVisibilitiesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('ratio_visibilities__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RatioVisibilitiesTableFilterComposer
+    extends Composer<_$AppDatabase, $RatioVisibilitiesTable> {
+  $$RatioVisibilitiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ratioKey => $composableBuilder(
+    column: $table.ratioKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get visible => $composableBuilder(
+    column: $table.visible,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amberLow => $composableBuilder(
+    column: $table.amberLow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get greenLow => $composableBuilder(
+    column: $table.greenLow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get greenHigh => $composableBuilder(
+    column: $table.greenHigh,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amberHigh => $composableBuilder(
+    column: $table.amberHigh,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RatioVisibilitiesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RatioVisibilitiesTable> {
+  $$RatioVisibilitiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ratioKey => $composableBuilder(
+    column: $table.ratioKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get visible => $composableBuilder(
+    column: $table.visible,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amberLow => $composableBuilder(
+    column: $table.amberLow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get greenLow => $composableBuilder(
+    column: $table.greenLow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get greenHigh => $composableBuilder(
+    column: $table.greenHigh,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amberHigh => $composableBuilder(
+    column: $table.amberHigh,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RatioVisibilitiesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RatioVisibilitiesTable> {
+  $$RatioVisibilitiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ratioKey =>
+      $composableBuilder(column: $table.ratioKey, builder: (column) => column);
+
+  GeneratedColumn<bool> get visible =>
+      $composableBuilder(column: $table.visible, builder: (column) => column);
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get amberLow =>
+      $composableBuilder(column: $table.amberLow, builder: (column) => column);
+
+  GeneratedColumn<double> get greenLow =>
+      $composableBuilder(column: $table.greenLow, builder: (column) => column);
+
+  GeneratedColumn<double> get greenHigh =>
+      $composableBuilder(column: $table.greenHigh, builder: (column) => column);
+
+  GeneratedColumn<double> get amberHigh =>
+      $composableBuilder(column: $table.amberHigh, builder: (column) => column);
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RatioVisibilitiesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RatioVisibilitiesTable,
+          RatioVisibility,
+          $$RatioVisibilitiesTableFilterComposer,
+          $$RatioVisibilitiesTableOrderingComposer,
+          $$RatioVisibilitiesTableAnnotationComposer,
+          $$RatioVisibilitiesTableCreateCompanionBuilder,
+          $$RatioVisibilitiesTableUpdateCompanionBuilder,
+          (RatioVisibility, $$RatioVisibilitiesTableReferences),
+          RatioVisibility,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$RatioVisibilitiesTableTableManager(
+    _$AppDatabase db,
+    $RatioVisibilitiesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RatioVisibilitiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RatioVisibilitiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RatioVisibilitiesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> tankId = const Value.absent(),
+                Value<String> ratioKey = const Value.absent(),
+                Value<bool> visible = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+                Value<double?> amberLow = const Value.absent(),
+                Value<double?> greenLow = const Value.absent(),
+                Value<double?> greenHigh = const Value.absent(),
+                Value<double?> amberHigh = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RatioVisibilitiesCompanion(
+                tankId: tankId,
+                ratioKey: ratioKey,
+                visible: visible,
+                displayOrder: displayOrder,
+                amberLow: amberLow,
+                greenLow: greenLow,
+                greenHigh: greenHigh,
+                amberHigh: amberHigh,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int tankId,
+                required String ratioKey,
+                Value<bool> visible = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+                Value<double?> amberLow = const Value.absent(),
+                Value<double?> greenLow = const Value.absent(),
+                Value<double?> greenHigh = const Value.absent(),
+                Value<double?> amberHigh = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RatioVisibilitiesCompanion.insert(
+                tankId: tankId,
+                ratioKey: ratioKey,
+                visible: visible,
+                displayOrder: displayOrder,
+                amberLow: amberLow,
+                greenLow: greenLow,
+                greenHigh: greenHigh,
+                amberHigh: amberHigh,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RatioVisibilitiesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable:
+                                    $$RatioVisibilitiesTableReferences
+                                        ._tankIdTable(db),
+                                referencedColumn:
+                                    $$RatioVisibilitiesTableReferences
+                                        ._tankIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RatioVisibilitiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RatioVisibilitiesTable,
+      RatioVisibility,
+      $$RatioVisibilitiesTableFilterComposer,
+      $$RatioVisibilitiesTableOrderingComposer,
+      $$RatioVisibilitiesTableAnnotationComposer,
+      $$RatioVisibilitiesTableCreateCompanionBuilder,
+      $$RatioVisibilitiesTableUpdateCompanionBuilder,
+      (RatioVisibility, $$RatioVisibilitiesTableReferences),
+      RatioVisibility,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -5240,6 +6271,8 @@ class $AppDatabaseManager {
       $$CarbonChangesTableTableManager(_db, _db.carbonChanges);
   $$EquipmentCleaningsTableTableManager get equipmentCleanings =>
       $$EquipmentCleaningsTableTableManager(_db, _db.equipmentCleanings);
+  $$RatioVisibilitiesTableTableManager get ratioVisibilities =>
+      $$RatioVisibilitiesTableTableManager(_db, _db.ratioVisibilities);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

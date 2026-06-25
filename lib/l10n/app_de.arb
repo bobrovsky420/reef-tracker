@@ -97,10 +97,8 @@
   "ratioMgCaLabel": "Mg : Ca",
   "ratioMgCaTitle": "Mg : Ca-Verhältnis",
   "ratioNoData": "Erfasse beide Parameter, um ihr Verhältnis zu sehen.",
+  "ratioBoundsNote": "Die Zonengrenzen verwenden {metric}, den auf der Karte angezeigten Wert.",
 
-  "dashboardSection": "Dashboard",
-  "showRatioPo4No3": "PO₄ : NO₃-Verhältnis anzeigen",
-  "showRatioMgCa": "Mg : Ca-Verhältnis anzeigen",
 
   "waterChanges": "Wasserwechsel",
   "recordWaterChange": "Wasserwechsel erfassen",

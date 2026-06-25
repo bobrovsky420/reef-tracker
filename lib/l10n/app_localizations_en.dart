@@ -318,13 +318,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ratioNoData => 'Record both parameters to see their ratio.';
 
   @override
-  String get dashboardSection => 'Dashboard';
-
-  @override
-  String get showRatioPo4No3 => 'Show PO₄ : NO₃ ratio';
-
-  @override
-  String get showRatioMgCa => 'Show Mg : Ca ratio';
+  String ratioBoundsNote(Object metric) {
+    return 'Zone limits use $metric, the value shown on the card.';
+  }
 
   @override
   String get waterChanges => 'Water changes';

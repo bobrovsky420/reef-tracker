@@ -113,10 +113,9 @@
   "ratioMgCaLabel": "Mg : Ca",
   "ratioMgCaTitle": "Mg : Ca ratio",
   "ratioNoData": "Record both parameters to see their ratio.",
+  "ratioBoundsNote": "Zone limits use {metric}, the value shown on the card.",
+  "@ratioBoundsNote": { "placeholders": { "metric": {} } },
 
-  "dashboardSection": "Dashboard",
-  "showRatioPo4No3": "Show PO₄ : NO₃ ratio",
-  "showRatioMgCa": "Show Mg : Ca ratio",
 
   "waterChanges": "Water changes",
   "recordWaterChange": "Record water change",
