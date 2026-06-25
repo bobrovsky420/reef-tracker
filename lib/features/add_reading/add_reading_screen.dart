@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
@@ -125,8 +124,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.schedule),
                   title: Text(l.measuredAt),
-                  subtitle:
-                      Text(DateFormat.yMMMEd().add_jm().format(_takenAt)),
+                  subtitle: Text(formatDateTime(context, _takenAt)),
                   trailing: TextButton(
                     onPressed: _pickDateTime,
                     child: Text(l.change),

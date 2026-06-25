@@ -1,8 +1,26 @@
+import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
+
 import '../domain/ratio.dart';
 import '../domain/setup_type.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
 import 'app_localizations.dart';
+
+/// Formats a date together with a time of day, choosing 12h (AM/PM) vs 24h
+/// from the **device's** clock setting (`MediaQuery.alwaysUse24HourFormat`) —
+/// the same signal the native time picker honors. `DateFormat.jm()` alone would
+/// follow the app's Intl locale and force AM/PM for English regardless of the
+/// user's regional 24-hour preference.
+///
+/// Set [weekday] to false in width-constrained spots (e.g. dialogs) to drop the
+/// leading weekday so the date + time fit on one line.
+String formatDateTime(BuildContext context, DateTime t, {bool weekday = true}) {
+  final use24 = MediaQuery.of(context).alwaysUse24HourFormat;
+  final time = use24 ? DateFormat.Hm() : DateFormat.jm();
+  final date = weekday ? DateFormat.yMMMEd() : DateFormat.yMMMd();
+  return '${date.format(t)} ${time.format(t)}';
+}
 
 /// Localized labels for domain values (parameter names/help, setup types,
 /// zones) that live as keys/enums rather than free text.

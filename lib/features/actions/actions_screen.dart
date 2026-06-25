@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
@@ -69,7 +68,7 @@ class ActionsBody extends ConsumerWidget {
         note = data.note;
     }
     final hasNote = note != null && note.isNotEmpty;
-    final date = DateFormat.yMMMEd().add_jm().format(e.time);
+    final date = formatDateTime(context, e.time);
     final subtitle = value == null ? date : '$value • $date';
 
     return Dismissible(
@@ -431,7 +430,7 @@ class _ActionDialogState extends State<_ActionDialog> {
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.schedule),
             title: Text(l.changedAt),
-            subtitle: Text(DateFormat.yMMMEd().add_jm().format(_time)),
+            subtitle: Text(formatDateTime(context, _time)),
             trailing: TextButton(
               onPressed: _pickDateTime,
               child: Text(l.change),
