@@ -100,7 +100,7 @@
   "rangeQuarter": "90d",
   "rangeAll": "All",
   "noReadingsInRange": "No readings in this range.",
-  "editValue": "Edit value",
+  "editMeasurement": "Edit measurement",
   "deleteMeasurementTitle": "Delete measurement?",
   "deleteMeasurementBody": "This permanently deletes this value.",
   "deleteTogetherTitle": "Delete measurement",
@@ -108,6 +108,9 @@
   "@deleteTogetherBody": { "placeholders": { "count": { "type": "int" } } },
   "deleteOnlyThis": "Only this value",
   "deleteAllTogether": "All together",
+  "editTogetherTitle": "Update measurement time",
+  "editTogetherBody": "This value was entered together with {count} other measurement(s). Update the time for only this value, or all values entered together?",
+  "@editTogetherBody": { "placeholders": { "count": { "type": "int" } } },
 
   "ratioPo4No3Label": "PO₄ : NO₃",
   "ratioPo4No3Title": "PO₄ : NO₃ ratio",

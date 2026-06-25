@@ -169,37 +169,71 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     ];
   }
 
+  /// Edits a reading's value and/or its date/time. When the timestamp is moved
+  /// and the reading was saved together with others (same moment), asks whether
+  /// to re-time just this value or the whole batch — mirroring delete's choice.
   Future<void> _editReading(
       BuildContext context, Reading r, ParamPresentation pres) async {
+    final db = ref.read(dbProvider);
+    final tank = ref.read(activeTankProvider);
+    final edit = await showDialog<_ReadingEdit>(
+      context: context,
+      builder: (ctx) => _ReadingDialog(
+        pres: pres,
+        initialValue: r.value,
+        initialTime: r.takenAt,
+      ),
+    );
+    if (edit == null) return;
+
+    final timeChanged = !edit.time.isAtSameMomentAs(r.takenAt);
+    bool applyTimeToAll = false;
+    if (timeChanged && tank != null) {
+      final siblings = await db.readingsAt(tank.id, r.takenAt);
+      final others = siblings.length - 1;
+      if (others > 0) {
+        if (!context.mounted) return;
+        final choice = await _askEditScope(context, others);
+        switch (choice) {
+          case _EditChoice.one:
+            applyTimeToAll = false;
+          case _EditChoice.all:
+            applyTimeToAll = true;
+          case _EditChoice.cancel:
+          case null:
+            return;
+        }
+      }
+    }
+
+    if (applyTimeToAll) {
+      await db.updateReadingsTimeAt(tank!.id, r.takenAt, edit.time);
+    }
+    await db.updateReading(r.copyWith(value: edit.value, takenAt: edit.time));
+  }
+
+  /// Asks whether a re-timing should affect only this reading or all [others]+1
+  /// readings entered together at the same moment.
+  Future<_EditChoice?> _askEditScope(BuildContext context, int others) {
     final l = AppLocalizations.of(context);
-    final ctrl = TextEditingController(text: pres.format(r.value));
-    final newValue = await showDialog<double>(
+    return showDialog<_EditChoice>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l.editValue),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true, signed: true),
-          decoration: InputDecoration(suffixText: pres.unitLabel),
-        ),
+        title: Text(l.editTogetherTitle),
+        content: Text(l.editTogetherBody(others)),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: Text(l.cancel)),
+              onPressed: () => Navigator.pop(ctx, _EditChoice.cancel),
+              child: Text(l.cancel)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, _EditChoice.one),
+              child: Text(l.deleteOnlyThis)),
           FilledButton(
-            onPressed: () {
-              final v = double.tryParse(ctrl.text.replaceAll(',', '.'));
-              Navigator.pop(ctx, v == null ? null : pres.toCanonical(v));
-            },
-            child: Text(l.save),
-          ),
+              onPressed: () => Navigator.pop(ctx, _EditChoice.all),
+              child: Text(l.deleteAllTogether)),
         ],
       ),
     );
-    if (newValue != null) {
-      await ref.read(dbProvider).updateReading(r.copyWith(value: newValue));
-    }
   }
 
   /// Handles a swipe-to-delete. When the reading was saved together with other
@@ -273,6 +307,121 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 }
 
 enum _DeleteChoice { one, all, cancel }
+
+enum _EditChoice { one, all, cancel }
+
+/// Result of [_ReadingDialog]: the edited canonical value and timestamp.
+class _ReadingEdit {
+  const _ReadingEdit(this.time, this.value);
+  final DateTime time;
+  final double value;
+}
+
+/// Edits one reading's value (in the user's display unit) and its date/time.
+/// The date/time picker mirrors the actions log's `_ActionDialog`.
+class _ReadingDialog extends StatefulWidget {
+  const _ReadingDialog({
+    required this.pres,
+    required this.initialValue,
+    required this.initialTime,
+  });
+
+  final ParamPresentation pres;
+
+  /// Canonical value to seed the field (shown converted to the display unit).
+  final double initialValue;
+  final DateTime initialTime;
+
+  @override
+  State<_ReadingDialog> createState() => _ReadingDialogState();
+}
+
+class _ReadingDialogState extends State<_ReadingDialog> {
+  late DateTime _time = widget.initialTime;
+  late final TextEditingController _valueCtrl =
+      TextEditingController(text: widget.pres.format(widget.initialValue));
+
+  @override
+  void dispose() {
+    _valueCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDateTime() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _time,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+    );
+    if (date == null || !mounted) return;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_time),
+    );
+    if (!mounted) return;
+    setState(() {
+      _time = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        picked?.hour ?? 0,
+        picked?.minute ?? 0,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l.editMeasurement),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.schedule),
+            title: Text(l.measuredAt),
+            subtitle: Text(DateFormat.yMMMEd().add_jm().format(_time)),
+            trailing: TextButton(
+              onPressed: _pickDateTime,
+              child: Text(l.change),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _valueCtrl,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(
+                decimal: true, signed: true),
+            decoration: InputDecoration(
+              suffixText: widget.pres.unitLabel,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final v = double.tryParse(_valueCtrl.text.replaceAll(',', '.'));
+            // Keep the original value if the field is empty or unparseable.
+            final canonical = v == null
+                ? widget.initialValue
+                : widget.pres.toCanonical(v);
+            Navigator.pop(context, _ReadingEdit(_time, canonical));
+          },
+          child: Text(l.save),
+        ),
+      ],
+    );
+  }
+}
 
 class _Chart extends StatelessWidget {
   const _Chart(

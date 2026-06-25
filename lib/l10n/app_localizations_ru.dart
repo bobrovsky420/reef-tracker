@@ -283,7 +283,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noReadingsInRange => 'Нет измерений в этом диапазоне.';
 
   @override
-  String get editValue => 'Изменить значение';
+  String get editMeasurement => 'Изменить измерение';
 
   @override
   String get deleteMeasurementTitle => 'Удалить измерение?';
@@ -305,6 +305,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteAllTogether => 'Все вместе';
+
+  @override
+  String get editTogetherTitle => 'Изменить время измерения';
+
+  @override
+  String editTogetherBody(int count) {
+    return 'Это значение было введено вместе с ещё $count измерениями. Изменить время только для этого значения или для всех значений, введённых вместе?';
+  }
 
   @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';

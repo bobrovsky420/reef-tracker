@@ -572,11 +572,11 @@ abstract class AppLocalizations {
   /// **'No readings in this range.'**
   String get noReadingsInRange;
 
-  /// No description provided for @editValue.
+  /// No description provided for @editMeasurement.
   ///
   /// In en, this message translates to:
-  /// **'Edit value'**
-  String get editValue;
+  /// **'Edit measurement'**
+  String get editMeasurement;
 
   /// No description provided for @deleteMeasurementTitle.
   ///
@@ -613,6 +613,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All together'**
   String get deleteAllTogether;
+
+  /// No description provided for @editTogetherTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update measurement time'**
+  String get editTogetherTitle;
+
+  /// No description provided for @editTogetherBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This value was entered together with {count} other measurement(s). Update the time for only this value, or all values entered together?'**
+  String editTogetherBody(int count);
 
   /// No description provided for @ratioPo4No3Label.
   ///

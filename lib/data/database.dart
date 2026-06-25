@@ -428,6 +428,13 @@ class AppDatabase extends _$AppDatabase {
             ..where((r) => r.tankId.equals(tankId) & r.takenAt.equals(takenAt)))
           .go();
 
+  /// Re-timestamps every reading saved together at [from] for [tankId] to [to]
+  /// (i.e. moves a whole group entered in one go). Returns the rows changed.
+  Future<int> updateReadingsTimeAt(int tankId, DateTime from, DateTime to) =>
+      (update(readings)
+            ..where((r) => r.tankId.equals(tankId) & r.takenAt.equals(from)))
+          .write(ReadingsCompanion(takenAt: Value(to)));
+
   // --- Water changes -------------------------------------------------------
 
   /// Water changes for a tank, newest first.

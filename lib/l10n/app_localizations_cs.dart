@@ -283,7 +283,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get noReadingsInRange => 'V tomto rozsahu nejsou žádná měření.';
 
   @override
-  String get editValue => 'Upravit hodnotu';
+  String get editMeasurement => 'Upravit měření';
 
   @override
   String get deleteMeasurementTitle => 'Smazat měření?';
@@ -304,6 +304,14 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get deleteAllTogether => 'Vše společně';
+
+  @override
+  String get editTogetherTitle => 'Změnit čas měření';
+
+  @override
+  String editTogetherBody(int count) {
+    return 'Tato hodnota byla zadána společně s $count dalšími měřeními. Změnit čas pouze pro tuto hodnotu, nebo pro všechny hodnoty zadané společně?';
+  }
 
   @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';

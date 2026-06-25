@@ -283,7 +283,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noReadingsInRange => 'Keine Messungen in diesem Zeitraum.';
 
   @override
-  String get editValue => 'Wert bearbeiten';
+  String get editMeasurement => 'Messung bearbeiten';
 
   @override
   String get deleteMeasurementTitle => 'Messung löschen?';
@@ -305,6 +305,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get deleteAllTogether => 'Alle zusammen';
+
+  @override
+  String get editTogetherTitle => 'Messzeitpunkt ändern';
+
+  @override
+  String editTogetherBody(int count) {
+    return 'Dieser Wert wurde zusammen mit $count weiteren Messungen erfasst. Den Zeitpunkt nur für diesen Wert oder für alle zusammen erfassten Werte ändern?';
+  }
 
   @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';

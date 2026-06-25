@@ -121,8 +121,9 @@ Notable DB behavior:
 - `boundsOf(TrackedParameter)` builds `ZoneBounds`; `presentationOf` bridges a
   tracked param + prefs to a `ParamPresentation`.
 - `applyPreset` re-applies preset bounds to known params without adding/removing.
-- `readingsAt` / `deleteReadingsAt` operate on a group of readings entered
-  together (same timestamp) — used by group edit/delete.
+- `readingsAt` / `deleteReadingsAt` / `updateReadingsTimeAt` operate on a group
+  of readings entered together (same timestamp) — used by group edit/delete and
+  by re-timing a whole batch.
 
 ### Backup (`backup.dart`)
 
@@ -210,7 +211,12 @@ their bodies (`DashboardBody`, `ActionsBody`) and the shell composes them.
 Per-parameter `fl_chart` line chart with **zone bands** drawn as
 `RangeAnnotations` (green/amber regions from the param's bounds), shared time-range
 selector, and water-change markers (see below). Values are presented in the user's
-units while bounds/zones stay canonical.
+units while bounds/zones stay canonical. Below the chart is the readings list:
+tap a row to edit its **value and date/time** (`_ReadingDialog`, the date/time
+picker mirroring the actions log); when the moved reading shares its timestamp
+with sibling measurements, the user is asked whether to re-time only that value
+or all values entered together (`updateReadingsTimeAt`). Swipe-left deletes, with
+the same one-vs-all choice for grouped readings (`deleteReadingsAt`).
 
 ### Parameter ratios (`domain/ratio.dart` + `features/ratio/ratio_screen.dart`)
 
