@@ -110,6 +110,12 @@ abstract class AppLocalizations {
   /// **'ReefTracker'**
   String get appTitle;
 
+  /// No description provided for @measurements.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurements'**
+  String get measurements;
+
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:

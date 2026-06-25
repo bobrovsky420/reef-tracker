@@ -12,6 +12,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get appTitle => 'ReefTracker';
 
   @override
+  String get measurements => 'Messwerte';
+
+  @override
   String get settings => 'Einstellungen';
 
   @override

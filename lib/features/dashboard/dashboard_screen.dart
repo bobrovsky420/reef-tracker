@@ -11,57 +11,10 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
-/// Home screen: active-tank selector + grid of parameter status tiles.
-class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context);
-    final tanksAsync = ref.watch(tanksProvider);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const _TankSelector(),
-        actions: [
-          IconButton(
-            tooltip: l.actions,
-            icon: const Icon(Icons.history),
-            onPressed: () => context.push('/actions'),
-          ),
-          IconButton(
-            tooltip: l.manageParameters,
-            icon: const Icon(Icons.tune),
-            onPressed: () => context.push('/parameters'),
-          ),
-          IconButton(
-            tooltip: l.settings,
-            icon: const Icon(Icons.settings),
-            onPressed: () => context.push('/settings'),
-          ),
-        ],
-      ),
-      body: tanksAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
-        data: (tanks) {
-          if (tanks.isEmpty) return const _NoTanksView();
-          return const _DashboardBody();
-        },
-      ),
-      floatingActionButton: tanksAsync.value?.isEmpty ?? true
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => context.push('/add-reading'),
-              icon: const Icon(Icons.add),
-              label: Text(l.addReading),
-            ),
-    );
-  }
-}
-
-class _DashboardBody extends ConsumerWidget {
-  const _DashboardBody();
+/// Grid of parameter status tiles for the active tank. Hosted by `HomeShell`,
+/// which owns the surrounding `Scaffold`, app bar, bottom navigation and FAB.
+class DashboardBody extends ConsumerWidget {
+  const DashboardBody({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -75,7 +28,8 @@ class _DashboardBody extends ConsumerWidget {
       data: (tracked) {
         final readings = readingsAsync.value ?? const [];
         final prefs = ref.watch(unitPrefsProvider);
-        final ratioSettings = ref.watch(ratioSettingsProvider).value ?? const {};
+        final ratioSettings =
+            ref.watch(ratioSettingsProvider).value ?? const {};
 
         // Latest readings per parameter (for value + trend).
         final byParam = <String, List<Reading>>{};
@@ -91,9 +45,10 @@ class _DashboardBody extends ConsumerWidget {
           items.add((
             order: param.displayOrder.toDouble(),
             tile: _ParameterTile(
-                param: param,
-                history: byParam[param.paramKey] ?? const [],
-                prefs: prefs),
+              param: param,
+              history: byParam[param.paramKey] ?? const [],
+              prefs: prefs,
+            ),
           ));
         }
         for (final kind in RatioKind.values) {
@@ -107,7 +62,10 @@ class _DashboardBody extends ConsumerWidget {
           items.add((
             order: ratioRowOrder(kind, row),
             tile: _RatioTile(
-                kind: kind, points: series, bounds: ratioBounds(kind, row)),
+              kind: kind,
+              points: series,
+              bounds: ratioBounds(kind, row),
+            ),
           ));
         }
         items.sort((a, b) => a.order.compareTo(b.order));
@@ -134,8 +92,11 @@ class _DashboardBody extends ConsumerWidget {
 /// title, the latest ratio value colored by its health zone, a trend indicator,
 /// and a relative timestamp. Tapping it opens that ratio's history graph.
 class _RatioTile extends StatelessWidget {
-  const _RatioTile(
-      {required this.kind, required this.points, required this.bounds});
+  const _RatioTile({
+    required this.kind,
+    required this.points,
+    required this.bounds,
+  });
 
   final RatioKind kind;
 
@@ -159,11 +120,15 @@ class _RatioTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l.ratioCardLabel(kind),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 15)),
+              Text(
+                l.ratioCardLabel(kind),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
               const Spacer(),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -172,9 +137,10 @@ class _RatioTile extends StatelessWidget {
                   Text(
                     formatRatioValue(kind, latest.ratio),
                     style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: zone.color),
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: zone.color,
+                    ),
                   ),
                   const Spacer(),
                   _RatioChangeIndicator(kind: kind, points: points),
@@ -183,8 +149,7 @@ class _RatioTile extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 _relativeTime(l, latest.time),
-                style:
-                    TextStyle(fontSize: 11, color: hint),
+                style: TextStyle(fontSize: 11, color: hint),
               ),
             ],
           ),
@@ -218,16 +183,21 @@ class _RatioChangeIndicator extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: hint),
         const SizedBox(width: 2),
-        Text('$sign${formatRatioN(diff.abs())}',
-            style: TextStyle(fontSize: 12, color: hint)),
+        Text(
+          '$sign${formatRatioN(diff.abs())}',
+          style: TextStyle(fontSize: 12, color: hint),
+        ),
       ],
     );
   }
 }
 
 class _ParameterTile extends StatelessWidget {
-  const _ParameterTile(
-      {required this.param, required this.history, required this.prefs});
+  const _ParameterTile({
+    required this.param,
+    required this.history,
+    required this.prefs,
+  });
 
   final TrackedParameter param;
   final List<Reading> history;
@@ -251,15 +221,21 @@ class _ParameterTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 15)),
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
               const Spacer(),
               if (latest == null)
-                Text(l.noReadings,
-                    style: TextStyle(color: Theme.of(context).hintColor))
+                Text(
+                  l.noReadings,
+                  style: TextStyle(color: Theme.of(context).hintColor),
+                )
               else
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -268,13 +244,16 @@ class _ParameterTile extends StatelessWidget {
                     Text(
                       pres.format(latest.value),
                       style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: zone.color),
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: zone.color,
+                      ),
                     ),
                     const SizedBox(width: 4),
-                    Text(pres.unitLabel,
-                        style: TextStyle(color: Theme.of(context).hintColor)),
+                    Text(
+                      pres.unitLabel,
+                      style: TextStyle(color: Theme.of(context).hintColor),
+                    ),
                     const Spacer(),
                     _ChangeIndicator(history: history, pres: pres),
                   ],
@@ -283,7 +262,9 @@ class _ParameterTile extends StatelessWidget {
               Text(
                 latest == null ? '—' : _relativeTime(l, latest.takenAt),
                 style: TextStyle(
-                    fontSize: 11, color: Theme.of(context).hintColor),
+                  fontSize: 11,
+                  color: Theme.of(context).hintColor,
+                ),
               ),
             ],
           ),
@@ -331,8 +312,8 @@ String _relativeTime(AppLocalizations l, DateTime t) {
 }
 
 /// App-bar widget that shows the active tank and lets the user switch / add.
-class _TankSelector extends ConsumerWidget {
-  const _TankSelector();
+class TankSelector extends ConsumerWidget {
+  const TankSelector({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -367,19 +348,23 @@ class _TankSelector extends ConsumerWidget {
         const PopupMenuDivider(),
         PopupMenuItem(
           value: -1,
-          child: Row(children: [
-            const Icon(Icons.edit, size: 18),
-            const SizedBox(width: 8),
-            Text(l.manageTanks),
-          ]),
+          child: Row(
+            children: [
+              const Icon(Icons.edit, size: 18),
+              const SizedBox(width: 8),
+              Text(l.manageTanks),
+            ],
+          ),
         ),
       ],
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Flexible(
-            child: Text(active?.name ?? l.appTitle,
-                overflow: TextOverflow.ellipsis),
+            child: Text(
+              active?.name ?? l.appTitle,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           const Icon(Icons.arrow_drop_down),
         ],
@@ -388,8 +373,8 @@ class _TankSelector extends ConsumerWidget {
   }
 }
 
-class _NoTanksView extends StatelessWidget {
-  const _NoTanksView();
+class NoTanksView extends StatelessWidget {
+  const NoTanksView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -402,8 +387,7 @@ class _NoTanksView extends StatelessWidget {
           children: [
             const Icon(Icons.water, size: 64),
             const SizedBox(height: 16),
-            Text(l.welcomeTitle,
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(l.welcomeTitle, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(l.welcomeBody, textAlign: TextAlign.center),
             const SizedBox(height: 24),

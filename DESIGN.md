@@ -156,24 +156,39 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 
 | Route | Screen |
 |-------|--------|
-| `/` | Dashboard |
+| `/` | Home shell — bottom-nav host for the Measurements (Dashboard) and Actions tabs |
 | `/tanks`, `/tanks/new`, `/tanks/:id/edit` | Manage / create / edit tanks |
 | `/parameters`, `/parameters/:id/edit` | Manage tracked parameters & zone bounds |
 | `/add-reading` | Log a batch of readings |
 | `/history/:paramKey` | Single-parameter history graph |
 | `/ratio/:type` | Ratio history graph (`type` = `po4no3` or `mgca`) |
 | `/ratio/:type/edit` | Edit a ratio card's per-tank zone bounds |
-| `/actions` | Combined action log (water changes + carbon changes) |
 | `/settings` | Units, language, backup/restore |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
+The Actions log is no longer a standalone route — it is the second tab inside the
+home shell (see Features).
+
 ## Features (`lib/features/`)
 
-### Dashboard (`dashboard_screen.dart`) — home
+### Home shell (`home/home_shell.dart`) — `/`
 
-- App-bar `_TankSelector` popup to switch active tank or jump to manage-tanks;
-  app-bar actions for the action log, manage parameters, settings; FAB to add a
-  reading.
+`HomeShell` is the app's root scaffold. It hosts the two primary peer
+destinations — **Measurements** (the dashboard) and **Actions** — behind a
+bottom `NavigationBar`, swapping only the body via an `IndexedStack` so each tab
+keeps its scroll/state. The **app bar is shared** across both tabs: the
+`TankSelector` (shown on both tabs — the actions log is tank-scoped too, and the
+bottom-nav label already names the current screen) plus the manage-parameters
+and settings buttons, so the active tank and settings are always reachable. The **FAB is per-tab**: "Add reading" on Measurements, "Add action"
+(`showAddActionSheet`) on Actions. With no tanks, the bottom bar and FAB are
+hidden and `NoTanksView` is shown. The dashboard and actions screens expose
+their bodies (`DashboardBody`, `ActionsBody`) and the shell composes them.
+
+### Dashboard (`dashboard_screen.dart`) — Measurements tab
+
+- `DashboardBody` renders the parameter grid for the active tank; the
+  surrounding chrome (app bar with `TankSelector`, bottom nav, FAB) is owned by
+  `HomeShell`.
 - One grid mixing `_ParameterTile`s (enabled tracked params) and `_RatioTile`s
   (visible ratio cards), ordered together by a **shared display order**
   (`TrackedParameters.displayOrder` and `RatioVisibilities.displayOrder` live in
@@ -225,14 +240,16 @@ decimal). `RatioDisplay` = `oneToN` | `decimal`.
 ### Actions log (`features/actions/`)
 
 A single combined log of tank maintenance actions for the active tank, newest
-first.
+first. Rendered as the **Actions tab** of the home shell.
 
-- `actions_screen.dart` — merges `waterChangesProvider` + `carbonChangesProvider`
-  + `equipmentCleaningsProvider` into one sorted list (`_Entry` sealed type:
-  `_WaterEntry` / `_CarbonEntry` / `_EquipmentEntry`). Each row: type icon, type
-  name, value (litres in the display volume unit, or grams; none for equipment
-  cleaning), optional note, timestamp; swipe-to-delete and an edit button. The
-  FAB opens a bottom sheet to choose which action to add. A shared
+- `actions_screen.dart` — `ActionsBody` merges `waterChangesProvider` +
+  `carbonChangesProvider` + `equipmentCleaningsProvider` into one sorted list
+  (`_Entry` sealed type: `_WaterEntry` / `_CarbonEntry` / `_EquipmentEntry`).
+  Each row: type icon, type name, value (litres in the display volume unit, or
+  grams; none for equipment cleaning), optional note, timestamp; swipe-to-delete
+  and an edit button. The shell's Actions-tab FAB calls the top-level
+  `showAddActionSheet`, which opens a bottom sheet to choose which action to add.
+  A shared
   `_ActionDialog` (date/time picker + **optional** numeric value with a unit
   suffix + optional note) drives both add and edit for every type; when its
   `valueLabel` is null the numeric field is hidden (equipment cleaning).

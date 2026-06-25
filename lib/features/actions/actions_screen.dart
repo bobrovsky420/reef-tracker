@@ -9,9 +9,11 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
 /// Combined log of tank actions (water changes and activated-carbon changes)
-/// for the active tank, newest first, with add/edit/delete.
-class ActionsScreen extends ConsumerWidget {
-  const ActionsScreen({super.key});
+/// for the active tank, newest first, with edit/delete. Hosted by `HomeShell`,
+/// which owns the surrounding `Scaffold`, app bar, bottom navigation and the
+/// add-action FAB (see `showAddActionSheet`).
+class ActionsBody extends ConsumerWidget {
+  const ActionsBody({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,7 +22,6 @@ class ActionsScreen extends ConsumerWidget {
     final carbon = ref.watch(carbonChangesProvider).value ?? const [];
     final equipment = ref.watch(equipmentCleaningsProvider).value ?? const [];
     final unit = ref.watch(unitPrefsProvider).volume;
-    final hasTank = ref.watch(activeTankProvider) != null;
 
     final entries = <_Entry>[
       ...water.map(_WaterEntry.new),
@@ -28,27 +29,20 @@ class ActionsScreen extends ConsumerWidget {
       ...equipment.map(_EquipmentEntry.new),
     ]..sort((a, b) => b.time.compareTo(a.time));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l.actions)),
-      body: entries.isEmpty
-          ? Center(child: Text(l.noActions))
-          : ListView.builder(
-              itemCount: entries.length,
-              itemBuilder: (context, i) =>
-                  _tile(context, ref, l, entries[i], unit),
-            ),
-      floatingActionButton: hasTank
-          ? FloatingActionButton.extended(
-              onPressed: () => _chooseAndAdd(context, ref),
-              icon: const Icon(Icons.add),
-              label: Text(l.addAction),
-            )
-          : null,
+    if (entries.isEmpty) return Center(child: Text(l.noActions));
+    return ListView.builder(
+      itemCount: entries.length,
+      itemBuilder: (context, i) => _tile(context, ref, l, entries[i], unit),
     );
   }
 
-  Widget _tile(BuildContext context, WidgetRef ref, AppLocalizations l,
-      _Entry e, VolumeUnit unit) {
+  Widget _tile(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+    _Entry e,
+    VolumeUnit unit,
+  ) {
     final IconData icon;
     final String title;
     final String? value;
@@ -100,196 +94,218 @@ class ActionsScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Future<void> _chooseAndAdd(BuildContext context, WidgetRef ref) async {
-    final l = AppLocalizations.of(context);
-    final kind = await showModalBottomSheet<_Kind>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.water_drop_outlined),
-              title: Text(l.recordWaterChange),
-              onTap: () => Navigator.pop(ctx, _Kind.water),
-            ),
-            ListTile(
-              leading: const Icon(Icons.grain),
-              title: Text(l.recordCarbonChange),
-              onTap: () => Navigator.pop(ctx, _Kind.carbon),
-            ),
-            ListTile(
-              leading: const Icon(Icons.cleaning_services_outlined),
-              title: Text(l.recordEquipmentCleaning),
-              onTap: () => Navigator.pop(ctx, _Kind.equipment),
-            ),
-          ],
-        ),
+/// Shows the add-action chooser sheet, then opens the editor for the chosen
+/// action type. Driven by `HomeShell`'s FAB on the Actions tab.
+Future<void> showAddActionSheet(BuildContext context, WidgetRef ref) async {
+  final l = AppLocalizations.of(context);
+  final kind = await showModalBottomSheet<_Kind>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.water_drop_outlined),
+            title: Text(l.recordWaterChange),
+            onTap: () => Navigator.pop(ctx, _Kind.water),
+          ),
+          ListTile(
+            leading: const Icon(Icons.grain),
+            title: Text(l.recordCarbonChange),
+            onTap: () => Navigator.pop(ctx, _Kind.carbon),
+          ),
+          ListTile(
+            leading: const Icon(Icons.cleaning_services_outlined),
+            title: Text(l.recordEquipmentCleaning),
+            onTap: () => Navigator.pop(ctx, _Kind.equipment),
+          ),
+        ],
       ),
-    );
-    if (kind == null || !context.mounted) return;
-    switch (kind) {
-      case _Kind.water:
-        await _editWater(context, ref, null);
-      case _Kind.carbon:
-        await _editCarbon(context, ref, null);
-      case _Kind.equipment:
-        await _editEquipment(context, ref, null);
-    }
+    ),
+  );
+  if (kind == null || !context.mounted) return;
+  switch (kind) {
+    case _Kind.water:
+      await _editWater(context, ref, null);
+    case _Kind.carbon:
+      await _editCarbon(context, ref, null);
+    case _Kind.equipment:
+      await _editEquipment(context, ref, null);
   }
+}
 
-  Future<void> _edit(BuildContext context, WidgetRef ref, _Entry e) {
-    switch (e) {
-      case _WaterEntry(:final data):
-        return _editWater(context, ref, data);
-      case _CarbonEntry(:final data):
-        return _editCarbon(context, ref, data);
-      case _EquipmentEntry(:final data):
-        return _editEquipment(context, ref, data);
-    }
+Future<void> _edit(BuildContext context, WidgetRef ref, _Entry e) {
+  switch (e) {
+    case _WaterEntry(:final data):
+      return _editWater(context, ref, data);
+    case _CarbonEntry(:final data):
+      return _editCarbon(context, ref, data);
+    case _EquipmentEntry(:final data):
+      return _editEquipment(context, ref, data);
   }
+}
 
-  Future<void> _editWater(
-      BuildContext context, WidgetRef ref, WaterChange? existing) async {
-    final tank = ref.read(activeTankProvider);
-    if (tank == null) return;
-    final l = AppLocalizations.of(context);
-    final unit = ref.read(unitPrefsProvider).volume;
-    final result = await showDialog<_ActionResult>(
-      context: context,
-      builder: (ctx) => _ActionDialog(
-        title: l.recordWaterChange,
-        valueLabel: l.amountLitersOptional,
-        valueSuffix: unit.symbol,
-        initialTime: existing?.changedAt ?? DateTime.now(),
-        initialValue: existing?.amountLiters == null
-            ? ''
-            : formatVolume(existing!.amountLiters!, unit),
-        initialNote: existing?.note,
-      ),
+Future<void> _editWater(
+  BuildContext context,
+  WidgetRef ref,
+  WaterChange? existing,
+) async {
+  final tank = ref.read(activeTankProvider);
+  if (tank == null) return;
+  final l = AppLocalizations.of(context);
+  final unit = ref.read(unitPrefsProvider).volume;
+  final result = await showDialog<_ActionResult>(
+    context: context,
+    builder: (ctx) => _ActionDialog(
+      title: l.recordWaterChange,
+      valueLabel: l.amountLitersOptional,
+      valueSuffix: unit.symbol,
+      initialTime: existing?.changedAt ?? DateTime.now(),
+      initialValue: existing?.amountLiters == null
+          ? ''
+          : formatVolume(existing!.amountLiters!, unit),
+      initialNote: existing?.note,
+    ),
+  );
+  if (result == null) return;
+  final amount = result.value == null
+      ? null
+      : volumeToCanonical(result.value!, unit);
+  final db = ref.read(dbProvider);
+  if (existing == null) {
+    await db.insertWaterChange(
+      tankId: tank.id,
+      changedAt: result.time,
+      amountLiters: amount,
+      note: result.note,
     );
-    if (result == null) return;
-    final amount =
-        result.value == null ? null : volumeToCanonical(result.value!, unit);
-    final db = ref.read(dbProvider);
-    if (existing == null) {
-      await db.insertWaterChange(
-        tankId: tank.id,
-        changedAt: result.time,
-        amountLiters: amount,
-        note: result.note,
-      );
-    } else {
-      await db.updateWaterChange(existing.copyWith(
+  } else {
+    await db.updateWaterChange(
+      existing.copyWith(
         changedAt: result.time,
         amountLiters: Value(amount),
         note: Value(result.note),
-      ));
-    }
-  }
-
-  Future<void> _editCarbon(
-      BuildContext context, WidgetRef ref, CarbonChange? existing) async {
-    final tank = ref.read(activeTankProvider);
-    if (tank == null) return;
-    final l = AppLocalizations.of(context);
-    final result = await showDialog<_ActionResult>(
-      context: context,
-      builder: (ctx) => _ActionDialog(
-        title: l.recordCarbonChange,
-        valueLabel: l.weightOptional,
-        valueSuffix: 'g',
-        initialTime: existing?.changedAt ?? DateTime.now(),
-        initialValue:
-            existing?.grams == null ? '' : _formatGrams(existing!.grams!),
-        initialNote: existing?.note,
       ),
     );
-    if (result == null) return;
-    final db = ref.read(dbProvider);
-    if (existing == null) {
-      await db.insertCarbonChange(
-        tankId: tank.id,
-        changedAt: result.time,
-        grams: result.value,
-        note: result.note,
-      );
-    } else {
-      await db.updateCarbonChange(existing.copyWith(
+  }
+}
+
+Future<void> _editCarbon(
+  BuildContext context,
+  WidgetRef ref,
+  CarbonChange? existing,
+) async {
+  final tank = ref.read(activeTankProvider);
+  if (tank == null) return;
+  final l = AppLocalizations.of(context);
+  final result = await showDialog<_ActionResult>(
+    context: context,
+    builder: (ctx) => _ActionDialog(
+      title: l.recordCarbonChange,
+      valueLabel: l.weightOptional,
+      valueSuffix: 'g',
+      initialTime: existing?.changedAt ?? DateTime.now(),
+      initialValue: existing?.grams == null
+          ? ''
+          : _formatGrams(existing!.grams!),
+      initialNote: existing?.note,
+    ),
+  );
+  if (result == null) return;
+  final db = ref.read(dbProvider);
+  if (existing == null) {
+    await db.insertCarbonChange(
+      tankId: tank.id,
+      changedAt: result.time,
+      grams: result.value,
+      note: result.note,
+    );
+  } else {
+    await db.updateCarbonChange(
+      existing.copyWith(
         changedAt: result.time,
         grams: Value(result.value),
         note: Value(result.note),
-      ));
-    }
-  }
-
-  Future<void> _editEquipment(
-      BuildContext context, WidgetRef ref, EquipmentCleaning? existing) async {
-    final tank = ref.read(activeTankProvider);
-    if (tank == null) return;
-    final l = AppLocalizations.of(context);
-    final result = await showDialog<_ActionResult>(
-      context: context,
-      builder: (ctx) => _ActionDialog(
-        title: l.recordEquipmentCleaning,
-        initialTime: existing?.cleanedAt ?? DateTime.now(),
-        initialNote: existing?.note,
       ),
     );
-    if (result == null) return;
-    final db = ref.read(dbProvider);
-    if (existing == null) {
-      await db.insertEquipmentCleaning(
-        tankId: tank.id,
-        cleanedAt: result.time,
-        note: result.note,
-      );
-    } else {
-      await db.updateEquipmentCleaning(existing.copyWith(
-        cleanedAt: result.time,
-        note: Value(result.note),
-      ));
-    }
   }
+}
 
-  Future<bool> _confirmDelete(
-      BuildContext context, WidgetRef ref, AppLocalizations l, _Entry e) async {
-    final (String titleText, String bodyText) = switch (e) {
-      _WaterEntry() => (l.deleteWaterChangeTitle, l.deleteWaterChangeBody),
-      _CarbonEntry() => (l.deleteCarbonChangeTitle, l.deleteCarbonChangeBody),
-      _EquipmentEntry() => (
-          l.deleteEquipmentCleaningTitle,
-          l.deleteEquipmentCleaningBody
+Future<void> _editEquipment(
+  BuildContext context,
+  WidgetRef ref,
+  EquipmentCleaning? existing,
+) async {
+  final tank = ref.read(activeTankProvider);
+  if (tank == null) return;
+  final l = AppLocalizations.of(context);
+  final result = await showDialog<_ActionResult>(
+    context: context,
+    builder: (ctx) => _ActionDialog(
+      title: l.recordEquipmentCleaning,
+      initialTime: existing?.cleanedAt ?? DateTime.now(),
+      initialNote: existing?.note,
+    ),
+  );
+  if (result == null) return;
+  final db = ref.read(dbProvider);
+  if (existing == null) {
+    await db.insertEquipmentCleaning(
+      tankId: tank.id,
+      cleanedAt: result.time,
+      note: result.note,
+    );
+  } else {
+    await db.updateEquipmentCleaning(
+      existing.copyWith(cleanedAt: result.time, note: Value(result.note)),
+    );
+  }
+}
+
+Future<bool> _confirmDelete(
+  BuildContext context,
+  WidgetRef ref,
+  AppLocalizations l,
+  _Entry e,
+) async {
+  final (String titleText, String bodyText) = switch (e) {
+    _WaterEntry() => (l.deleteWaterChangeTitle, l.deleteWaterChangeBody),
+    _CarbonEntry() => (l.deleteCarbonChangeTitle, l.deleteCarbonChangeBody),
+    _EquipmentEntry() => (
+      l.deleteEquipmentCleaningTitle,
+      l.deleteEquipmentCleaningBody,
+    ),
+  };
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(titleText),
+      content: Text(bodyText),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(l.cancel),
         ),
-    };
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(titleText),
-        content: Text(bodyText),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.cancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.delete)),
-        ],
-      ),
-    );
-    if (ok != true) return false;
-    final db = ref.read(dbProvider);
-    switch (e) {
-      case _WaterEntry(:final data):
-        await db.deleteWaterChange(data.id);
-      case _CarbonEntry(:final data):
-        await db.deleteCarbonChange(data.id);
-      case _EquipmentEntry(:final data):
-        await db.deleteEquipmentCleaning(data.id);
-    }
-    return true;
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l.delete),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return false;
+  final db = ref.read(dbProvider);
+  switch (e) {
+    case _WaterEntry(:final data):
+      await db.deleteWaterChange(data.id);
+    case _CarbonEntry(:final data):
+      await db.deleteCarbonChange(data.id);
+    case _EquipmentEntry(:final data):
+      await db.deleteEquipmentCleaning(data.id);
   }
+  return true;
 }
 
 String _formatGrams(double g) =>
@@ -364,10 +380,12 @@ class _ActionDialog extends StatefulWidget {
 
 class _ActionDialogState extends State<_ActionDialog> {
   late DateTime _time = widget.initialTime;
-  late final TextEditingController _valueCtrl =
-      TextEditingController(text: widget.initialValue);
-  late final TextEditingController _noteCtrl =
-      TextEditingController(text: widget.initialNote ?? '');
+  late final TextEditingController _valueCtrl = TextEditingController(
+    text: widget.initialValue,
+  );
+  late final TextEditingController _noteCtrl = TextEditingController(
+    text: widget.initialNote ?? '',
+  );
 
   @override
   void dispose() {
@@ -390,8 +408,13 @@ class _ActionDialogState extends State<_ActionDialog> {
     );
     if (!mounted) return;
     setState(() {
-      _time = DateTime(date.year, date.month, date.day, picked?.hour ?? 0,
-          picked?.minute ?? 0);
+      _time = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        picked?.hour ?? 0,
+        picked?.minute ?? 0,
+      );
     });
   }
 
@@ -418,8 +441,9 @@ class _ActionDialogState extends State<_ActionDialog> {
             TextField(
               controller: _valueCtrl,
               autofocus: true,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: InputDecoration(
                 labelText: widget.valueLabel,
                 suffixText: widget.valueSuffix,
@@ -441,14 +465,18 @@ class _ActionDialogState extends State<_ActionDialog> {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+          onPressed: () => Navigator.pop(context),
+          child: Text(l.cancel),
+        ),
         FilledButton(
           onPressed: () {
             final text = _valueCtrl.text.trim().replaceAll(',', '.');
             final value = text.isEmpty ? null : double.tryParse(text);
             final note = _noteCtrl.text.trim();
-            Navigator.pop(context,
-                _ActionResult(_time, value, note.isEmpty ? null : note));
+            Navigator.pop(
+              context,
+              _ActionResult(_time, value, note.isEmpty ? null : note),
+            );
           },
           child: Text(l.save),
         ),

@@ -12,6 +12,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get appTitle => 'ReefTracker';
 
   @override
+  String get measurements => 'Měření';
+
+  @override
   String get settings => 'Nastavení';
 
   @override

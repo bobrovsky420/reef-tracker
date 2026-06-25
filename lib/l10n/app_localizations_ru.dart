@@ -12,6 +12,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appTitle => 'ReefTracker';
 
   @override
+  String get measurements => 'Измерения';
+
+  @override
   String get settings => 'Настройки';
 
   @override

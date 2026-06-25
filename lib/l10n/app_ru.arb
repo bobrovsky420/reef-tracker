@@ -2,6 +2,7 @@
   "@@locale": "ru",
 
   "appTitle": "ReefTracker",
+  "measurements": "Измерения",
 
   "settings": "Настройки",
   "manageParameters": "Управление параметрами",
