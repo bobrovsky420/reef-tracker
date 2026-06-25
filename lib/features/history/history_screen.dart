@@ -159,10 +159,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   (r.note != null ? '\n${r.note}' : ''),
             ),
             isThreeLine: r.note != null,
-            trailing: IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => _editReading(context, r, pres),
+            trailing: Icon(
+              Icons.chevron_right,
+              color: Theme.of(context).colorScheme.outline,
             ),
+            onTap: () => _editReading(context, r, pres),
           ),
         ),
     ];

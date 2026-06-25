@@ -87,10 +87,11 @@ class ActionsBody extends ConsumerWidget {
         title: Text(title),
         subtitle: Text('$subtitle${hasNote ? '\n$note' : ''}'),
         isThreeLine: hasNote,
-        trailing: IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () => _edit(context, ref, e),
+        trailing: Icon(
+          Icons.chevron_right,
+          color: Theme.of(context).colorScheme.outline,
         ),
+        onTap: () => _edit(context, ref, e),
       ),
     );
   }

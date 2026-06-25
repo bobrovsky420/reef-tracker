@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-06-25
+
+### Changed
+- In the Measurements and Actions lists, tap a row to edit it instead of using a
+  separate edit icon. The edit icon is replaced by a subtle chevron indicating
+  the row is tappable; swipe-left to delete is unchanged.
+
 ## [0.5.1] - 2026-06-25
 
 ### Changed

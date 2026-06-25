@@ -250,7 +250,8 @@ first. Rendered as the **Actions tab** of the home shell.
   (`_Entry` sealed type: `_WaterEntry` / `_CarbonEntry` / `_EquipmentEntry`).
   Each row: type icon, type name, value (litres in the display volume unit, or
   grams; none for equipment cleaning), optional note, timestamp; swipe-to-delete
-  and an edit button. The shell's Actions-tab FAB calls the top-level
+  and tap-the-row-to-edit (a trailing chevron hints at tappability). The shell's
+  Actions-tab FAB calls the top-level
   `showAddActionSheet`, which opens a bottom sheet to choose which action to add.
   A shared
   `_ActionDialog` (date/time picker + **optional** numeric value with a unit
