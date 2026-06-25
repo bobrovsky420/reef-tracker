@@ -59,17 +59,21 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       ),
       bottomNavigationBar: hasTanks
           ? NavigationBar(
+              // Default M3 height is 80; trim it down for a more compact bar
+              // while still leaving room for the always-visible labels.
+              height: 64,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               selectedIndex: _index,
               onDestinationSelected: (i) => setState(() => _index = i),
               destinations: [
                 NavigationDestination(
-                  icon: const Icon(Icons.grid_view_outlined),
-                  selectedIcon: const Icon(Icons.grid_view),
+                  icon: const Icon(Icons.speed_outlined),
+                  selectedIcon: const Icon(Icons.speed),
                   label: l.measurements,
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.history_outlined),
-                  selectedIcon: const Icon(Icons.history),
+                  icon: const Icon(Icons.fact_check_outlined),
+                  selectedIcon: const Icon(Icons.fact_check),
                   label: l.actions,
                 ),
               ],

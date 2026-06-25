@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-06-25
+
+### Changed
+- The bottom navigation bar is now more compact (reduced height), with new
+  icons — a speedometer for Measurements and a clipboard with a checkmark for
+  Actions.
+- Dashboard measurement and ratio cards are now slightly smaller (~5%), fitting
+  a bit more on screen.
+- Ratio cards selected for display now always appear on the dashboard. When a
+  ratio can't be computed yet (a measurement is missing or the denominator is
+  zero), the card shows **"No readings"**, just like a measurement card, instead
+  of being hidden.
+
 ## [0.5.0] - 2026-06-25
 
 ### Changed

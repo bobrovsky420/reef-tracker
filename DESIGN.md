@@ -195,8 +195,11 @@ their bodies (`DashboardBody`, `ActionsBody`) and the shell composes them.
   the same integer space). Both tile types are the same size/layout: latest value
   **colored by its zone**, a trend indicator (delta vs. previous), and a relative
   timestamp; tapping opens the parameter history or `/ratio/<kind>`.
-- A ratio tile shows only when its card is visible **and** both of its parameters
-  have readings. Visibility + order are set in the **Manage Parameters** screen
+- A ratio tile shows whenever its card is visible (per settings), regardless of
+  whether a value can be computed yet: with no computable ratio — a parameter is
+  missing or the denominator is zero, so `computeRatioSeries` is empty — the tile
+  shows **"No readings"**, exactly like a measurement tile before its first
+  reading. Visibility + order are set in the **Manage Parameters** screen
   (ratios and measurements share one reorderable list) and stored **per tank** in
   `RatioVisibilities` (`ratioSettingsProvider` → `Map<RatioKind.name,
   RatioVisibility>`, resolved with `ratioRowVisible` / `ratioRowOrder`).

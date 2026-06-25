@@ -54,11 +54,14 @@ class DashboardBody extends ConsumerWidget {
         for (final kind in RatioKind.values) {
           final row = ratioSettings[kind.name];
           if (!ratioRowVisible(row)) continue;
+          // Keep visible ratio cards on the dashboard even with no computable
+          // value yet — the tile shows "No readings" (the series is empty when a
+          // measurement is missing or the denominator is zero), matching how
+          // measurement tiles render before their first reading.
           final series = computeRatioSeries(
             (byParam[kind.numeratorKey] ?? const []).reversed.toList(),
             (byParam[kind.denominatorKey] ?? const []).reversed.toList(),
           );
-          if (series.isEmpty) continue;
           items.add((
             order: ratioRowOrder(kind, row),
             tile: _RatioTile(
@@ -75,8 +78,8 @@ class DashboardBody extends ConsumerWidget {
         return GridView.builder(
           padding: const EdgeInsets.all(12),
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 230,
-            mainAxisExtent: 150,
+            maxCrossAxisExtent: 219,
+            mainAxisExtent: 143,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
@@ -100,7 +103,9 @@ class _RatioTile extends StatelessWidget {
 
   final RatioKind kind;
 
-  /// Non-empty ratio series (oldest first).
+  /// Ratio series (oldest first). Empty when the ratio can't be computed yet —
+  /// a measurement is missing or the denominator is zero — in which case the
+  /// tile shows "No readings".
   final List<RatioPoint> points;
   final ZoneBounds bounds;
 
@@ -108,8 +113,7 @@ class _RatioTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final hint = Theme.of(context).hintColor;
-    final latest = points.last;
-    final zone = ratioZone(kind, bounds, latest.ratio);
+    final latest = points.isNotEmpty ? points.last : null;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -130,25 +134,28 @@ class _RatioTile extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    formatRatioValue(kind, latest.ratio),
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: zone.color,
+              if (latest == null)
+                Text(l.noReadings, style: TextStyle(color: hint))
+              else
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      formatRatioValue(kind, latest.ratio),
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: ratioZone(kind, bounds, latest.ratio).color,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  _RatioChangeIndicator(kind: kind, points: points),
-                ],
-              ),
+                    const Spacer(),
+                    _RatioChangeIndicator(kind: kind, points: points),
+                  ],
+                ),
               const SizedBox(height: 4),
               Text(
-                _relativeTime(l, latest.time),
+                latest == null ? '—' : _relativeTime(l, latest.time),
                 style: TextStyle(fontSize: 11, color: hint),
               ),
             ],
