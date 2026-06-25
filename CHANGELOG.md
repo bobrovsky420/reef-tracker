@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separate edit icon. The edit icon is replaced by a subtle chevron indicating
   the row is tappable; swipe-left to delete is unchanged.
 
+### Fixed
+- Fixed the app crashing immediately on launch on some physical devices, caused
+  by a corrupted native library in the previously published release build.
+  Rebuilt cleanly (build 12).
+
 ## [0.5.1] - 2026-06-25
 
 ### Changed
