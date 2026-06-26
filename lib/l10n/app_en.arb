@@ -85,7 +85,6 @@
   "enterANumber": "Enter a number",
   "boundsOrderError": "Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.",
 
-  "measuredAt": "Measured at",
   "noteOptional": "Note (optional)",
   "saveReadings": "Save readings",
   "invalidNumberFor": "Invalid number for {name}",
@@ -123,7 +122,6 @@
 
   "waterChanges": "Water changes",
   "recordWaterChange": "Record water change",
-  "changedAt": "Changed at",
   "amountLitersOptional": "Amount (optional)",
   "noWaterChanges": "No water changes yet.",
   "amountNotRecorded": "Amount not recorded",

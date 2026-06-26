@@ -243,9 +243,6 @@ class AppLocalizationsPl extends AppLocalizations {
       'Granice muszą rosnąć: pomarańczowa dolna ≤ zielona dolna ≤ zielona górna ≤ pomarańczowa górna.';
 
   @override
-  String get measuredAt => 'Zmierzono';
-
-  @override
   String get noteOptional => 'Notatka (opcjonalnie)';
 
   @override
@@ -339,9 +336,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get recordWaterChange => 'Zapisz podmianę wody';
-
-  @override
-  String get changedAt => 'Data podmiany';
 
   @override
   String get amountLitersOptional => 'Ilość (opcjonalnie)';

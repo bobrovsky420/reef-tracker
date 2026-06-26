@@ -243,9 +243,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Границы должны возрастать: жёлтая нижняя ≤ зелёная нижняя ≤ зелёная верхняя ≤ жёлтая верхняя.';
 
   @override
-  String get measuredAt => 'Измерено';
-
-  @override
   String get noteOptional => 'Заметка (необязательно)';
 
   @override
@@ -340,9 +337,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get recordWaterChange => 'Записать подмену воды';
-
-  @override
-  String get changedAt => 'Дата подмены';
 
   @override
   String get amountLitersOptional => 'Количество (необязательно)';

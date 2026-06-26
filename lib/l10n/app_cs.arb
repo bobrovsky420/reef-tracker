@@ -72,7 +72,6 @@
   "enterANumber": "Zadejte číslo",
   "boundsOrderError": "Hranice musí narůstat: oranžová dolní ≤ zelená dolní ≤ zelená horní ≤ oranžová horní.",
 
-  "measuredAt": "Naměřeno",
   "noteOptional": "Poznámka (nepovinné)",
   "saveReadings": "Uložit měření",
   "invalidNumberFor": "Neplatné číslo pro {name}",
@@ -105,7 +104,6 @@
 
   "waterChanges": "Výměny vody",
   "recordWaterChange": "Zaznamenat výměnu vody",
-  "changedAt": "Datum výměny",
   "amountLitersOptional": "Množství (volitelné)",
   "noWaterChanges": "Zatím žádné výměny vody.",
   "amountNotRecorded": "Množství nezaznamenáno",

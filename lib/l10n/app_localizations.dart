@@ -500,12 +500,6 @@ abstract class AppLocalizations {
   /// **'Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.'**
   String get boundsOrderError;
 
-  /// No description provided for @measuredAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Measured at'**
-  String get measuredAt;
-
   /// No description provided for @noteOptional.
   ///
   /// In en, this message translates to:
@@ -673,12 +667,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Record water change'**
   String get recordWaterChange;
-
-  /// No description provided for @changedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Changed at'**
-  String get changedAt;
 
   /// No description provided for @amountLitersOptional.
   ///

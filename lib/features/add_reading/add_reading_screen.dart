@@ -121,13 +121,24 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               Card(
-                child: ListTile(
-                  leading: const Icon(Icons.schedule),
-                  title: Text(l.measuredAt),
-                  subtitle: Text(formatDateTime(context, _takenAt)),
-                  trailing: TextButton(
-                    onPressed: _pickDateTime,
-                    child: Text(l.change),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.schedule),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          formatDateTime(context, _takenAt, weekday: false),
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined),
+                        tooltip: l.change,
+                        onPressed: _pickDateTime,
+                      ),
+                    ],
                   ),
                 ),
               ),

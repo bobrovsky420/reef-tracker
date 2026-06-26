@@ -72,7 +72,6 @@
   "enterANumber": "Введите число",
   "boundsOrderError": "Границы должны возрастать: жёлтая нижняя ≤ зелёная нижняя ≤ зелёная верхняя ≤ жёлтая верхняя.",
 
-  "measuredAt": "Измерено",
   "noteOptional": "Заметка (необязательно)",
   "saveReadings": "Сохранить измерения",
   "invalidNumberFor": "Неверное число для {name}",
@@ -105,7 +104,6 @@
 
   "waterChanges": "Подмены воды",
   "recordWaterChange": "Записать подмену воды",
-  "changedAt": "Дата подмены",
   "amountLitersOptional": "Количество (необязательно)",
   "noWaterChanges": "Пока нет подмен воды.",
   "amountNotRecorded": "Объём не указан",

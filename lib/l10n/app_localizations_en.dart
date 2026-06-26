@@ -243,9 +243,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.';
 
   @override
-  String get measuredAt => 'Measured at';
-
-  @override
   String get noteOptional => 'Note (optional)';
 
   @override
@@ -338,9 +335,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordWaterChange => 'Record water change';
-
-  @override
-  String get changedAt => 'Changed at';
 
   @override
   String get amountLitersOptional => 'Amount (optional)';

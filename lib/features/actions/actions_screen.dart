@@ -426,15 +426,22 @@ class _ActionDialogState extends State<_ActionDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.schedule),
-            title: Text(l.changedAt),
-            subtitle: Text(formatDateTime(context, _time)),
-            trailing: TextButton(
-              onPressed: _pickDateTime,
-              child: Text(l.change),
-            ),
+          Row(
+            children: [
+              const Icon(Icons.schedule),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  formatDateTime(context, _time, weekday: false),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: l.change,
+                onPressed: _pickDateTime,
+              ),
+            ],
           ),
           if (widget.valueLabel != null) ...[
             const SizedBox(height: 8),

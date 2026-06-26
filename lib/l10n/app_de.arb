@@ -72,7 +72,6 @@
   "enterANumber": "Zahl eingeben",
   "boundsOrderError": "Grenzen müssen ansteigen: orange unten ≤ grün unten ≤ grün oben ≤ orange oben.",
 
-  "measuredAt": "Gemessen am",
   "noteOptional": "Notiz (optional)",
   "saveReadings": "Messungen speichern",
   "invalidNumberFor": "Ungültige Zahl für {name}",
@@ -105,7 +104,6 @@
 
   "waterChanges": "Wasserwechsel",
   "recordWaterChange": "Wasserwechsel erfassen",
-  "changedAt": "Gewechselt am",
   "amountLitersOptional": "Menge (optional)",
   "noWaterChanges": "Noch keine Wasserwechsel.",
   "amountNotRecorded": "Menge nicht erfasst",

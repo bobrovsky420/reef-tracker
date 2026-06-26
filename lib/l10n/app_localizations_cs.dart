@@ -243,9 +243,6 @@ class AppLocalizationsCs extends AppLocalizations {
       'Hranice musí narůstat: oranžová dolní ≤ zelená dolní ≤ zelená horní ≤ oranžová horní.';
 
   @override
-  String get measuredAt => 'Naměřeno';
-
-  @override
   String get noteOptional => 'Poznámka (nepovinné)';
 
   @override
@@ -339,9 +336,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get recordWaterChange => 'Zaznamenat výměnu vody';
-
-  @override
-  String get changedAt => 'Datum výměny';
 
   @override
   String get amountLitersOptional => 'Množství (volitelné)';

@@ -72,7 +72,6 @@
   "enterANumber": "Wpisz liczbę",
   "boundsOrderError": "Granice muszą rosnąć: pomarańczowa dolna ≤ zielona dolna ≤ zielona górna ≤ pomarańczowa górna.",
 
-  "measuredAt": "Zmierzono",
   "noteOptional": "Notatka (opcjonalnie)",
   "saveReadings": "Zapisz pomiary",
   "invalidNumberFor": "Nieprawidłowa liczba dla {name}",
@@ -105,7 +104,6 @@
 
   "waterChanges": "Podmiany wody",
   "recordWaterChange": "Zapisz podmianę wody",
-  "changedAt": "Data podmiany",
   "amountLitersOptional": "Ilość (opcjonalnie)",
   "noWaterChanges": "Brak podmian wody.",
   "amountNotRecorded": "Ilość nie zapisana",
