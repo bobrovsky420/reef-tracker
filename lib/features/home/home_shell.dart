@@ -6,6 +6,7 @@ import '../../app/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../actions/actions_screen.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../dosing/dosing_screen.dart';
 
 /// Home screen hosting the app's two primary peer destinations — Measurements
 /// and Actions — behind a bottom [NavigationBar]. Owns the shared app bar
@@ -53,7 +54,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           if (tanks.isEmpty) return const NoTanksView();
           return IndexedStack(
             index: _index,
-            children: const [DashboardBody(), ActionsBody()],
+            children: const [DashboardBody(), ActionsBody(), DosingBody()],
           );
         },
       ),
@@ -72,9 +73,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                   label: l.measurements,
                 ),
                 NavigationDestination(
+                  // Keep the outlined glyph even when selected.
                   icon: const Icon(Icons.fact_check_outlined),
-                  selectedIcon: const Icon(Icons.fact_check),
+                  selectedIcon: const Icon(Icons.fact_check_outlined),
                   label: l.actions,
+                ),
+                NavigationDestination(
+                  // Keep the outlined glyph even when selected.
+                  icon: const Icon(Icons.science_outlined),
+                  selectedIcon: const Icon(Icons.science_outlined),
+                  label: l.dosing,
                 ),
               ],
             )
@@ -91,10 +99,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         label: Text(l.addReading),
       );
     }
+    if (_index == 1) {
+      return FloatingActionButton.extended(
+        onPressed: () => showAddActionSheet(context, ref),
+        icon: const Icon(Icons.add),
+        label: Text(l.addAction),
+      );
+    }
     return FloatingActionButton.extended(
-      onPressed: () => showAddActionSheet(context, ref),
+      onPressed: () => context.push('/dosing/edit'),
       icon: const Icon(Icons.add),
-      label: Text(l.addAction),
+      label: Text(l.addSupplement),
     );
   }
 }

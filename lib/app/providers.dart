@@ -85,6 +85,13 @@ final equipmentCleaningsProvider =
   return ref.watch(dbProvider).watchEquipmentCleanings(tank.id);
 });
 
+/// Supplement-dosing plan entries for the active tank (dashboard order).
+final dosingEntriesProvider = StreamProvider<List<DosingEntry>>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return Stream.value(const []);
+  return ref.watch(dbProvider).watchDosingEntries(tank.id);
+});
+
 /// Readings for a single parameter of the active tank (oldest first).
 final paramReadingsProvider =
     StreamProvider.family<List<Reading>, String>((ref, paramKey) {

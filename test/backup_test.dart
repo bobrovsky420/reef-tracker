@@ -126,6 +126,32 @@ void main() {
       const RatioVisibility(
           tankId: 2, ratioKey: 'po4no3', visible: true, displayOrder: 1000),
     ];
+    final dosingEntries = [
+      DosingEntry(
+        id: 50,
+        tankId: 1,
+        productKey: 'redsea.foundation_b',
+        vendor: 'Red Sea',
+        program: 'Reef Care Program',
+        product: 'Reef Foundation B (KH/Alk)',
+        elementKey: 'alkalinity',
+        amount: 5.0,
+        amountUnit: 'ml',
+        basis: 'perDay',
+        frequency: 'daily',
+        doseTime: '21:00',
+        note: 'Auto-doser line 2',
+        displayOrder: 0,
+        createdAt: DateTime.fromMillisecondsSinceEpoch(1700004000000),
+      ),
+      DosingEntry(
+        id: 51,
+        tankId: 1,
+        product: 'Custom kalk mix',
+        displayOrder: 1,
+        createdAt: DateTime.fromMillisecondsSinceEpoch(1700005000000),
+      ),
+    ];
     final settings = [
       const Setting(key: 'temp_unit', value: 'fahrenheit'),
       const Setting(key: 'active_tank_id', value: '1'),
@@ -142,6 +168,7 @@ void main() {
         carbonChanges: carbonChanges,
         equipmentCleanings: equipmentCleanings,
         ratioVisibilities: ratioVisibilities,
+        dosingEntries: dosingEntries,
         settings: settings,
       );
       final data = decodeBackup(json);
@@ -209,6 +236,23 @@ void main() {
       expect(data.ratioVisibilities[1].displayOrder.value, 1000);
       expect(data.ratioVisibilities[1].greenLow.value, isNull);
 
+      final d0 = data.dosingEntries[0];
+      expect(d0.id.value, 50);
+      expect(d0.tankId.value, 1);
+      expect(d0.productKey.value, 'redsea.foundation_b');
+      expect(d0.product.value, 'Reef Foundation B (KH/Alk)');
+      expect(d0.elementKey.value, 'alkalinity');
+      expect(d0.amount.value, 5.0);
+      expect(d0.amountUnit.value, 'ml');
+      expect(d0.basis.value, 'perDay');
+      expect(d0.frequency.value, 'daily');
+      expect(d0.doseTime.value, '21:00');
+      expect(d0.createdAt.value, dosingEntries[0].createdAt);
+      final d1 = data.dosingEntries[1];
+      expect(d1.productKey.value, isNull);
+      expect(d1.elementKey.value, isNull);
+      expect(d1.amount.value, isNull);
+
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
       expect(data.settings[0].value.value, 'fahrenheit');
@@ -225,6 +269,7 @@ void main() {
         carbonChanges: carbonChanges,
         equipmentCleanings: equipmentCleanings,
         ratioVisibilities: ratioVisibilities,
+        dosingEntries: dosingEntries,
         settings: settings,
       )
           .replaceFirst(
@@ -234,12 +279,15 @@ void main() {
           .replaceFirst(
               RegExp(r',\s*"equipmentCleanings": \[.*?\]', dotAll: true), '')
           .replaceFirst(
-              RegExp(r',\s*"ratioVisibilities": \[.*?\]', dotAll: true), '');
+              RegExp(r',\s*"ratioVisibilities": \[.*?\]', dotAll: true), '')
+          .replaceFirst(
+              RegExp(r',\s*"dosingEntries": \[.*?\]', dotAll: true), '');
       final data = decodeBackup(json);
       expect(data.waterChanges, isEmpty);
       expect(data.carbonChanges, isEmpty);
       expect(data.equipmentCleanings, isEmpty);
       expect(data.ratioVisibilities, isEmpty);
+      expect(data.dosingEntries, isEmpty);
       expect(data.readings.length, 2);
     });
 
@@ -262,6 +310,7 @@ void main() {
         carbonChanges: const [],
         equipmentCleanings: const [],
         ratioVisibilities: const [],
+        dosingEntries: const [],
         settings: const [],
       ).replaceFirst('"version": 1', '"version": 999');
       expect(

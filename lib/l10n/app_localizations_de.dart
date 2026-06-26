@@ -404,6 +404,103 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dadurch wird diese Gerätereinigung dauerhaft gelöscht.';
 
   @override
+  String get dosing => 'Dosierung';
+
+  @override
+  String get addSupplement => 'Präparat hinzufügen';
+
+  @override
+  String get noDosing => 'Noch keine Präparate.';
+
+  @override
+  String get noDosingHint =>
+      'Füge die Präparate hinzu, die du in diesem Becken dosierst – Hersteller, Produkt und optional Dosierung und Zeitplan.';
+
+  @override
+  String get dosingNoDosage => 'Keine Dosierung angegeben';
+
+  @override
+  String get deleteDosingTitle => 'Präparat entfernen?';
+
+  @override
+  String get deleteDosingBody =>
+      'Dadurch wird dieses Präparat aus dem Dosierplan entfernt.';
+
+  @override
+  String get dosingNew => 'Präparat hinzufügen';
+
+  @override
+  String get dosingEdit => 'Präparat bearbeiten';
+
+  @override
+  String get dosingVendor => 'Hersteller';
+
+  @override
+  String get dosingVendorName => 'Herstellername';
+
+  @override
+  String get dosingProduct => 'Produkt';
+
+  @override
+  String get dosingProductName => 'Produktname';
+
+  @override
+  String get dosingElement => 'Element';
+
+  @override
+  String get dosingElementNone => '—';
+
+  @override
+  String get dosingCustom => 'Andere…';
+
+  @override
+  String get dosingDosageOptional => 'Dosierung (optional)';
+
+  @override
+  String get dosingAmount => 'Menge';
+
+  @override
+  String get dosingUnit => 'Einheit';
+
+  @override
+  String get dosingBasis => 'Basis';
+
+  @override
+  String get dosingPerDay => 'pro Tag';
+
+  @override
+  String get dosingPerDose => 'pro Dosis';
+
+  @override
+  String get dosingSchedule => 'Zeitplan';
+
+  @override
+  String get dosingFrequency => 'Häufigkeit';
+
+  @override
+  String get dosingFreqNone => 'Keine';
+
+  @override
+  String get dosingFreqDaily => 'Täglich';
+
+  @override
+  String get dosingFreqEveryNDays => 'Alle N Tage';
+
+  @override
+  String get dosingFreqWeekly => 'Wöchentlich';
+
+  @override
+  String get dosingIntervalDays => 'Intervall (Tage)';
+
+  @override
+  String dosingEveryDaysN(Object n) {
+    return 'Alle $n Tage';
+  }
+
+  @override
+  String get dosingTimeOptional => 'Uhrzeit (optional)';
+
+  @override
   String get unitsSection => 'Einheiten';
 
   @override

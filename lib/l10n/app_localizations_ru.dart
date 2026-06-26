@@ -404,6 +404,102 @@ class AppLocalizationsRu extends AppLocalizations {
       'Это безвозвратно удалит эту чистку оборудования.';
 
   @override
+  String get dosing => 'Дозирование';
+
+  @override
+  String get addSupplement => 'Добавить добавку';
+
+  @override
+  String get noDosing => 'Пока нет добавок.';
+
+  @override
+  String get noDosingHint =>
+      'Добавьте добавки, которые вы дозируете в этот аквариум — производитель, продукт и при желании доза и расписание.';
+
+  @override
+  String get dosingNoDosage => 'Доза не указана';
+
+  @override
+  String get deleteDosingTitle => 'Удалить добавку?';
+
+  @override
+  String get deleteDosingBody => 'Это удалит эту добавку из плана дозирования.';
+
+  @override
+  String get dosingNew => 'Добавить добавку';
+
+  @override
+  String get dosingEdit => 'Изменить добавку';
+
+  @override
+  String get dosingVendor => 'Производитель';
+
+  @override
+  String get dosingVendorName => 'Название производителя';
+
+  @override
+  String get dosingProduct => 'Продукт';
+
+  @override
+  String get dosingProductName => 'Название продукта';
+
+  @override
+  String get dosingElement => 'Элемент';
+
+  @override
+  String get dosingElementNone => '—';
+
+  @override
+  String get dosingCustom => 'Другое…';
+
+  @override
+  String get dosingDosageOptional => 'Дозировка (необязательно)';
+
+  @override
+  String get dosingAmount => 'Количество';
+
+  @override
+  String get dosingUnit => 'Единица';
+
+  @override
+  String get dosingBasis => 'Основа';
+
+  @override
+  String get dosingPerDay => 'в день';
+
+  @override
+  String get dosingPerDose => 'за дозу';
+
+  @override
+  String get dosingSchedule => 'Расписание';
+
+  @override
+  String get dosingFrequency => 'Частота';
+
+  @override
+  String get dosingFreqNone => 'Нет';
+
+  @override
+  String get dosingFreqDaily => 'Ежедневно';
+
+  @override
+  String get dosingFreqEveryNDays => 'Каждые N дней';
+
+  @override
+  String get dosingFreqWeekly => 'Еженедельно';
+
+  @override
+  String get dosingIntervalDays => 'Интервал (дни)';
+
+  @override
+  String dosingEveryDaysN(Object n) {
+    return 'Каждые $n дн.';
+  }
+
+  @override
+  String get dosingTimeOptional => 'Время (необязательно)';
+
+  @override
   String get unitsSection => 'Единицы';
 
   @override

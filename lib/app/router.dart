@@ -4,6 +4,7 @@ import '../data/database.dart';
 import '../domain/ratio.dart';
 import '../features/add_reading/add_reading_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
+import '../features/dosing/dosing_edit_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/home/home_shell.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
@@ -52,6 +53,11 @@ final appRouter = GoRouter(
       path: '/ratio/:type/edit',
       builder: (context, state) =>
           RatioEditScreen(kind: _ratioKind(state.pathParameters['type'])),
+    ),
+    GoRoute(
+      path: '/dosing/edit',
+      builder: (context, state) =>
+          DosingEditScreen(entry: state.extra as DosingEntry?),
     ),
     GoRoute(
       path: '/settings',

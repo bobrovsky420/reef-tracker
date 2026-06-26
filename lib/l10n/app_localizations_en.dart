@@ -402,6 +402,103 @@ class AppLocalizationsEn extends AppLocalizations {
       'This permanently deletes this equipment cleaning.';
 
   @override
+  String get dosing => 'Dosing';
+
+  @override
+  String get addSupplement => 'Add supplement';
+
+  @override
+  String get noDosing => 'No supplements yet.';
+
+  @override
+  String get noDosingHint =>
+      'Add the supplements you dose this tank — vendor, product, and optionally dosage and schedule.';
+
+  @override
+  String get dosingNoDosage => 'No dosage set';
+
+  @override
+  String get deleteDosingTitle => 'Remove supplement?';
+
+  @override
+  String get deleteDosingBody =>
+      'This removes this supplement from the dosing plan.';
+
+  @override
+  String get dosingNew => 'Add supplement';
+
+  @override
+  String get dosingEdit => 'Edit supplement';
+
+  @override
+  String get dosingVendor => 'Vendor';
+
+  @override
+  String get dosingVendorName => 'Vendor name';
+
+  @override
+  String get dosingProduct => 'Product';
+
+  @override
+  String get dosingProductName => 'Product name';
+
+  @override
+  String get dosingElement => 'Element';
+
+  @override
+  String get dosingElementNone => '—';
+
+  @override
+  String get dosingCustom => 'Other…';
+
+  @override
+  String get dosingDosageOptional => 'Dosage (optional)';
+
+  @override
+  String get dosingAmount => 'Amount';
+
+  @override
+  String get dosingUnit => 'Unit';
+
+  @override
+  String get dosingBasis => 'Basis';
+
+  @override
+  String get dosingPerDay => 'per day';
+
+  @override
+  String get dosingPerDose => 'per dose';
+
+  @override
+  String get dosingSchedule => 'Schedule';
+
+  @override
+  String get dosingFrequency => 'Frequency';
+
+  @override
+  String get dosingFreqNone => 'None';
+
+  @override
+  String get dosingFreqDaily => 'Daily';
+
+  @override
+  String get dosingFreqEveryNDays => 'Every N days';
+
+  @override
+  String get dosingFreqWeekly => 'Weekly';
+
+  @override
+  String get dosingIntervalDays => 'Interval (days)';
+
+  @override
+  String dosingEveryDaysN(Object n) {
+    return 'Every $n days';
+  }
+
+  @override
+  String get dosingTimeOptional => 'Time (optional)';
+
+  @override
   String get unitsSection => 'Units';
 
   @override

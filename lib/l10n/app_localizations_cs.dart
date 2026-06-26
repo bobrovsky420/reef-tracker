@@ -401,6 +401,103 @@ class AppLocalizationsCs extends AppLocalizations {
       'Tímto trvale smažete toto čištění vybavení.';
 
   @override
+  String get dosing => 'Dávkování';
+
+  @override
+  String get addSupplement => 'Přidat přípravek';
+
+  @override
+  String get noDosing => 'Zatím žádné přípravky.';
+
+  @override
+  String get noDosingHint =>
+      'Přidejte přípravky, které do této nádrže dávkujete – výrobce, produkt a volitelně dávku a rozvrh.';
+
+  @override
+  String get dosingNoDosage => 'Dávka nezadána';
+
+  @override
+  String get deleteDosingTitle => 'Odebrat přípravek?';
+
+  @override
+  String get deleteDosingBody =>
+      'Tímto odeberete tento přípravek z plánu dávkování.';
+
+  @override
+  String get dosingNew => 'Přidat přípravek';
+
+  @override
+  String get dosingEdit => 'Upravit přípravek';
+
+  @override
+  String get dosingVendor => 'Výrobce';
+
+  @override
+  String get dosingVendorName => 'Název výrobce';
+
+  @override
+  String get dosingProduct => 'Produkt';
+
+  @override
+  String get dosingProductName => 'Název produktu';
+
+  @override
+  String get dosingElement => 'Prvek';
+
+  @override
+  String get dosingElementNone => '—';
+
+  @override
+  String get dosingCustom => 'Jiné…';
+
+  @override
+  String get dosingDosageOptional => 'Dávkování (volitelné)';
+
+  @override
+  String get dosingAmount => 'Množství';
+
+  @override
+  String get dosingUnit => 'Jednotka';
+
+  @override
+  String get dosingBasis => 'Základ';
+
+  @override
+  String get dosingPerDay => 'za den';
+
+  @override
+  String get dosingPerDose => 'na dávku';
+
+  @override
+  String get dosingSchedule => 'Rozvrh';
+
+  @override
+  String get dosingFrequency => 'Frekvence';
+
+  @override
+  String get dosingFreqNone => 'Žádná';
+
+  @override
+  String get dosingFreqDaily => 'Denně';
+
+  @override
+  String get dosingFreqEveryNDays => 'Každých N dní';
+
+  @override
+  String get dosingFreqWeekly => 'Týdně';
+
+  @override
+  String get dosingIntervalDays => 'Interval (dny)';
+
+  @override
+  String dosingEveryDaysN(Object n) {
+    return 'Každých $n dní';
+  }
+
+  @override
+  String get dosingTimeOptional => 'Čas (volitelné)';
+
+  @override
   String get unitsSection => 'Jednotky';
 
   @override

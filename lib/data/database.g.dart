@@ -2953,6 +2953,979 @@ class RatioVisibilitiesCompanion extends UpdateCompanion<RatioVisibility> {
   }
 }
 
+class $DosingEntriesTable extends DosingEntries
+    with TableInfo<$DosingEntriesTable, DosingEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DosingEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _productKeyMeta = const VerificationMeta(
+    'productKey',
+  );
+  @override
+  late final GeneratedColumn<String> productKey = GeneratedColumn<String>(
+    'product_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vendorMeta = const VerificationMeta('vendor');
+  @override
+  late final GeneratedColumn<String> vendor = GeneratedColumn<String>(
+    'vendor',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _programMeta = const VerificationMeta(
+    'program',
+  );
+  @override
+  late final GeneratedColumn<String> program = GeneratedColumn<String>(
+    'program',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _productMeta = const VerificationMeta(
+    'product',
+  );
+  @override
+  late final GeneratedColumn<String> product = GeneratedColumn<String>(
+    'product',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _elementKeyMeta = const VerificationMeta(
+    'elementKey',
+  );
+  @override
+  late final GeneratedColumn<String> elementKey = GeneratedColumn<String>(
+    'element_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountUnitMeta = const VerificationMeta(
+    'amountUnit',
+  );
+  @override
+  late final GeneratedColumn<String> amountUnit = GeneratedColumn<String>(
+    'amount_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _basisMeta = const VerificationMeta('basis');
+  @override
+  late final GeneratedColumn<String> basis = GeneratedColumn<String>(
+    'basis',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _frequencyMeta = const VerificationMeta(
+    'frequency',
+  );
+  @override
+  late final GeneratedColumn<String> frequency = GeneratedColumn<String>(
+    'frequency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _intervalDaysMeta = const VerificationMeta(
+    'intervalDays',
+  );
+  @override
+  late final GeneratedColumn<int> intervalDays = GeneratedColumn<int>(
+    'interval_days',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _weekdaysMeta = const VerificationMeta(
+    'weekdays',
+  );
+  @override
+  late final GeneratedColumn<String> weekdays = GeneratedColumn<String>(
+    'weekdays',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _doseTimeMeta = const VerificationMeta(
+    'doseTime',
+  );
+  @override
+  late final GeneratedColumn<String> doseTime = GeneratedColumn<String>(
+    'dose_time',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tankId,
+    productKey,
+    vendor,
+    program,
+    product,
+    elementKey,
+    amount,
+    amountUnit,
+    basis,
+    frequency,
+    intervalDays,
+    weekdays,
+    doseTime,
+    note,
+    displayOrder,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dosing_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DosingEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('product_key')) {
+      context.handle(
+        _productKeyMeta,
+        productKey.isAcceptableOrUnknown(data['product_key']!, _productKeyMeta),
+      );
+    }
+    if (data.containsKey('vendor')) {
+      context.handle(
+        _vendorMeta,
+        vendor.isAcceptableOrUnknown(data['vendor']!, _vendorMeta),
+      );
+    }
+    if (data.containsKey('program')) {
+      context.handle(
+        _programMeta,
+        program.isAcceptableOrUnknown(data['program']!, _programMeta),
+      );
+    }
+    if (data.containsKey('product')) {
+      context.handle(
+        _productMeta,
+        product.isAcceptableOrUnknown(data['product']!, _productMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productMeta);
+    }
+    if (data.containsKey('element_key')) {
+      context.handle(
+        _elementKeyMeta,
+        elementKey.isAcceptableOrUnknown(data['element_key']!, _elementKeyMeta),
+      );
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    }
+    if (data.containsKey('amount_unit')) {
+      context.handle(
+        _amountUnitMeta,
+        amountUnit.isAcceptableOrUnknown(data['amount_unit']!, _amountUnitMeta),
+      );
+    }
+    if (data.containsKey('basis')) {
+      context.handle(
+        _basisMeta,
+        basis.isAcceptableOrUnknown(data['basis']!, _basisMeta),
+      );
+    }
+    if (data.containsKey('frequency')) {
+      context.handle(
+        _frequencyMeta,
+        frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta),
+      );
+    }
+    if (data.containsKey('interval_days')) {
+      context.handle(
+        _intervalDaysMeta,
+        intervalDays.isAcceptableOrUnknown(
+          data['interval_days']!,
+          _intervalDaysMeta,
+        ),
+      );
+    }
+    if (data.containsKey('weekdays')) {
+      context.handle(
+        _weekdaysMeta,
+        weekdays.isAcceptableOrUnknown(data['weekdays']!, _weekdaysMeta),
+      );
+    }
+    if (data.containsKey('dose_time')) {
+      context.handle(
+        _doseTimeMeta,
+        doseTime.isAcceptableOrUnknown(data['dose_time']!, _doseTimeMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DosingEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DosingEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      productKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_key'],
+      ),
+      vendor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vendor'],
+      ),
+      program: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}program'],
+      ),
+      product: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product'],
+      )!,
+      elementKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}element_key'],
+      ),
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      ),
+      amountUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}amount_unit'],
+      ),
+      basis: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}basis'],
+      ),
+      frequency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}frequency'],
+      ),
+      intervalDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}interval_days'],
+      ),
+      weekdays: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weekdays'],
+      ),
+      doseTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dose_time'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DosingEntriesTable createAlias(String alias) {
+    return $DosingEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class DosingEntry extends DataClass implements Insertable<DosingEntry> {
+  final int id;
+  final int tankId;
+
+  /// Stable `SupplementProduct.key` from the catalog, or null for a custom
+  /// (free-text) entry.
+  final String? productKey;
+
+  /// Denormalized display names (the catalog values at entry time, or the
+  /// user's free text for a custom entry).
+  final String? vendor;
+  final String? program;
+  final String product;
+
+  /// Target element as a real `Readings.paramKey` (e.g. `alkalinity`), or null
+  /// for trace/multi-element products.
+  final String? elementKey;
+
+  /// Dosage amount in its canonical unit (ml or g), optional.
+  final double? amount;
+
+  /// Amount unit, stored as [DoseUnit.name] (`ml`/`g`). Optional.
+  final String? amountUnit;
+
+  /// Whether [amount] is per day or per dose, stored as [DoseBasis.name].
+  final String? basis;
+
+  /// Schedule frequency, stored as [DoseFrequency.name]. Optional/descriptive.
+  final String? frequency;
+
+  /// Interval in days when [frequency] is `everyNDays`.
+  final int? intervalDays;
+
+  /// Comma-separated weekday numbers (1=Mon … 7=Sun) when [frequency] is
+  /// `weekly`.
+  final String? weekdays;
+
+  /// Time of day as `HH:mm`, optional.
+  final String? doseTime;
+  final String? note;
+  final int displayOrder;
+  final DateTime createdAt;
+  const DosingEntry({
+    required this.id,
+    required this.tankId,
+    this.productKey,
+    this.vendor,
+    this.program,
+    required this.product,
+    this.elementKey,
+    this.amount,
+    this.amountUnit,
+    this.basis,
+    this.frequency,
+    this.intervalDays,
+    this.weekdays,
+    this.doseTime,
+    this.note,
+    required this.displayOrder,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tank_id'] = Variable<int>(tankId);
+    if (!nullToAbsent || productKey != null) {
+      map['product_key'] = Variable<String>(productKey);
+    }
+    if (!nullToAbsent || vendor != null) {
+      map['vendor'] = Variable<String>(vendor);
+    }
+    if (!nullToAbsent || program != null) {
+      map['program'] = Variable<String>(program);
+    }
+    map['product'] = Variable<String>(product);
+    if (!nullToAbsent || elementKey != null) {
+      map['element_key'] = Variable<String>(elementKey);
+    }
+    if (!nullToAbsent || amount != null) {
+      map['amount'] = Variable<double>(amount);
+    }
+    if (!nullToAbsent || amountUnit != null) {
+      map['amount_unit'] = Variable<String>(amountUnit);
+    }
+    if (!nullToAbsent || basis != null) {
+      map['basis'] = Variable<String>(basis);
+    }
+    if (!nullToAbsent || frequency != null) {
+      map['frequency'] = Variable<String>(frequency);
+    }
+    if (!nullToAbsent || intervalDays != null) {
+      map['interval_days'] = Variable<int>(intervalDays);
+    }
+    if (!nullToAbsent || weekdays != null) {
+      map['weekdays'] = Variable<String>(weekdays);
+    }
+    if (!nullToAbsent || doseTime != null) {
+      map['dose_time'] = Variable<String>(doseTime);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['display_order'] = Variable<int>(displayOrder);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  DosingEntriesCompanion toCompanion(bool nullToAbsent) {
+    return DosingEntriesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      productKey: productKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(productKey),
+      vendor: vendor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(vendor),
+      program: program == null && nullToAbsent
+          ? const Value.absent()
+          : Value(program),
+      product: Value(product),
+      elementKey: elementKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(elementKey),
+      amount: amount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amount),
+      amountUnit: amountUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountUnit),
+      basis: basis == null && nullToAbsent
+          ? const Value.absent()
+          : Value(basis),
+      frequency: frequency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(frequency),
+      intervalDays: intervalDays == null && nullToAbsent
+          ? const Value.absent()
+          : Value(intervalDays),
+      weekdays: weekdays == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weekdays),
+      doseTime: doseTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(doseTime),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      displayOrder: Value(displayOrder),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory DosingEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DosingEntry(
+      id: serializer.fromJson<int>(json['id']),
+      tankId: serializer.fromJson<int>(json['tankId']),
+      productKey: serializer.fromJson<String?>(json['productKey']),
+      vendor: serializer.fromJson<String?>(json['vendor']),
+      program: serializer.fromJson<String?>(json['program']),
+      product: serializer.fromJson<String>(json['product']),
+      elementKey: serializer.fromJson<String?>(json['elementKey']),
+      amount: serializer.fromJson<double?>(json['amount']),
+      amountUnit: serializer.fromJson<String?>(json['amountUnit']),
+      basis: serializer.fromJson<String?>(json['basis']),
+      frequency: serializer.fromJson<String?>(json['frequency']),
+      intervalDays: serializer.fromJson<int?>(json['intervalDays']),
+      weekdays: serializer.fromJson<String?>(json['weekdays']),
+      doseTime: serializer.fromJson<String?>(json['doseTime']),
+      note: serializer.fromJson<String?>(json['note']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tankId': serializer.toJson<int>(tankId),
+      'productKey': serializer.toJson<String?>(productKey),
+      'vendor': serializer.toJson<String?>(vendor),
+      'program': serializer.toJson<String?>(program),
+      'product': serializer.toJson<String>(product),
+      'elementKey': serializer.toJson<String?>(elementKey),
+      'amount': serializer.toJson<double?>(amount),
+      'amountUnit': serializer.toJson<String?>(amountUnit),
+      'basis': serializer.toJson<String?>(basis),
+      'frequency': serializer.toJson<String?>(frequency),
+      'intervalDays': serializer.toJson<int?>(intervalDays),
+      'weekdays': serializer.toJson<String?>(weekdays),
+      'doseTime': serializer.toJson<String?>(doseTime),
+      'note': serializer.toJson<String?>(note),
+      'displayOrder': serializer.toJson<int>(displayOrder),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  DosingEntry copyWith({
+    int? id,
+    int? tankId,
+    Value<String?> productKey = const Value.absent(),
+    Value<String?> vendor = const Value.absent(),
+    Value<String?> program = const Value.absent(),
+    String? product,
+    Value<String?> elementKey = const Value.absent(),
+    Value<double?> amount = const Value.absent(),
+    Value<String?> amountUnit = const Value.absent(),
+    Value<String?> basis = const Value.absent(),
+    Value<String?> frequency = const Value.absent(),
+    Value<int?> intervalDays = const Value.absent(),
+    Value<String?> weekdays = const Value.absent(),
+    Value<String?> doseTime = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+    int? displayOrder,
+    DateTime? createdAt,
+  }) => DosingEntry(
+    id: id ?? this.id,
+    tankId: tankId ?? this.tankId,
+    productKey: productKey.present ? productKey.value : this.productKey,
+    vendor: vendor.present ? vendor.value : this.vendor,
+    program: program.present ? program.value : this.program,
+    product: product ?? this.product,
+    elementKey: elementKey.present ? elementKey.value : this.elementKey,
+    amount: amount.present ? amount.value : this.amount,
+    amountUnit: amountUnit.present ? amountUnit.value : this.amountUnit,
+    basis: basis.present ? basis.value : this.basis,
+    frequency: frequency.present ? frequency.value : this.frequency,
+    intervalDays: intervalDays.present ? intervalDays.value : this.intervalDays,
+    weekdays: weekdays.present ? weekdays.value : this.weekdays,
+    doseTime: doseTime.present ? doseTime.value : this.doseTime,
+    note: note.present ? note.value : this.note,
+    displayOrder: displayOrder ?? this.displayOrder,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  DosingEntry copyWithCompanion(DosingEntriesCompanion data) {
+    return DosingEntry(
+      id: data.id.present ? data.id.value : this.id,
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      productKey: data.productKey.present
+          ? data.productKey.value
+          : this.productKey,
+      vendor: data.vendor.present ? data.vendor.value : this.vendor,
+      program: data.program.present ? data.program.value : this.program,
+      product: data.product.present ? data.product.value : this.product,
+      elementKey: data.elementKey.present
+          ? data.elementKey.value
+          : this.elementKey,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      amountUnit: data.amountUnit.present
+          ? data.amountUnit.value
+          : this.amountUnit,
+      basis: data.basis.present ? data.basis.value : this.basis,
+      frequency: data.frequency.present ? data.frequency.value : this.frequency,
+      intervalDays: data.intervalDays.present
+          ? data.intervalDays.value
+          : this.intervalDays,
+      weekdays: data.weekdays.present ? data.weekdays.value : this.weekdays,
+      doseTime: data.doseTime.present ? data.doseTime.value : this.doseTime,
+      note: data.note.present ? data.note.value : this.note,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DosingEntry(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('productKey: $productKey, ')
+          ..write('vendor: $vendor, ')
+          ..write('program: $program, ')
+          ..write('product: $product, ')
+          ..write('elementKey: $elementKey, ')
+          ..write('amount: $amount, ')
+          ..write('amountUnit: $amountUnit, ')
+          ..write('basis: $basis, ')
+          ..write('frequency: $frequency, ')
+          ..write('intervalDays: $intervalDays, ')
+          ..write('weekdays: $weekdays, ')
+          ..write('doseTime: $doseTime, ')
+          ..write('note: $note, ')
+          ..write('displayOrder: $displayOrder, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    tankId,
+    productKey,
+    vendor,
+    program,
+    product,
+    elementKey,
+    amount,
+    amountUnit,
+    basis,
+    frequency,
+    intervalDays,
+    weekdays,
+    doseTime,
+    note,
+    displayOrder,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DosingEntry &&
+          other.id == this.id &&
+          other.tankId == this.tankId &&
+          other.productKey == this.productKey &&
+          other.vendor == this.vendor &&
+          other.program == this.program &&
+          other.product == this.product &&
+          other.elementKey == this.elementKey &&
+          other.amount == this.amount &&
+          other.amountUnit == this.amountUnit &&
+          other.basis == this.basis &&
+          other.frequency == this.frequency &&
+          other.intervalDays == this.intervalDays &&
+          other.weekdays == this.weekdays &&
+          other.doseTime == this.doseTime &&
+          other.note == this.note &&
+          other.displayOrder == this.displayOrder &&
+          other.createdAt == this.createdAt);
+}
+
+class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
+  final Value<int> id;
+  final Value<int> tankId;
+  final Value<String?> productKey;
+  final Value<String?> vendor;
+  final Value<String?> program;
+  final Value<String> product;
+  final Value<String?> elementKey;
+  final Value<double?> amount;
+  final Value<String?> amountUnit;
+  final Value<String?> basis;
+  final Value<String?> frequency;
+  final Value<int?> intervalDays;
+  final Value<String?> weekdays;
+  final Value<String?> doseTime;
+  final Value<String?> note;
+  final Value<int> displayOrder;
+  final Value<DateTime> createdAt;
+  const DosingEntriesCompanion({
+    this.id = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.productKey = const Value.absent(),
+    this.vendor = const Value.absent(),
+    this.program = const Value.absent(),
+    this.product = const Value.absent(),
+    this.elementKey = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.amountUnit = const Value.absent(),
+    this.basis = const Value.absent(),
+    this.frequency = const Value.absent(),
+    this.intervalDays = const Value.absent(),
+    this.weekdays = const Value.absent(),
+    this.doseTime = const Value.absent(),
+    this.note = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  DosingEntriesCompanion.insert({
+    this.id = const Value.absent(),
+    required int tankId,
+    this.productKey = const Value.absent(),
+    this.vendor = const Value.absent(),
+    this.program = const Value.absent(),
+    required String product,
+    this.elementKey = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.amountUnit = const Value.absent(),
+    this.basis = const Value.absent(),
+    this.frequency = const Value.absent(),
+    this.intervalDays = const Value.absent(),
+    this.weekdays = const Value.absent(),
+    this.doseTime = const Value.absent(),
+    this.note = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : tankId = Value(tankId),
+       product = Value(product);
+  static Insertable<DosingEntry> custom({
+    Expression<int>? id,
+    Expression<int>? tankId,
+    Expression<String>? productKey,
+    Expression<String>? vendor,
+    Expression<String>? program,
+    Expression<String>? product,
+    Expression<String>? elementKey,
+    Expression<double>? amount,
+    Expression<String>? amountUnit,
+    Expression<String>? basis,
+    Expression<String>? frequency,
+    Expression<int>? intervalDays,
+    Expression<String>? weekdays,
+    Expression<String>? doseTime,
+    Expression<String>? note,
+    Expression<int>? displayOrder,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tankId != null) 'tank_id': tankId,
+      if (productKey != null) 'product_key': productKey,
+      if (vendor != null) 'vendor': vendor,
+      if (program != null) 'program': program,
+      if (product != null) 'product': product,
+      if (elementKey != null) 'element_key': elementKey,
+      if (amount != null) 'amount': amount,
+      if (amountUnit != null) 'amount_unit': amountUnit,
+      if (basis != null) 'basis': basis,
+      if (frequency != null) 'frequency': frequency,
+      if (intervalDays != null) 'interval_days': intervalDays,
+      if (weekdays != null) 'weekdays': weekdays,
+      if (doseTime != null) 'dose_time': doseTime,
+      if (note != null) 'note': note,
+      if (displayOrder != null) 'display_order': displayOrder,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  DosingEntriesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? tankId,
+    Value<String?>? productKey,
+    Value<String?>? vendor,
+    Value<String?>? program,
+    Value<String>? product,
+    Value<String?>? elementKey,
+    Value<double?>? amount,
+    Value<String?>? amountUnit,
+    Value<String?>? basis,
+    Value<String?>? frequency,
+    Value<int?>? intervalDays,
+    Value<String?>? weekdays,
+    Value<String?>? doseTime,
+    Value<String?>? note,
+    Value<int>? displayOrder,
+    Value<DateTime>? createdAt,
+  }) {
+    return DosingEntriesCompanion(
+      id: id ?? this.id,
+      tankId: tankId ?? this.tankId,
+      productKey: productKey ?? this.productKey,
+      vendor: vendor ?? this.vendor,
+      program: program ?? this.program,
+      product: product ?? this.product,
+      elementKey: elementKey ?? this.elementKey,
+      amount: amount ?? this.amount,
+      amountUnit: amountUnit ?? this.amountUnit,
+      basis: basis ?? this.basis,
+      frequency: frequency ?? this.frequency,
+      intervalDays: intervalDays ?? this.intervalDays,
+      weekdays: weekdays ?? this.weekdays,
+      doseTime: doseTime ?? this.doseTime,
+      note: note ?? this.note,
+      displayOrder: displayOrder ?? this.displayOrder,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (productKey.present) {
+      map['product_key'] = Variable<String>(productKey.value);
+    }
+    if (vendor.present) {
+      map['vendor'] = Variable<String>(vendor.value);
+    }
+    if (program.present) {
+      map['program'] = Variable<String>(program.value);
+    }
+    if (product.present) {
+      map['product'] = Variable<String>(product.value);
+    }
+    if (elementKey.present) {
+      map['element_key'] = Variable<String>(elementKey.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (amountUnit.present) {
+      map['amount_unit'] = Variable<String>(amountUnit.value);
+    }
+    if (basis.present) {
+      map['basis'] = Variable<String>(basis.value);
+    }
+    if (frequency.present) {
+      map['frequency'] = Variable<String>(frequency.value);
+    }
+    if (intervalDays.present) {
+      map['interval_days'] = Variable<int>(intervalDays.value);
+    }
+    if (weekdays.present) {
+      map['weekdays'] = Variable<String>(weekdays.value);
+    }
+    if (doseTime.present) {
+      map['dose_time'] = Variable<String>(doseTime.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DosingEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('productKey: $productKey, ')
+          ..write('vendor: $vendor, ')
+          ..write('program: $program, ')
+          ..write('product: $product, ')
+          ..write('elementKey: $elementKey, ')
+          ..write('amount: $amount, ')
+          ..write('amountUnit: $amountUnit, ')
+          ..write('basis: $basis, ')
+          ..write('frequency: $frequency, ')
+          ..write('intervalDays: $intervalDays, ')
+          ..write('weekdays: $weekdays, ')
+          ..write('doseTime: $doseTime, ')
+          ..write('note: $note, ')
+          ..write('displayOrder: $displayOrder, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -3180,6 +4153,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $EquipmentCleaningsTable(this);
   late final $RatioVisibilitiesTable ratioVisibilities =
       $RatioVisibilitiesTable(this);
+  late final $DosingEntriesTable dosingEntries = $DosingEntriesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -3193,6 +4167,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     carbonChanges,
     equipmentCleanings,
     ratioVisibilities,
+    dosingEntries,
     settings,
   ];
   @override
@@ -3238,6 +4213,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('ratio_visibilities', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('dosing_entries', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -3378,6 +4360,24 @@ final class $$TanksTableReferences
     final cache = $_typedResult.readTableOrNull(
       _ratioVisibilitiesRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$DosingEntriesTable, List<DosingEntry>>
+  _dosingEntriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.dosingEntries,
+    aliasName: 'tanks__id__dosing_entries__tank_id',
+  );
+
+  $$DosingEntriesTableProcessedTableManager get dosingEntriesRefs {
+    final manager = $$DosingEntriesTableTableManager(
+      $_db,
+      $_db.dosingEntries,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_dosingEntriesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3563,6 +4563,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$RatioVisibilitiesTableFilterComposer(
             $db: $db,
             $table: $db.ratioVisibilities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> dosingEntriesRefs(
+    Expression<bool> Function($$DosingEntriesTableFilterComposer f) f,
+  ) {
+    final $$DosingEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dosingEntries,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DosingEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.dosingEntries,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3794,6 +4819,31 @@ class $$TanksTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> dosingEntriesRefs<T extends Object>(
+    Expression<T> Function($$DosingEntriesTableAnnotationComposer a) f,
+  ) {
+    final $$DosingEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dosingEntries,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DosingEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.dosingEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -3816,6 +4866,7 @@ class $$TanksTableTableManager
             bool carbonChangesRefs,
             bool equipmentCleaningsRefs,
             bool ratioVisibilitiesRefs,
+            bool dosingEntriesRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -3875,6 +4926,7 @@ class $$TanksTableTableManager
                 carbonChangesRefs = false,
                 equipmentCleaningsRefs = false,
                 ratioVisibilitiesRefs = false,
+                dosingEntriesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -3885,6 +4937,7 @@ class $$TanksTableTableManager
                     if (carbonChangesRefs) db.carbonChanges,
                     if (equipmentCleaningsRefs) db.equipmentCleanings,
                     if (ratioVisibilitiesRefs) db.ratioVisibilities,
+                    if (dosingEntriesRefs) db.dosingEntries,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4011,6 +5064,27 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (dosingEntriesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          DosingEntry
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._dosingEntriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).dosingEntriesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4038,6 +5112,7 @@ typedef $$TanksTableProcessedTableManager =
         bool carbonChangesRefs,
         bool equipmentCleaningsRefs,
         bool ratioVisibilitiesRefs,
+        bool dosingEntriesRefs,
       })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
@@ -6122,6 +7197,559 @@ typedef $$RatioVisibilitiesTableProcessedTableManager =
       RatioVisibility,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$DosingEntriesTableCreateCompanionBuilder =
+    DosingEntriesCompanion Function({
+      Value<int> id,
+      required int tankId,
+      Value<String?> productKey,
+      Value<String?> vendor,
+      Value<String?> program,
+      required String product,
+      Value<String?> elementKey,
+      Value<double?> amount,
+      Value<String?> amountUnit,
+      Value<String?> basis,
+      Value<String?> frequency,
+      Value<int?> intervalDays,
+      Value<String?> weekdays,
+      Value<String?> doseTime,
+      Value<String?> note,
+      Value<int> displayOrder,
+      Value<DateTime> createdAt,
+    });
+typedef $$DosingEntriesTableUpdateCompanionBuilder =
+    DosingEntriesCompanion Function({
+      Value<int> id,
+      Value<int> tankId,
+      Value<String?> productKey,
+      Value<String?> vendor,
+      Value<String?> program,
+      Value<String> product,
+      Value<String?> elementKey,
+      Value<double?> amount,
+      Value<String?> amountUnit,
+      Value<String?> basis,
+      Value<String?> frequency,
+      Value<int?> intervalDays,
+      Value<String?> weekdays,
+      Value<String?> doseTime,
+      Value<String?> note,
+      Value<int> displayOrder,
+      Value<DateTime> createdAt,
+    });
+
+final class $$DosingEntriesTableReferences
+    extends BaseReferences<_$AppDatabase, $DosingEntriesTable, DosingEntry> {
+  $$DosingEntriesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('dosing_entries__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DosingEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $DosingEntriesTable> {
+  $$DosingEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productKey => $composableBuilder(
+    column: $table.productKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vendor => $composableBuilder(
+    column: $table.vendor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get program => $composableBuilder(
+    column: $table.program,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get product => $composableBuilder(
+    column: $table.product,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get elementKey => $composableBuilder(
+    column: $table.elementKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get amountUnit => $composableBuilder(
+    column: $table.amountUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get basis => $composableBuilder(
+    column: $table.basis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get frequency => $composableBuilder(
+    column: $table.frequency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get intervalDays => $composableBuilder(
+    column: $table.intervalDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weekdays => $composableBuilder(
+    column: $table.weekdays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get doseTime => $composableBuilder(
+    column: $table.doseTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DosingEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DosingEntriesTable> {
+  $$DosingEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productKey => $composableBuilder(
+    column: $table.productKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vendor => $composableBuilder(
+    column: $table.vendor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get program => $composableBuilder(
+    column: $table.program,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get product => $composableBuilder(
+    column: $table.product,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get elementKey => $composableBuilder(
+    column: $table.elementKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get amountUnit => $composableBuilder(
+    column: $table.amountUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get basis => $composableBuilder(
+    column: $table.basis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get frequency => $composableBuilder(
+    column: $table.frequency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get intervalDays => $composableBuilder(
+    column: $table.intervalDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weekdays => $composableBuilder(
+    column: $table.weekdays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get doseTime => $composableBuilder(
+    column: $table.doseTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DosingEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DosingEntriesTable> {
+  $$DosingEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get productKey => $composableBuilder(
+    column: $table.productKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get vendor =>
+      $composableBuilder(column: $table.vendor, builder: (column) => column);
+
+  GeneratedColumn<String> get program =>
+      $composableBuilder(column: $table.program, builder: (column) => column);
+
+  GeneratedColumn<String> get product =>
+      $composableBuilder(column: $table.product, builder: (column) => column);
+
+  GeneratedColumn<String> get elementKey => $composableBuilder(
+    column: $table.elementKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get amountUnit => $composableBuilder(
+    column: $table.amountUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get basis =>
+      $composableBuilder(column: $table.basis, builder: (column) => column);
+
+  GeneratedColumn<String> get frequency =>
+      $composableBuilder(column: $table.frequency, builder: (column) => column);
+
+  GeneratedColumn<int> get intervalDays => $composableBuilder(
+    column: $table.intervalDays,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get weekdays =>
+      $composableBuilder(column: $table.weekdays, builder: (column) => column);
+
+  GeneratedColumn<String> get doseTime =>
+      $composableBuilder(column: $table.doseTime, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DosingEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DosingEntriesTable,
+          DosingEntry,
+          $$DosingEntriesTableFilterComposer,
+          $$DosingEntriesTableOrderingComposer,
+          $$DosingEntriesTableAnnotationComposer,
+          $$DosingEntriesTableCreateCompanionBuilder,
+          $$DosingEntriesTableUpdateCompanionBuilder,
+          (DosingEntry, $$DosingEntriesTableReferences),
+          DosingEntry,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$DosingEntriesTableTableManager(_$AppDatabase db, $DosingEntriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DosingEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DosingEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DosingEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> tankId = const Value.absent(),
+                Value<String?> productKey = const Value.absent(),
+                Value<String?> vendor = const Value.absent(),
+                Value<String?> program = const Value.absent(),
+                Value<String> product = const Value.absent(),
+                Value<String?> elementKey = const Value.absent(),
+                Value<double?> amount = const Value.absent(),
+                Value<String?> amountUnit = const Value.absent(),
+                Value<String?> basis = const Value.absent(),
+                Value<String?> frequency = const Value.absent(),
+                Value<int?> intervalDays = const Value.absent(),
+                Value<String?> weekdays = const Value.absent(),
+                Value<String?> doseTime = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DosingEntriesCompanion(
+                id: id,
+                tankId: tankId,
+                productKey: productKey,
+                vendor: vendor,
+                program: program,
+                product: product,
+                elementKey: elementKey,
+                amount: amount,
+                amountUnit: amountUnit,
+                basis: basis,
+                frequency: frequency,
+                intervalDays: intervalDays,
+                weekdays: weekdays,
+                doseTime: doseTime,
+                note: note,
+                displayOrder: displayOrder,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int tankId,
+                Value<String?> productKey = const Value.absent(),
+                Value<String?> vendor = const Value.absent(),
+                Value<String?> program = const Value.absent(),
+                required String product,
+                Value<String?> elementKey = const Value.absent(),
+                Value<double?> amount = const Value.absent(),
+                Value<String?> amountUnit = const Value.absent(),
+                Value<String?> basis = const Value.absent(),
+                Value<String?> frequency = const Value.absent(),
+                Value<int?> intervalDays = const Value.absent(),
+                Value<String?> weekdays = const Value.absent(),
+                Value<String?> doseTime = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DosingEntriesCompanion.insert(
+                id: id,
+                tankId: tankId,
+                productKey: productKey,
+                vendor: vendor,
+                program: program,
+                product: product,
+                elementKey: elementKey,
+                amount: amount,
+                amountUnit: amountUnit,
+                basis: basis,
+                frequency: frequency,
+                intervalDays: intervalDays,
+                weekdays: weekdays,
+                doseTime: doseTime,
+                note: note,
+                displayOrder: displayOrder,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$DosingEntriesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable: $$DosingEntriesTableReferences
+                                    ._tankIdTable(db),
+                                referencedColumn: $$DosingEntriesTableReferences
+                                    ._tankIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DosingEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DosingEntriesTable,
+      DosingEntry,
+      $$DosingEntriesTableFilterComposer,
+      $$DosingEntriesTableOrderingComposer,
+      $$DosingEntriesTableAnnotationComposer,
+      $$DosingEntriesTableCreateCompanionBuilder,
+      $$DosingEntriesTableUpdateCompanionBuilder,
+      (DosingEntry, $$DosingEntriesTableReferences),
+      DosingEntry,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -6273,6 +7901,8 @@ class $AppDatabaseManager {
       $$EquipmentCleaningsTableTableManager(_db, _db.equipmentCleanings);
   $$RatioVisibilitiesTableTableManager get ratioVisibilities =>
       $$RatioVisibilitiesTableTableManager(_db, _db.ratioVisibilities);
+  $$DosingEntriesTableTableManager get dosingEntries =>
+      $$DosingEntriesTableTableManager(_db, _db.dosingEntries);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

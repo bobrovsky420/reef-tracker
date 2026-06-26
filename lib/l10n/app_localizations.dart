@@ -788,6 +788,192 @@ abstract class AppLocalizations {
   /// **'This permanently deletes this equipment cleaning.'**
   String get deleteEquipmentCleaningBody;
 
+  /// No description provided for @dosing.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosing'**
+  String get dosing;
+
+  /// No description provided for @addSupplement.
+  ///
+  /// In en, this message translates to:
+  /// **'Add supplement'**
+  String get addSupplement;
+
+  /// No description provided for @noDosing.
+  ///
+  /// In en, this message translates to:
+  /// **'No supplements yet.'**
+  String get noDosing;
+
+  /// No description provided for @noDosingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the supplements you dose this tank — vendor, product, and optionally dosage and schedule.'**
+  String get noDosingHint;
+
+  /// No description provided for @dosingNoDosage.
+  ///
+  /// In en, this message translates to:
+  /// **'No dosage set'**
+  String get dosingNoDosage;
+
+  /// No description provided for @deleteDosingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove supplement?'**
+  String get deleteDosingTitle;
+
+  /// No description provided for @deleteDosingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes this supplement from the dosing plan.'**
+  String get deleteDosingBody;
+
+  /// No description provided for @dosingNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add supplement'**
+  String get dosingNew;
+
+  /// No description provided for @dosingEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit supplement'**
+  String get dosingEdit;
+
+  /// No description provided for @dosingVendor.
+  ///
+  /// In en, this message translates to:
+  /// **'Vendor'**
+  String get dosingVendor;
+
+  /// No description provided for @dosingVendorName.
+  ///
+  /// In en, this message translates to:
+  /// **'Vendor name'**
+  String get dosingVendorName;
+
+  /// No description provided for @dosingProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get dosingProduct;
+
+  /// No description provided for @dosingProductName.
+  ///
+  /// In en, this message translates to:
+  /// **'Product name'**
+  String get dosingProductName;
+
+  /// No description provided for @dosingElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Element'**
+  String get dosingElement;
+
+  /// No description provided for @dosingElementNone.
+  ///
+  /// In en, this message translates to:
+  /// **'—'**
+  String get dosingElementNone;
+
+  /// No description provided for @dosingCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Other…'**
+  String get dosingCustom;
+
+  /// No description provided for @dosingDosageOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosage (optional)'**
+  String get dosingDosageOptional;
+
+  /// No description provided for @dosingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get dosingAmount;
+
+  /// No description provided for @dosingUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get dosingUnit;
+
+  /// No description provided for @dosingBasis.
+  ///
+  /// In en, this message translates to:
+  /// **'Basis'**
+  String get dosingBasis;
+
+  /// No description provided for @dosingPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'per day'**
+  String get dosingPerDay;
+
+  /// No description provided for @dosingPerDose.
+  ///
+  /// In en, this message translates to:
+  /// **'per dose'**
+  String get dosingPerDose;
+
+  /// No description provided for @dosingSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get dosingSchedule;
+
+  /// No description provided for @dosingFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get dosingFrequency;
+
+  /// No description provided for @dosingFreqNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get dosingFreqNone;
+
+  /// No description provided for @dosingFreqDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get dosingFreqDaily;
+
+  /// No description provided for @dosingFreqEveryNDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every N days'**
+  String get dosingFreqEveryNDays;
+
+  /// No description provided for @dosingFreqWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get dosingFreqWeekly;
+
+  /// No description provided for @dosingIntervalDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval (days)'**
+  String get dosingIntervalDays;
+
+  /// No description provided for @dosingEveryDaysN.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {n} days'**
+  String dosingEveryDaysN(Object n);
+
+  /// No description provided for @dosingTimeOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Time (optional)'**
+  String get dosingTimeOptional;
+
   /// No description provided for @unitsSection.
   ///
   /// In en, this message translates to:

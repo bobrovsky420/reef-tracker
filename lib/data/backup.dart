@@ -36,6 +36,7 @@ class BackupData {
     required this.carbonChanges,
     required this.equipmentCleanings,
     required this.ratioVisibilities,
+    required this.dosingEntries,
     required this.settings,
   });
 
@@ -46,6 +47,7 @@ class BackupData {
   final List<CarbonChangesCompanion> carbonChanges;
   final List<EquipmentCleaningsCompanion> equipmentCleanings;
   final List<RatioVisibilitiesCompanion> ratioVisibilities;
+  final List<DosingEntriesCompanion> dosingEntries;
   final List<SettingsCompanion> settings;
 }
 
@@ -59,6 +61,7 @@ String encodeBackup({
   required List<CarbonChange> carbonChanges,
   required List<EquipmentCleaning> equipmentCleanings,
   required List<RatioVisibility> ratioVisibilities,
+  required List<DosingEntry> dosingEntries,
   required List<Setting> settings,
 }) {
   final map = <String, dynamic>{
@@ -75,6 +78,7 @@ String encodeBackup({
         equipmentCleanings.map(_equipmentCleaningToJson).toList(),
     'ratioVisibilities':
         ratioVisibilities.map(_ratioVisibilityToJson).toList(),
+    'dosingEntries': dosingEntries.map(_dosingEntryToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
   return const JsonEncoder.withIndent('  ').convert(map);
@@ -131,6 +135,12 @@ BackupData decodeBackup(String jsonString) {
         : _listOfMaps(decoded['ratioVisibilities'])
             .map(_ratioVisibilityFromJson)
             .toList();
+    // Dosing entries were added later; older backups omit the key.
+    final dosingEntries = decoded['dosingEntries'] == null
+        ? <DosingEntriesCompanion>[]
+        : _listOfMaps(decoded['dosingEntries'])
+            .map(_dosingEntryFromJson)
+            .toList();
     final settings =
         _listOfMaps(decoded['settings']).map(_settingFromJson).toList();
     return BackupData(
@@ -141,6 +151,7 @@ BackupData decodeBackup(String jsonString) {
       carbonChanges: carbonChanges,
       equipmentCleanings: equipmentCleanings,
       ratioVisibilities: ratioVisibilities,
+      dosingEntries: dosingEntries,
       settings: settings,
     );
   } catch (_) {
@@ -159,6 +170,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async => encodeBackup(
       carbonChanges: await db.getAllCarbonChanges(),
       equipmentCleanings: await db.getAllEquipmentCleanings(),
       ratioVisibilities: await db.getAllRatioVisibilities(),
+      dosingEntries: await db.getAllDosingEntries(),
       settings: await db.getAllSettings(),
     );
 
@@ -340,6 +352,47 @@ RatioVisibilitiesCompanion _ratioVisibilityFromJson(Map<String, dynamic> m) =>
       greenLow: Value((m['greenLow'] as num?)?.toDouble()),
       greenHigh: Value((m['greenHigh'] as num?)?.toDouble()),
       amberHigh: Value((m['amberHigh'] as num?)?.toDouble()),
+    );
+
+Map<String, dynamic> _dosingEntryToJson(DosingEntry d) => {
+      'id': d.id,
+      'tankId': d.tankId,
+      'productKey': d.productKey,
+      'vendor': d.vendor,
+      'program': d.program,
+      'product': d.product,
+      'elementKey': d.elementKey,
+      'amount': d.amount,
+      'amountUnit': d.amountUnit,
+      'basis': d.basis,
+      'frequency': d.frequency,
+      'intervalDays': d.intervalDays,
+      'weekdays': d.weekdays,
+      'doseTime': d.doseTime,
+      'note': d.note,
+      'displayOrder': d.displayOrder,
+      'createdAt': d.createdAt.millisecondsSinceEpoch,
+    };
+
+DosingEntriesCompanion _dosingEntryFromJson(Map<String, dynamic> m) =>
+    DosingEntriesCompanion(
+      id: Value(m['id'] as int),
+      tankId: Value(m['tankId'] as int),
+      productKey: Value(m['productKey'] as String?),
+      vendor: Value(m['vendor'] as String?),
+      program: Value(m['program'] as String?),
+      product: Value(m['product'] as String),
+      elementKey: Value(m['elementKey'] as String?),
+      amount: Value((m['amount'] as num?)?.toDouble()),
+      amountUnit: Value(m['amountUnit'] as String?),
+      basis: Value(m['basis'] as String?),
+      frequency: Value(m['frequency'] as String?),
+      intervalDays: Value(m['intervalDays'] as int?),
+      weekdays: Value(m['weekdays'] as String?),
+      doseTime: Value(m['doseTime'] as String?),
+      note: Value(m['note'] as String?),
+      displayOrder: Value(m['displayOrder'] as int),
+      createdAt: Value(_date(m['createdAt'])),
     );
 
 Map<String, dynamic> _settingToJson(Setting s) => {

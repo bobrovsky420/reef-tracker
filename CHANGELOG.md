@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-26
+
+### Added
+- Supplement dosing. A new **Dosing** tab lets you record, per aquarium, the
+  supplements you dose — pick the vendor and product from a built-in catalog of
+  major reef brands and programs (Red Sea, Tropic Marin, Triton, Fauna Marin,
+  Aquaforest, ZEOvit, generic/DIY), or enter your own with "Other…". Each entry
+  notes its target element and, optionally, a dosage (amount in ml or g, per day
+  or per dose) and a descriptive schedule (daily, every N days, or weekly on
+  chosen weekdays, with an optional time of day). This first version is for
+  reference only. Dosing entries are included in backups.
+
 ## [0.6.0] - 2026-06-26
 
 ### Added

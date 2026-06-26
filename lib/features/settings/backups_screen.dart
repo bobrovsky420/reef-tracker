@@ -153,6 +153,7 @@ class _BackupTile extends ConsumerWidget {
             carbonChangeRows: data.carbonChanges,
             equipmentCleaningRows: data.equipmentCleanings,
             ratioVisibilityRows: data.ratioVisibilities,
+            dosingEntryRows: data.dosingEntries,
             settingRows: data.settings,
           );
       if (context.mounted) _snack(context, l.backupRestored);

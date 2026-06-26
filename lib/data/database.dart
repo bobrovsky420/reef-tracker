@@ -124,6 +124,59 @@ class RatioVisibilities extends Table {
   Set<Column> get primaryKey => {tankId, ratioKey};
 }
 
+/// A supplement-dosing plan entry for a tank — an information-only record of
+/// what the tank is dosed (vendor/program/product + target element), with an
+/// optional dosage and a descriptive schedule. Catalog identity is kept via the
+/// stable [productKey] (null for custom entries) so a future dose log and
+/// consumption calculator can resolve the product and its potency; display
+/// names are denormalized so an entry survives catalog changes.
+class DosingEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+
+  /// Stable `SupplementProduct.key` from the catalog, or null for a custom
+  /// (free-text) entry.
+  TextColumn get productKey => text().nullable()();
+
+  /// Denormalized display names (the catalog values at entry time, or the
+  /// user's free text for a custom entry).
+  TextColumn get vendor => text().nullable()();
+  TextColumn get program => text().nullable()();
+  TextColumn get product => text()();
+
+  /// Target element as a real `Readings.paramKey` (e.g. `alkalinity`), or null
+  /// for trace/multi-element products.
+  TextColumn get elementKey => text().nullable()();
+
+  /// Dosage amount in its canonical unit (ml or g), optional.
+  RealColumn get amount => real().nullable()();
+
+  /// Amount unit, stored as [DoseUnit.name] (`ml`/`g`). Optional.
+  TextColumn get amountUnit => text().nullable()();
+
+  /// Whether [amount] is per day or per dose, stored as [DoseBasis.name].
+  TextColumn get basis => text().nullable()();
+
+  /// Schedule frequency, stored as [DoseFrequency.name]. Optional/descriptive.
+  TextColumn get frequency => text().nullable()();
+
+  /// Interval in days when [frequency] is `everyNDays`.
+  IntColumn get intervalDays => integer().nullable()();
+
+  /// Comma-separated weekday numbers (1=Mon … 7=Sun) when [frequency] is
+  /// `weekly`.
+  TextColumn get weekdays => text().nullable()();
+
+  /// Time of day as `HH:mm`, optional.
+  TextColumn get doseTime => text().nullable()();
+
+  TextColumn get note => text().nullable()();
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+  DateTimeColumn get createdAt =>
+      dateTime().withDefault(currentDateAndTime)();
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -143,13 +196,14 @@ const _kActiveTankKey = 'active_tank_id';
   CarbonChanges,
   EquipmentCleanings,
   RatioVisibilities,
+  DosingEntries,
   Settings
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -200,6 +254,11 @@ class AppDatabase extends _$AppDatabase {
               if (!await _columnExists('ratio_visibilities', col.key)) {
                 await m.addColumn(ratioVisibilities, col.value);
               }
+            }
+          }
+          if (from < 9) {
+            if (!await _tableExists('dosing_entries')) {
+              await m.createTable(dosingEntries);
             }
           }
         },
@@ -630,6 +689,35 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  // --- Dosing entries ------------------------------------------------------
+
+  /// Dosing-plan entries for a tank, in dashboard order then newest first.
+  Stream<List<DosingEntry>> watchDosingEntries(int tankId) =>
+      (select(dosingEntries)
+            ..where((d) => d.tankId.equals(tankId))
+            ..orderBy([
+              (d) => OrderingTerm(expression: d.displayOrder),
+              (d) => OrderingTerm(
+                  expression: d.createdAt, mode: OrderingMode.desc),
+            ]))
+          .watch();
+
+  Future<int> insertDosingEntry(DosingEntriesCompanion entry) async {
+    final order = (await (select(dosingEntries)
+              ..where((d) => d.tankId.equals(entry.tankId.value)))
+            .get())
+        .length;
+    return into(dosingEntries).insert(
+      entry.copyWith(displayOrder: Value(order)),
+    );
+  }
+
+  Future<void> updateDosingEntry(DosingEntry entry) =>
+      update(dosingEntries).replace(entry);
+
+  Future<void> deleteDosingEntry(int id) =>
+      (delete(dosingEntries)..where((d) => d.id.equals(id))).go();
+
   // --- Settings ------------------------------------------------------------
 
   Future<void> setActiveTank(int? tankId) =>
@@ -695,6 +783,10 @@ class AppDatabase extends _$AppDatabase {
   Future<List<RatioVisibility>> getAllRatioVisibilities() =>
       select(ratioVisibilities).get();
 
+  /// Every dosing-plan entry, across all tanks.
+  Future<List<DosingEntry>> getAllDosingEntries() =>
+      select(dosingEntries).get();
+
   /// Every settings key/value pair.
   Future<List<Setting>> getAllSettings() => select(settings).get();
 
@@ -709,6 +801,7 @@ class AppDatabase extends _$AppDatabase {
     required List<CarbonChangesCompanion> carbonChangeRows,
     required List<EquipmentCleaningsCompanion> equipmentCleaningRows,
     required List<RatioVisibilitiesCompanion> ratioVisibilityRows,
+    required List<DosingEntriesCompanion> dosingEntryRows,
     required List<SettingsCompanion> settingRows,
   }) async {
     await transaction(() async {
@@ -718,6 +811,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(carbonChanges).go();
       await delete(equipmentCleanings).go();
       await delete(ratioVisibilities).go();
+      await delete(dosingEntries).go();
       await delete(trackedParameters).go();
       await delete(settings).go();
       await delete(tanks).go();
@@ -730,6 +824,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(carbonChanges, carbonChangeRows);
         b.insertAll(equipmentCleanings, equipmentCleaningRows);
         b.insertAll(ratioVisibilities, ratioVisibilityRows);
+        b.insertAll(dosingEntries, dosingEntryRows);
         b.insertAll(settings, settingRows);
       });
     });
