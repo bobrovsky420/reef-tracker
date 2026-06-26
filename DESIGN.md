@@ -94,7 +94,8 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `Settings` | key (PK), value? — generic kv store |
 
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
-`volume_unit`, `locale`, `chart_range`.
+`volume_unit`, `locale`, `chart_range`, `auto_backup_enabled`,
+`auto_backup_interval`, `auto_backup_keep`, `last_auto_backup_at`.
 
 **Migrations** (`MigrationStrategy`): v2 added `Tanks.startDate` via `addColumn`;
 v3 added the `WaterChanges` table via `createTable`; v4 added `WaterChanges.note`
@@ -136,6 +137,32 @@ DateTimes serialized as epoch millis. `encodeBackup` dumps every table;
 share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
 **replaces the entire database in one transaction**, preserving primary keys so
 FK links survive (deletes children→parents, inserts parents→children).
+`encodeBackupFromDb(db)` is the shared "read every table → JSON" helper used by
+both manual export and the automatic backup service.
+
+### Automatic backup (`auto_backup.dart`)
+
+Two layers, **no new dependencies and no runtime permissions**:
+
+1. **Local rotating backups.** `runAutoBackupIfDue(db)` is called
+   opportunistically on app launch and on resume (`main.dart`,
+   `WidgetsBindingObserver`); it writes a backup only when the feature is
+   enabled, at least one tank exists, and the chosen interval
+   (`AutoBackupInterval` daily/weekly) has elapsed since `last_auto_backup_at`.
+   `writeAutoBackup` serializes via `encodeBackupFromDb` to
+   `<appDocuments>/backups/reeftracker-auto-<stamp>.json`, then `pruneAutoBackups`
+   keeps the newest *N* (`kAutoBackupDefaultKeep`). The **Manage backups** screen
+   (`features/settings/backups_screen.dart`, route `/settings/backups`) lists
+   them and offers restore (reuses `decodeBackup` + `restoreFromBackup`), share,
+   and delete.
+2. **Android Auto Backup.** `android:allowBackup="true"` plus empty
+   `res/xml/backup_rules.xml` / `data_extraction_rules.xml` (default = back up
+   all app data) mean the SQLite DB *and* the `backups/` folder are synced to the
+   user's Google Drive and auto-restored on reinstall / new device.
+
+Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
+(`daily`/`weekly`), `auto_backup_keep`, `last_auto_backup_at`. Providers:
+`autoBackupEnabledProvider`, `autoBackupIntervalProvider`.
 
 ## State layer (`lib/app/providers.dart`)
 
@@ -164,7 +191,8 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 | `/history/:paramKey` | Single-parameter history graph |
 | `/ratio/:type` | Ratio history graph (`type` = `po4no3` or `mgca`) |
 | `/ratio/:type/edit` | Edit a ratio card's per-tank zone bounds |
-| `/settings` | Units, language, backup/restore |
+| `/settings` | Units, language, backup/restore, automatic backup |
+| `/settings/backups` | Manage automatic backups (list / restore / share / delete) |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
@@ -297,8 +325,9 @@ setup type drives which parameters are seeded.
 ### Settings (`settings_screen.dart`)
 
 Unit selectors (temp/salinity/volume), language selector, and **Backup &
-Restore** (export → share sheet, import → file picker → full replace). Link to
-the salinity calculator. The About box shows the live app version via
+Restore** (export → share sheet, import → file picker → full replace), plus an
+**Automatic backup** toggle + frequency and a link to the **Manage backups**
+screen (see Data → Automatic backup). Link to the salinity calculator. The About box shows the live app version via
 `appVersionProvider` (`package_info_plus`), never a hardcoded string.
 
 ### Salinity calculator (`calculator/salinity_calculator_screen.dart`)

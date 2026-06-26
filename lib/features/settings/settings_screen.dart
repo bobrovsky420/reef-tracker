@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
 import '../../data/database.dart';
 import '../../domain/units.dart';
@@ -111,6 +112,45 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: Text(l.backupImportSubtitle),
             onTap: () => _import(context, db, l),
           ),
+          SwitchListTile(
+            secondary: const Icon(Icons.backup_outlined),
+            title: Text(l.autoBackupTitle),
+            subtitle: Text(l.autoBackupSubtitle),
+            value: ref.watch(autoBackupEnabledProvider).value ??
+                kAutoBackupDefaultEnabled,
+            onChanged: (v) =>
+                db.setSetting(kAutoBackupEnabledKey, v.toString()),
+          ),
+          if (ref.watch(autoBackupEnabledProvider).value ??
+              kAutoBackupDefaultEnabled) ...[
+            ListTile(
+              leading: const Icon(Icons.schedule),
+              title: Text(l.autoBackupFrequency),
+              trailing: DropdownButton<AutoBackupInterval>(
+                value: ref.watch(autoBackupIntervalProvider).value ??
+                    AutoBackupInterval.daily,
+                underline: const SizedBox.shrink(),
+                onChanged: (v) => v == null
+                    ? null
+                    : db.setSetting(kAutoBackupIntervalKey, v.name),
+                items: [
+                  DropdownMenuItem(
+                      value: AutoBackupInterval.daily,
+                      child: Text(l.autoBackupDaily)),
+                  DropdownMenuItem(
+                      value: AutoBackupInterval.weekly,
+                      child: Text(l.autoBackupWeekly)),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_outlined),
+              title: Text(l.manageBackups),
+              subtitle: Text(l.manageBackupsSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/settings/backups'),
+            ),
+          ],
           const Divider(),
           _SectionHeader(l.aboutSection),
           ListTile(

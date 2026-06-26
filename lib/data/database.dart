@@ -661,6 +661,13 @@ class AppDatabase extends _$AppDatabase {
       into(settings).insertOnConflictUpdate(
           SettingsCompanion.insert(key: key, value: Value(value)));
 
+  /// One-shot read of a settings value (null if the key is unset).
+  Future<String?> getSetting(String key) async {
+    final row = await (select(settings)..where((s) => s.key.equals(key)))
+        .getSingleOrNull();
+    return row?.value;
+  }
+
   // --- Backup --------------------------------------------------------------
 
   /// All tanks across the database (insertion order).

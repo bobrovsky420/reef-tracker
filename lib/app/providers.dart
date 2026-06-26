@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../data/auto_backup.dart';
 import '../data/database.dart';
 import '../domain/units.dart';
 
@@ -136,6 +137,19 @@ final chartRangeProvider = StreamProvider<String>((ref) => ref
     .watch(dbProvider)
     .watchSetting(kChartRangeKey)
     .map((v) => v ?? '30d'));
+
+/// Whether automatic backups are enabled (default on).
+final autoBackupEnabledProvider = StreamProvider<bool>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kAutoBackupEnabledKey)
+    .map((v) => v == null ? kAutoBackupDefaultEnabled : v == 'true'));
+
+/// The automatic-backup frequency, defaulting to daily.
+final autoBackupIntervalProvider = StreamProvider<AutoBackupInterval>((ref) =>
+    ref
+        .watch(dbProvider)
+        .watchSetting(kAutoBackupIntervalKey)
+        .map(AutoBackupInterval.fromName));
 
 /// Per-tank dashboard ratio-card settings (visibility + order) for the active
 /// tank, keyed by [RatioKind.name]. Missing entries fall back to defaults

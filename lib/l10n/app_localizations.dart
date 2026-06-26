@@ -920,6 +920,84 @@ abstract class AppLocalizations {
   /// **'That file isn\'t a valid ReefTracker backup'**
   String get backupInvalidFile;
 
+  /// No description provided for @autoBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic backup'**
+  String get autoBackupTitle;
+
+  /// No description provided for @autoBackupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep recent copies of your data on this device'**
+  String get autoBackupSubtitle;
+
+  /// No description provided for @autoBackupFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get autoBackupFrequency;
+
+  /// No description provided for @autoBackupDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get autoBackupDaily;
+
+  /// No description provided for @autoBackupWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get autoBackupWeekly;
+
+  /// No description provided for @manageBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage backups'**
+  String get manageBackups;
+
+  /// No description provided for @manageBackupsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View, restore, or share automatic backups'**
+  String get manageBackupsSubtitle;
+
+  /// No description provided for @backupsScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic backups'**
+  String get backupsScreenTitle;
+
+  /// No description provided for @noAutoBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'No automatic backups yet'**
+  String get noAutoBackups;
+
+  /// No description provided for @noAutoBackupsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A backup is saved automatically while you use the app.'**
+  String get noAutoBackupsHint;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @backupDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete backup?'**
+  String get backupDeleteConfirmTitle;
+
+  /// No description provided for @backupDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes this backup file from your device.'**
+  String get backupDeleteConfirmBody;
+
   /// No description provided for @aboutAppName.
   ///
   /// In en, this message translates to:

@@ -9,6 +9,7 @@ import '../features/home/home_shell.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
+import '../features/settings/backups_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
 
@@ -55,6 +56,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/settings/backups',
+      builder: (context, state) => const BackupsScreen(),
     ),
     GoRoute(
       path: '/calculator/salinity',

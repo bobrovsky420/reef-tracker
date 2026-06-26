@@ -476,6 +476,49 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Datei ist keine gültige ReefTracker-Sicherung';
 
   @override
+  String get autoBackupTitle => 'Automatische Sicherung';
+
+  @override
+  String get autoBackupSubtitle =>
+      'Aktuelle Kopien deiner Daten auf diesem Gerät behalten';
+
+  @override
+  String get autoBackupFrequency => 'Häufigkeit';
+
+  @override
+  String get autoBackupDaily => 'Täglich';
+
+  @override
+  String get autoBackupWeekly => 'Wöchentlich';
+
+  @override
+  String get manageBackups => 'Sicherungen verwalten';
+
+  @override
+  String get manageBackupsSubtitle =>
+      'Automatische Sicherungen ansehen, wiederherstellen oder teilen';
+
+  @override
+  String get backupsScreenTitle => 'Automatische Sicherungen';
+
+  @override
+  String get noAutoBackups => 'Noch keine automatischen Sicherungen';
+
+  @override
+  String get noAutoBackupsHint =>
+      'Eine Sicherung wird automatisch erstellt, während du die App nutzt.';
+
+  @override
+  String get share => 'Teilen';
+
+  @override
+  String get backupDeleteConfirmTitle => 'Sicherung löschen?';
+
+  @override
+  String get backupDeleteConfirmBody =>
+      'Dadurch wird diese Sicherungsdatei dauerhaft von deinem Gerät entfernt.';
+
+  @override
   String get aboutAppName => 'Über ReefTracker';
 
   @override

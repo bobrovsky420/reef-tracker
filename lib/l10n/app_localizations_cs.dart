@@ -470,6 +470,49 @@ class AppLocalizationsCs extends AppLocalizations {
   String get backupInvalidFile => 'Tento soubor není platná záloha ReefTracker';
 
   @override
+  String get autoBackupTitle => 'Automatická záloha';
+
+  @override
+  String get autoBackupSubtitle =>
+      'Uchovávat nedávné kopie dat v tomto zařízení';
+
+  @override
+  String get autoBackupFrequency => 'Četnost';
+
+  @override
+  String get autoBackupDaily => 'Denně';
+
+  @override
+  String get autoBackupWeekly => 'Týdně';
+
+  @override
+  String get manageBackups => 'Spravovat zálohy';
+
+  @override
+  String get manageBackupsSubtitle =>
+      'Zobrazit, obnovit nebo sdílet automatické zálohy';
+
+  @override
+  String get backupsScreenTitle => 'Automatické zálohy';
+
+  @override
+  String get noAutoBackups => 'Zatím žádné automatické zálohy';
+
+  @override
+  String get noAutoBackupsHint =>
+      'Záloha se ukládá automaticky během používání aplikace.';
+
+  @override
+  String get share => 'Sdílet';
+
+  @override
+  String get backupDeleteConfirmTitle => 'Smazat zálohu?';
+
+  @override
+  String get backupDeleteConfirmBody =>
+      'Tímto trvale odstraníte tento záložní soubor ze zařízení.';
+
+  @override
   String get aboutAppName => 'O aplikaci ReefTracker';
 
   @override

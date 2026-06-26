@@ -474,6 +474,49 @@ class AppLocalizationsPl extends AppLocalizations {
       'Ten plik nie jest prawidłową kopią zapasową ReefTracker';
 
   @override
+  String get autoBackupTitle => 'Automatyczna kopia zapasowa';
+
+  @override
+  String get autoBackupSubtitle =>
+      'Przechowuj najnowsze kopie danych na tym urządzeniu';
+
+  @override
+  String get autoBackupFrequency => 'Częstotliwość';
+
+  @override
+  String get autoBackupDaily => 'Codziennie';
+
+  @override
+  String get autoBackupWeekly => 'Co tydzień';
+
+  @override
+  String get manageBackups => 'Zarządzaj kopiami';
+
+  @override
+  String get manageBackupsSubtitle =>
+      'Wyświetl, przywróć lub udostępnij automatyczne kopie';
+
+  @override
+  String get backupsScreenTitle => 'Kopie automatyczne';
+
+  @override
+  String get noAutoBackups => 'Brak automatycznych kopii zapasowych';
+
+  @override
+  String get noAutoBackupsHint =>
+      'Kopia zapasowa jest zapisywana automatycznie podczas korzystania z aplikacji.';
+
+  @override
+  String get share => 'Udostępnij';
+
+  @override
+  String get backupDeleteConfirmTitle => 'Usunąć kopię zapasową?';
+
+  @override
+  String get backupDeleteConfirmBody =>
+      'Spowoduje to trwałe usunięcie tego pliku kopii zapasowej z urządzenia.';
+
+  @override
   String get aboutAppName => 'O aplikacji ReefTracker';
 
   @override

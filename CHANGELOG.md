@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-26
+
+### Added
+- Automatic backups. The app now saves a backup of all your data on the device
+  on a schedule (daily by default, switchable to weekly), keeping the most
+  recent copies and pruning older ones. A new "Manage backups" screen in
+  Settings lets you view, restore, share, or delete these automatic backups.
+  On Android, app data is also included in the system's cloud backup, so your
+  data is restored automatically when you reinstall or set up a new device.
+
 ## [0.5.3] - 2026-06-25
 
 ### Added

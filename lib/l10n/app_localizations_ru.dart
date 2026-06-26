@@ -474,6 +474,49 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот файл не является корректной резервной копией ReefTracker';
 
   @override
+  String get autoBackupTitle => 'Автоматическое резервное копирование';
+
+  @override
+  String get autoBackupSubtitle =>
+      'Хранить недавние копии данных на этом устройстве';
+
+  @override
+  String get autoBackupFrequency => 'Частота';
+
+  @override
+  String get autoBackupDaily => 'Ежедневно';
+
+  @override
+  String get autoBackupWeekly => 'Еженедельно';
+
+  @override
+  String get manageBackups => 'Управление копиями';
+
+  @override
+  String get manageBackupsSubtitle =>
+      'Просмотр, восстановление и отправка автоматических копий';
+
+  @override
+  String get backupsScreenTitle => 'Автоматические копии';
+
+  @override
+  String get noAutoBackups => 'Автоматических копий пока нет';
+
+  @override
+  String get noAutoBackupsHint =>
+      'Резервная копия создаётся автоматически во время использования приложения.';
+
+  @override
+  String get share => 'Поделиться';
+
+  @override
+  String get backupDeleteConfirmTitle => 'Удалить копию?';
+
+  @override
+  String get backupDeleteConfirmBody =>
+      'Этот файл резервной копии будет безвозвратно удалён с устройства.';
+
+  @override
   String get aboutAppName => 'О приложении ReefTracker';
 
   @override

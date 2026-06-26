@@ -148,19 +148,23 @@ BackupData decodeBackup(String jsonString) {
   }
 }
 
+/// Serializes the entire database to a backup JSON string by reading every
+/// table. Shared by manual export and the automatic backup service.
+Future<String> encodeBackupFromDb(AppDatabase db) async => encodeBackup(
+      schemaVersion: db.schemaVersion,
+      tanks: await db.getAllTanks(),
+      params: await db.getAllTrackedParameters(),
+      readings: await db.getAllReadings(),
+      waterChanges: await db.getAllWaterChanges(),
+      carbonChanges: await db.getAllCarbonChanges(),
+      equipmentCleanings: await db.getAllEquipmentCleanings(),
+      ratioVisibilities: await db.getAllRatioVisibilities(),
+      settings: await db.getAllSettings(),
+    );
+
 /// Exports the database and hands the JSON file to the OS share sheet.
 Future<void> exportBackup(AppDatabase db) async {
-  final json = encodeBackup(
-    schemaVersion: db.schemaVersion,
-    tanks: await db.getAllTanks(),
-    params: await db.getAllTrackedParameters(),
-    readings: await db.getAllReadings(),
-    waterChanges: await db.getAllWaterChanges(),
-    carbonChanges: await db.getAllCarbonChanges(),
-    equipmentCleanings: await db.getAllEquipmentCleanings(),
-    ratioVisibilities: await db.getAllRatioVisibilities(),
-    settings: await db.getAllSettings(),
-  );
+  final json = await encodeBackupFromDb(db);
 
   final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
   final fileName = 'reeftracker-backup-$stamp.json';

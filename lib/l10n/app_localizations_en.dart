@@ -471,6 +471,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupInvalidFile => 'That file isn\'t a valid ReefTracker backup';
 
   @override
+  String get autoBackupTitle => 'Automatic backup';
+
+  @override
+  String get autoBackupSubtitle =>
+      'Keep recent copies of your data on this device';
+
+  @override
+  String get autoBackupFrequency => 'Frequency';
+
+  @override
+  String get autoBackupDaily => 'Daily';
+
+  @override
+  String get autoBackupWeekly => 'Weekly';
+
+  @override
+  String get manageBackups => 'Manage backups';
+
+  @override
+  String get manageBackupsSubtitle =>
+      'View, restore, or share automatic backups';
+
+  @override
+  String get backupsScreenTitle => 'Automatic backups';
+
+  @override
+  String get noAutoBackups => 'No automatic backups yet';
+
+  @override
+  String get noAutoBackupsHint =>
+      'A backup is saved automatically while you use the app.';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get backupDeleteConfirmTitle => 'Delete backup?';
+
+  @override
+  String get backupDeleteConfirmBody =>
+      'This permanently removes this backup file from your device.';
+
+  @override
   String get aboutAppName => 'About ReefTracker';
 
   @override

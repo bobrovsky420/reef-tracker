@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Auto Backup rules for Android 11 (API 30) and below.
+  Empty rules keep the default behaviour: all eligible app data is backed up to
+  the user's Google Drive, including the SQLite database and the rotating JSON
+  backups stored under the app documents directory. Reinstalling the app (or
+  setting up a new device) then restores everything automatically.
+-->
+<full-backup-content>
+</full-backup-content>

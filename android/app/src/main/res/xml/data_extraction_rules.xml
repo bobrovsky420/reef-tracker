@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup / transfer rules for Android 12 (API 31) and above. Empty <cloud-backup>
+  and <device-transfer> sections keep the default behaviour: all eligible app
+  data (the SQLite database and the rotating JSON backups) is included, so the
+  app restores automatically after a reinstall or a direct device-to-device
+  transfer.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+    </cloud-backup>
+    <device-transfer>
+    </device-transfer>
+</data-extraction-rules>
