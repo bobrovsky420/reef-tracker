@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-28
+
+### Added
+- A **Compare graphs** view on the Measurements tab. Toggle the app-bar icon to
+  switch the parameter grid for a stack of trend charts — one per tracked
+  parameter, in the same order as the dashboard — all sharing a single, aligned
+  time axis. Reading straight down a point in time shows how your parameters
+  move together, with the usual zone bands and water-change markers lined up
+  across every chart.
+
 ## [0.7.1] - 2026-06-28
 
 ### Added

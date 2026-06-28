@@ -128,6 +128,18 @@ abstract class AppLocalizations {
   /// **'Manage parameters'**
   String get manageParameters;
 
+  /// No description provided for @compareView.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare graphs'**
+  String get compareView;
+
+  /// No description provided for @gridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid view'**
+  String get gridView;
+
   /// No description provided for @addReading.
   ///
   /// In en, this message translates to:

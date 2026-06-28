@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../actions/actions_screen.dart';
+import '../dashboard/comparison_view.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../dosing/dosing_screen.dart';
 
@@ -23,6 +24,10 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
 
+  /// On the Measurements tab, whether to show the stacked-graph comparison view
+  /// instead of the tile grid. Kept here so it survives tab switches.
+  bool _compare = false;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -35,6 +40,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         // too, and the bottom-nav label already names the current screen.
         title: const TankSelector(),
         actions: [
+          // Toggle the Measurements tab between the tile grid and the stacked
+          // comparison graphs.
+          if (hasTanks && _index == 0)
+            IconButton(
+              tooltip: _compare ? l.gridView : l.compareView,
+              icon: Icon(_compare ? Icons.grid_view : Icons.stacked_line_chart),
+              onPressed: () => setState(() => _compare = !_compare),
+            ),
           IconButton(
             tooltip: l.manageParameters,
             icon: const Icon(Icons.tune),
@@ -54,7 +67,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           if (tanks.isEmpty) return const NoTanksView();
           return IndexedStack(
             index: _index,
-            children: const [DashboardBody(), ActionsBody(), DosingBody()],
+            children: [
+              _compare ? const ComparisonBody() : const DashboardBody(),
+              const ActionsBody(),
+              const DosingBody(),
+            ],
           );
         },
       ),

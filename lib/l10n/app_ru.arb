@@ -6,6 +6,8 @@
 
   "settings": "Настройки",
   "manageParameters": "Управление параметрами",
+  "compareView": "Сравнить графики",
+  "gridView": "Сетка",
   "addReading": "Добавить измерение",
   "addAquarium": "Добавить аквариум",
   "manageTanks": "Управление аквариумами",

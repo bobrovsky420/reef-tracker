@@ -21,6 +21,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get manageParameters => 'Spravovat parametry';
 
   @override
+  String get compareView => 'Porovnat grafy';
+
+  @override
+  String get gridView => 'Mřížka';
+
+  @override
   String get addReading => 'Přidat měření';
 
   @override

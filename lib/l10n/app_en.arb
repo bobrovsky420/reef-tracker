@@ -6,6 +6,8 @@
 
   "settings": "Settings",
   "manageParameters": "Manage parameters",
+  "compareView": "Compare graphs",
+  "gridView": "Grid view",
   "addReading": "Add reading",
   "addAquarium": "Add aquarium",
   "manageTanks": "Manage tanks",

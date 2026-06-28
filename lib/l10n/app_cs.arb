@@ -6,6 +6,8 @@
 
   "settings": "Nastavení",
   "manageParameters": "Spravovat parametry",
+  "compareView": "Porovnat grafy",
+  "gridView": "Mřížka",
   "addReading": "Přidat měření",
   "addAquarium": "Přidat akvárium",
   "manageTanks": "Spravovat akvária",

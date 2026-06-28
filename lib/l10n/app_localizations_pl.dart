@@ -21,6 +21,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get manageParameters => 'Zarządzaj parametrami';
 
   @override
+  String get compareView => 'Porównaj wykresy';
+
+  @override
+  String get gridView => 'Widok siatki';
+
+  @override
   String get addReading => 'Dodaj pomiar';
 
   @override

@@ -6,6 +6,8 @@
 
   "settings": "Einstellungen",
   "manageParameters": "Parameter verwalten",
+  "compareView": "Diagramme vergleichen",
+  "gridView": "Rasteransicht",
   "addReading": "Messung hinzufügen",
   "addAquarium": "Aquarium hinzufügen",
   "manageTanks": "Aquarien verwalten",

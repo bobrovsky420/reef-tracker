@@ -21,6 +21,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageParameters => 'Manage parameters';
 
   @override
+  String get compareView => 'Compare graphs';
+
+  @override
+  String get gridView => 'Grid view';
+
+  @override
   String get addReading => 'Add reading';
 
   @override

@@ -242,12 +242,34 @@ bodies (`DashboardBody`, `ActionsBody`, `DosingBody`) and the shell composes the
 - Empty states: `NoTanksView` (first-run welcome: a language selector +
   add-aquarium prompt — lets the user pick their language before creating a tank
   without opening Settings) and `_NoParamsView`.
+- **Compare graphs view** (`dashboard/comparison_view.dart`, `ComparisonBody`):
+  an app-bar toggle on the Measurements tab (state `_compare` in `HomeShell`)
+  swaps the tile grid for a vertical stack of trend charts — one per enabled
+  tracked parameter, **in the same `displayOrder`** as the grid. Every chart is
+  pinned to **one shared time window** (`minX`/`maxX` = range start → now; for
+  "All" the oldest reading across params) so the X axes align and a vertical
+  time-slice reads all parameters at once; each chart keeps its own auto Y scale,
+  zone bands, and water-change markers (which line up across charts). Only the
+  last chart draws date labels (alignment is fixed by the constant left-axis
+  width). Empty-in-range params show a muted placeholder to preserve order;
+  tapping a chart opens `/history/:paramKey`. Measurements only — ratio cards are
+  not included.
+
+### Trend chart widget (`widgets/trend_chart.dart`)
+
+Shared `fl_chart` building blocks used by both the history and comparison views:
+`ChartRange` enum + `chartRangeFromLabel`/`chartRangeLabel`, the
+`ChartRangeSelector` (writes `chartRangeProvider`), and `TrendChart` — a
+per-parameter line chart with **zone bands** drawn as `RangeAnnotations`
+(green/amber regions from the param's bounds) and water-change markers. When
+given explicit `minX`/`maxX` it pins to that window (comparison alignment);
+otherwise it derives the window from the data (a single reading is centered).
+`showBottomTitles` controls whether the date axis is drawn.
 
 ### History graph (`history/history_screen.dart`)
 
-Per-parameter `fl_chart` line chart with **zone bands** drawn as
-`RangeAnnotations` (green/amber regions from the param's bounds), shared time-range
-selector, and water-change markers (see below). Values are presented in the user's
+Per-parameter history built on the shared `TrendChart` (zone bands + water-change
+markers) with the shared `ChartRangeSelector`. Values are presented in the user's
 units while bounds/zones stay canonical. Below the chart is the readings list:
 tap a row to edit its **value and date/time** (`_ReadingDialog`, the date/time
 picker mirroring the actions log); when the moved reading shares its timestamp
