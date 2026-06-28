@@ -665,6 +665,101 @@ class AppLocalizationsCs extends AppLocalizations {
       'SG je vztaženo k 25 °C. Převod je lineární aproximace: SG = 1 + ppt × 0,0264/35.';
 
   @override
+  String get doseCalcTitle => 'Kalkulačka dávkování';
+
+  @override
+  String get doseCalcIntro =>
+      'Odhadne, jak rychle nádrž spotřebovává prvek, a denní dávku, která ho udrží stabilní. Výměny vody se neuvažují.';
+
+  @override
+  String get doseCalcElement => 'Prvek';
+
+  @override
+  String get doseCalcWindow => 'Období měření';
+
+  @override
+  String doseCalcReadings(Object count) {
+    return '$count měření v období';
+  }
+
+  @override
+  String get doseCalcVolume => 'Objem nádrže';
+
+  @override
+  String get doseCalcCurrentDose => 'Aktuální denní dávka';
+
+  @override
+  String get doseCalcPerDay => 'den';
+
+  @override
+  String get doseCalcPotencyTitle => 'Síla přípravku';
+
+  @override
+  String get doseCalcPotencyFromCatalog =>
+      'Používá se síla tohoto produktu z katalogu.';
+
+  @override
+  String get doseCalcEnterManually => 'Zadat ručně';
+
+  @override
+  String get doseCalcUseCatalog => 'Použít hodnotu z katalogu';
+
+  @override
+  String get doseCalcRefAmount => 'Dávka';
+
+  @override
+  String get doseCalcRefVolume => 'Na objem';
+
+  @override
+  String get doseCalcRise => 'Zvýší o';
+
+  @override
+  String doseCalcRaises(Object detail) {
+    return '≈ $detail';
+  }
+
+  @override
+  String get doseCalcResultsTitle => 'Výsledek';
+
+  @override
+  String get doseCalcObservedChange => 'Naměřená změna';
+
+  @override
+  String get doseCalcConsumption => 'Spotřeba';
+
+  @override
+  String get doseCalcCurrentInput => 'Současné dávkování přidává';
+
+  @override
+  String get doseCalcSuggestedDose => 'Doporučená denní dávka';
+
+  @override
+  String get doseCalcAdjustment => 'Úprava';
+
+  @override
+  String get doseCalcStable =>
+      'Vaše dávka udržuje tento prvek stabilní – ponechte ji.';
+
+  @override
+  String get doseCalcIncrease => 'Zvyšte dávku, aby prvek zůstal stabilní.';
+
+  @override
+  String get doseCalcDecrease =>
+      'Dávku můžete snížit a prvek přesto udržíte stabilní.';
+
+  @override
+  String get doseCalcOverdosing =>
+      'Tento prvek roste – snižte nebo pozastavte dávkování.';
+
+  @override
+  String get doseCalcNeedsPotency =>
+      'Pro doporučení dávky zadejte sílu přípravku.';
+
+  @override
+  String get doseCalcInsufficient =>
+      'Pro výpočet přidejte alespoň dvě měření z různých dnů a objem nádrže.';
+
+  @override
   String get zoneOk => 'OK';
 
   @override

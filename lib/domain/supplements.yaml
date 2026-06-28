@@ -92,16 +92,23 @@ vendors:
         # The three Balling Trace bottles are mixed INTO the Ca/KH/Mg stock
         # solutions, never dosed standalone, so they are not listed as products.
         # Salts are dissolved into stock solution and dosed in ml (default unit).
+        #
+        # strength = element rise per 1 ml of stock per 1 L of tank, derived from
+        # the Fauna Marin Balling Light dosing chart (10 ml / 100 L raises:
+        # Ca +11 mg/L, KH +0.5 dKH, Mg +5 mg/L) → rise * 100 / 10.
         products:
           - key: faunamarin.bl_calcium
             name: Calcium Mix
             element: calcium
+            strength: { calcium: 110.0 }
           - key: faunamarin.bl_carbonate
             name: Carbonate Mix
             element: alkalinity
+            strength: { alkalinity: 5.0 }
           - key: faunamarin.bl_magnesium
             name: Magnesium Mix
             element: magnesium
+            strength: { magnesium: 50.0 }
 
   - key: aquaforest
     name: Aquaforest

@@ -670,6 +670,102 @@ class AppLocalizationsDe extends AppLocalizations {
       'SG bezieht sich auf 25 °C. Die Umrechnung ist eine lineare Näherung: SG = 1 + ppt × 0,0264/35.';
 
   @override
+  String get doseCalcTitle => 'Dosierungsrechner';
+
+  @override
+  String get doseCalcIntro =>
+      'Schätzt, wie schnell dein Becken ein Element verbraucht, und die Tagesdosis, die es stabil hält. Wasserwechsel werden nicht berücksichtigt.';
+
+  @override
+  String get doseCalcElement => 'Element';
+
+  @override
+  String get doseCalcWindow => 'Messzeitraum';
+
+  @override
+  String doseCalcReadings(Object count) {
+    return '$count Messungen im Zeitraum';
+  }
+
+  @override
+  String get doseCalcVolume => 'Beckenvolumen';
+
+  @override
+  String get doseCalcCurrentDose => 'Aktuelle Tagesdosis';
+
+  @override
+  String get doseCalcPerDay => 'Tag';
+
+  @override
+  String get doseCalcPotencyTitle => 'Stärke des Präparats';
+
+  @override
+  String get doseCalcPotencyFromCatalog =>
+      'Es wird die Katalogstärke für dieses Produkt verwendet.';
+
+  @override
+  String get doseCalcEnterManually => 'Manuell eingeben';
+
+  @override
+  String get doseCalcUseCatalog => 'Katalogwert verwenden';
+
+  @override
+  String get doseCalcRefAmount => 'Dosis';
+
+  @override
+  String get doseCalcRefVolume => 'Pro Volumen';
+
+  @override
+  String get doseCalcRise => 'Erhöht um';
+
+  @override
+  String doseCalcRaises(Object detail) {
+    return '≈ $detail';
+  }
+
+  @override
+  String get doseCalcResultsTitle => 'Ergebnis';
+
+  @override
+  String get doseCalcObservedChange => 'Gemessene Änderung';
+
+  @override
+  String get doseCalcConsumption => 'Verbrauch';
+
+  @override
+  String get doseCalcCurrentInput => 'Aktuelle Dosierung liefert';
+
+  @override
+  String get doseCalcSuggestedDose => 'Empfohlene Tagesdosis';
+
+  @override
+  String get doseCalcAdjustment => 'Anpassung';
+
+  @override
+  String get doseCalcStable =>
+      'Deine aktuelle Dosis hält dieses Element stabil – beibehalten.';
+
+  @override
+  String get doseCalcIncrease =>
+      'Erhöhe die Dosis, um dieses Element stabil zu halten.';
+
+  @override
+  String get doseCalcDecrease =>
+      'Du kannst die Dosis senken und das Element trotzdem stabil halten.';
+
+  @override
+  String get doseCalcOverdosing =>
+      'Dieses Element steigt – Dosierung reduzieren oder pausieren.';
+
+  @override
+  String get doseCalcNeedsPotency =>
+      'Gib die Stärke des Präparats ein, um eine Dosisempfehlung zu erhalten.';
+
+  @override
+  String get doseCalcInsufficient =>
+      'Füge mindestens zwei Messungen an verschiedenen Tagen und ein Beckenvolumen hinzu, um zu rechnen.';
+
+  @override
   String get zoneOk => 'OK';
 
   @override

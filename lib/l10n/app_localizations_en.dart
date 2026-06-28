@@ -665,6 +665,102 @@ class AppLocalizationsEn extends AppLocalizations {
       'SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.';
 
   @override
+  String get doseCalcTitle => 'Dose calculator';
+
+  @override
+  String get doseCalcIntro =>
+      'Estimate how fast your tank consumes an element and the daily dose that holds it steady. Water changes are not considered.';
+
+  @override
+  String get doseCalcElement => 'Element';
+
+  @override
+  String get doseCalcWindow => 'Measurement window';
+
+  @override
+  String doseCalcReadings(Object count) {
+    return '$count readings in range';
+  }
+
+  @override
+  String get doseCalcVolume => 'Tank volume';
+
+  @override
+  String get doseCalcCurrentDose => 'Current daily dose';
+
+  @override
+  String get doseCalcPerDay => 'day';
+
+  @override
+  String get doseCalcPotencyTitle => 'Supplement strength';
+
+  @override
+  String get doseCalcPotencyFromCatalog =>
+      'Using the catalog\'s strength for this product.';
+
+  @override
+  String get doseCalcEnterManually => 'Enter manually';
+
+  @override
+  String get doseCalcUseCatalog => 'Use catalog value';
+
+  @override
+  String get doseCalcRefAmount => 'Dose';
+
+  @override
+  String get doseCalcRefVolume => 'Per volume';
+
+  @override
+  String get doseCalcRise => 'Raises by';
+
+  @override
+  String doseCalcRaises(Object detail) {
+    return '≈ $detail';
+  }
+
+  @override
+  String get doseCalcResultsTitle => 'Result';
+
+  @override
+  String get doseCalcObservedChange => 'Measured change';
+
+  @override
+  String get doseCalcConsumption => 'Consumption';
+
+  @override
+  String get doseCalcCurrentInput => 'Current dosing adds';
+
+  @override
+  String get doseCalcSuggestedDose => 'Suggested daily dose';
+
+  @override
+  String get doseCalcAdjustment => 'Adjustment';
+
+  @override
+  String get doseCalcStable =>
+      'Your current dose holds this element steady — keep it.';
+
+  @override
+  String get doseCalcIncrease =>
+      'Increase the dose to keep this element steady.';
+
+  @override
+  String get doseCalcDecrease =>
+      'You can lower the dose and still hold this element steady.';
+
+  @override
+  String get doseCalcOverdosing =>
+      'This element is rising — reduce or pause dosing.';
+
+  @override
+  String get doseCalcNeedsPotency =>
+      'Enter the supplement strength to get a dose recommendation.';
+
+  @override
+  String get doseCalcInsufficient =>
+      'Add at least two measurements on different days and a tank volume to calculate.';
+
+  @override
   String get zoneOk => 'OK';
 
   @override

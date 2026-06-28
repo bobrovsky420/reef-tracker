@@ -668,6 +668,102 @@ class AppLocalizationsPl extends AppLocalizations {
       'SG odniesione do 25 °C. Przeliczenie to przybliżenie liniowe: SG = 1 + ppt × 0,0264/35.';
 
   @override
+  String get doseCalcTitle => 'Kalkulator dawkowania';
+
+  @override
+  String get doseCalcIntro =>
+      'Szacuje, jak szybko zbiornik zużywa pierwiastek, oraz dawkę dzienną, która utrzyma go na stałym poziomie. Podmiany wody nie są uwzględniane.';
+
+  @override
+  String get doseCalcElement => 'Pierwiastek';
+
+  @override
+  String get doseCalcWindow => 'Okres pomiarów';
+
+  @override
+  String doseCalcReadings(Object count) {
+    return 'Pomiary w okresie: $count';
+  }
+
+  @override
+  String get doseCalcVolume => 'Objętość zbiornika';
+
+  @override
+  String get doseCalcCurrentDose => 'Obecna dawka dzienna';
+
+  @override
+  String get doseCalcPerDay => 'dzień';
+
+  @override
+  String get doseCalcPotencyTitle => 'Moc preparatu';
+
+  @override
+  String get doseCalcPotencyFromCatalog =>
+      'Używana jest moc tego produktu z katalogu.';
+
+  @override
+  String get doseCalcEnterManually => 'Wpisz ręcznie';
+
+  @override
+  String get doseCalcUseCatalog => 'Użyj wartości z katalogu';
+
+  @override
+  String get doseCalcRefAmount => 'Dawka';
+
+  @override
+  String get doseCalcRefVolume => 'Na objętość';
+
+  @override
+  String get doseCalcRise => 'Podnosi o';
+
+  @override
+  String doseCalcRaises(Object detail) {
+    return '≈ $detail';
+  }
+
+  @override
+  String get doseCalcResultsTitle => 'Wynik';
+
+  @override
+  String get doseCalcObservedChange => 'Zmierzona zmiana';
+
+  @override
+  String get doseCalcConsumption => 'Zużycie';
+
+  @override
+  String get doseCalcCurrentInput => 'Obecne dawkowanie dodaje';
+
+  @override
+  String get doseCalcSuggestedDose => 'Sugerowana dawka dzienna';
+
+  @override
+  String get doseCalcAdjustment => 'Korekta';
+
+  @override
+  String get doseCalcStable =>
+      'Twoja dawka utrzymuje ten pierwiastek na stałym poziomie — zostaw ją.';
+
+  @override
+  String get doseCalcIncrease =>
+      'Zwiększ dawkę, aby utrzymać ten pierwiastek na stałym poziomie.';
+
+  @override
+  String get doseCalcDecrease =>
+      'Możesz zmniejszyć dawkę i nadal utrzymać ten pierwiastek na stałym poziomie.';
+
+  @override
+  String get doseCalcOverdosing =>
+      'Ten pierwiastek rośnie — zmniejsz lub wstrzymaj dawkowanie.';
+
+  @override
+  String get doseCalcNeedsPotency =>
+      'Podaj moc preparatu, aby otrzymać zalecenie dawki.';
+
+  @override
+  String get doseCalcInsufficient =>
+      'Aby obliczyć, dodaj co najmniej dwa pomiary z różnych dni i objętość zbiornika.';
+
+  @override
   String get zoneOk => 'OK';
 
   @override

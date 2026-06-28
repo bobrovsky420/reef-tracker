@@ -48,6 +48,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               icon: Icon(_compare ? Icons.grid_view : Icons.stacked_line_chart),
               onPressed: () => setState(() => _compare = !_compare),
             ),
+          // Dose calculator, contextual to the Dosing tab.
+          if (hasTanks && _index == 2)
+            IconButton(
+              tooltip: l.doseCalcTitle,
+              icon: const Icon(Icons.calculate_outlined),
+              onPressed: () => context.push('/dosing/calculator'),
+            ),
           IconButton(
             tooltip: l.manageParameters,
             icon: const Icon(Icons.tune),

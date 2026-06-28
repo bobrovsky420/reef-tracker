@@ -1286,6 +1286,174 @@ abstract class AppLocalizations {
   /// **'SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.'**
   String get refFormulaNote;
 
+  /// No description provided for @doseCalcTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose calculator'**
+  String get doseCalcTitle;
+
+  /// No description provided for @doseCalcIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate how fast your tank consumes an element and the daily dose that holds it steady. Water changes are not considered.'**
+  String get doseCalcIntro;
+
+  /// No description provided for @doseCalcElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Element'**
+  String get doseCalcElement;
+
+  /// No description provided for @doseCalcWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement window'**
+  String get doseCalcWindow;
+
+  /// No description provided for @doseCalcReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} readings in range'**
+  String doseCalcReadings(Object count);
+
+  /// No description provided for @doseCalcVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Tank volume'**
+  String get doseCalcVolume;
+
+  /// No description provided for @doseCalcCurrentDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Current daily dose'**
+  String get doseCalcCurrentDose;
+
+  /// No description provided for @doseCalcPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'day'**
+  String get doseCalcPerDay;
+
+  /// No description provided for @doseCalcPotencyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplement strength'**
+  String get doseCalcPotencyTitle;
+
+  /// No description provided for @doseCalcPotencyFromCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Using the catalog\'s strength for this product.'**
+  String get doseCalcPotencyFromCatalog;
+
+  /// No description provided for @doseCalcEnterManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter manually'**
+  String get doseCalcEnterManually;
+
+  /// No description provided for @doseCalcUseCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Use catalog value'**
+  String get doseCalcUseCatalog;
+
+  /// No description provided for @doseCalcRefAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose'**
+  String get doseCalcRefAmount;
+
+  /// No description provided for @doseCalcRefVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Per volume'**
+  String get doseCalcRefVolume;
+
+  /// No description provided for @doseCalcRise.
+  ///
+  /// In en, this message translates to:
+  /// **'Raises by'**
+  String get doseCalcRise;
+
+  /// No description provided for @doseCalcRaises.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {detail}'**
+  String doseCalcRaises(Object detail);
+
+  /// No description provided for @doseCalcResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get doseCalcResultsTitle;
+
+  /// No description provided for @doseCalcObservedChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured change'**
+  String get doseCalcObservedChange;
+
+  /// No description provided for @doseCalcConsumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Consumption'**
+  String get doseCalcConsumption;
+
+  /// No description provided for @doseCalcCurrentInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Current dosing adds'**
+  String get doseCalcCurrentInput;
+
+  /// No description provided for @doseCalcSuggestedDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested daily dose'**
+  String get doseCalcSuggestedDose;
+
+  /// No description provided for @doseCalcAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustment'**
+  String get doseCalcAdjustment;
+
+  /// No description provided for @doseCalcStable.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current dose holds this element steady — keep it.'**
+  String get doseCalcStable;
+
+  /// No description provided for @doseCalcIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase the dose to keep this element steady.'**
+  String get doseCalcIncrease;
+
+  /// No description provided for @doseCalcDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'You can lower the dose and still hold this element steady.'**
+  String get doseCalcDecrease;
+
+  /// No description provided for @doseCalcOverdosing.
+  ///
+  /// In en, this message translates to:
+  /// **'This element is rising — reduce or pause dosing.'**
+  String get doseCalcOverdosing;
+
+  /// No description provided for @doseCalcNeedsPotency.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the supplement strength to get a dose recommendation.'**
+  String get doseCalcNeedsPotency;
+
+  /// No description provided for @doseCalcInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least two measurements on different days and a tank volume to calculate.'**
+  String get doseCalcInsufficient;
+
   /// No description provided for @zoneOk.
   ///
   /// In en, this message translates to:

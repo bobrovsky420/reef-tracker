@@ -77,6 +77,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. |
+| `dose_calculator.dart` | Pure, testable math for the dose calculator (no Flutter/DB): `slopePerDay` (least-squares change/day over readings), `potencyFromReference` (vendor reference dose → potency per unit per litre), `dailyEquivalentDose` (a `DosingEntry`'s average daily amount from basis + schedule), and `computeDoseCalc` → `DoseCalcResult` (consumption/day + maintenance-dose recommendation + `DoseCalcStatus`). Water changes ignored. See Features. |
 | `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker. **The data (`kSupplementVendors`) is generated** — see below. |
 | `supplements.yaml` + `supplement_catalog.g.dart` | `supplements.yaml` (commented, hand-edited) is the **source of truth** for the catalog data; `dart run tool/gen_supplements.dart` validates it (unique product keys; every `element`/`strength` key is a real param key; `unit` ∈ ml/g) and generates the `part` file `supplement_catalog.g.dart` (`const kSupplementVendors`). Edit the YAML, never the `.g.dart`. `test/supplement_catalog_test.dart` re-checks the same invariants on the generated catalog. |
 
@@ -197,6 +198,7 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 | `/ratio/:type` | Ratio history graph (`type` = `po4no3` or `mgca`) |
 | `/ratio/:type/edit` | Edit a ratio card's per-tank zone bounds |
 | `/dosing/edit` | Add / edit a supplement-dosing entry (`extra` = `DosingEntry?`) |
+| `/dosing/calculator` | Consumption / dose-adjustment calculator |
 | `/settings` | Units, language, backup/restore, automatic backup |
 | `/settings/backups` | Manage automatic backups (list / restore / share / delete) |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
@@ -360,11 +362,34 @@ a log of discrete doses). Rendered as the **Dosing tab** of the home shell.
 
 **Future-proofing (decided up front):** dose amounts are stored canonically (ml/g
 only — no unit-preference conversion), `elementKey` is always a real
-`Readings.paramKey`, and every catalog product carries a stable `key` plus an
-(as-yet-unpopulated) `strength` potency slot — so a later phase can log actual
-doses and compute element consumption (dosed input vs. measured change) by
-joining entries → product → potency → readings. The plan's schedule is purely
-descriptive and is **not** the source of truth for that math.
+`Readings.paramKey`, and every catalog product carries a stable `key` plus a
+`strength` potency slot — so a later phase can log actual doses and compute
+element consumption by joining entries → product → potency → readings. The plan's
+schedule is purely descriptive and is **not** the source of truth for that math.
+The Fauna Marin Balling Light products now carry verified `strength` values
+(from the vendor's dosing chart); the dose calculator (below) consumes them.
+
+### Dose calculator (`features/dosing/dose_calculator_screen.dart`) — `/dosing/calculator`
+
+Opened from the Dosing tab's app-bar calculator icon (`HomeShell`, shown when
+`_index == 2`). Estimates an element's real daily consumption and proposes the
+maintenance dose, **ignoring water changes** (only dosing is assumed to add the
+element back). The math is the pure `domain/dose_calculator.dart`; the screen is
+just inputs + a result card and stores nothing.
+
+- **Inputs, all editable, mostly pre-filled:** element (from `kDosingElementKeys`,
+  default = first dosing-plan element); measurement window (a *local* `ChartRange`
+  selector that does **not** touch the shared `chartRangeProvider`); tank volume
+  (from `activeTankProvider.volumeLiters`, shown/parsed in the user's volume unit);
+  current daily dose (Σ `dailyEquivalentDose` over the element's plan entries, in
+  the entry's ml/g); and supplement strength (catalog `strength[element]` when a
+  plan entry's product has it, else a vendor reference dose → `potencyFromReference`,
+  with reference volume converted to litres).
+- **Output card:** measured change/day, consumption/day, current dosing input/day,
+  suggested daily dose + adjustment, and a `DoseCalcStatus` guidance banner
+  (stable / increase / decrease / overdosing / needs-potency / insufficient-data).
+  Works with no dosing (consumption = the measured drop) and flags a rising
+  element as over-dosing.
 
 ### Manage parameters (`manage_parameters_screen.dart`)
 
@@ -428,7 +453,7 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 - Localization codegen: `flutter gen-l10n`.
 - Tests (`flutter test`): `test/zones_test.dart`, `test/presets_test.dart`,
   `test/units_test.dart`, `test/ratio_test.dart`, `test/backup_test.dart`,
-  `test/supplement_catalog_test.dart`.
+  `test/supplement_catalog_test.dart`, `test/dose_calculator_test.dart`.
 
 ## Maintaining this document
 

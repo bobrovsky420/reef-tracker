@@ -668,6 +668,102 @@ class AppLocalizationsRu extends AppLocalizations {
       'SG приведён к 25 °C. Перевод — линейная аппроксимация: SG = 1 + ppt × 0,0264/35.';
 
   @override
+  String get doseCalcTitle => 'Калькулятор дозировки';
+
+  @override
+  String get doseCalcIntro =>
+      'Оценивает, как быстро аквариум расходует элемент, и суточную дозу, удерживающую его на месте. Подмены воды не учитываются.';
+
+  @override
+  String get doseCalcElement => 'Элемент';
+
+  @override
+  String get doseCalcWindow => 'Период измерений';
+
+  @override
+  String doseCalcReadings(Object count) {
+    return 'Измерений в периоде: $count';
+  }
+
+  @override
+  String get doseCalcVolume => 'Объём аквариума';
+
+  @override
+  String get doseCalcCurrentDose => 'Текущая суточная доза';
+
+  @override
+  String get doseCalcPerDay => 'сут';
+
+  @override
+  String get doseCalcPotencyTitle => 'Концентрация добавки';
+
+  @override
+  String get doseCalcPotencyFromCatalog =>
+      'Используется концентрация этого продукта из каталога.';
+
+  @override
+  String get doseCalcEnterManually => 'Ввести вручную';
+
+  @override
+  String get doseCalcUseCatalog => 'Взять из каталога';
+
+  @override
+  String get doseCalcRefAmount => 'Доза';
+
+  @override
+  String get doseCalcRefVolume => 'На объём';
+
+  @override
+  String get doseCalcRise => 'Повышает на';
+
+  @override
+  String doseCalcRaises(Object detail) {
+    return '≈ $detail';
+  }
+
+  @override
+  String get doseCalcResultsTitle => 'Результат';
+
+  @override
+  String get doseCalcObservedChange => 'Измеренное изменение';
+
+  @override
+  String get doseCalcConsumption => 'Потребление';
+
+  @override
+  String get doseCalcCurrentInput => 'Текущая доза добавляет';
+
+  @override
+  String get doseCalcSuggestedDose => 'Рекомендуемая суточная доза';
+
+  @override
+  String get doseCalcAdjustment => 'Корректировка';
+
+  @override
+  String get doseCalcStable =>
+      'Текущая доза удерживает элемент стабильным — оставьте как есть.';
+
+  @override
+  String get doseCalcIncrease =>
+      'Увеличьте дозу, чтобы удержать элемент стабильным.';
+
+  @override
+  String get doseCalcDecrease =>
+      'Дозу можно снизить и всё равно удержать элемент стабильным.';
+
+  @override
+  String get doseCalcOverdosing =>
+      'Элемент растёт — снизьте или приостановите дозирование.';
+
+  @override
+  String get doseCalcNeedsPotency =>
+      'Укажите концентрацию добавки, чтобы получить рекомендацию по дозе.';
+
+  @override
+  String get doseCalcInsufficient =>
+      'Для расчёта добавьте не менее двух измерений в разные дни и объём аквариума.';
+
+  @override
   String get zoneOk => 'OK';
 
   @override

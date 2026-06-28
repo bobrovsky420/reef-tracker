@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-28
+
+### Added
+- A **Dose calculator** on the Dosing tab (app-bar calculator icon). Pick an
+  element (e.g. Calcium) and it reads your stored measurements over a chosen
+  window to estimate how fast the tank actually consumes it, then proposes the
+  daily dose that holds it steady. Your current dose and tank volume are
+  pre-filled from your dosing plan and aquarium (all editable), and the
+  supplement strength can come from the built-in catalog or be entered from the
+  bottle's reference dose. Also works when you dose nothing yet, and warns when
+  an element is rising (over-dosing). Water changes are not considered yet.
+
+### Changed
+- The built-in catalog now includes verified potency data for Fauna Marin
+  Balling Light (Calcium, Carbonate and Magnesium Mix), so the dose calculator
+  can pre-fill their strength automatically.
+
 ## [0.8.0] - 2026-06-28
 
 ### Added
