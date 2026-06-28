@@ -380,18 +380,45 @@ class TankSelector extends ConsumerWidget {
   }
 }
 
-class NoTanksView extends StatelessWidget {
+class NoTanksView extends ConsumerWidget {
   const NoTanksView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final localeCode = ref.watch(localeCodeProvider).value ?? 'system';
+    final db = ref.read(dbProvider);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Let first-run users pick their language before anything else,
+            // since the device locale may not match what they want.
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.translate, size: 20),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: localeCode,
+                  onChanged: (v) => db.setSetting(kLocaleKey, v),
+                  items: [
+                    DropdownMenuItem(
+                        value: 'system', child: Text(l.languageSystem)),
+                    DropdownMenuItem(
+                        value: 'en', child: Text(l.languageEnglish)),
+                    DropdownMenuItem(value: 'cs', child: Text(l.languageCzech)),
+                    DropdownMenuItem(value: 'de', child: Text(l.languageGerman)),
+                    DropdownMenuItem(
+                        value: 'ru', child: Text(l.languageRussian)),
+                    DropdownMenuItem(value: 'pl', child: Text(l.languagePolish)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             const Icon(Icons.water, size: 64),
             const SizedBox(height: 16),
             Text(l.welcomeTitle, style: Theme.of(context).textTheme.titleLarge),

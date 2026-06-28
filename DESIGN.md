@@ -239,7 +239,9 @@ bodies (`DashboardBody`, `ActionsBody`, `DosingBody`) and the shell composes the
   (ratios and measurements share one reorderable list) and stored **per tank** in
   `RatioVisibilities` (`ratioSettingsProvider` → `Map<RatioKind.name,
   RatioVisibility>`, resolved with `ratioRowVisible` / `ratioRowOrder`).
-- Empty states: `_NoTanksView` (welcome + add aquarium) and `_NoParamsView`.
+- Empty states: `NoTanksView` (first-run welcome: a language selector +
+  add-aquarium prompt — lets the user pick their language before creating a tank
+  without opening Settings) and `_NoParamsView`.
 
 ### History graph (`history/history_screen.dart`)
 
