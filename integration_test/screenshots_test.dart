@@ -1,0 +1,102 @@
+// TEMPORARY screenshot harness for Play Store listing assets.
+// Seeds the DB from store_assets/sample-data.json, then drives the app to each
+// screen and captures a screenshot. Not a real test; safe to delete after use.
+//
+// Run via:
+//   flutter drive --driver=test_driver/screenshot_driver.dart \
+//     --target=integration_test/screenshots_test.dart \
+//     -d <device> --dart-define=SHOTS=phone   (or tablet)
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+
+import 'package:reeftracker/app/router.dart';
+import 'package:reeftracker/data/backup.dart';
+import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/main.dart';
+
+import 'sample_data.g.dart';
+
+Future<void> _seedDatabase() async {
+  final data = decodeBackup(sampleBackupJson);
+  final db = AppDatabase();
+  await db.restoreFromBackup(
+    tankRows: data.tanks,
+    paramRows: data.params,
+    readingRows: data.readings,
+    waterChangeRows: data.waterChanges,
+    carbonChangeRows: data.carbonChanges,
+    equipmentCleaningRows: data.equipmentCleanings,
+    ratioVisibilityRows: data.ratioVisibilities,
+    dosingEntryRows: data.dosingEntries,
+    settingRows: data.settings,
+  );
+  await db.close();
+}
+
+void main() {
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  const target = String.fromEnvironment('SHOTS', defaultValue: 'phone');
+
+  testWidgets('capture store screenshots', (tester) async {
+    await _seedDatabase();
+
+    await tester.pumpWidget(const ProviderScope(child: ReefTrackerApp()));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+    await binding.convertFlutterSurfaceToImage();
+
+    Future<void> shot(String name) async {
+      await tester.pumpAndSettle();
+      await binding.takeScreenshot(name);
+    }
+
+    Future<void> tapIcon(IconData icon) async {
+      final f = find.byIcon(icon);
+      expect(f, findsWidgets, reason: 'icon $icon not found');
+      await tester.tap(f.first);
+      await tester.pumpAndSettle(const Duration(milliseconds: 600));
+    }
+
+    // 1. Measurements (default tab, tile grid)
+    await shot('01-measurements');
+
+    // 2. Graphs (toggle the compare view on the Measurements tab)
+    await tapIcon(Icons.stacked_line_chart);
+    await shot('02-graphs');
+    await tapIcon(Icons.grid_view); // back to grid
+
+    if (target == 'phone') {
+      // 3. Actions tab
+      await tapIcon(Icons.fact_check_outlined);
+      await shot('03-actions');
+
+      // 4. Dosing tab
+      await tapIcon(Icons.science_outlined);
+      await shot('04-dosing');
+
+      // back to Measurements so the home state is clean
+      await tapIcon(Icons.speed_outlined);
+
+      // 5. Settings (tap the gear; a real tap settles reliably)
+      await tapIcon(Icons.settings);
+      await shot('05-settings');
+      appRouter.pop();
+      await tester.pumpAndSettle();
+
+      // 6. Salinity converter
+      appRouter.push('/calculator/salinity');
+      await tester.pumpAndSettle(const Duration(milliseconds: 600));
+      await shot('06-salinity');
+      appRouter.pop();
+      await tester.pumpAndSettle();
+
+      // 7. Dose calculator
+      appRouter.push('/dosing/calculator');
+      await tester.pumpAndSettle(const Duration(milliseconds: 600));
+      await shot('07-dose-calculator');
+      appRouter.pop();
+      await tester.pumpAndSettle();
+    }
+  });
+}
