@@ -48,7 +48,7 @@ class ActionsBody extends ConsumerWidget {
     final String? note;
     switch (e) {
       case _WaterEntry(:final data):
-        icon = Icons.water_drop_outlined;
+        icon = Icons.format_color_fill;
         title = l.waterChange;
         value = data.amountLiters != null
             ? l.volumeWithUnit(data.amountLiters!, unit)
@@ -107,7 +107,7 @@ Future<void> showAddActionSheet(BuildContext context, WidgetRef ref) async {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.water_drop_outlined),
+            leading: const Icon(Icons.format_color_fill),
             title: Text(l.recordWaterChange),
             onTap: () => Navigator.pop(ctx, _Kind.water),
           ),

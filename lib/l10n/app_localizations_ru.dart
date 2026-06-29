@@ -137,6 +137,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get volumeOptional => 'Объём (необязательно)';
 
   @override
+  String get vendorOptional => 'Производитель (необязательно)';
+
+  @override
+  String get modelOptional => 'Модель (необязательно)';
+
+  @override
+  String get notesOptional => 'Заметки (необязательно)';
+
+  @override
   String get createAquarium => 'Создать аквариум';
 
   @override

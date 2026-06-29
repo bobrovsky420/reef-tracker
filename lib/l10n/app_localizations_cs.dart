@@ -137,6 +137,15 @@ class AppLocalizationsCs extends AppLocalizations {
   String get volumeOptional => 'Objem (nepovinné)';
 
   @override
+  String get vendorOptional => 'Výrobce (nepovinné)';
+
+  @override
+  String get modelOptional => 'Model (nepovinné)';
+
+  @override
+  String get notesOptional => 'Poznámky (nepovinné)';
+
+  @override
   String get createAquarium => 'Vytvořit akvárium';
 
   @override

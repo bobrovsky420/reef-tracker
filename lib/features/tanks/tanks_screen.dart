@@ -37,7 +37,7 @@ class TanksScreen extends ConsumerWidget {
               final type = SetupType.fromName(t.setupType);
               final isActive = t.id == active?.id;
               return ListTile(
-                leading: Icon(isActive ? Icons.water_drop : Icons.water_drop_outlined,
+                leading: Icon(Icons.waves,
                     color: isActive ? Theme.of(context).colorScheme.primary : null),
                 title: Text(t.name),
                 subtitle: Text([
@@ -121,6 +121,12 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name =
       TextEditingController(text: widget.tank?.name ?? '');
+  late final TextEditingController _vendor =
+      TextEditingController(text: widget.tank?.vendor ?? '');
+  late final TextEditingController _model =
+      TextEditingController(text: widget.tank?.model ?? '');
+  late final TextEditingController _notes =
+      TextEditingController(text: widget.tank?.notes ?? '');
   late final TextEditingController _volume;
   late SetupType _type =
       widget.tank != null ? SetupType.fromName(widget.tank!.setupType) : SetupType.mixed;
@@ -144,8 +150,18 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
   @override
   void dispose() {
     _name.dispose();
+    _vendor.dispose();
+    _model.dispose();
+    _notes.dispose();
     _volume.dispose();
     super.dispose();
+  }
+
+  /// Trims [text] and returns null when nothing is left, so optional
+  /// free-text fields are stored as NULL rather than empty strings.
+  String? _trimToNull(String text) {
+    final t = text.trim();
+    return t.isEmpty ? null : t;
   }
 
   Future<void> _pickStartDate() async {
@@ -171,6 +187,9 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
         setupType: _type.name,
         volumeLiters: Value(volume),
         startDate: Value(_startDate),
+        notes: Value(_trimToNull(_notes.text)),
+        vendor: Value(_trimToNull(_vendor.text)),
+        model: Value(_trimToNull(_model.text)),
       ));
     } else {
       await db.createTankWithPreset(
@@ -178,6 +197,9 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
         type: _type,
         volumeLiters: volume,
         startDate: _startDate,
+        notes: _trimToNull(_notes.text),
+        vendor: _trimToNull(_vendor.text),
+        model: _trimToNull(_model.text),
       );
     }
     if (mounted) context.pop();
@@ -224,6 +246,18 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
             ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _vendor,
+              decoration: InputDecoration(labelText: l.vendorOptional),
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _model,
+              decoration: InputDecoration(labelText: l.modelOptional),
+              textCapitalization: TextCapitalization.sentences,
+            ),
             const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -247,6 +281,18 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _notes,
+              decoration: InputDecoration(
+                labelText: l.notesOptional,
+                alignLabelWithHint: true,
+              ),
+              textCapitalization: TextCapitalization.sentences,
+              keyboardType: TextInputType.multiline,
+              minLines: 3,
+              maxLines: 6,
             ),
             const SizedBox(height: 24),
             FilledButton.icon(

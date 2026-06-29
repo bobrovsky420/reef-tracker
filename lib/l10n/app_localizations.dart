@@ -332,6 +332,24 @@ abstract class AppLocalizations {
   /// **'Volume (optional)'**
   String get volumeOptional;
 
+  /// No description provided for @vendorOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Vendor (optional)'**
+  String get vendorOptional;
+
+  /// No description provided for @modelOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Model (optional)'**
+  String get modelOptional;
+
+  /// No description provided for @notesOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (optional)'**
+  String get notesOptional;
+
   /// No description provided for @createAquarium.
   ///
   /// In en, this message translates to:

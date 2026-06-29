@@ -88,7 +88,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 | Table | Key columns |
 |-------|-------------|
-| `Tanks` | id, name, setupType, volumeLiters?, startDate?, createdAt |
+| `Tanks` | id, name, setupType, volumeLiters?, startDate?, notes?, vendor?, model?, createdAt |
 | `TrackedParameters` | id, tankId (FK cascade), paramKey, unit, enabled, displayOrder, + 4 zone bounds (amberLow/greenLow/greenHigh/amberHigh) |
 | `Readings` | id, tankId (FK cascade), paramKey, value (canonical), takenAt, note? |
 | `WaterChanges` | id, tankId (FK cascade), changedAt, amountLiters?, note? |
@@ -110,7 +110,8 @@ v3 added the `WaterChanges` table via `createTable`; v4 added `WaterChanges.note
 the `RatioVisibilities` table (`createTable`, guarded by `_tableExists`); v7
 added `RatioVisibilities.displayOrder` (`addColumn`, guarded by `_columnExists`);
 v8 added `RatioVisibilities` zone-bound columns (`addColumn` ×4, guarded); v9
-added the `DosingEntries` table (`createTable`, guarded by `_tableExists`).
+added the `DosingEntries` table (`createTable`, guarded by `_tableExists`); v10
+added `Tanks.notes`/`vendor`/`model` (`addColumn` ×3, guarded by `_columnExists`).
 Foreign keys are enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
 add/change a table or column you must bump `schemaVersion` and add the matching
 migration**, then run `dart run build_runner build`.
@@ -445,8 +446,11 @@ values in the user's display units and are converted to canonical on save.
 
 ### Tanks (`tanks_screen.dart`)
 
-Create/edit/delete tanks. Editor converts volume to/from the display unit. The
-setup type drives which parameters are seeded.
+Create/edit/delete tanks. Editor converts volume to/from the display unit and
+captures optional free-text `vendor` and `model` (single line) plus multi-line
+`notes`. The setup type drives which parameters are seeded. The list and the
+Settings → About row use the `Icons.waves` glyph for an aquarium (tinted with
+the primary colour for the active tank).
 
 ### Settings (`settings_screen.dart`)
 

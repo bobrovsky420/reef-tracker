@@ -137,6 +137,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get volumeOptional => 'Volume (optional)';
 
   @override
+  String get vendorOptional => 'Vendor (optional)';
+
+  @override
+  String get modelOptional => 'Model (optional)';
+
+  @override
+  String get notesOptional => 'Notes (optional)';
+
+  @override
   String get createAquarium => 'Create aquarium';
 
   @override

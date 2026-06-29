@@ -221,6 +221,9 @@ Map<String, dynamic> _tankToJson(Tank t) => {
       'setupType': t.setupType,
       'volumeLiters': t.volumeLiters,
       'startDate': t.startDate?.millisecondsSinceEpoch,
+      'notes': t.notes,
+      'vendor': t.vendor,
+      'model': t.model,
       'createdAt': t.createdAt.millisecondsSinceEpoch,
     };
 
@@ -230,6 +233,9 @@ TanksCompanion _tankFromJson(Map<String, dynamic> m) => TanksCompanion(
       setupType: Value(m['setupType'] as String),
       volumeLiters: Value((m['volumeLiters'] as num?)?.toDouble()),
       startDate: Value(_dateOrNull(m['startDate'])),
+      notes: Value(m['notes'] as String?),
+      vendor: Value(m['vendor'] as String?),
+      model: Value(m['model'] as String?),
       createdAt: Value(_date(m['createdAt'])),
     );
 

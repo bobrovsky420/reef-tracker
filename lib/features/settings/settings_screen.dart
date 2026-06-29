@@ -203,7 +203,7 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(),
           _SectionHeader(l.aboutSection),
           ListTile(
-            leading: const Icon(Icons.science_outlined),
+            leading: const Icon(Icons.waves),
             title: Text(l.aquariums),
             trailing: Text('${tanks.length}'),
           ),

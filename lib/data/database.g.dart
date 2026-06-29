@@ -67,6 +67,33 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vendorMeta = const VerificationMeta('vendor');
+  @override
+  late final GeneratedColumn<String> vendor = GeneratedColumn<String>(
+    'vendor',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -86,6 +113,9 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
     setupType,
     volumeLiters,
     startDate,
+    notes,
+    vendor,
+    model,
     createdAt,
   ];
   @override
@@ -134,6 +164,24 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
         startDate.isAcceptableOrUnknown(data['start_date']!, _startDateMeta),
       );
     }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('vendor')) {
+      context.handle(
+        _vendorMeta,
+        vendor.isAcceptableOrUnknown(data['vendor']!, _vendorMeta),
+      );
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -169,6 +217,18 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}start_date'],
       ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      vendor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vendor'],
+      ),
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -192,6 +252,15 @@ class Tank extends DataClass implements Insertable<Tank> {
 
   /// When the aquarium was set up/started (optional, user-editable).
   final DateTime? startDate;
+
+  /// Free-text, multi-line notes about the aquarium (optional).
+  final String? notes;
+
+  /// Hardware vendor/manufacturer of the tank (optional, single line).
+  final String? vendor;
+
+  /// Tank model/name (optional, single line).
+  final String? model;
   final DateTime createdAt;
   const Tank({
     required this.id,
@@ -199,6 +268,9 @@ class Tank extends DataClass implements Insertable<Tank> {
     required this.setupType,
     this.volumeLiters,
     this.startDate,
+    this.notes,
+    this.vendor,
+    this.model,
     required this.createdAt,
   });
   @override
@@ -212,6 +284,15 @@ class Tank extends DataClass implements Insertable<Tank> {
     }
     if (!nullToAbsent || startDate != null) {
       map['start_date'] = Variable<DateTime>(startDate);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || vendor != null) {
+      map['vendor'] = Variable<String>(vendor);
+    }
+    if (!nullToAbsent || model != null) {
+      map['model'] = Variable<String>(model);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -228,6 +309,15 @@ class Tank extends DataClass implements Insertable<Tank> {
       startDate: startDate == null && nullToAbsent
           ? const Value.absent()
           : Value(startDate),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      vendor: vendor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(vendor),
+      model: model == null && nullToAbsent
+          ? const Value.absent()
+          : Value(model),
       createdAt: Value(createdAt),
     );
   }
@@ -243,6 +333,9 @@ class Tank extends DataClass implements Insertable<Tank> {
       setupType: serializer.fromJson<String>(json['setupType']),
       volumeLiters: serializer.fromJson<double?>(json['volumeLiters']),
       startDate: serializer.fromJson<DateTime?>(json['startDate']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      vendor: serializer.fromJson<String?>(json['vendor']),
+      model: serializer.fromJson<String?>(json['model']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -255,6 +348,9 @@ class Tank extends DataClass implements Insertable<Tank> {
       'setupType': serializer.toJson<String>(setupType),
       'volumeLiters': serializer.toJson<double?>(volumeLiters),
       'startDate': serializer.toJson<DateTime?>(startDate),
+      'notes': serializer.toJson<String?>(notes),
+      'vendor': serializer.toJson<String?>(vendor),
+      'model': serializer.toJson<String?>(model),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -265,6 +361,9 @@ class Tank extends DataClass implements Insertable<Tank> {
     String? setupType,
     Value<double?> volumeLiters = const Value.absent(),
     Value<DateTime?> startDate = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    Value<String?> vendor = const Value.absent(),
+    Value<String?> model = const Value.absent(),
     DateTime? createdAt,
   }) => Tank(
     id: id ?? this.id,
@@ -272,6 +371,9 @@ class Tank extends DataClass implements Insertable<Tank> {
     setupType: setupType ?? this.setupType,
     volumeLiters: volumeLiters.present ? volumeLiters.value : this.volumeLiters,
     startDate: startDate.present ? startDate.value : this.startDate,
+    notes: notes.present ? notes.value : this.notes,
+    vendor: vendor.present ? vendor.value : this.vendor,
+    model: model.present ? model.value : this.model,
     createdAt: createdAt ?? this.createdAt,
   );
   Tank copyWithCompanion(TanksCompanion data) {
@@ -283,6 +385,9 @@ class Tank extends DataClass implements Insertable<Tank> {
           ? data.volumeLiters.value
           : this.volumeLiters,
       startDate: data.startDate.present ? data.startDate.value : this.startDate,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      vendor: data.vendor.present ? data.vendor.value : this.vendor,
+      model: data.model.present ? data.model.value : this.model,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -295,14 +400,26 @@ class Tank extends DataClass implements Insertable<Tank> {
           ..write('setupType: $setupType, ')
           ..write('volumeLiters: $volumeLiters, ')
           ..write('startDate: $startDate, ')
+          ..write('notes: $notes, ')
+          ..write('vendor: $vendor, ')
+          ..write('model: $model, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, setupType, volumeLiters, startDate, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    setupType,
+    volumeLiters,
+    startDate,
+    notes,
+    vendor,
+    model,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -312,6 +429,9 @@ class Tank extends DataClass implements Insertable<Tank> {
           other.setupType == this.setupType &&
           other.volumeLiters == this.volumeLiters &&
           other.startDate == this.startDate &&
+          other.notes == this.notes &&
+          other.vendor == this.vendor &&
+          other.model == this.model &&
           other.createdAt == this.createdAt);
 }
 
@@ -321,6 +441,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
   final Value<String> setupType;
   final Value<double?> volumeLiters;
   final Value<DateTime?> startDate;
+  final Value<String?> notes;
+  final Value<String?> vendor;
+  final Value<String?> model;
   final Value<DateTime> createdAt;
   const TanksCompanion({
     this.id = const Value.absent(),
@@ -328,6 +451,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     this.setupType = const Value.absent(),
     this.volumeLiters = const Value.absent(),
     this.startDate = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.vendor = const Value.absent(),
+    this.model = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   TanksCompanion.insert({
@@ -336,6 +462,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     required String setupType,
     this.volumeLiters = const Value.absent(),
     this.startDate = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.vendor = const Value.absent(),
+    this.model = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : name = Value(name),
        setupType = Value(setupType);
@@ -345,6 +474,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     Expression<String>? setupType,
     Expression<double>? volumeLiters,
     Expression<DateTime>? startDate,
+    Expression<String>? notes,
+    Expression<String>? vendor,
+    Expression<String>? model,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -353,6 +485,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
       if (setupType != null) 'setup_type': setupType,
       if (volumeLiters != null) 'volume_liters': volumeLiters,
       if (startDate != null) 'start_date': startDate,
+      if (notes != null) 'notes': notes,
+      if (vendor != null) 'vendor': vendor,
+      if (model != null) 'model': model,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -363,6 +498,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     Value<String>? setupType,
     Value<double?>? volumeLiters,
     Value<DateTime?>? startDate,
+    Value<String?>? notes,
+    Value<String?>? vendor,
+    Value<String?>? model,
     Value<DateTime>? createdAt,
   }) {
     return TanksCompanion(
@@ -371,6 +509,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
       setupType: setupType ?? this.setupType,
       volumeLiters: volumeLiters ?? this.volumeLiters,
       startDate: startDate ?? this.startDate,
+      notes: notes ?? this.notes,
+      vendor: vendor ?? this.vendor,
+      model: model ?? this.model,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -393,6 +534,15 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     if (startDate.present) {
       map['start_date'] = Variable<DateTime>(startDate.value);
     }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (vendor.present) {
+      map['vendor'] = Variable<String>(vendor.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -407,6 +557,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
           ..write('setupType: $setupType, ')
           ..write('volumeLiters: $volumeLiters, ')
           ..write('startDate: $startDate, ')
+          ..write('notes: $notes, ')
+          ..write('vendor: $vendor, ')
+          ..write('model: $model, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -4231,6 +4384,9 @@ typedef $$TanksTableCreateCompanionBuilder =
       required String setupType,
       Value<double?> volumeLiters,
       Value<DateTime?> startDate,
+      Value<String?> notes,
+      Value<String?> vendor,
+      Value<String?> model,
       Value<DateTime> createdAt,
     });
 typedef $$TanksTableUpdateCompanionBuilder =
@@ -4240,6 +4396,9 @@ typedef $$TanksTableUpdateCompanionBuilder =
       Value<String> setupType,
       Value<double?> volumeLiters,
       Value<DateTime?> startDate,
+      Value<String?> notes,
+      Value<String?> vendor,
+      Value<String?> model,
       Value<DateTime> createdAt,
     });
 
@@ -4414,6 +4573,21 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
 
   ColumnFilters<DateTime> get startDate => $composableBuilder(
     column: $table.startDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vendor => $composableBuilder(
+    column: $table.vendor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4632,6 +4806,21 @@ class $$TanksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vendor => $composableBuilder(
+    column: $table.vendor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -4663,6 +4852,15 @@ class $$TanksTableAnnotationComposer
 
   GeneratedColumn<DateTime> get startDate =>
       $composableBuilder(column: $table.startDate, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get vendor =>
+      $composableBuilder(column: $table.vendor, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -4887,6 +5085,9 @@ class $$TanksTableTableManager
                 Value<String> setupType = const Value.absent(),
                 Value<double?> volumeLiters = const Value.absent(),
                 Value<DateTime?> startDate = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> vendor = const Value.absent(),
+                Value<String?> model = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => TanksCompanion(
                 id: id,
@@ -4894,6 +5095,9 @@ class $$TanksTableTableManager
                 setupType: setupType,
                 volumeLiters: volumeLiters,
                 startDate: startDate,
+                notes: notes,
+                vendor: vendor,
+                model: model,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -4903,6 +5107,9 @@ class $$TanksTableTableManager
                 required String setupType,
                 Value<double?> volumeLiters = const Value.absent(),
                 Value<DateTime?> startDate = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> vendor = const Value.absent(),
+                Value<String?> model = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => TanksCompanion.insert(
                 id: id,
@@ -4910,6 +5117,9 @@ class $$TanksTableTableManager
                 setupType: setupType,
                 volumeLiters: volumeLiters,
                 startDate: startDate,
+                notes: notes,
+                vendor: vendor,
+                model: model,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0

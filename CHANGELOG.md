@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2026-06-29
+
+### Changed
+- The water-change action now uses a bucket (pouring) icon instead of the water
+  drop, in both the actions list and the "add action" menu.
+
+## [0.11.0] - 2026-06-29
+
+### Added
+- Aquariums can now record an optional **vendor** and **model** (single-line free
+  text) and free-text multi-line **notes**, editable both when creating a tank
+  and later from its editor.
+
+### Changed
+- New aquarium icon: tanks now use a water-waves glyph in the aquariums list and
+  in Settings → About (the active tank is tinted), replacing the old water-drop
+  and flask icons.
+
 ## [0.10.1] - 2026-06-29
 
 ### Added

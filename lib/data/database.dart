@@ -28,6 +28,16 @@ class Tanks extends Table {
 
   /// When the aquarium was set up/started (optional, user-editable).
   DateTimeColumn get startDate => dateTime().nullable()();
+
+  /// Free-text, multi-line notes about the aquarium (optional).
+  TextColumn get notes => text().nullable()();
+
+  /// Hardware vendor/manufacturer of the tank (optional, single line).
+  TextColumn get vendor => text().nullable()();
+
+  /// Tank model/name (optional, single line).
+  TextColumn get model => text().nullable()();
+
   DateTimeColumn get createdAt =>
       dateTime().withDefault(currentDateAndTime)();
 }
@@ -203,7 +213,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -261,6 +271,17 @@ class AppDatabase extends _$AppDatabase {
               await m.createTable(dosingEntries);
             }
           }
+          if (from < 10) {
+            for (final col in {
+              'notes': tanks.notes,
+              'vendor': tanks.vendor,
+              'model': tanks.model,
+            }.entries) {
+              if (!await _columnExists('tanks', col.key)) {
+                await m.addColumn(tanks, col.value);
+              }
+            }
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -304,6 +325,9 @@ class AppDatabase extends _$AppDatabase {
     required SetupType type,
     double? volumeLiters,
     DateTime? startDate,
+    String? notes,
+    String? vendor,
+    String? model,
   }) async {
     return transaction(() async {
       final tankId = await into(tanks).insert(TanksCompanion.insert(
@@ -311,6 +335,9 @@ class AppDatabase extends _$AppDatabase {
         setupType: type.name,
         volumeLiters: Value(volumeLiters),
         startDate: Value(startDate),
+        notes: Value(notes),
+        vendor: Value(vendor),
+        model: Value(model),
       ));
       await _seedTrackedParameters(tankId, type);
       await setActiveTank(tankId);

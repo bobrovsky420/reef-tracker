@@ -137,6 +137,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get volumeOptional => 'Objętość (opcjonalnie)';
 
   @override
+  String get vendorOptional => 'Producent (opcjonalnie)';
+
+  @override
+  String get modelOptional => 'Model (opcjonalnie)';
+
+  @override
+  String get notesOptional => 'Notatki (opcjonalnie)';
+
+  @override
   String get createAquarium => 'Utwórz akwarium';
 
   @override
