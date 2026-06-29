@@ -103,6 +103,10 @@
   "ratioPo4No3Title": "Соотношение PO₄ : NO₃",
   "ratioMgCaLabel": "Mg : Ca",
   "ratioMgCaTitle": "Соотношение Mg : Ca",
+  "ratioCaAlkLabel": "Ca : Alk",
+  "ratioCaAlkTitle": "Соотношение Ca : Alk",
+  "ratioMgAlkLabel": "Mg : Alk",
+  "ratioMgAlkTitle": "Соотношение Mg : Alk",
   "ratioNoData": "Запишите оба параметра, чтобы увидеть их соотношение.",
   "ratioBoundsNote": "Границы зон используют {metric} — значение, показанное на карточке.",
 

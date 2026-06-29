@@ -103,6 +103,10 @@
   "ratioPo4No3Title": "Stosunek PO₄ : NO₃",
   "ratioMgCaLabel": "Mg : Ca",
   "ratioMgCaTitle": "Stosunek Mg : Ca",
+  "ratioCaAlkLabel": "Ca : Alk",
+  "ratioCaAlkTitle": "Stosunek Ca : Alk",
+  "ratioMgAlkLabel": "Mg : Alk",
+  "ratioMgAlkTitle": "Stosunek Mg : Alk",
   "ratioNoData": "Zapisz oba parametry, aby zobaczyć ich stosunek.",
   "ratioBoundsNote": "Granice stref używają {metric}, wartości pokazanej na karcie.",
 

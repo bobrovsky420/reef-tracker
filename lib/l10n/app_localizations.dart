@@ -674,6 +674,30 @@ abstract class AppLocalizations {
   /// **'Mg : Ca ratio'**
   String get ratioMgCaTitle;
 
+  /// No description provided for @ratioCaAlkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ca : Alk'**
+  String get ratioCaAlkLabel;
+
+  /// No description provided for @ratioCaAlkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ca : Alk ratio'**
+  String get ratioCaAlkTitle;
+
+  /// No description provided for @ratioMgAlkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mg : Alk'**
+  String get ratioMgAlkLabel;
+
+  /// No description provided for @ratioMgAlkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mg : Alk ratio'**
+  String get ratioMgAlkTitle;
+
   /// No description provided for @ratioNoData.
   ///
   /// In en, this message translates to:

@@ -339,6 +339,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ratioMgCaTitle => 'Mg : Ca-Verhältnis';
 
   @override
+  String get ratioCaAlkLabel => 'Ca : Alk';
+
+  @override
+  String get ratioCaAlkTitle => 'Ca : Alk-Verhältnis';
+
+  @override
+  String get ratioMgAlkLabel => 'Mg : Alk';
+
+  @override
+  String get ratioMgAlkTitle => 'Mg : Alk-Verhältnis';
+
+  @override
   String get ratioNoData =>
       'Erfasse beide Parameter, um ihr Verhältnis zu sehen.';
 

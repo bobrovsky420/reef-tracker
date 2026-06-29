@@ -206,7 +206,7 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 | `/parameters`, `/parameters/:id/edit` | Manage tracked parameters & zone bounds |
 | `/add-reading` | Log a batch of readings |
 | `/history/:paramKey` | Single-parameter history graph |
-| `/ratio/:type` | Ratio history graph (`type` = `po4no3` or `mgca`) |
+| `/ratio/:type` | Ratio history graph (`type` = `po4no3`, `mgca`, `caalk`, or `mgalk`) |
 | `/ratio/:type/edit` | Edit a ratio card's per-tank zone bounds |
 | `/dosing/edit` | Add / edit a supplement-dosing entry (`extra` = `DosingEntry?`) |
 | `/dosing/calculator` | Consumption / dose-adjustment calculator |
@@ -319,8 +319,9 @@ an empty map).
 
 Generic over a `RatioKind` enum (each carries numerator/denominator param keys,
 display symbols, and a `RatioDisplay` form). Current kinds: `po4no3` (PO₄ : NO₃,
-shown as `1 : N`) and `mgca` (Mg : Ca, shown as a single number = Mg/Ca to one
-decimal). `RatioDisplay` = `oneToN` | `decimal`.
+shown as `1 : N`), `mgca` (Mg : Ca), `caalk` (Ca : Alk), and `mgalk` (Mg : Alk) —
+the last three shown as a single number = numerator/denominator to one decimal.
+`RatioDisplay` = `oneToN` | `decimal`.
 - `latestRatio(numerator, denominator)` → current ratio (= numerator/denominator)
   from the newest reading of each (null if either missing or denominator = 0).
 - `computeRatioSeries(numerator, denominator)` builds a time series: at each
@@ -335,7 +336,8 @@ decimal). `RatioDisplay` = `oneToN` | `decimal`.
 - **Health zones:** each `RatioKind` carries recommended red/amber/green
   `defaultBounds` (in displayed-metric space; `RatioKindZones` extension) from
   reef guidance — PO₄ : NO₃ green ≈ 50–150 (a ~100:1 NO₃:PO₄ target), Mg : Ca
-  green ≈ 2.9–3.3 (≈3:1). Bounds are **editable per tank** via `RatioEditScreen`
+  green ≈ 2.9–3.3 (≈3:1), Ca : Alk green ≈ 46–62 (ppm/dKH, calcification balance),
+  Mg : Alk green ≈ 150–190 (ppm/dKH). Bounds are **editable per tank** via `RatioEditScreen`
   (`/ratio/:type/edit`), stored on the `RatioVisibilities` row; `ratioBounds(kind,
   row)` resolves the effective bounds (row when set, else defaults).
   `ratioZone(kind, bounds, ratio)` colors the dashboard tile and `RatioScreen`

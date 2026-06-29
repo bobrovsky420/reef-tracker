@@ -111,6 +111,10 @@ extension L10nDomain on AppLocalizations {
         return ratioPo4No3Label;
       case RatioKind.mgca:
         return ratioMgCaLabel;
+      case RatioKind.caalk:
+        return ratioCaAlkLabel;
+      case RatioKind.mgalk:
+        return ratioMgAlkLabel;
     }
   }
 
@@ -121,6 +125,10 @@ extension L10nDomain on AppLocalizations {
         return ratioPo4No3Title;
       case RatioKind.mgca:
         return ratioMgCaTitle;
+      case RatioKind.caalk:
+        return ratioCaAlkTitle;
+      case RatioKind.mgalk:
+        return ratioMgAlkTitle;
     }
   }
 

@@ -103,6 +103,10 @@
   "ratioPo4No3Title": "Poměr PO₄ : NO₃",
   "ratioMgCaLabel": "Mg : Ca",
   "ratioMgCaTitle": "Poměr Mg : Ca",
+  "ratioCaAlkLabel": "Ca : Alk",
+  "ratioCaAlkTitle": "Poměr Ca : Alk",
+  "ratioMgAlkLabel": "Mg : Alk",
+  "ratioMgAlkTitle": "Poměr Mg : Alk",
   "ratioNoData": "Zaznamenejte oba parametry, abyste viděli jejich poměr.",
   "ratioBoundsNote": "Hranice zón používají {metric}, hodnotu zobrazenou na kartě.",
 

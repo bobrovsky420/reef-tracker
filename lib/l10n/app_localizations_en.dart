@@ -338,6 +338,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ratioMgCaTitle => 'Mg : Ca ratio';
 
   @override
+  String get ratioCaAlkLabel => 'Ca : Alk';
+
+  @override
+  String get ratioCaAlkTitle => 'Ca : Alk ratio';
+
+  @override
+  String get ratioMgAlkLabel => 'Mg : Alk';
+
+  @override
+  String get ratioMgAlkTitle => 'Mg : Alk ratio';
+
+  @override
   String get ratioNoData => 'Record both parameters to see their ratio.';
 
   @override

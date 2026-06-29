@@ -103,6 +103,10 @@
   "ratioPo4No3Title": "PO₄ : NO₃-Verhältnis",
   "ratioMgCaLabel": "Mg : Ca",
   "ratioMgCaTitle": "Mg : Ca-Verhältnis",
+  "ratioCaAlkLabel": "Ca : Alk",
+  "ratioCaAlkTitle": "Ca : Alk-Verhältnis",
+  "ratioMgAlkLabel": "Mg : Alk",
+  "ratioMgAlkTitle": "Mg : Alk-Verhältnis",
   "ratioNoData": "Erfasse beide Parameter, um ihr Verhältnis zu sehen.",
   "ratioBoundsNote": "Die Zonengrenzen verwenden {metric}, den auf der Karte angezeigten Wert.",
 
