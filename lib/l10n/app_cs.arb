@@ -256,6 +256,9 @@
   "trendRedInDays": "Dosáhne kritické zóny za ~{days} d",
   "trendChipAmber": "Pozor ~{days} d",
   "trendChipRed": "Jednat ~{days} d",
+  "trendHorizon": "Horizont upozornění",
+  "trendHorizonSubtitle": "Upozornit na parametr, jen když opustí svůj rozsah do této doby",
+  "trendHorizonDays": "{days} dní",
 
   "zoneOk": "OK",
   "zoneAttention": "Pozor",

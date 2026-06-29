@@ -256,6 +256,9 @@
   "trendRedInDays": "Osiągnie strefę krytyczną za ~{days} dni",
   "trendChipAmber": "Uwaga ~{days} dni",
   "trendChipRed": "Działaj ~{days} dni",
+  "trendHorizon": "Horyzont alertu",
+  "trendHorizonSubtitle": "Oznaczaj parametr tylko, gdy opuści swój zakres w tym czasie",
+  "trendHorizonDays": "{days} dni",
 
   "zoneOk": "OK",
   "zoneAttention": "Uwaga",

@@ -810,6 +810,18 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get trendHorizon => 'Horizont upozornění';
+
+  @override
+  String get trendHorizonSubtitle =>
+      'Upozornit na parametr, jen když opustí svůj rozsah do této doby';
+
+  @override
+  String trendHorizonDays(int days) {
+    return '$days dní';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

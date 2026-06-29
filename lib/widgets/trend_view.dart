@@ -7,10 +7,6 @@ import '../domain/units.dart';
 import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
 
-/// Beyond this many days a forecast isn't actionable enough to clutter a small
-/// dashboard tile with; the full history card still shows it.
-const double kTrendTileHorizonDays = 60;
-
 IconData _directionIcon(TrendDirection d) {
   switch (d) {
     case TrendDirection.rising:
@@ -101,22 +97,27 @@ class TrendCard extends StatelessWidget {
 }
 
 /// Compact dashboard-tile forecast: the soonest threshold the value is heading
-/// for, within the actionable horizon. Renders nothing otherwise.
+/// for, shown only when that crossing is within [horizonDays]. Renders nothing
+/// otherwise.
 class TrendChip extends StatelessWidget {
-  const TrendChip({super.key, required this.trend});
+  const TrendChip({
+    super.key,
+    required this.trend,
+    required this.horizonDays,
+  });
 
   final TrendResult trend;
+  final int horizonDays;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final String text;
     final Color color;
-    if (trend.daysToAmber != null && trend.daysToAmber! <= kTrendTileHorizonDays) {
+    if (trend.daysToAmber != null && trend.daysToAmber! <= horizonDays) {
       text = l.trendChipAmber(_days(trend.daysToAmber!));
       color = Zone.amber.color;
-    } else if (trend.daysToRed != null &&
-        trend.daysToRed! <= kTrendTileHorizonDays) {
+    } else if (trend.daysToRed != null && trend.daysToRed! <= horizonDays) {
       text = l.trendChipRed(_days(trend.daysToRed!));
       color = Zone.red.color;
     } else {

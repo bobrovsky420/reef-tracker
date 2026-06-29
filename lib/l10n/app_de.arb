@@ -256,6 +256,9 @@
   "trendRedInDays": "Erreicht die kritische Zone in ~{days} T",
   "trendChipAmber": "Achtung ~{days} T",
   "trendChipRed": "Handeln ~{days} T",
+  "trendHorizon": "Warnhorizont",
+  "trendHorizonSubtitle": "Parameter nur markieren, wenn er innerhalb dieser Zeit seinen Bereich verlässt",
+  "trendHorizonDays": "{days} Tage",
 
   "zoneOk": "OK",
   "zoneAttention": "Achtung",

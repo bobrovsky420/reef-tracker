@@ -77,7 +77,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. |
-| `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.slopePerDay`, `TrendDirection`, and projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward). Uses the most recent `window` readings and returns null until that many exist. Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`. See Features. |
+| `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.slopePerDay`, `TrendDirection`, and projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward). Uses the most recent `window` readings and returns null until that many exist. Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). See Features. |
 | `dose_calculator.dart` | Pure, testable math for the dose calculator (no Flutter/DB): `slopePerDay` (least-squares change/day over readings), `potencyFromReference` (vendor reference dose → potency per unit per litre), `dailyEquivalentDose` (a `DosingEntry`'s average daily amount from basis + schedule), and `computeDoseCalc` → `DoseCalcResult` (consumption/day + maintenance-dose recommendation + `DoseCalcStatus`). Water changes ignored. See Features. |
 | `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker. **The data (`kSupplementVendors`) is generated** — see below. |
 | `supplements.yaml` + `supplement_catalog.g.dart` | `supplements.yaml` (commented, hand-edited) is the **source of truth** for the catalog data; `dart run tool/gen_supplements.dart` validates it (unique product keys; every `element`/`strength` key is a real param key; `unit` ∈ ml/g) and generates the `part` file `supplement_catalog.g.dart` (`const kSupplementVendors`). Edit the YAML, never the `.g.dart`. `test/supplement_catalog_test.dart` re-checks the same invariants on the generated catalog. |
@@ -101,7 +101,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
 `volume_unit`, `locale`, `chart_range`, `auto_backup_enabled`,
 `auto_backup_interval`, `auto_backup_keep`, `last_auto_backup_at`,
-`trend_enabled`, `trend_window`.
+`trend_enabled`, `trend_window`, `trend_horizon`.
 
 **Migrations** (`MigrationStrategy`): v2 added `Tanks.startDate` via `addColumn`;
 v3 added the `WaterChanges` table via `createTable`; v4 added `WaterChanges.note`
@@ -188,7 +188,8 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 - `chartRangeProvider` — shared time range (`7d`/`30d`/`90d`/`All`, default `30d`)
   applied to *all* graphs.
 - `trendEnabledProvider` (default on) / `trendWindowProvider` (default
-  `kTrendDefaultWindow`) — the Trends feature toggle and window size.
+  `kTrendDefaultWindow`) / `trendHorizonProvider` (default `kTrendDefaultHorizon`)
+  — the Trends feature toggle, window size, and dashboard forecast horizon.
 - `tankTrendsProvider` — `Map<paramKey, TrendResult>` for the active tank. **The
   trend cache:** a plain `Provider` derived from the two trend settings +
   `trackedParametersProvider` + `tankReadingsProvider`; Riverpod memoizes it and
@@ -303,12 +304,15 @@ pure `computeTrend` (domain); the per-tank results are cached in
   note. Independent of the chart range — it always uses the most recent `window`
   readings.
 - `TrendChip` — compact forecast on each **dashboard** `_ParameterTile`, shown
-  only when a zone crossing is projected within `kTrendTileHorizonDays` (60):
-  the soonest of attention (amber) / act-now (red) with its day estimate, drawn
-  in the matching zone color.
+  only when a zone crossing is projected within the configurable `horizonDays`
+  (`trendHorizonProvider`, default 14): the soonest of attention (amber) /
+  act-now (red) with its day estimate, drawn in the matching zone color. The
+  horizon gates only this dashboard chip — the history `TrendCard` always shows
+  the full projection.
 
-Enable/disable and the window size live in **Settings → Trends**; both widgets
-disappear when the feature is off (the provider returns an empty map).
+Enable/disable, the window size, and the alert horizon live in **Settings →
+Trends**; both widgets disappear when the feature is off (the provider returns
+an empty map).
 
 ### Parameter ratios (`domain/ratio.dart` + `features/ratio/ratio_screen.dart`)
 
@@ -447,7 +451,8 @@ setup type drives which parameters are seeded.
 ### Settings (`settings_screen.dart`)
 
 Unit selectors (temp/salinity/volume), language selector, a **Trends** section
-(on/off switch + recent-readings window selector, `kTrendMinWindow`..`kTrendMaxWindow`),
+(on/off switch + recent-readings window selector `kTrendMinWindow`..`kTrendMaxWindow`
++ alert-horizon selector within `kTrendMinHorizon`..`kTrendMaxHorizon`),
 and **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency and a link to the **Manage backups**
 screen (see Data → Automatic backup). Link to the salinity calculator. The About box shows the live app version via

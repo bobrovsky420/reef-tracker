@@ -814,6 +814,18 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get trendHorizon => 'Horyzont alertu';
+
+  @override
+  String get trendHorizonSubtitle =>
+      'Oznaczaj parametr tylko, gdy opuści swój zakres w tym czasie';
+
+  @override
+  String trendHorizonDays(int days) {
+    return '$days dni';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

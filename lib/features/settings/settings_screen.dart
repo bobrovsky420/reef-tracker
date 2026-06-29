@@ -10,6 +10,10 @@ import '../../domain/trend.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 
+/// Selectable forecast-horizon values (days), within
+/// [kTrendMinHorizon]..[kTrendMaxHorizon].
+const _trendHorizonOptions = [3, 7, 14, 30, 60, 90];
+
 /// Settings: language, unit preferences, tools, and about.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -99,7 +103,7 @@ class SettingsScreen extends ConsumerWidget {
             value: ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled,
             onChanged: (v) => db.setSetting(kTrendEnabledKey, v.toString()),
           ),
-          if (ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled)
+          if (ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled) ...[
             ListTile(
               leading: const Icon(Icons.timeline),
               title: Text(l.trendWindow),
@@ -116,6 +120,24 @@ class SettingsScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            ListTile(
+              leading: const Icon(Icons.notifications_active_outlined),
+              title: Text(l.trendHorizon),
+              subtitle: Text(l.trendHorizonSubtitle),
+              trailing: DropdownButton<int>(
+                value:
+                    ref.watch(trendHorizonProvider).value ?? kTrendDefaultHorizon,
+                underline: const SizedBox.shrink(),
+                onChanged: (v) => v == null
+                    ? null
+                    : db.setSetting(kTrendHorizonKey, v.toString()),
+                items: [
+                  for (final n in _trendHorizonOptions)
+                    DropdownMenuItem(value: n, child: Text(l.trendHorizonDays(n))),
+                ],
+              ),
+            ),
+          ],
           const Divider(),
           _SectionHeader(l.toolsSection),
           ListTile(

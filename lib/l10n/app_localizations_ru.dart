@@ -815,6 +815,18 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get trendHorizon => 'Горизонт оповещения';
+
+  @override
+  String get trendHorizonSubtitle =>
+      'Отмечать параметр, только если он выйдет за пределы в течение этого срока';
+
+  @override
+  String trendHorizonDays(int days) {
+    return '$days дн';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

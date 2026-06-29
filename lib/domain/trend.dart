@@ -21,6 +21,13 @@ const int kTrendDefaultWindow = 5;
 const int kTrendMinWindow = 3;
 const int kTrendMaxWindow = 10;
 
+/// Forecast horizon (days): a projected zone crossing is only surfaced as a
+/// dashboard "attention" chip when it falls within this many days. Bounds keep
+/// the configurable value sensible.
+const int kTrendDefaultHorizon = 14;
+const int kTrendMinHorizon = 3;
+const int kTrendMaxHorizon = 90;
+
 /// Whether the trend feature is on by default (first run, no setting stored).
 const bool kTrendDefaultEnabled = true;
 

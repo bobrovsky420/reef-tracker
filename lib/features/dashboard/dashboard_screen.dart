@@ -31,6 +31,8 @@ class DashboardBody extends ConsumerWidget {
         final readings = readingsAsync.value ?? const [];
         final prefs = ref.watch(unitPrefsProvider);
         final trends = ref.watch(tankTrendsProvider);
+        final trendHorizon =
+            ref.watch(trendHorizonProvider).value ?? kTrendDefaultHorizon;
         final ratioSettings =
             ref.watch(ratioSettingsProvider).value ?? const {};
 
@@ -52,6 +54,7 @@ class DashboardBody extends ConsumerWidget {
               history: byParam[param.paramKey] ?? const [],
               prefs: prefs,
               trend: trends[param.paramKey],
+              trendHorizon: trendHorizon,
             ),
           ));
         }
@@ -209,12 +212,14 @@ class _ParameterTile extends StatelessWidget {
     required this.history,
     required this.prefs,
     this.trend,
+    this.trendHorizon = kTrendDefaultHorizon,
   });
 
   final TrackedParameter param;
   final List<Reading> history;
   final UnitPrefs prefs;
   final TrendResult? trend;
+  final int trendHorizon;
 
   @override
   Widget build(BuildContext context) {
@@ -281,7 +286,7 @@ class _ParameterTile extends StatelessWidget {
               ),
               if (trend != null) ...[
                 const SizedBox(height: 2),
-                TrendChip(trend: trend!),
+                TrendChip(trend: trend!, horizonDays: trendHorizon),
               ],
             ],
           ),

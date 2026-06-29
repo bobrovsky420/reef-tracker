@@ -14,6 +14,7 @@ const kLocaleKey = 'locale';
 const kChartRangeKey = 'chart_range';
 const kTrendEnabledKey = 'trend_enabled';
 const kTrendWindowKey = 'trend_window';
+const kTrendHorizonKey = 'trend_horizon';
 
 /// The app's version + build number from the running package (e.g. "0.3.1+4"),
 /// so the About box always reflects the actual installed build.
@@ -173,6 +174,14 @@ final trendWindowProvider = StreamProvider<int>((ref) => ref
     .watch(dbProvider)
     .watchSetting(kTrendWindowKey)
     .map((v) => int.tryParse(v ?? '') ?? kTrendDefaultWindow));
+
+/// Forecast horizon in days: a projected zone crossing is shown as a dashboard
+/// attention chip only when it falls within this many days. Defaults to
+/// [kTrendDefaultHorizon].
+final trendHorizonProvider = StreamProvider<int>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kTrendHorizonKey)
+    .map((v) => int.tryParse(v ?? '') ?? kTrendDefaultHorizon));
 
 /// Recent-trend forecast per parameter for the active tank, keyed by paramKey.
 ///

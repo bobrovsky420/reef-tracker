@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-06-29
+
+### Added
+- A configurable **alert horizon** for trends (Settings → Trends). The dashboard
+  now flags a parameter with an attention chip only when it's projected to leave
+  its range within the chosen time (3–90 days, default 14), so far-off drifts
+  don't clutter the grid. The per-parameter history screen still shows the full
+  projection regardless.
+
 ## [0.10.0] - 2026-06-29
 
 ### Added

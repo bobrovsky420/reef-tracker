@@ -817,6 +817,18 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get trendHorizon => 'Warnhorizont';
+
+  @override
+  String get trendHorizonSubtitle =>
+      'Parameter nur markieren, wenn er innerhalb dieser Zeit seinen Bereich verlässt';
+
+  @override
+  String trendHorizonDays(int days) {
+    return '$days Tage';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

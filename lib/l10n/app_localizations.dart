@@ -1532,6 +1532,24 @@ abstract class AppLocalizations {
   /// **'Act now ~{days} d'**
   String trendChipRed(int days);
 
+  /// No description provided for @trendHorizon.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert horizon'**
+  String get trendHorizon;
+
+  /// No description provided for @trendHorizonSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Flag a parameter only when it will leave its range within this time'**
+  String get trendHorizonSubtitle;
+
+  /// No description provided for @trendHorizonDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String trendHorizonDays(int days);
+
   /// No description provided for @zoneOk.
   ///
   /// In en, this message translates to:

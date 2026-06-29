@@ -283,6 +283,10 @@
   "@trendChipAmber": { "placeholders": { "days": { "type": "int" } } },
   "trendChipRed": "Act now ~{days} d",
   "@trendChipRed": { "placeholders": { "days": { "type": "int" } } },
+  "trendHorizon": "Alert horizon",
+  "trendHorizonSubtitle": "Flag a parameter only when it will leave its range within this time",
+  "trendHorizonDays": "{days} days",
+  "@trendHorizonDays": { "placeholders": { "days": { "type": "int" } } },
 
   "zoneOk": "OK",
   "zoneAttention": "Attention",
