@@ -764,6 +764,57 @@ class AppLocalizationsRu extends AppLocalizations {
       'Для расчёта добавьте не менее двух измерений в разные дни и объём аквариума.';
 
   @override
+  String get trendSection => 'Тренды';
+
+  @override
+  String get trendShowTitle => 'Показывать тренды';
+
+  @override
+  String get trendShowSubtitle =>
+      'Прогнозирует, куда движется каждый параметр и когда выйдет за пределы диапазона';
+
+  @override
+  String get trendWindow => 'Используемые измерения';
+
+  @override
+  String get trendWindowSubtitle =>
+      'Сколько последних измерений определяют тренд';
+
+  @override
+  String get trendTitle => 'Текущий тренд';
+
+  @override
+  String trendRatePerDay(Object rate) {
+    return '$rate/день';
+  }
+
+  @override
+  String get trendFlat => 'Держится стабильно';
+
+  @override
+  String get trendWithinRange => 'При таком темпе остаётся в диапазоне';
+
+  @override
+  String trendAmberInDays(int days) {
+    return 'Достигнет зоны внимания через ~$days дн';
+  }
+
+  @override
+  String trendRedInDays(int days) {
+    return 'Достигнет критической зоны через ~$days дн';
+  }
+
+  @override
+  String trendChipAmber(int days) {
+    return 'Внимание ~$days дн';
+  }
+
+  @override
+  String trendChipRed(int days) {
+    return 'Действие ~$days дн';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

@@ -760,6 +760,56 @@ class AppLocalizationsCs extends AppLocalizations {
       'Pro výpočet přidejte alespoň dvě měření z různých dnů a objem nádrže.';
 
   @override
+  String get trendSection => 'Trendy';
+
+  @override
+  String get trendShowTitle => 'Zobrazovat trendy';
+
+  @override
+  String get trendShowSubtitle =>
+      'Předpovídá, kam každý parametr směřuje a kdy opustí svůj rozsah';
+
+  @override
+  String get trendWindow => 'Použitá měření';
+
+  @override
+  String get trendWindowSubtitle => 'Kolik posledních měření určuje trend';
+
+  @override
+  String get trendTitle => 'Aktuální trend';
+
+  @override
+  String trendRatePerDay(Object rate) {
+    return '$rate/den';
+  }
+
+  @override
+  String get trendFlat => 'Drží se stabilně';
+
+  @override
+  String get trendWithinRange => 'Při tomto tempu zůstává v rozsahu';
+
+  @override
+  String trendAmberInDays(int days) {
+    return 'Dosáhne zóny pozor za ~$days d';
+  }
+
+  @override
+  String trendRedInDays(int days) {
+    return 'Dosáhne kritické zóny za ~$days d';
+  }
+
+  @override
+  String trendChipAmber(int days) {
+    return 'Pozor ~$days d';
+  }
+
+  @override
+  String trendChipRed(int days) {
+    return 'Jednat ~$days d';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

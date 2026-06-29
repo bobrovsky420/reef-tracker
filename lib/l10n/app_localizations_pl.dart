@@ -764,6 +764,56 @@ class AppLocalizationsPl extends AppLocalizations {
       'Aby obliczyć, dodaj co najmniej dwa pomiary z różnych dni i objętość zbiornika.';
 
   @override
+  String get trendSection => 'Trendy';
+
+  @override
+  String get trendShowTitle => 'Pokazuj trendy';
+
+  @override
+  String get trendShowSubtitle =>
+      'Przewiduje, dokąd zmierza każdy parametr i kiedy opuści swój zakres';
+
+  @override
+  String get trendWindow => 'Użyte pomiary';
+
+  @override
+  String get trendWindowSubtitle => 'Ile ostatnich pomiarów wyznacza trend';
+
+  @override
+  String get trendTitle => 'Bieżący trend';
+
+  @override
+  String trendRatePerDay(Object rate) {
+    return '$rate/dzień';
+  }
+
+  @override
+  String get trendFlat => 'Utrzymuje się stabilnie';
+
+  @override
+  String get trendWithinRange => 'Przy tym tempie pozostaje w zakresie';
+
+  @override
+  String trendAmberInDays(int days) {
+    return 'Osiągnie strefę uwagi za ~$days dni';
+  }
+
+  @override
+  String trendRedInDays(int days) {
+    return 'Osiągnie strefę krytyczną za ~$days dni';
+  }
+
+  @override
+  String trendChipAmber(int days) {
+    return 'Uwaga ~$days dni';
+  }
+
+  @override
+  String trendChipRed(int days) {
+    return 'Działaj ~$days dni';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

@@ -6,6 +6,7 @@ import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
 import '../../data/database.dart';
+import '../../domain/trend.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -89,6 +90,32 @@ class SettingsScreen extends ConsumerWidget {
                   db.setSetting(kVolumeUnitKey, s.first.name),
             ),
           ),
+          const Divider(),
+          _SectionHeader(l.trendSection),
+          SwitchListTile(
+            secondary: const Icon(Icons.trending_up),
+            title: Text(l.trendShowTitle),
+            subtitle: Text(l.trendShowSubtitle),
+            value: ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled,
+            onChanged: (v) => db.setSetting(kTrendEnabledKey, v.toString()),
+          ),
+          if (ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled)
+            ListTile(
+              leading: const Icon(Icons.timeline),
+              title: Text(l.trendWindow),
+              subtitle: Text(l.trendWindowSubtitle),
+              trailing: DropdownButton<int>(
+                value: ref.watch(trendWindowProvider).value ?? kTrendDefaultWindow,
+                underline: const SizedBox.shrink(),
+                onChanged: (v) => v == null
+                    ? null
+                    : db.setSetting(kTrendWindowKey, v.toString()),
+                items: [
+                  for (var n = kTrendMinWindow; n <= kTrendMaxWindow; n++)
+                    DropdownMenuItem(value: n, child: Text('$n')),
+                ],
+              ),
+            ),
           const Divider(),
           _SectionHeader(l.toolsSection),
           ListTile(

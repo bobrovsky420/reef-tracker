@@ -766,6 +766,57 @@ class AppLocalizationsDe extends AppLocalizations {
       'Füge mindestens zwei Messungen an verschiedenen Tagen und ein Beckenvolumen hinzu, um zu rechnen.';
 
   @override
+  String get trendSection => 'Trends';
+
+  @override
+  String get trendShowTitle => 'Trends anzeigen';
+
+  @override
+  String get trendShowSubtitle =>
+      'Sagt voraus, wohin sich jeder Parameter entwickelt und wann er seinen Bereich verlässt';
+
+  @override
+  String get trendWindow => 'Verwendete Messwerte';
+
+  @override
+  String get trendWindowSubtitle =>
+      'Wie viele der letzten Messwerte den Trend bestimmen';
+
+  @override
+  String get trendTitle => 'Aktueller Trend';
+
+  @override
+  String trendRatePerDay(Object rate) {
+    return '$rate/Tag';
+  }
+
+  @override
+  String get trendFlat => 'Bleibt stabil';
+
+  @override
+  String get trendWithinRange => 'Bleibt bei diesem Tempo im Bereich';
+
+  @override
+  String trendAmberInDays(int days) {
+    return 'Erreicht die Achtung-Zone in ~$days T';
+  }
+
+  @override
+  String trendRedInDays(int days) {
+    return 'Erreicht die kritische Zone in ~$days T';
+  }
+
+  @override
+  String trendChipAmber(int days) {
+    return 'Achtung ~$days T';
+  }
+
+  @override
+  String trendChipRed(int days) {
+    return 'Handeln ~$days T';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

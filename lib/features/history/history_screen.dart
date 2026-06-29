@@ -9,6 +9,7 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/trend_chart.dart';
+import '../../widgets/trend_view.dart';
 import '../../widgets/zone_chip.dart';
 
 /// Time-series history + readings list for one parameter of the active tank.
@@ -32,6 +33,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         .cast<TrackedParameter?>()
         .firstWhere((t) => true, orElse: () => null);
     final readingsAsync = ref.watch(paramReadingsProvider(widget.paramKey));
+    final trend = ref.watch(tankTrendsProvider)[widget.paramKey];
     final waterChanges = ref.watch(waterChangesProvider).value ?? const [];
     final prefs = ref.watch(unitPrefsProvider);
     final pres = param != null
@@ -72,6 +74,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                   waterChanges: waterChanges),
                             ),
                           ),
+                          if (trend != null) ...[
+                            const Divider(),
+                            TrendCard(trend: trend, pres: pres),
+                          ],
                           const Divider(),
                           ..._readingsList(context, data, param, pres),
                         ],

@@ -761,6 +761,56 @@ class AppLocalizationsEn extends AppLocalizations {
       'Add at least two measurements on different days and a tank volume to calculate.';
 
   @override
+  String get trendSection => 'Trends';
+
+  @override
+  String get trendShowTitle => 'Show trends';
+
+  @override
+  String get trendShowSubtitle =>
+      'Project where each parameter is heading and when it will leave its range';
+
+  @override
+  String get trendWindow => 'Readings used';
+
+  @override
+  String get trendWindowSubtitle => 'How many recent readings define the trend';
+
+  @override
+  String get trendTitle => 'Recent trend';
+
+  @override
+  String trendRatePerDay(Object rate) {
+    return '$rate/day';
+  }
+
+  @override
+  String get trendFlat => 'Holding steady';
+
+  @override
+  String get trendWithinRange => 'Staying within range at this rate';
+
+  @override
+  String trendAmberInDays(int days) {
+    return 'Reaches attention zone in ~$days d';
+  }
+
+  @override
+  String trendRedInDays(int days) {
+    return 'Reaches critical zone in ~$days d';
+  }
+
+  @override
+  String trendChipAmber(int days) {
+    return 'Attention ~$days d';
+  }
+
+  @override
+  String trendChipRed(int days) {
+    return 'Act now ~$days d';
+  }
+
+  @override
   String get zoneOk => 'OK';
 
   @override

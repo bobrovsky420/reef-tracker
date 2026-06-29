@@ -6,10 +6,12 @@ import 'package:intl/intl.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/ratio.dart';
+import '../../domain/trend.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/trend_view.dart';
 
 /// Grid of parameter status tiles for the active tank. Hosted by `HomeShell`,
 /// which owns the surrounding `Scaffold`, app bar, bottom navigation and FAB.
@@ -28,6 +30,7 @@ class DashboardBody extends ConsumerWidget {
       data: (tracked) {
         final readings = readingsAsync.value ?? const [];
         final prefs = ref.watch(unitPrefsProvider);
+        final trends = ref.watch(tankTrendsProvider);
         final ratioSettings =
             ref.watch(ratioSettingsProvider).value ?? const {};
 
@@ -48,6 +51,7 @@ class DashboardBody extends ConsumerWidget {
               param: param,
               history: byParam[param.paramKey] ?? const [],
               prefs: prefs,
+              trend: trends[param.paramKey],
             ),
           ));
         }
@@ -204,11 +208,13 @@ class _ParameterTile extends StatelessWidget {
     required this.param,
     required this.history,
     required this.prefs,
+    this.trend,
   });
 
   final TrackedParameter param;
   final List<Reading> history;
   final UnitPrefs prefs;
+  final TrendResult? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -273,6 +279,10 @@ class _ParameterTile extends StatelessWidget {
                   color: Theme.of(context).hintColor,
                 ),
               ),
+              if (trend != null) ...[
+                const SizedBox(height: 2),
+                TrendChip(trend: trend!),
+              ],
             ],
           ),
         ),

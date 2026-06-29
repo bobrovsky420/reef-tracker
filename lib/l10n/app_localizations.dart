@@ -1454,6 +1454,84 @@ abstract class AppLocalizations {
   /// **'Add at least two measurements on different days and a tank volume to calculate.'**
   String get doseCalcInsufficient;
 
+  /// No description provided for @trendSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Trends'**
+  String get trendSection;
+
+  /// No description provided for @trendShowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show trends'**
+  String get trendShowTitle;
+
+  /// No description provided for @trendShowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Project where each parameter is heading and when it will leave its range'**
+  String get trendShowSubtitle;
+
+  /// No description provided for @trendWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Readings used'**
+  String get trendWindow;
+
+  /// No description provided for @trendWindowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How many recent readings define the trend'**
+  String get trendWindowSubtitle;
+
+  /// No description provided for @trendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent trend'**
+  String get trendTitle;
+
+  /// No description provided for @trendRatePerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate}/day'**
+  String trendRatePerDay(Object rate);
+
+  /// No description provided for @trendFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Holding steady'**
+  String get trendFlat;
+
+  /// No description provided for @trendWithinRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Staying within range at this rate'**
+  String get trendWithinRange;
+
+  /// No description provided for @trendAmberInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Reaches attention zone in ~{days} d'**
+  String trendAmberInDays(int days);
+
+  /// No description provided for @trendRedInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Reaches critical zone in ~{days} d'**
+  String trendRedInDays(int days);
+
+  /// No description provided for @trendChipAmber.
+  ///
+  /// In en, this message translates to:
+  /// **'Attention ~{days} d'**
+  String trendChipAmber(int days);
+
+  /// No description provided for @trendChipRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Act now ~{days} d'**
+  String trendChipRed(int days);
+
   /// No description provided for @zoneOk.
   ///
   /// In en, this message translates to:

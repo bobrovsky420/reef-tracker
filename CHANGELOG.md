@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-06-29
+
+### Added
+- **Trend detection** for each parameter. Beyond showing where a value sits in
+  its green/amber/red zones, the app now fits a line through your most recent
+  readings to estimate how fast a parameter is drifting and projects when it
+  will leave its healthy range. The per-parameter history screen shows the
+  recent rate (e.g. "−0.25 dKH/day") and any projected crossing into the
+  attention or critical zone, and dashboard tiles show a compact forecast chip
+  when a crossing is coming up. Toggle the feature on/off and choose how many
+  recent readings define a trend (3–10, default 5) in Settings → Trends; a
+  trend appears only once that many readings exist.
+
 ## [0.9.0] - 2026-06-28
 
 ### Added
