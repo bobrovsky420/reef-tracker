@@ -24,6 +24,43 @@ class AppLocalizationsRu extends AppLocalizations {
   String get moreOptions => 'Ещё';
 
   @override
+  String get tourTankTitle => 'Ваши аквариумы';
+
+  @override
+  String get tourTankDesc =>
+      'Нажмите здесь, чтобы переключаться между аквариумами или добавить новый.';
+
+  @override
+  String get tourCompareTitle => 'Сравнение';
+
+  @override
+  String get tourCompareDesc =>
+      'Переключайтесь между карточками параметров и совмещёнными графиками.';
+
+  @override
+  String get tourParamsTitle => 'Управление параметрами';
+
+  @override
+  String get tourParamsDesc =>
+      'Выберите, какие параметры воды отслеживать, и задайте их целевые диапазоны.';
+
+  @override
+  String get tourNext => 'Далее';
+
+  @override
+  String get tourDone => 'Понятно';
+
+  @override
+  String get tourSkip => 'Пропустить';
+
+  @override
+  String get replayTour => 'Показать обзор снова';
+
+  @override
+  String get replayTourSubtitle =>
+      'Повторно показать подсказки к верхней панели';
+
+  @override
   String get compareView => 'Сравнить графики';
 
   @override

@@ -24,6 +24,43 @@ class AppLocalizationsPl extends AppLocalizations {
   String get moreOptions => 'Więcej opcji';
 
   @override
+  String get tourTankTitle => 'Twoje akwaria';
+
+  @override
+  String get tourTankDesc =>
+      'Dotknij tutaj, aby przełączać akwaria lub dodać nowe.';
+
+  @override
+  String get tourCompareTitle => 'Porównanie';
+
+  @override
+  String get tourCompareDesc =>
+      'Przełączaj między kartami parametrów a zbiorczymi wykresami.';
+
+  @override
+  String get tourParamsTitle => 'Zarządzanie parametrami';
+
+  @override
+  String get tourParamsDesc =>
+      'Wybierz, które parametry wody śledzić, i ustaw ich docelowe zakresy.';
+
+  @override
+  String get tourNext => 'Dalej';
+
+  @override
+  String get tourDone => 'Rozumiem';
+
+  @override
+  String get tourSkip => 'Pomiń';
+
+  @override
+  String get replayTour => 'Powtórz przewodnik';
+
+  @override
+  String get replayTourSubtitle =>
+      'Pokaż ponownie wskazówki dotyczące górnego paska';
+
+  @override
   String get compareView => 'Porównaj wykresy';
 
   @override

@@ -16,6 +16,10 @@ const kTrendEnabledKey = 'trend_enabled';
 const kTrendWindowKey = 'trend_window';
 const kTrendHorizonKey = 'trend_horizon';
 
+/// Whether the one-time top-bar feature tour has already been shown. Bump the
+/// version suffix if a future tour should re-run for existing users.
+const kTourSeenKey = 'tour_v1_seen';
+
 /// The app's version + build number from the running package (e.g. "0.3.1+4"),
 /// so the About box always reflects the actual installed build.
 final appVersionProvider = FutureProvider<String>((ref) async {
@@ -129,6 +133,14 @@ final unitPrefsProvider = Provider<UnitPrefs>((ref) {
   final volume = ref.watch(volumeUnitProvider).value ?? VolumeUnit.liters;
   return UnitPrefs(temp: temp, salinity: salinity, volume: volume);
 });
+
+/// Whether the one-time top-bar feature tour has already been shown. Unset
+/// (a fresh install) reads as `false` so the tour runs once; the "Replay tour"
+/// settings action resets it to `'false'` to trigger it again.
+final tourSeenProvider = StreamProvider<bool>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kTourSeenKey)
+    .map((v) => v == 'true'));
 
 /// Stored language code ('system' / 'en' / 'cs'), defaulting to 'system'.
 final localeCodeProvider = StreamProvider<String>((ref) => ref

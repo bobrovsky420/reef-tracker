@@ -24,6 +24,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreOptions => 'More options';
 
   @override
+  String get tourTankTitle => 'Your aquariums';
+
+  @override
+  String get tourTankDesc =>
+      'Tap here to switch between aquariums or add a new one.';
+
+  @override
+  String get tourCompareTitle => 'Compare view';
+
+  @override
+  String get tourCompareDesc =>
+      'Switch between the parameter cards and stacked comparison graphs.';
+
+  @override
+  String get tourParamsTitle => 'Manage parameters';
+
+  @override
+  String get tourParamsDesc =>
+      'Choose which water parameters to track and set their target ranges.';
+
+  @override
+  String get tourNext => 'Next';
+
+  @override
+  String get tourDone => 'Got it';
+
+  @override
+  String get tourSkip => 'Skip';
+
+  @override
+  String get replayTour => 'Replay tour';
+
+  @override
+  String get replayTourSubtitle => 'Show the top-bar tips again';
+
+  @override
   String get compareView => 'Compare graphs';
 
   @override

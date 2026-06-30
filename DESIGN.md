@@ -233,6 +233,17 @@ reading" on Measurements, "Add action" (`showAddActionSheet`) on Actions, and
 and FAB are hidden and `NoTanksView` is shown. The tab screens expose their
 bodies (`DashboardBody`, `ActionsBody`, `DosingBody`) and the shell composes them.
 
+**First-run feature tour:** `HomeShell` registers a `showcaseview` `ShowcaseView`
+(in `initState`, unregistered in `dispose`) and spotlights the less-obvious
+top-bar elements once — the `TankSelector`, the compare/grid toggle, and the
+manage-parameters button — each wrapped in a `Showcase` with a localized
+title/description and Next/Skip actions. It auto-starts (after the first frame,
+on the Measurements tab) only when a tank exists and the `tour_v1_seen` setting
+is unset; starting immediately persists `tour_v1_seen = 'true'` so it never
+auto-runs twice. **Settings → "Replay tour"** resets the flag to `'false'` and
+returns to `/`; `tourSeenProvider` is reactive, so the shell re-runs the tour.
+Every action icon also carries a localized `tooltip` (long-press / accessibility).
+
 ### Dashboard (`dashboard_screen.dart`) — Measurements tab
 
 - `DashboardBody` renders the parameter grid for the active tank; the

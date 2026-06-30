@@ -24,6 +24,42 @@ class AppLocalizationsCs extends AppLocalizations {
   String get moreOptions => 'Další možnosti';
 
   @override
+  String get tourTankTitle => 'Vaše akvária';
+
+  @override
+  String get tourTankDesc =>
+      'Klepnutím přepnete mezi akvárii nebo přidáte nové.';
+
+  @override
+  String get tourCompareTitle => 'Porovnání';
+
+  @override
+  String get tourCompareDesc =>
+      'Přepínejte mezi kartami parametrů a souhrnnými grafy.';
+
+  @override
+  String get tourParamsTitle => 'Správa parametrů';
+
+  @override
+  String get tourParamsDesc =>
+      'Vyberte, které parametry vody sledovat, a nastavte jejich cílové rozsahy.';
+
+  @override
+  String get tourNext => 'Další';
+
+  @override
+  String get tourDone => 'Rozumím';
+
+  @override
+  String get tourSkip => 'Přeskočit';
+
+  @override
+  String get replayTour => 'Spustit prohlídku znovu';
+
+  @override
+  String get replayTourSubtitle => 'Znovu zobrazit tipy k horní liště';
+
+  @override
   String get compareView => 'Porovnat grafy';
 
   @override

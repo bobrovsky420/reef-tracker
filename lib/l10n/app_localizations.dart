@@ -134,6 +134,72 @@ abstract class AppLocalizations {
   /// **'More options'**
   String get moreOptions;
 
+  /// No description provided for @tourTankTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your aquariums'**
+  String get tourTankTitle;
+
+  /// No description provided for @tourTankDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here to switch between aquariums or add a new one.'**
+  String get tourTankDesc;
+
+  /// No description provided for @tourCompareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare view'**
+  String get tourCompareTitle;
+
+  /// No description provided for @tourCompareDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between the parameter cards and stacked comparison graphs.'**
+  String get tourCompareDesc;
+
+  /// No description provided for @tourParamsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage parameters'**
+  String get tourParamsTitle;
+
+  /// No description provided for @tourParamsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which water parameters to track and set their target ranges.'**
+  String get tourParamsDesc;
+
+  /// No description provided for @tourNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get tourNext;
+
+  /// No description provided for @tourDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get tourDone;
+
+  /// No description provided for @tourSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tourSkip;
+
+  /// No description provided for @replayTour.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay tour'**
+  String get replayTour;
+
+  /// No description provided for @replayTourSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the top-bar tips again'**
+  String get replayTourSubtitle;
+
   /// No description provided for @compareView.
   ///
   /// In en, this message translates to:

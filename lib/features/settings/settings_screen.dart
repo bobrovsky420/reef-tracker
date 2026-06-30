@@ -207,6 +207,16 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l.aquariums),
             trailing: Text('${tanks.length}'),
           ),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: Text(l.replayTour),
+            subtitle: Text(l.replayTourSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              await db.setSetting(kTourSeenKey, 'false');
+              if (context.mounted) context.go('/');
+            },
+          ),
           AboutListTile(
             icon: const Icon(Icons.info_outline),
             applicationName: l.appTitle,
