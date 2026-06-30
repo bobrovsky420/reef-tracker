@@ -371,7 +371,7 @@ class _ReadingDialogState extends State<_ReadingDialog> {
         ),
         FilledButton(
           onPressed: () {
-            final v = double.tryParse(_valueCtrl.text.replaceAll(',', '.'));
+            final v = parseUserDouble(_valueCtrl.text);
             // Keep the original value if the field is empty or unparseable.
             final canonical = v == null
                 ? widget.initialValue

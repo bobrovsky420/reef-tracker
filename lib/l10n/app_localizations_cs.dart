@@ -315,6 +315,9 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get invalidVolume => 'Zadejte platný kladný objem.';
+
+  @override
   String get enterAtLeastOneValue => 'Zadejte alespoň jednu hodnotu.';
 
   @override

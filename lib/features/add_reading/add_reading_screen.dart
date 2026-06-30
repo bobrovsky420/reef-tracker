@@ -68,7 +68,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     for (final p in params) {
       final text = _controllers[p.id]?.text.trim() ?? '';
       if (text.isEmpty) continue;
-      final value = double.tryParse(text.replaceAll(',', '.'));
+      final value = parseUserDouble(text);
       if (value == null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(l.invalidNumberFor(l.paramName(p.paramKey)))));
@@ -175,8 +175,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     final l = AppLocalizations.of(context);
     final pres = presentationOf(p, prefs);
     final ctrl = _controllerFor(p.id);
-    final text = ctrl.text.trim();
-    final value = double.tryParse(text.replaceAll(',', '.'));
+    final value = parseUserDouble(ctrl.text);
     final zone = value != null
         ? boundsOf(p).classify(pres.toCanonical(value))
         : Zone.unknown;

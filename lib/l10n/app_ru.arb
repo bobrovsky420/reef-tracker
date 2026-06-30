@@ -94,6 +94,7 @@
   "noteOptional": "Заметка (необязательно)",
   "saveReadings": "Сохранить измерения",
   "invalidNumberFor": "Неверное число для {name}",
+  "invalidVolume": "Введите корректный положительный объём.",
   "enterAtLeastOneValue": "Введите хотя бы одно значение.",
   "savedReadings": "Сохранено измерений: {count}.",
   "noTrackedToRecord": "Нет отслеживаемых параметров для записи.",

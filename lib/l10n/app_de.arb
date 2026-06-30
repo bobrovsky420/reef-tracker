@@ -94,6 +94,7 @@
   "noteOptional": "Notiz (optional)",
   "saveReadings": "Messungen speichern",
   "invalidNumberFor": "Ungültige Zahl für {name}",
+  "invalidVolume": "Geben Sie ein gültiges positives Volumen ein.",
   "enterAtLeastOneValue": "Gib mindestens einen Wert ein.",
   "savedReadings": "{count} Messung(en) gespeichert.",
   "noTrackedToRecord": "Keine verfolgten Parameter zum Erfassen.",

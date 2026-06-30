@@ -25,8 +25,7 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
     super.dispose();
   }
 
-  double? _parse(String s) =>
-      s.trim().isEmpty ? null : double.tryParse(s.replaceAll(',', '.'));
+  double? _parse(String s) => parseUserDouble(s);
 
   void _onPptChanged(String text) {
     if (_updating) return;

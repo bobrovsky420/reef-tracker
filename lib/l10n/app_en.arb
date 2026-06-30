@@ -108,6 +108,7 @@
   "saveReadings": "Save readings",
   "invalidNumberFor": "Invalid number for {name}",
   "@invalidNumberFor": { "placeholders": { "name": {} } },
+  "invalidVolume": "Enter a valid positive volume.",
   "enterAtLeastOneValue": "Enter at least one value.",
   "savedReadings": "Saved {count} reading(s).",
   "@savedReadings": { "placeholders": { "count": { "type": "int" } } },

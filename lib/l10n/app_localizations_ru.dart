@@ -316,6 +316,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get invalidVolume => 'Введите корректный положительный объём.';
+
+  @override
   String get enterAtLeastOneValue => 'Введите хотя бы одно значение.';
 
   @override

@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2026-06-30
+
+### Fixed
+- Health zone classification no longer shows a dangerously out-of-range value as
+  **OK (green)** when only the amber bound is set on that side. Red (beyond an
+  amber bound) is now evaluated before the green check, so e.g. a reading far
+  above the amber-high limit is correctly flagged red even with no green-high
+  bound configured.
+- Numeric inputs (readings, zone/ratio bounds, aquarium volume, dose and
+  salinity calculators) now reject non-finite values like `Infinity` and `NaN`,
+  which previously parsed successfully and, once stored, corrupted charts, zone
+  classification and trend math. Aquarium volume additionally must be a positive
+  number.
+
 ## [0.13.1] - 2026-06-30
 
 ### Added

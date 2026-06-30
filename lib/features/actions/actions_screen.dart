@@ -477,8 +477,7 @@ class _ActionDialogState extends State<_ActionDialog> {
         ),
         FilledButton(
           onPressed: () {
-            final text = _valueCtrl.text.trim().replaceAll(',', '.');
-            final value = text.isEmpty ? null : double.tryParse(text);
+            final value = parseUserDouble(_valueCtrl.text);
             final note = _noteCtrl.text.trim();
             Navigator.pop(
               context,

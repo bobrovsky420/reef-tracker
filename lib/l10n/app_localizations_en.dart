@@ -315,6 +315,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get invalidVolume => 'Enter a valid positive volume.';
+
+  @override
   String get enterAtLeastOneValue => 'Enter at least one value.';
 
   @override

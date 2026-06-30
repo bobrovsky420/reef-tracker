@@ -94,6 +94,7 @@
   "noteOptional": "Notatka (opcjonalnie)",
   "saveReadings": "Zapisz pomiary",
   "invalidNumberFor": "Nieprawidłowa liczba dla {name}",
+  "invalidVolume": "Wprowadź prawidłową dodatnią objętość.",
   "enterAtLeastOneValue": "Wpisz co najmniej jedną wartość.",
   "savedReadings": "Zapisano pomiarów: {count}.",
   "noTrackedToRecord": "Brak śledzonych parametrów do zapisania.",

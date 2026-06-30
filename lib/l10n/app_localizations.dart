@@ -632,6 +632,12 @@ abstract class AppLocalizations {
   /// **'Invalid number for {name}'**
   String invalidNumberFor(Object name);
 
+  /// No description provided for @invalidVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid positive volume.'**
+  String get invalidVolume;
+
   /// No description provided for @enterAtLeastOneValue.
   ///
   /// In en, this message translates to:

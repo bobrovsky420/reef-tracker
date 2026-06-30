@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../domain/ratio.dart';
+import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
@@ -52,8 +53,7 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
     return v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
   }
 
-  double? _parse(TextEditingController c) =>
-      c.text.trim().isEmpty ? null : double.tryParse(c.text.replaceAll(',', '.'));
+  double? _parse(TextEditingController c) => parseUserDouble(c.text);
 
   bool _orderOk() {
     final seq = [
@@ -150,9 +150,7 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
         ),
         validator: (v) {
           if (v == null || v.trim().isEmpty) return null;
-          return double.tryParse(v.replaceAll(',', '.')) == null
-              ? l.enterANumber
-              : null;
+          return parseUserDouble(v) == null ? l.enterANumber : null;
         },
       ),
     );

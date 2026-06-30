@@ -2,6 +2,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/domain/units.dart';
 
 void main() {
+  group('parseUserDouble', () {
+    test('parses plain and comma-decimal numbers', () {
+      expect(parseUserDouble('8.2'), 8.2);
+      expect(parseUserDouble('8,2'), 8.2);
+      expect(parseUserDouble('  -1.5 '), -1.5);
+    });
+
+    test('blank or null is null', () {
+      expect(parseUserDouble(null), isNull);
+      expect(parseUserDouble(''), isNull);
+      expect(parseUserDouble('   '), isNull);
+    });
+
+    test('non-numeric is null', () {
+      expect(parseUserDouble('abc'), isNull);
+    });
+
+    test('rejects non-finite Infinity/NaN', () {
+      expect(parseUserDouble('Infinity'), isNull);
+      expect(parseUserDouble('-Infinity'), isNull);
+      expect(parseUserDouble('NaN'), isNull);
+    });
+  });
+
   group('temperature conversion', () {
     test('C <-> F round trips', () {
       expect(celsiusToF(25), closeTo(77, 1e-9));

@@ -316,6 +316,9 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get invalidVolume => 'Wprowadź prawidłową dodatnią objętość.';
+
+  @override
   String get enterAtLeastOneValue => 'Wpisz co najmniej jedną wartość.';
 
   @override

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/supplement_catalog.dart';
+import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import 'dosing_screen.dart';
@@ -155,8 +156,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     final program =
         productKey != null ? kProgramNameByProductKey[productKey] : null;
 
-    final amountText = _amountCtrl.text.trim().replaceAll(',', '.');
-    final amount = amountText.isEmpty ? null : double.tryParse(amountText);
+    final amount = parseUserDouble(_amountCtrl.text);
 
     final interval = _frequency == DoseFrequency.everyNDays
         ? int.tryParse(_intervalCtrl.text.trim())

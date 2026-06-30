@@ -53,8 +53,7 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     super.dispose();
   }
 
-  double? _parse(String s) =>
-      s.trim().isEmpty ? null : double.tryParse(s.trim().replaceAll(',', '.'));
+  double? _parse(String s) => parseUserDouble(s);
 
   String _defaultElement(List<DosingEntry> entries) {
     for (final e in entries) {

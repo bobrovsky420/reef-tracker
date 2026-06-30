@@ -316,6 +316,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get invalidVolume => 'Geben Sie ein gültiges positives Volumen ein.';
+
+  @override
   String get enterAtLeastOneValue => 'Gib mindestens einen Wert ein.';
 
   @override

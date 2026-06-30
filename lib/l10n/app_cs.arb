@@ -94,6 +94,7 @@
   "noteOptional": "Poznámka (nepovinné)",
   "saveReadings": "Uložit měření",
   "invalidNumberFor": "Neplatné číslo pro {name}",
+  "invalidVolume": "Zadejte platný kladný objem.",
   "enterAtLeastOneValue": "Zadejte alespoň jednu hodnotu.",
   "savedReadings": "Uloženo měření: {count}.",
   "noTrackedToRecord": "Žádné sledované parametry k zaznamenání.",

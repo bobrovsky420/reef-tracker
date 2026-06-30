@@ -316,9 +316,8 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     super.dispose();
   }
 
-  /// Parsed display value, or null if blank.
-  double? _parse(TextEditingController c) =>
-      c.text.trim().isEmpty ? null : double.tryParse(c.text.replaceAll(',', '.'));
+  /// Parsed display value, or null if blank/non-finite.
+  double? _parse(TextEditingController c) => parseUserDouble(c.text);
 
   /// Parsed value converted back to canonical storage units, or null if blank.
   double? _canon(TextEditingController c) {
@@ -425,9 +424,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
         ),
         validator: (v) {
           if (v == null || v.trim().isEmpty) return null;
-          return double.tryParse(v.replaceAll(',', '.')) == null
-              ? l.enterANumber
-              : null;
+          return parseUserDouble(v) == null ? l.enterANumber : null;
         },
       ),
     );

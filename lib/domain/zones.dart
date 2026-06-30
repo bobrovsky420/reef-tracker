@@ -62,13 +62,16 @@ class ZoneBounds {
   Zone classify(double value) {
     if (isEmpty) return Zone.unknown;
 
+    // Red wins first: beyond a defined amber bound is critical regardless of
+    // whether the matching green bound is set. (A config with an amber bound but
+    // a null green bound on the same side must not short-circuit to green.)
+    if (amberLow != null && value < amberLow!) return Zone.red;
+    if (amberHigh != null && value > amberHigh!) return Zone.red;
+
     final aboveGreenLow = greenLow == null || value >= greenLow!;
     final belowGreenHigh = greenHigh == null || value <= greenHigh!;
     if (aboveGreenLow && belowGreenHigh) return Zone.green;
 
-    // Outside green — red only if beyond a defined amber bound.
-    if (amberLow != null && value < amberLow!) return Zone.red;
-    if (amberHigh != null && value > amberHigh!) return Zone.red;
     return Zone.amber;
   }
 }

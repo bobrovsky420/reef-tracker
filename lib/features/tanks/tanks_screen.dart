@@ -178,7 +178,7 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
-    final typed = double.tryParse(_volume.text.replaceAll(',', '.'));
+    final typed = parseUserDouble(_volume.text);
     final volume =
         typed == null ? null : volumeToCanonical(typed, _volumeUnit);
     if (_isEdit) {
@@ -245,6 +245,13 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
                   suffixText: _volumeUnit.symbol),
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
+              validator: (v) {
+                // Optional field: blank is fine, but a non-empty entry must be
+                // a finite positive number.
+                if (v == null || v.trim().isEmpty) return null;
+                final parsed = parseUserDouble(v);
+                return (parsed == null || parsed <= 0) ? l.invalidVolume : null;
+              },
             ),
             const SizedBox(height: 16),
             TextFormField(

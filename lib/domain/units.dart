@@ -1,5 +1,19 @@
 import 'parameter_catalog.dart';
 
+/// Parses a user-entered number, accepting either `,` or `.` as the decimal
+/// separator and rejecting non-finite values (`Infinity`/`NaN`), which
+/// `double.tryParse` otherwise accepts and which corrupt charts, zone
+/// classification and trend math once stored.
+///
+/// Returns `null` when [text] is blank or does not parse to a finite number.
+double? parseUserDouble(String? text) {
+  final t = text?.trim() ?? '';
+  if (t.isEmpty) return null;
+  final value = double.tryParse(t.replaceAll(',', '.'));
+  if (value == null || !value.isFinite) return null;
+  return value;
+}
+
 /// Temperature display unit. Canonical storage is always Celsius.
 enum TempUnit {
   celsius('°C'),

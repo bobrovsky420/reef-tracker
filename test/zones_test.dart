@@ -32,6 +32,19 @@ void main() {
       expect(upperOnly.classify(0.2), Zone.red);
     });
 
+    test('amber bound with null matching green bound still goes red', () {
+      // greenHigh cleared but amberHigh kept: a value far above amberHigh must
+      // be red, not short-circuit to green.
+      const amberHighOnly = ZoneBounds(greenLow: 7.5, amberHigh: 20);
+      expect(amberHighOnly.classify(999), Zone.red);
+      expect(amberHighOnly.classify(15), Zone.green); // within unbounded green
+      expect(amberHighOnly.classify(5), Zone.amber); // below green, no amberLow
+
+      const amberLowOnly = ZoneBounds(amberLow: 5, greenHigh: 8.5);
+      expect(amberLowOnly.classify(1), Zone.red);
+      expect(amberLowOnly.classify(6), Zone.green); // within unbounded green
+    });
+
     test('green with unbounded sides', () {
       const greenLowOnly = ZoneBounds(greenLow: 10);
       expect(greenLowOnly.classify(1000), Zone.green);
