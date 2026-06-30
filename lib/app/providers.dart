@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../data/auto_backup.dart';
 import '../data/database.dart';
+import '../domain/health_score.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 
@@ -15,6 +16,30 @@ const kChartRangeKey = 'chart_range';
 const kTrendEnabledKey = 'trend_enabled';
 const kTrendWindowKey = 'trend_window';
 const kTrendHorizonKey = 'trend_horizon';
+const kHealthDisplayKey = 'health_display';
+
+/// How much of the tank-health feature to surface on the dashboard.
+enum HealthDisplay {
+  /// Hide both the dashboard card and the app-bar badge.
+  off,
+
+  /// Show only the compact app-bar badge, no dashboard card.
+  badge,
+
+  /// Show both the app-bar badge and the dashboard card (default).
+  both;
+
+  /// Parses a stored setting value, defaulting to [both] when missing/unknown.
+  static HealthDisplay fromName(String? name) {
+    for (final v in HealthDisplay.values) {
+      if (v.name == name) return v;
+    }
+    return HealthDisplay.both;
+  }
+
+  bool get showBadge => this != HealthDisplay.off;
+  bool get showCard => this == HealthDisplay.both;
+}
 
 /// Whether the one-time top-bar feature tour has already been shown. Bump the
 /// version suffix if a future tour should re-run for existing users.
@@ -180,6 +205,13 @@ final trendEnabledProvider = StreamProvider<bool>((ref) => ref
     .watchSetting(kTrendEnabledKey)
     .map((v) => v == null ? kTrendDefaultEnabled : v == 'true'));
 
+/// How much of the tank-health feature to show (badge + card / badge only /
+/// off). Defaults to [HealthDisplay.both].
+final healthDisplayProvider = StreamProvider<HealthDisplay>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kHealthDisplayKey)
+    .map(HealthDisplay.fromName));
+
 /// Number of most-recent readings that define a trend (also the minimum count
 /// before a trend is shown). Defaults to [kTrendDefaultWindow].
 final trendWindowProvider = StreamProvider<int>((ref) => ref
@@ -223,6 +255,31 @@ final tankTrendsProvider = Provider<Map<String, TrendResult>>((ref) {
     if (t != null) result[p.paramKey] = t;
   }
   return result;
+});
+
+/// Overall tank-health score for the active tank, derived from its tracked
+/// parameters and their latest readings. Memoized like [tankTrendsProvider]:
+/// the (cheap) scoring only re-runs when the parameters or readings change.
+final tankHealthProvider = Provider<TankHealth>((ref) {
+  final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+  final readings = ref.watch(tankReadingsProvider).value ?? const [];
+
+  // Latest reading per parameter (readings arrive newest-first).
+  final latest = <String, Reading>{};
+  for (final r in readings) {
+    latest.putIfAbsent(r.paramKey, () => r);
+  }
+
+  final inputs = <HealthInput>[
+    for (final p in tracked.where((t) => t.enabled))
+      (
+        paramKey: p.paramKey,
+        bounds: boundsOf(p),
+        latest: latest[p.paramKey]?.value,
+        takenAt: latest[p.paramKey]?.takenAt,
+      ),
+  ];
+  return computeTankHealth(inputs);
 });
 
 /// Per-tank dashboard ratio-card settings (visibility + order) for the active

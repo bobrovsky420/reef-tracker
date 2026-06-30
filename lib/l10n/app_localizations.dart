@@ -1879,6 +1879,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Toxic. Should read effectively zero in a cycled tank.'**
   String get helpAmmonia;
+
+  /// No description provided for @healthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tank health'**
+  String get healthTitle;
+
+  /// No description provided for @healthGradeExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent'**
+  String get healthGradeExcellent;
+
+  /// No description provided for @healthGradeGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get healthGradeGood;
+
+  /// No description provided for @healthGradeCaution.
+  ///
+  /// In en, this message translates to:
+  /// **'Caution'**
+  String get healthGradeCaution;
+
+  /// No description provided for @healthGradeCritical.
+  ///
+  /// In en, this message translates to:
+  /// **'Critical'**
+  String get healthGradeCritical;
+
+  /// No description provided for @healthGradeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'No data'**
+  String get healthGradeUnknown;
+
+  /// No description provided for @healthAllOnTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'All parameters on target'**
+  String get healthAllOnTarget;
+
+  /// No description provided for @healthParamsToWatch.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} to watch'**
+  String healthParamsToWatch(int count);
+
+  /// No description provided for @healthSectionAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get healthSectionAttention;
+
+  /// No description provided for @healthSectionGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking good'**
+  String get healthSectionGood;
+
+  /// No description provided for @healthSectionStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Not tested recently'**
+  String get healthSectionStale;
+
+  /// No description provided for @healthNotTestedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Not tested in {count} d'**
+  String healthNotTestedDays(int count);
+
+  /// No description provided for @healthNeverTested.
+  ///
+  /// In en, this message translates to:
+  /// **'Not tested yet'**
+  String get healthNeverTested;
+
+  /// No description provided for @healthNoReadingsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No readings yet'**
+  String get healthNoReadingsYet;
+
+  /// No description provided for @healthScoreOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{score} of 100'**
+  String healthScoreOf(int score);
+
+  /// No description provided for @dashboardSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get dashboardSection;
+
+  /// No description provided for @healthDisplayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tank health'**
+  String get healthDisplayTitle;
+
+  /// No description provided for @healthDisplaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where to show the health summary'**
+  String get healthDisplaySubtitle;
+
+  /// No description provided for @healthDisplayBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge & card'**
+  String get healthDisplayBoth;
+
+  /// No description provided for @healthDisplayBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge only'**
+  String get healthDisplayBadge;
+
+  /// No description provided for @healthDisplayOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get healthDisplayOff;
 }
 
 class _AppLocalizationsDelegate

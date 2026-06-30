@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 import '../data/backup.dart';
+import '../domain/health_score.dart';
 import '../domain/ratio.dart';
 import '../domain/setup_type.dart';
 import '../domain/units.dart';
@@ -132,6 +133,21 @@ extension L10nDomain on AppLocalizations {
         return ratioCaAlkTitle;
       case RatioKind.mgalk:
         return ratioMgAlkTitle;
+    }
+  }
+
+  String healthGradeLabel(HealthGrade grade) {
+    switch (grade) {
+      case HealthGrade.excellent:
+        return healthGradeExcellent;
+      case HealthGrade.good:
+        return healthGradeGood;
+      case HealthGrade.caution:
+        return healthGradeCaution;
+      case HealthGrade.critical:
+        return healthGradeCritical;
+      case HealthGrade.unknown:
+        return healthGradeUnknown;
     }
   }
 

@@ -1003,4 +1003,73 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get helpAmmonia =>
       'Токсичен. В запущенном аквариуме должен быть практически нулевым.';
+
+  @override
+  String get healthTitle => 'Состояние аквариума';
+
+  @override
+  String get healthGradeExcellent => 'Отлично';
+
+  @override
+  String get healthGradeGood => 'Хорошо';
+
+  @override
+  String get healthGradeCaution => 'Внимание';
+
+  @override
+  String get healthGradeCritical => 'Критично';
+
+  @override
+  String get healthGradeUnknown => 'Нет данных';
+
+  @override
+  String get healthAllOnTarget => 'Все параметры в норме';
+
+  @override
+  String healthParamsToWatch(int count) {
+    return '$count под наблюдением';
+  }
+
+  @override
+  String get healthSectionAttention => 'Требует внимания';
+
+  @override
+  String get healthSectionGood => 'В норме';
+
+  @override
+  String get healthSectionStale => 'Давно не измерялось';
+
+  @override
+  String healthNotTestedDays(int count) {
+    return 'Не измерялось $count дн.';
+  }
+
+  @override
+  String get healthNeverTested => 'Ещё не измерялось';
+
+  @override
+  String get healthNoReadingsYet => 'Пока нет измерений';
+
+  @override
+  String healthScoreOf(int score) {
+    return '$score из 100';
+  }
+
+  @override
+  String get dashboardSection => 'Панель';
+
+  @override
+  String get healthDisplayTitle => 'Состояние аквариума';
+
+  @override
+  String get healthDisplaySubtitle => 'Где показывать сводку состояния';
+
+  @override
+  String get healthDisplayBoth => 'Значок и карточка';
+
+  @override
+  String get healthDisplayBadge => 'Только значок';
+
+  @override
+  String get healthDisplayOff => 'Скрыто';
 }

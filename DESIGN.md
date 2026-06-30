@@ -78,6 +78,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. |
 | `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.slopePerDay`, `TrendDirection`, and projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward). Uses the most recent `window` readings and returns null until that many exist. Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). See Features. |
+| `health_score.dart` | Pure, testable tank-health scoring (no Flutter/DB). `computeTankHealth(inputs)` → `TankHealth` (optional 0–100 `score`, worst-case `Zone` `band`, coarse `HealthGrade`, and per-parameter `ParameterHealth` breakdown). Each fresh, bounded parameter gets a 0–100 sub-score from its position in/beyond its bands (green 70–100, amber 40–69, red 0–39); the aggregate is the importance-weighted mean then **capped to the worst zone's ceiling** so one red can't be hidden behind greens. Readings older than `kHealthFreshnessDays`=30 are excluded and surfaced separately. See Features. |
 | `dose_calculator.dart` | Pure, testable math for the dose calculator (no Flutter/DB): `slopePerDay` (least-squares change/day over readings), `potencyFromReference` (vendor reference dose → potency per unit per litre), `dailyEquivalentDose` (a `DosingEntry`'s average daily amount from basis + schedule), and `computeDoseCalc` → `DoseCalcResult` (consumption/day + maintenance-dose recommendation + `DoseCalcStatus`). Water changes ignored. See Features. |
 | `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker. **The data (`kSupplementVendors`) is generated** — see below. |
 | `supplements.yaml` + `supplement_catalog.g.dart` | `supplements.yaml` (commented, hand-edited) is the **source of truth** for the catalog data; `dart run tool/gen_supplements.dart` validates it (unique product keys; every `element`/`strength` key is a real param key; `unit` ∈ ml/g) and generates the `part` file `supplement_catalog.g.dart` (`const kSupplementVendors`). Edit the YAML, never the `.g.dart`. `test/supplement_catalog_test.dart` re-checks the same invariants on the generated catalog. |
@@ -211,6 +212,13 @@ All app state is Riverpod providers over the singleton `dbProvider`:
   `trackedParametersProvider` + `tankReadingsProvider`; Riverpod memoizes it and
   re-runs `computeTrend` only when those inputs change, never on a widget
   rebuild. Empty when trends are off or no param has `window` readings yet.
+- `tankHealthProvider` — `TankHealth` for the active tank. Like `tankTrendsProvider`,
+  a memoized plain `Provider` derived from `trackedParametersProvider` +
+  `tankReadingsProvider`; collapses each parameter's latest reading + bounds into
+  the overall score/band/grade via `computeTankHealth`.
+- `healthDisplayProvider` — `HealthDisplay` (both / badge / off, default both):
+  how much of the tank-health feature to surface. `showCard` gates the dashboard
+  card, `showBadge` gates the compact app-bar badge.
 
 ## Routing (`lib/app/router.dart`)
 
@@ -269,6 +277,13 @@ re-runs the tour. Every action icon also carries a localized `tooltip`
 - `DashboardBody` renders the parameter grid for the active tank; the
   surrounding chrome (app bar with `TankSelector`, bottom nav, FAB) is owned by
   `HomeShell`.
+- A `CustomScrollView` whose first sliver is the **tank-health card**
+  (`TankHealthHeader`, `widgets/tank_health_badge.dart`) — a ring score + grade +
+  "N to watch", tappable to a breakdown sheet grouping parameters by zone, each
+  row linking to its history. The card scrolls with the tiles. A compact
+  `TankHealthBadgeCompact` also sits beside the tank name in `TankSelector`.
+  `healthDisplayProvider` (Settings → Dashboard) chooses badge & card / badge
+  only / off. Both read `tankHealthProvider`.
 - One grid mixing `_ParameterTile`s (enabled tracked params) and `_RatioTile`s
   (visible ratio cards), ordered together by a **shared display order**
   (`TrackedParameters.displayOrder` and `RatioVisibilities.displayOrder` live in

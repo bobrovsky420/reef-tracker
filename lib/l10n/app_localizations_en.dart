@@ -998,4 +998,73 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get helpAmmonia =>
       'Toxic. Should read effectively zero in a cycled tank.';
+
+  @override
+  String get healthTitle => 'Tank health';
+
+  @override
+  String get healthGradeExcellent => 'Excellent';
+
+  @override
+  String get healthGradeGood => 'Good';
+
+  @override
+  String get healthGradeCaution => 'Caution';
+
+  @override
+  String get healthGradeCritical => 'Critical';
+
+  @override
+  String get healthGradeUnknown => 'No data';
+
+  @override
+  String get healthAllOnTarget => 'All parameters on target';
+
+  @override
+  String healthParamsToWatch(int count) {
+    return '$count to watch';
+  }
+
+  @override
+  String get healthSectionAttention => 'Needs attention';
+
+  @override
+  String get healthSectionGood => 'Looking good';
+
+  @override
+  String get healthSectionStale => 'Not tested recently';
+
+  @override
+  String healthNotTestedDays(int count) {
+    return 'Not tested in $count d';
+  }
+
+  @override
+  String get healthNeverTested => 'Not tested yet';
+
+  @override
+  String get healthNoReadingsYet => 'No readings yet';
+
+  @override
+  String healthScoreOf(int score) {
+    return '$score of 100';
+  }
+
+  @override
+  String get dashboardSection => 'Dashboard';
+
+  @override
+  String get healthDisplayTitle => 'Tank health';
+
+  @override
+  String get healthDisplaySubtitle => 'Where to show the health summary';
+
+  @override
+  String get healthDisplayBoth => 'Badge & card';
+
+  @override
+  String get healthDisplayBadge => 'Badge only';
+
+  @override
+  String get healthDisplayOff => 'Hidden';
 }

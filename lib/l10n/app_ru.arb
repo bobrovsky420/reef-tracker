@@ -317,5 +317,28 @@
   "helpSalinity": "Удельный вес. ~1,026 SG ≈ 35 ppt.",
   "helpAlkalinity": "Карбонатная жёсткость. Поддерживайте стабильной — избегайте скачков.",
   "helpNitrate": "Питательное вещество. Кораллам нужно немного; избыток питает водоросли.",
-  "helpAmmonia": "Токсичен. В запущенном аквариуме должен быть практически нулевым."
+  "helpAmmonia": "Токсичен. В запущенном аквариуме должен быть практически нулевым.",
+
+  "healthTitle": "Состояние аквариума",
+  "healthGradeExcellent": "Отлично",
+  "healthGradeGood": "Хорошо",
+  "healthGradeCaution": "Внимание",
+  "healthGradeCritical": "Критично",
+  "healthGradeUnknown": "Нет данных",
+  "healthAllOnTarget": "Все параметры в норме",
+  "healthParamsToWatch": "{count} под наблюдением",
+  "healthSectionAttention": "Требует внимания",
+  "healthSectionGood": "В норме",
+  "healthSectionStale": "Давно не измерялось",
+  "healthNotTestedDays": "Не измерялось {count} дн.",
+  "healthNeverTested": "Ещё не измерялось",
+  "healthNoReadingsYet": "Пока нет измерений",
+  "healthScoreOf": "{score} из 100",
+
+  "dashboardSection": "Панель",
+  "healthDisplayTitle": "Состояние аквариума",
+  "healthDisplaySubtitle": "Где показывать сводку состояния",
+  "healthDisplayBoth": "Значок и карточка",
+  "healthDisplayBadge": "Только значок",
+  "healthDisplayOff": "Скрыто"
 }

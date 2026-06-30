@@ -317,5 +317,28 @@
   "helpSalinity": "Spezifisches Gewicht. ~1,026 SG ≈ 35 ppt.",
   "helpAlkalinity": "Karbonathärte. Stabil halten — Schwankungen vermeiden.",
   "helpNitrate": "Ein Nährstoff. Korallen brauchen etwas davon; zu viel fördert Algen.",
-  "helpAmmonia": "Giftig. Sollte in einem eingefahrenen Becken praktisch null sein."
+  "helpAmmonia": "Giftig. Sollte in einem eingefahrenen Becken praktisch null sein.",
+
+  "healthTitle": "Beckenzustand",
+  "healthGradeExcellent": "Ausgezeichnet",
+  "healthGradeGood": "Gut",
+  "healthGradeCaution": "Achtung",
+  "healthGradeCritical": "Kritisch",
+  "healthGradeUnknown": "Keine Daten",
+  "healthAllOnTarget": "Alle Parameter im Zielbereich",
+  "healthParamsToWatch": "{count} zu beobachten",
+  "healthSectionAttention": "Braucht Aufmerksamkeit",
+  "healthSectionGood": "Alles gut",
+  "healthSectionStale": "Länger nicht gemessen",
+  "healthNotTestedDays": "Seit {count} d nicht gemessen",
+  "healthNeverTested": "Noch nicht gemessen",
+  "healthNoReadingsYet": "Noch keine Messwerte",
+  "healthScoreOf": "{score} von 100",
+
+  "dashboardSection": "Dashboard",
+  "healthDisplayTitle": "Beckenzustand",
+  "healthDisplaySubtitle": "Wo die Zustandsübersicht erscheint",
+  "healthDisplayBoth": "Abzeichen & Karte",
+  "healthDisplayBadge": "Nur Abzeichen",
+  "healthDisplayOff": "Verborgen"
 }

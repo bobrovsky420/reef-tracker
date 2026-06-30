@@ -1003,4 +1003,73 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get helpAmmonia =>
       'Toksyczny. W dojrzałym akwarium powinien być praktycznie zerowy.';
+
+  @override
+  String get healthTitle => 'Kondycja zbiornika';
+
+  @override
+  String get healthGradeExcellent => 'Doskonała';
+
+  @override
+  String get healthGradeGood => 'Dobra';
+
+  @override
+  String get healthGradeCaution => 'Uwaga';
+
+  @override
+  String get healthGradeCritical => 'Krytyczna';
+
+  @override
+  String get healthGradeUnknown => 'Brak danych';
+
+  @override
+  String get healthAllOnTarget => 'Wszystkie parametry w normie';
+
+  @override
+  String healthParamsToWatch(int count) {
+    return '$count do obserwacji';
+  }
+
+  @override
+  String get healthSectionAttention => 'Wymaga uwagi';
+
+  @override
+  String get healthSectionGood => 'W porządku';
+
+  @override
+  String get healthSectionStale => 'Dawno nie mierzone';
+
+  @override
+  String healthNotTestedDays(int count) {
+    return 'Nie mierzone od $count d';
+  }
+
+  @override
+  String get healthNeverTested => 'Jeszcze nie mierzone';
+
+  @override
+  String get healthNoReadingsYet => 'Brak pomiarów';
+
+  @override
+  String healthScoreOf(int score) {
+    return '$score ze 100';
+  }
+
+  @override
+  String get dashboardSection => 'Pulpit';
+
+  @override
+  String get healthDisplayTitle => 'Kondycja zbiornika';
+
+  @override
+  String get healthDisplaySubtitle => 'Gdzie pokazać podsumowanie kondycji';
+
+  @override
+  String get healthDisplayBoth => 'Odznaka i karta';
+
+  @override
+  String get healthDisplayBadge => 'Tylko odznaka';
+
+  @override
+  String get healthDisplayOff => 'Ukryte';
 }

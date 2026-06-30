@@ -11,6 +11,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/tank_health_badge.dart';
 import '../../widgets/trend_view.dart';
 
 /// Grid of parameter status tiles for the active tank. Hosted by `HomeShell`,
@@ -82,16 +83,28 @@ class DashboardBody extends ConsumerWidget {
 
         if (items.isEmpty) return const _NoParamsView();
 
-        return GridView.builder(
-          padding: const EdgeInsets.all(12),
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 219,
-            mainAxisExtent: 143,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: items.length,
-          itemBuilder: (context, i) => items[i].tile,
+        final display =
+            ref.watch(healthDisplayProvider).value ?? HealthDisplay.both;
+
+        // One scroll view so the health card scrolls together with the tiles.
+        return CustomScrollView(
+          slivers: [
+            if (display.showCard)
+              const SliverToBoxAdapter(child: TankHealthHeader()),
+            SliverPadding(
+              padding: const EdgeInsets.all(12),
+              sliver: SliverGrid.builder(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 219,
+                  mainAxisExtent: 143,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, i) => items[i].tile,
+              ),
+            ),
+          ],
         );
       },
     );
@@ -344,7 +357,7 @@ class TankSelector extends ConsumerWidget {
     final active = ref.watch(activeTankProvider);
     if (tanks.isEmpty) return Text(l.appTitle);
 
-    return PopupMenuButton<int>(
+    final selector = PopupMenuButton<int>(
       onSelected: (id) {
         if (id == -1) {
           context.push('/tanks');
@@ -391,6 +404,21 @@ class TankSelector extends ConsumerWidget {
           const Icon(Icons.arrow_drop_down),
         ],
       ),
+    );
+
+    // The compact health badge sits beside the selector as its own tap target
+    // (inside the popup's child it would be swallowed by the menu gesture).
+    final showBadge =
+        (ref.watch(healthDisplayProvider).value ?? HealthDisplay.both).showBadge;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showBadge) ...[
+          const TankHealthBadgeCompact(),
+          const SizedBox(width: 4),
+        ],
+        Flexible(child: selector),
+      ],
     );
   }
 }

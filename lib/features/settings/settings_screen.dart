@@ -96,6 +96,30 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const Divider(),
+          _SectionHeader(l.dashboardSection),
+          ListTile(
+            leading: const Icon(Icons.speed),
+            title: Text(l.healthDisplayTitle),
+            subtitle: Text(l.healthDisplaySubtitle),
+            trailing: DropdownButton<HealthDisplay>(
+              value: ref.watch(healthDisplayProvider).value ??
+                  HealthDisplay.both,
+              underline: const SizedBox.shrink(),
+              onChanged: (v) =>
+                  v == null ? null : db.setSetting(kHealthDisplayKey, v.name),
+              items: [
+                DropdownMenuItem(
+                    value: HealthDisplay.both,
+                    child: Text(l.healthDisplayBoth)),
+                DropdownMenuItem(
+                    value: HealthDisplay.badge,
+                    child: Text(l.healthDisplayBadge)),
+                DropdownMenuItem(
+                    value: HealthDisplay.off, child: Text(l.healthDisplayOff)),
+              ],
+            ),
+          ),
+          const Divider(),
           _SectionHeader(l.trendSection),
           SwitchListTile(
             secondary: const Icon(Icons.trending_up),

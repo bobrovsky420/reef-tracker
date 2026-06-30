@@ -317,5 +317,28 @@
   "helpSalinity": "Specifická hustota. ~1,026 SG ≈ 35 ppt.",
   "helpAlkalinity": "Karbonátová tvrdost. Udržujte stabilní — vyhněte se výkyvům.",
   "helpNitrate": "Živina. Korály jí potřebují trochu; příliš mnoho podporuje řasy.",
-  "helpAmmonia": "Toxický. V zajetém akváriu by měl být prakticky nulový."
+  "helpAmmonia": "Toxický. V zajetém akváriu by měl být prakticky nulový.",
+
+  "healthTitle": "Zdraví nádrže",
+  "healthGradeExcellent": "Výborné",
+  "healthGradeGood": "Dobré",
+  "healthGradeCaution": "Pozor",
+  "healthGradeCritical": "Kritické",
+  "healthGradeUnknown": "Bez dat",
+  "healthAllOnTarget": "Všechny parametry v normě",
+  "healthParamsToWatch": "{count} ke sledování",
+  "healthSectionAttention": "Vyžaduje pozornost",
+  "healthSectionGood": "V pořádku",
+  "healthSectionStale": "Dlouho neměřeno",
+  "healthNotTestedDays": "Neměřeno {count} d",
+  "healthNeverTested": "Zatím neměřeno",
+  "healthNoReadingsYet": "Zatím žádná měření",
+  "healthScoreOf": "{score} ze 100",
+
+  "dashboardSection": "Přehled",
+  "healthDisplayTitle": "Zdraví nádrže",
+  "healthDisplaySubtitle": "Kde zobrazit souhrn zdraví",
+  "healthDisplayBoth": "Odznak a karta",
+  "healthDisplayBadge": "Jen odznak",
+  "healthDisplayOff": "Skryté"
 }

@@ -1006,4 +1006,73 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get helpAmmonia =>
       'Giftig. Sollte in einem eingefahrenen Becken praktisch null sein.';
+
+  @override
+  String get healthTitle => 'Beckenzustand';
+
+  @override
+  String get healthGradeExcellent => 'Ausgezeichnet';
+
+  @override
+  String get healthGradeGood => 'Gut';
+
+  @override
+  String get healthGradeCaution => 'Achtung';
+
+  @override
+  String get healthGradeCritical => 'Kritisch';
+
+  @override
+  String get healthGradeUnknown => 'Keine Daten';
+
+  @override
+  String get healthAllOnTarget => 'Alle Parameter im Zielbereich';
+
+  @override
+  String healthParamsToWatch(int count) {
+    return '$count zu beobachten';
+  }
+
+  @override
+  String get healthSectionAttention => 'Braucht Aufmerksamkeit';
+
+  @override
+  String get healthSectionGood => 'Alles gut';
+
+  @override
+  String get healthSectionStale => 'Länger nicht gemessen';
+
+  @override
+  String healthNotTestedDays(int count) {
+    return 'Seit $count d nicht gemessen';
+  }
+
+  @override
+  String get healthNeverTested => 'Noch nicht gemessen';
+
+  @override
+  String get healthNoReadingsYet => 'Noch keine Messwerte';
+
+  @override
+  String healthScoreOf(int score) {
+    return '$score von 100';
+  }
+
+  @override
+  String get dashboardSection => 'Dashboard';
+
+  @override
+  String get healthDisplayTitle => 'Beckenzustand';
+
+  @override
+  String get healthDisplaySubtitle => 'Wo die Zustandsübersicht erscheint';
+
+  @override
+  String get healthDisplayBoth => 'Abzeichen & Karte';
+
+  @override
+  String get healthDisplayBadge => 'Nur Abzeichen';
+
+  @override
+  String get healthDisplayOff => 'Verborgen';
 }

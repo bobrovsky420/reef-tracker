@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-06-30
+
+### Added
+- **Tank health score** — an at-a-glance 0–100 rating of the active tank,
+  derived from how each tracked parameter's latest reading sits within its
+  green/amber/red range. Shown as a ring badge in the dashboard header and a
+  compact badge beside the tank name in the app bar. The worst parameter always
+  sets the colour and grade (Excellent / Good / Caution / Critical), so one
+  critical value can't be hidden behind several healthy ones.
+- Tapping the badge opens a breakdown sheet grouping parameters into "needs
+  attention", "looking good" and "not tested recently", each row linking to its
+  history graph. Parameters not tested within 30 days are excluded from the
+  score and flagged separately.
+- Settings → Dashboard control for the tank-health display with three choices:
+  badge & card (default), badge only, or hidden.
+
 ## [0.13.4] - 2026-06-30
 
 ### Added

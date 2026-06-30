@@ -997,4 +997,73 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get helpAmmonia =>
       'Toxický. V zajetém akváriu by měl být prakticky nulový.';
+
+  @override
+  String get healthTitle => 'Zdraví nádrže';
+
+  @override
+  String get healthGradeExcellent => 'Výborné';
+
+  @override
+  String get healthGradeGood => 'Dobré';
+
+  @override
+  String get healthGradeCaution => 'Pozor';
+
+  @override
+  String get healthGradeCritical => 'Kritické';
+
+  @override
+  String get healthGradeUnknown => 'Bez dat';
+
+  @override
+  String get healthAllOnTarget => 'Všechny parametry v normě';
+
+  @override
+  String healthParamsToWatch(int count) {
+    return '$count ke sledování';
+  }
+
+  @override
+  String get healthSectionAttention => 'Vyžaduje pozornost';
+
+  @override
+  String get healthSectionGood => 'V pořádku';
+
+  @override
+  String get healthSectionStale => 'Dlouho neměřeno';
+
+  @override
+  String healthNotTestedDays(int count) {
+    return 'Neměřeno $count d';
+  }
+
+  @override
+  String get healthNeverTested => 'Zatím neměřeno';
+
+  @override
+  String get healthNoReadingsYet => 'Zatím žádná měření';
+
+  @override
+  String healthScoreOf(int score) {
+    return '$score ze 100';
+  }
+
+  @override
+  String get dashboardSection => 'Přehled';
+
+  @override
+  String get healthDisplayTitle => 'Zdraví nádrže';
+
+  @override
+  String get healthDisplaySubtitle => 'Kde zobrazit souhrn zdraví';
+
+  @override
+  String get healthDisplayBoth => 'Odznak a karta';
+
+  @override
+  String get healthDisplayBadge => 'Jen odznak';
+
+  @override
+  String get healthDisplayOff => 'Skryté';
 }

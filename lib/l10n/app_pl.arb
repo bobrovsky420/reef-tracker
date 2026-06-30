@@ -317,5 +317,28 @@
   "helpSalinity": "Gęstość względna. ~1,026 SG ≈ 35 ppt.",
   "helpAlkalinity": "Twardość węglanowa. Utrzymuj stabilną — unikaj wahań.",
   "helpNitrate": "Składnik odżywczy. Koralowce potrzebują go trochę; nadmiar sprzyja glonom.",
-  "helpAmmonia": "Toksyczny. W dojrzałym akwarium powinien być praktycznie zerowy."
+  "helpAmmonia": "Toksyczny. W dojrzałym akwarium powinien być praktycznie zerowy.",
+
+  "healthTitle": "Kondycja zbiornika",
+  "healthGradeExcellent": "Doskonała",
+  "healthGradeGood": "Dobra",
+  "healthGradeCaution": "Uwaga",
+  "healthGradeCritical": "Krytyczna",
+  "healthGradeUnknown": "Brak danych",
+  "healthAllOnTarget": "Wszystkie parametry w normie",
+  "healthParamsToWatch": "{count} do obserwacji",
+  "healthSectionAttention": "Wymaga uwagi",
+  "healthSectionGood": "W porządku",
+  "healthSectionStale": "Dawno nie mierzone",
+  "healthNotTestedDays": "Nie mierzone od {count} d",
+  "healthNeverTested": "Jeszcze nie mierzone",
+  "healthNoReadingsYet": "Brak pomiarów",
+  "healthScoreOf": "{score} ze 100",
+
+  "dashboardSection": "Pulpit",
+  "healthDisplayTitle": "Kondycja zbiornika",
+  "healthDisplaySubtitle": "Gdzie pokazać podsumowanie kondycji",
+  "healthDisplayBoth": "Odznaka i karta",
+  "healthDisplayBadge": "Tylko odznaka",
+  "healthDisplayOff": "Ukryte"
 }

@@ -1,8 +1,8 @@
 {
   "format": "reeftracker-backup",
   "version": 1,
-  "schemaVersion": 9,
-  "exportedAt": "2026-06-29T10:45:47.847871",
+  "schemaVersion": 10,
+  "exportedAt": "2026-06-30T17:02:27.635276",
   "tanks": [
     {
       "id": 1,
@@ -10,6 +10,9 @@
       "setupType": "mixed",
       "volumeLiters": 200.0,
       "startDate": 1671922800000,
+      "notes": null,
+      "vendor": null,
+      "model": null,
       "createdAt": 1782304539000
     }
   ],
@@ -511,6 +514,118 @@
       "value": 1.0256457142857143,
       "takenAt": 1782678600000,
       "note": null
+    },
+    {
+      "id": 49,
+      "tankId": 1,
+      "paramKey": "temperature",
+      "value": 26.0,
+      "takenAt": 1782740335000,
+      "note": null
+    },
+    {
+      "id": 50,
+      "tankId": 1,
+      "paramKey": "ph",
+      "value": 8.4,
+      "takenAt": 1782740335000,
+      "note": null
+    },
+    {
+      "id": 51,
+      "tankId": 1,
+      "paramKey": "salinity",
+      "value": 1.025872,
+      "takenAt": 1782740335000,
+      "note": null
+    },
+    {
+      "id": 52,
+      "tankId": 1,
+      "paramKey": "alkalinity",
+      "value": 8.2,
+      "takenAt": 1782740335000,
+      "note": null
+    },
+    {
+      "id": 53,
+      "tankId": 1,
+      "paramKey": "calcium",
+      "value": 414.0,
+      "takenAt": 1782740335000,
+      "note": null
+    },
+    {
+      "id": 54,
+      "tankId": 1,
+      "paramKey": "magnesium",
+      "value": 1325.0,
+      "takenAt": 1782740335000,
+      "note": null
+    },
+    {
+      "id": 55,
+      "tankId": 1,
+      "paramKey": "nitrate",
+      "value": 16.2,
+      "takenAt": 1782740335000,
+      "note": null
+    },
+    {
+      "id": 56,
+      "tankId": 1,
+      "paramKey": "phosphate",
+      "value": 0.1,
+      "takenAt": 1782740335000,
+      "note": null
+    },
+    {
+      "id": 57,
+      "tankId": 1,
+      "paramKey": "temperature",
+      "value": 26.2,
+      "takenAt": 1782831033000,
+      "note": null
+    },
+    {
+      "id": 58,
+      "tankId": 1,
+      "paramKey": "ph",
+      "value": 8.3,
+      "takenAt": 1782831033000,
+      "note": null
+    },
+    {
+      "id": 59,
+      "tankId": 1,
+      "paramKey": "salinity",
+      "value": 1.0260982857142857,
+      "takenAt": 1782831033000,
+      "note": null
+    },
+    {
+      "id": 60,
+      "tankId": 1,
+      "paramKey": "alkalinity",
+      "value": 8.3,
+      "takenAt": 1782831033000,
+      "note": null
+    },
+    {
+      "id": 61,
+      "tankId": 1,
+      "paramKey": "nitrate",
+      "value": 14.4,
+      "takenAt": 1782831033000,
+      "note": null
+    },
+    {
+      "id": 62,
+      "tankId": 1,
+      "paramKey": "phosphate",
+      "value": 0.09,
+      "takenAt": 1782831033000,
+      "note": null
     }
   ],
   "waterChanges": [
@@ -526,6 +641,13 @@
       "tankId": 1,
       "changedAt": 1781949600000,
       "amountLiters": 40.0,
+      "note": null
+    },
+    {
+      "id": 3,
+      "tankId": 1,
+      "changedAt": 1782808620000,
+      "amountLiters": 20.0,
       "note": null
     }
   ],
@@ -621,11 +743,15 @@
     },
     {
       "key": "last_auto_backup_at",
-      "value": "1782656094820"
+      "value": "1782831031363"
     },
     {
       "key": "locale",
       "value": "system"
+    },
+    {
+      "key": "tour_v1_seen",
+      "value": "true"
     }
   ]
 }

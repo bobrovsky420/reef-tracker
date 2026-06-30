@@ -346,5 +346,31 @@
   "helpSalinity": "Specific gravity. ~1.026 SG ≈ 35 ppt.",
   "helpAlkalinity": "Carbonate hardness. Keep stable — avoid swings.",
   "helpNitrate": "A nutrient. Corals need a little; too much fuels algae.",
-  "helpAmmonia": "Toxic. Should read effectively zero in a cycled tank."
+  "helpAmmonia": "Toxic. Should read effectively zero in a cycled tank.",
+
+  "healthTitle": "Tank health",
+  "healthGradeExcellent": "Excellent",
+  "healthGradeGood": "Good",
+  "healthGradeCaution": "Caution",
+  "healthGradeCritical": "Critical",
+  "healthGradeUnknown": "No data",
+  "healthAllOnTarget": "All parameters on target",
+  "healthParamsToWatch": "{count} to watch",
+  "@healthParamsToWatch": { "placeholders": { "count": { "type": "int" } } },
+  "healthSectionAttention": "Needs attention",
+  "healthSectionGood": "Looking good",
+  "healthSectionStale": "Not tested recently",
+  "healthNotTestedDays": "Not tested in {count} d",
+  "@healthNotTestedDays": { "placeholders": { "count": { "type": "int" } } },
+  "healthNeverTested": "Not tested yet",
+  "healthNoReadingsYet": "No readings yet",
+  "healthScoreOf": "{score} of 100",
+  "@healthScoreOf": { "placeholders": { "score": { "type": "int" } } },
+
+  "dashboardSection": "Dashboard",
+  "healthDisplayTitle": "Tank health",
+  "healthDisplaySubtitle": "Where to show the health summary",
+  "healthDisplayBoth": "Badge & card",
+  "healthDisplayBadge": "Badge only",
+  "healthDisplayOff": "Hidden"
 }
