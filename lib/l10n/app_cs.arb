@@ -32,6 +32,7 @@
   "apply": "Použít",
   "change": "Změnit",
   "errorWith": "Chyba: {message}",
+  "saveFailed": "Nepodařilo se uložit: {error}",
 
   "welcomeTitle": "Vítejte v ReefTrackeru",
   "welcomeBody": "Vytvořte své první akvárium a začněte sledovat parametry vody.",
@@ -205,6 +206,9 @@
   "backupExportFailed": "Zálohu se nepodařilo exportovat",
   "backupImportFailed": "Zálohu se nepodařilo obnovit",
   "backupInvalidFile": "Tento soubor není platná záloha ReefTracker",
+  "backupTooNew": "Tato záloha byla vytvořena novější verzí aplikace a nelze ji zde obnovit",
+  "backupCorrupted": "Soubor zálohy je poškozený nebo neúplný",
+  "backupInconsistent": "Záloha je nekonzistentní a nelze ji obnovit",
   "autoBackupTitle": "Automatická záloha",
   "autoBackupSubtitle": "Uchovávat nedávné kopie dat v tomto zařízení",
   "autoBackupFrequency": "Četnost",

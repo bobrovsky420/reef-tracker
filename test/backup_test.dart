@@ -317,4 +317,71 @@ void main() {
           () => decodeBackup(json), throwsA(isA<InvalidBackupException>()));
     });
   });
+
+  group('validateBackup', () {
+    BackupData dataWith({
+      List<TanksCompanion> tanks = const [],
+      List<ReadingsCompanion> readings = const [],
+      int schemaVersion = 1,
+    }) =>
+        BackupData(
+          schemaVersion: schemaVersion,
+          tanks: tanks,
+          params: const [],
+          readings: readings,
+          waterChanges: const [],
+          carbonChanges: const [],
+          equipmentCleanings: const [],
+          ratioVisibilities: const [],
+          dosingEntries: const [],
+          settings: const [],
+        );
+
+    TanksCompanion tank(int id) => TanksCompanion(
+          id: Value(id),
+          name: Value('Tank $id'),
+          setupType: const Value('mixed'),
+          createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+        );
+
+    ReadingsCompanion reading(int id, int tankId) => ReadingsCompanion(
+          id: Value(id),
+          tankId: Value(tankId),
+          paramKey: const Value('alk'),
+          value: const Value(8.2),
+          takenAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+        );
+
+    Matcher rejectedWith(BackupRejection reason) =>
+        throwsA(isA<InvalidBackupException>()
+            .having((e) => e.reason, 'reason', reason));
+
+    test('accepts a consistent data set', () {
+      final d = dataWith(tanks: [tank(1)], readings: [reading(10, 1)]);
+      expect(() => validateBackup(d, appSchemaVersion: 10), returnsNormally);
+    });
+
+    test('accepts an older schema version', () {
+      final d = dataWith(tanks: [tank(1)], schemaVersion: 1);
+      expect(() => validateBackup(d, appSchemaVersion: 10), returnsNormally);
+    });
+
+    test('rejects a newer schema version', () {
+      final d = dataWith(tanks: [tank(1)], schemaVersion: 11);
+      expect(() => validateBackup(d, appSchemaVersion: 10),
+          rejectedWith(BackupRejection.newerVersion));
+    });
+
+    test('rejects a reading referencing a missing aquarium', () {
+      final d = dataWith(tanks: [tank(1)], readings: [reading(10, 99)]);
+      expect(() => validateBackup(d, appSchemaVersion: 10),
+          rejectedWith(BackupRejection.inconsistent));
+    });
+
+    test('rejects duplicate aquarium ids', () {
+      final d = dataWith(tanks: [tank(1), tank(1)]);
+      expect(() => validateBackup(d, appSchemaVersion: 10),
+          rejectedWith(BackupRejection.inconsistent));
+    });
+  });
 }

@@ -106,6 +106,11 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String saveFailed(Object error) {
+    return 'Nie udało się zapisać: $error';
+  }
+
+  @override
   String get welcomeTitle => 'Witamy w ReefTracker';
 
   @override
@@ -646,6 +651,18 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get backupInvalidFile =>
       'Ten plik nie jest prawidłową kopią zapasową ReefTracker';
+
+  @override
+  String get backupTooNew =>
+      'Ta kopia zapasowa została utworzona przez nowszą wersję aplikacji i nie można jej tu przywrócić';
+
+  @override
+  String get backupCorrupted =>
+      'Plik kopii zapasowej jest uszkodzony lub niekompletny';
+
+  @override
+  String get backupInconsistent =>
+      'Kopia zapasowa jest niespójna i nie można jej przywrócić';
 
   @override
   String get autoBackupTitle => 'Automatyczna kopia zapasowa';

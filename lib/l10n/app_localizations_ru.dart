@@ -106,6 +106,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String saveFailed(Object error) {
+    return 'Не удалось сохранить: $error';
+  }
+
+  @override
   String get welcomeTitle => 'Добро пожаловать в ReefTracker';
 
   @override
@@ -645,6 +650,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get backupInvalidFile =>
       'Этот файл не является корректной резервной копией ReefTracker';
+
+  @override
+  String get backupTooNew =>
+      'Эта резервная копия создана более новой версией приложения и не может быть восстановлена здесь';
+
+  @override
+  String get backupCorrupted => 'Файл резервной копии повреждён или неполный';
+
+  @override
+  String get backupInconsistent =>
+      'Резервная копия несогласованна и не может быть восстановлена';
 
   @override
   String get autoBackupTitle => 'Автоматическое резервное копирование';

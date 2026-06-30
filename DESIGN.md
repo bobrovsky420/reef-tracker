@@ -136,16 +136,31 @@ Notable DB behavior:
 
 ### Backup (`backup.dart`)
 
-JSON document, `format: "reeftracker-backup"`, `version` (`kBackupVersion = 1`).
-DateTimes serialized as epoch millis. `encodeBackup` dumps every table;
-`decodeBackup` validates the format/version guard and is **forward-tolerant**
-(older backups without the `waterChanges` / `carbonChanges` /
-`equipmentCleanings` / `ratioVisibilities` / `dosingEntries` keys decode to empty
-lists).
+JSON document, `format: "reeftracker-backup"`, `version` (`kBackupVersion = 1`),
+plus the DB `schemaVersion` it was written against. DateTimes serialized as epoch
+millis. `encodeBackup` dumps every table; `decodeBackup` validates the
+format/version guard and is **forward-tolerant** (older backups without the
+`waterChanges` / `carbonChanges` / `equipmentCleanings` / `ratioVisibilities` /
+`dosingEntries` keys decode to empty lists). Each table is decoded in isolation,
+so a failure throws an `InvalidBackupException` naming the offending section
+rather than one catch-all "corrupted".
+
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
 **replaces the entire database in one transaction**, preserving primary keys so
 FK links survive (deletes children→parents, inserts parents→children).
+
+**Importing is a three-stage safety pipeline** (`importBackup`), so a bad file
+never wipes live data:
+1. `validateBackup` — in-memory pre-flight: rejects a backup whose
+   `schemaVersion` is newer than the app's, and checks internal consistency
+   (no duplicate primary keys, no child row referencing a missing aquarium).
+2. *Rehearsal* — the restore is run against a throwaway temp database so the real
+   SQLite engine (FK / NOT NULL / uniqueness) proves the rows insert cleanly.
+3. The actual transactional `restoreFromBackup` into the live DB.
+Failures in stage 1 or 2 surface a specific localized message
+(`BackupRejection` → `l10n.backupRejection`) and leave the live DB untouched.
+
 `encodeBackupFromDb(db)` is the shared "read every table → JSON" helper used by
 both manual export and the automatic backup service.
 
@@ -162,7 +177,7 @@ Two layers, **no new dependencies and no runtime permissions**:
    `<appDocuments>/backups/reeftracker-auto-<stamp>.json`, then `pruneAutoBackups`
    keeps the newest *N* (`kAutoBackupDefaultKeep`). The **Manage backups** screen
    (`features/settings/backups_screen.dart`, route `/settings/backups`) lists
-   them and offers restore (reuses `decodeBackup` + `restoreFromBackup`), share,
+   them and offers restore (reuses `decodeBackup` + `importBackup`), share,
    and delete.
 2. **Android Auto Backup.** `android:allowBackup="true"` plus empty
    `res/xml/backup_rules.xml` / `data_extraction_rules.xml` (default = back up

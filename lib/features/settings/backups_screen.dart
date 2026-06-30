@@ -10,6 +10,7 @@ import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
 
 /// Lists the rotating automatic backups stored on the device and lets the user
 /// restore, share, or delete each one.
@@ -145,20 +146,10 @@ class _BackupTile extends ConsumerWidget {
 
     try {
       final data = decodeBackup(await file.readAsString());
-      await ref.read(dbProvider).restoreFromBackup(
-            tankRows: data.tanks,
-            paramRows: data.params,
-            readingRows: data.readings,
-            waterChangeRows: data.waterChanges,
-            carbonChangeRows: data.carbonChanges,
-            equipmentCleaningRows: data.equipmentCleanings,
-            ratioVisibilityRows: data.ratioVisibilities,
-            dosingEntryRows: data.dosingEntries,
-            settingRows: data.settings,
-          );
+      await importBackup(ref.read(dbProvider), data);
       if (context.mounted) _snack(context, l.backupRestored);
-    } on InvalidBackupException {
-      if (context.mounted) _snack(context, l.backupInvalidFile);
+    } on InvalidBackupException catch (e) {
+      if (context.mounted) _snack(context, l.backupRejection(e.reason));
     } catch (_) {
       if (context.mounted) _snack(context, l.backupImportFailed);
     }

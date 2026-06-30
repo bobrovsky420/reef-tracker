@@ -33,6 +33,8 @@
   "change": "Change",
   "errorWith": "Error: {message}",
   "@errorWith": { "placeholders": { "message": {} } },
+  "saveFailed": "Couldn't save: {error}",
+  "@saveFailed": { "placeholders": { "error": {} } },
 
   "welcomeTitle": "Welcome to ReefTracker",
   "welcomeBody": "Create your first aquarium to start tracking water parameters.",
@@ -225,6 +227,9 @@
   "backupExportFailed": "Could not export the backup",
   "backupImportFailed": "Could not restore the backup",
   "backupInvalidFile": "That file isn't a valid ReefTracker backup",
+  "backupTooNew": "This backup was made by a newer version of the app and can't be restored here",
+  "backupCorrupted": "The backup file is damaged or incomplete",
+  "backupInconsistent": "The backup is inconsistent and can't be restored",
   "autoBackupTitle": "Automatic backup",
   "autoBackupSubtitle": "Keep recent copies of your data on this device",
   "autoBackupFrequency": "Frequency",

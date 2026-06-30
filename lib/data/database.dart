@@ -494,6 +494,29 @@ class AppDatabase extends _$AppDatabase {
         note: Value(note),
       ));
 
+  /// Inserts a group of readings entered together in one atomic batch, so a
+  /// failure partway through cannot leave a partial group behind. All rows share
+  /// the same [tankId], [takenAt] and [note].
+  Future<void> insertReadingGroup({
+    required int tankId,
+    required DateTime takenAt,
+    String? note,
+    required List<({String paramKey, double value})> values,
+  }) =>
+      batch((b) => b.insertAll(
+            readings,
+            [
+              for (final v in values)
+                ReadingsCompanion.insert(
+                  tankId: tankId,
+                  paramKey: v.paramKey,
+                  value: v.value,
+                  takenAt: takenAt,
+                  note: Value(note),
+                ),
+            ],
+          ));
+
   Future<void> updateReading(Reading reading) =>
       update(readings).replace(reading);
 

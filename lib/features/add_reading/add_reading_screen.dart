@@ -84,20 +84,31 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     }
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
+    final messenger = ScaffoldMessenger.of(context);
     final note = _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim();
-    for (final e in entries.entries) {
-      await db.insertReading(
+    try {
+      // Insert the whole group atomically so a failure mid-group can't leave a
+      // partial batch behind.
+      await db.insertReadingGroup(
         tankId: tank.id,
-        paramKey: e.key.paramKey,
-        value: e.value,
         takenAt: _takenAt,
         note: note,
+        values: [
+          for (final e in entries.entries)
+            (paramKey: e.key.paramKey, value: e.value),
+        ],
       );
-    }
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.savedReadings(entries.length))));
-      context.pop();
+      if (mounted) {
+        messenger.showSnackBar(
+            SnackBar(content: Text(l.savedReadings(entries.length))));
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(e.toString()))));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 

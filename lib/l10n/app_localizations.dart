@@ -284,6 +284,12 @@ abstract class AppLocalizations {
   /// **'Error: {message}'**
   String errorWith(Object message);
 
+  /// No description provided for @saveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save: {error}'**
+  String saveFailed(Object error);
+
   /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
@@ -1249,6 +1255,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That file isn\'t a valid ReefTracker backup'**
   String get backupInvalidFile;
+
+  /// No description provided for @backupTooNew.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup was made by a newer version of the app and can\'t be restored here'**
+  String get backupTooNew;
+
+  /// No description provided for @backupCorrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup file is damaged or incomplete'**
+  String get backupCorrupted;
+
+  /// No description provided for @backupInconsistent.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup is inconsistent and can\'t be restored'**
+  String get backupInconsistent;
 
   /// No description provided for @autoBackupTitle.
   ///

@@ -32,6 +32,7 @@
   "apply": "Anwenden",
   "change": "Ändern",
   "errorWith": "Fehler: {message}",
+  "saveFailed": "Speichern fehlgeschlagen: {error}",
 
   "welcomeTitle": "Willkommen bei ReefTracker",
   "welcomeBody": "Erstelle dein erstes Aquarium, um Wasserparameter zu verfolgen.",
@@ -205,6 +206,9 @@
   "backupExportFailed": "Sicherung konnte nicht exportiert werden",
   "backupImportFailed": "Sicherung konnte nicht wiederhergestellt werden",
   "backupInvalidFile": "Diese Datei ist keine gültige ReefTracker-Sicherung",
+  "backupTooNew": "Diese Sicherung wurde mit einer neueren App-Version erstellt und kann hier nicht wiederhergestellt werden",
+  "backupCorrupted": "Die Sicherungsdatei ist beschädigt oder unvollständig",
+  "backupInconsistent": "Die Sicherung ist inkonsistent und kann nicht wiederhergestellt werden",
   "autoBackupTitle": "Automatische Sicherung",
   "autoBackupSubtitle": "Aktuelle Kopien deiner Daten auf diesem Gerät behalten",
   "autoBackupFrequency": "Häufigkeit",

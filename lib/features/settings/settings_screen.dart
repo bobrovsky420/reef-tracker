@@ -9,6 +9,7 @@ import '../../data/database.dart';
 import '../../domain/trend.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
 
 /// Selectable forecast-horizon values (days), within
 /// [kTrendMinHorizon]..[kTrendMaxHorizon].
@@ -245,8 +246,8 @@ class SettingsScreen extends ConsumerWidget {
       final picked = await pickBackupData();
       if (picked == null) return; // user cancelled the file picker
       data = picked;
-    } on InvalidBackupException {
-      if (context.mounted) _snack(context, l.backupInvalidFile);
+    } on InvalidBackupException catch (e) {
+      if (context.mounted) _snack(context, l.backupRejection(e.reason));
       return;
     } catch (_) {
       if (context.mounted) _snack(context, l.backupImportFailed);
@@ -274,18 +275,10 @@ class SettingsScreen extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      await db.restoreFromBackup(
-        tankRows: data.tanks,
-        paramRows: data.params,
-        readingRows: data.readings,
-        waterChangeRows: data.waterChanges,
-        carbonChangeRows: data.carbonChanges,
-        equipmentCleaningRows: data.equipmentCleanings,
-        ratioVisibilityRows: data.ratioVisibilities,
-        dosingEntryRows: data.dosingEntries,
-        settingRows: data.settings,
-      );
+      await importBackup(db, data);
       if (context.mounted) _snack(context, l.backupRestored);
+    } on InvalidBackupException catch (e) {
+      if (context.mounted) _snack(context, l.backupRejection(e.reason));
     } catch (_) {
       if (context.mounted) _snack(context, l.backupImportFailed);
     }

@@ -106,6 +106,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String saveFailed(Object error) {
+    return 'Speichern fehlgeschlagen: $error';
+  }
+
+  @override
   String get welcomeTitle => 'Willkommen bei ReefTracker';
 
   @override
@@ -648,6 +653,18 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get backupInvalidFile =>
       'Diese Datei ist keine gültige ReefTracker-Sicherung';
+
+  @override
+  String get backupTooNew =>
+      'Diese Sicherung wurde mit einer neueren App-Version erstellt und kann hier nicht wiederhergestellt werden';
+
+  @override
+  String get backupCorrupted =>
+      'Die Sicherungsdatei ist beschädigt oder unvollständig';
+
+  @override
+  String get backupInconsistent =>
+      'Die Sicherung ist inkonsistent und kann nicht wiederhergestellt werden';
 
   @override
   String get autoBackupTitle => 'Automatische Sicherung';

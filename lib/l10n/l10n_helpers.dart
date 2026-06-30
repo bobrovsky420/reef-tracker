@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
+import '../data/backup.dart';
 import '../domain/ratio.dart';
 import '../domain/setup_type.dart';
 import '../domain/units.dart';
@@ -142,6 +143,20 @@ extension L10nDomain on AppLocalizations {
         return zoneActNow;
       case Zone.unknown:
         return zoneUnknown;
+    }
+  }
+
+  /// The localized message explaining why a backup file was rejected.
+  String backupRejection(BackupRejection reason) {
+    switch (reason) {
+      case BackupRejection.notBackupFile:
+        return backupInvalidFile;
+      case BackupRejection.newerVersion:
+        return backupTooNew;
+      case BackupRejection.corrupted:
+        return backupCorrupted;
+      case BackupRejection.inconsistent:
+        return backupInconsistent;
     }
   }
 }

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.2] - 2026-06-30
 
+### Changed
+- Restoring a backup is now validated before it touches your data: the backup is
+  checked for schema compatibility and internal consistency and then rehearsed in
+  a temporary database, so an incompatible or damaged file is rejected **without**
+  wiping the current database. Restore errors now explain what's wrong (too new,
+  damaged, or inconsistent) instead of a single generic message.
+
 ### Fixed
 - Health zone classification no longer shows a dangerously out-of-range value as
   **OK (green)** when only the amber bound is set on that side. Red (beyond an
@@ -18,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which previously parsed successfully and, once stored, corrupted charts, zone
   classification and trend math. Aquarium volume additionally must be a positive
   number.
+- The Save button on the add-reading and aquarium screens no longer gets stuck
+  in a disabled spinner state if the database write fails — the error is now
+  shown and the button is re-enabled.
+- A batch of readings entered together is now saved atomically, so a failure
+  partway through can no longer leave a partial group behind.
 
 ## [0.13.1] - 2026-06-30
 

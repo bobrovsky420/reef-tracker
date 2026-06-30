@@ -90,19 +90,6 @@ extension ZoneVisuals on Zone {
     }
   }
 
-  String get label {
-    switch (this) {
-      case Zone.green:
-        return 'OK';
-      case Zone.amber:
-        return 'Attention';
-      case Zone.red:
-        return 'Act now';
-      case Zone.unknown:
-        return '—';
-    }
-  }
-
   IconData get icon {
     switch (this) {
       case Zone.green:

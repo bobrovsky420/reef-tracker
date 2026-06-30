@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:drift/native.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
@@ -17,18 +18,42 @@ const String kBackupFormat = 'reeftracker-backup';
 /// [decodeBackup]) when the JSON shape changes incompatibly.
 const int kBackupVersion = 1;
 
-/// Raised when a file is not a recognizable ReefTracker backup.
+/// Why a backup file was rejected. Each value maps to a distinct user-facing
+/// (localized) message so the user learns *what* is wrong, instead of a single
+/// catch-all "corrupted".
+enum BackupRejection {
+  /// The file is not valid JSON, or not a ReefTracker backup at all.
+  notBackupFile,
+
+  /// The backup was produced by a newer app/schema than this one can read.
+  newerVersion,
+
+  /// Recognized as a backup, but the row shape is broken/incomplete.
+  corrupted,
+
+  /// Structurally valid but internally inconsistent: a child row references a
+  /// missing aquarium, or primary keys are duplicated.
+  inconsistent,
+}
+
+/// Raised when a file is not a recognizable or restorable ReefTracker backup.
+///
+/// [reason] drives the localized message shown to the user; [detail] carries
+/// developer-facing context (which section/id failed) for logs.
 class InvalidBackupException implements Exception {
-  const InvalidBackupException(this.message);
-  final String message;
+  const InvalidBackupException(this.reason, [this.detail]);
+  final BackupRejection reason;
+  final String? detail;
   @override
-  String toString() => 'InvalidBackupException: $message';
+  String toString() =>
+      'InvalidBackupException(${reason.name})${detail == null ? '' : ': $detail'}';
 }
 
 /// The decoded contents of a backup, ready to hand to
 /// [AppDatabase.restoreFromBackup].
 class BackupData {
   const BackupData({
+    required this.schemaVersion,
     required this.tanks,
     required this.params,
     required this.readings,
@@ -39,6 +64,10 @@ class BackupData {
     required this.dosingEntries,
     required this.settings,
   });
+
+  /// The database schema version the backup was written against (0 if the file
+  /// predates this field). Compared to the app's schema in [validateBackup].
+  final int schemaVersion;
 
   final List<TanksCompanion> tanks;
   final List<TrackedParametersCompanion> params;
@@ -92,72 +121,165 @@ BackupData decodeBackup(String jsonString) {
   try {
     decoded = jsonDecode(jsonString);
   } on FormatException {
-    throw const InvalidBackupException('Not valid JSON.');
+    throw const InvalidBackupException(
+        BackupRejection.notBackupFile, 'not valid JSON');
   }
   if (decoded is! Map<String, dynamic>) {
-    throw const InvalidBackupException('Unexpected file contents.');
+    throw const InvalidBackupException(
+        BackupRejection.notBackupFile, 'top level is not an object');
   }
   if (decoded['format'] != kBackupFormat) {
-    throw const InvalidBackupException('Not a ReefTracker backup file.');
+    throw const InvalidBackupException(
+        BackupRejection.notBackupFile, 'wrong format marker');
   }
   final version = decoded['version'];
   if (version is! int || version > kBackupVersion) {
     throw const InvalidBackupException(
-        'Backup was made by a newer version of the app.');
+        BackupRejection.newerVersion, 'document version too new');
+  }
+  // schemaVersion was always written from v1; treat a missing/odd value as 0
+  // (an unknown-but-older schema) rather than failing here.
+  final rawSchema = decoded['schemaVersion'];
+  final schemaVersion = rawSchema is int ? rawSchema : 0;
+
+  // Each section is parsed in isolation so a failure names the offending
+  // collection instead of collapsing into one generic "corrupted". Tables added
+  // in later app versions are absent from older backups, so a missing key
+  // defaults to an empty list rather than erroring.
+  List<T> section<T>(
+      String key, T Function(Map<String, dynamic>) fromJson,
+      {bool required = true}) {
+    final raw = decoded[key];
+    if (raw == null) {
+      if (required) {
+        throw InvalidBackupException(
+            BackupRejection.corrupted, 'missing section "$key"');
+      }
+      return <T>[];
+    }
+    try {
+      return _listOfMaps(raw).map(fromJson).toList();
+    } catch (e) {
+      throw InvalidBackupException(
+          BackupRejection.corrupted, 'section "$key": $e');
+    }
   }
 
+  return BackupData(
+    schemaVersion: schemaVersion,
+    tanks: section('tanks', _tankFromJson),
+    params: section('trackedParameters', _paramFromJson),
+    readings: section('readings', _readingFromJson),
+    waterChanges: section('waterChanges', _waterChangeFromJson, required: false),
+    carbonChanges:
+        section('carbonChanges', _carbonChangeFromJson, required: false),
+    equipmentCleanings: section(
+        'equipmentCleanings', _equipmentCleaningFromJson,
+        required: false),
+    ratioVisibilities: section(
+        'ratioVisibilities', _ratioVisibilityFromJson,
+        required: false),
+    dosingEntries:
+        section('dosingEntries', _dosingEntryFromJson, required: false),
+    settings: section('settings', _settingFromJson),
+  );
+}
+
+/// Validates a decoded [data] set against the running app *before* any live
+/// table is touched: rejects a backup from a newer schema, and checks internal
+/// consistency (no duplicate primary keys, no child row pointing at a missing
+/// aquarium). Throws [InvalidBackupException] with a specific [BackupRejection].
+void validateBackup(BackupData data, {required int appSchemaVersion}) {
+  if (data.schemaVersion > appSchemaVersion) {
+    throw InvalidBackupException(BackupRejection.newerVersion,
+        'schemaVersion ${data.schemaVersion} > app $appSchemaVersion');
+  }
+
+  // Unique aquarium ids (they are the FK target for every other table).
+  final tankIds = <int>{};
+  for (final t in data.tanks) {
+    if (!tankIds.add(t.id.value)) {
+      throw InvalidBackupException(
+          BackupRejection.inconsistent, 'duplicate tank id ${t.id.value}');
+    }
+  }
+
+  // Every child row must reference an aquarium present in the backup.
+  void requireTank(String section, Iterable<int> tankIdsUsed) {
+    for (final id in tankIdsUsed) {
+      if (!tankIds.contains(id)) {
+        throw InvalidBackupException(BackupRejection.inconsistent,
+            '$section references missing tank $id');
+      }
+    }
+  }
+
+  requireTank('trackedParameters', data.params.map((r) => r.tankId.value));
+  requireTank('readings', data.readings.map((r) => r.tankId.value));
+  requireTank('waterChanges', data.waterChanges.map((r) => r.tankId.value));
+  requireTank('carbonChanges', data.carbonChanges.map((r) => r.tankId.value));
+  requireTank('equipmentCleanings',
+      data.equipmentCleanings.map((r) => r.tankId.value));
+  requireTank(
+      'ratioVisibilities', data.ratioVisibilities.map((r) => r.tankId.value));
+  requireTank('dosingEntries', data.dosingEntries.map((r) => r.tankId.value));
+}
+
+/// Imports [data] into the live database safely:
+///
+/// 1. in-memory pre-flight validation ([validateBackup]);
+/// 2. a *rehearsal* restore into a throwaway temp database, so the real SQLite
+///    engine (FK, NOT NULL, uniqueness) proves the data inserts cleanly before
+///    any live data is deleted;
+/// 3. the actual transactional restore into [db].
+///
+/// If step 1 or 2 fails, the live database is never touched.
+Future<void> importBackup(AppDatabase db, BackupData data) async {
+  validateBackup(data, appSchemaVersion: db.schemaVersion);
+  await _rehearseRestore(data);
+  await _applyRestore(db, data);
+}
+
+/// Runs the restore against a fresh temp database and throws if it doesn't
+/// insert cleanly. The temp database (and its -wal/-shm sidecars) is always
+/// deleted afterwards.
+Future<void> _rehearseRestore(BackupData data) async {
+  final dir = await getTemporaryDirectory();
+  final file = File(p.join(
+      dir.path, 'reeftracker-import-${DateTime.now().microsecondsSinceEpoch}.sqlite'));
+  await _deleteDbFiles(file);
+  final temp = AppDatabase(NativeDatabase(file));
   try {
-    final tanks = _listOfMaps(decoded['tanks']).map(_tankFromJson).toList();
-    final params =
-        _listOfMaps(decoded['trackedParameters']).map(_paramFromJson).toList();
-    final readings =
-        _listOfMaps(decoded['readings']).map(_readingFromJson).toList();
-    // Water and carbon changes were added in later app versions; older backups
-    // omit the keys entirely, so default to empty lists rather than failing.
-    final waterChanges = decoded['waterChanges'] == null
-        ? <WaterChangesCompanion>[]
-        : _listOfMaps(decoded['waterChanges'])
-            .map(_waterChangeFromJson)
-            .toList();
-    final carbonChanges = decoded['carbonChanges'] == null
-        ? <CarbonChangesCompanion>[]
-        : _listOfMaps(decoded['carbonChanges'])
-            .map(_carbonChangeFromJson)
-            .toList();
-    final equipmentCleanings = decoded['equipmentCleanings'] == null
-        ? <EquipmentCleaningsCompanion>[]
-        : _listOfMaps(decoded['equipmentCleanings'])
-            .map(_equipmentCleaningFromJson)
-            .toList();
-    // Ratio visibility was added later; older backups omit the key.
-    final ratioVisibilities = decoded['ratioVisibilities'] == null
-        ? <RatioVisibilitiesCompanion>[]
-        : _listOfMaps(decoded['ratioVisibilities'])
-            .map(_ratioVisibilityFromJson)
-            .toList();
-    // Dosing entries were added later; older backups omit the key.
-    final dosingEntries = decoded['dosingEntries'] == null
-        ? <DosingEntriesCompanion>[]
-        : _listOfMaps(decoded['dosingEntries'])
-            .map(_dosingEntryFromJson)
-            .toList();
-    final settings =
-        _listOfMaps(decoded['settings']).map(_settingFromJson).toList();
-    return BackupData(
-      tanks: tanks,
-      params: params,
-      readings: readings,
-      waterChanges: waterChanges,
-      carbonChanges: carbonChanges,
-      equipmentCleanings: equipmentCleanings,
-      ratioVisibilities: ratioVisibilities,
-      dosingEntries: dosingEntries,
-      settings: settings,
-    );
-  } catch (_) {
-    throw const InvalidBackupException('Backup file is corrupted.');
+    await _applyRestore(temp, data);
+  } on InvalidBackupException {
+    rethrow;
+  } catch (e) {
+    // A constraint the in-memory checks don't cover (NOT NULL, type, unique).
+    throw InvalidBackupException(BackupRejection.inconsistent, 'rehearsal: $e');
+  } finally {
+    await temp.close();
+    await _deleteDbFiles(file);
   }
 }
+
+Future<void> _deleteDbFiles(File db) async {
+  for (final path in [db.path, '${db.path}-wal', '${db.path}-shm']) {
+    final f = File(path);
+    if (await f.exists()) await f.delete();
+  }
+}
+
+Future<void> _applyRestore(AppDatabase db, BackupData data) => db.restoreFromBackup(
+      tankRows: data.tanks,
+      paramRows: data.params,
+      readingRows: data.readings,
+      waterChangeRows: data.waterChanges,
+      carbonChangeRows: data.carbonChanges,
+      equipmentCleaningRows: data.equipmentCleanings,
+      ratioVisibilityRows: data.ratioVisibilities,
+      dosingEntryRows: data.dosingEntries,
+      settingRows: data.settings,
+    );
 
 /// Serializes the entire database to a backup JSON string by reading every
 /// table. Shared by manual export and the automatic backup service.
@@ -208,7 +330,8 @@ Future<BackupData?> pickBackupData() async {
   } else if (picked.path != null) {
     contents = await File(picked.path!).readAsString();
   } else {
-    throw const InvalidBackupException('Could not read the selected file.');
+    throw const InvalidBackupException(
+        BackupRejection.notBackupFile, 'could not read the selected file');
   }
   return decodeBackup(contents);
 }

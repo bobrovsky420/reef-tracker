@@ -176,33 +176,43 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
     final typed = parseUserDouble(_volume.text);
     final volume =
         typed == null ? null : volumeToCanonical(typed, _volumeUnit);
-    if (_isEdit) {
-      await db.updateTank(widget.tank!.copyWith(
-        name: _name.text.trim(),
-        setupType: _type.name,
-        volumeLiters: Value(volume),
-        startDate: Value(_startDate),
-        notes: Value(_trimToNull(_notes.text)),
-        vendor: Value(_trimToNull(_vendor.text)),
-        model: Value(_trimToNull(_model.text)),
-      ));
-    } else {
-      await db.createTankWithPreset(
-        name: _name.text.trim(),
-        type: _type,
-        volumeLiters: volume,
-        startDate: _startDate,
-        notes: _trimToNull(_notes.text),
-        vendor: _trimToNull(_vendor.text),
-        model: _trimToNull(_model.text),
-      );
+    try {
+      if (_isEdit) {
+        await db.updateTank(widget.tank!.copyWith(
+          name: _name.text.trim(),
+          setupType: _type.name,
+          volumeLiters: Value(volume),
+          startDate: Value(_startDate),
+          notes: Value(_trimToNull(_notes.text)),
+          vendor: Value(_trimToNull(_vendor.text)),
+          model: Value(_trimToNull(_model.text)),
+        ));
+      } else {
+        await db.createTankWithPreset(
+          name: _name.text.trim(),
+          type: _type,
+          volumeLiters: volume,
+          startDate: _startDate,
+          notes: _trimToNull(_notes.text),
+          vendor: _trimToNull(_vendor.text),
+          model: _trimToNull(_model.text),
+        );
+      }
+      if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(e.toString()))));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    if (mounted) context.pop();
   }
 
   @override

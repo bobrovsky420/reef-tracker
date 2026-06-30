@@ -32,6 +32,7 @@
   "apply": "Zastosuj",
   "change": "Zmień",
   "errorWith": "Błąd: {message}",
+  "saveFailed": "Nie udało się zapisać: {error}",
 
   "welcomeTitle": "Witamy w ReefTracker",
   "welcomeBody": "Utwórz swoje pierwsze akwarium, aby rozpocząć śledzenie parametrów wody.",
@@ -205,6 +206,9 @@
   "backupExportFailed": "Nie udało się wyeksportować kopii",
   "backupImportFailed": "Nie udało się przywrócić kopii",
   "backupInvalidFile": "Ten plik nie jest prawidłową kopią zapasową ReefTracker",
+  "backupTooNew": "Ta kopia zapasowa została utworzona przez nowszą wersję aplikacji i nie można jej tu przywrócić",
+  "backupCorrupted": "Plik kopii zapasowej jest uszkodzony lub niekompletny",
+  "backupInconsistent": "Kopia zapasowa jest niespójna i nie można jej przywrócić",
   "autoBackupTitle": "Automatyczna kopia zapasowa",
   "autoBackupSubtitle": "Przechowuj najnowsze kopie danych na tym urządzeniu",
   "autoBackupFrequency": "Częstotliwość",

@@ -105,6 +105,11 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String saveFailed(Object error) {
+    return 'Nepodařilo se uložit: $error';
+  }
+
+  @override
   String get welcomeTitle => 'Vítejte v ReefTrackeru';
 
   @override
@@ -641,6 +646,17 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get backupInvalidFile => 'Tento soubor není platná záloha ReefTracker';
+
+  @override
+  String get backupTooNew =>
+      'Tato záloha byla vytvořena novější verzí aplikace a nelze ji zde obnovit';
+
+  @override
+  String get backupCorrupted => 'Soubor zálohy je poškozený nebo neúplný';
+
+  @override
+  String get backupInconsistent =>
+      'Záloha je nekonzistentní a nelze ji obnovit';
 
   @override
   String get autoBackupTitle => 'Automatická záloha';
