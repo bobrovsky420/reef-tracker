@@ -1844,6 +1844,12 @@ abstract class AppLocalizations {
   /// **'Iodine'**
   String get paramIodine;
 
+  /// No description provided for @paramIron.
+  ///
+  /// In en, this message translates to:
+  /// **'Iron'**
+  String get paramIron;
+
   /// No description provided for @helpTemperature.
   ///
   /// In en, this message translates to:

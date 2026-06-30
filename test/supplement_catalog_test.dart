@@ -65,9 +65,9 @@ void main() {
         storedProgram: 'OLD PROGRAM',
         storedProduct: 'OLD NAME',
       );
-      expect(r.product, 'Reef Foundation B (KH/Alk)');
+      expect(r.product, 'Foundation B — KH/Alkalinity');
       expect(r.vendor, 'Red Sea');
-      expect(r.program, 'Reef Care Program');
+      expect(r.program, 'Foundation ABC');
     });
 
     test('an ungrouped catalog product resolves with a null program', () {

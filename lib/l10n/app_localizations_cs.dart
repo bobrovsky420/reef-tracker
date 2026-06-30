@@ -977,6 +977,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get paramIodine => 'Jód';
 
   @override
+  String get paramIron => 'Železo';
+
+  @override
   String get helpTemperature =>
       'Teplota vody. Stabilita je důležitější než přesná hodnota.';
 

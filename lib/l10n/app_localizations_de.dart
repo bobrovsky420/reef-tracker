@@ -986,6 +986,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get paramIodine => 'Jod';
 
   @override
+  String get paramIron => 'Eisen';
+
+  @override
   String get helpTemperature =>
       'Wassertemperatur. Stabilität ist wichtiger als der exakte Wert.';
 

@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.4] - 2026-06-30
+
+### Added
+- New Red Sea dosing program: **Complete Reef Care Program**, the all-in-one
+  4-part system (Part 1 Calcium & Magnesium, Part 2 KH/Alkalinity & pH
+  Stabilizer, Part 3 Iodine & Potassium, Part 4 Iron & Bioactive Elements).
+- **Iron** is now a trackable reef parameter (ppm), so iron-dosing supplements
+  (e.g. Red Sea Trace Colors C) can target it.
+- Dose-potency (strength) data for the Red Sea Foundation/Trace Colors and
+  Complete Reef Care parts, and for the Tropic Marin Balling parts, derived
+  from each vendor's published dosing charts.
+
+### Changed
+- Renamed the Red Sea Reef Care Program to **Foundation ABC** and updated its
+  product names to match Red Sea's current labelling (Foundation A/B/C and
+  Trace Colors A–D). NO₃:PO₄-X is now a standalone Red Sea product instead of
+  being grouped with the foundation supplements.
+
 ## [0.13.3] - 2026-06-30
 
 ### Fixed

@@ -77,6 +77,7 @@ const List<ParameterDef> kReefParameters = [
   ParameterDef(key: 'potassium', name: 'Potassium', unit: 'ppm', decimals: 0),
   ParameterDef(key: 'strontium', name: 'Strontium', unit: 'ppm', decimals: 1),
   ParameterDef(key: 'iodine', name: 'Iodine', unit: 'ppm', decimals: 2),
+  ParameterDef(key: 'iron', name: 'Iron', unit: 'ppm', decimals: 2),
 ];
 
 /// Lookup by key for O(1) access.

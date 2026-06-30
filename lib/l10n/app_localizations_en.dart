@@ -978,6 +978,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paramIodine => 'Iodine';
 
   @override
+  String get paramIron => 'Iron';
+
+  @override
   String get helpTemperature =>
       'Water temperature. Stability matters more than the exact value.';
 

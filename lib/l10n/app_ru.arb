@@ -311,6 +311,7 @@
   "paramPotassium": "Калий",
   "paramStrontium": "Стронций",
   "paramIodine": "Йод",
+  "paramIron": "Железо",
 
   "helpTemperature": "Температура воды. Стабильность важнее точного значения.",
   "helpSalinity": "Удельный вес. ~1,026 SG ≈ 35 ppt.",

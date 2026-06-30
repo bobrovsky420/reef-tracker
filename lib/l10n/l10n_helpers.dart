@@ -56,6 +56,8 @@ extension L10nDomain on AppLocalizations {
         return paramStrontium;
       case 'iodine':
         return paramIodine;
+      case 'iron':
+        return paramIron;
       default:
         return key;
     }

@@ -13,47 +13,82 @@ const List<SupplementVendor> kSupplementVendors = [
   SupplementVendor(
     key: 'redsea',
     name: 'Red Sea',
+    products: [
+      SupplementProduct(
+        key: 'redsea.no3po4x',
+        name: 'NO₃:PO₄-X (nutrient reducer)',
+      ),
+    ],
     programs: [
       SupplementProgram(
-        key: 'reef_care',
-        name: 'Reef Care Program',
+        key: 'foundation_abc',
+        name: 'Foundation ABC',
         products: [
           SupplementProduct(
             key: 'redsea.foundation_a',
-            name: 'Reef Foundation A (Ca/Sr/Ba)',
+            name: 'Foundation A — Calcium',
             elementKey: 'calcium',
+            strength: {'calcium': 200.0},
           ),
           SupplementProduct(
             key: 'redsea.foundation_b',
-            name: 'Reef Foundation B (KH/Alk)',
+            name: 'Foundation B — KH/Alkalinity',
             elementKey: 'alkalinity',
+            strength: {'alkalinity': 10.0},
           ),
           SupplementProduct(
             key: 'redsea.foundation_c',
-            name: 'Reef Foundation C (Mg)',
+            name: 'Foundation C — Magnesium',
             elementKey: 'magnesium',
+            strength: {'magnesium': 100.0},
           ),
           SupplementProduct(
             key: 'redsea.colors_a',
-            name: 'Reef Colors A (Iodine/Halogens)',
+            name: 'Trace Colors A — Iodine',
             elementKey: 'iodine',
+            strength: {'iodine': 3.0},
           ),
           SupplementProduct(
             key: 'redsea.colors_b',
-            name: 'Reef Colors B (Potassium)',
+            name: 'Trace Colors B — Potassium',
             elementKey: 'potassium',
+            strength: {'potassium': 175.0},
           ),
           SupplementProduct(
             key: 'redsea.colors_c',
-            name: 'Reef Colors C (Iron/trace)',
+            name: 'Trace Colors C — Iron',
+            elementKey: 'iron',
+            strength: {'iron': 1.0},
           ),
           SupplementProduct(
             key: 'redsea.colors_d',
-            name: 'Reef Colors D (trace)',
+            name: 'Trace Colors D — Bioactive Elements',
+          ),
+        ],
+      ),
+      SupplementProgram(
+        key: 'complete_reef_care',
+        name: 'Complete Reef Care Program',
+        products: [
+          SupplementProduct(
+            key: 'redsea.complete_1',
+            name: 'Part 1 — Calcium & Magnesium',
+            elementKey: 'calcium',
+            strength: {'calcium': 140.0},
           ),
           SupplementProduct(
-            key: 'redsea.no3po4x',
-            name: 'NO₃:PO₄-X (nutrient reducer)',
+            key: 'redsea.complete_2',
+            name: 'Part 2 — KH/Alkalinity & pH Stabilizer',
+            elementKey: 'alkalinity',
+            strength: {'alkalinity': 10.0},
+          ),
+          SupplementProduct(
+            key: 'redsea.complete_3',
+            name: 'Part 3 — Iodine & Potassium',
+          ),
+          SupplementProduct(
+            key: 'redsea.complete_4',
+            name: 'Part 4 — Iron & Bioactive Elements',
           ),
         ],
       ),
@@ -77,16 +112,19 @@ const List<SupplementVendor> kSupplementVendors = [
             key: 'tropicmarin.balling_a',
             name: 'Part A — Calcium',
             elementKey: 'calcium',
+            strength: {'calcium': 20.0},
           ),
           SupplementProduct(
             key: 'tropicmarin.balling_b',
             name: 'Part B — Carbonate (Alk)',
             elementKey: 'alkalinity',
+            strength: {'alkalinity': 2.8},
           ),
           SupplementProduct(
             key: 'tropicmarin.balling_c',
             name: 'Part C — Trace/Mg',
             elementKey: 'magnesium',
+            strength: {'magnesium': 3.35, 'potassium': 0.98},
           ),
         ],
       ),
@@ -155,47 +193,28 @@ const List<SupplementVendor> kSupplementVendors = [
     name: 'Aquaforest',
     programs: [
       SupplementProgram(
-        key: 'component',
-        name: 'Component 1·2·3+',
+        key: 'component_123',
+        name: 'Component 1·2·3',
         products: [
           SupplementProduct(
             key: 'aquaforest.component_1',
             name: 'Component 1+ (Ca)',
             elementKey: 'calcium',
+            strength: {'calcium': 18.0},
           ),
           SupplementProduct(
             key: 'aquaforest.component_2',
             name: 'Component 2+ (KH)',
             elementKey: 'alkalinity',
+            strength: {'alkalinity': 2.6},
           ),
           SupplementProduct(
             key: 'aquaforest.component_3',
             name: 'Component 3+ (Mg)',
             elementKey: 'magnesium',
+            strength: {'magnesium': 1.52},
           ),
         ],
-      ),
-    ],
-  ),
-  SupplementVendor(
-    key: 'zeovit',
-    name: 'ZEOvit (Korallen-Zucht)',
-    products: [
-      SupplementProduct(
-        key: 'zeovit.zeobak',
-        name: 'ZEObak',
-      ),
-      SupplementProduct(
-        key: 'zeovit.zeofood',
-        name: 'ZEOfood7',
-      ),
-      SupplementProduct(
-        key: 'zeovit.coral_vitalizer',
-        name: 'Coral Vitalizer',
-      ),
-      SupplementProduct(
-        key: 'zeovit.pohls_xtra',
-        name: 'Pohl\'s Xtra',
       ),
     ],
   ),

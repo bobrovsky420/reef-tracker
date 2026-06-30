@@ -311,6 +311,7 @@
   "paramPotassium": "Draslík",
   "paramStrontium": "Stroncium",
   "paramIodine": "Jód",
+  "paramIron": "Železo",
 
   "helpTemperature": "Teplota vody. Stabilita je důležitější než přesná hodnota.",
   "helpSalinity": "Specifická hustota. ~1,026 SG ≈ 35 ppt.",

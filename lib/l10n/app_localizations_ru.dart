@@ -983,6 +983,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paramIodine => 'Йод';
 
   @override
+  String get paramIron => 'Железо';
+
+  @override
   String get helpTemperature =>
       'Температура воды. Стабильность важнее точного значения.';
 

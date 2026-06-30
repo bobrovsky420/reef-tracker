@@ -9,7 +9,7 @@
 #  - `key` is a STABLE identifier persisted on dosing entries — never rename or
 #    reuse a key, or stored entries (and the future dose log) lose their link.
 #  - `element` is a real reef-parameter key (alkalinity, calcium, magnesium,
-#    potassium, strontium, iodine, nitrate, phosphate). Omit for trace /
+#    potassium, strontium, iodine, iron, nitrate, phosphate). Omit for trace /
 #    multi-element products.
 #  - `unit` is the default dose unit: `ml` (default, may be omitted) or `g`.
 #  - `strength` is the potency map for the future consumption calculator:
@@ -22,31 +22,66 @@
 vendors:
   - key: redsea
     name: Red Sea
+    products:
+      - key: redsea.no3po4x
+        name: "NO₃:PO₄-X (nutrient reducer)"
     programs:
-      - key: reef_care
-        name: Reef Care Program
+      - key: foundation_abc
+        name: Foundation ABC
+        # strength = element rise per 1 ml of product per 1 L of tank, from
+        # Red Sea's Foundation / Trace Colors dosing charts (1 ml / 100 L raises):
+        #  - Foundation A:  Ca +2 ppm     → 2 * 100 / 1
+        #  - Foundation B:  KH +0.1 dKH   → 0.1 * 100 / 1
+        #  - Foundation C:  Mg +1 ppm     → 1 * 100 / 1
+        #  - Trace Colors A: Iodine +0.03 ppm    → 0.03 * 100 / 1
+        #  - Trace Colors B: Potassium +1.75 ppm → 1.75 * 100 / 1
+        #  - Trace Colors C: Iron +0.01 ppm      → 0.01 * 100 / 1
         products:
           - key: redsea.foundation_a
-            name: Reef Foundation A (Ca/Sr/Ba)
+            name: Foundation A — Calcium
             element: calcium
+            strength: { calcium: 200.0 }
           - key: redsea.foundation_b
-            name: Reef Foundation B (KH/Alk)
+            name: Foundation B — KH/Alkalinity
             element: alkalinity
+            strength: { alkalinity: 10.0 }
           - key: redsea.foundation_c
-            name: Reef Foundation C (Mg)
+            name: Foundation C — Magnesium
             element: magnesium
+            strength: { magnesium: 100.0 }
           - key: redsea.colors_a
-            name: Reef Colors A (Iodine/Halogens)
+            name: Trace Colors A — Iodine
             element: iodine
+            strength: { iodine: 3.0 }
           - key: redsea.colors_b
-            name: Reef Colors B (Potassium)
+            name: Trace Colors B — Potassium
             element: potassium
+            strength: { potassium: 175.0 }
           - key: redsea.colors_c
-            name: Reef Colors C (Iron/trace)
+            name: Trace Colors C — Iron
+            element: iron
+            strength: { iron: 1.0 }
           - key: redsea.colors_d
-            name: Reef Colors D (trace)
-          - key: redsea.no3po4x
-            name: "NO₃:PO₄-X (nutrient reducer)"
+            name: Trace Colors D — Bioactive Elements
+      - key: complete_reef_care
+        name: Complete Reef Care Program
+        # strength = element rise per 1 ml of product per 1 L of tank, from
+        # Red Sea's Complete Reef Care dosing instructions (model R22755):
+        #  - Part #1: 1 ml / 100 L raises Ca +1.4 ppm → 1.4 * 100 / 1
+        #  - Part #2: 1 ml / 100 L raises KH +0.1 dKH → 0.1 * 100 / 1
+        products:
+          - key: redsea.complete_1
+            name: Part 1 — Calcium & Magnesium
+            element: calcium
+            strength: { calcium: 140.0 }
+          - key: redsea.complete_2
+            name: Part 2 — KH/Alkalinity & pH Stabilizer
+            element: alkalinity
+            strength: { alkalinity: 10.0 }
+          - key: redsea.complete_3
+            name: Part 3 — Iodine & Potassium
+          - key: redsea.complete_4
+            name: Part 4 — Iron & Bioactive Elements
 
   - key: tropicmarin
     name: Tropic Marin
@@ -56,22 +91,37 @@ vendors:
     programs:
       - key: balling
         name: Balling
+        # strength = element rise per 1 ml of stock per 1 L of tank, from the
+        # Tropic Marin Balling dosing chart's "Concentration of solution" (the
+        # element content per 1 L of made-up stock) → value / 1000:
+        #  - Part A: 20000 mg/L Ca         → 20.0
+        #  - Part B: 2800 °dH/L (= dKH)    → 2.8
+        #  - Part C: ~3350 mg/L Mg, ~980 mg/L K → 3.35 / 0.98
         products:
           - key: tropicmarin.balling_a
             name: Part A — Calcium
             element: calcium
+            strength: { calcium: 20.0 }
           - key: tropicmarin.balling_b
             name: Part B — Carbonate (Alk)
             element: alkalinity
+            strength: { alkalinity: 2.8 }
           - key: tropicmarin.balling_c
             name: Part C — Trace/Mg
             element: magnesium
+            strength: { magnesium: 3.35, potassium: 0.98 }
 
   - key: triton
     name: Triton
     programs:
       - key: core7
         name: Core7 Base Elementz
+        # No `strength` / `element`: Triton deliberately does NOT publish the
+        # Core7 concentrations (they steer users to ICP tests + their own
+        # calculator). The only figures online are third-party "educated
+        # guesses" (e.g. BeanAnimal's calculator), which the verified-only rule
+        # above rules out — a wrong value would silently corrupt consumption
+        # estimates. Leave these out until Triton publishes an official chart.
         products:
           - key: triton.core7_1
             name: "Base Elementz #1"
@@ -113,30 +163,26 @@ vendors:
   - key: aquaforest
     name: Aquaforest
     programs:
-      - key: component
-        name: Component 1·2·3+
+      - key: component_123
+        name: Component 1·2·3
+        # strength = element rise per 1 ml of product per 1 L of tank, from
+        # Aquaforest's Component 1·2·3+ dosing chart (25 ml / 100 L raises):
+        #  - Component 1+: Ca +4.5 ppm   → 4.5 * 100 / 25
+        #  - Component 2+: KH +0.65 dKH  → 0.65 * 100 / 25
+        #  - Component 3+: Mg +0.38 ppm  → 0.38 * 100 / 25
         products:
           - key: aquaforest.component_1
             name: Component 1+ (Ca)
             element: calcium
+            strength: { calcium: 18.0 }
           - key: aquaforest.component_2
             name: Component 2+ (KH)
             element: alkalinity
+            strength: { alkalinity: 2.6 }
           - key: aquaforest.component_3
             name: Component 3+ (Mg)
             element: magnesium
-
-  - key: zeovit
-    name: ZEOvit (Korallen-Zucht)
-    products:
-      - key: zeovit.zeobak
-        name: ZEObak
-      - key: zeovit.zeofood
-        name: ZEOfood7
-      - key: zeovit.coral_vitalizer
-        name: Coral Vitalizer
-      - key: zeovit.pohls_xtra
-        name: "Pohl's Xtra"
+            strength: { magnesium: 1.52 }
 
   - key: generic
     name: Generic / DIY

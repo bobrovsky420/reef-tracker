@@ -207,6 +207,7 @@ const List<String> kDosingElementKeys = [
   'potassium',
   'strontium',
   'iodine',
+  'iron',
   'nitrate',
   'phosphate',
 ];

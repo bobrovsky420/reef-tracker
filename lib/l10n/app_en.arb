@@ -340,6 +340,7 @@
   "paramPotassium": "Potassium",
   "paramStrontium": "Strontium",
   "paramIodine": "Iodine",
+  "paramIron": "Iron",
 
   "helpTemperature": "Water temperature. Stability matters more than the exact value.",
   "helpSalinity": "Specific gravity. ~1.026 SG ≈ 35 ppt.",
