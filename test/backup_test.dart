@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/backup.dart';
@@ -505,6 +506,33 @@ void main() {
 
       expect(await dst.getAllDosingEntries(), isEmpty);
       expect((await dst.getAllTanks()).length, 1);
+    });
+
+    List<String> exportFilesIn(Directory dir) => dir
+        .listSync()
+        .whereType<File>()
+        .map((f) => p.basename(f.path))
+        .where((n) =>
+            n.startsWith('reeftracker-backup-') && n.endsWith('.json'))
+        .toList();
+
+    test('exportBackup leaves no plaintext temp file and sweeps stale ones',
+        () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await seed(db);
+
+      // A leftover plaintext export from an earlier run that must be swept.
+      await File(p.join(tempDir.path, 'reeftracker-backup-stale.json'))
+          .writeAsString('{}');
+
+      // The share sheet is unavailable under `flutter test`; the cleanup in the
+      // finally must still delete the freshly written file regardless.
+      try {
+        await exportBackup(db);
+      } catch (_) {}
+
+      expect(exportFilesIn(tempDir), isEmpty);
     });
 
     test('rejects a backup whose child rows reference a missing tank',

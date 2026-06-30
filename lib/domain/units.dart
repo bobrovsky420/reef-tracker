@@ -132,10 +132,17 @@ class ParamPresentation {
 
   /// Formats the change between two canonical values in the display unit,
   /// always prefixed with an explicit sign (e.g. "+0.2", "-0.1", "0.0").
+  ///
+  /// Deltas that round to zero at the configured precision (including a negative
+  /// delta like `-0.04` that would otherwise render as `-0.0`) are normalized to
+  /// an unsigned zero, so the sign always matches the displayed magnitude.
   String formatChange(double current, double previous) {
     final delta = toDisplay(current) - toDisplay(previous);
     final s = delta.toStringAsFixed(decimals);
-    return delta > 0 ? '+$s' : s;
+    // Re-parse the rounded string so the sign reflects what's actually shown.
+    final rounded = double.parse(s);
+    if (rounded == 0) return (0.0).toStringAsFixed(decimals);
+    return rounded > 0 ? '+$s' : s;
   }
 }
 

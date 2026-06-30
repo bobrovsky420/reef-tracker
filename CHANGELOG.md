@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.3] - 2026-06-30
+
+### Fixed
+- Trend delta chips no longer display a negative-zero (`-0.0`) or an inconsistent
+  sign: a change that rounds to zero at the shown precision is now always rendered
+  as an unsigned `0.0`, and the `+`/`-` prefix always matches the displayed
+  magnitude.
+- Sharing a backup no longer leaves a plaintext copy of the whole database behind
+  in temporary storage: the exported file is deleted once the share sheet closes,
+  and any leftovers from earlier exports are swept on the next export.
+- Automatic backups can no longer run twice at once (e.g. when the app resumes
+  immediately after launch), which previously could duplicate work and collide on
+  the same backup filename. Concurrent triggers now share a single in-flight run.
+
 ## [0.13.2] - 2026-06-30
 
 ### Changed

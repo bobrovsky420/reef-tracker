@@ -94,10 +94,25 @@ Future<File> writeAutoBackup(
   return file;
 }
 
+/// In-flight guard for [runAutoBackupIfDue]. The launch post-frame callback and
+/// a `resumed` lifecycle event can fire almost simultaneously (e.g. resume right
+/// after cold start); without this, two runs could both pass the "is due" check,
+/// pick the same one-second filename stamp, and each do the full encode/write
+/// before either records `last_auto_backup_at`.
+Future<void>? _autoBackupInFlight;
+
 /// Takes an automatic backup if the feature is enabled, there is data worth
 /// saving, and at least one [AutoBackupInterval] has elapsed since the last
 /// one. Safe to call on every launch/resume; it returns quickly when not due.
-Future<void> runAutoBackupIfDue(AppDatabase db) async {
+///
+/// Single-flight: while one run is in progress, concurrent callers await the
+/// same future instead of starting a second, overlapping backup.
+Future<void> runAutoBackupIfDue(AppDatabase db) {
+  return _autoBackupInFlight ??=
+      _runAutoBackupIfDue(db).whenComplete(() => _autoBackupInFlight = null);
+}
+
+Future<void> _runAutoBackupIfDue(AppDatabase db) async {
   final enabledRaw = await db.getSetting(kAutoBackupEnabledKey);
   final enabled =
       enabledRaw == null ? kAutoBackupDefaultEnabled : enabledRaw == 'true';

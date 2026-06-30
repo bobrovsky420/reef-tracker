@@ -296,20 +296,54 @@ Future<String> encodeBackupFromDb(AppDatabase db) async => encodeBackup(
       settings: await db.getAllSettings(),
     );
 
+/// Filename prefix for the plaintext JSON the share sheet receives. Used to
+/// recognize (and sweep) our own leftovers in the temp directory.
+const String _kExportPrefix = 'reeftracker-backup-';
+
 /// Exports the database and hands the JSON file to the OS share sheet.
+///
+/// The exported JSON is a full plaintext copy of the database, so the temp file
+/// is deleted as soon as the share sheet returns. Any leftovers from earlier
+/// runs (e.g. an older app version, or a process killed mid-share) are swept
+/// first, so plaintext exports can't accumulate in temp storage.
 Future<void> exportBackup(AppDatabase db) async {
   final json = await encodeBackupFromDb(db);
 
   final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
-  final fileName = 'reeftracker-backup-$stamp.json';
+  final fileName = '$_kExportPrefix$stamp.json';
   final dir = await getTemporaryDirectory();
+  await _sweepStaleExports(dir);
   final file = File(p.join(dir.path, fileName));
   await file.writeAsString(json);
 
-  await Share.shareXFiles(
-    [XFile(file.path, mimeType: 'application/json', name: fileName)],
-    subject: fileName,
-  );
+  try {
+    await Share.shareXFiles(
+      [XFile(file.path, mimeType: 'application/json', name: fileName)],
+      subject: fileName,
+    );
+  } finally {
+    if (await file.exists()) await file.delete();
+  }
+}
+
+/// Best-effort deletion of stale plaintext export files left in [dir] by
+/// earlier exports. Never throws — a failed sweep must not block a new export.
+Future<void> _sweepStaleExports(Directory dir) async {
+  try {
+    await for (final entity in dir.list()) {
+      if (entity is! File) continue;
+      final name = p.basename(entity.path);
+      if (name.startsWith(_kExportPrefix) && name.endsWith('.json')) {
+        try {
+          await entity.delete();
+        } catch (_) {
+          // Ignore; another export may be sharing it right now.
+        }
+      }
+    }
+  } catch (_) {
+    // Temp dir unreadable; nothing to sweep.
+  }
 }
 
 /// Prompts the user to pick a backup file and decodes it. Returns null if the

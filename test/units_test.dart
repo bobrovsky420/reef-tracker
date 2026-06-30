@@ -106,4 +106,31 @@ void main() {
       expect(ca.unitFollowsSettings, isFalse);
     });
   });
+
+  group('formatChange', () {
+    final p = presentationFor(
+        'salinity', 'SG', 3, const UnitPrefs(salinity: SalinityUnit.sg));
+
+    test('signs visible changes explicitly', () {
+      expect(p.formatChange(1.026, 1.024), '+0.002');
+      expect(p.formatChange(1.024, 1.026), '-0.002');
+    });
+
+    test('exact zero is unsigned', () {
+      expect(p.formatChange(1.025, 1.025), '0.000');
+    });
+
+    test('near-zero negative delta does not render as -0.0', () {
+      // -0.0004 rounds to 0.000 at 3 decimals; must not show a "-0.000".
+      final s = p.formatChange(1.0250, 1.0254);
+      expect(s, '0.000');
+      expect(s.startsWith('-'), isFalse);
+    });
+
+    test('tiny positive delta that rounds to zero is unsigned', () {
+      final s = p.formatChange(1.0254, 1.0250);
+      expect(s, '0.000');
+      expect(s.startsWith('+'), isFalse);
+    });
+  });
 }

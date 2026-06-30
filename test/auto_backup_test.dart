@@ -167,6 +167,27 @@ void main() {
       expect(recorded, greaterThan(twoDaysAgo.millisecondsSinceEpoch));
     });
 
+    test('concurrent calls share one in-flight run (single-flight)', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      // Two calls fired before the first completes must reuse the same future
+      // rather than each starting (and writing) a second overlapping backup.
+      final f1 = runAutoBackupIfDue(db);
+      final f2 = runAutoBackupIfDue(db);
+      expect(identical(f1, f2), isTrue);
+      await Future.wait([f1, f2]);
+
+      expect((await listAutoBackups()).length, 1);
+
+      // Once the run has finished the guard is cleared, so a later call starts a
+      // fresh future (it returns quickly here since a backup is no longer due).
+      final f3 = runAutoBackupIfDue(db);
+      expect(identical(f3, f1), isFalse);
+      await f3;
+    });
+
     test('respects a weekly interval (1 day not enough)', () async {
       final db = newDb();
       addTearDown(db.close);
