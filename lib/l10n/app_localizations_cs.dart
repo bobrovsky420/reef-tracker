@@ -21,6 +21,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get manageParameters => 'Spravovat parametry';
 
   @override
+  String get moreOptions => 'Další možnosti';
+
+  @override
   String get compareView => 'Porovnat grafy';
 
   @override

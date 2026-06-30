@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageParameters => 'Manage parameters';
 
   @override
+  String get moreOptions => 'More options';
+
+  @override
   String get compareView => 'Compare graphs';
 
   @override

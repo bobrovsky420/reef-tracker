@@ -128,6 +128,12 @@ abstract class AppLocalizations {
   /// **'Manage parameters'**
   String get manageParameters;
 
+  /// No description provided for @moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get moreOptions;
+
   /// No description provided for @compareView.
   ///
   /// In en, this message translates to:

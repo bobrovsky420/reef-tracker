@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guide to whether the two are being dosed in step) and **Mg : Alk**. Like the
   existing ratios they appear on the dashboard with health zones and editable
   per-tank bounds.
+- The Parameters screen's overflow (⋮) menu now has a descriptive tooltip
+  ("More options") for clarity and screen-reader accessibility, matching the
+  tooltips already present on the top-bar action icons.
 
 ## [0.11.1] - 2026-06-29
 

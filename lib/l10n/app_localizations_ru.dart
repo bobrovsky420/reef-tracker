@@ -21,6 +21,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get manageParameters => 'Управление параметрами';
 
   @override
+  String get moreOptions => 'Ещё';
+
+  @override
   String get compareView => 'Сравнить графики';
 
   @override

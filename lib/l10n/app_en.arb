@@ -6,6 +6,7 @@
 
   "settings": "Settings",
   "manageParameters": "Manage parameters",
+  "moreOptions": "More options",
   "compareView": "Compare graphs",
   "gridView": "Grid view",
   "addReading": "Add reading",

@@ -38,6 +38,7 @@ class ManageParametersScreen extends ConsumerWidget {
         title: Text(l.parameters),
         actions: [
           PopupMenuButton<String>(
+            tooltip: l.moreOptions,
             onSelected: (v) async {
               if (v == 'preset') {
                 await _confirmApplyPreset(context, ref, tank.id, type);
