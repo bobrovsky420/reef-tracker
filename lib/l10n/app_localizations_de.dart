@@ -45,6 +45,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wähle, welche Wasserparameter verfolgt werden, und lege ihre Zielbereiche fest.';
 
   @override
+  String get tourDoseCalcTitle => 'Dosierungsrechner';
+
+  @override
+  String get tourDoseCalcDesc =>
+      'Öffne im Tab „Dosierung“ den Rechner, um die Tagesdosis zu schätzen, die ein Element stabil hält.';
+
+  @override
   String get tourNext => 'Weiter';
 
   @override

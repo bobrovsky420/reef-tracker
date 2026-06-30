@@ -170,6 +170,18 @@ abstract class AppLocalizations {
   /// **'Choose which water parameters to track and set their target ranges.'**
   String get tourParamsDesc;
 
+  /// No description provided for @tourDoseCalcTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose calculator'**
+  String get tourDoseCalcTitle;
+
+  /// No description provided for @tourDoseCalcDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'On the Dosing tab, open the calculator to estimate the daily dose that keeps an element steady.'**
+  String get tourDoseCalcDesc;
+
   /// No description provided for @tourNext.
   ///
   /// In en, this message translates to:

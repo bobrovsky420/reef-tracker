@@ -45,6 +45,13 @@ class AppLocalizationsCs extends AppLocalizations {
       'Vyberte, které parametry vody sledovat, a nastavte jejich cílové rozsahy.';
 
   @override
+  String get tourDoseCalcTitle => 'Kalkulačka dávkování';
+
+  @override
+  String get tourDoseCalcDesc =>
+      'Na kartě Dávkování otevřete kalkulačku pro odhad denní dávky, která udrží prvek stabilní.';
+
+  @override
   String get tourNext => 'Další';
 
   @override

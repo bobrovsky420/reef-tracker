@@ -13,6 +13,8 @@
   "tourCompareDesc": "Switch between the parameter cards and stacked comparison graphs.",
   "tourParamsTitle": "Manage parameters",
   "tourParamsDesc": "Choose which water parameters to track and set their target ranges.",
+  "tourDoseCalcTitle": "Dose calculator",
+  "tourDoseCalcDesc": "On the Dosing tab, open the calculator to estimate the daily dose that keeps an element steady.",
   "tourNext": "Next",
   "tourDone": "Got it",
   "tourSkip": "Skip",

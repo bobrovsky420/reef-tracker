@@ -13,6 +13,8 @@
   "tourCompareDesc": "Přepínejte mezi kartami parametrů a souhrnnými grafy.",
   "tourParamsTitle": "Správa parametrů",
   "tourParamsDesc": "Vyberte, které parametry vody sledovat, a nastavte jejich cílové rozsahy.",
+  "tourDoseCalcTitle": "Kalkulačka dávkování",
+  "tourDoseCalcDesc": "Na kartě Dávkování otevřete kalkulačku pro odhad denní dávky, která udrží prvek stabilní.",
   "tourNext": "Další",
   "tourDone": "Rozumím",
   "tourSkip": "Přeskočit",

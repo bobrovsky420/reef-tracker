@@ -45,6 +45,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выберите, какие параметры воды отслеживать, и задайте их целевые диапазоны.';
 
   @override
+  String get tourDoseCalcTitle => 'Калькулятор дозировки';
+
+  @override
+  String get tourDoseCalcDesc =>
+      'На вкладке «Дозирование» откройте калькулятор, чтобы оценить суточную дозу, удерживающую элемент стабильным.';
+
+  @override
   String get tourNext => 'Далее';
 
   @override

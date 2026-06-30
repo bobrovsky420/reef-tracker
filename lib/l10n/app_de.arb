@@ -13,6 +13,8 @@
   "tourCompareDesc": "Wechsle zwischen den Parameter-Karten und gestapelten Vergleichsgraphen.",
   "tourParamsTitle": "Parameter verwalten",
   "tourParamsDesc": "Wähle, welche Wasserparameter verfolgt werden, und lege ihre Zielbereiche fest.",
+  "tourDoseCalcTitle": "Dosierungsrechner",
+  "tourDoseCalcDesc": "Öffne im Tab „Dosierung“ den Rechner, um die Tagesdosis zu schätzen, die ein Element stabil hält.",
   "tourNext": "Weiter",
   "tourDone": "Verstanden",
   "tourSkip": "Überspringen",

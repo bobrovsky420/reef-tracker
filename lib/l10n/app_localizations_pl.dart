@@ -45,6 +45,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'Wybierz, które parametry wody śledzić, i ustaw ich docelowe zakresy.';
 
   @override
+  String get tourDoseCalcTitle => 'Kalkulator dawkowania';
+
+  @override
+  String get tourDoseCalcDesc =>
+      'Na karcie Dozowanie otwórz kalkulator, aby oszacować dzienną dawkę utrzymującą stabilny poziom pierwiastka.';
+
+  @override
   String get tourNext => 'Dalej';
 
   @override

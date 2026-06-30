@@ -30,14 +30,23 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   bool _compare = false;
 
   // First-run feature tour (showcaseview). Each key tags a top-bar element the
-  // tour spotlights, in order: tank selector → compare toggle → manage params.
+  // tour spotlights. The dose-calculator icon only exists on the Dosing tab, so
+  // the tour runs in two phases: phase 1 (tank → compare → manage params) on the
+  // Measurements tab, then it switches to the Dosing tab for phase 2 (the dose
+  // calculator) as the final step.
   final GlobalKey _tankTourKey = GlobalKey();
   final GlobalKey _compareTourKey = GlobalKey();
   final GlobalKey _paramsTourKey = GlobalKey();
+  final GlobalKey _doseCalcTourKey = GlobalKey();
 
   /// Guards against re-triggering the tour on every rebuild within a session.
   /// Reset when the "seen" flag flips back to false (a replay request).
   bool _tourStarted = false;
+
+  /// Which leg of the tour is running: 0 = idle, 1 = Measurements-tab steps,
+  /// 2 = the dose-calculator step on the Dosing tab. Drives the tab switch in
+  /// [onFinish] and the return to Measurements when the tour ends.
+  int _tourPhase = 0;
 
   @override
   void initState() {
@@ -52,6 +61,31 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         alignment: MainAxisAlignment.spaceBetween,
         actionGap: 16,
       ),
+      // Completing phase 1 switches to the Dosing tab and showcases the dose
+      // calculator; completing phase 2 ends the tour and returns to Measurements.
+      onFinish: () {
+        if (!mounted) return;
+        if (_tourPhase == 1) {
+          _tourPhase = 2;
+          setState(() => _index = 2);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            ShowcaseView.get().startShowCase(
+              [_doseCalcTourKey],
+              delay: const Duration(milliseconds: 350),
+            );
+          });
+        } else {
+          _tourPhase = 0;
+          setState(() => _index = 0);
+        }
+      },
+      // Skipping returns to Measurements if we'd already switched to Dosing.
+      onDismiss: (_) {
+        if (!mounted) return;
+        if (_tourPhase == 2) setState(() => _index = 0);
+        _tourPhase = 0;
+      },
     );
   }
 
@@ -61,20 +95,23 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     super.dispose();
   }
 
-  /// Starts the top-bar tour once the relevant targets are on screen, and marks
-  /// it seen so it never auto-runs again. Targets only exist on the Measurements
-  /// tab, so we gate on [_index] == 0.
+  /// Starts the top-bar tour once a tank exists, and marks it seen so it never
+  /// auto-runs again. Phase-1 targets (the compare toggle) only exist on the
+  /// Measurements tab, so we force [_index] back to it before starting — this
+  /// also makes "Replay tour" work no matter which tab was last open.
   void _maybeStartTour(bool hasTanks) {
     final seen = ref.watch(tourSeenProvider).value ?? true;
     // A replay resets the flag to false; allow the tour to fire again.
     ref.listen(tourSeenProvider, (_, next) {
       if (next.value == false) _tourStarted = false;
     });
-    if (seen || !hasTanks || _index != 0 || _tourStarted) return;
+    if (seen || !hasTanks || _tourStarted) return;
     _tourStarted = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(dbProvider).setSetting(kTourSeenKey, 'true');
+      _tourPhase = 1;
+      if (_index != 0) setState(() => _index = 0);
       ShowcaseView.get().startShowCase(
         [_tankTourKey, _compareTourKey, _paramsTourKey],
         delay: const Duration(milliseconds: 300),
@@ -150,18 +187,25 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 onPressed: () => setState(() => _compare = !_compare),
               ),
             ),
-          // Dose calculator, contextual to the Dosing tab.
+          // Dose calculator, contextual to the Dosing tab. The tour switches to
+          // this tab to spotlight it as its final step.
           if (hasTanks && _index == 2)
-            IconButton(
-              tooltip: l.doseCalcTitle,
-              icon: const Icon(Icons.calculate_outlined),
-              onPressed: () => context.push('/dosing/calculator'),
+            tourStep(
+              _doseCalcTourKey,
+              l.tourDoseCalcTitle,
+              l.tourDoseCalcDesc,
+              l.tourDone,
+              IconButton(
+                tooltip: l.doseCalcTitle,
+                icon: const Icon(Icons.calculate_outlined),
+                onPressed: () => context.push('/dosing/calculator'),
+              ),
             ),
           tourStep(
             _paramsTourKey,
             l.tourParamsTitle,
             l.tourParamsDesc,
-            l.tourDone,
+            l.tourNext,
             IconButton(
               tooltip: l.manageParameters,
               icon: const Icon(Icons.tune),

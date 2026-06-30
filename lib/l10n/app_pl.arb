@@ -13,6 +13,8 @@
   "tourCompareDesc": "Przełączaj między kartami parametrów a zbiorczymi wykresami.",
   "tourParamsTitle": "Zarządzanie parametrami",
   "tourParamsDesc": "Wybierz, które parametry wody śledzić, i ustaw ich docelowe zakresy.",
+  "tourDoseCalcTitle": "Kalkulator dawkowania",
+  "tourDoseCalcDesc": "Na karcie Dozowanie otwórz kalkulator, aby oszacować dzienną dawkę utrzymującą stabilny poziom pierwiastka.",
   "tourNext": "Dalej",
   "tourDone": "Rozumiem",
   "tourSkip": "Pomiń",
