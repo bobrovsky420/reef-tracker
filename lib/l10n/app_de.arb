@@ -47,6 +47,7 @@
   "aquariums": "Aquarien",
   "noAquariumsYet": "Noch keine Aquarien.",
   "makeActive": "Als aktiv festlegen",
+  "active": "Aktiv",
   "edit": "Bearbeiten",
   "deleteTankTitle": "„{name}“ löschen?",
   "deleteTankBody": "Dadurch werden das Aquarium und alle seine Messungen dauerhaft gelöscht.",

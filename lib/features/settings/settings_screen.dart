@@ -230,7 +230,15 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.waves),
             title: Text(l.aquariums),
-            trailing: Text('${tanks.length}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${tanks.length}'),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+            onTap: () => context.push('/tanks'),
           ),
           ListTile(
             leading: const Icon(Icons.help_outline),

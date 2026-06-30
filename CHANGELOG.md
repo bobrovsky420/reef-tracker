@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2026-06-30
+
+### Changed
+- The active tank on the Manage Aquariums screen is now marked with an "Active"
+  badge next to its name; its icon is the default colour instead of being tinted
+  blue, matching the other list icons.
+- The Aquariums row in Settings now opens the Manage Aquariums screen.
+
 ## [0.14.0] - 2026-06-30
 
 ### Added

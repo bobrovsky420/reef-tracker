@@ -52,6 +52,10 @@
   "aquariums": "Aquariums",
   "noAquariumsYet": "No aquariums yet.",
   "makeActive": "Make active",
+  "active": "Active",
+  "@active": {
+    "description": "Badge label marking the currently active aquarium in the list."
+  },
   "edit": "Edit",
   "deleteTankTitle": "Delete \"{name}\"?",
   "@deleteTankTitle": { "placeholders": { "name": {} } },

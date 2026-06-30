@@ -152,6 +152,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get makeActive => 'Сделать активным';
 
   @override
+  String get active => 'Активный';
+
+  @override
   String get edit => 'Изменить';
 
   @override

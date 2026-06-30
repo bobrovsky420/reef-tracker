@@ -151,6 +151,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get makeActive => 'Make active';
 
   @override
+  String get active => 'Active';
+
+  @override
   String get edit => 'Edit';
 
   @override

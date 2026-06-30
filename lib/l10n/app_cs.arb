@@ -47,6 +47,7 @@
   "aquariums": "Akvária",
   "noAquariumsYet": "Zatím žádná akvária.",
   "makeActive": "Nastavit jako aktivní",
+  "active": "Aktivní",
   "edit": "Upravit",
   "deleteTankTitle": "Smazat „{name}“?",
   "deleteTankBody": "Tímto trvale smažete akvárium i všechna jeho měření.",

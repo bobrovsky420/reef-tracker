@@ -47,6 +47,7 @@
   "aquariums": "Аквариумы",
   "noAquariumsYet": "Пока нет аквариумов.",
   "makeActive": "Сделать активным",
+  "active": "Активный",
   "edit": "Изменить",
   "deleteTankTitle": "Удалить «{name}»?",
   "deleteTankBody": "Это навсегда удалит аквариум и все его измерения.",

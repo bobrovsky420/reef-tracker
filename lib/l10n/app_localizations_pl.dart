@@ -152,6 +152,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get makeActive => 'Ustaw jako aktywne';
 
   @override
+  String get active => 'Aktywne';
+
+  @override
   String get edit => 'Edytuj';
 
   @override

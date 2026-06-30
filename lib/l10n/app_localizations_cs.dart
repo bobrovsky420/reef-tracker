@@ -151,6 +151,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get makeActive => 'Nastavit jako aktivní';
 
   @override
+  String get active => 'Aktivní';
+
+  @override
   String get edit => 'Upravit';
 
   @override

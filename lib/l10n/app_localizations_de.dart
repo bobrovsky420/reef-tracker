@@ -152,6 +152,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get makeActive => 'Als aktiv festlegen';
 
   @override
+  String get active => 'Aktiv';
+
+  @override
   String get edit => 'Bearbeiten';
 
   @override

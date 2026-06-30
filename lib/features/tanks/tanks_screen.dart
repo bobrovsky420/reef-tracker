@@ -37,9 +37,16 @@ class TanksScreen extends ConsumerWidget {
               final type = SetupType.fromName(t.setupType);
               final isActive = t.id == active?.id;
               return ListTile(
-                leading: Icon(Icons.waves,
-                    color: isActive ? Theme.of(context).colorScheme.primary : null),
-                title: Text(t.name),
+                leading: const Icon(Icons.waves),
+                title: Row(
+                  children: [
+                    Flexible(child: Text(t.name)),
+                    if (isActive) ...[
+                      const SizedBox(width: 8),
+                      _ActiveBadge(label: l.active),
+                    ],
+                  ],
+                ),
                 subtitle: Text([
                   l.setupLabel(type),
                   if (t.volumeLiters != null)
@@ -104,6 +111,32 @@ class TanksScreen extends ConsumerWidget {
     if (ok ?? false) {
       await ref.read(dbProvider).deleteTank(tank.id);
     }
+  }
+}
+
+/// Small pill marking the currently active aquarium in the list.
+class _ActiveBadge extends StatelessWidget {
+  const _ActiveBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: scheme.onPrimaryContainer,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
   }
 }
 

@@ -356,6 +356,12 @@ abstract class AppLocalizations {
   /// **'Make active'**
   String get makeActive;
 
+  /// Badge label marking the currently active aquarium in the list.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
   /// No description provided for @edit.
   ///
   /// In en, this message translates to:
