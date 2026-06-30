@@ -301,7 +301,13 @@ class AppDatabase extends _$AppDatabase {
   /// Whether [table] currently has a column named [column].
   Future<bool> _columnExists(String table, String column) async {
     if (!await _tableExists(table)) return false;
-    final rows = await customSelect("PRAGMA table_info('$table')").get();
+    // Use the parameterized `pragma_table_info()` table-valued function rather
+    // than interpolating the table name into a `PRAGMA table_info('...')`
+    // string, so the identifier is bound, not concatenated into SQL.
+    final rows = await customSelect(
+      'SELECT name FROM pragma_table_info(?)',
+      variables: [Variable<String>(table)],
+    ).get();
     return rows.any((r) => r.read<String>('name') == column);
   }
 
