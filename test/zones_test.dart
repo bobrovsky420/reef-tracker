@@ -51,4 +51,30 @@ void main() {
       expect(greenLowOnly.classify(5), Zone.amber); // below green, no amberLow
     });
   });
+
+  group('ZoneBounds.copyWith / isEmpty', () {
+    test('isEmpty only when every bound is null', () {
+      expect(const ZoneBounds().isEmpty, isTrue);
+      expect(const ZoneBounds(greenLow: 7).isEmpty, isFalse);
+    });
+
+    test('copyWith overrides only the supplied bounds', () {
+      const b = ZoneBounds(
+          amberLow: 7, greenLow: 7.5, greenHigh: 8.5, amberHigh: 9);
+      final c = b.copyWith(greenHigh: 9.0);
+      expect(c.amberLow, 7);
+      expect(c.greenLow, 7.5);
+      expect(c.greenHigh, 9.0);
+      expect(c.amberHigh, 9);
+    });
+  });
+
+  group('ZoneVisuals', () {
+    test('every zone maps to a distinct colour and icon', () {
+      final colors = Zone.values.map((z) => z.color).toSet();
+      final icons = Zone.values.map((z) => z.icon).toSet();
+      expect(colors.length, Zone.values.length);
+      expect(icons.length, Zone.values.length);
+    });
+  });
 }

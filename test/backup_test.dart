@@ -1,6 +1,24 @@
+import 'dart:io';
+
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/setup_type.dart';
+
+/// Routes path_provider (used by [importBackup]'s rehearsal restore) to a temp
+/// folder so it works under `flutter test`.
+class _FakePathProvider extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
+  _FakePathProvider(this.root);
+  final String root;
+  @override
+  Future<String?> getTemporaryPath() async => root;
+  @override
+  Future<String?> getApplicationDocumentsPath() async => root;
+}
 
 void main() {
   group('backup encode/decode', () {
@@ -382,6 +400,134 @@ void main() {
       final d = dataWith(tanks: [tank(1), tank(1)]);
       expect(() => validateBackup(d, appSchemaVersion: 10),
           rejectedWith(BackupRejection.inconsistent));
+    });
+  });
+
+  group('full database round-trip', () {
+    late Directory tempDir;
+
+    setUp(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      tempDir = await Directory.systemTemp.createTemp('reeftracker-bk-');
+      PathProviderPlatform.instance = _FakePathProvider(tempDir.path);
+    });
+    tearDown(() async {
+      if (await tempDir.exists()) await tempDir.delete(recursive: true);
+    });
+
+    AppDatabase newDb() => AppDatabase(NativeDatabase.memory());
+
+    /// Seeds a database with a representative spread of data across tables.
+    Future<int> seed(AppDatabase db) async {
+      final id =
+          await db.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      await db.insertReadingGroup(
+        tankId: id,
+        takenAt: DateTime(2026, 1, 1, 8),
+        note: 'morning',
+        values: const [
+          (paramKey: 'ph', value: 8.1),
+          (paramKey: 'alkalinity', value: 8.5),
+        ],
+      );
+      await db.insertWaterChange(
+          tankId: id, changedAt: DateTime(2026, 1, 2), amountLiters: 25);
+      await db.insertCarbonChange(
+          tankId: id, changedAt: DateTime(2026, 1, 3), grams: 200);
+      await db.insertEquipmentCleaning(
+          tankId: id, cleanedAt: DateTime(2026, 1, 4), note: 'skimmer');
+      await db.setRatioBounds(id, 'mgca',
+          amberLow: 2.6, greenLow: 2.9, greenHigh: 3.3, amberHigh: 3.6);
+      await db.setSetting('temp_unit', 'fahrenheit');
+      return id;
+    }
+
+    test('encode from DB -> decode -> import reproduces every table', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      final id = await seed(src);
+
+      final json = await encodeBackupFromDb(src);
+      final data = decodeBackup(json);
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      await importBackup(dst, data);
+
+      // Tank identity and ids preserved.
+      final tanks = await dst.getAllTanks();
+      expect(tanks.length, 1);
+      expect(tanks.single.id, id);
+      expect(tanks.single.name, 'Reef');
+
+      // Counts match the source across the data tables.
+      expect((await dst.getAllReadings()).length,
+          (await src.getAllReadings()).length);
+      expect((await dst.getAllWaterChanges()).length, 1);
+      expect((await dst.getAllCarbonChanges()).length, 1);
+      expect((await dst.getAllEquipmentCleanings()).length, 1);
+      expect((await dst.getAllRatioVisibilities()).length, 1);
+      expect((await dst.getAllTrackedParameters()).length,
+          (await src.getAllTrackedParameters()).length);
+      expect(await dst.getSetting('temp_unit'), 'fahrenheit');
+    });
+
+    test('import replaces existing data rather than appending', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src);
+      final data = decodeBackup(await encodeBackupFromDb(src));
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      // Pre-existing tank that must be wiped by the restore.
+      await dst.createTankWithPreset(name: 'Old', type: SetupType.sps);
+
+      await importBackup(dst, data);
+
+      final tanks = await dst.getAllTanks();
+      expect(tanks.length, 1);
+      expect(tanks.single.name, 'Reef');
+    });
+
+    test('imports an older backup missing later sections', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src);
+      // Drop a table that older app versions did not export.
+      final json = (await encodeBackupFromDb(src)).replaceFirst(
+          RegExp(r',\s*"dosingEntries": \[.*?\]', dotAll: true), '');
+      final data = decodeBackup(json);
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      await importBackup(dst, data);
+
+      expect(await dst.getAllDosingEntries(), isEmpty);
+      expect((await dst.getAllTanks()).length, 1);
+    });
+
+    test('rejects a backup whose child rows reference a missing tank',
+        () async {
+      final data = BackupData(
+        schemaVersion: 1,
+        tanks: const [],
+        params: [
+          TrackedParametersCompanion.insert(
+              tankId: 99, paramKey: 'ph', unit: 'pH'),
+        ],
+        readings: const [],
+        waterChanges: const [],
+        carbonChanges: const [],
+        equipmentCleanings: const [],
+        ratioVisibilities: const [],
+        dosingEntries: const [],
+        settings: const [],
+      );
+      final dst = newDb();
+      addTearDown(dst.close);
+      await expectLater(
+          importBackup(dst, data), throwsA(isA<InvalidBackupException>()));
     });
   });
 }
