@@ -1003,6 +1003,13 @@ class AppDatabase extends _$AppDatabase {
   /// Replaces the entire database contents with the supplied rows, preserving
   /// the original primary keys (so foreign-key links stay intact). Runs in a
   /// single transaction: on any error nothing is changed.
+  ///
+  /// [preserveSettingKeys] are settings that describe *this* device/user rather
+  /// than the aquarium data (units, language, the active-tank selection, …).
+  /// Their current values are left untouched and any matching rows in
+  /// [settingRows] are dropped, so restoring a backup from another device never
+  /// silently overwrites the local preferences (#18). Callers pass
+  /// `SettingKey.deviceLocalKeys`.
   Future<void> restoreFromBackup({
     required List<TanksCompanion> tankRows,
     required List<TrackedParametersCompanion> paramRows,
@@ -1013,7 +1020,11 @@ class AppDatabase extends _$AppDatabase {
     required List<RatioVisibilitiesCompanion> ratioVisibilityRows,
     required List<DosingEntriesCompanion> dosingEntryRows,
     required List<SettingsCompanion> settingRows,
+    Set<String> preserveSettingKeys = const {},
   }) async {
+    final incomingSettings = settingRows
+        .where((r) => !preserveSettingKeys.contains(r.key.value))
+        .toList();
     await transaction(() async {
       // Delete children before parents to satisfy foreign keys.
       await delete(readings).go();
@@ -1023,7 +1034,15 @@ class AppDatabase extends _$AppDatabase {
       await delete(ratioVisibilities).go();
       await delete(dosingEntries).go();
       await delete(trackedParameters).go();
-      await delete(settings).go();
+      // Preserve device-local preferences: wipe only the settings the restore
+      // is allowed to replace.
+      if (preserveSettingKeys.isEmpty) {
+        await delete(settings).go();
+      } else {
+        await (delete(settings)
+              ..where((s) => s.key.isNotIn(preserveSettingKeys.toList())))
+            .go();
+      }
       await delete(tanks).go();
       // Insert parents before children, preserving ids.
       await batch((b) {
@@ -1035,7 +1054,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(equipmentCleanings, equipmentCleaningRows);
         b.insertAll(ratioVisibilities, ratioVisibilityRows);
         b.insertAll(dosingEntries, dosingEntryRows);
-        b.insertAll(settings, settingRows);
+        b.insertAll(settings, incomingSettings);
       });
     });
   }

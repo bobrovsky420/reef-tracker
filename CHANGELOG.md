@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   logs, and dosing) now load faster and stay snappy as your log grows, thanks to
   new database indexes on the most-used lookups.
 
+### Fixed
+- Restoring a backup no longer overwrites **this device's own preferences**
+  (language, units, active aquarium, chart range, trend/health display, and the
+  automatic-backup settings). Only your aquarium data is replaced, so importing a
+  backup — even one made on another device — keeps your local settings intact.
+
 ## [0.15.2] - 2026-07-01
 
 ### Added

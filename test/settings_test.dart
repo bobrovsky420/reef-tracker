@@ -1,0 +1,68 @@
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/settings.dart';
+import 'package:reeftracker/domain/trend.dart';
+import 'package:reeftracker/domain/units.dart';
+
+void main() {
+  late AppDatabase db;
+  late AppSettings settings;
+
+  setUp(() {
+    db = AppDatabase(NativeDatabase.memory());
+    settings = AppSettings(db);
+  });
+  tearDown(() => db.close());
+
+  group('AppSettings typed accessors', () {
+    test('typed setters/getters round-trip through the store', () async {
+      await settings.setTempUnit(TempUnit.fahrenheit);
+      await settings.setTrendWindow(9);
+      await settings.setAutoBackupInterval(AutoBackupInterval.weekly);
+      await settings.setHealthDisplay(HealthDisplay.badge);
+      await settings.setTourSeen(true);
+
+      expect(await settings.watchTempUnit().first, TempUnit.fahrenheit);
+      expect(await settings.watchTrendWindow().first, 9);
+      expect(await settings.readAutoBackupInterval(), AutoBackupInterval.weekly);
+      expect(await settings.watchHealthDisplay().first, HealthDisplay.badge);
+      expect(await settings.watchTourSeen().first, isTrue);
+      // The typed setter writes under the canonical storage key.
+      expect(await db.getSetting(kTempUnitKey), 'fahrenheit');
+    });
+
+    test('unset keys decode to their single-sourced defaults', () async {
+      expect(await settings.watchTempUnit().first, TempUnit.celsius);
+      expect(await settings.watchLocaleCode().first, kDefaultLocaleCode);
+      expect(await settings.watchChartRange().first, kDefaultChartRange);
+      expect(await settings.watchTrendEnabled().first, kTrendDefaultEnabled);
+      expect(await settings.watchTrendWindow().first, kTrendDefaultWindow);
+      expect(await settings.watchTrendHorizon().first, kTrendDefaultHorizon);
+      expect(await settings.readAutoBackupEnabled(), kAutoBackupDefaultEnabled);
+      expect(await settings.readAutoBackupKeep(), kAutoBackupDefaultKeep);
+      expect(await settings.watchLastBackupAt().first, isNull);
+    });
+
+    test('last-backup timestamp round-trips to the minute', () async {
+      final when = DateTime.fromMillisecondsSinceEpoch(1751000000000);
+      await settings.setLastBackupAt(when);
+      expect(await settings.readLastBackupAt(), when);
+    });
+  });
+
+  group('SettingKey registry', () {
+    test('deviceLocalKeys covers every current key (all are preferences)', () {
+      // Today the Settings table holds only device/user preferences, so every
+      // registered key is device-local (#18). This guards against a new domain
+      // setting being added without deciding its restore behaviour.
+      expect(SettingKey.deviceLocalKeys,
+          {for (final k in SettingKey.values) k.storageKey});
+    });
+
+    test('storage keys are unique', () {
+      final keys = SettingKey.values.map((k) => k.storageKey).toList();
+      expect(keys.toSet().length, keys.length);
+    });
+  });
+}

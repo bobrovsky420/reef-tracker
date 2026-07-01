@@ -2,48 +2,34 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../data/auto_backup.dart';
 import '../data/database.dart';
+import '../data/settings.dart';
 import '../domain/health_score.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 
-const kTempUnitKey = 'temp_unit';
-const kSalinityUnitKey = 'salinity_unit';
-const kVolumeUnitKey = 'volume_unit';
-const kLocaleKey = 'locale';
-const kChartRangeKey = 'chart_range';
-const kTrendEnabledKey = 'trend_enabled';
-const kTrendWindowKey = 'trend_window';
-const kTrendHorizonKey = 'trend_horizon';
-const kHealthDisplayKey = 'health_display';
+// The settings keys, the [HealthDisplay] enum, and the typed [Settings] facade
+// live in `data/settings.dart`. Re-export the symbols widgets reach through this
+// file so their imports are unchanged.
+export '../data/settings.dart'
+    show
+        HealthDisplay,
+        AppSettings,
+        SettingKey,
+        kTourSeenKey,
+        kChartRangeKey,
+        kLocaleKey,
+        kTempUnitKey,
+        kSalinityUnitKey,
+        kVolumeUnitKey,
+        kHealthDisplayKey,
+        kTrendEnabledKey,
+        kTrendWindowKey,
+        kTrendHorizonKey;
 
-/// How much of the tank-health feature to surface on the dashboard.
-enum HealthDisplay {
-  /// Hide both the dashboard card and the app-bar badge.
-  off,
-
-  /// Show only the compact app-bar badge, no dashboard card.
-  badge,
-
-  /// Show both the app-bar badge and the dashboard card (default).
-  both;
-
-  /// Parses a stored setting value, defaulting to [both] when missing/unknown.
-  static HealthDisplay fromName(String? name) {
-    for (final v in HealthDisplay.values) {
-      if (v.name == name) return v;
-    }
-    return HealthDisplay.both;
-  }
-
-  bool get showBadge => this != HealthDisplay.off;
-  bool get showCard => this == HealthDisplay.both;
-}
-
-/// Whether the one-time top-bar feature tour has already been shown. Bump the
-/// version suffix if a future tour should re-run for existing users.
-const kTourSeenKey = 'tour_v1_seen';
+/// Typed facade over the settings key/value store — the single place that
+/// encodes/decodes settings and owns their defaults (see [Settings]).
+final settingsProvider = Provider<AppSettings>((ref) => AppSettings(ref.watch(dbProvider)));
 
 /// The app's version + build number from the running package (e.g. "0.3.1+4"),
 /// so the About box always reflects the actual installed build.
@@ -142,22 +128,16 @@ final paramReadingsProvider =
 });
 
 /// Preferred temperature display unit (default Celsius).
-final tempUnitProvider = StreamProvider<TempUnit>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kTempUnitKey)
-    .map((v) => TempUnit.fromName(v)));
+final tempUnitProvider = StreamProvider<TempUnit>(
+    (ref) => ref.watch(settingsProvider).watchTempUnit());
 
 /// Preferred salinity display unit (default ppt).
-final salinityUnitProvider = StreamProvider<SalinityUnit>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kSalinityUnitKey)
-    .map((v) => SalinityUnit.fromName(v)));
+final salinityUnitProvider = StreamProvider<SalinityUnit>(
+    (ref) => ref.watch(settingsProvider).watchSalinityUnit());
 
 /// Preferred volume display unit (default litres).
-final volumeUnitProvider = StreamProvider<VolumeUnit>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kVolumeUnitKey)
-    .map((v) => VolumeUnit.fromName(v)));
+final volumeUnitProvider = StreamProvider<VolumeUnit>(
+    (ref) => ref.watch(settingsProvider).watchVolumeUnit());
 
 /// Combined unit preferences, reactive to settings changes.
 final unitPrefsProvider = Provider<UnitPrefs>((ref) {
@@ -170,16 +150,12 @@ final unitPrefsProvider = Provider<UnitPrefs>((ref) {
 /// Whether the one-time top-bar feature tour has already been shown. Unset
 /// (a fresh install) reads as `false` so the tour runs once; the "Replay tour"
 /// settings action resets it to `'false'` to trigger it again.
-final tourSeenProvider = StreamProvider<bool>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kTourSeenKey)
-    .map((v) => v == 'true'));
+final tourSeenProvider = StreamProvider<bool>(
+    (ref) => ref.watch(settingsProvider).watchTourSeen());
 
 /// Stored language code ('system' / 'en' / 'cs'), defaulting to 'system'.
-final localeCodeProvider = StreamProvider<String>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kLocaleKey)
-    .map((v) => v ?? 'system'));
+final localeCodeProvider = StreamProvider<String>(
+    (ref) => ref.watch(settingsProvider).watchLocaleCode());
 
 /// The locale override for MaterialApp, or null to follow the system locale.
 final localeProvider = Provider<Locale?>((ref) {
@@ -189,62 +165,42 @@ final localeProvider = Provider<Locale?>((ref) {
 
 /// The history-chart time range, stored as the range's label ('7d', '30d',
 /// '90d', 'All'). Shared across every parameter graph. Defaults to '30d'.
-final chartRangeProvider = StreamProvider<String>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kChartRangeKey)
-    .map((v) => v ?? '30d'));
+final chartRangeProvider = StreamProvider<String>(
+    (ref) => ref.watch(settingsProvider).watchChartRange());
 
 /// Whether automatic backups are enabled (default on).
-final autoBackupEnabledProvider = StreamProvider<bool>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kAutoBackupEnabledKey)
-    .map((v) => v == null ? kAutoBackupDefaultEnabled : v == 'true'));
+final autoBackupEnabledProvider = StreamProvider<bool>(
+    (ref) => ref.watch(settingsProvider).watchAutoBackupEnabled());
 
 /// The automatic-backup frequency, defaulting to daily.
-final autoBackupIntervalProvider = StreamProvider<AutoBackupInterval>((ref) =>
-    ref
-        .watch(dbProvider)
-        .watchSetting(kAutoBackupIntervalKey)
-        .map(AutoBackupInterval.fromName));
+final autoBackupIntervalProvider = StreamProvider<AutoBackupInterval>(
+    (ref) => ref.watch(settingsProvider).watchAutoBackupInterval());
 
 /// When the most recent automatic or manual backup completed, or null if none
-/// has run yet. Reacts to [kLastAutoBackupAtKey], so it refreshes as soon as a
+/// has run yet. Reacts to the stored timestamp, so it refreshes as soon as a
 /// backup is written.
-final lastBackupAtProvider = StreamProvider<DateTime?>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kLastAutoBackupAtKey)
-    .map((v) {
-      final ms = int.tryParse(v ?? '');
-      return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
-    }));
+final lastBackupAtProvider = StreamProvider<DateTime?>(
+    (ref) => ref.watch(settingsProvider).watchLastBackupAt());
 
 /// Whether recent-trend detection / forecasts are shown (default on).
-final trendEnabledProvider = StreamProvider<bool>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kTrendEnabledKey)
-    .map((v) => v == null ? kTrendDefaultEnabled : v == 'true'));
+final trendEnabledProvider = StreamProvider<bool>(
+    (ref) => ref.watch(settingsProvider).watchTrendEnabled());
 
 /// How much of the tank-health feature to show (badge + card / badge only /
 /// off). Defaults to [HealthDisplay.both].
-final healthDisplayProvider = StreamProvider<HealthDisplay>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kHealthDisplayKey)
-    .map(HealthDisplay.fromName));
+final healthDisplayProvider = StreamProvider<HealthDisplay>(
+    (ref) => ref.watch(settingsProvider).watchHealthDisplay());
 
 /// Number of most-recent readings that define a trend (also the minimum count
 /// before a trend is shown). Defaults to [kTrendDefaultWindow].
-final trendWindowProvider = StreamProvider<int>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kTrendWindowKey)
-    .map((v) => int.tryParse(v ?? '') ?? kTrendDefaultWindow));
+final trendWindowProvider = StreamProvider<int>(
+    (ref) => ref.watch(settingsProvider).watchTrendWindow());
 
 /// Forecast horizon in days: a projected zone crossing is shown as a dashboard
 /// attention chip only when it falls within this many days. Defaults to
 /// [kTrendDefaultHorizon].
-final trendHorizonProvider = StreamProvider<int>((ref) => ref
-    .watch(dbProvider)
-    .watchSetting(kTrendHorizonKey)
-    .map((v) => int.tryParse(v ?? '') ?? kTrendDefaultHorizon));
+final trendHorizonProvider = StreamProvider<int>(
+    (ref) => ref.watch(settingsProvider).watchTrendHorizon());
 
 /// Recent-trend forecast per parameter for the active tank, keyed by paramKey.
 ///

@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../domain/supplement_catalog.dart';
 import 'database.dart';
+import 'settings.dart';
 
 /// Identifies a ReefTracker backup document and guards against importing
 /// arbitrary JSON files.
@@ -280,6 +281,8 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) => db.restoreFromBac
       ratioVisibilityRows: data.ratioVisibilities,
       dosingEntryRows: data.dosingEntries,
       settingRows: data.settings,
+      // Never overwrite this device's own preferences with the backup's (#18).
+      preserveSettingKeys: SettingKey.deviceLocalKeys,
     );
 
 /// Serializes the entire database to a backup JSON string by reading every

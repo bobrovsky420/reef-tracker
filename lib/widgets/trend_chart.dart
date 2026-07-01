@@ -64,7 +64,7 @@ class ChartRangeSelector extends ConsumerWidget {
         ],
         selected: {range},
         onSelectionChanged: (s) =>
-            ref.read(dbProvider).setSetting(kChartRangeKey, s.first.label),
+            ref.read(settingsProvider).setChartRange(s.first.label),
       ),
     );
   }

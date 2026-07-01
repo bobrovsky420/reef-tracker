@@ -510,7 +510,30 @@ void main() {
       expect((await dst.getAllRatioVisibilities()).length, 1);
       expect((await dst.getAllTrackedParameters()).length,
           (await src.getAllTrackedParameters()).length);
-      expect(await dst.getSetting('temp_unit'), 'fahrenheit');
+      // temp_unit is a device-local preference: the backup's value must NOT be
+      // imported (#18). dst had none, so it stays unset after restore.
+      expect(await dst.getSetting('temp_unit'), isNull);
+    });
+
+    test('restore preserves this device\'s local preferences (#18)', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src); // src stores temp_unit = fahrenheit
+      final data = decodeBackup(await encodeBackupFromDb(src));
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      // This device's own preferences, set before the restore.
+      await dst.setSetting('temp_unit', 'celsius');
+      await dst.setSetting('locale', 'de');
+
+      await importBackup(dst, data);
+
+      // Device-local preferences are untouched — not overwritten by the backup.
+      expect(await dst.getSetting('temp_unit'), 'celsius');
+      expect(await dst.getSetting('locale'), 'de');
+      // …while the aquarium data was restored.
+      expect((await dst.getAllTanks()).length, 1);
     });
 
     test('import replaces existing data rather than appending', () async {

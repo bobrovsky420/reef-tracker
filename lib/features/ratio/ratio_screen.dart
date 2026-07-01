@@ -77,8 +77,8 @@ class RatioScreen extends ConsumerWidget {
                       ],
                       selected: {rangeKey},
                       onSelectionChanged: (s) => ref
-                          .read(dbProvider)
-                          .setSetting(kChartRangeKey, s.first),
+                          .read(settingsProvider)
+                          .setChartRange(s.first),
                     ),
                   ),
                   Expanded(

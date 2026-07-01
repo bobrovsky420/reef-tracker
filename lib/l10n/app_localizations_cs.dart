@@ -672,7 +672,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'Tímto se VŠECHNA stávající data — všechna akvária, parametry a měření a také nastavení aplikace (jazyk, jednotky a předvolby) — nahradí obsahem souboru zálohy. Tuto akci nelze vrátit zpět.';
+      'Tímto se VŠECHNA data akvárií — všechna akvária, parametry a měření — nahradí obsahem souboru zálohy. Nastavení v tomto zařízení (jazyk, jednotky a předvolby) zůstane zachováno. Tuto akci nelze vrátit zpět.';
 
   @override
   String get restore => 'Obnovit';

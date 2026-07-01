@@ -6,38 +6,24 @@ import 'package:path_provider/path_provider.dart';
 
 import 'backup.dart';
 import 'database.dart';
+import 'settings.dart';
 
-/// Settings keys driving the automatic backup feature.
-const kAutoBackupEnabledKey = 'auto_backup_enabled';
-const kAutoBackupIntervalKey = 'auto_backup_interval';
-const kAutoBackupKeepKey = 'auto_backup_keep';
-const kLastAutoBackupAtKey = 'last_auto_backup_at';
-
-/// Defaults applied when the corresponding setting has never been written.
-const bool kAutoBackupDefaultEnabled = true;
-const int kAutoBackupDefaultKeep = 5;
+// The auto-backup settings keys, defaults, and the [AutoBackupInterval] enum now
+// live in the typed [Settings] facade; re-export so existing importers (and
+// tests) that reach them through this library keep working.
+export 'settings.dart'
+    show
+        kAutoBackupEnabledKey,
+        kAutoBackupIntervalKey,
+        kAutoBackupKeepKey,
+        kLastAutoBackupAtKey,
+        kAutoBackupDefaultEnabled,
+        kAutoBackupDefaultKeep,
+        AutoBackupInterval;
 
 /// Filename prefix that distinguishes rotating auto-backups from manually
 /// exported files; also makes lexical sort == chronological sort.
 const String kAutoBackupPrefix = 'reeftracker-auto-';
-
-/// How often an automatic backup is taken (opportunistically, on app launch
-/// or resume — see [runAutoBackupIfDue]).
-enum AutoBackupInterval {
-  daily(Duration(days: 1)),
-  weekly(Duration(days: 7));
-
-  const AutoBackupInterval(this.period);
-
-  /// Minimum time that must elapse between two automatic backups.
-  final Duration period;
-
-  static AutoBackupInterval fromName(String? name) =>
-      AutoBackupInterval.values.firstWhere(
-        (e) => e.name == name,
-        orElse: () => AutoBackupInterval.daily,
-      );
-}
 
 /// Resolves (creating if needed) the on-device folder that holds rotating
 /// automatic backups. It lives under the app documents directory, so it is
@@ -100,8 +86,7 @@ Future<File> writeAutoBackup(
 /// folder as [runAutoBackupIfDue], so it counts against [kAutoBackupKeepKey]
 /// and shows up in the Manage-backups list.
 Future<File> backupNow(AppDatabase db) async {
-  final keep = int.tryParse(await db.getSetting(kAutoBackupKeepKey) ?? '') ??
-      kAutoBackupDefaultKeep;
+  final keep = await AppSettings(db).readAutoBackupKeep();
   final file = await writeAutoBackup(db, keep: keep);
   await _stampLastBackup(db);
   return file;
@@ -109,10 +94,8 @@ Future<File> backupNow(AppDatabase db) async {
 
 /// Records "a backup just completed" so the schedule and the visible
 /// last-backup status share one source of truth.
-Future<void> _stampLastBackup(AppDatabase db) => db.setSetting(
-      kLastAutoBackupAtKey,
-      DateTime.now().millisecondsSinceEpoch.toString(),
-    );
+Future<void> _stampLastBackup(AppDatabase db) =>
+    AppSettings(db).setLastBackupAt(DateTime.now());
 
 /// In-flight guard for [runAutoBackupIfDue]. The launch post-frame callback and
 /// a `resumed` lifecycle event can fire almost simultaneously (e.g. resume right
@@ -133,24 +116,18 @@ Future<void> runAutoBackupIfDue(AppDatabase db) {
 }
 
 Future<void> _runAutoBackupIfDue(AppDatabase db) async {
-  final enabledRaw = await db.getSetting(kAutoBackupEnabledKey);
-  final enabled =
-      enabledRaw == null ? kAutoBackupDefaultEnabled : enabledRaw == 'true';
-  if (!enabled) return;
+  final settings = AppSettings(db);
+  if (!await settings.readAutoBackupEnabled()) return;
 
   // Nothing to protect until the user has created at least one aquarium.
   if ((await db.getAllTanks()).isEmpty) return;
 
-  final lastMillis = int.tryParse(await db.getSetting(kLastAutoBackupAtKey) ?? '');
-  if (lastMillis != null) {
-    final last = DateTime.fromMillisecondsSinceEpoch(lastMillis);
-    final interval =
-        AutoBackupInterval.fromName(await db.getSetting(kAutoBackupIntervalKey));
+  final last = await settings.readLastBackupAt();
+  if (last != null) {
+    final interval = await settings.readAutoBackupInterval();
     if (DateTime.now().difference(last) < interval.period) return;
   }
 
-  final keep = int.tryParse(await db.getSetting(kAutoBackupKeepKey) ?? '') ??
-      kAutoBackupDefaultKeep;
-  await writeAutoBackup(db, keep: keep);
+  await writeAutoBackup(db, keep: await settings.readAutoBackupKeep());
   await _stampLastBackup(db);
 }

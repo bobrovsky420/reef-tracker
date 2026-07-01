@@ -433,7 +433,7 @@ class NoTanksView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final localeCode = ref.watch(localeCodeProvider).value ?? 'system';
-    final db = ref.read(dbProvider);
+    final settings = ref.read(settingsProvider);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -449,7 +449,7 @@ class NoTanksView extends ConsumerWidget {
                 const SizedBox(width: 8),
                 DropdownButton<String>(
                   value: localeCode,
-                  onChanged: (v) => db.setSetting(kLocaleKey, v),
+                  onChanged: (v) => settings.setLocaleCode(v),
                   items: [
                     DropdownMenuItem(
                         value: 'system', child: Text(l.languageSystem)),

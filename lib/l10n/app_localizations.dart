@@ -1289,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupRestoreConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This replaces ALL current data — every aquarium, parameter, and reading, and your app settings (language, units, and preferences) — with the contents of the backup file. This cannot be undone.'**
+  /// **'This replaces ALL your aquarium data — every aquarium, parameter, and reading — with the contents of the backup file. Your settings on this device (language, units, and preferences) are kept. This cannot be undone.'**
   String get backupRestoreConfirmBody;
 
   /// No description provided for @restore.

@@ -674,7 +674,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'Dadurch werden ALLE aktuellen Daten — alle Aquarien, Parameter und Messwerte sowie Ihre App-Einstellungen (Sprache, Einheiten und Präferenzen) — durch den Inhalt der Sicherungsdatei ersetzt. Dies kann nicht rückgängig gemacht werden.';
+      'Dadurch werden ALLE Ihre Aquariendaten — alle Aquarien, Parameter und Messwerte — durch den Inhalt der Sicherungsdatei ersetzt. Ihre Einstellungen auf diesem Gerät (Sprache, Einheiten und Präferenzen) bleiben erhalten. Dies kann nicht rückgängig gemacht werden.';
 
   @override
   String get restore => 'Wiederherstellen';

@@ -246,7 +246,7 @@
   "backupImport": "Restore from backup",
   "backupImportSubtitle": "Replace all data with a backup file",
   "backupRestoreConfirmTitle": "Restore backup?",
-  "backupRestoreConfirmBody": "This replaces ALL current data — every aquarium, parameter, and reading, and your app settings (language, units, and preferences) — with the contents of the backup file. This cannot be undone.",
+  "backupRestoreConfirmBody": "This replaces ALL your aquarium data — every aquarium, parameter, and reading — with the contents of the backup file. Your settings on this device (language, units, and preferences) are kept. This cannot be undone.",
   "restore": "Restore",
   "backupRestored": "Backup restored",
   "backupExportFailed": "Could not export the backup",

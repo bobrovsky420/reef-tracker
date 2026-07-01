@@ -114,6 +114,15 @@ and orders by a timestamp: `Readings(tankId, paramKey, takenAt)` and
 `auto_backup_interval`, `auto_backup_keep`, `last_auto_backup_at`,
 `trend_enabled`, `trend_window`, `trend_horizon`.
 
+All settings access goes through the typed **`AppSettings` facade**
+(`data/settings.dart`, exposed as `settingsProvider`) — the single source of
+truth for each key, its default, and its typed encode/decode, so call sites stop
+doing stringly-typed `== 'true'` / `int.tryParse(..) ?? default` with the
+default duplicated everywhere. The `SettingKey` enum registers every key with a
+`deviceLocal` flag; `SettingKey.deviceLocalKeys` is what `restoreFromBackup`
+preserves (#18). Providers delegate to the facade's `watchX()` streams; screens
+call its `setX(value)` setters.
+
 **Migrations** (`MigrationStrategy`): v2 added `Tanks.startDate` via `addColumn`;
 v3 added the `WaterChanges` table via `createTable`; v4 added `WaterChanges.note`
 (`addColumn`) and the `CarbonChanges` table (`createTable`); v5 added the
@@ -165,7 +174,12 @@ forward-tolerant: a pre-v11 `dosingEntries` row without `startedAt`/`endedAt`/
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
 **replaces the entire database in one transaction**, preserving primary keys so
-FK links survive (deletes children→parents, inserts parents→children).
+FK links survive (deletes children→parents, inserts parents→children). It takes
+a `preserveSettingKeys` set (the caller passes `SettingKey.deviceLocalKeys`):
+those settings rows are neither deleted nor imported, so restoring a backup —
+possibly from another device — **never overwrites this device's own preferences**
+(units, language, active tank, chart range, trend/health display, the tour flag,
+auto-backup config; #18). Only the aquarium/domain data is replaced.
 
 **Importing is a three-stage safety pipeline** (`importBackup`), so a bad file
 never wipes live data:

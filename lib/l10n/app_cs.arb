@@ -211,7 +211,7 @@
   "backupImport": "Obnovit ze zálohy",
   "backupImportSubtitle": "Nahradit všechna data souborem zálohy",
   "backupRestoreConfirmTitle": "Obnovit zálohu?",
-  "backupRestoreConfirmBody": "Tímto se VŠECHNA stávající data — všechna akvária, parametry a měření a také nastavení aplikace (jazyk, jednotky a předvolby) — nahradí obsahem souboru zálohy. Tuto akci nelze vrátit zpět.",
+  "backupRestoreConfirmBody": "Tímto se VŠECHNA data akvárií — všechna akvária, parametry a měření — nahradí obsahem souboru zálohy. Nastavení v tomto zařízení (jazyk, jednotky a předvolby) zůstane zachováno. Tuto akci nelze vrátit zpět.",
   "restore": "Obnovit",
   "backupRestored": "Záloha obnovena",
   "backupExportFailed": "Zálohu se nepodařilo exportovat",

@@ -673,7 +673,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'Spowoduje to zastąpienie WSZYSTKICH obecnych danych — wszystkich akwariów, parametrów i pomiarów oraz ustawień aplikacji (języka, jednostek i preferencji) — zawartością pliku kopii zapasowej. Tej operacji nie można cofnąć.';
+      'Spowoduje to zastąpienie WSZYSTKICH danych akwariów — wszystkich akwariów, parametrów i pomiarów — zawartością pliku kopii zapasowej. Ustawienia na tym urządzeniu (język, jednostki i preferencje) zostaną zachowane. Tej operacji nie można cofnąć.';
 
   @override
   String get restore => 'Przywróć';

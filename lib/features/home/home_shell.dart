@@ -103,7 +103,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   /// its final phase finishes or it is dismissed — never at start, so a tour
   /// interrupted by a background/rotate/kill still replays on next launch (#16).
   /// The in-session [_tourStarted] guard prevents a duplicate start meanwhile.
-  void _markTourSeen() => ref.read(dbProvider).setSetting(kTourSeenKey, 'true');
+  void _markTourSeen() => ref.read(settingsProvider).setTourSeen(true);
 
   /// Starts the top-bar tour once a tank exists. The seen flag is persisted when
   /// the tour ends (see [_markTourSeen]), not here. Phase-1 targets (the compare

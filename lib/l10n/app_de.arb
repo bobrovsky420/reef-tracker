@@ -211,7 +211,7 @@
   "backupImport": "Aus Sicherung wiederherstellen",
   "backupImportSubtitle": "Alle Daten durch eine Sicherungsdatei ersetzen",
   "backupRestoreConfirmTitle": "Sicherung wiederherstellen?",
-  "backupRestoreConfirmBody": "Dadurch werden ALLE aktuellen Daten — alle Aquarien, Parameter und Messwerte sowie Ihre App-Einstellungen (Sprache, Einheiten und Präferenzen) — durch den Inhalt der Sicherungsdatei ersetzt. Dies kann nicht rückgängig gemacht werden.",
+  "backupRestoreConfirmBody": "Dadurch werden ALLE Ihre Aquariendaten — alle Aquarien, Parameter und Messwerte — durch den Inhalt der Sicherungsdatei ersetzt. Ihre Einstellungen auf diesem Gerät (Sprache, Einheiten und Präferenzen) bleiben erhalten. Dies kann nicht rückgängig gemacht werden.",
   "restore": "Wiederherstellen",
   "backupRestored": "Sicherung wiederhergestellt",
   "backupExportFailed": "Sicherung konnte nicht exportiert werden",

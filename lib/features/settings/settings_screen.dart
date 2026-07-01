@@ -27,6 +27,7 @@ class SettingsScreen extends ConsumerWidget {
     final prefs = ref.watch(unitPrefsProvider);
     final localeCode = ref.watch(localeCodeProvider).value ?? 'system';
     final db = ref.read(dbProvider);
+    final settings = ref.read(settingsProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l.settings)),
@@ -39,7 +40,7 @@ class SettingsScreen extends ConsumerWidget {
             trailing: DropdownButton<String>(
               value: localeCode,
               underline: const SizedBox.shrink(),
-              onChanged: (v) => db.setSetting(kLocaleKey, v),
+              onChanged: (v) => settings.setLocaleCode(v),
               items: [
                 DropdownMenuItem(
                     value: 'system', child: Text(l.languageSystem)),
@@ -65,7 +66,7 @@ class SettingsScreen extends ConsumerWidget {
               ],
               selected: {prefs.temp},
               onSelectionChanged: (s) =>
-                  db.setSetting(kTempUnitKey, s.first.name),
+                  settings.setTempUnit(s.first),
             ),
           ),
           ListTile(
@@ -79,7 +80,7 @@ class SettingsScreen extends ConsumerWidget {
               ],
               selected: {prefs.salinity},
               onSelectionChanged: (s) =>
-                  db.setSetting(kSalinityUnitKey, s.first.name),
+                  settings.setSalinityUnit(s.first),
             ),
           ),
           ListTile(
@@ -93,7 +94,7 @@ class SettingsScreen extends ConsumerWidget {
               ],
               selected: {prefs.volume},
               onSelectionChanged: (s) =>
-                  db.setSetting(kVolumeUnitKey, s.first.name),
+                  settings.setVolumeUnit(s.first),
             ),
           ),
           const Divider(),
@@ -107,7 +108,7 @@ class SettingsScreen extends ConsumerWidget {
                   HealthDisplay.both,
               underline: const SizedBox.shrink(),
               onChanged: (v) =>
-                  v == null ? null : db.setSetting(kHealthDisplayKey, v.name),
+                  v == null ? null : settings.setHealthDisplay(v),
               items: [
                 DropdownMenuItem(
                     value: HealthDisplay.both,
@@ -127,7 +128,7 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l.trendShowTitle),
             subtitle: Text(l.trendShowSubtitle),
             value: ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled,
-            onChanged: (v) => db.setSetting(kTrendEnabledKey, v.toString()),
+            onChanged: (v) => settings.setTrendEnabled(v),
           ),
           if (ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled) ...[
             ListTile(
@@ -137,9 +138,7 @@ class SettingsScreen extends ConsumerWidget {
               trailing: DropdownButton<int>(
                 value: ref.watch(trendWindowProvider).value ?? kTrendDefaultWindow,
                 underline: const SizedBox.shrink(),
-                onChanged: (v) => v == null
-                    ? null
-                    : db.setSetting(kTrendWindowKey, v.toString()),
+                onChanged: (v) => v == null ? null : settings.setTrendWindow(v),
                 items: [
                   for (var n = kTrendMinWindow; n <= kTrendMaxWindow; n++)
                     DropdownMenuItem(value: n, child: Text('$n')),
@@ -154,9 +153,7 @@ class SettingsScreen extends ConsumerWidget {
                 value:
                     ref.watch(trendHorizonProvider).value ?? kTrendDefaultHorizon,
                 underline: const SizedBox.shrink(),
-                onChanged: (v) => v == null
-                    ? null
-                    : db.setSetting(kTrendHorizonKey, v.toString()),
+                onChanged: (v) => v == null ? null : settings.setTrendHorizon(v),
                 items: [
                   for (final n in _trendHorizonOptions)
                     DropdownMenuItem(value: n, child: Text(l.trendHorizonDays(n))),
@@ -209,7 +206,7 @@ class SettingsScreen extends ConsumerWidget {
             value: ref.watch(autoBackupEnabledProvider).value ??
                 kAutoBackupDefaultEnabled,
             onChanged: (v) =>
-                db.setSetting(kAutoBackupEnabledKey, v.toString()),
+                settings.setAutoBackupEnabled(v),
           ),
           if (ref.watch(autoBackupEnabledProvider).value ??
               kAutoBackupDefaultEnabled) ...[
@@ -220,9 +217,7 @@ class SettingsScreen extends ConsumerWidget {
                 value: ref.watch(autoBackupIntervalProvider).value ??
                     AutoBackupInterval.daily,
                 underline: const SizedBox.shrink(),
-                onChanged: (v) => v == null
-                    ? null
-                    : db.setSetting(kAutoBackupIntervalKey, v.name),
+                onChanged: (v) => v == null ? null : settings.setAutoBackupInterval(v),
                 items: [
                   DropdownMenuItem(
                       value: AutoBackupInterval.daily,
@@ -262,7 +257,7 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: Text(l.replayTourSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () async {
-              await db.setSetting(kTourSeenKey, 'false');
+              await settings.setTourSeen(false);
               if (context.mounted) context.go('/');
             },
           ),
