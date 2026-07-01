@@ -626,6 +626,12 @@ abstract class AppLocalizations {
   /// **'Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.'**
   String get boundsOrderError;
 
+  /// No description provided for @boundsPairError.
+  ///
+  /// In en, this message translates to:
+  /// **'Each amber boundary needs its matching green boundary on the same side.'**
+  String get boundsPairError;
+
   /// No description provided for @noteOptional.
   ///
   /// In en, this message translates to:

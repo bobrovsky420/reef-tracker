@@ -338,12 +338,25 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     return true;
   }
 
+  /// An amber bound is meaningless without its matching green bound on the
+  /// same side: it would leave the chart zone bands overlapping (see #15).
+  bool _pairsOk() {
+    if (_parse(_amberLow) != null && _parse(_greenLow) == null) return false;
+    if (_parse(_amberHigh) != null && _parse(_greenHigh) == null) return false;
+    return true;
+  }
+
   Future<void> _save() async {
     final l = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     if (!_orderOk()) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.boundsOrderError)));
+      return;
+    }
+    if (!_pairsOk()) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.boundsPairError)));
       return;
     }
     await ref.read(dbProvider).updateTrackedParameter(widget.param.copyWith(

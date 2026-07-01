@@ -242,31 +242,33 @@ class TrendChart extends StatelessWidget {
       ZoneBounds b, double minY, double maxY) {
     final bands = <HorizontalRangeAnnotation>[];
     Color c(Zone z) => z.color.withValues(alpha: 0.10);
-    // Green band.
+    // Add a band only when it spans a positive range. Inverted or empty
+    // bands (y1 >= y2) come from inconsistent bounds and would paint
+    // misleading slivers or overlaps, so drop them defensively.
+    void add(double y1, double y2, Zone z) {
+      if (y1 < y2) {
+        bands.add(HorizontalRangeAnnotation(y1: y1, y2: y2, color: c(z)));
+      }
+    }
+    // Green band. Fall back to the matching amber bound (not the chart edge)
+    // so a one-sided green bound never spills over the red band beyond it.
     if (b.greenLow != null || b.greenHigh != null) {
-      bands.add(HorizontalRangeAnnotation(
-        y1: b.greenLow ?? minY,
-        y2: b.greenHigh ?? maxY,
-        color: c(Zone.green),
-      ));
+      add(b.greenLow ?? b.amberLow ?? minY,
+          b.greenHigh ?? b.amberHigh ?? maxY, Zone.green);
     }
     // Amber bands (between amber and green bounds).
     if (b.amberLow != null && b.greenLow != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: b.amberLow!, y2: b.greenLow!, color: c(Zone.amber)));
+      add(b.amberLow!, b.greenLow!, Zone.amber);
     }
     if (b.amberHigh != null && b.greenHigh != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: b.greenHigh!, y2: b.amberHigh!, color: c(Zone.amber)));
+      add(b.greenHigh!, b.amberHigh!, Zone.amber);
     }
     // Red bands (beyond amber bounds).
     if (b.amberLow != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: minY, y2: b.amberLow!, color: c(Zone.red)));
+      add(minY, b.amberLow!, Zone.red);
     }
     if (b.amberHigh != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: b.amberHigh!, y2: maxY, color: c(Zone.red)));
+      add(b.amberHigh!, maxY, Zone.red);
     }
     return bands;
   }

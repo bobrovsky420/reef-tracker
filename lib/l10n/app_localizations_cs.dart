@@ -312,6 +312,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Hranice musí narůstat: oranžová dolní ≤ zelená dolní ≤ zelená horní ≤ oranžová horní.';
 
   @override
+  String get boundsPairError =>
+      'Každá oranžová hranice vyžaduje odpovídající zelenou hranici na téže straně.';
+
+  @override
   String get noteOptional => 'Poznámka (nepovinné)';
 
   @override

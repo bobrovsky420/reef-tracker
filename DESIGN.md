@@ -71,7 +71,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 | File | Responsibility |
 |------|----------------|
-| `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** Any bound may be null = unbounded on that side. Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. |
+| `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. |
 | `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse). |
 | `parameter_catalog.dart` | `kReefParameters` — the master list (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP, K, Sr, I, Fe) with default units, plus `kParameterByKey` lookup and `formatParamValue`. |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
@@ -322,7 +322,11 @@ Shared `fl_chart` building blocks used by both the history and comparison views:
 `ChartRange` enum + `chartRangeFromLabel`/`chartRangeLabel`, the
 `ChartRangeSelector` (writes `chartRangeProvider`), and `TrendChart` — a
 per-parameter line chart with **zone bands** drawn as `RangeAnnotations`
-(green/amber regions from the param's bounds) and water-change markers. When
+(green/amber/red regions from the param's bounds) and water-change markers. Band
+rendering is defensive: the green band falls back to the matching amber bound
+(never the chart edge) so a one-sided green bound can't paint over the red band,
+and any band that would come out with `y1 >= y2` (inverted/empty) is skipped, so
+inconsistent or legacy bounds never produce overlapping/misleading regions. When
 given explicit `minX`/`maxX` it pins to that window (comparison alignment);
 otherwise it derives the window from the data (a single reading is centered).
 `showBottomTitles` controls whether the date axis is drawn.

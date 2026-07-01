@@ -313,6 +313,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Granice muszą rosnąć: pomarańczowa dolna ≤ zielona dolna ≤ zielona górna ≤ pomarańczowa górna.';
 
   @override
+  String get boundsPairError =>
+      'Każda pomarańczowa granica wymaga odpowiadającej zielonej granicy po tej samej stronie.';
+
+  @override
   String get noteOptional => 'Notatka (opcjonalnie)';
 
   @override

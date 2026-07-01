@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.2] - 2026-07-01
+
+### Fixed
+- Chart zone bands no longer overlap or invert when a parameter has one-sided
+  or partial green/amber bounds: the green band now falls back to the matching
+  amber bound (never the chart edge) so it can't paint over the red band, and
+  any band that would render with a zero or inverted height is skipped.
+- The parameter and ratio bound editors now reject saving an amber boundary
+  without its matching green boundary on the same side — the configuration that
+  produced the misleading chart bands — with a clear validation message.
+
 ## [0.14.1] - 2026-06-30
 
 ### Changed

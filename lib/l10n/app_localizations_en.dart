@@ -312,6 +312,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.';
 
   @override
+  String get boundsPairError =>
+      'Each amber boundary needs its matching green boundary on the same side.';
+
+  @override
   String get noteOptional => 'Note (optional)';
 
   @override

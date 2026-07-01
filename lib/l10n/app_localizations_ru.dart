@@ -313,6 +313,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Границы должны возрастать: жёлтая нижняя ≤ зелёная нижняя ≤ зелёная верхняя ≤ жёлтая верхняя.';
 
   @override
+  String get boundsPairError =>
+      'Каждой жёлтой границе нужна соответствующая зелёная граница с той же стороны.';
+
+  @override
   String get noteOptional => 'Заметка (необязательно)';
 
   @override

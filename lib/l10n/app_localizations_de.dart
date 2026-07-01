@@ -313,6 +313,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Grenzen müssen ansteigen: orange unten ≤ grün unten ≤ grün oben ≤ orange oben.';
 
   @override
+  String get boundsPairError =>
+      'Jede orange Grenze benötigt ihre passende grüne Grenze auf derselben Seite.';
+
+  @override
   String get noteOptional => 'Notiz (optional)';
 
   @override
