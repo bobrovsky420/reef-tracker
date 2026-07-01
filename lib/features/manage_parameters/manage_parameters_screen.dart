@@ -11,6 +11,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/zone_bounds_editor.dart';
 
 /// Per-tank parameter management: enable/disable, reorder, edit zones, add from
 /// the catalog, and re-apply the setup-type preset.
@@ -282,11 +283,8 @@ class ParameterEditScreen extends ConsumerStatefulWidget {
 
 class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _editorKey = GlobalKey<ZoneBoundsEditorState>();
   late final TextEditingController _unit;
-  late final TextEditingController _amberLow;
-  late final TextEditingController _greenLow;
-  late final TextEditingController _greenHigh;
-  late final TextEditingController _amberHigh;
   late final ParamPresentation _pres;
 
   @override
@@ -295,77 +293,50 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     // Edit boundaries in the user's display unit; values are stored canonically.
     _pres = presentationOf(widget.param, ref.read(unitPrefsProvider));
     _unit = TextEditingController(text: widget.param.unit);
-    _amberLow = _ctrl(widget.param.amberLow);
-    _greenLow = _ctrl(widget.param.greenLow);
-    _greenHigh = _ctrl(widget.param.greenHigh);
-    _amberHigh = _ctrl(widget.param.amberHigh);
   }
-
-  TextEditingController _ctrl(double? canonical) => TextEditingController(
-      text: canonical == null
-          ? ''
-          : _pres.toDisplay(canonical).toStringAsFixed(_pres.decimals));
 
   @override
   void dispose() {
     _unit.dispose();
-    _amberLow.dispose();
-    _greenLow.dispose();
-    _greenHigh.dispose();
-    _amberHigh.dispose();
     super.dispose();
   }
 
-  /// Parsed display value, or null if blank/non-finite.
-  double? _parse(TextEditingController c) => parseUserDouble(c.text);
+  /// The parameter's stored (canonical) bounds converted into the display space
+  /// the editor edits in.
+  ZoneBounds get _displayBounds => ZoneBounds(
+        amberLow: _toDisplay(widget.param.amberLow),
+        greenLow: _toDisplay(widget.param.greenLow),
+        greenHigh: _toDisplay(widget.param.greenHigh),
+        amberHigh: _toDisplay(widget.param.amberHigh),
+      );
 
-  /// Parsed value converted back to canonical storage units, or null if blank.
-  double? _canon(TextEditingController c) {
-    final v = _parse(c);
-    return v == null ? null : _pres.toCanonical(v);
-  }
-
-  bool _orderOk() {
-    final seq = [
-      _parse(_amberLow),
-      _parse(_greenLow),
-      _parse(_greenHigh),
-      _parse(_amberHigh),
-    ].whereType<double>().toList();
-    for (var i = 1; i < seq.length; i++) {
-      if (seq[i] < seq[i - 1]) return false;
-    }
-    return true;
-  }
-
-  /// An amber bound is meaningless without its matching green bound on the
-  /// same side: it would leave the chart zone bands overlapping (see #15).
-  bool _pairsOk() {
-    if (_parse(_amberLow) != null && _parse(_greenLow) == null) return false;
-    if (_parse(_amberHigh) != null && _parse(_greenHigh) == null) return false;
-    return true;
-  }
+  double? _toDisplay(double? canonical) =>
+      canonical == null ? null : _pres.toDisplay(canonical);
 
   Future<void> _save() async {
     final l = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
-    if (!_orderOk()) {
+    final editor = _editorKey.currentState!;
+    if (!editor.orderOk) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.boundsOrderError)));
       return;
     }
-    if (!_pairsOk()) {
+    if (!editor.pairsOk) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.boundsPairError)));
       return;
     }
+    // Editor values are in display space; convert back to canonical storage.
+    final b = editor.values;
+    double? canon(double? v) => v == null ? null : _pres.toCanonical(v);
     await ref.read(dbProvider).updateTrackedParameter(widget.param.copyWith(
           // Temp/salinity unit follows app settings; keep stored canonical unit.
           unit: _pres.unitFollowsSettings ? widget.param.unit : _unit.text.trim(),
-          amberLow: Value(_canon(_amberLow)),
-          greenLow: Value(_canon(_greenLow)),
-          greenHigh: Value(_canon(_greenHigh)),
-          amberHigh: Value(_canon(_amberHigh)),
+          amberLow: Value(canon(b.amberLow)),
+          greenLow: Value(canon(b.greenLow)),
+          greenHigh: Value(canon(b.greenHigh)),
+          amberHigh: Value(canon(b.amberHigh)),
         ));
     if (mounted) context.pop();
   }
@@ -398,16 +369,14 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
                 decoration: InputDecoration(labelText: l.unit),
               ),
             const SizedBox(height: 24),
-            const _ZoneLegendRow(),
-            const SizedBox(height: 8),
-            _boundField(_amberLow, l.boundAmberLow, Zone.red),
-            _boundField(_greenLow, l.boundGreenLow, Zone.green),
-            _boundField(_greenHigh, l.boundGreenHigh, Zone.green),
-            _boundField(_amberHigh, l.boundAmberHigh, Zone.red),
-            const SizedBox(height: 8),
-            Text(
-              l.boundsUnitNote(_pres.unitLabel),
-              style: Theme.of(context).textTheme.bodySmall,
+            ZoneBoundsEditor(
+              key: _editorKey,
+              initial: _displayBounds,
+              format: (v) => v.toStringAsFixed(_pres.decimals),
+              trailingNote: Text(
+                l.boundsUnitNote(_pres.unitLabel),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -418,53 +387,6 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _boundField(TextEditingController c, String label, Zone zone) {
-    final l = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        controller: c,
-        keyboardType: const TextInputType.numberWithOptions(
-            decimal: true, signed: true),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(Icons.circle, color: zone.color, size: 14),
-          prefixIconConstraints:
-              const BoxConstraints(minWidth: 36, minHeight: 0),
-        ),
-        validator: (v) {
-          if (v == null || v.trim().isEmpty) return null;
-          return parseUserDouble(v) == null ? l.enterANumber : null;
-        },
-      ),
-    );
-  }
-}
-
-class _ZoneLegendRow extends StatelessWidget {
-  const _ZoneLegendRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    Widget dot(Zone z, String label) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.circle, color: z.color, size: 12),
-            const SizedBox(width: 4),
-            Text(label),
-          ],
-        );
-    return Wrap(
-      spacing: 16,
-      children: [
-        dot(Zone.green, l.zoneOk),
-        dot(Zone.amber, l.zoneAttention),
-        dot(Zone.red, l.zoneActNow),
-      ],
     );
   }
 }

@@ -536,6 +536,11 @@ shown, drag to reorder either, and edit a parameter's zone bounds
 `applyDashboardOrder` (params → `TrackedParameters`, ratios →
 `RatioVisibilities`). Each row has an edit button: parameters open
 `ParameterEditScreen`, ratios open `RatioEditScreen` (per-tank zone bounds).
+Both editors render their four bound fields through the shared
+`ZoneBoundsEditor` widget ([lib/widgets/zone_bounds_editor.dart](lib/widgets/zone_bounds_editor.dart)),
+which owns the controllers, draws the legend + zone-colored fields, and centralizes
+the order (`amberLow ≤ … ≤ amberHigh`) and amber-implies-green pairing rules; each
+screen keeps only its own seeding (display-unit vs. ratio-metric) and save target.
 Re-applying a setup-type preset is available.
 
 ### Add reading (`add_reading_screen.dart`)

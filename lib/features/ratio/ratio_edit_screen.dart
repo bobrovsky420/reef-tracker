@@ -4,10 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../domain/ratio.dart';
-import '../../domain/units.dart';
-import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/zone_bounds_editor.dart';
 
 /// Editor for a ratio card's four zone boundaries, per tank. Values are in the
 /// ratio's displayed-metric space (e.g. NO₃ ÷ PO₄, Mg ÷ Ca) — there is no unit
@@ -23,79 +22,33 @@ class RatioEditScreen extends ConsumerStatefulWidget {
 
 class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _amberLow;
-  late final TextEditingController _greenLow;
-  late final TextEditingController _greenHigh;
-  late final TextEditingController _amberHigh;
-  bool _initialized = false;
+  final _editorKey = GlobalKey<ZoneBoundsEditorState>();
 
-  @override
-  void dispose() {
-    if (_initialized) {
-      _amberLow.dispose();
-      _greenLow.dispose();
-      _greenHigh.dispose();
-      _amberHigh.dispose();
-    }
-    super.dispose();
-  }
-
-  void _initFrom(ZoneBounds bounds) {
-    _amberLow = TextEditingController(text: _fmt(bounds.amberLow));
-    _greenLow = TextEditingController(text: _fmt(bounds.greenLow));
-    _greenHigh = TextEditingController(text: _fmt(bounds.greenHigh));
-    _amberHigh = TextEditingController(text: _fmt(bounds.amberHigh));
-    _initialized = true;
-  }
-
-  static String _fmt(double? v) {
-    if (v == null) return '';
-    return v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
-  }
-
-  double? _parse(TextEditingController c) => parseUserDouble(c.text);
-
-  bool _orderOk() {
-    final seq = [
-      _parse(_amberLow),
-      _parse(_greenLow),
-      _parse(_greenHigh),
-      _parse(_amberHigh),
-    ].whereType<double>().toList();
-    for (var i = 1; i < seq.length; i++) {
-      if (seq[i] < seq[i - 1]) return false;
-    }
-    return true;
-  }
-
-  /// An amber bound is meaningless without its matching green bound on the
-  /// same side: it would leave the chart zone bands overlapping (see #15).
-  bool _pairsOk() {
-    if (_parse(_amberLow) != null && _parse(_greenLow) == null) return false;
-    if (_parse(_amberHigh) != null && _parse(_greenHigh) == null) return false;
-    return true;
-  }
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
 
   Future<void> _save(int tankId) async {
     final l = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
-    if (!_orderOk()) {
+    final editor = _editorKey.currentState!;
+    if (!editor.orderOk) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.boundsOrderError)));
       return;
     }
-    if (!_pairsOk()) {
+    if (!editor.pairsOk) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.boundsPairError)));
       return;
     }
+    final bounds = editor.values;
     await ref.read(dbProvider).setRatioBounds(
           tankId,
           widget.kind.name,
-          amberLow: _parse(_amberLow),
-          greenLow: _parse(_greenLow),
-          greenHigh: _parse(_greenHigh),
-          amberHigh: _parse(_amberHigh),
+          amberLow: bounds.amberLow,
+          greenLow: bounds.greenLow,
+          greenHigh: bounds.greenHigh,
+          amberHigh: bounds.amberHigh,
         );
     if (mounted) context.pop();
   }
@@ -113,11 +66,8 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
       );
     }
 
-    // Initialize controllers once from the tank's current effective bounds.
-    if (!_initialized) {
-      final row = ref.read(ratioSettingsProvider).value?[kind.name];
-      _initFrom(ratioBounds(kind, row));
-    }
+    // Seed the editor once from the tank's current effective bounds.
+    final row = ref.read(ratioSettingsProvider).value?[kind.name];
 
     return Scaffold(
       appBar: AppBar(title: Text(l.ratioCardLabel(kind))),
@@ -129,12 +79,11 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
             Text(l.ratioBoundsNote(ratioMetricLabel(kind)),
                 style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 24),
-            const _ZoneLegendRow(),
-            const SizedBox(height: 8),
-            _boundField(_amberLow, l.boundAmberLow, Zone.red),
-            _boundField(_greenLow, l.boundGreenLow, Zone.green),
-            _boundField(_greenHigh, l.boundGreenHigh, Zone.green),
-            _boundField(_amberHigh, l.boundAmberHigh, Zone.red),
+            ZoneBoundsEditor(
+              key: _editorKey,
+              initial: ratioBounds(kind, row),
+              format: _fmt,
+            ),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () => _save(tank.id),
@@ -144,53 +93,6 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _boundField(TextEditingController c, String label, Zone zone) {
-    final l = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        controller: c,
-        keyboardType:
-            const TextInputType.numberWithOptions(decimal: true, signed: true),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(Icons.circle, color: zone.color, size: 14),
-          prefixIconConstraints:
-              const BoxConstraints(minWidth: 36, minHeight: 0),
-        ),
-        validator: (v) {
-          if (v == null || v.trim().isEmpty) return null;
-          return parseUserDouble(v) == null ? l.enterANumber : null;
-        },
-      ),
-    );
-  }
-}
-
-class _ZoneLegendRow extends StatelessWidget {
-  const _ZoneLegendRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    Widget dot(Zone z, String label) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.circle, color: z.color, size: 12),
-            const SizedBox(width: 4),
-            Text(label),
-          ],
-        );
-    return Wrap(
-      spacing: 16,
-      children: [
-        dot(Zone.green, l.zoneOk),
-        dot(Zone.amber, l.zoneAttention),
-        dot(Zone.red, l.zoneActNow),
-      ],
     );
   }
 }
