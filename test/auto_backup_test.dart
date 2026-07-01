@@ -41,7 +41,7 @@ void main() {
   Future<void> seedBackupFiles(int count) async {
     final dir = await autoBackupDir();
     for (var i = 0; i < count; i++) {
-      final stamp = '2026010${i}-000000';
+      final stamp = '2026010$i-000000';
       File(p.join(dir.path, '$kAutoBackupPrefix$stamp.json'))
           .writeAsStringSync('{}');
     }

@@ -59,6 +59,10 @@ class TrackedParameters extends Table {
 }
 
 /// A single logged measurement.
+@TableIndex(
+    name: 'idx_readings_tank_param_taken',
+    columns: {#tankId, #paramKey, #takenAt})
+@TableIndex(name: 'idx_readings_tank_taken', columns: {#tankId, #takenAt})
 class Readings extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -70,6 +74,7 @@ class Readings extends Table {
 }
 
 /// A logged water change for a tank (date/time + optional volume + note).
+@TableIndex(name: 'idx_water_changes_tank_changed', columns: {#tankId, #changedAt})
 class WaterChanges extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -85,6 +90,8 @@ class WaterChanges extends Table {
 
 /// A logged activated-carbon change for a tank (date/time + optional weight
 /// in grams + note, e.g. the brand).
+@TableIndex(
+    name: 'idx_carbon_changes_tank_changed', columns: {#tankId, #changedAt})
 class CarbonChanges extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -100,6 +107,9 @@ class CarbonChanges extends Table {
 
 /// A logged equipment cleaning for a tank (date/time + optional note, e.g.
 /// which piece of equipment was cleaned).
+@TableIndex(
+    name: 'idx_equipment_cleanings_tank_cleaned',
+    columns: {#tankId, #cleanedAt})
 class EquipmentCleanings extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -141,6 +151,7 @@ class RatioVisibilities extends Table {
 /// stable [productKey] (null for custom entries) so a future dose log and
 /// consumption calculator can resolve the product and its potency; display
 /// names are denormalized so an entry survives catalog changes.
+@TableIndex(name: 'idx_dosing_entries_tank', columns: {#tankId})
 class DosingEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -229,7 +240,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -313,6 +324,29 @@ class AppDatabase extends _$AppDatabase {
               'UPDATE dosing_entries SET started_at = created_at '
               'WHERE started_at IS NULL',
             );
+          }
+          if (from < 12) {
+            // Secondary indexes for the hot reactive read paths (tankId +
+            // timestamp/paramKey). Declared as `@TableIndex` so fresh installs
+            // get them via `createAll`; created here for existing databases.
+            // `IF NOT EXISTS` keeps this idempotent, matching the guarded
+            // migration convention above.
+            for (final sql in const [
+              'CREATE INDEX IF NOT EXISTS idx_readings_tank_param_taken '
+                  'ON readings (tank_id, param_key, taken_at)',
+              'CREATE INDEX IF NOT EXISTS idx_readings_tank_taken '
+                  'ON readings (tank_id, taken_at)',
+              'CREATE INDEX IF NOT EXISTS idx_water_changes_tank_changed '
+                  'ON water_changes (tank_id, changed_at)',
+              'CREATE INDEX IF NOT EXISTS idx_carbon_changes_tank_changed '
+                  'ON carbon_changes (tank_id, changed_at)',
+              'CREATE INDEX IF NOT EXISTS idx_equipment_cleanings_tank_cleaned '
+                  'ON equipment_cleanings (tank_id, cleaned_at)',
+              'CREATE INDEX IF NOT EXISTS idx_dosing_entries_tank '
+                  'ON dosing_entries (tank_id)',
+            ]) {
+              await customStatement(sql);
+            }
           }
         },
         beforeOpen: (details) async {

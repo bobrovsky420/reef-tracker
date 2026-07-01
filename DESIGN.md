@@ -86,7 +86,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 9**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 12**
 
 | Table | Key columns |
 |-------|-------------|
@@ -99,6 +99,15 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RatioVisibilities` | tankId + ratioKey (composite PK), tankId FK cascade, visible, displayOrder, amberLow?/greenLow?/greenHigh?/amberHigh? — per-tank ratio-card visibility, dashboard position (shared order space with `TrackedParameters.displayOrder`), and editable zone bounds; a missing row (or all-null bounds) = visible, ordered last, default zones |
 | `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), note?, displayOrder, createdAt, startedAt? (segment start; backfilled from createdAt), endedAt? (null = current), state (`DosingState`: active/ended/paused) — per-tank supplement-dosing plan (info-only). A plan is a chain of **dated segments**: editing a dose-affecting field ends the current segment (`state=ended`, `endedAt` set) and starts a new active one; stopping soft-ends it. Only `active` rows show in the Dosing tab and feed the calculator; `ended` rows are retained history. `paused` is reserved for a later phase. |
 | `Settings` | key (PK), value? — generic kv store |
+
+**Secondary indexes** (declared as `@TableIndex` on the table classes, so
+`createAll` builds them for fresh installs; the v12 migration creates them for
+existing DBs) back the hot reactive read paths — each stream filters on `tankId`
+and orders by a timestamp: `Readings(tankId, paramKey, takenAt)` and
+`Readings(tankId, takenAt)` (both kept — the 3-column one can't order by
+`takenAt` when only `tankId` is filtered), `WaterChanges(tankId, changedAt)`,
+`CarbonChanges(tankId, changedAt)`, `EquipmentCleanings(tankId, cleanedAt)`, and
+`DosingEntries(tankId)`.
 
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
 `volume_unit`, `locale`, `chart_range`, `auto_backup_enabled`,
@@ -115,8 +124,10 @@ v8 added `RatioVisibilities` zone-bound columns (`addColumn` ×4, guarded); v9
 added the `DosingEntries` table (`createTable`, guarded by `_tableExists`); v10
 added `Tanks.notes`/`vendor`/`model` (`addColumn` ×3, guarded by `_columnExists`);
 v11 added `DosingEntries.startedAt`/`endedAt`/`state` (`addColumn` ×3, guarded)
-and backfills `started_at = created_at` for pre-existing rows via `customStatement`.
-Foreign keys are enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
+and backfills `started_at = created_at` for pre-existing rows via `customStatement`;
+v12 added the secondary indexes above (`CREATE INDEX IF NOT EXISTS` ×6 via
+`customStatement`, matching the `@TableIndex` definitions that `createAll` uses
+for new installs). Foreign keys are enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
 add/change a table or column you must bump `schemaVersion` and add the matching
 migration**, then run `dart run build_runner build`.
 
@@ -606,7 +617,22 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 - Tests (`flutter test`): `test/zones_test.dart`, `test/presets_test.dart`,
   `test/units_test.dart`, `test/ratio_test.dart`, `test/backup_test.dart`,
   `test/supplement_catalog_test.dart`, `test/dose_calculator_test.dart`,
-`test/trend_test.dart`.
+  `test/trend_test.dart`, `test/health_score_test.dart` (tank-health banding,
+  weighting, staleness), `test/zone_bands_test.dart` (chart band geometry), and
+  the widget tests (e.g. `test/zone_chip_test.dart`).
+- **Testing convention:** chart/health/zone logic lives in pure, Flutter-free
+  functions (`domain/health_score.dart`, `zoneBands` in `domain/zones.dart`) so
+  it can be unit-tested without a widget; the thin widgets (`trend_chart.dart`)
+  only map that output onto `fl_chart`. Widget tests pump through the shared
+  `test/support/pump.dart` helper (ProviderScope + MaterialApp + l10n delegates);
+  DB-touching tests use `NativeDatabase.memory()` with a faked `path_provider`.
+- **CI (`.github/workflows/ci.yml`):** every push/PR to `master` runs
+  `flutter analyze` + `flutter test` on `ubuntu-latest`. It does **not** build
+  the Android app (that needs the pinned plugin/toolchain and is CI-fragile).
+  Generated sources (`database.g.dart`, `app_localizations*.dart`) are committed,
+  so CI runs no codegen — regenerate and commit them when the schema or an ARB
+  file changes. `flutter analyze` must stay clean (it fails on any issue,
+  including info-level lints).
 
 ## Maintaining this document
 

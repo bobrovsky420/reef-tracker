@@ -1,0 +1,40 @@
+name: CI
+
+# Static analysis + unit/widget tests on every push and PR to master.
+# We deliberately do NOT build the Android app here: the release build depends
+# on an exact plugin/toolchain pinning (see TODO #12) that is fragile in CI and
+# irrelevant to catching logic regressions. `analyze` + `test` cover the risk
+# areas (domain math, backup round-trip, zone bands, health scoring, widgets).
+#
+# Generated sources (lib/data/database.g.dart, lib/l10n/app_localizations*.dart)
+# are committed, so no build_runner / gen-l10n step is needed here. If you change
+# the drift schema or an ARB file, regenerate and commit those files.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.3
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Fails on warnings/errors (the project's clean baseline). Not
+      # --fatal-infos: some test files carry pre-existing info-level lints.
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test

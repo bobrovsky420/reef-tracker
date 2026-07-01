@@ -4461,6 +4461,30 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $RatioVisibilitiesTable(this);
   late final $DosingEntriesTable dosingEntries = $DosingEntriesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final Index idxReadingsTankParamTaken = Index(
+    'idx_readings_tank_param_taken',
+    'CREATE INDEX idx_readings_tank_param_taken ON readings (tank_id, param_key, taken_at)',
+  );
+  late final Index idxReadingsTankTaken = Index(
+    'idx_readings_tank_taken',
+    'CREATE INDEX idx_readings_tank_taken ON readings (tank_id, taken_at)',
+  );
+  late final Index idxWaterChangesTankChanged = Index(
+    'idx_water_changes_tank_changed',
+    'CREATE INDEX idx_water_changes_tank_changed ON water_changes (tank_id, changed_at)',
+  );
+  late final Index idxCarbonChangesTankChanged = Index(
+    'idx_carbon_changes_tank_changed',
+    'CREATE INDEX idx_carbon_changes_tank_changed ON carbon_changes (tank_id, changed_at)',
+  );
+  late final Index idxEquipmentCleaningsTankCleaned = Index(
+    'idx_equipment_cleanings_tank_cleaned',
+    'CREATE INDEX idx_equipment_cleanings_tank_cleaned ON equipment_cleanings (tank_id, cleaned_at)',
+  );
+  late final Index idxDosingEntriesTank = Index(
+    'idx_dosing_entries_tank',
+    'CREATE INDEX idx_dosing_entries_tank ON dosing_entries (tank_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4475,6 +4499,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ratioVisibilities,
     dosingEntries,
     settings,
+    idxReadingsTankParamTaken,
+    idxReadingsTankTaken,
+    idxWaterChangesTankChanged,
+    idxCarbonChangesTankChanged,
+    idxEquipmentCleaningsTankCleaned,
+    idxDosingEntriesTank,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([

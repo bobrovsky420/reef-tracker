@@ -76,6 +76,44 @@ class ZoneBounds {
   }
 }
 
+/// A single horizontal zone band for a chart: fill the vertical range
+/// `[y1, y2)` with [zone]'s colour. [y1] is always strictly less than [y2] —
+/// [zoneBands] drops empty/inverted bands.
+typedef ZoneBand = ({double y1, double y2, Zone zone});
+
+/// Builds the green / amber / red horizontal bands for a chart spanning
+/// [minY]..[maxY] from [b], as a pure, Flutter-free description so band
+/// generation can be unit-tested without a chart widget.
+///
+/// The green band falls back to the *matching amber bound* (not the chart edge)
+/// when a green bound is null, so a one-sided green bound can never spill over
+/// the red band beyond it (finding #15). Any band that would be empty or
+/// inverted (`y1 >= y2`), e.g. from inconsistent legacy/restored bounds, is
+/// dropped rather than painted as a misleading sliver or overlap.
+List<ZoneBand> zoneBands(ZoneBounds b, double minY, double maxY) {
+  final bands = <ZoneBand>[];
+  void add(double y1, double y2, Zone zone) {
+    if (y1 < y2) bands.add((y1: y1, y2: y2, zone: zone));
+  }
+
+  // Green band.
+  if (b.greenLow != null || b.greenHigh != null) {
+    add(b.greenLow ?? b.amberLow ?? minY, b.greenHigh ?? b.amberHigh ?? maxY,
+        Zone.green);
+  }
+  // Amber bands (between amber and green bounds).
+  if (b.amberLow != null && b.greenLow != null) {
+    add(b.amberLow!, b.greenLow!, Zone.amber);
+  }
+  if (b.amberHigh != null && b.greenHigh != null) {
+    add(b.greenHigh!, b.amberHigh!, Zone.amber);
+  }
+  // Red bands (beyond amber bounds).
+  if (b.amberLow != null) add(minY, b.amberLow!, Zone.red);
+  if (b.amberHigh != null) add(b.amberHigh!, maxY, Zone.red);
+  return bands;
+}
+
 extension ZoneVisuals on Zone {
   Color get color {
     switch (this) {
