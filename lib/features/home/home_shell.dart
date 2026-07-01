@@ -77,12 +77,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           });
         } else {
           _tourPhase = 0;
+          _markTourSeen();
           setState(() => _index = 0);
         }
       },
       // Skipping returns to Measurements if we'd already switched to Dosing.
       onDismiss: (_) {
         if (!mounted) return;
+        _markTourSeen();
         if (_tourPhase == 2) setState(() => _index = 0);
         _tourPhase = 0;
       },
@@ -95,10 +97,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     super.dispose();
   }
 
-  /// Starts the top-bar tour once a tank exists, and marks it seen so it never
-  /// auto-runs again. Phase-1 targets (the compare toggle) only exist on the
-  /// Measurements tab, so we force [_index] back to it before starting — this
-  /// also makes "Replay tour" work no matter which tab was last open.
+  /// Persists the "tour seen" flag. Called only when the tour actually ends —
+  /// its final phase finishes or it is dismissed — never at start, so a tour
+  /// interrupted by a background/rotate/kill still replays on next launch (#16).
+  /// The in-session [_tourStarted] guard prevents a duplicate start meanwhile.
+  void _markTourSeen() => ref.read(dbProvider).setSetting(kTourSeenKey, 'true');
+
+  /// Starts the top-bar tour once a tank exists. The seen flag is persisted when
+  /// the tour ends (see [_markTourSeen]), not here. Phase-1 targets (the compare
+  /// toggle) only exist on the Measurements tab, so we force [_index] back to it
+  /// before starting — this also makes "Replay tour" work no matter which tab
+  /// was last open.
   void _maybeStartTour(bool hasTanks) {
     final seen = ref.watch(tourSeenProvider).value ?? true;
     // A replay resets the flag to false; allow the tour to fire again.
@@ -109,7 +118,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     _tourStarted = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(dbProvider).setSetting(kTourSeenKey, 'true');
       _tourPhase = 1;
       if (_index != 0) setState(() => _index = 0);
       ShowcaseView.get().startShowCase(

@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The parameter and ratio bound editors now reject saving an amber boundary
   without its matching green boundary on the same side — the configuration that
   produced the misleading chart bands — with a clear validation message.
+- The first-run feature tour is now marked as seen only when it actually ends
+  (its final step finishes, or it is skipped) instead of the moment it starts,
+  so a tour interrupted by backgrounding, rotating, or killing the app replays
+  on the next launch rather than being lost half-seen.
+- Editing a reading now validates the value field: a blank or unparseable entry
+  shows an inline error and keeps the dialog open instead of silently reverting
+  to the original value, so a mistyped edit can no longer look like it saved.
 
 ## [0.14.1] - 2026-06-30
 

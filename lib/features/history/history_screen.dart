@@ -292,6 +292,7 @@ class _ReadingDialog extends StatefulWidget {
 }
 
 class _ReadingDialogState extends State<_ReadingDialog> {
+  final _formKey = GlobalKey<FormState>();
   late DateTime _time = widget.initialTime;
   late final TextEditingController _valueCtrl =
       TextEditingController(text: widget.pres.format(widget.initialValue));
@@ -331,38 +332,45 @@ class _ReadingDialogState extends State<_ReadingDialog> {
     final l = AppLocalizations.of(context);
     return AlertDialog(
       title: Text(l.editMeasurement),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.schedule),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  formatDateTime(context, _time, weekday: false),
-                  style: Theme.of(context).textTheme.bodyLarge,
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.schedule),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    formatDateTime(context, _time, weekday: false),
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                tooltip: l.change,
-                onPressed: _pickDateTime,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _valueCtrl,
-            autofocus: true,
-            keyboardType: const TextInputType.numberWithOptions(
-                decimal: true, signed: true),
-            decoration: InputDecoration(
-              suffixText: widget.pres.unitLabel,
-              border: const OutlineInputBorder(),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: l.change,
+                  onPressed: _pickDateTime,
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _valueCtrl,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true, signed: true),
+              decoration: InputDecoration(
+                suffixText: widget.pres.unitLabel,
+                border: const OutlineInputBorder(),
+              ),
+              // Reject a blank or unparseable value instead of silently
+              // reverting to the original on save.
+              validator: (_) =>
+                  parseUserDouble(_valueCtrl.text) == null ? l.enterANumber : null,
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -371,12 +379,10 @@ class _ReadingDialogState extends State<_ReadingDialog> {
         ),
         FilledButton(
           onPressed: () {
-            final v = parseUserDouble(_valueCtrl.text);
-            // Keep the original value if the field is empty or unparseable.
-            final canonical = v == null
-                ? widget.initialValue
-                : widget.pres.toCanonical(v);
-            Navigator.pop(context, _ReadingEdit(_time, canonical));
+            if (!_formKey.currentState!.validate()) return;
+            final v = parseUserDouble(_valueCtrl.text)!;
+            Navigator.pop(
+                context, _ReadingEdit(_time, widget.pres.toCanonical(v)));
           },
           child: Text(l.save),
         ),
