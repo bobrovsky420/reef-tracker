@@ -191,9 +191,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     );
   }
 
-  /// Handles a swipe-to-delete. When the reading was saved together with other
-  /// measurements (same timestamp), asks whether to delete just this value or
-  /// the whole batch. Returns true if the swiped row should be dismissed.
+  /// Handles a swipe-to-delete. A standalone measurement is deleted immediately
+  /// with an "Undo" SnackBar; one saved together with other measurements (same
+  /// timestamp) still prompts whether to delete just this value or the whole
+  /// batch, then offers the same undo. Returns true if the row should dismiss.
   Future<bool> _confirmDelete(BuildContext context, Reading r) async {
     final l = AppLocalizations.of(context);
     final db = ref.read(dbProvider);
@@ -204,60 +205,74 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final others = siblings.length - 1;
     if (!context.mounted) return false;
 
+    // The readings to restore if the user taps Undo.
+    final List<Reading> removed;
     if (others <= 0) {
-      // A standalone measurement: simple confirmation.
-      final ok = await showDialog<bool>(
+      // A standalone measurement: delete straight away, offer undo.
+      await db.deleteReading(r.id);
+      removed = [r];
+    } else {
+      // Saved together with other measurements: offer a choice first.
+      final choice = await showDialog<_DeleteChoice>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text(l.deleteMeasurementTitle),
-          content: Text(l.deleteMeasurementBody),
+          title: Text(l.deleteTogetherTitle),
+          content: Text(l.deleteTogetherBody(others)),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
+                onPressed: () => Navigator.pop(ctx, _DeleteChoice.cancel),
                 child: Text(l.cancel)),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, _DeleteChoice.one),
+                child: Text(l.deleteOnlyThis)),
             FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text(l.delete)),
+                onPressed: () => Navigator.pop(ctx, _DeleteChoice.all),
+                child: Text(l.deleteAllTogether)),
           ],
         ),
       );
-      if (ok == true) {
-        await db.deleteReading(r.id);
-        return true;
+      switch (choice) {
+        case _DeleteChoice.one:
+          await db.deleteReading(r.id);
+          removed = [r];
+        case _DeleteChoice.all:
+          await db.deleteReadingsAt(tank.id, r.takenAt);
+          removed = siblings;
+        case _DeleteChoice.cancel:
+        case null:
+          return false;
       }
-      return false;
     }
 
-    // Saved together with other measurements: offer a choice.
-    final choice = await showDialog<_DeleteChoice>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.deleteTogetherTitle),
-        content: Text(l.deleteTogetherBody(others)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, _DeleteChoice.cancel),
-              child: Text(l.cancel)),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, _DeleteChoice.one),
-              child: Text(l.deleteOnlyThis)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, _DeleteChoice.all),
-              child: Text(l.deleteAllTogether)),
-        ],
-      ),
-    );
-    switch (choice) {
-      case _DeleteChoice.one:
-        await db.deleteReading(r.id);
-        return true;
-      case _DeleteChoice.all:
-        await db.deleteReadingsAt(tank.id, r.takenAt);
-        return true;
-      case _DeleteChoice.cancel:
-      case null:
-        return false;
-    }
+    if (context.mounted) _showUndo(context, l, removed);
+    return true;
+  }
+
+  /// Shows a "Deleted — Undo" SnackBar that re-inserts [removed] readings,
+  /// preserving each reading's own value, timestamp and note.
+  void _showUndo(BuildContext context, AppLocalizations l, List<Reading> removed) {
+    final db = ref.read(dbProvider);
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l.itemDeleted),
+          action: SnackBarAction(
+            label: l.undo,
+            onPressed: () async {
+              for (final r in removed) {
+                await db.insertReading(
+                  tankId: r.tankId,
+                  paramKey: r.paramKey,
+                  value: r.value,
+                  takenAt: r.takenAt,
+                  note: r.note,
+                );
+              }
+            },
+          ),
+        ),
+      );
   }
 }
 

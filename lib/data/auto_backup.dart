@@ -94,6 +94,26 @@ Future<File> writeAutoBackup(
   return file;
 }
 
+/// Writes a backup immediately, ignoring the schedule, and records it as the
+/// most recent backup (so the "last backup" status updates at once). Used by
+/// the manual "Back up now" action. Writes into the same rotating auto-backup
+/// folder as [runAutoBackupIfDue], so it counts against [kAutoBackupKeepKey]
+/// and shows up in the Manage-backups list.
+Future<File> backupNow(AppDatabase db) async {
+  final keep = int.tryParse(await db.getSetting(kAutoBackupKeepKey) ?? '') ??
+      kAutoBackupDefaultKeep;
+  final file = await writeAutoBackup(db, keep: keep);
+  await _stampLastBackup(db);
+  return file;
+}
+
+/// Records "a backup just completed" so the schedule and the visible
+/// last-backup status share one source of truth.
+Future<void> _stampLastBackup(AppDatabase db) => db.setSetting(
+      kLastAutoBackupAtKey,
+      DateTime.now().millisecondsSinceEpoch.toString(),
+    );
+
 /// In-flight guard for [runAutoBackupIfDue]. The launch post-frame callback and
 /// a `resumed` lifecycle event can fire almost simultaneously (e.g. resume right
 /// after cold start); without this, two runs could both pass the "is due" check,
@@ -132,8 +152,5 @@ Future<void> _runAutoBackupIfDue(AppDatabase db) async {
   final keep = int.tryParse(await db.getSetting(kAutoBackupKeepKey) ?? '') ??
       kAutoBackupDefaultKeep;
   await writeAutoBackup(db, keep: keep);
-  await db.setSetting(
-    kLastAutoBackupAtKey,
-    DateTime.now().millisecondsSinceEpoch.toString(),
-  );
+  await _stampLastBackup(db);
 }

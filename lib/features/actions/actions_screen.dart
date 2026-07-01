@@ -80,7 +80,7 @@ class ActionsBody extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 16),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      confirmDismiss: (_) => _confirmDelete(context, ref, l, e),
+      confirmDismiss: (_) => _deleteWithUndo(context, ref, l, e),
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
@@ -264,38 +264,15 @@ Future<void> _editEquipment(
   }
 }
 
-Future<bool> _confirmDelete(
+/// Deletes the swiped action immediately and offers an "Undo" SnackBar that
+/// re-inserts it, replacing the old confirm dialog (faster for the common case
+/// and safe against accidental swipes).
+Future<bool> _deleteWithUndo(
   BuildContext context,
   WidgetRef ref,
   AppLocalizations l,
   _Entry e,
 ) async {
-  final (String titleText, String bodyText) = switch (e) {
-    _WaterEntry() => (l.deleteWaterChangeTitle, l.deleteWaterChangeBody),
-    _CarbonEntry() => (l.deleteCarbonChangeTitle, l.deleteCarbonChangeBody),
-    _EquipmentEntry() => (
-      l.deleteEquipmentCleaningTitle,
-      l.deleteEquipmentCleaningBody,
-    ),
-  };
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(titleText),
-      content: Text(bodyText),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(l.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l.delete),
-        ),
-      ],
-    ),
-  );
-  if (ok != true) return false;
   final db = ref.read(dbProvider);
   switch (e) {
     case _WaterEntry(:final data):
@@ -305,6 +282,41 @@ Future<bool> _confirmDelete(
     case _EquipmentEntry(:final data):
       await db.deleteEquipmentCleaning(data.id);
   }
+  if (!context.mounted) return true;
+  ScaffoldMessenger.of(context)
+    ..clearSnackBars()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(l.itemDeleted),
+        action: SnackBarAction(
+          label: l.undo,
+          onPressed: () async {
+            switch (e) {
+              case _WaterEntry(:final data):
+                await db.insertWaterChange(
+                  tankId: data.tankId,
+                  changedAt: data.changedAt,
+                  amountLiters: data.amountLiters,
+                  note: data.note,
+                );
+              case _CarbonEntry(:final data):
+                await db.insertCarbonChange(
+                  tankId: data.tankId,
+                  changedAt: data.changedAt,
+                  grams: data.grams,
+                  note: data.note,
+                );
+              case _EquipmentEntry(:final data):
+                await db.insertEquipmentCleaning(
+                  tankId: data.tankId,
+                  cleanedAt: data.cleanedAt,
+                  note: data.note,
+                );
+            }
+          },
+        ),
+      ),
+    );
   return true;
 }
 

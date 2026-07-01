@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
@@ -175,6 +176,21 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(),
           _SectionHeader(l.backupSection),
           ListTile(
+            leading: const Icon(Icons.backup),
+            title: Text(l.backupNow),
+            subtitle: Text(
+              ref.watch(lastBackupAtProvider).maybeWhen(
+                    data: (t) => t == null
+                        ? l.backupNeverRun
+                        : l.backupLastRun(
+                            DateFormat.yMMMd().add_jm().format(t.toLocal()),
+                          ),
+                    orElse: () => l.backupNeverRun,
+                  ),
+            ),
+            onTap: () => _backupNow(context, db, l),
+          ),
+          ListTile(
             leading: const Icon(Icons.upload_file_outlined),
             title: Text(l.backupExport),
             subtitle: Text(l.backupExportSubtitle),
@@ -260,6 +276,17 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _backupNow(
+      BuildContext context, AppDatabase db, AppLocalizations l) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await backupNow(db);
+      messenger.showSnackBar(SnackBar(content: Text(l.backupDone)));
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l.backupExportFailed)));
+    }
   }
 
   Future<void> _export(

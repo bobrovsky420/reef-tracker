@@ -184,7 +184,11 @@ Two layers, **no new dependencies and no runtime permissions**:
    keeps the newest *N* (`kAutoBackupDefaultKeep`). The **Manage backups** screen
    (`features/settings/backups_screen.dart`, route `/settings/backups`) lists
    them and offers restore (reuses `decodeBackup` + `importBackup`), share,
-   and delete.
+   and delete. `backupNow(db)` powers the **Back up now** action in Settings:
+   it writes into the same rotating folder regardless of the schedule and stamps
+   `last_auto_backup_at`, so the visible "last backup" status (surfaced via
+   `lastBackupAtProvider`) updates at once. The schedule and the manual button
+   share `_stampLastBackup` as the single source of truth for that timestamp.
 2. **Android Auto Backup.** `android:allowBackup="true"` plus empty
    `res/xml/backup_rules.xml` / `data_extraction_rules.xml` (default = back up
    all app data) mean the SQLite DB *and* the `backups/` folder are synced to the
@@ -192,7 +196,7 @@ Two layers, **no new dependencies and no runtime permissions**:
 
 Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 (`daily`/`weekly`), `auto_backup_keep`, `last_auto_backup_at`. Providers:
-`autoBackupEnabledProvider`, `autoBackupIntervalProvider`.
+`autoBackupEnabledProvider`, `autoBackupIntervalProvider`, `lastBackupAtProvider`.
 
 ## State layer (`lib/app/providers.dart`)
 
@@ -350,8 +354,10 @@ units while bounds/zones stay canonical. Below the chart is the readings list:
 tap a row to edit its **value and date/time** (`_ReadingDialog`, the date/time
 picker mirroring the actions log); when the moved reading shares its timestamp
 with sibling measurements, the user is asked whether to re-time only that value
-or all values entered together (`updateReadingsTimeAt`). Swipe-left deletes, with
-the same one-vs-all choice for grouped readings (`deleteReadingsAt`).
+or all values entered together (`updateReadingsTimeAt`). Swipe-left deletes: a
+standalone reading is removed immediately with an **"Undo" SnackBar**
+(`_showUndo` re-inserts it); a grouped reading still prompts the one-vs-all
+choice (`deleteReadingsAt`) first, then offers the same undo.
 
 ### Trend detection (`domain/trend.dart` + `widgets/trend_view.dart`)
 
@@ -416,7 +422,9 @@ first. Rendered as the **Actions tab** of the home shell.
   (`_Entry` sealed type: `_WaterEntry` / `_CarbonEntry` / `_EquipmentEntry`).
   Each row: type icon, type name, value (litres in the display volume unit, or
   grams; none for equipment cleaning), optional note, timestamp; swipe-to-delete
-  and tap-the-row-to-edit (a trailing chevron hints at tappability). The shell's
+  (`_deleteWithUndo` removes the row immediately and shows an **"Undo" SnackBar**
+  that re-inserts it) and tap-the-row-to-edit (a trailing chevron hints at
+  tappability). The shell's
   Actions-tab FAB calls the top-level
   `showAddActionSheet`, which opens a bottom sheet to choose which action to add.
   A shared

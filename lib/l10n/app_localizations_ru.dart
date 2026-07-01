@@ -111,6 +111,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get change => 'Изменить';
 
   @override
+  String get undo => 'Отменить';
+
+  @override
+  String get itemDeleted => 'Удалено';
+
+  @override
   String errorWith(Object message) {
     return 'Ошибка: $message';
   }
@@ -370,13 +376,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get editMeasurement => 'Изменить измерение';
 
   @override
-  String get deleteMeasurementTitle => 'Удалить измерение?';
-
-  @override
-  String get deleteMeasurementBody =>
-      'Это безвозвратно удалит данное значение.';
-
-  @override
   String get deleteTogetherTitle => 'Удалить измерение';
 
   @override
@@ -447,13 +446,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get amountNotRecorded => 'Объём не указан';
 
   @override
-  String get deleteWaterChangeTitle => 'Удалить подмену воды?';
-
-  @override
-  String get deleteWaterChangeBody =>
-      'Это безвозвратно удалит эту подмену воды.';
-
-  @override
   String get actions => 'Действия';
 
   @override
@@ -483,24 +475,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get deleteCarbonChangeTitle => 'Удалить замену угля?';
-
-  @override
-  String get deleteCarbonChangeBody =>
-      'Это безвозвратно удалит эту замену угля.';
-
-  @override
   String get equipmentCleaning => 'Чистка оборудования';
 
   @override
   String get recordEquipmentCleaning => 'Записать чистку оборудования';
-
-  @override
-  String get deleteEquipmentCleaningTitle => 'Удалить чистку оборудования?';
-
-  @override
-  String get deleteEquipmentCleaningBody =>
-      'Это безвозвратно удалит эту чистку оборудования.';
 
   @override
   String get dosing => 'Дозирование';
@@ -663,6 +641,20 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupSection => 'Резервная копия';
 
   @override
+  String get backupNow => 'Создать копию сейчас';
+
+  @override
+  String backupLastRun(String when) {
+    return 'Последняя копия: $when';
+  }
+
+  @override
+  String get backupNeverRun => 'Копий пока нет';
+
+  @override
+  String get backupDone => 'Копия сохранена';
+
+  @override
   String get backupExport => 'Экспортировать копию';
 
   @override
@@ -681,7 +673,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'Все текущие аквариумы, параметры и измерения будут заменены содержимым файла резервной копии. Это действие нельзя отменить.';
+      'ВСЕ текущие данные — все аквариумы, параметры и измерения, а также настройки приложения (язык, единицы измерения и предпочтения) — будут заменены содержимым файла резервной копии. Это действие нельзя отменить.';
 
   @override
   String get restore => 'Восстановить';

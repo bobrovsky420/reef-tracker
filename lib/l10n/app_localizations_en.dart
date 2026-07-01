@@ -110,6 +110,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get change => 'Change';
 
   @override
+  String get undo => 'Undo';
+
+  @override
+  String get itemDeleted => 'Deleted';
+
+  @override
   String errorWith(Object message) {
     return 'Error: $message';
   }
@@ -369,12 +375,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editMeasurement => 'Edit measurement';
 
   @override
-  String get deleteMeasurementTitle => 'Delete measurement?';
-
-  @override
-  String get deleteMeasurementBody => 'This permanently deletes this value.';
-
-  @override
   String get deleteTogetherTitle => 'Delete measurement';
 
   @override
@@ -444,13 +444,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get amountNotRecorded => 'Amount not recorded';
 
   @override
-  String get deleteWaterChangeTitle => 'Delete water change?';
-
-  @override
-  String get deleteWaterChangeBody =>
-      'This permanently deletes this water change.';
-
-  @override
   String get actions => 'Actions';
 
   @override
@@ -480,24 +473,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get deleteCarbonChangeTitle => 'Delete carbon change?';
-
-  @override
-  String get deleteCarbonChangeBody =>
-      'This permanently deletes this carbon change.';
-
-  @override
   String get equipmentCleaning => 'Equipment cleaning';
 
   @override
   String get recordEquipmentCleaning => 'Record equipment cleaning';
-
-  @override
-  String get deleteEquipmentCleaningTitle => 'Delete equipment cleaning?';
-
-  @override
-  String get deleteEquipmentCleaningBody =>
-      'This permanently deletes this equipment cleaning.';
 
   @override
   String get dosing => 'Dosing';
@@ -661,6 +640,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupSection => 'Backup';
 
   @override
+  String get backupNow => 'Back up now';
+
+  @override
+  String backupLastRun(String when) {
+    return 'Last backup: $when';
+  }
+
+  @override
+  String get backupNeverRun => 'No backup yet';
+
+  @override
+  String get backupDone => 'Backup saved';
+
+  @override
   String get backupExport => 'Export backup';
 
   @override
@@ -678,7 +671,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'This replaces all current aquariums, parameters, and readings with the contents of the backup file. This cannot be undone.';
+      'This replaces ALL current data — every aquarium, parameter, and reading, and your app settings (language, units, and preferences) — with the contents of the backup file. This cannot be undone.';
 
   @override
   String get restore => 'Restore';

@@ -106,6 +106,35 @@ void main() {
     });
   });
 
+  group('backupNow', () {
+    test('writes immediately (ignoring schedule) and stamps the timestamp',
+        () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      // A very recent stamp would make runAutoBackupIfDue skip; backupNow must
+      // still write.
+      await db.setSetting(kLastAutoBackupAtKey,
+          DateTime.now().millisecondsSinceEpoch.toString());
+
+      final file = await backupNow(db);
+      expect(await file.exists(), isTrue);
+      expect((await listAutoBackups()).length, 1);
+      expect(await db.getSetting(kLastAutoBackupAtKey), isNotNull);
+    });
+
+    test('prunes to the configured keep count', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      await db.setSetting(kAutoBackupKeepKey, '2');
+      await seedBackupFiles(4); // pre-existing older backups
+
+      await backupNow(db);
+      expect((await listAutoBackups()).length, 2);
+    });
+  });
+
   group('runAutoBackupIfDue', () {
     test('does nothing when disabled', () async {
       final db = newDb();

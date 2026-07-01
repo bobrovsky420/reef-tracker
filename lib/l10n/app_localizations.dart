@@ -296,6 +296,18 @@ abstract class AppLocalizations {
   /// **'Change'**
   String get change;
 
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @itemDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get itemDeleted;
+
   /// No description provided for @errorWith.
   ///
   /// In en, this message translates to:
@@ -728,18 +740,6 @@ abstract class AppLocalizations {
   /// **'Edit measurement'**
   String get editMeasurement;
 
-  /// No description provided for @deleteMeasurementTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete measurement?'**
-  String get deleteMeasurementTitle;
-
-  /// No description provided for @deleteMeasurementBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This permanently deletes this value.'**
-  String get deleteMeasurementBody;
-
   /// No description provided for @deleteTogetherTitle.
   ///
   /// In en, this message translates to:
@@ -866,18 +866,6 @@ abstract class AppLocalizations {
   /// **'Amount not recorded'**
   String get amountNotRecorded;
 
-  /// No description provided for @deleteWaterChangeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete water change?'**
-  String get deleteWaterChangeTitle;
-
-  /// No description provided for @deleteWaterChangeBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This permanently deletes this water change.'**
-  String get deleteWaterChangeBody;
-
   /// No description provided for @actions.
   ///
   /// In en, this message translates to:
@@ -932,18 +920,6 @@ abstract class AppLocalizations {
   /// **'{value} g'**
   String gramsSuffix(Object value);
 
-  /// No description provided for @deleteCarbonChangeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete carbon change?'**
-  String get deleteCarbonChangeTitle;
-
-  /// No description provided for @deleteCarbonChangeBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This permanently deletes this carbon change.'**
-  String get deleteCarbonChangeBody;
-
   /// No description provided for @equipmentCleaning.
   ///
   /// In en, this message translates to:
@@ -955,18 +931,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Record equipment cleaning'**
   String get recordEquipmentCleaning;
-
-  /// No description provided for @deleteEquipmentCleaningTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete equipment cleaning?'**
-  String get deleteEquipmentCleaningTitle;
-
-  /// No description provided for @deleteEquipmentCleaningBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This permanently deletes this equipment cleaning.'**
-  String get deleteEquipmentCleaningBody;
 
   /// No description provided for @dosing.
   ///
@@ -1268,6 +1232,30 @@ abstract class AppLocalizations {
   /// **'Backup'**
   String get backupSection;
 
+  /// No description provided for @backupNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get backupNow;
+
+  /// Subtitle showing when the most recent backup completed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last backup: {when}'**
+  String backupLastRun(String when);
+
+  /// No description provided for @backupNeverRun.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup yet'**
+  String get backupNeverRun;
+
+  /// No description provided for @backupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved'**
+  String get backupDone;
+
   /// No description provided for @backupExport.
   ///
   /// In en, this message translates to:
@@ -1301,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupRestoreConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This replaces all current aquariums, parameters, and readings with the contents of the backup file. This cannot be undone.'**
+  /// **'This replaces ALL current data — every aquarium, parameter, and reading, and your app settings (language, units, and preferences) — with the contents of the backup file. This cannot be undone.'**
   String get backupRestoreConfirmBody;
 
   /// No description provided for @restore.

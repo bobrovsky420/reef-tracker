@@ -110,6 +110,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get change => 'Změnit';
 
   @override
+  String get undo => 'Zpět';
+
+  @override
+  String get itemDeleted => 'Smazáno';
+
+  @override
   String errorWith(Object message) {
     return 'Chyba: $message';
   }
@@ -369,12 +375,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get editMeasurement => 'Upravit měření';
 
   @override
-  String get deleteMeasurementTitle => 'Smazat měření?';
-
-  @override
-  String get deleteMeasurementBody => 'Tímto trvale smažete tuto hodnotu.';
-
-  @override
   String get deleteTogetherTitle => 'Smazat měření';
 
   @override
@@ -445,12 +445,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get amountNotRecorded => 'Množství nezaznamenáno';
 
   @override
-  String get deleteWaterChangeTitle => 'Smazat výměnu vody?';
-
-  @override
-  String get deleteWaterChangeBody => 'Tímto trvale smažete tuto výměnu vody.';
-
-  @override
   String get actions => 'Úkony';
 
   @override
@@ -480,23 +474,10 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get deleteCarbonChangeTitle => 'Smazat výměnu uhlí?';
-
-  @override
-  String get deleteCarbonChangeBody => 'Tímto trvale smažete tuto výměnu uhlí.';
-
-  @override
   String get equipmentCleaning => 'Čištění vybavení';
 
   @override
   String get recordEquipmentCleaning => 'Zaznamenat čištění vybavení';
-
-  @override
-  String get deleteEquipmentCleaningTitle => 'Smazat čištění vybavení?';
-
-  @override
-  String get deleteEquipmentCleaningBody =>
-      'Tímto trvale smažete toto čištění vybavení.';
 
   @override
   String get dosing => 'Dávkování';
@@ -660,6 +641,20 @@ class AppLocalizationsCs extends AppLocalizations {
   String get backupSection => 'Záloha';
 
   @override
+  String get backupNow => 'Zálohovat nyní';
+
+  @override
+  String backupLastRun(String when) {
+    return 'Poslední záloha: $when';
+  }
+
+  @override
+  String get backupNeverRun => 'Zatím žádná záloha';
+
+  @override
+  String get backupDone => 'Záloha uložena';
+
+  @override
   String get backupExport => 'Exportovat zálohu';
 
   @override
@@ -677,7 +672,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'Tímto se všechna stávající akvária, parametry a měření nahradí obsahem souboru zálohy. Tuto akci nelze vrátit zpět.';
+      'Tímto se VŠECHNA stávající data — všechna akvária, parametry a měření a také nastavení aplikace (jazyk, jednotky a předvolby) — nahradí obsahem souboru zálohy. Tuto akci nelze vrátit zpět.';
 
   @override
   String get restore => 'Obnovit';

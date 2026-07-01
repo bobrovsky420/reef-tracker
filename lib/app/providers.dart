@@ -207,6 +207,17 @@ final autoBackupIntervalProvider = StreamProvider<AutoBackupInterval>((ref) =>
         .watchSetting(kAutoBackupIntervalKey)
         .map(AutoBackupInterval.fromName));
 
+/// When the most recent automatic or manual backup completed, or null if none
+/// has run yet. Reacts to [kLastAutoBackupAtKey], so it refreshes as soon as a
+/// backup is written.
+final lastBackupAtProvider = StreamProvider<DateTime?>((ref) => ref
+    .watch(dbProvider)
+    .watchSetting(kLastAutoBackupAtKey)
+    .map((v) {
+      final ms = int.tryParse(v ?? '');
+      return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+    }));
+
 /// Whether recent-trend detection / forecasts are shown (default on).
 final trendEnabledProvider = StreamProvider<bool>((ref) => ref
     .watch(dbProvider)

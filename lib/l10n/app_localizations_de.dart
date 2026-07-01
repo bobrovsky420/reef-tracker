@@ -111,6 +111,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get change => 'Ändern';
 
   @override
+  String get undo => 'Rückgängig';
+
+  @override
+  String get itemDeleted => 'Gelöscht';
+
+  @override
   String errorWith(Object message) {
     return 'Fehler: $message';
   }
@@ -370,13 +376,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get editMeasurement => 'Messung bearbeiten';
 
   @override
-  String get deleteMeasurementTitle => 'Messung löschen?';
-
-  @override
-  String get deleteMeasurementBody =>
-      'Dadurch wird dieser Wert dauerhaft gelöscht.';
-
-  @override
   String get deleteTogetherTitle => 'Messung löschen';
 
   @override
@@ -447,13 +446,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get amountNotRecorded => 'Menge nicht erfasst';
 
   @override
-  String get deleteWaterChangeTitle => 'Wasserwechsel löschen?';
-
-  @override
-  String get deleteWaterChangeBody =>
-      'Dadurch wird dieser Wasserwechsel dauerhaft gelöscht.';
-
-  @override
   String get actions => 'Maßnahmen';
 
   @override
@@ -483,24 +475,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get deleteCarbonChangeTitle => 'Kohlewechsel löschen?';
-
-  @override
-  String get deleteCarbonChangeBody =>
-      'Dadurch wird dieser Kohlewechsel dauerhaft gelöscht.';
-
-  @override
   String get equipmentCleaning => 'Gerätereinigung';
 
   @override
   String get recordEquipmentCleaning => 'Gerätereinigung erfassen';
-
-  @override
-  String get deleteEquipmentCleaningTitle => 'Gerätereinigung löschen?';
-
-  @override
-  String get deleteEquipmentCleaningBody =>
-      'Dadurch wird diese Gerätereinigung dauerhaft gelöscht.';
 
   @override
   String get dosing => 'Dosierung';
@@ -664,6 +642,20 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backupSection => 'Sicherung';
 
   @override
+  String get backupNow => 'Jetzt sichern';
+
+  @override
+  String backupLastRun(String when) {
+    return 'Letzte Sicherung: $when';
+  }
+
+  @override
+  String get backupNeverRun => 'Noch keine Sicherung';
+
+  @override
+  String get backupDone => 'Sicherung gespeichert';
+
+  @override
   String get backupExport => 'Sicherung exportieren';
 
   @override
@@ -682,7 +674,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'Dadurch werden alle aktuellen Aquarien, Parameter und Messwerte durch den Inhalt der Sicherungsdatei ersetzt. Dies kann nicht rückgängig gemacht werden.';
+      'Dadurch werden ALLE aktuellen Daten — alle Aquarien, Parameter und Messwerte sowie Ihre App-Einstellungen (Sprache, Einheiten und Präferenzen) — durch den Inhalt der Sicherungsdatei ersetzt. Dies kann nicht rückgängig gemacht werden.';
 
   @override
   String get restore => 'Wiederherstellen';

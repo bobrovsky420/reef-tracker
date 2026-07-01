@@ -111,6 +111,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get change => 'Zmień';
 
   @override
+  String get undo => 'Cofnij';
+
+  @override
+  String get itemDeleted => 'Usunięto';
+
+  @override
   String errorWith(Object message) {
     return 'Błąd: $message';
   }
@@ -370,13 +376,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get editMeasurement => 'Edytuj pomiar';
 
   @override
-  String get deleteMeasurementTitle => 'Usunąć pomiar?';
-
-  @override
-  String get deleteMeasurementBody =>
-      'Spowoduje to trwałe usunięcie tej wartości.';
-
-  @override
   String get deleteTogetherTitle => 'Usuń pomiar';
 
   @override
@@ -446,13 +445,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get amountNotRecorded => 'Ilość nie zapisana';
 
   @override
-  String get deleteWaterChangeTitle => 'Usunąć podmianę wody?';
-
-  @override
-  String get deleteWaterChangeBody =>
-      'Spowoduje to trwałe usunięcie tej podmiany wody.';
-
-  @override
   String get actions => 'Czynności';
 
   @override
@@ -482,24 +474,10 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get deleteCarbonChangeTitle => 'Usunąć wymianę węgla?';
-
-  @override
-  String get deleteCarbonChangeBody =>
-      'Spowoduje to trwałe usunięcie tej wymiany węgla.';
-
-  @override
   String get equipmentCleaning => 'Czyszczenie sprzętu';
 
   @override
   String get recordEquipmentCleaning => 'Zapisz czyszczenie sprzętu';
-
-  @override
-  String get deleteEquipmentCleaningTitle => 'Usunąć czyszczenie sprzętu?';
-
-  @override
-  String get deleteEquipmentCleaningBody =>
-      'Spowoduje to trwałe usunięcie tego czyszczenia sprzętu.';
 
   @override
   String get dosing => 'Dozowanie';
@@ -663,6 +641,20 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupSection => 'Kopia zapasowa';
 
   @override
+  String get backupNow => 'Utwórz kopię teraz';
+
+  @override
+  String backupLastRun(String when) {
+    return 'Ostatnia kopia: $when';
+  }
+
+  @override
+  String get backupNeverRun => 'Brak kopii zapasowej';
+
+  @override
+  String get backupDone => 'Kopia zapisana';
+
+  @override
   String get backupExport => 'Eksportuj kopię';
 
   @override
@@ -681,7 +673,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'Spowoduje to zastąpienie wszystkich obecnych akwariów, parametrów i pomiarów zawartością pliku kopii zapasowej. Tej operacji nie można cofnąć.';
+      'Spowoduje to zastąpienie WSZYSTKICH obecnych danych — wszystkich akwariów, parametrów i pomiarów oraz ustawień aplikacji (języka, jednostek i preferencji) — zawartością pliku kopii zapasowej. Tej operacji nie można cofnąć.';
 
   @override
   String get restore => 'Przywróć';

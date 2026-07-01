@@ -34,6 +34,8 @@
   "stop": "Stop",
   "apply": "Apply",
   "change": "Change",
+  "undo": "Undo",
+  "itemDeleted": "Deleted",
   "errorWith": "Error: {message}",
   "@errorWith": { "placeholders": { "message": {} } },
   "saveFailed": "Couldn't save: {error}",
@@ -130,8 +132,6 @@
   "rangeAll": "All",
   "noReadingsInRange": "No readings in this range.",
   "editMeasurement": "Edit measurement",
-  "deleteMeasurementTitle": "Delete measurement?",
-  "deleteMeasurementBody": "This permanently deletes this value.",
   "deleteTogetherTitle": "Delete measurement",
   "deleteTogetherBody": "This value was entered together with {count} other measurement(s). Delete only this value, or all values entered together?",
   "@deleteTogetherBody": { "placeholders": { "count": { "type": "int" } } },
@@ -159,8 +159,6 @@
   "amountLitersOptional": "Amount (optional)",
   "noWaterChanges": "No water changes yet.",
   "amountNotRecorded": "Amount not recorded",
-  "deleteWaterChangeTitle": "Delete water change?",
-  "deleteWaterChangeBody": "This permanently deletes this water change.",
 
   "actions": "Actions",
   "noActions": "No actions yet.",
@@ -172,12 +170,8 @@
   "weightNotRecorded": "Weight not recorded",
   "gramsSuffix": "{value} g",
   "@gramsSuffix": { "placeholders": { "value": {} } },
-  "deleteCarbonChangeTitle": "Delete carbon change?",
-  "deleteCarbonChangeBody": "This permanently deletes this carbon change.",
   "equipmentCleaning": "Equipment cleaning",
   "recordEquipmentCleaning": "Record equipment cleaning",
-  "deleteEquipmentCleaningTitle": "Delete equipment cleaning?",
-  "deleteEquipmentCleaningBody": "This permanently deletes this equipment cleaning.",
 
   "dosing": "Dosing",
   "addSupplement": "Add supplement",
@@ -234,12 +228,25 @@
   "salinityCalculatorSubtitle": "Convert ppt ↔ specific gravity (SG)",
 
   "backupSection": "Backup",
+  "backupNow": "Back up now",
+  "backupLastRun": "Last backup: {when}",
+  "@backupLastRun": {
+    "description": "Subtitle showing when the most recent backup completed.",
+    "placeholders": {
+      "when": {
+        "type": "String",
+        "example": "Jul 1, 2026, 3:24 PM"
+      }
+    }
+  },
+  "backupNeverRun": "No backup yet",
+  "backupDone": "Backup saved",
   "backupExport": "Export backup",
   "backupExportSubtitle": "Save all aquariums and readings to a file",
   "backupImport": "Restore from backup",
   "backupImportSubtitle": "Replace all data with a backup file",
   "backupRestoreConfirmTitle": "Restore backup?",
-  "backupRestoreConfirmBody": "This replaces all current aquariums, parameters, and readings with the contents of the backup file. This cannot be undone.",
+  "backupRestoreConfirmBody": "This replaces ALL current data — every aquarium, parameter, and reading, and your app settings (language, units, and preferences) — with the contents of the backup file. This cannot be undone.",
   "restore": "Restore",
   "backupRestored": "Backup restored",
   "backupExportFailed": "Could not export the backup",

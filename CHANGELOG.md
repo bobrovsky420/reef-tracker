@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.2] - 2026-07-01
+
+### Added
+- The Backup settings now show **when the last backup ran** and offer a one-tap
+  **Back up now** button, so it's clear your data is protected. A manual backup
+  is saved into the same rotating on-device backup list as the automatic ones.
+
+### Changed
+- The restore confirmation now **warns that restoring replaces your app
+  settings too** (language, units, and preferences), not just your aquarium data.
+- Swiping away a reading or an action now **deletes it immediately with an
+  "Undo" option** in a SnackBar, instead of a confirmation dialog — faster for
+  the common case and safe against accidental swipes. Readings that were entered
+  together still ask whether to delete only that value or all of them first.
+
 ## [0.15.1] - 2026-07-01
 
 ### Added
