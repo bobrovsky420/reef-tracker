@@ -238,6 +238,7 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 | `/ratio/:type/edit` | Edit a ratio card's per-tank zone bounds |
 | `/dosing/edit` | Add / edit a supplement-dosing entry (`extra` = `DosingEntry?`) |
 | `/dosing/calculator` | Consumption / dose-adjustment calculator |
+| `/dosing/history` | Read-only timeline of all dose segments (active + ended) with permanent-delete |
 | `/settings` | Units, language, backup/restore, automatic backup |
 | `/settings/backups` | Manage automatic backups (list / restore / share / delete) |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
@@ -264,12 +265,12 @@ bodies (`DashboardBody`, `ActionsBody`, `DosingBody`) and the shell composes the
 **First-run feature tour:** `HomeShell` registers a `showcaseview` `ShowcaseView`
 (in `initState`, unregistered in `dispose`) and spotlights the less-obvious
 top-bar elements once, each wrapped in a `Showcase` with a localized
-title/description and Next/Skip actions. Because the dose-calculator icon only
-renders on the Dosing tab, the tour runs in **two phases** tracked by
-`_tourPhase`: phase 1 on the Measurements tab (`TankSelector` → compare/grid
-toggle → manage-parameters), then `onFinish` switches to the Dosing tab and
-starts phase 2 (the dose calculator) as the final step; finishing or skipping
-phase 2 returns to the Measurements tab. It auto-starts (after the first frame)
+title/description and Next/Skip actions. Because the dosing-history and
+dose-calculator icons only render on the Dosing tab, the tour runs in **two
+phases** tracked by `_tourPhase`: phase 1 on the Measurements tab (`TankSelector`
+→ compare/grid toggle → manage-parameters), then `onFinish` switches to the
+Dosing tab and starts phase 2 (dosing history → the dose calculator) as its final
+steps; finishing or skipping phase 2 returns to the Measurements tab. It auto-starts (after the first frame)
 only when a tank exists and the `tour_v1_seen` setting is unset, forcing the
 Measurements tab first. `tour_v1_seen = 'true'` is persisted (`_markTourSeen`)
 **only when the tour actually ends** — phase 2's `onFinish` or a dismiss — not at
@@ -469,6 +470,16 @@ Rendered as the **Dosing tab** of the home shell.
   reflected on existing entries), falling back to the stored snapshot only for
   custom or orphaned entries. The target element stays the stored, user-editable
   value.
+- `dosing_history_screen.dart` — `DosingHistoryScreen` (route `/dosing/history`,
+  opened from a **history icon in the Dosing tab's app bar**, contextual to
+  `_index == 2`) is a read-only timeline of **all** segments for the active tank
+  (`watchDosingHistory` / `dosingHistoryProvider`, active + ended, newest first).
+  Each row reuses `dosingDetailLine` for the dosage and shows the segment's period
+  (`Since {date}` for active, `{from} – {to}` for ended). A trailing delete
+  **permanently** removes a record entered by mistake (`deleteDosingEntry`, a real
+  hard delete — distinct from the reversible `stopDosingEntry`), behind an
+  irreversible confirmation that warns when the record isn't the most recent for
+  its element.
 
 **Future-proofing (decided up front):** dose amounts are stored canonically (ml/g
 only — no unit-preference conversion), `elementKey` is always a real

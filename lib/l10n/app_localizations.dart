@@ -170,6 +170,18 @@ abstract class AppLocalizations {
   /// **'Choose which water parameters to track and set their target ranges.'**
   String get tourParamsDesc;
 
+  /// No description provided for @tourDosingHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosing history'**
+  String get tourDosingHistoryTitle;
+
+  /// No description provided for @tourDosingHistoryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review every past and current dose period, and remove a record entered by mistake.'**
+  String get tourDosingHistoryDesc;
+
   /// No description provided for @tourDoseCalcTitle.
   ///
   /// In en, this message translates to:
@@ -997,6 +1009,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This stops dosing it and removes it from the active plan. Its history is kept.'**
   String get stopDosingBody;
+
+  /// No description provided for @dosingHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosing history'**
+  String get dosingHistoryTitle;
+
+  /// No description provided for @dosingHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No dosing history yet.'**
+  String get dosingHistoryEmpty;
+
+  /// No description provided for @dosingHistoryCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get dosingHistoryCurrent;
+
+  /// No description provided for @dosingHistorySince.
+  ///
+  /// In en, this message translates to:
+  /// **'Since {date}'**
+  String dosingHistorySince(Object date);
+
+  /// No description provided for @dosingHistoryPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} – {to}'**
+  String dosingHistoryPeriod(Object from, Object to);
+
+  /// No description provided for @deleteDosingRecordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this record?'**
+  String get deleteDosingRecordTitle;
+
+  /// No description provided for @deleteDosingRecordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes this dosing record from history and the dose calculation. It can\'t be undone.'**
+  String get deleteDosingRecordBody;
+
+  /// No description provided for @deleteDosingRecordNotLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t the most recent record for this element; deleting it won\'t change later records.'**
+  String get deleteDosingRecordNotLatest;
 
   /// No description provided for @dosingNew.
   ///

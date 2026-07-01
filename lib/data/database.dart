@@ -794,6 +794,21 @@ class AppDatabase extends _$AppDatabase {
             ]))
           .watch();
 
+  /// Every dosing segment for a tank — active **and** ended (superseded/stopped)
+  /// — newest first, for the history timeline. Ordered by when each segment
+  /// began (`startedAt`, falling back to `createdAt` for any un-backfilled row).
+  Stream<List<DosingEntry>> watchDosingHistory(int tankId) =>
+      (select(dosingEntries)
+            ..where((d) => d.tankId.equals(tankId))
+            ..orderBy([
+              (d) => OrderingTerm(
+                  expression: coalesce([d.startedAt, d.createdAt]),
+                  mode: OrderingMode.desc),
+              (d) => OrderingTerm(
+                  expression: d.createdAt, mode: OrderingMode.desc),
+            ]))
+          .watch();
+
   Future<int> insertDosingEntry(DosingEntriesCompanion entry) async {
     final existing = await (select(dosingEntries)
           ..where((d) => d.tankId.equals(entry.tankId.value)))
@@ -858,6 +873,12 @@ class AppDatabase extends _$AppDatabase {
           endedAt: Value(DateTime.now()),
         ),
       );
+
+  /// Permanently removes a dosing segment — the history screen's "delete a record
+  /// entered by mistake". Unlike [stopDosingEntry] this is irreversible and leaves
+  /// no history; use it only for erroneous records, not to stop dosing.
+  Future<void> deleteDosingEntry(int id) =>
+      (delete(dosingEntries)..where((d) => d.id.equals(id))).go();
 
   /// Persists a new manual ordering of a tank's dosing entries, given their ids
   /// in the desired top-to-bottom order.

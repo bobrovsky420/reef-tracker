@@ -5,11 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.15.0] - 2026-07-01
+## [0.15.1] - 2026-07-01
 
 ### Added
-- Dosing entries can now be **reordered** by dragging the handle on each row;
-  the new order is saved per tank.
+- A **Dosing history** screen (from the history icon on the Dosing tab) shows
+  every past and current dose period per supplement — including stopped ones —
+  with the option to permanently delete a record entered by mistake.
 - The dose calculator now **warns when the dose changed within the measurement
   window**, so a mid-window adjustment no longer silently skews the consumption
   and dose-recommendation figures.
@@ -20,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   period is retained and a new one starts, recording exactly when it changed.
 - Swiping a supplement now **stops** it (removing it from the active plan while
   keeping its history) instead of permanently deleting it.
+
+## [0.15.0] - 2026-07-01
+
+### Added
+- Dosing entries can now be **reordered** by dragging the handle on each row;
+  the new order is saved per tank.
 
 ### Fixed
 - Readings, water changes and cleanings can no longer be dated in the future:

@@ -45,6 +45,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wähle, welche Wasserparameter verfolgt werden, und lege ihre Zielbereiche fest.';
 
   @override
+  String get tourDosingHistoryTitle => 'Dosierverlauf';
+
+  @override
+  String get tourDosingHistoryDesc =>
+      'Sieh dir alle vergangenen und aktuellen Dosierzeiträume an und entferne einen versehentlich erstellten Eintrag.';
+
+  @override
   String get tourDoseCalcTitle => 'Dosierungsrechner';
 
   @override
@@ -517,6 +524,36 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get stopDosingBody =>
       'Dadurch wird die Dosierung gestoppt und das Präparat aus dem aktiven Plan entfernt. Der Verlauf bleibt erhalten.';
+
+  @override
+  String get dosingHistoryTitle => 'Dosierverlauf';
+
+  @override
+  String get dosingHistoryEmpty => 'Noch kein Dosierverlauf.';
+
+  @override
+  String get dosingHistoryCurrent => 'Aktuell';
+
+  @override
+  String dosingHistorySince(Object date) {
+    return 'Seit $date';
+  }
+
+  @override
+  String dosingHistoryPeriod(Object from, Object to) {
+    return '$from – $to';
+  }
+
+  @override
+  String get deleteDosingRecordTitle => 'Diesen Eintrag löschen?';
+
+  @override
+  String get deleteDosingRecordBody =>
+      'Dadurch wird dieser Dosiereintrag dauerhaft aus dem Verlauf und der Dosisberechnung entfernt. Das kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get deleteDosingRecordNotLatest =>
+      'Dies ist nicht der neueste Eintrag für dieses Element; das Löschen ändert spätere Einträge nicht.';
 
   @override
   String get dosingNew => 'Präparat hinzufügen';

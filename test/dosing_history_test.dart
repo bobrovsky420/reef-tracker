@@ -81,6 +81,50 @@ void main() {
       expect(row.endedAt, isNotNull);
       expect(await db.watchDosingEntries(tankId).first, isEmpty);
     });
+
+    test('watchDosingHistory returns active + ended, newest first', () async {
+      await addAlk(amount: 5);
+      final old = (await db.getAllDosingEntries()).single;
+      // Backdate the first segment so the newest-first order is unambiguous
+      // (drift stores DateTime at second precision).
+      await (db.update(db.dosingEntries)..where((d) => d.id.equals(old.id)))
+          .write(DosingEntriesCompanion(
+        startedAt: Value(DateTime.now().subtract(const Duration(days: 10))),
+      ));
+      await db.supersedeDosingEntry(
+        old,
+        const DosingEntriesCompanion(
+          product: Value('Alk'),
+          elementKey: Value('alkalinity'),
+          amount: Value(7),
+        ),
+      );
+
+      final history = await db.watchDosingHistory(tankId).first;
+      expect(history, hasLength(2));
+      // The new active segment started last, so it sorts first.
+      expect(history.first.state, DosingState.active.name);
+      expect(history.first.amount, 7);
+      expect(history.last.state, DosingState.ended.name);
+      // The active-only plan view still shows just the current one.
+      expect(await db.watchDosingEntries(tankId).first, hasLength(1));
+    });
+
+    test('deleteDosingEntry hard-removes a single segment', () async {
+      await addAlk(amount: 5);
+      final old = (await db.getAllDosingEntries()).single;
+      await db.supersedeDosingEntry(
+        old,
+        const DosingEntriesCompanion(product: Value('Alk'), amount: Value(7)),
+      );
+      expect(await db.getAllDosingEntries(), hasLength(2));
+
+      await db.deleteDosingEntry(old.id);
+
+      final remaining = await db.getAllDosingEntries();
+      expect(remaining, hasLength(1));
+      expect(remaining.single.amount, 7);
+    });
   });
 
   group('dosing migration backfill (v11)', () {

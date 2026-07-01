@@ -45,6 +45,13 @@ class AppLocalizationsCs extends AppLocalizations {
       'Vyberte, které parametry vody sledovat, a nastavte jejich cílové rozsahy.';
 
   @override
+  String get tourDosingHistoryTitle => 'Historie dávkování';
+
+  @override
+  String get tourDosingHistoryDesc =>
+      'Prohlédněte si všechna minulá i současná období dávkování a odeberte omylem zadaný záznam.';
+
+  @override
   String get tourDoseCalcTitle => 'Kalkulačka dávkování';
 
   @override
@@ -513,6 +520,36 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get stopDosingBody =>
       'Tímto zastavíte jeho dávkování a odeberete ho z aktivního plánu. Historie zůstane zachována.';
+
+  @override
+  String get dosingHistoryTitle => 'Historie dávkování';
+
+  @override
+  String get dosingHistoryEmpty => 'Zatím žádná historie dávkování.';
+
+  @override
+  String get dosingHistoryCurrent => 'Aktuální';
+
+  @override
+  String dosingHistorySince(Object date) {
+    return 'Od $date';
+  }
+
+  @override
+  String dosingHistoryPeriod(Object from, Object to) {
+    return '$from – $to';
+  }
+
+  @override
+  String get deleteDosingRecordTitle => 'Smazat tento záznam?';
+
+  @override
+  String get deleteDosingRecordBody =>
+      'Tímto trvale odstraníte tento záznam dávkování z historie i z výpočtu dávky. Akci nelze vrátit zpět.';
+
+  @override
+  String get deleteDosingRecordNotLatest =>
+      'Toto není nejnovější záznam pro tento prvek; jeho smazání neovlivní pozdější záznamy.';
 
   @override
   String get dosingNew => 'Přidat přípravek';

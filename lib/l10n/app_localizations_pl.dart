@@ -45,6 +45,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'Wybierz, które parametry wody śledzić, i ustaw ich docelowe zakresy.';
 
   @override
+  String get tourDosingHistoryTitle => 'Historia dozowania';
+
+  @override
+  String get tourDosingHistoryDesc =>
+      'Przejrzyj wszystkie dawne i bieżące okresy dozowania oraz usuń wpis dodany przez pomyłkę.';
+
+  @override
   String get tourDoseCalcTitle => 'Kalkulator dawkowania';
 
   @override
@@ -516,6 +523,36 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get stopDosingBody =>
       'Spowoduje to zatrzymanie dozowania i usunięcie preparatu z aktywnego planu. Historia zostanie zachowana.';
+
+  @override
+  String get dosingHistoryTitle => 'Historia dozowania';
+
+  @override
+  String get dosingHistoryEmpty => 'Brak historii dozowania.';
+
+  @override
+  String get dosingHistoryCurrent => 'Bieżąca';
+
+  @override
+  String dosingHistorySince(Object date) {
+    return 'Od $date';
+  }
+
+  @override
+  String dosingHistoryPeriod(Object from, Object to) {
+    return '$from – $to';
+  }
+
+  @override
+  String get deleteDosingRecordTitle => 'Usunąć ten wpis?';
+
+  @override
+  String get deleteDosingRecordBody =>
+      'Trwale usunie to ten wpis dozowania z historii i z obliczeń dawki. Nie można tego cofnąć.';
+
+  @override
+  String get deleteDosingRecordNotLatest =>
+      'To nie jest najnowszy wpis dla tego pierwiastka; jego usunięcie nie zmieni późniejszych wpisów.';
 
   @override
   String get dosingNew => 'Dodaj preparat';

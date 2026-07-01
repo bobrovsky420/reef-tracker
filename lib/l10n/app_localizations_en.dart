@@ -45,6 +45,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose which water parameters to track and set their target ranges.';
 
   @override
+  String get tourDosingHistoryTitle => 'Dosing history';
+
+  @override
+  String get tourDosingHistoryDesc =>
+      'Review every past and current dose period, and remove a record entered by mistake.';
+
+  @override
   String get tourDoseCalcTitle => 'Dose calculator';
 
   @override
@@ -514,6 +521,36 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get stopDosingBody =>
       'This stops dosing it and removes it from the active plan. Its history is kept.';
+
+  @override
+  String get dosingHistoryTitle => 'Dosing history';
+
+  @override
+  String get dosingHistoryEmpty => 'No dosing history yet.';
+
+  @override
+  String get dosingHistoryCurrent => 'Current';
+
+  @override
+  String dosingHistorySince(Object date) {
+    return 'Since $date';
+  }
+
+  @override
+  String dosingHistoryPeriod(Object from, Object to) {
+    return '$from – $to';
+  }
+
+  @override
+  String get deleteDosingRecordTitle => 'Delete this record?';
+
+  @override
+  String get deleteDosingRecordBody =>
+      'This permanently removes this dosing record from history and the dose calculation. It can\'t be undone.';
+
+  @override
+  String get deleteDosingRecordNotLatest =>
+      'This isn\'t the most recent record for this element; deleting it won\'t change later records.';
 
   @override
   String get dosingNew => 'Add supplement';

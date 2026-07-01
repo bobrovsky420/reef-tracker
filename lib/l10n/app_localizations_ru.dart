@@ -45,6 +45,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выберите, какие параметры воды отслеживать, и задайте их целевые диапазоны.';
 
   @override
+  String get tourDosingHistoryTitle => 'История дозирования';
+
+  @override
+  String get tourDosingHistoryDesc =>
+      'Просматривайте все прошлые и текущие периоды дозирования и удаляйте запись, добавленную по ошибке.';
+
+  @override
   String get tourDoseCalcTitle => 'Калькулятор дозировки';
 
   @override
@@ -517,6 +524,36 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get stopDosingBody =>
       'Дозирование будет остановлено, а добавка удалена из активного плана. История сохранится.';
+
+  @override
+  String get dosingHistoryTitle => 'История дозирования';
+
+  @override
+  String get dosingHistoryEmpty => 'Истории дозирования пока нет.';
+
+  @override
+  String get dosingHistoryCurrent => 'Текущая';
+
+  @override
+  String dosingHistorySince(Object date) {
+    return 'С $date';
+  }
+
+  @override
+  String dosingHistoryPeriod(Object from, Object to) {
+    return '$from – $to';
+  }
+
+  @override
+  String get deleteDosingRecordTitle => 'Удалить эту запись?';
+
+  @override
+  String get deleteDosingRecordBody =>
+      'Эта запись дозирования будет навсегда удалена из истории и из расчёта дозы. Отменить нельзя.';
+
+  @override
+  String get deleteDosingRecordNotLatest =>
+      'Это не самая последняя запись для этого элемента; её удаление не изменит более поздние записи.';
 
   @override
   String get dosingNew => 'Добавить добавку';

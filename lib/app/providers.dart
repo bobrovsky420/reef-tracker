@@ -125,6 +125,14 @@ final dosingEntriesProvider = StreamProvider<List<DosingEntry>>((ref) {
   return ref.watch(dbProvider).watchDosingEntries(tank.id);
 });
 
+/// Every dosing segment (active + ended) for the active tank, newest first —
+/// the source for the dosing history timeline.
+final dosingHistoryProvider = StreamProvider<List<DosingEntry>>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return Stream.value(const []);
+  return ref.watch(dbProvider).watchDosingHistory(tank.id);
+});
+
 /// Readings for a single parameter of the active tank (oldest first).
 final paramReadingsProvider =
     StreamProvider.family<List<Reading>, String>((ref, paramKey) {

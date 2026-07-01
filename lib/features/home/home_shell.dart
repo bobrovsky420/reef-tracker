@@ -30,13 +30,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   bool _compare = false;
 
   // First-run feature tour (showcaseview). Each key tags a top-bar element the
-  // tour spotlights. The dose-calculator icon only exists on the Dosing tab, so
-  // the tour runs in two phases: phase 1 (tank → compare → manage params) on the
-  // Measurements tab, then it switches to the Dosing tab for phase 2 (the dose
-  // calculator) as the final step.
+  // tour spotlights. The dosing-history and dose-calculator icons only exist on
+  // the Dosing tab, so the tour runs in two phases: phase 1 (tank → compare →
+  // manage params) on the Measurements tab, then it switches to the Dosing tab
+  // for phase 2 (dosing history → dose calculator) as its final steps.
   final GlobalKey _tankTourKey = GlobalKey();
   final GlobalKey _compareTourKey = GlobalKey();
   final GlobalKey _paramsTourKey = GlobalKey();
+  final GlobalKey _dosingHistoryTourKey = GlobalKey();
   final GlobalKey _doseCalcTourKey = GlobalKey();
 
   /// Guards against re-triggering the tour on every rebuild within a session.
@@ -44,8 +45,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   bool _tourStarted = false;
 
   /// Which leg of the tour is running: 0 = idle, 1 = Measurements-tab steps,
-  /// 2 = the dose-calculator step on the Dosing tab. Drives the tab switch in
-  /// [onFinish] and the return to Measurements when the tour ends.
+  /// 2 = the Dosing-tab steps (dosing history, then dose calculator). Drives the
+  /// tab switch in [onFinish] and the return to Measurements when the tour ends.
   int _tourPhase = 0;
 
   @override
@@ -61,8 +62,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         alignment: MainAxisAlignment.spaceBetween,
         actionGap: 16,
       ),
-      // Completing phase 1 switches to the Dosing tab and showcases the dose
-      // calculator; completing phase 2 ends the tour and returns to Measurements.
+      // Completing phase 1 switches to the Dosing tab and showcases the dosing
+      // history then the dose calculator; completing phase 2 ends the tour and
+      // returns to Measurements.
       onFinish: () {
         if (!mounted) return;
         if (_tourPhase == 1) {
@@ -71,7 +73,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             ShowcaseView.get().startShowCase(
-              [_doseCalcTourKey],
+              [_dosingHistoryTourKey, _doseCalcTourKey],
               delay: const Duration(milliseconds: 350),
             );
           });
@@ -193,6 +195,19 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 icon:
                     Icon(_compare ? Icons.grid_view : Icons.stacked_line_chart),
                 onPressed: () => setState(() => _compare = !_compare),
+              ),
+            ),
+          // Dosing history, contextual to the Dosing tab. First step of phase 2.
+          if (hasTanks && _index == 2)
+            tourStep(
+              _dosingHistoryTourKey,
+              l.tourDosingHistoryTitle,
+              l.tourDosingHistoryDesc,
+              l.tourNext,
+              IconButton(
+                tooltip: l.dosingHistoryTitle,
+                icon: const Icon(Icons.history),
+                onPressed: () => context.push('/dosing/history'),
               ),
             ),
           // Dose calculator, contextual to the Dosing tab. The tour switches to
