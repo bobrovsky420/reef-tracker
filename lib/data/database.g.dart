@@ -3296,6 +3296,38 @@ class $DosingEntriesTable extends DosingEntries
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _endedAtMeta = const VerificationMeta(
+    'endedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
+    'ended_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: Constant(DosingState.active.name),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3315,6 +3347,9 @@ class $DosingEntriesTable extends DosingEntries
     note,
     displayOrder,
     createdAt,
+    startedAt,
+    endedAt,
+    state,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3437,6 +3472,24 @@ class $DosingEntriesTable extends DosingEntries
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    }
+    if (data.containsKey('ended_at')) {
+      context.handle(
+        _endedAtMeta,
+        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
+      );
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
     return context;
   }
 
@@ -3514,6 +3567,18 @@ class $DosingEntriesTable extends DosingEntries
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      ),
+      endedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ended_at'],
+      ),
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
     );
   }
 
@@ -3565,6 +3630,20 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
   final String? note;
   final int displayOrder;
   final DateTime createdAt;
+
+  /// When this dose segment became active. A dosing plan is a chain of dated
+  /// segments: editing a dose-affecting field ends the current segment and
+  /// starts a new one. Nullable only so the migration can backfill it from
+  /// [createdAt] for pre-history rows; new inserts always set it.
+  final DateTime? startedAt;
+
+  /// When this segment stopped being active — set when it is superseded by an
+  /// edit or the supplement is stopped. Null = current/active.
+  final DateTime? endedAt;
+
+  /// Lifecycle state, stored as [DosingState.name] (`active`/`ended`/`paused`).
+  /// Only `active` rows show in the Dosing tab and feed the calculator.
+  final String state;
   const DosingEntry({
     required this.id,
     required this.tankId,
@@ -3583,6 +3662,9 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     this.note,
     required this.displayOrder,
     required this.createdAt,
+    this.startedAt,
+    this.endedAt,
+    required this.state,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3628,6 +3710,13 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     }
     map['display_order'] = Variable<int>(displayOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || startedAt != null) {
+      map['started_at'] = Variable<DateTime>(startedAt);
+    }
+    if (!nullToAbsent || endedAt != null) {
+      map['ended_at'] = Variable<DateTime>(endedAt);
+    }
+    map['state'] = Variable<String>(state);
     return map;
   }
 
@@ -3672,6 +3761,13 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       displayOrder: Value(displayOrder),
       createdAt: Value(createdAt),
+      startedAt: startedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startedAt),
+      endedAt: endedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endedAt),
+      state: Value(state),
     );
   }
 
@@ -3698,6 +3794,9 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
       note: serializer.fromJson<String?>(json['note']),
       displayOrder: serializer.fromJson<int>(json['displayOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      startedAt: serializer.fromJson<DateTime?>(json['startedAt']),
+      endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
+      state: serializer.fromJson<String>(json['state']),
     );
   }
   @override
@@ -3721,6 +3820,9 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
       'note': serializer.toJson<String?>(note),
       'displayOrder': serializer.toJson<int>(displayOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'startedAt': serializer.toJson<DateTime?>(startedAt),
+      'endedAt': serializer.toJson<DateTime?>(endedAt),
+      'state': serializer.toJson<String>(state),
     };
   }
 
@@ -3742,6 +3844,9 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     Value<String?> note = const Value.absent(),
     int? displayOrder,
     DateTime? createdAt,
+    Value<DateTime?> startedAt = const Value.absent(),
+    Value<DateTime?> endedAt = const Value.absent(),
+    String? state,
   }) => DosingEntry(
     id: id ?? this.id,
     tankId: tankId ?? this.tankId,
@@ -3760,6 +3865,9 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     note: note.present ? note.value : this.note,
     displayOrder: displayOrder ?? this.displayOrder,
     createdAt: createdAt ?? this.createdAt,
+    startedAt: startedAt.present ? startedAt.value : this.startedAt,
+    endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    state: state ?? this.state,
   );
   DosingEntry copyWithCompanion(DosingEntriesCompanion data) {
     return DosingEntry(
@@ -3790,6 +3898,9 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
           ? data.displayOrder.value
           : this.displayOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      state: data.state.present ? data.state.value : this.state,
     );
   }
 
@@ -3812,7 +3923,10 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
           ..write('doseTime: $doseTime, ')
           ..write('note: $note, ')
           ..write('displayOrder: $displayOrder, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('state: $state')
           ..write(')'))
         .toString();
   }
@@ -3836,6 +3950,9 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     note,
     displayOrder,
     createdAt,
+    startedAt,
+    endedAt,
+    state,
   );
   @override
   bool operator ==(Object other) =>
@@ -3857,7 +3974,10 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
           other.doseTime == this.doseTime &&
           other.note == this.note &&
           other.displayOrder == this.displayOrder &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.startedAt == this.startedAt &&
+          other.endedAt == this.endedAt &&
+          other.state == this.state);
 }
 
 class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
@@ -3878,6 +3998,9 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
   final Value<String?> note;
   final Value<int> displayOrder;
   final Value<DateTime> createdAt;
+  final Value<DateTime?> startedAt;
+  final Value<DateTime?> endedAt;
+  final Value<String> state;
   const DosingEntriesCompanion({
     this.id = const Value.absent(),
     this.tankId = const Value.absent(),
@@ -3896,6 +4019,9 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     this.note = const Value.absent(),
     this.displayOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    this.state = const Value.absent(),
   });
   DosingEntriesCompanion.insert({
     this.id = const Value.absent(),
@@ -3915,6 +4041,9 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     this.note = const Value.absent(),
     this.displayOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    this.state = const Value.absent(),
   }) : tankId = Value(tankId),
        product = Value(product);
   static Insertable<DosingEntry> custom({
@@ -3935,6 +4064,9 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     Expression<String>? note,
     Expression<int>? displayOrder,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? endedAt,
+    Expression<String>? state,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3954,6 +4086,9 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
       if (note != null) 'note': note,
       if (displayOrder != null) 'display_order': displayOrder,
       if (createdAt != null) 'created_at': createdAt,
+      if (startedAt != null) 'started_at': startedAt,
+      if (endedAt != null) 'ended_at': endedAt,
+      if (state != null) 'state': state,
     });
   }
 
@@ -3975,6 +4110,9 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     Value<String?>? note,
     Value<int>? displayOrder,
     Value<DateTime>? createdAt,
+    Value<DateTime?>? startedAt,
+    Value<DateTime?>? endedAt,
+    Value<String>? state,
   }) {
     return DosingEntriesCompanion(
       id: id ?? this.id,
@@ -3994,6 +4132,9 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
       note: note ?? this.note,
       displayOrder: displayOrder ?? this.displayOrder,
       createdAt: createdAt ?? this.createdAt,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      state: state ?? this.state,
     );
   }
 
@@ -4051,6 +4192,15 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<DateTime>(endedAt.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
     return map;
   }
 
@@ -4073,7 +4223,10 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
           ..write('doseTime: $doseTime, ')
           ..write('note: $note, ')
           ..write('displayOrder: $displayOrder, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('state: $state')
           ..write(')'))
         .toString();
   }
@@ -7426,6 +7579,9 @@ typedef $$DosingEntriesTableCreateCompanionBuilder =
       Value<String?> note,
       Value<int> displayOrder,
       Value<DateTime> createdAt,
+      Value<DateTime?> startedAt,
+      Value<DateTime?> endedAt,
+      Value<String> state,
     });
 typedef $$DosingEntriesTableUpdateCompanionBuilder =
     DosingEntriesCompanion Function({
@@ -7446,6 +7602,9 @@ typedef $$DosingEntriesTableUpdateCompanionBuilder =
       Value<String?> note,
       Value<int> displayOrder,
       Value<DateTime> createdAt,
+      Value<DateTime?> startedAt,
+      Value<DateTime?> endedAt,
+      Value<String> state,
     });
 
 final class $$DosingEntriesTableReferences
@@ -7563,6 +7722,21 @@ class $$DosingEntriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$TanksTableFilterComposer get tankId {
     final $$TanksTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -7676,6 +7850,21 @@ class $$DosingEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TanksTableOrderingComposer get tankId {
     final $$TanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -7767,6 +7956,15 @@ class $$DosingEntriesTableAnnotationComposer
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
   $$TanksTableAnnotationComposer get tankId {
     final $$TanksTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -7836,6 +8034,9 @@ class $$DosingEntriesTableTableManager
                 Value<String?> note = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> startedAt = const Value.absent(),
+                Value<DateTime?> endedAt = const Value.absent(),
+                Value<String> state = const Value.absent(),
               }) => DosingEntriesCompanion(
                 id: id,
                 tankId: tankId,
@@ -7854,6 +8055,9 @@ class $$DosingEntriesTableTableManager
                 note: note,
                 displayOrder: displayOrder,
                 createdAt: createdAt,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                state: state,
               ),
           createCompanionCallback:
               ({
@@ -7874,6 +8078,9 @@ class $$DosingEntriesTableTableManager
                 Value<String?> note = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> startedAt = const Value.absent(),
+                Value<DateTime?> endedAt = const Value.absent(),
+                Value<String> state = const Value.absent(),
               }) => DosingEntriesCompanion.insert(
                 id: id,
                 tankId: tankId,
@@ -7892,6 +8099,9 @@ class $$DosingEntriesTableTableManager
                 note: note,
                 displayOrder: displayOrder,
                 createdAt: createdAt,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                state: state,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -60,6 +60,20 @@ enum DoseFrequency {
   }
 }
 
+/// Lifecycle state of a dosing-plan entry. A plan is an ordered chain of dated
+/// segments: only [active] entries show in the Dosing tab and feed the
+/// calculator, while [ended] segments are retained history (a dose was adjusted
+/// — the old segment is superseded — or the supplement was stopped).
+enum DosingState {
+  active,
+  ended,
+  // Reserved for a later phase (explicit pause/resume UI); unused in v1.
+  paused;
+
+  static DosingState fromName(String? name) =>
+      values.firstWhere((s) => s.name == name, orElse: () => DosingState.active);
+}
+
 /// A single supplement product in the built-in catalog.
 class SupplementProduct {
   const SupplementProduct({

@@ -156,6 +156,11 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
       volumeLiters: volLiters,
     );
 
+    // The active plan assumes the current dose held for the whole window. If a
+    // dose segment for this element started mid-window (there are readings
+    // before it), warn that the slope mixes two dose regimes.
+    final doseChangedAt = _doseChangedInWindow(entries, element, points);
+
     return Scaffold(
       appBar: AppBar(title: Text(l.doseCalcTitle)),
       body: ListView(
@@ -173,9 +178,51 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
           const Divider(height: 32),
           _potencySection(l, element, volUnit, volLiters, potency),
           const Divider(height: 32),
+          if (doseChangedAt != null) ...[
+            _doseChangedWarning(l, doseChangedAt),
+            const SizedBox(height: 12),
+          ],
           _resultCard(l, element, result),
         ],
       ),
+    );
+  }
+
+  /// The most recent dose-segment start for [element] that falls inside the
+  /// measurement [points] (i.e. some readings predate it), or null when the
+  /// dose held for the whole window. Single-element only in this phase.
+  DateTime? _doseChangedInWindow(
+    List<DosingEntry> entries,
+    String element,
+    List<DosePoint> points,
+  ) {
+    DateTime? boundary;
+    for (final e in entries.where((e) => e.elementKey == element)) {
+      final s = e.startedAt;
+      if (s != null && (boundary == null || s.isAfter(boundary))) boundary = s;
+    }
+    if (boundary == null) return null;
+    return points.any((p) => p.t.isBefore(boundary!)) ? boundary : null;
+  }
+
+  Widget _doseChangedWarning(AppLocalizations l, DateTime changedAt) {
+    final scheme = Theme.of(context).colorScheme;
+    final date = MaterialLocalizations.of(context).formatMediumDate(changedAt);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.info_outline, size: 20, color: scheme.tertiary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            l.doseCalcDoseChanged(date),
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: scheme.tertiary),
+          ),
+        ),
+      ],
     );
   }
 

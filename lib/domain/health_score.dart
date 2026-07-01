@@ -10,6 +10,7 @@
 /// parameter, so one red can never be hidden behind several greens.
 library;
 
+import 'clock.dart';
 import 'zones.dart';
 
 /// Parameters tested longer ago than this are considered stale: their last
@@ -148,7 +149,7 @@ TankHealth computeTankHealth(
     final zone =
         value == null ? Zone.unknown : input.bounds.classify(value);
     final stale = input.takenAt != null &&
-        clock.difference(input.takenAt!).inDays > freshnessDays;
+        daysSince(input.takenAt!, now: clock) > freshnessDays;
 
     final sub = (value != null && zone != Zone.unknown && !stale)
         ? _subScore(input.bounds, value, zone)

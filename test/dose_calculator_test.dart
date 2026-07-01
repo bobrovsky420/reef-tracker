@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/dose_calculator.dart';
+import 'package:reeftracker/domain/supplement_catalog.dart';
 
 /// Builds a minimal [DosingEntry] for the daily-equivalent tests.
 DosingEntry entry({
@@ -21,6 +22,7 @@ DosingEntry entry({
       weekdays: weekdays,
       displayOrder: 0,
       createdAt: DateTime(2026, 1, 1),
+      state: DosingState.active.name,
     );
 
 void main() {

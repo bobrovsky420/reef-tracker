@@ -72,6 +72,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | File | Responsibility |
 |------|----------------|
 | `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. |
+| `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). |
 | `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse). |
 | `parameter_catalog.dart` | `kReefParameters` — the master list (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP, K, Sr, I, Fe) with default units, plus `kParameterByKey` lookup and `formatParamValue`. |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
@@ -96,7 +97,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `CarbonChanges` | id, tankId (FK cascade), changedAt, grams?, note? |
 | `EquipmentCleanings` | id, tankId (FK cascade), cleanedAt, note? |
 | `RatioVisibilities` | tankId + ratioKey (composite PK), tankId FK cascade, visible, displayOrder, amberLow?/greenLow?/greenHigh?/amberHigh? — per-tank ratio-card visibility, dashboard position (shared order space with `TrackedParameters.displayOrder`), and editable zone bounds; a missing row (or all-null bounds) = visible, ordered last, default zones |
-| `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), note?, displayOrder, createdAt — per-tank supplement-dosing plan (info-only) |
+| `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), note?, displayOrder, createdAt, startedAt? (segment start; backfilled from createdAt), endedAt? (null = current), state (`DosingState`: active/ended/paused) — per-tank supplement-dosing plan (info-only). A plan is a chain of **dated segments**: editing a dose-affecting field ends the current segment (`state=ended`, `endedAt` set) and starts a new active one; stopping soft-ends it. Only `active` rows show in the Dosing tab and feed the calculator; `ended` rows are retained history. `paused` is reserved for a later phase. |
 | `Settings` | key (PK), value? — generic kv store |
 
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
@@ -112,7 +113,9 @@ the `RatioVisibilities` table (`createTable`, guarded by `_tableExists`); v7
 added `RatioVisibilities.displayOrder` (`addColumn`, guarded by `_columnExists`);
 v8 added `RatioVisibilities` zone-bound columns (`addColumn` ×4, guarded); v9
 added the `DosingEntries` table (`createTable`, guarded by `_tableExists`); v10
-added `Tanks.notes`/`vendor`/`model` (`addColumn` ×3, guarded by `_columnExists`).
+added `Tanks.notes`/`vendor`/`model` (`addColumn` ×3, guarded by `_columnExists`);
+v11 added `DosingEntries.startedAt`/`endedAt`/`state` (`addColumn` ×3, guarded)
+and backfills `started_at = created_at` for pre-existing rows via `customStatement`.
 Foreign keys are enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
 add/change a table or column you must bump `schemaVersion` and add the matching
 migration**, then run `dart run build_runner build`.
@@ -144,7 +147,9 @@ format/version guard and is **forward-tolerant** (older backups without the
 `waterChanges` / `carbonChanges` / `equipmentCleanings` / `ratioVisibilities` /
 `dosingEntries` keys decode to empty lists). Each table is decoded in isolation,
 so a failure throws an `InvalidBackupException` naming the offending section
-rather than one catch-all "corrupted".
+rather than one catch-all "corrupted". Field-level decoding is likewise
+forward-tolerant: a pre-v11 `dosingEntries` row without `startedAt`/`endedAt`/
+`state` decodes with `startedAt = createdAt`, `endedAt = null`, `state = active`.
 
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
@@ -315,9 +320,11 @@ re-runs the tour. Every action icon also carries a localized `tooltip`
   time-slice reads all parameters at once; each chart keeps its own auto Y scale,
   zone bands, and water-change markers (which line up across charts). Only the
   last chart draws date labels (alignment is fixed by the constant left-axis
-  width). Empty-in-range params show a muted placeholder to preserve order;
-  tapping a chart opens `/history/:paramKey`. Measurements only — ratio cards are
-  not included.
+  width). Each chart's header shows its newest **in-range** reading (zone-colored
+  from that value), so the number always matches the chart below; empty-in-range
+  params show no header value and a muted placeholder to preserve order. Tapping a
+  chart opens `/history/:paramKey`. Measurements only — ratio cards are not
+  included.
 
 ### Trend chart widget (`widgets/trend_chart.dart`)
 
@@ -427,23 +434,35 @@ first. Rendered as the **Actions tab** of the home shell.
 ### Dosing (`features/dosing/`) — Dosing tab
 
 An information-only, per-tank **supplement-dosing plan** (a standing regimen, not
-a log of discrete doses). Rendered as the **Dosing tab** of the home shell.
+a log of discrete doses). It is a chain of **dated segments** per entry: only
+`active` segments are shown and used; adjusting a dose or stopping a supplement
+retains the prior period as history (see `DosingEntries` / `DosingState`).
+Rendered as the **Dosing tab** of the home shell.
 
 - `dosing_screen.dart` — `DosingBody` lists the active tank's `dosingEntriesProvider`
-  rows. Each row: a chemistry icon, the product name with a target-element chip,
-  a `vendor · program` line, and a localized dosage/schedule summary
-  (`dosingDetailLine`) — or "No dosage set" when neither is recorded. Tap a row to
-  edit; swipe-left to delete. Helpers here also parse/format the stored weekday
-  list and `HH:mm` time using `MaterialLocalizations` (device 12/24-h + locale).
+  rows (**active segments only**; `watchDosingEntries` filters on `state`). Each row:
+  a chemistry icon, the product name with a target-element chip, a `vendor · program`
+  line, and a localized dosage/schedule summary (`dosingDetailLine`) — or "No dosage
+  set" when neither is recorded. Tap a row to edit; **swipe-left to stop**
+  (`_confirmStop` → `stopDosingEntry`, a soft-end that keeps the row as history, not
+  a hard delete); drag the handle to reorder (a `ReorderableListView` with explicit
+  drag handles so swipe and drag don't clash, persisting the new order via
+  `reorderDosingEntries`). New entries are appended with `max(displayOrder)+1`.
+  Helpers here also parse/format the stored weekday list and `HH:mm` time using
+  `MaterialLocalizations` (device 12/24-h + locale).
 - `dosing_edit_screen.dart` — `DosingEditScreen` (route `/dosing/edit`, `extra` =
   `DosingEntry?`) is the add/edit form. It cascades **Vendor → Product → Element**
   off `kSupplementVendors`: picking a catalog product auto-fills its element and
   default unit; an "Other…" choice in either dropdown swaps in a free-text field
   (custom entries persist `productKey = null`). Optional **Dosage** = amount +
   unit (ml/g) + basis (per day/dose); optional **Schedule** = frequency
-  (daily / every N days / weekly with weekday chips) + time. On save it writes a
-  `DosingEntries` row, keeping the stable `productKey` (for the future dose-log +
-  consumption features) and a denormalized vendor/program/product snapshot.
+  (daily / every N days / weekly with weekday chips) + time. On save: a new entry
+  is inserted; editing an existing one **branches on `_doseAffectingChanged`** — a
+  dose-affecting change (product, element, amount/unit/basis, frequency/interval/
+  weekdays) calls `supersedeDosingEntry` (ends the old segment, starts a new active
+  one keeping `displayOrder`), while a cosmetic-only change (display name, note,
+  time) updates in place via `updateDosingEntry`. It keeps the stable `productKey`
+  and a denormalized vendor/program/product snapshot.
 - **Display names resolve live.** `DosingBody` shows vendor/program/product via
   `resolveSupplementNames(...)`: when `productKey` still matches a catalog
   product it uses the **current** catalog names (so a YAML rename/move is
@@ -481,6 +500,12 @@ just inputs + a result card and stores nothing.
   (stable / increase / decrease / overdosing / needs-potency / insufficient-data).
   Works with no dosing (consumption = the measured drop) and flags a rising
   element as over-dosing.
+- **Dose-changed warning (warn-only).** The slope math assumes the current dose
+  held for the whole window. `_doseChangedInWindow` takes the latest `startedAt`
+  over the element's active segments and, if some readings in the window predate it,
+  shows an info notice (`doseCalcDoseChanged`) that the result mixes two dose
+  regimes. It does **not** clamp the window (that could drop below two readings).
+  Single-element for now; multi-element per-entry potency is a later phase.
 
 ### Manage parameters (`manage_parameters_screen.dart`)
 
@@ -497,7 +522,14 @@ Re-applying a setup-type preset is available.
 ### Add reading (`add_reading_screen.dart`)
 
 Enter several parameters at once for a single timestamp (group). Inputs accept
-values in the user's display units and are converted to canonical on save.
+values in the user's display units and are converted to canonical on save. The
+timestamp is chosen via the shared `pickPastDateTime` helper (in
+[l10n_helpers.dart](lib/l10n/l10n_helpers.dart)) — also used by the reading-edit
+and actions dialogs — which caps the date/time picker at the current minute so a
+reading/action can **never** be dated in the future (a future timestamp would
+skew trends/health/"time ago" and be clipped off charts pinned to `now`). The
+downstream consumers additionally tolerate a moving clock via `clock.dart`
+(`ageSince`/`daysSince`).
 
 ### Tanks (`tanks_screen.dart`)
 

@@ -8,6 +8,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/domain/supplement_catalog.dart';
 
 /// Routes path_provider (used by [importBackup]'s rehearsal restore) to a temp
 /// folder so it works under `flutter test`.
@@ -162,6 +163,8 @@ void main() {
         note: 'Auto-doser line 2',
         displayOrder: 0,
         createdAt: DateTime.fromMillisecondsSinceEpoch(1700004000000),
+        startedAt: DateTime.fromMillisecondsSinceEpoch(1700004000000),
+        state: DosingState.active.name,
       ),
       DosingEntry(
         id: 51,
@@ -169,6 +172,9 @@ void main() {
         product: 'Custom kalk mix',
         displayOrder: 1,
         createdAt: DateTime.fromMillisecondsSinceEpoch(1700005000000),
+        startedAt: DateTime.fromMillisecondsSinceEpoch(1700005000000),
+        endedAt: DateTime.fromMillisecondsSinceEpoch(1700006000000),
+        state: DosingState.ended.name,
       ),
     ];
     final settings = [
@@ -267,10 +273,16 @@ void main() {
       expect(d0.frequency.value, 'daily');
       expect(d0.doseTime.value, '21:00');
       expect(d0.createdAt.value, dosingEntries[0].createdAt);
+      expect(d0.startedAt.value, dosingEntries[0].startedAt);
+      expect(d0.endedAt.value, isNull);
+      expect(d0.state.value, DosingState.active.name);
       final d1 = data.dosingEntries[1];
       expect(d1.productKey.value, isNull);
       expect(d1.elementKey.value, isNull);
       expect(d1.amount.value, isNull);
+      expect(d1.startedAt.value, dosingEntries[1].startedAt);
+      expect(d1.endedAt.value, dosingEntries[1].endedAt);
+      expect(d1.state.value, DosingState.ended.name);
 
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
@@ -308,6 +320,34 @@ void main() {
       expect(data.ratioVisibilities, isEmpty);
       expect(data.dosingEntries, isEmpty);
       expect(data.readings.length, 2);
+    });
+
+    test('tolerates dosing entries without segment fields (pre-v11)', () {
+      final json = encodeBackup(
+        schemaVersion: 10,
+        tanks: tanks,
+        params: params,
+        readings: readings,
+        waterChanges: waterChanges,
+        carbonChanges: carbonChanges,
+        equipmentCleanings: equipmentCleanings,
+        ratioVisibilities: ratioVisibilities,
+        dosingEntries: dosingEntries,
+        settings: settings,
+      )
+          .replaceAll(RegExp(r',\s*"startedAt":\s*(?:null|\d+)'), '')
+          .replaceAll(RegExp(r',\s*"endedAt":\s*(?:null|\d+)'), '')
+          .replaceAll(RegExp(r',\s*"state":\s*"[^"]*"'), '');
+      final data = decodeBackup(json);
+      // Missing segment fields fall back to: started = created, not ended, active.
+      final d0 = data.dosingEntries[0];
+      expect(d0.startedAt.value, dosingEntries[0].createdAt);
+      expect(d0.endedAt.value, isNull);
+      expect(d0.state.value, DosingState.active.name);
+      final d1 = data.dosingEntries[1];
+      expect(d1.startedAt.value, dosingEntries[1].createdAt);
+      expect(d1.endedAt.value, isNull);
+      expect(d1.state.value, DosingState.active.name);
     });
 
     test('rejects files that are not ReefTracker backups', () {

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../domain/clock.dart';
 import '../../domain/ratio.dart';
 import '../../domain/trend.dart';
 import '../../domain/units.dart';
@@ -338,7 +339,9 @@ class _ChangeIndicator extends StatelessWidget {
 }
 
 String _relativeTime(AppLocalizations l, DateTime t) {
-  final d = DateTime.now().difference(t);
+  // ageSince clamps a future/clock-skewed timestamp to zero → "just now"
+  // instead of a negative "-N min ago".
+  final d = ageSince(t);
   if (d.inMinutes < 1) return l.timeJustNow;
   if (d.inMinutes < 60) return l.timeMinAgo(d.inMinutes);
   if (d.inHours < 24) return l.timeHoursAgo(d.inHours);

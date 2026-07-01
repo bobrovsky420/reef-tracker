@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/presets.dart';
 import '../domain/setup_type.dart';
+import '../domain/supplement_catalog.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
 
@@ -185,6 +186,21 @@ class DosingEntries extends Table {
   IntColumn get displayOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt =>
       dateTime().withDefault(currentDateAndTime)();
+
+  /// When this dose segment became active. A dosing plan is a chain of dated
+  /// segments: editing a dose-affecting field ends the current segment and
+  /// starts a new one. Nullable only so the migration can backfill it from
+  /// [createdAt] for pre-history rows; new inserts always set it.
+  DateTimeColumn get startedAt => dateTime().nullable()();
+
+  /// When this segment stopped being active — set when it is superseded by an
+  /// edit or the supplement is stopped. Null = current/active.
+  DateTimeColumn get endedAt => dateTime().nullable()();
+
+  /// Lifecycle state, stored as [DosingState.name] (`active`/`ended`/`paused`).
+  /// Only `active` rows show in the Dosing tab and feed the calculator.
+  TextColumn get state =>
+      text().withDefault(Constant(DosingState.active.name))();
 }
 
 /// Simple key/value store for app-wide settings (e.g. active tank).
@@ -213,7 +229,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -281,6 +297,22 @@ class AppDatabase extends _$AppDatabase {
                 await m.addColumn(tanks, col.value);
               }
             }
+          }
+          if (from < 11) {
+            for (final col in {
+              'started_at': dosingEntries.startedAt,
+              'ended_at': dosingEntries.endedAt,
+              'state': dosingEntries.state,
+            }.entries) {
+              if (!await _columnExists('dosing_entries', col.key)) {
+                await m.addColumn(dosingEntries, col.value);
+              }
+            }
+            // Backfill: pre-history rows start when they were created.
+            await customStatement(
+              'UPDATE dosing_entries SET started_at = created_at '
+              'WHERE started_at IS NULL',
+            );
           }
         },
         beforeOpen: (details) async {
@@ -747,10 +779,14 @@ class AppDatabase extends _$AppDatabase {
 
   // --- Dosing entries ------------------------------------------------------
 
-  /// Dosing-plan entries for a tank, in dashboard order then newest first.
+  /// Active dosing-plan entries for a tank, in dashboard order then newest
+  /// first. Ended (superseded/stopped) segments are retained as history but
+  /// excluded here.
   Stream<List<DosingEntry>> watchDosingEntries(int tankId) =>
       (select(dosingEntries)
-            ..where((d) => d.tankId.equals(tankId))
+            ..where((d) =>
+                d.tankId.equals(tankId) &
+                d.state.equals(DosingState.active.name))
             ..orderBy([
               (d) => OrderingTerm(expression: d.displayOrder),
               (d) => OrderingTerm(
@@ -759,20 +795,83 @@ class AppDatabase extends _$AppDatabase {
           .watch();
 
   Future<int> insertDosingEntry(DosingEntriesCompanion entry) async {
-    final order = (await (select(dosingEntries)
-              ..where((d) => d.tankId.equals(entry.tankId.value)))
-            .get())
-        .length;
+    final existing = await (select(dosingEntries)
+          ..where((d) => d.tankId.equals(entry.tankId.value)))
+        .get();
+    // max(displayOrder) + 1, not the row count: after deleting a middle entry
+    // the count could collide with an existing order and make rows jump (#21).
+    final order =
+        existing.fold<int>(-1, (m, d) => d.displayOrder > m ? d.displayOrder : m) +
+            1;
     return into(dosingEntries).insert(
-      entry.copyWith(displayOrder: Value(order)),
+      entry.copyWith(
+        displayOrder: Value(order),
+        // A freshly added supplement starts a new active segment now.
+        startedAt: entry.startedAt.present
+            ? entry.startedAt
+            : Value(DateTime.now()),
+        state: entry.state.present
+            ? entry.state
+            : Value(DosingState.active.name),
+      ),
     );
   }
 
+  /// In-place update for **cosmetic** changes only (display name, note, time) —
+  /// anything that doesn't alter the dosed amount. Dose-affecting edits must go
+  /// through [supersedeDosingEntry] so the old dose is retained as history.
   Future<void> updateDosingEntry(DosingEntry entry) =>
       update(dosingEntries).replace(entry);
 
-  Future<void> deleteDosingEntry(int id) =>
-      (delete(dosingEntries)..where((d) => d.id.equals(id))).go();
+  /// Records a dose change: ends the current [old] segment and starts a new
+  /// active one carrying [next], keeping the same [DosingEntry.displayOrder] so
+  /// the entry stays in place. Runs in one transaction.
+  Future<void> supersedeDosingEntry(
+    DosingEntry old,
+    DosingEntriesCompanion next,
+  ) async {
+    final now = DateTime.now();
+    await transaction(() async {
+      await (update(dosingEntries)..where((d) => d.id.equals(old.id))).write(
+        DosingEntriesCompanion(
+          state: Value(DosingState.ended.name),
+          endedAt: Value(now),
+        ),
+      );
+      await into(dosingEntries).insert(
+        next.copyWith(
+          tankId: Value(old.tankId),
+          displayOrder: Value(old.displayOrder),
+          startedAt: Value(now),
+          state: Value(DosingState.active.name),
+        ),
+      );
+    });
+  }
+
+  /// Soft-ends a dosing entry (the "stop" action): keeps the row as history but
+  /// removes it from the active plan.
+  Future<void> stopDosingEntry(int id) =>
+      (update(dosingEntries)..where((d) => d.id.equals(id))).write(
+        DosingEntriesCompanion(
+          state: Value(DosingState.ended.name),
+          endedAt: Value(DateTime.now()),
+        ),
+      );
+
+  /// Persists a new manual ordering of a tank's dosing entries, given their ids
+  /// in the desired top-to-bottom order.
+  Future<void> reorderDosingEntries(List<int> orderedIds) async {
+    await batch((b) {
+      for (var i = 0; i < orderedIds.length; i++) {
+        b.update(
+          dosingEntries,
+          DosingEntriesCompanion(displayOrder: Value(i)),
+          where: (d) => d.id.equals(orderedIds[i]),
+        );
+      }
+    });
+  }
 
   // --- Settings ------------------------------------------------------------
 

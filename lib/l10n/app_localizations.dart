@@ -266,6 +266,12 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get delete;
 
+  /// No description provided for @stop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stop;
+
   /// No description provided for @apply.
   ///
   /// In en, this message translates to:
@@ -980,17 +986,17 @@ abstract class AppLocalizations {
   /// **'No dosage set'**
   String get dosingNoDosage;
 
-  /// No description provided for @deleteDosingTitle.
+  /// No description provided for @stopDosingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Remove supplement?'**
-  String get deleteDosingTitle;
+  /// **'Stop this supplement?'**
+  String get stopDosingTitle;
 
-  /// No description provided for @deleteDosingBody.
+  /// No description provided for @stopDosingBody.
   ///
   /// In en, this message translates to:
-  /// **'This removes this supplement from the dosing plan.'**
-  String get deleteDosingBody;
+  /// **'This stops dosing it and removes it from the active plan. Its history is kept.'**
+  String get stopDosingBody;
 
   /// No description provided for @dosingNew.
   ///
@@ -1483,6 +1489,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} readings in range'**
   String doseCalcReadings(Object count);
+
+  /// No description provided for @doseCalcDoseChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose changed on {date}; readings before then reflect a different dose.'**
+  String doseCalcDoseChanged(Object date);
 
   /// No description provided for @doseCalcVolume.
   ///

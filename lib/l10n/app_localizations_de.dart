@@ -95,6 +95,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get delete => 'Löschen';
 
   @override
+  String get stop => 'Stoppen';
+
+  @override
   String get apply => 'Anwenden';
 
   @override
@@ -509,11 +512,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dosingNoDosage => 'Keine Dosierung angegeben';
 
   @override
-  String get deleteDosingTitle => 'Präparat entfernen?';
+  String get stopDosingTitle => 'Dieses Präparat stoppen?';
 
   @override
-  String get deleteDosingBody =>
-      'Dadurch wird dieses Präparat aus dem Dosierplan entfernt.';
+  String get stopDosingBody =>
+      'Dadurch wird die Dosierung gestoppt und das Präparat aus dem aktiven Plan entfernt. Der Verlauf bleibt erhalten.';
 
   @override
   String get dosingNew => 'Präparat hinzufügen';
@@ -780,6 +783,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String doseCalcReadings(Object count) {
     return '$count Messungen im Zeitraum';
+  }
+
+  @override
+  String doseCalcDoseChanged(Object date) {
+    return 'Dosis am $date geändert; Messungen davor spiegeln eine andere Dosis wider.';
   }
 
   @override

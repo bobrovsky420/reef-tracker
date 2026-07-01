@@ -304,27 +304,9 @@ class _ReadingDialogState extends State<_ReadingDialog> {
   }
 
   Future<void> _pickDateTime() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _time,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
-    );
-    if (date == null || !mounted) return;
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_time),
-    );
-    if (!mounted) return;
-    setState(() {
-      _time = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        picked?.hour ?? 0,
-        picked?.minute ?? 0,
-      );
-    });
+    final picked = await pickPastDateTime(context, _time);
+    if (picked == null || !mounted) return;
+    setState(() => _time = picked);
   }
 
   @override

@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../data/backup.dart';
@@ -22,6 +22,42 @@ String formatDateTime(BuildContext context, DateTime t, {bool weekday = true}) {
   final time = use24 ? DateFormat.Hm() : DateFormat.jm();
   final date = weekday ? DateFormat.yMMMEd() : DateFormat.yMMMd();
   return '${date.format(t)} ${time.format(t)}';
+}
+
+/// Shows a date picker followed by a time picker and returns the composed
+/// [DateTime], **clamped so it can never land in the future** — readings,
+/// water changes and cleanings are always logged in the past or now. Returns
+/// `null` if the user cancels the date step (or the context unmounts).
+///
+/// Guards two ways the native pickers could otherwise produce a future time:
+/// the date page is capped at today (`lastDate: now`), and because
+/// `showTimePicker` is unconstrained, the composed value is clamped down to the
+/// current minute. [initial] seeds both pickers, itself clamped to now so an
+/// already-future value can't push `initialDate` past `lastDate` (which asserts).
+Future<DateTime?> pickPastDateTime(
+  BuildContext context,
+  DateTime initial,
+) async {
+  final seed = initial.isAfter(DateTime.now()) ? DateTime.now() : initial;
+  final date = await showDatePicker(
+    context: context,
+    initialDate: seed,
+    firstDate: DateTime(2000),
+    lastDate: DateTime.now(),
+  );
+  if (date == null || !context.mounted) return null;
+  final time = await showTimePicker(
+    context: context,
+    initialTime: TimeOfDay.fromDateTime(seed),
+  );
+  if (!context.mounted) return null;
+  final now = DateTime.now();
+  final composed = DateTime(
+      date.year, date.month, date.day, time?.hour ?? 0, time?.minute ?? 0);
+  // Truncate to the minute (readings group at minute precision) when clamping.
+  return composed.isAfter(now)
+      ? DateTime(now.year, now.month, now.day, now.hour, now.minute)
+      : composed;
 }
 
 /// Localized labels for domain values (parameter names/help, setup types,

@@ -95,6 +95,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get delete => 'Удалить';
 
   @override
+  String get stop => 'Остановить';
+
+  @override
   String get apply => 'Применить';
 
   @override
@@ -509,10 +512,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dosingNoDosage => 'Доза не указана';
 
   @override
-  String get deleteDosingTitle => 'Удалить добавку?';
+  String get stopDosingTitle => 'Остановить эту добавку?';
 
   @override
-  String get deleteDosingBody => 'Это удалит эту добавку из плана дозирования.';
+  String get stopDosingBody =>
+      'Дозирование будет остановлено, а добавка удалена из активного плана. История сохранится.';
 
   @override
   String get dosingNew => 'Добавить добавку';
@@ -777,6 +781,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String doseCalcReadings(Object count) {
     return 'Измерений в периоде: $count';
+  }
+
+  @override
+  String doseCalcDoseChanged(Object date) {
+    return 'Доза изменена $date; измерения до этой даты отражают другую дозу.';
   }
 
   @override

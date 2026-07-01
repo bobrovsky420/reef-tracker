@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../domain/supplement_catalog.dart';
 import 'database.dart';
 
 /// Identifies a ReefTracker backup document and guards against importing
@@ -535,6 +536,9 @@ Map<String, dynamic> _dosingEntryToJson(DosingEntry d) => {
       'note': d.note,
       'displayOrder': d.displayOrder,
       'createdAt': d.createdAt.millisecondsSinceEpoch,
+      'startedAt': d.startedAt?.millisecondsSinceEpoch,
+      'endedAt': d.endedAt?.millisecondsSinceEpoch,
+      'state': d.state,
     };
 
 DosingEntriesCompanion _dosingEntryFromJson(Map<String, dynamic> m) =>
@@ -556,6 +560,11 @@ DosingEntriesCompanion _dosingEntryFromJson(Map<String, dynamic> m) =>
       note: Value(m['note'] as String?),
       displayOrder: Value(m['displayOrder'] as int),
       createdAt: Value(_date(m['createdAt'])),
+      // Forward-tolerant: pre-history backups have no segment fields, so a
+      // restored entry starts when it was created and is active.
+      startedAt: Value(_dateOrNull(m['startedAt']) ?? _date(m['createdAt'])),
+      endedAt: Value(_dateOrNull(m['endedAt'])),
+      state: Value((m['state'] as String?) ?? DosingState.active.name),
     );
 
 Map<String, dynamic> _settingToJson(Setting s) => {

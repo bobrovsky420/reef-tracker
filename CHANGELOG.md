@@ -5,9 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.14.2] - 2026-07-01
+## [0.15.0] - 2026-07-01
+
+### Added
+- Dosing entries can now be **reordered** by dragging the handle on each row;
+  the new order is saved per tank.
+- The dose calculator now **warns when the dose changed within the measurement
+  window**, so a mid-window adjustment no longer silently skews the consumption
+  and dose-recommendation figures.
+
+### Changed
+- Dosing entries now **keep their history**. Adjusting a dose (amount, product,
+  element, or schedule) no longer overwrites the old values: the previous dose
+  period is retained and a new one starts, recording exactly when it changed.
+- Swiping a supplement now **stops** it (removing it from the active plan while
+  keeping its history) instead of permanently deleting it.
 
 ### Fixed
+- Readings, water changes and cleanings can no longer be dated in the future:
+  the date/time picker is capped at the current moment, so a future timestamp
+  can't skew trends, freshness or "time ago" labels or get clipped off charts.
+- Freshness, "time ago" and "not tested for N days" no longer misbehave when a
+  timestamp is in the future or the device clock moves: ages are clamped to zero
+  instead of going negative, and day counts are rounded rather than truncated so
+  the staleness cutoff and the displayed day count agree.
+- Dosing entries no longer occasionally jump position after deleting one and
+  adding another (new entries are now ordered after the current maximum instead
+  of by row count, which could collide).
+- In the comparison view, a parameter's header value now reflects the latest
+  reading within the selected range instead of the newest reading overall, so a
+  zone-colored value no longer appears above a "No readings in range" chart.
 - Chart zone bands no longer overlap or invert when a parameter has one-sided
   or partial green/amber bounds: the green band now falls back to the matching
   amber bound (never the chart edge) so it can't paint over the red band, and

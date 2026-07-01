@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../app/providers.dart';
 import '../data/database.dart';
+import '../domain/clock.dart';
 import '../domain/health_score.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
@@ -349,8 +350,7 @@ class _ParamRow extends StatelessWidget {
       if (health.takenAt == null) {
         note = l.healthNeverTested;
       } else if (health.stale) {
-        note = l.healthNotTestedDays(
-            DateTime.now().difference(health.takenAt!).inDays);
+        note = l.healthNotTestedDays(daysSince(health.takenAt!));
       }
     }
 

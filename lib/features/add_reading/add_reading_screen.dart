@@ -41,22 +41,9 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
   }
 
   Future<void> _pickDateTime() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _takenAt,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
-    );
-    if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_takenAt),
-    );
-    if (!mounted) return;
-    setState(() {
-      _takenAt = DateTime(date.year, date.month, date.day, time?.hour ?? 0,
-          time?.minute ?? 0);
-    });
+    final picked = await pickPastDateTime(context, _takenAt);
+    if (picked == null || !mounted) return;
+    setState(() => _takenAt = picked);
   }
 
   Future<void> _save(List<TrackedParameter> params) async {

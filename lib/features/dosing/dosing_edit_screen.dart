@@ -190,25 +190,32 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     final existing = widget.entry;
     if (existing == null) {
       await db.insertDosingEntry(companion);
+    } else if (_doseAffectingChanged(existing, companion)) {
+      // A dose change: retain the old dose as history and start a new segment.
+      await db.supersedeDosingEntry(existing, companion);
     } else {
+      // Cosmetic-only edit (display name, note, time): update in place.
       await db.updateDosingEntry(existing.copyWith(
-        productKey: companion.productKey,
-        vendor: companion.vendor,
-        program: companion.program,
         product: _productName,
-        elementKey: companion.elementKey,
-        amount: companion.amount,
-        amountUnit: companion.amountUnit,
-        basis: companion.basis,
-        frequency: companion.frequency,
-        intervalDays: companion.intervalDays,
-        weekdays: companion.weekdays,
         doseTime: companion.doseTime,
         note: companion.note,
       ));
     }
     if (mounted) Navigator.of(context).pop();
   }
+
+  /// Whether the edit changed any field that alters the dosed amount (and thus
+  /// the dose-calculator boundary), requiring a new history segment. Cosmetic
+  /// fields (display name, note, time) are excluded.
+  bool _doseAffectingChanged(DosingEntry old, DosingEntriesCompanion next) =>
+      old.productKey != next.productKey.value ||
+      old.elementKey != next.elementKey.value ||
+      old.amount != next.amount.value ||
+      old.amountUnit != next.amountUnit.value ||
+      old.basis != next.basis.value ||
+      old.frequency != next.frequency.value ||
+      old.intervalDays != next.intervalDays.value ||
+      old.weekdays != next.weekdays.value;
 
   // --- Build ------------------------------------------------------------------
 

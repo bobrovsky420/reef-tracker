@@ -52,9 +52,19 @@ class DosingBody extends ConsumerWidget {
       );
     }
 
-    return ListView.builder(
+    return ReorderableListView.builder(
+      buildDefaultDragHandles: false,
       itemCount: entries.length,
-      itemBuilder: (context, i) => _tile(context, ref, l, entries[i]),
+      // ignore: deprecated_member_use
+      onReorder: (oldIndex, newIndex) {
+        if (newIndex > oldIndex) newIndex -= 1;
+        final reordered = [...entries];
+        reordered.insert(newIndex, reordered.removeAt(oldIndex));
+        ref
+            .read(dbProvider)
+            .reorderDosingEntries([for (final e in reordered) e.id]);
+      },
+      itemBuilder: (context, i) => _tile(context, ref, l, entries[i], i),
     );
   }
 
@@ -63,6 +73,7 @@ class DosingBody extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l,
     DosingEntry e,
+    int index,
   ) {
     // Resolve vendor/program/product live from the catalog (via productKey),
     // falling back to the stored snapshot for custom/orphaned entries.
@@ -88,10 +99,13 @@ class DosingBody extends ConsumerWidget {
         color: Theme.of(context).colorScheme.error,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: const Icon(Icons.stop_circle_outlined, color: Colors.white),
       ),
-      confirmDismiss: (_) => _confirmDelete(context, ref, l, e),
+      confirmDismiss: (_) => _confirmStop(context, ref, l, e),
       child: ListTile(
+        // Center the icon over the full tile height (title + detail lines),
+        // matching the Actions tiles; otherwise isThreeLine top-aligns it.
+        titleAlignment: ListTileTitleAlignment.center,
         leading: const Icon(Icons.science_outlined),
         title: Row(
           children: [
@@ -104,16 +118,19 @@ class DosingBody extends ConsumerWidget {
         ),
         subtitle: Text(lines),
         isThreeLine: source.isNotEmpty,
-        trailing: Icon(
-          Icons.chevron_right,
-          color: Theme.of(context).colorScheme.outline,
+        trailing: ReorderableDragStartListener(
+          index: index,
+          child: Icon(
+            Icons.drag_handle,
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
         onTap: () => context.push('/dosing/edit', extra: e),
       ),
     );
   }
 
-  Future<bool> _confirmDelete(
+  Future<bool> _confirmStop(
     BuildContext context,
     WidgetRef ref,
     AppLocalizations l,
@@ -122,8 +139,8 @@ class DosingBody extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l.deleteDosingTitle),
-        content: Text(l.deleteDosingBody),
+        title: Text(l.stopDosingTitle),
+        content: Text(l.stopDosingBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -131,13 +148,13 @@ class DosingBody extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.delete),
+            child: Text(l.stop),
           ),
         ],
       ),
     );
     if (ok != true) return false;
-    await ref.read(dbProvider).deleteDosingEntry(e.id);
+    await ref.read(dbProvider).stopDosingEntry(e.id);
     return true;
   }
 }

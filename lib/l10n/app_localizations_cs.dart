@@ -94,6 +94,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get delete => 'Smazat';
 
   @override
+  String get stop => 'Zastavit';
+
+  @override
   String get apply => 'Použít';
 
   @override
@@ -505,11 +508,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get dosingNoDosage => 'Dávka nezadána';
 
   @override
-  String get deleteDosingTitle => 'Odebrat přípravek?';
+  String get stopDosingTitle => 'Zastavit tento přípravek?';
 
   @override
-  String get deleteDosingBody =>
-      'Tímto odeberete tento přípravek z plánu dávkování.';
+  String get stopDosingBody =>
+      'Tímto zastavíte jeho dávkování a odeberete ho z aktivního plánu. Historie zůstane zachována.';
 
   @override
   String get dosingNew => 'Přidat přípravek';
@@ -773,6 +776,11 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String doseCalcReadings(Object count) {
     return '$count měření v období';
+  }
+
+  @override
+  String doseCalcDoseChanged(Object date) {
+    return 'Dávka byla změněna $date; měření před tímto datem odpovídají jiné dávce.';
   }
 
   @override

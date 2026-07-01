@@ -89,7 +89,6 @@ class ComparisonBody extends ConsumerWidget {
                   final isLast = i == params.length - 1;
                   return _ParamChartCard(
                     param: param,
-                    latest: history.isNotEmpty ? history.first : null,
                     inRange: inRange,
                     prefs: prefs,
                     waterChanges: waterChanges,
@@ -108,12 +107,11 @@ class ComparisonBody extends ConsumerWidget {
   }
 }
 
-/// A single parameter's header (name + zone-colored latest value) above its
-/// aligned trend chart, or a muted placeholder when it has no data in range.
+/// A single parameter's header (name + zone-colored latest in-range value) above
+/// its aligned trend chart, or a muted placeholder when it has no data in range.
 class _ParamChartCard extends StatelessWidget {
   const _ParamChartCard({
     required this.param,
-    required this.latest,
     required this.inRange,
     required this.prefs,
     required this.waterChanges,
@@ -124,7 +122,6 @@ class _ParamChartCard extends StatelessWidget {
   });
 
   final TrackedParameter param;
-  final Reading? latest;
   final List<Reading> inRange;
   final UnitPrefs prefs;
   final List<WaterChange> waterChanges;
@@ -138,7 +135,11 @@ class _ParamChartCard extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final pres = presentationOf(param, prefs);
     final bounds = boundsOf(param);
-    final zone = latest != null ? bounds.classify(latest!.value) : Zone.unknown;
+    // Header value tracks the chart: the newest reading *in range* (inRange is
+    // ascending), not the newest overall — otherwise a zone-colored value would
+    // sit above a "No readings in range" chart and imply in-range data (#22).
+    final latest = inRange.isNotEmpty ? inRange.last : null;
+    final zone = latest != null ? bounds.classify(latest.value) : Zone.unknown;
     final hint = Theme.of(context).hintColor;
 
     return InkWell(
@@ -165,7 +166,7 @@ class _ParamChartCard extends StatelessWidget {
                   ),
                   if (latest != null) ...[
                     Text(
-                      pres.format(latest!.value),
+                      pres.format(latest.value),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
