@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Android Auto Backup rules for Android 11 (API 30) and below.
-  Empty rules keep the default behaviour: all eligible app data is backed up to
-  the user's Google Drive, including the SQLite database and the rotating JSON
-  backups stored under the app documents directory. Reinstalling the app (or
-  setting up a new device) then restores everything automatically.
+  All eligible app data is backed up to the user's Google Drive *except* the
+  rotating JSON auto-backups under the app documents directory
+  (data root/app_flutter/backups): they duplicate the SQLite database byte for
+  byte, double the cleartext copies in Google Drive, and count against the
+  ~25 MB Auto Backup quota — hitting it silently stops the whole backup (#36).
+  The database alone restores everything on reinstall / new device.
 -->
 <full-backup-content>
+    <exclude domain="root" path="app_flutter/backups"/>
 </full-backup-content>

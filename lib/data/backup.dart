@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../domain/setup_type.dart';
 import '../domain/supplement_catalog.dart';
 import 'database.dart';
 import 'settings.dart';
@@ -134,8 +135,19 @@ BackupData decodeBackup(String jsonString) {
     throw const InvalidBackupException(
         BackupRejection.notBackupFile, 'wrong format marker');
   }
+  // Distinguish the version failures (#38): only a genuinely newer document
+  // may claim "backup from a newer app" — a missing version means this isn't
+  // one of our documents, and a non-int one is a damaged/hand-edited file.
   final version = decoded['version'];
-  if (version is! int || version > kBackupVersion) {
+  if (version == null) {
+    throw const InvalidBackupException(
+        BackupRejection.notBackupFile, 'missing version');
+  }
+  if (version is! int) {
+    throw InvalidBackupException(
+        BackupRejection.corrupted, 'non-integer version "$version"');
+  }
+  if (version > kBackupVersion) {
     throw const InvalidBackupException(
         BackupRejection.newerVersion, 'document version too new');
   }
@@ -251,6 +263,46 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   requireTank(
       'ratioVisibilities', data.ratioVisibilities.map((r) => r.tankId.value));
   requireTank('dosingEntries', data.dosingEntries.map((r) => r.tankId.value));
+
+  // Enum-ish text columns must hold values the app can interpret (#34): a
+  // dosing `state` outside DosingState matches neither the active-plan filter
+  // nor history — an unmanageable zombie row — and a garbage setupType or
+  // frequency silently degrades into fallback behavior. Nulls pass where the
+  // column is nullable; only present garbage rejects.
+  void requireKnown(
+      String field, Iterable<String?> values, Set<String> allowed) {
+    for (final v in values) {
+      if (v != null && !allowed.contains(v)) {
+        throw InvalidBackupException(
+            BackupRejection.inconsistent, '$field: unknown value "$v"');
+      }
+    }
+  }
+
+  Set<String> names(List<Enum> values) => {for (final v in values) v.name};
+
+  requireKnown(
+      'tanks.setupType',
+      data.tanks.map((t) => t.setupType.present ? t.setupType.value : null),
+      names(SetupType.values));
+  requireKnown(
+      'dosingEntries.state',
+      data.dosingEntries.map((d) => d.state.present ? d.state.value : null),
+      names(DosingState.values));
+  requireKnown(
+      'dosingEntries.frequency',
+      data.dosingEntries
+          .map((d) => d.frequency.present ? d.frequency.value : null),
+      names(DoseFrequency.values));
+  requireKnown(
+      'dosingEntries.amountUnit',
+      data.dosingEntries
+          .map((d) => d.amountUnit.present ? d.amountUnit.value : null),
+      names(DoseUnit.values));
+  requireKnown(
+      'dosingEntries.basis',
+      data.dosingEntries.map((d) => d.basis.present ? d.basis.value : null),
+      names(DoseBasis.values));
 }
 
 /// Imports [data] into the live database safely:
@@ -332,10 +384,14 @@ const String _kExportPrefix = 'reeftracker-backup-';
 
 /// Exports the database and hands the JSON file to the OS share sheet.
 ///
-/// The exported JSON is a full plaintext copy of the database, so the temp file
-/// is deleted as soon as the share sheet returns. Any leftovers from earlier
-/// runs (e.g. an older app version, or a process killed mid-share) are swept
-/// first, so plaintext exports can't accumulate in temp storage.
+/// The exported JSON is a full plaintext copy of the database, so our staging
+/// file is deleted as soon as the share sheet returns, and any leftovers from
+/// earlier runs (e.g. a process killed mid-share) are swept first. share_plus
+/// keeps its *own* copy of every shared file under `<temp>/share_plus/` and
+/// clears it only on the next share (#35): when the sheet is dismissed no
+/// receiver holds the content URI, so that copy is deleted at once; after a
+/// completed share the target app may still be streaming it, so it is left
+/// for the next export's sweep instead.
 Future<void> exportBackup(AppDatabase db) async {
   final json = await encodeBackupFromDb(db);
 
@@ -347,17 +403,22 @@ Future<void> exportBackup(AppDatabase db) async {
   await file.writeAsString(json);
 
   try {
-    await Share.shareXFiles(
+    final result = await Share.shareXFiles(
       [XFile(file.path, mimeType: 'application/json', name: fileName)],
       subject: fileName,
     );
+    if (result.status == ShareResultStatus.dismissed) {
+      await _sweepSharePlusCopies(dir);
+    }
   } finally {
     if (await file.exists()) await file.delete();
   }
 }
 
 /// Best-effort deletion of stale plaintext export files left in [dir] by
-/// earlier exports. Never throws — a failed sweep must not block a new export.
+/// earlier exports — both our own staging files and the copies share_plus
+/// keeps under its cache subfolder. Never throws — a failed sweep must not
+/// block a new export.
 Future<void> _sweepStaleExports(Directory dir) async {
   try {
     await for (final entity in dir.list()) {
@@ -374,6 +435,30 @@ Future<void> _sweepStaleExports(Directory dir) async {
   } catch (_) {
     // Temp dir unreadable; nothing to sweep.
   }
+  await _sweepSharePlusCopies(dir);
+}
+
+/// Deletes our export copies from share_plus's `share_plus/` cache subfolder
+/// (it copies every shared XFile there and clears the folder itself only on
+/// the *next* share, #35). Only files matching our export naming are touched.
+/// Best-effort, never throws.
+Future<void> _sweepSharePlusCopies(Directory tempDir) async {
+  try {
+    final shareDir = Directory(p.join(tempDir.path, 'share_plus'));
+    await for (final entity in shareDir.list()) {
+      if (entity is! File) continue;
+      final name = p.basename(entity.path);
+      if (name.startsWith(_kExportPrefix) && name.endsWith('.json')) {
+        try {
+          await entity.delete();
+        } catch (_) {
+          // Ignore; the receiver may still hold it open.
+        }
+      }
+    }
+  } catch (_) {
+    // Folder absent (no share happened yet) or unreadable; nothing to sweep.
+  }
 }
 
 /// Prompts the user to pick a backup file and decodes it. Returns null if the
@@ -387,15 +472,35 @@ Future<BackupData?> pickBackupData() async {
   if (result == null || result.files.isEmpty) return null;
 
   final picked = result.files.single;
-  String contents;
   final bytes = picked.bytes;
-  if (bytes != null) {
+  if (bytes != null) return decodeBackupBytes(bytes);
+  if (picked.path != null) {
+    String contents;
+    try {
+      contents = await File(picked.path!).readAsString();
+    } on FileSystemException catch (e) {
+      // Unreadable file, or dart:io's readAsString failing to decode non-UTF-8
+      // content — keep the InvalidBackupException contract (#37) so the user
+      // gets the specific rejection message instead of a generic failure.
+      throw InvalidBackupException(
+          BackupRejection.notBackupFile, 'unreadable file: ${e.message}');
+    }
+    return decodeBackup(contents);
+  }
+  throw const InvalidBackupException(
+      BackupRejection.notBackupFile, 'could not read the selected file');
+}
+
+/// Decodes raw backup-file [bytes], keeping the [InvalidBackupException]
+/// contract for non-UTF-8 content (#37): a binary file renamed `.json` is
+/// reported as "not a backup file", not as a generic import failure.
+BackupData decodeBackupBytes(List<int> bytes) {
+  String contents;
+  try {
     contents = utf8.decode(bytes);
-  } else if (picked.path != null) {
-    contents = await File(picked.path!).readAsString();
-  } else {
-    throw const InvalidBackupException(
-        BackupRejection.notBackupFile, 'could not read the selected file');
+  } on FormatException catch (e) {
+    throw InvalidBackupException(
+        BackupRejection.notBackupFile, 'not UTF-8 text: ${e.message}');
   }
   return decodeBackup(contents);
 }

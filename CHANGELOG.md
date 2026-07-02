@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a small absolute floor) instead of a flat 0.5 ml: a large mismatch on a
   small dose of a potent supplement is no longer waved through as "keep your
   current dose", and big dosers aren't nagged over trivial tweaks.
+- **Exported backups no longer linger in the app's share cache**: the plaintext
+  copy the share sheet works from is removed as soon as the share is dismissed,
+  and any copy left by a completed share is cleaned up on the next export.
+- **Android cloud Auto Backup no longer uploads the rotating JSON backups**
+  alongside the database — they are the same data twice, doubled the cleartext
+  copies in Google Drive, and ate into the backup quota. Device-to-device
+  transfer still carries everything.
 
 ### Fixed
 - **Trends no longer warn about a parameter that is recovering**: a value
@@ -35,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A health-score input carrying a value without a timestamp is now treated as
   stale instead of eternally fresh (defensive; not reachable from the app's own
   data).
+- **Importing a backup with unrecognizable aquarium-type or dosing lifecycle
+  values is now rejected** with a clear message instead of restoring rows the
+  app can neither display correctly nor manage.
+- A **binary or non-text file renamed to `.json`** now gets the specific "not a
+  backup file" message on import instead of a generic "import failed".
+- A backup file whose version field is **missing or damaged** (e.g. truncated
+  by a failed download) is no longer misreported as "backup from a newer app".
 
 ### Added
 - Settings now shows a **persistent warning when the last backup attempt

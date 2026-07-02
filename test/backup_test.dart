@@ -408,7 +408,48 @@ void main() {
         settings: const [],
       ).replaceFirst('"version": 1', '"version": 999');
       expect(
-          () => decodeBackup(json), throwsA(isA<InvalidBackupException>()));
+          () => decodeBackup(json),
+          throwsA(isA<InvalidBackupException>().having(
+              (e) => e.reason, 'reason', BackupRejection.newerVersion)));
+    });
+
+    test('missing or non-int version is not reported as "newer app" (#38)',
+        () {
+      // A truncated/hand-edited file must not get the misleading "backup from
+      // a newer app" message: absent version -> not a backup file at all;
+      // non-int version -> recognized but damaged.
+      const missing = '{"format":"reeftracker-backup",'
+          '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
+          '"readings":[],"settings":[]}';
+      expect(
+          () => decodeBackup(missing),
+          throwsA(isA<InvalidBackupException>().having(
+              (e) => e.reason, 'reason', BackupRejection.notBackupFile)));
+
+      const nonInt = '{"format":"reeftracker-backup","version":"1",'
+          '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
+          '"readings":[],"settings":[]}';
+      expect(
+          () => decodeBackup(nonInt),
+          throwsA(isA<InvalidBackupException>()
+              .having((e) => e.reason, 'reason', BackupRejection.corrupted)));
+    });
+
+    test('non-UTF-8 bytes are rejected as not-a-backup, not a crash (#37)',
+        () {
+      // 0xC3 announces a two-byte sequence; 0x28 is not a continuation byte —
+      // a binary file renamed .json must surface the specific rejection
+      // message, not escape the InvalidBackupException contract.
+      expect(
+          () => decodeBackupBytes(const [0xC3, 0x28, 0x00]),
+          throwsA(isA<InvalidBackupException>().having(
+              (e) => e.reason, 'reason', BackupRejection.notBackupFile)));
+
+      // Valid UTF-8 bytes take the normal decode path.
+      const json = '{"format":"reeftracker-backup","version":1,'
+          '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
+          '"readings":[],"settings":[]}';
+      expect(decodeBackupBytes(json.codeUnits).tanks, isEmpty);
     });
   });
 
@@ -633,6 +674,31 @@ void main() {
       expect(exportFilesIn(tempDir), isEmpty);
     });
 
+    test('exportBackup sweeps lingering share_plus cache copies (#35)',
+        () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await seed(db);
+
+      // share_plus copies every shared XFile into <temp>/share_plus/ and only
+      // clears it on the *next* share — simulate the copy a previous export
+      // left behind, plus a foreign file that must not be touched.
+      final shareDir = Directory(p.join(tempDir.path, 'share_plus'));
+      await shareDir.create();
+      final lingering =
+          File(p.join(shareDir.path, 'reeftracker-backup-20260101-000000.json'));
+      await lingering.writeAsString('{}');
+      final foreign = File(p.join(shareDir.path, 'photo.jpg'));
+      await foreign.writeAsString('x');
+
+      try {
+        await exportBackup(db);
+      } catch (_) {}
+
+      expect(await lingering.exists(), isFalse);
+      expect(await foreign.exists(), isTrue);
+    });
+
     /// Minimal companion builders for hand-assembled [BackupData] sets.
     TanksCompanion tankRow(int id) => TanksCompanion(
           id: Value(id),
@@ -735,40 +801,83 @@ void main() {
       expect((await dst.getAllReadings()).single.id, 1 << 31);
     });
 
-    test('currently restores unrecognized enum-ish strings verbatim (#34 open)',
-        () async {
-      // Documents open TODO #34: setupType/state/frequency are not
-      // whitelisted, so garbage strings restore cleanly — and a bogus dosing
-      // `state` yields a row that matches neither the active-plan filter nor
-      // any lifecycle the UI can manage. Flip when #34 is fixed.
-      final data = bareData(
-        tanks: [
+    DosingEntriesCompanion dosingRow(
+      int id, {
+      String state = 'active',
+      String? frequency,
+      String? amountUnit,
+      String? basis,
+    }) =>
+        DosingEntriesCompanion(
+          id: Value(id),
+          tankId: const Value(1),
+          product: const Value('Mystery'),
+          state: Value(state),
+          frequency: Value(frequency),
+          amountUnit: Value(amountUnit),
+          basis: Value(basis),
+          createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+          startedAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+        );
+
+    test('rejects unrecognized enum-ish strings (#34)', () async {
+      // Regression test for #34: a garbage dosing `state` would restore into a
+      // row that matches neither the active-plan filter nor history — an
+      // unmanageable zombie; unknown setupType/frequency/amountUnit/basis
+      // silently degrade behavior. validateBackup whitelists all of them.
+      final badSets = <String, BackupData>{
+        'setupType': bareData(tanks: [
           TanksCompanion(
             id: const Value(1),
             name: const Value('T'),
             setupType: const Value('not-a-setup-type'),
             createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
           ),
-        ],
-        dosingEntries: [
-          DosingEntriesCompanion(
-            id: const Value(50),
-            tankId: const Value(1),
-            product: const Value('Mystery'),
-            frequency: const Value('sometimes'),
-            state: const Value('bogus'),
-            createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-            startedAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-          ),
-        ],
-      );
+        ]),
+        'state': bareData(
+            tanks: [tankRow(1)],
+            dosingEntries: [dosingRow(50, state: 'bogus')]),
+        'frequency': bareData(
+            tanks: [tankRow(1)],
+            dosingEntries: [dosingRow(50, frequency: 'sometimes')]),
+        'amountUnit': bareData(
+            tanks: [tankRow(1)],
+            dosingEntries: [dosingRow(50, amountUnit: 'cups')]),
+        'basis': bareData(
+            tanks: [tankRow(1)],
+            dosingEntries: [dosingRow(50, basis: 'perMoon')]),
+      };
+      for (final bad in badSets.entries) {
+        final dst = newDb();
+        addTearDown(dst.close);
+        await expectLater(
+            importBackup(dst, bad.value),
+            throwsA(isA<InvalidBackupException>()
+                .having((e) => e.reason, 'reason',
+                    BackupRejection.inconsistent)
+                .having((e) => e.detail, 'detail', contains(bad.key))),
+            reason: 'garbage ${bad.key} must be rejected');
+        expect(await dst.getAllDosingEntries(), isEmpty);
+      }
+    });
+
+    test('accepts every known enum value, including nulls (#34)', () async {
+      final data = bareData(tanks: [
+        tankRow(1)
+      ], dosingEntries: [
+        // `paused` is reserved for a later phase but is a legal stored value.
+        dosingRow(50,
+            state: 'paused',
+            frequency: 'everyNDays',
+            amountUnit: 'g',
+            basis: 'perDose'),
+        // The nullable enum-ish columns may all be null.
+        dosingRow(51),
+      ]);
       final dst = newDb();
       addTearDown(dst.close);
       await importBackup(dst, data);
-      expect((await dst.getAllTanks()).single.setupType, 'not-a-setup-type');
-      final entry = (await dst.getAllDosingEntries()).single;
-      expect(entry.state, 'bogus');
-      expect(entry.frequency, 'sometimes');
+      expect((await dst.getAllDosingEntries()).length, 2);
     });
 
     test('rejects a backup whose child rows reference a missing tank',

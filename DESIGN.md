@@ -187,7 +187,9 @@ Notable DB behavior:
 JSON document, `format: "reeftracker-backup"`, `version` (`kBackupVersion = 1`),
 plus the DB `schemaVersion` it was written against. DateTimes serialized as epoch
 millis. `encodeBackup` dumps every table; `decodeBackup` validates the
-format/version guard and is **forward-tolerant** (older backups without the
+format/version guard (distinguishing a missing version = not a backup file, a
+non-int version = corrupted, and a genuinely newer document) and is
+**forward-tolerant** (older backups without the
 `waterChanges` / `carbonChanges` / `equipmentCleanings` / `ratioVisibilities` /
 `dosingEntries` keys decode to empty lists). Each table is decoded in isolation,
 so a failure throws an `InvalidBackupException` naming the offending section
@@ -199,7 +201,13 @@ Where a missing optional column has a table default, the decoder emits Drift's
 row without `displayOrder` gets the table default 1000 = ordered last).
 
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
-share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
+share sheet, then cleans up the plaintext copies: its own staging file as soon
+as the sheet returns, share_plus's internal copy (under `<temp>/share_plus/`)
+immediately when the sheet was dismissed, and any copy a completed share left
+behind at the start of the next export (deleting it right away could break a
+receiver still streaming the content URI). `pickBackupData` uses the file
+picker; read/UTF-8 failures stay inside the `InvalidBackupException` contract
+so a binary file renamed `.json` gets the specific rejection message. `restoreFromBackup`
 **replaces the entire database in one transaction**, preserving primary keys so
 FK links survive (deletes children→parents, inserts parents→children). It takes
 a `preserveSettingKeys` set (the caller passes `SettingKey.deviceLocalKeys`):
@@ -211,8 +219,13 @@ auto-backup config; #18). Only the aquarium/domain data is replaced.
 **Importing is a three-stage safety pipeline** (`importBackup`), so a bad file
 never wipes live data:
 1. `validateBackup` — in-memory pre-flight: rejects a backup whose
-   `schemaVersion` is newer than the app's, and checks internal consistency
-   (no duplicate primary keys, no child row referencing a missing aquarium).
+   `schemaVersion` is newer than the app's, and checks internal consistency:
+   no duplicate primary keys, no child row referencing a missing aquarium,
+   row ids within `1..2^31` (a crafted huge id would exhaust SQLite's
+   AUTOINCREMENT space and permanently break inserts), and enum-ish text
+   columns (`setupType`, dosing `state`/`frequency`/`amountUnit`/`basis`)
+   whitelisted against the app's enums so a garbage `state` can't restore an
+   unmanageable zombie row.
 2. *Rehearsal* — the restore is run against a throwaway temp database so the real
    SQLite engine (FK / NOT NULL / uniqueness) proves the rows insert cleanly.
 3. The actual transactional `restoreFromBackup` into the live DB.
@@ -262,10 +275,14 @@ Two layers, **no new dependencies and no runtime permissions**:
    schedule-agnostic and does **not** stamp the timestamp or the error — the
    shared `_writeAndStamp` path used by `runAutoBackupIfDue` and `backupNow`
    does.
-2. **Android Auto Backup.** `android:allowBackup="true"` plus empty
-   `res/xml/backup_rules.xml` / `data_extraction_rules.xml` (default = back up
-   all app data) mean the SQLite DB *and* the `backups/` folder are synced to the
-   user's Google Drive and auto-restored on reinstall / new device.
+2. **Android Auto Backup.** `android:allowBackup="true"` plus
+   `res/xml/backup_rules.xml` / `data_extraction_rules.xml` mean the SQLite DB
+   is synced to the user's Google Drive and auto-restored on reinstall / new
+   device. Cloud backup **excludes the rotating `backups/` folder**
+   (`<exclude domain="root" path="app_flutter/backups"/>`): the JSONs duplicate
+   the DB, would double the cleartext copies in Drive, and count against the
+   ~25 MB Auto Backup quota. Device-to-device transfer (API 31+) still carries
+   everything.
 
 Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 (`daily`/`weekly`), `auto_backup_keep`, `last_auto_backup_at`,
