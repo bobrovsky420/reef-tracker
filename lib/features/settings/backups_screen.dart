@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,37 +22,47 @@ class BackupsScreen extends ConsumerStatefulWidget {
   ConsumerState<BackupsScreen> createState() => _BackupsScreenState();
 }
 
+/// A backup file paired with its stat, taken once at list time so tiles never
+/// do filesystem I/O inside `build` (T5).
+typedef _BackupEntry = ({File file, FileStat stat});
+
+Future<List<_BackupEntry>> _loadBackups() async {
+  final files = await listAutoBackups();
+  return [for (final f in files) (file: f, stat: await f.stat())];
+}
+
 class _BackupsScreenState extends ConsumerState<BackupsScreen> {
-  late Future<List<File>> _backups;
+  late Future<List<_BackupEntry>> _backups;
 
   @override
   void initState() {
     super.initState();
-    _backups = listAutoBackups();
+    _backups = _loadBackups();
   }
 
-  void _reload() => setState(() => _backups = listAutoBackups());
+  void _reload() => setState(() => _backups = _loadBackups());
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l.backupsScreenTitle)),
-      body: FutureBuilder<List<File>>(
+      body: FutureBuilder<List<_BackupEntry>>(
         future: _backups,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          final files = snapshot.data ?? const <File>[];
-          if (files.isEmpty) {
+          final entries = snapshot.data ?? const <_BackupEntry>[];
+          if (entries.isEmpty) {
             return _EmptyState(l: l);
           }
           return ListView.separated(
-            itemCount: files.length,
+            itemCount: entries.length,
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, i) => _BackupTile(
-              file: files[i],
+              file: entries[i].file,
+              stat: entries[i].stat,
               onChanged: _reload,
             ),
           );
@@ -91,15 +102,19 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _BackupTile extends ConsumerWidget {
-  const _BackupTile({required this.file, required this.onChanged});
+  const _BackupTile({
+    required this.file,
+    required this.stat,
+    required this.onChanged,
+  });
 
   final File file;
+  final FileStat stat;
   final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final stat = file.statSync();
     // Shared helper honors the device 12/24-hour preference (#41).
     final when = formatDateTime(context, stat.modified, weekday: false);
     final size = _formatSize(l, stat.size);
@@ -146,7 +161,10 @@ class _BackupTile extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      final data = decodeBackup(await file.readAsString());
+      // Decode in a worker isolate (T5) so a large backup doesn't freeze the
+      // UI; InvalidBackupException crosses the boundary typed.
+      final contents = await file.readAsString();
+      final data = await Isolate.run(() => decodeBackup(contents));
       await importBackup(ref.read(dbProvider), data);
       if (context.mounted) _snack(context, l.backupRestored);
     } on InvalidBackupException catch (e) {

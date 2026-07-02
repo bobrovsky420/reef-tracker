@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:drift/native.dart';
 import 'package:file_picker/file_picker.dart';
@@ -83,7 +84,12 @@ class BackupData {
   final List<SettingsCompanion> settings;
 }
 
-/// Serializes the whole database to a pretty-printed JSON string.
+/// Serializes the whole database to a compact JSON string.
+///
+/// Deliberately *not* pretty-printed (T5): indentation roughly doubles both
+/// the encode work and the file size of every backup in the rotation (which
+/// also counts against the ~25 MB Android cloud-backup quota), and
+/// [decodeBackup] is whitespace-agnostic, so nothing reads the indentation.
 String encodeBackup({
   required int schemaVersion,
   required List<Tank> tanks,
@@ -113,7 +119,7 @@ String encodeBackup({
     'dosingEntries': dosingEntries.map(_dosingEntryToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
-  return const JsonEncoder.withIndent('  ').convert(map);
+  return jsonEncode(map);
 }
 
 /// Parses a backup JSON string into companion rows. Throws
@@ -315,6 +321,8 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
 ///
 /// If step 1 or 2 fails, the live database is never touched.
 Future<void> importBackup(AppDatabase db, BackupData data) async {
+  // validateBackup stays on this isolate deliberately (T5): it only builds id
+  // sets — copying [data] to a worker would cost about as much as the check.
   validateBackup(data, appSchemaVersion: db.schemaVersion);
   await _rehearseRestore(data);
   await _applyRestore(db, data);
@@ -328,7 +336,11 @@ Future<void> _rehearseRestore(BackupData data) async {
   final file = File(p.join(
       dir.path, 'reeftracker-import-${DateTime.now().microsecondsSinceEpoch}.sqlite'));
   await _deleteDbFiles(file);
-  final temp = AppDatabase(NativeDatabase(file));
+  // createInBackground, not NativeDatabase(file): the synchronous executor
+  // would run every rehearsal insert's SQLite C call on the calling (UI)
+  // isolate — for a large backup that is a bigger import-path stall than the
+  // JSON decode itself (T5).
+  final temp = AppDatabase(NativeDatabase.createInBackground(file));
   try {
     await _applyRestore(temp, data);
   } on InvalidBackupException {
@@ -365,18 +377,39 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) => db.restoreFromBac
 
 /// Serializes the entire database to a backup JSON string by reading every
 /// table. Shared by manual export and the automatic backup service.
-Future<String> encodeBackupFromDb(AppDatabase db) async => encodeBackup(
-      schemaVersion: db.schemaVersion,
-      tanks: await db.getAllTanks(),
-      params: await db.getAllTrackedParameters(),
-      readings: await db.getAllReadings(),
-      waterChanges: await db.getAllWaterChanges(),
-      carbonChanges: await db.getAllCarbonChanges(),
-      equipmentCleanings: await db.getAllEquipmentCleanings(),
-      ratioVisibilities: await db.getAllRatioVisibilities(),
-      dosingEntries: await db.getAllDosingEntries(),
-      settings: await db.getAllSettings(),
-    );
+///
+/// The table reads go through drift's background executor as usual; the JSON
+/// string building — the CPU-heavy part for a years-old database — runs in a
+/// short-lived worker isolate (T5) so a backup never janks the UI. That
+/// matters because auto-backup fires right after the first frame and on
+/// resume. The row lists are plain value objects (cheap to send); the result
+/// string comes back via `Isolate.exit`, without a copy.
+Future<String> encodeBackupFromDb(AppDatabase db) async {
+  final schemaVersion = db.schemaVersion;
+  final tanks = await db.getAllTanks();
+  final params = await db.getAllTrackedParameters();
+  final readings = await db.getAllReadings();
+  final waterChanges = await db.getAllWaterChanges();
+  final carbonChanges = await db.getAllCarbonChanges();
+  final equipmentCleanings = await db.getAllEquipmentCleanings();
+  final ratioVisibilities = await db.getAllRatioVisibilities();
+  final dosingEntries = await db.getAllDosingEntries();
+  final settings = await db.getAllSettings();
+  // The closure must capture only sendable plain data — never [db]: an open
+  // database (ports, native handles) cannot cross the isolate boundary.
+  return Isolate.run(() => encodeBackup(
+        schemaVersion: schemaVersion,
+        tanks: tanks,
+        params: params,
+        readings: readings,
+        waterChanges: waterChanges,
+        carbonChanges: carbonChanges,
+        equipmentCleanings: equipmentCleanings,
+        ratioVisibilities: ratioVisibilities,
+        dosingEntries: dosingEntries,
+        settings: settings,
+      ));
+}
 
 /// Filename prefix for the plaintext JSON the share sheet receives. Used to
 /// recognize (and sweep) our own leftovers in the temp directory.
@@ -471,9 +504,13 @@ Future<BackupData?> pickBackupData() async {
   );
   if (result == null || result.files.isEmpty) return null;
 
+  // Decoding parses the whole file (jsonDecode + companion mapping) — run it
+  // in a worker isolate (T5) so a big import doesn't freeze the picker UI.
+  // [InvalidBackupException] is plain data (enum + string), so Isolate.run
+  // rethrows it here typed, keeping the rejection-message contract (#37).
   final picked = result.files.single;
   final bytes = picked.bytes;
-  if (bytes != null) return decodeBackupBytes(bytes);
+  if (bytes != null) return Isolate.run(() => decodeBackupBytes(bytes));
   if (picked.path != null) {
     String contents;
     try {
@@ -485,7 +522,7 @@ Future<BackupData?> pickBackupData() async {
       throw InvalidBackupException(
           BackupRejection.notBackupFile, 'unreadable file: ${e.message}');
     }
-    return decodeBackup(contents);
+    return Isolate.run(() => decodeBackup(contents));
   }
   throw const InvalidBackupException(
       BackupRejection.notBackupFile, 'could not read the selected file');

@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The database now runs in SQLite WAL journal mode, so long reads (such as a
   backup being written) and saves no longer block each other.
+- Creating and restoring backups no longer freezes the app: the JSON
+  encoding/decoding and the pre-restore rehearsal now run off the UI thread.
+  This matters most on "backup day", when the automatic backup fires right at
+  startup or on resume with years of readings in the database.
+- Backup files are now written as compact JSON (roughly half the size), which
+  also reduces what the rotating backups count against the Android cloud
+  backup quota. Existing pretty-printed backups restore unchanged.
 
 ### Fixed
 - The app could hang forever on the launch splash screen on some devices

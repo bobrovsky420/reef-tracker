@@ -39,8 +39,7 @@ Future<Directory> autoBackupDir() async {
 /// The rotating auto-backup files, newest first.
 Future<List<File>> listAutoBackups() async {
   final dir = await autoBackupDir();
-  final files = dir
-      .listSync()
+  final files = (await dir.list().toList())
       .whereType<File>()
       .where((f) {
         final name = p.basename(f.path);

@@ -251,7 +251,13 @@ Failures in stage 1 or 2 surface a specific localized message
 (`BackupRejection` → `l10n.backupRejection`) and leave the live DB untouched.
 
 `encodeBackupFromDb(db)` is the shared "read every table → JSON" helper used by
-both manual export and the automatic backup service.
+both manual export and the automatic backup service. The CPU-heavy halves of
+the pipeline run **off the UI isolate** (T5): JSON encoding and decoding happen
+in `Isolate.run` workers (auto-backup fires right after the first frame and on
+resume, so a large database would otherwise jank startup), and the rehearsal
+restore uses `NativeDatabase.createInBackground`. Backup JSON is compact, not
+pretty-printed — indentation would double the encode cost and file size, and
+nothing reads it.
 
 ### Automatic backup (`auto_backup.dart`)
 

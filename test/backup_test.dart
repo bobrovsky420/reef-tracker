@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -304,15 +305,15 @@ void main() {
         settings: settings,
       )
           .replaceFirst(
-              RegExp(r',\s*"waterChanges": \[.*?\]', dotAll: true), '')
+              RegExp(r',\s*"waterChanges":\s*\[.*?\]', dotAll: true), '')
           .replaceFirst(
-              RegExp(r',\s*"carbonChanges": \[.*?\]', dotAll: true), '')
+              RegExp(r',\s*"carbonChanges":\s*\[.*?\]', dotAll: true), '')
           .replaceFirst(
-              RegExp(r',\s*"equipmentCleanings": \[.*?\]', dotAll: true), '')
+              RegExp(r',\s*"equipmentCleanings":\s*\[.*?\]', dotAll: true), '')
           .replaceFirst(
-              RegExp(r',\s*"ratioVisibilities": \[.*?\]', dotAll: true), '')
+              RegExp(r',\s*"ratioVisibilities":\s*\[.*?\]', dotAll: true), '')
           .replaceFirst(
-              RegExp(r',\s*"dosingEntries": \[.*?\]', dotAll: true), '');
+              RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true), '');
       final data = decodeBackup(json);
       expect(data.waterChanges, isEmpty);
       expect(data.carbonChanges, isEmpty);
@@ -406,7 +407,7 @@ void main() {
         ratioVisibilities: const [],
         dosingEntries: const [],
         settings: const [],
-      ).replaceFirst('"version": 1', '"version": 999');
+      ).replaceFirst(RegExp(r'"version":\s*1'), '"version":999');
       expect(
           () => decodeBackup(json),
           throwsA(isA<InvalidBackupException>().having(
@@ -450,6 +451,17 @@ void main() {
           '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
           '"readings":[],"settings":[]}';
       expect(decodeBackupBytes(json.codeUnits).tanks, isEmpty);
+    });
+
+    test('InvalidBackupException crosses the decode worker isolate typed (T5)',
+        () async {
+      // Import decodes in Isolate.run; the exception must arrive here as an
+      // InvalidBackupException (not a RemoteError) so the user still gets the
+      // specific localized rejection message (#37).
+      await expectLater(
+          Isolate.run(() => decodeBackupBytes(const [0xC3, 0x28, 0x00])),
+          throwsA(isA<InvalidBackupException>().having(
+              (e) => e.reason, 'reason', BackupRejection.notBackupFile)));
     });
   });
 
@@ -636,7 +648,7 @@ void main() {
       await seed(src);
       // Drop a table that older app versions did not export.
       final json = (await encodeBackupFromDb(src)).replaceFirst(
-          RegExp(r',\s*"dosingEntries": \[.*?\]', dotAll: true), '');
+          RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true), '');
       final data = decodeBackup(json);
 
       final dst = newDb();
