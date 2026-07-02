@@ -323,7 +323,18 @@ loading/empty instead of the previous tank's rows flashing under the new tank's
 name (a rebuilt non-family StreamProvider keeps its previous value while the
 new stream loads); the old tank's instance loses its only listener and its live
 query is disposed. Consumers are unaffected — `ref.watch` yields the same
-`AsyncValue` either way. Beyond those internal families nothing uses
+`AsyncValue` either way.
+
+**Stream emissions are deduplicated** (T2): Drift invalidates watch queries at
+*table* granularity and re-emits a freshly built (identity-unequal) list even
+when the result is unchanged — e.g. a write for another tank. Every list/map
+stream above is wrapped in `.distinct(listEquals/mapEquals)` so an identical
+re-emission never becomes a new `AsyncValue`, and the derived results
+(`TrendResult`, `TankHealth`) are value-equal so an unchanged recompute doesn't
+notify watchers either (Riverpod 3 filters updates with `==`). Net effect: a
+write only rebuilds the widgets whose data actually changed.
+
+Beyond those internal families nothing uses
 `autoDispose`: state is small and single-user, so providers simply live for the
 app's lifetime (pairing with the home shell's `IndexedStack`, which keeps tab
 widget state alive too), and the permanent wrappers keep the *active* tank's

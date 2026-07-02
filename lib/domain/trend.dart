@@ -82,6 +82,22 @@ class TrendResult {
   /// The soonest projected zone crossing (amber or red), or null when neither
   /// is forecast. Amber always comes before red on the same trajectory.
   double? get soonestCrossing => daysToAmber ?? daysToRed;
+
+  /// Value equality, so recomputing an unchanged trend doesn't read as a new
+  /// one — providers/`select`s can skip notifying their watchers (T2).
+  @override
+  bool operator ==(Object other) =>
+      other is TrendResult &&
+      other.slopePerDay == slopePerDay &&
+      other.direction == direction &&
+      other.window == window &&
+      other.daysToAmber == daysToAmber &&
+      other.daysToRed == daysToRed &&
+      other.recovering == recovering;
+
+  @override
+  int get hashCode => Object.hash(
+      slopePerDay, direction, window, daysToAmber, daysToRed, recovering);
 }
 
 /// Computes the recent trend for [points] (oldest-first) using up to the most

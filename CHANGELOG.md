@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.16.0] - 2026-07-02
 
 ### Changed
+- Performance: the dashboard, health badge and history screens no longer
+  rebuild when unrelated data changes (e.g. a reading saved for another
+  aquarium) — identical database emissions and unchanged trend/health results
+  are now filtered out before they reach the UI.
 - Internal architecture cleanup with no behavior changes: the domain layer
   (zones, ratios, dose math, parameter catalog) no longer depends on Flutter
   or the database, dead English-only display fields were removed in favor of

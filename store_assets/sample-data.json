@@ -1,8 +1,8 @@
 {
   "format": "reeftracker-backup",
   "version": 1,
-  "schemaVersion": 10,
-  "exportedAt": "2026-06-30T17:02:27.635276",
+  "schemaVersion": 11,
+  "exportedAt": "2026-07-01T18:27:24.918946",
   "tanks": [
     {
       "id": 1,
@@ -332,14 +332,6 @@
       "note": null
     },
     {
-      "id": 25,
-      "tankId": 1,
-      "paramKey": "ph",
-      "value": 7.6,
-      "takenAt": 1779523200000,
-      "note": null
-    },
-    {
       "id": 26,
       "tankId": 1,
       "paramKey": "alkalinity",
@@ -626,6 +618,78 @@
       "value": 0.09,
       "takenAt": 1782831033000,
       "note": null
+    },
+    {
+      "id": 63,
+      "tankId": 1,
+      "paramKey": "temperature",
+      "value": 25.3,
+      "takenAt": 1782903971000,
+      "note": null
+    },
+    {
+      "id": 64,
+      "tankId": 1,
+      "paramKey": "ph",
+      "value": 8.4,
+      "takenAt": 1782903971000,
+      "note": null
+    },
+    {
+      "id": 65,
+      "tankId": 1,
+      "paramKey": "salinity",
+      "value": 1.0260228571428571,
+      "takenAt": 1782903971000,
+      "note": null
+    },
+    {
+      "id": 66,
+      "tankId": 1,
+      "paramKey": "alkalinity",
+      "value": 8.4,
+      "takenAt": 1782903971000,
+      "note": null
+    },
+    {
+      "id": 67,
+      "tankId": 1,
+      "paramKey": "nitrate",
+      "value": 15.4,
+      "takenAt": 1782903971000,
+      "note": null
+    },
+    {
+      "id": 68,
+      "tankId": 1,
+      "paramKey": "phosphate",
+      "value": 0.11,
+      "takenAt": 1782903971000,
+      "note": null
+    },
+    {
+      "id": 69,
+      "tankId": 1,
+      "paramKey": "temperature",
+      "value": 25.5,
+      "takenAt": 1779523200000,
+      "note": null
+    },
+    {
+      "id": 70,
+      "tankId": 1,
+      "paramKey": "ph",
+      "value": 8.1,
+      "takenAt": 1779523200000,
+      "note": null
+    },
+    {
+      "id": 71,
+      "tankId": 1,
+      "paramKey": "salinity",
+      "value": 1.025494857142857,
+      "takenAt": 1779523200000,
+      "note": null
     }
   ],
   "waterChanges": [
@@ -687,7 +751,10 @@
       "doseTime": null,
       "note": null,
       "displayOrder": 0,
-      "createdAt": 1782586437000
+      "createdAt": 1782586437000,
+      "startedAt": 1782586437000,
+      "endedAt": null,
+      "state": "active"
     },
     {
       "id": 2,
@@ -706,7 +773,10 @@
       "doseTime": null,
       "note": null,
       "displayOrder": 1,
-      "createdAt": 1782586446000
+      "createdAt": 1782586446000,
+      "startedAt": 1782586446000,
+      "endedAt": null,
+      "state": "active"
     },
     {
       "id": 3,
@@ -725,7 +795,54 @@
       "doseTime": null,
       "note": null,
       "displayOrder": 2,
-      "createdAt": 1782586457000
+      "createdAt": 1782586457000,
+      "startedAt": 1782586457000,
+      "endedAt": 1782904225000,
+      "state": "ended"
+    },
+    {
+      "id": 4,
+      "tankId": 1,
+      "productKey": "redsea.no3po4x",
+      "vendor": "Red Sea",
+      "program": null,
+      "product": "NO₃:PO₄-X (nutrient reducer)",
+      "elementKey": null,
+      "amount": 12.0,
+      "amountUnit": "ml",
+      "basis": "perDay",
+      "frequency": "daily",
+      "intervalDays": null,
+      "weekdays": null,
+      "doseTime": null,
+      "note": null,
+      "displayOrder": 3,
+      "createdAt": 1782904207000,
+      "startedAt": 1782904207000,
+      "endedAt": null,
+      "state": "active"
+    },
+    {
+      "id": 5,
+      "tankId": 1,
+      "productKey": "faunamarin.bl_carbonate",
+      "vendor": "Fauna Marin",
+      "program": "Balling Light",
+      "product": "Carbonate Mix",
+      "elementKey": "alkalinity",
+      "amount": 38.0,
+      "amountUnit": "ml",
+      "basis": "perDay",
+      "frequency": null,
+      "intervalDays": null,
+      "weekdays": null,
+      "doseTime": null,
+      "note": null,
+      "displayOrder": 2,
+      "createdAt": 1782904225000,
+      "startedAt": 1782904225000,
+      "endedAt": null,
+      "state": "active"
     }
   ],
   "settings": [
@@ -743,7 +860,7 @@
     },
     {
       "key": "last_auto_backup_at",
-      "value": "1782831031363"
+      "value": "1782922879891"
     },
     {
       "key": "locale",

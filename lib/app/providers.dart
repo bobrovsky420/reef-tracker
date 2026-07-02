@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals, mapEquals;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -46,9 +47,18 @@ final dbProvider = Provider<AppDatabase>((ref) {
   return db;
 });
 
+/// Drift query streams re-emit a freshly built list on *any* write to a
+/// watched table — invalidation is table-level, so a write for another tank
+/// (or an unrelated column) re-emits an identical result. The list is a new
+/// object each time, and `AsyncData` compares its payload with `==` (identity
+/// for lists), so every re-emission would fan out as widget rebuilds. Rows are
+/// drift-generated value types, so dropping consecutive equal emissions here
+/// stops the fan-out at the source (T2).
+Stream<List<T>> _dedup<T>(Stream<List<T>> s) => s.distinct(listEquals);
+
 /// All tanks, reactive.
 final tanksProvider = StreamProvider<List<Tank>>(
-  (ref) => ref.watch(dbProvider).watchTanks(),
+  (ref) => _dedup(ref.watch(dbProvider).watchTanks()),
 );
 
 /// The id of the currently selected tank (persisted in settings).
@@ -80,8 +90,8 @@ final activeTankProvider = Provider<Tank?>((ref) {
 // instance loses its only listener and its live query is disposed.
 
 final _trackedParametersFamily = StreamProvider.autoDispose
-    .family<List<TrackedParameter>, int>(
-        (ref, tankId) => ref.watch(dbProvider).watchTrackedParameters(tankId));
+    .family<List<TrackedParameter>, int>((ref, tankId) =>
+        _dedup(ref.watch(dbProvider).watchTrackedParameters(tankId)));
 
 /// Tracked parameters for the active tank.
 final trackedParametersProvider =
@@ -92,8 +102,8 @@ final trackedParametersProvider =
 });
 
 final _tankReadingsFamily = StreamProvider.autoDispose
-    .family<List<Reading>, int>(
-        (ref, tankId) => ref.watch(dbProvider).watchReadingsForTank(tankId));
+    .family<List<Reading>, int>((ref, tankId) =>
+        _dedup(ref.watch(dbProvider).watchReadingsForTank(tankId)));
 
 /// All readings for the active tank (newest first).
 final tankReadingsProvider = Provider<AsyncValue<List<Reading>>>((ref) {
@@ -103,8 +113,8 @@ final tankReadingsProvider = Provider<AsyncValue<List<Reading>>>((ref) {
 });
 
 final _waterChangesFamily = StreamProvider.autoDispose
-    .family<List<WaterChange>, int>(
-        (ref, tankId) => ref.watch(dbProvider).watchWaterChanges(tankId));
+    .family<List<WaterChange>, int>((ref, tankId) =>
+        _dedup(ref.watch(dbProvider).watchWaterChanges(tankId)));
 
 /// Water changes for the active tank (newest first).
 final waterChangesProvider = Provider<AsyncValue<List<WaterChange>>>((ref) {
@@ -114,8 +124,8 @@ final waterChangesProvider = Provider<AsyncValue<List<WaterChange>>>((ref) {
 });
 
 final _carbonChangesFamily = StreamProvider.autoDispose
-    .family<List<CarbonChange>, int>(
-        (ref, tankId) => ref.watch(dbProvider).watchCarbonChanges(tankId));
+    .family<List<CarbonChange>, int>((ref, tankId) =>
+        _dedup(ref.watch(dbProvider).watchCarbonChanges(tankId)));
 
 /// Activated-carbon changes for the active tank (newest first).
 final carbonChangesProvider = Provider<AsyncValue<List<CarbonChange>>>((ref) {
@@ -125,8 +135,8 @@ final carbonChangesProvider = Provider<AsyncValue<List<CarbonChange>>>((ref) {
 });
 
 final _equipmentCleaningsFamily = StreamProvider.autoDispose
-    .family<List<EquipmentCleaning>, int>(
-        (ref, tankId) => ref.watch(dbProvider).watchEquipmentCleanings(tankId));
+    .family<List<EquipmentCleaning>, int>((ref, tankId) =>
+        _dedup(ref.watch(dbProvider).watchEquipmentCleanings(tankId)));
 
 /// Equipment cleanings for the active tank (newest first).
 final equipmentCleaningsProvider =
@@ -137,8 +147,8 @@ final equipmentCleaningsProvider =
 });
 
 final _dosingEntriesFamily = StreamProvider.autoDispose
-    .family<List<DosingEntry>, int>(
-        (ref, tankId) => ref.watch(dbProvider).watchDosingEntries(tankId));
+    .family<List<DosingEntry>, int>((ref, tankId) =>
+        _dedup(ref.watch(dbProvider).watchDosingEntries(tankId)));
 
 /// Supplement-dosing plan entries for the active tank (dashboard order).
 final dosingEntriesProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
@@ -148,8 +158,8 @@ final dosingEntriesProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
 });
 
 final _dosingHistoryFamily = StreamProvider.autoDispose
-    .family<List<DosingEntry>, int>(
-        (ref, tankId) => ref.watch(dbProvider).watchDosingHistory(tankId));
+    .family<List<DosingEntry>, int>((ref, tankId) =>
+        _dedup(ref.watch(dbProvider).watchDosingHistory(tankId)));
 
 /// Every dosing segment (active + ended) for the active tank, newest first —
 /// the source for the dosing history timeline.
@@ -160,8 +170,8 @@ final dosingHistoryProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
 });
 
 final _paramReadingsFamily = StreamProvider.autoDispose
-    .family<List<Reading>, ({int tankId, String paramKey})>((ref, key) =>
-        ref.watch(dbProvider).watchParamReadings(key.tankId, key.paramKey));
+    .family<List<Reading>, ({int tankId, String paramKey})>((ref, key) => _dedup(
+        ref.watch(dbProvider).watchParamReadings(key.tankId, key.paramKey)));
 
 /// Readings for a single parameter of the active tank (oldest first).
 final paramReadingsProvider =
@@ -286,6 +296,8 @@ final tankTrendsProvider = Provider<Map<String, TrendResult>>((ref) {
 /// Overall tank-health score for the active tank, derived from its tracked
 /// parameters and their latest readings. Memoized like [tankTrendsProvider]:
 /// the (cheap) scoring only re-runs when the parameters or readings change.
+/// [TankHealth] is value-equal, so a recompute that lands on the same health
+/// (e.g. a reading's note was edited) doesn't notify watchers (T2).
 final tankHealthProvider = Provider<TankHealth>((ref) {
   final tracked = ref.watch(trackedParametersProvider).value ?? const [];
   final readings = ref.watch(tankReadingsProvider).value ?? const [];
@@ -312,7 +324,10 @@ final _ratioSettingsFamily = StreamProvider.autoDispose
     .family<Map<String, RatioSettings>, int>((ref, tankId) => ref
         .watch(dbProvider)
         .watchRatioVisibilities(tankId)
-        .map((rows) => {for (final r in rows) r.ratioKey: r.settings}));
+        .map((rows) => {for (final r in rows) r.ratioKey: r.settings})
+        // Same dedup as the list families ([_dedup]); RatioSettings is a
+        // record, so map values are value-equal.
+        .distinct(mapEquals));
 
 /// Per-tank dashboard ratio-card settings (visibility + order) for the active
 /// tank, keyed by [RatioKind.name], as domain [RatioSettings] records. Missing

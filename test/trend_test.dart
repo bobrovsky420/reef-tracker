@@ -161,6 +161,23 @@ void main() {
     });
   });
 
+  group('value equality (T2)', () {
+    test('recomputing identical inputs yields an equal result', () {
+      final a = computeTrend(
+          points: series([8.0, 8.1, 8.2, 8.3, 8.4]), bounds: bounds, window: 5);
+      final b = computeTrend(
+          points: series([8.0, 8.1, 8.2, 8.3, 8.4]), bounds: bounds, window: 5);
+      expect(a, isNot(same(b)));
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+
+      // A genuinely different trend still compares unequal.
+      final c = computeTrend(
+          points: series([8.0, 8.1, 8.2, 8.3, 8.9]), bounds: bounds, window: 5);
+      expect(a, isNot(equals(c)));
+    });
+  });
+
   group('invalid bounds', () {
     test('bounds violating the ordering invariant yield no forecast', () {
       // Inverted greens (possible via restored backups) classify as unknown;

@@ -67,6 +67,62 @@ void main() {
     expect(container.read(tankReadingsProvider).value, isEmpty);
   });
 
+  test(
+      'a write for another tank does not re-notify the active tank\'s '
+      'providers (T2)', () async {
+    final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+    final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+    // Recent timestamps: the health score only counts readings fresher than
+    // kHealthFreshnessDays, and the settle below waits for hasData.
+    final now = DateTime.now();
+    await db.insertReading(
+        tankId: a,
+        paramKey: 'ph',
+        value: 8.1,
+        takenAt: now.subtract(const Duration(days: 2)));
+    await db.setActiveTank(a);
+
+    var readingsNotifies = 0;
+    var healthNotifies = 0;
+    final readingsSub = container.listen(
+        tankReadingsProvider, (_, _) => readingsNotifies++,
+        fireImmediately: true);
+    final healthSub = container.listen(
+        tankHealthProvider, (_, _) => healthNotifies++,
+        fireImmediately: true);
+    addTearDown(readingsSub.close);
+    addTearDown(healthSub.close);
+
+    // Settle on the derived provider too: its rebuild lands an event-loop
+    // turn after the readings notify, so sample the baselines only once the
+    // whole chain is quiet.
+    await pumpUntil(() =>
+        (container.read(tankReadingsProvider).value ?? const []).isNotEmpty &&
+        container.read(tankHealthProvider).hasData);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    final settledReadings = readingsNotifies;
+    final settledHealth = healthNotifies;
+
+    // Invalidates the readings table, but tank A's result set is unchanged —
+    // drift re-emits an identical list, which the dedup must swallow before
+    // it reaches any listener.
+    await db.insertReading(
+        tankId: b,
+        paramKey: 'ph',
+        value: 7.9,
+        takenAt: now.subtract(const Duration(days: 1)));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    expect(readingsNotifies, settledReadings,
+        reason: "another tank's write must not re-notify readings watchers");
+    expect(healthNotifies, settledHealth,
+        reason: "another tank's write must not re-notify health watchers");
+    // And a genuine write for tank A still comes through.
+    await db.insertReading(
+        tankId: a, paramKey: 'ph', value: 8.2, takenAt: now);
+    await pumpUntil(() => readingsNotifies > settledReadings);
+  });
+
   test('switching back to a tank reloads its data', () async {
     final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
     final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);

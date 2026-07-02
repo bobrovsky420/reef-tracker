@@ -36,7 +36,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         .cast<TrackedParameter?>()
         .firstWhere((t) => true, orElse: () => null);
     final readingsAsync = ref.watch(paramReadingsProvider(widget.paramKey));
-    final trend = ref.watch(tankTrendsProvider)[widget.paramKey];
+    // select + TrendResult's value equality: another parameter's trend
+    // changing doesn't rebuild this screen (T2).
+    final trend = ref
+        .watch(tankTrendsProvider.select((trends) => trends[widget.paramKey]));
     final waterChanges = ref.watch(waterChangesProvider).value ?? const [];
     final prefs = ref.watch(unitPrefsProvider);
     final pres = param != null

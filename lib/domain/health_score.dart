@@ -82,6 +82,21 @@ class ParameterHealth {
   final bool includedInScore;
 
   bool get hasReading => value != null;
+
+  /// Value equality (see [TankHealth.==]).
+  @override
+  bool operator ==(Object other) =>
+      other is ParameterHealth &&
+      other.paramKey == paramKey &&
+      other.zone == zone &&
+      other.value == value &&
+      other.takenAt == takenAt &&
+      other.stale == stale &&
+      other.includedInScore == includedInScore;
+
+  @override
+  int get hashCode =>
+      Object.hash(paramKey, zone, value, takenAt, stale, includedInScore);
 }
 
 /// The overall health of a tank: an optional 0–100 [score], the worst-case
@@ -124,6 +139,27 @@ class TankHealth {
   /// usable bounds. Surfaced so the score isn't silently treating them as fine.
   List<ParameterHealth> get notScored =>
       parameters.where((p) => !p.includedInScore).toList();
+
+  /// Value equality, so recomputing an unchanged health doesn't read as a new
+  /// one — the health provider can skip notifying its watchers (T2).
+  @override
+  bool operator ==(Object other) {
+    if (other is! TankHealth ||
+        other.score != score ||
+        other.band != band ||
+        other.grade != grade ||
+        other.parameters.length != parameters.length) {
+      return false;
+    }
+    for (var i = 0; i < parameters.length; i++) {
+      if (other.parameters[i] != parameters[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(score, band, grade, Object.hashAll(parameters));
 }
 
 /// Computes the overall [TankHealth] from per-parameter [inputs].

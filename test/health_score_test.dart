@@ -236,6 +236,24 @@ void main() {
     });
   });
 
+  test('value equality: identical recomputes are equal (T2)', () {
+    final inputs = [
+      input('alkalinity', alkBounds, value: 8.5),
+      input('salinity', const ZoneBounds(greenLow: 33, greenHigh: 35),
+          value: 34),
+    ];
+    final a = computeTankHealth(inputs, now: now);
+    final b = computeTankHealth(inputs, now: now);
+    expect(a, isNot(same(b)));
+    expect(a, b);
+    expect(a.hashCode, b.hashCode);
+
+    // A genuinely different health still compares unequal.
+    final c = computeTankHealth(
+        [input('alkalinity', alkBounds, value: 9.5)], now: now);
+    expect(a, isNot(equals(c)));
+  });
+
   test('importance weighting lets a heavy param dominate a light one', () {
     // salinity (weight 3) sits centred green (100); a default-weight (1)
     // parameter sits at an amber edge. With the amber ceiling removed by using
