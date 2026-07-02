@@ -28,6 +28,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final l = AppLocalizations.of(context);
     final range = chartRangeFromLabel(ref.watch(chartRangeProvider).value);
     final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+    // "firstWhereOrNull" without package:collection — the param may have been
+    // untracked/deleted while this screen is open; null falls back to the
+    // catalog-based presentation below instead of crashing.
     final TrackedParameter? param = tracked
         .where((t) => t.paramKey == widget.paramKey)
         .cast<TrackedParameter?>()

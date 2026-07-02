@@ -27,6 +27,14 @@ and no account.
 | i18n / formatting  | Flutter `gen-l10n` (ARB files) + `intl` |
 | Backup I/O         | `share_plus` (export via OS share sheet) + `file_picker` (import) |
 | App metadata       | `package_info_plus` (real version/build for the About box) |
+| Feature tour       | `showcaseview` (first-run spotlight tour of the top bar) |
+
+> ⚠️ **Pinned plugins.** `share_plus` (10.1.4) and `file_picker` (11.0.0) are
+> pinned to exact known-good versions, and `package_info_plus` is held below 10:
+> newer releases fail the **release** build against this project's Android
+> toolchain (Kotlin 2.3 / AGP 9 / Gradle 9.1) or pull conflicting `win32`
+> constraints. Do not bump any of them individually — see the comment in
+> `pubspec.yaml`; they must move together once verified.
 
 ## Architecture overview
 
@@ -56,9 +64,11 @@ converted only for display/input.**
 - Temperature stored in **°C**, salinity in **SG**, volume in **litres**.
 - The user's unit preferences (°C/°F, ppt/SG, L/gal) live in the `Settings`
   key/value table and are surfaced via `unitPrefsProvider`.
-- `domain/units.dart` owns all conversions and `ParamPresentation`
-  (`presentationForKey` / `presentationOf` in `database.dart`) which knows how to
-  format/parse a parameter's value for the current prefs.
+- `domain/units.dart` owns all conversions **and** `ParamPresentation` itself
+  (plus its `presentationFor` / `presentationForKey` factories) — the object
+  that knows how to format/parse a parameter's value for the current prefs.
+  `database.dart` adds only the thin `presentationOf(trackedParam, prefs)`
+  bridge from a DB row to `presentationForKey`.
 - **Zone classification always compares canonical values against canonical
   bounds**, so changing display units never changes health colors.
 
@@ -71,17 +81,17 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 | File | Responsibility |
 |------|----------------|
-| `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. |
-| `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). |
+| `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. `classify` deliberately tests **red before green**, so a beyond-amber value can't short-circuit to "green" through an open (null) green side. |
+| `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). Rounding (not truncating) avoids under-counting: a reading 18 h into its 7th day reads as 7 days, not 6 — which matters right at the 30-day health-freshness cutoff. |
 | `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse). |
 | `parameter_catalog.dart` | `kReefParameters` — the master list (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP, K, Sr, I, Fe) with default units, plus `kParameterByKey` lookup and `formatParamValue`. |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. |
-| `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.slopePerDay`, `TrendDirection`, and projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward). Uses the most recent `window` readings and returns null until that many exist. Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). See Features. |
-| `health_score.dart` | Pure, testable tank-health scoring (no Flutter/DB). `computeTankHealth(inputs)` → `TankHealth` (optional 0–100 `score`, worst-case `Zone` `band`, coarse `HealthGrade`, and per-parameter `ParameterHealth` breakdown). Each fresh, bounded parameter gets a 0–100 sub-score from its position in/beyond its bands (green 70–100, amber 40–69, red 0–39); the aggregate is the importance-weighted mean then **capped to the worst zone's ceiling** so one red can't be hidden behind greens. Readings older than `kHealthFreshnessDays`=30 are excluded and surfaced separately. See Features. |
-| `dose_calculator.dart` | Pure, testable math for the dose calculator (no Flutter/DB): `slopePerDay` (least-squares change/day over readings), `potencyFromReference` (vendor reference dose → potency per unit per litre), `dailyEquivalentDose` (a `DosingEntry`'s average daily amount from basis + schedule), and `computeDoseCalc` → `DoseCalcResult` (consumption/day + maintenance-dose recommendation + `DoseCalcStatus`). Water changes ignored. See Features. |
-| `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker. **The data (`kSupplementVendors`) is generated** — see below. |
+| `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.slopePerDay`, `TrendDirection`, and projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward). Uses the most recent `window` readings and returns null until that many exist. Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). Slopes with magnitude < 1e-9 (`_flatEpsilon`) classify as flat (no forecast), and a bound projection is dropped when the bound lies opposite the direction of travel ("the bound is behind us"). See Features. |
+| `health_score.dart` | Pure, testable tank-health scoring (no Flutter/DB). `computeTankHealth(inputs)` → `TankHealth` (optional 0–100 `score`, worst-case `Zone` `band`, coarse `HealthGrade`, and per-parameter `ParameterHealth` breakdown). Each fresh, bounded parameter gets a 0–100 sub-score from its position in/beyond its bands (green 70–100, amber 40–69, red 0–39), interpolated linearly within the band: centred in green = 100, at a green bound = 70; amber runs 69→40 from the green toward the amber bound; red falls 39→0 with distance measured in *amber-band widths* past the amber bound (so a wide amber band forgives overshoot proportionally); one-sided/unmeasurable cases use flat 90 / 55 / 20. The aggregate is the importance-weighted mean — **weights:** 3 = temp, salinity, alk, NH₃/₄, NO₂ · 2.5 = pH · 2 = Ca, Mg, NO₃, PO₄ · 1 = everything else — then **capped to the worst zone's ceiling** (any red ⇒ ≤ 39, else any amber ⇒ ≤ 69) so one red can't be hidden behind greens. **Grade thresholds:** excellent ≥ 85, good ≥ 70, caution ≥ 40, critical < 40. Readings older than `kHealthFreshnessDays`=30 are excluded and surfaced separately. See Features. |
+| `dose_calculator.dart` | Pure, testable math for the dose calculator (no Flutter/DB): `slopePerDay` (least-squares change/day over readings), `potencyFromReference` (vendor reference dose → potency per unit per litre), `dailyEquivalentDose` (a `DosingEntry`'s average daily amount from basis + schedule), and `computeDoseCalc` → `DoseCalcResult` (consumption/day + maintenance-dose recommendation + `DoseCalcStatus`). Sign convention: `consumption = dosingInput − slope`, so a falling element (negative slope) means consumption exceeds the dose; `consumption ≤ 0` reports `overdosing`, and \|suggested − current\| ≤ 0.5 ml/g (`stableThreshold`) reports `stable` to avoid churn over trivial adjustments. Water changes ignored. See Features. |
+| `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Product `key`s are **never reused or repurposed** — stored entries (and the future dose log) resolve display names and potency through them. `strength` is recorded **only when verified against the vendor's own dosing chart**; an unverified potency would silently corrupt consumption estimates (e.g. Triton Core7 carries none because the vendor publishes no concentrations). Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker. **The data (`kSupplementVendors`) is generated** — see below. |
 | `supplements.yaml` + `supplement_catalog.g.dart` | `supplements.yaml` (commented, hand-edited) is the **source of truth** for the catalog data; `dart run tool/gen_supplements.dart` validates it (unique product keys; every `element`/`strength` key is a real param key; `unit` ∈ ml/g) and generates the `part` file `supplement_catalog.g.dart` (`const kSupplementVendors`). Edit the YAML, never the `.g.dart`. `test/supplement_catalog_test.dart` re-checks the same invariants on the generated catalog. |
 
 ## Data layer (`lib/data/`)
@@ -112,7 +122,8 @@ and orders by a timestamp: `Readings(tankId, paramKey, takenAt)` and
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
 `volume_unit`, `locale`, `chart_range`, `auto_backup_enabled`,
 `auto_backup_interval`, `auto_backup_keep`, `last_auto_backup_at`,
-`trend_enabled`, `trend_window`, `trend_horizon`.
+`trend_enabled`, `trend_window`, `trend_horizon`, `health_display` (tank-health
+surfacing: both/badge/off), `tour_v1_seen` (first-run feature-tour flag).
 
 All settings access goes through the typed **`AppSettings` facade**
 (`data/settings.dart`, exposed as `settingsProvider`) — the single source of
@@ -157,6 +168,19 @@ Notable DB behavior:
 - `readingsAt` / `deleteReadingsAt` / `updateReadingsTimeAt` operate on a group
   of readings entered together (same timestamp) — used by group edit/delete and
   by re-timing a whole batch.
+- **Dosing segment operations:** `insertDosingEntry` assigns
+  `displayOrder = max(existing) + 1` — *not* the row count, which collides with
+  an existing order after a middle row is deleted — and stamps
+  `startedAt = now` / `state = active` when absent. `supersedeDosingEntry` ends
+  the old segment and inserts the new active one **in one transaction**, reusing
+  the old `displayOrder` so the row keeps its list position. `stopDosingEntry`
+  is a soft end (`state = ended`, row retained as history);
+  `deleteDosingEntry` is the only hard delete. `watchDosingHistory` orders by
+  `coalesce(startedAt, createdAt)` desc so pre-v11 rows still sort correctly.
+- **Transaction boundaries:** every multi-step write is atomic —
+  `createTankWithPreset` (insert + seed + activate), `deleteTank` (delete +
+  active-tank fallback), `supersedeDosingEntry`, `applyDashboardOrder` (params
+  batch + ratio insert-or-update), and `restoreFromBackup`.
 
 ### Backup (`backup.dart`)
 
@@ -170,6 +194,9 @@ so a failure throws an `InvalidBackupException` naming the offending section
 rather than one catch-all "corrupted". Field-level decoding is likewise
 forward-tolerant: a pre-v11 `dosingEntries` row without `startedAt`/`endedAt`/
 `state` decodes with `startedAt = createdAt`, `endedAt = null`, `state = active`.
+Where a missing optional column has a table default, the decoder emits Drift's
+`Value.absent()` so the **default** applies rather than NULL (e.g. an old ratio
+row without `displayOrder` gets the table default 1000 = ordered last).
 
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet; `pickBackupData` uses the file picker. `restoreFromBackup`
@@ -214,6 +241,12 @@ Two layers, **no new dependencies and no runtime permissions**:
    `last_auto_backup_at`, so the visible "last backup" status (surfaced via
    `lastBackupAtProvider`) updates at once. The schedule and the manual button
    share `_stampLastBackup` as the single source of truth for that timestamp.
+   `runAutoBackupIfDue` is **single-flight** (a module-level `_autoBackupInFlight`
+   future): the launch post-frame callback and a `resumed` lifecycle event can
+   fire near-simultaneously, and without the guard both would pass the is-due
+   check and write the same one-second-stamped file. Note the role split:
+   `writeAutoBackup` is schedule-agnostic and does **not** stamp the timestamp —
+   only `runAutoBackupIfDue` and `backupNow` do.
 2. **Android Auto Backup.** `android:allowBackup="true"` plus empty
    `res/xml/backup_rules.xml` / `data_extraction_rules.xml` (default = back up
    all app data) mean the SQLite DB *and* the `backups/` folder are synced to the
@@ -225,7 +258,15 @@ Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 
 ## State layer (`lib/app/providers.dart`)
 
-All app state is Riverpod providers over the singleton `dbProvider`:
+All app state is Riverpod providers over the singleton `dbProvider`. Two
+provider shapes are used deliberately: **every DB read is a `StreamProvider`**
+wrapping a Drift watch stream (the UI reacts to any DB change with no manual
+invalidation), while **derived values are plain memoized `Provider`s**
+(`unitPrefsProvider`, `localeProvider`, `tankTrendsProvider`,
+`tankHealthProvider`) that Riverpod re-runs only when a watched input changes —
+never on a mere widget rebuild. Nothing uses `autoDispose`: state is small and
+single-user, so providers simply live for the app's lifetime (pairing with the
+home shell's `IndexedStack`, which keeps tab widget state alive too). The graph:
 
 - `tanksProvider` (all tanks), `activeTankIdProvider` (persisted), `activeTankProvider`
   (resolves id → tank, falls back to first tank).
@@ -235,7 +276,10 @@ All app state is Riverpod providers over the singleton `dbProvider`:
   (all newest-first), `dosingEntriesProvider` (dashboard order).
 - Unit prefs: `tempUnitProvider`, `salinityUnitProvider`, `volumeUnitProvider`,
   combined `unitPrefsProvider`.
-- `localeCodeProvider` / `localeProvider` (null = follow system).
+- `localeCodeProvider` (raw stored code; reads as `'system'` while the stream is
+  still loading) → `localeProvider` (`Locale?`, null = follow system) — a
+  two-stage mapping so MaterialApp's `locale:` stays null unless the user has
+  explicitly picked a language.
 - `chartRangeProvider` — shared time range (`7d`/`30d`/`90d`/`All`, default `30d`)
   applied to *all* graphs.
 - `trendEnabledProvider` (default on) / `trendWindowProvider` (default
@@ -253,6 +297,32 @@ All app state is Riverpod providers over the singleton `dbProvider`:
 - `healthDisplayProvider` — `HealthDisplay` (both / badge / off, default both):
   how much of the tank-health feature to surface. `showCard` gates the dashboard
   card, `showBadge` gates the compact app-bar badge.
+- `settingsProvider` — the typed `AppSettings` facade instance (see Data layer);
+  all settings reads/writes flow through it.
+- `tourSeenProvider` — reactive `tour_v1_seen` flag; drives the first-run tour
+  and Settings → "Replay tour".
+- `dosingHistoryProvider` — all dose segments (active + ended, newest first)
+  for the history timeline. `ratioSettingsProvider` — per-tank
+  `Map<RatioKind.name, RatioVisibility>` for ratio-card visibility/order/bounds.
+- `autoBackupEnabledProvider` / `autoBackupIntervalProvider` /
+  `lastBackupAtProvider` — see Data → Automatic backup.
+- `appVersionProvider` — `FutureProvider` over `package_info_plus`; feeds the
+  About box so the version is never hardcoded.
+
+## App entry & lifecycle (`lib/main.dart`)
+
+`main.dart` is a `ProviderScope` around `MaterialApp.router`, plus two pieces of
+lifecycle wiring that are easy to miss:
+
+- **Auto-backup triggers.** The root widget is a `WidgetsBindingObserver`;
+  `runAutoBackupIfDue(db)` fires once after the first frame and again on every
+  `AppLifecycleState.resumed`. Both calls are fire-and-forget with errors
+  swallowed — a failed backup must never block or crash the UI (the schedule
+  simply retries on the next launch/resume).
+- **`Intl.defaultLocale` is set inside MaterialApp's `builder`**, not in
+  `initState`: the builder runs after Flutter has resolved the effective locale
+  (and re-runs when it changes), so `DateFormat` immediately renders dates in a
+  newly selected language without an app restart.
 
 ## Routing (`lib/app/router.dart`)
 
@@ -309,6 +379,20 @@ meanwhile. **Settings → "Replay tour"** resets the flag to
 `'false'` and returns to `/`; `tourSeenProvider` is reactive, so the shell
 re-runs the tour. Every action icon also carries a localized `tooltip`
 (long-press / accessibility).
+
+### Deletion & undo conventions (cross-cutting)
+
+Destructive affordances follow one rule of thumb — **frequent, low-stakes
+deletes act immediately and offer an Undo SnackBar; rare or irreversible ones go
+behind a confirmation dialog**:
+
+- Readings and action-log rows (water/carbon/cleaning): swipe deletes at once
+  and the SnackBar's Undo re-inserts the exact row (grouped readings first ask
+  the one-vs-all question).
+- Stopping a supplement (Dosing-tab swipe) is a *soft end* behind a light
+  confirm — the segment is retained as history, so it is recoverable by design.
+- Hard deletes (a dosing-history record, a tank, restoring a backup over live
+  data) are irreversible and always confirm first — never undo-after-the-fact.
 
 ### Dashboard (`dashboard_screen.dart`) — Measurements tab
 
@@ -368,7 +452,8 @@ rendering is defensive: the green band falls back to the matching amber bound
 and any band that would come out with `y1 >= y2` (inverted/empty) is skipped, so
 inconsistent or legacy bounds never produce overlapping/misleading regions. When
 given explicit `minX`/`maxX` it pins to that window (comparison alignment);
-otherwise it derives the window from the data (a single reading is centered).
+otherwise it derives the window from the data (a single reading is centered in
+a 12-hour window rather than pinned to a chart edge).
 `showBottomTitles` controls whether the date axis is drawn.
 
 ### History graph (`history/history_screen.dart`)
@@ -419,6 +504,8 @@ the last three shown as a single number = numerator/denominator to one decimal.
 - `computeRatioSeries(numerator, denominator)` builds a time series: at each
   timestamp where either parameter was measured, the most recent value of the
   *other* is carried forward, so a point exists whenever both have ≥1 reading.
+  Points whose denominator is 0 at that instant are skipped (no
+  division-by-zero / NaN on the chart).
 - `formatRatioValue(kind, ratio)` renders per the kind's `RatioDisplay`;
   `ratioChartY(kind, ratio)` maps a ratio to its plotted Y (PO₄ : NO₃ plots the
   inverse N). `ratioBreakdown` shows the raw inputs. `formatRatio`/`formatRatioN`
@@ -628,12 +715,21 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   `dart run tool/gen_supplements.dart` (validates + writes
   `supplement_catalog.g.dart`).
 - Localization codegen: `flutter gen-l10n`.
-- Tests (`flutter test`): `test/zones_test.dart`, `test/presets_test.dart`,
-  `test/units_test.dart`, `test/ratio_test.dart`, `test/backup_test.dart`,
+- Tests (`flutter test`): domain — `test/zones_test.dart`,
+  `test/presets_test.dart`, `test/units_test.dart`, `test/ratio_test.dart`,
+  `test/parameter_catalog_test.dart`, `test/setup_type_test.dart`,
   `test/supplement_catalog_test.dart`, `test/dose_calculator_test.dart`,
   `test/trend_test.dart`, `test/health_score_test.dart` (tank-health banding,
-  weighting, staleness), `test/zone_bands_test.dart` (chart band geometry), and
-  the widget tests (e.g. `test/zone_chip_test.dart`).
+  weighting, staleness), `test/zone_bands_test.dart` (chart band geometry);
+  data — `test/database_test.dart`, `test/migration_test.dart` (multi-version
+  upgrade idempotency), `test/backup_test.dart`, `test/auto_backup_test.dart`,
+  `test/settings_test.dart`, `test/dosing_history_test.dart`; plus the widget
+  tests (e.g. `test/zone_chip_test.dart`).
+- `test/tool/seed_sample_data.dart` is a *tool in test clothing*: running
+  `flutter test test/tool/seed_sample_data.dart` generates a seeded
+  `reeftracker.sqlite` at the current schema, for pushing into an emulator's
+  `app_flutter/` via `adb run-as` — the fastest way to demo or regress against
+  realistic data.
 - **Testing convention:** chart/health/zone logic lives in pure, Flutter-free
   functions (`domain/health_score.dart`, `zoneBands` in `domain/zones.dart`) so
   it can be unit-tested without a widget; the thin widgets (`trend_chart.dart`)
@@ -641,12 +737,33 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   `test/support/pump.dart` helper (ProviderScope + MaterialApp + l10n delegates);
   DB-touching tests use `NativeDatabase.memory()` with a faked `path_provider`.
 - **CI (`.github/workflows/ci.yml`):** every push/PR to `master` runs
-  `flutter analyze` + `flutter test` on `ubuntu-latest`. It does **not** build
-  the Android app (that needs the pinned plugin/toolchain and is CI-fragile).
-  Generated sources (`database.g.dart`, `app_localizations*.dart`) are committed,
-  so CI runs no codegen — regenerate and commit them when the schema or an ARB
-  file changes. `flutter analyze` must stay clean (it fails on any issue,
-  including info-level lints).
+  `flutter analyze` + `flutter test` on `ubuntu-latest` (Flutter pinned to
+  3.44.3). It does **not** build the Android app (that needs the pinned
+  plugin/toolchain and is CI-fragile). Generated sources (`database.g.dart`,
+  `app_localizations*.dart`) are committed, so CI runs no codegen — regenerate
+  and commit them when the schema or an ARB file changes. `flutter analyze` runs
+  **without** `--fatal-infos` (some test files carry pre-existing info-level
+  lints) and fails on warnings/errors — keep that baseline clean.
+
+### OneDrive & the build scripts (`scripts/`)
+
+The repo lives inside OneDrive, which locks Flutter's churning build files. The
+volatile directories (`build`, `.dart_tool`, `android/.gradle`,
+`android/.kotlin`) are therefore **NTFS junctions** pointing outside OneDrive
+(default target `C:\Android\reefbuild\ReefTracker\`; override with the
+`REEFBUILD_ROOT` env var).
+
+- **Never run `flutter clean` here** — it deletes the junctions, and the next
+  build recreates them as real in-OneDrive folders: the file locks return and
+  release artifacts land in the stale in-OneDrive location. Use
+  `scripts\safe-clean.ps1` instead (empties the caches, keeps the junctions).
+- `scripts\build-release.ps1` — heals the junctions first, then builds and
+  verifies the signed release AAB (reported at its real out-of-OneDrive path).
+- `scripts\heal-junctions.ps1` — repairs clobbered junctions after an
+  accidental `flutter clean`.
+
+See [scripts/README.md](scripts/README.md) for the full junction table and
+details.
 
 ## Maintaining this document
 
@@ -656,3 +773,10 @@ migrations, new screens or routes, new domain rules, new features, or shifts in
 the layering/state model — update the relevant section here in the same change.
 Skip updates for purely cosmetic or trivial edits that don't change the design
 (wording tweaks, styling, refactors with no behavioral/structural effect).
+
+Related documents: [TODO.md](TODO.md) is the audited, severity-rated backlog of
+known bugs and improvements — `#N` references in code comments point at entries
+there (it cross-references the older numbering some comments still use).
+[CHANGELOG.md](CHANGELOG.md) records user-facing changes (update rules in
+`CLAUDE.md`); [scripts/README.md](scripts/README.md) documents the OneDrive
+build-junction workflow.

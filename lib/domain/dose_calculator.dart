@@ -189,6 +189,9 @@ DoseCalcResult computeDoseCalc({
     );
   }
 
+  // Sign convention: a falling element (slope < 0) means the tank consumes
+  // more than the dose adds, so consumption = input − slope grows; a rising
+  // element makes it shrink (and go negative when input exceeds consumption).
   final consumptionPerDay = dosingInputPerDay - slopePerDay;
 
   // Without a potency we can still report consumption (no dosing case) but
