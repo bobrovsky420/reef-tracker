@@ -350,6 +350,41 @@ void main() {
       expect(d1.state.value, DosingState.active.name);
     });
 
+    test('rejects a broken row inside a section as corrupted, naming it', () {
+      // A recognizable backup whose readings section holds an incomplete row.
+      const json = '{"format":"reeftracker-backup","version":1,'
+          '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
+          '"readings":[{"id":1}],"settings":[]}';
+      expect(
+          () => decodeBackup(json),
+          throwsA(isA<InvalidBackupException>()
+              .having((e) => e.reason, 'reason', BackupRejection.corrupted)
+              .having((e) => e.detail, 'detail', contains('readings'))));
+    });
+
+    test('rejects a section that is not a list as corrupted', () {
+      const json = '{"format":"reeftracker-backup","version":1,'
+          '"schemaVersion":1,"tanks":{},"trackedParameters":[],'
+          '"readings":[],"settings":[]}';
+      expect(
+          () => decodeBackup(json),
+          throwsA(isA<InvalidBackupException>()
+              .having((e) => e.reason, 'reason', BackupRejection.corrupted)));
+    });
+
+    test('rejects a missing required section as corrupted', () {
+      // No "tanks" key at all — unlike the optional later-version sections,
+      // the core sections must be present.
+      const json = '{"format":"reeftracker-backup","version":1,'
+          '"schemaVersion":1,"trackedParameters":[],'
+          '"readings":[],"settings":[]}';
+      expect(
+          () => decodeBackup(json),
+          throwsA(isA<InvalidBackupException>()
+              .having((e) => e.reason, 'reason', BackupRejection.corrupted)
+              .having((e) => e.detail, 'detail', contains('tanks'))));
+    });
+
     test('rejects files that are not ReefTracker backups', () {
       expect(() => decodeBackup('not json'),
           throwsA(isA<InvalidBackupException>()));
@@ -596,6 +631,133 @@ void main() {
       } catch (_) {}
 
       expect(exportFilesIn(tempDir), isEmpty);
+    });
+
+    /// Minimal companion builders for hand-assembled [BackupData] sets.
+    TanksCompanion tankRow(int id) => TanksCompanion(
+          id: Value(id),
+          name: Value('Tank $id'),
+          setupType: const Value('mixed'),
+          createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+        );
+
+    ReadingsCompanion readingRow(int id, int tankId) => ReadingsCompanion(
+          id: Value(id),
+          tankId: Value(tankId),
+          paramKey: const Value('alkalinity'),
+          value: const Value(8.2),
+          takenAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+        );
+
+    BackupData bareData({
+      List<TanksCompanion> tanks = const [],
+      List<ReadingsCompanion> readings = const [],
+      List<DosingEntriesCompanion> dosingEntries = const [],
+    }) =>
+        BackupData(
+          schemaVersion: 1,
+          tanks: tanks,
+          params: const [],
+          readings: readings,
+          waterChanges: const [],
+          carbonChanges: const [],
+          equipmentCleanings: const [],
+          ratioVisibilities: const [],
+          dosingEntries: dosingEntries,
+          settings: const [],
+        );
+
+    test('duplicate non-tank primary keys are rejected by the rehearsal',
+        () async {
+      // validateBackup only checks tank-id uniqueness; duplicate child PKs are
+      // caught by the real SQLite engine during the rehearsal restore and
+      // surfaced as `inconsistent`.
+      final data = bareData(
+          tanks: [tankRow(1)],
+          readings: [readingRow(10, 1), readingRow(10, 1)]);
+      final dst = newDb();
+      addTearDown(dst.close);
+      await expectLater(
+          importBackup(dst, data),
+          throwsA(isA<InvalidBackupException>().having(
+              (e) => e.reason, 'reason', BackupRejection.inconsistent)));
+    });
+
+    test('a failed import leaves the live database untouched', () async {
+      final dst = newDb();
+      addTearDown(dst.close);
+      await seed(dst);
+      final tankBefore = (await dst.getAllTanks()).single;
+      final readingsBefore = (await dst.getAllReadings()).length;
+
+      // Passes the in-memory validation (unique tank ids, FKs resolve) but
+      // fails in the rehearsal: duplicate reading primary keys.
+      final bad = bareData(
+          tanks: [tankRow(1)],
+          readings: [readingRow(10, 1), readingRow(10, 1)]);
+      await expectLater(
+          importBackup(dst, bad), throwsA(isA<InvalidBackupException>()));
+
+      // The rehearsal caught it before any live table was touched.
+      final tankAfter = (await dst.getAllTanks()).single;
+      expect(tankAfter.id, tankBefore.id);
+      expect(tankAfter.name, tankBefore.name);
+      expect((await dst.getAllReadings()).length, readingsBefore);
+      expect((await dst.getAllWaterChanges()).length, 1);
+      expect((await dst.getAllRatioVisibilities()).length, 1);
+    });
+
+    test('currently accepts extreme and negative row ids (#33 open)',
+        () async {
+      // Documents open TODO #33: an id of 2^63−1 exhausts SQLite AUTOINCREMENT
+      // (no reading can ever be inserted again) and negative ids are accepted
+      // too — validateBackup should reject both as `inconsistent`. Today the
+      // import succeeds; flip these expectations when #33 is fixed.
+      const maxId = 0x7FFFFFFFFFFFFFFF; // 2^63 − 1
+      final data = bareData(
+          tanks: [tankRow(1)],
+          readings: [readingRow(-5, 1), readingRow(maxId, 1)]);
+      final dst = newDb();
+      addTearDown(dst.close);
+      await importBackup(dst, data);
+      expect((await dst.getAllReadings()).map((r) => r.id),
+          unorderedEquals([-5, maxId]));
+    });
+
+    test('currently restores unrecognized enum-ish strings verbatim (#34 open)',
+        () async {
+      // Documents open TODO #34: setupType/state/frequency are not
+      // whitelisted, so garbage strings restore cleanly — and a bogus dosing
+      // `state` yields a row that matches neither the active-plan filter nor
+      // any lifecycle the UI can manage. Flip when #34 is fixed.
+      final data = bareData(
+        tanks: [
+          TanksCompanion(
+            id: const Value(1),
+            name: const Value('T'),
+            setupType: const Value('not-a-setup-type'),
+            createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+          ),
+        ],
+        dosingEntries: [
+          DosingEntriesCompanion(
+            id: const Value(50),
+            tankId: const Value(1),
+            product: const Value('Mystery'),
+            frequency: const Value('sometimes'),
+            state: const Value('bogus'),
+            createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+            startedAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+          ),
+        ],
+      );
+      final dst = newDb();
+      addTearDown(dst.close);
+      await importBackup(dst, data);
+      expect((await dst.getAllTanks()).single.setupType, 'not-a-setup-type');
+      final entry = (await dst.getAllDosingEntries()).single;
+      expect(entry.state, 'bogus');
+      expect(entry.frequency, 'sometimes');
     });
 
     test('rejects a backup whose child rows reference a missing tank',

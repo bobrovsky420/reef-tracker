@@ -204,7 +204,7 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
-    if (picked != null) setState(() => _startDate = picked);
+    if (picked != null && mounted) setState(() => _startDate = picked);
   }
 
   Future<void> _save() async {

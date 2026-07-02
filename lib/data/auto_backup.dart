@@ -75,7 +75,22 @@ Future<File> writeAutoBackup(
   final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
   final dir = await autoBackupDir();
   final file = File(p.join(dir.path, '$kAutoBackupPrefix$stamp.json'));
-  await file.writeAsString(json);
+  // Write to a tmp name and rename (atomic on the same filesystem) so a
+  // disk-full or mid-write kill can never leave a truncated `.json` in the
+  // rotation — the `.tmp` suffix is invisible to [listAutoBackups] and
+  // therefore to [pruneAutoBackups].
+  final tmp = File('${file.path}.tmp');
+  try {
+    await tmp.writeAsString(json, flush: true);
+    await tmp.rename(file.path);
+  } catch (_) {
+    try {
+      if (await tmp.exists()) await tmp.delete();
+    } catch (_) {
+      // Best-effort cleanup; the original error is what matters.
+    }
+    rethrow;
+  }
   await pruneAutoBackups(keep);
   return file;
 }

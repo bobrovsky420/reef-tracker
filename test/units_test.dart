@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:reeftracker/domain/units.dart';
 
 void main() {
@@ -23,6 +24,65 @@ void main() {
       expect(parseUserDouble('Infinity'), isNull);
       expect(parseUserDouble('-Infinity'), isNull);
       expect(parseUserDouble('NaN'), isNull);
+    });
+
+    test('en locale: comma in strict thousands positions is grouping (#6)',
+        () {
+      // Default test locale is en (dot-decimal): "1,300" is en-style
+      // thousands grouping, "1.300" is a decimal.
+      expect(parseUserDouble('1,300'), 1300);
+      expect(parseUserDouble('1,300,000'), 1300000);
+      expect(parseUserDouble('1,025'), 1025);
+      expect(parseUserDouble('1.300'), 1.3);
+      expect(parseUserDouble('1.025'), 1.025);
+    });
+
+    test('en locale: a lone comma that cannot be grouping is a decimal', () {
+      // Comma-only keyboards must still be able to type decimals.
+      expect(parseUserDouble('2,5'), 2.5);
+      expect(parseUserDouble('1,30'), 1.3);
+    });
+
+    test('mixed or malformed separators are rejected', () {
+      expect(parseUserDouble('1.234,5'), isNull);
+      expect(parseUserDouble('1,234.5'), isNull);
+      expect(parseUserDouble('1,2,3'), isNull);
+      expect(parseUserDouble('1.2.3'), isNull);
+    });
+
+    group('comma-decimal locale (cs)', () {
+      setUp(() => Intl.defaultLocale = 'cs');
+      tearDown(() => Intl.defaultLocale = null);
+
+      test('comma is always the decimal point', () {
+        // The salinity case: "1,025" SG must parse as a decimal, not be
+        // rejected as ambiguous grouping.
+        expect(parseUserDouble('1,025'), 1.025);
+        expect(parseUserDouble('1,300'), 1.3);
+        expect(parseUserDouble('8,2'), 8.2);
+      });
+
+      test('dot- and space-grouped thousands are grouping', () {
+        expect(parseUserDouble('1.300'), 1300);
+        expect(parseUserDouble('1 300'), 1300);
+        expect(parseUserDouble('1 300,5'), 1300.5);
+        expect(parseUserDouble('1 300 000'), 1300000);
+      });
+
+      test('a lone dot that cannot be grouping is a decimal', () {
+        expect(parseUserDouble('1.5'), 1.5);
+      });
+    });
+
+    group('comma-decimal locale with dot grouping (de)', () {
+      setUp(() => Intl.defaultLocale = 'de');
+      tearDown(() => Intl.defaultLocale = null);
+
+      test('de conventions parse both directions', () {
+        expect(parseUserDouble('1,3'), 1.3);
+        expect(parseUserDouble('1.300'), 1300);
+        expect(parseUserDouble('1,025'), 1.025);
+      });
     });
   });
 
@@ -131,6 +191,34 @@ void main() {
       final s = p.formatChange(1.0254, 1.0250);
       expect(s, '0.000');
       expect(s.startsWith('+'), isFalse);
+    });
+
+    test('converts the delta into the display unit (°F)', () {
+      final f = presentationFor('temperature', '°C', 1,
+          const UnitPrefs(temp: TempUnit.fahrenheit));
+      // ±1 °C reads as ±1.8 °F.
+      expect(f.formatChange(26, 25), '+1.8');
+      expect(f.formatChange(25, 26), '-1.8');
+    });
+
+    test('a change invisible in °C can still be visible in °F', () {
+      final c = presentationFor('temperature', '°C', 1, const UnitPrefs());
+      final f = presentationFor('temperature', '°C', 1,
+          const UnitPrefs(temp: TempUnit.fahrenheit));
+      // +0.03 °C rounds away at one decimal, but is +0.054 °F -> "+0.1".
+      expect(c.formatChange(25.03, 25.0), '0.0');
+      expect(f.formatChange(25.03, 25.0), '+0.1');
+    });
+  });
+
+  group('format with non-finite input', () {
+    test('renders the literal NaN/Infinity (no guard in format)', () {
+      // Pins current behavior: `format` trusts canonical storage — the
+      // finite-ness guard lives at the input boundary (parseUserDouble). A
+      // non-finite value that sneaks into the DB renders as a literal string.
+      final ca = presentationFor('calcium', 'ppm', 0, const UnitPrefs());
+      expect(ca.format(double.nan), 'NaN');
+      expect(ca.format(double.infinity), 'Infinity');
     });
   });
 }

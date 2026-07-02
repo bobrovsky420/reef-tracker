@@ -83,7 +83,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 |------|----------------|
 | `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. `classify` deliberately tests **red before green**, so a beyond-amber value can't short-circuit to "green" through an open (null) green side. |
 | `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). Rounding (not truncating) avoids under-counting: a reading 18 h into its 7th day reads as 7 days, not 6 — which matters right at the 30-day health-freshness cutoff. |
-| `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse). |
+| `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. |
 | `parameter_catalog.dart` | `kReefParameters` — the master list (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP, K, Sr, I, Fe) with default units, plus `kParameterByKey` lookup and `formatParamValue`. |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
@@ -232,7 +232,9 @@ Two layers, **no new dependencies and no runtime permissions**:
    enabled, at least one tank exists, and the chosen interval
    (`AutoBackupInterval` daily/weekly) has elapsed since `last_auto_backup_at`.
    `writeAutoBackup` serializes via `encodeBackupFromDb` to
-   `<appDocuments>/backups/reeftracker-auto-<stamp>.json`, then `pruneAutoBackups`
+   `<appDocuments>/backups/reeftracker-auto-<stamp>.json` — **atomically**, via
+   a `.json.tmp` write + rename, so an interrupted write can never leave a
+   truncated file in the rotation — then `pruneAutoBackups`
    keeps the newest *N* (`kAutoBackupDefaultKeep`). The **Manage backups** screen
    (`features/settings/backups_screen.dart`, route `/settings/backups`) lists
    them and offers restore (reuses `decodeBackup` + `importBackup`), share,
@@ -344,6 +346,12 @@ lifecycle wiring that are easy to miss:
 
 The Actions log is no longer a standalone route — it is the second tab inside the
 home shell (see Features).
+
+The two `:id` edit routes treat `state.extra` (the object passed by in-app
+`context.push`) as a fast path only: when it is absent — deep link, state
+restoration — a `_ResolveById` widget resolves the row by `:id` from
+`tanksProvider` / `trackedParametersProvider` and navigates home when the id
+doesn't exist, instead of crashing or opening a blank create form.
 
 ## Features (`lib/features/`)
 

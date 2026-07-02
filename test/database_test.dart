@@ -65,6 +65,30 @@ void main() {
       await db.addTrackedParameter(id, 'iodine', SetupType.fishOnly);
       expect((await db.getTrackedParameters(id)).length, before + 1);
     });
+
+    test(
+        'after removing a middle parameter a new one collides on displayOrder '
+        '(#9 open)', () async {
+      // Documents open TODO #9: the new order is the row COUNT, which equals
+      // the last surviving row's order once a middle row was removed. Flip
+      // this to expect max+1 when #9 is fixed (mirroring the dosing-entry
+      // fix at insertDosingEntry).
+      final id =
+          await db.createTankWithPreset(name: 'A', type: SetupType.fishOnly);
+      final params = await db.getTrackedParameters(id);
+      expect(params.length, greaterThanOrEqualTo(3),
+          reason: 'need a removable middle row');
+      await db.removeTrackedParameter(params[1].id);
+
+      await db.addTrackedParameter(id, 'iodine', SetupType.fishOnly);
+      final after = await db.getTrackedParameters(id);
+      final added = after.firstWhere((p) => p.paramKey == 'iodine');
+      expect(added.displayOrder, params.last.displayOrder,
+          reason: 'collides with the surviving last parameter');
+      // The duplicate order makes the dashboard ordering ambiguous.
+      final orders = after.map((p) => p.displayOrder).toList();
+      expect(orders.toSet().length, lessThan(orders.length));
+    });
   });
 
   group('foreign-key cascade', () {

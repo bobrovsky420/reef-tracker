@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (language, units, active aquarium, chart range, trend/health display, and the
   automatic-backup settings). Only your aquarium data is replaced, so importing a
   backup — even one made on another device — keeps your local settings intact.
+- Typed numbers are now understood **according to your language's number
+  format**: `1,300` means thirteen hundred in English but 1.3 in
+  Czech/German/Polish/Russian, thousands separators (`1,300` / `1.300` /
+  `1 300`) are recognized, and input mixing both separators (`1.234,5`) is
+  rejected instead of being silently misread as a wildly wrong value.
+- **Automatic backups are written atomically.** A backup interrupted mid-write
+  (full storage, app killed) can no longer leave a truncated file that would
+  count as the newest backup and push valid older backups out of the rotation.
+- Tapping **Save twice quickly on a supplement** no longer creates duplicate
+  dosing entries or duplicate dose-history segments.
+- Opening a tank or parameter **edit screen from a link or a restored session**
+  no longer crashes (parameters) or shows a blank "new tank" form under an edit
+  URL (tanks) — the item is now looked up by its id.
+- Fixed rare crashes when the **tank start-date or dose-time picker** was still
+  open while its screen was closed.
 
 ## [0.15.2] - 2026-07-01
 

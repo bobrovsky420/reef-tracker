@@ -115,6 +115,20 @@ void main() {
       expect(h.score, isNull);
     });
 
+    test('every parameter stale -> no score, unknown band and grade', () {
+      final old = now.subtract(const Duration(days: 45));
+      final h = computeTankHealth([
+        input('alkalinity', alkBounds, value: 8.0, takenAt: old),
+        input('calcium', const ZoneBounds(greenLow: 400, greenHigh: 450),
+            value: 420, takenAt: old),
+      ], now: now);
+      expect(h.score, isNull);
+      expect(h.band, Zone.unknown);
+      expect(h.grade, HealthGrade.unknown);
+      expect(h.notScored, hasLength(2));
+      expect(h.parameters.every((p) => p.stale), isTrue);
+    });
+
     test('a stale parameter does not drag down a fresh green score', () {
       final h = computeTankHealth([
         input('alkalinity', alkBounds, value: 8.0), // fresh, centred green
@@ -125,6 +139,80 @@ void main() {
       expect(h.score, 100);
       expect(h.band, Zone.green);
       expect(h.notScored.single.paramKey, 'calcium');
+    });
+  });
+
+  group('computeTankHealth — sub-score shape', () {
+    test('deeper red scores lower (depth gradient)', () {
+      // Both readings are red below amberLow (7); depth is measured in
+      // amber-band widths (greenLow − amberLow = 0.5).
+      final shallow = computeTankHealth(
+          [input('alkalinity', alkBounds, value: 6.9)], now: now);
+      final deep = computeTankHealth(
+          [input('alkalinity', alkBounds, value: 6.5)], now: now);
+      expect(shallow.band, Zone.red);
+      expect(deep.band, Zone.red);
+      expect(shallow.score, 31); // 0.2 widths past the bound: 39 − 39·0.2
+      expect(deep.score, 0); // a full width past amberLow bottoms out
+      expect(shallow.score!, greaterThan(deep.score!));
+    });
+
+    test('amber with no matching amber bound falls back to 55', () {
+      // Below greenLow with no amberLow: distance can't be normalized, so the
+      // sub-score is the flat mid-amber 55.
+      const greensOnly = ZoneBounds(greenLow: 7.5, greenHigh: 8.5);
+      final h = computeTankHealth(
+          [input('alkalinity', greensOnly, value: 7.2)], now: now);
+      expect(h.band, Zone.amber);
+      expect(h.score, 55);
+    });
+
+    test('red with no green bound to measure a width falls back to 20', () {
+      // Above amberHigh with no greenHigh: no amber-band width exists, so the
+      // sub-score is the flat deep-red 20.
+      const amberHighOnly = ZoneBounds(amberHigh: 10);
+      final h = computeTankHealth(
+          [input('nitrate', amberHighOnly, value: 11)], now: now);
+      expect(h.band, Zone.red);
+      expect(h.score, 20);
+    });
+  });
+
+  group('computeTankHealth — exact band boundaries', () {
+    test('score 70 is green/good; 69 is amber/caution', () {
+      // A green value hugging its bound scores exactly 70 — the green floor.
+      const wide = ZoneBounds(greenLow: 0, greenHigh: 100);
+      final at70 = computeTankHealth([input('kh', wide, value: 100)], now: now);
+      expect(at70.score, 70);
+      expect(at70.band, Zone.green);
+      expect(at70.grade, HealthGrade.good);
+
+      // One amber present: the worst-zone ceiling clamps an otherwise-high
+      // weighted mean (≈85) down to exactly 69, the top of the amber band.
+      final at69 = computeTankHealth([
+        input('alkalinity', alkBounds, value: 8.0), // 100, weight 3
+        input('phosphate', const ZoneBounds(greenHigh: 0.05, amberHigh: 0.1),
+            value: 0.06), // amber 63.2, weight 2
+      ], now: now);
+      expect(at69.score, 69);
+      expect(at69.band, Zone.amber);
+      expect(at69.grade, HealthGrade.caution);
+    });
+
+    test('score 40 is amber/caution; 39 is red/critical', () {
+      // Exactly on amberHigh classifies amber and scores the amber floor, 40.
+      final at40 = computeTankHealth(
+          [input('alkalinity', alkBounds, value: 9.0)], now: now);
+      expect(at40.score, 40);
+      expect(at40.band, Zone.amber);
+      expect(at40.grade, HealthGrade.caution);
+
+      // Barely past amberLow rounds to 39, the top of the red band.
+      final at39 = computeTankHealth(
+          [input('alkalinity', alkBounds, value: 6.999)], now: now);
+      expect(at39.score, 39);
+      expect(at39.band, Zone.red);
+      expect(at39.grade, HealthGrade.critical);
     });
   });
 

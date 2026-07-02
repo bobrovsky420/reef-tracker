@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import 'parameter_catalog.dart';
 
 /// Parses a user-entered number, accepting either `,` or `.` as the decimal
@@ -5,14 +7,57 @@ import 'parameter_catalog.dart';
 /// `double.tryParse` otherwise accepts and which corrupt charts, zone
 /// classification and trend math once stored.
 ///
-/// Returns `null` when [text] is blank or does not parse to a finite number.
+/// Separator semantics follow the active app locale (`Intl.defaultLocale`,
+/// kept in sync with the resolved locale by the app builder):
+/// - The locale's decimal separator is always a decimal point, so a Czech
+///   user's `1,025` is 1.025 while an English user's `1.025` is too.
+/// - The *opposite* separator in strict thousands positions is grouping:
+///   `1,300` is 1300 in an English-locale app, `1.300` is 1300 in a German
+///   one. Space-grouped input (`1 300`, cs/pl/ru style) is always grouping.
+/// - A single opposite separator that cannot be grouping (`2,5` in an
+///   English app — comma-only keyboards) is an unambiguous decimal.
+/// - Input mixing both separators (`1.234,5`) is rejected as ambiguous.
+///
+/// Returns `null` when [text] is blank, ambiguous, or does not parse to a
+/// finite number.
 double? parseUserDouble(String? text) {
-  final t = text?.trim() ?? '';
+  var t = text?.trim() ?? '';
   if (t.isEmpty) return null;
-  final value = double.tryParse(t.replaceAll(',', '.'));
+
+  // Space-style thousands grouping (regular, no-break, or narrow no-break
+  // spaces), stripped only when the spaces sit in strict grouping positions.
+  if (RegExp(r'^[+-]?\d{1,3}([\u00A0\u202F ]\d{3})+([.,]\d+)?$').hasMatch(t)) {
+    t = t.replaceAll(RegExp(r'[\u00A0\u202F ]'), '');
+  }
+
+  final hasDot = t.contains('.');
+  final hasComma = t.contains(',');
+  if (hasDot && hasComma) return null;
+
+  if (hasDot || hasComma) {
+    final sep = hasComma ? ',' : '.';
+    final single = t.indexOf(sep) == t.lastIndexOf(sep);
+    if (sep == _decimalSeparator()) {
+      if (!single) return null;
+      t = t.replaceAll(sep, '.');
+    } else if (RegExp('^[+-]?\\d{1,3}(${RegExp.escape(sep)}\\d{3})+\$')
+        .hasMatch(t)) {
+      t = t.replaceAll(sep, '');
+    } else if (single) {
+      t = t.replaceAll(sep, '.');
+    } else {
+      return null;
+    }
+  }
+
+  final value = double.tryParse(t);
   if (value == null || !value.isFinite) return null;
   return value;
 }
+
+/// The active locale's decimal separator (`.` for en, `,` for cs/de/pl/ru).
+String _decimalSeparator() =>
+    NumberFormat.decimalPattern(Intl.defaultLocale).symbols.DECIMAL_SEP;
 
 /// Temperature display unit. Canonical storage is always Celsius.
 enum TempUnit {

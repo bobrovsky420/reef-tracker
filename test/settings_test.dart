@@ -49,6 +49,15 @@ void main() {
       await settings.setLastBackupAt(when);
       expect(await settings.readLastBackupAt(), when);
     });
+
+    test('a garbage last-backup value reads as null (never throws)', () async {
+      await db.setSetting(kLastAutoBackupAtKey, 'not-a-number');
+      expect(await settings.readLastBackupAt(), isNull);
+      expect(await settings.watchLastBackupAt().first, isNull);
+
+      await db.setSetting(kLastAutoBackupAtKey, '');
+      expect(await settings.readLastBackupAt(), isNull);
+    });
   });
 
   group('SettingKey registry', () {

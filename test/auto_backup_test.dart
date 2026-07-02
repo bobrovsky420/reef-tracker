@@ -135,6 +135,86 @@ void main() {
     });
   });
 
+  group('write failures & rotation edge cases', () {
+    test('a failed write propagates and does not stamp last-backup', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      // Block the backups folder with a plain file so creating the directory
+      // (and hence writing any backup) fails, like a full/read-only disk.
+      final blocker = File(p.join(docsDir.path, 'backups'));
+      await blocker.writeAsString('not a directory');
+
+      await expectLater(
+          runAutoBackupIfDue(db), throwsA(isA<FileSystemException>()));
+      expect(await db.getSetting(kLastAutoBackupAtKey), isNull,
+          reason: 'a failed backup must not be recorded as completed');
+
+      // The single-flight guard is cleared after a failure, so once the
+      // obstruction is gone a retry succeeds.
+      await blocker.delete();
+      await runAutoBackupIfDue(db);
+      expect((await listAutoBackups()).length, 1);
+      expect(await db.getSetting(kLastAutoBackupAtKey), isNotNull);
+    });
+
+    test('in-flight tmp files never enter the rotation (#11 fixed)', () async {
+      // Writes now go tmp-file + atomic rename, so an interrupted write leaves
+      // at most a `.tmp` — which must be invisible to the rotation: it neither
+      // counts against keep nor evicts valid backups.
+      await seedBackupFiles(2); // valid-shaped 20260100 / 20260101
+      final dir = await autoBackupDir();
+      File(p.join(dir.path, '${kAutoBackupPrefix}20270101-000000.json.tmp'))
+          .writeAsStringSync('{"format": "reeftracker-ba'); // truncated
+
+      await pruneAutoBackups(2);
+
+      final names =
+          (await listAutoBackups()).map((f) => p.basename(f.path)).toList();
+      expect(names, hasLength(2));
+      expect(names.any((n) => n.contains('20270101')), isFalse,
+          reason: 'a partial tmp file must not be listed as a backup');
+      expect(names.any((n) => n.contains('20260100')), isTrue,
+          reason: 'no valid backup may be evicted by a partial file');
+    });
+
+    test('a completed write is a whole file under the final name', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      final file = await writeAutoBackup(db, keep: 3);
+      expect(p.basename(file.path), endsWith('.json'));
+      // No leftover tmp artifacts next to the finished backup.
+      final leftovers = (await autoBackupDir())
+          .listSync()
+          .where((e) => e.path.endsWith('.tmp'));
+      expect(leftovers, isEmpty);
+    });
+
+    test('two writes within the same second collide on one filename '
+        '(#13 open)', () async {
+      // Documents open TODO #13: the yyyyMMdd-HHmmss stamp has one-second
+      // resolution, so a manual "Back up now" racing the scheduled run
+      // overwrites the same file instead of producing a second backup.
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      for (var attempt = 0; attempt < 5; attempt++) {
+        final first = await writeAutoBackup(db, keep: 10);
+        final second = await writeAutoBackup(db, keep: 10);
+        if (p.basename(first.path) == p.basename(second.path)) {
+          expect(await listAutoBackups(), hasLength(1));
+          return;
+        }
+        // The two writes straddled a second boundary; clear and try again.
+        await pruneAutoBackups(0);
+      }
+      fail('could not land two writes in the same second after 5 attempts');
+    });
+  });
+
   group('runAutoBackupIfDue', () {
     test('does nothing when disabled', () async {
       final db = newDb();
@@ -215,6 +295,23 @@ void main() {
       final f3 = runAutoBackupIfDue(db);
       expect(identical(f3, f1), isFalse);
       await f3;
+    });
+
+    test('a future-dated last-backup stamp suppresses backups (#12 open)',
+        () async {
+      // Documents open TODO #12: after a clock rollback the stored stamp lies
+      // in the future, `now.difference(last)` is negative (always < interval),
+      // and no backup is taken until the wall clock passes the stamp again.
+      // Flip once a negative difference is treated as "due".
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final future = DateTime.now().add(const Duration(days: 2));
+      await db.setSetting(
+          kLastAutoBackupAtKey, future.millisecondsSinceEpoch.toString());
+
+      await runAutoBackupIfDue(db);
+      expect(await listAutoBackups(), isEmpty);
     });
 
     test('respects a weekly interval (1 day not enough)', () async {

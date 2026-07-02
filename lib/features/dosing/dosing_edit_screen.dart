@@ -46,6 +46,9 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
 
   final _noteCtrl = TextEditingController();
 
+  /// True while a save is in flight; blocks re-entrant saves (double-tap).
+  bool _saving = false;
+
   @override
   void initState() {
     super.initState();
@@ -116,6 +119,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
   }
 
   bool get _canSave {
+    if (_saving) return false;
     if (_vendorSel == null) return false;
     if (_customVendor && _vendorCtrl.text.trim().isEmpty) return false;
     return _productName.isNotEmpty;
@@ -145,8 +149,12 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
   // --- Save -------------------------------------------------------------------
 
   Future<void> _save() async {
+    // Re-entrancy guard: a double-tap while the first insert is in flight
+    // would otherwise insert (or supersede) twice.
+    if (_saving) return;
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
+    setState(() => _saving = true);
     final db = ref.read(dbProvider);
 
     final productKey =
@@ -187,21 +195,26 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
       note: Value(note.isEmpty ? null : note),
     );
 
-    final existing = widget.entry;
-    if (existing == null) {
-      await db.insertDosingEntry(companion);
-    } else if (_doseAffectingChanged(existing, companion)) {
-      // A dose change: retain the old dose as history and start a new segment.
-      await db.supersedeDosingEntry(existing, companion);
-    } else {
-      // Cosmetic-only edit (display name, note, time): update in place.
-      await db.updateDosingEntry(existing.copyWith(
-        product: _productName,
-        doseTime: companion.doseTime,
-        note: companion.note,
-      ));
+    try {
+      final existing = widget.entry;
+      if (existing == null) {
+        await db.insertDosingEntry(companion);
+      } else if (_doseAffectingChanged(existing, companion)) {
+        // A dose change: retain the old dose as history and start a new
+        // segment.
+        await db.supersedeDosingEntry(existing, companion);
+      } else {
+        // Cosmetic-only edit (display name, note, time): update in place.
+        await db.updateDosingEntry(existing.copyWith(
+          product: _productName,
+          doseTime: companion.doseTime,
+          note: companion.note,
+        ));
+      }
+      if (mounted) Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    if (mounted) Navigator.of(context).pop();
   }
 
   /// Whether the edit changed any field that alters the dosed amount (and thus
@@ -483,7 +496,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
                   context: context,
                   initialTime: _time ?? const TimeOfDay(hour: 20, minute: 0),
                 );
-                if (picked != null) setState(() => _time = picked);
+                if (picked != null && mounted) setState(() => _time = picked);
               },
             ),
           ],

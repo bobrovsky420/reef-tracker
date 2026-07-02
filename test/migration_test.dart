@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/domain/supplement_catalog.dart';
 
 /// These tests guard the recurring Drift migration pitfall (see the project
 /// memory `drift-migration-createtable-pitfall`): `createTable`/`addColumn`
@@ -13,9 +14,12 @@ import 'package:reeftracker/domain/setup_type.dart';
 /// we prove that idempotency by running those steps against a schema that
 /// already contains everything.
 ///
-/// We can't synthesize the *original* v1/v2 schemas without historical Drift
-/// schema dumps, so we don't exercise the (unguarded) `from < 2`/`from < 3`
-/// steps here — those only ever run on a genuinely old database.
+/// The unguarded `from < 2`/`from < 3` steps (and the v11 backfill against
+/// rows that genuinely predate the segment columns) are exercised in the
+/// "genuine legacy schemas" group below by hand-crafting the old table shapes
+/// with raw SQL — migrations only ever ADD to those tables, so an
+/// SQL-compatible reconstruction is sufficient even without historical Drift
+/// schema dumps.
 void main() {
   late Directory tempDir;
 
@@ -96,6 +100,176 @@ void main() {
     // Forcing a query runs beforeOpen -> onUpgrade(11, schemaVersion).
     await db.customSelect('SELECT 1').get();
     expect(await indexNames(db), containsAll(expectedIndexes));
+  });
+
+  group('genuine legacy schemas', () {
+    /// Rebuilds the real v1 (or v2) schema in a temp file: the four original
+    /// tables only, without any column added by a later migration. Starts from
+    /// a normally created database, then swaps the current tables for the old
+    /// shapes via raw SQL and rewinds the recorded version.
+    Future<File> seedGenuineLegacy(int version) async {
+      assert(version == 1 || version == 2);
+      final file = File('${tempDir.path}/genuine-v$version.sqlite');
+      final seed = AppDatabase(NativeDatabase(file));
+      // Drop everything onCreate built (children before parents for the FKs).
+      for (final table in const [
+        'readings',
+        'water_changes',
+        'carbon_changes',
+        'equipment_cleanings',
+        'ratio_visibilities',
+        'dosing_entries',
+        'tracked_parameters',
+        'settings',
+        'tanks',
+      ]) {
+        await seed.customStatement('DROP TABLE IF EXISTS $table');
+      }
+      // v2 = v1 plus the nullable tanks.start_date column.
+      final startDate = version >= 2 ? 'start_date INTEGER, ' : '';
+      await seed.customStatement('CREATE TABLE tanks ('
+          'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'name TEXT NOT NULL, '
+          'setup_type TEXT NOT NULL, '
+          'volume_liters REAL, '
+          '$startDate'
+          "created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')))");
+      await seed.customStatement('CREATE TABLE tracked_parameters ('
+          'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'tank_id INTEGER NOT NULL REFERENCES tanks (id) ON DELETE CASCADE, '
+          'param_key TEXT NOT NULL, '
+          'unit TEXT NOT NULL, '
+          'enabled INTEGER NOT NULL DEFAULT 1, '
+          'display_order INTEGER NOT NULL DEFAULT 0, '
+          'amber_low REAL, green_low REAL, green_high REAL, amber_high REAL)');
+      await seed.customStatement('CREATE TABLE readings ('
+          'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'tank_id INTEGER NOT NULL REFERENCES tanks (id) ON DELETE CASCADE, '
+          'param_key TEXT NOT NULL, '
+          'value REAL NOT NULL, '
+          'taken_at INTEGER NOT NULL, '
+          'note TEXT)');
+      await seed.customStatement(
+          'CREATE TABLE settings ("key" TEXT NOT NULL PRIMARY KEY, value TEXT)');
+      // Pre-existing data that must survive the upgrade (drift stores
+      // DateTimes as unix seconds).
+      await seed.customStatement(
+          "INSERT INTO tanks (id, name, setup_type, volume_liters, created_at) "
+          "VALUES (1, 'Old reef', 'mixed', 180, 1600000000)");
+      await seed.customStatement(
+          "INSERT INTO tracked_parameters (tank_id, param_key, unit) "
+          "VALUES (1, 'alkalinity', 'dKH')");
+      await seed.customStatement(
+          'INSERT INTO readings (tank_id, param_key, value, taken_at) '
+          'VALUES (1, \'alkalinity\', 8.2, 1600000100)');
+      await seed.customStatement(
+          'INSERT INTO settings ("key", value) VALUES (\'active_tank_id\', \'1\')');
+      await seed.customStatement('PRAGMA user_version = $version');
+      await seed.close();
+      return file;
+    }
+
+    // v1 exercises the unguarded `from < 2` addColumn(start_date); v2 starts
+    // at the unguarded `from < 3` createTable(water_changes), whose
+    // current-definition table already contains `note` — so the `from < 4`
+    // guard must skip the addColumn instead of throwing "duplicate column".
+    for (final from in const [1, 2]) {
+      test('a genuine v$from database upgrades to the current schema intact',
+          () async {
+        final file = await seedGenuineLegacy(from);
+        final db = AppDatabase(NativeDatabase(file));
+        addTearDown(db.close);
+
+        // Pre-existing rows survive and map through the full current shape.
+        final tank = (await db.getAllTanks()).single;
+        expect(tank.name, 'Old reef');
+        expect(tank.startDate, isNull); // added by v2, null-backfilled
+        expect(tank.notes, isNull); // added by v10
+        expect((await db.getAllReadings()).single.value, 8.2);
+        expect((await db.getTrackedParameters(tank.id)).single.paramKey,
+            'alkalinity');
+
+        // Tables that did not exist at v$from were created and are usable.
+        await db.insertWaterChange(
+            tankId: tank.id, changedAt: DateTime(2026, 1, 2), amountLiters: 20);
+        expect((await db.getAllWaterChanges()).single.amountLiters, 20);
+        expect(await db.getAllDosingEntries(), isEmpty);
+        expect(await indexNames(db), containsAll(expectedIndexes));
+
+        final ver = await db
+            .customSelect('PRAGMA user_version')
+            .map((r) => r.read<int>('user_version'))
+            .getSingle();
+        expect(ver, db.schemaVersion);
+      });
+    }
+
+    test('v10 dosing rows get started_at backfilled and an active state',
+        () async {
+      final file = File('${tempDir.path}/genuine-v10.sqlite');
+      final seed = AppDatabase(NativeDatabase(file));
+      final tankId =
+          await seed.createTankWithPreset(name: 'T', type: SetupType.mixed);
+      // Swap dosing_entries for its real v9/v10 shape (no segment columns).
+      await seed.customStatement('DROP TABLE dosing_entries');
+      await seed.customStatement('CREATE TABLE dosing_entries ('
+          'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+          'tank_id INTEGER NOT NULL REFERENCES tanks (id) ON DELETE CASCADE, '
+          'product_key TEXT, vendor TEXT, program TEXT, product TEXT NOT NULL, '
+          'element_key TEXT, amount REAL, amount_unit TEXT, basis TEXT, '
+          'frequency TEXT, interval_days INTEGER, weekdays TEXT, '
+          'dose_time TEXT, note TEXT, '
+          'display_order INTEGER NOT NULL DEFAULT 0, '
+          "created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')))");
+      await seed.customStatement(
+          'INSERT INTO dosing_entries (tank_id, product, created_at) VALUES '
+          "($tankId, 'Kalk', 1600000000), ($tankId, 'All-For-Reef', 1600100000)");
+      await seed.customStatement('PRAGMA user_version = 10');
+      await seed.close();
+
+      final db = AppDatabase(NativeDatabase(file));
+      addTearDown(db.close);
+
+      final entries = await db.getAllDosingEntries();
+      expect(entries, hasLength(2));
+      for (final e in entries) {
+        expect(e.startedAt, e.createdAt,
+            reason: 'pre-history rows start when they were created');
+        expect(e.endedAt, isNull);
+        expect(e.state, DosingState.active.name);
+      }
+    });
+
+    test(
+        'combined v8 upgrade: dosing table created by from<9, then the v11 '
+        'segment steps no-op cleanly', () async {
+      final file = File('${tempDir.path}/genuine-v8.sqlite');
+      final seed = AppDatabase(NativeDatabase(file));
+      final tankId =
+          await seed.createTankWithPreset(name: 'T', type: SetupType.mixed);
+      // v8 shape: no dosing_entries at all, no tank detail columns yet.
+      await seed.customStatement('DROP TABLE dosing_entries');
+      for (final col in const ['notes', 'vendor', 'model']) {
+        await seed.customStatement('ALTER TABLE tanks DROP COLUMN $col');
+      }
+      await seed.customStatement('PRAGMA user_version = 8');
+      await seed.close();
+
+      final db = AppDatabase(NativeDatabase(file));
+      addTearDown(db.close);
+
+      final tank = (await db.getAllTanks()).single;
+      expect(tank.id, tankId);
+      expect(tank.notes, isNull); // re-added by the from<10 step
+      // from<9 created dosing_entries from the CURRENT definition (segment
+      // columns included), so the from<11 guards must skip and the backfill
+      // must no-op; a fresh insert gets its segment fields.
+      await db.insertDosingEntry(
+          DosingEntriesCompanion.insert(tankId: tank.id, product: 'Kalk'));
+      final entry = (await db.getAllDosingEntries()).single;
+      expect(entry.state, DosingState.active.name);
+      expect(entry.startedAt, isNotNull);
+    });
   });
 
   group('guarded migration steps are idempotent', () {

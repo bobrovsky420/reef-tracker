@@ -110,6 +110,67 @@ void main() {
         closeTo(3.0, 1e-9),
       );
     });
+
+    test('everyNDays with a zero or negative interval falls back to daily',
+        () {
+      // Documents the silent fallback (see TODO #8: the UI can store 0/-3
+      // today; the calculator then treats the plan as dosed every day).
+      expect(
+        dailyEquivalentDose(
+            entry(amount: 10, frequency: 'everyNDays', intervalDays: 0)),
+        closeTo(10, 1e-9),
+      );
+      expect(
+        dailyEquivalentDose(
+            entry(amount: 10, frequency: 'everyNDays', intervalDays: -3)),
+        closeTo(10, 1e-9),
+      );
+    });
+
+    test('everyNDays with no interval recorded treats it as every day', () {
+      expect(
+        dailyEquivalentDose(entry(amount: 10, frequency: 'everyNDays')),
+        closeTo(10, 1e-9),
+      );
+    });
+
+    test('weekly with no valid weekdays falls back to daily', () {
+      expect(
+        dailyEquivalentDose(entry(amount: 7, frequency: 'weekly', weekdays: '')),
+        closeTo(7, 1e-9),
+      );
+      // Out-of-range and non-numeric entries are all discarded -> count 0.
+      expect(
+        dailyEquivalentDose(
+            entry(amount: 7, frequency: 'weekly', weekdays: '0,8,abc')),
+        closeTo(7, 1e-9),
+      );
+    });
+
+    test('weekly counts only the valid weekday numbers', () {
+      // 1 and 4 are valid; 0, 9 and junk are ignored -> 2 dosing days.
+      expect(
+        dailyEquivalentDose(
+            entry(amount: 7, frequency: 'weekly', weekdays: '1,0,9,4,x')),
+        closeTo(2.0, 1e-9),
+      );
+    });
+
+    test('basis is currently ignored: perDose equals perDay', () {
+      // Pins that dailyEquivalentDose reads only the schedule — the stored
+      // basis (perDay vs perDose) does not change the result today (both mean
+      // "amount per active day"). If basis ever starts contributing, this
+      // must be revisited deliberately.
+      final perDay = dailyEquivalentDose(entry(
+          amount: 12, basis: 'perDay', frequency: 'everyNDays', intervalDays: 3));
+      final perDose = dailyEquivalentDose(entry(
+          amount: 12,
+          basis: 'perDose',
+          frequency: 'everyNDays',
+          intervalDays: 3));
+      expect(perDay, perDose);
+      expect(perDay, closeTo(4.0, 1e-9));
+    });
   });
 
   group('computeDoseCalc', () {
