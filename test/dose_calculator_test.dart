@@ -57,6 +57,27 @@ void main() {
     });
   });
 
+  group('linearFit', () {
+    test('on a perfect line the fitted last value equals the raw last', () {
+      final f = linearFit(series([400, 405, 410]))!;
+      expect(f.slopePerDay, closeTo(5, 1e-9));
+      expect(f.valueAtLast, closeTo(410, 1e-9));
+    });
+
+    test('an outlier endpoint is pulled back toward the regression line', () {
+      // 8.0→8.3 steady, then a noisy 9.05: mean 8.33 + slope 0.23 × 2 = 8.79.
+      final f = linearFit(series([8.0, 8.1, 8.2, 8.3, 9.05]))!;
+      expect(f.slopePerDay, closeTo(0.23, 1e-9));
+      expect(f.valueAtLast, closeTo(8.79, 1e-9));
+    });
+
+    test('null under the same conditions as slopePerDay', () {
+      expect(linearFit([]), isNull);
+      expect(linearFit(series([400])), isNull);
+      expect(linearFit([(t: t0, value: 400.0), (t: t0, value: 410.0)]), isNull);
+    });
+  });
+
   group('potencyFromReference', () {
     test('matches the Fauna Marin Calcium chart (10 ml/100 L -> +11)', () {
       final p = potencyFromReference(
@@ -276,6 +297,62 @@ void main() {
         volumeLiters: volume,
       );
       expect(r.status, DoseCalcStatus.needsPotency);
+    });
+
+    group('nothing dosed (#27)', () {
+      test('rising element with no dose → noDoseNeeded, not overdosing', () {
+        // "Reduce or pause dosing" is wrong when nothing is dosed.
+        final r = computeDoseCalc(
+          slopePerDay: 5,
+          currentDailyDose: 0,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        expect(r.status, DoseCalcStatus.noDoseNeeded);
+        expect(r.suggestedDailyDose, 0);
+      });
+
+      test('tiny consumption with no dose → increase, never stable', () {
+        // Suggested dose ≈ 0.045 ml/day is below the stability tolerance, but
+        // "keep your current dose" would mean keep dosing nothing.
+        final r = computeDoseCalc(
+          slopePerDay: -0.05,
+          currentDailyDose: 0,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        expect(r.suggestedDailyDose!, greaterThan(0));
+        expect(r.status, DoseCalcStatus.increase);
+      });
+    });
+
+    group('stability tolerance scales with the dose (#28)', () {
+      // Same chemical mismatch (suggested = dose + 0.4 ml/day) judged against
+      // a 10 ml/day dose (within ±5%) and a 1 ml/day dose (way past ±5%).
+      test('a ±5% mismatch on a large dose is stable', () {
+        // input 11 ppm/d, consumption 11.44 → suggested 10.4, adjustment +0.4.
+        final r = computeDoseCalc(
+          slopePerDay: -0.44,
+          currentDailyDose: 10,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        expect(r.adjustment, closeTo(0.4, 1e-9));
+        expect(r.status, DoseCalcStatus.stable);
+      });
+
+      test('the same absolute mismatch on a small dose is actionable', () {
+        // input 1.1 ppm/d, consumption 1.54 → suggested 1.4, adjustment +0.4:
+        // 40% under-dosed — the old flat 0.5 ml threshold called this stable.
+        final r = computeDoseCalc(
+          slopePerDay: -0.44,
+          currentDailyDose: 1,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        expect(r.adjustment, closeTo(0.4, 1e-9));
+        expect(r.status, DoseCalcStatus.increase);
+      });
     });
   });
 }

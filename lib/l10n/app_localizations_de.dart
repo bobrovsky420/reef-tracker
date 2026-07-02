@@ -934,6 +934,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieses Element steigt – Dosierung reduzieren oder pausieren.';
 
   @override
+  String get doseCalcNoDoseNeeded =>
+      'Es wird nichts dosiert und dieses Element fällt nicht – keine Dosierung nötig.';
+
+  @override
   String get doseCalcNeedsPotency =>
       'Gib die Stärke des Präparats ein, um eine Dosisempfehlung zu erhalten.';
 

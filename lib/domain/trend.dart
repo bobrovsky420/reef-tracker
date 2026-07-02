@@ -10,7 +10,7 @@
 /// zones. A trend is only produced once at least `window` readings exist.
 library;
 
-import 'dose_calculator.dart' show DosePoint, slopePerDay;
+import 'dose_calculator.dart' show DosePoint, linearFit;
 import 'zones.dart';
 
 export 'dose_calculator.dart' show DosePoint;
@@ -46,6 +46,7 @@ class TrendResult {
     required this.window,
     this.daysToAmber,
     this.daysToRed,
+    this.recovering = false,
   });
 
   /// Signed least-squares slope over the window, in canonical units per day
@@ -58,13 +59,21 @@ class TrendResult {
 
   /// Projected days until the value first leaves the green zone (crosses
   /// `greenLow`/`greenHigh` into amber), or null when it isn't heading toward a
-  /// green bound (flat, moving away, already past it, or no bound on that side).
+  /// green bound (flat, moving away, already past it, no bound on that side,
+  /// or [recovering]).
   final double? daysToAmber;
 
   /// Projected days until the value reaches the red zone (crosses
   /// `amberLow`/`amberHigh`), or null under the same conditions as
   /// [daysToAmber].
   final double? daysToRed;
+
+  /// True when the value is currently *outside* its green range but moving
+  /// back toward it. No crossing forecast is produced then — projecting the
+  /// trajectory across the green zone to the far bound would warn about a
+  /// parameter that is actively improving (#25). Kept as a distinct state so
+  /// the UI can one day surface it positively (see TODO U15).
+  final bool recovering;
 
   /// True when the value is heading out of its healthy range and we can say
   /// roughly when.
@@ -87,8 +96,9 @@ TrendResult? computeTrend({
 }) {
   if (window < 2 || points.length < window) return null;
   final recent = points.sublist(points.length - window);
-  final slope = slopePerDay(recent);
-  if (slope == null) return null;
+  final fit = linearFit(recent);
+  if (fit == null) return null;
+  final slope = fit.slopePerDay;
 
   final TrendDirection direction;
   if (slope > _flatEpsilon) {
@@ -99,31 +109,49 @@ TrendResult? computeTrend({
     direction = TrendDirection.flat;
   }
 
-  final current = recent.last.value;
+  // Anchor the projection on the fitted value at the last timestamp, not the
+  // raw last reading, so one noisy endpoint can't swing the forecast (#26).
+  final current = fit.valueAtLast;
+
+  // Bounds violating the ordering invariant classify as unknown — don't
+  // project toward them either.
+  final b = bounds.isValid ? bounds : const ZoneBounds();
+
+  // A value already outside its green range but heading back toward it is
+  // recovering, not at risk: the only bounds ahead of it are on the *far* side
+  // of green, and forecasting those would flag an improving parameter (#25).
+  final belowGreen = (b.greenLow != null && current < b.greenLow!) ||
+      (b.amberLow != null && current < b.amberLow!);
+  final aboveGreen = (b.greenHigh != null && current > b.greenHigh!) ||
+      (b.amberHigh != null && current > b.amberHigh!);
+  final recovering = (belowGreen && direction == TrendDirection.rising) ||
+      (aboveGreen && direction == TrendDirection.falling);
 
   // Days until the line from `current` at `slope` reaches `bound`, but only
-  // when that bound lies ahead in the direction of travel (so a value already
-  // past a bound, or moving away from it, yields null rather than a negative or
-  // backwards estimate).
+  // when that bound lies ahead in the direction of travel (a bound behind us
+  // yields null rather than a negative or backwards estimate). A crossing
+  // within numerical noise of "now" reports 0 — the fitted anchor is a
+  // computed value, so an exact on-the-bound hit can land a few ulps off.
   double? daysTo(double? bound) {
     if (bound == null || direction == TrendDirection.flat) return null;
-    final delta = bound - current;
-    if (delta == 0) return 0;
-    if ((delta > 0) != (slope > 0)) return null; // bound is behind us
-    return delta / slope;
+    final days = (bound - current) / slope;
+    if (days.abs() < 1e-9) return 0;
+    return days < 0 ? null : days;
   }
 
   double? toAmber;
   double? toRed;
-  switch (direction) {
-    case TrendDirection.rising:
-      toAmber = daysTo(bounds.greenHigh);
-      toRed = daysTo(bounds.amberHigh);
-    case TrendDirection.falling:
-      toAmber = daysTo(bounds.greenLow);
-      toRed = daysTo(bounds.amberLow);
-    case TrendDirection.flat:
-      break;
+  if (!recovering) {
+    switch (direction) {
+      case TrendDirection.rising:
+        toAmber = daysTo(b.greenHigh);
+        toRed = daysTo(b.amberHigh);
+      case TrendDirection.falling:
+        toAmber = daysTo(b.greenLow);
+        toRed = daysTo(b.amberLow);
+      case TrendDirection.flat:
+        break;
+    }
   }
 
   return TrendResult(
@@ -132,5 +160,6 @@ TrendResult? computeTrend({
     window: window,
     daysToAmber: toAmber,
     daysToRed: toRed,
+    recovering: recovering,
   );
 }

@@ -129,6 +129,26 @@ void main() {
       expect(h.parameters.every((p) => p.stale), isTrue);
     });
 
+    test('a value with no timestamp is stale, not eternally fresh (#29)', () {
+      // HealthInput permits latest != null with takenAt == null; freshness
+      // can't be verified then, so the reading must not be scored.
+      final h = computeTankHealth(
+          [(paramKey: 'alkalinity', bounds: alkBounds, latest: 8.0, takenAt: null)],
+          now: now);
+      expect(h.score, isNull);
+      final p = h.parameters.single;
+      expect(p.stale, isTrue);
+      expect(p.includedInScore, isFalse);
+    });
+
+    test('no value and no timestamp is "no reading", not stale', () {
+      final h = computeTankHealth(
+          [(paramKey: 'alkalinity', bounds: alkBounds, latest: null, takenAt: null)],
+          now: now);
+      expect(h.parameters.single.stale, isFalse);
+      expect(h.parameters.single.includedInScore, isFalse);
+    });
+
     test('a stale parameter does not drag down a fresh green score', () {
       final h = computeTankHealth([
         input('alkalinity', alkBounds, value: 8.0), // fresh, centred green

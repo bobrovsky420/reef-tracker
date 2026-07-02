@@ -67,16 +67,25 @@ class DashboardBody extends ConsumerWidget {
           // value yet — the tile shows "No readings" (the series is empty when a
           // measurement is missing or the denominator is zero), matching how
           // measurement tiles render before their first reading.
+          final numHist = byParam[kind.numeratorKey] ?? const <Reading>[];
+          final denHist = byParam[kind.denominatorKey] ?? const <Reading>[];
           final series = computeRatioSeries(
-            (byParam[kind.numeratorKey] ?? const []).reversed.toList(),
-            (byParam[kind.denominatorKey] ?? const []).reversed.toList(),
+            numHist.reversed.toList(),
+            denHist.reversed.toList(),
           );
+          // The headline pairs the latest reading of each parameter; when they
+          // lie further apart than kRatioMaxSkew (or the latest pair is
+          // undefined) the "current" ratio is half stale — render it muted
+          // instead of confidently zone-colored (#32).
+          final stale =
+              series.isNotEmpty && latestRatio(numHist, denHist) == null;
           items.add((
             order: ratioRowOrder(kind, row),
             tile: _RatioTile(
               kind: kind,
               points: series,
               bounds: ratioBounds(kind, row),
+              stale: stale,
             ),
           ));
         }
@@ -120,6 +129,7 @@ class _RatioTile extends StatelessWidget {
     required this.kind,
     required this.points,
     required this.bounds,
+    this.stale = false,
   });
 
   final RatioKind kind;
@@ -129,6 +139,11 @@ class _RatioTile extends StatelessWidget {
   /// tile shows "No readings".
   final List<RatioPoint> points;
   final ZoneBounds bounds;
+
+  /// True when the latest pair of readings doesn't describe a current tank
+  /// state (its halves are further apart than [kRatioMaxSkew]): the value is
+  /// shown muted instead of zone-colored.
+  final bool stale;
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +182,9 @@ class _RatioTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: ratioZone(kind, bounds, latest.ratio).color,
+                        color: stale
+                            ? hint
+                            : ratioZone(kind, bounds, latest.ratio).color,
                       ),
                     ),
                     const Spacer(),

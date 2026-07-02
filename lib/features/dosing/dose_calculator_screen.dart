@@ -533,6 +533,11 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
           Icons.warning_amber_outlined,
           scheme.error,
         ),
+      DoseCalcStatus.noDoseNeeded => (
+          l.doseCalcNoDoseNeeded,
+          Icons.check_circle_outline,
+          Colors.green,
+        ),
     };
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

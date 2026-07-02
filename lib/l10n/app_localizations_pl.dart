@@ -932,6 +932,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Ten pierwiastek rośnie — zmniejsz lub wstrzymaj dawkowanie.';
 
   @override
+  String get doseCalcNoDoseNeeded =>
+      'Nic nie jest dozowane, a ten pierwiastek nie spada — dawkowanie nie jest potrzebne.';
+
+  @override
   String get doseCalcNeedsPotency =>
       'Podaj moc preparatu, aby otrzymać zalecenie dawki.';
 

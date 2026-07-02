@@ -928,6 +928,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Tento prvek roste – snižte nebo pozastavte dávkování.';
 
   @override
+  String get doseCalcNoDoseNeeded =>
+      'Nic se nedávkuje a tento prvek neklesá – dávkování není potřeba.';
+
+  @override
   String get doseCalcNeedsPotency =>
       'Pro doporučení dávky zadejte sílu přípravku.';
 

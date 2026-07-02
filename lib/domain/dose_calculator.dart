@@ -20,6 +20,8 @@
 ///   suggestedDailyDose = consumptionPerDay * volumeLiters / p   (clamped >= 0)
 library;
 
+import 'dart:math';
+
 import '../data/database.dart';
 import 'supplement_catalog.dart';
 
@@ -46,6 +48,10 @@ enum DoseCalcStatus {
 
   /// The element is rising (consumption <= 0) — reduce or stop dosing.
   overdosing,
+
+  /// Nothing is dosed and the element is not falling — no dose is needed.
+  /// (Distinct from [overdosing]: there is nothing to reduce or pause.)
+  noDoseNeeded,
 }
 
 /// The full result of a dose calculation. Nullable fields are absent when they
@@ -78,9 +84,14 @@ class DoseCalcResult {
   final double? adjustment;
 }
 
-/// Least-squares slope of [points] in value-per-day, or null when there are
+/// A least-squares line fit through a series: its slope in value-per-day and
+/// the fitted (regression) value at the last point's timestamp — a noise-free
+/// anchor for projections, unlike the raw last reading.
+typedef LinearFit = ({double slopePerDay, double valueAtLast});
+
+/// Least-squares fit of [points] (see [LinearFit]), or null when there are
 /// fewer than two points or they share a single instant (zero time span).
-double? slopePerDay(List<DosePoint> points) {
+LinearFit? linearFit(List<DosePoint> points) {
   if (points.length < 2) return null;
   final t0 = points.first.t.millisecondsSinceEpoch.toDouble();
   const msPerDay = 86400000.0;
@@ -101,8 +112,16 @@ double? slopePerDay(List<DosePoint> points) {
     sxy += dx * (ys[i] - meanY);
   }
   if (sxx == 0) return null; // all readings at the same instant
-  return sxy / sxx;
+  final slope = sxy / sxx;
+  return (
+    slopePerDay: slope,
+    valueAtLast: meanY + slope * (xs.last - meanX),
+  );
 }
+
+/// Least-squares slope of [points] in value-per-day, or null when there are
+/// fewer than two points or they share a single instant (zero time span).
+double? slopePerDay(List<DosePoint> points) => linearFit(points)?.slopePerDay;
 
 /// Potency `p` (element rise per 1 unit of product per 1 litre) from a vendor
 /// reference dose: [doseAmount] units in [refVolumeLiters] litres raises the
@@ -164,14 +183,19 @@ int _weekdayCount(String? raw) {
 /// [potency] the element rise per unit per litre (null = unknown), and
 /// [volumeLiters] the tank volume.
 ///
-/// [stableThreshold] is the absolute dose difference (in ml/g) within which the
-/// current dose is considered "good enough" and reported as [DoseCalcStatus.stable].
+/// The current dose is reported as [DoseCalcStatus.stable] when the suggested
+/// adjustment is within `max(stableFraction * currentDailyDose,
+/// stableThreshold)`: the tolerance scales with the dose (±5% by default) so
+/// "stable" means the same *relative* chemical mismatch regardless of product
+/// potency, with [stableThreshold] (ml/g) as an absolute floor below typical
+/// dosing precision.
 DoseCalcResult computeDoseCalc({
   required double? slopePerDay,
   required double currentDailyDose,
   required double? potency,
   required double? volumeLiters,
-  double stableThreshold = 0.5,
+  double stableThreshold = 0.1,
+  double stableFraction = 0.05,
 }) {
   if (slopePerDay == null || volumeLiters == null || volumeLiters <= 0) {
     return const DoseCalcResult(status: DoseCalcStatus.insufficientData);
@@ -215,8 +239,18 @@ DoseCalcResult computeDoseCalc({
 
   final DoseCalcStatus status;
   if (consumptionPerDay <= 0) {
-    status = DoseCalcStatus.overdosing;
-  } else if (adjustment.abs() <= stableThreshold) {
+    // Nothing is being consumed. With an active dose that's overdosing; with
+    // no dose there is nothing to "reduce or pause" — the element holds (or
+    // rises) on its own.
+    status = currentDailyDose > 0
+        ? DoseCalcStatus.overdosing
+        : DoseCalcStatus.noDoseNeeded;
+  } else if (currentDailyDose <= 0) {
+    // Consumption but nothing dosed: always recommend starting — "keep your
+    // current dose" would be advice to keep dosing nothing.
+    status = DoseCalcStatus.increase;
+  } else if (adjustment.abs() <=
+      max(stableFraction * currentDailyDose, stableThreshold)) {
     status = DoseCalcStatus.stable;
   } else if (adjustment > 0) {
     status = DoseCalcStatus.increase;

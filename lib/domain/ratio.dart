@@ -84,14 +84,28 @@ class RatioPoint {
   final double denominator;
 }
 
+/// Maximum age gap between the two halves of a "current" ratio: when the
+/// latest numerator and denominator readings lie further apart than this, the
+/// pair no longer describes a single tank state (today's PO₄ against a
+/// months-old NO₃) and [latestRatio] reports null. Mirrors the health score's
+/// freshness idea (`kHealthFreshnessDays`).
+const Duration kRatioMaxSkew = Duration(days: 30);
+
 /// Computes the ratio for the latest available measurement of each parameter.
-/// Returns null when either value is missing or the denominator is zero
-/// (undefined ratio). Both lists are newest-first (as stored for a tank).
-RatioPoint? latestRatio(List<Reading> numerator, List<Reading> denominator) {
+/// Returns null when either value is missing, the denominator is zero
+/// (undefined ratio), or the two readings are further apart than [maxSkew]
+/// (the pair is half stale, not a confident "current" ratio). Both lists are
+/// newest-first (as stored for a tank).
+RatioPoint? latestRatio(
+  List<Reading> numerator,
+  List<Reading> denominator, {
+  Duration maxSkew = kRatioMaxSkew,
+}) {
   if (numerator.isEmpty || denominator.isEmpty) return null;
   final num = numerator.first;
   final den = denominator.first;
   if (den.value == 0) return null;
+  if (num.takenAt.difference(den.takenAt).abs() > maxSkew) return null;
   return RatioPoint(
     time: num.takenAt.isAfter(den.takenAt) ? num.takenAt : den.takenAt,
     ratio: num.value / den.value,

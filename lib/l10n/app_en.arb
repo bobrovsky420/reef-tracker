@@ -340,6 +340,7 @@
   "doseCalcIncrease": "Increase the dose to keep this element steady.",
   "doseCalcDecrease": "You can lower the dose and still hold this element steady.",
   "doseCalcOverdosing": "This element is rising — reduce or pause dosing.",
+  "doseCalcNoDoseNeeded": "Nothing is dosed and this element isn't falling — no dose is needed.",
   "doseCalcNeedsPotency": "Enter the supplement strength to get a dose recommendation.",
   "doseCalcInsufficient": "Add at least two measurements on different days and a tank volume to calculate.",
 

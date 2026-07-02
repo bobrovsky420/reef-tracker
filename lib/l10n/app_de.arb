@@ -288,6 +288,7 @@
   "doseCalcIncrease": "Erhöhe die Dosis, um dieses Element stabil zu halten.",
   "doseCalcDecrease": "Du kannst die Dosis senken und das Element trotzdem stabil halten.",
   "doseCalcOverdosing": "Dieses Element steigt – Dosierung reduzieren oder pausieren.",
+  "doseCalcNoDoseNeeded": "Es wird nichts dosiert und dieses Element fällt nicht – keine Dosierung nötig.",
   "doseCalcNeedsPotency": "Gib die Stärke des Präparats ein, um eine Dosisempfehlung zu erhalten.",
   "doseCalcInsufficient": "Füge mindestens zwei Messungen an verschiedenen Tagen und ein Beckenvolumen hinzu, um zu rechnen.",
 

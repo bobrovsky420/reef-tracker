@@ -927,6 +927,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This element is rising — reduce or pause dosing.';
 
   @override
+  String get doseCalcNoDoseNeeded =>
+      'Nothing is dosed and this element isn\'t falling — no dose is needed.';
+
+  @override
   String get doseCalcNeedsPotency =>
       'Enter the supplement strength to get a dose recommendation.';
 

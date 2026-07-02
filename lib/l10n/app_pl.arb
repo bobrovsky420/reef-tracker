@@ -288,6 +288,7 @@
   "doseCalcIncrease": "Zwiększ dawkę, aby utrzymać ten pierwiastek na stałym poziomie.",
   "doseCalcDecrease": "Możesz zmniejszyć dawkę i nadal utrzymać ten pierwiastek na stałym poziomie.",
   "doseCalcOverdosing": "Ten pierwiastek rośnie — zmniejsz lub wstrzymaj dawkowanie.",
+  "doseCalcNoDoseNeeded": "Nic nie jest dozowane, a ten pierwiastek nie spada — dawkowanie nie jest potrzebne.",
   "doseCalcNeedsPotency": "Podaj moc preparatu, aby otrzymać zalecenie dawki.",
   "doseCalcInsufficient": "Aby obliczyć, dodaj co najmniej dwa pomiary z różnych dni i objętość zbiornika.",
 

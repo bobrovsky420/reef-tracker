@@ -62,12 +62,28 @@ void main() {
       expect(green.y2, 8.5);
     });
 
-    test('drops empty/inverted bands from inconsistent bounds', () {
-      // greenLow > greenHigh: the green band would be inverted and must be
-      // dropped rather than painted as a misleading sliver.
+    test('bounds violating the ordering invariant paint nothing (#30)', () {
+      // greenLow > greenHigh (possible via restored backups) makes the whole
+      // config unusable: no bands, matching classify() returning unknown.
       const b = ZoneBounds(greenLow: 9, greenHigh: 8);
+      expect(zoneBands(b, 0, 14), isEmpty);
+      expect(b.classify(8.5), Zone.unknown);
+    });
+
+    test('amber-only bounds paint green between them, matching classify (#30)',
+        () {
+      // Both greens null: classify() calls everything between the amber
+      // bounds green, so the chart must paint that region green too.
+      const b = ZoneBounds(amberLow: 5, amberHigh: 10);
+      expect(b.classify(7), Zone.green);
+
       final bands = zoneBands(b, 0, 14);
-      expect(bands.where((x) => x.zone == Zone.green), isEmpty);
+      final green = bandFor(bands, Zone.green)!;
+      expect(green.y1, 5);
+      expect(green.y2, 10);
+      final red = bands.where((x) => x.zone == Zone.red).toList();
+      expect(red.any((x) => x.y1 == 0 && x.y2 == 5), isTrue);
+      expect(red.any((x) => x.y1 == 10 && x.y2 == 14), isTrue);
     });
 
     test('empty bounds produce no bands', () {

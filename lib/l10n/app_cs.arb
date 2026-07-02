@@ -288,6 +288,7 @@
   "doseCalcIncrease": "Zvyšte dávku, aby prvek zůstal stabilní.",
   "doseCalcDecrease": "Dávku můžete snížit a prvek přesto udržíte stabilní.",
   "doseCalcOverdosing": "Tento prvek roste – snižte nebo pozastavte dávkování.",
+  "doseCalcNoDoseNeeded": "Nic se nedávkuje a tento prvek neklesá – dávkování není potřeba.",
   "doseCalcNeedsPotency": "Pro doporučení dávky zadejte sílu přípravku.",
   "doseCalcInsufficient": "Pro výpočet přidejte alespoň dvě měření z různých dnů a objem nádrže.",
 

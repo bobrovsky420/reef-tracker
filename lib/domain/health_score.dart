@@ -72,7 +72,9 @@ class ParameterHealth {
   /// When the latest reading was taken, or null when there is none.
   final DateTime? takenAt;
 
-  /// True when the latest reading is older than [kHealthFreshnessDays].
+  /// True when the latest reading is too old to trust: older than
+  /// [kHealthFreshnessDays], or (defensively) carrying a value with no
+  /// timestamp at all.
   final bool stale;
 
   /// True when this parameter actually contributed to the aggregate (has a
@@ -148,8 +150,12 @@ TankHealth computeTankHealth(
     final value = input.latest;
     final zone =
         value == null ? Zone.unknown : input.bounds.classify(value);
-    final stale = input.takenAt != null &&
-        daysSince(input.takenAt!, now: clock) > freshnessDays;
+    // A value with no timestamp cannot be verified as fresh — treat it as
+    // stale rather than eternally fresh (#29). Without a value there is
+    // nothing to be stale.
+    final stale = value != null &&
+        (input.takenAt == null ||
+            daysSince(input.takenAt!, now: clock) > freshnessDays);
 
     final sub = (value != null && zone != Zone.unknown && !stale)
         ? _subScore(input.bounds, value, zone)

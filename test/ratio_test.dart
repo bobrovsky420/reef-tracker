@@ -38,6 +38,26 @@ void main() {
           [_r(kPhosphateKey, 0.1, 1000)], [_r(kNitrateKey, 0, 1000)]);
       expect(ratio, isNull);
     });
+
+    test('null when the halves are further apart than maxSkew (#32)', () {
+      // Today's PO₄ against a months-old NO₃ is not a "current" ratio.
+      const day = 24 * 60 * 60 * 1000;
+      final phosphate = [_r(kPhosphateKey, 0.1, 100 * day)];
+      final staleNitrate = [_r(kNitrateKey, 10, 0)];
+      expect(latestRatio(phosphate, staleNitrate), isNull);
+
+      // Within the default 30-day window the pair still counts…
+      final recentNitrate = [_r(kNitrateKey, 10, 80 * day)];
+      expect(latestRatio(phosphate, recentNitrate), isNotNull);
+
+      // …and the gate is symmetric and tunable.
+      expect(latestRatio(staleNitrate, phosphate), isNull);
+      expect(
+        latestRatio(phosphate, staleNitrate,
+            maxSkew: const Duration(days: 365)),
+        isNotNull,
+      );
+    });
   });
 
   group('computeRatioSeries (oldest-first input)', () {

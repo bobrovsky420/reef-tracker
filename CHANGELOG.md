@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.15.3] - 2026-07-01
 
+### Changed
+- The dose calculator's **"stable" verdict now scales with your dose** (±5%,
+  with a small absolute floor) instead of a flat 0.5 ml: a large mismatch on a
+  small dose of a potent supplement is no longer waved through as "keep your
+  current dose", and big dosers aren't nagged over trivial tweaks.
+
+### Fixed
+- **Trends no longer warn about a parameter that is recovering**: a value
+  outside its range but moving back toward green used to get an "attention in
+  ~N days" forecast for crossing the *far* boundary; it now simply shows the
+  improving direction with no false alarm.
+- **Trend forecasts are less swayed by a single noisy reading**: the projection
+  now starts from the fitted trend line instead of the raw last measurement, so
+  one outlier test result can no longer flip "fine" into "critical in ~4 days".
+- The dose calculator now gives **correct guidance when nothing is dosed**: a
+  rising element says "no dose needed" instead of "reduce or pause dosing", and
+  any real consumption recommends starting a dose instead of "keep your current
+  dose" (of nothing).
+- **Zone limits restored from an edited or corrupted backup can no longer paint
+  every reading amber**: limits that contradict their own ordering are treated
+  as unset (gray/unknown) until re-saved. Amber-only limits now draw their green
+  chart band, so the chart no longer contradicts the tile color.
+- A ratio card whose two measurements are **more than 30 days apart** now shows
+  its value muted instead of confidently health-colored — e.g. today's
+  phosphate against a months-old nitrate is not a current ratio.
+- A health-score input carrying a value without a timestamp is now treated as
+  stale instead of eternally fresh (defensive; not reachable from the app's own
+  data).
+
 ### Added
 - Settings now shows a **persistent warning when the last backup attempt
   failed** ("Last backup failed on …"), cleared automatically by the next

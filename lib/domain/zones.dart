@@ -45,6 +45,23 @@ class ZoneBounds {
       greenHigh == null &&
       amberHigh == null;
 
+  /// True when the present bounds respect the documented ordering invariant
+  /// (`amberLow <= greenLow <= greenHigh <= amberHigh`, skipping nulls).
+  ///
+  /// The bound editors enforce this on save, but inverted bounds can still
+  /// arrive via restored/hand-edited backups — and would make [classify] label
+  /// *every* value amber. Invalid bounds are therefore treated as unusable:
+  /// [classify] returns [Zone.unknown] and [zoneBands] paints nothing.
+  bool get isValid {
+    double? prev;
+    for (final v in [amberLow, greenLow, greenHigh, amberHigh]) {
+      if (v == null) continue;
+      if (prev != null && v < prev) return false;
+      prev = v;
+    }
+    return true;
+  }
+
   ZoneBounds copyWith({
     double? amberLow,
     double? greenLow,
@@ -60,7 +77,7 @@ class ZoneBounds {
 
   /// Classifies [value] into a [Zone] using these boundaries.
   Zone classify(double value) {
-    if (isEmpty) return Zone.unknown;
+    if (isEmpty || !isValid) return Zone.unknown;
 
     // Red wins first: beyond a defined amber bound is critical regardless of
     // whether the matching green bound is set. (A config with an amber bound but
@@ -88,9 +105,12 @@ typedef ZoneBand = ({double y1, double y2, Zone zone});
 /// The green band falls back to the *matching amber bound* (not the chart edge)
 /// when a green bound is null, so a one-sided green bound can never spill over
 /// the red band beyond it (finding #15). Any band that would be empty or
-/// inverted (`y1 >= y2`), e.g. from inconsistent legacy/restored bounds, is
-/// dropped rather than painted as a misleading sliver or overlap.
+/// inverted (`y1 >= y2`) is dropped rather than painted as a misleading
+/// sliver or overlap, and bounds violating the ordering invariant as a whole
+/// ([ZoneBounds.isValid]) paint nothing — matching [ZoneBounds.classify]
+/// returning [Zone.unknown] for them.
 List<ZoneBand> zoneBands(ZoneBounds b, double minY, double maxY) {
+  if (!b.isValid) return const [];
   final bands = <ZoneBand>[];
   void add(double y1, double y2, Zone zone) {
     if (y1 < y2) bands.add((y1: y1, y2: y2, zone: zone));
@@ -100,6 +120,11 @@ List<ZoneBand> zoneBands(ZoneBounds b, double minY, double maxY) {
   if (b.greenLow != null || b.greenHigh != null) {
     add(b.greenLow ?? b.amberLow ?? minY, b.greenHigh ?? b.amberHigh ?? maxY,
         Zone.green);
+  } else if (b.amberLow != null || b.amberHigh != null) {
+    // Amber-only bounds (possible via restored backups): classify() calls
+    // everything between the amber bounds green, so paint that region green
+    // too instead of leaving a blank middle the tile colour contradicts.
+    add(b.amberLow ?? minY, b.amberHigh ?? maxY, Zone.green);
   }
   // Amber bands (between amber and green bounds).
   if (b.amberLow != null && b.greenLow != null) {

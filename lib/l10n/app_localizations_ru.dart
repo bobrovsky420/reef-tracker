@@ -931,6 +931,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Элемент растёт — снизьте или приостановите дозирование.';
 
   @override
+  String get doseCalcNoDoseNeeded =>
+      'Ничего не дозируется, и этот элемент не падает — дозирование не требуется.';
+
+  @override
   String get doseCalcNeedsPotency =>
       'Укажите концентрацию добавки, чтобы получить рекомендацию по дозе.';
 

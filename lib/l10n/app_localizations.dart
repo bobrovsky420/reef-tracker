@@ -1735,6 +1735,12 @@ abstract class AppLocalizations {
   /// **'This element is rising — reduce or pause dosing.'**
   String get doseCalcOverdosing;
 
+  /// No description provided for @doseCalcNoDoseNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is dosed and this element isn\'t falling — no dose is needed.'**
+  String get doseCalcNoDoseNeeded;
+
   /// No description provided for @doseCalcNeedsPotency.
   ///
   /// In en, this message translates to:

@@ -50,6 +50,27 @@ void main() {
       expect(greenLowOnly.classify(1000), Zone.green);
       expect(greenLowOnly.classify(5), Zone.amber); // below green, no amberLow
     });
+
+    test('bounds violating the ordering invariant classify as unknown (#30)',
+        () {
+      // Inverted greens (possible via restored/hand-edited backups) used to
+      // label every value amber; they are unusable, not a real config.
+      const inverted = ZoneBounds(greenLow: 9, greenHigh: 8);
+      expect(inverted.isValid, isFalse);
+      expect(inverted.classify(8.5), Zone.unknown);
+      expect(inverted.classify(1), Zone.unknown);
+
+      const crossed = ZoneBounds(amberLow: 8, greenLow: 7);
+      expect(crossed.isValid, isFalse);
+      expect(crossed.classify(7.5), Zone.unknown);
+    });
+
+    test('ordered and partial bounds are valid', () {
+      expect(b.isValid, isTrue);
+      expect(const ZoneBounds().isValid, isTrue);
+      expect(const ZoneBounds(amberLow: 5, amberHigh: 10).isValid, isTrue);
+      expect(const ZoneBounds(greenLow: 7, greenHigh: 7).isValid, isTrue);
+    });
   });
 
   group('ZoneBounds.copyWith / isEmpty', () {

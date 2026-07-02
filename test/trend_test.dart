@@ -101,39 +101,78 @@ void main() {
     });
   });
 
-  group('behaviour pins (open TODO items)', () {
-    test(
-        'a recovering amber value is still forecast toward the far bound '
-        '(#25 open)', () {
-      // 7.2 sits in the LOW amber zone and is rising back toward green, yet
-      // the projection targets the far greenHigh/amberHigh bounds ahead of it,
-      // so the UI warns about a parameter that is actively improving.
-      // Documents open TODO #25 (suppress, or report a "recovering" state).
+  group('recovering values (#25)', () {
+    test('a recovering low-amber value gets no forecast, only the flag', () {
+      // 7.2 sits in the LOW amber zone and is rising back toward green: the
+      // only bounds ahead lie on the far side of green, so no crossing is
+      // forecast — the parameter is actively improving.
       final t = computeTrend(
           points: series([7.0, 7.05, 7.1, 7.15, 7.2]),
           bounds: bounds,
           window: 5)!;
       expect(t.direction, TrendDirection.rising);
-      expect(t.daysToAmber, closeTo((9 - 7.2) / 0.05, 1e-6)); // 36 d away
-      expect(t.daysToRed, closeTo((10 - 7.2) / 0.05, 1e-6)); // 56 d away
-      expect(t.hasForecast, isTrue);
+      expect(t.recovering, isTrue);
+      expect(t.daysToAmber, isNull);
+      expect(t.daysToRed, isNull);
+      expect(t.hasForecast, isFalse);
     });
 
-    test(
-        'projection anchors on the raw last reading, not the fitted line '
-        '(#26 open)', () {
-      // One outlier endpoint (9.05 after a steady 8.0→8.3 run) both inflates
-      // the slope and moves the anchor past greenHigh, so the amber crossing
-      // vanishes and the red forecast is driven by a single noisy reading.
-      // Documents open TODO #26 (anchor on the regression value instead:
-      // fitted last ≈ 8.99, still inside green).
+    test('a recovering high-side value (falling back to green) is symmetric',
+        () {
+      // 9.4 in high amber, falling toward green.
+      final t = computeTrend(
+          points: series([9.8, 9.7, 9.6, 9.5, 9.4]), bounds: bounds, window: 5)!;
+      expect(t.direction, TrendDirection.falling);
+      expect(t.recovering, isTrue);
+      expect(t.hasForecast, isFalse);
+    });
+
+    test('a worsening amber value still forecasts the red crossing', () {
+      // 9.2 in high amber and still rising: not recovering — red ahead.
+      final t = computeTrend(
+          points: series([8.8, 8.9, 9.0, 9.1, 9.2]), bounds: bounds, window: 5)!;
+      expect(t.recovering, isFalse);
+      expect(t.daysToRed, closeTo(8, 1e-9));
+    });
+
+    test('an out-of-range value holding flat is not "recovering"', () {
+      final t = computeTrend(
+          points: series([7.2, 7.2, 7.2, 7.2, 7.2]), bounds: bounds, window: 5)!;
+      expect(t.direction, TrendDirection.flat);
+      expect(t.recovering, isFalse);
+      expect(t.hasForecast, isFalse);
+    });
+  });
+
+  group('projection anchor (#26)', () {
+    test('projects from the fitted line, not a noisy raw endpoint', () {
+      // One outlier endpoint (9.05 after a steady 8.0→8.3 run) inflates the
+      // slope; the anchor is the regression value at the last timestamp
+      // (mean 8.33 + slope 0.23 × 2 = 8.79, still inside green), so the amber
+      // crossing survives instead of vanishing behind the raw 9.05.
       final t = computeTrend(
           points: series([8.0, 8.1, 8.2, 8.3, 9.05]),
           bounds: bounds,
           window: 5)!;
       expect(t.slopePerDay, closeTo(0.23, 1e-9));
-      expect(t.daysToAmber, isNull); // raw 9.05 > greenHigh → "already past"
-      expect(t.daysToRed, closeTo((10 - 9.05) / 0.23, 1e-6)); // ≈ 4.1 d
+      expect(t.recovering, isFalse);
+      expect(t.daysToAmber, closeTo((9 - 8.79) / 0.23, 1e-6)); // ≈ 0.9 d
+      expect(t.daysToRed, closeTo((10 - 8.79) / 0.23, 1e-6)); // ≈ 5.3 d
+    });
+  });
+
+  group('invalid bounds', () {
+    test('bounds violating the ordering invariant yield no forecast', () {
+      // Inverted greens (possible via restored backups) classify as unknown;
+      // the trend must not project toward garbage bounds either.
+      const inverted = ZoneBounds(greenLow: 9, greenHigh: 8);
+      final t = computeTrend(
+          points: series([8.1, 8.2, 8.3, 8.4, 8.5]),
+          bounds: inverted,
+          window: 5)!;
+      expect(t.direction, TrendDirection.rising);
+      expect(t.hasForecast, isFalse);
+      expect(t.recovering, isFalse);
     });
   });
 }
