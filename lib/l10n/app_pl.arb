@@ -213,6 +213,7 @@
   "backupNow": "Utwórz kopię teraz",
   "backupLastRun": "Ostatnia kopia: {when}",
   "backupNeverRun": "Brak kopii zapasowej",
+  "backupLastFailed": "Ostatnia kopia nie powiodła się {when}",
   "backupDone": "Kopia zapisana",
   "backupExport": "Eksportuj kopię",
   "backupExportSubtitle": "Zapisz wszystkie akwaria i pomiary do pliku",

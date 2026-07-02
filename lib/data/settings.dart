@@ -30,6 +30,7 @@ const kAutoBackupEnabledKey = 'auto_backup_enabled';
 const kAutoBackupIntervalKey = 'auto_backup_interval';
 const kAutoBackupKeepKey = 'auto_backup_keep';
 const kLastAutoBackupAtKey = 'last_auto_backup_at';
+const kLastBackupErrorAtKey = 'last_backup_error_at';
 
 // --- Non-key defaults --------------------------------------------------------
 
@@ -104,7 +105,8 @@ enum SettingKey {
   autoBackupEnabled(kAutoBackupEnabledKey, deviceLocal: true),
   autoBackupInterval(kAutoBackupIntervalKey, deviceLocal: true),
   autoBackupKeep(kAutoBackupKeepKey, deviceLocal: true),
-  lastAutoBackupAt(kLastAutoBackupAtKey, deviceLocal: true);
+  lastAutoBackupAt(kLastAutoBackupAtKey, deviceLocal: true),
+  lastBackupErrorAt(kLastBackupErrorAtKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -235,6 +237,15 @@ class AppSettings {
       _parseEpochMillis(await _read(SettingKey.lastAutoBackupAt));
   Future<void> setLastBackupAt(DateTime when) => _write(
       SettingKey.lastAutoBackupAt, when.millisecondsSinceEpoch.toString());
+
+  /// When the most recent backup attempt (automatic or manual) failed, or null
+  /// if the latest attempt succeeded / none has failed yet. Cleared by every
+  /// successful backup, so a non-null value always means "the backup you are
+  /// counting on is not being written" (TODO #22).
+  Stream<DateTime?> watchLastBackupErrorAt() =>
+      _watch(SettingKey.lastBackupErrorAt).map(_parseEpochMillis);
+  Future<void> setLastBackupErrorAt(DateTime? when) => _write(
+      SettingKey.lastBackupErrorAt, when?.millisecondsSinceEpoch.toString());
 }
 
 DateTime? _parseEpochMillis(String? v) {

@@ -187,6 +187,19 @@ class SettingsScreen extends ConsumerWidget {
             ),
             onTap: () => _backupNow(context, db, l),
           ),
+          // A failed backup attempt is worth a loud, persistent warning: the
+          // user believes they are protected while nothing is being written
+          // (#22). Cleared automatically by the next successful backup.
+          if (ref.watch(lastBackupErrorAtProvider).value case final errorAt?)
+            ListTile(
+              leading: Icon(Icons.error_outline,
+                  color: Theme.of(context).colorScheme.error),
+              title: Text(
+                l.backupLastFailed(
+                    DateFormat.yMMMd().add_jm().format(errorAt.toLocal())),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           ListTile(
             leading: const Icon(Icons.upload_file_outlined),
             title: Text(l.backupExport),

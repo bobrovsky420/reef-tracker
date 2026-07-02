@@ -213,6 +213,7 @@
   "backupNow": "Jetzt sichern",
   "backupLastRun": "Letzte Sicherung: {when}",
   "backupNeverRun": "Noch keine Sicherung",
+  "backupLastFailed": "Letzte Sicherung fehlgeschlagen am {when}",
   "backupDone": "Sicherung gespeichert",
   "backupExport": "Sicherung exportieren",
   "backupExportSubtitle": "Alle Aquarien und Messwerte in eine Datei speichern",

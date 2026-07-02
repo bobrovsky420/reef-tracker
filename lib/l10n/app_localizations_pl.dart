@@ -687,6 +687,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupNeverRun => 'Brak kopii zapasowej';
 
   @override
+  String backupLastFailed(String when) {
+    return 'Ostatnia kopia nie powiodła się $when';
+  }
+
+  @override
   String get backupDone => 'Kopia zapisana';
 
   @override

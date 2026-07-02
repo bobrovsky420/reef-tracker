@@ -688,6 +688,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backupNeverRun => 'Noch keine Sicherung';
 
   @override
+  String backupLastFailed(String when) {
+    return 'Letzte Sicherung fehlgeschlagen am $when';
+  }
+
+  @override
   String get backupDone => 'Sicherung gespeichert';
 
   @override

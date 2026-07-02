@@ -136,7 +136,8 @@ void main() {
   });
 
   group('write failures & rotation edge cases', () {
-    test('a failed write propagates and does not stamp last-backup', () async {
+    test('a failed write propagates, does not stamp last-backup, and records '
+        'the failure (#22)', () async {
       final db = newDb();
       addTearDown(db.close);
       await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
@@ -149,13 +150,28 @@ void main() {
           runAutoBackupIfDue(db), throwsA(isA<FileSystemException>()));
       expect(await db.getSetting(kLastAutoBackupAtKey), isNull,
           reason: 'a failed backup must not be recorded as completed');
+      expect(await db.getSetting(kLastBackupErrorAtKey), isNotNull,
+          reason: 'a failed backup must be recorded so the UI can warn');
 
       // The single-flight guard is cleared after a failure, so once the
-      // obstruction is gone a retry succeeds.
+      // obstruction is gone a retry succeeds — and clears the failure stamp.
       await blocker.delete();
       await runAutoBackupIfDue(db);
       expect((await listAutoBackups()).length, 1);
       expect(await db.getSetting(kLastAutoBackupAtKey), isNotNull);
+      expect(await db.getSetting(kLastBackupErrorAtKey), isNull,
+          reason: 'a successful backup must clear the recorded failure');
+    });
+
+    test('a failed manual backupNow also records the failure (#22)', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final blocker = File(p.join(docsDir.path, 'backups'));
+      await blocker.writeAsString('not a directory');
+
+      await expectLater(backupNow(db), throwsA(isA<FileSystemException>()));
+      expect(await db.getSetting(kLastBackupErrorAtKey), isNotNull);
     });
 
     test('in-flight tmp files never enter the rotation (#11 fixed)', () async {
@@ -192,26 +208,52 @@ void main() {
       expect(leftovers, isEmpty);
     });
 
-    test('two writes within the same second collide on one filename '
-        '(#13 open)', () async {
-      // Documents open TODO #13: the yyyyMMdd-HHmmss stamp has one-second
-      // resolution, so a manual "Back up now" racing the scheduled run
-      // overwrites the same file instead of producing a second backup.
+    test('the filename stamp is UTC with millisecond precision (#13/#14)',
+        () async {
       final db = newDb();
       addTearDown(db.close);
       await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
 
-      for (var attempt = 0; attempt < 5; attempt++) {
-        final first = await writeAutoBackup(db, keep: 10);
-        final second = await writeAutoBackup(db, keep: 10);
-        if (p.basename(first.path) == p.basename(second.path)) {
-          expect(await listAutoBackups(), hasLength(1));
-          return;
-        }
-        // The two writes straddled a second boundary; clear and try again.
-        await pruneAutoBackups(0);
-      }
-      fail('could not land two writes in the same second after 5 attempts');
+      final before = DateTime.now().toUtc();
+      final file = await writeAutoBackup(db, keep: 3);
+      final after = DateTime.now().toUtc();
+
+      final name = p.basename(file.path);
+      final m = RegExp(r'^reeftracker-auto-(\d{8})-(\d{6})-(\d{3})\.json$')
+          .firstMatch(name);
+      expect(m, isNotNull, reason: 'unexpected stamp format in $name');
+      final d = m!.group(1)!;
+      final t = m.group(2)!;
+      final stamped = DateTime.utc(
+        int.parse(d.substring(0, 4)),
+        int.parse(d.substring(4, 6)),
+        int.parse(d.substring(6, 8)),
+        int.parse(t.substring(0, 2)),
+        int.parse(t.substring(2, 4)),
+        int.parse(t.substring(4, 6)),
+        int.parse(m.group(3)!),
+      );
+      // A local-time stamp would be off by the zone offset; UTC lands between
+      // the surrounding wall-clock readings (with slack for ms truncation).
+      expect(
+          stamped.isAfter(before.subtract(const Duration(seconds: 1))), isTrue,
+          reason: '$stamped is not a UTC stamp near $before');
+      expect(stamped.isBefore(after.add(const Duration(seconds: 1))), isTrue,
+          reason: '$stamped is not a UTC stamp near $after');
+    });
+
+    test('two writes within the same second get distinct filenames '
+        '(#13 fixed)', () async {
+      // The stamp carries milliseconds, so a manual "Back up now" racing the
+      // scheduled run can no longer overwrite the same file.
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      final first = await writeAutoBackup(db, keep: 10);
+      final second = await writeAutoBackup(db, keep: 10);
+      expect(p.basename(first.path), isNot(p.basename(second.path)));
+      expect(await listAutoBackups(), hasLength(2));
     });
   });
 
@@ -297,12 +339,11 @@ void main() {
       await f3;
     });
 
-    test('a future-dated last-backup stamp suppresses backups (#12 open)',
+    test('a future-dated last-backup stamp is treated as due (#12 fixed)',
         () async {
-      // Documents open TODO #12: after a clock rollback the stored stamp lies
-      // in the future, `now.difference(last)` is negative (always < interval),
-      // and no backup is taken until the wall clock passes the stamp again.
-      // Flip once a negative difference is treated as "due".
+      // After a clock rollback the stored stamp lies in the future and
+      // `now.difference(last)` is negative; that must count as "due" instead
+      // of silently disabling backups until the clock catches up.
       final db = newDb();
       addTearDown(db.close);
       await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
@@ -311,7 +352,42 @@ void main() {
           kLastAutoBackupAtKey, future.millisecondsSinceEpoch.toString());
 
       await runAutoBackupIfDue(db);
-      expect(await listAutoBackups(), isEmpty);
+      expect((await listAutoBackups()).length, 1);
+      // The stamp was rewritten to "now", so the rolled-back clock schedules
+      // normally from here on.
+      final recorded = int.parse((await db.getSetting(kLastAutoBackupAtKey))!);
+      expect(recorded, lessThan(future.millisecondsSinceEpoch));
+    });
+
+    test('backupNow waits for an in-flight scheduled run (#13 fixed)',
+        () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      // Fire the manual backup while the scheduled (due) run is in flight:
+      // both must complete, serialized into two distinct backups.
+      final scheduled = runAutoBackupIfDue(db);
+      final manual = backupNow(db);
+      await Future.wait([scheduled, manual]);
+
+      expect((await listAutoBackups()).length, 2);
+    });
+
+    test('a scheduled run fired during backupNow shares its slot (#13 fixed)',
+        () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      final manual = backupNow(db);
+      // The scheduled run sees the manual backup in flight and awaits it
+      // instead of encoding a second, overlapping backup.
+      await runAutoBackupIfDue(db);
+      await manual;
+
+      expect((await listAutoBackups()).length, 1);
+      expect(await db.getSetting(kLastAutoBackupAtKey), isNotNull);
     });
 
     test('respects a weekly interval (1 day not enough)', () async {

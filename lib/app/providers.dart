@@ -182,6 +182,12 @@ final autoBackupIntervalProvider = StreamProvider<AutoBackupInterval>(
 final lastBackupAtProvider = StreamProvider<DateTime?>(
     (ref) => ref.watch(settingsProvider).watchLastBackupAt());
 
+/// When the most recent backup attempt failed, or null if the latest attempt
+/// succeeded (every successful backup clears it). Non-null drives the warning
+/// row in Settings → Backup.
+final lastBackupErrorAtProvider = StreamProvider<DateTime?>(
+    (ref) => ref.watch(settingsProvider).watchLastBackupErrorAt());
+
 /// Whether recent-trend detection / forecasts are shown (default on).
 final trendEnabledProvider = StreamProvider<bool>(
     (ref) => ref.watch(settingsProvider).watchTrendEnabled());

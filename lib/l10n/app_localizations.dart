@@ -1303,6 +1303,12 @@ abstract class AppLocalizations {
   /// **'No backup yet'**
   String get backupNeverRun;
 
+  /// Warning row in Settings shown while the most recent backup attempt (automatic or manual) failed; cleared by the next successful backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Last backup failed on {when}'**
+  String backupLastFailed(String when);
+
   /// No description provided for @backupDone.
   ///
   /// In en, this message translates to:

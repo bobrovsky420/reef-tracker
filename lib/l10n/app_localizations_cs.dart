@@ -686,6 +686,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get backupNeverRun => 'Zatím žádná záloha';
 
   @override
+  String backupLastFailed(String when) {
+    return 'Poslední záloha se nezdařila $when';
+  }
+
+  @override
   String get backupDone => 'Záloha uložena';
 
   @override

@@ -41,8 +41,18 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   }
 
   /// Fire-and-forget automatic backup; failures must never disrupt the app.
+  /// The backup layer persists a failure as `last_backup_error_at` (surfaced
+  /// in Settings), so here it only needs to be logged, not swallowed silently.
   void _maybeBackUp() {
-    runAutoBackupIfDue(ref.read(dbProvider)).catchError((_) {});
+    runAutoBackupIfDue(ref.read(dbProvider))
+        .catchError((Object e, StackTrace s) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: e,
+        stack: s,
+        library: 'auto_backup',
+        context: ErrorSummary('running the automatic backup'),
+      ));
+    });
   }
 
   @override

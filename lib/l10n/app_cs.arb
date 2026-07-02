@@ -213,6 +213,7 @@
   "backupNow": "Zálohovat nyní",
   "backupLastRun": "Poslední záloha: {when}",
   "backupNeverRun": "Zatím žádná záloha",
+  "backupLastFailed": "Poslední záloha se nezdařila {when}",
   "backupDone": "Záloha uložena",
   "backupExport": "Exportovat zálohu",
   "backupExportSubtitle": "Uložit všechna akvária a měření do souboru",

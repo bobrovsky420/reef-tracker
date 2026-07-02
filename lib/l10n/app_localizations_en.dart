@@ -685,6 +685,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupNeverRun => 'No backup yet';
 
   @override
+  String backupLastFailed(String when) {
+    return 'Last backup failed on $when';
+  }
+
+  @override
   String get backupDone => 'Backup saved';
 
   @override

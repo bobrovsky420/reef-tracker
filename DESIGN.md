@@ -231,32 +231,47 @@ Two layers, **no new dependencies and no runtime permissions**:
    `WidgetsBindingObserver`); it writes a backup only when the feature is
    enabled, at least one tank exists, and the chosen interval
    (`AutoBackupInterval` daily/weekly) has elapsed since `last_auto_backup_at`.
+   A rolled-back device clock (stamp in the future) counts as due, so backups
+   can never be silently suspended until the clock catches up.
    `writeAutoBackup` serializes via `encodeBackupFromDb` to
    `<appDocuments>/backups/reeftracker-auto-<stamp>.json` — **atomically**, via
    a `.json.tmp` write + rename, so an interrupted write can never leave a
    truncated file in the rotation — then `pruneAutoBackups`
-   keeps the newest *N* (`kAutoBackupDefaultKeep`). The **Manage backups** screen
-   (`features/settings/backups_screen.dart`, route `/settings/backups`) lists
-   them and offers restore (reuses `decodeBackup` + `importBackup`), share,
-   and delete. `backupNow(db)` powers the **Back up now** action in Settings:
-   it writes into the same rotating folder regardless of the schedule and stamps
-   `last_auto_backup_at`, so the visible "last backup" status (surfaced via
-   `lastBackupAtProvider`) updates at once. The schedule and the manual button
-   share `_stampLastBackup` as the single source of truth for that timestamp.
-   `runAutoBackupIfDue` is **single-flight** (a module-level `_autoBackupInFlight`
-   future): the launch post-frame callback and a `resumed` lifecycle event can
-   fire near-simultaneously, and without the guard both would pass the is-due
-   check and write the same one-second-stamped file. Note the role split:
-   `writeAutoBackup` is schedule-agnostic and does **not** stamp the timestamp —
-   only `runAutoBackupIfDue` and `backupNow` do.
+   keeps the newest *N* (`kAutoBackupDefaultKeep`). The filename stamp is
+   **UTC with millisecond precision** (`yyyyMMdd-HHmmss-SSS`): UTC keeps the
+   lexical sort chronological across DST fall-back, milliseconds keep two
+   near-simultaneous writes from colliding on one name (filenames are never
+   shown as dates — the UI formats the file's mtime). The **Manage backups**
+   screen (`features/settings/backups_screen.dart`, route `/settings/backups`)
+   lists them and offers restore (reuses `decodeBackup` + `importBackup`),
+   share, and delete. `backupNow(db)` powers the **Back up now** action in
+   Settings: it writes into the same rotating folder regardless of the schedule
+   and stamps `last_auto_backup_at`, so the visible "last backup" status
+   (surfaced via `lastBackupAtProvider`) updates at once. The schedule and the
+   manual button share `_stampLastBackup` as the single source of truth for
+   that timestamp. Both entry points are **serialized through one in-flight
+   slot** (a module-level `_autoBackupInFlight` future): concurrent
+   `runAutoBackupIfDue` calls (the launch post-frame callback and a `resumed`
+   event can fire near-simultaneously) share the same run, and `backupNow`
+   queues behind an in-flight run and then occupies the slot itself, so a
+   manual and a scheduled backup can never encode/write concurrently.
+   **Failures are recorded, not swallowed**: a failed write persists
+   `last_backup_error_at` (cleared by the next successful backup), which
+   Settings surfaces as a persistent "Last backup failed on …" warning row via
+   `lastBackupErrorAtProvider`. Note the role split: `writeAutoBackup` is
+   schedule-agnostic and does **not** stamp the timestamp or the error — the
+   shared `_writeAndStamp` path used by `runAutoBackupIfDue` and `backupNow`
+   does.
 2. **Android Auto Backup.** `android:allowBackup="true"` plus empty
    `res/xml/backup_rules.xml` / `data_extraction_rules.xml` (default = back up
    all app data) mean the SQLite DB *and* the `backups/` folder are synced to the
    user's Google Drive and auto-restored on reinstall / new device.
 
 Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
-(`daily`/`weekly`), `auto_backup_keep`, `last_auto_backup_at`. Providers:
-`autoBackupEnabledProvider`, `autoBackupIntervalProvider`, `lastBackupAtProvider`.
+(`daily`/`weekly`), `auto_backup_keep`, `last_auto_backup_at`,
+`last_backup_error_at`. Providers: `autoBackupEnabledProvider`,
+`autoBackupIntervalProvider`, `lastBackupAtProvider`,
+`lastBackupErrorAtProvider`.
 
 ## State layer (`lib/app/providers.dart`)
 
@@ -318,9 +333,11 @@ lifecycle wiring that are easy to miss:
 
 - **Auto-backup triggers.** The root widget is a `WidgetsBindingObserver`;
   `runAutoBackupIfDue(db)` fires once after the first frame and again on every
-  `AppLifecycleState.resumed`. Both calls are fire-and-forget with errors
-  swallowed — a failed backup must never block or crash the UI (the schedule
-  simply retries on the next launch/resume).
+  `AppLifecycleState.resumed`. Both calls are fire-and-forget — a failed backup
+  must never block or crash the UI (the schedule simply retries on the next
+  launch/resume) — but failures are logged via `FlutterError.reportError` and
+  persisted by the backup layer (`last_backup_error_at`, surfaced in Settings),
+  never silently swallowed.
 - **`Intl.defaultLocale` is set inside MaterialApp's `builder`**, not in
   `initState`: the builder runs after Flutter has resolved the effective locale
   (and re-runs when it changes), so `DateFormat` immediately renders dates in a

@@ -686,6 +686,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupNeverRun => 'Копий пока нет';
 
   @override
+  String backupLastFailed(String when) {
+    return 'Не удалось создать копию $when';
+  }
+
+  @override
   String get backupDone => 'Копия сохранена';
 
   @override

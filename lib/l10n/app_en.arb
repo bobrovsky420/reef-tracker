@@ -250,6 +250,16 @@
     }
   },
   "backupNeverRun": "No backup yet",
+  "backupLastFailed": "Last backup failed on {when}",
+  "@backupLastFailed": {
+    "description": "Warning row in Settings shown while the most recent backup attempt (automatic or manual) failed; cleared by the next successful backup.",
+    "placeholders": {
+      "when": {
+        "type": "String",
+        "example": "Jul 1, 2026, 3:24 PM"
+      }
+    }
+  },
   "backupDone": "Backup saved",
   "backupExport": "Export backup",
   "backupExportSubtitle": "Save all aquariums and readings to a file",

@@ -7,12 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.15.3] - 2026-07-01
 
+### Added
+- Settings now shows a **persistent warning when the last backup attempt
+  failed** ("Last backup failed on …"), cleared automatically by the next
+  successful backup. Previously a failing backup was completely silent, so you
+  could believe you were protected while nothing was being written.
+
 ### Changed
 - Screens that show a lot of history (measurements, charts, water/carbon/cleaning
   logs, and dosing) now load faster and stay snappy as your log grows, thanks to
   new database indexes on the most-used lookups.
 
 ### Fixed
+- **Backups no longer stop silently after a clock rollback**: if the device
+  clock moves backwards past the last-backup timestamp, the next
+  launch/resume takes a backup immediately instead of waiting for the clock to
+  catch up.
+- A manual **"Back up now" no longer races the automatic backup**: the two are
+  serialized, and backup filenames carry millisecond timestamps, so two
+  backups written in the same second can no longer overwrite each other.
+- Backup filenames are stamped in **UTC**, so the repeated hour at the end of
+  daylight-saving time can no longer make the rotation delete a newer backup
+  before an older one.
 - Readings are now **sanity-checked when saving**: physically impossible values
   (a negative concentration, salinity below pure water) are rejected with a
   clear message, and values outside the typical range (e.g. magnesium 1.3 ppm —

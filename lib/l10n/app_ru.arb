@@ -213,6 +213,7 @@
   "backupNow": "Создать копию сейчас",
   "backupLastRun": "Последняя копия: {when}",
   "backupNeverRun": "Копий пока нет",
+  "backupLastFailed": "Не удалось создать копию {when}",
   "backupDone": "Копия сохранена",
   "backupExport": "Экспортировать копию",
   "backupExportSubtitle": "Сохранить все аквариумы и измерения в файл",

@@ -17,6 +17,7 @@ export 'settings.dart'
         kAutoBackupIntervalKey,
         kAutoBackupKeepKey,
         kLastAutoBackupAtKey,
+        kLastBackupErrorAtKey,
         kAutoBackupDefaultEnabled,
         kAutoBackupDefaultKeep,
         AutoBackupInterval;
@@ -72,7 +73,11 @@ Future<File> writeAutoBackup(
   int keep = kAutoBackupDefaultKeep,
 }) async {
   final json = await encodeBackupFromDb(db);
-  final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
+  // UTC keeps lexical order == chronological order across DST fall-back, when
+  // a local-time stamp would repeat an hour (#14); milliseconds keep two
+  // writes within the same second from colliding on one filename (#13).
+  final stamp =
+      DateFormat('yyyyMMdd-HHmmss-SSS').format(DateTime.now().toUtc());
   final dir = await autoBackupDir();
   final file = File(p.join(dir.path, '$kAutoBackupPrefix$stamp.json'));
   // Write to a tmp name and rename (atomic on the same filesystem) so a
@@ -100,23 +105,66 @@ Future<File> writeAutoBackup(
 /// the manual "Back up now" action. Writes into the same rotating auto-backup
 /// folder as [runAutoBackupIfDue], so it counts against [kAutoBackupKeepKey]
 /// and shows up in the Manage-backups list.
-Future<File> backupNow(AppDatabase db) async {
+///
+/// Serialized with the scheduled run (#13): if a launch/resume auto-backup is
+/// in flight, the manual write waits for it to finish (even if it fails), and
+/// while the manual write runs it occupies the same in-flight slot so a
+/// concurrent [runAutoBackupIfDue] awaits it instead of encoding in parallel.
+Future<File> backupNow(AppDatabase db) {
+  final prior = _autoBackupInFlight;
+  final Future<File> run = prior == null
+      ? _backupNow(db)
+      // A failed scheduled run must not block the manual one queued behind it.
+      : prior.catchError((_) {}).then((_) => _backupNow(db));
+  // The slot future swallows errors: [run] (returned to the caller) is where
+  // failures are handled; the slot only signals "a backup attempt is active".
+  late final Future<void> slot;
+  slot = run.then<void>((_) {}, onError: (_) {}).whenComplete(() {
+    if (identical(_autoBackupInFlight, slot)) _autoBackupInFlight = null;
+  });
+  _autoBackupInFlight = slot;
+  return run;
+}
+
+Future<File> _backupNow(AppDatabase db) async {
   final keep = await AppSettings(db).readAutoBackupKeep();
-  final file = await writeAutoBackup(db, keep: keep);
-  await _stampLastBackup(db);
-  return file;
+  return _writeAndStamp(db, keep: keep);
+}
+
+/// Writes the backup, then stamps success — or records the failure in
+/// `last_backup_error_at` before rethrowing, so the UI can tell the user their
+/// safety net is not being written (#22).
+Future<File> _writeAndStamp(AppDatabase db, {required int keep}) async {
+  try {
+    final file = await writeAutoBackup(db, keep: keep);
+    await _stampLastBackup(db);
+    return file;
+  } catch (_) {
+    try {
+      await AppSettings(db).setLastBackupErrorAt(DateTime.now());
+    } catch (_) {
+      // Best-effort: if the DB itself is broken this write fails too, and the
+      // original error is the one worth propagating.
+    }
+    rethrow;
+  }
 }
 
 /// Records "a backup just completed" so the schedule and the visible
-/// last-backup status share one source of truth.
-Future<void> _stampLastBackup(AppDatabase db) =>
-    AppSettings(db).setLastBackupAt(DateTime.now());
+/// last-backup status share one source of truth — and clears any recorded
+/// failure, so `last_backup_error_at` always describes the *latest* attempt.
+Future<void> _stampLastBackup(AppDatabase db) async {
+  final settings = AppSettings(db);
+  await settings.setLastBackupAt(DateTime.now());
+  await settings.setLastBackupErrorAt(null);
+}
 
-/// In-flight guard for [runAutoBackupIfDue]. The launch post-frame callback and
-/// a `resumed` lifecycle event can fire almost simultaneously (e.g. resume right
-/// after cold start); without this, two runs could both pass the "is due" check,
-/// pick the same one-second filename stamp, and each do the full encode/write
-/// before either records `last_auto_backup_at`.
+/// In-flight guard shared by [runAutoBackupIfDue] and [backupNow]. The launch
+/// post-frame callback and a `resumed` lifecycle event can fire almost
+/// simultaneously (e.g. resume right after cold start); without this, two runs
+/// could both pass the "is due" check and each do the full encode/write before
+/// either records `last_auto_backup_at`. [backupNow] occupies the same slot so
+/// a manual backup never overlaps a scheduled one (#13).
 Future<void>? _autoBackupInFlight;
 
 /// Takes an automatic backup if the feature is enabled, there is data worth
@@ -126,8 +174,15 @@ Future<void>? _autoBackupInFlight;
 /// Single-flight: while one run is in progress, concurrent callers await the
 /// same future instead of starting a second, overlapping backup.
 Future<void> runAutoBackupIfDue(AppDatabase db) {
-  return _autoBackupInFlight ??=
-      _runAutoBackupIfDue(db).whenComplete(() => _autoBackupInFlight = null);
+  final existing = _autoBackupInFlight;
+  if (existing != null) return existing;
+  late final Future<void> run;
+  run = _runAutoBackupIfDue(db).whenComplete(() {
+    // Only clear the slot if a newer run (e.g. a manual backupNow chained
+    // behind this one) hasn't taken it over meanwhile.
+    if (identical(_autoBackupInFlight, run)) _autoBackupInFlight = null;
+  });
+  return _autoBackupInFlight = run;
 }
 
 Future<void> _runAutoBackupIfDue(AppDatabase db) async {
@@ -140,9 +195,12 @@ Future<void> _runAutoBackupIfDue(AppDatabase db) async {
   final last = await settings.readLastBackupAt();
   if (last != null) {
     final interval = await settings.readAutoBackupInterval();
-    if (DateTime.now().difference(last) < interval.period) return;
+    final sinceLast = DateTime.now().difference(last);
+    // A negative difference means the device clock was rolled back past the
+    // stamp; treat that as due instead of silently never backing up until the
+    // clock catches up with the stamp again (#12).
+    if (sinceLast >= Duration.zero && sinceLast < interval.period) return;
   }
 
-  await writeAutoBackup(db, keep: await settings.readAutoBackupKeep());
-  await _stampLastBackup(db);
+  await _writeAndStamp(db, keep: await settings.readAutoBackupKeep());
 }
