@@ -27,6 +27,8 @@ class DosingEditScreen extends ConsumerStatefulWidget {
 }
 
 class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
+  final _formKey = GlobalKey<FormState>();
+
   // Selection: a vendor/product key, [_kCustom], or null for none chosen.
   String? _vendorSel;
   String? _productSel;
@@ -152,6 +154,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     // Re-entrancy guard: a double-tap while the first insert is in flight
     // would otherwise insert (or supersede) twice.
     if (_saving) return;
+    if (!_formKey.currentState!.validate()) return;
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
     setState(() => _saving = true);
@@ -239,33 +242,36 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
       appBar: AppBar(
         title: Text(widget.entry == null ? l.dosingNew : l.dosingEdit),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _vendorField(l),
-          const SizedBox(height: 16),
-          _productField(l),
-          const SizedBox(height: 16),
-          _elementField(l),
-          const Divider(height: 32),
-          _dosageSection(l),
-          const Divider(height: 32),
-          _scheduleSection(l),
-          const Divider(height: 32),
-          TextField(
-            controller: _noteCtrl,
-            decoration: InputDecoration(
-              labelText: l.noteOptional,
-              border: const OutlineInputBorder(),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _vendorField(l),
+            const SizedBox(height: 16),
+            _productField(l),
+            const SizedBox(height: 16),
+            _elementField(l),
+            const Divider(height: 32),
+            _dosageSection(l),
+            const Divider(height: 32),
+            _scheduleSection(l),
+            const Divider(height: 32),
+            TextField(
+              controller: _noteCtrl,
+              decoration: InputDecoration(
+                labelText: l.noteOptional,
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 2,
             ),
-            maxLines: 2,
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _canSave ? _save : null,
-            child: Text(l.save),
-          ),
-        ],
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: _canSave ? _save : null,
+              child: Text(l.save),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -366,7 +372,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           children: [
             Expanded(
               flex: 2,
-              child: TextField(
+              child: TextFormField(
                 controller: _amountCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -374,6 +380,15 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
                   labelText: l.dosingAmount,
                   border: const OutlineInputBorder(),
                 ),
+                validator: (v) {
+                  // The dosage is optional, but a non-empty entry must be a
+                  // positive number — garbage was silently dropped before (#8).
+                  if (v == null || v.trim().isEmpty) return null;
+                  final parsed = parseUserDouble(v);
+                  return (parsed == null || parsed <= 0)
+                      ? l.invalidPositiveNumber
+                      : null;
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -440,13 +455,21 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
         ),
         if (_frequency == DoseFrequency.everyNDays) ...[
           const SizedBox(height: 12),
-          TextField(
+          TextFormField(
             controller: _intervalCtrl,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: l.dosingIntervalDays,
               border: const OutlineInputBorder(),
             ),
+            validator: (v) {
+              // "Every N days" needs a whole N ≥ 1 — 0/-3 used to be stored
+              // and silently reinterpreted as daily by the calculator (#8).
+              final parsed = int.tryParse((v ?? '').trim());
+              return (parsed == null || parsed < 1)
+                  ? l.invalidIntervalDays
+                  : null;
+            },
           ),
         ],
         if (_frequency == DoseFrequency.weekly) ...[

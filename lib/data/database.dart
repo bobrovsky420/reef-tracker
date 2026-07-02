@@ -478,7 +478,12 @@ class AppDatabase extends _$AppDatabase {
     if (existing.isNotEmpty) return;
     final def = kParameterByKey[paramKey];
     final bounds = presetBounds(type, paramKey);
-    final order = (await getTrackedParameters(tankId)).length;
+    // max(displayOrder) + 1, not the row count: after removing a middle
+    // parameter the count could collide with an existing order (same fix as
+    // insertDosingEntry).
+    final order = (await getTrackedParameters(tankId))
+            .fold<int>(-1, (m, p) => p.displayOrder > m ? p.displayOrder : m) +
+        1;
     await into(trackedParameters).insert(TrackedParametersCompanion.insert(
       tankId: tankId,
       paramKey: paramKey,

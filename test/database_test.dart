@@ -67,12 +67,11 @@ void main() {
     });
 
     test(
-        'after removing a middle parameter a new one collides on displayOrder '
-        '(#9 open)', () async {
-      // Documents open TODO #9: the new order is the row COUNT, which equals
-      // the last surviving row's order once a middle row was removed. Flip
-      // this to expect max+1 when #9 is fixed (mirroring the dosing-entry
-      // fix at insertDosingEntry).
+        'after removing a middle parameter a new one gets a unique '
+        'displayOrder (#9)', () async {
+      // Regression test for #9: the new order is max(displayOrder)+1, not the
+      // row count, so it cannot collide with a surviving row after a middle
+      // row was removed (mirrors the insertDosingEntry fix).
       final id =
           await db.createTankWithPreset(name: 'A', type: SetupType.fishOnly);
       final params = await db.getTrackedParameters(id);
@@ -83,11 +82,11 @@ void main() {
       await db.addTrackedParameter(id, 'iodine', SetupType.fishOnly);
       final after = await db.getTrackedParameters(id);
       final added = after.firstWhere((p) => p.paramKey == 'iodine');
-      expect(added.displayOrder, params.last.displayOrder,
-          reason: 'collides with the surviving last parameter');
-      // The duplicate order makes the dashboard ordering ambiguous.
+      expect(added.displayOrder, params.last.displayOrder + 1,
+          reason: 'max+1 of the surviving parameters');
+      // All orders stay unique.
       final orders = after.map((p) => p.displayOrder).toList();
-      expect(orders.toSet().length, lessThan(orders.length));
+      expect(orders.toSet().length, orders.length);
     });
   });
 

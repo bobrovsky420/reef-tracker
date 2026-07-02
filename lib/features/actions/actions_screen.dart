@@ -391,6 +391,7 @@ class _ActionDialog extends StatefulWidget {
 }
 
 class _ActionDialogState extends State<_ActionDialog> {
+  final _formKey = GlobalKey<FormState>();
   late DateTime _time = widget.initialTime;
   late final TextEditingController _valueCtrl = TextEditingController(
     text: widget.initialValue,
@@ -417,52 +418,64 @@ class _ActionDialogState extends State<_ActionDialog> {
     final l = AppLocalizations.of(context);
     return AlertDialog(
       title: Text(widget.title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.schedule),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  formatDateTime(context, _time, weekday: false),
-                  style: Theme.of(context).textTheme.bodyLarge,
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.schedule),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    formatDateTime(context, _time, weekday: false),
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                tooltip: l.change,
-                onPressed: _pickDateTime,
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: l.change,
+                  onPressed: _pickDateTime,
+                ),
+              ],
+            ),
+            if (widget.valueLabel != null) ...[
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _valueCtrl,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: widget.valueLabel,
+                  suffixText: widget.valueSuffix,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (v) {
+                  // Optional field: blank means "amount not recorded", but a
+                  // non-empty entry must be a positive number (#7).
+                  if (v == null || v.trim().isEmpty) return null;
+                  final parsed = parseUserDouble(v);
+                  return (parsed == null || parsed <= 0)
+                      ? l.invalidPositiveNumber
+                      : null;
+                },
               ),
             ],
-          ),
-          if (widget.valueLabel != null) ...[
-            const SizedBox(height: 8),
-            TextField(
-              controller: _valueCtrl,
-              autofocus: true,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _noteCtrl,
+              autofocus: widget.valueLabel == null,
               decoration: InputDecoration(
-                labelText: widget.valueLabel,
-                suffixText: widget.valueSuffix,
+                labelText: l.noteOptional,
                 border: const OutlineInputBorder(),
               ),
+              maxLines: 2,
             ),
           ],
-          const SizedBox(height: 12),
-          TextField(
-            controller: _noteCtrl,
-            autofocus: widget.valueLabel == null,
-            decoration: InputDecoration(
-              labelText: l.noteOptional,
-              border: const OutlineInputBorder(),
-            ),
-            maxLines: 2,
-          ),
-        ],
+        ),
       ),
       actions: [
         TextButton(
@@ -471,6 +484,7 @@ class _ActionDialogState extends State<_ActionDialog> {
         ),
         FilledButton(
           onPressed: () {
+            if (!(_formKey.currentState?.validate() ?? false)) return;
             final value = parseUserDouble(_valueCtrl.text);
             final note = _noteCtrl.text.trim();
             Navigator.pop(

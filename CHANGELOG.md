@@ -13,6 +13,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new database indexes on the most-used lookups.
 
 ### Fixed
+- Readings are now **sanity-checked when saving**: physically impossible values
+  (a negative concentration, salinity below pure water) are rejected with a
+  clear message, and values outside the typical range (e.g. magnesium 1.3 ppm —
+  usually a typo or a decimal-separator slip) ask for confirmation showing the
+  value as the app understood it, so extreme-but-real readings stay recordable.
+- The **water-change and carbon-dosing dialogs** no longer silently discard an
+  unreadable amount (e.g. `5o`) or accept a negative one — invalid input now
+  shows an error instead of saving "Amount not recorded".
+- The **supplement form validates the dosage and schedule**: a garbage amount is
+  no longer silently dropped, and "every N days" requires a whole number of at
+  least 1 — schedules like "Every 0 days" can no longer be stored (previously
+  they silently skewed the dose calculator as if dosing daily; existing bad rows
+  are now treated as an unknown schedule instead).
+- Adding a parameter after removing another **no longer duplicates its dashboard
+  position**, which could make the parameter order ambiguous.
+- Restoring a **crafted or corrupted backup with absurd row ids** (which could
+  permanently prevent the app from ever saving new readings) is now rejected by
+  backup validation.
+- Navigating away from the home screen and back (e.g. a deep link that falls
+  back to home) no longer breaks the **feature-tour overlay**: during a route
+  swap the incoming home screen registered its tour scope before the outgoing
+  one cleaned up, and the cleanup tore down the fresh registration.
 - Restoring a backup no longer overwrites **this device's own preferences**
   (language, units, active aquarium, chart range, trend/health display, and the
   automatic-backup settings). Only your aquarium data is replaced, so importing a

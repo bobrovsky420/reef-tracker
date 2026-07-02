@@ -111,19 +111,20 @@ void main() {
       );
     });
 
-    test('everyNDays with a zero or negative interval falls back to daily',
+    test('everyNDays with a zero or negative interval contributes nothing',
         () {
-      // Documents the silent fallback (see TODO #8: the UI can store 0/-3
-      // today; the calculator then treats the plan as dosed every day).
+      // Regression test for #8: the UI now validates the interval, and the
+      // calculator treats a garbage stored interval (pre-fix rows) as an
+      // unknown cadence (0) instead of silently pretending "daily".
       expect(
         dailyEquivalentDose(
             entry(amount: 10, frequency: 'everyNDays', intervalDays: 0)),
-        closeTo(10, 1e-9),
+        0,
       );
       expect(
         dailyEquivalentDose(
             entry(amount: 10, frequency: 'everyNDays', intervalDays: -3)),
-        closeTo(10, 1e-9),
+        0,
       );
     });
 

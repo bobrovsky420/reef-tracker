@@ -707,21 +707,32 @@ void main() {
       expect((await dst.getAllRatioVisibilities()).length, 1);
     });
 
-    test('currently accepts extreme and negative row ids (#33 open)',
-        () async {
-      // Documents open TODO #33: an id of 2^63−1 exhausts SQLite AUTOINCREMENT
-      // (no reading can ever be inserted again) and negative ids are accepted
-      // too — validateBackup should reject both as `inconsistent`. Today the
-      // import succeeds; flip these expectations when #33 is fixed.
+    test('rejects extreme, negative and zero row ids (#33)', () async {
+      // Regression test for #33: an id of 2^63−1 exhausts SQLite AUTOINCREMENT
+      // (no reading could ever be inserted again after restore); negative and
+      // zero ids are bogus for AUTOINCREMENT columns. validateBackup rejects
+      // anything outside 1..2^31 as `inconsistent`.
       const maxId = 0x7FFFFFFFFFFFFFFF; // 2^63 − 1
-      final data = bareData(
-          tanks: [tankRow(1)],
-          readings: [readingRow(-5, 1), readingRow(maxId, 1)]);
+      for (final badId in [-5, 0, (1 << 31) + 1, maxId]) {
+        final data =
+            bareData(tanks: [tankRow(1)], readings: [readingRow(badId, 1)]);
+        final dst = newDb();
+        addTearDown(dst.close);
+        await expectLater(
+            importBackup(dst, data),
+            throwsA(isA<InvalidBackupException>().having(
+                (e) => e.reason, 'reason', BackupRejection.inconsistent)),
+            reason: 'id $badId must be rejected');
+        expect(await dst.getAllReadings(), isEmpty);
+      }
+
+      // The 2^31 boundary itself still imports.
+      final ok =
+          bareData(tanks: [tankRow(1)], readings: [readingRow(1 << 31, 1)]);
       final dst = newDb();
       addTearDown(dst.close);
-      await importBackup(dst, data);
-      expect((await dst.getAllReadings()).map((r) => r.id),
-          unorderedEquals([-5, maxId]));
+      await importBackup(dst, ok);
+      expect((await dst.getAllReadings()).single.id, 1 << 31);
     });
 
     test('currently restores unrecognized enum-ish strings verbatim (#34 open)',

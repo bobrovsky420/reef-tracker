@@ -686,6 +686,59 @@ abstract class AppLocalizations {
   /// **'Enter a valid positive volume.'**
   String get invalidVolume;
 
+  /// No description provided for @invalidPositiveNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive number.'**
+  String get invalidPositiveNumber;
+
+  /// No description provided for @invalidIntervalDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number of days (1 or more).'**
+  String get invalidIntervalDays;
+
+  /// SnackBar shown when a reading is below the parameter's hard physical floor (e.g. a negative concentration).
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: this value is not physically possible.'**
+  String impossibleValueFor(Object name);
+
+  /// No description provided for @impossibleValue.
+  ///
+  /// In en, this message translates to:
+  /// **'This value is not physically possible.'**
+  String get impossibleValue;
+
+  /// No description provided for @implausibleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unusual values'**
+  String get implausibleTitle;
+
+  /// No description provided for @implausibleIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'The following is outside the typical range. Check for a typo before saving.'**
+  String get implausibleIntro;
+
+  /// One line per suspicious reading in the confirmation dialog. value/max include the unit label, min is a bare number.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {value} (typical {min}–{max})'**
+  String implausibleValueLine(
+    Object name,
+    Object value,
+    Object min,
+    Object max,
+  );
+
+  /// No description provided for @saveAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Save anyway'**
+  String get saveAnyway;
+
   /// No description provided for @enterAtLeastOneValue.
   ///
   /// In en, this message translates to:

@@ -122,7 +122,10 @@ double? potencyFromReference({
 /// `perDay` basis = the amount is a daily total on each dosing day; `perDose`
 /// basis = the amount is one discrete dose. The schedule sets dosing days per
 /// week (daily → 7, every-N-days → 7/N, weekly → number of selected weekdays;
-/// no schedule → treated as daily). Returns 0 when no amount is recorded.
+/// no schedule → treated as daily). Returns 0 when no amount is recorded, or
+/// when a stored every-N-days interval is invalid (≤ 0): a garbage interval
+/// means the true cadence is unknown, and pretending "daily" would skew the
+/// dose calculator upward (#8).
 double dailyEquivalentDose(DosingEntry entry) {
   final amount = entry.amount;
   if (amount == null) return 0;
@@ -131,7 +134,8 @@ double dailyEquivalentDose(DosingEntry entry) {
   switch (freq) {
     case DoseFrequency.everyNDays:
       final n = entry.intervalDays ?? 1;
-      dosingDaysPerWeek = n > 0 ? 7 / n : 7;
+      if (n <= 0) return 0;
+      dosingDaysPerWeek = 7 / n;
     case DoseFrequency.weekly:
       final count = _weekdayCount(entry.weekdays);
       dosingDaysPerWeek = count > 0 ? count.toDouble() : 7;

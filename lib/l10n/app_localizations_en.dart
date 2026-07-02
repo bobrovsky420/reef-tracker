@@ -346,6 +346,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidVolume => 'Enter a valid positive volume.';
 
   @override
+  String get invalidPositiveNumber => 'Enter a positive number.';
+
+  @override
+  String get invalidIntervalDays => 'Enter a whole number of days (1 or more).';
+
+  @override
+  String impossibleValueFor(Object name) {
+    return '$name: this value is not physically possible.';
+  }
+
+  @override
+  String get impossibleValue => 'This value is not physically possible.';
+
+  @override
+  String get implausibleTitle => 'Unusual values';
+
+  @override
+  String get implausibleIntro =>
+      'The following is outside the typical range. Check for a typo before saving.';
+
+  @override
+  String implausibleValueLine(
+    Object name,
+    Object value,
+    Object min,
+    Object max,
+  ) {
+    return '$name: $value (typical $min–$max)';
+  }
+
+  @override
+  String get saveAnyway => 'Save anyway';
+
+  @override
   String get enterAtLeastOneValue => 'Enter at least one value.';
 
   @override

@@ -137,6 +137,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final edit = await showDialog<_ReadingEdit>(
       context: context,
       builder: (ctx) => _ReadingDialog(
+        paramKey: r.paramKey,
         pres: pres,
         initialValue: r.value,
         initialTime: r.takenAt,
@@ -294,11 +295,13 @@ class _ReadingEdit {
 /// The date/time picker mirrors the actions log's `_ActionDialog`.
 class _ReadingDialog extends StatefulWidget {
   const _ReadingDialog({
+    required this.paramKey,
     required this.pres,
     required this.initialValue,
     required this.initialTime,
   });
 
+  final String paramKey;
   final ParamPresentation pres;
 
   /// Canonical value to seed the field (shown converted to the display unit).
@@ -364,10 +367,17 @@ class _ReadingDialogState extends State<_ReadingDialog> {
                 suffixText: widget.pres.unitLabel,
                 border: const OutlineInputBorder(),
               ),
-              // Reject a blank or unparseable value instead of silently
-              // reverting to the original on save.
-              validator: (_) =>
-                  parseUserDouble(_valueCtrl.text) == null ? l.enterANumber : null,
+              // Reject a blank, unparseable, or physically impossible value
+              // instead of silently reverting to the original on save (#31).
+              validator: (_) {
+                final v = parseUserDouble(_valueCtrl.text);
+                if (v == null) return l.enterANumber;
+                final canonical = widget.pres.toCanonical(v);
+                return checkParamValue(widget.paramKey, canonical) ==
+                        ParamValueCheck.impossible
+                    ? l.impossibleValue
+                    : null;
+              },
             ),
           ],
         ),
@@ -378,15 +388,64 @@ class _ReadingDialogState extends State<_ReadingDialog> {
           child: Text(l.cancel),
         ),
         FilledButton(
-          onPressed: () {
+          onPressed: () async {
             if (!_formKey.currentState!.validate()) return;
             final v = parseUserDouble(_valueCtrl.text)!;
-            Navigator.pop(
-                context, _ReadingEdit(_time, widget.pres.toCanonical(v)));
+            final canonical = widget.pres.toCanonical(v);
+            // A value outside the plausible range needs explicit confirmation
+            // before it replaces the stored one (#31).
+            if (checkParamValue(widget.paramKey, canonical) ==
+                ParamValueCheck.implausible) {
+              final proceed = await _confirmImplausible(l, canonical);
+              if (proceed != true) return;
+            }
+            if (!context.mounted) return;
+            Navigator.pop(context, _ReadingEdit(_time, canonical));
           },
           child: Text(l.save),
         ),
       ],
+    );
+  }
+
+  /// Asks the user to confirm a value outside the plausible range, echoing the
+  /// value as the app understood it (which is what exposes a locale mis-parse).
+  Future<bool?> _confirmImplausible(AppLocalizations l, double canonical) {
+    // `implausible` implies the catalog defines the range.
+    final def = kParameterByKey[widget.paramKey]!;
+    final pres = widget.pres;
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.implausibleTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.implausibleIntro),
+            const SizedBox(height: 12),
+            Text(
+              l.implausibleValueLine(
+                l.paramName(widget.paramKey),
+                '${pres.format(canonical)} ${pres.unitLabel}',
+                pres.format(def.plausibleMin!),
+                '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
+              ),
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.saveAnyway),
+          ),
+        ],
+      ),
     );
   }
 }

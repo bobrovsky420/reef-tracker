@@ -346,6 +346,40 @@ class AppLocalizationsCs extends AppLocalizations {
   String get invalidVolume => 'Zadejte platný kladný objem.';
 
   @override
+  String get invalidPositiveNumber => 'Zadejte kladné číslo.';
+
+  @override
+  String get invalidIntervalDays => 'Zadejte celý počet dní (alespoň 1).';
+
+  @override
+  String impossibleValueFor(Object name) {
+    return '$name: tato hodnota není fyzikálně možná.';
+  }
+
+  @override
+  String get impossibleValue => 'Tato hodnota není fyzikálně možná.';
+
+  @override
+  String get implausibleTitle => 'Neobvyklé hodnoty';
+
+  @override
+  String get implausibleIntro =>
+      'Následující hodnota je mimo obvyklý rozsah. Před uložením zkontrolujte překlepy.';
+
+  @override
+  String implausibleValueLine(
+    Object name,
+    Object value,
+    Object min,
+    Object max,
+  ) {
+    return '$name: $value (obvykle $min–$max)';
+  }
+
+  @override
+  String get saveAnyway => 'Přesto uložit';
+
+  @override
   String get enterAtLeastOneValue => 'Zadejte alespoň jednu hodnotu.';
 
   @override

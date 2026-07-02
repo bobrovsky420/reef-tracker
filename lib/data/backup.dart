@@ -197,6 +197,32 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
         'schemaVersion ${data.schemaVersion} > app $appSchemaVersion');
   }
 
+  // Preserved AUTOINCREMENT ids must stay in a sane range (#33): once the
+  // sqlite_sequence max reaches 2^63−1 SQLite refuses *all* future inserts
+  // (SQLITE_FULL), permanently breaking the table after restore. Negative and
+  // zero ids are equally bogus for AUTOINCREMENT columns. 2^31 is orders of
+  // magnitude beyond any real backup while leaving the id space practically
+  // inexhaustible after restore.
+  const maxSaneId = 1 << 31;
+  void requireSaneIds(String section, Iterable<Value<int>> ids) {
+    for (final id in ids) {
+      // An absent id is fine — SQLite assigns the next one on insert.
+      if (id.present && (id.value < 1 || id.value > maxSaneId)) {
+        throw InvalidBackupException(BackupRejection.inconsistent,
+            '$section id ${id.value} out of range');
+      }
+    }
+  }
+
+  requireSaneIds('tanks', data.tanks.map((r) => r.id));
+  requireSaneIds('trackedParameters', data.params.map((r) => r.id));
+  requireSaneIds('readings', data.readings.map((r) => r.id));
+  requireSaneIds('waterChanges', data.waterChanges.map((r) => r.id));
+  requireSaneIds('carbonChanges', data.carbonChanges.map((r) => r.id));
+  requireSaneIds(
+      'equipmentCleanings', data.equipmentCleanings.map((r) => r.id));
+  requireSaneIds('dosingEntries', data.dosingEntries.map((r) => r.id));
+
   // Unique aquarium ids (they are the FK target for every other table).
   final tankIds = <int>{};
   for (final t in data.tanks) {

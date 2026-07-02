@@ -347,6 +347,40 @@ class AppLocalizationsRu extends AppLocalizations {
   String get invalidVolume => 'Введите корректный положительный объём.';
 
   @override
+  String get invalidPositiveNumber => 'Введите положительное число.';
+
+  @override
+  String get invalidIntervalDays => 'Введите целое число дней (не менее 1).';
+
+  @override
+  String impossibleValueFor(Object name) {
+    return '$name: это значение физически невозможно.';
+  }
+
+  @override
+  String get impossibleValue => 'Это значение физически невозможно.';
+
+  @override
+  String get implausibleTitle => 'Необычные значения';
+
+  @override
+  String get implausibleIntro =>
+      'Следующее значение выходит за пределы обычного диапазона. Проверьте, нет ли опечатки, прежде чем сохранять.';
+
+  @override
+  String implausibleValueLine(
+    Object name,
+    Object value,
+    Object min,
+    Object max,
+  ) {
+    return '$name: $value (обычно $min–$max)';
+  }
+
+  @override
+  String get saveAnyway => 'Всё равно сохранить';
+
+  @override
   String get enterAtLeastOneValue => 'Введите хотя бы одно значение.';
 
   @override

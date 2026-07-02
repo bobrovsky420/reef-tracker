@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
@@ -52,6 +53,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     if (tank == null) return;
     final prefs = ref.read(unitPrefsProvider);
     final entries = <TrackedParameter, double>{};
+    final implausible = <TrackedParameter>[];
     for (final p in params) {
       final text = _controllers[p.id]?.text.trim() ?? '';
       if (text.isEmpty) continue;
@@ -62,12 +64,31 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
         return;
       }
       // Store canonically (e.g. °C, SG) regardless of the display unit.
-      entries[p] = presentationOf(p, prefs).toCanonical(value);
+      final canonical = presentationOf(p, prefs).toCanonical(value);
+      // Sanity-check the canonical value (#31): impossible measurements are
+      // rejected; merely implausible ones are collected and confirmed below,
+      // so a genuinely extreme reading stays recordable.
+      switch (checkParamValue(p.paramKey, canonical)) {
+        case ParamValueCheck.impossible:
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(l.impossibleValueFor(l.paramName(p.paramKey)))));
+          return;
+        case ParamValueCheck.implausible:
+          implausible.add(p);
+        case ParamValueCheck.ok:
+          break;
+      }
+      entries[p] = canonical;
     }
     if (entries.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.enterAtLeastOneValue)));
       return;
+    }
+    if (implausible.isNotEmpty) {
+      final proceed = await _confirmImplausible(
+          l, [for (final p in implausible) (p, entries[p]!)], prefs);
+      if (proceed != true || !mounted) return;
     }
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
@@ -97,6 +118,59 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Asks the user to confirm values outside their plausible range before
+  /// saving (#31). Shows each suspicious value as the app understood it, in
+  /// the display unit, next to the typical range — which is what exposes a
+  /// locale mis-parse (`1,300` read as 1.3).
+  Future<bool?> _confirmImplausible(
+    AppLocalizations l,
+    List<(TrackedParameter, double)> values,
+    UnitPrefs prefs,
+  ) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.implausibleTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.implausibleIntro),
+            const SizedBox(height: 12),
+            for (final (p, canonical) in values)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Builder(builder: (_) {
+                  final pres = presentationOf(p, prefs);
+                  // `implausible` implies the catalog defines the range.
+                  final def = kParameterByKey[p.paramKey]!;
+                  return Text(
+                    l.implausibleValueLine(
+                      l.paramName(p.paramKey),
+                      '${pres.format(canonical)} ${pres.unitLabel}',
+                      pres.format(def.plausibleMin!),
+                      '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  );
+                }),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.saveAnyway),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

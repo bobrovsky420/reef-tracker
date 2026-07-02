@@ -15,11 +15,38 @@ import 'package:reeftracker/l10n/app_localizations.dart';
 /// `/parameters/:id/edit` routes must work from the URL alone (deep link,
 /// state restoration) — `state.extra` is only an in-app fast path.
 void main() {
+  /// Pumps a bounded amount of fake time in small steps.
+  ///
+  /// Deliberately NOT [WidgetTester.pumpAndSettle]: the app legitimately shows
+  /// a `CircularProgressIndicator` while drift streams load, and its endless
+  /// animation keeps scheduling frames, so `pumpAndSettle` never settles and
+  /// the test hangs until the 10-minute watchdog (this hung CI too). Stepping
+  /// fake time forward fires drift's zero-duration stream timers and lets the
+  /// UI rebuild with data, without ever waiting for "no scheduled frames".
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+  }
+
+  /// Unmounts the app and flushes the timers that drift's watched queries keep
+  /// pending, *inside* the test body — the binding's "A Timer is still
+  /// pending" invariant check runs before `addTearDown` callbacks, so a
+  /// teardown-time unmount is too late. Call as the last step of every test.
+  Future<void> unmountApp(WidgetTester tester) async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  }
+
   /// Boots the real [appRouter] against an in-memory database and returns the
   /// database for seeding.
   Future<AppDatabase> pumpRouterApp(WidgetTester tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
+    // These tests exercise routing, not the first-run feature tour. Left
+    // unseen, the tour fires once a tank exists and its delayed showcase
+    // overlay insertions land after navigation/teardown, failing the test.
+    await AppSettings(db).setTourSeen(true);
     // The router singleton keeps its location across tests; park it at home
     // so the next test starts from a known state.
     addTearDown(() => appRouter.go('/'));
@@ -33,7 +60,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
     return db;
   }
 
@@ -42,13 +69,17 @@ void main() {
     final db = await pumpRouterApp(tester);
     final tankId =
         await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
-    final params = await db.watchTrackedParameters(tankId).first;
+    // A plain get, not `watchTrackedParameters(...).first`: awaiting a drift
+    // *stream* inside testWidgets' FakeAsync zone deadlocks — the emission is
+    // scheduled on a zero-duration timer that only fires while pumping.
+    final params = await db.getTrackedParameters(tankId);
     expect(params, isNotEmpty, reason: 'preset must track parameters');
 
     appRouter.go('/parameters/${params.first.id}/edit');
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.byType(ParameterEditScreen), findsOneWidget);
+    await unmountApp(tester);
   });
 
   testWidgets('/tanks/:id/edit without extra opens the edit form, not create',
@@ -58,11 +89,12 @@ void main() {
         await db.createTankWithPreset(name: 'Reef One', type: SetupType.mixed);
 
     appRouter.go('/tanks/$tankId/edit');
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.byType(TankEditScreen), findsOneWidget);
     // The form is pre-filled with the existing tank, not a blank create form.
     expect(find.text('Reef One'), findsWidgets);
+    await unmountApp(tester);
   });
 
   testWidgets('an unknown :id redirects home instead of crashing',
@@ -71,8 +103,9 @@ void main() {
     await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
 
     appRouter.go('/parameters/424242/edit');
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.byType(HomeShell), findsOneWidget);
+    await unmountApp(tester);
   });
 }

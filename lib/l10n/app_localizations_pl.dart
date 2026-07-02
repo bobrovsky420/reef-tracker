@@ -347,6 +347,41 @@ class AppLocalizationsPl extends AppLocalizations {
   String get invalidVolume => 'Wprowadź prawidłową dodatnią objętość.';
 
   @override
+  String get invalidPositiveNumber => 'Wpisz liczbę dodatnią.';
+
+  @override
+  String get invalidIntervalDays =>
+      'Wpisz całkowitą liczbę dni (co najmniej 1).';
+
+  @override
+  String impossibleValueFor(Object name) {
+    return '$name: ta wartość jest fizycznie niemożliwa.';
+  }
+
+  @override
+  String get impossibleValue => 'Ta wartość jest fizycznie niemożliwa.';
+
+  @override
+  String get implausibleTitle => 'Nietypowe wartości';
+
+  @override
+  String get implausibleIntro =>
+      'Poniższa wartość wykracza poza typowy zakres. Sprawdź, czy nie ma literówki, zanim zapiszesz.';
+
+  @override
+  String implausibleValueLine(
+    Object name,
+    Object value,
+    Object min,
+    Object max,
+  ) {
+    return '$name: $value (typowo $min–$max)';
+  }
+
+  @override
+  String get saveAnyway => 'Zapisz mimo to';
+
+  @override
   String get enterAtLeastOneValue => 'Wpisz co najmniej jedną wartość.';
 
   @override

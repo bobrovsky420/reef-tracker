@@ -23,6 +23,14 @@ class HomeShell extends ConsumerStatefulWidget {
 }
 
 class _HomeShellState extends ConsumerState<HomeShell> {
+  /// The instance currently owning the ShowcaseView registration. During a
+  /// route swap the incoming HomeShell mounts (and registers) *before* the
+  /// outgoing one disposes, so an unguarded dispose-time unregister would tear
+  /// down the new instance's registration — the showcase overlay then throws
+  /// "No ShowcaseView registered" on its next rebuild (hit by the unknown-id
+  /// redirect-home path).
+  static _HomeShellState? _showcaseOwner;
+
   int _index = 0;
 
   /// On the Measurements tab, whether to show the stacked-graph comparison view
@@ -55,6 +63,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     // Register the showcase controller for this screen's scope. Localized
     // tooltip text/buttons are supplied per-Showcase in build (where
     // AppLocalizations is available).
+    _showcaseOwner = this;
     ShowcaseView.register(
       blurValue: 1,
       globalTooltipActionConfig: const TooltipActionConfig(
@@ -95,7 +104,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   void dispose() {
-    ShowcaseView.get().unregister();
+    // Only the owning instance may unregister — see [_showcaseOwner].
+    if (identical(_showcaseOwner, this)) {
+      ShowcaseView.get().unregister();
+      _showcaseOwner = null;
+    }
     super.dispose();
   }
 
