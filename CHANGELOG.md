@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.1] - 2026-07-02
+
+### Fixed
+- The app could hang forever on the launch splash screen on some devices
+  (seen on 0.15.3): startup waited unbounded on a platform call that never
+  answers when made before the first frame (flutter/flutter#72872). The
+  pre-frame locale/database warm-up is now time-bounded and the database's
+  directory lookup retries after the first frame, so launch always proceeds.
+
 ## [0.16.0] - 2026-07-02
 
 ### Changed
