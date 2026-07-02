@@ -739,6 +739,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The backup is inconsistent and can\'t be restored';
 
   @override
+  String get dataLoadFailed =>
+      'Some data failed to load. If this keeps happening, restart the app or restore a backup.';
+
+  @override
   String get autoBackupTitle => 'Automatic backup';
 
   @override

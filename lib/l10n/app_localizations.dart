@@ -1399,6 +1399,12 @@ abstract class AppLocalizations {
   /// **'The backup is inconsistent and can\'t be restored'**
   String get backupInconsistent;
 
+  /// SnackBar shown when a database query fails; without it the affected screen would just look empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Some data failed to load. If this keeps happening, restart the app or restore a backup.'**
+  String get dataLoadFailed;
+
   /// No description provided for @autoBackupTitle.
   ///
   /// In en, this message translates to:

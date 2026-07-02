@@ -27,7 +27,9 @@ String formatDateTime(BuildContext context, DateTime t, {bool weekday = true}) {
 /// Shows a date picker followed by a time picker and returns the composed
 /// [DateTime], **clamped so it can never land in the future** — readings,
 /// water changes and cleanings are always logged in the past or now. Returns
-/// `null` if the user cancels the date step (or the context unmounts).
+/// `null` if the user cancels either step (or the context unmounts): a
+/// cancelled time picker aborts the whole pick rather than defaulting the
+/// time to midnight (#16).
 ///
 /// Guards two ways the native pickers could otherwise produce a future time:
 /// the date page is capped at today (`lastDate: now`), and because
@@ -50,10 +52,10 @@ Future<DateTime?> pickPastDateTime(
     context: context,
     initialTime: TimeOfDay.fromDateTime(seed),
   );
-  if (!context.mounted) return null;
+  if (time == null || !context.mounted) return null;
   final now = DateTime.now();
-  final composed = DateTime(
-      date.year, date.month, date.day, time?.hour ?? 0, time?.minute ?? 0);
+  final composed =
+      DateTime(date.year, date.month, date.day, time.hour, time.minute);
   // Truncate to the minute (readings group at minute precision) when clamping.
   return composed.isAfter(now)
       ? DateTime(now.year, now.month, now.day, now.hour, now.minute)

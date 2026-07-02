@@ -742,6 +742,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Резервная копия несогласованна и не может быть восстановлена';
 
   @override
+  String get dataLoadFailed =>
+      'Не удалось загрузить часть данных. Если это повторяется, перезапустите приложение или восстановите резервную копию.';
+
+  @override
   String get autoBackupTitle => 'Автоматическое резервное копирование';
 
   @override

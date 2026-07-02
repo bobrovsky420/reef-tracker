@@ -744,6 +744,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Kopia zapasowa jest niespójna i nie można jej przywrócić';
 
   @override
+  String get dataLoadFailed =>
+      'Nie udało się wczytać części danych. Jeśli problem się powtarza, uruchom aplikację ponownie lub przywróć kopię zapasową.';
+
+  @override
   String get autoBackupTitle => 'Automatyczna kopia zapasowa';
 
   @override

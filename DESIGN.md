@@ -283,7 +283,18 @@ invalidation), while **derived values are plain memoized `Provider`s**
 `tankHealthProvider`) that Riverpod re-runs only when a watched input changes —
 never on a mere widget rebuild. Nothing uses `autoDispose`: state is small and
 single-user, so providers simply live for the app's lifetime (pairing with the
-home shell's `IndexedStack`, which keeps tab widget state alive too). The graph:
+home shell's `IndexedStack`, which keeps tab widget state alive too).
+
+Consumers read the stream providers as `.value ?? const []`, so a failed DB
+query would otherwise render as "no data". `ProviderErrorObserver`
+(`lib/app/provider_errors.dart`, installed on the root `ProviderScope` in
+`main.dart`) closes that gap: every provider failure — build throw or
+Stream/Future error emission — is logged via `FlutterError.reportError` and
+surfaced as a localized SnackBar through `MaterialApp.router`'s
+`scaffoldMessengerKey`, rate-limited (one per minute) because a single broken
+query cascades through the derived providers and riverpod's automatic retries.
+
+The graph:
 
 - `tanksProvider` (all tanks), `activeTankIdProvider` (persisted), `activeTankProvider`
   (resolves id → tank, falls back to first tank).
@@ -688,7 +699,8 @@ timestamp is chosen via the shared `pickPastDateTime` helper (in
 [l10n_helpers.dart](lib/l10n/l10n_helpers.dart)) — also used by the reading-edit
 and actions dialogs — which caps the date/time picker at the current minute so a
 reading/action can **never** be dated in the future (a future timestamp would
-skew trends/health/"time ago" and be clipped off charts pinned to `now`). The
+skew trends/health/"time ago" and be clipped off charts pinned to `now`), and
+aborts (returns null) when either the date or the time step is cancelled. The
 downstream consumers additionally tolerate a moving clock via `clock.dart`
 (`ageSince`/`daysSince`).
 

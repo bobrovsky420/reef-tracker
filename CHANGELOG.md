@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new database indexes on the most-used lookups.
 
 ### Fixed
+- **Database errors are no longer invisible**: when reading data fails (e.g. a
+  damaged database), the app now shows a "Some data failed to load" warning and
+  logs the error, instead of silently rendering the affected screens as if the
+  tank were empty.
+- **Cancelling the time picker now aborts** when logging a reading, water
+  change, or cleaning at a custom date & time — previously the entry was
+  silently recorded at midnight of the chosen day.
 - **Backups no longer stop silently after a clock rollback**: if the device
   clock moves backwards past the last-backup timestamp, the next
   launch/resume takes a backup immediately instead of waiting for the clock to

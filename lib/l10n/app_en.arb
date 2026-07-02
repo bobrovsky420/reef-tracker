@@ -275,6 +275,10 @@
   "backupTooNew": "This backup was made by a newer version of the app and can't be restored here",
   "backupCorrupted": "The backup file is damaged or incomplete",
   "backupInconsistent": "The backup is inconsistent and can't be restored",
+  "dataLoadFailed": "Some data failed to load. If this keeps happening, restart the app or restore a backup.",
+  "@dataLoadFailed": {
+    "description": "SnackBar shown when a database query fails; without it the affected screen would just look empty."
+  },
   "autoBackupTitle": "Automatic backup",
   "autoBackupSubtitle": "Keep recent copies of your data on this device",
   "autoBackupFrequency": "Frequency",

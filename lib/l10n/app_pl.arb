@@ -229,6 +229,7 @@
   "backupTooNew": "Ta kopia zapasowa została utworzona przez nowszą wersję aplikacji i nie można jej tu przywrócić",
   "backupCorrupted": "Plik kopii zapasowej jest uszkodzony lub niekompletny",
   "backupInconsistent": "Kopia zapasowa jest niespójna i nie można jej przywrócić",
+  "dataLoadFailed": "Nie udało się wczytać części danych. Jeśli problem się powtarza, uruchom aplikację ponownie lub przywróć kopię zapasową.",
   "autoBackupTitle": "Automatyczna kopia zapasowa",
   "autoBackupSubtitle": "Przechowuj najnowsze kopie danych na tym urządzeniu",
   "autoBackupFrequency": "Częstotliwość",

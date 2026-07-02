@@ -2,13 +2,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'app/provider_errors.dart';
 import 'app/providers.dart';
 import 'app/router.dart';
 import 'data/auto_backup.dart';
 import 'l10n/app_localizations.dart';
 
 void main() {
-  runApp(const ProviderScope(child: ReefTrackerApp()));
+  runApp(ProviderScope(
+    observers: [ProviderErrorObserver(showError: _warnDataLoadFailed)],
+    child: const ReefTrackerApp(),
+  ));
+}
+
+/// Attached to [MaterialApp.router] so provider failures can be surfaced from
+/// outside the widget tree (see [ProviderErrorObserver]).
+final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+/// Shows the localized "data failed to load" SnackBar (#21). A failure can
+/// fire before the first frame (e.g. the database failing to open during the
+/// initial build), when no ScaffoldMessenger exists yet — in that case retry
+/// once after the frame instead of dropping the warning.
+void _warnDataLoadFailed() {
+  void show() {
+    final messenger = _messengerKey.currentState;
+    final context = _messengerKey.currentContext;
+    if (messenger == null || context == null) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(AppLocalizations.of(context).dataLoadFailed),
+      duration: const Duration(seconds: 6),
+    ));
+  }
+
+  if (_messengerKey.currentState != null) {
+    show();
+  } else {
+    WidgetsBinding.instance.addPostFrameCallback((_) => show());
+  }
 }
 
 class ReefTrackerApp extends ConsumerStatefulWidget {
@@ -60,6 +90,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     const seed = Color(0xFF0277BD); // reef blue
     final locale = ref.watch(localeProvider);
     return MaterialApp.router(
+      scaffoldMessengerKey: _messengerKey,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       locale: locale,

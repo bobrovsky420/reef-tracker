@@ -229,6 +229,7 @@
   "backupTooNew": "Tato záloha byla vytvořena novější verzí aplikace a nelze ji zde obnovit",
   "backupCorrupted": "Soubor zálohy je poškozený nebo neúplný",
   "backupInconsistent": "Záloha je nekonzistentní a nelze ji obnovit",
+  "dataLoadFailed": "Některá data se nepodařilo načíst. Pokud se to opakuje, restartujte aplikaci nebo obnovte zálohu.",
   "autoBackupTitle": "Automatická záloha",
   "autoBackupSubtitle": "Uchovávat nedávné kopie dat v tomto zařízení",
   "autoBackupFrequency": "Četnost",

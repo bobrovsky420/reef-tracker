@@ -229,6 +229,7 @@
   "backupTooNew": "Diese Sicherung wurde mit einer neueren App-Version erstellt und kann hier nicht wiederhergestellt werden",
   "backupCorrupted": "Die Sicherungsdatei ist beschädigt oder unvollständig",
   "backupInconsistent": "Die Sicherung ist inkonsistent und kann nicht wiederhergestellt werden",
+  "dataLoadFailed": "Einige Daten konnten nicht geladen werden. Falls das wiederholt auftritt, starte die App neu oder stelle eine Sicherung wieder her.",
   "autoBackupTitle": "Automatische Sicherung",
   "autoBackupSubtitle": "Aktuelle Kopien deiner Daten auf diesem Gerät behalten",
   "autoBackupFrequency": "Häufigkeit",

@@ -746,6 +746,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Sicherung ist inkonsistent und kann nicht wiederhergestellt werden';
 
   @override
+  String get dataLoadFailed =>
+      'Einige Daten konnten nicht geladen werden. Falls das wiederholt auftritt, starte die App neu oder stelle eine Sicherung wieder her.';
+
+  @override
   String get autoBackupTitle => 'Automatische Sicherung';
 
   @override

@@ -740,6 +740,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Záloha je nekonzistentní a nelze ji obnovit';
 
   @override
+  String get dataLoadFailed =>
+      'Některá data se nepodařilo načíst. Pokud se to opakuje, restartujte aplikaci nebo obnovte zálohu.';
+
+  @override
   String get autoBackupTitle => 'Automatická záloha';
 
   @override
