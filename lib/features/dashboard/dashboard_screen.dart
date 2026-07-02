@@ -14,6 +14,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/tank_health_badge.dart';
 import '../../widgets/trend_view.dart';
+import '../../widgets/zone_visuals.dart';
 
 /// Grid of parameter status tiles for the active tank. Hosted by `HomeShell`,
 /// which owns the surrounding `Scaffold`, app bar, bottom navigation and FAB.
@@ -67,8 +68,10 @@ class DashboardBody extends ConsumerWidget {
           // value yet — the tile shows "No readings" (the series is empty when a
           // measurement is missing or the denominator is zero), matching how
           // measurement tiles render before their first reading.
-          final numHist = byParam[kind.numeratorKey] ?? const <Reading>[];
-          final denHist = byParam[kind.denominatorKey] ?? const <Reading>[];
+          final numHist =
+              (byParam[kind.numeratorKey] ?? const []).ratioReadings;
+          final denHist =
+              (byParam[kind.denominatorKey] ?? const []).ratioReadings;
           final series = computeRatioSeries(
             numHist.reversed.toList(),
             denHist.reversed.toList(),

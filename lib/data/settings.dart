@@ -1,6 +1,9 @@
 import '../domain/trend.dart';
 import '../domain/units.dart';
 import 'database.dart';
+import 'setting_keys.dart';
+
+export 'setting_keys.dart';
 
 /// Single source of truth for the `Settings` key/value store: every persisted
 /// key, its default, its typed accessor, and whether it is a **device-local
@@ -13,24 +16,8 @@ import 'database.dart';
 /// T4) — which also makes excluding device preferences from a backup restore a
 /// one-liner (TODO #18, [SettingKey.deviceLocalKeys]).
 
-// --- Key strings (the persisted names; never change without a migration) -----
-
-const kActiveTankKey = 'active_tank_id';
-const kTempUnitKey = 'temp_unit';
-const kSalinityUnitKey = 'salinity_unit';
-const kVolumeUnitKey = 'volume_unit';
-const kLocaleKey = 'locale';
-const kChartRangeKey = 'chart_range';
-const kTrendEnabledKey = 'trend_enabled';
-const kTrendWindowKey = 'trend_window';
-const kTrendHorizonKey = 'trend_horizon';
-const kHealthDisplayKey = 'health_display';
-const kTourSeenKey = 'tour_v1_seen';
-const kAutoBackupEnabledKey = 'auto_backup_enabled';
-const kAutoBackupIntervalKey = 'auto_backup_interval';
-const kAutoBackupKeepKey = 'auto_backup_keep';
-const kLastAutoBackupAtKey = 'last_auto_backup_at';
-const kLastBackupErrorAtKey = 'last_backup_error_at';
+// The persisted key strings live in `setting_keys.dart` (re-exported above) so
+// `database.dart` can share them without an import cycle (#55).
 
 // --- Non-key defaults --------------------------------------------------------
 

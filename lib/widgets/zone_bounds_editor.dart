@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
+import 'zone_visuals.dart';
 
 /// Shared editor for a set of four zone boundaries
 /// (`amberLow` ≤ `greenLow` ≤ `greenHigh` ≤ `amberHigh`), used by both the

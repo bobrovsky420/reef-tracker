@@ -18,7 +18,7 @@ import 'app_localizations.dart';
 /// Set [weekday] to false in width-constrained spots (e.g. dialogs) to drop the
 /// leading weekday so the date + time fit on one line.
 String formatDateTime(BuildContext context, DateTime t, {bool weekday = true}) {
-  final use24 = MediaQuery.of(context).alwaysUse24HourFormat;
+  final use24 = MediaQuery.alwaysUse24HourFormatOf(context);
   final time = use24 ? DateFormat.Hm() : DateFormat.jm();
   final date = weekday ? DateFormat.yMMMEd() : DateFormat.yMMMd();
   return '${date.format(t)} ${time.format(t)}';

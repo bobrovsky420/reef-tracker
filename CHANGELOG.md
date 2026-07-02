@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-07-02
+
+### Changed
+- Internal architecture cleanup with no behavior changes: the domain layer
+  (zones, ratios, dose math, parameter catalog) no longer depends on Flutter
+  or the database, dead English-only display fields were removed in favor of
+  the localization pipeline, and the `active_tank_id` settings key now has a
+  single shared definition.
+
+### Removed
+- The end-of-life `sqlite3_flutter_libs` dependency (inert — the bundled
+  SQLite already comes from the actively maintained `sqlite3` package).
+
 ## [0.15.3] - 2026-07-01
 
 ### Added

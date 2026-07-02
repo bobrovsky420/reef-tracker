@@ -20,7 +20,6 @@ void main() {
       for (final p in kReefParameters) {
         expect(p.key, isNotEmpty, reason: 'empty key');
         expect(p.key.trim(), p.key, reason: '${p.key} has surrounding space');
-        expect(p.name, isNotEmpty, reason: '${p.key} has empty name');
         expect(p.unit, isNotEmpty, reason: '${p.key} has empty unit');
         expect(p.decimals, greaterThanOrEqualTo(0),
             reason: '${p.key} has negative decimals');

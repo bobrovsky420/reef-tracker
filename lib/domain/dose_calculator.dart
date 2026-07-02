@@ -22,11 +22,20 @@ library;
 
 import 'dart:math';
 
-import '../data/database.dart';
 import 'supplement_catalog.dart';
 
 /// A timestamped measurement used to derive the consumption trend.
 typedef DosePoint = ({DateTime t, double value});
+
+/// The schedule half of a dosing plan entry — the only fields
+/// [dailyEquivalentDose] reads. A plain record so the domain stays decoupled
+/// from the DB's `DosingEntry` row (callers map via `DosingEntry.schedule`).
+typedef DoseSchedule = ({
+  double? amount,
+  String? frequency,
+  int? intervalDays,
+  String? weekdays,
+});
 
 /// Outcome category for a calculation, driving the guidance message in the UI.
 enum DoseCalcStatus {
@@ -135,28 +144,29 @@ double? potencyFromReference({
   return rise * refVolumeLiters / doseAmount;
 }
 
-/// Average daily amount (in the entry's own unit) implied by a dosing plan
-/// [entry]: its `amount` scaled by how often it is actually dosed.
+/// Average daily amount (in the entry's own unit) implied by a dosing plan's
+/// [schedule]: its `amount` scaled by how often it is actually dosed.
 ///
-/// `perDay` basis = the amount is a daily total on each dosing day; `perDose`
-/// basis = the amount is one discrete dose. The schedule sets dosing days per
-/// week (daily → 7, every-N-days → 7/N, weekly → number of selected weekdays;
-/// no schedule → treated as daily). Returns 0 when no amount is recorded, or
-/// when a stored every-N-days interval is invalid (≤ 0): a garbage interval
-/// means the true cadence is unknown, and pretending "daily" would skew the
-/// dose calculator upward (#8).
-double dailyEquivalentDose(DosingEntry entry) {
-  final amount = entry.amount;
+/// The entry's stored basis (`perDay` = daily total on each dosing day,
+/// `perDose` = one discrete dose) is deliberately not part of [DoseSchedule]:
+/// for both, the per-active-day amount is `amount`, so it cannot change the
+/// result. The schedule sets dosing days per week (daily → 7, every-N-days →
+/// 7/N, weekly → number of selected weekdays; no schedule → treated as daily).
+/// Returns 0 when no amount is recorded, or when a stored every-N-days
+/// interval is invalid (≤ 0): a garbage interval means the true cadence is
+/// unknown, and pretending "daily" would skew the dose calculator upward (#8).
+double dailyEquivalentDose(DoseSchedule schedule) {
+  final amount = schedule.amount;
   if (amount == null) return 0;
-  final freq = DoseFrequency.fromName(entry.frequency);
+  final freq = DoseFrequency.fromName(schedule.frequency);
   double dosingDaysPerWeek;
   switch (freq) {
     case DoseFrequency.everyNDays:
-      final n = entry.intervalDays ?? 1;
+      final n = schedule.intervalDays ?? 1;
       if (n <= 0) return 0;
       dosingDaysPerWeek = 7 / n;
     case DoseFrequency.weekly:
-      final count = _weekdayCount(entry.weekdays);
+      final count = _weekdayCount(schedule.weekdays);
       dosingDaysPerWeek = count > 0 ? count.toDouble() : 7;
     case DoseFrequency.daily:
     case null:

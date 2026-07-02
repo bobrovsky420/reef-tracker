@@ -9,6 +9,7 @@ import '../domain/units.dart';
 import '../domain/zones.dart';
 import '../features/actions/water_change_markers.dart';
 import '../l10n/app_localizations.dart';
+import 'zone_visuals.dart';
 
 /// The shared chart time range, stored as its [label] ('7d', '30d', '90d',
 /// 'All') via [chartRangeProvider]. Applied to every parameter graph.

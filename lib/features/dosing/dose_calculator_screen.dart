@@ -112,7 +112,7 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     DoseUnit? unit;
     double? catalog;
     for (final e in entries.where((e) => e.elementKey == element)) {
-      sum += dailyEquivalentDose(e);
+      sum += dailyEquivalentDose(e.schedule);
       if (e.amount != null) unit ??= DoseUnit.fromName(e.amountUnit);
       final key = e.productKey;
       if (key != null) {

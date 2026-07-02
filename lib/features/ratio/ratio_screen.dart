@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
+import '../../data/database.dart';
 import '../../domain/ratio.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/zone_visuals.dart';
 
 /// Time-series graph of a [RatioKind] for the active tank.
 class RatioScreen extends ConsumerWidget {
@@ -55,8 +57,10 @@ class RatioScreen extends ConsumerWidget {
       body: (numeratorAsync.isLoading || denominatorAsync.isLoading)
           ? const Center(child: CircularProgressIndicator())
           : Builder(builder: (context) {
-              final numerator = numeratorAsync.value ?? const [];
-              final denominator = denominatorAsync.value ?? const [];
+              final numerator =
+                  (numeratorAsync.value ?? const []).ratioReadings;
+              final denominator =
+                  (denominatorAsync.value ?? const []).ratioReadings;
               final all = computeRatioSeries(numerator, denominator);
               final cutoff = days == null
                   ? null

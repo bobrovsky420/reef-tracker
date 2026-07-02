@@ -6,6 +6,7 @@ import '../domain/trend.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
+import 'zone_visuals.dart';
 
 IconData _directionIcon(TrendDirection d) {
   switch (d) {

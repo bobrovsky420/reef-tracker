@@ -1,6 +1,21 @@
-import '../data/database.dart';
+/// Pure, testable ratio math and presentation helpers. Like `trend.dart` and
+/// `dose_calculator.dart` this has no DB dependency — it works on plain
+/// records ([RatioReading], [RatioSettings]) mapped from storage rows at the
+/// data boundary, so it can be unit-tested in isolation.
+library;
+
 import 'units.dart';
 import 'zones.dart';
+
+/// A timestamped parameter value used by the ratio math. A plain record so the
+/// domain stays decoupled from the DB's `Reading` row (callers map via
+/// `Reading.ratioReading`).
+typedef RatioReading = ({DateTime takenAt, double value});
+
+/// A tank's stored settings for one ratio card as the domain sees them,
+/// mapped from the `RatioVisibilities` row at the data boundary (via
+/// `RatioVisibility.settings`). [bounds] may be empty (= no custom bounds).
+typedef RatioSettings = ({bool visible, int displayOrder, ZoneBounds bounds});
 
 /// Stable parameter keys used to compute the supported ratios.
 const String kPhosphateKey = 'phosphate';
@@ -98,8 +113,8 @@ const Duration kRatioMaxSkew = Duration(days: 30);
 /// (the pair is half stale, not a confident "current" ratio). Both lists are
 /// newest-first (as stored for a tank).
 RatioPoint? latestRatio(
-  List<Reading> numerator,
-  List<Reading> denominator, {
+  List<RatioReading> numerator,
+  List<RatioReading> denominator, {
   Duration maxSkew = kRatioMaxSkew,
 }) {
   if (numerator.isEmpty || denominator.isEmpty) return null;
@@ -120,7 +135,7 @@ RatioPoint? latestRatio(
 /// so a ratio is produced whenever both have been recorded at least once. Both
 /// lists must be oldest-first.
 List<RatioPoint> computeRatioSeries(
-    List<Reading> numerator, List<Reading> denominator) {
+    List<RatioReading> numerator, List<RatioReading> denominator) {
   if (numerator.isEmpty || denominator.isEmpty) return const [];
 
   final times = <DateTime>{
@@ -146,8 +161,8 @@ List<RatioPoint> computeRatioSeries(
 }
 
 /// Last reading in [readings] (oldest-first) taken at or before [t], or null.
-Reading? _latestAtOrBefore(List<Reading> readings, DateTime t) {
-  Reading? found;
+RatioReading? _latestAtOrBefore(List<RatioReading> readings, DateTime t) {
+  RatioReading? found;
   for (final r in readings) {
     if (r.takenAt.isAfter(t)) break;
     found = r;
@@ -219,18 +234,13 @@ double ratioChartY(RatioKind kind, double ratio) {
   }
 }
 
-/// The effective zone bounds for [kind] on a tank: the per-tank row's bounds
-/// when set, otherwise the kind's recommended defaults. (A row with no bounds
-/// at all — e.g. created only to toggle visibility — falls back to defaults.)
-ZoneBounds ratioBounds(RatioKind kind, RatioVisibility? row) {
-  if (row == null) return kind.defaultBounds;
-  final b = ZoneBounds(
-    amberLow: row.amberLow,
-    greenLow: row.greenLow,
-    greenHigh: row.greenHigh,
-    amberHigh: row.amberHigh,
-  );
-  return b.isEmpty ? kind.defaultBounds : b;
+/// The effective zone bounds for [kind] on a tank: the per-tank stored bounds
+/// when set, otherwise the kind's recommended defaults. (Settings with no
+/// bounds at all — e.g. created only to toggle visibility — fall back to
+/// defaults.)
+ZoneBounds ratioBounds(RatioKind kind, RatioSettings? settings) {
+  if (settings == null || settings.bounds.isEmpty) return kind.defaultBounds;
+  return settings.bounds;
 }
 
 /// Health zone for a [ratio] of [kind], classifying the displayed metric
@@ -241,14 +251,14 @@ Zone ratioZone(RatioKind kind, ZoneBounds bounds, double ratio) {
   return bounds.classify(y);
 }
 
-/// Whether a ratio card is shown, from its per-tank settings row (a missing
-/// row means visible — the default).
-bool ratioRowVisible(RatioVisibility? row) => row?.visible ?? true;
+/// Whether a ratio card is shown, from its per-tank [settings] (missing
+/// settings mean visible — the default).
+bool ratioRowVisible(RatioSettings? settings) => settings?.visible ?? true;
 
-/// The dashboard display order of a ratio card from its settings row, falling
-/// back to the kind's default order when no row exists yet.
-double ratioRowOrder(RatioKind kind, RatioVisibility? row) =>
-    (row?.displayOrder ?? kind.defaultOrder).toDouble();
+/// The dashboard display order of a ratio card from its [settings], falling
+/// back to the kind's default order when none are stored yet.
+double ratioRowOrder(RatioKind kind, RatioSettings? settings) =>
+    (settings?.displayOrder ?? kind.defaultOrder).toDouble();
 
 /// A compact "Symbol value · Symbol value" breakdown of a ratio point's inputs.
 String ratioBreakdown(RatioKind kind, RatioPoint p) =>

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/domain/zones.dart';
+import 'package:reeftracker/widgets/zone_visuals.dart';
 
 void main() {
   group('ZoneBounds.classify', () {

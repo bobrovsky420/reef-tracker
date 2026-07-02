@@ -9,9 +9,9 @@ import '../data/database.dart';
 import '../domain/clock.dart';
 import '../domain/health_score.dart';
 import '../domain/units.dart';
-import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
+import 'zone_visuals.dart';
 
 /// A circular progress ring filled to [score]/100 in [color], with [center]
 /// drawn in the middle. Used at several sizes by the health badges below.

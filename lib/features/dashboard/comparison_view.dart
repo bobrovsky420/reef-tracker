@@ -9,6 +9,7 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/trend_chart.dart';
+import '../../widgets/zone_visuals.dart';
 
 /// Stacked-graph comparison view for the Measurements tab. Renders one compact
 /// line chart per enabled tracked parameter — in the same `displayOrder` as the

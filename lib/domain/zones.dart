@@ -1,4 +1,9 @@
-import 'package:flutter/material.dart';
+/// Pure, testable zone classification and chart-band math — no Flutter and no
+/// DB dependency. How a [Zone] *renders* (color, icon) lives in the widget
+/// layer: `widgets/zone_visuals.dart`.
+library;
+
+import 'package:meta/meta.dart';
 
 /// Health classification of a single reading against its configured boundaries.
 enum Zone {
@@ -137,32 +142,4 @@ List<ZoneBand> zoneBands(ZoneBounds b, double minY, double maxY) {
   if (b.amberLow != null) add(minY, b.amberLow!, Zone.red);
   if (b.amberHigh != null) add(b.amberHigh!, maxY, Zone.red);
   return bands;
-}
-
-extension ZoneVisuals on Zone {
-  Color get color {
-    switch (this) {
-      case Zone.green:
-        return const Color(0xFF2E9E5B);
-      case Zone.amber:
-        return const Color(0xFFE6A100);
-      case Zone.red:
-        return const Color(0xFFD93838);
-      case Zone.unknown:
-        return const Color(0xFF9E9E9E);
-    }
-  }
-
-  IconData get icon {
-    switch (this) {
-      case Zone.green:
-        return Icons.check_circle;
-      case Zone.amber:
-        return Icons.warning_amber_rounded;
-      case Zone.red:
-        return Icons.error;
-      case Zone.unknown:
-        return Icons.help_outline;
-    }
-  }
 }

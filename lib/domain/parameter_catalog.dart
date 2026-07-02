@@ -1,12 +1,14 @@
 /// A reef water parameter that can be tracked. The catalog below is static
 /// app data (not stored in the DB) so it can evolve without DB migrations.
+///
+/// Display name and help text are localized (`l.paramName`/`l.paramHelp`
+/// keyed by [key]), not stored here — do not add English text fields back
+/// (#54).
 class ParameterDef {
   const ParameterDef({
     required this.key,
-    required this.name,
     required this.unit,
     required this.decimals,
-    this.help,
     this.minValue,
     this.plausibleMin,
     this.plausibleMax,
@@ -15,17 +17,11 @@ class ParameterDef {
   /// Stable identifier persisted in the database (e.g. `alkalinity`).
   final String key;
 
-  /// Display name (e.g. `Alkalinity`).
-  final String name;
-
   /// Default unit of measure (e.g. `dKH`). Editable per tank.
   final String unit;
 
   /// How many decimal places to show when formatting values.
   final int decimals;
-
-  /// Optional short hint shown in the parameter editor.
-  final String? help;
 
   /// Hard physical floor in the *canonical* unit (°C, SG, ppm, …); values
   /// below it are impossible measurements (negative concentrations, SG below
@@ -76,17 +72,14 @@ ParamValueCheck checkParamValue(String paramKey, double value) {
 const List<ParameterDef> kReefParameters = [
   ParameterDef(
     key: 'temperature',
-    name: 'Temperature',
     unit: '°C',
     decimals: 1,
-    help: 'Water temperature. Stability matters more than the exact value.',
     minValue: 0,
     plausibleMin: 10,
     plausibleMax: 40,
   ),
   ParameterDef(
     key: 'ph',
-    name: 'pH',
     unit: 'pH',
     decimals: 2,
     minValue: 0,
@@ -95,27 +88,22 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'salinity',
-    name: 'Salinity',
     unit: 'SG',
     decimals: 3,
-    help: 'Specific gravity. ~1.026 SG ≈ 35 ppt.',
     minValue: 1.0,
     plausibleMin: 1.0,
     plausibleMax: 1.05,
   ),
   ParameterDef(
     key: 'alkalinity',
-    name: 'Alkalinity',
     unit: 'dKH',
     decimals: 1,
-    help: 'Carbonate hardness. Keep stable — avoid swings.',
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 30,
   ),
   ParameterDef(
     key: 'calcium',
-    name: 'Calcium (Ca)',
     unit: 'ppm',
     decimals: 0,
     minValue: 0,
@@ -124,7 +112,6 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'magnesium',
-    name: 'Magnesium (Mg)',
     unit: 'ppm',
     decimals: 0,
     minValue: 0,
@@ -133,17 +120,14 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'nitrate',
-    name: 'Nitrate (NO₃)',
     unit: 'ppm',
     decimals: 1,
-    help: 'A nutrient. Corals need a little; too much fuels algae.',
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 250,
   ),
   ParameterDef(
     key: 'phosphate',
-    name: 'Phosphate (PO₄)',
     unit: 'ppm',
     decimals: 2,
     minValue: 0,
@@ -152,17 +136,14 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'ammonia',
-    name: 'Ammonia (NH₃/₄)',
     unit: 'ppm',
     decimals: 2,
-    help: 'Toxic. Should read effectively zero in a cycled tank.',
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 10,
   ),
   ParameterDef(
     key: 'nitrite',
-    name: 'Nitrite (NO₂)',
     unit: 'ppm',
     decimals: 2,
     minValue: 0,
@@ -172,7 +153,6 @@ const List<ParameterDef> kReefParameters = [
   // ORP can dip below zero in anoxic conditions — no hard floor.
   ParameterDef(
     key: 'orp',
-    name: 'ORP',
     unit: 'mV',
     decimals: 0,
     plausibleMin: -300,
@@ -180,7 +160,6 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'potassium',
-    name: 'Potassium',
     unit: 'ppm',
     decimals: 0,
     minValue: 0,
@@ -189,7 +168,6 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'strontium',
-    name: 'Strontium',
     unit: 'ppm',
     decimals: 1,
     minValue: 0,
@@ -198,7 +176,6 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'iodine',
-    name: 'Iodine',
     unit: 'ppm',
     decimals: 2,
     minValue: 0,
@@ -207,7 +184,6 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'iron',
-    name: 'Iron',
     unit: 'ppm',
     decimals: 2,
     minValue: 0,

@@ -116,12 +116,10 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
       },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: seed),
-        useMaterial3: true,
       ),
       darkTheme: ThemeData(
         colorScheme:
             ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
-        useMaterial3: true,
       ),
       routerConfig: appRouter,
     );

@@ -1,28 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/dose_calculator.dart';
-import 'package:reeftracker/domain/supplement_catalog.dart';
 
-/// Builds a minimal [DosingEntry] for the daily-equivalent tests.
-DosingEntry entry({
+/// Builds a [DoseSchedule] record for the daily-equivalent tests.
+DoseSchedule entry({
   double? amount,
-  String? basis,
   String? frequency,
   int? intervalDays,
   String? weekdays,
 }) =>
-    DosingEntry(
-      id: 1,
-      tankId: 1,
-      product: 'Test',
+    (
       amount: amount,
-      basis: basis,
       frequency: frequency,
       intervalDays: intervalDays,
       weekdays: weekdays,
-      displayOrder: 0,
-      createdAt: DateTime(2026, 1, 1),
-      state: DosingState.active.name,
     );
 
 void main() {
@@ -178,21 +168,9 @@ void main() {
       );
     });
 
-    test('basis is currently ignored: perDose equals perDay', () {
-      // Pins that dailyEquivalentDose reads only the schedule — the stored
-      // basis (perDay vs perDose) does not change the result today (both mean
-      // "amount per active day"). If basis ever starts contributing, this
-      // must be revisited deliberately.
-      final perDay = dailyEquivalentDose(entry(
-          amount: 12, basis: 'perDay', frequency: 'everyNDays', intervalDays: 3));
-      final perDose = dailyEquivalentDose(entry(
-          amount: 12,
-          basis: 'perDose',
-          frequency: 'everyNDays',
-          intervalDays: 3));
-      expect(perDay, perDose);
-      expect(perDay, closeTo(4.0, 1e-9));
-    });
+    // Note: the entry's stored basis (perDay vs perDose) is structurally
+    // ignored now — it is not part of [DoseSchedule] — so the old pinning
+    // test ("perDose equals perDay") is guaranteed by the signature.
   });
 
   group('computeDoseCalc', () {

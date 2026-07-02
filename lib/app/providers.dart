@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../data/database.dart';
 import '../data/settings.dart';
 import '../domain/health_score.dart';
+import '../domain/ratio.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 
@@ -308,16 +309,17 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
 });
 
 final _ratioSettingsFamily = StreamProvider.autoDispose
-    .family<Map<String, RatioVisibility>, int>((ref, tankId) => ref
+    .family<Map<String, RatioSettings>, int>((ref, tankId) => ref
         .watch(dbProvider)
         .watchRatioVisibilities(tankId)
-        .map((rows) => {for (final r in rows) r.ratioKey: r}));
+        .map((rows) => {for (final r in rows) r.ratioKey: r.settings}));
 
 /// Per-tank dashboard ratio-card settings (visibility + order) for the active
-/// tank, keyed by [RatioKind.name]. Missing entries fall back to defaults
-/// (visible, ordered after measurements) via `ratioRowVisible`/`ratioRowOrder`.
+/// tank, keyed by [RatioKind.name], as domain [RatioSettings] records. Missing
+/// entries fall back to defaults (visible, ordered after measurements) via
+/// `ratioRowVisible`/`ratioRowOrder`.
 final ratioSettingsProvider =
-    Provider<AsyncValue<Map<String, RatioVisibility>>>((ref) {
+    Provider<AsyncValue<Map<String, RatioSettings>>>((ref) {
   final tank = ref.watch(activeTankProvider);
   if (tank == null) return const AsyncValue.data({});
   return ref.watch(_ratioSettingsFamily(tank.id));

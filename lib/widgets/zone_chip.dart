@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
+import 'zone_visuals.dart';
 
 /// A small colored pill showing a zone's status (OK / Attention / Act now).
 class ZoneChip extends StatelessWidget {

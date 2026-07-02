@@ -6,12 +6,15 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../domain/dose_calculator.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/presets.dart';
+import '../domain/ratio.dart';
 import '../domain/setup_type.dart';
 import '../domain/supplement_catalog.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
+import 'setting_keys.dart';
 
 /// Re-export drift's [Value] wrapper so UI code building companions/copyWith
 /// calls can use it without importing all of drift.
@@ -230,8 +233,6 @@ class Settings extends Table {
   @override
   Set<Column> get primaryKey => {key};
 }
-
-const _kActiveTankKey = 'active_tank_id';
 
 @DriftDatabase(tables: [
   Tanks,
@@ -959,20 +960,20 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> setActiveTank(int? tankId) =>
       into(settings).insertOnConflictUpdate(SettingsCompanion.insert(
-        key: _kActiveTankKey,
+        key: kActiveTankKey,
         value: Value(tankId?.toString()),
       ));
 
   Future<int?> getActiveTankId() async {
     final row = await (select(settings)
-          ..where((s) => s.key.equals(_kActiveTankKey)))
+          ..where((s) => s.key.equals(kActiveTankKey)))
         .getSingleOrNull();
     final v = row?.value;
     return v == null ? null : int.tryParse(v);
   }
 
   Stream<int?> watchActiveTankId() => (select(settings)
-        ..where((s) => s.key.equals(_kActiveTankKey)))
+        ..where((s) => s.key.equals(kActiveTankKey)))
       .watchSingleOrNull()
       .map((row) => row?.value == null ? null : int.tryParse(row!.value!));
 
@@ -1117,3 +1118,42 @@ ZoneBounds boundsOf(TrackedParameter p) => ZoneBounds(
 /// user's unit preferences.
 ParamPresentation presentationOf(TrackedParameter p, UnitPrefs prefs) =>
     presentationForKey(p.paramKey, p.unit, prefs);
+
+// --- Domain mappers ----------------------------------------------------------
+// The pure math in `lib/domain/` takes plain records instead of drift rows
+// (#52); these bridge from the rows at the data boundary.
+
+extension ReadingDomain on Reading {
+  /// This reading as the record the ratio math consumes.
+  RatioReading get ratioReading => (takenAt: takenAt, value: value);
+}
+
+extension ReadingListDomain on Iterable<Reading> {
+  /// These readings as the records the ratio math consumes, order preserved.
+  List<RatioReading> get ratioReadings =>
+      [for (final r in this) r.ratioReading];
+}
+
+extension DosingEntryDomain on DosingEntry {
+  /// The schedule fields [dailyEquivalentDose] reads.
+  DoseSchedule get schedule => (
+        amount: amount,
+        frequency: frequency,
+        intervalDays: intervalDays,
+        weekdays: weekdays,
+      );
+}
+
+extension RatioVisibilityDomain on RatioVisibility {
+  /// This row as the settings record the ratio helpers consume.
+  RatioSettings get settings => (
+        visible: visible,
+        displayOrder: displayOrder,
+        bounds: ZoneBounds(
+          amberLow: amberLow,
+          greenLow: greenLow,
+          greenHigh: greenHigh,
+          amberHigh: amberHigh,
+        ),
+      );
+}

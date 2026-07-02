@@ -152,7 +152,7 @@ class ManageParametersScreen extends ConsumerWidget {
       _RatioItem item, int index) {
     final l = AppLocalizations.of(context);
     final kind = item.kind;
-    final bounds = ratioBounds(kind, item.row);
+    final bounds = ratioBounds(kind, item.settings);
     return ListTile(
       key: ValueKey('r${kind.name}'),
       title: Text(l.ratioCardLabel(kind)),
@@ -160,7 +160,7 @@ class ManageParametersScreen extends ConsumerWidget {
       leading: Semantics(
         label: l.ratioCardLabel(kind),
         child: Switch(
-          value: ratioRowVisible(item.row),
+          value: ratioRowVisible(item.settings),
           onChanged: (v) =>
               ref.read(dbProvider).setRatioVisible(tankId, kind.name, v),
         ),
@@ -258,11 +258,11 @@ class _ParamItem extends _DashItem {
 }
 
 class _RatioItem extends _DashItem {
-  _RatioItem(this.kind, this.row);
+  _RatioItem(this.kind, this.settings);
   final RatioKind kind;
-  final RatioVisibility? row;
+  final RatioSettings? settings;
   @override
-  double get order => ratioRowOrder(kind, row);
+  double get order => ratioRowOrder(kind, settings);
 }
 
 String _boundsSummary(
