@@ -151,7 +151,13 @@ v12 added the secondary indexes above (`CREATE INDEX IF NOT EXISTS` ×6 via
 `customStatement`, matching the `@TableIndex` definitions that `createAll` uses
 for new installs); v13 added `Readings.groupId` (`addColumn`, guarded — pre-v13
 rows stay null and keep legacy timestamp grouping). Foreign keys are enabled in
-`beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
+`beforeOpen` (`PRAGMA foreign_keys = ON`), and the database opens in **WAL
+journal mode** (`pragma journal_mode = WAL` in the
+`NativeDatabase.createInBackground` setup callback, T6) so readers and writers
+don't block each other — e.g. a backup encode's SELECTs vs. a concurrent user
+write. WAL is persistent in the DB file, but the pragma runs on every open to
+cover fresh installs and pre-WAL databases alike; the `-wal`/`-shm` sidecar
+files were already handled by the backup/restore paths. **When you
 add/change a table or column you must bump `schemaVersion` and add the matching
 migration**, then run `dart run build_runner build`.
 
@@ -348,6 +354,17 @@ Stream/Future error emission — is logged via `FlutterError.reportError` and
 surfaced as a localized SnackBar through `MaterialApp.router`'s
 `scaffoldMessengerKey`, rate-limited (one per minute) because a single broken
 query cascades through the derived providers and riverpod's automatic retries.
+
+**Startup pre-warm is time-bounded.** `main()` awaits the first
+`localeCodeProvider` value before `runApp` so the first frame renders in the
+stored language (and the database open/migration is front-loaded), but only up
+to a 3 s timeout: platform-channel calls made before the first frame can hang
+forever on some devices (flutter/flutter#72872), which would freeze the app on
+the native splash screen. On timeout the app starts in the system locale and
+snaps once the value arrives. For the same reason `_documentsDir()` in
+`database.dart` retries `getApplicationDocumentsDirectory()` with a per-attempt
+timeout — `LazyDatabase` caches its open future, so a single stalled pre-frame
+call must not leave the database permanently unopenable.
 
 The graph:
 

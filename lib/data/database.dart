@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -1100,10 +1101,35 @@ String newReadingGroupId() =>
 
 LazyDatabase _open() {
   return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
+    final dir = await _documentsDir();
     final file = File(p.join(dir.path, 'reeftracker.sqlite'));
-    return NativeDatabase.createInBackground(file);
+    return NativeDatabase.createInBackground(
+      file,
+      // WAL keeps readers and writers from blocking each other (T6): a backup
+      // encode's SELECTs no longer stall user writes and vice versa. The mode
+      // is persistent, but issuing it on every open is the documented way to
+      // cover fresh installs and pre-WAL databases alike.
+      setup: (raw) => raw.execute('pragma journal_mode = WAL;'),
+    );
   });
+}
+
+/// On some devices `getApplicationDocumentsDirectory()` never answers when
+/// first called before the first frame (flutter/flutter#72872) — and
+/// [LazyDatabase] caches its open callback's future, so a single stalled call
+/// would leave the database permanently unopenable. Bound each attempt and
+/// retry: a fresh call made after the first frame answers normally. The last
+/// resort waits unbounded rather than failing the open outright.
+Future<Directory> _documentsDir() async {
+  for (var attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await getApplicationDocumentsDirectory()
+          .timeout(const Duration(seconds: 2));
+    } on TimeoutException {
+      // Retry — by now startup has likely progressed past the first frame.
+    }
+  }
+  return getApplicationDocumentsDirectory();
 }
 
 /// Convenience: build [ZoneBounds] from a tracked-parameter row.

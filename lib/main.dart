@@ -16,10 +16,16 @@ Future<void> main() async {
   // Pre-warm the stored locale override before the first frame (#24): without
   // this the app renders its first frame(s) in the system language and then
   // snaps to the chosen one. Also front-loads the database open/migration.
-  // On failure fall back to the system locale — the observer above already
+  // The wait MUST be bounded: on some devices a platform-channel call made
+  // before the first frame never answers (flutter/flutter#72872), which froze
+  // startup on the splash screen forever. On timeout (or failure) the app
+  // starts in the system locale and the database open recovers post-frame
+  // (see `_documentsDir` in database.dart); the observer above already
   // surfaces database errors to the user.
   try {
-    await container.read(localeCodeProvider.future);
+    await container
+        .read(localeCodeProvider.future)
+        .timeout(const Duration(seconds: 3));
   } catch (_) {}
   runApp(UncontrolledProviderScope(
     container: container,

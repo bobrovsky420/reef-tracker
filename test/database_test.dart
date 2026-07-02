@@ -1,9 +1,23 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/presets.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/units.dart';
+
+/// Routes path_provider to a temp folder so the real file-backed open path
+/// (`AppDatabase()` → `_open()`) works under `flutter test`.
+class _FakePathProvider extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
+  _FakePathProvider(this.root);
+  final String root;
+  @override
+  Future<String?> getApplicationDocumentsPath() async => root;
+}
 
 void main() {
   late AppDatabase db;
@@ -256,6 +270,23 @@ void main() {
       expect(pres.unitLabel, '°F');
       expect(pres.toDisplay(25), closeTo(77, 1e-9));
       expect(pres.toCanonical(77), closeTo(25, 1e-9));
+    });
+  });
+
+  group('journal mode (T6)', () {
+    test('the real file-backed open runs in WAL mode', () async {
+      final dir = await Directory.systemTemp.createTemp('reeftracker-wal');
+      final prev = PathProviderPlatform.instance;
+      PathProviderPlatform.instance = _FakePathProvider(dir.path);
+      final fileDb = AppDatabase();
+      try {
+        final row = await fileDb.customSelect('pragma journal_mode;').getSingle();
+        expect(row.read<String>('journal_mode'), 'wal');
+      } finally {
+        await fileDb.close();
+        PathProviderPlatform.instance = prev;
+        await dir.delete(recursive: true);
+      }
     });
   });
 }

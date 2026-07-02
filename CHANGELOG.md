@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.16.1] - 2026-07-02
 
+### Changed
+- The database now runs in SQLite WAL journal mode, so long reads (such as a
+  backup being written) and saves no longer block each other.
+
 ### Fixed
 - The app could hang forever on the launch splash screen on some devices
   (seen on 0.15.3): startup waited unbounded on a platform call that never
