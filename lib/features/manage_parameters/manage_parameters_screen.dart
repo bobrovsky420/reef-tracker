@@ -98,9 +98,13 @@ class ManageParametersScreen extends ConsumerWidget {
           );
         },
       ),
+      // Disabled until the tracked list has loaded (#19): with an empty
+      // fallback the sheet would offer already-tracked parameters.
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _addParameter(context, ref, tank.id, type,
-            trackedAsync.value ?? const []),
+        onPressed: trackedAsync.hasValue
+            ? () => _addParameter(
+                context, ref, tank.id, type, trackedAsync.value!)
+            : null,
         icon: const Icon(Icons.add),
         label: Text(l.addParameter),
       ),
@@ -115,11 +119,16 @@ class ManageParametersScreen extends ConsumerWidget {
       key: ValueKey('p${param.id}'),
       title: Text(l.paramName(param.paramKey)),
       subtitle: Text(_boundsSummary(l, boundsOf(param), pres)),
-      leading: Switch(
-        value: param.enabled,
-        onChanged: (v) => ref
-            .read(dbProvider)
-            .updateTrackedParameter(param.copyWith(enabled: v)),
+      // Name the switch after its row so screen readers don't announce an
+      // anonymous switch (#48).
+      leading: Semantics(
+        label: l.paramName(param.paramKey),
+        child: Switch(
+          value: param.enabled,
+          onChanged: (v) => ref
+              .read(dbProvider)
+              .updateTrackedParameter(param.copyWith(enabled: v)),
+        ),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -132,7 +141,7 @@ class ManageParametersScreen extends ConsumerWidget {
           ),
           ReorderableDragStartListener(
             index: index,
-            child: const Icon(Icons.drag_handle),
+            child: Icon(Icons.drag_handle, semanticLabel: l.reorder),
           ),
         ],
       ),
@@ -148,10 +157,13 @@ class ManageParametersScreen extends ConsumerWidget {
       key: ValueKey('r${kind.name}'),
       title: Text(l.ratioCardLabel(kind)),
       subtitle: Text(_ratioBoundsSummary(l, kind, bounds)),
-      leading: Switch(
-        value: ratioRowVisible(item.row),
-        onChanged: (v) =>
-            ref.read(dbProvider).setRatioVisible(tankId, kind.name, v),
+      leading: Semantics(
+        label: l.ratioCardLabel(kind),
+        child: Switch(
+          value: ratioRowVisible(item.row),
+          onChanged: (v) =>
+              ref.read(dbProvider).setRatioVisible(tankId, kind.name, v),
+        ),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -163,7 +175,7 @@ class ManageParametersScreen extends ConsumerWidget {
           ),
           ReorderableDragStartListener(
             index: index,
-            child: const Icon(Icons.drag_handle),
+            child: Icon(Icons.drag_handle, semanticLabel: l.reorder),
           ),
         ],
       ),
@@ -372,7 +384,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
             ZoneBoundsEditor(
               key: _editorKey,
               initial: _displayBounds,
-              format: (v) => v.toStringAsFixed(_pres.decimals),
+              format: (v) => formatLocaleNumber(v, _pres.decimals),
               trailingNote: Text(
                 l.boundsUnitNote(_pres.unitLabel),
                 style: Theme.of(context).textTheme.bodySmall,

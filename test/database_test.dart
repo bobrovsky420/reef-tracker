@@ -125,7 +125,8 @@ void main() {
   });
 
   group('reading groups', () {
-    test('insertReadingGroup stores all rows at one timestamp', () async {
+    test('insertReadingGroup stores all rows at one timestamp with one groupId',
+        () async {
       final id =
           await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
       final t = DateTime(2026, 3, 1, 9, 30);
@@ -140,14 +141,18 @@ void main() {
         ],
       );
 
-      final group = await db.readingsAt(id, t);
+      final all = await db.getAllReadings();
+      expect(all.length, 3);
+      final group = await db.readingGroup(all.first);
       expect(group.length, 3);
       expect(group.map((r) => r.paramKey),
           containsAll(['ph', 'alkalinity', 'calcium']));
       expect(group.every((r) => r.note == 'morning test'), isTrue);
+      expect(group.every((r) => r.groupId == all.first.groupId), isTrue);
+      expect(all.first.groupId, isNotNull);
     });
 
-    test('updateReadingsTimeAt moves a whole group', () async {
+    test('updateReadingGroupTime moves a whole group', () async {
       final id =
           await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
       final from = DateTime(2026, 3, 1, 9, 30);
@@ -157,10 +162,63 @@ void main() {
         (paramKey: 'alkalinity', value: 8.5),
       ]);
 
-      final moved = await db.updateReadingsTimeAt(id, from, to);
+      final r = (await db.getAllReadings()).first;
+      final moved = await db.updateReadingGroupTime(r, to);
       expect(moved, 2);
-      expect(await db.readingsAt(id, from), isEmpty);
-      expect((await db.readingsAt(id, to)).length, 2);
+      final all = await db.getAllReadings();
+      expect(all.every((x) => x.takenAt.isAtSameMomentAs(to)), isTrue);
+    });
+
+    test('two groups saved at the same second stay distinct (#15)', () async {
+      final id =
+          await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final t = DateTime(2026, 3, 1, 9, 30);
+      await db.insertReadingGroup(tankId: id, takenAt: t, values: const [
+        (paramKey: 'ph', value: 8.1),
+        (paramKey: 'alkalinity', value: 8.5),
+      ]);
+      await db.insertReadingGroup(tankId: id, takenAt: t, values: const [
+        (paramKey: 'calcium', value: 420),
+        (paramKey: 'magnesium', value: 1300),
+      ]);
+
+      final all = await db.getAllReadings();
+      final ph = all.firstWhere((r) => r.paramKey == 'ph');
+      final group = await db.readingGroup(ph);
+      expect(group.length, 2,
+          reason: 'the same-second batch must not merge in');
+      expect(group.map((r) => r.paramKey),
+          unorderedEquals(['ph', 'alkalinity']));
+
+      // Deleting one group leaves the other untouched.
+      expect(await db.deleteReadingGroup(ph), 2);
+      final remaining = await db.getAllReadings();
+      expect(remaining.map((r) => r.paramKey),
+          unorderedEquals(['calcium', 'magnesium']));
+    });
+
+    test('legacy rows without groupId fall back to timestamp grouping (#15)',
+        () async {
+      final id =
+          await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final t = DateTime(2026, 3, 1, 9, 30);
+      // Pre-v13 rows: inserted individually, no group id.
+      await db.insertReading(
+          tankId: id, paramKey: 'ph', value: 8.1, takenAt: t);
+      await db.insertReading(
+          tankId: id, paramKey: 'alkalinity', value: 8.5, takenAt: t);
+      // A new grouped batch on the very same second.
+      await db.insertReadingGroup(tankId: id, takenAt: t, values: const [
+        (paramKey: 'calcium', value: 420),
+      ]);
+
+      final legacy = (await db.getAllReadings())
+          .firstWhere((r) => r.paramKey == 'ph');
+      expect(legacy.groupId, isNull);
+      final group = await db.readingGroup(legacy);
+      expect(group.map((r) => r.paramKey),
+          unorderedEquals(['ph', 'alkalinity']),
+          reason: 'legacy grouping must not swallow the new grouped batch');
     });
   });
 

@@ -117,6 +117,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get itemDeleted => 'Gelöscht';
 
   @override
+  String get reorder => 'Neu anordnen';
+
+  @override
   String errorWith(Object message) {
     return 'Fehler: $message';
   }
@@ -386,7 +389,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String savedReadings(int count) {
-    return '$count Messung(en) gespeichert.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Messungen gespeichert.',
+      one: '1 Messung gespeichert.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -415,7 +424,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String deleteTogetherBody(int count) {
-    return 'Dieser Wert wurde zusammen mit $count weiteren Messungen erfasst. Nur diesen Wert oder alle zusammen erfassten Werte löschen?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Dieser Wert wurde zusammen mit $count weiteren Messungen erfasst. Nur diesen Wert oder alle zusammen erfassten Werte löschen?',
+      one:
+          'Dieser Wert wurde zusammen mit 1 weiteren Messung erfasst. Nur diesen Wert oder alle zusammen erfassten Werte löschen?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -429,7 +446,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String editTogetherBody(int count) {
-    return 'Dieser Wert wurde zusammen mit $count weiteren Messungen erfasst. Den Zeitpunkt nur für diesen Wert oder für alle zusammen erfassten Werte ändern?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Dieser Wert wurde zusammen mit $count weiteren Messungen erfasst. Den Zeitpunkt nur für diesen Wert oder für alle zusammen erfassten Werte ändern?',
+      one:
+          'Dieser Wert wurde zusammen mit 1 weiteren Messung erfasst. Den Zeitpunkt nur für diesen Wert oder für alle zusammen erfassten Werte ändern?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -508,6 +533,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String gramsSuffix(Object value) {
     return '$value g';
   }
+
+  @override
+  String get gramSymbol => 'g';
 
   @override
   String get equipmentCleaning => 'Gerätereinigung';
@@ -635,8 +663,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dosingIntervalDays => 'Intervall (Tage)';
 
   @override
-  String dosingEveryDaysN(Object n) {
-    return 'Alle $n Tage';
+  String dosingEveryDaysN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Alle $n Tage',
+      one: 'Jeden Tag',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -723,6 +757,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backupRestored => 'Sicherung wiederhergestellt';
 
   @override
+  String get backupNowFailed => 'Die Sicherung konnte nicht gespeichert werden';
+
+  @override
+  String get backupShareFailed => 'Die Sicherung konnte nicht geteilt werden';
+
+  @override
   String get backupExportFailed => 'Sicherung konnte nicht exportiert werden';
 
   @override
@@ -793,6 +833,21 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dadurch wird diese Sicherungsdatei dauerhaft von deinem Gerät entfernt.';
 
   @override
+  String sizeBytes(Object size) {
+    return '$size B';
+  }
+
+  @override
+  String sizeKilobytes(Object size) {
+    return '$size KB';
+  }
+
+  @override
+  String sizeMegabytes(Object size) {
+    return '$size MB';
+  }
+
+  @override
   String get aboutAppName => 'Über ReefTracker';
 
   @override
@@ -854,8 +909,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get doseCalcWindow => 'Messzeitraum';
 
   @override
-  String doseCalcReadings(Object count) {
-    return '$count Messungen im Zeitraum';
+  String doseCalcReadings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Messungen im Zeitraum',
+      one: '1 Messung im Zeitraum',
+    );
+    return '$_temp0';
   }
 
   @override

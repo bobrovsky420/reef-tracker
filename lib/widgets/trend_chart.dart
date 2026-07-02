@@ -112,6 +112,16 @@ class TrendChart extends StatelessWidget {
         FlSpot(r.takenAt.millisecondsSinceEpoch.toDouble(),
             pres.toDisplay(r.value)),
     ];
+    // Guard the widget's own contract (#17): `values.reduce` below throws on
+    // an empty series. Current callers filter first, but the next one won't.
+    if (spots.isEmpty) {
+      return Center(
+        child: Text(
+          AppLocalizations.of(context).noReadingsInRange,
+          style: TextStyle(color: Theme.of(context).hintColor),
+        ),
+      );
+    }
     final p = param;
     final canonical = p != null ? boundsOf(p) : const ZoneBounds();
     double? d(double? v) => v == null ? null : pres.toDisplay(v);
@@ -188,7 +198,7 @@ class TrendChart extends StatelessWidget {
               showTitles: true,
               reservedSize: 44,
               getTitlesWidget: (v, meta) => Text(
-                v.toStringAsFixed(pres.decimals.clamp(0, 2)),
+                formatLocaleNumber(v, pres.decimals.clamp(0, 2)),
                 style: const TextStyle(fontSize: 10),
               ),
             ),

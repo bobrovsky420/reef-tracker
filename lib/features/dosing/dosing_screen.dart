@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/supplement_catalog.dart';
+import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
@@ -123,6 +124,7 @@ class DosingBody extends ConsumerWidget {
           child: Icon(
             Icons.drag_handle,
             color: Theme.of(context).colorScheme.outline,
+            semanticLabel: l.reorder,
           ),
         ),
         onTap: () => context.push('/dosing/edit', extra: e),
@@ -135,28 +137,39 @@ class DosingBody extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l,
     DosingEntry e,
-  ) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.stopDosingTitle),
-        content: Text(l.stopDosingBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.stop),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return false;
-    await ref.read(dbProvider).stopDosingEntry(e.id);
-    return true;
-  }
+  ) =>
+      confirmStopDosing(context, ref, e);
+}
+
+/// Confirms and performs the "stop this supplement" action. Shared by the
+/// swipe gesture on the Dosing tab and the edit screen's Stop button — the
+/// latter is the accessible, non-swipe path (#45). Returns true if stopped.
+Future<bool> confirmStopDosing(
+  BuildContext context,
+  WidgetRef ref,
+  DosingEntry e,
+) async {
+  final l = AppLocalizations.of(context);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.stopDosingTitle),
+      content: Text(l.stopDosingBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(l.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l.stop),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return false;
+  await ref.read(dbProvider).stopDosingEntry(e.id);
+  return true;
 }
 
 /// Builds the localized "dosage • schedule" summary for an entry, falling back
@@ -198,9 +211,9 @@ String dosingDetailLine(
   return parts.join(' · ');
 }
 
-/// Formats a dose amount without a trailing `.0` (e.g. `5`, `2.5`).
-String formatDoseAmount(double v) =>
-    v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+/// Formats a dose amount without a trailing zero fraction, using the active
+/// locale's decimal separator (e.g. `5`, `2.5`, cs/de `2,5`).
+String formatDoseAmount(double v) => formatLocaleNumberTrim(v);
 
 /// Parses the stored comma-separated weekday list (1=Mon … 7=Sun).
 List<int> parseWeekdays(String? raw) {

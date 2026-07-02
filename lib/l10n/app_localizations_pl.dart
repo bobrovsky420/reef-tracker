@@ -117,6 +117,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get itemDeleted => 'Usunięto';
 
   @override
+  String get reorder => 'Zmień kolejność';
+
+  @override
   String errorWith(Object message) {
     return 'Błąd: $message';
   }
@@ -386,7 +389,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String savedReadings(int count) {
-    return 'Zapisano pomiarów: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Zapisano $count pomiaru.',
+      many: 'Zapisano $count pomiarów.',
+      few: 'Zapisano $count pomiary.',
+      one: 'Zapisano 1 pomiar.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -415,7 +426,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String deleteTogetherBody(int count) {
-    return 'Ta wartość została wprowadzona razem z $count innymi pomiarami. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Ta wartość została wprowadzona razem z $count innymi pomiarami. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?',
+      one:
+          'Ta wartość została wprowadzona razem z 1 innym pomiarem. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -429,7 +448,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String editTogetherBody(int count) {
-    return 'Ta wartość została wprowadzona razem z $count innymi pomiarami. Zmienić czas tylko dla tej wartości, czy dla wszystkich wprowadzonych razem?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Ta wartość została wprowadzona razem z $count innymi pomiarami. Zmienić czas tylko dla tej wartości, czy dla wszystkich wprowadzonych razem?',
+      one:
+          'Ta wartość została wprowadzona razem z 1 innym pomiarem. Zmienić czas tylko dla tej wartości, czy dla wszystkich wprowadzonych razem?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -507,6 +534,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String gramsSuffix(Object value) {
     return '$value g';
   }
+
+  @override
+  String get gramSymbol => 'g';
 
   @override
   String get equipmentCleaning => 'Czyszczenie sprzętu';
@@ -634,8 +664,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get dosingIntervalDays => 'Odstęp (dni)';
 
   @override
-  String dosingEveryDaysN(Object n) {
-    return 'Co $n dni';
+  String dosingEveryDaysN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Co $n dnia',
+      many: 'Co $n dni',
+      few: 'Co $n dni',
+      one: 'Co dzień',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -722,6 +760,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupRestored => 'Kopia zapasowa przywrócona';
 
   @override
+  String get backupNowFailed => 'Nie udało się zapisać kopii zapasowej';
+
+  @override
+  String get backupShareFailed => 'Nie udało się udostępnić kopii zapasowej';
+
+  @override
   String get backupExportFailed => 'Nie udało się wyeksportować kopii';
 
   @override
@@ -791,6 +835,21 @@ class AppLocalizationsPl extends AppLocalizations {
       'Spowoduje to trwałe usunięcie tego pliku kopii zapasowej z urządzenia.';
 
   @override
+  String sizeBytes(Object size) {
+    return '$size B';
+  }
+
+  @override
+  String sizeKilobytes(Object size) {
+    return '$size KB';
+  }
+
+  @override
+  String sizeMegabytes(Object size) {
+    return '$size MB';
+  }
+
+  @override
   String get aboutAppName => 'O aplikacji ReefTracker';
 
   @override
@@ -852,8 +911,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcWindow => 'Okres pomiarów';
 
   @override
-  String doseCalcReadings(Object count) {
-    return 'Pomiary w okresie: $count';
+  String doseCalcReadings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pomiaru w okresie',
+      many: '$count pomiarów w okresie',
+      few: '$count pomiary w okresie',
+      one: '1 pomiar w okresie',
+    );
+    return '$_temp0';
   }
 
   @override

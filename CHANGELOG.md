@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.15.3] - 2026-07-01
 
+### Added
+- **Delete and Stop are reachable without swiping**: the measurement and
+  action edit dialogs now include a Delete button (with the same
+  batch-aware confirmation and Undo as swiping), and the supplement edit
+  screen has a Stop action — so TalkBack and switch-access users can manage
+  entries too.
+
+### Changed
+- **Numbers now display in your language's format**: Czech, German, Polish and
+  Russian users see "2,5 ml" instead of "2.5 ml" everywhere — tiles, charts,
+  dialogs, the calculators — matching the comma input the app already accepted.
+- Counts are **properly pluralized in every language** ("Saved 1 reading" /
+  "Saved 3 readings", including the Czech/Polish/Russian few/many forms),
+  replacing the old "reading(s)" and "1 readings" style.
+- The app now **starts directly in your chosen language** instead of flashing
+  the system language for the first moment; the database is also opened before
+  the first frame.
+- **Dashboard tiles grow with the system font size** instead of clipping their
+  text at large accessibility scales.
+- Backup timestamps in Settings honor the device's **24-hour clock preference**,
+  and backup file sizes are shown with translated units (e.g. КБ/МБ in
+  Russian) and locale decimals.
+- The water-change marker on charts now follows the app **theme** (readable in
+  both light and dark mode); status chips, list drag handles and the
+  parameter switches are now **labeled for screen readers**; the gram suffix in
+  the carbon dialog is localized.
+
+### Fixed
+- **Switching aquariums no longer flashes the previous tank's data**: for a
+  moment the dashboard, actions and dosing lists could show tank A's readings
+  under tank B's name; each tank's data now loads fresh on switch.
+- A failed **"Back up now" shows an accurate message** ("Could not save the
+  backup" instead of the misleading "Could not export the backup"), and a
+  failed share of a stored backup now shows an error instead of failing
+  silently.
+- **Measurements saved in the same second no longer merge into one batch**:
+  each "Add reading" save is tagged with its own batch id, so batch delete/
+  re-time can no longer drag in unrelated readings that happen to share a
+  timestamp (existing data keeps the old timestamp grouping).
+- The **dose calculator no longer overwrites what you typed**: the automatic
+  prefill of tank volume and current dose now only fills empty fields and
+  can't fire mid-edit anymore.
+- The add-parameter sheet can no longer briefly **offer parameters that are
+  already tracked** while the list is loading, and rapid double-taps can no
+  longer create duplicate parameters or dosing rows (the checks now run
+  atomically).
+- An empty chart series now shows "No readings in this range" instead of
+  being able to crash the chart widget (defensive; not reachable from the
+  current screens).
+
 ### Changed
 - The dose calculator's **"stable" verdict now scales with your dose** (±5%,
   with a small absolute floor) instead of a flat 0.5 ml: a large mismatch on a

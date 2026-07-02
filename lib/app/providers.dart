@@ -67,64 +67,108 @@ final activeTankProvider = Provider<Tank?>((ref) {
   return tanks.first;
 });
 
+// --- Tank-scoped data --------------------------------------------------------
+//
+// Each public provider below is a plain `Provider<AsyncValue<...>>` delegating
+// to a private autoDispose StreamProvider *family keyed by tank id* (#20).
+// Switching the active tank switches to a fresh family instance, so consumers
+// briefly see loading/empty instead of the previous tank's rows flashing under
+// the new tank's name (a rebuilt non-family StreamProvider keeps its previous
+// value while the new stream loads). The wrapper permanently keeps the active
+// tank's instance alive (same liveness as before); the previous tank's
+// instance loses its only listener and its live query is disposed.
+
+final _trackedParametersFamily = StreamProvider.autoDispose
+    .family<List<TrackedParameter>, int>(
+        (ref, tankId) => ref.watch(dbProvider).watchTrackedParameters(tankId));
+
 /// Tracked parameters for the active tank.
 final trackedParametersProvider =
-    StreamProvider<List<TrackedParameter>>((ref) {
+    Provider<AsyncValue<List<TrackedParameter>>>((ref) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const []);
-  return ref.watch(dbProvider).watchTrackedParameters(tank.id);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_trackedParametersFamily(tank.id));
 });
+
+final _tankReadingsFamily = StreamProvider.autoDispose
+    .family<List<Reading>, int>(
+        (ref, tankId) => ref.watch(dbProvider).watchReadingsForTank(tankId));
 
 /// All readings for the active tank (newest first).
-final tankReadingsProvider = StreamProvider<List<Reading>>((ref) {
+final tankReadingsProvider = Provider<AsyncValue<List<Reading>>>((ref) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const []);
-  return ref.watch(dbProvider).watchReadingsForTank(tank.id);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_tankReadingsFamily(tank.id));
 });
+
+final _waterChangesFamily = StreamProvider.autoDispose
+    .family<List<WaterChange>, int>(
+        (ref, tankId) => ref.watch(dbProvider).watchWaterChanges(tankId));
 
 /// Water changes for the active tank (newest first).
-final waterChangesProvider = StreamProvider<List<WaterChange>>((ref) {
+final waterChangesProvider = Provider<AsyncValue<List<WaterChange>>>((ref) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const []);
-  return ref.watch(dbProvider).watchWaterChanges(tank.id);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_waterChangesFamily(tank.id));
 });
 
+final _carbonChangesFamily = StreamProvider.autoDispose
+    .family<List<CarbonChange>, int>(
+        (ref, tankId) => ref.watch(dbProvider).watchCarbonChanges(tankId));
+
 /// Activated-carbon changes for the active tank (newest first).
-final carbonChangesProvider = StreamProvider<List<CarbonChange>>((ref) {
+final carbonChangesProvider = Provider<AsyncValue<List<CarbonChange>>>((ref) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const []);
-  return ref.watch(dbProvider).watchCarbonChanges(tank.id);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_carbonChangesFamily(tank.id));
 });
+
+final _equipmentCleaningsFamily = StreamProvider.autoDispose
+    .family<List<EquipmentCleaning>, int>(
+        (ref, tankId) => ref.watch(dbProvider).watchEquipmentCleanings(tankId));
 
 /// Equipment cleanings for the active tank (newest first).
 final equipmentCleaningsProvider =
-    StreamProvider<List<EquipmentCleaning>>((ref) {
+    Provider<AsyncValue<List<EquipmentCleaning>>>((ref) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const []);
-  return ref.watch(dbProvider).watchEquipmentCleanings(tank.id);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_equipmentCleaningsFamily(tank.id));
 });
 
+final _dosingEntriesFamily = StreamProvider.autoDispose
+    .family<List<DosingEntry>, int>(
+        (ref, tankId) => ref.watch(dbProvider).watchDosingEntries(tankId));
+
 /// Supplement-dosing plan entries for the active tank (dashboard order).
-final dosingEntriesProvider = StreamProvider<List<DosingEntry>>((ref) {
+final dosingEntriesProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const []);
-  return ref.watch(dbProvider).watchDosingEntries(tank.id);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_dosingEntriesFamily(tank.id));
 });
+
+final _dosingHistoryFamily = StreamProvider.autoDispose
+    .family<List<DosingEntry>, int>(
+        (ref, tankId) => ref.watch(dbProvider).watchDosingHistory(tankId));
 
 /// Every dosing segment (active + ended) for the active tank, newest first —
 /// the source for the dosing history timeline.
-final dosingHistoryProvider = StreamProvider<List<DosingEntry>>((ref) {
+final dosingHistoryProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const []);
-  return ref.watch(dbProvider).watchDosingHistory(tank.id);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_dosingHistoryFamily(tank.id));
 });
+
+final _paramReadingsFamily = StreamProvider.autoDispose
+    .family<List<Reading>, ({int tankId, String paramKey})>((ref, key) =>
+        ref.watch(dbProvider).watchParamReadings(key.tankId, key.paramKey));
 
 /// Readings for a single parameter of the active tank (oldest first).
 final paramReadingsProvider =
-    StreamProvider.family<List<Reading>, String>((ref, paramKey) {
+    Provider.family<AsyncValue<List<Reading>>, String>((ref, paramKey) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const []);
-  return ref.watch(dbProvider).watchParamReadings(tank.id, paramKey);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref
+      .watch(_paramReadingsFamily((tankId: tank.id, paramKey: paramKey)));
 });
 
 /// Preferred temperature display unit (default Celsius).
@@ -263,15 +307,18 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
   return computeTankHealth(inputs);
 });
 
+final _ratioSettingsFamily = StreamProvider.autoDispose
+    .family<Map<String, RatioVisibility>, int>((ref, tankId) => ref
+        .watch(dbProvider)
+        .watchRatioVisibilities(tankId)
+        .map((rows) => {for (final r in rows) r.ratioKey: r}));
+
 /// Per-tank dashboard ratio-card settings (visibility + order) for the active
 /// tank, keyed by [RatioKind.name]. Missing entries fall back to defaults
 /// (visible, ordered after measurements) via `ratioRowVisible`/`ratioRowOrder`.
 final ratioSettingsProvider =
-    StreamProvider<Map<String, RatioVisibility>>((ref) {
+    Provider<AsyncValue<Map<String, RatioVisibility>>>((ref) {
   final tank = ref.watch(activeTankProvider);
-  if (tank == null) return Stream.value(const {});
-  return ref
-      .watch(dbProvider)
-      .watchRatioVisibilities(tank.id)
-      .map((rows) => {for (final r in rows) r.ratioKey: r});
+  if (tank == null) return const AsyncValue.data({});
+  return ref.watch(_ratioSettingsFamily(tank.id));
 });

@@ -117,6 +117,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get itemDeleted => 'Удалено';
 
   @override
+  String get reorder => 'Изменить порядок';
+
+  @override
   String errorWith(Object message) {
     return 'Ошибка: $message';
   }
@@ -385,7 +388,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String savedReadings(int count) {
-    return 'Сохранено измерений: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Сохранено $count измерения.',
+      many: 'Сохранено $count измерений.',
+      few: 'Сохранено $count измерения.',
+      one: 'Сохранено $count измерение.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -414,7 +425,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String deleteTogetherBody(int count) {
-    return 'Это значение было введено вместе с ещё $count измерениями. Удалить только это значение или все значения, введённые вместе?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Это значение было введено вместе с ещё $count измерениями. Удалить только это значение или все значения, введённые вместе?',
+      one:
+          'Это значение было введено вместе с ещё $count измерением. Удалить только это значение или все значения, введённые вместе?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -428,7 +447,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String editTogetherBody(int count) {
-    return 'Это значение было введено вместе с ещё $count измерениями. Изменить время только для этого значения или для всех значений, введённых вместе?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Это значение было введено вместе с ещё $count измерениями. Изменить время только для этого значения или для всех значений, введённых вместе?',
+      one:
+          'Это значение было введено вместе с ещё $count измерением. Изменить время только для этого значения или для всех значений, введённых вместе?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -507,6 +534,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String gramsSuffix(Object value) {
     return '$value г';
   }
+
+  @override
+  String get gramSymbol => 'г';
 
   @override
   String get equipmentCleaning => 'Чистка оборудования';
@@ -634,8 +664,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dosingIntervalDays => 'Интервал (дни)';
 
   @override
-  String dosingEveryDaysN(Object n) {
-    return 'Каждые $n дн.';
+  String dosingEveryDaysN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Каждые $n дня',
+      many: 'Каждые $n дней',
+      few: 'Каждые $n дня',
+      one: 'Каждый $n-й день',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -721,6 +759,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupRestored => 'Резервная копия восстановлена';
 
   @override
+  String get backupNowFailed => 'Не удалось сохранить резервную копию';
+
+  @override
+  String get backupShareFailed => 'Не удалось поделиться резервной копией';
+
+  @override
   String get backupExportFailed => 'Не удалось экспортировать копию';
 
   @override
@@ -789,6 +833,21 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот файл резервной копии будет безвозвратно удалён с устройства.';
 
   @override
+  String sizeBytes(Object size) {
+    return '$size Б';
+  }
+
+  @override
+  String sizeKilobytes(Object size) {
+    return '$size КБ';
+  }
+
+  @override
+  String sizeMegabytes(Object size) {
+    return '$size МБ';
+  }
+
+  @override
   String get aboutAppName => 'О приложении ReefTracker';
 
   @override
@@ -851,8 +910,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get doseCalcWindow => 'Период измерений';
 
   @override
-  String doseCalcReadings(Object count) {
-    return 'Измерений в периоде: $count';
+  String doseCalcReadings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count измерения в периоде',
+      many: '$count измерений в периоде',
+      few: '$count измерения в периоде',
+      one: '$count измерение в периоде',
+    );
+    return '$_temp0';
   }
 
   @override

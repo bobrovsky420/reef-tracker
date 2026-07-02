@@ -36,6 +36,10 @@
   "change": "Change",
   "undo": "Undo",
   "itemDeleted": "Deleted",
+  "reorder": "Reorder",
+  "@reorder": {
+    "description": "Semantic label for list drag handles (screen readers)."
+  },
   "errorWith": "Error: {message}",
   "@errorWith": { "placeholders": { "message": {} } },
   "saveFailed": "Couldn't save: {error}",
@@ -132,7 +136,7 @@
   "@implausibleValueLine": { "description": "One line per suspicious reading in the confirmation dialog. value/max include the unit label, min is a bare number.", "placeholders": { "name": {}, "value": {}, "min": {}, "max": {} } },
   "saveAnyway": "Save anyway",
   "enterAtLeastOneValue": "Enter at least one value.",
-  "savedReadings": "Saved {count} reading(s).",
+  "savedReadings": "{count, plural, one{Saved 1 reading.} other{Saved {count} readings.}}",
   "@savedReadings": { "placeholders": { "count": { "type": "int" } } },
   "noTrackedToRecord": "No tracked parameters to record.",
 
@@ -143,12 +147,12 @@
   "noReadingsInRange": "No readings in this range.",
   "editMeasurement": "Edit measurement",
   "deleteTogetherTitle": "Delete measurement",
-  "deleteTogetherBody": "This value was entered together with {count} other measurement(s). Delete only this value, or all values entered together?",
+  "deleteTogetherBody": "{count, plural, one{This value was entered together with 1 other measurement. Delete only this value, or all values entered together?} other{This value was entered together with {count} other measurements. Delete only this value, or all values entered together?}}",
   "@deleteTogetherBody": { "placeholders": { "count": { "type": "int" } } },
   "deleteOnlyThis": "Only this value",
   "deleteAllTogether": "All together",
   "editTogetherTitle": "Update measurement time",
-  "editTogetherBody": "This value was entered together with {count} other measurement(s). Update the time for only this value, or all values entered together?",
+  "editTogetherBody": "{count, plural, one{This value was entered together with 1 other measurement. Update the time for only this value, or all values entered together?} other{This value was entered together with {count} other measurements. Update the time for only this value, or all values entered together?}}",
   "@editTogetherBody": { "placeholders": { "count": { "type": "int" } } },
 
   "ratioPo4No3Label": "PO₄ : NO₃",
@@ -180,6 +184,10 @@
   "weightNotRecorded": "Weight not recorded",
   "gramsSuffix": "{value} g",
   "@gramsSuffix": { "placeholders": { "value": {} } },
+  "gramSymbol": "g",
+  "@gramSymbol": {
+    "description": "Bare unit symbol for grams, used as an input-field suffix."
+  },
   "equipmentCleaning": "Equipment cleaning",
   "recordEquipmentCleaning": "Record equipment cleaning",
 
@@ -222,8 +230,8 @@
   "dosingFreqEveryNDays": "Every N days",
   "dosingFreqWeekly": "Weekly",
   "dosingIntervalDays": "Interval (days)",
-  "dosingEveryDaysN": "Every {n} days",
-  "@dosingEveryDaysN": { "placeholders": { "n": {} } },
+  "dosingEveryDaysN": "{n, plural, one{Every day} other{Every {n} days}}",
+  "@dosingEveryDaysN": { "placeholders": { "n": { "type": "int" } } },
   "dosingTimeOptional": "Time (optional)",
 
   "unitsSection": "Units",
@@ -269,6 +277,11 @@
   "backupRestoreConfirmBody": "This replaces ALL your aquarium data — every aquarium, parameter, and reading — with the contents of the backup file. Your settings on this device (language, units, and preferences) are kept. This cannot be undone.",
   "restore": "Restore",
   "backupRestored": "Backup restored",
+  "backupNowFailed": "Could not save the backup",
+  "@backupNowFailed": {
+    "description": "Shown when the local \"Back up now\" write fails (distinct from a failed export/share)."
+  },
+  "backupShareFailed": "Could not share the backup",
   "backupExportFailed": "Could not export the backup",
   "backupImportFailed": "Could not restore the backup",
   "backupInvalidFile": "That file isn't a valid ReefTracker backup",
@@ -292,6 +305,12 @@
   "share": "Share",
   "backupDeleteConfirmTitle": "Delete backup?",
   "backupDeleteConfirmBody": "This permanently removes this backup file from your device.",
+  "sizeBytes": "{size} B",
+  "@sizeBytes": { "description": "File size in bytes.", "placeholders": { "size": {} } },
+  "sizeKilobytes": "{size} KB",
+  "@sizeKilobytes": { "description": "File size in kilobytes; size is already locale-formatted.", "placeholders": { "size": {} } },
+  "sizeMegabytes": "{size} MB",
+  "@sizeMegabytes": { "description": "File size in megabytes; size is already locale-formatted.", "placeholders": { "size": {} } },
 
   "aboutAppName": "About ReefTracker",
   "aboutDescription": "Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.",
@@ -314,8 +333,8 @@
   "doseCalcIntro": "Estimate how fast your tank consumes an element and the daily dose that holds it steady. Water changes are not considered.",
   "doseCalcElement": "Element",
   "doseCalcWindow": "Measurement window",
-  "doseCalcReadings": "{count} readings in range",
-  "@doseCalcReadings": { "placeholders": { "count": {} } },
+  "doseCalcReadings": "{count, plural, one{1 reading in range} other{{count} readings in range}}",
+  "@doseCalcReadings": { "placeholders": { "count": { "type": "int" } } },
   "doseCalcDoseChanged": "Dose changed on {date}; readings before then reflect a different dose.",
   "@doseCalcDoseChanged": { "placeholders": { "date": {} } },
   "doseCalcVolume": "Tank volume",

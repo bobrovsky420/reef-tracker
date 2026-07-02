@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
@@ -179,8 +178,11 @@ class SettingsScreen extends ConsumerWidget {
               ref.watch(lastBackupAtProvider).maybeWhen(
                     data: (t) => t == null
                         ? l.backupNeverRun
+                        // Shared helper honors the device 12/24-hour
+                        // preference (#41).
                         : l.backupLastRun(
-                            DateFormat.yMMMd().add_jm().format(t.toLocal()),
+                            formatDateTime(context, t.toLocal(),
+                                weekday: false),
                           ),
                     orElse: () => l.backupNeverRun,
                   ),
@@ -196,7 +198,8 @@ class SettingsScreen extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.error),
               title: Text(
                 l.backupLastFailed(
-                    DateFormat.yMMMd().add_jm().format(errorAt.toLocal())),
+                    formatDateTime(context, errorAt.toLocal(),
+                        weekday: false)),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
@@ -293,7 +296,8 @@ class SettingsScreen extends ConsumerWidget {
       await backupNow(db);
       messenger.showSnackBar(SnackBar(content: Text(l.backupDone)));
     } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(l.backupExportFailed)));
+      // A local write failed — not an export, so don't claim one did (#23).
+      messenger.showSnackBar(SnackBar(content: Text(l.backupNowFailed)));
     }
   }
 

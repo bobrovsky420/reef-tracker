@@ -26,7 +26,7 @@ int _days(double v) => math.max(1, v.round());
 /// toDisplay(0)`, independent of the current value.
 String _signedRate(TrendResult t, ParamPresentation pres) {
   final disp = pres.toDisplay(t.slopePerDay) - pres.toDisplay(0);
-  final s = disp.abs().toStringAsFixed(pres.decimals);
+  final s = formatLocaleNumber(disp.abs(), pres.decimals);
   if (disp > 0) return '+$s';
   if (disp < 0) return '−$s';
   return s;

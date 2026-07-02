@@ -116,6 +116,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get itemDeleted => 'Smazáno';
 
   @override
+  String get reorder => 'Změnit pořadí';
+
+  @override
   String errorWith(Object message) {
     return 'Chyba: $message';
   }
@@ -384,7 +387,14 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String savedReadings(int count) {
-    return 'Uloženo měření: $count.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uloženo $count měření.',
+      few: 'Uložena $count měření.',
+      one: 'Uloženo 1 měření.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -413,7 +423,15 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String deleteTogetherBody(int count) {
-    return 'Tato hodnota byla zadána společně s $count dalšími měřeními. Smazat pouze tuto hodnotu, nebo všechny hodnoty zadané společně?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Tato hodnota byla zadána společně s $count dalšími měřeními. Smazat pouze tuto hodnotu, nebo všechny hodnoty zadané společně?',
+      one:
+          'Tato hodnota byla zadána společně s 1 dalším měřením. Smazat pouze tuto hodnotu, nebo všechny hodnoty zadané společně?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -427,7 +445,15 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String editTogetherBody(int count) {
-    return 'Tato hodnota byla zadána společně s $count dalšími měřeními. Změnit čas pouze pro tuto hodnotu, nebo pro všechny hodnoty zadané společně?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Tato hodnota byla zadána společně s $count dalšími měřeními. Změnit čas pouze pro tuto hodnotu, nebo pro všechny hodnoty zadané společně?',
+      one:
+          'Tato hodnota byla zadána společně s 1 dalším měřením. Změnit čas pouze pro tuto hodnotu, nebo pro všechny hodnoty zadané společně?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -506,6 +532,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String gramsSuffix(Object value) {
     return '$value g';
   }
+
+  @override
+  String get gramSymbol => 'g';
 
   @override
   String get equipmentCleaning => 'Čištění vybavení';
@@ -633,8 +662,15 @@ class AppLocalizationsCs extends AppLocalizations {
   String get dosingIntervalDays => 'Interval (dny)';
 
   @override
-  String dosingEveryDaysN(Object n) {
-    return 'Každých $n dní';
+  String dosingEveryDaysN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Každých $n dní',
+      few: 'Každé $n dny',
+      one: 'Každý den',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -720,6 +756,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get backupRestored => 'Záloha obnovena';
 
   @override
+  String get backupNowFailed => 'Zálohu se nepodařilo uložit';
+
+  @override
+  String get backupShareFailed => 'Zálohu se nepodařilo sdílet';
+
+  @override
   String get backupExportFailed => 'Zálohu se nepodařilo exportovat';
 
   @override
@@ -787,6 +829,21 @@ class AppLocalizationsCs extends AppLocalizations {
       'Tímto trvale odstraníte tento záložní soubor ze zařízení.';
 
   @override
+  String sizeBytes(Object size) {
+    return '$size B';
+  }
+
+  @override
+  String sizeKilobytes(Object size) {
+    return '$size kB';
+  }
+
+  @override
+  String sizeMegabytes(Object size) {
+    return '$size MB';
+  }
+
+  @override
   String get aboutAppName => 'O aplikaci ReefTracker';
 
   @override
@@ -849,8 +906,14 @@ class AppLocalizationsCs extends AppLocalizations {
   String get doseCalcWindow => 'Období měření';
 
   @override
-  String doseCalcReadings(Object count) {
-    return '$count měření v období';
+  String doseCalcReadings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count měření v období',
+      one: '1 měření v období',
+    );
+    return '$_temp0';
   }
 
   @override

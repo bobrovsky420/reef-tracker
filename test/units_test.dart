@@ -211,14 +211,43 @@ void main() {
     });
   });
 
+  group('formatLocaleNumber (#39)', () {
+    tearDown(() => Intl.defaultLocale = null);
+
+    test('en renders a decimal point, cs a comma', () {
+      expect(formatLocaleNumber(2.5, 1), '2.5');
+      Intl.defaultLocale = 'cs';
+      expect(formatLocaleNumber(2.5, 1), '2,5');
+      expect(formatLocaleNumber(-0.1, 1), '-0,1');
+    });
+
+    test('no grouping, so formatted output round-trips through the parser',
+        () {
+      for (final locale in [null, 'cs', 'de', 'pl', 'ru', 'en']) {
+        Intl.defaultLocale = locale;
+        for (final v in [1300.0, 1300.5, 1.025, 0.02]) {
+          expect(parseUserDouble(formatLocaleNumber(v, 3)), closeTo(v, 1e-6),
+              reason: 'locale=$locale value=$v');
+        }
+      }
+    });
+
+    test('trim variant drops the zero fraction and trailing zeros', () {
+      expect(formatLocaleNumberTrim(5), '5');
+      expect(formatLocaleNumberTrim(2.5), '2.5');
+      expect(formatLocaleNumberTrim(0.025, decimals: 4), '0.025');
+    });
+  });
+
   group('format with non-finite input', () {
-    test('renders the literal NaN/Infinity (no guard in format)', () {
+    test('renders the locale NaN/infinity symbols (no guard in format)', () {
       // Pins current behavior: `format` trusts canonical storage — the
       // finite-ness guard lives at the input boundary (parseUserDouble). A
-      // non-finite value that sneaks into the DB renders as a literal string.
+      // non-finite value that sneaks into the DB renders as NumberFormat's
+      // locale symbols (#39 routed display through intl).
       final ca = presentationFor('calcium', 'ppm', 0, const UnitPrefs());
       expect(ca.format(double.nan), 'NaN');
-      expect(ca.format(double.infinity), 'Infinity');
+      expect(ca.format(double.infinity), '∞');
     });
   });
 }

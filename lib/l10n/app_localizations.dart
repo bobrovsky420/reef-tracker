@@ -308,6 +308,12 @@ abstract class AppLocalizations {
   /// **'Deleted'**
   String get itemDeleted;
 
+  /// Semantic label for list drag handles (screen readers).
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get reorder;
+
   /// No description provided for @errorWith.
   ///
   /// In en, this message translates to:
@@ -748,7 +754,7 @@ abstract class AppLocalizations {
   /// No description provided for @savedReadings.
   ///
   /// In en, this message translates to:
-  /// **'Saved {count} reading(s).'**
+  /// **'{count, plural, one{Saved 1 reading.} other{Saved {count} readings.}}'**
   String savedReadings(int count);
 
   /// No description provided for @noTrackedToRecord.
@@ -802,7 +808,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteTogetherBody.
   ///
   /// In en, this message translates to:
-  /// **'This value was entered together with {count} other measurement(s). Delete only this value, or all values entered together?'**
+  /// **'{count, plural, one{This value was entered together with 1 other measurement. Delete only this value, or all values entered together?} other{This value was entered together with {count} other measurements. Delete only this value, or all values entered together?}}'**
   String deleteTogetherBody(int count);
 
   /// No description provided for @deleteOnlyThis.
@@ -826,7 +832,7 @@ abstract class AppLocalizations {
   /// No description provided for @editTogetherBody.
   ///
   /// In en, this message translates to:
-  /// **'This value was entered together with {count} other measurement(s). Update the time for only this value, or all values entered together?'**
+  /// **'{count, plural, one{This value was entered together with 1 other measurement. Update the time for only this value, or all values entered together?} other{This value was entered together with {count} other measurements. Update the time for only this value, or all values entered together?}}'**
   String editTogetherBody(int count);
 
   /// No description provided for @ratioPo4No3Label.
@@ -972,6 +978,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{value} g'**
   String gramsSuffix(Object value);
+
+  /// Bare unit symbol for grams, used as an input-field suffix.
+  ///
+  /// In en, this message translates to:
+  /// **'g'**
+  String get gramSymbol;
 
   /// No description provided for @equipmentCleaning.
   ///
@@ -1210,8 +1222,8 @@ abstract class AppLocalizations {
   /// No description provided for @dosingEveryDaysN.
   ///
   /// In en, this message translates to:
-  /// **'Every {n} days'**
-  String dosingEveryDaysN(Object n);
+  /// **'{n, plural, one{Every day} other{Every {n} days}}'**
+  String dosingEveryDaysN(int n);
 
   /// No description provided for @dosingTimeOptional.
   ///
@@ -1363,6 +1375,18 @@ abstract class AppLocalizations {
   /// **'Backup restored'**
   String get backupRestored;
 
+  /// Shown when the local "Back up now" write fails (distinct from a failed export/share).
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the backup'**
+  String get backupNowFailed;
+
+  /// No description provided for @backupShareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not share the backup'**
+  String get backupShareFailed;
+
   /// No description provided for @backupExportFailed.
   ///
   /// In en, this message translates to:
@@ -1483,6 +1507,24 @@ abstract class AppLocalizations {
   /// **'This permanently removes this backup file from your device.'**
   String get backupDeleteConfirmBody;
 
+  /// File size in bytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} B'**
+  String sizeBytes(Object size);
+
+  /// File size in kilobytes; size is already locale-formatted.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} KB'**
+  String sizeKilobytes(Object size);
+
+  /// File size in megabytes; size is already locale-formatted.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} MB'**
+  String sizeMegabytes(Object size);
+
   /// No description provided for @aboutAppName.
   ///
   /// In en, this message translates to:
@@ -1600,8 +1642,8 @@ abstract class AppLocalizations {
   /// No description provided for @doseCalcReadings.
   ///
   /// In en, this message translates to:
-  /// **'{count} readings in range'**
-  String doseCalcReadings(Object count);
+  /// **'{count, plural, one{1 reading in range} other{{count} readings in range}}'**
+  String doseCalcReadings(int count);
 
   /// No description provided for @doseCalcDoseChanged.
   ///

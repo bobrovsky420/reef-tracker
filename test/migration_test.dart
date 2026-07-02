@@ -185,7 +185,10 @@ void main() {
         expect(tank.name, 'Old reef');
         expect(tank.startDate, isNull); // added by v2, null-backfilled
         expect(tank.notes, isNull); // added by v10
-        expect((await db.getAllReadings()).single.value, 8.2);
+        final reading = (await db.getAllReadings()).single;
+        expect(reading.value, 8.2);
+        expect(reading.groupId, isNull,
+            reason: 'pre-v13 rows keep timestamp grouping (#15)');
         expect((await db.getTrackedParameters(tank.id)).single.paramKey,
             'alkalinity');
 

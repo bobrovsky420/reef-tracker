@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../domain/ratio.dart';
+import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/zone_bounds_editor.dart';
@@ -24,8 +25,8 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _editorKey = GlobalKey<ZoneBoundsEditorState>();
 
-  static String _fmt(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
+  // Up to 4 decimals: ratio bounds can be small fractions (e.g. 0.025).
+  static String _fmt(double v) => formatLocaleNumberTrim(v, decimals: 4);
 
   Future<void> _save(int tankId) async {
     final l = AppLocalizations.of(context);

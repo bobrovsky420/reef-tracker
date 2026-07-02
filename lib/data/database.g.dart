@@ -1242,6 +1242,17 @@ class $ReadingsTable extends Readings with TableInfo<$ReadingsTable, Reading> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1250,6 +1261,7 @@ class $ReadingsTable extends Readings with TableInfo<$ReadingsTable, Reading> {
     value,
     takenAt,
     note,
+    groupId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1304,6 +1316,12 @@ class $ReadingsTable extends Readings with TableInfo<$ReadingsTable, Reading> {
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
     return context;
   }
 
@@ -1337,6 +1355,10 @@ class $ReadingsTable extends Readings with TableInfo<$ReadingsTable, Reading> {
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
     );
   }
 
@@ -1353,6 +1375,13 @@ class Reading extends DataClass implements Insertable<Reading> {
   final double value;
   final DateTime takenAt;
   final String? note;
+
+  /// Identifies readings entered together as one batch on the add-reading
+  /// screen (#15). Group edit/delete keys on this instead of the second-level
+  /// `takenAt` timestamp, which silently merged distinct groups saved (or
+  /// re-timed onto) the same second. Null for rows from before schema v13,
+  /// which fall back to timestamp grouping.
+  final String? groupId;
   const Reading({
     required this.id,
     required this.tankId,
@@ -1360,6 +1389,7 @@ class Reading extends DataClass implements Insertable<Reading> {
     required this.value,
     required this.takenAt,
     this.note,
+    this.groupId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1372,6 +1402,9 @@ class Reading extends DataClass implements Insertable<Reading> {
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
     return map;
   }
 
@@ -1383,6 +1416,9 @@ class Reading extends DataClass implements Insertable<Reading> {
       value: Value(value),
       takenAt: Value(takenAt),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
     );
   }
 
@@ -1398,6 +1434,7 @@ class Reading extends DataClass implements Insertable<Reading> {
       value: serializer.fromJson<double>(json['value']),
       takenAt: serializer.fromJson<DateTime>(json['takenAt']),
       note: serializer.fromJson<String?>(json['note']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
     );
   }
   @override
@@ -1410,6 +1447,7 @@ class Reading extends DataClass implements Insertable<Reading> {
       'value': serializer.toJson<double>(value),
       'takenAt': serializer.toJson<DateTime>(takenAt),
       'note': serializer.toJson<String?>(note),
+      'groupId': serializer.toJson<String?>(groupId),
     };
   }
 
@@ -1420,6 +1458,7 @@ class Reading extends DataClass implements Insertable<Reading> {
     double? value,
     DateTime? takenAt,
     Value<String?> note = const Value.absent(),
+    Value<String?> groupId = const Value.absent(),
   }) => Reading(
     id: id ?? this.id,
     tankId: tankId ?? this.tankId,
@@ -1427,6 +1466,7 @@ class Reading extends DataClass implements Insertable<Reading> {
     value: value ?? this.value,
     takenAt: takenAt ?? this.takenAt,
     note: note.present ? note.value : this.note,
+    groupId: groupId.present ? groupId.value : this.groupId,
   );
   Reading copyWithCompanion(ReadingsCompanion data) {
     return Reading(
@@ -1436,6 +1476,7 @@ class Reading extends DataClass implements Insertable<Reading> {
       value: data.value.present ? data.value.value : this.value,
       takenAt: data.takenAt.present ? data.takenAt.value : this.takenAt,
       note: data.note.present ? data.note.value : this.note,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
     );
   }
 
@@ -1447,13 +1488,15 @@ class Reading extends DataClass implements Insertable<Reading> {
           ..write('paramKey: $paramKey, ')
           ..write('value: $value, ')
           ..write('takenAt: $takenAt, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('groupId: $groupId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, tankId, paramKey, value, takenAt, note);
+  int get hashCode =>
+      Object.hash(id, tankId, paramKey, value, takenAt, note, groupId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1463,7 +1506,8 @@ class Reading extends DataClass implements Insertable<Reading> {
           other.paramKey == this.paramKey &&
           other.value == this.value &&
           other.takenAt == this.takenAt &&
-          other.note == this.note);
+          other.note == this.note &&
+          other.groupId == this.groupId);
 }
 
 class ReadingsCompanion extends UpdateCompanion<Reading> {
@@ -1473,6 +1517,7 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
   final Value<double> value;
   final Value<DateTime> takenAt;
   final Value<String?> note;
+  final Value<String?> groupId;
   const ReadingsCompanion({
     this.id = const Value.absent(),
     this.tankId = const Value.absent(),
@@ -1480,6 +1525,7 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
     this.value = const Value.absent(),
     this.takenAt = const Value.absent(),
     this.note = const Value.absent(),
+    this.groupId = const Value.absent(),
   });
   ReadingsCompanion.insert({
     this.id = const Value.absent(),
@@ -1488,6 +1534,7 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
     required double value,
     required DateTime takenAt,
     this.note = const Value.absent(),
+    this.groupId = const Value.absent(),
   }) : tankId = Value(tankId),
        paramKey = Value(paramKey),
        value = Value(value),
@@ -1499,6 +1546,7 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
     Expression<double>? value,
     Expression<DateTime>? takenAt,
     Expression<String>? note,
+    Expression<String>? groupId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1507,6 +1555,7 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
       if (value != null) 'value': value,
       if (takenAt != null) 'taken_at': takenAt,
       if (note != null) 'note': note,
+      if (groupId != null) 'group_id': groupId,
     });
   }
 
@@ -1517,6 +1566,7 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
     Value<double>? value,
     Value<DateTime>? takenAt,
     Value<String?>? note,
+    Value<String?>? groupId,
   }) {
     return ReadingsCompanion(
       id: id ?? this.id,
@@ -1525,6 +1575,7 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
       value: value ?? this.value,
       takenAt: takenAt ?? this.takenAt,
       note: note ?? this.note,
+      groupId: groupId ?? this.groupId,
     );
   }
 
@@ -1549,6 +1600,9 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
     return map;
   }
 
@@ -1560,7 +1614,8 @@ class ReadingsCompanion extends UpdateCompanion<Reading> {
           ..write('paramKey: $paramKey, ')
           ..write('value: $value, ')
           ..write('takenAt: $takenAt, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('groupId: $groupId')
           ..write(')'))
         .toString();
   }
@@ -5940,6 +5995,7 @@ typedef $$ReadingsTableCreateCompanionBuilder =
       required double value,
       required DateTime takenAt,
       Value<String?> note,
+      Value<String?> groupId,
     });
 typedef $$ReadingsTableUpdateCompanionBuilder =
     ReadingsCompanion Function({
@@ -5949,6 +6005,7 @@ typedef $$ReadingsTableUpdateCompanionBuilder =
       Value<double> value,
       Value<DateTime> takenAt,
       Value<String?> note,
+      Value<String?> groupId,
     });
 
 final class $$ReadingsTableReferences
@@ -6004,6 +6061,11 @@ class $$ReadingsTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6065,6 +6127,11 @@ class $$ReadingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TanksTableOrderingComposer get tankId {
     final $$TanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -6112,6 +6179,9 @@ class $$ReadingsTableAnnotationComposer
 
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
 
   $$TanksTableAnnotationComposer get tankId {
     final $$TanksTableAnnotationComposer composer = $composerBuilder(
@@ -6171,6 +6241,7 @@ class $$ReadingsTableTableManager
                 Value<double> value = const Value.absent(),
                 Value<DateTime> takenAt = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
               }) => ReadingsCompanion(
                 id: id,
                 tankId: tankId,
@@ -6178,6 +6249,7 @@ class $$ReadingsTableTableManager
                 value: value,
                 takenAt: takenAt,
                 note: note,
+                groupId: groupId,
               ),
           createCompanionCallback:
               ({
@@ -6187,6 +6259,7 @@ class $$ReadingsTableTableManager
                 required double value,
                 required DateTime takenAt,
                 Value<String?> note = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
               }) => ReadingsCompanion.insert(
                 id: id,
                 tankId: tankId,
@@ -6194,6 +6267,7 @@ class $$ReadingsTableTableManager
                 value: value,
                 takenAt: takenAt,
                 note: note,
+                groupId: groupId,
               ),
           withReferenceMapper: (p0) => p0
               .map(

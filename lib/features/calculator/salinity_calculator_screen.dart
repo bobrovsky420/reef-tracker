@@ -14,8 +14,12 @@ class SalinityCalculatorScreen extends StatefulWidget {
 }
 
 class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
-  final _pptCtrl = TextEditingController(text: '35.0');
-  final _sgCtrl = TextEditingController(text: '1.0264');
+  // Seed the fields through the locale formatter so a cs/de user sees "35,0"
+  // from the start, matching what the fields echo while typing (#39).
+  late final _pptCtrl =
+      TextEditingController(text: formatLocaleNumber(35, 1));
+  late final _sgCtrl =
+      TextEditingController(text: formatLocaleNumber(1.0264, 4));
   bool _updating = false;
 
   @override
@@ -32,7 +36,7 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
     final ppt = _parse(text);
     if (ppt == null) return;
     _updating = true;
-    _sgCtrl.text = pptToSg(ppt).toStringAsFixed(4);
+    _sgCtrl.text = formatLocaleNumber(pptToSg(ppt), 4);
     _updating = false;
   }
 
@@ -41,7 +45,7 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
     final sg = _parse(text);
     if (sg == null) return;
     _updating = true;
-    _pptCtrl.text = sgToPpt(sg).toStringAsFixed(1);
+    _pptCtrl.text = formatLocaleNumber(sgToPpt(sg), 1);
     _updating = false;
   }
 

@@ -1,4 +1,5 @@
 import '../data/database.dart';
+import 'units.dart';
 import 'zones.dart';
 
 /// Stable parameter keys used to compute the supported ratios.
@@ -159,19 +160,19 @@ Reading? _latestAtOrBefore(List<Reading> readings, DateTime t) {
 /// measurements shown alongside the ratio.
 String formatRatio(double r) {
   if (!r.isFinite) return '—';
-  if (r >= 100) return r.toStringAsFixed(0);
-  if (r >= 10) return r.toStringAsFixed(1);
-  if (r >= 1) return r.toStringAsFixed(2);
-  if (r >= 0.1) return r.toStringAsFixed(3);
-  return r.toStringAsFixed(4);
+  if (r >= 100) return formatLocaleNumber(r, 0);
+  if (r >= 10) return formatLocaleNumber(r, 1);
+  if (r >= 1) return formatLocaleNumber(r, 2);
+  if (r >= 0.1) return formatLocaleNumber(r, 3);
+  return formatLocaleNumber(r, 4);
 }
 
 /// Formats just the `N` side of a `1 : N` / `N : 1` ratio (and chart labels).
 String formatRatioN(double n) {
   if (!n.isFinite) return '—';
-  if (n >= 10) return n.toStringAsFixed(0);
-  if (n >= 1) return n.toStringAsFixed(1);
-  return n.toStringAsFixed(2);
+  if (n >= 10) return formatLocaleNumber(n, 0);
+  if (n >= 1) return formatLocaleNumber(n, 1);
+  return formatLocaleNumber(n, 2);
 }
 
 /// Formats a [ratio] (numerator/denominator) for display per [kind].
@@ -182,7 +183,7 @@ String formatRatioValue(RatioKind kind, double ratio) {
       return '1 : ${formatRatioN(1 / ratio)}';
     case RatioDisplay.decimal:
       if (!ratio.isFinite) return '—';
-      return ratio.toStringAsFixed(1);
+      return formatLocaleNumber(ratio, 1);
   }
 }
 

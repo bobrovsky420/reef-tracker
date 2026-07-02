@@ -156,7 +156,7 @@ Future<void> _editWater(
   if (tank == null) return;
   final l = AppLocalizations.of(context);
   final unit = ref.read(unitPrefsProvider).volume;
-  final result = await showDialog<_ActionResult>(
+  final outcome = await showDialog<_ActionOutcome>(
     context: context,
     builder: (ctx) => _ActionDialog(
       title: l.recordWaterChange,
@@ -167,9 +167,17 @@ Future<void> _editWater(
           ? ''
           : formatVolume(existing!.amountLiters!, unit),
       initialNote: existing?.note,
+      showDelete: existing != null,
     ),
   );
-  if (result == null) return;
+  if (outcome == null) return;
+  if (outcome is _ActionDelete) {
+    if (existing != null && context.mounted) {
+      await _deleteWithUndo(context, ref, l, _WaterEntry(existing));
+    }
+    return;
+  }
+  final result = outcome as _ActionResult;
   final amount = result.value == null
       ? null
       : volumeToCanonical(result.value!, unit);
@@ -200,20 +208,28 @@ Future<void> _editCarbon(
   final tank = ref.read(activeTankProvider);
   if (tank == null) return;
   final l = AppLocalizations.of(context);
-  final result = await showDialog<_ActionResult>(
+  final outcome = await showDialog<_ActionOutcome>(
     context: context,
     builder: (ctx) => _ActionDialog(
       title: l.recordCarbonChange,
       valueLabel: l.weightOptional,
-      valueSuffix: 'g',
+      valueSuffix: l.gramSymbol,
       initialTime: existing?.changedAt ?? DateTime.now(),
       initialValue: existing?.grams == null
           ? ''
           : _formatGrams(existing!.grams!),
       initialNote: existing?.note,
+      showDelete: existing != null,
     ),
   );
-  if (result == null) return;
+  if (outcome == null) return;
+  if (outcome is _ActionDelete) {
+    if (existing != null && context.mounted) {
+      await _deleteWithUndo(context, ref, l, _CarbonEntry(existing));
+    }
+    return;
+  }
+  final result = outcome as _ActionResult;
   final db = ref.read(dbProvider);
   if (existing == null) {
     await db.insertCarbonChange(
@@ -241,15 +257,23 @@ Future<void> _editEquipment(
   final tank = ref.read(activeTankProvider);
   if (tank == null) return;
   final l = AppLocalizations.of(context);
-  final result = await showDialog<_ActionResult>(
+  final outcome = await showDialog<_ActionOutcome>(
     context: context,
     builder: (ctx) => _ActionDialog(
       title: l.recordEquipmentCleaning,
       initialTime: existing?.cleanedAt ?? DateTime.now(),
       initialNote: existing?.note,
+      showDelete: existing != null,
     ),
   );
-  if (result == null) return;
+  if (outcome == null) return;
+  if (outcome is _ActionDelete) {
+    if (existing != null && context.mounted) {
+      await _deleteWithUndo(context, ref, l, _EquipmentEntry(existing));
+    }
+    return;
+  }
+  final result = outcome as _ActionResult;
   final db = ref.read(dbProvider);
   if (existing == null) {
     await db.insertEquipmentCleaning(
@@ -320,8 +344,7 @@ Future<bool> _deleteWithUndo(
   return true;
 }
 
-String _formatGrams(double g) =>
-    g == g.roundToDouble() ? g.toStringAsFixed(0) : g.toStringAsFixed(1);
+String _formatGrams(double g) => formatLocaleNumberTrim(g);
 
 enum _Kind { water, carbon, equipment }
 
@@ -357,7 +380,18 @@ class _EquipmentEntry extends _Entry {
   String get key => 'e${data.id}';
 }
 
-class _ActionResult {
+/// What the action dialog produced: a save payload or a delete request. The
+/// delete branch exists so screen-reader/switch-access users have a non-swipe
+/// way to remove an entry (#45).
+sealed class _ActionOutcome {
+  const _ActionOutcome();
+}
+
+class _ActionDelete extends _ActionOutcome {
+  const _ActionDelete();
+}
+
+class _ActionResult extends _ActionOutcome {
   const _ActionResult(this.time, this.value, this.note);
   final DateTime time;
   final double? value;
@@ -374,6 +408,7 @@ class _ActionDialog extends StatefulWidget {
     required this.initialTime,
     this.initialValue = '',
     required this.initialNote,
+    this.showDelete = false,
   });
 
   final String title;
@@ -385,6 +420,10 @@ class _ActionDialog extends StatefulWidget {
   final DateTime initialTime;
   final String initialValue;
   final String? initialNote;
+
+  /// Whether to offer a Delete action (editing an existing entry). This is the
+  /// accessible alternative to swipe-to-delete (#45).
+  final bool showDelete;
 
   @override
   State<_ActionDialog> createState() => _ActionDialogState();
@@ -478,6 +517,14 @@ class _ActionDialogState extends State<_ActionDialog> {
         ),
       ),
       actions: [
+        if (widget.showDelete)
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, const _ActionDelete()),
+            child: Text(l.delete),
+          ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(l.cancel),

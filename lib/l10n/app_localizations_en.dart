@@ -116,6 +116,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itemDeleted => 'Deleted';
 
   @override
+  String get reorder => 'Reorder';
+
+  @override
   String errorWith(Object message) {
     return 'Error: $message';
   }
@@ -384,7 +387,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String savedReadings(int count) {
-    return 'Saved $count reading(s).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Saved $count readings.',
+      one: 'Saved 1 reading.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -413,7 +422,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteTogetherBody(int count) {
-    return 'This value was entered together with $count other measurement(s). Delete only this value, or all values entered together?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'This value was entered together with $count other measurements. Delete only this value, or all values entered together?',
+      one:
+          'This value was entered together with 1 other measurement. Delete only this value, or all values entered together?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -427,7 +444,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String editTogetherBody(int count) {
-    return 'This value was entered together with $count other measurement(s). Update the time for only this value, or all values entered together?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'This value was entered together with $count other measurements. Update the time for only this value, or all values entered together?',
+      one:
+          'This value was entered together with 1 other measurement. Update the time for only this value, or all values entered together?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -505,6 +530,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String gramsSuffix(Object value) {
     return '$value g';
   }
+
+  @override
+  String get gramSymbol => 'g';
 
   @override
   String get equipmentCleaning => 'Equipment cleaning';
@@ -632,8 +660,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dosingIntervalDays => 'Interval (days)';
 
   @override
-  String dosingEveryDaysN(Object n) {
-    return 'Every $n days';
+  String dosingEveryDaysN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Every $n days',
+      one: 'Every day',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -719,6 +753,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupRestored => 'Backup restored';
 
   @override
+  String get backupNowFailed => 'Could not save the backup';
+
+  @override
+  String get backupShareFailed => 'Could not share the backup';
+
+  @override
   String get backupExportFailed => 'Could not export the backup';
 
   @override
@@ -786,6 +826,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'This permanently removes this backup file from your device.';
 
   @override
+  String sizeBytes(Object size) {
+    return '$size B';
+  }
+
+  @override
+  String sizeKilobytes(Object size) {
+    return '$size KB';
+  }
+
+  @override
+  String sizeMegabytes(Object size) {
+    return '$size MB';
+  }
+
+  @override
   String get aboutAppName => 'About ReefTracker';
 
   @override
@@ -847,8 +902,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get doseCalcWindow => 'Measurement window';
 
   @override
-  String doseCalcReadings(Object count) {
-    return '$count readings in range';
+  String doseCalcReadings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count readings in range',
+      one: '1 reading in range',
+    );
+    return '$_temp0';
   }
 
   @override

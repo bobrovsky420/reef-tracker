@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -71,6 +72,13 @@ class Readings extends Table {
   RealColumn get value => real()();
   DateTimeColumn get takenAt => dateTime()();
   TextColumn get note => text().nullable()();
+
+  /// Identifies readings entered together as one batch on the add-reading
+  /// screen (#15). Group edit/delete keys on this instead of the second-level
+  /// `takenAt` timestamp, which silently merged distinct groups saved (or
+  /// re-timed onto) the same second. Null for rows from before schema v13,
+  /// which fall back to timestamp grouping.
+  TextColumn get groupId => text().nullable()();
 }
 
 /// A logged water change for a tank (date/time + optional volume + note).
@@ -240,7 +248,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -346,6 +354,13 @@ class AppDatabase extends _$AppDatabase {
                   'ON dosing_entries (tank_id)',
             ]) {
               await customStatement(sql);
+            }
+          }
+          if (from < 13) {
+            // Reading batches get a stable group id (#15); pre-existing rows
+            // stay null and keep the legacy timestamp-based grouping.
+            if (!await _columnExists('readings', 'group_id')) {
+              await m.addColumn(readings, readings.groupId);
             }
           }
         },
@@ -469,31 +484,36 @@ class AppDatabase extends _$AppDatabase {
           .get();
 
   /// Adds a parameter to a tank if not already present (seeding preset bounds).
+  /// The exists-check and insert run in one transaction (#10) so a double-fire
+  /// (double-tap, launch/resume race) can't insert the parameter twice.
   Future<void> addTrackedParameter(
       int tankId, String paramKey, SetupType type) async {
-    final existing = await (select(trackedParameters)
-          ..where(
-              (t) => t.tankId.equals(tankId) & t.paramKey.equals(paramKey)))
-        .get();
-    if (existing.isNotEmpty) return;
-    final def = kParameterByKey[paramKey];
-    final bounds = presetBounds(type, paramKey);
-    // max(displayOrder) + 1, not the row count: after removing a middle
-    // parameter the count could collide with an existing order (same fix as
-    // insertDosingEntry).
-    final order = (await getTrackedParameters(tankId))
-            .fold<int>(-1, (m, p) => p.displayOrder > m ? p.displayOrder : m) +
-        1;
-    await into(trackedParameters).insert(TrackedParametersCompanion.insert(
-      tankId: tankId,
-      paramKey: paramKey,
-      unit: def?.unit ?? '',
-      displayOrder: Value(order),
-      amberLow: Value(bounds.amberLow),
-      greenLow: Value(bounds.greenLow),
-      greenHigh: Value(bounds.greenHigh),
-      amberHigh: Value(bounds.amberHigh),
-    ));
+    await transaction(() async {
+      final existing = await (select(trackedParameters)
+            ..where(
+                (t) => t.tankId.equals(tankId) & t.paramKey.equals(paramKey)))
+          .get();
+      if (existing.isNotEmpty) return;
+      final def = kParameterByKey[paramKey];
+      final bounds = presetBounds(type, paramKey);
+      // max(displayOrder) + 1, not the row count: after removing a middle
+      // parameter the count could collide with an existing order (same fix as
+      // insertDosingEntry).
+      final order = (await getTrackedParameters(tankId))
+              .fold<int>(
+                  -1, (m, p) => p.displayOrder > m ? p.displayOrder : m) +
+          1;
+      await into(trackedParameters).insert(TrackedParametersCompanion.insert(
+        tankId: tankId,
+        paramKey: paramKey,
+        unit: def?.unit ?? '',
+        displayOrder: Value(order),
+        amberLow: Value(bounds.amberLow),
+        greenLow: Value(bounds.greenLow),
+        greenHigh: Value(bounds.greenHigh),
+        amberHigh: Value(bounds.amberHigh),
+      ));
+    });
   }
 
   Future<void> updateTrackedParameter(TrackedParameter param) =>
@@ -562,6 +582,7 @@ class AppDatabase extends _$AppDatabase {
     required double value,
     required DateTime takenAt,
     String? note,
+    String? groupId,
   }) =>
       into(readings).insert(ReadingsCompanion.insert(
         tankId: tankId,
@@ -569,30 +590,36 @@ class AppDatabase extends _$AppDatabase {
         value: value,
         takenAt: takenAt,
         note: Value(note),
+        groupId: Value(groupId),
       ));
 
   /// Inserts a group of readings entered together in one atomic batch, so a
   /// failure partway through cannot leave a partial group behind. All rows share
-  /// the same [tankId], [takenAt] and [note].
+  /// the same [tankId], [takenAt], [note] and a freshly generated [Readings.groupId]
+  /// (#15), so later group edit/delete can't bleed into an unrelated batch that
+  /// happens to share the same second.
   Future<void> insertReadingGroup({
     required int tankId,
     required DateTime takenAt,
     String? note,
     required List<({String paramKey, double value})> values,
-  }) =>
-      batch((b) => b.insertAll(
-            readings,
-            [
-              for (final v in values)
-                ReadingsCompanion.insert(
-                  tankId: tankId,
-                  paramKey: v.paramKey,
-                  value: v.value,
-                  takenAt: takenAt,
-                  note: Value(note),
-                ),
-            ],
-          ));
+  }) {
+    final groupId = newReadingGroupId();
+    return batch((b) => b.insertAll(
+          readings,
+          [
+            for (final v in values)
+              ReadingsCompanion.insert(
+                tankId: tankId,
+                paramKey: v.paramKey,
+                value: v.value,
+                takenAt: takenAt,
+                note: Value(note),
+                groupId: Value(groupId),
+              ),
+          ],
+        ));
+  }
 
   Future<void> updateReading(Reading reading) =>
       update(readings).replace(reading);
@@ -600,25 +627,32 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteReading(int id) =>
       (delete(readings)..where((r) => r.id.equals(id))).go();
 
-  /// Readings saved together with the same timestamp for a tank (i.e. entered
-  /// in one go on the add-reading screen), including the one being inspected.
-  Future<List<Reading>> readingsAt(int tankId, DateTime takenAt) =>
-      (select(readings)
-            ..where((r) => r.tankId.equals(tankId) & r.takenAt.equals(takenAt)))
-          .get();
+  /// Predicate matching every reading saved together with [r] (#15): rows
+  /// sharing its group id when it has one, otherwise (pre-v13 rows) the legacy
+  /// same-timestamp rule — restricted to other ungrouped rows so a legacy group
+  /// can't swallow a new batch that lands on the same second.
+  Expression<bool> _sameGroupAs(Readings tbl, Reading r) {
+    final gid = r.groupId;
+    if (gid != null) return tbl.groupId.equals(gid);
+    return tbl.tankId.equals(r.tankId) &
+        tbl.takenAt.equals(r.takenAt) &
+        tbl.groupId.isNull();
+  }
 
-  /// Deletes every reading saved together at [takenAt] for [tankId].
+  /// Readings saved together with [r] (entered in one go on the add-reading
+  /// screen), including [r] itself.
+  Future<List<Reading>> readingGroup(Reading r) =>
+      (select(readings)..where((tbl) => _sameGroupAs(tbl, r))).get();
+
+  /// Deletes every reading saved together with [r] (including [r]).
   /// Returns the number of rows removed.
-  Future<int> deleteReadingsAt(int tankId, DateTime takenAt) =>
-      (delete(readings)
-            ..where((r) => r.tankId.equals(tankId) & r.takenAt.equals(takenAt)))
-          .go();
+  Future<int> deleteReadingGroup(Reading r) =>
+      (delete(readings)..where((tbl) => _sameGroupAs(tbl, r))).go();
 
-  /// Re-timestamps every reading saved together at [from] for [tankId] to [to]
-  /// (i.e. moves a whole group entered in one go). Returns the rows changed.
-  Future<int> updateReadingsTimeAt(int tankId, DateTime from, DateTime to) =>
-      (update(readings)
-            ..where((r) => r.tankId.equals(tankId) & r.takenAt.equals(from)))
+  /// Re-timestamps every reading saved together with [r] to [to] (i.e. moves a
+  /// whole group entered in one go). Returns the rows changed.
+  Future<int> updateReadingGroupTime(Reading r, DateTime to) =>
+      (update(readings)..where((tbl) => _sameGroupAs(tbl, r)))
           .write(ReadingsCompanion(takenAt: Value(to)));
 
   // --- Water changes -------------------------------------------------------
@@ -727,25 +761,22 @@ class AppDatabase extends _$AppDatabase {
           .getSingleOrNull();
 
   /// Sets whether a ratio card is shown for [tankId], leaving its order intact.
-  Future<void> setRatioVisible(
-      int tankId, String ratioKey, bool visible) async {
-    final existing = await _ratioRow(tankId, ratioKey);
-    if (existing == null) {
-      await into(ratioVisibilities).insert(RatioVisibilitiesCompanion.insert(
+  ///
+  /// A single upsert on the composite `(tankId, ratioKey)` primary key (#10):
+  /// only the columns present in the companion are written on conflict, so a
+  /// concurrent double-fire can neither duplicate the row nor throw a PK
+  /// conflict, and existing order/bounds stay untouched.
+  Future<void> setRatioVisible(int tankId, String ratioKey, bool visible) =>
+      into(ratioVisibilities)
+          .insertOnConflictUpdate(RatioVisibilitiesCompanion.insert(
         tankId: tankId,
         ratioKey: ratioKey,
         visible: Value(visible),
       ));
-    } else {
-      await (update(ratioVisibilities)
-            ..where((r) =>
-                r.tankId.equals(tankId) & r.ratioKey.equals(ratioKey)))
-          .write(RatioVisibilitiesCompanion(visible: Value(visible)));
-    }
-  }
 
   /// Sets the per-tank zone bounds for a ratio card (creating the row if
-  /// needed), leaving visibility and order intact.
+  /// needed), leaving visibility and order intact. Same upsert shape as
+  /// [setRatioVisible] (#10).
   Future<void> setRatioBounds(
     int tankId,
     String ratioKey, {
@@ -753,10 +784,9 @@ class AppDatabase extends _$AppDatabase {
     required double? greenLow,
     required double? greenHigh,
     required double? amberHigh,
-  }) async {
-    final existing = await _ratioRow(tankId, ratioKey);
-    if (existing == null) {
-      await into(ratioVisibilities).insert(RatioVisibilitiesCompanion.insert(
+  }) =>
+      into(ratioVisibilities)
+          .insertOnConflictUpdate(RatioVisibilitiesCompanion.insert(
         tankId: tankId,
         ratioKey: ratioKey,
         amberLow: Value(amberLow),
@@ -764,18 +794,6 @@ class AppDatabase extends _$AppDatabase {
         greenHigh: Value(greenHigh),
         amberHigh: Value(amberHigh),
       ));
-    } else {
-      await (update(ratioVisibilities)
-            ..where((r) =>
-                r.tankId.equals(tankId) & r.ratioKey.equals(ratioKey)))
-          .write(RatioVisibilitiesCompanion(
-        amberLow: Value(amberLow),
-        greenLow: Value(greenLow),
-        greenHigh: Value(greenHigh),
-        amberHigh: Value(amberHigh),
-      ));
-    }
-  }
 
   /// Persists a new combined dashboard order across measurements and ratio
   /// cards (they share one order space). [paramOrders] gives tracked-parameter
@@ -849,26 +867,30 @@ class AppDatabase extends _$AppDatabase {
           .watch();
 
   Future<int> insertDosingEntry(DosingEntriesCompanion entry) async {
-    final existing = await (select(dosingEntries)
-          ..where((d) => d.tankId.equals(entry.tankId.value)))
-        .get();
-    // max(displayOrder) + 1, not the row count: after deleting a middle entry
-    // the count could collide with an existing order and make rows jump (#21).
-    final order =
-        existing.fold<int>(-1, (m, d) => d.displayOrder > m ? d.displayOrder : m) +
-            1;
-    return into(dosingEntries).insert(
-      entry.copyWith(
-        displayOrder: Value(order),
-        // A freshly added supplement starts a new active segment now.
-        startedAt: entry.startedAt.present
-            ? entry.startedAt
-            : Value(DateTime.now()),
-        state: entry.state.present
-            ? entry.state
-            : Value(DosingState.active.name),
-      ),
-    );
+    // The max-order read and the insert run in one transaction (#10) so two
+    // concurrent inserts can't be assigned the same displayOrder.
+    return transaction(() async {
+      final existing = await (select(dosingEntries)
+            ..where((d) => d.tankId.equals(entry.tankId.value)))
+          .get();
+      // max(displayOrder) + 1, not the row count: after deleting a middle entry
+      // the count could collide with an existing order and make rows jump (#21).
+      final order = existing.fold<int>(
+              -1, (m, d) => d.displayOrder > m ? d.displayOrder : m) +
+          1;
+      return into(dosingEntries).insert(
+        entry.copyWith(
+          displayOrder: Value(order),
+          // A freshly added supplement starts a new active segment now.
+          startedAt: entry.startedAt.present
+              ? entry.startedAt
+              : Value(DateTime.now()),
+          state: entry.state.present
+              ? entry.state
+              : Value(DosingState.active.name),
+        ),
+      );
+    });
   }
 
   /// In-place update for **cosmetic** changes only (display name, note, time) —
@@ -1064,6 +1086,16 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 }
+
+final Random _groupIdRandom = Random();
+
+/// A practically-unique id for a batch of readings entered together (#15):
+/// microsecond timestamp + random suffix, no external uuid dependency needed
+/// for the collision odds that matter here (ids only need to differ between
+/// batches of one tank).
+String newReadingGroupId() =>
+    '${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}'
+    '-${_groupIdRandom.nextInt(1 << 30).toRadixString(36)}';
 
 LazyDatabase _open() {
   return LazyDatabase(() async {

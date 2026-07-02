@@ -83,7 +83,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 |------|----------------|
 | `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. `classify` deliberately tests **red before green**, so a beyond-amber value can't short-circuit to "green" through an open (null) green side. Bounds violating the ordering invariant (`isValid` = present bounds non-decreasing; violations are possible only via restored/hand-edited backups, the editors validate) are treated as **unusable**: `classify` returns `unknown` and `zoneBands` paints nothing, instead of labeling every value amber. Amber-only bounds (both greens null) classify — and paint — the region between the ambers as green, keeping tile color and chart bands in agreement. |
 | `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). Rounding (not truncating) avoids under-counting: a reading 18 h into its 7th day reads as 7 days, not 6 — which matters right at the 30-day health-freshness cutoff. |
-| `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. |
+| `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. Display formatting is the mirror image: `formatLocaleNumber`/`formatLocaleNumberTrim` render with the locale's decimal separator (grouping deliberately off — grouped output with decimals would mix separators, which the parser rejects, and formatted values are seeded back into edit fields); all user-facing number formatting routes through them (`ParamPresentation.format`, volumes, dose amounts, ratios, chart axes). |
 | `parameter_catalog.dart` | `kReefParameters` — the master list (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP, K, Sr, I, Fe) with default units, plus `kParameterByKey` lookup and `formatParamValue`. Each `ParameterDef` also carries **value-sanity limits in canonical units**: `minValue` = hard physical floor (0 for concentrations, 1.0 for SG; ORP has none — legitimately negative) and a deliberately generous `plausibleMin`/`plausibleMax` pair (e.g. Mg 800–2000, SG 1.0–1.05). `checkParamValue(paramKey, canonicalValue)` → `ParamValueCheck` (ok / impossible / implausible): **impossible** values are rejected by the reading inputs outright; **implausible** ones require an explicit "Save anyway" confirmation that echoes the value as parsed next to the typical range — the backstop that turns a locale decimal-separator mis-parse (`1,300` → 1.3) into a visible prompt instead of silent data corruption, while keeping extreme-but-real crash readings recordable. Enforced in Add Reading and the history value-edit dialog, always on the canonical value (after °F/ppt conversion). |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
@@ -96,13 +96,13 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 12**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 13**
 
 | Table | Key columns |
 |-------|-------------|
 | `Tanks` | id, name, setupType, volumeLiters?, startDate?, notes?, vendor?, model?, createdAt |
 | `TrackedParameters` | id, tankId (FK cascade), paramKey, unit, enabled, displayOrder, + 4 zone bounds (amberLow/greenLow/greenHigh/amberHigh) |
-| `Readings` | id, tankId (FK cascade), paramKey, value (canonical), takenAt, note? |
+| `Readings` | id, tankId (FK cascade), paramKey, value (canonical), takenAt, note?, groupId? — `groupId` tags readings entered together as one add-reading batch (generated by `newReadingGroupId`, no uuid dependency); null on pre-v13 rows, which fall back to same-timestamp grouping |
 | `WaterChanges` | id, tankId (FK cascade), changedAt, amountLiters?, note? |
 | `CarbonChanges` | id, tankId (FK cascade), changedAt, grams?, note? |
 | `EquipmentCleanings` | id, tankId (FK cascade), cleanedAt, note? |
@@ -147,7 +147,9 @@ v11 added `DosingEntries.startedAt`/`endedAt`/`state` (`addColumn` ×3, guarded)
 and backfills `started_at = created_at` for pre-existing rows via `customStatement`;
 v12 added the secondary indexes above (`CREATE INDEX IF NOT EXISTS` ×6 via
 `customStatement`, matching the `@TableIndex` definitions that `createAll` uses
-for new installs). Foreign keys are enabled in `beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
+for new installs); v13 added `Readings.groupId` (`addColumn`, guarded — pre-v13
+rows stay null and keep legacy timestamp grouping). Foreign keys are enabled in
+`beforeOpen` (`PRAGMA foreign_keys = ON`). **When you
 add/change a table or column you must bump `schemaVersion` and add the matching
 migration**, then run `dart run build_runner build`.
 
@@ -165,9 +167,13 @@ Notable DB behavior:
 - `boundsOf(TrackedParameter)` builds `ZoneBounds`; `presentationOf` bridges a
   tracked param + prefs to a `ParamPresentation`.
 - `applyPreset` re-applies preset bounds to known params without adding/removing.
-- `readingsAt` / `deleteReadingsAt` / `updateReadingsTimeAt` operate on a group
-  of readings entered together (same timestamp) — used by group edit/delete and
-  by re-timing a whole batch.
+- `readingGroup` / `deleteReadingGroup` / `updateReadingGroupTime` operate on a
+  batch of readings entered together, keyed on `Readings.groupId`
+  (`insertReadingGroup` stamps each batch) with a legacy fallback for pre-v13
+  rows: same tank + timestamp **and** null groupId, so an old group can never
+  swallow a new batch that lands on the same second. Re-timing a single value
+  out of its batch clears its groupId; the delete-undo path and backups
+  round-trip it.
 - **Dosing segment operations:** `insertDosingEntry` assigns
   `displayOrder = max(existing) + 1` — *not* the row count, which collides with
   an existing order after a middle row is deleted — and stamps
@@ -180,7 +186,11 @@ Notable DB behavior:
 - **Transaction boundaries:** every multi-step write is atomic —
   `createTankWithPreset` (insert + seed + activate), `deleteTank` (delete +
   active-tank fallback), `supersedeDosingEntry`, `applyDashboardOrder` (params
-  batch + ratio insert-or-update), and `restoreFromBackup`.
+  batch + ratio insert-or-update), `addTrackedParameter` (exists-check +
+  max-order + insert), `insertDosingEntry` (max-order + insert), and
+  `restoreFromBackup`. `setRatioVisible`/`setRatioBounds` are single
+  `insertOnConflictUpdate` upserts on the composite PK (only the companion's
+  present columns are written on conflict).
 
 ### Backup (`backup.dart`)
 
@@ -298,9 +308,24 @@ wrapping a Drift watch stream (the UI reacts to any DB change with no manual
 invalidation), while **derived values are plain memoized `Provider`s**
 (`unitPrefsProvider`, `localeProvider`, `tankTrendsProvider`,
 `tankHealthProvider`) that Riverpod re-runs only when a watched input changes —
-never on a mere widget rebuild. Nothing uses `autoDispose`: state is small and
-single-user, so providers simply live for the app's lifetime (pairing with the
-home shell's `IndexedStack`, which keeps tab widget state alive too).
+never on a mere widget rebuild.
+
+**Tank-scoped providers are family-backed** (#20): each public tank-scoped
+provider (`trackedParametersProvider`, `tankReadingsProvider`,
+`waterChangesProvider`, `carbonChangesProvider`, `equipmentCleaningsProvider`,
+`dosingEntriesProvider`, `dosingHistoryProvider`, `paramReadingsProvider`,
+`ratioSettingsProvider`) is a plain `Provider<AsyncValue<…>>` delegating to a
+private **autoDispose `StreamProvider` family keyed by tank id**. Switching the
+active tank swaps to a fresh family instance, so consumers briefly see
+loading/empty instead of the previous tank's rows flashing under the new tank's
+name (a rebuilt non-family StreamProvider keeps its previous value while the
+new stream loads); the old tank's instance loses its only listener and its live
+query is disposed. Consumers are unaffected — `ref.watch` yields the same
+`AsyncValue` either way. Beyond those internal families nothing uses
+`autoDispose`: state is small and single-user, so providers simply live for the
+app's lifetime (pairing with the home shell's `IndexedStack`, which keeps tab
+widget state alive too), and the permanent wrappers keep the *active* tank's
+data warm for `ref.read` call sites.
 
 Consumers read the stream providers as `.value ?? const []`, so a failed DB
 query would otherwise render as "no data". `ProviderErrorObserver`
@@ -518,12 +543,16 @@ Per-parameter history built on the shared `TrendChart` (zone bands + water-chang
 markers) with the shared `ChartRangeSelector`. Values are presented in the user's
 units while bounds/zones stay canonical. Below the chart is the readings list:
 tap a row to edit its **value and date/time** (`_ReadingDialog`, the date/time
-picker mirroring the actions log); when the moved reading shares its timestamp
-with sibling measurements, the user is asked whether to re-time only that value
-or all values entered together (`updateReadingsTimeAt`). Swipe-left deletes: a
-standalone reading is removed immediately with an **"Undo" SnackBar**
-(`_showUndo` re-inserts it); a grouped reading still prompts the one-vs-all
-choice (`deleteReadingsAt`) first, then offers the same undo.
+picker mirroring the actions log); when the moved reading belongs to a batch of
+sibling measurements, the user is asked whether to re-time only that value
+(detaching it from the batch) or all values entered together
+(`updateReadingGroupTime`). Swipe-left deletes: a standalone reading is removed
+immediately with an **"Undo" SnackBar** (`_showUndo` re-inserts it, preserving
+the batch id); a grouped reading still prompts the one-vs-all choice
+(`deleteReadingGroup`) first, then offers the same undo. The edit dialog also
+carries a **Delete** button that reuses the exact swipe flow — the accessible
+path for screen-reader/switch-access users, mirrored by Delete in the action
+dialogs and Stop on the dosing edit screen.
 
 ### Trend detection (`domain/trend.dart` + `widgets/trend_view.dart`)
 

@@ -44,6 +44,34 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
   bool _prefilled = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Prefill from a provider listener, not from build() (#18): a late stream
+    // emission used to overwrite whatever the user had typed meanwhile. The
+    // one-shot `_prefilled` guard plus `onlyIfEmpty` keeps user input intact.
+    var inInitState = true;
+    ref.listenManual(dosingEntriesProvider, fireImmediately: true,
+        (_, next) {
+      if (_prefilled || !next.hasValue) return;
+      _prefilled = true;
+      final entries = next.value ?? const <DosingEntry>[];
+      _element ??= _defaultElement(entries);
+      _applyPrefill(
+        element: _element!,
+        tank: ref.read(activeTankProvider),
+        entries: entries,
+        volUnit: ref.read(unitPrefsProvider).volume,
+        prefillVolume: true,
+        onlyIfEmpty: true,
+      );
+      // When the entries arrive asynchronously the widget is already built and
+      // needs a rebuild; during initState the first build is still ahead.
+      if (!inInitState) setState(() {});
+    });
+    inInitState = false;
+  }
+
+  @override
   void dispose() {
     _volumeCtrl.dispose();
     _doseCtrl.dispose();
@@ -64,15 +92,18 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
   }
 
   /// Fills the dose, dose-unit and potency fields for [element]; optionally also
-  /// the tank volume. Reads the plan entries for this element.
+  /// the tank volume. Reads the plan entries for this element. With
+  /// [onlyIfEmpty] (the initial async prefill) text the user has already typed
+  /// is never overwritten (#18); an explicit element change overwrites.
   void _applyPrefill({
     required String element,
     required Tank? tank,
     required List<DosingEntry> entries,
     required VolumeUnit volUnit,
     required bool prefillVolume,
+    bool onlyIfEmpty = false,
   }) {
-    if (prefillVolume) {
+    if (prefillVolume && !(onlyIfEmpty && _volumeCtrl.text.isNotEmpty)) {
       final v = tank?.volumeLiters;
       _volumeCtrl.text = v == null ? '' : formatVolume(v, volUnit);
     }
@@ -88,8 +119,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         catalog ??= kSupplementProductByKey[key]?.strength?[element];
       }
     }
-    _doseUnit = unit ?? DoseUnit.ml;
-    _doseCtrl.text = sum > 0 ? formatDoseAmount(sum) : '';
+    if (!(onlyIfEmpty && _doseCtrl.text.isNotEmpty)) {
+      _doseUnit = unit ?? DoseUnit.ml;
+      _doseCtrl.text = sum > 0 ? formatDoseAmount(sum) : '';
+    }
     _catalogPotency = catalog;
     _useCatalogPotency = catalog != null;
     if (catalog == null) {
@@ -119,18 +152,6 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     final tank = ref.watch(activeTankProvider);
     final entriesAsync = ref.watch(dosingEntriesProvider);
     final entries = entriesAsync.value ?? const <DosingEntry>[];
-
-    if (!_prefilled && entriesAsync.hasValue) {
-      _element ??= _defaultElement(entries);
-      _applyPrefill(
-        element: _element!,
-        tank: tank,
-        entries: entries,
-        volUnit: volUnit,
-        prefillVolume: true,
-      );
-      _prefilled = true;
-    }
     final element = _element ?? kDosingElementKeys.first;
 
     final readings = ref.watch(paramReadingsProvider(element)).value ?? const [];
@@ -557,12 +578,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     );
   }
 
-  /// Trims a value to a compact string (up to 3 significant decimals).
-  String _trim(double v) {
-    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
-    final s = v.toStringAsFixed(v.abs() < 1 ? 3 : 2);
-    return s;
-  }
+  /// Trims a value to a compact locale-formatted string (up to 3 significant
+  /// decimals).
+  String _trim(double v) =>
+      formatLocaleNumberTrim(v, decimals: v.abs() < 1 ? 3 : 2);
 
   String _signed(double v) => '${v >= 0 ? '+' : '−'}${_trim(v.abs())}';
 }

@@ -59,6 +59,32 @@ double? parseUserDouble(String? text) {
 String _decimalSeparator() =>
     NumberFormat.decimalPattern(Intl.defaultLocale).symbols.DECIMAL_SEP;
 
+/// Formats [value] for display in the active app locale with exactly
+/// [decimals] fraction digits — the display-side counterpart of
+/// [parseUserDouble] (#39), so "2,5" typed by a cs/de user is echoed back as
+/// "2,5" and not "2.5".
+///
+/// Grouping separators are deliberately turned off: formatted values are also
+/// seeded into edit fields, and a grouped value with decimals (de "1.300,5")
+/// mixes both separators, which [parseUserDouble] rejects as ambiguous.
+String formatLocaleNumber(double value, int decimals) {
+  final f = NumberFormat.decimalPatternDigits(
+      locale: Intl.defaultLocale, decimalDigits: decimals)
+    ..turnOffGrouping();
+  return f.format(value);
+}
+
+/// Formats [value] like [formatLocaleNumber], but with at most [decimals]
+/// fraction digits and no trailing zero fraction (e.g. `5`, `2,5`) — the app's
+/// common style for dose amounts, gram weights and volumes.
+String formatLocaleNumberTrim(double value, {int decimals = 1}) {
+  final f = NumberFormat.decimalPattern(Intl.defaultLocale)
+    ..turnOffGrouping()
+    ..minimumFractionDigits = 0
+    ..maximumFractionDigits = decimals;
+  return f.format(value);
+}
+
 /// Temperature display unit. Canonical storage is always Celsius.
 enum TempUnit {
   celsius('°C'),
@@ -144,12 +170,8 @@ double volumeToCanonical(double display, VolumeUnit unit) =>
 
 /// Formats a canonical litre value as a bare number string in [unit] (whole
 /// numbers without decimals, otherwise one decimal place).
-String formatVolume(double liters, VolumeUnit unit) {
-  final v = volumeToDisplay(liters, unit);
-  return v == v.roundToDouble()
-      ? v.toStringAsFixed(0)
-      : v.toStringAsFixed(1);
-}
+String formatVolume(double liters, VolumeUnit unit) =>
+    formatLocaleNumberTrim(volumeToDisplay(liters, unit));
 
 /// How to present a parameter's value: the unit label, decimals, and the
 /// conversions between canonical storage and the user's display unit.
@@ -171,9 +193,10 @@ class ParamPresentation {
   /// than the per-parameter unit field.
   final bool unitFollowsSettings;
 
-  /// Formats a canonical value for display in the preferred unit.
+  /// Formats a canonical value for display in the preferred unit, using the
+  /// active locale's decimal separator.
   String format(double canonical) =>
-      toDisplay(canonical).toStringAsFixed(decimals);
+      formatLocaleNumber(toDisplay(canonical), decimals);
 
   /// Formats the change between two canonical values in the display unit,
   /// always prefixed with an explicit sign (e.g. "+0.2", "-0.1", "0.0").
@@ -183,10 +206,11 @@ class ParamPresentation {
   /// an unsigned zero, so the sign always matches the displayed magnitude.
   String formatChange(double current, double previous) {
     final delta = toDisplay(current) - toDisplay(previous);
-    final s = delta.toStringAsFixed(decimals);
-    // Re-parse the rounded string so the sign reflects what's actually shown.
-    final rounded = double.parse(s);
-    if (rounded == 0) return (0.0).toStringAsFixed(decimals);
+    // Round first (via the fixed-decimals string) so the sign reflects what's
+    // actually shown; only then apply the locale display formatting.
+    final rounded = double.parse(delta.toStringAsFixed(decimals));
+    if (rounded == 0) return formatLocaleNumber(0, decimals);
+    final s = formatLocaleNumber(rounded, decimals);
     return rounded > 0 ? '+$s' : s;
   }
 }

@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
+import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
@@ -100,8 +100,9 @@ class _BackupTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final stat = file.statSync();
-    final when = DateFormat.yMMMd().add_jm().format(stat.modified);
-    final size = _formatSize(stat.size);
+    // Shared helper honors the device 12/24-hour preference (#41).
+    final when = formatDateTime(context, stat.modified, weekday: false);
+    final size = _formatSize(l, stat.size);
 
     return ListTile(
       leading: const Icon(Icons.history),
@@ -113,7 +114,7 @@ class _BackupTile extends ConsumerWidget {
             case 'restore':
               _restore(context, ref, l);
             case 'share':
-              _share();
+              _share(context, l);
             case 'delete':
               _delete(context, l);
           }
@@ -155,12 +156,17 @@ class _BackupTile extends ConsumerWidget {
     }
   }
 
-  Future<void> _share() async {
+  Future<void> _share(BuildContext context, AppLocalizations l) async {
     final name = p.basename(file.path);
-    await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'application/json', name: name)],
-      subject: name,
-    );
+    try {
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/json', name: name)],
+        subject: name,
+      );
+    } catch (_) {
+      // E.g. the file was pruned/deleted meanwhile, or no share target (#23).
+      if (context.mounted) _snack(context, l.backupShareFailed);
+    }
   }
 
   Future<void> _delete(BuildContext context, AppLocalizations l) async {
@@ -186,11 +192,13 @@ class _BackupTile extends ConsumerWidget {
     onChanged();
   }
 
-  static String _formatSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
+  /// Localized file size: translated unit symbols and the locale's decimal
+  /// separator (#42).
+  static String _formatSize(AppLocalizations l, int bytes) {
+    if (bytes < 1024) return l.sizeBytes('$bytes');
     final kb = bytes / 1024;
-    if (kb < 1024) return '${kb.toStringAsFixed(1)} KB';
-    return '${(kb / 1024).toStringAsFixed(1)} MB';
+    if (kb < 1024) return l.sizeKilobytes(formatLocaleNumber(kb, 1));
+    return l.sizeMegabytes(formatLocaleNumber(kb / 1024, 1));
   }
 
   void _snack(BuildContext context, String message) {

@@ -8,9 +8,21 @@ import 'app/router.dart';
 import 'data/auto_backup.dart';
 import 'l10n/app_localizations.dart';
 
-void main() {
-  runApp(ProviderScope(
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final container = ProviderContainer(
     observers: [ProviderErrorObserver(showError: _warnDataLoadFailed)],
+  );
+  // Pre-warm the stored locale override before the first frame (#24): without
+  // this the app renders its first frame(s) in the system language and then
+  // snaps to the chosen one. Also front-loads the database open/migration.
+  // On failure fall back to the system locale — the observer above already
+  // surfaces database errors to the user.
+  try {
+    await container.read(localeCodeProvider.future);
+  } catch (_) {}
+  runApp(UncontrolledProviderScope(
+    container: container,
     child: const ReefTrackerApp(),
   ));
 }

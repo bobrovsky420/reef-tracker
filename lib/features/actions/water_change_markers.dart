@@ -26,6 +26,8 @@ List<VerticalLine> waterChangeLines({
   return lines;
 }
 
-/// The colour used for water-change markers across all graphs.
+/// The colour used for water-change markers across all graphs. Derived from
+/// the theme (#47) so it keeps contrast on both brightnesses instead of the
+/// old fixed light-blue, and stays distinct from the primary-colored series.
 Color waterChangeMarkerColor(BuildContext context) =>
-    Colors.lightBlue.shade400;
+    Theme.of(context).colorScheme.tertiary;

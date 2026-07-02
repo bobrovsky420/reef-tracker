@@ -565,6 +565,7 @@ Map<String, dynamic> _readingToJson(Reading r) => {
       'value': r.value,
       'takenAt': r.takenAt.millisecondsSinceEpoch,
       'note': r.note,
+      'groupId': r.groupId,
     };
 
 ReadingsCompanion _readingFromJson(Map<String, dynamic> m) => ReadingsCompanion(
@@ -574,6 +575,8 @@ ReadingsCompanion _readingFromJson(Map<String, dynamic> m) => ReadingsCompanion(
       value: Value((m['value'] as num).toDouble()),
       takenAt: Value(_date(m['takenAt'])),
       note: Value(m['note'] as String?),
+      // Absent in pre-v13 backups; such rows keep timestamp grouping (#15).
+      groupId: Value(m['groupId'] as String?),
     );
 
 Map<String, dynamic> _waterChangeToJson(WaterChange w) => {

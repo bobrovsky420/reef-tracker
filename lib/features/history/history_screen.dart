@@ -134,7 +134,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       BuildContext context, Reading r, ParamPresentation pres) async {
     final db = ref.read(dbProvider);
     final tank = ref.read(activeTankProvider);
-    final edit = await showDialog<_ReadingEdit>(
+    final result = await showDialog<_ReadingDialogResult>(
       context: context,
       builder: (ctx) => _ReadingDialog(
         paramKey: r.paramKey,
@@ -143,13 +143,22 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         initialTime: r.takenAt,
       ),
     );
-    if (edit == null) return;
+    if (result == null) return;
+    // Delete requested from the dialog — the accessible, non-swipe path (#45).
+    // Reuses the swipe flow's group-aware confirm + undo.
+    if (result is _ReadingDelete) {
+      if (context.mounted) await _confirmDelete(context, r);
+      return;
+    }
+    final edit = result as _ReadingEdit;
 
     final timeChanged = !edit.time.isAtSameMomentAs(r.takenAt);
     bool applyTimeToAll = false;
+    var hadSiblings = false;
     if (timeChanged && tank != null) {
-      final siblings = await db.readingsAt(tank.id, r.takenAt);
+      final siblings = await db.readingGroup(r);
       final others = siblings.length - 1;
+      hadSiblings = others > 0;
       if (others > 0) {
         if (!context.mounted) return;
         final choice = await _askEditScope(context, others);
@@ -166,9 +175,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     }
 
     if (applyTimeToAll) {
-      await db.updateReadingsTimeAt(tank!.id, r.takenAt, edit.time);
+      await db.updateReadingGroupTime(r, edit.time);
     }
-    await db.updateReading(r.copyWith(value: edit.value, takenAt: edit.time));
+    // Re-timing only this value detaches it from its batch (#15): it no longer
+    // shares the group's moment, so group delete/edit must not drag it along.
+    final detach = timeChanged && !applyTimeToAll && hadSiblings;
+    await db.updateReading(r.copyWith(
+      value: edit.value,
+      takenAt: edit.time,
+      groupId: detach ? const Value(null) : Value(r.groupId),
+    ));
   }
 
   /// Asks whether a re-timing should affect only this reading or all [others]+1
@@ -205,7 +221,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final tank = ref.read(activeTankProvider);
     if (tank == null) return false;
 
-    final siblings = await db.readingsAt(tank.id, r.takenAt);
+    final siblings = await db.readingGroup(r);
     final others = siblings.length - 1;
     if (!context.mounted) return false;
 
@@ -240,7 +256,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           await db.deleteReading(r.id);
           removed = [r];
         case _DeleteChoice.all:
-          await db.deleteReadingsAt(tank.id, r.takenAt);
+          await db.deleteReadingGroup(r);
           removed = siblings;
         case _DeleteChoice.cancel:
         case null:
@@ -271,6 +287,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   value: r.value,
                   takenAt: r.takenAt,
                   note: r.note,
+                  // Keep the batch identity so a restored group can still be
+                  // edited/deleted together (#15).
+                  groupId: r.groupId,
                 );
               }
             },
@@ -284,8 +303,18 @@ enum _DeleteChoice { one, all, cancel }
 
 enum _EditChoice { one, all, cancel }
 
-/// Result of [_ReadingDialog]: the edited canonical value and timestamp.
-class _ReadingEdit {
+/// What [_ReadingDialog] produced: an edit payload or a delete request (the
+/// non-swipe delete path, #45).
+sealed class _ReadingDialogResult {
+  const _ReadingDialogResult();
+}
+
+class _ReadingDelete extends _ReadingDialogResult {
+  const _ReadingDelete();
+}
+
+/// The edited canonical value and timestamp.
+class _ReadingEdit extends _ReadingDialogResult {
   const _ReadingEdit(this.time, this.value);
   final DateTime time;
   final double value;
@@ -383,6 +412,13 @@ class _ReadingDialogState extends State<_ReadingDialog> {
         ),
       ),
       actions: [
+        TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.error,
+          ),
+          onPressed: () => Navigator.pop(context, const _ReadingDelete()),
+          child: Text(l.delete),
+        ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(l.cancel),

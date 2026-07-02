@@ -104,9 +104,12 @@ class DashboardBody extends ConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.all(12),
               sliver: SliverGrid.builder(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 219,
-                  mainAxisExtent: 143,
+                  // The tile is mostly stacked text, so its height must grow
+                  // with the system font scale or it clips at 1.3–2.0× (#44).
+                  mainAxisExtent:
+                      MediaQuery.textScalerOf(context).scale(143),
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),

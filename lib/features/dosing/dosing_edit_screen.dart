@@ -241,6 +241,20 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.entry == null ? l.dosingNew : l.dosingEdit),
+        actions: [
+          // Non-swipe path to stop the supplement (#45): swipe-to-stop on the
+          // Dosing tab is unusable with TalkBack/switch access.
+          if (widget.entry != null)
+            IconButton(
+              icon: const Icon(Icons.stop_circle_outlined),
+              tooltip: l.stop,
+              onPressed: () async {
+                final stopped =
+                    await confirmStopDosing(context, ref, widget.entry!);
+                if (stopped && context.mounted) Navigator.of(context).pop();
+              },
+            ),
+        ],
       ),
       body: Form(
         key: _formKey,
