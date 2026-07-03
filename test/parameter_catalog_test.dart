@@ -5,8 +5,11 @@ void main() {
   group('kReefParameters catalog integrity', () {
     test('keys are unique', () {
       final keys = kReefParameters.map((p) => p.key).toList();
-      expect(keys.toSet().length, keys.length,
-          reason: 'duplicate parameter key in catalog');
+      expect(
+        keys.toSet().length,
+        keys.length,
+        reason: 'duplicate parameter key in catalog',
+      );
     });
 
     test('kParameterByKey indexes every parameter', () {
@@ -21,10 +24,16 @@ void main() {
         expect(p.key, isNotEmpty, reason: 'empty key');
         expect(p.key.trim(), p.key, reason: '${p.key} has surrounding space');
         expect(p.unit, isNotEmpty, reason: '${p.key} has empty unit');
-        expect(p.decimals, greaterThanOrEqualTo(0),
-            reason: '${p.key} has negative decimals');
-        expect(p.decimals, lessThanOrEqualTo(4),
-            reason: '${p.key} has implausible decimals');
+        expect(
+          p.decimals,
+          greaterThanOrEqualTo(0),
+          reason: '${p.key} has negative decimals',
+        );
+        expect(
+          p.decimals,
+          lessThanOrEqualTo(4),
+          reason: '${p.key} has implausible decimals',
+        );
       }
     });
   });
@@ -50,9 +59,13 @@ void main() {
 
     test('non-finite values are impossible', () {
       expect(
-          checkParamValue('calcium', double.nan), ParamValueCheck.impossible);
-      expect(checkParamValue('calcium', double.infinity),
-          ParamValueCheck.impossible);
+        checkParamValue('calcium', double.nan),
+        ParamValueCheck.impossible,
+      );
+      expect(
+        checkParamValue('calcium', double.infinity),
+        ParamValueCheck.impossible,
+      );
     });
 
     test('locale mis-parse magnitudes land outside the plausible range', () {
@@ -65,16 +78,14 @@ void main() {
       expect(checkParamValue('calcium', 4.2), ParamValueCheck.implausible);
     });
 
-    test(
-        'extreme but physically possible values are implausible, not '
+    test('extreme but physically possible values are implausible, not '
         'impossible (still recordable after confirmation)', () {
       expect(checkParamValue('temperature', 45), ParamValueCheck.implausible);
       expect(checkParamValue('ph', 11), ParamValueCheck.implausible);
       expect(checkParamValue('nitrate', 400), ParamValueCheck.implausible);
     });
 
-    test(
-        'ORP has no hard floor: negative readings are merely checked for '
+    test('ORP has no hard floor: negative readings are merely checked for '
         'plausibility', () {
       expect(checkParamValue('orp', -100), ParamValueCheck.ok);
       expect(checkParamValue('orp', -500), ParamValueCheck.implausible);
@@ -84,15 +95,20 @@ void main() {
       expect(checkParamValue('not-a-param', -99999), ParamValueCheck.ok);
     });
 
-    test('every catalog parameter with a plausible bound defines both bounds',
-        () {
-      // The confirmation dialogs render "typical {min}–{max}" and assume a
-      // complete pair whenever a value classifies as implausible.
-      for (final def in kReefParameters) {
-        expect((def.plausibleMin == null) == (def.plausibleMax == null), isTrue,
-            reason: '${def.key} must define both plausible bounds or neither');
-      }
-    });
+    test(
+      'every catalog parameter with a plausible bound defines both bounds',
+      () {
+        // The confirmation dialogs render "typical {min}–{max}" and assume a
+        // complete pair whenever a value classifies as implausible.
+        for (final def in kReefParameters) {
+          expect(
+            (def.plausibleMin == null) == (def.plausibleMax == null),
+            isTrue,
+            reason: '${def.key} must define both plausible bounds or neither',
+          );
+        }
+      },
+    );
 
     test('plausible bounds sit above the hard floor and are ordered', () {
       for (final def in kReefParameters) {

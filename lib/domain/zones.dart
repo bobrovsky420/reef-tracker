@@ -72,13 +72,12 @@ class ZoneBounds {
     double? greenLow,
     double? greenHigh,
     double? amberHigh,
-  }) =>
-      ZoneBounds(
-        amberLow: amberLow ?? this.amberLow,
-        greenLow: greenLow ?? this.greenLow,
-        greenHigh: greenHigh ?? this.greenHigh,
-        amberHigh: amberHigh ?? this.amberHigh,
-      );
+  }) => ZoneBounds(
+    amberLow: amberLow ?? this.amberLow,
+    greenLow: greenLow ?? this.greenLow,
+    greenHigh: greenHigh ?? this.greenHigh,
+    amberHigh: amberHigh ?? this.amberHigh,
+  );
 
   /// Classifies [value] into a [Zone] using these boundaries.
   Zone classify(double value) {
@@ -123,8 +122,11 @@ List<ZoneBand> zoneBands(ZoneBounds b, double minY, double maxY) {
 
   // Green band.
   if (b.greenLow != null || b.greenHigh != null) {
-    add(b.greenLow ?? b.amberLow ?? minY, b.greenHigh ?? b.amberHigh ?? maxY,
-        Zone.green);
+    add(
+      b.greenLow ?? b.amberLow ?? minY,
+      b.greenHigh ?? b.amberHigh ?? maxY,
+      Zone.green,
+    );
   } else if (b.amberLow != null || b.amberHigh != null) {
     // Amber-only bounds (possible via restored backups): classify() calls
     // everything between the amber bounds green, so paint that region green

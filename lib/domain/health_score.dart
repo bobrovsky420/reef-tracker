@@ -127,13 +127,14 @@ class TankHealth {
   /// group ordered worst-first by how far out they are isn't available here, so
   /// reds simply precede ambers (input order within a zone).
   List<ParameterHealth> get offenders => [
-        ...parameters.where((p) => p.includedInScore && p.zone == Zone.red),
-        ...parameters.where((p) => p.includedInScore && p.zone == Zone.amber),
-      ];
+    ...parameters.where((p) => p.includedInScore && p.zone == Zone.red),
+    ...parameters.where((p) => p.includedInScore && p.zone == Zone.amber),
+  ];
 
   /// Fresh parameters sitting inside their green range.
-  List<ParameterHealth> get healthy =>
-      parameters.where((p) => p.includedInScore && p.zone == Zone.green).toList();
+  List<ParameterHealth> get healthy => parameters
+      .where((p) => p.includedInScore && p.zone == Zone.green)
+      .toList();
 
   /// Parameters that couldn't be scored: stale readings, no reading yet, or no
   /// usable bounds. Surfaced so the score isn't silently treating them as fine.
@@ -184,12 +185,12 @@ TankHealth computeTankHealth(
 
   for (final input in inputs) {
     final value = input.latest;
-    final zone =
-        value == null ? Zone.unknown : input.bounds.classify(value);
+    final zone = value == null ? Zone.unknown : input.bounds.classify(value);
     // A value with no timestamp cannot be verified as fresh — treat it as
     // stale rather than eternally fresh (#29). Without a value there is
     // nothing to be stale.
-    final stale = value != null &&
+    final stale =
+        value != null &&
         (input.takenAt == null ||
             daysSince(input.takenAt!, now: clock) > freshnessDays);
 
@@ -209,14 +210,16 @@ TankHealth computeTankHealth(
       }
     }
 
-    params.add(ParameterHealth(
-      paramKey: input.paramKey,
-      zone: zone,
-      value: value,
-      takenAt: input.takenAt,
-      stale: stale,
-      includedInScore: included,
-    ));
+    params.add(
+      ParameterHealth(
+        paramKey: input.paramKey,
+        zone: zone,
+        value: value,
+        takenAt: input.takenAt,
+        stale: stale,
+        includedInScore: included,
+      ),
+    );
   }
 
   if (weightTotal == 0) {
@@ -241,23 +244,18 @@ TankHealth computeTankHealth(
   final band = score >= 70
       ? Zone.green
       : score >= 40
-          ? Zone.amber
-          : Zone.red;
+      ? Zone.amber
+      : Zone.red;
 
   final grade = score >= 85
       ? HealthGrade.excellent
       : score >= 70
-          ? HealthGrade.good
-          : score >= 40
-              ? HealthGrade.caution
-              : HealthGrade.critical;
+      ? HealthGrade.good
+      : score >= 40
+      ? HealthGrade.caution
+      : HealthGrade.critical;
 
-  return TankHealth(
-    score: score,
-    band: band,
-    grade: grade,
-    parameters: params,
-  );
+  return TankHealth(score: score, band: band, grade: grade, parameters: params);
 }
 
 /// Maps a single [value] to a 0–100 sub-score given its [zone] and [bounds].

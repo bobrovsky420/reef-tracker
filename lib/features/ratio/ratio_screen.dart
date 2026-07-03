@@ -47,68 +47,79 @@ class RatioScreen extends ConsumerWidget {
         .$2;
 
     final numeratorAsync = ref.watch(paramReadingsProvider(kind.numeratorKey));
-    final denominatorAsync =
-        ref.watch(paramReadingsProvider(kind.denominatorKey));
-    final bounds =
-        ratioBounds(kind, ref.watch(ratioSettingsProvider).value?[kind.name]);
+    final denominatorAsync = ref.watch(
+      paramReadingsProvider(kind.denominatorKey),
+    );
+    final bounds = ratioBounds(
+      kind,
+      ref.watch(ratioSettingsProvider).value?[kind.name],
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(l.ratioScreenTitle(kind))),
       body: (numeratorAsync.isLoading || denominatorAsync.isLoading)
           ? const Center(child: CircularProgressIndicator())
-          : Builder(builder: (context) {
-              final numerator =
-                  (numeratorAsync.value ?? const []).ratioReadings;
-              final denominator =
-                  (denominatorAsync.value ?? const []).ratioReadings;
-              final all = computeRatioSeries(numerator, denominator);
-              final cutoff = days == null
-                  ? null
-                  : DateTime.now().subtract(Duration(days: days));
-              final data = cutoff == null
-                  ? all
-                  : all.where((p) => p.time.isAfter(cutoff)).toList();
+          : Builder(
+              builder: (context) {
+                final numerator =
+                    (numeratorAsync.value ?? const []).ratioReadings;
+                final denominator =
+                    (denominatorAsync.value ?? const []).ratioReadings;
+                final all = computeRatioSeries(numerator, denominator);
+                final cutoff = days == null
+                    ? null
+                    : DateTime.now().subtract(Duration(days: days));
+                final data = cutoff == null
+                    ? all
+                    : all.where((p) => p.time.isAfter(cutoff)).toList();
 
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: SegmentedButton<String>(
-                      segments: [
-                        for (final r in _ranges)
-                          ButtonSegment(
-                              value: r.$1, label: Text(_rangeLabel(l, r.$1))),
-                      ],
-                      selected: {rangeKey},
-                      onSelectionChanged: (s) => ref
-                          .read(settingsProvider)
-                          .setChartRange(s.first),
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: SegmentedButton<String>(
+                        segments: [
+                          for (final r in _ranges)
+                            ButtonSegment(
+                              value: r.$1,
+                              label: Text(_rangeLabel(l, r.$1)),
+                            ),
+                        ],
+                        selected: {rangeKey},
+                        onSelectionChanged: (s) =>
+                            ref.read(settingsProvider).setChartRange(s.first),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: data.isEmpty
-                        ? Center(child: Text(l.ratioNoData))
-                        : ListView(
-                            children: [
-                              SizedBox(
-                                height: 280,
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(8, 16, 16, 8),
-                                  child: _RatioChart(
+                    Expanded(
+                      child: data.isEmpty
+                          ? Center(child: Text(l.ratioNoData))
+                          : ListView(
+                              children: [
+                                SizedBox(
+                                  height: 280,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      8,
+                                      16,
+                                      16,
+                                      8,
+                                    ),
+                                    child: _RatioChart(
                                       kind: kind,
                                       points: data,
-                                      bounds: bounds),
+                                      bounds: bounds,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const Divider(),
-                              ..._pointsList(context, data),
-                            ],
-                          ),
-                  ),
-                ],
-              );
-            }),
+                                const Divider(),
+                                ..._pointsList(context, data),
+                              ],
+                            ),
+                    ),
+                  ],
+                );
+              },
+            ),
     );
   }
 
@@ -121,8 +132,7 @@ class RatioScreen extends ConsumerWidget {
           subtitle: Text(ratioBreakdown(kind, p)),
           trailing: Text(
             DateFormat.yMMMEd().format(p.time),
-            style: TextStyle(
-                fontSize: 12, color: Theme.of(context).hintColor),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
           ),
         ),
     ];
@@ -130,8 +140,11 @@ class RatioScreen extends ConsumerWidget {
 }
 
 class _RatioChart extends StatelessWidget {
-  const _RatioChart(
-      {required this.kind, required this.points, required this.bounds});
+  const _RatioChart({
+    required this.kind,
+    required this.points,
+    required this.bounds,
+  });
 
   final RatioKind kind;
   final List<RatioPoint> points;
@@ -143,8 +156,10 @@ class _RatioChart extends StatelessWidget {
     final spots = [
       for (final p in points)
         if (ratioChartY(kind, p.ratio).isFinite)
-          FlSpot(p.time.millisecondsSinceEpoch.toDouble(),
-              ratioChartY(kind, p.ratio)),
+          FlSpot(
+            p.time.millisecondsSinceEpoch.toDouble(),
+            ratioChartY(kind, p.ratio),
+          ),
     ];
 
     if (spots.isEmpty) {
@@ -159,7 +174,7 @@ class _RatioChart extends StatelessWidget {
       bounds.amberLow,
       bounds.greenLow,
       bounds.greenHigh,
-      bounds.amberHigh
+      bounds.amberHigh,
     ]) {
       if (b != null) {
         minY = b < minY ? b : minY;
@@ -197,18 +212,18 @@ class _RatioChart extends StatelessWidget {
         gridData: const FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 48,
-              getTitlesWidget: (v, meta) => Text(
-                formatRatioN(v),
-                style: const TextStyle(fontSize: 10),
-              ),
+              getTitlesWidget: (v, meta) =>
+                  Text(formatRatioN(v), style: const TextStyle(fontSize: 10)),
             ),
           ),
           bottomTitles: AxisTitles(
@@ -229,11 +244,14 @@ class _RatioChart extends StatelessWidget {
                   }
                 }
                 final d = DateTime.fromMillisecondsSinceEpoch(
-                    isSingle ? spots.first.x.toInt() : v.toInt());
+                  isSingle ? spots.first.x.toInt() : v.toInt(),
+                );
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(DateFormat.Md().format(d),
-                      style: const TextStyle(fontSize: 10)),
+                  child: Text(
+                    DateFormat.Md().format(d),
+                    style: const TextStyle(fontSize: 10),
+                  ),
                 );
               },
             ),
@@ -254,28 +272,56 @@ class _RatioChart extends StatelessWidget {
 
   /// Green/amber/red bands from the kind's recommended bounds (chart-Y space).
   List<HorizontalRangeAnnotation> _zoneBands(
-      ZoneBounds b, double minY, double maxY) {
+    ZoneBounds b,
+    double minY,
+    double maxY,
+  ) {
     final bands = <HorizontalRangeAnnotation>[];
     Color c(Zone z) => z.color.withValues(alpha: 0.10);
     if (b.greenLow != null || b.greenHigh != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: b.greenLow ?? minY, y2: b.greenHigh ?? maxY, color: c(Zone.green)));
+      bands.add(
+        HorizontalRangeAnnotation(
+          y1: b.greenLow ?? minY,
+          y2: b.greenHigh ?? maxY,
+          color: c(Zone.green),
+        ),
+      );
     }
     if (b.amberLow != null && b.greenLow != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: b.amberLow!, y2: b.greenLow!, color: c(Zone.amber)));
+      bands.add(
+        HorizontalRangeAnnotation(
+          y1: b.amberLow!,
+          y2: b.greenLow!,
+          color: c(Zone.amber),
+        ),
+      );
     }
     if (b.amberHigh != null && b.greenHigh != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: b.greenHigh!, y2: b.amberHigh!, color: c(Zone.amber)));
+      bands.add(
+        HorizontalRangeAnnotation(
+          y1: b.greenHigh!,
+          y2: b.amberHigh!,
+          color: c(Zone.amber),
+        ),
+      );
     }
     if (b.amberLow != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: minY, y2: b.amberLow!, color: c(Zone.red)));
+      bands.add(
+        HorizontalRangeAnnotation(
+          y1: minY,
+          y2: b.amberLow!,
+          color: c(Zone.red),
+        ),
+      );
     }
     if (b.amberHigh != null) {
-      bands.add(HorizontalRangeAnnotation(
-          y1: b.amberHigh!, y2: maxY, color: c(Zone.red)));
+      bands.add(
+        HorizontalRangeAnnotation(
+          y1: b.amberHigh!,
+          y2: maxY,
+          color: c(Zone.red),
+        ),
+      );
     }
     return bands;
   }

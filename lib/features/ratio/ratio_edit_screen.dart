@@ -33,17 +33,21 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
     if (!_formKey.currentState!.validate()) return;
     final editor = _editorKey.currentState!;
     if (!editor.orderOk) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.boundsOrderError)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.boundsOrderError)));
       return;
     }
     if (!editor.pairsOk) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.boundsPairError)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.boundsPairError)));
       return;
     }
     final bounds = editor.values;
-    await ref.read(dbProvider).setRatioBounds(
+    await ref
+        .read(dbProvider)
+        .setRatioBounds(
           tankId,
           widget.kind.name,
           amberLow: bounds.amberLow,
@@ -77,8 +81,10 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(l.ratioBoundsNote(ratioMetricLabel(kind)),
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              l.ratioBoundsNote(ratioMetricLabel(kind)),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 24),
             ZoneBoundsEditor(
               key: _editorKey,

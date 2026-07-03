@@ -11,12 +11,12 @@ Future<void> main() async {
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
 
   await integrationDriver(
-    onScreenshot: (String name, List<int> bytes,
-        [Map<String, Object?>? args]) async {
-      final file = File('${outDir.path}/$name.png');
-      await file.writeAsBytes(bytes);
-      stdout.writeln('saved ${file.path} (${bytes.length} bytes)');
-      return true;
-    },
+    onScreenshot:
+        (String name, List<int> bytes, [Map<String, Object?>? args]) async {
+          final file = File('${outDir.path}/$name.png');
+          await file.writeAsBytes(bytes);
+          stdout.writeln('saved ${file.path} (${bytes.length} bytes)');
+          return true;
+        },
   );
 }

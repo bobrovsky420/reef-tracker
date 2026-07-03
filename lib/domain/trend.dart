@@ -97,7 +97,13 @@ class TrendResult {
 
   @override
   int get hashCode => Object.hash(
-      slopePerDay, direction, window, daysToAmber, daysToRed, recovering);
+    slopePerDay,
+    direction,
+    window,
+    daysToAmber,
+    daysToRed,
+    recovering,
+  );
 }
 
 /// Computes the recent trend for [points] (oldest-first) using up to the most
@@ -136,11 +142,14 @@ TrendResult? computeTrend({
   // A value already outside its green range but heading back toward it is
   // recovering, not at risk: the only bounds ahead of it are on the *far* side
   // of green, and forecasting those would flag an improving parameter (#25).
-  final belowGreen = (b.greenLow != null && current < b.greenLow!) ||
+  final belowGreen =
+      (b.greenLow != null && current < b.greenLow!) ||
       (b.amberLow != null && current < b.amberLow!);
-  final aboveGreen = (b.greenHigh != null && current > b.greenHigh!) ||
+  final aboveGreen =
+      (b.greenHigh != null && current > b.greenHigh!) ||
       (b.amberHigh != null && current > b.amberHigh!);
-  final recovering = (belowGreen && direction == TrendDirection.rising) ||
+  final recovering =
+      (belowGreen && direction == TrendDirection.rising) ||
       (aboveGreen && direction == TrendDirection.falling);
 
   // Days until the line from `current` at `slope` reaches `bound`, but only

@@ -16,12 +16,14 @@ List<VerticalLine> waterChangeLines({
   for (final c in changes) {
     final x = c.changedAt.millisecondsSinceEpoch.toDouble();
     if (x < minX || x > maxX) continue;
-    lines.add(VerticalLine(
-      x: x,
-      color: color,
-      strokeWidth: 1.5,
-      dashArray: const [5, 4],
-    ));
+    lines.add(
+      VerticalLine(
+        x: x,
+        color: color,
+        strokeWidth: 1.5,
+        dashArray: const [5, 4],
+      ),
+    );
   }
   return lines;
 }

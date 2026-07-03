@@ -145,7 +145,11 @@ void main() {
         amberHigh: 3.6,
       ),
       const RatioVisibility(
-          tankId: 2, ratioKey: 'po4no3', visible: true, displayOrder: 1000),
+        tankId: 2,
+        ratioKey: 'po4no3',
+        visible: true,
+        displayOrder: 1000,
+      ),
     ];
     final dosingEntries = [
       DosingEntry(
@@ -292,28 +296,39 @@ void main() {
     });
 
     test('tolerates older backups without later action sections', () {
-      final json = encodeBackup(
-        schemaVersion: 2,
-        tanks: tanks,
-        params: params,
-        readings: readings,
-        waterChanges: waterChanges,
-        carbonChanges: carbonChanges,
-        equipmentCleanings: equipmentCleanings,
-        ratioVisibilities: ratioVisibilities,
-        dosingEntries: dosingEntries,
-        settings: settings,
-      )
-          .replaceFirst(
-              RegExp(r',\s*"waterChanges":\s*\[.*?\]', dotAll: true), '')
-          .replaceFirst(
-              RegExp(r',\s*"carbonChanges":\s*\[.*?\]', dotAll: true), '')
-          .replaceFirst(
-              RegExp(r',\s*"equipmentCleanings":\s*\[.*?\]', dotAll: true), '')
-          .replaceFirst(
-              RegExp(r',\s*"ratioVisibilities":\s*\[.*?\]', dotAll: true), '')
-          .replaceFirst(
-              RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true), '');
+      final json =
+          encodeBackup(
+                schemaVersion: 2,
+                tanks: tanks,
+                params: params,
+                readings: readings,
+                waterChanges: waterChanges,
+                carbonChanges: carbonChanges,
+                equipmentCleanings: equipmentCleanings,
+                ratioVisibilities: ratioVisibilities,
+                dosingEntries: dosingEntries,
+                settings: settings,
+              )
+              .replaceFirst(
+                RegExp(r',\s*"waterChanges":\s*\[.*?\]', dotAll: true),
+                '',
+              )
+              .replaceFirst(
+                RegExp(r',\s*"carbonChanges":\s*\[.*?\]', dotAll: true),
+                '',
+              )
+              .replaceFirst(
+                RegExp(r',\s*"equipmentCleanings":\s*\[.*?\]', dotAll: true),
+                '',
+              )
+              .replaceFirst(
+                RegExp(r',\s*"ratioVisibilities":\s*\[.*?\]', dotAll: true),
+                '',
+              )
+              .replaceFirst(
+                RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true),
+                '',
+              );
       final data = decodeBackup(json);
       expect(data.waterChanges, isEmpty);
       expect(data.carbonChanges, isEmpty);
@@ -324,21 +339,22 @@ void main() {
     });
 
     test('tolerates dosing entries without segment fields (pre-v11)', () {
-      final json = encodeBackup(
-        schemaVersion: 10,
-        tanks: tanks,
-        params: params,
-        readings: readings,
-        waterChanges: waterChanges,
-        carbonChanges: carbonChanges,
-        equipmentCleanings: equipmentCleanings,
-        ratioVisibilities: ratioVisibilities,
-        dosingEntries: dosingEntries,
-        settings: settings,
-      )
-          .replaceAll(RegExp(r',\s*"startedAt":\s*(?:null|\d+)'), '')
-          .replaceAll(RegExp(r',\s*"endedAt":\s*(?:null|\d+)'), '')
-          .replaceAll(RegExp(r',\s*"state":\s*"[^"]*"'), '');
+      final json =
+          encodeBackup(
+                schemaVersion: 10,
+                tanks: tanks,
+                params: params,
+                readings: readings,
+                waterChanges: waterChanges,
+                carbonChanges: carbonChanges,
+                equipmentCleanings: equipmentCleanings,
+                ratioVisibilities: ratioVisibilities,
+                dosingEntries: dosingEntries,
+                settings: settings,
+              )
+              .replaceAll(RegExp(r',\s*"startedAt":\s*(?:null|\d+)'), '')
+              .replaceAll(RegExp(r',\s*"endedAt":\s*(?:null|\d+)'), '')
+              .replaceAll(RegExp(r',\s*"state":\s*"[^"]*"'), '');
       final data = decodeBackup(json);
       // Missing segment fields fall back to: started = created, not ended, active.
       final d0 = data.dosingEntries[0];
@@ -353,46 +369,64 @@ void main() {
 
     test('rejects a broken row inside a section as corrupted, naming it', () {
       // A recognizable backup whose readings section holds an incomplete row.
-      const json = '{"format":"reeftracker-backup","version":1,'
+      const json =
+          '{"format":"reeftracker-backup","version":1,'
           '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
           '"readings":[{"id":1}],"settings":[]}';
       expect(
-          () => decodeBackup(json),
-          throwsA(isA<InvalidBackupException>()
+        () => decodeBackup(json),
+        throwsA(
+          isA<InvalidBackupException>()
               .having((e) => e.reason, 'reason', BackupRejection.corrupted)
-              .having((e) => e.detail, 'detail', contains('readings'))));
+              .having((e) => e.detail, 'detail', contains('readings')),
+        ),
+      );
     });
 
     test('rejects a section that is not a list as corrupted', () {
-      const json = '{"format":"reeftracker-backup","version":1,'
+      const json =
+          '{"format":"reeftracker-backup","version":1,'
           '"schemaVersion":1,"tanks":{},"trackedParameters":[],'
           '"readings":[],"settings":[]}';
       expect(
-          () => decodeBackup(json),
-          throwsA(isA<InvalidBackupException>()
-              .having((e) => e.reason, 'reason', BackupRejection.corrupted)));
+        () => decodeBackup(json),
+        throwsA(
+          isA<InvalidBackupException>().having(
+            (e) => e.reason,
+            'reason',
+            BackupRejection.corrupted,
+          ),
+        ),
+      );
     });
 
     test('rejects a missing required section as corrupted', () {
       // No "tanks" key at all — unlike the optional later-version sections,
       // the core sections must be present.
-      const json = '{"format":"reeftracker-backup","version":1,'
+      const json =
+          '{"format":"reeftracker-backup","version":1,'
           '"schemaVersion":1,"trackedParameters":[],'
           '"readings":[],"settings":[]}';
       expect(
-          () => decodeBackup(json),
-          throwsA(isA<InvalidBackupException>()
+        () => decodeBackup(json),
+        throwsA(
+          isA<InvalidBackupException>()
               .having((e) => e.reason, 'reason', BackupRejection.corrupted)
-              .having((e) => e.detail, 'detail', contains('tanks'))));
+              .having((e) => e.detail, 'detail', contains('tanks')),
+        ),
+      );
     });
 
     test('rejects files that are not ReefTracker backups', () {
-      expect(() => decodeBackup('not json'),
-          throwsA(isA<InvalidBackupException>()));
-      expect(() => decodeBackup('{"format":"something-else"}'),
-          throwsA(isA<InvalidBackupException>()));
-      expect(() => decodeBackup('[]'),
-          throwsA(isA<InvalidBackupException>()));
+      expect(
+        () => decodeBackup('not json'),
+        throwsA(isA<InvalidBackupException>()),
+      );
+      expect(
+        () => decodeBackup('{"format":"something-else"}'),
+        throwsA(isA<InvalidBackupException>()),
+      );
+      expect(() => decodeBackup('[]'), throwsA(isA<InvalidBackupException>()));
     });
 
     test('rejects backups from a newer document version', () {
@@ -409,60 +443,93 @@ void main() {
         settings: const [],
       ).replaceFirst(RegExp(r'"version":\s*1'), '"version":999');
       expect(
-          () => decodeBackup(json),
-          throwsA(isA<InvalidBackupException>().having(
-              (e) => e.reason, 'reason', BackupRejection.newerVersion)));
+        () => decodeBackup(json),
+        throwsA(
+          isA<InvalidBackupException>().having(
+            (e) => e.reason,
+            'reason',
+            BackupRejection.newerVersion,
+          ),
+        ),
+      );
     });
 
-    test('missing or non-int version is not reported as "newer app" (#38)',
-        () {
+    test('missing or non-int version is not reported as "newer app" (#38)', () {
       // A truncated/hand-edited file must not get the misleading "backup from
       // a newer app" message: absent version -> not a backup file at all;
       // non-int version -> recognized but damaged.
-      const missing = '{"format":"reeftracker-backup",'
+      const missing =
+          '{"format":"reeftracker-backup",'
           '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
           '"readings":[],"settings":[]}';
       expect(
-          () => decodeBackup(missing),
-          throwsA(isA<InvalidBackupException>().having(
-              (e) => e.reason, 'reason', BackupRejection.notBackupFile)));
+        () => decodeBackup(missing),
+        throwsA(
+          isA<InvalidBackupException>().having(
+            (e) => e.reason,
+            'reason',
+            BackupRejection.notBackupFile,
+          ),
+        ),
+      );
 
-      const nonInt = '{"format":"reeftracker-backup","version":"1",'
+      const nonInt =
+          '{"format":"reeftracker-backup","version":"1",'
           '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
           '"readings":[],"settings":[]}';
       expect(
-          () => decodeBackup(nonInt),
-          throwsA(isA<InvalidBackupException>()
-              .having((e) => e.reason, 'reason', BackupRejection.corrupted)));
+        () => decodeBackup(nonInt),
+        throwsA(
+          isA<InvalidBackupException>().having(
+            (e) => e.reason,
+            'reason',
+            BackupRejection.corrupted,
+          ),
+        ),
+      );
     });
 
-    test('non-UTF-8 bytes are rejected as not-a-backup, not a crash (#37)',
-        () {
+    test('non-UTF-8 bytes are rejected as not-a-backup, not a crash (#37)', () {
       // 0xC3 announces a two-byte sequence; 0x28 is not a continuation byte —
       // a binary file renamed .json must surface the specific rejection
       // message, not escape the InvalidBackupException contract.
       expect(
-          () => decodeBackupBytes(const [0xC3, 0x28, 0x00]),
-          throwsA(isA<InvalidBackupException>().having(
-              (e) => e.reason, 'reason', BackupRejection.notBackupFile)));
+        () => decodeBackupBytes(const [0xC3, 0x28, 0x00]),
+        throwsA(
+          isA<InvalidBackupException>().having(
+            (e) => e.reason,
+            'reason',
+            BackupRejection.notBackupFile,
+          ),
+        ),
+      );
 
       // Valid UTF-8 bytes take the normal decode path.
-      const json = '{"format":"reeftracker-backup","version":1,'
+      const json =
+          '{"format":"reeftracker-backup","version":1,'
           '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
           '"readings":[],"settings":[]}';
       expect(decodeBackupBytes(json.codeUnits).tanks, isEmpty);
     });
 
-    test('InvalidBackupException crosses the decode worker isolate typed (T5)',
-        () async {
-      // Import decodes in Isolate.run; the exception must arrive here as an
-      // InvalidBackupException (not a RemoteError) so the user still gets the
-      // specific localized rejection message (#37).
-      await expectLater(
+    test(
+      'InvalidBackupException crosses the decode worker isolate typed (T5)',
+      () async {
+        // Import decodes in Isolate.run; the exception must arrive here as an
+        // InvalidBackupException (not a RemoteError) so the user still gets the
+        // specific localized rejection message (#37).
+        await expectLater(
           Isolate.run(() => decodeBackupBytes(const [0xC3, 0x28, 0x00])),
-          throwsA(isA<InvalidBackupException>().having(
-              (e) => e.reason, 'reason', BackupRejection.notBackupFile)));
-    });
+          throwsA(
+            isA<InvalidBackupException>().having(
+              (e) => e.reason,
+              'reason',
+              BackupRejection.notBackupFile,
+            ),
+          ),
+        );
+      },
+    );
   });
 
   group('validateBackup', () {
@@ -470,38 +537,37 @@ void main() {
       List<TanksCompanion> tanks = const [],
       List<ReadingsCompanion> readings = const [],
       int schemaVersion = 1,
-    }) =>
-        BackupData(
-          schemaVersion: schemaVersion,
-          tanks: tanks,
-          params: const [],
-          readings: readings,
-          waterChanges: const [],
-          carbonChanges: const [],
-          equipmentCleanings: const [],
-          ratioVisibilities: const [],
-          dosingEntries: const [],
-          settings: const [],
-        );
+    }) => BackupData(
+      schemaVersion: schemaVersion,
+      tanks: tanks,
+      params: const [],
+      readings: readings,
+      waterChanges: const [],
+      carbonChanges: const [],
+      equipmentCleanings: const [],
+      ratioVisibilities: const [],
+      dosingEntries: const [],
+      settings: const [],
+    );
 
     TanksCompanion tank(int id) => TanksCompanion(
-          id: Value(id),
-          name: Value('Tank $id'),
-          setupType: const Value('mixed'),
-          createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-        );
+      id: Value(id),
+      name: Value('Tank $id'),
+      setupType: const Value('mixed'),
+      createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+    );
 
     ReadingsCompanion reading(int id, int tankId) => ReadingsCompanion(
-          id: Value(id),
-          tankId: Value(tankId),
-          paramKey: const Value('alk'),
-          value: const Value(8.2),
-          takenAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-        );
+      id: Value(id),
+      tankId: Value(tankId),
+      paramKey: const Value('alk'),
+      value: const Value(8.2),
+      takenAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+    );
 
-    Matcher rejectedWith(BackupRejection reason) =>
-        throwsA(isA<InvalidBackupException>()
-            .having((e) => e.reason, 'reason', reason));
+    Matcher rejectedWith(BackupRejection reason) => throwsA(
+      isA<InvalidBackupException>().having((e) => e.reason, 'reason', reason),
+    );
 
     test('accepts a consistent data set', () {
       final d = dataWith(tanks: [tank(1)], readings: [reading(10, 1)]);
@@ -515,20 +581,26 @@ void main() {
 
     test('rejects a newer schema version', () {
       final d = dataWith(tanks: [tank(1)], schemaVersion: 11);
-      expect(() => validateBackup(d, appSchemaVersion: 10),
-          rejectedWith(BackupRejection.newerVersion));
+      expect(
+        () => validateBackup(d, appSchemaVersion: 10),
+        rejectedWith(BackupRejection.newerVersion),
+      );
     });
 
     test('rejects a reading referencing a missing aquarium', () {
       final d = dataWith(tanks: [tank(1)], readings: [reading(10, 99)]);
-      expect(() => validateBackup(d, appSchemaVersion: 10),
-          rejectedWith(BackupRejection.inconsistent));
+      expect(
+        () => validateBackup(d, appSchemaVersion: 10),
+        rejectedWith(BackupRejection.inconsistent),
+      );
     });
 
     test('rejects duplicate aquarium ids', () {
       final d = dataWith(tanks: [tank(1), tank(1)]);
-      expect(() => validateBackup(d, appSchemaVersion: 10),
-          rejectedWith(BackupRejection.inconsistent));
+      expect(
+        () => validateBackup(d, appSchemaVersion: 10),
+        rejectedWith(BackupRejection.inconsistent),
+      );
     });
   });
 
@@ -548,8 +620,10 @@ void main() {
 
     /// Seeds a database with a representative spread of data across tables.
     Future<int> seed(AppDatabase db) async {
-      final id =
-          await db.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      final id = await db.createTankWithPreset(
+        name: 'Reef',
+        type: SetupType.mixed,
+      );
       await db.insertReadingGroup(
         tankId: id,
         takenAt: DateTime(2026, 1, 1, 8),
@@ -560,13 +634,28 @@ void main() {
         ],
       );
       await db.insertWaterChange(
-          tankId: id, changedAt: DateTime(2026, 1, 2), amountLiters: 25);
+        tankId: id,
+        changedAt: DateTime(2026, 1, 2),
+        amountLiters: 25,
+      );
       await db.insertCarbonChange(
-          tankId: id, changedAt: DateTime(2026, 1, 3), grams: 200);
+        tankId: id,
+        changedAt: DateTime(2026, 1, 3),
+        grams: 200,
+      );
       await db.insertEquipmentCleaning(
-          tankId: id, cleanedAt: DateTime(2026, 1, 4), note: 'skimmer');
-      await db.setRatioBounds(id, 'mgca',
-          amberLow: 2.6, greenLow: 2.9, greenHigh: 3.3, amberHigh: 3.6);
+        tankId: id,
+        cleanedAt: DateTime(2026, 1, 4),
+        note: 'skimmer',
+      );
+      await db.setRatioBounds(
+        id,
+        'mgca',
+        amberLow: 2.6,
+        greenLow: 2.9,
+        greenHigh: 3.3,
+        amberHigh: 3.6,
+      );
       await db.setSetting('temp_unit', 'fahrenheit');
       return id;
     }
@@ -590,14 +679,18 @@ void main() {
       expect(tanks.single.name, 'Reef');
 
       // Counts match the source across the data tables.
-      expect((await dst.getAllReadings()).length,
-          (await src.getAllReadings()).length);
+      expect(
+        (await dst.getAllReadings()).length,
+        (await src.getAllReadings()).length,
+      );
       expect((await dst.getAllWaterChanges()).length, 1);
       expect((await dst.getAllCarbonChanges()).length, 1);
       expect((await dst.getAllEquipmentCleanings()).length, 1);
       expect((await dst.getAllRatioVisibilities()).length, 1);
-      expect((await dst.getAllTrackedParameters()).length,
-          (await src.getAllTrackedParameters()).length);
+      expect(
+        (await dst.getAllTrackedParameters()).length,
+        (await src.getAllTrackedParameters()).length,
+      );
       // temp_unit is a device-local preference: the backup's value must NOT be
       // imported (#18). dst had none, so it stays unset after restore.
       expect(await dst.getSetting('temp_unit'), isNull);
@@ -648,7 +741,9 @@ void main() {
       await seed(src);
       // Drop a table that older app versions did not export.
       final json = (await encodeBackupFromDb(src)).replaceFirst(
-          RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true), '');
+        RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true),
+        '',
+      );
       final data = decodeBackup(json);
 
       final dst = newDb();
@@ -663,103 +758,118 @@ void main() {
         .listSync()
         .whereType<File>()
         .map((f) => p.basename(f.path))
-        .where((n) =>
-            n.startsWith('reeftracker-backup-') && n.endsWith('.json'))
+        .where(
+          (n) => n.startsWith('reeftracker-backup-') && n.endsWith('.json'),
+        )
         .toList();
 
-    test('exportBackup leaves no plaintext temp file and sweeps stale ones',
-        () async {
-      final db = newDb();
-      addTearDown(db.close);
-      await seed(db);
+    test(
+      'exportBackup leaves no plaintext temp file and sweeps stale ones',
+      () async {
+        final db = newDb();
+        addTearDown(db.close);
+        await seed(db);
 
-      // A leftover plaintext export from an earlier run that must be swept.
-      await File(p.join(tempDir.path, 'reeftracker-backup-stale.json'))
-          .writeAsString('{}');
+        // A leftover plaintext export from an earlier run that must be swept.
+        await File(
+          p.join(tempDir.path, 'reeftracker-backup-stale.json'),
+        ).writeAsString('{}');
 
-      // The share sheet is unavailable under `flutter test`; the cleanup in the
-      // finally must still delete the freshly written file regardless.
-      try {
-        await exportBackup(db);
-      } catch (_) {}
+        // The share sheet is unavailable under `flutter test`; the cleanup in the
+        // finally must still delete the freshly written file regardless.
+        try {
+          await exportBackup(db);
+        } catch (_) {}
 
-      expect(exportFilesIn(tempDir), isEmpty);
-    });
+        expect(exportFilesIn(tempDir), isEmpty);
+      },
+    );
 
-    test('exportBackup sweeps lingering share_plus cache copies (#35)',
-        () async {
-      final db = newDb();
-      addTearDown(db.close);
-      await seed(db);
+    test(
+      'exportBackup sweeps lingering share_plus cache copies (#35)',
+      () async {
+        final db = newDb();
+        addTearDown(db.close);
+        await seed(db);
 
-      // share_plus copies every shared XFile into <temp>/share_plus/ and only
-      // clears it on the *next* share — simulate the copy a previous export
-      // left behind, plus a foreign file that must not be touched.
-      final shareDir = Directory(p.join(tempDir.path, 'share_plus'));
-      await shareDir.create();
-      final lingering =
-          File(p.join(shareDir.path, 'reeftracker-backup-20260101-000000.json'));
-      await lingering.writeAsString('{}');
-      final foreign = File(p.join(shareDir.path, 'photo.jpg'));
-      await foreign.writeAsString('x');
+        // share_plus copies every shared XFile into <temp>/share_plus/ and only
+        // clears it on the *next* share — simulate the copy a previous export
+        // left behind, plus a foreign file that must not be touched.
+        final shareDir = Directory(p.join(tempDir.path, 'share_plus'));
+        await shareDir.create();
+        final lingering = File(
+          p.join(shareDir.path, 'reeftracker-backup-20260101-000000.json'),
+        );
+        await lingering.writeAsString('{}');
+        final foreign = File(p.join(shareDir.path, 'photo.jpg'));
+        await foreign.writeAsString('x');
 
-      try {
-        await exportBackup(db);
-      } catch (_) {}
+        try {
+          await exportBackup(db);
+        } catch (_) {}
 
-      expect(await lingering.exists(), isFalse);
-      expect(await foreign.exists(), isTrue);
-    });
+        expect(await lingering.exists(), isFalse);
+        expect(await foreign.exists(), isTrue);
+      },
+    );
 
     /// Minimal companion builders for hand-assembled [BackupData] sets.
     TanksCompanion tankRow(int id) => TanksCompanion(
-          id: Value(id),
-          name: Value('Tank $id'),
-          setupType: const Value('mixed'),
-          createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-        );
+      id: Value(id),
+      name: Value('Tank $id'),
+      setupType: const Value('mixed'),
+      createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+    );
 
     ReadingsCompanion readingRow(int id, int tankId) => ReadingsCompanion(
-          id: Value(id),
-          tankId: Value(tankId),
-          paramKey: const Value('alkalinity'),
-          value: const Value(8.2),
-          takenAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-        );
+      id: Value(id),
+      tankId: Value(tankId),
+      paramKey: const Value('alkalinity'),
+      value: const Value(8.2),
+      takenAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+    );
 
     BackupData bareData({
       List<TanksCompanion> tanks = const [],
       List<ReadingsCompanion> readings = const [],
       List<DosingEntriesCompanion> dosingEntries = const [],
-    }) =>
-        BackupData(
-          schemaVersion: 1,
-          tanks: tanks,
-          params: const [],
-          readings: readings,
-          waterChanges: const [],
-          carbonChanges: const [],
-          equipmentCleanings: const [],
-          ratioVisibilities: const [],
-          dosingEntries: dosingEntries,
-          settings: const [],
-        );
+    }) => BackupData(
+      schemaVersion: 1,
+      tanks: tanks,
+      params: const [],
+      readings: readings,
+      waterChanges: const [],
+      carbonChanges: const [],
+      equipmentCleanings: const [],
+      ratioVisibilities: const [],
+      dosingEntries: dosingEntries,
+      settings: const [],
+    );
 
-    test('duplicate non-tank primary keys are rejected by the rehearsal',
-        () async {
-      // validateBackup only checks tank-id uniqueness; duplicate child PKs are
-      // caught by the real SQLite engine during the rehearsal restore and
-      // surfaced as `inconsistent`.
-      final data = bareData(
+    test(
+      'duplicate non-tank primary keys are rejected by the rehearsal',
+      () async {
+        // validateBackup only checks tank-id uniqueness; duplicate child PKs are
+        // caught by the real SQLite engine during the rehearsal restore and
+        // surfaced as `inconsistent`.
+        final data = bareData(
           tanks: [tankRow(1)],
-          readings: [readingRow(10, 1), readingRow(10, 1)]);
-      final dst = newDb();
-      addTearDown(dst.close);
-      await expectLater(
+          readings: [readingRow(10, 1), readingRow(10, 1)],
+        );
+        final dst = newDb();
+        addTearDown(dst.close);
+        await expectLater(
           importBackup(dst, data),
-          throwsA(isA<InvalidBackupException>().having(
-              (e) => e.reason, 'reason', BackupRejection.inconsistent)));
-    });
+          throwsA(
+            isA<InvalidBackupException>().having(
+              (e) => e.reason,
+              'reason',
+              BackupRejection.inconsistent,
+            ),
+          ),
+        );
+      },
+    );
 
     test('a failed import leaves the live database untouched', () async {
       final dst = newDb();
@@ -771,10 +881,13 @@ void main() {
       // Passes the in-memory validation (unique tank ids, FKs resolve) but
       // fails in the rehearsal: duplicate reading primary keys.
       final bad = bareData(
-          tanks: [tankRow(1)],
-          readings: [readingRow(10, 1), readingRow(10, 1)]);
+        tanks: [tankRow(1)],
+        readings: [readingRow(10, 1), readingRow(10, 1)],
+      );
       await expectLater(
-          importBackup(dst, bad), throwsA(isA<InvalidBackupException>()));
+        importBackup(dst, bad),
+        throwsA(isA<InvalidBackupException>()),
+      );
 
       // The rehearsal caught it before any live table was touched.
       final tankAfter = (await dst.getAllTanks()).single;
@@ -792,21 +905,31 @@ void main() {
       // anything outside 1..2^31 as `inconsistent`.
       const maxId = 0x7FFFFFFFFFFFFFFF; // 2^63 − 1
       for (final badId in [-5, 0, (1 << 31) + 1, maxId]) {
-        final data =
-            bareData(tanks: [tankRow(1)], readings: [readingRow(badId, 1)]);
+        final data = bareData(
+          tanks: [tankRow(1)],
+          readings: [readingRow(badId, 1)],
+        );
         final dst = newDb();
         addTearDown(dst.close);
         await expectLater(
-            importBackup(dst, data),
-            throwsA(isA<InvalidBackupException>().having(
-                (e) => e.reason, 'reason', BackupRejection.inconsistent)),
-            reason: 'id $badId must be rejected');
+          importBackup(dst, data),
+          throwsA(
+            isA<InvalidBackupException>().having(
+              (e) => e.reason,
+              'reason',
+              BackupRejection.inconsistent,
+            ),
+          ),
+          reason: 'id $badId must be rejected',
+        );
         expect(await dst.getAllReadings(), isEmpty);
       }
 
       // The 2^31 boundary itself still imports.
-      final ok =
-          bareData(tanks: [tankRow(1)], readings: [readingRow(1 << 31, 1)]);
+      final ok = bareData(
+        tanks: [tankRow(1)],
+        readings: [readingRow(1 << 31, 1)],
+      );
       final dst = newDb();
       addTearDown(dst.close);
       await importBackup(dst, ok);
@@ -819,18 +942,17 @@ void main() {
       String? frequency,
       String? amountUnit,
       String? basis,
-    }) =>
-        DosingEntriesCompanion(
-          id: Value(id),
-          tankId: const Value(1),
-          product: const Value('Mystery'),
-          state: Value(state),
-          frequency: Value(frequency),
-          amountUnit: Value(amountUnit),
-          basis: Value(basis),
-          createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-          startedAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-        );
+    }) => DosingEntriesCompanion(
+      id: Value(id),
+      tankId: const Value(1),
+      product: const Value('Mystery'),
+      state: Value(state),
+      frequency: Value(frequency),
+      amountUnit: Value(amountUnit),
+      basis: Value(basis),
+      createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+      startedAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+    );
 
     test('rejects unrecognized enum-ish strings (#34)', () async {
       // Regression test for #34: a garbage dosing `state` would restore into a
@@ -838,81 +960,99 @@ void main() {
       // unmanageable zombie; unknown setupType/frequency/amountUnit/basis
       // silently degrade behavior. validateBackup whitelists all of them.
       final badSets = <String, BackupData>{
-        'setupType': bareData(tanks: [
-          TanksCompanion(
-            id: const Value(1),
-            name: const Value('T'),
-            setupType: const Value('not-a-setup-type'),
-            createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
-          ),
-        ]),
+        'setupType': bareData(
+          tanks: [
+            TanksCompanion(
+              id: const Value(1),
+              name: const Value('T'),
+              setupType: const Value('not-a-setup-type'),
+              createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+            ),
+          ],
+        ),
         'state': bareData(
-            tanks: [tankRow(1)],
-            dosingEntries: [dosingRow(50, state: 'bogus')]),
+          tanks: [tankRow(1)],
+          dosingEntries: [dosingRow(50, state: 'bogus')],
+        ),
         'frequency': bareData(
-            tanks: [tankRow(1)],
-            dosingEntries: [dosingRow(50, frequency: 'sometimes')]),
+          tanks: [tankRow(1)],
+          dosingEntries: [dosingRow(50, frequency: 'sometimes')],
+        ),
         'amountUnit': bareData(
-            tanks: [tankRow(1)],
-            dosingEntries: [dosingRow(50, amountUnit: 'cups')]),
+          tanks: [tankRow(1)],
+          dosingEntries: [dosingRow(50, amountUnit: 'cups')],
+        ),
         'basis': bareData(
-            tanks: [tankRow(1)],
-            dosingEntries: [dosingRow(50, basis: 'perMoon')]),
+          tanks: [tankRow(1)],
+          dosingEntries: [dosingRow(50, basis: 'perMoon')],
+        ),
       };
       for (final bad in badSets.entries) {
         final dst = newDb();
         addTearDown(dst.close);
         await expectLater(
-            importBackup(dst, bad.value),
-            throwsA(isA<InvalidBackupException>()
-                .having((e) => e.reason, 'reason',
-                    BackupRejection.inconsistent)
-                .having((e) => e.detail, 'detail', contains(bad.key))),
-            reason: 'garbage ${bad.key} must be rejected');
+          importBackup(dst, bad.value),
+          throwsA(
+            isA<InvalidBackupException>()
+                .having((e) => e.reason, 'reason', BackupRejection.inconsistent)
+                .having((e) => e.detail, 'detail', contains(bad.key)),
+          ),
+          reason: 'garbage ${bad.key} must be rejected',
+        );
         expect(await dst.getAllDosingEntries(), isEmpty);
       }
     });
 
     test('accepts every known enum value, including nulls (#34)', () async {
-      final data = bareData(tanks: [
-        tankRow(1)
-      ], dosingEntries: [
-        // `paused` is reserved for a later phase but is a legal stored value.
-        dosingRow(50,
+      final data = bareData(
+        tanks: [tankRow(1)],
+        dosingEntries: [
+          // `paused` is reserved for a later phase but is a legal stored value.
+          dosingRow(
+            50,
             state: 'paused',
             frequency: 'everyNDays',
             amountUnit: 'g',
-            basis: 'perDose'),
-        // The nullable enum-ish columns may all be null.
-        dosingRow(51),
-      ]);
+            basis: 'perDose',
+          ),
+          // The nullable enum-ish columns may all be null.
+          dosingRow(51),
+        ],
+      );
       final dst = newDb();
       addTearDown(dst.close);
       await importBackup(dst, data);
       expect((await dst.getAllDosingEntries()).length, 2);
     });
 
-    test('rejects a backup whose child rows reference a missing tank',
-        () async {
-      final data = BackupData(
-        schemaVersion: 1,
-        tanks: const [],
-        params: [
-          TrackedParametersCompanion.insert(
-              tankId: 99, paramKey: 'ph', unit: 'pH'),
-        ],
-        readings: const [],
-        waterChanges: const [],
-        carbonChanges: const [],
-        equipmentCleanings: const [],
-        ratioVisibilities: const [],
-        dosingEntries: const [],
-        settings: const [],
-      );
-      final dst = newDb();
-      addTearDown(dst.close);
-      await expectLater(
-          importBackup(dst, data), throwsA(isA<InvalidBackupException>()));
-    });
+    test(
+      'rejects a backup whose child rows reference a missing tank',
+      () async {
+        final data = BackupData(
+          schemaVersion: 1,
+          tanks: const [],
+          params: [
+            TrackedParametersCompanion.insert(
+              tankId: 99,
+              paramKey: 'ph',
+              unit: 'pH',
+            ),
+          ],
+          readings: const [],
+          waterChanges: const [],
+          carbonChanges: const [],
+          equipmentCleanings: const [],
+          ratioVisibilities: const [],
+          dosingEntries: const [],
+          settings: const [],
+        );
+        final dst = newDb();
+        addTearDown(dst.close);
+        await expectLater(
+          importBackup(dst, data),
+          throwsA(isA<InvalidBackupException>()),
+        );
+      },
+    );
   });
 }

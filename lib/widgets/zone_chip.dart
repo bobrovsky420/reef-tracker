@@ -21,7 +21,9 @@ class ZoneChip extends StatelessWidget {
       label: compact ? AppLocalizations.of(context).zoneLabel(zone) : null,
       child: Container(
         padding: EdgeInsets.symmetric(
-            horizontal: compact ? 6 : 10, vertical: compact ? 2 : 4),
+          horizontal: compact ? 6 : 10,
+          vertical: compact ? 2 : 4,
+        ),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
@@ -36,7 +38,10 @@ class ZoneChip extends StatelessWidget {
               Text(
                 AppLocalizations.of(context).zoneLabel(zone),
                 style: TextStyle(
-                    color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
               ),
             ],
           ],

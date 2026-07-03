@@ -111,8 +111,7 @@ class DashboardBody extends ConsumerWidget {
                   maxCrossAxisExtent: 219,
                   // The tile is mostly stacked text, so its height must grow
                   // with the system font scale or it clips at 1.3–2.0× (#44).
-                  mainAxisExtent:
-                      MediaQuery.textScalerOf(context).scale(143),
+                  mainAxisExtent: MediaQuery.textScalerOf(context).scale(143),
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
@@ -435,7 +434,8 @@ class TankSelector extends ConsumerWidget {
     // The compact health badge sits beside the selector as its own tap target
     // (inside the popup's child it would be swallowed by the menu gesture).
     final showBadge =
-        (ref.watch(healthDisplayProvider).value ?? HealthDisplay.both).showBadge;
+        (ref.watch(healthDisplayProvider).value ?? HealthDisplay.both)
+            .showBadge;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -475,14 +475,26 @@ class NoTanksView extends ConsumerWidget {
                   onChanged: (v) => settings.setLocaleCode(v),
                   items: [
                     DropdownMenuItem(
-                        value: 'system', child: Text(l.languageSystem)),
+                      value: 'system',
+                      child: Text(l.languageSystem),
+                    ),
                     DropdownMenuItem(
-                        value: 'en', child: Text(l.languageEnglish)),
+                      value: 'en',
+                      child: Text(l.languageEnglish),
+                    ),
                     DropdownMenuItem(value: 'cs', child: Text(l.languageCzech)),
-                    DropdownMenuItem(value: 'de', child: Text(l.languageGerman)),
                     DropdownMenuItem(
-                        value: 'ru', child: Text(l.languageRussian)),
-                    DropdownMenuItem(value: 'pl', child: Text(l.languagePolish)),
+                      value: 'de',
+                      child: Text(l.languageGerman),
+                    ),
+                    DropdownMenuItem(
+                      value: 'ru',
+                      child: Text(l.languageRussian),
+                    ),
+                    DropdownMenuItem(
+                      value: 'pl',
+                      child: Text(l.languagePolish),
+                    ),
                   ],
                 ),
               ],

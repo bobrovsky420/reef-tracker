@@ -15,16 +15,19 @@ void main() {
     late void Function() open;
     await pumpApp(
       tester,
-      Builder(builder: (context) {
-        open = () async => onResult(await pickPastDateTime(context, initial));
-        return TextButton(onPressed: open, child: const Text('pick'));
-      }),
+      Builder(
+        builder: (context) {
+          open = () async => onResult(await pickPastDateTime(context, initial));
+          return TextButton(onPressed: open, child: const Text('pick'));
+        },
+      ),
     );
     return open;
   }
 
-  testWidgets('confirming both steps returns the composed date and time',
-      (tester) async {
+  testWidgets('confirming both steps returns the composed date and time', (
+    tester,
+  ) async {
     DateTime? result;
     var completed = false;
     await pumpPicker(tester, (r) {
@@ -43,8 +46,9 @@ void main() {
     expect(result, initial);
   });
 
-  testWidgets('cancelling the time step aborts instead of recording midnight',
-      (tester) async {
+  testWidgets('cancelling the time step aborts instead of recording midnight', (
+    tester,
+  ) async {
     DateTime? result;
     var completed = false;
     await pumpPicker(tester, (r) {

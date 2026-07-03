@@ -1,14 +1,12 @@
 name: CI
 
-# Static analysis + unit/widget tests on every push and PR to master.
-# We deliberately do NOT build the Android app here: the release build depends
-# on an exact plugin/toolchain pinning (see TODO #12) that is fragile in CI and
-# irrelevant to catching logic regressions. `analyze` + `test` cover the risk
-# areas (domain math, backup round-trip, zone bands, health scoring, widgets).
+# Every push and PR to master runs, in one job: format check, a
+# regenerate-and-diff guard for all committed generated sources, analyze, and
+# tests with coverage (lcov uploaded as an artifact). A second job builds a
+# debug APK so the Android platform layer (Gradle/AGP/Kotlin config, manifest,
+# pinned plugins) is exercised too — debug needs no key.properties.
 #
-# Generated sources (lib/data/database.g.dart, lib/l10n/app_localizations*.dart)
-# are committed, so no build_runner / gen-l10n step is needed here. If you change
-# the drift schema or an ARB file, regenerate and commit those files.
+# Superseded runs on the same ref are cancelled (concurrency below).
 
 on:
   push:
@@ -16,9 +14,14 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -31,10 +34,58 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Format check
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Generated sources (database.g.dart, app_localizations*.dart,
+      # supplement_catalog.g.dart) are committed; regenerate them all and fail
+      # on any diff so an ARB/schema/supplements.yaml edit can't merge with
+      # stale generated code. Order matters: build_runner deletes
+      # supplement_catalog.g.dart (a .g.dart no builder claims) as a
+      # conflicting output, so gen_supplements must run after it.
+      - name: Check generated code is up to date
+        run: |
+          flutter gen-l10n
+          dart run build_runner build
+          dart run tool/gen_supplements.dart
+          git diff --exit-code
+          test -z "$(git ls-files --others --exclude-standard)"
+
       # Fails on warnings/errors (the project's clean baseline). Not
       # --fatal-infos: some test files carry pre-existing info-level lints.
       - name: Analyze
         run: flutter analyze
 
       - name: Test
-        run: flutter test
+        run: flutter test --coverage
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
+
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # AGP 9 / Kotlin 2.3 (see the pinned-plugin note in pubspec.yaml); match
+      # the JDK 21 used for local release builds instead of the runner default.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.3
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build debug APK
+        run: flutter build apk --debug

@@ -7,20 +7,19 @@ DoseSchedule entry({
   String? frequency,
   int? intervalDays,
   String? weekdays,
-}) =>
-    (
-      amount: amount,
-      frequency: frequency,
-      intervalDays: intervalDays,
-      weekdays: weekdays,
-    );
+}) => (
+  amount: amount,
+  frequency: frequency,
+  intervalDays: intervalDays,
+  weekdays: weekdays,
+);
 
 void main() {
   final t0 = DateTime(2026, 1, 1);
   List<DosePoint> series(List<double> values, {int stepDays = 1}) => [
-        for (var i = 0; i < values.length; i++)
-          (t: t0.add(Duration(days: i * stepDays)), value: values[i])
-      ];
+    for (var i = 0; i < values.length; i++)
+      (t: t0.add(Duration(days: i * stepDays)), value: values[i]),
+  ];
 
   group('slopePerDay', () {
     test('returns null with fewer than two points', () {
@@ -29,10 +28,7 @@ void main() {
     });
 
     test('returns null when all points share an instant', () {
-      expect(
-        slopePerDay([(t: t0, value: 400), (t: t0, value: 410)]),
-        isNull,
-      );
+      expect(slopePerDay([(t: t0, value: 400), (t: t0, value: 410)]), isNull);
     });
 
     test('falling element gives a negative slope', () {
@@ -109,7 +105,8 @@ void main() {
     test('every 2 days -> halved', () {
       expect(
         dailyEquivalentDose(
-            entry(amount: 14, frequency: 'everyNDays', intervalDays: 2)),
+          entry(amount: 14, frequency: 'everyNDays', intervalDays: 2),
+        ),
         closeTo(7, 1e-9),
       );
     });
@@ -117,24 +114,26 @@ void main() {
     test('weekly with 3 days -> amount * 3/7', () {
       expect(
         dailyEquivalentDose(
-            entry(amount: 7, frequency: 'weekly', weekdays: '1,3,5')),
+          entry(amount: 7, frequency: 'weekly', weekdays: '1,3,5'),
+        ),
         closeTo(3.0, 1e-9),
       );
     });
 
-    test('everyNDays with a zero or negative interval contributes nothing',
-        () {
+    test('everyNDays with a zero or negative interval contributes nothing', () {
       // Regression test for #8: the UI now validates the interval, and the
       // calculator treats a garbage stored interval (pre-fix rows) as an
       // unknown cadence (0) instead of silently pretending "daily".
       expect(
         dailyEquivalentDose(
-            entry(amount: 10, frequency: 'everyNDays', intervalDays: 0)),
+          entry(amount: 10, frequency: 'everyNDays', intervalDays: 0),
+        ),
         0,
       );
       expect(
         dailyEquivalentDose(
-            entry(amount: 10, frequency: 'everyNDays', intervalDays: -3)),
+          entry(amount: 10, frequency: 'everyNDays', intervalDays: -3),
+        ),
         0,
       );
     });
@@ -148,13 +147,16 @@ void main() {
 
     test('weekly with no valid weekdays falls back to daily', () {
       expect(
-        dailyEquivalentDose(entry(amount: 7, frequency: 'weekly', weekdays: '')),
+        dailyEquivalentDose(
+          entry(amount: 7, frequency: 'weekly', weekdays: ''),
+        ),
         closeTo(7, 1e-9),
       );
       // Out-of-range and non-numeric entries are all discarded -> count 0.
       expect(
         dailyEquivalentDose(
-            entry(amount: 7, frequency: 'weekly', weekdays: '0,8,abc')),
+          entry(amount: 7, frequency: 'weekly', weekdays: '0,8,abc'),
+        ),
         closeTo(7, 1e-9),
       );
     });
@@ -163,7 +165,8 @@ void main() {
       // 1 and 4 are valid; 0, 9 and junk are ignored -> 2 dosing days.
       expect(
         dailyEquivalentDose(
-            entry(amount: 7, frequency: 'weekly', weekdays: '1,0,9,4,x')),
+          entry(amount: 7, frequency: 'weekly', weekdays: '1,0,9,4,x'),
+        ),
         closeTo(2.0, 1e-9),
       );
     });
@@ -198,19 +201,21 @@ void main() {
       );
     });
 
-    test('no dosing: consumption equals the drop, but needs potency for dose',
-        () {
-      // Ca falling 11 ppm/day, nothing dosed.
-      final r = computeDoseCalc(
-        slopePerDay: -11,
-        currentDailyDose: 0,
-        potency: null,
-        volumeLiters: volume,
-      );
-      expect(r.status, DoseCalcStatus.needsPotency);
-      expect(r.consumptionPerDay, closeTo(11, 1e-9));
-      expect(r.suggestedDailyDose, isNull);
-    });
+    test(
+      'no dosing: consumption equals the drop, but needs potency for dose',
+      () {
+        // Ca falling 11 ppm/day, nothing dosed.
+        final r = computeDoseCalc(
+          slopePerDay: -11,
+          currentDailyDose: 0,
+          potency: null,
+          volumeLiters: volume,
+        );
+        expect(r.status, DoseCalcStatus.needsPotency);
+        expect(r.consumptionPerDay, closeTo(11, 1e-9));
+        expect(r.suggestedDailyDose, isNull);
+      },
+    );
 
     test('no dosing with potency recommends a starting dose', () {
       // Consuming 11 ppm/day in 100 L; potency 110 -> 10 ml/day to maintain.

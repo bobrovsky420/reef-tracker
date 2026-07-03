@@ -39,7 +39,9 @@ void main() {
     ..writeln("part of 'supplement_catalog.dart';")
     ..writeln('')
     ..writeln('/// The built-in supplement catalog, generated from')
-    ..writeln('/// `supplements.yaml`. Curated, with a UI "Other…" escape hatch.')
+    ..writeln(
+      '/// `supplements.yaml`. Curated, with a UI "Other…" escape hatch.',
+    )
     ..writeln('const List<SupplementVendor> kSupplementVendors = [');
 
   final vendors = doc['vendors'] as YamlList;
@@ -68,7 +70,9 @@ void main() {
           ..writeln("        name: '${_esc(prog['name'])}',")
           ..writeln('        products: [');
         for (final p in prog['products'] as YamlList) {
-          buf.write(_emitProduct(p, '          ', validParams, seenKeys, errors));
+          buf.write(
+            _emitProduct(p, '          ', validParams, seenKeys, errors),
+          );
         }
         buf
           ..writeln('        ],')
@@ -90,8 +94,17 @@ void main() {
   }
 
   File(_outPath).writeAsStringSync(buf.toString());
-  stdout.writeln('Wrote $_outPath '
-      '(${vendors.length} vendors, ${seenKeys.length} products).');
+  // Normalize to the current formatter style so the file stays byte-identical
+  // to what CI's format + generated-code checks expect.
+  final fmt = Process.runSync('dart', ['format', _outPath], runInShell: true);
+  if (fmt.exitCode != 0) {
+    stderr.writeln('dart format failed:\n${fmt.stderr}');
+    exit(1);
+  }
+  stdout.writeln(
+    'Wrote $_outPath '
+    '(${vendors.length} vendors, ${seenKeys.length} products).',
+  );
 }
 
 String _emitProduct(

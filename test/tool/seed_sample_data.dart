@@ -61,63 +61,73 @@ void main() {
     // Alk: an OLD segment (5 ml/day, 40d ago → superseded 12d ago) plus the
     // CURRENT active segment (7 ml/day since 12d ago). This makes the dose
     // calculator's "dose changed within window" warning fire.
-    final oldAlkId = await db.insertDosingEntry(DosingEntriesCompanion(
-      tankId: Value(tank),
-      productKey: const Value('redsea.foundation_b'),
-      vendor: const Value('Red Sea'),
-      program: const Value('Reef Care Program'),
-      product: const Value('Reef Foundation B (KH/Alk)'),
-      elementKey: const Value('alkalinity'),
-      amount: const Value(5),
-      amountUnit: Value(DoseUnit.ml.name),
-      basis: Value(DoseBasis.perDay.name),
-      frequency: Value(DoseFrequency.daily.name),
-      startedAt: Value(daysAgo(40)),
-    ));
+    final oldAlkId = await db.insertDosingEntry(
+      DosingEntriesCompanion(
+        tankId: Value(tank),
+        productKey: const Value('redsea.foundation_b'),
+        vendor: const Value('Red Sea'),
+        program: const Value('Reef Care Program'),
+        product: const Value('Reef Foundation B (KH/Alk)'),
+        elementKey: const Value('alkalinity'),
+        amount: const Value(5),
+        amountUnit: Value(DoseUnit.ml.name),
+        basis: Value(DoseBasis.perDay.name),
+        frequency: Value(DoseFrequency.daily.name),
+        startedAt: Value(daysAgo(40)),
+      ),
+    );
     // Backdate the ended segment's boundary explicitly.
-    await (db.update(db.dosingEntries)
-          ..where((d) => d.id.equals(oldAlkId)))
-        .write(DosingEntriesCompanion(
-      state: Value(DosingState.ended.name),
-      endedAt: Value(daysAgo(12)),
-    ));
-    final newAlkId = await db.insertDosingEntry(DosingEntriesCompanion(
-      tankId: Value(tank),
-      productKey: const Value('redsea.foundation_b'),
-      vendor: const Value('Red Sea'),
-      program: const Value('Reef Care Program'),
-      product: const Value('Reef Foundation B (KH/Alk)'),
-      elementKey: const Value('alkalinity'),
-      amount: const Value(7),
-      amountUnit: Value(DoseUnit.ml.name),
-      basis: Value(DoseBasis.perDay.name),
-      frequency: Value(DoseFrequency.daily.name),
-    ));
+    await (db.update(
+      db.dosingEntries,
+    )..where((d) => d.id.equals(oldAlkId))).write(
+      DosingEntriesCompanion(
+        state: Value(DosingState.ended.name),
+        endedAt: Value(daysAgo(12)),
+      ),
+    );
+    final newAlkId = await db.insertDosingEntry(
+      DosingEntriesCompanion(
+        tankId: Value(tank),
+        productKey: const Value('redsea.foundation_b'),
+        vendor: const Value('Red Sea'),
+        program: const Value('Reef Care Program'),
+        product: const Value('Reef Foundation B (KH/Alk)'),
+        elementKey: const Value('alkalinity'),
+        amount: const Value(7),
+        amountUnit: Value(DoseUnit.ml.name),
+        basis: Value(DoseBasis.perDay.name),
+        frequency: Value(DoseFrequency.daily.name),
+      ),
+    );
     await (db.update(db.dosingEntries)..where((d) => d.id.equals(newAlkId)))
         .write(DosingEntriesCompanion(startedAt: Value(daysAgo(12))));
 
     // Calcium: a single active supplement, no history yet.
-    await db.insertDosingEntry(DosingEntriesCompanion(
-      tankId: Value(tank),
-      productKey: const Value('redsea.foundation_a'),
-      vendor: const Value('Red Sea'),
-      program: const Value('Reef Care Program'),
-      product: const Value('Reef Foundation A (Ca)'),
-      elementKey: const Value('calcium'),
-      amount: const Value(6),
-      amountUnit: Value(DoseUnit.ml.name),
-      basis: Value(DoseBasis.perDay.name),
-      frequency: Value(DoseFrequency.daily.name),
-    ));
+    await db.insertDosingEntry(
+      DosingEntriesCompanion(
+        tankId: Value(tank),
+        productKey: const Value('redsea.foundation_a'),
+        vendor: const Value('Red Sea'),
+        program: const Value('Reef Care Program'),
+        product: const Value('Reef Foundation A (Ca)'),
+        elementKey: const Value('calcium'),
+        amount: const Value(6),
+        amountUnit: Value(DoseUnit.ml.name),
+        basis: Value(DoseBasis.perDay.name),
+        frequency: Value(DoseFrequency.daily.name),
+      ),
+    );
 
     // A stopped trace supplement (soft-ended) — history only, hidden from list.
-    final traceId = await db.insertDosingEntry(DosingEntriesCompanion(
-      tankId: Value(tank),
-      vendor: const Value('Custom'),
-      product: const Value('Vitamin C (occasional)'),
-      note: const Value('Stopped during algae outbreak'),
-      startedAt: Value(daysAgo(60)),
-    ));
+    final traceId = await db.insertDosingEntry(
+      DosingEntriesCompanion(
+        tankId: Value(tank),
+        vendor: const Value('Custom'),
+        product: const Value('Vitamin C (occasional)'),
+        note: const Value('Stopped during algae outbreak'),
+        startedAt: Value(daysAgo(60)),
+      ),
+    );
     await db.stopDosingEntry(traceId);
     await (db.update(db.dosingEntries)..where((d) => d.id.equals(traceId)))
         .write(DosingEntriesCompanion(endedAt: Value(daysAgo(20))));

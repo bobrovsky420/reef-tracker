@@ -8,8 +8,11 @@ void main() {
     test('every preset key exists in the catalog', () {
       for (final entry in kPresets.entries) {
         for (final key in entry.value.keys) {
-          expect(kParameterByKey.containsKey(key), isTrue,
-              reason: '${entry.key} references unknown parameter "$key"');
+          expect(
+            kParameterByKey.containsKey(key),
+            isTrue,
+            reason: '${entry.key} references unknown parameter "$key"',
+          );
         }
       }
     });
@@ -30,8 +33,11 @@ void main() {
             bounds.amberHigh,
           ].whereType<double>().toList();
           for (var i = 1; i < seq.length; i++) {
-            expect(seq[i] >= seq[i - 1], isTrue,
-                reason: 'Out-of-order bound in ${entry.key}: $seq');
+            expect(
+              seq[i] >= seq[i - 1],
+              isTrue,
+              reason: 'Out-of-order bound in ${entry.key}: $seq',
+            );
           }
         }
       }

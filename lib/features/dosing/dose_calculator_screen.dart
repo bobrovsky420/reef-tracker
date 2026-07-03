@@ -50,8 +50,7 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     // emission used to overwrite whatever the user had typed meanwhile. The
     // one-shot `_prefilled` guard plus `onlyIfEmpty` keeps user input intact.
     var inInitState = true;
-    ref.listenManual(dosingEntriesProvider, fireImmediately: true,
-        (_, next) {
+    ref.listenManual(dosingEntriesProvider, fireImmediately: true, (_, next) {
       if (_prefilled || !next.hasValue) return;
       _prefilled = true;
       final entries = next.value ?? const <DosingEntry>[];
@@ -127,7 +126,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     _useCatalogPotency = catalog != null;
     if (catalog == null) {
       if (_refAmountCtrl.text.isEmpty) _refAmountCtrl.text = '10';
-      if (_refVolCtrl.text.isEmpty) _refVolCtrl.text = formatVolume(100, volUnit);
+      if (_refVolCtrl.text.isEmpty) {
+        _refVolCtrl.text = formatVolume(100, volUnit);
+      }
     }
   }
 
@@ -154,7 +155,8 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     final entries = entriesAsync.value ?? const <DosingEntry>[];
     final element = _element ?? kDosingElementKeys.first;
 
-    final readings = ref.watch(paramReadingsProvider(element)).value ?? const [];
+    final readings =
+        ref.watch(paramReadingsProvider(element)).value ?? const [];
     final windowStart = _range.days == null
         ? null
         : DateTime.now().subtract(Duration(days: _range.days!));
@@ -167,7 +169,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     final slope = slopePerDay(points);
     final dose = _parse(_doseCtrl.text) ?? 0;
     final volDisp = _parse(_volumeCtrl.text);
-    final volLiters = volDisp == null ? null : volumeToCanonical(volDisp, volUnit);
+    final volLiters = volDisp == null
+        ? null
+        : volumeToCanonical(volDisp, volUnit);
     final potency = _effectivePotency(volUnit);
 
     final result = computeDoseCalc(
@@ -237,10 +241,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         Expanded(
           child: Text(
             l.doseCalcDoseChanged(date),
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: scheme.tertiary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.tertiary),
           ),
         ),
       ],
@@ -301,8 +304,8 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         Text(
           l.doseCalcReadings(count),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
       ],
     );
@@ -356,16 +359,20 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         Row(
           children: [
             Expanded(
-              child: Text(l.doseCalcPotencyTitle,
-                  style: Theme.of(context).textTheme.titleSmall),
+              child: Text(
+                l.doseCalcPotencyTitle,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
             ),
             if (_catalogPotency != null)
               TextButton(
                 onPressed: () =>
                     setState(() => _useCatalogPotency = !_useCatalogPotency),
-                child: Text(_useCatalogPotency
-                    ? l.doseCalcEnterManually
-                    : l.doseCalcUseCatalog),
+                child: Text(
+                  _useCatalogPotency
+                      ? l.doseCalcEnterManually
+                      : l.doseCalcUseCatalog,
+                ),
               ),
           ],
         ),
@@ -384,8 +391,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
               Expanded(
                 child: TextField(
                   controller: _refAmountCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: l.doseCalcRefAmount,
                     suffixText: _doseUnit.symbol,
@@ -398,8 +406,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
               Expanded(
                 child: TextField(
                   controller: _refVolCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: l.doseCalcRefVolume,
                     suffixText: volUnit.symbol,
@@ -412,8 +421,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
               Expanded(
                 child: TextField(
                   controller: _riseCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: l.doseCalcRise,
                     suffixText: unitStr,
@@ -431,19 +441,15 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
               '${_trim(potency / volLiters)} $unitStr / ${_doseUnit.symbol}',
             ),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
         ],
       ],
     );
   }
 
-  Widget _resultCard(
-    AppLocalizations l,
-    String element,
-    DoseCalcResult r,
-  ) {
+  Widget _resultCard(AppLocalizations l, String element, DoseCalcResult r) {
     final scheme = Theme.of(context).colorScheme;
     final unitStr = kParameterByKey[element]?.unit ?? '';
 
@@ -454,29 +460,37 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
 
     final rows = <Widget>[];
     if (r.observedChangePerDay != null) {
-      rows.add(_resultRow(l.doseCalcObservedChange, rate(r.observedChangePerDay)));
+      rows.add(
+        _resultRow(l.doseCalcObservedChange, rate(r.observedChangePerDay)),
+      );
     }
     if (r.consumptionPerDay != null) {
       rows.add(_resultRow(l.doseCalcConsumption, addRate(r.consumptionPerDay)));
     }
     if ((r.dosingInputPerDay ?? 0) > 0) {
-      rows.add(_resultRow(l.doseCalcCurrentInput, addRate(r.dosingInputPerDay)));
+      rows.add(
+        _resultRow(l.doseCalcCurrentInput, addRate(r.dosingInputPerDay)),
+      );
     }
     if (r.suggestedDailyDose != null) {
-      rows.add(_resultRow(
-        l.doseCalcSuggestedDose,
-        '${formatDoseAmount(r.suggestedDailyDose!)} ${_doseUnit.symbol} / '
-        '${l.doseCalcPerDay}',
-        emphasize: true,
-      ));
+      rows.add(
+        _resultRow(
+          l.doseCalcSuggestedDose,
+          '${formatDoseAmount(r.suggestedDailyDose!)} ${_doseUnit.symbol} / '
+          '${l.doseCalcPerDay}',
+          emphasize: true,
+        ),
+      );
     }
     if (r.adjustment != null) {
       final adj = r.adjustment!;
-      rows.add(_resultRow(
-        l.doseCalcAdjustment,
-        '${adj >= 0 ? '+' : '−'}${formatDoseAmount(adj.abs())} '
-        '${_doseUnit.symbol}',
-      ));
+      rows.add(
+        _resultRow(
+          l.doseCalcAdjustment,
+          '${adj >= 0 ? '+' : '−'}${formatDoseAmount(adj.abs())} '
+          '${_doseUnit.symbol}',
+        ),
+      );
     }
 
     return Card(
@@ -486,8 +500,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l.doseCalcResultsTitle,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              l.doseCalcResultsTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 12),
             ...rows,
             if (rows.isNotEmpty) const SizedBox(height: 12),
@@ -500,10 +516,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
 
   Widget _resultRow(String label, String value, {bool emphasize = false}) {
     final style = emphasize
-        ? Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(fontWeight: FontWeight.bold)
+        ? Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)
         : Theme.of(context).textTheme.bodyMedium;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -525,40 +540,40 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
   ) {
     final (text, icon, color) = switch (status) {
       DoseCalcStatus.insufficientData => (
-          l.doseCalcInsufficient,
-          Icons.info_outline,
-          scheme.outline,
-        ),
+        l.doseCalcInsufficient,
+        Icons.info_outline,
+        scheme.outline,
+      ),
       DoseCalcStatus.needsPotency => (
-          l.doseCalcNeedsPotency,
-          Icons.science_outlined,
-          scheme.primary,
-        ),
+        l.doseCalcNeedsPotency,
+        Icons.science_outlined,
+        scheme.primary,
+      ),
       DoseCalcStatus.stable => (
-          l.doseCalcStable,
-          Icons.check_circle_outline,
-          Colors.green,
-        ),
+        l.doseCalcStable,
+        Icons.check_circle_outline,
+        Colors.green,
+      ),
       DoseCalcStatus.increase => (
-          l.doseCalcIncrease,
-          Icons.arrow_upward,
-          scheme.primary,
-        ),
+        l.doseCalcIncrease,
+        Icons.arrow_upward,
+        scheme.primary,
+      ),
       DoseCalcStatus.decrease => (
-          l.doseCalcDecrease,
-          Icons.arrow_downward,
-          scheme.primary,
-        ),
+        l.doseCalcDecrease,
+        Icons.arrow_downward,
+        scheme.primary,
+      ),
       DoseCalcStatus.overdosing => (
-          l.doseCalcOverdosing,
-          Icons.warning_amber_outlined,
-          scheme.error,
-        ),
+        l.doseCalcOverdosing,
+        Icons.warning_amber_outlined,
+        scheme.error,
+      ),
       DoseCalcStatus.noDoseNeeded => (
-          l.doseCalcNoDoseNeeded,
-          Icons.check_circle_outline,
-          Colors.green,
-        ),
+        l.doseCalcNoDoseNeeded,
+        Icons.check_circle_outline,
+        Colors.green,
+      ),
     };
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,10 +583,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         Expanded(
           child: Text(
             text,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: color),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: color),
           ),
         ),
       ],

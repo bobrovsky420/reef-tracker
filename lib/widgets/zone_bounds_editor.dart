@@ -70,11 +70,11 @@ class ZoneBoundsEditorState extends State<ZoneBoundsEditor> {
 
   /// The four parsed bounds in the parent's display space (null where blank).
   ZoneBounds get values => ZoneBounds(
-        amberLow: _parse(_amberLow),
-        greenLow: _parse(_greenLow),
-        greenHigh: _parse(_greenHigh),
-        amberHigh: _parse(_amberHigh),
-      );
+    amberLow: _parse(_amberLow),
+    greenLow: _parse(_greenLow),
+    greenHigh: _parse(_greenHigh),
+    amberHigh: _parse(_amberHigh),
+  );
 
   /// True when the present bounds are monotonically non-decreasing.
   bool get orderOk {
@@ -124,13 +124,17 @@ class ZoneBoundsEditorState extends State<ZoneBoundsEditor> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextFormField(
         controller: c,
-        keyboardType:
-            const TextInputType.numberWithOptions(decimal: true, signed: true),
+        keyboardType: const TextInputType.numberWithOptions(
+          decimal: true,
+          signed: true,
+        ),
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(Icons.circle, color: zone.color, size: 14),
-          prefixIconConstraints:
-              const BoxConstraints(minWidth: 36, minHeight: 0),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 36,
+            minHeight: 0,
+          ),
         ),
         validator: (v) {
           if (v == null || v.trim().isEmpty) return null;
@@ -148,13 +152,13 @@ class _ZoneLegendRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     Widget dot(Zone z, String label) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.circle, color: z.color, size: 12),
-            const SizedBox(width: 4),
-            Text(label),
-          ],
-        );
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.circle, color: z.color, size: 12),
+        const SizedBox(width: 4),
+        Text(label),
+      ],
+    );
     return Wrap(
       spacing: 16,
       children: [

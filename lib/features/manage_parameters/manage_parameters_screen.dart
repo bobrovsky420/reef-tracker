@@ -47,8 +47,9 @@ class ManageParametersScreen extends ConsumerWidget {
             },
             itemBuilder: (context) => [
               PopupMenuItem(
-                  value: 'preset',
-                  child: Text(l.reapplyPreset(l.setupLabel(type)))),
+                value: 'preset',
+                child: Text(l.reapplyPreset(l.setupLabel(type))),
+              ),
             ],
           ),
         ],
@@ -84,14 +85,18 @@ class ManageParametersScreen extends ConsumerWidget {
                     ratioOrders.add((key: it.kind.name, order: i));
                 }
               }
-              ref.read(dbProvider).applyDashboardOrder(tank.id,
-                  paramOrders: paramOrders, ratioOrders: ratioOrders);
+              ref
+                  .read(dbProvider)
+                  .applyDashboardOrder(
+                    tank.id,
+                    paramOrders: paramOrders,
+                    ratioOrders: ratioOrders,
+                  );
             },
             itemBuilder: (context, i) {
               final item = items[i];
               return switch (item) {
-                _ParamItem() =>
-                  _paramRow(context, ref, item.param, prefs, i),
+                _ParamItem() => _paramRow(context, ref, item.param, prefs, i),
                 _RatioItem() => _ratioRow(context, ref, tank.id, item, i),
               };
             },
@@ -103,7 +108,12 @@ class ManageParametersScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: trackedAsync.hasValue
             ? () => _addParameter(
-                context, ref, tank.id, type, trackedAsync.value!)
+                context,
+                ref,
+                tank.id,
+                type,
+                trackedAsync.value!,
+              )
             : null,
         icon: const Icon(Icons.add),
         label: Text(l.addParameter),
@@ -111,8 +121,13 @@ class ManageParametersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _paramRow(BuildContext context, WidgetRef ref, TrackedParameter param,
-      UnitPrefs prefs, int index) {
+  Widget _paramRow(
+    BuildContext context,
+    WidgetRef ref,
+    TrackedParameter param,
+    UnitPrefs prefs,
+    int index,
+  ) {
     final l = AppLocalizations.of(context);
     final pres = presentationOf(param, prefs);
     return ListTile(
@@ -148,8 +163,13 @@ class ManageParametersScreen extends ConsumerWidget {
     );
   }
 
-  Widget _ratioRow(BuildContext context, WidgetRef ref, int tankId,
-      _RatioItem item, int index) {
+  Widget _ratioRow(
+    BuildContext context,
+    WidgetRef ref,
+    int tankId,
+    _RatioItem item,
+    int index,
+  ) {
     final l = AppLocalizations.of(context);
     final kind = item.kind;
     final bounds = ratioBounds(kind, item.settings);
@@ -182,16 +202,22 @@ class ManageParametersScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _addParameter(BuildContext context, WidgetRef ref, int tankId,
-      SetupType type, List<TrackedParameter> tracked) async {
+  Future<void> _addParameter(
+    BuildContext context,
+    WidgetRef ref,
+    int tankId,
+    SetupType type,
+    List<TrackedParameter> tracked,
+  ) async {
     final l = AppLocalizations.of(context);
     final existing = tracked.map((e) => e.paramKey).toSet();
-    final available =
-        kReefParameters.where((p) => !existing.contains(p.key)).toList();
+    final available = kReefParameters
+        .where((p) => !existing.contains(p.key))
+        .toList();
     if (available.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.allParametersAdded)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.allParametersAdded)));
       return;
     }
     final key = await showModalBottomSheet<String>(
@@ -203,8 +229,10 @@ class ManageParametersScreen extends ConsumerWidget {
           for (final p in available)
             ListTile(
               title: Text(l.paramName(p.key)),
-              trailing: Text(p.unit,
-                  style: TextStyle(color: Theme.of(ctx).hintColor)),
+              trailing: Text(
+                p.unit,
+                style: TextStyle(color: Theme.of(ctx).hintColor),
+              ),
               onTap: () => Navigator.pop(ctx, p.key),
             ),
         ],
@@ -215,8 +243,12 @@ class ManageParametersScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmApplyPreset(BuildContext context, WidgetRef ref,
-      int tankId, SetupType type) async {
+  Future<void> _confirmApplyPreset(
+    BuildContext context,
+    WidgetRef ref,
+    int tankId,
+    SetupType type,
+  ) async {
     final l = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
@@ -225,20 +257,22 @@ class ManageParametersScreen extends ConsumerWidget {
         content: Text(l.reapplyPresetBody),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.cancel)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.apply)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.apply),
+          ),
         ],
       ),
     );
     if (ok ?? false) {
       await ref.read(dbProvider).applyPreset(tankId, type);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.presetApplied)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l.presetApplied)));
       }
     }
   }
@@ -266,12 +300,19 @@ class _RatioItem extends _DashItem {
 }
 
 String _boundsSummary(
-    AppLocalizations l, ZoneBounds b, ParamPresentation pres) {
+  AppLocalizations l,
+  ZoneBounds b,
+  ParamPresentation pres,
+) {
   if (b.isEmpty) return l.noBoundariesSet;
   String f(double? v) => v == null ? '∞' : pres.format(v);
   return l.boundsSummary(
-      f(b.greenLow), f(b.greenHigh), pres.unitLabel, f(b.amberLow),
-      f(b.amberHigh));
+    f(b.greenLow),
+    f(b.greenHigh),
+    pres.unitLabel,
+    f(b.amberLow),
+    f(b.amberHigh),
+  );
 }
 
 /// Bounds summary for a ratio card, formatted in the kind's displayed metric.
@@ -279,7 +320,12 @@ String _ratioBoundsSummary(AppLocalizations l, RatioKind kind, ZoneBounds b) {
   if (b.isEmpty) return l.noBoundariesSet;
   String f(double? v) => v == null ? '∞' : formatRatioBound(kind, v);
   return l.boundsSummary(
-      f(b.greenLow), f(b.greenHigh), '', f(b.amberLow), f(b.amberHigh));
+    f(b.greenLow),
+    f(b.greenHigh),
+    '',
+    f(b.amberLow),
+    f(b.amberHigh),
+  );
 }
 
 /// Editor for a single tracked parameter's unit + four zone boundaries.
@@ -316,11 +362,11 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
   /// The parameter's stored (canonical) bounds converted into the display space
   /// the editor edits in.
   ZoneBounds get _displayBounds => ZoneBounds(
-        amberLow: _toDisplay(widget.param.amberLow),
-        greenLow: _toDisplay(widget.param.greenLow),
-        greenHigh: _toDisplay(widget.param.greenHigh),
-        amberHigh: _toDisplay(widget.param.amberHigh),
-      );
+    amberLow: _toDisplay(widget.param.amberLow),
+    greenLow: _toDisplay(widget.param.greenLow),
+    greenHigh: _toDisplay(widget.param.greenHigh),
+    amberHigh: _toDisplay(widget.param.amberHigh),
+  );
 
   double? _toDisplay(double? canonical) =>
       canonical == null ? null : _pres.toDisplay(canonical);
@@ -330,26 +376,34 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     if (!_formKey.currentState!.validate()) return;
     final editor = _editorKey.currentState!;
     if (!editor.orderOk) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.boundsOrderError)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.boundsOrderError)));
       return;
     }
     if (!editor.pairsOk) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.boundsPairError)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.boundsPairError)));
       return;
     }
     // Editor values are in display space; convert back to canonical storage.
     final b = editor.values;
     double? canon(double? v) => v == null ? null : _pres.toCanonical(v);
-    await ref.read(dbProvider).updateTrackedParameter(widget.param.copyWith(
-          // Temp/salinity unit follows app settings; keep stored canonical unit.
-          unit: _pres.unitFollowsSettings ? widget.param.unit : _unit.text.trim(),
-          amberLow: Value(canon(b.amberLow)),
-          greenLow: Value(canon(b.greenLow)),
-          greenHigh: Value(canon(b.greenHigh)),
-          amberHigh: Value(canon(b.amberHigh)),
-        ));
+    await ref
+        .read(dbProvider)
+        .updateTrackedParameter(
+          widget.param.copyWith(
+            // Temp/salinity unit follows app settings; keep stored canonical unit.
+            unit: _pres.unitFollowsSettings
+                ? widget.param.unit
+                : _unit.text.trim(),
+            amberLow: Value(canon(b.amberLow)),
+            greenLow: Value(canon(b.greenLow)),
+            greenHigh: Value(canon(b.greenHigh)),
+            amberHigh: Value(canon(b.amberHigh)),
+          ),
+        );
     if (mounted) context.pop();
   }
 

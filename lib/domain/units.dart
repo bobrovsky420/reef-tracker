@@ -40,8 +40,9 @@ double? parseUserDouble(String? text) {
     if (sep == _decimalSeparator()) {
       if (!single) return null;
       t = t.replaceAll(sep, '.');
-    } else if (RegExp('^[+-]?\\d{1,3}(${RegExp.escape(sep)}\\d{3})+\$')
-        .hasMatch(t)) {
+    } else if (RegExp(
+      '^[+-]?\\d{1,3}(${RegExp.escape(sep)}\\d{3})+\$',
+    ).hasMatch(t)) {
       t = t.replaceAll(sep, '');
     } else if (single) {
       t = t.replaceAll(sep, '.');
@@ -69,8 +70,9 @@ String _decimalSeparator() =>
 /// mixes both separators, which [parseUserDouble] rejects as ambiguous.
 String formatLocaleNumber(double value, int decimals) {
   final f = NumberFormat.decimalPatternDigits(
-      locale: Intl.defaultLocale, decimalDigits: decimals)
-    ..turnOffGrouping();
+    locale: Intl.defaultLocale,
+    decimalDigits: decimals,
+  )..turnOffGrouping();
   return f.format(value);
 }
 
@@ -93,9 +95,10 @@ enum TempUnit {
   const TempUnit(this.symbol);
   final String symbol;
 
-  static TempUnit fromName(String? n) =>
-      TempUnit.values.firstWhere((e) => e.name == n,
-          orElse: () => TempUnit.celsius);
+  static TempUnit fromName(String? n) => TempUnit.values.firstWhere(
+    (e) => e.name == n,
+    orElse: () => TempUnit.celsius,
+  );
 }
 
 /// Salinity display unit. Canonical storage is always specific gravity (SG).
@@ -106,9 +109,10 @@ enum SalinityUnit {
   const SalinityUnit(this.symbol);
   final String symbol;
 
-  static SalinityUnit fromName(String? n) =>
-      SalinityUnit.values.firstWhere((e) => e.name == n,
-          orElse: () => SalinityUnit.ppt);
+  static SalinityUnit fromName(String? n) => SalinityUnit.values.firstWhere(
+    (e) => e.name == n,
+    orElse: () => SalinityUnit.ppt,
+  );
 }
 
 /// Volume display unit. Canonical storage is always litres.
@@ -119,9 +123,10 @@ enum VolumeUnit {
   const VolumeUnit(this.symbol);
   final String symbol;
 
-  static VolumeUnit fromName(String? n) =>
-      VolumeUnit.values.firstWhere((e) => e.name == n,
-          orElse: () => VolumeUnit.liters);
+  static VolumeUnit fromName(String? n) => VolumeUnit.values.firstWhere(
+    (e) => e.name == n,
+    orElse: () => VolumeUnit.liters,
+  );
 }
 
 /// User's preferred display units. Defaults: Celsius, ppt, and litres.
@@ -257,6 +262,12 @@ ParamPresentation presentationFor(
 
 /// Convenience overload using the catalog's default decimals for [paramKey].
 ParamPresentation presentationForKey(
-        String paramKey, String storedUnit, UnitPrefs prefs) =>
-    presentationFor(paramKey, storedUnit,
-        kParameterByKey[paramKey]?.decimals ?? 2, prefs);
+  String paramKey,
+  String storedUnit,
+  UnitPrefs prefs,
+) => presentationFor(
+  paramKey,
+  storedUnit,
+  kParameterByKey[paramKey]?.decimals ?? 2,
+  prefs,
+);

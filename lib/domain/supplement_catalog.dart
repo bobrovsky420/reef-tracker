@@ -70,8 +70,10 @@ enum DosingState {
   // Reserved for a later phase (explicit pause/resume UI); unused in v1.
   paused;
 
-  static DosingState fromName(String? name) =>
-      values.firstWhere((s) => s.name == name, orElse: () => DosingState.active);
+  static DosingState fromName(String? name) => values.firstWhere(
+    (s) => s.name == name,
+    orElse: () => DosingState.active,
+  );
 }
 
 /// A single supplement product in the built-in catalog.
@@ -145,8 +147,10 @@ class SupplementVendor {
   final List<SupplementProduct> products;
 
   /// Every product under this vendor, flattened across programs + ungrouped.
-  Iterable<SupplementProduct> get allProducts =>
-      [...products, for (final p in programs) ...p.products];
+  Iterable<SupplementProduct> get allProducts => [
+    ...products,
+    for (final p in programs) ...p.products,
+  ];
 }
 
 /// Vendor lookup by [SupplementVendor.key].
@@ -190,8 +194,9 @@ final Map<String, String> kProgramNameByProductKey = {
   required String? storedProgram,
   required String storedProduct,
 }) {
-  final product =
-      productKey == null ? null : kSupplementProductByKey[productKey];
+  final product = productKey == null
+      ? null
+      : kSupplementProductByKey[productKey];
   if (product == null) {
     return (
       product: storedProduct,

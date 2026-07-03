@@ -110,8 +110,10 @@ class TrendChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final spots = [
       for (final r in readings)
-        FlSpot(r.takenAt.millisecondsSinceEpoch.toDouble(),
-            pres.toDisplay(r.value)),
+        FlSpot(
+          r.takenAt.millisecondsSinceEpoch.toDouble(),
+          pres.toDisplay(r.value),
+        ),
     ];
     // Guard the widget's own contract (#17): `values.reduce` below throws on
     // an empty series. Current callers filter first, but the next one won't.
@@ -141,7 +143,7 @@ class TrendChart extends StatelessWidget {
       bounds.amberLow,
       bounds.greenLow,
       bounds.greenHigh,
-      bounds.amberHigh
+      bounds.amberHigh,
     ]) {
       if (b != null) {
         minY = b < minY ? b : minY;
@@ -190,10 +192,12 @@ class TrendChart extends StatelessWidget {
         gridData: const FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -226,11 +230,14 @@ class TrendChart extends StatelessWidget {
                   }
                 }
                 final dt = DateTime.fromMillisecondsSinceEpoch(
-                    isSingle ? spots.first.x.toInt() : v.toInt());
+                  isSingle ? spots.first.x.toInt() : v.toInt(),
+                );
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text(DateFormat.Md().format(dt),
-                      style: const TextStyle(fontSize: 10)),
+                  child: Text(
+                    DateFormat.Md().format(dt),
+                    style: const TextStyle(fontSize: 10),
+                  ),
                 );
               },
             ),
@@ -250,14 +257,20 @@ class TrendChart extends StatelessWidget {
   }
 
   List<HorizontalRangeAnnotation> _zoneBands(
-      ZoneBounds b, double minY, double maxY) {
+    ZoneBounds b,
+    double minY,
+    double maxY,
+  ) {
     Color c(Zone z) => z.color.withValues(alpha: 0.10);
     // Band geometry (fallbacks, overlap/inversion dropping) lives in the pure,
     // unit-tested `zoneBands`; here we only map it onto fl_chart annotations.
     return [
       for (final band in zoneBands(b, minY, maxY))
         HorizontalRangeAnnotation(
-            y1: band.y1, y2: band.y2, color: c(band.zone)),
+          y1: band.y1,
+          y2: band.y2,
+          color: c(band.zone),
+        ),
     ];
   }
 }

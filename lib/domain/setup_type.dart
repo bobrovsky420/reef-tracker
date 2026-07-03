@@ -12,7 +12,8 @@ enum SetupType {
 
   /// Parses the value stored in the database back into an enum, defaulting to
   /// [SetupType.mixed] for unknown/legacy values.
-  static SetupType fromName(String name) =>
-      SetupType.values.firstWhere((e) => e.name == name,
-          orElse: () => SetupType.mixed);
+  static SetupType fromName(String name) => SetupType.values.firstWhere(
+    (e) => e.name == name,
+    orElse: () => SetupType.mixed,
+  );
 }

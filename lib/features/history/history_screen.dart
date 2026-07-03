@@ -38,15 +38,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final readingsAsync = ref.watch(paramReadingsProvider(widget.paramKey));
     // select + TrendResult's value equality: another parameter's trend
     // changing doesn't rebuild this screen (T2).
-    final trend = ref
-        .watch(tankTrendsProvider.select((trends) => trends[widget.paramKey]));
+    final trend = ref.watch(
+      tankTrendsProvider.select((trends) => trends[widget.paramKey]),
+    );
     final waterChanges = ref.watch(waterChangesProvider).value ?? const [];
     final prefs = ref.watch(unitPrefsProvider);
     final pres = param != null
         ? presentationOf(param, prefs)
         : presentationForKey(
-            widget.paramKey, kParameterByKey[widget.paramKey]?.unit ?? '',
-            prefs);
+            widget.paramKey,
+            kParameterByKey[widget.paramKey]?.unit ?? '',
+            prefs,
+          );
 
     return Scaffold(
       appBar: AppBar(title: Text(l.paramName(widget.paramKey))),
@@ -74,10 +77,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
                               child: TrendChart(
-                                  readings: data,
-                                  param: param,
-                                  pres: pres,
-                                  waterChanges: waterChanges),
+                                readings: data,
+                                param: param,
+                                pres: pres,
+                                waterChanges: waterChanges,
+                              ),
                             ),
                           ),
                           if (trend != null) ...[
@@ -96,8 +100,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     );
   }
 
-  List<Widget> _readingsList(BuildContext context, List<Reading> data,
-      TrackedParameter? param, ParamPresentation pres) {
+  List<Widget> _readingsList(
+    BuildContext context,
+    List<Reading> data,
+    TrackedParameter? param,
+    ParamPresentation pres,
+  ) {
     final bounds = param != null ? boundsOf(param) : const ZoneBounds();
     final reversed = data.reversed.toList(); // newest first
     return [
@@ -134,7 +142,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   /// and the reading was saved together with others (same moment), asks whether
   /// to re-time just this value or the whole batch — mirroring delete's choice.
   Future<void> _editReading(
-      BuildContext context, Reading r, ParamPresentation pres) async {
+    BuildContext context,
+    Reading r,
+    ParamPresentation pres,
+  ) async {
     final db = ref.read(dbProvider);
     final tank = ref.read(activeTankProvider);
     final result = await showDialog<_ReadingDialogResult>(
@@ -183,11 +194,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     // Re-timing only this value detaches it from its batch (#15): it no longer
     // shares the group's moment, so group delete/edit must not drag it along.
     final detach = timeChanged && !applyTimeToAll && hadSiblings;
-    await db.updateReading(r.copyWith(
-      value: edit.value,
-      takenAt: edit.time,
-      groupId: detach ? const Value(null) : Value(r.groupId),
-    ));
+    await db.updateReading(
+      r.copyWith(
+        value: edit.value,
+        takenAt: edit.time,
+        groupId: detach ? const Value(null) : Value(r.groupId),
+      ),
+    );
   }
 
   /// Asks whether a re-timing should affect only this reading or all [others]+1
@@ -201,14 +214,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         content: Text(l.editTogetherBody(others)),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, _EditChoice.cancel),
-              child: Text(l.cancel)),
+            onPressed: () => Navigator.pop(ctx, _EditChoice.cancel),
+            child: Text(l.cancel),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, _EditChoice.one),
-              child: Text(l.deleteOnlyThis)),
+            onPressed: () => Navigator.pop(ctx, _EditChoice.one),
+            child: Text(l.deleteOnlyThis),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, _EditChoice.all),
-              child: Text(l.deleteAllTogether)),
+            onPressed: () => Navigator.pop(ctx, _EditChoice.all),
+            child: Text(l.deleteAllTogether),
+          ),
         ],
       ),
     );
@@ -243,14 +259,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           content: Text(l.deleteTogetherBody(others)),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx, _DeleteChoice.cancel),
-                child: Text(l.cancel)),
+              onPressed: () => Navigator.pop(ctx, _DeleteChoice.cancel),
+              child: Text(l.cancel),
+            ),
             TextButton(
-                onPressed: () => Navigator.pop(ctx, _DeleteChoice.one),
-                child: Text(l.deleteOnlyThis)),
+              onPressed: () => Navigator.pop(ctx, _DeleteChoice.one),
+              child: Text(l.deleteOnlyThis),
+            ),
             FilledButton(
-                onPressed: () => Navigator.pop(ctx, _DeleteChoice.all),
-                child: Text(l.deleteAllTogether)),
+              onPressed: () => Navigator.pop(ctx, _DeleteChoice.all),
+              child: Text(l.deleteAllTogether),
+            ),
           ],
         ),
       );
@@ -273,7 +292,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   /// Shows a "Deleted — Undo" SnackBar that re-inserts [removed] readings,
   /// preserving each reading's own value, timestamp and note.
-  void _showUndo(BuildContext context, AppLocalizations l, List<Reading> removed) {
+  void _showUndo(
+    BuildContext context,
+    AppLocalizations l,
+    List<Reading> removed,
+  ) {
     final db = ref.read(dbProvider);
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
@@ -347,8 +370,9 @@ class _ReadingDialog extends StatefulWidget {
 class _ReadingDialogState extends State<_ReadingDialog> {
   final _formKey = GlobalKey<FormState>();
   late DateTime _time = widget.initialTime;
-  late final TextEditingController _valueCtrl =
-      TextEditingController(text: widget.pres.format(widget.initialValue));
+  late final TextEditingController _valueCtrl = TextEditingController(
+    text: widget.pres.format(widget.initialValue),
+  );
 
   @override
   void dispose() {
@@ -394,7 +418,9 @@ class _ReadingDialogState extends State<_ReadingDialog> {
               controller: _valueCtrl,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true, signed: true),
+                decimal: true,
+                signed: true,
+              ),
               decoration: InputDecoration(
                 suffixText: widget.pres.unitLabel,
                 border: const OutlineInputBorder(),

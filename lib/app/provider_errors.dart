@@ -40,12 +40,14 @@ final class ProviderErrorObserver extends ProviderObserver {
     Object error,
     StackTrace stackTrace,
   ) {
-    FlutterError.reportError(FlutterErrorDetails(
-      exception: error,
-      stack: stackTrace,
-      library: 'providers',
-      context: ErrorSummary('provider ${context.provider} failed'),
-    ));
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'providers',
+        context: ErrorSummary('provider ${context.provider} failed'),
+      ),
+    );
     final now = _now();
     final last = _lastShownAt;
     if (last != null && now.difference(last) < throttle) return;

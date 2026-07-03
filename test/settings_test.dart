@@ -25,7 +25,10 @@ void main() {
 
       expect(await settings.watchTempUnit().first, TempUnit.fahrenheit);
       expect(await settings.watchTrendWindow().first, 9);
-      expect(await settings.readAutoBackupInterval(), AutoBackupInterval.weekly);
+      expect(
+        await settings.readAutoBackupInterval(),
+        AutoBackupInterval.weekly,
+      );
       expect(await settings.watchHealthDisplay().first, HealthDisplay.badge);
       expect(await settings.watchTourSeen().first, isTrue);
       // The typed setter writes under the canonical storage key.
@@ -65,8 +68,9 @@ void main() {
       // Today the Settings table holds only device/user preferences, so every
       // registered key is device-local (#18). This guards against a new domain
       // setting being added without deciding its restore behaviour.
-      expect(SettingKey.deviceLocalKeys,
-          {for (final k in SettingKey.values) k.storageKey});
+      expect(SettingKey.deviceLocalKeys, {
+        for (final k in SettingKey.values) k.storageKey,
+      });
     });
 
     test('storage keys are unique', () {

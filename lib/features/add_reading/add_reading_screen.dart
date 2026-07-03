@@ -59,8 +59,9 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
       if (text.isEmpty) continue;
       final value = parseUserDouble(text);
       if (value == null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(l.invalidNumberFor(l.paramName(p.paramKey)))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.invalidNumberFor(l.paramName(p.paramKey)))),
+        );
         return;
       }
       // Store canonically (e.g. °C, SG) regardless of the display unit.
@@ -70,8 +71,11 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
       // so a genuinely extreme reading stays recordable.
       switch (checkParamValue(p.paramKey, canonical)) {
         case ParamValueCheck.impossible:
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(l.impossibleValueFor(l.paramName(p.paramKey)))));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l.impossibleValueFor(l.paramName(p.paramKey))),
+            ),
+          );
           return;
         case ParamValueCheck.implausible:
           implausible.add(p);
@@ -81,13 +85,15 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
       entries[p] = canonical;
     }
     if (entries.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.enterAtLeastOneValue)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.enterAtLeastOneValue)));
       return;
     }
     if (implausible.isNotEmpty) {
-      final proceed = await _confirmImplausible(
-          l, [for (final p in implausible) (p, entries[p]!)], prefs);
+      final proceed = await _confirmImplausible(l, [
+        for (final p in implausible) (p, entries[p]!),
+      ], prefs);
       if (proceed != true || !mounted) return;
     }
     setState(() => _saving = true);
@@ -108,12 +114,15 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
       );
       if (mounted) {
         messenger.showSnackBar(
-            SnackBar(content: Text(l.savedReadings(entries.length))));
+          SnackBar(content: Text(l.savedReadings(entries.length))),
+        );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(e.toString()))));
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.saveFailed(e.toString()))),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -142,20 +151,22 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
             for (final (p, canonical) in values)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Builder(builder: (_) {
-                  final pres = presentationOf(p, prefs);
-                  // `implausible` implies the catalog defines the range.
-                  final def = kParameterByKey[p.paramKey]!;
-                  return Text(
-                    l.implausibleValueLine(
-                      l.paramName(p.paramKey),
-                      '${pres.format(canonical)} ${pres.unitLabel}',
-                      pres.format(def.plausibleMin!),
-                      '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
-                    ),
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  );
-                }),
+                child: Builder(
+                  builder: (_) {
+                    final pres = presentationOf(p, prefs);
+                    // `implausible` implies the catalog defines the range.
+                    final def = kParameterByKey[p.paramKey]!;
+                    return Text(
+                      l.implausibleValueLine(
+                        l.paramName(p.paramKey),
+                        '${pres.format(canonical)} ${pres.unitLabel}',
+                        pres.format(def.plausibleMin!),
+                        '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    );
+                  },
+                ),
               ),
           ],
         ),
@@ -232,7 +243,8 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.save),
                 label: Text(l.saveReadings),
               ),
@@ -258,15 +270,19 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
         children: [
           Expanded(
             flex: 3,
-            child: Text(l.paramName(p.paramKey),
-                style: const TextStyle(fontWeight: FontWeight.w500)),
+            child: Text(
+              l.paramName(p.paramKey),
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
           ),
           Expanded(
             flex: 3,
             child: TextField(
               controller: ctrl,
               keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true, signed: true),
+                decimal: true,
+                signed: true,
+              ),
               decoration: InputDecoration(
                 isDense: true,
                 suffixText: pres.unitLabel,

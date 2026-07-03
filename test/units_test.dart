@@ -26,8 +26,7 @@ void main() {
       expect(parseUserDouble('NaN'), isNull);
     });
 
-    test('en locale: comma in strict thousands positions is grouping (#6)',
-        () {
+    test('en locale: comma in strict thousands positions is grouping (#6)', () {
       // Default test locale is en (dot-decimal): "1,300" is en-style
       // thousands grouping, "1.300" is a decimal.
       expect(parseUserDouble('1,300'), 1300);
@@ -110,9 +109,13 @@ void main() {
     test('US gallon reference and round trips', () {
       expect(gallonsToLiters(1), closeTo(3.785411784, 1e-9));
       expect(litersToGallons(3.785411784), closeTo(1, 1e-9));
-      expect(volumeToCanonical(volumeToDisplay(200, VolumeUnit.gallons),
-              VolumeUnit.gallons),
-          closeTo(200, 1e-9));
+      expect(
+        volumeToCanonical(
+          volumeToDisplay(200, VolumeUnit.gallons),
+          VolumeUnit.gallons,
+        ),
+        closeTo(200, 1e-9),
+      );
     });
 
     test('litres unit is identity', () {
@@ -138,8 +141,12 @@ void main() {
 
   group('presentationFor', () {
     test('temperature follows prefs and converts', () {
-      final f = presentationFor('temperature', '°C', 1,
-          const UnitPrefs(temp: TempUnit.fahrenheit));
+      final f = presentationFor(
+        'temperature',
+        '°C',
+        1,
+        const UnitPrefs(temp: TempUnit.fahrenheit),
+      );
       expect(f.unitLabel, '°F');
       expect(f.toDisplay(25), closeTo(77, 1e-9));
       expect(f.toCanonical(77), closeTo(25, 1e-9));
@@ -148,11 +155,19 @@ void main() {
 
     test('salinity ppt vs SG decimals', () {
       final ppt = presentationFor(
-          'salinity', 'SG', 3, const UnitPrefs(salinity: SalinityUnit.ppt));
+        'salinity',
+        'SG',
+        3,
+        const UnitPrefs(salinity: SalinityUnit.ppt),
+      );
       expect(ppt.unitLabel, 'ppt');
       expect(ppt.decimals, 1);
       final sg = presentationFor(
-          'salinity', 'SG', 3, const UnitPrefs(salinity: SalinityUnit.sg));
+        'salinity',
+        'SG',
+        3,
+        const UnitPrefs(salinity: SalinityUnit.sg),
+      );
       expect(sg.unitLabel, 'SG');
       expect(sg.decimals, 3);
       expect(sg.toDisplay(1.026), closeTo(1.026, 1e-9));
@@ -169,7 +184,11 @@ void main() {
 
   group('formatChange', () {
     final p = presentationFor(
-        'salinity', 'SG', 3, const UnitPrefs(salinity: SalinityUnit.sg));
+      'salinity',
+      'SG',
+      3,
+      const UnitPrefs(salinity: SalinityUnit.sg),
+    );
 
     test('signs visible changes explicitly', () {
       expect(p.formatChange(1.026, 1.024), '+0.002');
@@ -194,8 +213,12 @@ void main() {
     });
 
     test('converts the delta into the display unit (°F)', () {
-      final f = presentationFor('temperature', '°C', 1,
-          const UnitPrefs(temp: TempUnit.fahrenheit));
+      final f = presentationFor(
+        'temperature',
+        '°C',
+        1,
+        const UnitPrefs(temp: TempUnit.fahrenheit),
+      );
       // ±1 °C reads as ±1.8 °F.
       expect(f.formatChange(26, 25), '+1.8');
       expect(f.formatChange(25, 26), '-1.8');
@@ -203,8 +226,12 @@ void main() {
 
     test('a change invisible in °C can still be visible in °F', () {
       final c = presentationFor('temperature', '°C', 1, const UnitPrefs());
-      final f = presentationFor('temperature', '°C', 1,
-          const UnitPrefs(temp: TempUnit.fahrenheit));
+      final f = presentationFor(
+        'temperature',
+        '°C',
+        1,
+        const UnitPrefs(temp: TempUnit.fahrenheit),
+      );
       // +0.03 °C rounds away at one decimal, but is +0.054 °F -> "+0.1".
       expect(c.formatChange(25.03, 25.0), '0.0');
       expect(f.formatChange(25.03, 25.0), '+0.1');
@@ -221,13 +248,15 @@ void main() {
       expect(formatLocaleNumber(-0.1, 1), '-0,1');
     });
 
-    test('no grouping, so formatted output round-trips through the parser',
-        () {
+    test('no grouping, so formatted output round-trips through the parser', () {
       for (final locale in [null, 'cs', 'de', 'pl', 'ru', 'en']) {
         Intl.defaultLocale = locale;
         for (final v in [1300.0, 1300.5, 1.025, 0.02]) {
-          expect(parseUserDouble(formatLocaleNumber(v, 3)), closeTo(v, 1e-6),
-              reason: 'locale=$locale value=$v');
+          expect(
+            parseUserDouble(formatLocaleNumber(v, 3)),
+            closeTo(v, 1e-6),
+            reason: 'locale=$locale value=$v',
+          );
         }
       }
     });

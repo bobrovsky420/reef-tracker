@@ -31,7 +31,9 @@ export '../data/settings.dart'
 
 /// Typed facade over the settings key/value store — the single place that
 /// encodes/decodes settings and owns their defaults (see [Settings]).
-final settingsProvider = Provider<AppSettings>((ref) => AppSettings(ref.watch(dbProvider)));
+final settingsProvider = Provider<AppSettings>(
+  (ref) => AppSettings(ref.watch(dbProvider)),
+);
 
 /// The app's version + build number from the running package (e.g. "0.3.1+4"),
 /// so the About box always reflects the actual installed build.
@@ -90,20 +92,25 @@ final activeTankProvider = Provider<Tank?>((ref) {
 // instance loses its only listener and its live query is disposed.
 
 final _trackedParametersFamily = StreamProvider.autoDispose
-    .family<List<TrackedParameter>, int>((ref, tankId) =>
-        _dedup(ref.watch(dbProvider).watchTrackedParameters(tankId)));
+    .family<List<TrackedParameter>, int>(
+      (ref, tankId) =>
+          _dedup(ref.watch(dbProvider).watchTrackedParameters(tankId)),
+    );
 
 /// Tracked parameters for the active tank.
-final trackedParametersProvider =
-    Provider<AsyncValue<List<TrackedParameter>>>((ref) {
+final trackedParametersProvider = Provider<AsyncValue<List<TrackedParameter>>>((
+  ref,
+) {
   final tank = ref.watch(activeTankProvider);
   if (tank == null) return const AsyncValue.data([]);
   return ref.watch(_trackedParametersFamily(tank.id));
 });
 
 final _tankReadingsFamily = StreamProvider.autoDispose
-    .family<List<Reading>, int>((ref, tankId) =>
-        _dedup(ref.watch(dbProvider).watchReadingsForTank(tankId)));
+    .family<List<Reading>, int>(
+      (ref, tankId) =>
+          _dedup(ref.watch(dbProvider).watchReadingsForTank(tankId)),
+    );
 
 /// All readings for the active tank (newest first).
 final tankReadingsProvider = Provider<AsyncValue<List<Reading>>>((ref) {
@@ -113,8 +120,9 @@ final tankReadingsProvider = Provider<AsyncValue<List<Reading>>>((ref) {
 });
 
 final _waterChangesFamily = StreamProvider.autoDispose
-    .family<List<WaterChange>, int>((ref, tankId) =>
-        _dedup(ref.watch(dbProvider).watchWaterChanges(tankId)));
+    .family<List<WaterChange>, int>(
+      (ref, tankId) => _dedup(ref.watch(dbProvider).watchWaterChanges(tankId)),
+    );
 
 /// Water changes for the active tank (newest first).
 final waterChangesProvider = Provider<AsyncValue<List<WaterChange>>>((ref) {
@@ -124,8 +132,9 @@ final waterChangesProvider = Provider<AsyncValue<List<WaterChange>>>((ref) {
 });
 
 final _carbonChangesFamily = StreamProvider.autoDispose
-    .family<List<CarbonChange>, int>((ref, tankId) =>
-        _dedup(ref.watch(dbProvider).watchCarbonChanges(tankId)));
+    .family<List<CarbonChange>, int>(
+      (ref, tankId) => _dedup(ref.watch(dbProvider).watchCarbonChanges(tankId)),
+    );
 
 /// Activated-carbon changes for the active tank (newest first).
 final carbonChangesProvider = Provider<AsyncValue<List<CarbonChange>>>((ref) {
@@ -135,20 +144,23 @@ final carbonChangesProvider = Provider<AsyncValue<List<CarbonChange>>>((ref) {
 });
 
 final _equipmentCleaningsFamily = StreamProvider.autoDispose
-    .family<List<EquipmentCleaning>, int>((ref, tankId) =>
-        _dedup(ref.watch(dbProvider).watchEquipmentCleanings(tankId)));
+    .family<List<EquipmentCleaning>, int>(
+      (ref, tankId) =>
+          _dedup(ref.watch(dbProvider).watchEquipmentCleanings(tankId)),
+    );
 
 /// Equipment cleanings for the active tank (newest first).
 final equipmentCleaningsProvider =
     Provider<AsyncValue<List<EquipmentCleaning>>>((ref) {
-  final tank = ref.watch(activeTankProvider);
-  if (tank == null) return const AsyncValue.data([]);
-  return ref.watch(_equipmentCleaningsFamily(tank.id));
-});
+      final tank = ref.watch(activeTankProvider);
+      if (tank == null) return const AsyncValue.data([]);
+      return ref.watch(_equipmentCleaningsFamily(tank.id));
+    });
 
 final _dosingEntriesFamily = StreamProvider.autoDispose
-    .family<List<DosingEntry>, int>((ref, tankId) =>
-        _dedup(ref.watch(dbProvider).watchDosingEntries(tankId)));
+    .family<List<DosingEntry>, int>(
+      (ref, tankId) => _dedup(ref.watch(dbProvider).watchDosingEntries(tankId)),
+    );
 
 /// Supplement-dosing plan entries for the active tank (dashboard order).
 final dosingEntriesProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
@@ -158,8 +170,9 @@ final dosingEntriesProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
 });
 
 final _dosingHistoryFamily = StreamProvider.autoDispose
-    .family<List<DosingEntry>, int>((ref, tankId) =>
-        _dedup(ref.watch(dbProvider).watchDosingHistory(tankId)));
+    .family<List<DosingEntry>, int>(
+      (ref, tankId) => _dedup(ref.watch(dbProvider).watchDosingHistory(tankId)),
+    );
 
 /// Every dosing segment (active + ended) for the active tank, newest first —
 /// the source for the dosing history timeline.
@@ -170,29 +183,36 @@ final dosingHistoryProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
 });
 
 final _paramReadingsFamily = StreamProvider.autoDispose
-    .family<List<Reading>, ({int tankId, String paramKey})>((ref, key) => _dedup(
-        ref.watch(dbProvider).watchParamReadings(key.tankId, key.paramKey)));
+    .family<List<Reading>, ({int tankId, String paramKey})>(
+      (ref, key) => _dedup(
+        ref.watch(dbProvider).watchParamReadings(key.tankId, key.paramKey),
+      ),
+    );
 
 /// Readings for a single parameter of the active tank (oldest first).
 final paramReadingsProvider =
     Provider.family<AsyncValue<List<Reading>>, String>((ref, paramKey) {
-  final tank = ref.watch(activeTankProvider);
-  if (tank == null) return const AsyncValue.data([]);
-  return ref
-      .watch(_paramReadingsFamily((tankId: tank.id, paramKey: paramKey)));
-});
+      final tank = ref.watch(activeTankProvider);
+      if (tank == null) return const AsyncValue.data([]);
+      return ref.watch(
+        _paramReadingsFamily((tankId: tank.id, paramKey: paramKey)),
+      );
+    });
 
 /// Preferred temperature display unit (default Celsius).
 final tempUnitProvider = StreamProvider<TempUnit>(
-    (ref) => ref.watch(settingsProvider).watchTempUnit());
+  (ref) => ref.watch(settingsProvider).watchTempUnit(),
+);
 
 /// Preferred salinity display unit (default ppt).
 final salinityUnitProvider = StreamProvider<SalinityUnit>(
-    (ref) => ref.watch(settingsProvider).watchSalinityUnit());
+  (ref) => ref.watch(settingsProvider).watchSalinityUnit(),
+);
 
 /// Preferred volume display unit (default litres).
 final volumeUnitProvider = StreamProvider<VolumeUnit>(
-    (ref) => ref.watch(settingsProvider).watchVolumeUnit());
+  (ref) => ref.watch(settingsProvider).watchVolumeUnit(),
+);
 
 /// Combined unit preferences, reactive to settings changes.
 final unitPrefsProvider = Provider<UnitPrefs>((ref) {
@@ -206,11 +226,13 @@ final unitPrefsProvider = Provider<UnitPrefs>((ref) {
 /// (a fresh install) reads as `false` so the tour runs once; the "Replay tour"
 /// settings action resets it to `'false'` to trigger it again.
 final tourSeenProvider = StreamProvider<bool>(
-    (ref) => ref.watch(settingsProvider).watchTourSeen());
+  (ref) => ref.watch(settingsProvider).watchTourSeen(),
+);
 
 /// Stored language code ('system' / 'en' / 'cs'), defaulting to 'system'.
 final localeCodeProvider = StreamProvider<String>(
-    (ref) => ref.watch(settingsProvider).watchLocaleCode());
+  (ref) => ref.watch(settingsProvider).watchLocaleCode(),
+);
 
 /// The locale override for MaterialApp, or null to follow the system locale.
 final localeProvider = Provider<Locale?>((ref) {
@@ -221,47 +243,56 @@ final localeProvider = Provider<Locale?>((ref) {
 /// The history-chart time range, stored as the range's label ('7d', '30d',
 /// '90d', 'All'). Shared across every parameter graph. Defaults to '30d'.
 final chartRangeProvider = StreamProvider<String>(
-    (ref) => ref.watch(settingsProvider).watchChartRange());
+  (ref) => ref.watch(settingsProvider).watchChartRange(),
+);
 
 /// Whether automatic backups are enabled (default on).
 final autoBackupEnabledProvider = StreamProvider<bool>(
-    (ref) => ref.watch(settingsProvider).watchAutoBackupEnabled());
+  (ref) => ref.watch(settingsProvider).watchAutoBackupEnabled(),
+);
 
 /// The automatic-backup frequency, defaulting to daily.
 final autoBackupIntervalProvider = StreamProvider<AutoBackupInterval>(
-    (ref) => ref.watch(settingsProvider).watchAutoBackupInterval());
+  (ref) => ref.watch(settingsProvider).watchAutoBackupInterval(),
+);
 
 /// When the most recent automatic or manual backup completed, or null if none
 /// has run yet. Reacts to the stored timestamp, so it refreshes as soon as a
 /// backup is written.
 final lastBackupAtProvider = StreamProvider<DateTime?>(
-    (ref) => ref.watch(settingsProvider).watchLastBackupAt());
+  (ref) => ref.watch(settingsProvider).watchLastBackupAt(),
+);
 
 /// When the most recent backup attempt failed, or null if the latest attempt
 /// succeeded (every successful backup clears it). Non-null drives the warning
 /// row in Settings → Backup.
 final lastBackupErrorAtProvider = StreamProvider<DateTime?>(
-    (ref) => ref.watch(settingsProvider).watchLastBackupErrorAt());
+  (ref) => ref.watch(settingsProvider).watchLastBackupErrorAt(),
+);
 
 /// Whether recent-trend detection / forecasts are shown (default on).
 final trendEnabledProvider = StreamProvider<bool>(
-    (ref) => ref.watch(settingsProvider).watchTrendEnabled());
+  (ref) => ref.watch(settingsProvider).watchTrendEnabled(),
+);
 
 /// How much of the tank-health feature to show (badge + card / badge only /
 /// off). Defaults to [HealthDisplay.both].
 final healthDisplayProvider = StreamProvider<HealthDisplay>(
-    (ref) => ref.watch(settingsProvider).watchHealthDisplay());
+  (ref) => ref.watch(settingsProvider).watchHealthDisplay(),
+);
 
 /// Number of most-recent readings that define a trend (also the minimum count
 /// before a trend is shown). Defaults to [kTrendDefaultWindow].
 final trendWindowProvider = StreamProvider<int>(
-    (ref) => ref.watch(settingsProvider).watchTrendWindow());
+  (ref) => ref.watch(settingsProvider).watchTrendWindow(),
+);
 
 /// Forecast horizon in days: a projected zone crossing is shown as a dashboard
 /// attention chip only when it falls within this many days. Defaults to
 /// [kTrendDefaultHorizon].
 final trendHorizonProvider = StreamProvider<int>(
-    (ref) => ref.watch(settingsProvider).watchTrendHorizon());
+  (ref) => ref.watch(settingsProvider).watchTrendHorizon(),
+);
 
 /// Recent-trend forecast per parameter for the active tank, keyed by paramKey.
 ///
@@ -321,20 +352,23 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
 });
 
 final _ratioSettingsFamily = StreamProvider.autoDispose
-    .family<Map<String, RatioSettings>, int>((ref, tankId) => ref
-        .watch(dbProvider)
-        .watchRatioVisibilities(tankId)
-        .map((rows) => {for (final r in rows) r.ratioKey: r.settings})
-        // Same dedup as the list families ([_dedup]); RatioSettings is a
-        // record, so map values are value-equal.
-        .distinct(mapEquals));
+    .family<Map<String, RatioSettings>, int>(
+      (ref, tankId) => ref
+          .watch(dbProvider)
+          .watchRatioVisibilities(tankId)
+          .map((rows) => {for (final r in rows) r.ratioKey: r.settings})
+          // Same dedup as the list families ([_dedup]); RatioSettings is a
+          // record, so map values are value-equal.
+          .distinct(mapEquals),
+    );
 
 /// Per-tank dashboard ratio-card settings (visibility + order) for the active
 /// tank, keyed by [RatioKind.name], as domain [RatioSettings] records. Missing
 /// entries fall back to defaults (visible, ordered after measurements) via
 /// `ratioRowVisible`/`ratioRowOrder`.
-final ratioSettingsProvider =
-    Provider<AsyncValue<Map<String, RatioSettings>>>((ref) {
+final ratioSettingsProvider = Provider<AsyncValue<Map<String, RatioSettings>>>((
+  ref,
+) {
   final tank = ref.watch(activeTankProvider);
   if (tank == null) return const AsyncValue.data({});
   return ref.watch(_ratioSettingsFamily(tank.id));

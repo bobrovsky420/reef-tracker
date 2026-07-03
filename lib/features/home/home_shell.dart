@@ -81,10 +81,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           setState(() => _index = 2);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            ShowcaseView.get().startShowCase(
-              [_dosingHistoryTourKey, _doseCalcTourKey],
-              delay: const Duration(milliseconds: 350),
-            );
+            ShowcaseView.get().startShowCase([
+              _dosingHistoryTourKey,
+              _doseCalcTourKey,
+            ], delay: const Duration(milliseconds: 350));
           });
         } else {
           _tourPhase = 0;
@@ -135,10 +135,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       if (!mounted) return;
       _tourPhase = 1;
       if (_index != 0) setState(() => _index = 0);
-      ShowcaseView.get().startShowCase(
-        [_tankTourKey, _compareTourKey, _paramsTourKey],
-        delay: const Duration(milliseconds: 300),
-      );
+      ShowcaseView.get().startShowCase([
+        _tankTourKey,
+        _compareTourKey,
+        _paramsTourKey,
+      ], delay: const Duration(milliseconds: 300));
     });
   }
 
@@ -157,31 +158,30 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       textStyle: TextStyle(color: cs.onSurfaceVariant),
     );
     TooltipActionButton nextAction(String name) => TooltipActionButton(
-          type: TooltipDefaultActionType.next,
-          name: name,
-          backgroundColor: cs.primary,
-          textStyle: TextStyle(color: cs.onPrimary),
-        );
+      type: TooltipDefaultActionType.next,
+      name: name,
+      backgroundColor: cs.primary,
+      textStyle: TextStyle(color: cs.onPrimary),
+    );
     Widget tourStep(
       GlobalKey key,
       String title,
       String description,
       String nextLabel,
       Widget child,
-    ) =>
-        Showcase(
-          key: key,
-          title: title,
-          description: description,
-          tooltipActions: [skipAction, nextAction(nextLabel)],
-          tooltipBackgroundColor: cs.surfaceContainerHighest,
-          textColor: cs.onSurface,
-          titleTextStyle: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(color: cs.onSurface, fontWeight: FontWeight.w600),
-          child: child,
-        );
+    ) => Showcase(
+      key: key,
+      title: title,
+      description: description,
+      tooltipActions: [skipAction, nextAction(nextLabel)],
+      tooltipBackgroundColor: cs.surfaceContainerHighest,
+      textColor: cs.onSurface,
+      titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+        color: cs.onSurface,
+        fontWeight: FontWeight.w600,
+      ),
+      child: child,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -205,8 +205,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               l.tourNext,
               IconButton(
                 tooltip: _compare ? l.gridView : l.compareView,
-                icon:
-                    Icon(_compare ? Icons.grid_view : Icons.stacked_line_chart),
+                icon: Icon(
+                  _compare ? Icons.grid_view : Icons.stacked_line_chart,
+                ),
                 onPressed: () => setState(() => _compare = !_compare),
               ),
             ),

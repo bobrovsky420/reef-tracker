@@ -106,7 +106,8 @@ class TankHealthBadgeCompact extends ConsumerWidget {
 
     return Semantics(
       button: true,
-      label: '${l.healthTitle}: ${l.healthGradeLabel(health.grade)}, '
+      label:
+          '${l.healthTitle}: ${l.healthGradeLabel(health.grade)}, '
           '${l.healthScoreOf(health.score!)}',
       child: InkResponse(
         radius: 22,
@@ -186,8 +187,9 @@ class TankHealthHeader extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.hintColor),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.hintColor,
+                      ),
                     ),
                   ],
                 ),
@@ -260,8 +262,10 @@ class _TankHealthSheet extends ConsumerWidget {
                     Text(l.healthTitle, style: theme.textTheme.labelMedium),
                     Text(
                       l.healthGradeLabel(health.grade),
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(color: color, fontWeight: FontWeight.w700),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -307,9 +311,9 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).hintColor,
-              letterSpacing: 0.6,
-            ),
+          color: Theme.of(context).hintColor,
+          letterSpacing: 0.6,
+        ),
       ),
     );
   }
@@ -374,12 +378,17 @@ class _ParamRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(l.paramName(health.paramKey),
-                      style: theme.textTheme.bodyLarge),
+                  Text(
+                    l.paramName(health.paramKey),
+                    style: theme.textTheme.bodyLarge,
+                  ),
                   if (note != null)
-                    Text(note,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: theme.hintColor)),
+                    Text(
+                      note,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.hintColor,
+                      ),
+                    ),
                 ],
               ),
             ),

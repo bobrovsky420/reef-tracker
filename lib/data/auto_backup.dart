@@ -39,15 +39,13 @@ Future<Directory> autoBackupDir() async {
 /// The rotating auto-backup files, newest first.
 Future<List<File>> listAutoBackups() async {
   final dir = await autoBackupDir();
-  final files = (await dir.list().toList())
-      .whereType<File>()
-      .where((f) {
-        final name = p.basename(f.path);
-        return name.startsWith(kAutoBackupPrefix) && name.endsWith('.json');
-      })
-      .toList()
-    // Names are timestamp-ordered, so a reverse lexical sort = newest first.
-    ..sort((a, b) => b.path.compareTo(a.path));
+  final files =
+      (await dir.list().toList()).whereType<File>().where((f) {
+          final name = p.basename(f.path);
+          return name.startsWith(kAutoBackupPrefix) && name.endsWith('.json');
+        }).toList()
+        // Names are timestamp-ordered, so a reverse lexical sort = newest first.
+        ..sort((a, b) => b.path.compareTo(a.path));
   return files;
 }
 
@@ -75,8 +73,9 @@ Future<File> writeAutoBackup(
   // UTC keeps lexical order == chronological order across DST fall-back, when
   // a local-time stamp would repeat an hour (#14); milliseconds keep two
   // writes within the same second from colliding on one filename (#13).
-  final stamp =
-      DateFormat('yyyyMMdd-HHmmss-SSS').format(DateTime.now().toUtc());
+  final stamp = DateFormat(
+    'yyyyMMdd-HHmmss-SSS',
+  ).format(DateTime.now().toUtc());
   final dir = await autoBackupDir();
   final file = File(p.join(dir.path, '$kAutoBackupPrefix$stamp.json'));
   // Write to a tmp name and rename (atomic on the same filesystem) so a

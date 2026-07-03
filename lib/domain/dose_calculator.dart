@@ -107,7 +107,7 @@ LinearFit? linearFit(List<DosePoint> points) {
   // Days relative to the first point keep the numbers small and stable.
   final xs = [
     for (final p in points)
-      (p.t.millisecondsSinceEpoch.toDouble() - t0) / msPerDay
+      (p.t.millisecondsSinceEpoch.toDouble() - t0) / msPerDay,
   ];
   final ys = [for (final p in points) p.value];
   final n = points.length;
@@ -122,10 +122,7 @@ LinearFit? linearFit(List<DosePoint> points) {
   }
   if (sxx == 0) return null; // all readings at the same instant
   final slope = sxy / sxx;
-  return (
-    slopePerDay: slope,
-    valueAtLast: meanY + slope * (xs.last - meanX),
-  );
+  return (slopePerDay: slope, valueAtLast: meanY + slope * (xs.last - meanX));
 }
 
 /// Least-squares slope of [points] in value-per-day, or null when there are
@@ -215,8 +212,8 @@ DoseCalcResult computeDoseCalc({
   // is unknown).
   final dosingInputPerDay =
       (currentDailyDose > 0 && potency != null && potency > 0)
-          ? potency * currentDailyDose / volumeLiters
-          : 0.0;
+      ? potency * currentDailyDose / volumeLiters
+      : 0.0;
 
   // If something is dosed but we don't know its potency, we can't separate
   // input from consumption — fall back to needing potency.

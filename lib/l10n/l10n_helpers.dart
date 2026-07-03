@@ -54,8 +54,13 @@ Future<DateTime?> pickPastDateTime(
   );
   if (time == null || !context.mounted) return null;
   final now = DateTime.now();
-  final composed =
-      DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  final composed = DateTime(
+    date.year,
+    date.month,
+    date.day,
+    time.hour,
+    time.minute,
+  );
   // Truncate to the minute (readings group at minute precision) when clamping.
   return composed.isAfter(now)
       ? DateTime(now.year, now.month, now.day, now.hour, now.minute)

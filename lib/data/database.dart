@@ -44,8 +44,7 @@ class Tanks extends Table {
   /// Tank model/name (optional, single line).
   TextColumn get model => text().nullable()();
 
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 /// A parameter the user tracks for a specific tank, plus its zone boundaries.
@@ -65,8 +64,9 @@ class TrackedParameters extends Table {
 
 /// A single logged measurement.
 @TableIndex(
-    name: 'idx_readings_tank_param_taken',
-    columns: {#tankId, #paramKey, #takenAt})
+  name: 'idx_readings_tank_param_taken',
+  columns: {#tankId, #paramKey, #takenAt},
+)
 @TableIndex(name: 'idx_readings_tank_taken', columns: {#tankId, #takenAt})
 class Readings extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -86,7 +86,10 @@ class Readings extends Table {
 }
 
 /// A logged water change for a tank (date/time + optional volume + note).
-@TableIndex(name: 'idx_water_changes_tank_changed', columns: {#tankId, #changedAt})
+@TableIndex(
+  name: 'idx_water_changes_tank_changed',
+  columns: {#tankId, #changedAt},
+)
 class WaterChanges extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -103,7 +106,9 @@ class WaterChanges extends Table {
 /// A logged activated-carbon change for a tank (date/time + optional weight
 /// in grams + note, e.g. the brand).
 @TableIndex(
-    name: 'idx_carbon_changes_tank_changed', columns: {#tankId, #changedAt})
+  name: 'idx_carbon_changes_tank_changed',
+  columns: {#tankId, #changedAt},
+)
 class CarbonChanges extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -120,8 +125,9 @@ class CarbonChanges extends Table {
 /// A logged equipment cleaning for a tank (date/time + optional note, e.g.
 /// which piece of equipment was cleaned).
 @TableIndex(
-    name: 'idx_equipment_cleanings_tank_cleaned',
-    columns: {#tankId, #cleanedAt})
+  name: 'idx_equipment_cleanings_tank_cleaned',
+  columns: {#tankId, #cleanedAt},
+)
 class EquipmentCleanings extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -207,8 +213,7 @@ class DosingEntries extends Table {
 
   TextColumn get note => text().nullable()();
   IntColumn get displayOrder => integer().withDefault(const Constant(0))();
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   /// When this dose segment became active. A dosing plan is a chain of dated
   /// segments: editing a dose-affecting field ends the current segment and
@@ -235,17 +240,19 @@ class Settings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [
-  Tanks,
-  TrackedParameters,
-  Readings,
-  WaterChanges,
-  CarbonChanges,
-  EquipmentCleanings,
-  RatioVisibilities,
-  DosingEntries,
-  Settings
-])
+@DriftDatabase(
+  tables: [
+    Tanks,
+    TrackedParameters,
+    Readings,
+    WaterChanges,
+    CarbonChanges,
+    EquipmentCleanings,
+    RatioVisibilities,
+    DosingEntries,
+    Settings,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
@@ -254,122 +261,121 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.addColumn(tanks, tanks.startDate);
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(tanks, tanks.startDate);
+      }
+      if (from < 3) {
+        await m.createTable(waterChanges);
+      }
+      if (from < 4) {
+        // `createTable` builds a table from its CURRENT definition. When
+        // upgrading straight from a schema before v3, the createTable above
+        // already creates water_changes WITH the `note` column, so adding
+        // it again would throw "duplicate column name: note". Guard against
+        // that (and any partially-applied state) by checking first.
+        if (!await _columnExists('water_changes', 'note')) {
+          await m.addColumn(waterChanges, waterChanges.note);
+        }
+        if (!await _tableExists('carbon_changes')) {
+          await m.createTable(carbonChanges);
+        }
+      }
+      if (from < 5) {
+        if (!await _tableExists('equipment_cleanings')) {
+          await m.createTable(equipmentCleanings);
+        }
+      }
+      if (from < 6) {
+        if (!await _tableExists('ratio_visibilities')) {
+          await m.createTable(ratioVisibilities);
+        }
+      }
+      if (from < 7) {
+        if (!await _columnExists('ratio_visibilities', 'display_order')) {
+          await m.addColumn(ratioVisibilities, ratioVisibilities.displayOrder);
+        }
+      }
+      if (from < 8) {
+        for (final col in {
+          'amber_low': ratioVisibilities.amberLow,
+          'green_low': ratioVisibilities.greenLow,
+          'green_high': ratioVisibilities.greenHigh,
+          'amber_high': ratioVisibilities.amberHigh,
+        }.entries) {
+          if (!await _columnExists('ratio_visibilities', col.key)) {
+            await m.addColumn(ratioVisibilities, col.value);
           }
-          if (from < 3) {
-            await m.createTable(waterChanges);
+        }
+      }
+      if (from < 9) {
+        if (!await _tableExists('dosing_entries')) {
+          await m.createTable(dosingEntries);
+        }
+      }
+      if (from < 10) {
+        for (final col in {
+          'notes': tanks.notes,
+          'vendor': tanks.vendor,
+          'model': tanks.model,
+        }.entries) {
+          if (!await _columnExists('tanks', col.key)) {
+            await m.addColumn(tanks, col.value);
           }
-          if (from < 4) {
-            // `createTable` builds a table from its CURRENT definition. When
-            // upgrading straight from a schema before v3, the createTable above
-            // already creates water_changes WITH the `note` column, so adding
-            // it again would throw "duplicate column name: note". Guard against
-            // that (and any partially-applied state) by checking first.
-            if (!await _columnExists('water_changes', 'note')) {
-              await m.addColumn(waterChanges, waterChanges.note);
-            }
-            if (!await _tableExists('carbon_changes')) {
-              await m.createTable(carbonChanges);
-            }
+        }
+      }
+      if (from < 11) {
+        for (final col in {
+          'started_at': dosingEntries.startedAt,
+          'ended_at': dosingEntries.endedAt,
+          'state': dosingEntries.state,
+        }.entries) {
+          if (!await _columnExists('dosing_entries', col.key)) {
+            await m.addColumn(dosingEntries, col.value);
           }
-          if (from < 5) {
-            if (!await _tableExists('equipment_cleanings')) {
-              await m.createTable(equipmentCleanings);
-            }
-          }
-          if (from < 6) {
-            if (!await _tableExists('ratio_visibilities')) {
-              await m.createTable(ratioVisibilities);
-            }
-          }
-          if (from < 7) {
-            if (!await _columnExists('ratio_visibilities', 'display_order')) {
-              await m.addColumn(
-                  ratioVisibilities, ratioVisibilities.displayOrder);
-            }
-          }
-          if (from < 8) {
-            for (final col in {
-              'amber_low': ratioVisibilities.amberLow,
-              'green_low': ratioVisibilities.greenLow,
-              'green_high': ratioVisibilities.greenHigh,
-              'amber_high': ratioVisibilities.amberHigh,
-            }.entries) {
-              if (!await _columnExists('ratio_visibilities', col.key)) {
-                await m.addColumn(ratioVisibilities, col.value);
-              }
-            }
-          }
-          if (from < 9) {
-            if (!await _tableExists('dosing_entries')) {
-              await m.createTable(dosingEntries);
-            }
-          }
-          if (from < 10) {
-            for (final col in {
-              'notes': tanks.notes,
-              'vendor': tanks.vendor,
-              'model': tanks.model,
-            }.entries) {
-              if (!await _columnExists('tanks', col.key)) {
-                await m.addColumn(tanks, col.value);
-              }
-            }
-          }
-          if (from < 11) {
-            for (final col in {
-              'started_at': dosingEntries.startedAt,
-              'ended_at': dosingEntries.endedAt,
-              'state': dosingEntries.state,
-            }.entries) {
-              if (!await _columnExists('dosing_entries', col.key)) {
-                await m.addColumn(dosingEntries, col.value);
-              }
-            }
-            // Backfill: pre-history rows start when they were created.
-            await customStatement(
-              'UPDATE dosing_entries SET started_at = created_at '
-              'WHERE started_at IS NULL',
-            );
-          }
-          if (from < 12) {
-            // Secondary indexes for the hot reactive read paths (tankId +
-            // timestamp/paramKey). Declared as `@TableIndex` so fresh installs
-            // get them via `createAll`; created here for existing databases.
-            // `IF NOT EXISTS` keeps this idempotent, matching the guarded
-            // migration convention above.
-            for (final sql in const [
-              'CREATE INDEX IF NOT EXISTS idx_readings_tank_param_taken '
-                  'ON readings (tank_id, param_key, taken_at)',
-              'CREATE INDEX IF NOT EXISTS idx_readings_tank_taken '
-                  'ON readings (tank_id, taken_at)',
-              'CREATE INDEX IF NOT EXISTS idx_water_changes_tank_changed '
-                  'ON water_changes (tank_id, changed_at)',
-              'CREATE INDEX IF NOT EXISTS idx_carbon_changes_tank_changed '
-                  'ON carbon_changes (tank_id, changed_at)',
-              'CREATE INDEX IF NOT EXISTS idx_equipment_cleanings_tank_cleaned '
-                  'ON equipment_cleanings (tank_id, cleaned_at)',
-              'CREATE INDEX IF NOT EXISTS idx_dosing_entries_tank '
-                  'ON dosing_entries (tank_id)',
-            ]) {
-              await customStatement(sql);
-            }
-          }
-          if (from < 13) {
-            // Reading batches get a stable group id (#15); pre-existing rows
-            // stay null and keep the legacy timestamp-based grouping.
-            if (!await _columnExists('readings', 'group_id')) {
-              await m.addColumn(readings, readings.groupId);
-            }
-          }
-        },
-        beforeOpen: (details) async {
-          await customStatement('PRAGMA foreign_keys = ON');
-        },
-      );
+        }
+        // Backfill: pre-history rows start when they were created.
+        await customStatement(
+          'UPDATE dosing_entries SET started_at = created_at '
+          'WHERE started_at IS NULL',
+        );
+      }
+      if (from < 12) {
+        // Secondary indexes for the hot reactive read paths (tankId +
+        // timestamp/paramKey). Declared as `@TableIndex` so fresh installs
+        // get them via `createAll`; created here for existing databases.
+        // `IF NOT EXISTS` keeps this idempotent, matching the guarded
+        // migration convention above.
+        for (final sql in const [
+          'CREATE INDEX IF NOT EXISTS idx_readings_tank_param_taken '
+              'ON readings (tank_id, param_key, taken_at)',
+          'CREATE INDEX IF NOT EXISTS idx_readings_tank_taken '
+              'ON readings (tank_id, taken_at)',
+          'CREATE INDEX IF NOT EXISTS idx_water_changes_tank_changed '
+              'ON water_changes (tank_id, changed_at)',
+          'CREATE INDEX IF NOT EXISTS idx_carbon_changes_tank_changed '
+              'ON carbon_changes (tank_id, changed_at)',
+          'CREATE INDEX IF NOT EXISTS idx_equipment_cleanings_tank_cleaned '
+              'ON equipment_cleanings (tank_id, cleaned_at)',
+          'CREATE INDEX IF NOT EXISTS idx_dosing_entries_tank '
+              'ON dosing_entries (tank_id)',
+        ]) {
+          await customStatement(sql);
+        }
+      }
+      if (from < 13) {
+        // Reading batches get a stable group id (#15); pre-existing rows
+        // stay null and keep the legacy timestamp-based grouping.
+        if (!await _columnExists('readings', 'group_id')) {
+          await m.addColumn(readings, readings.groupId);
+        }
+      }
+    },
+    beforeOpen: (details) async {
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
+  );
 
   /// Whether a table with [name] currently exists (used to keep migrations
   /// idempotent across multi-version upgrades).
@@ -396,13 +402,13 @@ class AppDatabase extends _$AppDatabase {
 
   // --- Tanks ---------------------------------------------------------------
 
-  Stream<List<Tank>> watchTanks() =>
-      (select(tanks)..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
-          .watch();
+  Stream<List<Tank>> watchTanks() => (select(
+    tanks,
+  )..orderBy([(t) => OrderingTerm(expression: t.createdAt)])).watch();
 
-  Future<List<Tank>> getTanks() =>
-      (select(tanks)..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
-          .get();
+  Future<List<Tank>> getTanks() => (select(
+    tanks,
+  )..orderBy([(t) => OrderingTerm(expression: t.createdAt)])).get();
 
   Future<Tank> getTank(int id) =>
       (select(tanks)..where((t) => t.id.equals(id))).getSingle();
@@ -419,15 +425,17 @@ class AppDatabase extends _$AppDatabase {
     String? model,
   }) async {
     return transaction(() async {
-      final tankId = await into(tanks).insert(TanksCompanion.insert(
-        name: name,
-        setupType: type.name,
-        volumeLiters: Value(volumeLiters),
-        startDate: Value(startDate),
-        notes: Value(notes),
-        vendor: Value(vendor),
-        model: Value(model),
-      ));
+      final tankId = await into(tanks).insert(
+        TanksCompanion.insert(
+          name: name,
+          setupType: type.name,
+          volumeLiters: Value(volumeLiters),
+          startDate: Value(startDate),
+          notes: Value(notes),
+          vendor: Value(vendor),
+          model: Value(model),
+        ),
+      );
       await _seedTrackedParameters(tankId, type);
       await setActiveTank(tankId);
       return tankId;
@@ -489,32 +497,39 @@ class AppDatabase extends _$AppDatabase {
   /// The exists-check and insert run in one transaction (#10) so a double-fire
   /// (double-tap, launch/resume race) can't insert the parameter twice.
   Future<void> addTrackedParameter(
-      int tankId, String paramKey, SetupType type) async {
+    int tankId,
+    String paramKey,
+    SetupType type,
+  ) async {
     await transaction(() async {
-      final existing = await (select(trackedParameters)
-            ..where(
-                (t) => t.tankId.equals(tankId) & t.paramKey.equals(paramKey)))
-          .get();
+      final existing =
+          await (select(trackedParameters)..where(
+                (t) => t.tankId.equals(tankId) & t.paramKey.equals(paramKey),
+              ))
+              .get();
       if (existing.isNotEmpty) return;
       final def = kParameterByKey[paramKey];
       final bounds = presetBounds(type, paramKey);
       // max(displayOrder) + 1, not the row count: after removing a middle
       // parameter the count could collide with an existing order (same fix as
       // insertDosingEntry).
-      final order = (await getTrackedParameters(tankId))
-              .fold<int>(
-                  -1, (m, p) => p.displayOrder > m ? p.displayOrder : m) +
+      final order =
+          (await getTrackedParameters(
+            tankId,
+          )).fold<int>(-1, (m, p) => p.displayOrder > m ? p.displayOrder : m) +
           1;
-      await into(trackedParameters).insert(TrackedParametersCompanion.insert(
-        tankId: tankId,
-        paramKey: paramKey,
-        unit: def?.unit ?? '',
-        displayOrder: Value(order),
-        amberLow: Value(bounds.amberLow),
-        greenLow: Value(bounds.greenLow),
-        greenHigh: Value(bounds.greenHigh),
-        amberHigh: Value(bounds.amberHigh),
-      ));
+      await into(trackedParameters).insert(
+        TrackedParametersCompanion.insert(
+          tankId: tankId,
+          paramKey: paramKey,
+          unit: def?.unit ?? '',
+          displayOrder: Value(order),
+          amberLow: Value(bounds.amberLow),
+          greenLow: Value(bounds.greenLow),
+          greenHigh: Value(bounds.greenHigh),
+          amberHigh: Value(bounds.amberHigh),
+        ),
+      );
     });
   }
 
@@ -565,8 +580,8 @@ class AppDatabase extends _$AppDatabase {
       (select(readings)
             ..where((r) => r.tankId.equals(tankId))
             ..orderBy([
-              (r) => OrderingTerm(
-                  expression: r.takenAt, mode: OrderingMode.desc)
+              (r) =>
+                  OrderingTerm(expression: r.takenAt, mode: OrderingMode.desc),
             ]))
           .watch();
 
@@ -574,7 +589,8 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<Reading>> watchParamReadings(int tankId, String paramKey) =>
       (select(readings)
             ..where(
-                (r) => r.tankId.equals(tankId) & r.paramKey.equals(paramKey))
+              (r) => r.tankId.equals(tankId) & r.paramKey.equals(paramKey),
+            )
             ..orderBy([(r) => OrderingTerm(expression: r.takenAt)]))
           .watch();
 
@@ -585,15 +601,16 @@ class AppDatabase extends _$AppDatabase {
     required DateTime takenAt,
     String? note,
     String? groupId,
-  }) =>
-      into(readings).insert(ReadingsCompanion.insert(
-        tankId: tankId,
-        paramKey: paramKey,
-        value: value,
-        takenAt: takenAt,
-        note: Value(note),
-        groupId: Value(groupId),
-      ));
+  }) => into(readings).insert(
+    ReadingsCompanion.insert(
+      tankId: tankId,
+      paramKey: paramKey,
+      value: value,
+      takenAt: takenAt,
+      note: Value(note),
+      groupId: Value(groupId),
+    ),
+  );
 
   /// Inserts a group of readings entered together in one atomic batch, so a
   /// failure partway through cannot leave a partial group behind. All rows share
@@ -607,20 +624,19 @@ class AppDatabase extends _$AppDatabase {
     required List<({String paramKey, double value})> values,
   }) {
     final groupId = newReadingGroupId();
-    return batch((b) => b.insertAll(
-          readings,
-          [
-            for (final v in values)
-              ReadingsCompanion.insert(
-                tankId: tankId,
-                paramKey: v.paramKey,
-                value: v.value,
-                takenAt: takenAt,
-                note: Value(note),
-                groupId: Value(groupId),
-              ),
-          ],
-        ));
+    return batch(
+      (b) => b.insertAll(readings, [
+        for (final v in values)
+          ReadingsCompanion.insert(
+            tankId: tankId,
+            paramKey: v.paramKey,
+            value: v.value,
+            takenAt: takenAt,
+            note: Value(note),
+            groupId: Value(groupId),
+          ),
+      ]),
+    );
   }
 
   Future<void> updateReading(Reading reading) =>
@@ -654,8 +670,9 @@ class AppDatabase extends _$AppDatabase {
   /// Re-timestamps every reading saved together with [r] to [to] (i.e. moves a
   /// whole group entered in one go). Returns the rows changed.
   Future<int> updateReadingGroupTime(Reading r, DateTime to) =>
-      (update(readings)..where((tbl) => _sameGroupAs(tbl, r)))
-          .write(ReadingsCompanion(takenAt: Value(to)));
+      (update(readings)..where((tbl) => _sameGroupAs(tbl, r))).write(
+        ReadingsCompanion(takenAt: Value(to)),
+      );
 
   // --- Water changes -------------------------------------------------------
 
@@ -665,7 +682,9 @@ class AppDatabase extends _$AppDatabase {
             ..where((w) => w.tankId.equals(tankId))
             ..orderBy([
               (w) => OrderingTerm(
-                  expression: w.changedAt, mode: OrderingMode.desc)
+                expression: w.changedAt,
+                mode: OrderingMode.desc,
+              ),
             ]))
           .watch();
 
@@ -674,13 +693,14 @@ class AppDatabase extends _$AppDatabase {
     required DateTime changedAt,
     double? amountLiters,
     String? note,
-  }) =>
-      into(waterChanges).insert(WaterChangesCompanion.insert(
-        tankId: tankId,
-        changedAt: changedAt,
-        amountLiters: Value(amountLiters),
-        note: Value(note),
-      ));
+  }) => into(waterChanges).insert(
+    WaterChangesCompanion.insert(
+      tankId: tankId,
+      changedAt: changedAt,
+      amountLiters: Value(amountLiters),
+      note: Value(note),
+    ),
+  );
 
   Future<void> updateWaterChange(WaterChange change) =>
       update(waterChanges).replace(change);
@@ -696,7 +716,9 @@ class AppDatabase extends _$AppDatabase {
             ..where((c) => c.tankId.equals(tankId))
             ..orderBy([
               (c) => OrderingTerm(
-                  expression: c.changedAt, mode: OrderingMode.desc)
+                expression: c.changedAt,
+                mode: OrderingMode.desc,
+              ),
             ]))
           .watch();
 
@@ -705,13 +727,14 @@ class AppDatabase extends _$AppDatabase {
     required DateTime changedAt,
     double? grams,
     String? note,
-  }) =>
-      into(carbonChanges).insert(CarbonChangesCompanion.insert(
-        tankId: tankId,
-        changedAt: changedAt,
-        grams: Value(grams),
-        note: Value(note),
-      ));
+  }) => into(carbonChanges).insert(
+    CarbonChangesCompanion.insert(
+      tankId: tankId,
+      changedAt: changedAt,
+      grams: Value(grams),
+      note: Value(note),
+    ),
+  );
 
   Future<void> updateCarbonChange(CarbonChange change) =>
       update(carbonChanges).replace(change);
@@ -727,7 +750,9 @@ class AppDatabase extends _$AppDatabase {
             ..where((c) => c.tankId.equals(tankId))
             ..orderBy([
               (c) => OrderingTerm(
-                  expression: c.cleanedAt, mode: OrderingMode.desc)
+                expression: c.cleanedAt,
+                mode: OrderingMode.desc,
+              ),
             ]))
           .watch();
 
@@ -735,12 +760,13 @@ class AppDatabase extends _$AppDatabase {
     required int tankId,
     required DateTime cleanedAt,
     String? note,
-  }) =>
-      into(equipmentCleanings).insert(EquipmentCleaningsCompanion.insert(
-        tankId: tankId,
-        cleanedAt: cleanedAt,
-        note: Value(note),
-      ));
+  }) => into(equipmentCleanings).insert(
+    EquipmentCleaningsCompanion.insert(
+      tankId: tankId,
+      cleanedAt: cleanedAt,
+      note: Value(note),
+    ),
+  );
 
   Future<void> updateEquipmentCleaning(EquipmentCleaning cleaning) =>
       update(equipmentCleanings).replace(cleaning);
@@ -752,14 +778,14 @@ class AppDatabase extends _$AppDatabase {
 
   /// Stored per-tank ratio-card settings (visibility + dashboard order). Rows
   /// are absent for ratios left at their defaults (visible, ordered last).
-  Stream<List<RatioVisibility>> watchRatioVisibilities(int tankId) =>
-      (select(ratioVisibilities)..where((r) => r.tankId.equals(tankId)))
-          .watch();
+  Stream<List<RatioVisibility>> watchRatioVisibilities(int tankId) => (select(
+    ratioVisibilities,
+  )..where((r) => r.tankId.equals(tankId))).watch();
 
   Future<RatioVisibility?> _ratioRow(int tankId, String ratioKey) =>
-      (select(ratioVisibilities)
-            ..where((r) =>
-                r.tankId.equals(tankId) & r.ratioKey.equals(ratioKey)))
+      (select(ratioVisibilities)..where(
+            (r) => r.tankId.equals(tankId) & r.ratioKey.equals(ratioKey),
+          ))
           .getSingleOrNull();
 
   /// Sets whether a ratio card is shown for [tankId], leaving its order intact.
@@ -769,12 +795,13 @@ class AppDatabase extends _$AppDatabase {
   /// concurrent double-fire can neither duplicate the row nor throw a PK
   /// conflict, and existing order/bounds stay untouched.
   Future<void> setRatioVisible(int tankId, String ratioKey, bool visible) =>
-      into(ratioVisibilities)
-          .insertOnConflictUpdate(RatioVisibilitiesCompanion.insert(
-        tankId: tankId,
-        ratioKey: ratioKey,
-        visible: Value(visible),
-      ));
+      into(ratioVisibilities).insertOnConflictUpdate(
+        RatioVisibilitiesCompanion.insert(
+          tankId: tankId,
+          ratioKey: ratioKey,
+          visible: Value(visible),
+        ),
+      );
 
   /// Sets the per-tank zone bounds for a ratio card (creating the row if
   /// needed), leaving visibility and order intact. Same upsert shape as
@@ -786,16 +813,16 @@ class AppDatabase extends _$AppDatabase {
     required double? greenLow,
     required double? greenHigh,
     required double? amberHigh,
-  }) =>
-      into(ratioVisibilities)
-          .insertOnConflictUpdate(RatioVisibilitiesCompanion.insert(
-        tankId: tankId,
-        ratioKey: ratioKey,
-        amberLow: Value(amberLow),
-        greenLow: Value(greenLow),
-        greenHigh: Value(greenHigh),
-        amberHigh: Value(amberHigh),
-      ));
+  }) => into(ratioVisibilities).insertOnConflictUpdate(
+    RatioVisibilitiesCompanion.insert(
+      tankId: tankId,
+      ratioKey: ratioKey,
+      amberLow: Value(amberLow),
+      greenLow: Value(greenLow),
+      greenHigh: Value(greenHigh),
+      amberHigh: Value(amberHigh),
+    ),
+  );
 
   /// Persists a new combined dashboard order across measurements and ratio
   /// cards (they share one order space). [paramOrders] gives tracked-parameter
@@ -826,11 +853,10 @@ class AppDatabase extends _$AppDatabase {
             ),
           );
         } else {
-          await (update(ratioVisibilities)
-                ..where((t) =>
-                    t.tankId.equals(tankId) & t.ratioKey.equals(r.key)))
-              .write(
-                  RatioVisibilitiesCompanion(displayOrder: Value(r.order)));
+          await (update(ratioVisibilities)..where(
+                (t) => t.tankId.equals(tankId) & t.ratioKey.equals(r.key),
+              ))
+              .write(RatioVisibilitiesCompanion(displayOrder: Value(r.order)));
         }
       }
     });
@@ -843,13 +869,17 @@ class AppDatabase extends _$AppDatabase {
   /// excluded here.
   Stream<List<DosingEntry>> watchDosingEntries(int tankId) =>
       (select(dosingEntries)
-            ..where((d) =>
-                d.tankId.equals(tankId) &
-                d.state.equals(DosingState.active.name))
+            ..where(
+              (d) =>
+                  d.tankId.equals(tankId) &
+                  d.state.equals(DosingState.active.name),
+            )
             ..orderBy([
               (d) => OrderingTerm(expression: d.displayOrder),
               (d) => OrderingTerm(
-                  expression: d.createdAt, mode: OrderingMode.desc),
+                expression: d.createdAt,
+                mode: OrderingMode.desc,
+              ),
             ]))
           .watch();
 
@@ -861,10 +891,13 @@ class AppDatabase extends _$AppDatabase {
             ..where((d) => d.tankId.equals(tankId))
             ..orderBy([
               (d) => OrderingTerm(
-                  expression: coalesce([d.startedAt, d.createdAt]),
-                  mode: OrderingMode.desc),
+                expression: coalesce([d.startedAt, d.createdAt]),
+                mode: OrderingMode.desc,
+              ),
               (d) => OrderingTerm(
-                  expression: d.createdAt, mode: OrderingMode.desc),
+                expression: d.createdAt,
+                mode: OrderingMode.desc,
+              ),
             ]))
           .watch();
 
@@ -872,13 +905,16 @@ class AppDatabase extends _$AppDatabase {
     // The max-order read and the insert run in one transaction (#10) so two
     // concurrent inserts can't be assigned the same displayOrder.
     return transaction(() async {
-      final existing = await (select(dosingEntries)
-            ..where((d) => d.tankId.equals(entry.tankId.value)))
-          .get();
+      final existing = await (select(
+        dosingEntries,
+      )..where((d) => d.tankId.equals(entry.tankId.value))).get();
       // max(displayOrder) + 1, not the row count: after deleting a middle entry
       // the count could collide with an existing order and make rows jump (#21).
-      final order = existing.fold<int>(
-              -1, (m, d) => d.displayOrder > m ? d.displayOrder : m) +
+      final order =
+          existing.fold<int>(
+            -1,
+            (m, d) => d.displayOrder > m ? d.displayOrder : m,
+          ) +
           1;
       return into(dosingEntries).insert(
         entry.copyWith(
@@ -960,23 +996,25 @@ class AppDatabase extends _$AppDatabase {
   // --- Settings ------------------------------------------------------------
 
   Future<void> setActiveTank(int? tankId) =>
-      into(settings).insertOnConflictUpdate(SettingsCompanion.insert(
-        key: kActiveTankKey,
-        value: Value(tankId?.toString()),
-      ));
+      into(settings).insertOnConflictUpdate(
+        SettingsCompanion.insert(
+          key: kActiveTankKey,
+          value: Value(tankId?.toString()),
+        ),
+      );
 
   Future<int?> getActiveTankId() async {
-    final row = await (select(settings)
-          ..where((s) => s.key.equals(kActiveTankKey)))
-        .getSingleOrNull();
+    final row = await (select(
+      settings,
+    )..where((s) => s.key.equals(kActiveTankKey))).getSingleOrNull();
     final v = row?.value;
     return v == null ? null : int.tryParse(v);
   }
 
-  Stream<int?> watchActiveTankId() => (select(settings)
-        ..where((s) => s.key.equals(kActiveTankKey)))
-      .watchSingleOrNull()
-      .map((row) => row?.value == null ? null : int.tryParse(row!.value!));
+  Stream<int?> watchActiveTankId() =>
+      (select(settings)..where((s) => s.key.equals(kActiveTankKey)))
+          .watchSingleOrNull()
+          .map((row) => row?.value == null ? null : int.tryParse(row!.value!));
 
   /// Generic settings access (used for unit preferences, etc.).
   Stream<String?> watchSetting(String key) =>
@@ -986,12 +1024,14 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> setSetting(String key, String? value) =>
       into(settings).insertOnConflictUpdate(
-          SettingsCompanion.insert(key: key, value: Value(value)));
+        SettingsCompanion.insert(key: key, value: Value(value)),
+      );
 
   /// One-shot read of a settings value (null if the key is unset).
   Future<String?> getSetting(String key) async {
-    final row = await (select(settings)..where((s) => s.key.equals(key)))
-        .getSingleOrNull();
+    final row = await (select(
+      settings,
+    )..where((s) => s.key.equals(key))).getSingleOrNull();
     return row?.value;
   }
 
@@ -1068,9 +1108,9 @@ class AppDatabase extends _$AppDatabase {
       if (preserveSettingKeys.isEmpty) {
         await delete(settings).go();
       } else {
-        await (delete(settings)
-              ..where((s) => s.key.isNotIn(preserveSettingKeys.toList())))
-            .go();
+        await (delete(
+          settings,
+        )..where((s) => s.key.isNotIn(preserveSettingKeys.toList()))).go();
       }
       await delete(tanks).go();
       // Insert parents before children, preserving ids.
@@ -1123,8 +1163,9 @@ LazyDatabase _open() {
 Future<Directory> _documentsDir() async {
   for (var attempt = 0; attempt < 3; attempt++) {
     try {
-      return await getApplicationDocumentsDirectory()
-          .timeout(const Duration(seconds: 2));
+      return await getApplicationDocumentsDirectory().timeout(
+        const Duration(seconds: 2),
+      );
     } on TimeoutException {
       // Retry — by now startup has likely progressed past the first frame.
     }
@@ -1134,11 +1175,11 @@ Future<Directory> _documentsDir() async {
 
 /// Convenience: build [ZoneBounds] from a tracked-parameter row.
 ZoneBounds boundsOf(TrackedParameter p) => ZoneBounds(
-      amberLow: p.amberLow,
-      greenLow: p.greenLow,
-      greenHigh: p.greenHigh,
-      amberHigh: p.amberHigh,
-    );
+  amberLow: p.amberLow,
+  greenLow: p.greenLow,
+  greenHigh: p.greenHigh,
+  amberHigh: p.amberHigh,
+);
 
 /// Convenience: resolve how to present a tracked parameter's values given the
 /// user's unit preferences.
@@ -1156,30 +1197,31 @@ extension ReadingDomain on Reading {
 
 extension ReadingListDomain on Iterable<Reading> {
   /// These readings as the records the ratio math consumes, order preserved.
-  List<RatioReading> get ratioReadings =>
-      [for (final r in this) r.ratioReading];
+  List<RatioReading> get ratioReadings => [
+    for (final r in this) r.ratioReading,
+  ];
 }
 
 extension DosingEntryDomain on DosingEntry {
   /// The schedule fields [dailyEquivalentDose] reads.
   DoseSchedule get schedule => (
-        amount: amount,
-        frequency: frequency,
-        intervalDays: intervalDays,
-        weekdays: weekdays,
-      );
+    amount: amount,
+    frequency: frequency,
+    intervalDays: intervalDays,
+    weekdays: weekdays,
+  );
 }
 
 extension RatioVisibilityDomain on RatioVisibility {
   /// This row as the settings record the ratio helpers consume.
   RatioSettings get settings => (
-        visible: visible,
-        displayOrder: displayOrder,
-        bounds: ZoneBounds(
-          amberLow: amberLow,
-          greenLow: greenLow,
-          greenHigh: greenHigh,
-          amberHigh: amberHigh,
-        ),
-      );
+    visible: visible,
+    displayOrder: displayOrder,
+    bounds: ZoneBounds(
+      amberLow: amberLow,
+      greenLow: greenLow,
+      greenHigh: greenHigh,
+      amberHigh: amberHigh,
+    ),
+  );
 }

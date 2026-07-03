@@ -2,19 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/domain/ratio.dart';
 import 'package:reeftracker/domain/zones.dart';
 
-RatioReading _r(double value, int msEpoch) => (
-      takenAt: DateTime.fromMillisecondsSinceEpoch(msEpoch),
-      value: value,
-    );
+RatioReading _r(double value, int msEpoch) =>
+    (takenAt: DateTime.fromMillisecondsSinceEpoch(msEpoch), value: value);
 
 void main() {
   group('latestRatio (numerator, denominator; newest-first input)', () {
     test('uses the most recent value of each parameter', () {
       // PO₄ : NO₃ -> numerator = phosphate, denominator = nitrate.
-      final phosphate = [
-        _r(0.1, 2000),
-        _r(0.2, 1000)
-      ];
+      final phosphate = [_r(0.1, 2000), _r(0.2, 1000)];
       final nitrate = [_r(10, 2000), _r(5, 1000)];
       final ratio = latestRatio(phosphate, nitrate);
       expect(ratio, isNotNull);
@@ -29,8 +24,7 @@ void main() {
     });
 
     test('null when denominator is zero (undefined ratio)', () {
-      final ratio = latestRatio(
-          [_r(0.1, 1000)], [_r(0, 1000)]);
+      final ratio = latestRatio([_r(0.1, 1000)], [_r(0, 1000)]);
       expect(ratio, isNull);
     });
 
@@ -48,8 +42,11 @@ void main() {
       // …and the gate is symmetric and tunable.
       expect(latestRatio(staleNitrate, phosphate), isNull);
       expect(
-        latestRatio(phosphate, staleNitrate,
-            maxSkew: const Duration(days: 365)),
+        latestRatio(
+          phosphate,
+          staleNitrate,
+          maxSkew: const Duration(days: 365),
+        ),
         isNotNull,
       );
     });
@@ -109,11 +106,15 @@ void main() {
 
   group('ratioBounds', () {
     test('falls back to the kind default when no settings or no bounds', () {
-      expect(ratioBounds(RatioKind.mgca, null).greenLow,
-          RatioKind.mgca.defaultBounds.greenLow);
+      expect(
+        ratioBounds(RatioKind.mgca, null).greenLow,
+        RatioKind.mgca.defaultBounds.greenLow,
+      );
       const blank = (visible: true, displayOrder: 1000, bounds: ZoneBounds());
-      expect(ratioBounds(RatioKind.mgca, blank).greenHigh,
-          RatioKind.mgca.defaultBounds.greenHigh);
+      expect(
+        ratioBounds(RatioKind.mgca, blank).greenHigh,
+        RatioKind.mgca.defaultBounds.greenHigh,
+      );
     });
 
     test('uses the stored bounds when set', () {

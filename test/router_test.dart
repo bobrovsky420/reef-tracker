@@ -64,29 +64,36 @@ void main() {
     return db;
   }
 
-  testWidgets('/parameters/:id/edit without extra resolves the param from the DB',
-      (tester) async {
+  testWidgets(
+    '/parameters/:id/edit without extra resolves the param from the DB',
+    (tester) async {
+      final db = await pumpRouterApp(tester);
+      final tankId = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      // A plain get, not `watchTrackedParameters(...).first`: awaiting a drift
+      // *stream* inside testWidgets' FakeAsync zone deadlocks — the emission is
+      // scheduled on a zero-duration timer that only fires while pumping.
+      final params = await db.getTrackedParameters(tankId);
+      expect(params, isNotEmpty, reason: 'preset must track parameters');
+
+      appRouter.go('/parameters/${params.first.id}/edit');
+      await settle(tester);
+
+      expect(find.byType(ParameterEditScreen), findsOneWidget);
+      await unmountApp(tester);
+    },
+  );
+
+  testWidgets('/tanks/:id/edit without extra opens the edit form, not create', (
+    tester,
+  ) async {
     final db = await pumpRouterApp(tester);
-    final tankId =
-        await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
-    // A plain get, not `watchTrackedParameters(...).first`: awaiting a drift
-    // *stream* inside testWidgets' FakeAsync zone deadlocks — the emission is
-    // scheduled on a zero-duration timer that only fires while pumping.
-    final params = await db.getTrackedParameters(tankId);
-    expect(params, isNotEmpty, reason: 'preset must track parameters');
-
-    appRouter.go('/parameters/${params.first.id}/edit');
-    await settle(tester);
-
-    expect(find.byType(ParameterEditScreen), findsOneWidget);
-    await unmountApp(tester);
-  });
-
-  testWidgets('/tanks/:id/edit without extra opens the edit form, not create',
-      (tester) async {
-    final db = await pumpRouterApp(tester);
-    final tankId =
-        await db.createTankWithPreset(name: 'Reef One', type: SetupType.mixed);
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef One',
+      type: SetupType.mixed,
+    );
 
     appRouter.go('/tanks/$tankId/edit');
     await settle(tester);
@@ -97,8 +104,9 @@ void main() {
     await unmountApp(tester);
   });
 
-  testWidgets('an unknown :id redirects home instead of crashing',
-      (tester) async {
+  testWidgets('an unknown :id redirects home instead of crashing', (
+    tester,
+  ) async {
     final db = await pumpRouterApp(tester);
     await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
 

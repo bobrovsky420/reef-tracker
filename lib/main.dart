@@ -27,10 +27,12 @@ Future<void> main() async {
         .read(localeCodeProvider.future)
         .timeout(const Duration(seconds: 3));
   } catch (_) {}
-  runApp(UncontrolledProviderScope(
-    container: container,
-    child: const ReefTrackerApp(),
-  ));
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const ReefTrackerApp(),
+    ),
+  );
 }
 
 /// Attached to [MaterialApp.router] so provider failures can be surfaced from
@@ -46,10 +48,12 @@ void _warnDataLoadFailed() {
     final messenger = _messengerKey.currentState;
     final context = _messengerKey.currentContext;
     if (messenger == null || context == null) return;
-    messenger.showSnackBar(SnackBar(
-      content: Text(AppLocalizations.of(context).dataLoadFailed),
-      duration: const Duration(seconds: 6),
-    ));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context).dataLoadFailed),
+        duration: const Duration(seconds: 6),
+      ),
+    );
   }
 
   if (_messengerKey.currentState != null) {
@@ -92,14 +96,18 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   /// The backup layer persists a failure as `last_backup_error_at` (surfaced
   /// in Settings), so here it only needs to be logged, not swallowed silently.
   void _maybeBackUp() {
-    runAutoBackupIfDue(ref.read(dbProvider))
-        .catchError((Object e, StackTrace s) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: e,
-        stack: s,
-        library: 'auto_backup',
-        context: ErrorSummary('running the automatic backup'),
-      ));
+    runAutoBackupIfDue(ref.read(dbProvider)).catchError((
+      Object e,
+      StackTrace s,
+    ) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: s,
+          library: 'auto_backup',
+          context: ErrorSummary('running the automatic backup'),
+        ),
+      );
     });
   }
 
@@ -120,12 +128,12 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
         Intl.defaultLocale = Localizations.localeOf(context).toLanguageTag();
         return child ?? const SizedBox.shrink();
       },
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: seed),
-      ),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: seed)),
       darkTheme: ThemeData(
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seed,
+          brightness: Brightness.dark,
+        ),
       ),
       routerConfig: appRouter,
     );

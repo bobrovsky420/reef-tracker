@@ -112,10 +112,10 @@ String encodeBackup({
     'readings': readings.map(_readingToJson).toList(),
     'waterChanges': waterChanges.map(_waterChangeToJson).toList(),
     'carbonChanges': carbonChanges.map(_carbonChangeToJson).toList(),
-    'equipmentCleanings':
-        equipmentCleanings.map(_equipmentCleaningToJson).toList(),
-    'ratioVisibilities':
-        ratioVisibilities.map(_ratioVisibilityToJson).toList(),
+    'equipmentCleanings': equipmentCleanings
+        .map(_equipmentCleaningToJson)
+        .toList(),
+    'ratioVisibilities': ratioVisibilities.map(_ratioVisibilityToJson).toList(),
     'dosingEntries': dosingEntries.map(_dosingEntryToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
@@ -131,15 +131,21 @@ BackupData decodeBackup(String jsonString) {
     decoded = jsonDecode(jsonString);
   } on FormatException {
     throw const InvalidBackupException(
-        BackupRejection.notBackupFile, 'not valid JSON');
+      BackupRejection.notBackupFile,
+      'not valid JSON',
+    );
   }
   if (decoded is! Map<String, dynamic>) {
     throw const InvalidBackupException(
-        BackupRejection.notBackupFile, 'top level is not an object');
+      BackupRejection.notBackupFile,
+      'top level is not an object',
+    );
   }
   if (decoded['format'] != kBackupFormat) {
     throw const InvalidBackupException(
-        BackupRejection.notBackupFile, 'wrong format marker');
+      BackupRejection.notBackupFile,
+      'wrong format marker',
+    );
   }
   // Distinguish the version failures (#38): only a genuinely newer document
   // may claim "backup from a newer app" — a missing version means this isn't
@@ -147,15 +153,21 @@ BackupData decodeBackup(String jsonString) {
   final version = decoded['version'];
   if (version == null) {
     throw const InvalidBackupException(
-        BackupRejection.notBackupFile, 'missing version');
+      BackupRejection.notBackupFile,
+      'missing version',
+    );
   }
   if (version is! int) {
     throw InvalidBackupException(
-        BackupRejection.corrupted, 'non-integer version "$version"');
+      BackupRejection.corrupted,
+      'non-integer version "$version"',
+    );
   }
   if (version > kBackupVersion) {
     throw const InvalidBackupException(
-        BackupRejection.newerVersion, 'document version too new');
+      BackupRejection.newerVersion,
+      'document version too new',
+    );
   }
   // schemaVersion was always written from v1; treat a missing/odd value as 0
   // (an unknown-but-older schema) rather than failing here.
@@ -167,13 +179,17 @@ BackupData decodeBackup(String jsonString) {
   // in later app versions are absent from older backups, so a missing key
   // defaults to an empty list rather than erroring.
   List<T> section<T>(
-      String key, T Function(Map<String, dynamic>) fromJson,
-      {bool required = true}) {
+    String key,
+    T Function(Map<String, dynamic>) fromJson, {
+    bool required = true,
+  }) {
     final raw = decoded[key];
     if (raw == null) {
       if (required) {
         throw InvalidBackupException(
-            BackupRejection.corrupted, 'missing section "$key"');
+          BackupRejection.corrupted,
+          'missing section "$key"',
+        );
       }
       return <T>[];
     }
@@ -181,7 +197,9 @@ BackupData decodeBackup(String jsonString) {
       return _listOfMaps(raw).map(fromJson).toList();
     } catch (e) {
       throw InvalidBackupException(
-          BackupRejection.corrupted, 'section "$key": $e');
+        BackupRejection.corrupted,
+        'section "$key": $e',
+      );
     }
   }
 
@@ -190,17 +208,31 @@ BackupData decodeBackup(String jsonString) {
     tanks: section('tanks', _tankFromJson),
     params: section('trackedParameters', _paramFromJson),
     readings: section('readings', _readingFromJson),
-    waterChanges: section('waterChanges', _waterChangeFromJson, required: false),
-    carbonChanges:
-        section('carbonChanges', _carbonChangeFromJson, required: false),
+    waterChanges: section(
+      'waterChanges',
+      _waterChangeFromJson,
+      required: false,
+    ),
+    carbonChanges: section(
+      'carbonChanges',
+      _carbonChangeFromJson,
+      required: false,
+    ),
     equipmentCleanings: section(
-        'equipmentCleanings', _equipmentCleaningFromJson,
-        required: false),
+      'equipmentCleanings',
+      _equipmentCleaningFromJson,
+      required: false,
+    ),
     ratioVisibilities: section(
-        'ratioVisibilities', _ratioVisibilityFromJson,
-        required: false),
-    dosingEntries:
-        section('dosingEntries', _dosingEntryFromJson, required: false),
+      'ratioVisibilities',
+      _ratioVisibilityFromJson,
+      required: false,
+    ),
+    dosingEntries: section(
+      'dosingEntries',
+      _dosingEntryFromJson,
+      required: false,
+    ),
     settings: section('settings', _settingFromJson),
   );
 }
@@ -211,8 +243,10 @@ BackupData decodeBackup(String jsonString) {
 /// aquarium). Throws [InvalidBackupException] with a specific [BackupRejection].
 void validateBackup(BackupData data, {required int appSchemaVersion}) {
   if (data.schemaVersion > appSchemaVersion) {
-    throw InvalidBackupException(BackupRejection.newerVersion,
-        'schemaVersion ${data.schemaVersion} > app $appSchemaVersion');
+    throw InvalidBackupException(
+      BackupRejection.newerVersion,
+      'schemaVersion ${data.schemaVersion} > app $appSchemaVersion',
+    );
   }
 
   // Preserved AUTOINCREMENT ids must stay in a sane range (#33): once the
@@ -226,8 +260,10 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     for (final id in ids) {
       // An absent id is fine — SQLite assigns the next one on insert.
       if (id.present && (id.value < 1 || id.value > maxSaneId)) {
-        throw InvalidBackupException(BackupRejection.inconsistent,
-            '$section id ${id.value} out of range');
+        throw InvalidBackupException(
+          BackupRejection.inconsistent,
+          '$section id ${id.value} out of range',
+        );
       }
     }
   }
@@ -238,7 +274,9 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   requireSaneIds('waterChanges', data.waterChanges.map((r) => r.id));
   requireSaneIds('carbonChanges', data.carbonChanges.map((r) => r.id));
   requireSaneIds(
-      'equipmentCleanings', data.equipmentCleanings.map((r) => r.id));
+    'equipmentCleanings',
+    data.equipmentCleanings.map((r) => r.id),
+  );
   requireSaneIds('dosingEntries', data.dosingEntries.map((r) => r.id));
 
   // Unique aquarium ids (they are the FK target for every other table).
@@ -246,7 +284,9 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   for (final t in data.tanks) {
     if (!tankIds.add(t.id.value)) {
       throw InvalidBackupException(
-          BackupRejection.inconsistent, 'duplicate tank id ${t.id.value}');
+        BackupRejection.inconsistent,
+        'duplicate tank id ${t.id.value}',
+      );
     }
   }
 
@@ -254,8 +294,10 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   void requireTank(String section, Iterable<int> tankIdsUsed) {
     for (final id in tankIdsUsed) {
       if (!tankIds.contains(id)) {
-        throw InvalidBackupException(BackupRejection.inconsistent,
-            '$section references missing tank $id');
+        throw InvalidBackupException(
+          BackupRejection.inconsistent,
+          '$section references missing tank $id',
+        );
       }
     }
   }
@@ -264,10 +306,14 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   requireTank('readings', data.readings.map((r) => r.tankId.value));
   requireTank('waterChanges', data.waterChanges.map((r) => r.tankId.value));
   requireTank('carbonChanges', data.carbonChanges.map((r) => r.tankId.value));
-  requireTank('equipmentCleanings',
-      data.equipmentCleanings.map((r) => r.tankId.value));
   requireTank(
-      'ratioVisibilities', data.ratioVisibilities.map((r) => r.tankId.value));
+    'equipmentCleanings',
+    data.equipmentCleanings.map((r) => r.tankId.value),
+  );
+  requireTank(
+    'ratioVisibilities',
+    data.ratioVisibilities.map((r) => r.tankId.value),
+  );
   requireTank('dosingEntries', data.dosingEntries.map((r) => r.tankId.value));
 
   // Enum-ish text columns must hold values the app can interpret (#34): a
@@ -276,11 +322,16 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   // frequency silently degrades into fallback behavior. Nulls pass where the
   // column is nullable; only present garbage rejects.
   void requireKnown(
-      String field, Iterable<String?> values, Set<String> allowed) {
+    String field,
+    Iterable<String?> values,
+    Set<String> allowed,
+  ) {
     for (final v in values) {
       if (v != null && !allowed.contains(v)) {
         throw InvalidBackupException(
-            BackupRejection.inconsistent, '$field: unknown value "$v"');
+          BackupRejection.inconsistent,
+          '$field: unknown value "$v"',
+        );
       }
     }
   }
@@ -288,27 +339,34 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   Set<String> names(List<Enum> values) => {for (final v in values) v.name};
 
   requireKnown(
-      'tanks.setupType',
-      data.tanks.map((t) => t.setupType.present ? t.setupType.value : null),
-      names(SetupType.values));
+    'tanks.setupType',
+    data.tanks.map((t) => t.setupType.present ? t.setupType.value : null),
+    names(SetupType.values),
+  );
   requireKnown(
-      'dosingEntries.state',
-      data.dosingEntries.map((d) => d.state.present ? d.state.value : null),
-      names(DosingState.values));
+    'dosingEntries.state',
+    data.dosingEntries.map((d) => d.state.present ? d.state.value : null),
+    names(DosingState.values),
+  );
   requireKnown(
-      'dosingEntries.frequency',
-      data.dosingEntries
-          .map((d) => d.frequency.present ? d.frequency.value : null),
-      names(DoseFrequency.values));
+    'dosingEntries.frequency',
+    data.dosingEntries.map(
+      (d) => d.frequency.present ? d.frequency.value : null,
+    ),
+    names(DoseFrequency.values),
+  );
   requireKnown(
-      'dosingEntries.amountUnit',
-      data.dosingEntries
-          .map((d) => d.amountUnit.present ? d.amountUnit.value : null),
-      names(DoseUnit.values));
+    'dosingEntries.amountUnit',
+    data.dosingEntries.map(
+      (d) => d.amountUnit.present ? d.amountUnit.value : null,
+    ),
+    names(DoseUnit.values),
+  );
   requireKnown(
-      'dosingEntries.basis',
-      data.dosingEntries.map((d) => d.basis.present ? d.basis.value : null),
-      names(DoseBasis.values));
+    'dosingEntries.basis',
+    data.dosingEntries.map((d) => d.basis.present ? d.basis.value : null),
+    names(DoseBasis.values),
+  );
 }
 
 /// Imports [data] into the live database safely:
@@ -333,8 +391,12 @@ Future<void> importBackup(AppDatabase db, BackupData data) async {
 /// deleted afterwards.
 Future<void> _rehearseRestore(BackupData data) async {
   final dir = await getTemporaryDirectory();
-  final file = File(p.join(
-      dir.path, 'reeftracker-import-${DateTime.now().microsecondsSinceEpoch}.sqlite'));
+  final file = File(
+    p.join(
+      dir.path,
+      'reeftracker-import-${DateTime.now().microsecondsSinceEpoch}.sqlite',
+    ),
+  );
   await _deleteDbFiles(file);
   // createInBackground, not NativeDatabase(file): the synchronous executor
   // would run every rehearsal insert's SQLite C call on the calling (UI)
@@ -361,7 +423,8 @@ Future<void> _deleteDbFiles(File db) async {
   }
 }
 
-Future<void> _applyRestore(AppDatabase db, BackupData data) => db.restoreFromBackup(
+Future<void> _applyRestore(AppDatabase db, BackupData data) =>
+    db.restoreFromBackup(
       tankRows: data.tanks,
       paramRows: data.params,
       readingRows: data.readings,
@@ -397,18 +460,20 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   final settings = await db.getAllSettings();
   // The closure must capture only sendable plain data — never [db]: an open
   // database (ports, native handles) cannot cross the isolate boundary.
-  return Isolate.run(() => encodeBackup(
-        schemaVersion: schemaVersion,
-        tanks: tanks,
-        params: params,
-        readings: readings,
-        waterChanges: waterChanges,
-        carbonChanges: carbonChanges,
-        equipmentCleanings: equipmentCleanings,
-        ratioVisibilities: ratioVisibilities,
-        dosingEntries: dosingEntries,
-        settings: settings,
-      ));
+  return Isolate.run(
+    () => encodeBackup(
+      schemaVersion: schemaVersion,
+      tanks: tanks,
+      params: params,
+      readings: readings,
+      waterChanges: waterChanges,
+      carbonChanges: carbonChanges,
+      equipmentCleanings: equipmentCleanings,
+      ratioVisibilities: ratioVisibilities,
+      dosingEntries: dosingEntries,
+      settings: settings,
+    ),
+  );
 }
 
 /// Filename prefix for the plaintext JSON the share sheet receives. Used to
@@ -436,10 +501,9 @@ Future<void> exportBackup(AppDatabase db) async {
   await file.writeAsString(json);
 
   try {
-    final result = await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'application/json', name: fileName)],
-      subject: fileName,
-    );
+    final result = await Share.shareXFiles([
+      XFile(file.path, mimeType: 'application/json', name: fileName),
+    ], subject: fileName);
     if (result.status == ShareResultStatus.dismissed) {
       await _sweepSharePlusCopies(dir);
     }
@@ -520,12 +584,16 @@ Future<BackupData?> pickBackupData() async {
       // content — keep the InvalidBackupException contract (#37) so the user
       // gets the specific rejection message instead of a generic failure.
       throw InvalidBackupException(
-          BackupRejection.notBackupFile, 'unreadable file: ${e.message}');
+        BackupRejection.notBackupFile,
+        'unreadable file: ${e.message}',
+      );
     }
     return Isolate.run(() => decodeBackup(contents));
   }
   throw const InvalidBackupException(
-      BackupRejection.notBackupFile, 'could not read the selected file');
+    BackupRejection.notBackupFile,
+    'could not read the selected file',
+  );
 }
 
 /// Decodes raw backup-file [bytes], keeping the [InvalidBackupException]
@@ -537,7 +605,9 @@ BackupData decodeBackupBytes(List<int> bytes) {
     contents = utf8.decode(bytes);
   } on FormatException catch (e) {
     throw InvalidBackupException(
-        BackupRejection.notBackupFile, 'not UTF-8 text: ${e.message}');
+      BackupRejection.notBackupFile,
+      'not UTF-8 text: ${e.message}',
+    );
   }
   return decodeBackup(contents);
 }
@@ -545,41 +615,41 @@ BackupData decodeBackupBytes(List<int> bytes) {
 // --- JSON mapping (DateTimes stored as epoch milliseconds) -----------------
 
 Map<String, dynamic> _tankToJson(Tank t) => {
-      'id': t.id,
-      'name': t.name,
-      'setupType': t.setupType,
-      'volumeLiters': t.volumeLiters,
-      'startDate': t.startDate?.millisecondsSinceEpoch,
-      'notes': t.notes,
-      'vendor': t.vendor,
-      'model': t.model,
-      'createdAt': t.createdAt.millisecondsSinceEpoch,
-    };
+  'id': t.id,
+  'name': t.name,
+  'setupType': t.setupType,
+  'volumeLiters': t.volumeLiters,
+  'startDate': t.startDate?.millisecondsSinceEpoch,
+  'notes': t.notes,
+  'vendor': t.vendor,
+  'model': t.model,
+  'createdAt': t.createdAt.millisecondsSinceEpoch,
+};
 
 TanksCompanion _tankFromJson(Map<String, dynamic> m) => TanksCompanion(
-      id: Value(m['id'] as int),
-      name: Value(m['name'] as String),
-      setupType: Value(m['setupType'] as String),
-      volumeLiters: Value((m['volumeLiters'] as num?)?.toDouble()),
-      startDate: Value(_dateOrNull(m['startDate'])),
-      notes: Value(m['notes'] as String?),
-      vendor: Value(m['vendor'] as String?),
-      model: Value(m['model'] as String?),
-      createdAt: Value(_date(m['createdAt'])),
-    );
+  id: Value(m['id'] as int),
+  name: Value(m['name'] as String),
+  setupType: Value(m['setupType'] as String),
+  volumeLiters: Value((m['volumeLiters'] as num?)?.toDouble()),
+  startDate: Value(_dateOrNull(m['startDate'])),
+  notes: Value(m['notes'] as String?),
+  vendor: Value(m['vendor'] as String?),
+  model: Value(m['model'] as String?),
+  createdAt: Value(_date(m['createdAt'])),
+);
 
 Map<String, dynamic> _paramToJson(TrackedParameter t) => {
-      'id': t.id,
-      'tankId': t.tankId,
-      'paramKey': t.paramKey,
-      'unit': t.unit,
-      'enabled': t.enabled,
-      'displayOrder': t.displayOrder,
-      'amberLow': t.amberLow,
-      'greenLow': t.greenLow,
-      'greenHigh': t.greenHigh,
-      'amberHigh': t.amberHigh,
-    };
+  'id': t.id,
+  'tankId': t.tankId,
+  'paramKey': t.paramKey,
+  'unit': t.unit,
+  'enabled': t.enabled,
+  'displayOrder': t.displayOrder,
+  'amberLow': t.amberLow,
+  'greenLow': t.greenLow,
+  'greenHigh': t.greenHigh,
+  'amberHigh': t.amberHigh,
+};
 
 TrackedParametersCompanion _paramFromJson(Map<String, dynamic> m) =>
     TrackedParametersCompanion(
@@ -596,33 +666,33 @@ TrackedParametersCompanion _paramFromJson(Map<String, dynamic> m) =>
     );
 
 Map<String, dynamic> _readingToJson(Reading r) => {
-      'id': r.id,
-      'tankId': r.tankId,
-      'paramKey': r.paramKey,
-      'value': r.value,
-      'takenAt': r.takenAt.millisecondsSinceEpoch,
-      'note': r.note,
-      'groupId': r.groupId,
-    };
+  'id': r.id,
+  'tankId': r.tankId,
+  'paramKey': r.paramKey,
+  'value': r.value,
+  'takenAt': r.takenAt.millisecondsSinceEpoch,
+  'note': r.note,
+  'groupId': r.groupId,
+};
 
 ReadingsCompanion _readingFromJson(Map<String, dynamic> m) => ReadingsCompanion(
-      id: Value(m['id'] as int),
-      tankId: Value(m['tankId'] as int),
-      paramKey: Value(m['paramKey'] as String),
-      value: Value((m['value'] as num).toDouble()),
-      takenAt: Value(_date(m['takenAt'])),
-      note: Value(m['note'] as String?),
-      // Absent in pre-v13 backups; such rows keep timestamp grouping (#15).
-      groupId: Value(m['groupId'] as String?),
-    );
+  id: Value(m['id'] as int),
+  tankId: Value(m['tankId'] as int),
+  paramKey: Value(m['paramKey'] as String),
+  value: Value((m['value'] as num).toDouble()),
+  takenAt: Value(_date(m['takenAt'])),
+  note: Value(m['note'] as String?),
+  // Absent in pre-v13 backups; such rows keep timestamp grouping (#15).
+  groupId: Value(m['groupId'] as String?),
+);
 
 Map<String, dynamic> _waterChangeToJson(WaterChange w) => {
-      'id': w.id,
-      'tankId': w.tankId,
-      'changedAt': w.changedAt.millisecondsSinceEpoch,
-      'amountLiters': w.amountLiters,
-      'note': w.note,
-    };
+  'id': w.id,
+  'tankId': w.tankId,
+  'changedAt': w.changedAt.millisecondsSinceEpoch,
+  'amountLiters': w.amountLiters,
+  'note': w.note,
+};
 
 WaterChangesCompanion _waterChangeFromJson(Map<String, dynamic> m) =>
     WaterChangesCompanion(
@@ -634,12 +704,12 @@ WaterChangesCompanion _waterChangeFromJson(Map<String, dynamic> m) =>
     );
 
 Map<String, dynamic> _carbonChangeToJson(CarbonChange c) => {
-      'id': c.id,
-      'tankId': c.tankId,
-      'changedAt': c.changedAt.millisecondsSinceEpoch,
-      'grams': c.grams,
-      'note': c.note,
-    };
+  'id': c.id,
+  'tankId': c.tankId,
+  'changedAt': c.changedAt.millisecondsSinceEpoch,
+  'grams': c.grams,
+  'note': c.note,
+};
 
 CarbonChangesCompanion _carbonChangeFromJson(Map<String, dynamic> m) =>
     CarbonChangesCompanion(
@@ -651,31 +721,31 @@ CarbonChangesCompanion _carbonChangeFromJson(Map<String, dynamic> m) =>
     );
 
 Map<String, dynamic> _equipmentCleaningToJson(EquipmentCleaning c) => {
-      'id': c.id,
-      'tankId': c.tankId,
-      'cleanedAt': c.cleanedAt.millisecondsSinceEpoch,
-      'note': c.note,
-    };
+  'id': c.id,
+  'tankId': c.tankId,
+  'cleanedAt': c.cleanedAt.millisecondsSinceEpoch,
+  'note': c.note,
+};
 
 EquipmentCleaningsCompanion _equipmentCleaningFromJson(
-        Map<String, dynamic> m) =>
-    EquipmentCleaningsCompanion(
-      id: Value(m['id'] as int),
-      tankId: Value(m['tankId'] as int),
-      cleanedAt: Value(_date(m['cleanedAt'])),
-      note: Value(m['note'] as String?),
-    );
+  Map<String, dynamic> m,
+) => EquipmentCleaningsCompanion(
+  id: Value(m['id'] as int),
+  tankId: Value(m['tankId'] as int),
+  cleanedAt: Value(_date(m['cleanedAt'])),
+  note: Value(m['note'] as String?),
+);
 
 Map<String, dynamic> _ratioVisibilityToJson(RatioVisibility r) => {
-      'tankId': r.tankId,
-      'ratioKey': r.ratioKey,
-      'visible': r.visible,
-      'displayOrder': r.displayOrder,
-      'amberLow': r.amberLow,
-      'greenLow': r.greenLow,
-      'greenHigh': r.greenHigh,
-      'amberHigh': r.amberHigh,
-    };
+  'tankId': r.tankId,
+  'ratioKey': r.ratioKey,
+  'visible': r.visible,
+  'displayOrder': r.displayOrder,
+  'amberLow': r.amberLow,
+  'greenLow': r.greenLow,
+  'greenHigh': r.greenHigh,
+  'amberHigh': r.amberHigh,
+};
 
 RatioVisibilitiesCompanion _ratioVisibilityFromJson(Map<String, dynamic> m) =>
     RatioVisibilitiesCompanion(
@@ -693,27 +763,27 @@ RatioVisibilitiesCompanion _ratioVisibilityFromJson(Map<String, dynamic> m) =>
     );
 
 Map<String, dynamic> _dosingEntryToJson(DosingEntry d) => {
-      'id': d.id,
-      'tankId': d.tankId,
-      'productKey': d.productKey,
-      'vendor': d.vendor,
-      'program': d.program,
-      'product': d.product,
-      'elementKey': d.elementKey,
-      'amount': d.amount,
-      'amountUnit': d.amountUnit,
-      'basis': d.basis,
-      'frequency': d.frequency,
-      'intervalDays': d.intervalDays,
-      'weekdays': d.weekdays,
-      'doseTime': d.doseTime,
-      'note': d.note,
-      'displayOrder': d.displayOrder,
-      'createdAt': d.createdAt.millisecondsSinceEpoch,
-      'startedAt': d.startedAt?.millisecondsSinceEpoch,
-      'endedAt': d.endedAt?.millisecondsSinceEpoch,
-      'state': d.state,
-    };
+  'id': d.id,
+  'tankId': d.tankId,
+  'productKey': d.productKey,
+  'vendor': d.vendor,
+  'program': d.program,
+  'product': d.product,
+  'elementKey': d.elementKey,
+  'amount': d.amount,
+  'amountUnit': d.amountUnit,
+  'basis': d.basis,
+  'frequency': d.frequency,
+  'intervalDays': d.intervalDays,
+  'weekdays': d.weekdays,
+  'doseTime': d.doseTime,
+  'note': d.note,
+  'displayOrder': d.displayOrder,
+  'createdAt': d.createdAt.millisecondsSinceEpoch,
+  'startedAt': d.startedAt?.millisecondsSinceEpoch,
+  'endedAt': d.endedAt?.millisecondsSinceEpoch,
+  'state': d.state,
+};
 
 DosingEntriesCompanion _dosingEntryFromJson(Map<String, dynamic> m) =>
     DosingEntriesCompanion(
@@ -742,14 +812,14 @@ DosingEntriesCompanion _dosingEntryFromJson(Map<String, dynamic> m) =>
     );
 
 Map<String, dynamic> _settingToJson(Setting s) => {
-      'key': s.key,
-      'value': s.value,
-    };
+  'key': s.key,
+  'value': s.value,
+};
 
 SettingsCompanion _settingFromJson(Map<String, dynamic> m) => SettingsCompanion(
-      key: Value(m['key'] as String),
-      value: Value(m['value'] as String?),
-    );
+  key: Value(m['key'] as String),
+  value: Value(m['value'] as String?),
+);
 
 List<Map<String, dynamic>> _listOfMaps(dynamic v) =>
     (v as List).cast<Map<String, dynamic>>();

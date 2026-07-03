@@ -47,13 +47,15 @@ class TanksScreen extends ConsumerWidget {
                     ],
                   ],
                 ),
-                subtitle: Text([
-                  l.setupLabel(type),
-                  if (t.volumeLiters != null)
-                    l.volumeWithUnit(t.volumeLiters!, volumeUnit),
-                  if (t.startDate != null)
-                    l.sinceDate(DateFormat.yMMMd().format(t.startDate!)),
-                ].join(' • ')),
+                subtitle: Text(
+                  [
+                    l.setupLabel(type),
+                    if (t.volumeLiters != null)
+                      l.volumeWithUnit(t.volumeLiters!, volumeUnit),
+                    if (t.startDate != null)
+                      l.sinceDate(DateFormat.yMMMd().format(t.startDate!)),
+                  ].join(' • '),
+                ),
                 trailing: PopupMenuButton<String>(
                   onSelected: (v) async {
                     switch (v) {
@@ -68,7 +70,9 @@ class TanksScreen extends ConsumerWidget {
                   itemBuilder: (context) => [
                     if (!isActive)
                       PopupMenuItem(
-                          value: 'activate', child: Text(l.makeActive)),
+                        value: 'activate',
+                        child: Text(l.makeActive),
+                      ),
                     PopupMenuItem(value: 'edit', child: Text(l.edit)),
                     PopupMenuItem(value: 'delete', child: Text(l.delete)),
                   ],
@@ -88,7 +92,10 @@ class TanksScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(
-      BuildContext context, WidgetRef ref, Tank tank) async {
+    BuildContext context,
+    WidgetRef ref,
+    Tank tank,
+  ) async {
     final l = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
@@ -97,11 +104,13 @@ class TanksScreen extends ConsumerWidget {
         content: Text(l.deleteTankBody),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.cancel)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(l.delete),
           ),
@@ -132,9 +141,9 @@ class _ActiveBadge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: scheme.onPrimaryContainer,
-              fontWeight: FontWeight.w600,
-            ),
+          color: scheme.onPrimaryContainer,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -152,17 +161,22 @@ class TankEditScreen extends ConsumerStatefulWidget {
 
 class _TankEditScreenState extends ConsumerState<TankEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _name =
-      TextEditingController(text: widget.tank?.name ?? '');
-  late final TextEditingController _vendor =
-      TextEditingController(text: widget.tank?.vendor ?? '');
-  late final TextEditingController _model =
-      TextEditingController(text: widget.tank?.model ?? '');
-  late final TextEditingController _notes =
-      TextEditingController(text: widget.tank?.notes ?? '');
+  late final TextEditingController _name = TextEditingController(
+    text: widget.tank?.name ?? '',
+  );
+  late final TextEditingController _vendor = TextEditingController(
+    text: widget.tank?.vendor ?? '',
+  );
+  late final TextEditingController _model = TextEditingController(
+    text: widget.tank?.model ?? '',
+  );
+  late final TextEditingController _notes = TextEditingController(
+    text: widget.tank?.notes ?? '',
+  );
   late final TextEditingController _volume;
-  late SetupType _type =
-      widget.tank != null ? SetupType.fromName(widget.tank!.setupType) : SetupType.mixed;
+  late SetupType _type = widget.tank != null
+      ? SetupType.fromName(widget.tank!.setupType)
+      : SetupType.mixed;
   late DateTime? _startDate = widget.tank?.startDate;
   bool _saving = false;
 
@@ -177,7 +191,8 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
     super.initState();
     final liters = widget.tank?.volumeLiters;
     _volume = TextEditingController(
-        text: liters == null ? '' : formatVolume(liters, _volumeUnit));
+      text: liters == null ? '' : formatVolume(liters, _volumeUnit),
+    );
   }
 
   @override
@@ -214,19 +229,20 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
     final typed = parseUserDouble(_volume.text);
-    final volume =
-        typed == null ? null : volumeToCanonical(typed, _volumeUnit);
+    final volume = typed == null ? null : volumeToCanonical(typed, _volumeUnit);
     try {
       if (_isEdit) {
-        await db.updateTank(widget.tank!.copyWith(
-          name: _name.text.trim(),
-          setupType: _type.name,
-          volumeLiters: Value(volume),
-          startDate: Value(_startDate),
-          notes: Value(_trimToNull(_notes.text)),
-          vendor: Value(_trimToNull(_vendor.text)),
-          model: Value(_trimToNull(_model.text)),
-        ));
+        await db.updateTank(
+          widget.tank!.copyWith(
+            name: _name.text.trim(),
+            setupType: _type.name,
+            volumeLiters: Value(volume),
+            startDate: Value(_startDate),
+            notes: Value(_trimToNull(_notes.text)),
+            vendor: Value(_trimToNull(_vendor.text)),
+            model: Value(_trimToNull(_model.text)),
+          ),
+        );
       } else {
         await db.createTankWithPreset(
           name: _name.text.trim(),
@@ -241,7 +257,9 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
-        messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(e.toString()))));
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.saveFailed(e.toString()))),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -261,7 +279,9 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
             TextFormField(
               controller: _name,
               decoration: InputDecoration(
-                  labelText: l.name, hintText: l.nameHint),
+                labelText: l.name,
+                hintText: l.nameHint,
+              ),
               textCapitalization: TextCapitalization.sentences,
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? l.enterAName : null,
@@ -278,16 +298,20 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
             ),
             const SizedBox(height: 8),
             if (!_isEdit)
-              Text(l.presetSeedNote,
-                  style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                l.presetSeedNote,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _volume,
               decoration: InputDecoration(
-                  labelText: l.volumeOptional,
-                  suffixText: _volumeUnit.symbol),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                labelText: l.volumeOptional,
+                suffixText: _volumeUnit.symbol,
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               validator: (v) {
                 // Optional field: blank is fine, but a non-empty entry must be
                 // a finite positive number.
@@ -313,9 +337,11 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event),
               title: Text(l.startDate),
-              subtitle: Text(_startDate == null
-                  ? l.notSet
-                  : DateFormat.yMMMd().format(_startDate!)),
+              subtitle: Text(
+                _startDate == null
+                    ? l.notSet
+                    : DateFormat.yMMMd().format(_startDate!),
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -351,7 +377,8 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.save),
               label: Text(_isEdit ? l.save : l.createAquarium),
             ),

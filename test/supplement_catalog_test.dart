@@ -9,8 +9,9 @@ import 'package:reeftracker/domain/supplement_catalog.dart';
 void main() {
   final validParams = kParameterByKey.keys.toSet();
 
-  Iterable<SupplementProduct> allProducts() =>
-      [for (final v in kSupplementVendors) ...v.allProducts];
+  Iterable<SupplementProduct> allProducts() => [
+    for (final v in kSupplementVendors) ...v.allProducts,
+  ];
 
   test('product keys are unique across the whole catalog', () {
     final seen = <String>{};
@@ -26,9 +27,13 @@ void main() {
   test('every elementKey is a real reef-parameter key', () {
     for (final p in allProducts()) {
       if (p.elementKey != null) {
-        expect(validParams, contains(p.elementKey),
-            reason: 'product "${p.key}" has unknown elementKey '
-                '"${p.elementKey}"');
+        expect(
+          validParams,
+          contains(p.elementKey),
+          reason:
+              'product "${p.key}" has unknown elementKey '
+              '"${p.elementKey}"',
+        );
       }
     }
   });
@@ -36,8 +41,11 @@ void main() {
   test('every strength key is a real reef-parameter key', () {
     for (final p in allProducts()) {
       for (final key in p.strength?.keys ?? const <String>[]) {
-        expect(validParams, contains(key),
-            reason: 'product "${p.key}" has unknown strength key "$key"');
+        expect(
+          validParams,
+          contains(key),
+          reason: 'product "${p.key}" has unknown strength key "$key"',
+        );
       }
     }
   });

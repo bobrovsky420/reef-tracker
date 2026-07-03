@@ -4,14 +4,17 @@ import 'zones.dart';
 /// Shorthand for building [ZoneBounds] from an amber-low / green-low /
 /// green-high / amber-high tuple. `null` outer bounds mean "never red on that
 /// side".
-ZoneBounds _b(double? amberLow, double greenLow, double greenHigh,
-        double? amberHigh) =>
-    ZoneBounds(
-      amberLow: amberLow,
-      greenLow: greenLow,
-      greenHigh: greenHigh,
-      amberHigh: amberHigh,
-    );
+ZoneBounds _b(
+  double? amberLow,
+  double greenLow,
+  double greenHigh,
+  double? amberHigh,
+) => ZoneBounds(
+  amberLow: amberLow,
+  greenLow: greenLow,
+  greenHigh: greenHigh,
+  amberHigh: amberHigh,
+);
 
 /// Default boundaries per setup type. The *keys present* in each map are the
 /// parameters tracked by default for that setup type; everything else can be

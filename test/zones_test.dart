@@ -4,7 +4,12 @@ import 'package:reeftracker/widgets/zone_visuals.dart';
 
 void main() {
   group('ZoneBounds.classify', () {
-    const b = ZoneBounds(amberLow: 7, greenLow: 7.5, greenHigh: 8.5, amberHigh: 9);
+    const b = ZoneBounds(
+      amberLow: 7,
+      greenLow: 7.5,
+      greenHigh: 8.5,
+      amberHigh: 9,
+    );
 
     test('inside green range', () {
       expect(b.classify(7.5), Zone.green);
@@ -52,19 +57,21 @@ void main() {
       expect(greenLowOnly.classify(5), Zone.amber); // below green, no amberLow
     });
 
-    test('bounds violating the ordering invariant classify as unknown (#30)',
-        () {
-      // Inverted greens (possible via restored/hand-edited backups) used to
-      // label every value amber; they are unusable, not a real config.
-      const inverted = ZoneBounds(greenLow: 9, greenHigh: 8);
-      expect(inverted.isValid, isFalse);
-      expect(inverted.classify(8.5), Zone.unknown);
-      expect(inverted.classify(1), Zone.unknown);
+    test(
+      'bounds violating the ordering invariant classify as unknown (#30)',
+      () {
+        // Inverted greens (possible via restored/hand-edited backups) used to
+        // label every value amber; they are unusable, not a real config.
+        const inverted = ZoneBounds(greenLow: 9, greenHigh: 8);
+        expect(inverted.isValid, isFalse);
+        expect(inverted.classify(8.5), Zone.unknown);
+        expect(inverted.classify(1), Zone.unknown);
 
-      const crossed = ZoneBounds(amberLow: 8, greenLow: 7);
-      expect(crossed.isValid, isFalse);
-      expect(crossed.classify(7.5), Zone.unknown);
-    });
+        const crossed = ZoneBounds(amberLow: 8, greenLow: 7);
+        expect(crossed.isValid, isFalse);
+        expect(crossed.classify(7.5), Zone.unknown);
+      },
+    );
 
     test('ordered and partial bounds are valid', () {
       expect(b.isValid, isTrue);
@@ -82,7 +89,11 @@ void main() {
 
     test('copyWith overrides only the supplied bounds', () {
       const b = ZoneBounds(
-          amberLow: 7, greenLow: 7.5, greenHigh: 8.5, amberHigh: 9);
+        amberLow: 7,
+        greenLow: 7.5,
+        greenHigh: 8.5,
+        amberHigh: 9,
+      );
       final c = b.copyWith(greenHigh: 9.0);
       expect(c.amberLow, 7);
       expect(c.greenLow, 7.5);

@@ -42,9 +42,10 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (v) => settings.setLocaleCode(v),
               items: [
                 DropdownMenuItem(
-                    value: 'system', child: Text(l.languageSystem)),
-                DropdownMenuItem(
-                    value: 'en', child: Text(l.languageEnglish)),
+                  value: 'system',
+                  child: Text(l.languageSystem),
+                ),
+                DropdownMenuItem(value: 'en', child: Text(l.languageEnglish)),
                 DropdownMenuItem(value: 'cs', child: Text(l.languageCzech)),
                 DropdownMenuItem(value: 'de', child: Text(l.languageGerman)),
                 DropdownMenuItem(value: 'ru', child: Text(l.languageRussian)),
@@ -64,8 +65,7 @@ class SettingsScreen extends ConsumerWidget {
                 ButtonSegment(value: TempUnit.fahrenheit, label: Text('°F')),
               ],
               selected: {prefs.temp},
-              onSelectionChanged: (s) =>
-                  settings.setTempUnit(s.first),
+              onSelectionChanged: (s) => settings.setTempUnit(s.first),
             ),
           ),
           ListTile(
@@ -78,8 +78,7 @@ class SettingsScreen extends ConsumerWidget {
                 ButtonSegment(value: SalinityUnit.sg, label: Text('SG')),
               ],
               selected: {prefs.salinity},
-              onSelectionChanged: (s) =>
-                  settings.setSalinityUnit(s.first),
+              onSelectionChanged: (s) => settings.setSalinityUnit(s.first),
             ),
           ),
           ListTile(
@@ -92,8 +91,7 @@ class SettingsScreen extends ConsumerWidget {
                 ButtonSegment(value: VolumeUnit.gallons, label: Text('gal')),
               ],
               selected: {prefs.volume},
-              onSelectionChanged: (s) =>
-                  settings.setVolumeUnit(s.first),
+              onSelectionChanged: (s) => settings.setVolumeUnit(s.first),
             ),
           ),
           const Divider(),
@@ -103,20 +101,23 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l.healthDisplayTitle),
             subtitle: Text(l.healthDisplaySubtitle),
             trailing: DropdownButton<HealthDisplay>(
-              value: ref.watch(healthDisplayProvider).value ??
-                  HealthDisplay.both,
+              value:
+                  ref.watch(healthDisplayProvider).value ?? HealthDisplay.both,
               underline: const SizedBox.shrink(),
-              onChanged: (v) =>
-                  v == null ? null : settings.setHealthDisplay(v),
+              onChanged: (v) => v == null ? null : settings.setHealthDisplay(v),
               items: [
                 DropdownMenuItem(
-                    value: HealthDisplay.both,
-                    child: Text(l.healthDisplayBoth)),
+                  value: HealthDisplay.both,
+                  child: Text(l.healthDisplayBoth),
+                ),
                 DropdownMenuItem(
-                    value: HealthDisplay.badge,
-                    child: Text(l.healthDisplayBadge)),
+                  value: HealthDisplay.badge,
+                  child: Text(l.healthDisplayBadge),
+                ),
                 DropdownMenuItem(
-                    value: HealthDisplay.off, child: Text(l.healthDisplayOff)),
+                  value: HealthDisplay.off,
+                  child: Text(l.healthDisplayOff),
+                ),
               ],
             ),
           ),
@@ -126,16 +127,19 @@ class SettingsScreen extends ConsumerWidget {
             secondary: const Icon(Icons.trending_up),
             title: Text(l.trendShowTitle),
             subtitle: Text(l.trendShowSubtitle),
-            value: ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled,
+            value:
+                ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled,
             onChanged: (v) => settings.setTrendEnabled(v),
           ),
-          if (ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled) ...[
+          if (ref.watch(trendEnabledProvider).value ??
+              kTrendDefaultEnabled) ...[
             ListTile(
               leading: const Icon(Icons.timeline),
               title: Text(l.trendWindow),
               subtitle: Text(l.trendWindowSubtitle),
               trailing: DropdownButton<int>(
-                value: ref.watch(trendWindowProvider).value ?? kTrendDefaultWindow,
+                value:
+                    ref.watch(trendWindowProvider).value ?? kTrendDefaultWindow,
                 underline: const SizedBox.shrink(),
                 onChanged: (v) => v == null ? null : settings.setTrendWindow(v),
                 items: [
@@ -150,12 +154,17 @@ class SettingsScreen extends ConsumerWidget {
               subtitle: Text(l.trendHorizonSubtitle),
               trailing: DropdownButton<int>(
                 value:
-                    ref.watch(trendHorizonProvider).value ?? kTrendDefaultHorizon,
+                    ref.watch(trendHorizonProvider).value ??
+                    kTrendDefaultHorizon,
                 underline: const SizedBox.shrink(),
-                onChanged: (v) => v == null ? null : settings.setTrendHorizon(v),
+                onChanged: (v) =>
+                    v == null ? null : settings.setTrendHorizon(v),
                 items: [
                   for (final n in _trendHorizonOptions)
-                    DropdownMenuItem(value: n, child: Text(l.trendHorizonDays(n))),
+                    DropdownMenuItem(
+                      value: n,
+                      child: Text(l.trendHorizonDays(n)),
+                    ),
                 ],
               ),
             ),
@@ -175,14 +184,19 @@ class SettingsScreen extends ConsumerWidget {
             leading: const Icon(Icons.backup),
             title: Text(l.backupNow),
             subtitle: Text(
-              ref.watch(lastBackupAtProvider).maybeWhen(
+              ref
+                  .watch(lastBackupAtProvider)
+                  .maybeWhen(
                     data: (t) => t == null
                         ? l.backupNeverRun
                         // Shared helper honors the device 12/24-hour
                         // preference (#41).
                         : l.backupLastRun(
-                            formatDateTime(context, t.toLocal(),
-                                weekday: false),
+                            formatDateTime(
+                              context,
+                              t.toLocal(),
+                              weekday: false,
+                            ),
                           ),
                     orElse: () => l.backupNeverRun,
                   ),
@@ -194,12 +208,14 @@ class SettingsScreen extends ConsumerWidget {
           // (#22). Cleared automatically by the next successful backup.
           if (ref.watch(lastBackupErrorAtProvider).value case final errorAt?)
             ListTile(
-              leading: Icon(Icons.error_outline,
-                  color: Theme.of(context).colorScheme.error),
+              leading: Icon(
+                Icons.error_outline,
+                color: Theme.of(context).colorScheme.error,
+              ),
               title: Text(
                 l.backupLastFailed(
-                    formatDateTime(context, errorAt.toLocal(),
-                        weekday: false)),
+                  formatDateTime(context, errorAt.toLocal(), weekday: false),
+                ),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
@@ -219,10 +235,10 @@ class SettingsScreen extends ConsumerWidget {
             secondary: const Icon(Icons.backup_outlined),
             title: Text(l.autoBackupTitle),
             subtitle: Text(l.autoBackupSubtitle),
-            value: ref.watch(autoBackupEnabledProvider).value ??
+            value:
+                ref.watch(autoBackupEnabledProvider).value ??
                 kAutoBackupDefaultEnabled,
-            onChanged: (v) =>
-                settings.setAutoBackupEnabled(v),
+            onChanged: (v) => settings.setAutoBackupEnabled(v),
           ),
           if (ref.watch(autoBackupEnabledProvider).value ??
               kAutoBackupDefaultEnabled) ...[
@@ -230,17 +246,21 @@ class SettingsScreen extends ConsumerWidget {
               leading: const Icon(Icons.schedule),
               title: Text(l.autoBackupFrequency),
               trailing: DropdownButton<AutoBackupInterval>(
-                value: ref.watch(autoBackupIntervalProvider).value ??
+                value:
+                    ref.watch(autoBackupIntervalProvider).value ??
                     AutoBackupInterval.daily,
                 underline: const SizedBox.shrink(),
-                onChanged: (v) => v == null ? null : settings.setAutoBackupInterval(v),
+                onChanged: (v) =>
+                    v == null ? null : settings.setAutoBackupInterval(v),
                 items: [
                   DropdownMenuItem(
-                      value: AutoBackupInterval.daily,
-                      child: Text(l.autoBackupDaily)),
+                    value: AutoBackupInterval.daily,
+                    child: Text(l.autoBackupDaily),
+                  ),
                   DropdownMenuItem(
-                      value: AutoBackupInterval.weekly,
-                      child: Text(l.autoBackupWeekly)),
+                    value: AutoBackupInterval.weekly,
+                    child: Text(l.autoBackupWeekly),
+                  ),
                 ],
               ),
             ),
@@ -290,7 +310,10 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _backupNow(
-      BuildContext context, AppDatabase db, AppLocalizations l) async {
+    BuildContext context,
+    AppDatabase db,
+    AppLocalizations l,
+  ) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await backupNow(db);
@@ -302,7 +325,10 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _export(
-      BuildContext context, AppDatabase db, AppLocalizations l) async {
+    BuildContext context,
+    AppDatabase db,
+    AppLocalizations l,
+  ) async {
     try {
       await exportBackup(db);
     } catch (_) {
@@ -311,7 +337,10 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _import(
-      BuildContext context, AppDatabase db, AppLocalizations l) async {
+    BuildContext context,
+    AppDatabase db,
+    AppLocalizations l,
+  ) async {
     final BackupData data;
     try {
       final picked = await pickBackupData();
@@ -356,8 +385,9 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _snack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

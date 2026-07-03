@@ -98,10 +98,7 @@ const List<SupplementVendor> kSupplementVendors = [
     key: 'tropicmarin',
     name: 'Tropic Marin',
     products: [
-      SupplementProduct(
-        key: 'tropicmarin.all_for_reef',
-        name: 'All-For-Reef',
-      ),
+      SupplementProduct(key: 'tropicmarin.all_for_reef', name: 'All-For-Reef'),
     ],
     programs: [
       SupplementProgram(
@@ -138,22 +135,10 @@ const List<SupplementVendor> kSupplementVendors = [
         key: 'core7',
         name: 'Core7 Base Elementz',
         products: [
-          SupplementProduct(
-            key: 'triton.core7_1',
-            name: 'Base Elementz #1',
-          ),
-          SupplementProduct(
-            key: 'triton.core7_2',
-            name: 'Base Elementz #2',
-          ),
-          SupplementProduct(
-            key: 'triton.core7_3',
-            name: 'Base Elementz #3',
-          ),
-          SupplementProduct(
-            key: 'triton.core7_4',
-            name: 'Base Elementz #4',
-          ),
+          SupplementProduct(key: 'triton.core7_1', name: 'Base Elementz #1'),
+          SupplementProduct(key: 'triton.core7_2', name: 'Base Elementz #2'),
+          SupplementProduct(key: 'triton.core7_3', name: 'Base Elementz #3'),
+          SupplementProduct(key: 'triton.core7_4', name: 'Base Elementz #4'),
         ],
       ),
     ],

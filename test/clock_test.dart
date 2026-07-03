@@ -6,8 +6,10 @@ void main() {
 
   group('ageSince', () {
     test('measures the age of a past instant', () {
-      expect(ageSince(now.subtract(const Duration(hours: 5)), now: now),
-          const Duration(hours: 5));
+      expect(
+        ageSince(now.subtract(const Duration(hours: 5)), now: now),
+        const Duration(hours: 5),
+      );
     });
 
     test('the same instant is zero', () {
@@ -15,8 +17,10 @@ void main() {
     });
 
     test('a future instant clamps to zero instead of going negative', () {
-      expect(ageSince(now.add(const Duration(days: 2)), now: now),
-          Duration.zero);
+      expect(
+        ageSince(now.add(const Duration(days: 2)), now: now),
+        Duration.zero,
+      );
     });
   });
 
@@ -24,12 +28,13 @@ void main() {
     test('rounds to the nearest day instead of truncating', () {
       // 18 h into the 7th day reads as 7 days, not 6.
       expect(
-          daysSince(now.subtract(const Duration(days: 6, hours: 18)),
-              now: now),
-          7);
+        daysSince(now.subtract(const Duration(days: 6, hours: 18)), now: now),
+        7,
+      );
       expect(
-          daysSince(now.subtract(const Duration(days: 6, hours: 6)), now: now),
-          6);
+        daysSince(now.subtract(const Duration(days: 6, hours: 6)), now: now),
+        6,
+      );
     });
 
     test('half a day rounds up, just under half a day rounds down', () {

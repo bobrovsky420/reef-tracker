@@ -107,9 +107,9 @@ enum SettingKey {
   /// The storage keys of every device-local preference — restore preserves
   /// exactly these (see [AppDatabase.restoreFromBackup]).
   static Set<String> get deviceLocalKeys => {
-        for (final k in values)
-          if (k.deviceLocal) k.storageKey,
-      };
+    for (final k in values)
+      if (k.deviceLocal) k.storageKey,
+  };
 }
 
 /// Typed facade over the [AppDatabase] key/value `Settings` store. Cheap to
@@ -150,8 +150,7 @@ class AppSettings {
   /// [kDefaultLocaleCode].
   Stream<String> watchLocaleCode() =>
       _watch(SettingKey.locale).map((v) => v ?? kDefaultLocaleCode);
-  Future<void> setLocaleCode(String? code) =>
-      _write(SettingKey.locale, code);
+  Future<void> setLocaleCode(String? code) => _write(SettingKey.locale, code);
 
   // --- chart range -----------------------------------------------------------
 
@@ -162,18 +161,21 @@ class AppSettings {
 
   // --- trend -----------------------------------------------------------------
 
-  Stream<bool> watchTrendEnabled() => _watch(SettingKey.trendEnabled)
-      .map((v) => v == null ? kTrendDefaultEnabled : v == 'true');
+  Stream<bool> watchTrendEnabled() => _watch(
+    SettingKey.trendEnabled,
+  ).map((v) => v == null ? kTrendDefaultEnabled : v == 'true');
   Future<void> setTrendEnabled(bool enabled) =>
       _write(SettingKey.trendEnabled, enabled.toString());
 
-  Stream<int> watchTrendWindow() => _watch(SettingKey.trendWindow)
-      .map((v) => int.tryParse(v ?? '') ?? kTrendDefaultWindow);
+  Stream<int> watchTrendWindow() => _watch(
+    SettingKey.trendWindow,
+  ).map((v) => int.tryParse(v ?? '') ?? kTrendDefaultWindow);
   Future<void> setTrendWindow(int window) =>
       _write(SettingKey.trendWindow, window.toString());
 
-  Stream<int> watchTrendHorizon() => _watch(SettingKey.trendHorizon)
-      .map((v) => int.tryParse(v ?? '') ?? kTrendDefaultHorizon);
+  Stream<int> watchTrendHorizon() => _watch(
+    SettingKey.trendHorizon,
+  ).map((v) => int.tryParse(v ?? '') ?? kTrendDefaultHorizon);
   Future<void> setTrendHorizon(int days) =>
       _write(SettingKey.trendHorizon, days.toString());
 
@@ -195,8 +197,9 @@ class AppSettings {
 
   // --- automatic backup ------------------------------------------------------
 
-  Stream<bool> watchAutoBackupEnabled() => _watch(SettingKey.autoBackupEnabled)
-      .map((v) => v == null ? kAutoBackupDefaultEnabled : v == 'true');
+  Stream<bool> watchAutoBackupEnabled() => _watch(
+    SettingKey.autoBackupEnabled,
+  ).map((v) => v == null ? kAutoBackupDefaultEnabled : v == 'true');
   Future<bool> readAutoBackupEnabled() async {
     final v = await _read(SettingKey.autoBackupEnabled);
     return v == null ? kAutoBackupDefaultEnabled : v == 'true';
@@ -223,7 +226,9 @@ class AppSettings {
   Future<DateTime?> readLastBackupAt() async =>
       _parseEpochMillis(await _read(SettingKey.lastAutoBackupAt));
   Future<void> setLastBackupAt(DateTime when) => _write(
-      SettingKey.lastAutoBackupAt, when.millisecondsSinceEpoch.toString());
+    SettingKey.lastAutoBackupAt,
+    when.millisecondsSinceEpoch.toString(),
+  );
 
   /// When the most recent backup attempt (automatic or manual) failed, or null
   /// if the latest attempt succeeded / none has failed yet. Cleared by every
@@ -232,7 +237,9 @@ class AppSettings {
   Stream<DateTime?> watchLastBackupErrorAt() =>
       _watch(SettingKey.lastBackupErrorAt).map(_parseEpochMillis);
   Future<void> setLastBackupErrorAt(DateTime? when) => _write(
-      SettingKey.lastBackupErrorAt, when?.millisecondsSinceEpoch.toString());
+    SettingKey.lastBackupErrorAt,
+    when?.millisecondsSinceEpoch.toString(),
+  );
 }
 
 DateTime? _parseEpochMillis(String? v) {

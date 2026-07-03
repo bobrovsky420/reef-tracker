@@ -46,8 +46,11 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.history,
-                size: 48, color: Theme.of(context).colorScheme.outline),
+            Icon(
+              Icons.history,
+              size: 48,
+              color: Theme.of(context).colorScheme.outline,
+            ),
             const SizedBox(height: 12),
             Text(
               l.dosingHistoryEmpty,
@@ -82,9 +85,10 @@ class _HistoryTile extends ConsumerWidget {
       storedProgram: entry.program,
       storedProduct: entry.product,
     );
-    final source = [names.vendor, names.program]
-        .where((s) => s != null && s.isNotEmpty)
-        .join(' · ');
+    final source = [
+      names.vendor,
+      names.program,
+    ].where((s) => s != null && s.isNotEmpty).join(' · ');
 
     return ListTile(
       titleAlignment: ListTileTitleAlignment.center,
@@ -108,10 +112,12 @@ class _HistoryTile extends ConsumerWidget {
           if (source.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(source,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.outline,
-                      )),
+              child: Text(
+                source,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.outline),
+              ),
             ),
           Padding(
             padding: const EdgeInsets.only(top: 2),
@@ -122,8 +128,8 @@ class _HistoryTile extends ConsumerWidget {
             child: Text(
               _period(context, l),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _active ? scheme.primary : scheme.outline,
-                  ),
+                color: _active ? scheme.primary : scheme.outline,
+              ),
             ),
           ),
         ],
@@ -150,10 +156,12 @@ class _HistoryTile extends ConsumerWidget {
     final key = entry.elementKey;
     if (key == null) return false;
     final mine = entry.startedAt ?? entry.createdAt;
-    return all.any((e) =>
-        e.id != entry.id &&
-        e.elementKey == key &&
-        (e.startedAt ?? e.createdAt).isAfter(mine));
+    return all.any(
+      (e) =>
+          e.id != entry.id &&
+          e.elementKey == key &&
+          (e.startedAt ?? e.createdAt).isAfter(mine),
+    );
   }
 
   Future<void> _confirmDelete(
@@ -194,8 +202,9 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final bg = highlight ? scheme.primaryContainer : scheme.secondaryContainer;
-    final fg =
-        highlight ? scheme.onPrimaryContainer : scheme.onSecondaryContainer;
+    final fg = highlight
+        ? scheme.onPrimaryContainer
+        : scheme.onSecondaryContainer;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(

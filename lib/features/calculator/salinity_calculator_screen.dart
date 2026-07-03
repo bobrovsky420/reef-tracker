@@ -16,10 +16,10 @@ class SalinityCalculatorScreen extends StatefulWidget {
 class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
   // Seed the fields through the locale formatter so a cs/de user sees "35,0"
   // from the start, matching what the fields echo while typing (#39).
-  late final _pptCtrl =
-      TextEditingController(text: formatLocaleNumber(35, 1));
-  late final _sgCtrl =
-      TextEditingController(text: formatLocaleNumber(1.0264, 4));
+  late final _pptCtrl = TextEditingController(text: formatLocaleNumber(35, 1));
+  late final _sgCtrl = TextEditingController(
+    text: formatLocaleNumber(1.0264, 4),
+  );
   bool _updating = false;
 
   @override
@@ -57,13 +57,14 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(l.calculatorIntro,
-              style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            l.calculatorIntro,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           const SizedBox(height: 24),
           TextField(
             controller: _pptCtrl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               labelText: l.salinity,
               suffixText: 'ppt',
@@ -77,8 +78,7 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
           ),
           TextField(
             controller: _sgCtrl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               labelText: l.specificGravity,
               suffixText: 'SG',
@@ -94,8 +94,10 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l.referencePoints,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    l.referencePoints,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(l.refSeawater),
                   Text(l.refReefTarget),
@@ -103,7 +105,9 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
                   Text(
                     l.refFormulaNote,
                     style: const TextStyle(
-                        fontSize: 12, fontStyle: FontStyle.italic),
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),

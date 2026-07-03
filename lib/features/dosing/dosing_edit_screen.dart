@@ -104,10 +104,9 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
 
   // --- Selection resolution ---------------------------------------------------
 
-  SupplementVendor? get _vendor =>
-      _vendorSel == null || _vendorSel == _kCustom
-          ? null
-          : kSupplementVendorByKey[_vendorSel];
+  SupplementVendor? get _vendor => _vendorSel == null || _vendorSel == _kCustom
+      ? null
+      : kSupplementVendorByKey[_vendorSel];
 
   bool get _customVendor => _vendorSel == _kCustom;
   bool get _customProduct =>
@@ -160,12 +159,13 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
 
-    final productKey =
-        (_productSel != null && _productSel != _kCustom) ? _productSel : null;
-    final vendorName =
-        _customVendor ? _vendorCtrl.text.trim() : _vendor?.name;
-    final program =
-        productKey != null ? kProgramNameByProductKey[productKey] : null;
+    final productKey = (_productSel != null && _productSel != _kCustom)
+        ? _productSel
+        : null;
+    final vendorName = _customVendor ? _vendorCtrl.text.trim() : _vendor?.name;
+    final program = productKey != null
+        ? kProgramNameByProductKey[productKey]
+        : null;
 
     final amount = parseUserDouble(_amountCtrl.text);
 
@@ -178,7 +178,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     final doseTime = _time == null
         ? null
         : '${_time!.hour.toString().padLeft(2, '0')}:'
-            '${_time!.minute.toString().padLeft(2, '0')}';
+              '${_time!.minute.toString().padLeft(2, '0')}';
     final note = _noteCtrl.text.trim();
 
     final companion = DosingEntriesCompanion(
@@ -208,11 +208,13 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
         await db.supersedeDosingEntry(existing, companion);
       } else {
         // Cosmetic-only edit (display name, note, time): update in place.
-        await db.updateDosingEntry(existing.copyWith(
-          product: _productName,
-          doseTime: companion.doseTime,
-          note: companion.note,
-        ));
+        await db.updateDosingEntry(
+          existing.copyWith(
+            product: _productName,
+            doseTime: companion.doseTime,
+            note: companion.note,
+          ),
+        );
       }
       if (mounted) Navigator.of(context).pop();
     } finally {
@@ -249,8 +251,11 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
               icon: const Icon(Icons.stop_circle_outlined),
               tooltip: l.stop,
               onPressed: () async {
-                final stopped =
-                    await confirmStopDosing(context, ref, widget.entry!);
+                final stopped = await confirmStopDosing(
+                  context,
+                  ref,
+                  widget.entry!,
+                );
                 if (stopped && context.mounted) Navigator.of(context).pop();
               },
             ),
@@ -379,8 +384,10 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l.dosingDosageOptional,
-            style: Theme.of(context).textTheme.titleSmall),
+        Text(
+          l.dosingDosageOptional,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -388,8 +395,9 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
               flex: 2,
               child: TextFormField(
                 controller: _amountCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: l.dosingAmount,
                   border: const OutlineInputBorder(),
@@ -431,9 +439,13 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           ),
           items: [
             DropdownMenuItem(
-                value: DoseBasis.perDay, child: Text(l.dosingPerDay)),
+              value: DoseBasis.perDay,
+              child: Text(l.dosingPerDay),
+            ),
             DropdownMenuItem(
-                value: DoseBasis.perDose, child: Text(l.dosingPerDose)),
+              value: DoseBasis.perDose,
+              child: Text(l.dosingPerDose),
+            ),
           ],
           onChanged: (v) => setState(() => _basis = v ?? _basis),
         ),
@@ -445,8 +457,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l.dosingSchedule,
-            style: Theme.of(context).textTheme.titleSmall),
+        Text(l.dosingSchedule, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 12),
         DropdownButtonFormField<DoseFrequency?>(
           initialValue: _frequency,
@@ -458,12 +469,17 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           items: [
             DropdownMenuItem(value: null, child: Text(l.dosingFreqNone)),
             DropdownMenuItem(
-                value: DoseFrequency.daily, child: Text(l.dosingFreqDaily)),
+              value: DoseFrequency.daily,
+              child: Text(l.dosingFreqDaily),
+            ),
             DropdownMenuItem(
-                value: DoseFrequency.everyNDays,
-                child: Text(l.dosingFreqEveryNDays)),
+              value: DoseFrequency.everyNDays,
+              child: Text(l.dosingFreqEveryNDays),
+            ),
             DropdownMenuItem(
-                value: DoseFrequency.weekly, child: Text(l.dosingFreqWeekly)),
+              value: DoseFrequency.weekly,
+              child: Text(l.dosingFreqWeekly),
+            ),
           ],
           onChanged: (v) => setState(() => _frequency = v),
         ),
@@ -544,7 +560,8 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
 
   String _weekdayLabel(BuildContext context, int weekday) {
     final base = DateTime(2024, 1, 1); // a Monday
-    return MaterialLocalizations.of(context)
-        .narrowWeekdays[base.add(Duration(days: weekday - 1)).weekday % 7];
+    return MaterialLocalizations.of(
+      context,
+    ).narrowWeekdays[base.add(Duration(days: weekday - 1)).weekday % 7];
   }
 }

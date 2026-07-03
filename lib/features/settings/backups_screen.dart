@@ -84,16 +84,23 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.backup_outlined,
-                size: 56, color: Theme.of(context).colorScheme.outline),
+            Icon(
+              Icons.backup_outlined,
+              size: 56,
+              color: Theme.of(context).colorScheme.outline,
+            ),
             const SizedBox(height: 16),
-            Text(l.noAutoBackups,
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center),
+            Text(
+              l.noAutoBackups,
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 8),
-            Text(l.noAutoBackupsHint,
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center),
+            Text(
+              l.noAutoBackupsHint,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
@@ -144,7 +151,10 @@ class _BackupTile extends ConsumerWidget {
   }
 
   Future<void> _restore(
-      BuildContext context, WidgetRef ref, AppLocalizations l) async {
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -152,9 +162,13 @@ class _BackupTile extends ConsumerWidget {
         content: Text(l.backupRestoreConfirmBody),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true), child: Text(l.restore)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.restore),
+          ),
         ],
       ),
     );
@@ -177,10 +191,9 @@ class _BackupTile extends ConsumerWidget {
   Future<void> _share(BuildContext context, AppLocalizations l) async {
     final name = p.basename(file.path);
     try {
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'application/json', name: name)],
-        subject: name,
-      );
+      await Share.shareXFiles([
+        XFile(file.path, mimeType: 'application/json', name: name),
+      ], subject: name);
     } catch (_) {
       // E.g. the file was pruned/deleted meanwhile, or no share target (#23).
       if (context.mounted) _snack(context, l.backupShareFailed);
@@ -195,9 +208,13 @@ class _BackupTile extends ConsumerWidget {
         content: Text(l.backupDeleteConfirmBody),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true), child: Text(l.delete)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.delete),
+          ),
         ],
       ),
     );
@@ -220,7 +237,8 @@ class _BackupTile extends ConsumerWidget {
   }
 
   void _snack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

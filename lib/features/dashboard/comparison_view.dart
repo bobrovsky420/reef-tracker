@@ -52,8 +52,9 @@ class ComparisonBody extends ConsumerWidget {
         // is "now"; the start is the range cutoff, or — for "All" — the oldest
         // reading across all enabled params (falling back to 30 days).
         final now = DateTime.now();
-        final cutoff =
-            range.days == null ? null : now.subtract(Duration(days: range.days!));
+        final cutoff = range.days == null
+            ? null
+            : now.subtract(Duration(days: range.days!));
         DateTime windowStart;
         if (cutoff != null) {
           windowStart = cutoff;
@@ -175,8 +176,10 @@ class _ParamChartCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 3),
-                    Text(pres.unitLabel,
-                        style: TextStyle(fontSize: 12, color: hint)),
+                    Text(
+                      pres.unitLabel,
+                      style: TextStyle(fontSize: 12, color: hint),
+                    ),
                   ],
                 ],
               ),
@@ -185,12 +188,18 @@ class _ParamChartCard extends StatelessWidget {
               height: chartHeight,
               child: inRange.isEmpty
                   ? Center(
-                      child: Text(l.noReadingsInRange,
-                          style: TextStyle(fontSize: 12, color: hint)),
+                      child: Text(
+                        l.noReadingsInRange,
+                        style: TextStyle(fontSize: 12, color: hint),
+                      ),
                     )
                   : Padding(
                       padding: EdgeInsets.fromLTRB(
-                          0, 8, 12, showBottomTitles ? 4 : 8),
+                        0,
+                        8,
+                        12,
+                        showBottomTitles ? 4 : 8,
+                      ),
                       child: TrendChart(
                         readings: inRange,
                         param: param,

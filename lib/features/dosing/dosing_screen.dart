@@ -44,8 +44,8 @@ class DosingBody extends ConsumerWidget {
                 l.noDosingHint,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
             ],
           ),
@@ -61,9 +61,9 @@ class DosingBody extends ConsumerWidget {
         if (newIndex > oldIndex) newIndex -= 1;
         final reordered = [...entries];
         reordered.insert(newIndex, reordered.removeAt(oldIndex));
-        ref
-            .read(dbProvider)
-            .reorderDosingEntries([for (final e in reordered) e.id]);
+        ref.read(dbProvider).reorderDosingEntries([
+          for (final e in reordered) e.id,
+        ]);
       },
       itemBuilder: (context, i) => _tile(context, ref, l, entries[i], i),
     );
@@ -84,14 +84,12 @@ class DosingBody extends ConsumerWidget {
       storedProgram: e.program,
       storedProduct: e.product,
     );
-    final source = [names.vendor, names.program]
-        .where((s) => s != null && s.isNotEmpty)
-        .join(' · ');
+    final source = [
+      names.vendor,
+      names.program,
+    ].where((s) => s != null && s.isNotEmpty).join(' · ');
     final detail = dosingDetailLine(context, l, e);
-    final lines = [
-      if (source.isNotEmpty) source,
-      detail,
-    ].join('\n');
+    final lines = [if (source.isNotEmpty) source, detail].join('\n');
 
     return Dismissible(
       key: ValueKey(e.id),
@@ -137,8 +135,7 @@ class DosingBody extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l,
     DosingEntry e,
-  ) =>
-      confirmStopDosing(context, ref, e);
+  ) => confirmStopDosing(context, ref, e);
 }
 
 /// Confirms and performs the "stop this supplement" action. Shared by the
@@ -218,13 +215,14 @@ String formatDoseAmount(double v) => formatLocaleNumberTrim(v);
 /// Parses the stored comma-separated weekday list (1=Mon … 7=Sun).
 List<int> parseWeekdays(String? raw) {
   if (raw == null || raw.isEmpty) return const [];
-  final days = raw
-      .split(',')
-      .map((s) => int.tryParse(s.trim()))
-      .whereType<int>()
-      .where((d) => d >= 1 && d <= 7)
-      .toList()
-    ..sort();
+  final days =
+      raw
+          .split(',')
+          .map((s) => int.tryParse(s.trim()))
+          .whereType<int>()
+          .where((d) => d >= 1 && d <= 7)
+          .toList()
+        ..sort();
   return days;
 }
 
@@ -235,8 +233,11 @@ String formatWeekdays(BuildContext context, List<int> days) {
   // 1 = Mon … 7 = Sun, so `% 7` folds Sunday (7) onto index 0.
   final base = DateTime(2024, 1, 1);
   return days
-      .map((d) => MaterialLocalizations.of(context)
-          .narrowWeekdays[base.add(Duration(days: d - 1)).weekday % 7])
+      .map(
+        (d) => MaterialLocalizations.of(
+          context,
+        ).narrowWeekdays[base.add(Duration(days: d - 1)).weekday % 7],
+      )
       .join(', ');
 }
 
@@ -245,8 +246,9 @@ String formatDoseTime(BuildContext context, String hhmm) {
   final parts = hhmm.split(':');
   final h = int.tryParse(parts.first) ?? 0;
   final m = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
-  return MaterialLocalizations.of(context)
-      .formatTimeOfDay(TimeOfDay(hour: h, minute: m));
+  return MaterialLocalizations.of(
+    context,
+  ).formatTimeOfDay(TimeOfDay(hour: h, minute: m));
 }
 
 class _ElementChip extends StatelessWidget {
@@ -264,9 +266,9 @@ class _ElementChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: scheme.onSecondaryContainer,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: scheme.onSecondaryContainer),
       ),
     );
   }

@@ -40,8 +40,13 @@ enum RatioKind {
   caalk(kCalciumKey, kAlkalinityKey, 'Ca', 'Alk', RatioDisplay.decimal),
   mgalk(kMagnesiumKey, kAlkalinityKey, 'Mg', 'Alk', RatioDisplay.decimal);
 
-  const RatioKind(this.numeratorKey, this.denominatorKey, this.numeratorSymbol,
-      this.denominatorSymbol, this.display);
+  const RatioKind(
+    this.numeratorKey,
+    this.denominatorKey,
+    this.numeratorSymbol,
+    this.denominatorSymbol,
+    this.display,
+  );
 
   final String numeratorKey;
   final String denominatorKey;
@@ -60,23 +65,39 @@ extension RatioKindZones on RatioKind {
     switch (this) {
       case RatioKind.po4no3:
         return const ZoneBounds(
-            amberLow: 25, greenLow: 50, greenHigh: 150, amberHigh: 250);
+          amberLow: 25,
+          greenLow: 50,
+          greenHigh: 150,
+          amberHigh: 250,
+        );
       case RatioKind.mgca:
         return const ZoneBounds(
-            amberLow: 2.6, greenLow: 2.9, greenHigh: 3.3, amberHigh: 3.6);
+          amberLow: 2.6,
+          greenLow: 2.9,
+          greenHigh: 3.3,
+          amberHigh: 3.6,
+        );
       case RatioKind.caalk:
         // Ca (ppm) ÷ Alk (dKH). Ca and carbonate alkalinity are consumed
         // together when corals build CaCO₃, so this flags dosing imbalance.
         // NSW ≈ 412 / 7.0 ≈ 59; balanced reef setups (Ca 420–450, Alk 8–9)
         // land ≈ 48–56. Extremes hint that one is being dosed out of step.
         return const ZoneBounds(
-            amberLow: 40, greenLow: 46, greenHigh: 62, amberHigh: 70);
+          amberLow: 40,
+          greenLow: 46,
+          greenHigh: 62,
+          amberHigh: 70,
+        );
       case RatioKind.mgalk:
         // Mg (ppm) ÷ Alk (dKH). Magnesium keeps Ca and alkalinity in solution;
         // a low value hints at why both are hard to hold. NSW ≈ 1280 / 7.0 ≈
         // 183; reef setups (Mg 1300–1400, Alk 8–9) land ≈ 155–185.
         return const ZoneBounds(
-            amberLow: 135, greenLow: 150, greenHigh: 190, amberHigh: 210);
+          amberLow: 135,
+          greenLow: 150,
+          greenHigh: 190,
+          amberHigh: 210,
+        );
     }
   }
 
@@ -135,14 +156,15 @@ RatioPoint? latestRatio(
 /// so a ratio is produced whenever both have been recorded at least once. Both
 /// lists must be oldest-first.
 List<RatioPoint> computeRatioSeries(
-    List<RatioReading> numerator, List<RatioReading> denominator) {
+  List<RatioReading> numerator,
+  List<RatioReading> denominator,
+) {
   if (numerator.isEmpty || denominator.isEmpty) return const [];
 
   final times = <DateTime>{
     for (final r in numerator) r.takenAt,
     for (final r in denominator) r.takenAt,
-  }.toList()
-    ..sort();
+  }.toList()..sort();
 
   final points = <RatioPoint>[];
   for (final t in times) {
@@ -150,12 +172,14 @@ List<RatioPoint> computeRatioSeries(
     final den = _latestAtOrBefore(denominator, t);
     if (num == null || den == null) continue;
     if (den.value == 0) continue;
-    points.add(RatioPoint(
-      time: t,
-      ratio: num.value / den.value,
-      numerator: num.value,
-      denominator: den.value,
-    ));
+    points.add(
+      RatioPoint(
+        time: t,
+        ratio: num.value / den.value,
+        numerator: num.value,
+        denominator: den.value,
+      ),
+    );
   }
   return points;
 }

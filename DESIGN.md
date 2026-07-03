@@ -863,14 +863,21 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   only map that output onto `fl_chart`. Widget tests pump through the shared
   `test/support/pump.dart` helper (ProviderScope + MaterialApp + l10n delegates);
   DB-touching tests use `NativeDatabase.memory()` with a faked `path_provider`.
-- **CI (`.github/workflows/ci.yml`):** every push/PR to `master` runs
-  `flutter analyze` + `flutter test` on `ubuntu-latest` (Flutter pinned to
-  3.44.3). It does **not** build the Android app (that needs the pinned
-  plugin/toolchain and is CI-fragile). Generated sources (`database.g.dart`,
-  `app_localizations*.dart`) are committed, so CI runs no codegen — regenerate
-  and commit them when the schema or an ARB file changes. `flutter analyze` runs
-  **without** `--fatal-infos` (some test files carry pre-existing info-level
-  lints) and fails on warnings/errors — keep that baseline clean.
+- **CI (`.github/workflows/ci.yml`):** every push/PR to `master` runs two jobs
+  on `ubuntu-latest` (Flutter pinned to 3.44.3; superseded runs on the same ref
+  are cancelled). The main job runs `dart format --set-exit-if-changed`, a
+  regenerate-and-diff guard for all committed generated sources
+  (`flutter gen-l10n`, `dart run build_runner build`, then
+  `dart run tool/gen_supplements.dart` — build_runner deletes
+  `supplement_catalog.g.dart` as an unclaimed output, so the supplement
+  generator must run after it), `flutter analyze`, and
+  `flutter test --coverage` with the lcov file uploaded as an artifact. A
+  second job builds a **debug** APK on JDK 21 (Temurin) to exercise the
+  Android platform layer — debug needs no `key.properties` and works with the
+  pinned plugins. `flutter analyze` runs **without** `--fatal-infos` (some
+  test files carry pre-existing info-level lints) and fails on
+  warnings/errors — keep that baseline clean, and keep the whole repo
+  `dart format`-clean.
 
 ### OneDrive & the build scripts (`scripts/`)
 

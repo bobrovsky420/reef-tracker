@@ -46,24 +46,36 @@ class TrendCard extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final hint = theme.hintColor;
-    final rate = l.trendRatePerDay('${_signedRate(trend, pres)} ${pres.unitLabel}');
+    final rate = l.trendRatePerDay(
+      '${_signedRate(trend, pres)} ${pres.unitLabel}',
+    );
 
     final lines = <Widget>[];
     if (trend.daysToAmber != null) {
-      lines.add(_forecastLine(
-          l.trendAmberInDays(_days(trend.daysToAmber!)), Zone.amber.color));
+      lines.add(
+        _forecastLine(
+          l.trendAmberInDays(_days(trend.daysToAmber!)),
+          Zone.amber.color,
+        ),
+      );
     }
     if (trend.daysToRed != null) {
-      lines.add(_forecastLine(
-          l.trendRedInDays(_days(trend.daysToRed!)), Zone.red.color));
+      lines.add(
+        _forecastLine(
+          l.trendRedInDays(_days(trend.daysToRed!)),
+          Zone.red.color,
+        ),
+      );
     }
     if (lines.isEmpty) {
-      lines.add(Text(
-        trend.direction == TrendDirection.flat
-            ? l.trendFlat
-            : l.trendWithinRange,
-        style: TextStyle(color: hint),
-      ));
+      lines.add(
+        Text(
+          trend.direction == TrendDirection.flat
+              ? l.trendFlat
+              : l.trendWithinRange,
+          style: TextStyle(color: hint),
+        ),
+      );
     }
 
     return Padding(
@@ -77,8 +89,7 @@ class TrendCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l.trendTitle,
-                    style: theme.textTheme.titleSmall),
+                Text(l.trendTitle, style: theme.textTheme.titleSmall),
                 const SizedBox(height: 2),
                 Text(rate, style: TextStyle(color: hint)),
                 ...lines,
@@ -91,21 +102,19 @@ class TrendCard extends StatelessWidget {
   }
 
   Widget _forecastLine(String text, Color color) => Padding(
-        padding: const EdgeInsets.only(top: 2),
-        child: Text(text,
-            style: TextStyle(color: color, fontWeight: FontWeight.w600)),
-      );
+    padding: const EdgeInsets.only(top: 2),
+    child: Text(
+      text,
+      style: TextStyle(color: color, fontWeight: FontWeight.w600),
+    ),
+  );
 }
 
 /// Compact dashboard-tile forecast: the soonest threshold the value is heading
 /// for, shown only when that crossing is within [horizonDays]. Renders nothing
 /// otherwise.
 class TrendChip extends StatelessWidget {
-  const TrendChip({
-    super.key,
-    required this.trend,
-    required this.horizonDays,
-  });
+  const TrendChip({super.key, required this.trend, required this.horizonDays});
 
   final TrendResult trend;
   final int horizonDays;
@@ -134,7 +143,11 @@ class TrendChip extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
