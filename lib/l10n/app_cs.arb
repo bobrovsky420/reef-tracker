@@ -303,7 +303,7 @@
   "trendShowTitle": "Zobrazovat trendy",
   "trendShowSubtitle": "Předpovídá, kam každý parametr směřuje a kdy opustí svůj rozsah",
   "trendWindow": "Použitá měření",
-  "trendWindowSubtitle": "Kolik posledních měření určuje trend",
+  "trendWindowSubtitle": "Kolik posledních měření určuje trend; při častějším měření se rozšíří tak, aby pokrylo alespoň {days} dní",
   "trendTitle": "Aktuální trend",
   "trendRatePerDay": "{rate}/den",
   "trendFlat": "Drží se stabilně",

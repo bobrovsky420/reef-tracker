@@ -315,6 +315,104 @@ void main() {
     );
   });
 
+  group('watchRecentReadingsPerParam (T1)', () {
+    test('caps each parameter at the limit, newest first, and excludes '
+        'other tanks', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+      for (var i = 0; i < 12; i++) {
+        await db.insertReading(
+          tankId: a,
+          paramKey: 'alkalinity',
+          value: 8.0 + i * 0.01,
+          takenAt: DateTime(2026, 1, 1 + i),
+        );
+      }
+      for (var i = 0; i < 3; i++) {
+        await db.insertReading(
+          tankId: a,
+          paramKey: 'calcium',
+          value: 400.0 + i,
+          takenAt: DateTime(2026, 1, 1 + i),
+        );
+      }
+      await db.insertReading(
+        tankId: b,
+        paramKey: 'alkalinity',
+        value: 7.0,
+        takenAt: DateTime(2026, 2, 1),
+      );
+
+      final rows = await db.watchRecentReadingsPerParam(a, 10).first;
+
+      expect(rows.every((r) => r.tankId == a), isTrue);
+      final alk = rows.where((r) => r.paramKey == 'alkalinity').toList();
+      final ca = rows.where((r) => r.paramKey == 'calcium').toList();
+      // Over-cap parameter is truncated to its *newest* rows, newest first.
+      expect(alk, hasLength(10));
+      expect(alk.first.takenAt, DateTime(2026, 1, 12));
+      expect(alk.last.takenAt, DateTime(2026, 1, 3));
+      // Under-cap parameter is returned whole.
+      expect(ca, hasLength(3));
+      // Newest-first within each parameter — the order consumers group on.
+      for (final list in [alk, ca]) {
+        for (var i = 1; i < list.length; i++) {
+          expect(list[i].takenAt.isAfter(list[i - 1].takenAt), isFalse);
+        }
+      }
+    });
+
+    test(
+      'same-second readings break ties by id without dropping rows',
+      () async {
+        final a = await db.createTankWithPreset(
+          name: 'A',
+          type: SetupType.mixed,
+        );
+        final t = DateTime(2026, 1, 1, 12);
+        await db.insertReading(
+          tankId: a,
+          paramKey: 'ph',
+          value: 8.0,
+          takenAt: t,
+        );
+        await db.insertReading(
+          tankId: a,
+          paramKey: 'ph',
+          value: 8.2,
+          takenAt: t,
+        );
+
+        final head = await db.watchRecentReadingsPerParam(a, 1).first;
+        // The later insert (higher id) counts as newest.
+        expect(head.single.value, 8.2);
+        final both = await db.watchRecentReadingsPerParam(a, 2).first;
+        expect(both.map((r) => r.value).toList(), [8.2, 8.0]);
+      },
+    );
+
+    test('re-emits with the new head when a newer reading arrives', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      await db.insertReading(
+        tankId: a,
+        paramKey: 'ph',
+        value: 8.0,
+        takenAt: DateTime(2026, 1, 1),
+      );
+      final headValues = db
+          .watchRecentReadingsPerParam(a, 1)
+          .map((rows) => rows.single.value);
+      final sawUpdate = expectLater(headValues, emitsThrough(8.3));
+      await db.insertReading(
+        tankId: a,
+        paramKey: 'ph',
+        value: 8.3,
+        takenAt: DateTime(2026, 1, 2),
+      );
+      await sawUpdate;
+    });
+  });
+
   group('settings', () {
     test('round-trips values and reports null for unset keys', () async {
       expect(await db.getSetting('locale'), isNull);

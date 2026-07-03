@@ -1013,7 +1013,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trendWindow => 'Readings used';
 
   @override
-  String get trendWindowSubtitle => 'How many recent readings define the trend';
+  String trendWindowSubtitle(int days) {
+    return 'How many recent readings define the trend; widened to cover at least $days days when you measure more often';
+  }
 
   @override
   String get trendTitle => 'Recent trend';

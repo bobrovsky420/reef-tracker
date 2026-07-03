@@ -167,9 +167,16 @@ class AppSettings {
   Future<void> setTrendEnabled(bool enabled) =>
       _write(SettingKey.trendEnabled, enabled.toString());
 
-  Stream<int> watchTrendWindow() => _watch(
-    SettingKey.trendWindow,
-  ).map((v) => int.tryParse(v ?? '') ?? kTrendDefaultWindow);
+  // Clamped: the settings dropdown only offers 3..10, but a hand-edited value
+  // outside that range would crash the dropdown and — since T1 caps the
+  // dashboard's readings feed per parameter — could silently starve
+  // computeTrend of points.
+  Stream<int> watchTrendWindow() => _watch(SettingKey.trendWindow).map(
+    (v) => (int.tryParse(v ?? '') ?? kTrendDefaultWindow).clamp(
+      kTrendMinWindow,
+      kTrendMaxWindow,
+    ),
+  );
   Future<void> setTrendWindow(int window) =>
       _write(SettingKey.trendWindow, window.toString());
 

@@ -1016,7 +1016,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get trendWindow => 'Použitá měření';
 
   @override
-  String get trendWindowSubtitle => 'Kolik posledních měření určuje trend';
+  String trendWindowSubtitle(int days) {
+    return 'Kolik posledních měření určuje trend; při častějším měření se rozšíří tak, aby pokrylo alespoň $days dní';
+  }
 
   @override
   String get trendTitle => 'Aktuální trend';

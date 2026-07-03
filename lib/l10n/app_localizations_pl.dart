@@ -1024,7 +1024,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get trendWindow => 'Użyte pomiary';
 
   @override
-  String get trendWindowSubtitle => 'Ile ostatnich pomiarów wyznacza trend';
+  String trendWindowSubtitle(int days) {
+    return 'Ile ostatnich pomiarów wyznacza trend; przy częstszych pomiarach okno obejmuje co najmniej $days dni';
+  }
 
   @override
   String get trendTitle => 'Bieżący trend';

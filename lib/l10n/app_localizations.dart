@@ -1819,11 +1819,11 @@ abstract class AppLocalizations {
   /// **'Readings used'**
   String get trendWindow;
 
-  /// No description provided for @trendWindowSubtitle.
+  /// Settings subtitle for the trend window size. {days} is kTrendMinSpanDays, the minimum time span the fitted readings cover.
   ///
   /// In en, this message translates to:
-  /// **'How many recent readings define the trend'**
-  String get trendWindowSubtitle;
+  /// **'How many recent readings define the trend; widened to cover at least {days} days when you measure more often'**
+  String trendWindowSubtitle(int days);
 
   /// No description provided for @trendTitle.
   ///

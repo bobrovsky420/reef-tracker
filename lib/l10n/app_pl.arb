@@ -303,7 +303,7 @@
   "trendShowTitle": "Pokazuj trendy",
   "trendShowSubtitle": "Przewiduje, dokąd zmierza każdy parametr i kiedy opuści swój zakres",
   "trendWindow": "Użyte pomiary",
-  "trendWindowSubtitle": "Ile ostatnich pomiarów wyznacza trend",
+  "trendWindowSubtitle": "Ile ostatnich pomiarów wyznacza trend; przy częstszych pomiarach okno obejmuje co najmniej {days} dni",
   "trendTitle": "Bieżący trend",
   "trendRatePerDay": "{rate}/dzień",
   "trendFlat": "Utrzymuje się stabilnie",

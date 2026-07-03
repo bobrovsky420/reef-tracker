@@ -594,6 +594,27 @@ class AppDatabase extends _$AppDatabase {
             ..orderBy([(r) => OrderingTerm(expression: r.takenAt)]))
           .watch();
 
+  /// The newest [limit] readings *per parameter* for a tank, newest first (T1).
+  ///
+  /// This is the bounded feed for everything on the dashboard path that only
+  /// needs the head of each parameter's history (latest value + change, health
+  /// score, trend window) — unlike [watchReadingsForTank], its per-write
+  /// re-query cost stays O(parameters × limit) no matter how many years of
+  /// readings accumulate. Drift's fluent API has no window functions, hence
+  /// custom SQL; the partition rides `idx_readings_tank_param_taken`. The `id`
+  /// tiebreaker makes same-second readings deterministic.
+  Stream<List<Reading>> watchRecentReadingsPerParam(int tankId, int limit) =>
+      customSelect(
+        'SELECT * FROM ('
+        'SELECT r.*, ROW_NUMBER() OVER '
+        '(PARTITION BY param_key ORDER BY taken_at DESC, id DESC) AS rn '
+        'FROM readings r WHERE tank_id = ?'
+        ') WHERE rn <= ? '
+        'ORDER BY taken_at DESC, id DESC',
+        variables: [Variable.withInt(tankId), Variable.withInt(limit)],
+        readsFrom: {readings},
+      ).asyncMap(readings.mapFromRow).watch();
+
   Future<void> insertReading({
     required int tankId,
     required String paramKey,

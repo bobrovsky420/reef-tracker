@@ -4,10 +4,12 @@
 ///
 /// Where the zone bands answer *"where is this value now?"*, the trend answers
 /// *"where is it heading, and when will it leave its healthy range?"* It fits a
-/// least-squares line through the most recent N readings (`window`) to get a
-/// signed change-per-day, then projects that line forward to the parameter's
-/// zone boundaries to estimate when the value will enter the amber and red
-/// zones. A trend is only produced once at least `window` readings exist.
+/// least-squares line through the most recent N readings (`window`) — widened
+/// to cover at least [kTrendMinSpanDays] days when they are measured more
+/// often than daily — to get a signed change-per-day, then projects that line
+/// forward to the parameter's zone boundaries to estimate when the value will
+/// enter the amber and red zones. A trend is only produced once at least
+/// `window` readings exist.
 library;
 
 import 'dose_calculator.dart' show DosePoint, linearFit;
@@ -20,6 +22,15 @@ export 'dose_calculator.dart' show DosePoint;
 const int kTrendDefaultWindow = 5;
 const int kTrendMinWindow = 3;
 const int kTrendMaxWindow = 10;
+
+/// Minimum time span (days) the fitted readings should cover. With several
+/// measurements a day, the newest `window` readings can span just a day or
+/// two, and test-kit noise over such a short base inflates into large
+/// per-day slopes and jumpy forecasts. When the newest `window` readings
+/// span less than this, the fit widens to include every reading within the
+/// last [kTrendMinSpanDays] days of the newest one. Readings taken daily or
+/// less often are unaffected — their window already covers the span.
+const int kTrendMinSpanDays = 5;
 
 /// Forecast horizon (days): a projected zone crossing is only surfaced as a
 /// dashboard "attention" chip when it falls within this many days. Bounds keep
@@ -54,7 +65,8 @@ class TrendResult {
   final double slopePerDay;
   final TrendDirection direction;
 
-  /// Number of readings the fit used.
+  /// Number of readings the fit actually used: the configured window, or more
+  /// when the window was widened to cover at least [kTrendMinSpanDays].
   final int window;
 
   /// Projected days until the value first leaves the green zone (crosses
@@ -106,8 +118,10 @@ class TrendResult {
   );
 }
 
-/// Computes the recent trend for [points] (oldest-first) using up to the most
-/// recent [window] readings, projecting toward [bounds].
+/// Computes the recent trend for [points] (oldest-first) using at least the
+/// most recent [window] readings — widened to every reading within the last
+/// [minSpanDays] days when the window alone spans less than that (frequent
+/// measurers, see [kTrendMinSpanDays]) — projecting toward [bounds].
 ///
 /// Returns null when [window] < 2, fewer than [window] readings exist, or the
 /// readings share a single instant (no computable slope).
@@ -115,9 +129,20 @@ TrendResult? computeTrend({
   required List<DosePoint> points,
   required ZoneBounds bounds,
   required int window,
+  int minSpanDays = kTrendMinSpanDays,
 }) {
   if (window < 2 || points.length < window) return null;
-  final recent = points.sublist(points.length - window);
+  var start = points.length - window;
+  // Hybrid window: when the newest [window] readings span less than
+  // [minSpanDays], take every reading inside that span instead (strictly
+  // newer than the cutoff, so once-a-day readings keep exactly the window).
+  final cutoff = points.last.t.subtract(Duration(days: minSpanDays));
+  if (points[start].t.isAfter(cutoff)) {
+    while (start > 0 && points[start - 1].t.isAfter(cutoff)) {
+      start--;
+    }
+  }
+  final recent = points.sublist(start);
   final fit = linearFit(recent);
   if (fit == null) return null;
   final slope = fit.slopePerDay;
@@ -182,7 +207,7 @@ TrendResult? computeTrend({
   return TrendResult(
     slopePerDay: slope,
     direction: direction,
-    window: window,
+    window: recent.length,
     daysToAmber: toAmber,
     daysToRed: toRed,
     recovering: recovering,

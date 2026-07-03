@@ -25,7 +25,12 @@ class DashboardBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final trackedAsync = ref.watch(trackedParametersProvider);
-    final readingsAsync = ref.watch(tankReadingsProvider);
+    // Head of each parameter's history (newest kRecentReadingsPerParam rows,
+    // T1) — plenty for the tiles: latest value + change needs 2, and the ratio
+    // headline reads only the last two merged series points, which can only
+    // ever carry forward each parameter's latest readings. Full series live
+    // on the history/ratio screens.
+    final readingsAsync = ref.watch(recentReadingsProvider);
 
     return trackedAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),

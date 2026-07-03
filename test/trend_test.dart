@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/domain/dose_calculator.dart' show linearFit;
 import 'package:reeftracker/domain/trend.dart';
 import 'package:reeftracker/domain/zones.dart';
 
@@ -37,6 +38,76 @@ void main() {
       expect(t.window, 5);
       expect(t.slopePerDay, closeTo(0.1, 1e-9));
       expect(t.direction, TrendDirection.rising);
+    });
+  });
+
+  group('minimum-span widening (kTrendMinSpanDays)', () {
+    // Two measurements a day: 12 h between points.
+    List<DosePoint> dense(List<double> values) => [
+      for (var i = 0; i < values.length; i++)
+        (t: t0.add(Duration(hours: i * 12)), value: values[i]),
+    ];
+
+    test('a sub-span window widens to every reading within the span', () {
+      // 12 points every 12 h: the newest 5 span only 2 days, so the fit must
+      // widen to all points strictly within kTrendMinSpanDays (5 d) of the
+      // newest — the 10 newest here. The flat older points inside the span
+      // pull the slope below the last-5-only fit (0.2/day).
+      final pts = dense([
+        8.0,
+        8.0,
+        8.0,
+        8.0,
+        8.0,
+        8.0,
+        8.0,
+        8.1,
+        8.2,
+        8.3,
+        8.4,
+        8.5,
+      ]);
+      final t = computeTrend(points: pts, bounds: bounds, window: 5)!;
+      expect(t.window, 10);
+      expect(
+        t.slopePerDay,
+        closeTo(linearFit(pts.sublist(2))!.slopePerDay, 1e-9),
+      );
+      expect(t.slopePerDay, lessThan(0.2));
+    });
+
+    test('daily readings keep exactly the configured window', () {
+      // Daily spacing: the newest 5 already cover the span (the cutoff point
+      // itself is excluded, so nothing older leaks into the fit).
+      final t = computeTrend(
+        points: series([7.0, 7.0, 7.0, 8.1, 8.2, 8.3, 8.4, 8.5]),
+        bounds: bounds,
+        window: 5,
+      )!;
+      expect(t.window, 5);
+      expect(t.slopePerDay, closeTo(0.1, 1e-9));
+    });
+
+    test('sparser-than-daily readings are unaffected', () {
+      final t = computeTrend(
+        points: series([8.1, 8.2, 8.3, 8.4, 8.5], stepDays: 7),
+        bounds: bounds,
+        window: 5,
+      )!;
+      expect(t.window, 5);
+      expect(t.slopePerDay, closeTo(0.1 / 7, 1e-9));
+    });
+
+    test('minSpanDays: 0 disables widening', () {
+      final pts = dense([8.0, 8.0, 8.0, 8.0, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5]);
+      final t = computeTrend(
+        points: pts,
+        bounds: bounds,
+        window: 5,
+        minSpanDays: 0,
+      )!;
+      expect(t.window, 5);
+      expect(t.slopePerDay, closeTo(0.2, 1e-9));
     });
   });
 

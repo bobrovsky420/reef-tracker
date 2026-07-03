@@ -1023,8 +1023,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get trendWindow => 'Используемые измерения';
 
   @override
-  String get trendWindowSubtitle =>
-      'Сколько последних измерений определяют тренд';
+  String trendWindowSubtitle(int days) {
+    return 'Сколько последних измерений определяют тренд; при частых измерениях окно расширяется минимум до $days дней';
+  }
 
   @override
   String get trendTitle => 'Текущий тренд';

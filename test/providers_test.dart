@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/health_score.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/domain/trend.dart';
 
 /// Pumps the event loop until [cond] holds (or fails the test after ~1 s).
 Future<void> pumpUntil(bool Function() cond) async {
@@ -144,6 +146,78 @@ void main() {
     // And a genuine write for tank A still comes through.
     await db.insertReading(tankId: a, paramKey: 'ph', value: 8.2, takenAt: now);
     await pumpUntil(() => readingsNotifies > settledReadings);
+  });
+
+  test('trends and health run off the capped recent-readings feed and match '
+      'the full history (T1)', () async {
+    final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+    await db.setActiveTank(a);
+    // More readings than the kRecentReadingsPerParam cap, four a day, all
+    // fresh (health only counts readings newer than kHealthFreshnessDays).
+    // At this density the trend window widens to kTrendMinSpanDays — which
+    // must still fit inside the capped feed for parity to hold.
+    final now = DateTime.now();
+    const total = 45;
+    for (var i = total; i >= 1; i--) {
+      await db.insertReading(
+        tankId: a,
+        paramKey: 'ph',
+        value: 8.0 + (total - i) * 0.01,
+        takenAt: now.subtract(Duration(hours: i * 6)),
+      );
+    }
+
+    final recentSub = container.listen(recentReadingsProvider, (_, _) {});
+    final trendsSub = container.listen(tankTrendsProvider, (_, _) {});
+    final healthSub = container.listen(tankHealthProvider, (_, _) {});
+    addTearDown(recentSub.close);
+    addTearDown(trendsSub.close);
+    addTearDown(healthSub.close);
+
+    await pumpUntil(
+      () =>
+          (container.read(recentReadingsProvider).value ?? const [])
+              .isNotEmpty &&
+          container.read(tankTrendsProvider).containsKey('ph'),
+    );
+
+    final recent = container
+        .read(recentReadingsProvider)
+        .value!
+        .where((r) => r.paramKey == 'ph')
+        .toList();
+    // Capped to the newest kRecentReadingsPerParam rows, newest first.
+    expect(recent, hasLength(kRecentReadingsPerParam));
+    expect(recent.first.value, 8.0 + (total - 1) * 0.01);
+
+    // Trend parity: the capped feed must yield exactly the trend the full
+    // history yields (computeTrend never looks past its window).
+    final tracked = await db.getTrackedParameters(a);
+    final ph = tracked.firstWhere((p) => p.paramKey == 'ph');
+    final full = await db.watchReadingsForTank(a).first;
+    final points = <DosePoint>[
+      for (final r in full.reversed) (t: r.takenAt, value: r.value),
+    ];
+    final expectedTrend = computeTrend(
+      points: points,
+      bounds: boundsOf(ph),
+      window: kTrendDefaultWindow,
+    );
+    expect(container.read(tankTrendsProvider)['ph'], expectedTrend);
+
+    // Health parity: the score built from the capped feed equals one built
+    // from each parameter's true latest reading.
+    final latest = recent.first;
+    final expectedHealth = computeTankHealth([
+      for (final p in tracked.where((t) => t.enabled))
+        (
+          paramKey: p.paramKey,
+          bounds: boundsOf(p),
+          latest: p.paramKey == 'ph' ? latest.value : null,
+          takenAt: p.paramKey == 'ph' ? latest.takenAt : null,
+        ),
+    ]);
+    expect(container.read(tankHealthProvider), expectedHealth);
   });
 
   test('switching back to a tank reloads its data', () async {

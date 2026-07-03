@@ -1020,8 +1020,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get trendWindow => 'Verwendete Messwerte';
 
   @override
-  String get trendWindowSubtitle =>
-      'Wie viele der letzten Messwerte den Trend bestimmen';
+  String trendWindowSubtitle(int days) {
+    return 'Wie viele der letzten Messwerte den Trend bestimmen; bei häufigeren Messungen erweitert auf mindestens $days Tage';
+  }
 
   @override
   String get trendTitle => 'Aktueller Trend';

@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.2] - 2026-07-03
+
+### Changed
+- Trends are more stable for frequently measured parameters: the trend line
+  now always covers at least 5 days of history. When you measure a parameter
+  several times a day, the configured number of readings alone spans only a
+  day or two, and test-kit noise over such a short base made slopes and
+  forecasts jumpy — the fit now widens to include every reading from the last
+  5 days. Parameters measured daily or less often behave exactly as before.
+- Performance: the dashboard, trend chips and health score now load only the
+  newest few readings of each parameter instead of the tank's entire
+  measurement history, and no longer re-read that history on every save. With
+  years of data, saving a reading previously re-loaded every stored row; the
+  full history is now only read while a chart screen that actually plots it
+  is open. Graphs are unaffected and still show all readings.
+
 ## [0.16.1] - 2026-07-02
 
 ### Changed

@@ -112,11 +112,48 @@ final _tankReadingsFamily = StreamProvider.autoDispose
           _dedup(ref.watch(dbProvider).watchReadingsForTank(tankId)),
     );
 
-/// All readings for the active tank (newest first).
-final tankReadingsProvider = Provider<AsyncValue<List<Reading>>>((ref) {
+/// All readings for the active tank (newest first). This is the *unbounded*
+/// full-table stream — its only remaining consumer is the comparison view's
+/// charts, so unlike the other tank-scoped wrappers this one is autoDispose:
+/// the full query lives only while a chart screen watches it instead of
+/// re-materializing every row on each write for the whole session (T1).
+/// Everything that needs just the head of each parameter's history watches
+/// [recentReadingsProvider] instead.
+final tankReadingsProvider = Provider.autoDispose<AsyncValue<List<Reading>>>((
+  ref,
+) {
   final tank = ref.watch(activeTankProvider);
   if (tank == null) return const AsyncValue.data([]);
   return ref.watch(_tankReadingsFamily(tank.id));
+});
+
+/// Row cap per parameter for [recentReadingsProvider]. Must fit the widened
+/// trend window — [kTrendMaxWindow] readings *or* everything within
+/// [kTrendMinSpanDays], whichever is more — so it allows for several
+/// measurements a day (40 ≈ 8/day over the 5-day span) while still bounding
+/// the per-write re-query cost (T1). Denser data than the cap degrades
+/// gracefully: the trend simply fits over the newest rows available.
+const int kRecentReadingsPerParam = 40;
+
+final _recentReadingsFamily = StreamProvider.autoDispose
+    .family<List<Reading>, int>(
+      (ref, tankId) => _dedup(
+        ref
+            .watch(dbProvider)
+            .watchRecentReadingsPerParam(tankId, kRecentReadingsPerParam),
+      ),
+    );
+
+/// The newest [kRecentReadingsPerParam] readings per parameter for the active
+/// tank, newest first (T1). Bounded feed for the dashboard tiles (latest
+/// value + change), [tankHealthProvider] (latest per parameter) and
+/// [tankTrendsProvider] (the widened trend window per parameter); its
+/// per-write cost is independent of the total history size. Full series stay
+/// on [tankReadingsProvider]/[paramReadingsProvider].
+final recentReadingsProvider = Provider<AsyncValue<List<Reading>>>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_recentReadingsFamily(tank.id));
 });
 
 final _waterChangesFamily = StreamProvider.autoDispose
@@ -306,7 +343,10 @@ final tankTrendsProvider = Provider<Map<String, TrendResult>>((ref) {
   if (!enabled) return const {};
   final window = ref.watch(trendWindowProvider).value ?? kTrendDefaultWindow;
   final tracked = ref.watch(trackedParametersProvider).value ?? const [];
-  final readings = ref.watch(tankReadingsProvider).value ?? const [];
+  // Bounded head of each parameter's history — the widened trend window
+  // (window readings or kTrendMinSpanDays, whichever covers more) fits inside
+  // kRecentReadingsPerParam for any sane measuring cadence.
+  final readings = ref.watch(recentReadingsProvider).value ?? const [];
 
   // Group into oldest-first per-parameter series (readings arrive newest-first).
   final byParam = <String, List<DosePoint>>{};
@@ -331,7 +371,7 @@ final tankTrendsProvider = Provider<Map<String, TrendResult>>((ref) {
 /// (e.g. a reading's note was edited) doesn't notify watchers (T2).
 final tankHealthProvider = Provider<TankHealth>((ref) {
   final tracked = ref.watch(trackedParametersProvider).value ?? const [];
-  final readings = ref.watch(tankReadingsProvider).value ?? const [];
+  final readings = ref.watch(recentReadingsProvider).value ?? const [];
 
   // Latest reading per parameter (readings arrive newest-first).
   final latest = <String, Reading>{};

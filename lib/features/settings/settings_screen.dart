@@ -136,7 +136,7 @@ class SettingsScreen extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.timeline),
               title: Text(l.trendWindow),
-              subtitle: Text(l.trendWindowSubtitle),
+              subtitle: Text(l.trendWindowSubtitle(kTrendMinSpanDays)),
               trailing: DropdownButton<int>(
                 value:
                     ref.watch(trendWindowProvider).value ?? kTrendDefaultWindow,

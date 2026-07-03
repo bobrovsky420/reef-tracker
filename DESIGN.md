@@ -326,9 +326,10 @@ never on a mere widget rebuild.
 
 **Tank-scoped providers are family-backed** (#20): each public tank-scoped
 provider (`trackedParametersProvider`, `tankReadingsProvider`,
-`waterChangesProvider`, `carbonChangesProvider`, `equipmentCleaningsProvider`,
-`dosingEntriesProvider`, `dosingHistoryProvider`, `paramReadingsProvider`,
-`ratioSettingsProvider`) is a plain `Provider<AsyncValue<…>>` delegating to a
+`recentReadingsProvider`, `waterChangesProvider`, `carbonChangesProvider`,
+`equipmentCleaningsProvider`, `dosingEntriesProvider`,
+`dosingHistoryProvider`, `paramReadingsProvider`, `ratioSettingsProvider`) is
+a plain `Provider<AsyncValue<…>>` delegating to a
 private **autoDispose `StreamProvider` family keyed by tank id**. Switching the
 active tank swaps to a fresh family instance, so consumers briefly see
 loading/empty instead of the previous tank's rows flashing under the new tank's
@@ -346,11 +347,31 @@ re-emission never becomes a new `AsyncValue`, and the derived results
 notify watchers either (Riverpod 3 filters updates with `==`). Net effect: a
 write only rebuilds the widgets whose data actually changed.
 
-Beyond those internal families nothing uses
-`autoDispose`: state is small and single-user, so providers simply live for the
-app's lifetime (pairing with the home shell's `IndexedStack`, which keeps tab
-widget state alive too), and the permanent wrappers keep the *active* tank's
-data warm for `ref.read` call sites.
+Beyond those internal families only
+`tankReadingsProvider` uses `autoDispose`: state is small and single-user, so
+providers simply live for the app's lifetime (pairing with the home shell's
+`IndexedStack`, which keeps tab widget state alive too), and the permanent
+wrappers keep the *active* tank's data warm for `ref.read` call sites.
+
+**The full readings history is not kept live** (T1). `tankReadingsProvider`
+streams the tank's *entire* readings table — a query whose per-write re-run
+cost grows unboundedly with years of data (Drift invalidates at table
+granularity, so every saved reading re-materializes the whole result). Its
+only consumer is the comparison view's charts, so its wrapper is
+`autoDispose`: the unbounded query lives only while that tab is on screen.
+Everything on the dashboard path — parameter tiles, ratio-card headlines,
+`tankTrendsProvider`, `tankHealthProvider` — instead watches
+`recentReadingsProvider`, which caps the stream at the newest
+`kRecentReadingsPerParam` (40) readings *per parameter*
+(`watchRecentReadingsPerParam`, a `ROW_NUMBER()` window function riding
+`idx_readings_tank_param_taken`), enough for the latest value + change (2),
+the health score's latest-per-parameter (1) and the hybrid trend window
+(`kTrendMaxWindow` readings or everything within `kTrendMinSpanDays`,
+whichever is more — 40 allows ~8 measurements/day over the 5-day span);
+the ratio headline reads only the last two merged series points, which
+can only ever carry each parameter's latest readings, so the cap is exact
+there too. Per-parameter full series (history/ratio/dose-calculator screens)
+stay on `paramReadingsProvider`.
 
 Consumers read the stream providers as `.value ?? const []`, so a failed DB
 query would otherwise render as "no data". `ProviderErrorObserver`
@@ -376,7 +397,9 @@ The graph:
 
 - `tanksProvider` (all tanks), `activeTankIdProvider` (persisted), `activeTankProvider`
   (resolves id → tank, falls back to first tank).
-- `trackedParametersProvider`, `tankReadingsProvider` (newest-first),
+- `trackedParametersProvider`, `tankReadingsProvider` (newest-first, full
+  history — comparison view only, autoDispose), `recentReadingsProvider`
+  (newest `kRecentReadingsPerParam` per parameter — dashboard/trends/health, T1),
   `paramReadingsProvider(paramKey)` family (oldest-first, chart-friendly),
   `waterChangesProvider`, `carbonChangesProvider`, `equipmentCleaningsProvider`
   (all newest-first), `dosingEntriesProvider` (dashboard order).
@@ -393,12 +416,12 @@ The graph:
   — the Trends feature toggle, window size, and dashboard forecast horizon.
 - `tankTrendsProvider` — `Map<paramKey, TrendResult>` for the active tank. **The
   trend cache:** a plain `Provider` derived from the two trend settings +
-  `trackedParametersProvider` + `tankReadingsProvider`; Riverpod memoizes it and
+  `trackedParametersProvider` + `recentReadingsProvider`; Riverpod memoizes it and
   re-runs `computeTrend` only when those inputs change, never on a widget
   rebuild. Empty when trends are off or no param has `window` readings yet.
 - `tankHealthProvider` — `TankHealth` for the active tank. Like `tankTrendsProvider`,
   a memoized plain `Provider` derived from `trackedParametersProvider` +
-  `tankReadingsProvider`; collapses each parameter's latest reading + bounds into
+  `recentReadingsProvider`; collapses each parameter's latest reading + bounds into
   the overall score/band/grade via `computeTankHealth`.
 - `healthDisplayProvider` — `HealthDisplay` (both / badge / off, default both):
   how much of the tank-health feature to surface. `showCard` gates the dashboard
@@ -595,13 +618,19 @@ dialogs and Stop on the dosing edit screen.
 Layered on top of the zone bands: where the bands say *where a value is*, the
 trend says *where it's heading and when it leaves its range*. The math is the
 pure `computeTrend` (domain); the per-tank results are cached in
-`tankTrendsProvider` (state layer). Two shared widgets render a `TrendResult`:
+`tankTrendsProvider` (state layer). The fit uses a **hybrid window**: at least
+the configured `window` readings *and* at least `kTrendMinSpanDays` (5) of
+coverage — when the newest `window` readings span less than that (several
+measurements a day), the fit widens to every reading within the span, so
+test-kit noise over a few hours doesn't read as a steep per-day slope.
+Once-a-day-or-sparser readings keep exactly the `window` newest. Two shared
+widgets render a `TrendResult`:
 - `TrendCard` — full block under the **history** chart (shown only when a trend
   exists): the per-day rate (`slopePerDay` converted to the display unit via the
   affine `toDisplay(slope) − toDisplay(0)`, signed) plus projected "reaches
   attention/critical zone in ~N d" lines, or a "holding steady / within range"
-  note. Independent of the chart range — it always uses the most recent `window`
-  readings.
+  note. Independent of the chart range — it always uses the hybrid trend
+  window above.
 - `TrendChip` — compact forecast on each **dashboard** `_ParameterTile`, shown
   only when a zone crossing is projected within the configurable `horizonDays`
   (`trendHorizonProvider`, default 14): the soonest of attention (amber) /
