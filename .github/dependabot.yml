@@ -1,0 +1,19 @@
+# Dependency-update automation (TODO T11).
+version: 2
+updates:
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: weekly
+    # The plugin trio is pinned on purpose (TODO #50): newer versions break the
+    # Android release build under AGP 9 / Kotlin 2.3. They must be bumped
+    # together, verified with a real release build, once file_picker 12 is
+    # stable — not one at a time by a bot.
+    ignore:
+      - dependency-name: share_plus
+      - dependency-name: file_picker
+      - dependency-name: package_info_plus
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

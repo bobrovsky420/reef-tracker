@@ -35,6 +35,9 @@ migrate_working_dir/
 
 # Symbolication related
 app.*.symbols
+# Per-release obfuscation symbol archives (scripts/build-release.ps1); keep
+# locally / upload to Play, too big and binary for git.
+/symbols/
 
 # Obfuscation related
 app.*.map.json

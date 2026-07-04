@@ -24,8 +24,11 @@ try {
     flutter pub get
     if ($LASTEXITCODE -ne 0) { throw "flutter pub get failed" }
 
-    Write-Host "`n-- flutter build appbundle --release --" -ForegroundColor Cyan
-    flutter build appbundle --release
+    # Obfuscated build (TODO T12); the split-debug-info symbols are the ONLY
+    # way to symbolicate crash stacks from this build — archive them per
+    # release below, never discard them.
+    Write-Host "`n-- flutter build appbundle --release (obfuscated) --" -ForegroundColor Cyan
+    flutter build appbundle --release --obfuscate --split-debug-info=build\symbols
     if ($LASTEXITCODE -ne 0) { throw "flutter build failed" }
 
     # 4. Report the artifact at its real (out-of-OneDrive) location.
@@ -35,6 +38,18 @@ try {
     Write-Host "`n== Built ==" -ForegroundColor Green
     Write-Host ("  {0}" -f $f.FullName)
     Write-Host ("  {0} MB   {1}" -f [math]::Round($f.Length/1MB,1), $f.LastWriteTime)
+
+    # 4b. Archive the obfuscation symbols per release version, outside build\
+    # (which flutter clean wipes). Upload the zip alongside the AAB, or attach
+    # it to the Play release for deobfuscated crash reports.
+    $version = (Select-String -Path (Join-Path $script:RepoRoot 'pubspec.yaml') -Pattern '^version:\s*(\S+)').Matches[0].Groups[1].Value
+    $symbolsSrc = Join-Path $script:TargetRoot 'build\symbols'
+    if (-not (Test-Path $symbolsSrc)) { throw "Obfuscated build produced no symbols at $symbolsSrc" }
+    $symbolsDir = Join-Path $script:RepoRoot 'symbols'
+    New-Item -ItemType Directory -Force $symbolsDir | Out-Null
+    $symbolsZip = Join-Path $symbolsDir ("symbols-{0}.zip" -f ($version -replace '\+', '-'))
+    Compress-Archive -Path (Join-Path $symbolsSrc '*') -DestinationPath $symbolsZip -Force
+    Write-Host ("  symbols: {0}" -f $symbolsZip)
 
     # 5. Best-effort signing check (should be CN=Alexandr Bobrovsky, not debug).
     $jarsigner = Get-Command jarsigner -ErrorAction SilentlyContinue

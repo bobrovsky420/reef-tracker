@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -396,9 +398,9 @@ class TankSelector extends ConsumerWidget {
     final selector = PopupMenuButton<int>(
       onSelected: (id) {
         if (id == -1) {
-          context.push('/tanks');
+          unawaited(context.push('/tanks'));
         } else {
-          ref.read(dbProvider).setActiveTank(id);
+          unawaited(ref.read(dbProvider).setActiveTank(id));
         }
       },
       itemBuilder: (context) => [

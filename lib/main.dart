@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -97,19 +99,21 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   /// The backup layer persists a failure as `last_backup_error_at` (surfaced
   /// in Settings), so here it only needs to be logged, not swallowed silently.
   void _maybeBackUp() {
-    runAutoBackupIfDue(ref.read(dbProvider)).catchError((
-      Object e,
-      StackTrace s,
-    ) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: e,
-          stack: s,
-          library: 'auto_backup',
-          context: ErrorSummary('running the automatic backup'),
-        ),
-      );
-    });
+    unawaited(
+      runAutoBackupIfDue(ref.read(dbProvider)).catchError((
+        Object e,
+        StackTrace s,
+      ) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'auto_backup',
+            context: ErrorSummary('running the automatic backup'),
+          ),
+        );
+      }),
+    );
   }
 
   @override

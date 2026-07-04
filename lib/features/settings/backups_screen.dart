@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -134,11 +135,11 @@ class _BackupTile extends ConsumerWidget {
         onSelected: (action) {
           switch (action) {
             case 'restore':
-              _restore(context, ref, l);
+              unawaited(_restore(context, ref, l));
             case 'share':
-              _share(context, l);
+              unawaited(_share(context, l));
             case 'delete':
-              _delete(context, l);
+              unawaited(_delete(context, l));
           }
         },
         itemBuilder: (context) => [

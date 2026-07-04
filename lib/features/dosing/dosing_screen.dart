@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -61,9 +63,11 @@ class DosingBody extends ConsumerWidget {
         if (newIndex > oldIndex) newIndex -= 1;
         final reordered = [...entries];
         reordered.insert(newIndex, reordered.removeAt(oldIndex));
-        ref.read(dbProvider).reorderDosingEntries([
-          for (final e in reordered) e.id,
-        ]);
+        unawaited(
+          ref.read(dbProvider).reorderDosingEntries([
+            for (final e in reordered) e.id,
+          ]),
+        );
       },
       itemBuilder: (context, i) => _tile(context, ref, l, entries[i], i),
     );

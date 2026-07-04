@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -85,13 +87,15 @@ class ManageParametersScreen extends ConsumerWidget {
                     ratioOrders.add((key: it.kind.name, order: i));
                 }
               }
-              ref
-                  .read(dbProvider)
-                  .applyDashboardOrder(
-                    tank.id,
-                    paramOrders: paramOrders,
-                    ratioOrders: ratioOrders,
-                  );
+              unawaited(
+                ref
+                    .read(dbProvider)
+                    .applyDashboardOrder(
+                      tank.id,
+                      paramOrders: paramOrders,
+                      ratioOrders: ratioOrders,
+                    ),
+              );
             },
             itemBuilder: (context, i) {
               final item = items[i];

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -60,9 +62,11 @@ class TanksScreen extends ConsumerWidget {
                   onSelected: (v) async {
                     switch (v) {
                       case 'activate':
-                        ref.read(dbProvider).setActiveTank(t.id);
+                        await ref.read(dbProvider).setActiveTank(t.id);
                       case 'edit':
-                        context.push('/tanks/${t.id}/edit', extra: t);
+                        unawaited(
+                          context.push('/tanks/${t.id}/edit', extra: t),
+                        );
                       case 'delete':
                         await _confirmDelete(context, ref, t);
                     }

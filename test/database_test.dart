@@ -84,7 +84,7 @@ void main() {
 
       // 'iodine' is not in the fish-only preset.
       await db.addTrackedParameter(id, 'iodine', SetupType.fishOnly);
-      var keys = (await db.getTrackedParameters(id)).map((p) => p.paramKey);
+      final keys = (await db.getTrackedParameters(id)).map((p) => p.paramKey);
       expect(keys, contains('iodine'));
       expect((await db.getTrackedParameters(id)).length, before + 1);
 

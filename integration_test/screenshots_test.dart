@@ -6,6 +6,8 @@
 //   flutter drive --driver=test_driver/screenshot_driver.dart \
 //     --target=integration_test/screenshots_test.dart \
 //     -d <device> --dart-define=SHOTS=phone   (or tablet)
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -85,14 +87,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // 6. Salinity converter
-      appRouter.push('/calculator/salinity');
+      unawaited(appRouter.push('/calculator/salinity'));
       await tester.pumpAndSettle(const Duration(milliseconds: 600));
       await shot('06-salinity');
       appRouter.pop();
       await tester.pumpAndSettle();
 
       // 7. Dose calculator
-      appRouter.push('/dosing/calculator');
+      unawaited(appRouter.push('/dosing/calculator'));
       await tester.pumpAndSettle(const Duration(milliseconds: 600));
       await shot('07-dose-calculator');
       appRouter.pop();

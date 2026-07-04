@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -361,7 +362,7 @@ class _ParamRow extends StatelessWidget {
     return InkWell(
       onTap: () {
         Navigator.of(context).pop();
-        context.push('/history/${health.paramKey}');
+        unawaited(context.push('/history/${health.paramKey}'));
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),

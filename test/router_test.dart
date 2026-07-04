@@ -1,21 +1,56 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/features/add_reading/add_reading_screen.dart';
+import 'package:reeftracker/features/calculator/salinity_calculator_screen.dart';
+import 'package:reeftracker/features/dosing/dose_calculator_screen.dart';
+import 'package:reeftracker/features/dosing/dosing_edit_screen.dart';
+import 'package:reeftracker/features/dosing/dosing_history_screen.dart';
+import 'package:reeftracker/features/history/history_screen.dart';
 import 'package:reeftracker/features/home/home_shell.dart';
 import 'package:reeftracker/features/manage_parameters/manage_parameters_screen.dart';
+import 'package:reeftracker/features/ratio/ratio_edit_screen.dart';
 import 'package:reeftracker/features/ratio/ratio_screen.dart';
+import 'package:reeftracker/features/settings/backups_screen.dart';
+import 'package:reeftracker/features/settings/settings_screen.dart';
 import 'package:reeftracker/features/tanks/tanks_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
+
+/// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so
+/// screens that touch the backup directory can build under `flutter test`.
+class _FakePathProvider extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
+  _FakePathProvider(this.root);
+  final String root;
+  @override
+  Future<String?> getApplicationDocumentsPath() async => root;
+  @override
+  Future<String?> getTemporaryPath() async => root;
+}
 
 /// Regression tests for TODO #1/#2: the `/tanks/:id/edit` and
 /// `/parameters/:id/edit` routes must work from the URL alone (deep link,
 /// state restoration) — `state.extra` is only an in-app fast path.
+/// Plus the T13 coverage: every route builds, in every supported locale.
 void main() {
+  late Directory docsDir;
+  setUp(() async {
+    docsDir = await Directory.systemTemp.createTemp('reeftracker-router-');
+    PathProviderPlatform.instance = _FakePathProvider(docsDir.path);
+  });
+  tearDown(() async {
+    if (await docsDir.exists()) await docsDir.delete(recursive: true);
+  });
+
   /// Pumps a bounded amount of fake time in small steps.
   ///
   /// Deliberately NOT [WidgetTester.pumpAndSettle]: the app legitimately shows
@@ -41,7 +76,10 @@ void main() {
 
   /// Boots the real [appRouter] against an in-memory database and returns the
   /// database for seeding.
-  Future<AppDatabase> pumpRouterApp(WidgetTester tester) async {
+  Future<AppDatabase> pumpRouterApp(
+    WidgetTester tester, {
+    Locale? locale,
+  }) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     // These tests exercise routing, not the first-run feature tour. Left
@@ -55,6 +93,7 @@ void main() {
       ProviderScope(
         overrides: [dbProvider.overrideWithValue(db)],
         child: MaterialApp.router(
+          locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: appRouter,
@@ -63,6 +102,34 @@ void main() {
     );
     await settle(tester);
     return db;
+  }
+
+  /// Every static route with the screen it must build (T13). The parameterized
+  /// edit routes are covered by their dedicated tests above/below; the list
+  /// ends at home so the router singleton is parked for the next iteration.
+  final allRoutes = <(String, Type)>[
+    ('/tanks', TanksScreen),
+    ('/tanks/new', TankEditScreen),
+    ('/parameters', ManageParametersScreen),
+    ('/add-reading', AddReadingScreen),
+    ('/history/alkalinity', HistoryScreen),
+    ('/ratio/po4no3/edit', RatioEditScreen),
+    ('/dosing/edit', DosingEditScreen),
+    ('/dosing/calculator', DoseCalculatorScreen),
+    ('/dosing/history', DosingHistoryScreen),
+    ('/settings', SettingsScreen),
+    ('/settings/backups', BackupsScreen),
+    ('/calculator/salinity', SalinityCalculatorScreen),
+    ('/', HomeShell),
+  ];
+
+  Future<void> visitAllRoutes(WidgetTester tester) async {
+    for (final (location, screen) in allRoutes) {
+      appRouter.go(location);
+      await settle(tester);
+      expect(tester.takeException(), isNull, reason: location);
+      expect(find.byType(screen), findsOneWidget, reason: location);
+    }
   }
 
   testWidgets(
@@ -150,5 +217,23 @@ void main() {
     await settle(tester);
     expect(find.byType(RatioScreen), findsOneWidget);
     await unmountApp(tester);
+  });
+
+  testWidgets('every route builds its screen (T13)', (tester) async {
+    final db = await pumpRouterApp(tester);
+    await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+    await visitAllRoutes(tester);
+    await unmountApp(tester);
+  });
+
+  testWidgets('every route builds in every supported locale (T13)', (
+    tester,
+  ) async {
+    for (final locale in AppLocalizations.supportedLocales) {
+      final db = await pumpRouterApp(tester, locale: locale);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      await visitAllRoutes(tester);
+      await unmountApp(tester);
+    }
   });
 }

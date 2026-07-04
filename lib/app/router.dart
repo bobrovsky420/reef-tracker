@@ -7,8 +7,6 @@ import 'package:go_router/go_router.dart';
 
 import '../data/database.dart';
 import '../domain/ratio.dart';
-import '../l10n/app_localizations.dart';
-import 'providers.dart';
 import '../features/add_reading/add_reading_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
 import '../features/dosing/dose_calculator_screen.dart';
@@ -22,6 +20,8 @@ import '../features/ratio/ratio_screen.dart';
 import '../features/settings/backups_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
+import '../l10n/app_localizations.dart';
+import 'providers.dart';
 
 final appRouter = GoRouter(
   routes: [
@@ -182,7 +182,7 @@ class _ResolveById<T> extends ConsumerWidget {
     if (async.isLoading && !async.hasValue) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    for (final row in async.value ?? const []) {
+    for (final row in async.value ?? const <Never>[]) {
       if (idOf(row) == id) return builder(row);
     }
     // Unknown id (or a load error surfaced as an empty list): navigating to
