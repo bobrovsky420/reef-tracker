@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:crypto/crypto.dart';
 import 'package:drift/native.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -119,7 +120,15 @@ String encodeBackup({
     'dosingEntries': dosingEntries.map(_dosingEntryToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
-  return jsonEncode(map);
+  final payload = jsonEncode(map);
+  // Integrity checksum (T7): sha256 over the compact JSON of the document
+  // without the `checksum` key. Catches in-field corruption that keeps the
+  // JSON parseable — truncation already fails jsonDecode. Spliced into the
+  // encoded string rather than re-encoding the (potentially large) map with
+  // the key added; a compact-encoded non-empty map always ends in `}`.
+  final checksum = sha256.convert(utf8.encode(payload)).toString();
+  return '${payload.substring(0, payload.length - 1)},'
+      '"checksum":"$checksum"}';
 }
 
 /// Parses a backup JSON string into companion rows. Throws
@@ -168,6 +177,29 @@ BackupData decodeBackup(String jsonString) {
       BackupRejection.newerVersion,
       'document version too new',
     );
+  }
+  // Integrity checksum (T7): sha256 over the compact JSON of the document
+  // without the `checksum` key. jsonDecode preserves key order and Dart's
+  // number encoding round-trips, so re-encoding the remaining map reproduces
+  // the exact bytes hashed at encode time. Absent in backups written before
+  // the checksum existed — those are accepted unverified. A hand-edited (e.g.
+  // pretty-printed) file no longer matches its checksum by design: it is not
+  // the document the app wrote.
+  final storedChecksum = decoded.remove('checksum');
+  if (storedChecksum != null) {
+    if (storedChecksum is! String) {
+      throw InvalidBackupException(
+        BackupRejection.corrupted,
+        'non-string checksum "$storedChecksum"',
+      );
+    }
+    final actual = sha256.convert(utf8.encode(jsonEncode(decoded))).toString();
+    if (actual != storedChecksum) {
+      throw const InvalidBackupException(
+        BackupRejection.corrupted,
+        'checksum mismatch',
+      );
+    }
   }
   // schemaVersion was always written from v1; treat a missing/odd value as 0
   // (an unknown-but-older schema) rather than failing here.

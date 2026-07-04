@@ -227,8 +227,12 @@ final _paramReadingsFamily = StreamProvider.autoDispose
     );
 
 /// Readings for a single parameter of the active tank (oldest first).
-final paramReadingsProvider =
-    Provider.family<AsyncValue<List<Reading>>, String>((ref, paramKey) {
+/// autoDispose (T3): each instance is a full-series live query, and consumers
+/// (history, ratio, dose-calculator screens) all re-watch on entry — without
+/// it every paramKey ever visited would keep re-querying its whole history on
+/// each readings write for the rest of the session.
+final paramReadingsProvider = Provider.autoDispose
+    .family<AsyncValue<List<Reading>>, String>((ref, paramKey) {
       final tank = ref.watch(activeTankProvider);
       if (tank == null) return const AsyncValue.data([]);
       return ref.watch(
@@ -236,19 +240,50 @@ final paramReadingsProvider =
       );
     });
 
+// --- Settings ---------------------------------------------------------------
+
+/// The raw settings key/value map — the *single* live query behind every
+/// settings provider (T4). Previously each setting held its own
+/// `watchSingleOrNull`, so any settings write (e.g. the auto-backup stamp)
+/// re-ran ~14 queries; now it re-runs this one. `main()` awaits this
+/// provider's first value to pre-warm the stored locale (and the database
+/// open) before the first frame.
+final settingsMapProvider = StreamProvider<Map<String, String?>>(
+  (ref) => ref.watch(settingsProvider).watchAll().distinct(mapEquals),
+);
+
+/// A single setting derived from [settingsMapProvider]: `select` re-evaluates
+/// the (cheap) decode on every map emission but only notifies watchers when
+/// *this key's* decoded value actually changed — a write to one setting no
+/// longer re-notifies the other settings' watchers. Decoders (and defaults)
+/// are the same static [AppSettings] functions the stream facade uses.
+Provider<AsyncValue<T>> _setting<T>(
+  SettingKey key,
+  T Function(String? raw) decode,
+) => Provider<AsyncValue<T>>(
+  (ref) => ref.watch(
+    settingsMapProvider.select(
+      (async) => async.whenData((map) => decode(map[key.storageKey])),
+    ),
+  ),
+);
+
 /// Preferred temperature display unit (default Celsius).
-final tempUnitProvider = StreamProvider<TempUnit>(
-  (ref) => ref.watch(settingsProvider).watchTempUnit(),
+final tempUnitProvider = _setting(
+  SettingKey.tempUnit,
+  AppSettings.decodeTempUnit,
 );
 
 /// Preferred salinity display unit (default ppt).
-final salinityUnitProvider = StreamProvider<SalinityUnit>(
-  (ref) => ref.watch(settingsProvider).watchSalinityUnit(),
+final salinityUnitProvider = _setting(
+  SettingKey.salinityUnit,
+  AppSettings.decodeSalinityUnit,
 );
 
 /// Preferred volume display unit (default litres).
-final volumeUnitProvider = StreamProvider<VolumeUnit>(
-  (ref) => ref.watch(settingsProvider).watchVolumeUnit(),
+final volumeUnitProvider = _setting(
+  SettingKey.volumeUnit,
+  AppSettings.decodeVolumeUnit,
 );
 
 /// Combined unit preferences, reactive to settings changes.
@@ -262,13 +297,15 @@ final unitPrefsProvider = Provider<UnitPrefs>((ref) {
 /// Whether the one-time top-bar feature tour has already been shown. Unset
 /// (a fresh install) reads as `false` so the tour runs once; the "Replay tour"
 /// settings action resets it to `'false'` to trigger it again.
-final tourSeenProvider = StreamProvider<bool>(
-  (ref) => ref.watch(settingsProvider).watchTourSeen(),
+final tourSeenProvider = _setting(
+  SettingKey.tourSeen,
+  AppSettings.decodeTourSeen,
 );
 
 /// Stored language code ('system' / 'en' / 'cs'), defaulting to 'system'.
-final localeCodeProvider = StreamProvider<String>(
-  (ref) => ref.watch(settingsProvider).watchLocaleCode(),
+final localeCodeProvider = _setting(
+  SettingKey.locale,
+  AppSettings.decodeLocaleCode,
 );
 
 /// The locale override for MaterialApp, or null to follow the system locale.
@@ -279,56 +316,65 @@ final localeProvider = Provider<Locale?>((ref) {
 
 /// The history-chart time range, stored as the range's label ('7d', '30d',
 /// '90d', 'All'). Shared across every parameter graph. Defaults to '30d'.
-final chartRangeProvider = StreamProvider<String>(
-  (ref) => ref.watch(settingsProvider).watchChartRange(),
+final chartRangeProvider = _setting(
+  SettingKey.chartRange,
+  AppSettings.decodeChartRange,
 );
 
 /// Whether automatic backups are enabled (default on).
-final autoBackupEnabledProvider = StreamProvider<bool>(
-  (ref) => ref.watch(settingsProvider).watchAutoBackupEnabled(),
+final autoBackupEnabledProvider = _setting(
+  SettingKey.autoBackupEnabled,
+  AppSettings.decodeAutoBackupEnabled,
 );
 
 /// The automatic-backup frequency, defaulting to daily.
-final autoBackupIntervalProvider = StreamProvider<AutoBackupInterval>(
-  (ref) => ref.watch(settingsProvider).watchAutoBackupInterval(),
+final autoBackupIntervalProvider = _setting(
+  SettingKey.autoBackupInterval,
+  AppSettings.decodeAutoBackupInterval,
 );
 
 /// When the most recent automatic or manual backup completed, or null if none
 /// has run yet. Reacts to the stored timestamp, so it refreshes as soon as a
 /// backup is written.
-final lastBackupAtProvider = StreamProvider<DateTime?>(
-  (ref) => ref.watch(settingsProvider).watchLastBackupAt(),
+final lastBackupAtProvider = _setting(
+  SettingKey.lastAutoBackupAt,
+  AppSettings.decodeLastBackupAt,
 );
 
 /// When the most recent backup attempt failed, or null if the latest attempt
 /// succeeded (every successful backup clears it). Non-null drives the warning
 /// row in Settings → Backup.
-final lastBackupErrorAtProvider = StreamProvider<DateTime?>(
-  (ref) => ref.watch(settingsProvider).watchLastBackupErrorAt(),
+final lastBackupErrorAtProvider = _setting(
+  SettingKey.lastBackupErrorAt,
+  AppSettings.decodeLastBackupErrorAt,
 );
 
 /// Whether recent-trend detection / forecasts are shown (default on).
-final trendEnabledProvider = StreamProvider<bool>(
-  (ref) => ref.watch(settingsProvider).watchTrendEnabled(),
+final trendEnabledProvider = _setting(
+  SettingKey.trendEnabled,
+  AppSettings.decodeTrendEnabled,
 );
 
 /// How much of the tank-health feature to show (badge + card / badge only /
 /// off). Defaults to [HealthDisplay.both].
-final healthDisplayProvider = StreamProvider<HealthDisplay>(
-  (ref) => ref.watch(settingsProvider).watchHealthDisplay(),
+final healthDisplayProvider = _setting(
+  SettingKey.healthDisplay,
+  AppSettings.decodeHealthDisplay,
 );
 
 /// Number of most-recent readings that define a trend (also the minimum count
 /// before a trend is shown). Defaults to [kTrendDefaultWindow].
-final trendWindowProvider = StreamProvider<int>(
-  (ref) => ref.watch(settingsProvider).watchTrendWindow(),
+final trendWindowProvider = _setting(
+  SettingKey.trendWindow,
+  AppSettings.decodeTrendWindow,
 );
 
 /// Forecast horizon in days: a projected zone crossing is shown as a dashboard
 /// attention chip only when it falls within this many days. Defaults to
 /// [kTrendDefaultHorizon].
-final trendHorizonProvider = StreamProvider<int>(
-  (ref) => ref.watch(settingsProvider).watchTrendHorizon(),
+final trendHorizonProvider = _setting(
+  SettingKey.trendHorizon,
+  AppSettings.decodeTrendHorizon,
 );
 
 /// Recent-trend forecast per parameter for the active tank, keyed by paramKey.

@@ -2190,6 +2190,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hidden'**
   String get healthDisplayOff;
+
+  /// Title of the error screen shown when a navigation link or deep link points to a screen that doesn't exist.
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found'**
+  String get routeNotFoundTitle;
+
+  /// No description provided for @routeNotFoundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This link doesn\'t lead anywhere in the app.'**
+  String get routeNotFoundBody;
+
+  /// No description provided for @routeNotFoundGoHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to home screen'**
+  String get routeNotFoundGoHome;
 }
 
 class _AppLocalizationsDelegate

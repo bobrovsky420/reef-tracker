@@ -1229,4 +1229,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get healthDisplayOff => 'Verborgen';
+
+  @override
+  String get routeNotFoundTitle => 'Seite nicht gefunden';
+
+  @override
+  String get routeNotFoundBody => 'Dieser Link führt in der App nirgendwohin.';
+
+  @override
+  String get routeNotFoundGoHome => 'Zum Startbildschirm';
 }

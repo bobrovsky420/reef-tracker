@@ -1037,6 +1037,13 @@ class AppDatabase extends _$AppDatabase {
           .watchSingleOrNull()
           .map((row) => row?.value == null ? null : int.tryParse(row!.value!));
 
+  /// The whole settings store as one live key/value map — the single query
+  /// behind every settings provider, so a write re-runs one query instead of
+  /// one per watched key (T4).
+  Stream<Map<String, String?>> watchAllSettings() => select(
+    settings,
+  ).watch().map((rows) => {for (final r in rows) r.key: r.value});
+
   /// Generic settings access (used for unit preferences, etc.).
   Stream<String?> watchSetting(String key) =>
       (select(settings)..where((s) => s.key.equals(key)))

@@ -6,6 +6,7 @@ import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/health_score.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/trend.dart';
+import 'package:reeftracker/domain/units.dart';
 
 /// Pumps the event loop until [cond] holds (or fails the test after ~1 s).
 Future<void> pumpUntil(bool Function() cond) async {
@@ -219,6 +220,62 @@ void main() {
     ]);
     expect(container.read(tankHealthProvider), expectedHealth);
   });
+
+  test(
+    'a settings write notifies only that setting\'s watchers (T4)',
+    () async {
+      final settings = AppSettings(db);
+
+      var tempNotifies = 0;
+      var windowNotifies = 0;
+      final tempSub = container.listen(
+        tempUnitProvider,
+        (_, _) => tempNotifies++,
+        fireImmediately: true,
+      );
+      final windowSub = container.listen(
+        trendWindowProvider,
+        (_, _) => windowNotifies++,
+        fireImmediately: true,
+      );
+      addTearDown(tempSub.close);
+      addTearDown(windowSub.close);
+
+      await pumpUntil(
+        () =>
+            container.read(tempUnitProvider).hasValue &&
+            container.read(trendWindowProvider).hasValue,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final settledTemp = tempNotifies;
+      final settledWindow = windowNotifies;
+
+      // A write to an unrelated key re-runs the single settings-map query, but
+      // the per-key selects must swallow it before any watcher fires.
+      await settings.setLastBackupAt(DateTime.now());
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(
+        tempNotifies,
+        settledTemp,
+        reason: 'an unrelated settings write must not re-notify tempUnit',
+      );
+      expect(
+        windowNotifies,
+        settledWindow,
+        reason: 'an unrelated settings write must not re-notify trendWindow',
+      );
+
+      // A genuine change to a watched key still comes through, alone.
+      await settings.setTempUnit(TempUnit.fahrenheit);
+      await pumpUntil(() => tempNotifies > settledTemp);
+      expect(container.read(tempUnitProvider).value, TempUnit.fahrenheit);
+      expect(
+        windowNotifies,
+        settledWindow,
+        reason: 'a tempUnit write must not re-notify trendWindow',
+      );
+    },
+  );
 
   test('switching back to a tank reloads its data', () async {
     final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);

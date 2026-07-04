@@ -8,6 +8,7 @@ import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/home/home_shell.dart';
 import 'package:reeftracker/features/manage_parameters/manage_parameters_screen.dart';
+import 'package:reeftracker/features/ratio/ratio_screen.dart';
 import 'package:reeftracker/features/tanks/tanks_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
@@ -114,6 +115,40 @@ void main() {
     await settle(tester);
 
     expect(find.byType(HomeShell), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  testWidgets('an unknown route shows the localized error screen with a way '
+      'home (T8)', (tester) async {
+    final db = await pumpRouterApp(tester);
+    await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+    appRouter.go('/no/such/route');
+    await settle(tester);
+
+    // The localized screen, not go_router's built-in English error page.
+    expect(find.text('Page not found'), findsOneWidget);
+
+    await tester.tap(find.text('Go to home screen'));
+    await settle(tester);
+    expect(find.byType(HomeShell), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  testWidgets('a garbage ratio type redirects home instead of opening '
+      'po4no3 (T8)', (tester) async {
+    final db = await pumpRouterApp(tester);
+    await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+    appRouter.go('/ratio/garbage');
+    await settle(tester);
+    expect(find.byType(RatioScreen), findsNothing);
+    expect(find.byType(HomeShell), findsOneWidget);
+
+    // A valid type still opens the ratio screen through the same route.
+    appRouter.go('/ratio/po4no3');
+    await settle(tester);
+    expect(find.byType(RatioScreen), findsOneWidget);
     await unmountApp(tester);
   });
 }

@@ -5,6 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.3] - 2026-07-04
+
+### Added
+- Backups now carry an integrity checksum, so a backup file damaged after it
+  was written (bad storage, broken transfer) is detected and rejected as
+  corrupted at import instead of silently restoring altered values. Automatic
+  backups are additionally verified on disk before they replace an older
+  backup in the rotation. Older backups without a checksum still restore.
+
+### Changed
+- Performance: single-parameter chart data (history, ratio and dose
+  calculator screens) is now released when you leave the screen. Previously
+  every parameter chart ever opened kept its full measurement series live in
+  the background and re-read it on each save for the rest of the session.
+- Performance: the measurement list on the parameter history screen and the
+  ratio screen's value list now build only the rows on screen; with years of
+  data on the "All" range, both previously built every row (with its swipe
+  handling) on each rebuild.
+- Performance: typing a value on the Add reading screen now updates only that
+  row's zone indicator instead of rebuilding the whole form on every
+  keystroke, and ratio series are computed in a single pass over the data.
+- Performance: all settings are now read through a single database query
+  instead of one per setting (~14), and changing one setting no longer
+  re-notifies screens watching the others.
+
+### Fixed
+- The tank health card at the top of the dashboard was slightly wider than
+  the parameter tile grid below it; both now align to the same edges.
+- Opening a broken or outdated link into the app now shows a translated
+  "page not found" screen with a button back to the home screen, instead of
+  an untranslated English error page with no way back.
+- A link to an unknown ratio type now goes to the home screen instead of
+  silently opening the PO₄/NO₃ ratio.
+
 ## [0.16.2] - 2026-07-03
 
 ### Changed

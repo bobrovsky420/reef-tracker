@@ -68,28 +68,43 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             children: [
               const ChartRangeSelector(),
               Expanded(
+                // Builder-based slivers (T14): only visible reading rows are
+                // instantiated — on "All" the old ListView(children:) built
+                // hundreds of Dismissible tiles per rebuild.
                 child: data.isEmpty
                     ? Center(child: Text(l.noReadingsInRange))
-                    : ListView(
-                        children: [
-                          SizedBox(
-                            height: 280,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
-                              child: TrendChart(
-                                readings: data,
-                                param: param,
-                                pres: pres,
-                                waterChanges: waterChanges,
+                    : CustomScrollView(
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: SizedBox(
+                              height: 280,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  8,
+                                  16,
+                                  16,
+                                  8,
+                                ),
+                                child: TrendChart(
+                                  readings: data,
+                                  param: param,
+                                  pres: pres,
+                                  waterChanges: waterChanges,
+                                ),
                               ),
                             ),
                           ),
-                          if (trend != null) ...[
-                            const Divider(),
-                            TrendCard(trend: trend, pres: pres),
-                          ],
-                          const Divider(),
-                          ..._readingsList(context, data, param, pres),
+                          if (trend != null)
+                            SliverToBoxAdapter(
+                              child: Column(
+                                children: [
+                                  const Divider(),
+                                  TrendCard(trend: trend, pres: pres),
+                                ],
+                              ),
+                            ),
+                          const SliverToBoxAdapter(child: Divider()),
+                          _readingsSliver(context, data, param, pres),
                         ],
                       ),
               ),
@@ -100,17 +115,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     );
   }
 
-  List<Widget> _readingsList(
+  Widget _readingsSliver(
     BuildContext context,
     List<Reading> data,
     TrackedParameter? param,
     ParamPresentation pres,
   ) {
     final bounds = param != null ? boundsOf(param) : const ZoneBounds();
-    final reversed = data.reversed.toList(); // newest first
-    return [
-      for (final r in reversed)
-        Dismissible(
+    return SliverList.builder(
+      itemCount: data.length,
+      itemBuilder: (context, i) {
+        final r = data[data.length - 1 - i]; // newest first
+        return Dismissible(
           key: ValueKey(r.id),
           direction: DismissDirection.endToStart,
           background: Container(
@@ -134,8 +150,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             ),
             onTap: () => _editReading(context, r, pres),
           ),
-        ),
-    ];
+        );
+      },
+    );
   }
 
   /// Edits a reading's value and/or its date/time. When the timestamp is moved

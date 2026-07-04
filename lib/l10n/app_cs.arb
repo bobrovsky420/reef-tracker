@@ -370,5 +370,9 @@
   "healthDisplaySubtitle": "Kde zobrazit souhrn zdraví",
   "healthDisplayBoth": "Odznak a karta",
   "healthDisplayBadge": "Jen odznak",
-  "healthDisplayOff": "Skryté"
+  "healthDisplayOff": "Skryté",
+
+  "routeNotFoundTitle": "Stránka nenalezena",
+  "routeNotFoundBody": "Tento odkaz v aplikaci nikam nevede.",
+  "routeNotFoundGoHome": "Přejít na hlavní obrazovku"
 }

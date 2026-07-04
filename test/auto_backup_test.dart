@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/auto_backup.dart';
+import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 
@@ -106,6 +107,19 @@ void main() {
       expect(p.basename(file.path), startsWith(kAutoBackupPrefix));
       // The new file plus the 2 newest old ones = 3.
       expect((await listAutoBackups()).length, 3);
+    });
+
+    test('the written file passes checksum verification (T7)', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      final file = await writeAutoBackup(db, keep: 3);
+      final json = await file.readAsString();
+      expect(json, contains('"checksum":"'));
+      // decodeBackup verifies the checksum for documents that carry one, so a
+      // clean decode proves write + verify-before-rename kept the file intact.
+      expect(decodeBackup(json).tanks.length, 1);
     });
   });
 

@@ -1222,4 +1222,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthDisplayOff => 'Hidden';
+
+  @override
+  String get routeNotFoundTitle => 'Page not found';
+
+  @override
+  String get routeNotFoundBody =>
+      'This link doesn\'t lead anywhere in the app.';
+
+  @override
+  String get routeNotFoundGoHome => 'Go to home screen';
 }

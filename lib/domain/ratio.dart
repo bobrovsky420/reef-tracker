@@ -155,21 +155,34 @@ RatioPoint? latestRatio(
 /// measured, the most recent value of the *other* parameter is carried forward,
 /// so a ratio is produced whenever both have been recorded at least once. Both
 /// lists must be oldest-first.
+///
+/// A single merge pass with two carry-forward cursors — O(n+m), not a rescan of
+/// both lists per merged timestamp (T15); this runs on the dashboard path for
+/// every visible ratio card.
 List<RatioPoint> computeRatioSeries(
   List<RatioReading> numerator,
   List<RatioReading> denominator,
 ) {
   if (numerator.isEmpty || denominator.isEmpty) return const [];
 
-  final times = <DateTime>{
-    for (final r in numerator) r.takenAt,
-    for (final r in denominator) r.takenAt,
-  }.toList()..sort();
-
   final points = <RatioPoint>[];
-  for (final t in times) {
-    final num = _latestAtOrBefore(numerator, t);
-    final den = _latestAtOrBefore(denominator, t);
+  var ni = 0; // next unconsumed numerator reading
+  var di = 0; // next unconsumed denominator reading
+  RatioReading? num; // carried-forward latest numerator at or before t
+  RatioReading? den; // carried-forward latest denominator at or before t
+  while (ni < numerator.length || di < denominator.length) {
+    // The earliest timestamp not yet processed across both lists.
+    final nt = ni < numerator.length ? numerator[ni].takenAt : null;
+    final dt = di < denominator.length ? denominator[di].takenAt : null;
+    final t = nt == null || (dt != null && dt.isBefore(nt)) ? dt! : nt;
+    // Consume every reading at [t] (both lists, so equal timestamps merge into
+    // one point); the last one wins, matching "the most recent value".
+    while (ni < numerator.length && !numerator[ni].takenAt.isAfter(t)) {
+      num = numerator[ni++];
+    }
+    while (di < denominator.length && !denominator[di].takenAt.isAfter(t)) {
+      den = denominator[di++];
+    }
     if (num == null || den == null) continue;
     if (den.value == 0) continue;
     points.add(
@@ -182,16 +195,6 @@ List<RatioPoint> computeRatioSeries(
     );
   }
   return points;
-}
-
-/// Last reading in [readings] (oldest-first) taken at or before [t], or null.
-RatioReading? _latestAtOrBefore(List<RatioReading> readings, DateTime t) {
-  RatioReading? found;
-  for (final r in readings) {
-    if (r.takenAt.isAfter(t)) break;
-    found = r;
-  }
-  return found;
 }
 
 /// Formats a value with precision that scales with its magnitude, so both

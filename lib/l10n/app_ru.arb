@@ -370,5 +370,9 @@
   "healthDisplaySubtitle": "Где показывать сводку состояния",
   "healthDisplayBoth": "Значок и карточка",
   "healthDisplayBadge": "Только значок",
-  "healthDisplayOff": "Скрыто"
+  "healthDisplayOff": "Скрыто",
+
+  "routeNotFoundTitle": "Страница не найдена",
+  "routeNotFoundBody": "Эта ссылка никуда не ведёт в приложении.",
+  "routeNotFoundGoHome": "На главный экран"
 }

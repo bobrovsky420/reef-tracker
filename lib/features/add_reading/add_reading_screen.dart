@@ -6,7 +6,6 @@ import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
-import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/zone_chip.dart';
@@ -25,12 +24,11 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
   DateTime _takenAt = DateTime.now();
   bool _saving = false;
 
+  // No listener here: only the row's zone chip depends on the typed text, and
+  // it listens to its own controller (T14) — a keystroke must not rebuild the
+  // whole form.
   TextEditingController _controllerFor(int id) =>
-      _controllers.putIfAbsent(id, () {
-        final c = TextEditingController();
-        c.addListener(() => setState(() {}));
-        return c;
-      });
+      _controllers.putIfAbsent(id, TextEditingController.new);
 
   @override
   void dispose() {
@@ -259,10 +257,6 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     final l = AppLocalizations.of(context);
     final pres = presentationOf(p, prefs);
     final ctrl = _controllerFor(p.id);
-    final value = parseUserDouble(ctrl.text);
-    final zone = value != null
-        ? boundsOf(p).classify(pres.toCanonical(value))
-        : Zone.unknown;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -293,9 +287,15 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
           const SizedBox(width: 8),
           SizedBox(
             width: 40,
-            child: value != null
-                ? ZoneChip(zone, compact: true)
-                : const SizedBox.shrink(),
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: ctrl,
+              builder: (context, text, _) {
+                final value = parseUserDouble(text.text);
+                if (value == null) return const SizedBox.shrink();
+                final zone = boundsOf(p).classify(pres.toCanonical(value));
+                return ZoneChip(zone, compact: true);
+              },
+            ),
           ),
         ],
       ),

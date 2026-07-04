@@ -1233,4 +1233,13 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get healthDisplayOff => 'Ukryte';
+
+  @override
+  String get routeNotFoundTitle => 'Nie znaleziono strony';
+
+  @override
+  String get routeNotFoundBody => 'Ten link nigdzie nie prowadzi w aplikacji.';
+
+  @override
+  String get routeNotFoundGoHome => 'Przejdź do ekranu głównego';
 }

@@ -91,28 +91,33 @@ class RatioScreen extends ConsumerWidget {
                       ),
                     ),
                     Expanded(
+                      // Builder-based slivers (T14): only visible rows are
+                      // instantiated — the old ListView(children:) built the
+                      // whole series' tiles per rebuild on "All".
                       child: data.isEmpty
                           ? Center(child: Text(l.ratioNoData))
-                          : ListView(
-                              children: [
-                                SizedBox(
-                                  height: 280,
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      8,
-                                      16,
-                                      16,
-                                      8,
-                                    ),
-                                    child: _RatioChart(
-                                      kind: kind,
-                                      points: data,
-                                      bounds: bounds,
+                          : CustomScrollView(
+                              slivers: [
+                                SliverToBoxAdapter(
+                                  child: SizedBox(
+                                    height: 280,
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        8,
+                                        16,
+                                        16,
+                                        8,
+                                      ),
+                                      child: _RatioChart(
+                                        kind: kind,
+                                        points: data,
+                                        bounds: bounds,
+                                      ),
                                     ),
                                   ),
                                 ),
-                                const Divider(),
-                                ..._pointsList(context, data),
+                                const SliverToBoxAdapter(child: Divider()),
+                                _pointsSliver(context, data),
                               ],
                             ),
                     ),
@@ -123,19 +128,21 @@ class RatioScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _pointsList(BuildContext context, List<RatioPoint> data) {
-    final reversed = data.reversed.toList(); // newest first
-    return [
-      for (final p in reversed)
-        ListTile(
+  Widget _pointsSliver(BuildContext context, List<RatioPoint> data) {
+    return SliverList.builder(
+      itemCount: data.length,
+      itemBuilder: (context, i) {
+        final p = data[data.length - 1 - i]; // newest first
+        return ListTile(
           title: Text(formatRatioValue(kind, p.ratio)),
           subtitle: Text(ratioBreakdown(kind, p)),
           trailing: Text(
             DateFormat.yMMMEd().format(p.time),
             style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
           ),
-        ),
-    ];
+        );
+      },
+    );
   }
 }
 

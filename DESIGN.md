@@ -25,7 +25,7 @@ and no account.
 | Charts             | `fl_chart` |
 | Routing            | `go_router` |
 | i18n / formatting  | Flutter `gen-l10n` (ARB files) + `intl` |
-| Backup I/O         | `share_plus` (export via OS share sheet) + `file_picker` (import) |
+| Backup I/O         | `share_plus` (export via OS share sheet) + `file_picker` (import) + `crypto` (sha256 integrity checksum) |
 | App metadata       | `package_info_plus` (real version/build for the About box) |
 | Feature tour       | `showcaseview` (first-run spotlight tour of the top bar) |
 
@@ -218,6 +218,15 @@ Where a missing optional column has a table default, the decoder emits Drift's
 `Value.absent()` so the **default** applies rather than NULL (e.g. an old ratio
 row without `displayOrder` gets the table default 1000 = ordered last).
 
+Every document carries an **integrity checksum** (T7): `checksum` = sha256 hex
+of the compact JSON encoding of the document *without* that key. `decodeBackup`
+strips the key, re-encodes the rest and compares — jsonDecode preserves key
+order and Dart's number encoding round-trips, so the bytes match exactly; a
+mismatch (in-field corruption that keeps the JSON parseable) rejects as
+`corrupted`. Checksum-less backups from older app versions are accepted
+unverified, and `kBackupVersion` stays 1 so older apps can import new files
+(they ignore the extra key).
+
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet, then cleans up the plaintext copies: its own staging file as soon
 as the sheet returns, share_plus's internal copy (under `<temp>/share_plus/`)
@@ -272,8 +281,9 @@ Two layers, **no new dependencies and no runtime permissions**:
    can never be silently suspended until the clock catches up.
    `writeAutoBackup` serializes via `encodeBackupFromDb` to
    `<appDocuments>/backups/reeftracker-auto-<stamp>.json` — **atomically**, via
-   a `.json.tmp` write + rename, so an interrupted write can never leave a
-   truncated file in the rotation — then `pruneAutoBackups`
+   a `.json.tmp` write + read-back verification + rename, so an interrupted or
+   silently corrupted write can never leave a truncated file in the rotation —
+   then `pruneAutoBackups`
    keeps the newest *N* (`kAutoBackupDefaultKeep`). The filename stamp is
    **UTC with millisecond precision** (`yyyyMMdd-HHmmss-SSS`): UTC keeps the
    lexical sort chronological across DST fall-back, milliseconds keep two
@@ -321,8 +331,18 @@ provider shapes are used deliberately: **every DB read is a `StreamProvider`**
 wrapping a Drift watch stream (the UI reacts to any DB change with no manual
 invalidation), while **derived values are plain memoized `Provider`s**
 (`unitPrefsProvider`, `localeProvider`, `tankTrendsProvider`,
-`tankHealthProvider`) that Riverpod re-runs only when a watched input changes —
-never on a mere widget rebuild.
+`tankHealthProvider`, and every per-key settings provider) that Riverpod
+re-runs only when a watched input changes — never on a mere widget rebuild.
+
+**All settings ride one query** (T4): `settingsMapProvider` is the single
+`StreamProvider` over the whole settings table (`AppSettings.watchAll()`,
+deduped with `mapEquals`), and each public settings provider
+(`tempUnitProvider`, `trendWindowProvider`, `lastBackupAtProvider`, …) is a
+plain `Provider<AsyncValue<T>>` `select`ing its key out of the map and decoding
+it with the same static `AppSettings.decode*` function the stream facade uses.
+A settings write (e.g. the auto-backup timestamp) re-runs one SQL query instead
+of ~14 `watchSingleOrNull`s, and `select`'s equality check means only the
+watchers of the key that actually changed are notified.
 
 **Tank-scoped providers are family-backed** (#20): each public tank-scoped
 provider (`trackedParametersProvider`, `tankReadingsProvider`,
@@ -347,11 +367,13 @@ re-emission never becomes a new `AsyncValue`, and the derived results
 notify watchers either (Riverpod 3 filters updates with `==`). Net effect: a
 write only rebuilds the widgets whose data actually changed.
 
-Beyond those internal families only
-`tankReadingsProvider` uses `autoDispose`: state is small and single-user, so
-providers simply live for the app's lifetime (pairing with the home shell's
-`IndexedStack`, which keeps tab widget state alive too), and the permanent
-wrappers keep the *active* tank's data warm for `ref.read` call sites.
+Beyond those internal families only the two full-series wrappers —
+`tankReadingsProvider` and `paramReadingsProvider` (T3) — use `autoDispose`:
+their unbounded live queries exist only while a chart screen watches them.
+The rest of the state is small and single-user, so those providers simply
+live for the app's lifetime (pairing with the home shell's `IndexedStack`,
+which keeps tab widget state alive too), and the permanent wrappers keep the
+*active* tank's data warm for `ref.read` call sites.
 
 **The full readings history is not kept live** (T1). `tankReadingsProvider`
 streams the tank's *entire* readings table — a query whose per-write re-run
@@ -383,8 +405,9 @@ surfaced as a localized SnackBar through `MaterialApp.router`'s
 query cascades through the derived providers and riverpod's automatic retries.
 
 **Startup pre-warm is time-bounded.** `main()` awaits the first
-`localeCodeProvider` value before `runApp` so the first frame renders in the
-stored language (and the database open/migration is front-loaded), but only up
+`settingsMapProvider` value (which carries the stored locale override) before
+`runApp` so the first frame renders in the stored language (and the database
+open/migration is front-loaded), but only up
 to a 3 s timeout: platform-channel calls made before the first frame can hang
 forever on some devices (flutter/flutter#72872), which would freeze the app on
 the native splash screen. On timeout the app starts in the system locale and
@@ -400,7 +423,8 @@ The graph:
 - `trackedParametersProvider`, `tankReadingsProvider` (newest-first, full
   history — comparison view only, autoDispose), `recentReadingsProvider`
   (newest `kRecentReadingsPerParam` per parameter — dashboard/trends/health, T1),
-  `paramReadingsProvider(paramKey)` family (oldest-first, chart-friendly),
+  `paramReadingsProvider(paramKey)` family (oldest-first, chart-friendly,
+  autoDispose),
   `waterChangesProvider`, `carbonChangesProvider`, `equipmentCleaningsProvider`
   (all newest-first), `dosingEntriesProvider` (dashboard order).
 - Unit prefs: `tempUnitProvider`, `salinityUnitProvider`, `volumeUnitProvider`,
@@ -481,6 +505,11 @@ The two `:id` edit routes treat `state.extra` (the object passed by in-app
 restoration — a `_ResolveById` widget resolves the row by `:id` from
 `tanksProvider` / `trackedParametersProvider` and navigates home when the id
 doesn't exist, instead of crashing or opening a blank create form.
+
+Unknown routes land on a localized "page not found" screen with a go-home
+button (`errorBuilder`) instead of go_router's built-in English-only error
+page, and a `/ratio/:type` segment that names no known `RatioKind` redirects
+home instead of silently opening the PO₄/NO₃ ratio (T8).
 
 ## Features (`lib/features/`)
 

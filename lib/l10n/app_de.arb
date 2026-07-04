@@ -370,5 +370,9 @@
   "healthDisplaySubtitle": "Wo die Zustandsübersicht erscheint",
   "healthDisplayBoth": "Abzeichen & Karte",
   "healthDisplayBadge": "Nur Abzeichen",
-  "healthDisplayOff": "Verborgen"
+  "healthDisplayOff": "Verborgen",
+
+  "routeNotFoundTitle": "Seite nicht gefunden",
+  "routeNotFoundBody": "Dieser Link führt in der App nirgendwohin.",
+  "routeNotFoundGoHome": "Zum Startbildschirm"
 }

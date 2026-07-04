@@ -444,5 +444,12 @@
   "healthDisplaySubtitle": "Where to show the health summary",
   "healthDisplayBoth": "Badge & card",
   "healthDisplayBadge": "Badge only",
-  "healthDisplayOff": "Hidden"
+  "healthDisplayOff": "Hidden",
+
+  "routeNotFoundTitle": "Page not found",
+  "@routeNotFoundTitle": {
+    "description": "Title of the error screen shown when a navigation link or deep link points to a screen that doesn't exist."
+  },
+  "routeNotFoundBody": "This link doesn't lead anywhere in the app.",
+  "routeNotFoundGoHome": "Go to home screen"
 }

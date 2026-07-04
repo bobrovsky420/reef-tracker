@@ -1232,4 +1232,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get healthDisplayOff => 'Скрыто';
+
+  @override
+  String get routeNotFoundTitle => 'Страница не найдена';
+
+  @override
+  String get routeNotFoundBody => 'Эта ссылка никуда не ведёт в приложении.';
+
+  @override
+  String get routeNotFoundGoHome => 'На главный экран';
 }

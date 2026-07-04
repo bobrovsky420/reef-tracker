@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../data/database.dart';
 import '../domain/ratio.dart';
+import '../l10n/app_localizations.dart';
 import 'providers.dart';
 import '../features/add_reading/add_reading_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
@@ -74,13 +75,15 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/ratio/:type',
+      redirect: _unknownRatioTypeToHome,
       builder: (context, state) =>
-          RatioScreen(kind: _ratioKind(state.pathParameters['type'])),
+          RatioScreen(kind: _ratioKind(state.pathParameters['type'])!),
     ),
     GoRoute(
       path: '/ratio/:type/edit',
+      redirect: _unknownRatioTypeToHome,
       builder: (context, state) =>
-          RatioEditScreen(kind: _ratioKind(state.pathParameters['type'])),
+          RatioEditScreen(kind: _ratioKind(state.pathParameters['type'])!),
     ),
     GoRoute(
       path: '/dosing/edit',
@@ -108,14 +111,52 @@ final appRouter = GoRouter(
       builder: (context, state) => const SalinityCalculatorScreen(),
     ),
   ],
+  // Unknown routes (a stale or mistyped deep link) land on a localized error
+  // screen instead of go_router's built-in English-only page (T8).
+  errorBuilder: (context, state) => const _RouteNotFoundScreen(),
 );
 
-/// Resolves a `:type` path segment to a [RatioKind], defaulting to po4no3.
-RatioKind _ratioKind(String? type) {
+/// Resolves a `:type` path segment to a [RatioKind], or null when the segment
+/// names no known ratio (a garbage deep link) — the route then redirects home
+/// instead of silently opening po4no3 (T8).
+RatioKind? _ratioKind(String? type) {
   for (final k in RatioKind.values) {
     if (k.name == type) return k;
   }
-  return RatioKind.po4no3;
+  return null;
+}
+
+String? _unknownRatioTypeToHome(BuildContext context, GoRouterState state) =>
+    _ratioKind(state.pathParameters['type']) == null ? '/' : null;
+
+/// Localized "page not found" screen for unknown routes, with a way back —
+/// the error page is otherwise a navigational dead end on a bad deep link.
+class _RouteNotFoundScreen extends StatelessWidget {
+  const _RouteNotFoundScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.routeNotFoundTitle)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.routeNotFoundBody, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => context.go('/'),
+                child: Text(l10n.routeNotFoundGoHome),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Resolves an edit route's target row by its `:id` path parameter when the

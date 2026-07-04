@@ -127,20 +127,34 @@ class AppSettings {
   Future<void> _write(SettingKey key, String? value) =>
       _db.setSetting(key.storageKey, value);
 
+  /// The whole settings store as one live key/value map (T4). The settings
+  /// providers derive every individual setting from this single query (via the
+  /// static `decode*` functions below) instead of holding one
+  /// `watchSingleOrNull` per key — a settings write re-runs one query, not ~14.
+  Stream<Map<String, String?>> watchAll() => _db.watchAllSettings();
+
+  // Each setting's raw-string decoding (including its default) lives in one
+  // static `decode*` function, shared by the per-key `watch*` stream and the
+  // map-based provider path — the two can't drift apart.
+
   // --- units -----------------------------------------------------------------
 
+  static TempUnit decodeTempUnit(String? raw) => TempUnit.fromName(raw);
   Stream<TempUnit> watchTempUnit() =>
-      _watch(SettingKey.tempUnit).map(TempUnit.fromName);
+      _watch(SettingKey.tempUnit).map(decodeTempUnit);
   Future<void> setTempUnit(TempUnit unit) =>
       _write(SettingKey.tempUnit, unit.name);
 
+  static SalinityUnit decodeSalinityUnit(String? raw) =>
+      SalinityUnit.fromName(raw);
   Stream<SalinityUnit> watchSalinityUnit() =>
-      _watch(SettingKey.salinityUnit).map(SalinityUnit.fromName);
+      _watch(SettingKey.salinityUnit).map(decodeSalinityUnit);
   Future<void> setSalinityUnit(SalinityUnit unit) =>
       _write(SettingKey.salinityUnit, unit.name);
 
+  static VolumeUnit decodeVolumeUnit(String? raw) => VolumeUnit.fromName(raw);
   Stream<VolumeUnit> watchVolumeUnit() =>
-      _watch(SettingKey.volumeUnit).map(VolumeUnit.fromName);
+      _watch(SettingKey.volumeUnit).map(decodeVolumeUnit);
   Future<void> setVolumeUnit(VolumeUnit unit) =>
       _write(SettingKey.volumeUnit, unit.name);
 
@@ -148,22 +162,25 @@ class AppSettings {
 
   /// The stored language code ('system' / 'en' / 'cs' / …), defaulting to
   /// [kDefaultLocaleCode].
+  static String decodeLocaleCode(String? raw) => raw ?? kDefaultLocaleCode;
   Stream<String> watchLocaleCode() =>
-      _watch(SettingKey.locale).map((v) => v ?? kDefaultLocaleCode);
+      _watch(SettingKey.locale).map(decodeLocaleCode);
   Future<void> setLocaleCode(String? code) => _write(SettingKey.locale, code);
 
   // --- chart range -----------------------------------------------------------
 
+  static String decodeChartRange(String? raw) => raw ?? kDefaultChartRange;
   Stream<String> watchChartRange() =>
-      _watch(SettingKey.chartRange).map((v) => v ?? kDefaultChartRange);
+      _watch(SettingKey.chartRange).map(decodeChartRange);
   Future<void> setChartRange(String label) =>
       _write(SettingKey.chartRange, label);
 
   // --- trend -----------------------------------------------------------------
 
-  Stream<bool> watchTrendEnabled() => _watch(
-    SettingKey.trendEnabled,
-  ).map((v) => v == null ? kTrendDefaultEnabled : v == 'true');
+  static bool decodeTrendEnabled(String? raw) =>
+      raw == null ? kTrendDefaultEnabled : raw == 'true';
+  Stream<bool> watchTrendEnabled() =>
+      _watch(SettingKey.trendEnabled).map(decodeTrendEnabled);
   Future<void> setTrendEnabled(bool enabled) =>
       _write(SettingKey.trendEnabled, enabled.toString());
 
@@ -171,25 +188,29 @@ class AppSettings {
   // outside that range would crash the dropdown and — since T1 caps the
   // dashboard's readings feed per parameter — could silently starve
   // computeTrend of points.
-  Stream<int> watchTrendWindow() => _watch(SettingKey.trendWindow).map(
-    (v) => (int.tryParse(v ?? '') ?? kTrendDefaultWindow).clamp(
-      kTrendMinWindow,
-      kTrendMaxWindow,
-    ),
-  );
+  static int decodeTrendWindow(String? raw) =>
+      (int.tryParse(raw ?? '') ?? kTrendDefaultWindow).clamp(
+        kTrendMinWindow,
+        kTrendMaxWindow,
+      );
+  Stream<int> watchTrendWindow() =>
+      _watch(SettingKey.trendWindow).map(decodeTrendWindow);
   Future<void> setTrendWindow(int window) =>
       _write(SettingKey.trendWindow, window.toString());
 
-  Stream<int> watchTrendHorizon() => _watch(
-    SettingKey.trendHorizon,
-  ).map((v) => int.tryParse(v ?? '') ?? kTrendDefaultHorizon);
+  static int decodeTrendHorizon(String? raw) =>
+      int.tryParse(raw ?? '') ?? kTrendDefaultHorizon;
+  Stream<int> watchTrendHorizon() =>
+      _watch(SettingKey.trendHorizon).map(decodeTrendHorizon);
   Future<void> setTrendHorizon(int days) =>
       _write(SettingKey.trendHorizon, days.toString());
 
   // --- health display --------------------------------------------------------
 
+  static HealthDisplay decodeHealthDisplay(String? raw) =>
+      HealthDisplay.fromName(raw);
   Stream<HealthDisplay> watchHealthDisplay() =>
-      _watch(SettingKey.healthDisplay).map(HealthDisplay.fromName);
+      _watch(SettingKey.healthDisplay).map(decodeHealthDisplay);
   Future<void> setHealthDisplay(HealthDisplay display) =>
       _write(SettingKey.healthDisplay, display.name);
 
@@ -197,28 +218,30 @@ class AppSettings {
 
   /// Whether the one-time top-bar tour has already been shown; unset reads as
   /// `false` so the tour runs once on a fresh install.
+  static bool decodeTourSeen(String? raw) => raw == 'true';
   Stream<bool> watchTourSeen() =>
-      _watch(SettingKey.tourSeen).map((v) => v == 'true');
+      _watch(SettingKey.tourSeen).map(decodeTourSeen);
   Future<void> setTourSeen(bool seen) =>
       _write(SettingKey.tourSeen, seen.toString());
 
   // --- automatic backup ------------------------------------------------------
 
-  Stream<bool> watchAutoBackupEnabled() => _watch(
-    SettingKey.autoBackupEnabled,
-  ).map((v) => v == null ? kAutoBackupDefaultEnabled : v == 'true');
-  Future<bool> readAutoBackupEnabled() async {
-    final v = await _read(SettingKey.autoBackupEnabled);
-    return v == null ? kAutoBackupDefaultEnabled : v == 'true';
-  }
+  static bool decodeAutoBackupEnabled(String? raw) =>
+      raw == null ? kAutoBackupDefaultEnabled : raw == 'true';
+  Stream<bool> watchAutoBackupEnabled() =>
+      _watch(SettingKey.autoBackupEnabled).map(decodeAutoBackupEnabled);
+  Future<bool> readAutoBackupEnabled() async =>
+      decodeAutoBackupEnabled(await _read(SettingKey.autoBackupEnabled));
 
   Future<void> setAutoBackupEnabled(bool enabled) =>
       _write(SettingKey.autoBackupEnabled, enabled.toString());
 
+  static AutoBackupInterval decodeAutoBackupInterval(String? raw) =>
+      AutoBackupInterval.fromName(raw);
   Stream<AutoBackupInterval> watchAutoBackupInterval() =>
-      _watch(SettingKey.autoBackupInterval).map(AutoBackupInterval.fromName);
+      _watch(SettingKey.autoBackupInterval).map(decodeAutoBackupInterval);
   Future<AutoBackupInterval> readAutoBackupInterval() async =>
-      AutoBackupInterval.fromName(await _read(SettingKey.autoBackupInterval));
+      decodeAutoBackupInterval(await _read(SettingKey.autoBackupInterval));
   Future<void> setAutoBackupInterval(AutoBackupInterval interval) =>
       _write(SettingKey.autoBackupInterval, interval.name);
 
@@ -228,8 +251,9 @@ class AppSettings {
 
   /// When the most recent automatic or manual backup completed, or null if
   /// none has run yet (or the stored value is unparseable).
+  static DateTime? decodeLastBackupAt(String? raw) => _parseEpochMillis(raw);
   Stream<DateTime?> watchLastBackupAt() =>
-      _watch(SettingKey.lastAutoBackupAt).map(_parseEpochMillis);
+      _watch(SettingKey.lastAutoBackupAt).map(decodeLastBackupAt);
   Future<DateTime?> readLastBackupAt() async =>
       _parseEpochMillis(await _read(SettingKey.lastAutoBackupAt));
   Future<void> setLastBackupAt(DateTime when) => _write(
@@ -241,8 +265,10 @@ class AppSettings {
   /// if the latest attempt succeeded / none has failed yet. Cleared by every
   /// successful backup, so a non-null value always means "the backup you are
   /// counting on is not being written" (TODO #22).
+  static DateTime? decodeLastBackupErrorAt(String? raw) =>
+      _parseEpochMillis(raw);
   Stream<DateTime?> watchLastBackupErrorAt() =>
-      _watch(SettingKey.lastBackupErrorAt).map(_parseEpochMillis);
+      _watch(SettingKey.lastBackupErrorAt).map(decodeLastBackupErrorAt);
   Future<void> setLastBackupErrorAt(DateTime? when) => _write(
     SettingKey.lastBackupErrorAt,
     when?.millisecondsSinceEpoch.toString(),

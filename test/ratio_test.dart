@@ -73,6 +73,42 @@ void main() {
       final series = computeRatioSeries(phosphate, nitrate);
       expect(series.map((p) => p.time.millisecondsSinceEpoch), [2000]);
     });
+
+    // Pins the single-merge-pass rewrite (T15) to the original semantics.
+    test('interleaved series produce one point per distinct timestamp', () {
+      final phosphate = [_r(0.10, 1000), _r(0.20, 3000), _r(0.30, 5000)];
+      final nitrate = [_r(10, 2000), _r(20, 4000)];
+      final series = computeRatioSeries(phosphate, nitrate);
+      expect(series.map((p) => p.time.millisecondsSinceEpoch), [
+        2000,
+        3000,
+        4000,
+        5000,
+      ]);
+      expect(series.map((p) => p.ratio), [
+        closeTo(0.10 / 10, 1e-12),
+        closeTo(0.20 / 10, 1e-12),
+        closeTo(0.20 / 20, 1e-12),
+        closeTo(0.30 / 20, 1e-12),
+      ]);
+    });
+
+    test('a timestamp shared by both series merges into one point', () {
+      final phosphate = [_r(0.1, 1000), _r(0.2, 2000)];
+      final nitrate = [_r(10, 2000)];
+      final series = computeRatioSeries(phosphate, nitrate);
+      expect(series.map((p) => p.time.millisecondsSinceEpoch), [2000]);
+      expect(series.single.ratio, closeTo(0.2 / 10, 1e-12));
+    });
+
+    test('equal timestamps within one series: the later entry wins', () {
+      // Two same-second readings of one parameter (list order = storage
+      // order): the point reflects the last one, as before the rewrite.
+      final phosphate = [_r(0.1, 1000), _r(0.4, 1000)];
+      final nitrate = [_r(10, 1000)];
+      final series = computeRatioSeries(phosphate, nitrate);
+      expect(series.single.ratio, closeTo(0.4 / 10, 1e-12));
+    });
   });
 
   group('formatRatio', () {

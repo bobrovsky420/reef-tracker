@@ -1225,4 +1225,13 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get healthDisplayOff => 'Skryté';
+
+  @override
+  String get routeNotFoundTitle => 'Stránka nenalezena';
+
+  @override
+  String get routeNotFoundBody => 'Tento odkaz v aplikaci nikam nevede.';
+
+  @override
+  String get routeNotFoundGoHome => 'Přejít na hlavní obrazovku';
 }

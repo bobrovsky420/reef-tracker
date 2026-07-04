@@ -162,6 +162,10 @@ class _RatioTile extends StatelessWidget {
     final latest = points.isNotEmpty ? points.last : null;
 
     return Card(
+      // The grid's padding/spacing fully define the layout; the default Card
+      // margin would inset tiles 4px inside their cells, leaving the row of
+      // tiles narrower than the health header card above.
+      margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push('/ratio/${kind.name}'),
@@ -272,6 +276,8 @@ class _ParameterTile extends StatelessWidget {
     final pres = presentationOf(param, prefs);
 
     return Card(
+      // Same as _RatioTile: let the grid own all spacing.
+      margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push('/history/${param.paramKey}'),

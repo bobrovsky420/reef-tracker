@@ -328,7 +328,10 @@ void main() {
               .replaceFirst(
                 RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true),
                 '',
-              );
+              )
+              // Older backups predate the checksum too (T7); with it left in,
+              // the stripped document would (correctly) fail verification.
+              .replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
       final data = decodeBackup(json);
       expect(data.waterChanges, isEmpty);
       expect(data.carbonChanges, isEmpty);
@@ -354,7 +357,9 @@ void main() {
               )
               .replaceAll(RegExp(r',\s*"startedAt":\s*(?:null|\d+)'), '')
               .replaceAll(RegExp(r',\s*"endedAt":\s*(?:null|\d+)'), '')
-              .replaceAll(RegExp(r',\s*"state":\s*"[^"]*"'), '');
+              .replaceAll(RegExp(r',\s*"state":\s*"[^"]*"'), '')
+              // Pre-v11 backups predate the checksum as well (T7).
+              .replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
       final data = decodeBackup(json);
       // Missing segment fields fall back to: started = created, not ended, active.
       final d0 = data.dosingEntries[0];
@@ -365,6 +370,72 @@ void main() {
       expect(d1.startedAt.value, dosingEntries[1].createdAt);
       expect(d1.endedAt.value, isNull);
       expect(d1.state.value, DosingState.active.name);
+    });
+
+    test(
+      'checksum catches in-field corruption the JSON parser cannot (T7)',
+      () {
+        final json = encodeBackup(
+          schemaVersion: 2,
+          tanks: tanks,
+          params: params,
+          readings: readings,
+          waterChanges: waterChanges,
+          carbonChanges: carbonChanges,
+          equipmentCleanings: equipmentCleanings,
+          ratioVisibilities: ratioVisibilities,
+          dosingEntries: dosingEntries,
+          settings: settings,
+        );
+        // Same-length in-field flip: the JSON stays parseable and every row
+        // still decodes — only the checksum can tell the value was damaged.
+        final tampered = json.replaceFirst('"value":8.2', '"value":9.2');
+        expect(tampered, isNot(json));
+        expect(
+          () => decodeBackup(tampered),
+          throwsA(
+            isA<InvalidBackupException>()
+                .having((e) => e.reason, 'reason', BackupRejection.corrupted)
+                .having((e) => e.detail, 'detail', contains('checksum')),
+          ),
+        );
+        // The untampered document still decodes (the round-trip test also
+        // covers this, but pin it next to the negative case).
+        expect(decodeBackup(json).readings.length, 2);
+      },
+    );
+
+    test('backups without a checksum are accepted unverified (T7)', () {
+      // Every backup written before the checksum existed lacks the key; it
+      // must keep importing.
+      final legacy = encodeBackup(
+        schemaVersion: 2,
+        tanks: tanks,
+        params: params,
+        readings: readings,
+        waterChanges: waterChanges,
+        carbonChanges: carbonChanges,
+        equipmentCleanings: equipmentCleanings,
+        ratioVisibilities: ratioVisibilities,
+        dosingEntries: dosingEntries,
+        settings: settings,
+      ).replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
+      expect(decodeBackup(legacy).tanks.length, 2);
+    });
+
+    test('rejects a non-string checksum as corrupted (T7)', () {
+      const json =
+          '{"format":"reeftracker-backup","version":1,'
+          '"schemaVersion":1,"tanks":[],"trackedParameters":[],'
+          '"readings":[],"settings":[],"checksum":5}';
+      expect(
+        () => decodeBackup(json),
+        throwsA(
+          isA<InvalidBackupException>()
+              .having((e) => e.reason, 'reason', BackupRejection.corrupted)
+              .having((e) => e.detail, 'detail', contains('checksum')),
+        ),
+      );
     });
 
     test('rejects a broken row inside a section as corrupted, naming it', () {
@@ -739,11 +810,14 @@ void main() {
       final src = newDb();
       addTearDown(src.close);
       await seed(src);
-      // Drop a table that older app versions did not export.
-      final json = (await encodeBackupFromDb(src)).replaceFirst(
-        RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true),
-        '',
-      );
+      // Drop a table that older app versions did not export — such backups
+      // predate the checksum too (T7), so drop that as well.
+      final json = (await encodeBackupFromDb(src))
+          .replaceFirst(
+            RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true),
+            '',
+          )
+          .replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
       final data = decodeBackup(json);
 
       final dst = newDb();

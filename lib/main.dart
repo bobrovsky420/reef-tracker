@@ -13,9 +13,10 @@ Future<void> main() async {
   final container = ProviderContainer(
     observers: [ProviderErrorObserver(showError: _warnDataLoadFailed)],
   );
-  // Pre-warm the stored locale override before the first frame (#24): without
-  // this the app renders its first frame(s) in the system language and then
-  // snaps to the chosen one. Also front-loads the database open/migration.
+  // Pre-warm the settings map — which carries the stored locale override —
+  // before the first frame (#24): without this the app renders its first
+  // frame(s) in the system language and then snaps to the chosen one. Also
+  // front-loads the database open/migration.
   // The wait MUST be bounded: on some devices a platform-channel call made
   // before the first frame never answers (flutter/flutter#72872), which froze
   // startup on the splash screen forever. On timeout (or failure) the app
@@ -24,7 +25,7 @@ Future<void> main() async {
   // surfaces database errors to the user.
   try {
     await container
-        .read(localeCodeProvider.future)
+        .read(settingsMapProvider.future)
         .timeout(const Duration(seconds: 3));
   } catch (_) {}
   runApp(

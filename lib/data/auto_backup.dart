@@ -85,6 +85,13 @@ Future<File> writeAutoBackup(
   final tmp = File('${file.path}.tmp');
   try {
     await tmp.writeAsString(json, flush: true);
+    // Verify before rename (#11 follow-up, T7): read the file back and compare
+    // to what was encoded, so a write the filesystem corrupted silently can
+    // never enter the rotation as the newest backup. Failure surfaces through
+    // the normal backup-error path (`last_backup_error_at`, #22).
+    if (await tmp.readAsString() != json) {
+      throw FileSystemException('written backup does not match', tmp.path);
+    }
     await tmp.rename(file.path);
   } catch (_) {
     try {

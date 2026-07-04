@@ -370,5 +370,9 @@
   "healthDisplaySubtitle": "Gdzie pokazać podsumowanie kondycji",
   "healthDisplayBoth": "Odznaka i karta",
   "healthDisplayBadge": "Tylko odznaka",
-  "healthDisplayOff": "Ukryte"
+  "healthDisplayOff": "Ukryte",
+
+  "routeNotFoundTitle": "Nie znaleziono strony",
+  "routeNotFoundBody": "Ten link nigdzie nie prowadzi w aplikacji.",
+  "routeNotFoundGoHome": "Przejdź do ekranu głównego"
 }
