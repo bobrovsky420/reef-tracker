@@ -11,6 +11,7 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/trend_chart.dart';
 import '../../widgets/trend_view.dart';
 import '../../widgets/zone_chip.dart';
+import '../actions/action_markers.dart';
 
 /// Time-series history + readings list for one parameter of the active tank.
 class HistoryScreen extends ConsumerStatefulWidget {
@@ -41,7 +42,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final trend = ref.watch(
       tankTrendsProvider.select((trends) => trends[widget.paramKey]),
     );
-    final waterChanges = ref.watch(waterChangesProvider).value ?? const [];
+    final markers = actionMarkers(
+      waterChanges: ref.watch(waterChangesProvider).value ?? const [],
+      carbonChanges: ref.watch(carbonChangesProvider).value ?? const [],
+      cleanings: ref.watch(equipmentCleaningsProvider).value ?? const [],
+    );
     final prefs = ref.watch(unitPrefsProvider);
     final pres = param != null
         ? presentationOf(param, prefs)
@@ -89,7 +94,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                   readings: data,
                                   param: param,
                                   pres: pres,
-                                  waterChanges: waterChanges,
+                                  markers: markers,
+                                  zoomable: true,
+                                  showMarkerLegend: true,
                                 ),
                               ),
                             ),

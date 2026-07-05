@@ -13,6 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   measurement with timestamp, parameter, value in your display units, unit,
   and note) for analysis in Excel/Google Sheets or comparison with lab
   results.
+- Measurements with a note now stand out on graphs as a ringed accent dot
+  (shown even on dense graphs where regular point dots are hidden), and
+  touching one shows the note in the tooltip.
+- The parameter history graph supports pinch-zoom and pan (horizontal, up to
+  10×); double-tap the graph to reset the view.
+- Carbon changes and equipment cleanings now appear on parameter graphs as
+  vertical marker lines alongside water changes, each with its own color and
+  dash style, plus a small legend naming the line styles visible in the
+  current time window (under the history graph, above the comparison view).
+
+### Fixed
+- Touching a point on a graph now shows a readable tooltip: high-contrast
+  colors that follow the light/dark theme (previously blue text on dark grey,
+  barely visible), the value formatted with its unit in your locale, and the
+  measurement's date and time. Ratio graphs show the value in their display
+  form (e.g. "1 : 100"). The tooltip also stays inside the chart instead of
+  being clipped at the edges.
 
 ## [0.16.3] - 2026-07-04
 

@@ -38,15 +38,40 @@ void main() {
     );
 
     // Alkalinity gently declining over ~4 weeks (dosing can't quite keep up).
+    // Two readings carry notes so the chart note markers (U5b/U13) have data.
     const alkSeries = [8.6, 8.5, 8.3, 8.2, 8.0, 7.9, 7.7, 7.6];
+    const alkNotes = <int, String>{
+      2: 'Salifert test kit, fresh reagents',
+      6:
+          'Retested twice — corals look pale, raising the dose tomorrow. '
+          'Long note to exercise the tooltip truncation behavior on device.',
+    };
     for (var i = 0; i < alkSeries.length; i++) {
       await db.insertReading(
         tankId: tank,
         paramKey: 'alkalinity',
         value: alkSeries[i],
         takenAt: daysAgo((alkSeries.length - 1 - i) * 4),
+        note: alkNotes[i],
       );
     }
+    // One of each action mid-series so all three marker styles + the legend
+    // (U6) render on the alkalinity graph.
+    await db.insertWaterChange(
+      tankId: tank,
+      changedAt: daysAgo(10),
+      amountLiters: 30,
+    );
+    await db.insertCarbonChange(
+      tankId: tank,
+      changedAt: daysAgo(18),
+      grams: 60,
+    );
+    await db.insertEquipmentCleaning(
+      tankId: tank,
+      cleanedAt: daysAgo(5),
+      note: 'Skimmer cup',
+    );
     // A couple of calcium points too.
     for (final (i, v) in [430.0, 425.0, 420.0].indexed) {
       await db.insertReading(

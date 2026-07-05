@@ -10,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/trend_chart.dart';
 import '../../widgets/zone_visuals.dart';
+import '../actions/action_markers.dart';
 
 /// Stacked-graph comparison view for the Measurements tab. Renders one compact
 /// line chart per enabled tracked parameter — in the same `displayOrder` as the
@@ -34,7 +35,11 @@ class ComparisonBody extends ConsumerWidget {
       data: (tracked) {
         final readings = readingsAsync.value ?? const <Reading>[];
         final prefs = ref.watch(unitPrefsProvider);
-        final waterChanges = ref.watch(waterChangesProvider).value ?? const [];
+        final markers = actionMarkers(
+          waterChanges: ref.watch(waterChangesProvider).value ?? const [],
+          carbonChanges: ref.watch(carbonChangesProvider).value ?? const [],
+          cleanings: ref.watch(equipmentCleaningsProvider).value ?? const [],
+        );
         final range = chartRangeFromLabel(ref.watch(chartRangeProvider).value);
 
         // Enabled params in dashboard order.
@@ -74,6 +79,10 @@ class ComparisonBody extends ConsumerWidget {
         return Column(
           children: [
             const ChartRangeSelector(),
+            // One legend for the whole stack — every chart shares the window.
+            ActionMarkerLegend(
+              kinds: actionMarkerKindsInWindow(markers, minX, maxX),
+            ),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(4, 0, 12, 16),
@@ -93,7 +102,7 @@ class ComparisonBody extends ConsumerWidget {
                     param: param,
                     inRange: inRange,
                     prefs: prefs,
-                    waterChanges: waterChanges,
+                    markers: markers,
                     minX: minX,
                     maxX: maxX,
                     showBottomTitles: isLast,
@@ -116,7 +125,7 @@ class _ParamChartCard extends StatelessWidget {
     required this.param,
     required this.inRange,
     required this.prefs,
-    required this.waterChanges,
+    required this.markers,
     required this.minX,
     required this.maxX,
     required this.showBottomTitles,
@@ -126,7 +135,7 @@ class _ParamChartCard extends StatelessWidget {
   final TrackedParameter param;
   final List<Reading> inRange;
   final UnitPrefs prefs;
-  final List<WaterChange> waterChanges;
+  final List<ActionMarker> markers;
   final double minX;
   final double maxX;
   final bool showBottomTitles;
@@ -204,7 +213,7 @@ class _ParamChartCard extends StatelessWidget {
                         readings: inRange,
                         param: param,
                         pres: pres,
-                        waterChanges: waterChanges,
+                        markers: markers,
                         minX: minX,
                         maxX: maxX,
                         showBottomTitles: showBottomTitles,

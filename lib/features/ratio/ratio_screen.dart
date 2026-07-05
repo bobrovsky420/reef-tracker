@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/ratio.dart';
+import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/trend_chart.dart';
 import '../../widgets/zone_visuals.dart';
 
 /// Time-series graph of a [RatioKind] for the active tank.
@@ -218,6 +220,15 @@ class _RatioChart extends StatelessWidget {
         ),
         gridData: const FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),
+        // Label the touched value in the kind's display form: the chart Y is
+        // the `N` of `1 : N` for oneToN kinds, the plain quotient otherwise.
+        lineTouchData: chartLineTouchData(
+          context,
+          formatValue: (s) => switch (kind.display) {
+            RatioDisplay.oneToN => '1 : ${formatRatioN(s.y)}',
+            RatioDisplay.decimal => formatLocaleNumber(s.y, 1),
+          },
+        ),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(
             sideTitles: SideTitles(showTitles: false),

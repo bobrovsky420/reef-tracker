@@ -7,8 +7,9 @@ import '../app/providers.dart';
 import '../data/database.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
-import '../features/actions/water_change_markers.dart';
+import '../features/actions/action_markers.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/l10n_helpers.dart';
 import 'zone_visuals.dart';
 
 /// The shared chart time range, stored as its [label] ('7d', '30d', '90d',
@@ -35,6 +36,70 @@ String chartRangeLabel(AppLocalizations l, ChartRange r) {
     case ChartRange.all:
       return l.rangeAll;
   }
+}
+
+/// Shared touch behavior for the app's line charts. fl_chart's default
+/// tooltip (blue text on dark grey) is barely legible; this one uses the
+/// theme's inverse-surface pair for contrast in both brightnesses and shows
+/// [formatValue]'s text over a localized timestamp instead of a raw y.
+///
+/// [noteFor] (by spot index) appends the reading's note as a third line,
+/// collapsed to a single truncated line — the full text lives in the
+/// history list, the tooltip is just the pointer to it.
+LineTouchData chartLineTouchData(
+  BuildContext context, {
+  required String Function(FlSpot spot) formatValue,
+  String? Function(int spotIndex)? noteFor,
+}) {
+  final scheme = Theme.of(context).colorScheme;
+  return LineTouchData(
+    touchTooltipData: LineTouchTooltipData(
+      getTooltipColor: (_) => scheme.inverseSurface,
+      fitInsideHorizontally: true,
+      fitInsideVertically: true,
+      getTooltipItems: (spots) => [
+        for (final s in spots)
+          LineTooltipItem(
+            formatValue(s),
+            TextStyle(
+              color: scheme.onInverseSurface,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+            children: [
+              TextSpan(
+                text:
+                    '\n${formatDateTime(context, DateTime.fromMillisecondsSinceEpoch(s.x.toInt()), weekday: false)}',
+                style: TextStyle(
+                  color: scheme.onInverseSurface.withValues(alpha: 0.75),
+                  fontWeight: FontWeight.normal,
+                  fontSize: 11,
+                ),
+              ),
+              if (_noteExcerpt(noteFor?.call(s.spotIndex)) case final note?)
+                TextSpan(
+                  text: '\n$note',
+                  style: TextStyle(
+                    color: scheme.onInverseSurface.withValues(alpha: 0.75),
+                    fontWeight: FontWeight.normal,
+                    fontStyle: FontStyle.italic,
+                    fontSize: 11,
+                  ),
+                ),
+            ],
+          ),
+      ],
+    ),
+  );
+}
+
+/// A note collapsed to one tooltip-sized line, or null when there is nothing
+/// to show.
+String? _noteExcerpt(String? note) {
+  if (note == null) return null;
+  final oneLine = note.trim().replaceAll(RegExp(r'\s+'), ' ');
+  if (oneLine.isEmpty) return null;
+  return oneLine.length <= 60 ? oneLine : '${oneLine.substring(0, 59)}…';
 }
 
 /// Resolves a stored range label back to its [ChartRange], defaulting to month.
@@ -79,22 +144,27 @@ class ChartRangeSelector extends ConsumerWidget {
 /// window (used by the comparison view so multiple stacked charts share an
 /// aligned time axis); otherwise the window is derived from the data — a single
 /// reading is centered in a 24h window.
-class TrendChart extends StatelessWidget {
+class TrendChart extends StatefulWidget {
   const TrendChart({
     super.key,
     required this.readings,
     required this.param,
     required this.pres,
-    required this.waterChanges,
+    required this.markers,
     this.minX,
     this.maxX,
     this.showBottomTitles = true,
+    this.zoomable = false,
+    this.showMarkerLegend = false,
   });
 
   final List<Reading> readings;
   final TrackedParameter? param;
   final ParamPresentation pres;
-  final List<WaterChange> waterChanges;
+
+  /// Logged maintenance actions drawn as dashed vertical lines (U6); build
+  /// with [actionMarkers].
+  final List<ActionMarker> markers;
 
   /// Optional explicit time window (epoch millis). When both are set the chart
   /// uses them verbatim so several charts can share one aligned X axis.
@@ -106,8 +176,34 @@ class TrendChart extends StatelessWidget {
   /// alignment between stacked charts — only the last chart need show dates.
   final bool showBottomTitles;
 
+  /// Enables pinch-zoom (horizontal) and pan, with double-tap to reset (U5c).
+  /// Off by default: comparison-view charts must stay pinned to their shared
+  /// [minX]/[maxX] window, and the small dashboard charts don't need it.
+  final bool zoomable;
+
+  /// Renders a compact [ActionMarkerLegend] under the plot for the marker
+  /// kinds visible in this chart's window. Off by default: the comparison
+  /// view stacks many charts and draws one shared legend itself.
+  final bool showMarkerLegend;
+
+  @override
+  State<TrendChart> createState() => _TrendChartState();
+}
+
+class _TrendChartState extends State<TrendChart> {
+  /// Owned here (not by fl_chart) so double-tap can reset the zoom/pan.
+  final _transformation = TransformationController();
+
+  @override
+  void dispose() {
+    _transformation.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final readings = widget.readings;
+    final pres = widget.pres;
     final spots = [
       for (final r in readings)
         FlSpot(
@@ -125,7 +221,7 @@ class TrendChart extends StatelessWidget {
         ),
       );
     }
-    final p = param;
+    final p = widget.param;
     final canonical = p != null ? boundsOf(p) : const ZoneBounds();
     double? d(double? v) => v == null ? null : pres.toDisplay(v);
     final bounds = ZoneBounds(
@@ -154,13 +250,13 @@ class TrendChart extends StatelessWidget {
     minY -= pad;
     maxY += pad;
 
-    final hasWindow = minX != null && maxX != null;
+    final hasWindow = widget.minX != null && widget.maxX != null;
     final isSingle = !hasWindow && spots.length == 1;
     final double loX;
     final double hiX;
     if (hasWindow) {
-      loX = minX!;
-      hiX = maxX!;
+      loX = widget.minX!;
+      hiX = widget.maxX!;
     } else if (isSingle) {
       // Center a lone measurement instead of pinning it to the left edge.
       const halfWindowMs = 12 * 60 * 60 * 1000; // 12h either side
@@ -172,7 +268,28 @@ class TrendChart extends StatelessWidget {
     }
     final spanMs = (hiX - loX).abs();
 
-    return LineChart(
+    // Note markers (U13): noted readings keep an accent dot even on dense
+    // series where regular dots are hidden. Indexed lookups work because
+    // `spots` is built 1:1 from `readings` above; the x-value set only feeds
+    // `checkToShowDot`, whose callback doesn't receive the spot index.
+    final scheme = Theme.of(context).colorScheme;
+    final hasNote = [
+      for (final r in readings) r.note?.trim().isNotEmpty ?? false,
+    ];
+    final notedXs = <double>{
+      for (var i = 0; i < spots.length; i++)
+        if (hasNote[i]) spots[i].x,
+    };
+    final showAllDots = spots.length <= 40;
+
+    final chart = LineChart(
+      transformationConfig: widget.zoomable
+          ? FlTransformationConfig(
+              scaleAxis: FlScaleAxis.horizontal,
+              maxScale: 10,
+              transformationController: _transformation,
+            )
+          : const FlTransformationConfig(),
       LineChartData(
         minY: minY,
         maxY: maxY,
@@ -182,15 +299,21 @@ class TrendChart extends StatelessWidget {
           horizontalRangeAnnotations: _zoneBands(bounds, minY, maxY),
         ),
         extraLinesData: ExtraLinesData(
-          verticalLines: waterChangeLines(
-            changes: waterChanges,
+          verticalLines: actionMarkerLines(
+            markers: widget.markers,
             minX: loX,
             maxX: hiX,
-            color: waterChangeMarkerColor(context),
+            color: (kind) => actionMarkerColor(context, kind),
           ),
         ),
         gridData: const FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),
+        lineTouchData: chartLineTouchData(
+          context,
+          formatValue: (s) =>
+              '${formatLocaleNumber(s.y, pres.decimals)} ${pres.unitLabel}',
+          noteFor: (i) => readings[i].note,
+        ),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(
             sideTitles: SideTitles(showTitles: false),
@@ -210,7 +333,7 @@ class TrendChart extends StatelessWidget {
           ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
-              showTitles: showBottomTitles,
+              showTitles: widget.showBottomTitles,
               reservedSize: 28,
               // For a single reading, emit exactly one centered label;
               // otherwise label both ends plus well-spaced interior ticks.
@@ -248,12 +371,50 @@ class TrendChart extends StatelessWidget {
             spots: spots,
             isCurved: false,
             barWidth: 2.5,
-            color: Theme.of(context).colorScheme.primary,
-            dotData: FlDotData(show: spots.length <= 40),
+            color: scheme.primary,
+            dotData: FlDotData(
+              show: showAllDots || notedXs.isNotEmpty,
+              checkToShowDot: (spot, bar) =>
+                  showAllDots || notedXs.contains(spot.x),
+              // Noted readings get a ringed accent dot in the same tertiary
+              // "annotation" family as the water-change markers; shape keeps
+              // them apart (dot vs vertical line).
+              getDotPainter: (spot, xPct, bar, index) => hasNote[index]
+                  ? FlDotCirclePainter(
+                      radius: 4.5,
+                      color: scheme.tertiary,
+                      strokeWidth: 2,
+                      strokeColor: scheme.surface,
+                    )
+                  : FlDotCirclePainter(
+                      radius: 3,
+                      color: scheme.primary,
+                      strokeWidth: 0,
+                      strokeColor: Colors.transparent,
+                    ),
+            ),
           ),
         ],
       ),
     );
+    Widget result = widget.zoomable
+        ? GestureDetector(
+            onDoubleTap: () => _transformation.value = Matrix4.identity(),
+            child: chart,
+          )
+        : chart;
+    if (widget.showMarkerLegend) {
+      final kinds = actionMarkerKindsInWindow(widget.markers, loX, hiX);
+      if (kinds.isNotEmpty) {
+        result = Column(
+          children: [
+            Expanded(child: result),
+            ActionMarkerLegend(kinds: kinds),
+          ],
+        );
+      }
+    }
+    return result;
   }
 
   List<HorizontalRangeAnnotation> _zoneBands(

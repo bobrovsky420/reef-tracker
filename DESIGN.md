@@ -645,6 +645,21 @@ otherwise it derives the window from the data (a single reading is centered in
 a 12-hour window rather than pinned to a chart edge).
 `showBottomTitles` controls whether the date axis is drawn.
 
+Touch interactions: `chartLineTouchData(context, formatValue:, noteFor:)` is
+the shared tooltip for all line charts (including the ratio graph) — theme
+inverse-surface colors (readable in both brightnesses, unlike fl_chart's
+default), a bold locale-formatted value + unit line, a localized timestamp
+line, and (TrendChart only) the reading's note collapsed to one truncated
+italic line. **Note markers:** readings with a note draw a ringed
+tertiary-colored accent dot (same "annotation" color family as the
+water-change lines; shape tells them apart) and stay visible even on dense
+series where regular dots are hidden (> 40 points). **Zoom/pan** (`zoomable`,
+history screen only): horizontal pinch-zoom (max 10×) + pan via fl_chart's
+`FlTransformationConfig`; double-tap resets. Comparison-view charts stay
+non-zoomable — they must keep their shared aligned time window.
+**Action markers** (`markers` + `showMarkerLegend`): see
+`features/actions/action_markers.dart` under the Actions section.
+
 ### History graph (`history/history_screen.dart`)
 
 Per-parameter history built on the shared `TrendChart` (zone bands + water-change
@@ -749,10 +764,17 @@ first. Rendered as the **Actions tab** of the home shell.
     unit) + note (e.g. salt brand).
   - **Carbon change**: optional weight in grams + note (e.g. brand).
   - **Equipment cleaning**: date/time + optional note only (e.g. which gear).
-- `water_change_markers.dart` — `waterChangeLines(...)` builds dashed
-  `VerticalLine`s rendered on **every** time-series graph (history and ratio) via
-  `extraLinesData`, so water changes line up visually with parameter movements.
-  (Carbon changes are logged only; they are not drawn on graphs.)
+- `action_markers.dart` (U6) — all three action types are drawn as dashed
+  `VerticalLine`s on the parameter graphs (history + comparison view) via
+  `extraLinesData`, so maintenance lines up visually with parameter movements.
+  `ActionMarker`/`actionMarkers(...)` flatten the three logs;
+  `actionMarkerLines(...)` builds the in-window lines. Each kind has a
+  theme-derived color (water = tertiary, carbon = secondary, cleaning =
+  outline) **and** a distinct dash pattern, so the types stay apart for
+  color-blind users. `ActionMarkerLegend` names the styles actually visible:
+  the history chart renders it under the plot (`TrendChart.showMarkerLegend`),
+  the comparison view draws one shared legend above its stack. Ratio graphs
+  draw no markers (computed series, not measurements).
 
 ### Dosing (`features/dosing/`) — Dosing tab
 
