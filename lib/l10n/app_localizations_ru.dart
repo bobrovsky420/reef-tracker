@@ -403,6 +403,54 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noTrackedToRecord => 'Нет отслеживаемых параметров для записи.';
 
   @override
+  String get testSetAll => 'Все';
+
+  @override
+  String get newTestSet => 'Новый набор тестов';
+
+  @override
+  String get editTestSet => 'Изменить набор тестов';
+
+  @override
+  String get manageTestSets => 'Управление наборами тестов';
+
+  @override
+  String get testSetNameHint => 'напр. Большой еженедельный тест';
+
+  @override
+  String get testSetNeedParam => 'Выберите хотя бы один параметр.';
+
+  @override
+  String deleteTestSetTitle(Object name) {
+    return 'Удалить «$name»?';
+  }
+
+  @override
+  String get deleteTestSetBody =>
+      'Набор тестов будет удалён. Ваши измерения сохранятся.';
+
+  @override
+  String get testSetEmptyHint =>
+      'В этом наборе нет активных параметров. Измените его или переключитесь на «Все».';
+
+  @override
+  String testSetParamCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count параметра',
+      many: '$count параметров',
+      few: '$count параметра',
+      one: '$count параметр',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noTestSets =>
+      'Наборов тестов пока нет. Набор позволяет записывать только те параметры, которые вы тестируете вместе.';
+
+  @override
   String get rangeWeek => '7 дн';
 
   @override

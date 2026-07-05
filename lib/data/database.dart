@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -231,6 +232,29 @@ class DosingEntries extends Table {
       text().withDefault(Constant(DosingState.active.name))();
 }
 
+/// A named subset of a tank's parameters used to filter the Add Reading form
+/// (U9, a "test set" like "weekly big test" or "daily Alk").
+///
+/// [paramKeys] holds stable *catalog* parameter keys as a JSON array (see
+/// [encodeTemplateParamKeys]) rather than [TrackedParameters] row ids, so a set
+/// survives a parameter being disabled — or untracked and re-added later.
+/// Keys that aren't currently tracked+enabled are skipped at display time,
+/// never removed from the set.
+@TableIndex(name: 'idx_reading_templates_tank', columns: {#tankId})
+@DataClassName('ReadingTemplate')
+class ReadingTemplates extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+  TextColumn get name => text().withLength(min: 1, max: 80)();
+
+  /// JSON array of catalog `paramKey` strings, e.g. `["alkalinity","calcium"]`.
+  TextColumn get paramKeys => text()();
+
+  /// Position of the set's chip on the Add Reading screen.
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -250,6 +274,7 @@ class Settings extends Table {
     EquipmentCleanings,
     RatioVisibilities,
     DosingEntries,
+    ReadingTemplates,
     Settings,
   ],
 )
@@ -257,7 +282,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -370,6 +395,16 @@ class AppDatabase extends _$AppDatabase {
         if (!await _columnExists('readings', 'group_id')) {
           await m.addColumn(readings, readings.groupId);
         }
+      }
+      if (from < 14) {
+        // Test sets for the Add Reading screen (U9).
+        if (!await _tableExists('reading_templates')) {
+          await m.createTable(readingTemplates);
+        }
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_reading_templates_tank '
+          'ON reading_templates (tank_id)',
+        );
       }
     },
     beforeOpen: (details) async {
@@ -1026,6 +1061,76 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  // --- Reading templates (test sets, U9) ------------------------------------
+
+  /// Test sets for a tank, in user (drag) order, then insertion order.
+  Stream<List<ReadingTemplate>> watchReadingTemplates(int tankId) =>
+      (select(readingTemplates)
+            ..where((t) => t.tankId.equals(tankId))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.displayOrder),
+              (t) => OrderingTerm(expression: t.id),
+            ]))
+          .watch();
+
+  /// Creates a test set and returns its id. The max-order read and the insert
+  /// run in one transaction (#10); max(displayOrder) + 1, not the row count
+  /// (same collision fix as [insertDosingEntry]).
+  Future<int> insertReadingTemplate({
+    required int tankId,
+    required String name,
+    required List<String> paramKeys,
+  }) {
+    return transaction(() async {
+      final existing = await (select(
+        readingTemplates,
+      )..where((t) => t.tankId.equals(tankId))).get();
+      final order =
+          existing.fold<int>(
+            -1,
+            (m, t) => t.displayOrder > m ? t.displayOrder : m,
+          ) +
+          1;
+      return into(readingTemplates).insert(
+        ReadingTemplatesCompanion.insert(
+          tankId: tankId,
+          name: name,
+          paramKeys: encodeTemplateParamKeys(paramKeys),
+          displayOrder: Value(order),
+        ),
+      );
+    });
+  }
+
+  /// Renames a test set and/or replaces its parameter keys.
+  Future<void> updateReadingTemplate(
+    int id, {
+    required String name,
+    required List<String> paramKeys,
+  }) => (update(readingTemplates)..where((t) => t.id.equals(id))).write(
+    ReadingTemplatesCompanion(
+      name: Value(name),
+      paramKeys: Value(encodeTemplateParamKeys(paramKeys)),
+    ),
+  );
+
+  Future<void> deleteReadingTemplate(int id) =>
+      (delete(readingTemplates)..where((t) => t.id.equals(id))).go();
+
+  /// Persists a new manual ordering of a tank's test sets, given their ids in
+  /// the desired left-to-right chip order.
+  Future<void> reorderReadingTemplates(List<int> orderedIds) async {
+    await batch((b) {
+      for (var i = 0; i < orderedIds.length; i++) {
+        b.update(
+          readingTemplates,
+          ReadingTemplatesCompanion(displayOrder: Value(i)),
+          where: (t) => t.id.equals(orderedIds[i]),
+        );
+      }
+    });
+  }
+
   // --- Settings ------------------------------------------------------------
 
   Future<void> setActiveTank(int? tankId) =>
@@ -1106,6 +1211,10 @@ class AppDatabase extends _$AppDatabase {
   Future<List<DosingEntry>> getAllDosingEntries() =>
       select(dosingEntries).get();
 
+  /// Every test set, across all tanks.
+  Future<List<ReadingTemplate>> getAllReadingTemplates() =>
+      select(readingTemplates).get();
+
   /// Every settings key/value pair.
   Future<List<Setting>> getAllSettings() => select(settings).get();
 
@@ -1128,6 +1237,7 @@ class AppDatabase extends _$AppDatabase {
     required List<EquipmentCleaningsCompanion> equipmentCleaningRows,
     required List<RatioVisibilitiesCompanion> ratioVisibilityRows,
     required List<DosingEntriesCompanion> dosingEntryRows,
+    required List<ReadingTemplatesCompanion> readingTemplateRows,
     required List<SettingsCompanion> settingRows,
     Set<String> preserveSettingKeys = const {},
   }) async {
@@ -1142,6 +1252,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(equipmentCleanings).go();
       await delete(ratioVisibilities).go();
       await delete(dosingEntries).go();
+      await delete(readingTemplates).go();
       await delete(trackedParameters).go();
       // Preserve device-local preferences: wipe only the settings the restore
       // is allowed to replace.
@@ -1163,10 +1274,37 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(equipmentCleanings, equipmentCleaningRows);
         b.insertAll(ratioVisibilities, ratioVisibilityRows);
         b.insertAll(dosingEntries, dosingEntryRows);
+        b.insertAll(readingTemplates, readingTemplateRows);
         b.insertAll(settings, incomingSettings);
       });
     });
   }
+}
+
+/// Encodes a test set's catalog keys for [ReadingTemplates.paramKeys].
+String encodeTemplateParamKeys(List<String> keys) => jsonEncode(keys);
+
+/// Decodes [ReadingTemplates.paramKeys]. Tolerates any malformed stored value
+/// (e.g. a hand-edited backup) by returning an empty list — an empty set still
+/// renders and stays editable, it never crashes the Add Reading screen.
+List<String> decodeTemplateParamKeys(String raw) {
+  try {
+    final v = jsonDecode(raw);
+    if (v is List) {
+      return [
+        for (final k in v)
+          if (k is String) k,
+      ];
+    }
+  } on FormatException {
+    // Fall through to the empty list.
+  }
+  return const [];
+}
+
+extension ReadingTemplateKeys on ReadingTemplate {
+  /// The set's catalog parameter keys, decoded from the stored JSON array.
+  List<String> get keys => decodeTemplateParamKeys(paramKeys);
 }
 
 final Random _groupIdRandom = Random();

@@ -400,6 +400,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noTrackedToRecord => 'No tracked parameters to record.';
 
   @override
+  String get testSetAll => 'All';
+
+  @override
+  String get newTestSet => 'New test set';
+
+  @override
+  String get editTestSet => 'Edit test set';
+
+  @override
+  String get manageTestSets => 'Manage test sets';
+
+  @override
+  String get testSetNameHint => 'e.g. Weekly big test';
+
+  @override
+  String get testSetNeedParam => 'Select at least one parameter.';
+
+  @override
+  String deleteTestSetTitle(Object name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String get deleteTestSetBody =>
+      'This removes the test set. Your readings are kept.';
+
+  @override
+  String get testSetEmptyHint =>
+      'This test set has no enabled parameters. Edit it, or switch to All.';
+
+  @override
+  String testSetParamCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count parameters',
+      one: '1 parameter',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noTestSets =>
+      'No test sets yet. A test set records just the parameters you test together.';
+
+  @override
   String get rangeWeek => '7d';
 
   @override

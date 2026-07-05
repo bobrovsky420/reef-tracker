@@ -67,6 +67,7 @@ class BackupData {
     required this.equipmentCleanings,
     required this.ratioVisibilities,
     required this.dosingEntries,
+    this.readingTemplates = const [],
     required this.settings,
   });
 
@@ -82,6 +83,10 @@ class BackupData {
   final List<EquipmentCleaningsCompanion> equipmentCleanings;
   final List<RatioVisibilitiesCompanion> ratioVisibilities;
   final List<DosingEntriesCompanion> dosingEntries;
+
+  /// Test sets (U9). Defaults to empty: pre-U9 backups have no section, and
+  /// the round-trip test pins that new backups carry it.
+  final List<ReadingTemplatesCompanion> readingTemplates;
   final List<SettingsCompanion> settings;
 }
 
@@ -101,6 +106,7 @@ String encodeBackup({
   required List<EquipmentCleaning> equipmentCleanings,
   required List<RatioVisibility> ratioVisibilities,
   required List<DosingEntry> dosingEntries,
+  List<ReadingTemplate> readingTemplates = const [],
   required List<Setting> settings,
 }) {
   final map = <String, dynamic>{
@@ -118,6 +124,7 @@ String encodeBackup({
         .toList(),
     'ratioVisibilities': ratioVisibilities.map(_ratioVisibilityToJson).toList(),
     'dosingEntries': dosingEntries.map(_dosingEntryToJson).toList(),
+    'readingTemplates': readingTemplates.map(_readingTemplateToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
   final payload = jsonEncode(map);
@@ -265,6 +272,11 @@ BackupData decodeBackup(String jsonString) {
       _dosingEntryFromJson,
       required: false,
     ),
+    readingTemplates: section(
+      'readingTemplates',
+      _readingTemplateFromJson,
+      required: false,
+    ),
     settings: section('settings', _settingFromJson),
   );
 }
@@ -310,6 +322,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     data.equipmentCleanings.map((r) => r.id),
   );
   requireSaneIds('dosingEntries', data.dosingEntries.map((r) => r.id));
+  requireSaneIds('readingTemplates', data.readingTemplates.map((r) => r.id));
 
   // Unique aquarium ids (they are the FK target for every other table).
   final tankIds = <int>{};
@@ -347,6 +360,22 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     data.ratioVisibilities.map((r) => r.tankId.value),
   );
   requireTank('dosingEntries', data.dosingEntries.map((r) => r.tankId.value));
+  requireTank(
+    'readingTemplates',
+    data.readingTemplates.map((r) => r.tankId.value),
+  );
+
+  // A test set's name is user-visible text on a chip; a whitespace-only name
+  // would render an invisible, untappable-looking chip (the SQL length check
+  // only catches the fully empty string).
+  for (final t in data.readingTemplates) {
+    if (t.name.present && t.name.value.trim().isEmpty) {
+      throw const InvalidBackupException(
+        BackupRejection.inconsistent,
+        'readingTemplates: blank name',
+      );
+    }
+  }
 
   // Enum-ish text columns must hold values the app can interpret (#34): a
   // dosing `state` outside DosingState matches neither the active-plan filter
@@ -465,6 +494,7 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       equipmentCleaningRows: data.equipmentCleanings,
       ratioVisibilityRows: data.ratioVisibilities,
       dosingEntryRows: data.dosingEntries,
+      readingTemplateRows: data.readingTemplates,
       settingRows: data.settings,
       // Never overwrite this device's own preferences with the backup's (#18).
       preserveSettingKeys: SettingKey.deviceLocalKeys,
@@ -489,6 +519,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   final equipmentCleanings = await db.getAllEquipmentCleanings();
   final ratioVisibilities = await db.getAllRatioVisibilities();
   final dosingEntries = await db.getAllDosingEntries();
+  final readingTemplates = await db.getAllReadingTemplates();
   final settings = await db.getAllSettings();
   // The closure must capture only sendable plain data — never [db]: an open
   // database (ports, native handles) cannot cross the isolate boundary.
@@ -503,6 +534,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       equipmentCleanings: equipmentCleanings,
       ratioVisibilities: ratioVisibilities,
       dosingEntries: dosingEntries,
+      readingTemplates: readingTemplates,
       settings: settings,
     ),
   );
@@ -774,6 +806,30 @@ DosingEntriesCompanion _dosingEntryFromJson(Map<String, dynamic> m) =>
       startedAt: Value(_dateOrNull(m['startedAt']) ?? _date(m['createdAt'])),
       endedAt: Value(_dateOrNull(m['endedAt'])),
       state: Value((m['state'] as String?) ?? DosingState.active.name),
+    );
+
+Map<String, dynamic> _readingTemplateToJson(ReadingTemplate t) => {
+  'id': t.id,
+  'tankId': t.tankId,
+  'name': t.name,
+  // Stored as a JSON string in the DB; embedded as a real JSON array in the
+  // backup so the file stays hand-readable and the list shape is validated on
+  // import by the cast below.
+  'paramKeys': decodeTemplateParamKeys(t.paramKeys),
+  'displayOrder': t.displayOrder,
+};
+
+ReadingTemplatesCompanion _readingTemplateFromJson(Map<String, dynamic> m) =>
+    ReadingTemplatesCompanion(
+      id: Value(m['id'] as int),
+      tankId: Value(m['tankId'] as int),
+      name: Value(m['name'] as String),
+      // List.from checks every element eagerly: a non-string key throws here,
+      // inside section(), and reports as a corrupted readingTemplates section.
+      paramKeys: Value(
+        encodeTemplateParamKeys(List<String>.from(m['paramKeys'] as List)),
+      ),
+      displayOrder: Value(m['displayOrder'] as int),
     );
 
 Map<String, dynamic> _settingToJson(Setting s) => {

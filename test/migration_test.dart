@@ -314,6 +314,35 @@ void main() {
     });
   });
 
+  test('upgrading from v13 creates the reading_templates table (U9)', () async {
+    // seedFullSchemaAt builds the current schema, so drop the table (and
+    // its index) to reconstruct a genuine v13 file where the from<14 step
+    // must actually create both.
+    final file = File('${tempDir.path}/from13-notemplates.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    await seed.getAllTanks();
+    await seed.customStatement(
+      'DROP INDEX IF EXISTS idx_reading_templates_tank',
+    );
+    await seed.customStatement('DROP TABLE reading_templates');
+    await seed.customStatement('PRAGMA user_version = 13');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    final id = await db.insertReadingTemplate(
+      tankId: tankId,
+      name: 'Weekly',
+      paramKeys: ['alkalinity', 'calcium'],
+    );
+    expect(id, greaterThan(0));
+    expect(await indexNames(db), contains('idx_reading_templates_tank'));
+  });
+
   group('guarded migration steps are idempotent', () {
     // v3..(schemaVersion-1): re-running each upgrade against a schema that
     // already has every table/column must not throw.

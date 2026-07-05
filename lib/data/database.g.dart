@@ -4287,6 +4287,368 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
   }
 }
 
+class $ReadingTemplatesTable extends ReadingTemplates
+    with TableInfo<$ReadingTemplatesTable, ReadingTemplate> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReadingTemplatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 80,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _paramKeysMeta = const VerificationMeta(
+    'paramKeys',
+  );
+  @override
+  late final GeneratedColumn<String> paramKeys = GeneratedColumn<String>(
+    'param_keys',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tankId,
+    name,
+    paramKeys,
+    displayOrder,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reading_templates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReadingTemplate> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('param_keys')) {
+      context.handle(
+        _paramKeysMeta,
+        paramKeys.isAcceptableOrUnknown(data['param_keys']!, _paramKeysMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_paramKeysMeta);
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReadingTemplate map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReadingTemplate(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      paramKeys: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}param_keys'],
+      )!,
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
+    );
+  }
+
+  @override
+  $ReadingTemplatesTable createAlias(String alias) {
+    return $ReadingTemplatesTable(attachedDatabase, alias);
+  }
+}
+
+class ReadingTemplate extends DataClass implements Insertable<ReadingTemplate> {
+  final int id;
+  final int tankId;
+  final String name;
+
+  /// JSON array of catalog `paramKey` strings, e.g. `["alkalinity","calcium"]`.
+  final String paramKeys;
+
+  /// Position of the set's chip on the Add Reading screen.
+  final int displayOrder;
+  const ReadingTemplate({
+    required this.id,
+    required this.tankId,
+    required this.name,
+    required this.paramKeys,
+    required this.displayOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tank_id'] = Variable<int>(tankId);
+    map['name'] = Variable<String>(name);
+    map['param_keys'] = Variable<String>(paramKeys);
+    map['display_order'] = Variable<int>(displayOrder);
+    return map;
+  }
+
+  ReadingTemplatesCompanion toCompanion(bool nullToAbsent) {
+    return ReadingTemplatesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      name: Value(name),
+      paramKeys: Value(paramKeys),
+      displayOrder: Value(displayOrder),
+    );
+  }
+
+  factory ReadingTemplate.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReadingTemplate(
+      id: serializer.fromJson<int>(json['id']),
+      tankId: serializer.fromJson<int>(json['tankId']),
+      name: serializer.fromJson<String>(json['name']),
+      paramKeys: serializer.fromJson<String>(json['paramKeys']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tankId': serializer.toJson<int>(tankId),
+      'name': serializer.toJson<String>(name),
+      'paramKeys': serializer.toJson<String>(paramKeys),
+      'displayOrder': serializer.toJson<int>(displayOrder),
+    };
+  }
+
+  ReadingTemplate copyWith({
+    int? id,
+    int? tankId,
+    String? name,
+    String? paramKeys,
+    int? displayOrder,
+  }) => ReadingTemplate(
+    id: id ?? this.id,
+    tankId: tankId ?? this.tankId,
+    name: name ?? this.name,
+    paramKeys: paramKeys ?? this.paramKeys,
+    displayOrder: displayOrder ?? this.displayOrder,
+  );
+  ReadingTemplate copyWithCompanion(ReadingTemplatesCompanion data) {
+    return ReadingTemplate(
+      id: data.id.present ? data.id.value : this.id,
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      name: data.name.present ? data.name.value : this.name,
+      paramKeys: data.paramKeys.present ? data.paramKeys.value : this.paramKeys,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReadingTemplate(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('name: $name, ')
+          ..write('paramKeys: $paramKeys, ')
+          ..write('displayOrder: $displayOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, tankId, name, paramKeys, displayOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReadingTemplate &&
+          other.id == this.id &&
+          other.tankId == this.tankId &&
+          other.name == this.name &&
+          other.paramKeys == this.paramKeys &&
+          other.displayOrder == this.displayOrder);
+}
+
+class ReadingTemplatesCompanion extends UpdateCompanion<ReadingTemplate> {
+  final Value<int> id;
+  final Value<int> tankId;
+  final Value<String> name;
+  final Value<String> paramKeys;
+  final Value<int> displayOrder;
+  const ReadingTemplatesCompanion({
+    this.id = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.paramKeys = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+  });
+  ReadingTemplatesCompanion.insert({
+    this.id = const Value.absent(),
+    required int tankId,
+    required String name,
+    required String paramKeys,
+    this.displayOrder = const Value.absent(),
+  }) : tankId = Value(tankId),
+       name = Value(name),
+       paramKeys = Value(paramKeys);
+  static Insertable<ReadingTemplate> custom({
+    Expression<int>? id,
+    Expression<int>? tankId,
+    Expression<String>? name,
+    Expression<String>? paramKeys,
+    Expression<int>? displayOrder,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tankId != null) 'tank_id': tankId,
+      if (name != null) 'name': name,
+      if (paramKeys != null) 'param_keys': paramKeys,
+      if (displayOrder != null) 'display_order': displayOrder,
+    });
+  }
+
+  ReadingTemplatesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? tankId,
+    Value<String>? name,
+    Value<String>? paramKeys,
+    Value<int>? displayOrder,
+  }) {
+    return ReadingTemplatesCompanion(
+      id: id ?? this.id,
+      tankId: tankId ?? this.tankId,
+      name: name ?? this.name,
+      paramKeys: paramKeys ?? this.paramKeys,
+      displayOrder: displayOrder ?? this.displayOrder,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (paramKeys.present) {
+      map['param_keys'] = Variable<String>(paramKeys.value);
+    }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReadingTemplatesCompanion(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('name: $name, ')
+          ..write('paramKeys: $paramKeys, ')
+          ..write('displayOrder: $displayOrder')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -4515,6 +4877,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RatioVisibilitiesTable ratioVisibilities =
       $RatioVisibilitiesTable(this);
   late final $DosingEntriesTable dosingEntries = $DosingEntriesTable(this);
+  late final $ReadingTemplatesTable readingTemplates = $ReadingTemplatesTable(
+    this,
+  );
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index idxReadingsTankParamTaken = Index(
     'idx_readings_tank_param_taken',
@@ -4540,6 +4905,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_dosing_entries_tank',
     'CREATE INDEX idx_dosing_entries_tank ON dosing_entries (tank_id)',
   );
+  late final Index idxReadingTemplatesTank = Index(
+    'idx_reading_templates_tank',
+    'CREATE INDEX idx_reading_templates_tank ON reading_templates (tank_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4553,6 +4922,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     equipmentCleanings,
     ratioVisibilities,
     dosingEntries,
+    readingTemplates,
     settings,
     idxReadingsTankParamTaken,
     idxReadingsTankTaken,
@@ -4560,6 +4930,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     idxCarbonChangesTankChanged,
     idxEquipmentCleaningsTankCleaned,
     idxDosingEntriesTank,
+    idxReadingTemplatesTank,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -4611,6 +4982,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('dosing_entries', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('reading_templates', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -4775,6 +5153,26 @@ final class $$TanksTableReferences
     ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_dosingEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ReadingTemplatesTable, List<ReadingTemplate>>
+  _readingTemplatesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.readingTemplates,
+    aliasName: 'tanks__id__reading_templates__tank_id',
+  );
+
+  $$ReadingTemplatesTableProcessedTableManager get readingTemplatesRefs {
+    final manager = $$ReadingTemplatesTableTableManager(
+      $_db,
+      $_db.readingTemplates,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _readingTemplatesRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -5000,6 +5398,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$DosingEntriesTableFilterComposer(
             $db: $db,
             $table: $db.dosingEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> readingTemplatesRefs(
+    Expression<bool> Function($$ReadingTemplatesTableFilterComposer f) f,
+  ) {
+    final $$ReadingTemplatesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.readingTemplates,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingTemplatesTableFilterComposer(
+            $db: $db,
+            $table: $db.readingTemplates,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5280,6 +5703,31 @@ class $$TanksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> readingTemplatesRefs<T extends Object>(
+    Expression<T> Function($$ReadingTemplatesTableAnnotationComposer a) f,
+  ) {
+    final $$ReadingTemplatesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.readingTemplates,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingTemplatesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.readingTemplates,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -5303,6 +5751,7 @@ class $$TanksTableTableManager
             bool equipmentCleaningsRefs,
             bool ratioVisibilitiesRefs,
             bool dosingEntriesRefs,
+            bool readingTemplatesRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -5375,6 +5824,7 @@ class $$TanksTableTableManager
                 equipmentCleaningsRefs = false,
                 ratioVisibilitiesRefs = false,
                 dosingEntriesRefs = false,
+                readingTemplatesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -5386,6 +5836,7 @@ class $$TanksTableTableManager
                     if (equipmentCleaningsRefs) db.equipmentCleanings,
                     if (ratioVisibilitiesRefs) db.ratioVisibilities,
                     if (dosingEntriesRefs) db.dosingEntries,
+                    if (readingTemplatesRefs) db.readingTemplates,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -5533,6 +5984,27 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (readingTemplatesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          ReadingTemplate
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._readingTemplatesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).readingTemplatesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -5561,6 +6033,7 @@ typedef $$TanksTableProcessedTableManager =
         bool equipmentCleaningsRefs,
         bool ratioVisibilitiesRefs,
         bool dosingEntriesRefs,
+        bool readingTemplatesRefs,
       })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
@@ -8274,6 +8747,328 @@ typedef $$DosingEntriesTableProcessedTableManager =
       DosingEntry,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$ReadingTemplatesTableCreateCompanionBuilder =
+    ReadingTemplatesCompanion Function({
+      Value<int> id,
+      required int tankId,
+      required String name,
+      required String paramKeys,
+      Value<int> displayOrder,
+    });
+typedef $$ReadingTemplatesTableUpdateCompanionBuilder =
+    ReadingTemplatesCompanion Function({
+      Value<int> id,
+      Value<int> tankId,
+      Value<String> name,
+      Value<String> paramKeys,
+      Value<int> displayOrder,
+    });
+
+final class $$ReadingTemplatesTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $ReadingTemplatesTable, ReadingTemplate> {
+  $$ReadingTemplatesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('reading_templates__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ReadingTemplatesTableFilterComposer
+    extends Composer<_$AppDatabase, $ReadingTemplatesTable> {
+  $$ReadingTemplatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paramKeys => $composableBuilder(
+    column: $table.paramKeys,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReadingTemplatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReadingTemplatesTable> {
+  $$ReadingTemplatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paramKeys => $composableBuilder(
+    column: $table.paramKeys,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReadingTemplatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReadingTemplatesTable> {
+  $$ReadingTemplatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get paramKeys =>
+      $composableBuilder(column: $table.paramKeys, builder: (column) => column);
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReadingTemplatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReadingTemplatesTable,
+          ReadingTemplate,
+          $$ReadingTemplatesTableFilterComposer,
+          $$ReadingTemplatesTableOrderingComposer,
+          $$ReadingTemplatesTableAnnotationComposer,
+          $$ReadingTemplatesTableCreateCompanionBuilder,
+          $$ReadingTemplatesTableUpdateCompanionBuilder,
+          (ReadingTemplate, $$ReadingTemplatesTableReferences),
+          ReadingTemplate,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$ReadingTemplatesTableTableManager(
+    _$AppDatabase db,
+    $ReadingTemplatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReadingTemplatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReadingTemplatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReadingTemplatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> tankId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> paramKeys = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+              }) => ReadingTemplatesCompanion(
+                id: id,
+                tankId: tankId,
+                name: name,
+                paramKeys: paramKeys,
+                displayOrder: displayOrder,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int tankId,
+                required String name,
+                required String paramKeys,
+                Value<int> displayOrder = const Value.absent(),
+              }) => ReadingTemplatesCompanion.insert(
+                id: id,
+                tankId: tankId,
+                name: name,
+                paramKeys: paramKeys,
+                displayOrder: displayOrder,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ReadingTemplatesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable:
+                                    $$ReadingTemplatesTableReferences
+                                        ._tankIdTable(db),
+                                referencedColumn:
+                                    $$ReadingTemplatesTableReferences
+                                        ._tankIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ReadingTemplatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReadingTemplatesTable,
+      ReadingTemplate,
+      $$ReadingTemplatesTableFilterComposer,
+      $$ReadingTemplatesTableOrderingComposer,
+      $$ReadingTemplatesTableAnnotationComposer,
+      $$ReadingTemplatesTableCreateCompanionBuilder,
+      $$ReadingTemplatesTableUpdateCompanionBuilder,
+      (ReadingTemplate, $$ReadingTemplatesTableReferences),
+      ReadingTemplate,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -8427,6 +9222,8 @@ class $AppDatabaseManager {
       $$RatioVisibilitiesTableTableManager(_db, _db.ratioVisibilities);
   $$DosingEntriesTableTableManager get dosingEntries =>
       $$DosingEntriesTableTableManager(_db, _db.dosingEntries);
+  $$ReadingTemplatesTableTableManager get readingTemplates =>
+      $$ReadingTemplatesTableTableManager(_db, _db.readingTemplates);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

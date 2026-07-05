@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -182,6 +183,22 @@ void main() {
         state: DosingState.ended.name,
       ),
     ];
+    final readingTemplates = [
+      ReadingTemplate(
+        id: 60,
+        tankId: 1,
+        name: 'Weekly big test',
+        paramKeys: encodeTemplateParamKeys(['alkalinity', 'calcium']),
+        displayOrder: 0,
+      ),
+      ReadingTemplate(
+        id: 61,
+        tankId: 2,
+        name: 'Daily Alk',
+        paramKeys: encodeTemplateParamKeys(['alkalinity']),
+        displayOrder: 1,
+      ),
+    ];
     final settings = [
       const Setting(key: 'temp_unit', value: 'fahrenheit'),
       const Setting(key: 'active_tank_id', value: '1'),
@@ -199,6 +216,7 @@ void main() {
         equipmentCleanings: equipmentCleanings,
         ratioVisibilities: ratioVisibilities,
         dosingEntries: dosingEntries,
+        readingTemplates: readingTemplates,
         settings: settings,
       );
       final data = decodeBackup(json);
@@ -289,11 +307,57 @@ void main() {
       expect(d1.endedAt.value, dosingEntries[1].endedAt);
       expect(d1.state.value, DosingState.ended.name);
 
+      final rt0 = data.readingTemplates[0];
+      expect(rt0.id.value, 60);
+      expect(rt0.tankId.value, 1);
+      expect(rt0.name.value, 'Weekly big test');
+      expect(decodeTemplateParamKeys(rt0.paramKeys.value), [
+        'alkalinity',
+        'calcium',
+      ]);
+      expect(rt0.displayOrder.value, 0);
+      expect(data.readingTemplates[1].name.value, 'Daily Alk');
+
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
       expect(data.settings[0].value.value, 'fahrenheit');
       expect(data.settings[2].value.value, isNull);
     });
+
+    test(
+      'rejects a readingTemplates row with non-string keys as corrupted',
+      () {
+        final json = encodeBackup(
+          schemaVersion: 2,
+          tanks: tanks,
+          params: params,
+          readings: readings,
+          waterChanges: waterChanges,
+          carbonChanges: carbonChanges,
+          equipmentCleanings: equipmentCleanings,
+          ratioVisibilities: ratioVisibilities,
+          dosingEntries: dosingEntries,
+          readingTemplates: readingTemplates,
+          settings: settings,
+        );
+        // Tamper with a template's keys (re-encoding drops the now-stale
+        // checksum, which older backups legitimately lack).
+        final doc = jsonDecode(json) as Map<String, dynamic>;
+        doc.remove('checksum');
+        final templatesJson = doc['readingTemplates'] as List;
+        (templatesJson[0] as Map<String, dynamic>)['paramKeys'] = [1, 2];
+        expect(
+          () => decodeBackup(jsonEncode(doc)),
+          throwsA(
+            isA<InvalidBackupException>().having(
+              (e) => e.reason,
+              'reason',
+              BackupRejection.corrupted,
+            ),
+          ),
+        );
+      },
+    );
 
     test('tolerates older backups without later action sections', () {
       final json =
@@ -329,6 +393,10 @@ void main() {
                 RegExp(r',\s*"dosingEntries":\s*\[.*?\]', dotAll: true),
                 '',
               )
+              .replaceFirst(
+                RegExp(r',\s*"readingTemplates":\s*\[.*?\]', dotAll: true),
+                '',
+              )
               // Older backups predate the checksum too (T7); with it left in,
               // the stripped document would (correctly) fail verification.
               .replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
@@ -338,6 +406,7 @@ void main() {
       expect(data.equipmentCleanings, isEmpty);
       expect(data.ratioVisibilities, isEmpty);
       expect(data.dosingEntries, isEmpty);
+      expect(data.readingTemplates, isEmpty);
       expect(data.readings.length, 2);
     });
 
@@ -607,6 +676,7 @@ void main() {
     BackupData dataWith({
       List<TanksCompanion> tanks = const [],
       List<ReadingsCompanion> readings = const [],
+      List<ReadingTemplatesCompanion> readingTemplates = const [],
       int schemaVersion = 1,
     }) => BackupData(
       schemaVersion: schemaVersion,
@@ -618,6 +688,7 @@ void main() {
       equipmentCleanings: const [],
       ratioVisibilities: const [],
       dosingEntries: const [],
+      readingTemplates: readingTemplates,
       settings: const [],
     );
 
@@ -670,6 +741,53 @@ void main() {
       final d = dataWith(tanks: [tank(1), tank(1)]);
       expect(
         () => validateBackup(d, appSchemaVersion: 10),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    ReadingTemplatesCompanion template(
+      int id,
+      int tankId, {
+      String name = 'Weekly',
+    }) => ReadingTemplatesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      name: Value(name),
+      paramKeys: Value(encodeTemplateParamKeys(['alkalinity'])),
+      displayOrder: const Value(0),
+    );
+
+    test('accepts a consistent test set (U9)', () {
+      final d = dataWith(tanks: [tank(1)], readingTemplates: [template(60, 1)]);
+      expect(() => validateBackup(d, appSchemaVersion: 14), returnsNormally);
+    });
+
+    test('rejects a test set referencing a missing aquarium (U9)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        readingTemplates: [template(60, 99)],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 14),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a test set with an out-of-range id (U9, #33)', () {
+      final d = dataWith(tanks: [tank(1)], readingTemplates: [template(-1, 1)]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 14),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a test set with a blank name (U9)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        readingTemplates: [template(60, 1, name: '   ')],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 14),
         rejectedWith(BackupRejection.inconsistent),
       );
     });
@@ -727,6 +845,11 @@ void main() {
         greenHigh: 3.3,
         amberHigh: 3.6,
       );
+      await db.insertReadingTemplate(
+        tankId: id,
+        name: 'Weekly big test',
+        paramKeys: ['alkalinity', 'calcium'],
+      );
       await db.setSetting('temp_unit', 'fahrenheit');
       return id;
     }
@@ -758,6 +881,9 @@ void main() {
       expect((await dst.getAllCarbonChanges()).length, 1);
       expect((await dst.getAllEquipmentCleanings()).length, 1);
       expect((await dst.getAllRatioVisibilities()).length, 1);
+      final restoredTemplate = (await dst.getAllReadingTemplates()).single;
+      expect(restoredTemplate.name, 'Weekly big test');
+      expect(restoredTemplate.keys, ['alkalinity', 'calcium']);
       expect(
         (await dst.getAllTrackedParameters()).length,
         (await src.getAllTrackedParameters()).length,

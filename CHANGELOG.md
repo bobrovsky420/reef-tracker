@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.17.0] - 2026-07-05
 
 ### Added
+- Test sets on the Add Reading screen: name the parameter subsets you test
+  together ("Weekly big test", "Daily Alk") and switch between them with
+  chips at the top of the form — the set you used last is preselected per
+  aquarium. Values you typed stay (and are saved) even if the current set
+  hides them. Create a set from the "+" chip (parameters you just filled in
+  come pre-selected); edit, delete, and reorder sets from the checklist
+  button in the top bar (or long-press a chip to edit it). Test sets are
+  included in backups.
 - Settings → Backup gained "Export measurements (CSV)": shares the active
   aquarium's measurements as a spreadsheet-friendly CSV file (one row per
   measurement with timestamp, parameter, value in your display units, unit,

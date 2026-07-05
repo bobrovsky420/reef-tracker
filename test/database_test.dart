@@ -171,6 +171,104 @@ void main() {
     );
   });
 
+  group('reading templates (test sets, U9)', () {
+    test('insert assigns max(displayOrder)+1 and returns the id', () async {
+      final id = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      final a = await db.insertReadingTemplate(
+        tankId: id,
+        name: 'Daily Alk',
+        paramKeys: ['alkalinity'],
+      );
+      final b = await db.insertReadingTemplate(
+        tankId: id,
+        name: 'Weekly',
+        paramKeys: ['calcium', 'magnesium'],
+      );
+      final c = await db.insertReadingTemplate(
+        tankId: id,
+        name: 'Nutrients',
+        paramKeys: ['nitrate', 'phosphate'],
+      );
+      var rows = await db.watchReadingTemplates(id).first;
+      expect(rows.map((t) => t.id), [a, b, c]);
+      expect(rows.map((t) => t.displayOrder), [0, 1, 2]);
+
+      // Removing a middle template must not let a new one collide (#9 class).
+      await db.deleteReadingTemplate(b);
+      final d = await db.insertReadingTemplate(
+        tankId: id,
+        name: 'ICP prep',
+        paramKeys: ['iodine'],
+      );
+      rows = await db.watchReadingTemplates(id).first;
+      expect(rows.map((t) => t.id), [a, c, d]);
+      expect(rows.last.displayOrder, 3); // max+1, not the row count (2)
+    });
+
+    test(
+      'update replaces name and keys; reorder persists chip order',
+      () async {
+        final id = await db.createTankWithPreset(
+          name: 'A',
+          type: SetupType.mixed,
+        );
+        final a = await db.insertReadingTemplate(
+          tankId: id,
+          name: 'Daily',
+          paramKeys: ['alkalinity'],
+        );
+        final b = await db.insertReadingTemplate(
+          tankId: id,
+          name: 'Weekly',
+          paramKeys: ['calcium'],
+        );
+
+        await db.updateReadingTemplate(
+          a,
+          name: 'Daily Alk+Ca',
+          paramKeys: ['alkalinity', 'calcium'],
+        );
+        var rows = await db.watchReadingTemplates(id).first;
+        expect(rows.first.name, 'Daily Alk+Ca');
+        expect(rows.first.keys, ['alkalinity', 'calcium']);
+
+        await db.reorderReadingTemplates([b, a]);
+        rows = await db.watchReadingTemplates(id).first;
+        expect(rows.map((t) => t.id), [b, a]);
+      },
+    );
+
+    test('deleting a tank cascades to its templates', () async {
+      final id = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      await db.insertReadingTemplate(
+        tankId: id,
+        name: 'Weekly',
+        paramKeys: ['calcium'],
+      );
+      await db.deleteTank(id);
+      expect(await db.getAllReadingTemplates(), isEmpty);
+    });
+
+    test('paramKeys codec round-trips and tolerates garbage', () {
+      expect(
+        decodeTemplateParamKeys(encodeTemplateParamKeys(['alkalinity', 'ph'])),
+        ['alkalinity', 'ph'],
+      );
+      expect(decodeTemplateParamKeys(encodeTemplateParamKeys([])), isEmpty);
+      // Malformed stored values decode to an empty set, never throw.
+      expect(decodeTemplateParamKeys('not json'), isEmpty);
+      expect(decodeTemplateParamKeys('{"a":1}'), isEmpty);
+      // Non-string elements are skipped, not crashed on.
+      expect(decodeTemplateParamKeys('["ph", 3, null]'), ['ph']);
+    });
+  });
+
   group('reading groups', () {
     test(
       'insertReadingGroup stores all rows at one timestamp with one groupId',

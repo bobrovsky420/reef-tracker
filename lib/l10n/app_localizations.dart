@@ -763,6 +763,72 @@ abstract class AppLocalizations {
   /// **'No tracked parameters to record.'**
   String get noTrackedToRecord;
 
+  /// Chip on the Add Reading screen that shows every enabled parameter (no test-set filter).
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get testSetAll;
+
+  /// No description provided for @newTestSet.
+  ///
+  /// In en, this message translates to:
+  /// **'New test set'**
+  String get newTestSet;
+
+  /// No description provided for @editTestSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit test set'**
+  String get editTestSet;
+
+  /// No description provided for @manageTestSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage test sets'**
+  String get manageTestSets;
+
+  /// Hint text for the test-set name field.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Weekly big test'**
+  String get testSetNameHint;
+
+  /// No description provided for @testSetNeedParam.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one parameter.'**
+  String get testSetNeedParam;
+
+  /// No description provided for @deleteTestSetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?'**
+  String deleteTestSetTitle(Object name);
+
+  /// No description provided for @deleteTestSetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the test set. Your readings are kept.'**
+  String get deleteTestSetBody;
+
+  /// No description provided for @testSetEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This test set has no enabled parameters. Edit it, or switch to All.'**
+  String get testSetEmptyHint;
+
+  /// Subtitle in the manage sheet: how many enabled parameters a test set shows.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 parameter} other{{count} parameters}}'**
+  String testSetParamCount(int count);
+
+  /// No description provided for @noTestSets.
+  ///
+  /// In en, this message translates to:
+  /// **'No test sets yet. A test set records just the parameters you test together.'**
+  String get noTestSets;
+
   /// No description provided for @rangeWeek.
   ///
   /// In en, this message translates to:

@@ -219,6 +219,22 @@ final dosingHistoryProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
   return ref.watch(_dosingHistoryFamily(tank.id));
 });
 
+final _readingTemplatesFamily = StreamProvider.autoDispose
+    .family<List<ReadingTemplate>, int>(
+      (ref, tankId) =>
+          _dedup(ref.watch(dbProvider).watchReadingTemplates(tankId)),
+    );
+
+/// Test sets (named parameter subsets for the Add Reading screen, U9) for the
+/// active tank, in user chip order.
+final readingTemplatesProvider = Provider<AsyncValue<List<ReadingTemplate>>>((
+  ref,
+) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_readingTemplatesFamily(tank.id));
+});
+
 final _paramReadingsFamily = StreamProvider.autoDispose
     .family<List<Reading>, ({int tankId, String paramKey})>(
       (ref, key) => _dedup(
@@ -347,6 +363,13 @@ final lastBackupAtProvider = _setting(
 final lastBackupErrorAtProvider = _setting(
   SettingKey.lastBackupErrorAt,
   AppSettings.decodeLastBackupErrorAt,
+);
+
+/// Last-used test set per tank id (device-local UI state, U9). A missing or
+/// dangling entry means "All parameters".
+final lastReadingTemplatesProvider = _setting(
+  SettingKey.lastReadingTemplate,
+  AppSettings.decodeLastReadingTemplates,
 );
 
 /// Whether recent-trend detection / forecasts are shown (default on).

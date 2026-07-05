@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../domain/trend.dart';
 import '../domain/units.dart';
 import 'database.dart';
@@ -93,7 +95,8 @@ enum SettingKey {
   autoBackupInterval(kAutoBackupIntervalKey, deviceLocal: true),
   autoBackupKeep(kAutoBackupKeepKey, deviceLocal: true),
   lastAutoBackupAt(kLastAutoBackupAtKey, deviceLocal: true),
-  lastBackupErrorAt(kLastBackupErrorAtKey, deviceLocal: true);
+  lastBackupErrorAt(kLastBackupErrorAtKey, deviceLocal: true),
+  lastReadingTemplate(kLastReadingTemplateKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -273,6 +276,50 @@ class AppSettings {
     SettingKey.lastBackupErrorAt,
     when?.millisecondsSinceEpoch.toString(),
   );
+
+  // --- test sets (U9) ----------------------------------------------------------
+
+  /// Last-used test set per tank, as tank id → [ReadingTemplate] id. A missing
+  /// entry means "All"; a dangling id (the set was deleted, or ids changed in a
+  /// restore) is simply not found by the UI and also falls back to "All".
+  /// Stored as one JSON object (`{"1": 5}`) rather than one key per tank so the
+  /// [SettingKey] registry stays a closed list.
+  static Map<int, int> decodeLastReadingTemplates(String? raw) {
+    if (raw == null) return const {};
+    try {
+      final v = jsonDecode(raw);
+      if (v is Map<String, dynamic>) {
+        return {
+          for (final e in v.entries)
+            if (int.tryParse(e.key) != null && e.value is int)
+              int.parse(e.key): e.value as int,
+        };
+      }
+    } on FormatException {
+      // Malformed stored value — treat as "no selections".
+    }
+    return const {};
+  }
+
+  Stream<Map<int, int>> watchLastReadingTemplates() =>
+      _watch(SettingKey.lastReadingTemplate).map(decodeLastReadingTemplates);
+
+  /// Records [templateId] as the last-used test set for [tankId]; null selects
+  /// "All" (removes the entry).
+  Future<void> setLastReadingTemplate(int tankId, int? templateId) async {
+    final map = Map<int, int>.of(
+      decodeLastReadingTemplates(await _read(SettingKey.lastReadingTemplate)),
+    );
+    if (templateId == null) {
+      map.remove(tankId);
+    } else {
+      map[tankId] = templateId;
+    }
+    await _write(
+      SettingKey.lastReadingTemplate,
+      jsonEncode({for (final e in map.entries) '${e.key}': e.value}),
+    );
+  }
 }
 
 DateTime? _parseEpochMillis(String? v) {

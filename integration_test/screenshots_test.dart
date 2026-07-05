@@ -32,6 +32,7 @@ Future<void> _seedDatabase() async {
     equipmentCleaningRows: data.equipmentCleanings,
     ratioVisibilityRows: data.ratioVisibilities,
     dosingEntryRows: data.dosingEntries,
+    readingTemplateRows: data.readingTemplates,
     settingRows: data.settings,
   );
   await db.close();

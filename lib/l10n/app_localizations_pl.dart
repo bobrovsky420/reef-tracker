@@ -404,6 +404,54 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noTrackedToRecord => 'Brak śledzonych parametrów do zapisania.';
 
   @override
+  String get testSetAll => 'Wszystkie';
+
+  @override
+  String get newTestSet => 'Nowy zestaw testów';
+
+  @override
+  String get editTestSet => 'Edytuj zestaw testów';
+
+  @override
+  String get manageTestSets => 'Zarządzaj zestawami testów';
+
+  @override
+  String get testSetNameHint => 'np. Duży cotygodniowy test';
+
+  @override
+  String get testSetNeedParam => 'Wybierz co najmniej jeden parametr.';
+
+  @override
+  String deleteTestSetTitle(Object name) {
+    return 'Usunąć „$name”?';
+  }
+
+  @override
+  String get deleteTestSetBody =>
+      'Zestaw testów zostanie usunięty. Twoje pomiary pozostaną.';
+
+  @override
+  String get testSetEmptyHint =>
+      'Ten zestaw nie zawiera żadnych aktywnych parametrów. Edytuj go lub przełącz na Wszystkie.';
+
+  @override
+  String testSetParamCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count parametru',
+      many: '$count parametrów',
+      few: '$count parametry',
+      one: '1 parametr',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noTestSets =>
+      'Brak zestawów testów. Zestaw pozwala zapisywać tylko te parametry, które testujesz razem.';
+
+  @override
   String get rangeWeek => '7 dni';
 
   @override

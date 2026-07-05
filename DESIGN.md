@@ -96,7 +96,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 13**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 14**
 
 | Table | Key columns |
 |-------|-------------|
@@ -108,6 +108,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `EquipmentCleanings` | id, tankId (FK cascade), cleanedAt, note? |
 | `RatioVisibilities` | tankId + ratioKey (composite PK), tankId FK cascade, visible, displayOrder, amberLow?/greenLow?/greenHigh?/amberHigh? — per-tank ratio-card visibility, dashboard position (shared order space with `TrackedParameters.displayOrder`), and editable zone bounds; a missing row (or all-null bounds) = visible, ordered last, default zones |
 | `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), note?, displayOrder, createdAt, startedAt? (segment start; backfilled from createdAt), endedAt? (null = current), state (`DosingState`: active/ended/paused) — per-tank supplement-dosing plan (info-only). A plan is a chain of **dated segments**: editing a dose-affecting field ends the current segment (`state=ended`, `endedAt` set) and starts a new active one; stopping soft-ends it. Only `active` rows show in the Dosing tab and feed the calculator; `ended` rows are retained history. `paused` is reserved for a later phase. |
+| `ReadingTemplates` | id, tankId (FK cascade), name, paramKeys (JSON array of stable *catalog* keys — `encodeTemplateParamKeys`/`decodeTemplateParamKeys`, tolerant decode), displayOrder — per-tank **test sets** (U9): named parameter subsets whose chips filter the Add Reading form. Catalog keys, not `TrackedParameters` ids, so a set survives disable/untrack + re-add; keys not currently tracked+enabled are skipped at display, never deleted |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -116,14 +117,16 @@ existing DBs) back the hot reactive read paths — each stream filters on `tankI
 and orders by a timestamp: `Readings(tankId, paramKey, takenAt)` and
 `Readings(tankId, takenAt)` (both kept — the 3-column one can't order by
 `takenAt` when only `tankId` is filtered), `WaterChanges(tankId, changedAt)`,
-`CarbonChanges(tankId, changedAt)`, `EquipmentCleanings(tankId, cleanedAt)`, and
-`DosingEntries(tankId)`.
+`CarbonChanges(tankId, changedAt)`, `EquipmentCleanings(tankId, cleanedAt)`,
+`DosingEntries(tankId)`, and `ReadingTemplates(tankId)`.
 
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
 `volume_unit`, `locale`, `chart_range`, `auto_backup_enabled`,
 `auto_backup_interval`, `auto_backup_keep`, `last_auto_backup_at`,
 `trend_enabled`, `trend_window`, `trend_horizon`, `health_display` (tank-health
-surfacing: both/badge/off), `tour_v1_seen` (first-run feature-tour flag).
+surfacing: both/badge/off), `tour_v1_seen` (first-run feature-tour flag),
+`last_reading_template` (last-used test set per tank as one JSON object
+`{"<tankId>": <templateId>}`; missing/dangling entries mean "All").
 
 All settings access goes through the typed **`AppSettings` facade**
 (`data/settings.dart`, exposed as `settingsProvider`) — the single source of
@@ -150,7 +153,9 @@ and backfills `started_at = created_at` for pre-existing rows via `customStateme
 v12 added the secondary indexes above (`CREATE INDEX IF NOT EXISTS` ×6 via
 `customStatement`, matching the `@TableIndex` definitions that `createAll` uses
 for new installs); v13 added `Readings.groupId` (`addColumn`, guarded — pre-v13
-rows stay null and keep legacy timestamp grouping). Foreign keys are enabled in
+rows stay null and keep legacy timestamp grouping); v14 added the
+`ReadingTemplates` table (`createTable`, guarded by `_tableExists`) and its
+`tankId` index (U9). Foreign keys are enabled in
 `beforeOpen` (`PRAGMA foreign_keys = ON`), and the database opens in **WAL
 journal mode** (`pragma journal_mode = WAL` in the
 `NativeDatabase.createInBackground` setup callback, T6) so readers and writers
@@ -195,8 +200,8 @@ Notable DB behavior:
   `createTankWithPreset` (insert + seed + activate), `deleteTank` (delete +
   active-tank fallback), `supersedeDosingEntry`, `applyDashboardOrder` (params
   batch + ratio insert-or-update), `addTrackedParameter` (exists-check +
-  max-order + insert), `insertDosingEntry` (max-order + insert), and
-  `restoreFromBackup`. `setRatioVisible`/`setRatioBounds` are single
+  max-order + insert), `insertDosingEntry` (max-order + insert),
+  `insertReadingTemplate` (max-order + insert), and `restoreFromBackup`. `setRatioVisible`/`setRatioBounds` are single
   `insertOnConflictUpdate` upserts on the composite PK (only the companion's
   present columns are written on conflict).
 
@@ -209,7 +214,7 @@ format/version guard (distinguishing a missing version = not a backup file, a
 non-int version = corrupted, and a genuinely newer document) and is
 **forward-tolerant** (older backups without the
 `waterChanges` / `carbonChanges` / `equipmentCleanings` / `ratioVisibilities` /
-`dosingEntries` keys decode to empty lists). Each table is decoded in isolation,
+`dosingEntries` / `readingTemplates` keys decode to empty lists). Each table is decoded in isolation,
 so a failure throws an `InvalidBackupException` naming the offending section
 rather than one catch-all "corrupted". Field-level decoding is likewise
 forward-tolerant: a pre-v11 `dosingEntries` row without `startedAt`/`endedAt`/
@@ -255,7 +260,9 @@ never wipes live data:
    AUTOINCREMENT space and permanently break inserts), and enum-ish text
    columns (`setupType`, dosing `state`/`frequency`/`amountUnit`/`basis`)
    whitelisted against the app's enums so a garbage `state` can't restore an
-   unmanageable zombie row.
+   unmanageable zombie row, and test-set names must not be blank (their
+   `paramKeys` must be a JSON list of strings — enforced by the section
+   decoder).
 2. *Rehearsal* — the restore is run against a throwaway temp database so the real
    SQLite engine (FK / NOT NULL / uniqueness) proves the rows insert cleanly.
 3. The actual transactional `restoreFromBackup` into the live DB.
@@ -368,8 +375,8 @@ watchers of the key that actually changed are notified.
 provider (`trackedParametersProvider`, `tankReadingsProvider`,
 `recentReadingsProvider`, `waterChangesProvider`, `carbonChangesProvider`,
 `equipmentCleaningsProvider`, `dosingEntriesProvider`,
-`dosingHistoryProvider`, `paramReadingsProvider`, `ratioSettingsProvider`) is
-a plain `Provider<AsyncValue<…>>` delegating to a
+`dosingHistoryProvider`, `paramReadingsProvider`, `ratioSettingsProvider`,
+`readingTemplatesProvider`) is a plain `Provider<AsyncValue<…>>` delegating to a
 private **autoDispose `StreamProvider` family keyed by tank id**. Switching the
 active tank swaps to a fresh family instance, so consumers briefly see
 loading/empty instead of the previous tank's rows flashing under the new tank's
@@ -893,6 +900,24 @@ skew trends/health/"time ago" and be clipped off charts pinned to `now`), and
 aborts (returns null) when either the date or the time step is cancelled. The
 downstream consumers additionally tolerate a moving clock via `clock.dart`
 (`ageSince`/`daysSince`).
+
+**Test sets (U9)** — a horizontal single-select `ChoiceChip` row under the
+timestamp card: `[All] [set…] [+ new]`, backed by `readingTemplatesProvider`
+(the `ReadingTemplates` table). Selecting a set narrows which parameter rows
+are *shown*; it is strictly a view filter — controllers persist across chip
+switches and `_save` always receives the full enabled-parameter list, so a
+typed value hidden by the current selection is still saved (the
+"Saved N readings" SnackBar reports the true count). The tapped chip is
+persisted per tank (`last_reading_template` setting) and preselected on the
+next visit; a dangling stored id silently falls back to All. A set whose
+key intersection with the enabled parameters is empty renders a hint instead
+of rows. The `+` chip opens the create sheet (`test_set_sheets.dart`) with the
+currently-typed parameters pre-checked; an app-bar checklist action opens the
+manage sheet (list + edit/delete/drag-reorder — the accessible path, chip
+long-press being only a shortcut to edit, #45 precedent). Editing preserves a
+set's keys that are currently disabled/untracked (shown nowhere, never
+dropped); deleting is a plain confirm with no undo (recreating a set is cheap
+— deliberate exception to the undo conventions above).
 
 ### Tanks (`tanks_screen.dart`)
 

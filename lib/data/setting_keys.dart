@@ -24,3 +24,4 @@ const kAutoBackupIntervalKey = 'auto_backup_interval';
 const kAutoBackupKeepKey = 'auto_backup_keep';
 const kLastAutoBackupAtKey = 'last_auto_backup_at';
 const kLastBackupErrorAtKey = 'last_backup_error_at';
+const kLastReadingTemplateKey = 'last_reading_template';

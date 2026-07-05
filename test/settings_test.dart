@@ -61,6 +61,26 @@ void main() {
       await db.setSetting(kLastAutoBackupAtKey, '');
       expect(await settings.readLastBackupAt(), isNull);
     });
+
+    test('last-used test set round-trips per tank; null clears (U9)', () async {
+      await settings.setLastReadingTemplate(1, 5);
+      await settings.setLastReadingTemplate(2, 9);
+      expect(await settings.watchLastReadingTemplates().first, {1: 5, 2: 9});
+
+      // Selecting "All" removes the tank's entry, leaving others intact.
+      await settings.setLastReadingTemplate(1, null);
+      expect(await settings.watchLastReadingTemplates().first, {2: 9});
+    });
+
+    test('garbage last-used test set values decode as empty (U9)', () {
+      expect(AppSettings.decodeLastReadingTemplates(null), isEmpty);
+      expect(AppSettings.decodeLastReadingTemplates('not json'), isEmpty);
+      expect(AppSettings.decodeLastReadingTemplates('[1,2]'), isEmpty);
+      // Non-numeric keys / non-int values are skipped, not crashed on.
+      expect(AppSettings.decodeLastReadingTemplates('{"x":1,"2":"y","3":7}'), {
+        3: 7,
+      });
+    });
   });
 
   group('SettingKey registry', () {

@@ -140,6 +140,29 @@
   "@savedReadings": { "placeholders": { "count": { "type": "int" } } },
   "noTrackedToRecord": "No tracked parameters to record.",
 
+  "testSetAll": "All",
+  "@testSetAll": {
+    "description": "Chip on the Add Reading screen that shows every enabled parameter (no test-set filter)."
+  },
+  "newTestSet": "New test set",
+  "editTestSet": "Edit test set",
+  "manageTestSets": "Manage test sets",
+  "testSetNameHint": "e.g. Weekly big test",
+  "@testSetNameHint": {
+    "description": "Hint text for the test-set name field."
+  },
+  "testSetNeedParam": "Select at least one parameter.",
+  "deleteTestSetTitle": "Delete \"{name}\"?",
+  "@deleteTestSetTitle": { "placeholders": { "name": {} } },
+  "deleteTestSetBody": "This removes the test set. Your readings are kept.",
+  "testSetEmptyHint": "This test set has no enabled parameters. Edit it, or switch to All.",
+  "testSetParamCount": "{count, plural, one{1 parameter} other{{count} parameters}}",
+  "@testSetParamCount": {
+    "description": "Subtitle in the manage sheet: how many enabled parameters a test set shows.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "noTestSets": "No test sets yet. A test set records just the parameters you test together.",
+
   "rangeWeek": "7d",
   "rangeMonth": "30d",
   "rangeQuarter": "90d",

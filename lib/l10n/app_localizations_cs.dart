@@ -401,6 +401,53 @@ class AppLocalizationsCs extends AppLocalizations {
   String get noTrackedToRecord => 'Žádné sledované parametry k zaznamenání.';
 
   @override
+  String get testSetAll => 'Vše';
+
+  @override
+  String get newTestSet => 'Nová testovací sada';
+
+  @override
+  String get editTestSet => 'Upravit testovací sadu';
+
+  @override
+  String get manageTestSets => 'Spravovat testovací sady';
+
+  @override
+  String get testSetNameHint => 'např. Velký týdenní test';
+
+  @override
+  String get testSetNeedParam => 'Vyberte alespoň jeden parametr.';
+
+  @override
+  String deleteTestSetTitle(Object name) {
+    return 'Smazat „$name“?';
+  }
+
+  @override
+  String get deleteTestSetBody =>
+      'Testovací sada bude odstraněna. Vaše měření zůstanou zachována.';
+
+  @override
+  String get testSetEmptyHint =>
+      'Tato sada neobsahuje žádné aktivní parametry. Upravte ji, nebo přepněte na Vše.';
+
+  @override
+  String testSetParamCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count parametrů',
+      few: '$count parametry',
+      one: '1 parametr',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noTestSets =>
+      'Zatím žádné testovací sady. Sada umožní zaznamenat jen parametry, které testujete společně.';
+
+  @override
   String get rangeWeek => '7 d';
 
   @override
