@@ -79,9 +79,12 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Opportunistic backup: run once at launch, after the first frame so it
-    // never blocks startup.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeBackUp());
+    // Opportunistic housekeeping + backup: run once at launch, after the
+    // first frame so they never block startup.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _purgeDeletedTanks();
+      _maybeBackUp();
+    });
   }
 
   @override
@@ -93,6 +96,30 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) _maybeBackUp();
+  }
+
+  /// Finalizes tanks soft-deleted in a previous session (U10). Normally a
+  /// delete is finalized when its undo SnackBar closes; a process kill during
+  /// that window leaves the row stamped — invisible everywhere, so
+  /// effectively deleted — and this sweep collects it. Fire-and-forget: the
+  /// backup encode already excludes soft-deleted tanks, so ordering against
+  /// [_maybeBackUp] doesn't matter.
+  void _purgeDeletedTanks() {
+    unawaited(
+      ref.read(dbProvider).purgeDeletedTanks().catchError((
+        Object e,
+        StackTrace s,
+      ) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'tanks',
+            context: ErrorSummary('purging soft-deleted tanks'),
+          ),
+        );
+      }),
+    );
   }
 
   /// Fire-and-forget automatic backup; failures must never disrupt the app.

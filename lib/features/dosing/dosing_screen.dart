@@ -104,7 +104,7 @@ class DosingBody extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 16),
         child: const Icon(Icons.stop_circle_outlined, color: Colors.white),
       ),
-      confirmDismiss: (_) => _confirmStop(context, ref, l, e),
+      confirmDismiss: (_) => stopDosingWithUndo(context, ref, e),
       child: ListTile(
         // Center the icon over the full tile height (title + detail lines),
         // matching the Actions tiles; otherwise isThreeLine top-aligns it.
@@ -134,42 +134,36 @@ class DosingBody extends ConsumerWidget {
     );
   }
 
-  Future<bool> _confirmStop(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l,
-    DosingEntry e,
-  ) => confirmStopDosing(context, ref, e);
 }
 
-/// Confirms and performs the "stop this supplement" action. Shared by the
-/// swipe gesture on the Dosing tab and the edit screen's Stop button — the
-/// latter is the accessible, non-swipe path (#45). Returns true if stopped.
-Future<bool> confirmStopDosing(
+/// Stops the supplement immediately and shows an "Undo" SnackBar that writes
+/// the captured pre-stop row back (U10 — no confirm dialog: the stop is a
+/// soft state change and cheap to restore, so it follows the readings/actions
+/// undo pattern). Shared by the swipe gesture on the Dosing tab and the edit
+/// screen's Stop button — the latter is the accessible, non-swipe path (#45)
+/// and pops right after; `ScaffoldMessenger.of` resolves to the app-level
+/// messenger, so the SnackBar survives the pop. Returns true (the row should
+/// dismiss).
+Future<bool> stopDosingWithUndo(
   BuildContext context,
   WidgetRef ref,
   DosingEntry e,
 ) async {
   final l = AppLocalizations.of(context);
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l.stopDosingTitle),
-      content: Text(l.stopDosingBody),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(l.cancel),
+  final db = ref.read(dbProvider);
+  final messenger = ScaffoldMessenger.of(context);
+  await db.stopDosingEntry(e.id);
+  messenger
+    ..clearSnackBars()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(l.supplementStopped),
+        action: SnackBarAction(
+          label: l.undo,
+          onPressed: () => db.restoreDosingEntry(e),
         ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l.stop),
-        ),
-      ],
-    ),
-  );
-  if (ok != true) return false;
-  await ref.read(dbProvider).stopDosingEntry(e.id);
+      ),
+    );
   return true;
 }
 

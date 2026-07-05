@@ -101,6 +101,9 @@ class TanksScreen extends ConsumerWidget {
     Tank tank,
   ) async {
     final l = AppLocalizations.of(context);
+    final db = ref.read(dbProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final wasActive = ref.read(activeTankProvider)?.id == tank.id;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -121,8 +124,37 @@ class TanksScreen extends ConsumerWidget {
         ],
       ),
     );
-    if (ok ?? false) {
-      await ref.read(dbProvider).deleteTank(tank.id);
+    if (ok != true) return;
+    // Soft delete + undo SnackBar (U10): the rows survive in SQLite for the
+    // SnackBar's lifetime, so the biggest possible loss in the app stays
+    // reversible past the confirm dialog.
+    await db.softDeleteTank(tank.id);
+    messenger.clearSnackBars();
+    final controller = messenger.showSnackBar(
+      SnackBar(
+        content: Text(l.tankDeleted(tank.name)),
+        // An action makes a SnackBar persist by default; this one must
+        // auto-close — its close is what finalizes the hard delete below.
+        persist: false,
+        duration: const Duration(seconds: 7),
+        action: SnackBarAction(
+          label: l.undo,
+          onPressed: () async {
+            final restored = await db.restoreTank(tank.id);
+            // Hand the active slot back only if the row still existed (a
+            // backup restore during the window replaces all tanks).
+            if (restored && wasActive) await db.setActiveTank(tank.id);
+          },
+        ),
+      ),
+    );
+    // The grace period is the SnackBar's lifetime: any close other than the
+    // Undo tap finalizes the delete. hardDeleteTank only touches soft-deleted
+    // rows, so a stale callback can't remove a live tank reusing the id. A
+    // process kill before this fires is collected by the startup purge sweep.
+    final reason = await controller.closed;
+    if (reason != SnackBarClosedReason.action) {
+      await db.hardDeleteTank(tank.id);
     }
   }
 }

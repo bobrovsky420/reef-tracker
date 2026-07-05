@@ -893,6 +893,36 @@ void main() {
       expect(await dst.getSetting('temp_unit'), isNull);
     });
 
+    test(
+      'encode excludes soft-deleted tanks and their child rows (U10)',
+      () async {
+        final src = newDb();
+        addTearDown(src.close);
+        await seed(src);
+        // A second tank inside its delete-undo window: it must not enter a
+        // backup written during the window.
+        final doomed = await src.createTankWithPreset(
+          name: 'Doomed',
+          type: SetupType.fishOnly,
+        );
+        await src.insertReading(
+          tankId: doomed,
+          paramKey: 'ph',
+          value: 8.0,
+          takenAt: DateTime(2026, 3, 1),
+        );
+        await src.softDeleteTank(doomed);
+
+        final data = decodeBackup(await encodeBackupFromDb(src));
+        expect(data.tanks.map((t) => t.name.value), ['Reef']);
+        expect(data.params.map((p) => p.tankId.value), isNot(contains(doomed)));
+        expect(
+          data.readings.map((r) => r.tankId.value),
+          isNot(contains(doomed)),
+        );
+      },
+    );
+
     test('restore preserves this device\'s local preferences (#18)', () async {
       final src = newDb();
       addTearDown(src.close);

@@ -195,7 +195,10 @@ Future<void> _runAutoBackupIfDue(AppDatabase db) async {
   if (!await settings.readAutoBackupEnabled()) return;
 
   // Nothing to protect until the user has created at least one aquarium.
-  if ((await db.getAllTanks()).isEmpty) return;
+  // Visible tanks only: soft-deleted ones (U10) are excluded from the encode,
+  // so backing up a database holding nothing else would write an empty file
+  // into the rotation, evicting a useful older backup.
+  if ((await db.getTanks()).isEmpty) return;
 
   final last = await settings.readLastBackupAt();
   if (last != null) {

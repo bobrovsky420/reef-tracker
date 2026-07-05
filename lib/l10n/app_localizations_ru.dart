@@ -186,6 +186,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Это навсегда удалит аквариум и все его измерения.';
 
   @override
+  String tankDeleted(Object name) {
+    return 'Аквариум «$name» удалён';
+  }
+
+  @override
   String get newAquarium => 'Новый аквариум';
 
   @override
@@ -609,11 +614,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dosingNoDosage => 'Доза не указана';
 
   @override
-  String get stopDosingTitle => 'Остановить эту добавку?';
-
-  @override
-  String get stopDosingBody =>
-      'Дозирование будет остановлено, а добавка удалена из активного плана. История сохранится.';
+  String get supplementStopped => 'Добавка остановлена';
 
   @override
   String get dosingHistoryTitle => 'История дозирования';

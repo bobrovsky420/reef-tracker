@@ -186,6 +186,11 @@ class AppLocalizationsPl extends AppLocalizations {
       'Spowoduje to trwałe usunięcie akwarium i wszystkich jego pomiarów.';
 
   @override
+  String tankDeleted(Object name) {
+    return 'Usunięto akwarium „$name”';
+  }
+
+  @override
   String get newAquarium => 'Nowe akwarium';
 
   @override
@@ -609,11 +614,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get dosingNoDosage => 'Brak dawki';
 
   @override
-  String get stopDosingTitle => 'Zatrzymać ten preparat?';
-
-  @override
-  String get stopDosingBody =>
-      'Spowoduje to zatrzymanie dozowania i usunięcie preparatu z aktywnego planu. Historia zostanie zachowana.';
+  String get supplementStopped => 'Preparat zatrzymany';
 
   @override
   String get dosingHistoryTitle => 'Historia dozowania';

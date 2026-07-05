@@ -69,6 +69,11 @@
   "deleteTankTitle": "Delete \"{name}\"?",
   "@deleteTankTitle": { "placeholders": { "name": {} } },
   "deleteTankBody": "This permanently deletes the aquarium and all of its readings.",
+  "tankDeleted": "Deleted \"{name}\"",
+  "@tankDeleted": {
+    "description": "SnackBar shown after deleting an aquarium; paired with an Undo action.",
+    "placeholders": { "name": {} }
+  },
   "newAquarium": "New aquarium",
   "editAquarium": "Edit aquarium",
   "name": "Name",
@@ -219,8 +224,10 @@
   "noDosing": "No supplements yet.",
   "noDosingHint": "Add the supplements you dose this tank — vendor, product, and optionally dosage and schedule.",
   "dosingNoDosage": "No dosage set",
-  "stopDosingTitle": "Stop this supplement?",
-  "stopDosingBody": "This stops dosing it and removes it from the active plan. Its history is kept.",
+  "supplementStopped": "Supplement stopped",
+  "@supplementStopped": {
+    "description": "SnackBar shown after stopping a supplement; paired with an Undo action. The entry moves to dosing history."
+  },
   "dosingHistoryTitle": "Dosing history",
   "dosingHistoryEmpty": "No dosing history yet.",
   "dosingHistoryCurrent": "Current",

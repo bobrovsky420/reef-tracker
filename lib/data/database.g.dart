@@ -106,6 +106,17 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -117,6 +128,7 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
     vendor,
     model,
     createdAt,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -188,6 +200,12 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -233,6 +251,10 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -262,6 +284,12 @@ class Tank extends DataClass implements Insertable<Tank> {
   /// Tank model/name (optional, single line).
   final String? model;
   final DateTime createdAt;
+
+  /// Soft-delete stamp (U10). Set by [AppDatabase.softDeleteTank] — the tank
+  /// vanishes from every read path but its rows survive the undo window —
+  /// and cleared by [AppDatabase.restoreTank]. Non-null rows are finalized by
+  /// [AppDatabase.hardDeleteTank] / [AppDatabase.purgeDeletedTanks].
+  final DateTime? deletedAt;
   const Tank({
     required this.id,
     required this.name,
@@ -272,6 +300,7 @@ class Tank extends DataClass implements Insertable<Tank> {
     this.vendor,
     this.model,
     required this.createdAt,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -295,6 +324,9 @@ class Tank extends DataClass implements Insertable<Tank> {
       map['model'] = Variable<String>(model);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -319,6 +351,9 @@ class Tank extends DataClass implements Insertable<Tank> {
           ? const Value.absent()
           : Value(model),
       createdAt: Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -337,6 +372,7 @@ class Tank extends DataClass implements Insertable<Tank> {
       vendor: serializer.fromJson<String?>(json['vendor']),
       model: serializer.fromJson<String?>(json['model']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -352,6 +388,7 @@ class Tank extends DataClass implements Insertable<Tank> {
       'vendor': serializer.toJson<String?>(vendor),
       'model': serializer.toJson<String?>(model),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -365,6 +402,7 @@ class Tank extends DataClass implements Insertable<Tank> {
     Value<String?> vendor = const Value.absent(),
     Value<String?> model = const Value.absent(),
     DateTime? createdAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => Tank(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -375,6 +413,7 @@ class Tank extends DataClass implements Insertable<Tank> {
     vendor: vendor.present ? vendor.value : this.vendor,
     model: model.present ? model.value : this.model,
     createdAt: createdAt ?? this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   Tank copyWithCompanion(TanksCompanion data) {
     return Tank(
@@ -389,6 +428,7 @@ class Tank extends DataClass implements Insertable<Tank> {
       vendor: data.vendor.present ? data.vendor.value : this.vendor,
       model: data.model.present ? data.model.value : this.model,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -403,7 +443,8 @@ class Tank extends DataClass implements Insertable<Tank> {
           ..write('notes: $notes, ')
           ..write('vendor: $vendor, ')
           ..write('model: $model, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -419,6 +460,7 @@ class Tank extends DataClass implements Insertable<Tank> {
     vendor,
     model,
     createdAt,
+    deletedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -432,7 +474,8 @@ class Tank extends DataClass implements Insertable<Tank> {
           other.notes == this.notes &&
           other.vendor == this.vendor &&
           other.model == this.model &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class TanksCompanion extends UpdateCompanion<Tank> {
@@ -445,6 +488,7 @@ class TanksCompanion extends UpdateCompanion<Tank> {
   final Value<String?> vendor;
   final Value<String?> model;
   final Value<DateTime> createdAt;
+  final Value<DateTime?> deletedAt;
   const TanksCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -455,6 +499,7 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     this.vendor = const Value.absent(),
     this.model = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   });
   TanksCompanion.insert({
     this.id = const Value.absent(),
@@ -466,6 +511,7 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     this.vendor = const Value.absent(),
     this.model = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   }) : name = Value(name),
        setupType = Value(setupType);
   static Insertable<Tank> custom({
@@ -478,6 +524,7 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     Expression<String>? vendor,
     Expression<String>? model,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -489,6 +536,7 @@ class TanksCompanion extends UpdateCompanion<Tank> {
       if (vendor != null) 'vendor': vendor,
       if (model != null) 'model': model,
       if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
     });
   }
 
@@ -502,6 +550,7 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     Value<String?>? vendor,
     Value<String?>? model,
     Value<DateTime>? createdAt,
+    Value<DateTime?>? deletedAt,
   }) {
     return TanksCompanion(
       id: id ?? this.id,
@@ -513,6 +562,7 @@ class TanksCompanion extends UpdateCompanion<Tank> {
       vendor: vendor ?? this.vendor,
       model: model ?? this.model,
       createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -546,6 +596,9 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     return map;
   }
 
@@ -560,7 +613,8 @@ class TanksCompanion extends UpdateCompanion<Tank> {
           ..write('notes: $notes, ')
           ..write('vendor: $vendor, ')
           ..write('model: $model, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -5004,6 +5058,7 @@ typedef $$TanksTableCreateCompanionBuilder =
       Value<String?> vendor,
       Value<String?> model,
       Value<DateTime> createdAt,
+      Value<DateTime?> deletedAt,
     });
 typedef $$TanksTableUpdateCompanionBuilder =
     TanksCompanion Function({
@@ -5016,6 +5071,7 @@ typedef $$TanksTableUpdateCompanionBuilder =
       Value<String?> vendor,
       Value<String?> model,
       Value<DateTime> createdAt,
+      Value<DateTime?> deletedAt,
     });
 
 final class $$TanksTableReferences
@@ -5229,6 +5285,11 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5486,6 +5547,11 @@ class $$TanksTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TanksTableAnnotationComposer
@@ -5525,6 +5591,9 @@ class $$TanksTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   Expression<T> trackedParametersRefs<T extends Object>(
     Expression<T> Function($$TrackedParametersTableAnnotationComposer a) f,
@@ -5776,6 +5845,7 @@ class $$TanksTableTableManager
                 Value<String?> vendor = const Value.absent(),
                 Value<String?> model = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => TanksCompanion(
                 id: id,
                 name: name,
@@ -5786,6 +5856,7 @@ class $$TanksTableTableManager
                 vendor: vendor,
                 model: model,
                 createdAt: createdAt,
+                deletedAt: deletedAt,
               ),
           createCompanionCallback:
               ({
@@ -5798,6 +5869,7 @@ class $$TanksTableTableManager
                 Value<String?> vendor = const Value.absent(),
                 Value<String?> model = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => TanksCompanion.insert(
                 id: id,
                 name: name,
@@ -5808,6 +5880,7 @@ class $$TanksTableTableManager
                 vendor: vendor,
                 model: model,
                 createdAt: createdAt,
+                deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(

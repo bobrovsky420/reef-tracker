@@ -142,7 +142,8 @@ void main() {
         amountLiters: 20,
       );
 
-      await db.deleteTank(id);
+      await db.softDeleteTank(id);
+      await db.hardDeleteTank(id);
 
       expect(await db.getAllReadings(), isEmpty);
       expect(await db.getAllWaterChanges(), isEmpty);
@@ -162,13 +163,89 @@ void main() {
         );
         expect(await db.getActiveTankId(), b); // last created is active
 
-        await db.deleteTank(b);
+        await db.softDeleteTank(b);
         expect(await db.getActiveTankId(), a);
 
-        await db.deleteTank(a);
+        await db.softDeleteTank(a);
         expect(await db.getActiveTankId(), isNull);
       },
     );
+  });
+
+  group('tank soft delete (U10)', () {
+    test('softDeleteTank hides the tank; restoreTank brings it back', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+
+      await db.softDeleteTank(a);
+      expect((await db.getTanks()).map((t) => t.id), [b]);
+      expect((await db.watchTanks().first).map((t) => t.id), [b]);
+      // The rows survive the window: the full dump still sees the tank.
+      expect((await db.getAllTanks()).length, 2);
+
+      expect(await db.restoreTank(a), isTrue);
+      expect((await db.getTanks()).map((t) => t.id), [a, b]);
+      final restored = (await db.getTanks()).first;
+      expect(restored.deletedAt, isNull);
+    });
+
+    test('restoreTank returns false once the row is gone', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      await db.softDeleteTank(a);
+      await db.hardDeleteTank(a);
+      expect(await db.restoreTank(a), isFalse);
+    });
+
+    test('hardDeleteTank only removes soft-deleted rows', () async {
+      // A stale undo-window callback must never remove a live tank that
+      // reused the id (e.g. re-inserted by a backup restore).
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      await db.hardDeleteTank(a);
+      expect((await db.getTanks()).map((t) => t.id), [a]);
+    });
+
+    test('purgeDeletedTanks sweeps every soft-deleted tank', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+      final c = await db.createTankWithPreset(name: 'C', type: SetupType.mixed);
+      await db.insertReading(
+        tankId: a,
+        paramKey: 'ph',
+        value: 8.1,
+        takenAt: DateTime(2026, 1, 1),
+      );
+      await db.softDeleteTank(a);
+      await db.softDeleteTank(c);
+
+      await db.purgeDeletedTanks();
+      expect((await db.getAllTanks()).map((t) => t.id), [b]);
+      // Children cascaded with the purge.
+      expect(await db.getAllReadings(), isEmpty);
+    });
+  });
+
+  group('dosing stop undo (U10)', () {
+    test('restoreDosingEntry writes the pre-stop row back verbatim', () async {
+      final id = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      await db.insertDosingEntry(
+        DosingEntriesCompanion(
+          tankId: Value(id),
+          product: const Value('All-For-Reef'),
+        ),
+      );
+      final before = (await db.watchDosingEntries(id).first).single;
+      expect(before.endedAt, isNull);
+
+      await db.stopDosingEntry(before.id);
+      expect(await db.watchDosingEntries(id).first, isEmpty);
+
+      await db.restoreDosingEntry(before);
+      final after = (await db.watchDosingEntries(id).first).single;
+      expect(after, before); // state and the null endedAt restored exactly
+    });
   });
 
   group('reading templates (test sets, U9)', () {
@@ -251,7 +328,8 @@ void main() {
         name: 'Weekly',
         paramKeys: ['calcium'],
       );
-      await db.deleteTank(id);
+      await db.softDeleteTank(id);
+      await db.hardDeleteTank(id);
       expect(await db.getAllReadingTemplates(), isEmpty);
     });
 

@@ -343,6 +343,26 @@ void main() {
     expect(await indexNames(db), contains('idx_reading_templates_tank'));
   });
 
+  test('upgrading from v14 adds the tanks.deleted_at column (U10)', () async {
+    // seedFullSchemaAt builds the current schema, so drop the column to
+    // reconstruct a genuine v14 file where the from<15 step must add it.
+    final file = File('${tempDir.path}/from14-nodeletedat.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    await seed.getAllTanks();
+    await seed.customStatement('ALTER TABLE tanks DROP COLUMN deleted_at');
+    await seed.customStatement('PRAGMA user_version = 14');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final id = await db.createTankWithPreset(name: 'R', type: SetupType.mixed);
+    // Exercises the new column on both the write and the filtered read path.
+    await db.softDeleteTank(id);
+    expect(await db.getTanks(), isEmpty);
+    expect(await db.restoreTank(id), isTrue);
+    expect((await db.getTanks()).single.id, id);
+  });
+
   group('guarded migration steps are idempotent', () {
     // v3..(schemaVersion-1): re-running each upgrade against a schema that
     // already has every table/column must not throw.

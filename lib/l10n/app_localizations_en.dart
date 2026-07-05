@@ -185,6 +185,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'This permanently deletes the aquarium and all of its readings.';
 
   @override
+  String tankDeleted(Object name) {
+    return 'Deleted \"$name\"';
+  }
+
+  @override
   String get newAquarium => 'New aquarium';
 
   @override
@@ -603,11 +608,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dosingNoDosage => 'No dosage set';
 
   @override
-  String get stopDosingTitle => 'Stop this supplement?';
-
-  @override
-  String get stopDosingBody =>
-      'This stops dosing it and removes it from the active plan. Its history is kept.';
+  String get supplementStopped => 'Supplement stopped';
 
   @override
   String get dosingHistoryTitle => 'Dosing history';

@@ -185,6 +185,11 @@ class AppLocalizationsCs extends AppLocalizations {
       'Tímto trvale smažete akvárium i všechna jeho měření.';
 
   @override
+  String tankDeleted(Object name) {
+    return 'Akvárium „$name“ smazáno';
+  }
+
+  @override
   String get newAquarium => 'Nové akvárium';
 
   @override
@@ -606,11 +611,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get dosingNoDosage => 'Dávka nezadána';
 
   @override
-  String get stopDosingTitle => 'Zastavit tento přípravek?';
-
-  @override
-  String get stopDosingBody =>
-      'Tímto zastavíte jeho dávkování a odeberete ho z aktivního plánu. Historie zůstane zachována.';
+  String get supplementStopped => 'Přípravek zastaven';
 
   @override
   String get dosingHistoryTitle => 'Historie dávkování';

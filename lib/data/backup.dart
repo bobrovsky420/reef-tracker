@@ -511,16 +511,51 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
 /// string comes back via `Isolate.exit`, without a copy.
 Future<String> encodeBackupFromDb(AppDatabase db) async {
   final schemaVersion = db.schemaVersion;
-  final tanks = await db.getAllTanks();
-  final params = await db.getAllTrackedParameters();
-  final readings = await db.getAllReadings();
-  final waterChanges = await db.getAllWaterChanges();
-  final carbonChanges = await db.getAllCarbonChanges();
-  final equipmentCleanings = await db.getAllEquipmentCleanings();
-  final ratioVisibilities = await db.getAllRatioVisibilities();
-  final dosingEntries = await db.getAllDosingEntries();
-  final readingTemplates = await db.getAllReadingTemplates();
+  final allTanks = await db.getAllTanks();
+  var params = await db.getAllTrackedParameters();
+  var readings = await db.getAllReadings();
+  var waterChanges = await db.getAllWaterChanges();
+  var carbonChanges = await db.getAllCarbonChanges();
+  var equipmentCleanings = await db.getAllEquipmentCleanings();
+  var ratioVisibilities = await db.getAllRatioVisibilities();
+  var dosingEntries = await db.getAllDosingEntries();
+  var readingTemplates = await db.getAllReadingTemplates();
   final settings = await db.getAllSettings();
+  // Soft-deleted tanks (U10) are conceptually deleted — their rows only
+  // persist through the brief undo window. Exclude them and their child rows
+  // so a backup racing that window never resurrects the tank. `deletedAt`
+  // itself never enters the format, so `validateBackup`/`kBackupVersion` are
+  // untouched and older apps import new backups unchanged.
+  final hidden = {
+    for (final t in allTanks)
+      if (t.deletedAt != null) t.id,
+  };
+  final tanks = [
+    for (final t in allTanks)
+      if (t.deletedAt == null) t,
+  ];
+  if (hidden.isNotEmpty) {
+    params = params.where((r) => !hidden.contains(r.tankId)).toList();
+    readings = readings.where((r) => !hidden.contains(r.tankId)).toList();
+    waterChanges = waterChanges
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
+    carbonChanges = carbonChanges
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
+    equipmentCleanings = equipmentCleanings
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
+    ratioVisibilities = ratioVisibilities
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
+    dosingEntries = dosingEntries
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
+    readingTemplates = readingTemplates
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
+  }
   // The closure must capture only sendable plain data — never [db]: an open
   // database (ports, native handles) cannot cross the isolate boundary.
   return Isolate.run(

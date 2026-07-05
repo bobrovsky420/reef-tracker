@@ -31,6 +31,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dash style, plus a small legend naming the line styles visible in the
   current time window (under the history graph, above the comparison view).
 
+### Changed
+- Deleting an aquarium can now be undone: after the confirmation, the aquarium
+  disappears with an "Undo" option for a few seconds before the deletion (and
+  all of its measurements, actions, and dosing data) becomes permanent. Until
+  then the aquarium's data stays safely on disk, so even closing the app
+  during the undo window loses nothing you chose to keep.
+- Stopping a supplement no longer asks for confirmation: it stops immediately
+  and offers "Undo" — the same pattern as deleting a measurement. Stopping was
+  already reversible in spirit (the supplement moves to the dosing history),
+  so the extra dialog was pure friction.
+
 ### Fixed
 - Touching a point on a graph now shows a readable tooltip: high-contrast
   colors that follow the light/dark theme (previously blue text on dark grey,

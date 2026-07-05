@@ -416,6 +416,12 @@ abstract class AppLocalizations {
   /// **'This permanently deletes the aquarium and all of its readings.'**
   String get deleteTankBody;
 
+  /// SnackBar shown after deleting an aquarium; paired with an Undo action.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{name}\"'**
+  String tankDeleted(Object name);
+
   /// No description provided for @newAquarium.
   ///
   /// In en, this message translates to:
@@ -1093,17 +1099,11 @@ abstract class AppLocalizations {
   /// **'No dosage set'**
   String get dosingNoDosage;
 
-  /// No description provided for @stopDosingTitle.
+  /// SnackBar shown after stopping a supplement; paired with an Undo action. The entry moves to dosing history.
   ///
   /// In en, this message translates to:
-  /// **'Stop this supplement?'**
-  String get stopDosingTitle;
-
-  /// No description provided for @stopDosingBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This stops dosing it and removes it from the active plan. Its history is kept.'**
-  String get stopDosingBody;
+  /// **'Supplement stopped'**
+  String get supplementStopped;
 
   /// No description provided for @dosingHistoryTitle.
   ///

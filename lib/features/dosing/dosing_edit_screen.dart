@@ -251,12 +251,10 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
               icon: const Icon(Icons.stop_circle_outlined),
               tooltip: l.stop,
               onPressed: () async {
-                final stopped = await confirmStopDosing(
-                  context,
-                  ref,
-                  widget.entry!,
-                );
-                if (stopped && context.mounted) Navigator.of(context).pop();
+                // Stops immediately with an Undo SnackBar (U10); the SnackBar
+                // outlives this screen (app-level messenger).
+                await stopDosingWithUndo(context, ref, widget.entry!);
+                if (context.mounted) Navigator.of(context).pop();
               },
             ),
         ],

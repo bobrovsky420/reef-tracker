@@ -46,6 +46,12 @@ class Tanks extends Table {
   TextColumn get model => text().nullable()();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// Soft-delete stamp (U10). Set by [AppDatabase.softDeleteTank] — the tank
+  /// vanishes from every read path but its rows survive the undo window —
+  /// and cleared by [AppDatabase.restoreTank]. Non-null rows are finalized by
+  /// [AppDatabase.hardDeleteTank] / [AppDatabase.purgeDeletedTanks].
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
 /// A parameter the user tracks for a specific tank, plus its zone boundaries.
@@ -282,7 +288,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -406,6 +412,12 @@ class AppDatabase extends _$AppDatabase {
           'ON reading_templates (tank_id)',
         );
       }
+      if (from < 15) {
+        // Grace-period soft delete for tanks (U10).
+        if (!await _columnExists('tanks', 'deleted_at')) {
+          await m.addColumn(tanks, tanks.deletedAt);
+        }
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -437,13 +449,17 @@ class AppDatabase extends _$AppDatabase {
 
   // --- Tanks ---------------------------------------------------------------
 
-  Stream<List<Tank>> watchTanks() => (select(
-    tanks,
-  )..orderBy([(t) => OrderingTerm(expression: t.createdAt)])).watch();
+  Stream<List<Tank>> watchTanks() =>
+      (select(tanks)
+            ..where((t) => t.deletedAt.isNull())
+            ..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
+          .watch();
 
-  Future<List<Tank>> getTanks() => (select(
-    tanks,
-  )..orderBy([(t) => OrderingTerm(expression: t.createdAt)])).get();
+  Future<List<Tank>> getTanks() =>
+      (select(tanks)
+            ..where((t) => t.deletedAt.isNull())
+            ..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
+          .get();
 
   Future<Tank> getTank(int id) =>
       (select(tanks)..where((t) => t.id.equals(id))).getSingle();
@@ -479,9 +495,15 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> updateTank(Tank tank) => update(tanks).replace(tank);
 
-  Future<void> deleteTank(int id) async {
+  /// Soft-deletes a tank (U10): stamps [Tanks.deletedAt], which hides it from
+  /// every read path, and hands the active-tank slot to another visible tank.
+  /// Reversible via [restoreTank] until [hardDeleteTank] (undo window closed)
+  /// or [purgeDeletedTanks] (startup sweep) finalizes it.
+  Future<void> softDeleteTank(int id) async {
     await transaction(() async {
-      await (delete(tanks)..where((t) => t.id.equals(id))).go();
+      await (update(tanks)..where((t) => t.id.equals(id))).write(
+        TanksCompanion(deletedAt: Value(DateTime.now())),
+      );
       final remaining = await getTanks();
       final active = await getActiveTankId();
       if (active == id) {
@@ -489,6 +511,29 @@ class AppDatabase extends _$AppDatabase {
       }
     });
   }
+
+  /// Clears a soft-deleted tank's [Tanks.deletedAt] — the Undo action.
+  /// Returns false when the row no longer exists (purged, or wiped by a
+  /// backup restore meanwhile) so callers don't re-activate a ghost id.
+  Future<bool> restoreTank(int id) async {
+    final n = await (update(tanks)..where((t) => t.id.equals(id))).write(
+      const TanksCompanion(deletedAt: Value(null)),
+    );
+    return n > 0;
+  }
+
+  /// Finalizes a soft delete: irreversibly removes the tank (children
+  /// cascade). Guarded to soft-deleted rows only, so a stale undo-window
+  /// callback can never remove a live tank that reused the id (e.g. one
+  /// re-inserted by a backup restore during the window).
+  Future<void> hardDeleteTank(int id) => (delete(
+    tanks,
+  )..where((t) => t.id.equals(id) & t.deletedAt.isNotNull())).go();
+
+  /// Removes every soft-deleted tank — the startup sweep collecting rows
+  /// orphaned by a process kill during the undo window.
+  Future<void> purgeDeletedTanks() =>
+      (delete(tanks)..where((t) => t.deletedAt.isNotNull())).go();
 
   Future<void> _seedTrackedParameters(int tankId, SetupType type) async {
     final keys = defaultTrackedKeys(type);
@@ -1040,6 +1085,12 @@ class AppDatabase extends _$AppDatabase {
           endedAt: Value(DateTime.now()),
         ),
       );
+
+  /// Writes a captured pre-stop row back verbatim — the Undo of
+  /// [stopDosingEntry] (U10). A full row replace, so `state` and the null
+  /// `endedAt` are restored exactly; a no-op if the row was deleted meanwhile.
+  Future<void> restoreDosingEntry(DosingEntry entry) =>
+      update(dosingEntries).replace(entry);
 
   /// Permanently removes a dosing segment — the history screen's "delete a record
   /// entered by mistake". Unlike [stopDosingEntry] this is irreversible and leaves
