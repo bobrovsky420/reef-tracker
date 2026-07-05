@@ -271,6 +271,13 @@
   "backupDone": "Backup saved",
   "backupExport": "Export backup",
   "backupExportSubtitle": "Save all aquariums and readings to a file",
+  "csvExportTitle": "Export measurements (CSV)",
+  "csvExportSubtitle": "Share the active aquarium's measurements as a spreadsheet file",
+  "csvExportNoData": "No measurements to export yet",
+  "@csvExportNoData": {
+    "description": "Shown when the CSV export is tapped but the active aquarium has no measurements (or no aquarium exists)."
+  },
+  "csvExportFailed": "Could not export the measurements",
   "backupImport": "Restore from backup",
   "backupImportSubtitle": "Replace all data with a backup file",
   "backupRestoreConfirmTitle": "Restore backup?",

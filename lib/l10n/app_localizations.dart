@@ -1339,6 +1339,30 @@ abstract class AppLocalizations {
   /// **'Save all aquariums and readings to a file'**
   String get backupExportSubtitle;
 
+  /// No description provided for @csvExportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export measurements (CSV)'**
+  String get csvExportTitle;
+
+  /// No description provided for @csvExportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share the active aquarium\'s measurements as a spreadsheet file'**
+  String get csvExportSubtitle;
+
+  /// Shown when the CSV export is tapped but the active aquarium has no measurements (or no aquarium exists).
+  ///
+  /// In en, this message translates to:
+  /// **'No measurements to export yet'**
+  String get csvExportNoData;
+
+  /// No description provided for @csvExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not export the measurements'**
+  String get csvExportFailed;
+
   /// No description provided for @backupImport.
   ///
   /// In en, this message translates to:

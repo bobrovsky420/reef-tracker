@@ -737,6 +737,19 @@ class AppLocalizationsCs extends AppLocalizations {
       'Uložit všechna akvária a měření do souboru';
 
   @override
+  String get csvExportTitle => 'Export měření (CSV)';
+
+  @override
+  String get csvExportSubtitle =>
+      'Sdílet měření aktivního akvária jako tabulkový soubor';
+
+  @override
+  String get csvExportNoData => 'Zatím žádná měření k exportu';
+
+  @override
+  String get csvExportFailed => 'Měření se nepodařilo exportovat';
+
+  @override
   String get backupImport => 'Obnovit ze zálohy';
 
   @override

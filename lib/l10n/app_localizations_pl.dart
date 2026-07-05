@@ -740,6 +740,19 @@ class AppLocalizationsPl extends AppLocalizations {
       'Zapisz wszystkie akwaria i pomiary do pliku';
 
   @override
+  String get csvExportTitle => 'Eksport pomiarów (CSV)';
+
+  @override
+  String get csvExportSubtitle =>
+      'Udostępnij pomiary aktywnego akwarium jako plik arkusza kalkulacyjnego';
+
+  @override
+  String get csvExportNoData => 'Brak pomiarów do wyeksportowania';
+
+  @override
+  String get csvExportFailed => 'Nie udało się wyeksportować pomiarów';
+
+  @override
   String get backupImport => 'Przywróć z kopii';
 
   @override

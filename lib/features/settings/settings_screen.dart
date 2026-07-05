@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
+import '../../data/csv_export.dart';
 import '../../data/database.dart';
 import '../../domain/trend.dart';
 import '../../domain/units.dart';
@@ -226,6 +227,12 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _export(context, db, l),
           ),
           ListTile(
+            leading: const Icon(Icons.table_chart_outlined),
+            title: Text(l.csvExportTitle),
+            subtitle: Text(l.csvExportSubtitle),
+            onTap: () => _exportCsv(context, ref, l),
+          ),
+          ListTile(
             leading: const Icon(Icons.settings_backup_restore),
             title: Text(l.backupImport),
             subtitle: Text(l.backupImportSubtitle),
@@ -333,6 +340,36 @@ class SettingsScreen extends ConsumerWidget {
       await exportBackup(db);
     } catch (_) {
       if (context.mounted) _snack(context, l.backupExportFailed);
+    }
+  }
+
+  /// Shares the active aquarium's measurements as a CSV file (U3). Reads
+  /// tank/prefs synchronously before the first await so no context or ref is
+  /// used across the async gap.
+  Future<void> _exportCsv(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final tankId = ref.read(activeTankIdProvider).value;
+    if (tankId == null) {
+      _snack(context, l.csvExportNoData);
+      return;
+    }
+    final tank = (ref.read(tanksProvider).value ?? const <Tank>[])
+        .where((t) => t.id == tankId)
+        .firstOrNull;
+    try {
+      final shared = await exportReadingsCsv(
+        ref.read(dbProvider),
+        tankId: tankId,
+        tankName: tank?.name ?? '',
+        prefs: ref.read(unitPrefsProvider),
+      );
+      // An empty tank is not an error — tell the user why nothing opened.
+      if (!shared && context.mounted) _snack(context, l.csvExportNoData);
+    } catch (_) {
+      if (context.mounted) _snack(context, l.csvExportFailed);
     }
   }
 

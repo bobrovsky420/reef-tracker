@@ -585,6 +585,18 @@ class AppDatabase extends _$AppDatabase {
             ]))
           .watch();
 
+  /// One-shot fetch of every reading for a tank, oldest first (`id` as the
+  /// same-second tiebreak) — feeds the measurement CSV export (U3). Live UI
+  /// reads go through the bounded watchers instead.
+  Future<List<Reading>> getReadingsForTank(int tankId) =>
+      (select(readings)
+            ..where((r) => r.tankId.equals(tankId))
+            ..orderBy([
+              (r) => OrderingTerm(expression: r.takenAt),
+              (r) => OrderingTerm(expression: r.id),
+            ]))
+          .get();
+
   /// Readings for a single parameter, oldest first (chart-friendly order).
   Stream<List<Reading>> watchParamReadings(int tankId, String paramKey) =>
       (select(readings)

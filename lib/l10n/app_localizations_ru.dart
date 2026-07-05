@@ -739,6 +739,19 @@ class AppLocalizationsRu extends AppLocalizations {
       'Сохранить все аквариумы и измерения в файл';
 
   @override
+  String get csvExportTitle => 'Экспорт измерений (CSV)';
+
+  @override
+  String get csvExportSubtitle =>
+      'Поделиться измерениями активного аквариума в виде табличного файла';
+
+  @override
+  String get csvExportNoData => 'Пока нет измерений для экспорта';
+
+  @override
+  String get csvExportFailed => 'Не удалось экспортировать измерения';
+
+  @override
   String get backupImport => 'Восстановить из копии';
 
   @override

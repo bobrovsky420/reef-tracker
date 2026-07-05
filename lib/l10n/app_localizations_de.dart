@@ -737,6 +737,19 @@ class AppLocalizationsDe extends AppLocalizations {
       'Alle Aquarien und Messwerte in eine Datei speichern';
 
   @override
+  String get csvExportTitle => 'Messwerte exportieren (CSV)';
+
+  @override
+  String get csvExportSubtitle =>
+      'Messwerte des aktiven Aquariums als Tabellendatei teilen';
+
+  @override
+  String get csvExportNoData => 'Noch keine Messwerte zum Exportieren';
+
+  @override
+  String get csvExportFailed => 'Messwerte konnten nicht exportiert werden';
+
+  @override
   String get backupImport => 'Aus Sicherung wiederherstellen';
 
   @override

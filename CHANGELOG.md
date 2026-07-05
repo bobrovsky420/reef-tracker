@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-07-05
+
+### Added
+- Settings → Backup gained "Export measurements (CSV)": shares the active
+  aquarium's measurements as a spreadsheet-friendly CSV file (one row per
+  measurement with timestamp, parameter, value in your display units, unit,
+  and note) for analysis in Excel/Google Sheets or comparison with lab
+  results.
+
 ## [0.16.3] - 2026-07-04
 
 ### Added

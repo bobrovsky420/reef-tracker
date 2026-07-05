@@ -43,7 +43,7 @@ The codebase is organized into four layers:
 ```
 lib/
   domain/    Pure Dart business rules — no Flutter, no DB. Static app data.
-  data/      Drift database, backup encode/decode. The only persistence layer.
+  data/      Drift database, backup encode/decode, CSV export. The only persistence layer.
   app/       Riverpod providers (state graph) + go_router route table + theme.
   features/  One folder per screen/feature, wired to providers.
   l10n/      ARB source strings + generated AppLocalizations + domain-label helpers.
@@ -228,11 +228,14 @@ unverified, and `kBackupVersion` stays 1 so older apps can import new files
 (they ignore the extra key).
 
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
-share sheet, then cleans up the plaintext copies: its own staging file as soon
-as the sheet returns, share_plus's internal copy (under `<temp>/share_plus/`)
-immediately when the sheet was dismissed, and any copy a completed share left
-behind at the start of the next export (deleting it right away could break a
-receiver still streaming the content URI). `pickBackupData` uses the file
+share sheet via the shared `shareExportFile` helper (`export_share.dart`),
+which cleans up the plaintext copies: the staging file as soon as the sheet
+returns, share_plus's internal copy (under `<temp>/share_plus/`) immediately
+when the sheet was dismissed, and any copy a completed share left behind at
+the start of the next export (deleting it right away could break a receiver
+still streaming the content URI). The sweep recognizes both export naming
+patterns (backup JSON and measurement CSV) and never touches foreign files.
+`pickBackupData` uses the file
 picker; read/UTF-8 failures stay inside the `InvalidBackupException` contract
 so a binary file renamed `.json` gets the specific rejection message. `restoreFromBackup`
 **replaces the entire database in one transaction**, preserving primary keys so
@@ -267,6 +270,23 @@ resume, so a large database would otherwise jank startup), and the rehearsal
 restore uses `NativeDatabase.createInBackground`. Backup JSON is compact, not
 pretty-printed — indentation would double the encode cost and file size, and
 nothing reads it.
+
+### Measurement CSV export (`csv_export.dart`)
+
+Settings → Backup offers "Export measurements (CSV)" (U3): the **active
+tank's readings only**, shared through the same `shareExportFile` staging/
+sweep path as the JSON backup. `encodeReadingsCsv` is a pure function (unit
+tested) producing RFC 4180 output — comma-delimited, CRLF, quote-escaped —
+one row per measurement, oldest first, header
+`taken_at,parameter,value,unit,note`. `parameter` is the stable catalog key
+(same identifier as the JSON backup) so files compare across app languages;
+values are converted to the user's display units at display precision but
+always with a `.` decimal separator (locale decimals would fight the comma
+delimiter); timestamps are device-local `yyyy-MM-dd HH:mm:ss`. Readings whose
+tracked-parameter row was removed fall back to the catalog's default unit.
+Encoding runs in `Isolate.run` (readings are the largest table); the fetch is
+a one-shot `getReadingsForTank`, not a watcher. An empty tank shows a
+localized "nothing to export" SnackBar instead of opening the share sheet.
 
 ### Automatic backup (`auto_backup.dart`)
 

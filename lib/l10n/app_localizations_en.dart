@@ -734,6 +734,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Save all aquariums and readings to a file';
 
   @override
+  String get csvExportTitle => 'Export measurements (CSV)';
+
+  @override
+  String get csvExportSubtitle =>
+      'Share the active aquarium\'s measurements as a spreadsheet file';
+
+  @override
+  String get csvExportNoData => 'No measurements to export yet';
+
+  @override
+  String get csvExportFailed => 'Could not export the measurements';
+
+  @override
   String get backupImport => 'Restore from backup';
 
   @override
