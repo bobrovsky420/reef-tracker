@@ -28,6 +28,23 @@ String formatDateTime(BuildContext context, DateTime t, {bool weekday = true}) {
 /// `Intl.defaultLocale`, which MaterialApp keeps in sync with the app locale.
 String formatDate(DateTime t) => DateFormat.yMMMd().format(t);
 
+/// Localized short weekday names (e.g. "Mon, Thu") for [days] (1=Mon … 7=Sun,
+/// rendered in ascending order). Shared by the dosing rows and the
+/// maintenance-schedule subtitles.
+String formatWeekdays(BuildContext context, Iterable<int> days) {
+  // 2024-01-01 is a Monday; offset by (weekday-1) to reach each day.
+  // `narrowWeekdays` is Sunday-first (index 0 = Sun) while DateTime.weekday is
+  // 1 = Mon … 7 = Sun, so `% 7` folds Sunday (7) onto index 0.
+  final base = DateTime(2024, 1, 1);
+  return (days.toList()..sort())
+      .map(
+        (d) => MaterialLocalizations.of(
+          context,
+        ).narrowWeekdays[base.add(Duration(days: d - 1)).weekday % 7],
+      )
+      .join(', ');
+}
+
 /// Shows a date picker followed by a time picker and returns the composed
 /// [DateTime], **clamped so it can never land in the future** — readings,
 /// water changes and cleanings are always logged in the past or now. Returns

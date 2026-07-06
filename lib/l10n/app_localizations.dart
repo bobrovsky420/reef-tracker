@@ -2538,6 +2538,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No maintenance tasks yet. Plan water changes or custom tasks to get due chips and reminders.'**
   String get scheduleEmptyBody;
+
+  /// No description provided for @repeatModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats'**
+  String get repeatModeLabel;
+
+  /// No description provided for @repeatEveryDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every X days'**
+  String get repeatEveryDays;
+
+  /// No description provided for @repeatEveryWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Every X weeks'**
+  String get repeatEveryWeeks;
+
+  /// No description provided for @repeatEveryMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Every X months'**
+  String get repeatEveryMonths;
+
+  /// No description provided for @repeatOnWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days of the week'**
+  String get repeatOnWeekdays;
+
+  /// No description provided for @repeatOnMonthDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of the month'**
+  String get repeatOnMonthDay;
+
+  /// No description provided for @weeksLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Weeks'**
+  String get weeksLabel;
+
+  /// No description provided for @monthsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Months'**
+  String get monthsLabel;
+
+  /// No description provided for @monthDayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of the month (1–31)'**
+  String get monthDayLabel;
+
+  /// No description provided for @invalidInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number (1 or more).'**
+  String get invalidInterval;
+
+  /// No description provided for @invalidMonthDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a day between 1 and 31.'**
+  String get invalidMonthDay;
+
+  /// No description provided for @weekdaysRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one day.'**
+  String get weekdaysRequired;
+
+  /// Schedule subtitle: the task repeats every {n} weeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, one{Every week} other{Every {n} weeks}}'**
+  String everyWeeksN(int n);
+
+  /// Schedule subtitle: the task repeats every {n} months.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, one{Every month} other{Every {n} months}}'**
+  String everyMonthsN(int n);
+
+  /// Schedule subtitle: the task repeats on fixed weekdays; {days} is a localized list of short weekday names (e.g. "Mon, Thu").
+  ///
+  /// In en, this message translates to:
+  /// **'Every {days}'**
+  String everyWeekdays(String days);
+
+  /// Schedule subtitle: the task repeats every month on day {n} (1–31, clamped to short months).
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly on day {n}'**
+  String monthlyOnDayN(int n);
 }
 
 class _AppLocalizationsDelegate

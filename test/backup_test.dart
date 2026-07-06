@@ -208,7 +208,8 @@ void main() {
         tankId: 1,
         actionType: 'waterChange',
         title: null,
-        cadenceDays: 14,
+        cadenceDays: 2,
+        cadenceUnit: 'weeks',
         scheduledAt: null,
         lastDoneAt: null,
         remindEnabled: true,
@@ -226,6 +227,16 @@ void main() {
         remindEnabled: false,
         note: 'under the sink',
         displayOrder: 1,
+      ),
+      MaintenanceSchedule(
+        id: 72,
+        tankId: 1,
+        actionType: null,
+        title: 'Clean glass',
+        weekdays: '1,4',
+        monthDay: 15,
+        remindEnabled: true,
+        displayOrder: 2,
       ),
     ];
     final settings = [
@@ -353,7 +364,10 @@ void main() {
       expect(ms0.tankId.value, 1);
       expect(ms0.actionType.value, 'waterChange');
       expect(ms0.title.value, isNull);
-      expect(ms0.cadenceDays.value, 14);
+      expect(ms0.cadenceDays.value, 2);
+      expect(ms0.cadenceUnit.value, 'weeks');
+      expect(ms0.weekdays.value, isNull);
+      expect(ms0.monthDay.value, isNull);
       expect(ms0.scheduledAt.value, isNull);
       expect(ms0.lastDoneAt.value, isNull);
       expect(ms0.remindEnabled.value, isTrue);
@@ -361,10 +375,14 @@ void main() {
       expect(ms1.actionType.value, isNull);
       expect(ms1.title.value, 'Replace RO membrane');
       expect(ms1.cadenceDays.value, isNull);
+      expect(ms1.cadenceUnit.value, isNull);
       expect(ms1.scheduledAt.value, maintenanceSchedules[1].scheduledAt);
       expect(ms1.lastDoneAt.value, maintenanceSchedules[1].lastDoneAt);
       expect(ms1.remindEnabled.value, isFalse);
       expect(ms1.note.value, 'under the sink');
+      final ms2 = data.maintenanceSchedules[2];
+      expect(ms2.weekdays.value, '1,4');
+      expect(ms2.monthDay.value, 15);
 
       // The v16 columns on existing sections round-trip too.
       expect(data.params[0].testCadenceDays.value, params[0].testCadenceDays);
@@ -885,12 +903,18 @@ void main() {
       String? actionType = 'waterChange',
       String? title,
       int? cadenceDays = 14,
+      String? cadenceUnit,
+      String? weekdays,
+      int? monthDay,
     }) => MaintenanceSchedulesCompanion(
       id: Value(id),
       tankId: Value(tankId),
       actionType: Value(actionType),
       title: Value(title),
       cadenceDays: Value(cadenceDays),
+      cadenceUnit: Value(cadenceUnit),
+      weekdays: Value(weekdays),
+      monthDay: Value(monthDay),
       displayOrder: const Value(0),
     );
 
@@ -956,6 +980,58 @@ void main() {
         () => validateBackup(d, appSchemaVersion: 16),
         rejectedWith(BackupRejection.inconsistent),
       );
+    });
+
+    test('accepts the v17 repeat modes (unit / weekdays / month day)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [
+          schedule(70, 1, cadenceDays: 2, cadenceUnit: 'months'),
+          schedule(71, 1, cadenceDays: null, weekdays: '1,4'),
+          schedule(72, 1, cadenceDays: null, monthDay: 31),
+        ],
+      );
+      expect(() => validateBackup(d, appSchemaVersion: 17), returnsNormally);
+    });
+
+    test('rejects an unknown cadence unit (#8 at the door)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [schedule(70, 1, cadenceUnit: 'fortnights')],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 17),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a weekday list with no valid day', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [
+          schedule(70, 1, cadenceDays: null, weekdays: '0,9'),
+        ],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 17),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects an out-of-range month day', () {
+      for (final day in const [0, 32]) {
+        final d = dataWith(
+          tanks: [tank(1)],
+          maintenanceSchedules: [
+            schedule(70, 1, cadenceDays: null, monthDay: day),
+          ],
+        );
+        expect(
+          () => validateBackup(d, appSchemaVersion: 17),
+          rejectedWith(BackupRejection.inconsistent),
+          reason: 'monthDay=$day',
+        );
+      }
     });
 
     test('rejects a plan with an out-of-range id (U12, #33)', () {

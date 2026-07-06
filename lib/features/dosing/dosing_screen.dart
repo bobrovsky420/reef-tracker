@@ -223,21 +223,6 @@ List<int> parseWeekdays(String? raw) {
   return days;
 }
 
-/// Localized short weekday names (e.g. "Mon, Thu") for [days] (1=Mon … 7=Sun).
-String formatWeekdays(BuildContext context, List<int> days) {
-  // 2024-01-01 is a Monday; offset by (weekday-1) to reach each day.
-  // `narrowWeekdays` is Sunday-first (index 0 = Sun) while DateTime.weekday is
-  // 1 = Mon … 7 = Sun, so `% 7` folds Sunday (7) onto index 0.
-  final base = DateTime(2024, 1, 1);
-  return days
-      .map(
-        (d) => MaterialLocalizations.of(
-          context,
-        ).narrowWeekdays[base.add(Duration(days: d - 1)).weekday % 7],
-      )
-      .join(', ');
-}
-
 /// Renders a stored `HH:mm` time using the device's 12/24-hour preference.
 String formatDoseTime(BuildContext context, String hhmm) {
   final parts = hhmm.split(':');

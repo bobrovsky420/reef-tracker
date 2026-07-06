@@ -1425,4 +1425,74 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get scheduleEmptyBody =>
       'Zatím žádné úkoly údržby. Naplánujte výměny vody nebo vlastní úkoly a získáte štítky termínů a připomínky.';
+
+  @override
+  String get repeatModeLabel => 'Opakování';
+
+  @override
+  String get repeatEveryDays => 'Každých X dní';
+
+  @override
+  String get repeatEveryWeeks => 'Každých X týdnů';
+
+  @override
+  String get repeatEveryMonths => 'Každých X měsíců';
+
+  @override
+  String get repeatOnWeekdays => 'Dny v týdnu';
+
+  @override
+  String get repeatOnMonthDay => 'Den v měsíci';
+
+  @override
+  String get weeksLabel => 'Týdny';
+
+  @override
+  String get monthsLabel => 'Měsíce';
+
+  @override
+  String get monthDayLabel => 'Den v měsíci (1–31)';
+
+  @override
+  String get invalidInterval => 'Zadejte celé číslo (1 nebo více).';
+
+  @override
+  String get invalidMonthDay => 'Zadejte den mezi 1 a 31.';
+
+  @override
+  String get weekdaysRequired => 'Vyberte alespoň jeden den.';
+
+  @override
+  String everyWeeksN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Každých $n týdnů',
+      few: 'Každé $n týdny',
+      one: 'Každý týden',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyMonthsN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Každých $n měsíců',
+      few: 'Každé $n měsíce',
+      one: 'Každý měsíc',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyWeekdays(String days) {
+    return 'Vždy v $days';
+  }
+
+  @override
+  String monthlyOnDayN(int n) {
+    return 'Každý měsíc $n. den';
+  }
 }

@@ -458,6 +458,13 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     ),
     names(MaintenanceActionType.values),
   );
+  requireKnown(
+    'maintenanceSchedules.cadenceUnit',
+    data.maintenanceSchedules.map(
+      (s) => s.cadenceUnit.present ? s.cadenceUnit.value : null,
+    ),
+    names(MaintenanceCadenceUnit.values),
+  );
 
   // A maintenance plan is either typed (a known actionType) or a custom task,
   // which must carry a visible title; a plan with neither is unrenderable. A
@@ -478,6 +485,24 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
       throw InvalidBackupException(
         BackupRejection.inconsistent,
         'maintenanceSchedules: cadenceDays $cadence out of range',
+      );
+    }
+    // The calendar repeat fields get the same at-the-door treatment: a
+    // present weekday list that parses empty, or a month day outside 1–31,
+    // would restore a permanently silent plan (the domain returns null
+    // rather than guessing, #8).
+    final weekdays = s.weekdays.present ? s.weekdays.value : null;
+    if (weekdays != null && parseWeekdays(weekdays).isEmpty) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'maintenanceSchedules: weekdays "$weekdays" has no valid day',
+      );
+    }
+    final monthDay = s.monthDay.present ? s.monthDay.value : null;
+    if (monthDay != null && (monthDay < 1 || monthDay > 31)) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'maintenanceSchedules: monthDay $monthDay out of range',
       );
     }
   }
@@ -938,6 +963,9 @@ Map<String, dynamic> _maintenanceScheduleToJson(MaintenanceSchedule s) => {
   'actionType': s.actionType,
   'title': s.title,
   'cadenceDays': s.cadenceDays,
+  'cadenceUnit': s.cadenceUnit,
+  'weekdays': s.weekdays,
+  'monthDay': s.monthDay,
   'scheduledAt': s.scheduledAt?.millisecondsSinceEpoch,
   'lastDoneAt': s.lastDoneAt?.millisecondsSinceEpoch,
   'remindEnabled': s.remindEnabled,
@@ -953,6 +981,10 @@ MaintenanceSchedulesCompanion _maintenanceScheduleFromJson(
   actionType: Value(m['actionType'] as String?),
   title: Value(m['title'] as String?),
   cadenceDays: Value(m['cadenceDays'] as int?),
+  // Absent in pre-v17 backups: null = plain every-N-days (or one-off).
+  cadenceUnit: Value(m['cadenceUnit'] as String?),
+  weekdays: Value(m['weekdays'] as String?),
+  monthDay: Value(m['monthDay'] as int?),
   scheduledAt: Value(_dateOrNull(m['scheduledAt'])),
   lastDoneAt: Value(_dateOrNull(m['lastDoneAt'])),
   remindEnabled: Value((m['remindEnabled'] as bool?) ?? true),

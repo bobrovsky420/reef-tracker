@@ -169,9 +169,12 @@ class ReminderScheduler {
           if (!s.remindEnabled) continue;
           final typed = MaintenanceActionType.fromName(s.actionType);
           final fireAt = fireAtFor(
-            nextElasticDue(
+            nextMaintenanceDue(
               lastDone: typed != null ? lastActions[typed] : s.lastDoneAt,
               cadenceDays: s.cadenceDays,
+              cadenceUnit: s.cadenceUnit,
+              weekdays: s.weekdays,
+              monthDay: s.monthDay,
               scheduledAt: s.scheduledAt,
               now: now,
             ),

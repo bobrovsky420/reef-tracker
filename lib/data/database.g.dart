@@ -4883,6 +4883,39 @@ class $MaintenanceSchedulesTable extends MaintenanceSchedules
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _cadenceUnitMeta = const VerificationMeta(
+    'cadenceUnit',
+  );
+  @override
+  late final GeneratedColumn<String> cadenceUnit = GeneratedColumn<String>(
+    'cadence_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _weekdaysMeta = const VerificationMeta(
+    'weekdays',
+  );
+  @override
+  late final GeneratedColumn<String> weekdays = GeneratedColumn<String>(
+    'weekdays',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _monthDayMeta = const VerificationMeta(
+    'monthDay',
+  );
+  @override
+  late final GeneratedColumn<int> monthDay = GeneratedColumn<int>(
+    'month_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _scheduledAtMeta = const VerificationMeta(
     'scheduledAt',
   );
@@ -4948,6 +4981,9 @@ class $MaintenanceSchedulesTable extends MaintenanceSchedules
     actionType,
     title,
     cadenceDays,
+    cadenceUnit,
+    weekdays,
+    monthDay,
     scheduledAt,
     lastDoneAt,
     remindEnabled,
@@ -4996,6 +5032,27 @@ class $MaintenanceSchedulesTable extends MaintenanceSchedules
           data['cadence_days']!,
           _cadenceDaysMeta,
         ),
+      );
+    }
+    if (data.containsKey('cadence_unit')) {
+      context.handle(
+        _cadenceUnitMeta,
+        cadenceUnit.isAcceptableOrUnknown(
+          data['cadence_unit']!,
+          _cadenceUnitMeta,
+        ),
+      );
+    }
+    if (data.containsKey('weekdays')) {
+      context.handle(
+        _weekdaysMeta,
+        weekdays.isAcceptableOrUnknown(data['weekdays']!, _weekdaysMeta),
+      );
+    }
+    if (data.containsKey('month_day')) {
+      context.handle(
+        _monthDayMeta,
+        monthDay.isAcceptableOrUnknown(data['month_day']!, _monthDayMeta),
       );
     }
     if (data.containsKey('scheduled_at')) {
@@ -5069,6 +5126,18 @@ class $MaintenanceSchedulesTable extends MaintenanceSchedules
         DriftSqlType.int,
         data['${effectivePrefix}cadence_days'],
       ),
+      cadenceUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cadence_unit'],
+      ),
+      weekdays: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weekdays'],
+      ),
+      monthDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}month_day'],
+      ),
       scheduledAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}scheduled_at'],
@@ -5111,9 +5180,23 @@ class MaintenanceSchedule extends DataClass
   /// localized action name instead.
   final String? title;
 
-  /// Repeat every N days after the last completion; null = one-off (due at
-  /// [scheduledAt], retired once done).
+  /// Repeat every N units ([cadenceUnit]) after the last completion; null =
+  /// one-off (due at [scheduledAt], retired once done) unless a calendar
+  /// repeat ([weekdays]/[monthDay]) is set instead.
   final int? cadenceDays;
+
+  /// Unit of [cadenceDays] (`MaintenanceCadenceUnit.name`: days/weeks/
+  /// months); null = days (pre-v17 rows).
+  final String? cadenceUnit;
+
+  /// Comma-separated weekday numbers (1=Mon … 7=Sun) for a fixed-weekday
+  /// repeat ("every Monday") — same format as `DosingEntries.weekdays`.
+  /// Takes precedence over [cadenceDays]/[monthDay] when non-empty.
+  final String? weekdays;
+
+  /// Day of month (1–31, clamped to short months) for a fixed-date repeat
+  /// ("every 1st of the month"). Takes precedence over [cadenceDays].
+  final int? monthDay;
 
   /// Planned first (or one-off) due date; ignored once the task has ever been
   /// completed.
@@ -5136,6 +5219,9 @@ class MaintenanceSchedule extends DataClass
     this.actionType,
     this.title,
     this.cadenceDays,
+    this.cadenceUnit,
+    this.weekdays,
+    this.monthDay,
     this.scheduledAt,
     this.lastDoneAt,
     required this.remindEnabled,
@@ -5155,6 +5241,15 @@ class MaintenanceSchedule extends DataClass
     }
     if (!nullToAbsent || cadenceDays != null) {
       map['cadence_days'] = Variable<int>(cadenceDays);
+    }
+    if (!nullToAbsent || cadenceUnit != null) {
+      map['cadence_unit'] = Variable<String>(cadenceUnit);
+    }
+    if (!nullToAbsent || weekdays != null) {
+      map['weekdays'] = Variable<String>(weekdays);
+    }
+    if (!nullToAbsent || monthDay != null) {
+      map['month_day'] = Variable<int>(monthDay);
     }
     if (!nullToAbsent || scheduledAt != null) {
       map['scheduled_at'] = Variable<DateTime>(scheduledAt);
@@ -5183,6 +5278,15 @@ class MaintenanceSchedule extends DataClass
       cadenceDays: cadenceDays == null && nullToAbsent
           ? const Value.absent()
           : Value(cadenceDays),
+      cadenceUnit: cadenceUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cadenceUnit),
+      weekdays: weekdays == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weekdays),
+      monthDay: monthDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(monthDay),
       scheduledAt: scheduledAt == null && nullToAbsent
           ? const Value.absent()
           : Value(scheduledAt),
@@ -5206,6 +5310,9 @@ class MaintenanceSchedule extends DataClass
       actionType: serializer.fromJson<String?>(json['actionType']),
       title: serializer.fromJson<String?>(json['title']),
       cadenceDays: serializer.fromJson<int?>(json['cadenceDays']),
+      cadenceUnit: serializer.fromJson<String?>(json['cadenceUnit']),
+      weekdays: serializer.fromJson<String?>(json['weekdays']),
+      monthDay: serializer.fromJson<int?>(json['monthDay']),
       scheduledAt: serializer.fromJson<DateTime?>(json['scheduledAt']),
       lastDoneAt: serializer.fromJson<DateTime?>(json['lastDoneAt']),
       remindEnabled: serializer.fromJson<bool>(json['remindEnabled']),
@@ -5222,6 +5329,9 @@ class MaintenanceSchedule extends DataClass
       'actionType': serializer.toJson<String?>(actionType),
       'title': serializer.toJson<String?>(title),
       'cadenceDays': serializer.toJson<int?>(cadenceDays),
+      'cadenceUnit': serializer.toJson<String?>(cadenceUnit),
+      'weekdays': serializer.toJson<String?>(weekdays),
+      'monthDay': serializer.toJson<int?>(monthDay),
       'scheduledAt': serializer.toJson<DateTime?>(scheduledAt),
       'lastDoneAt': serializer.toJson<DateTime?>(lastDoneAt),
       'remindEnabled': serializer.toJson<bool>(remindEnabled),
@@ -5236,6 +5346,9 @@ class MaintenanceSchedule extends DataClass
     Value<String?> actionType = const Value.absent(),
     Value<String?> title = const Value.absent(),
     Value<int?> cadenceDays = const Value.absent(),
+    Value<String?> cadenceUnit = const Value.absent(),
+    Value<String?> weekdays = const Value.absent(),
+    Value<int?> monthDay = const Value.absent(),
     Value<DateTime?> scheduledAt = const Value.absent(),
     Value<DateTime?> lastDoneAt = const Value.absent(),
     bool? remindEnabled,
@@ -5247,6 +5360,9 @@ class MaintenanceSchedule extends DataClass
     actionType: actionType.present ? actionType.value : this.actionType,
     title: title.present ? title.value : this.title,
     cadenceDays: cadenceDays.present ? cadenceDays.value : this.cadenceDays,
+    cadenceUnit: cadenceUnit.present ? cadenceUnit.value : this.cadenceUnit,
+    weekdays: weekdays.present ? weekdays.value : this.weekdays,
+    monthDay: monthDay.present ? monthDay.value : this.monthDay,
     scheduledAt: scheduledAt.present ? scheduledAt.value : this.scheduledAt,
     lastDoneAt: lastDoneAt.present ? lastDoneAt.value : this.lastDoneAt,
     remindEnabled: remindEnabled ?? this.remindEnabled,
@@ -5264,6 +5380,11 @@ class MaintenanceSchedule extends DataClass
       cadenceDays: data.cadenceDays.present
           ? data.cadenceDays.value
           : this.cadenceDays,
+      cadenceUnit: data.cadenceUnit.present
+          ? data.cadenceUnit.value
+          : this.cadenceUnit,
+      weekdays: data.weekdays.present ? data.weekdays.value : this.weekdays,
+      monthDay: data.monthDay.present ? data.monthDay.value : this.monthDay,
       scheduledAt: data.scheduledAt.present
           ? data.scheduledAt.value
           : this.scheduledAt,
@@ -5288,6 +5409,9 @@ class MaintenanceSchedule extends DataClass
           ..write('actionType: $actionType, ')
           ..write('title: $title, ')
           ..write('cadenceDays: $cadenceDays, ')
+          ..write('cadenceUnit: $cadenceUnit, ')
+          ..write('weekdays: $weekdays, ')
+          ..write('monthDay: $monthDay, ')
           ..write('scheduledAt: $scheduledAt, ')
           ..write('lastDoneAt: $lastDoneAt, ')
           ..write('remindEnabled: $remindEnabled, ')
@@ -5304,6 +5428,9 @@ class MaintenanceSchedule extends DataClass
     actionType,
     title,
     cadenceDays,
+    cadenceUnit,
+    weekdays,
+    monthDay,
     scheduledAt,
     lastDoneAt,
     remindEnabled,
@@ -5319,6 +5446,9 @@ class MaintenanceSchedule extends DataClass
           other.actionType == this.actionType &&
           other.title == this.title &&
           other.cadenceDays == this.cadenceDays &&
+          other.cadenceUnit == this.cadenceUnit &&
+          other.weekdays == this.weekdays &&
+          other.monthDay == this.monthDay &&
           other.scheduledAt == this.scheduledAt &&
           other.lastDoneAt == this.lastDoneAt &&
           other.remindEnabled == this.remindEnabled &&
@@ -5333,6 +5463,9 @@ class MaintenanceSchedulesCompanion
   final Value<String?> actionType;
   final Value<String?> title;
   final Value<int?> cadenceDays;
+  final Value<String?> cadenceUnit;
+  final Value<String?> weekdays;
+  final Value<int?> monthDay;
   final Value<DateTime?> scheduledAt;
   final Value<DateTime?> lastDoneAt;
   final Value<bool> remindEnabled;
@@ -5344,6 +5477,9 @@ class MaintenanceSchedulesCompanion
     this.actionType = const Value.absent(),
     this.title = const Value.absent(),
     this.cadenceDays = const Value.absent(),
+    this.cadenceUnit = const Value.absent(),
+    this.weekdays = const Value.absent(),
+    this.monthDay = const Value.absent(),
     this.scheduledAt = const Value.absent(),
     this.lastDoneAt = const Value.absent(),
     this.remindEnabled = const Value.absent(),
@@ -5356,6 +5492,9 @@ class MaintenanceSchedulesCompanion
     this.actionType = const Value.absent(),
     this.title = const Value.absent(),
     this.cadenceDays = const Value.absent(),
+    this.cadenceUnit = const Value.absent(),
+    this.weekdays = const Value.absent(),
+    this.monthDay = const Value.absent(),
     this.scheduledAt = const Value.absent(),
     this.lastDoneAt = const Value.absent(),
     this.remindEnabled = const Value.absent(),
@@ -5368,6 +5507,9 @@ class MaintenanceSchedulesCompanion
     Expression<String>? actionType,
     Expression<String>? title,
     Expression<int>? cadenceDays,
+    Expression<String>? cadenceUnit,
+    Expression<String>? weekdays,
+    Expression<int>? monthDay,
     Expression<DateTime>? scheduledAt,
     Expression<DateTime>? lastDoneAt,
     Expression<bool>? remindEnabled,
@@ -5380,6 +5522,9 @@ class MaintenanceSchedulesCompanion
       if (actionType != null) 'action_type': actionType,
       if (title != null) 'title': title,
       if (cadenceDays != null) 'cadence_days': cadenceDays,
+      if (cadenceUnit != null) 'cadence_unit': cadenceUnit,
+      if (weekdays != null) 'weekdays': weekdays,
+      if (monthDay != null) 'month_day': monthDay,
       if (scheduledAt != null) 'scheduled_at': scheduledAt,
       if (lastDoneAt != null) 'last_done_at': lastDoneAt,
       if (remindEnabled != null) 'remind_enabled': remindEnabled,
@@ -5394,6 +5539,9 @@ class MaintenanceSchedulesCompanion
     Value<String?>? actionType,
     Value<String?>? title,
     Value<int?>? cadenceDays,
+    Value<String?>? cadenceUnit,
+    Value<String?>? weekdays,
+    Value<int?>? monthDay,
     Value<DateTime?>? scheduledAt,
     Value<DateTime?>? lastDoneAt,
     Value<bool>? remindEnabled,
@@ -5406,6 +5554,9 @@ class MaintenanceSchedulesCompanion
       actionType: actionType ?? this.actionType,
       title: title ?? this.title,
       cadenceDays: cadenceDays ?? this.cadenceDays,
+      cadenceUnit: cadenceUnit ?? this.cadenceUnit,
+      weekdays: weekdays ?? this.weekdays,
+      monthDay: monthDay ?? this.monthDay,
       scheduledAt: scheduledAt ?? this.scheduledAt,
       lastDoneAt: lastDoneAt ?? this.lastDoneAt,
       remindEnabled: remindEnabled ?? this.remindEnabled,
@@ -5431,6 +5582,15 @@ class MaintenanceSchedulesCompanion
     }
     if (cadenceDays.present) {
       map['cadence_days'] = Variable<int>(cadenceDays.value);
+    }
+    if (cadenceUnit.present) {
+      map['cadence_unit'] = Variable<String>(cadenceUnit.value);
+    }
+    if (weekdays.present) {
+      map['weekdays'] = Variable<String>(weekdays.value);
+    }
+    if (monthDay.present) {
+      map['month_day'] = Variable<int>(monthDay.value);
     }
     if (scheduledAt.present) {
       map['scheduled_at'] = Variable<DateTime>(scheduledAt.value);
@@ -5458,6 +5618,9 @@ class MaintenanceSchedulesCompanion
           ..write('actionType: $actionType, ')
           ..write('title: $title, ')
           ..write('cadenceDays: $cadenceDays, ')
+          ..write('cadenceUnit: $cadenceUnit, ')
+          ..write('weekdays: $weekdays, ')
+          ..write('monthDay: $monthDay, ')
           ..write('scheduledAt: $scheduledAt, ')
           ..write('lastDoneAt: $lastDoneAt, ')
           ..write('remindEnabled: $remindEnabled, ')
@@ -10072,6 +10235,9 @@ typedef $$MaintenanceSchedulesTableCreateCompanionBuilder =
       Value<String?> actionType,
       Value<String?> title,
       Value<int?> cadenceDays,
+      Value<String?> cadenceUnit,
+      Value<String?> weekdays,
+      Value<int?> monthDay,
       Value<DateTime?> scheduledAt,
       Value<DateTime?> lastDoneAt,
       Value<bool> remindEnabled,
@@ -10085,6 +10251,9 @@ typedef $$MaintenanceSchedulesTableUpdateCompanionBuilder =
       Value<String?> actionType,
       Value<String?> title,
       Value<int?> cadenceDays,
+      Value<String?> cadenceUnit,
+      Value<String?> weekdays,
+      Value<int?> monthDay,
       Value<DateTime?> scheduledAt,
       Value<DateTime?> lastDoneAt,
       Value<bool> remindEnabled,
@@ -10149,6 +10318,21 @@ class $$MaintenanceSchedulesTableFilterComposer
 
   ColumnFilters<int> get cadenceDays => $composableBuilder(
     column: $table.cadenceDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cadenceUnit => $composableBuilder(
+    column: $table.cadenceUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weekdays => $composableBuilder(
+    column: $table.weekdays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get monthDay => $composableBuilder(
+    column: $table.monthDay,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10230,6 +10414,21 @@ class $$MaintenanceSchedulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get cadenceUnit => $composableBuilder(
+    column: $table.cadenceUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weekdays => $composableBuilder(
+    column: $table.weekdays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get monthDay => $composableBuilder(
+    column: $table.monthDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get scheduledAt => $composableBuilder(
     column: $table.scheduledAt,
     builder: (column) => ColumnOrderings(column),
@@ -10303,6 +10502,17 @@ class $$MaintenanceSchedulesTableAnnotationComposer
     column: $table.cadenceDays,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get cadenceUnit => $composableBuilder(
+    column: $table.cadenceUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get weekdays =>
+      $composableBuilder(column: $table.weekdays, builder: (column) => column);
+
+  GeneratedColumn<int> get monthDay =>
+      $composableBuilder(column: $table.monthDay, builder: (column) => column);
 
   GeneratedColumn<DateTime> get scheduledAt => $composableBuilder(
     column: $table.scheduledAt,
@@ -10392,6 +10602,9 @@ class $$MaintenanceSchedulesTableTableManager
                 Value<String?> actionType = const Value.absent(),
                 Value<String?> title = const Value.absent(),
                 Value<int?> cadenceDays = const Value.absent(),
+                Value<String?> cadenceUnit = const Value.absent(),
+                Value<String?> weekdays = const Value.absent(),
+                Value<int?> monthDay = const Value.absent(),
                 Value<DateTime?> scheduledAt = const Value.absent(),
                 Value<DateTime?> lastDoneAt = const Value.absent(),
                 Value<bool> remindEnabled = const Value.absent(),
@@ -10403,6 +10616,9 @@ class $$MaintenanceSchedulesTableTableManager
                 actionType: actionType,
                 title: title,
                 cadenceDays: cadenceDays,
+                cadenceUnit: cadenceUnit,
+                weekdays: weekdays,
+                monthDay: monthDay,
                 scheduledAt: scheduledAt,
                 lastDoneAt: lastDoneAt,
                 remindEnabled: remindEnabled,
@@ -10416,6 +10632,9 @@ class $$MaintenanceSchedulesTableTableManager
                 Value<String?> actionType = const Value.absent(),
                 Value<String?> title = const Value.absent(),
                 Value<int?> cadenceDays = const Value.absent(),
+                Value<String?> cadenceUnit = const Value.absent(),
+                Value<String?> weekdays = const Value.absent(),
+                Value<int?> monthDay = const Value.absent(),
                 Value<DateTime?> scheduledAt = const Value.absent(),
                 Value<DateTime?> lastDoneAt = const Value.absent(),
                 Value<bool> remindEnabled = const Value.absent(),
@@ -10427,6 +10646,9 @@ class $$MaintenanceSchedulesTableTableManager
                 actionType: actionType,
                 title: title,
                 cadenceDays: cadenceDays,
+                cadenceUnit: cadenceUnit,
+                weekdays: weekdays,
+                monthDay: monthDay,
                 scheduledAt: scheduledAt,
                 lastDoneAt: lastDoneAt,
                 remindEnabled: remindEnabled,

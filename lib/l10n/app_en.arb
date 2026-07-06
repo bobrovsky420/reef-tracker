@@ -567,5 +567,38 @@
   "markDone": "Mark done",
   "taskMarkedDone": "Marked as done",
   "taskDeleted": "Task deleted",
-  "scheduleEmptyBody": "No maintenance tasks yet. Plan water changes or custom tasks to get due chips and reminders."
+  "scheduleEmptyBody": "No maintenance tasks yet. Plan water changes or custom tasks to get due chips and reminders.",
+
+  "repeatModeLabel": "Repeats",
+  "repeatEveryDays": "Every X days",
+  "repeatEveryWeeks": "Every X weeks",
+  "repeatEveryMonths": "Every X months",
+  "repeatOnWeekdays": "Days of the week",
+  "repeatOnMonthDay": "Day of the month",
+  "weeksLabel": "Weeks",
+  "monthsLabel": "Months",
+  "monthDayLabel": "Day of the month (1–31)",
+  "invalidInterval": "Enter a whole number (1 or more).",
+  "invalidMonthDay": "Enter a day between 1 and 31.",
+  "weekdaysRequired": "Pick at least one day.",
+  "everyWeeksN": "{n, plural, one{Every week} other{Every {n} weeks}}",
+  "@everyWeeksN": {
+    "description": "Schedule subtitle: the task repeats every {n} weeks.",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "everyMonthsN": "{n, plural, one{Every month} other{Every {n} months}}",
+  "@everyMonthsN": {
+    "description": "Schedule subtitle: the task repeats every {n} months.",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "everyWeekdays": "Every {days}",
+  "@everyWeekdays": {
+    "description": "Schedule subtitle: the task repeats on fixed weekdays; {days} is a localized list of short weekday names (e.g. \"Mon, Thu\").",
+    "placeholders": { "days": { "type": "String" } }
+  },
+  "monthlyOnDayN": "Monthly on day {n}",
+  "@monthlyOnDayN": {
+    "description": "Schedule subtitle: the task repeats every month on day {n} (1–31, clamped to short months).",
+    "placeholders": { "n": { "type": "int" } }
+  }
 }

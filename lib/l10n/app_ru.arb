@@ -434,5 +434,22 @@
   "markDone": "Готово",
   "taskMarkedDone": "Отмечено выполненным",
   "taskDeleted": "Задача удалена",
-  "scheduleEmptyBody": "Пока нет задач обслуживания. Запланируйте подмены воды или свои задачи, чтобы видеть сроки и получать напоминания."
+  "scheduleEmptyBody": "Пока нет задач обслуживания. Запланируйте подмены воды или свои задачи, чтобы видеть сроки и получать напоминания.",
+
+  "repeatModeLabel": "Повтор",
+  "repeatEveryDays": "Каждые X дней",
+  "repeatEveryWeeks": "Каждые X недель",
+  "repeatEveryMonths": "Каждые X месяцев",
+  "repeatOnWeekdays": "Дни недели",
+  "repeatOnMonthDay": "День месяца",
+  "weeksLabel": "Недели",
+  "monthsLabel": "Месяцы",
+  "monthDayLabel": "День месяца (1–31)",
+  "invalidInterval": "Введите целое число (не менее 1).",
+  "invalidMonthDay": "Введите день от 1 до 31.",
+  "weekdaysRequired": "Выберите хотя бы один день.",
+  "everyWeeksN": "{n, plural, one{Каждую {n}-ю неделю} few{Каждые {n} недели} many{Каждые {n} недель} other{Каждые {n} недели}}",
+  "everyMonthsN": "{n, plural, one{Каждый {n}-й месяц} few{Каждые {n} месяца} many{Каждые {n} месяцев} other{Каждые {n} месяца}}",
+  "everyWeekdays": "По {days}",
+  "monthlyOnDayN": "Ежемесячно {n}-го числа"
 }

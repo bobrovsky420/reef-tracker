@@ -434,5 +434,22 @@
   "markDone": "Zrobione",
   "taskMarkedDone": "Oznaczono jako zrobione",
   "taskDeleted": "Zadanie usunięte",
-  "scheduleEmptyBody": "Brak zadań konserwacji. Zaplanuj podmiany wody lub własne zadania, aby widzieć terminy i otrzymywać przypomnienia."
+  "scheduleEmptyBody": "Brak zadań konserwacji. Zaplanuj podmiany wody lub własne zadania, aby widzieć terminy i otrzymywać przypomnienia.",
+
+  "repeatModeLabel": "Powtarzanie",
+  "repeatEveryDays": "Co X dni",
+  "repeatEveryWeeks": "Co X tygodni",
+  "repeatEveryMonths": "Co X miesięcy",
+  "repeatOnWeekdays": "Dni tygodnia",
+  "repeatOnMonthDay": "Dzień miesiąca",
+  "weeksLabel": "Tygodnie",
+  "monthsLabel": "Miesiące",
+  "monthDayLabel": "Dzień miesiąca (1–31)",
+  "invalidInterval": "Podaj liczbę całkowitą (co najmniej 1).",
+  "invalidMonthDay": "Podaj dzień od 1 do 31.",
+  "weekdaysRequired": "Wybierz co najmniej jeden dzień.",
+  "everyWeeksN": "{n, plural, one{Co tydzień} few{Co {n} tygodnie} many{Co {n} tygodni} other{Co {n} tygodnia}}",
+  "everyMonthsN": "{n, plural, one{Co miesiąc} few{Co {n} miesiące} many{Co {n} miesięcy} other{Co {n} miesiąca}}",
+  "everyWeekdays": "W {days}",
+  "monthlyOnDayN": "Co miesiąc {n}. dnia"
 }

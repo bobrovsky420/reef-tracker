@@ -1439,4 +1439,76 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get scheduleEmptyBody =>
       'Brak zadań konserwacji. Zaplanuj podmiany wody lub własne zadania, aby widzieć terminy i otrzymywać przypomnienia.';
+
+  @override
+  String get repeatModeLabel => 'Powtarzanie';
+
+  @override
+  String get repeatEveryDays => 'Co X dni';
+
+  @override
+  String get repeatEveryWeeks => 'Co X tygodni';
+
+  @override
+  String get repeatEveryMonths => 'Co X miesięcy';
+
+  @override
+  String get repeatOnWeekdays => 'Dni tygodnia';
+
+  @override
+  String get repeatOnMonthDay => 'Dzień miesiąca';
+
+  @override
+  String get weeksLabel => 'Tygodnie';
+
+  @override
+  String get monthsLabel => 'Miesiące';
+
+  @override
+  String get monthDayLabel => 'Dzień miesiąca (1–31)';
+
+  @override
+  String get invalidInterval => 'Podaj liczbę całkowitą (co najmniej 1).';
+
+  @override
+  String get invalidMonthDay => 'Podaj dzień od 1 do 31.';
+
+  @override
+  String get weekdaysRequired => 'Wybierz co najmniej jeden dzień.';
+
+  @override
+  String everyWeeksN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Co $n tygodnia',
+      many: 'Co $n tygodni',
+      few: 'Co $n tygodnie',
+      one: 'Co tydzień',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyMonthsN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Co $n miesiąca',
+      many: 'Co $n miesięcy',
+      few: 'Co $n miesiące',
+      one: 'Co miesiąc',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyWeekdays(String days) {
+    return 'W $days';
+  }
+
+  @override
+  String monthlyOnDayN(int n) {
+    return 'Co miesiąc $n. dnia';
+  }
 }

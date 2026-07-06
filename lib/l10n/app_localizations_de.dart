@@ -1430,4 +1430,72 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get scheduleEmptyBody =>
       'Noch keine Wartungsaufgaben. Plane Wasserwechsel oder eigene Aufgaben für Fälligkeits-Chips und Erinnerungen.';
+
+  @override
+  String get repeatModeLabel => 'Wiederholung';
+
+  @override
+  String get repeatEveryDays => 'Alle X Tage';
+
+  @override
+  String get repeatEveryWeeks => 'Alle X Wochen';
+
+  @override
+  String get repeatEveryMonths => 'Alle X Monate';
+
+  @override
+  String get repeatOnWeekdays => 'Wochentage';
+
+  @override
+  String get repeatOnMonthDay => 'Tag im Monat';
+
+  @override
+  String get weeksLabel => 'Wochen';
+
+  @override
+  String get monthsLabel => 'Monate';
+
+  @override
+  String get monthDayLabel => 'Tag im Monat (1–31)';
+
+  @override
+  String get invalidInterval => 'Ganze Zahl eingeben (mindestens 1).';
+
+  @override
+  String get invalidMonthDay => 'Tag zwischen 1 und 31 eingeben.';
+
+  @override
+  String get weekdaysRequired => 'Mindestens einen Tag auswählen.';
+
+  @override
+  String everyWeeksN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Alle $n Wochen',
+      one: 'Jede Woche',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyMonthsN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Alle $n Monate',
+      one: 'Jeden Monat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyWeekdays(String days) {
+    return 'Jeden $days';
+  }
+
+  @override
+  String monthlyOnDayN(int n) {
+    return 'Monatlich am $n.';
+  }
 }

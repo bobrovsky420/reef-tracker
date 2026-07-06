@@ -69,6 +69,251 @@ void main() {
     });
   });
 
+  group('nextMaintenanceDue', () {
+    test('null / "days" unit matches the elastic every-N-days math', () {
+      final lastDone = DateTime(2026, 7, 10, 18, 15);
+      for (final unit in [null, 'days']) {
+        expect(
+          nextMaintenanceDue(
+            lastDone: lastDone,
+            cadenceDays: 7,
+            cadenceUnit: unit,
+            now: now,
+          ),
+          DateTime(2026, 7, 17, 18, 15),
+          reason: 'unit=$unit',
+        );
+      }
+    });
+
+    test('weeks: due N*7 days after last done, keeping the time', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 7, 10, 18, 15),
+          cadenceDays: 2,
+          cadenceUnit: 'weeks',
+          now: now,
+        ),
+        DateTime(2026, 7, 24, 18, 15),
+      );
+    });
+
+    test('months: calendar month step, keeping the time', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 7, 10, 8),
+          cadenceDays: 2,
+          cadenceUnit: 'months',
+          now: now,
+        ),
+        DateTime(2026, 9, 10, 8),
+      );
+      // Year wrap.
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 11, 15, 8),
+          cadenceDays: 3,
+          cadenceUnit: 'months',
+          now: now,
+        ),
+        DateTime(2027, 2, 15, 8),
+      );
+    });
+
+    test('months: short target months clamp the day (Jan 31 + 1 = Feb 28)', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 1, 31, 8),
+          cadenceDays: 1,
+          cadenceUnit: 'months',
+          now: now,
+        ),
+        DateTime(2026, 2, 28, 8),
+      );
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 3, 31, 8),
+          cadenceDays: 1,
+          cadenceUnit: 'months',
+          now: now,
+        ),
+        DateTime(2026, 4, 30, 8),
+      );
+    });
+
+    test('months, never done: seed date, else due now (like elastic)', () {
+      final seed = DateTime(2026, 8, 1, 9);
+      expect(
+        nextMaintenanceDue(
+          cadenceDays: 1,
+          cadenceUnit: 'months',
+          scheduledAt: seed,
+          now: now,
+        ),
+        seed,
+      );
+      expect(
+        nextMaintenanceDue(cadenceDays: 1, cadenceUnit: 'months', now: now),
+        now,
+      );
+    });
+
+    test('unknown unit or cadence < 1 is unknown, never a guess (#8)', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: now,
+          cadenceDays: 2,
+          cadenceUnit: 'fortnights',
+          now: now,
+        ),
+        isNull,
+      );
+      for (final unit in ['weeks', 'months']) {
+        expect(
+          nextMaintenanceDue(
+            lastDone: now,
+            cadenceDays: 0,
+            cadenceUnit: unit,
+            now: now,
+          ),
+          isNull,
+          reason: 'unit=$unit',
+        );
+      }
+    });
+
+    test('weekdays: next matching day strictly after last done, at noon', () {
+      // now/lastDone is a Wednesday.
+      expect(
+        nextMaintenanceDue(lastDone: now, weekdays: '1', now: now), // Mon
+        DateTime(2026, 7, 20, 12),
+      );
+      expect(
+        nextMaintenanceDue(lastDone: now, weekdays: '1,4', now: now),
+        DateTime(2026, 7, 16, 12), // Thu comes first
+      );
+      // Done on a matching day: strictly after → the following week.
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 7, 13, 9), // a Monday
+          weekdays: '1',
+          now: now,
+        ),
+        DateTime(2026, 7, 20, 12),
+      );
+    });
+
+    test('weekdays, never done: today counts (no phantom overdue)', () {
+      expect(
+        nextMaintenanceDue(weekdays: '3', now: now), // Wednesday = today
+        DateTime(2026, 7, 15, 12),
+      );
+      // Seeded: first match on/after the planned date.
+      expect(
+        nextMaintenanceDue(
+          weekdays: '1',
+          scheduledAt: DateTime(2026, 8, 1), // a Saturday
+          now: now,
+        ),
+        DateTime(2026, 8, 3, 12),
+      );
+    });
+
+    test('weekdays take precedence over a stored cadence', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: now,
+          weekdays: '1',
+          cadenceDays: 5,
+          now: now,
+        ),
+        DateTime(2026, 7, 20, 12),
+      );
+    });
+
+    test('present-but-garbage weekday list is unknown → null (#8)', () {
+      expect(
+        nextMaintenanceDue(lastDone: now, weekdays: '0,9', now: now),
+        isNull,
+      );
+    });
+
+    test('monthDay: next matching date strictly after last done, at noon', () {
+      expect(
+        nextMaintenanceDue(lastDone: now, monthDay: 1, now: now),
+        DateTime(2026, 8, 1, 12),
+      );
+      // Done on the matching day: next month.
+      expect(
+        nextMaintenanceDue(lastDone: now, monthDay: 15, now: now),
+        DateTime(2026, 8, 15, 12),
+      );
+    });
+
+    test('monthDay 31 clamps to short months (Feb 28, Apr 30)', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 1, 31),
+          monthDay: 31,
+          now: now,
+        ),
+        DateTime(2026, 2, 28, 12),
+      );
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 3, 31),
+          monthDay: 31,
+          now: now,
+        ),
+        DateTime(2026, 4, 30, 12),
+      );
+    });
+
+    test('monthDay, never done: next occurrence from today / the seed', () {
+      expect(
+        nextMaintenanceDue(monthDay: 20, now: now),
+        DateTime(2026, 7, 20, 12),
+      );
+      expect(
+        nextMaintenanceDue(monthDay: 10, now: now),
+        DateTime(2026, 8, 10, 12), // the 10th already passed this month
+      );
+    });
+
+    test('monthDay out of range is unknown → null', () {
+      for (final d in [0, 32, -1]) {
+        expect(
+          nextMaintenanceDue(lastDone: now, monthDay: d, now: now),
+          isNull,
+          reason: 'monthDay=$d',
+        );
+      }
+    });
+
+    test('no repeat fields: one-off passthrough', () {
+      final seed = DateTime(2026, 7, 20, 9);
+      expect(nextMaintenanceDue(scheduledAt: seed, now: now), seed);
+      expect(
+        nextMaintenanceDue(scheduledAt: seed, lastDone: now, now: now),
+        isNull,
+      );
+    });
+  });
+
+  group('MaintenanceCadenceUnit.fromName', () {
+    test('null means days (pre-v17 rows); garbage is null, not a guess', () {
+      expect(
+        MaintenanceCadenceUnit.fromName(null),
+        MaintenanceCadenceUnit.days,
+      );
+      expect(
+        MaintenanceCadenceUnit.fromName('weeks'),
+        MaintenanceCadenceUnit.weeks,
+      );
+      expect(MaintenanceCadenceUnit.fromName('fortnights'), isNull);
+    });
+  });
+
   group('dueStatus / daysLeftUntil', () {
     test('future, today and overdue are signed', () {
       expect(daysLeftUntil(now.add(const Duration(days: 3)), now: now), 3);

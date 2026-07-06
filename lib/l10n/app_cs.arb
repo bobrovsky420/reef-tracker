@@ -434,5 +434,22 @@
   "markDone": "Hotovo",
   "taskMarkedDone": "Označeno jako hotové",
   "taskDeleted": "Úkol smazán",
-  "scheduleEmptyBody": "Zatím žádné úkoly údržby. Naplánujte výměny vody nebo vlastní úkoly a získáte štítky termínů a připomínky."
+  "scheduleEmptyBody": "Zatím žádné úkoly údržby. Naplánujte výměny vody nebo vlastní úkoly a získáte štítky termínů a připomínky.",
+
+  "repeatModeLabel": "Opakování",
+  "repeatEveryDays": "Každých X dní",
+  "repeatEveryWeeks": "Každých X týdnů",
+  "repeatEveryMonths": "Každých X měsíců",
+  "repeatOnWeekdays": "Dny v týdnu",
+  "repeatOnMonthDay": "Den v měsíci",
+  "weeksLabel": "Týdny",
+  "monthsLabel": "Měsíce",
+  "monthDayLabel": "Den v měsíci (1–31)",
+  "invalidInterval": "Zadejte celé číslo (1 nebo více).",
+  "invalidMonthDay": "Zadejte den mezi 1 a 31.",
+  "weekdaysRequired": "Vyberte alespoň jeden den.",
+  "everyWeeksN": "{n, plural, one{Každý týden} few{Každé {n} týdny} other{Každých {n} týdnů}}",
+  "everyMonthsN": "{n, plural, one{Každý měsíc} few{Každé {n} měsíce} other{Každých {n} měsíců}}",
+  "everyWeekdays": "Vždy v {days}",
+  "monthlyOnDayN": "Každý měsíc {n}. den"
 }

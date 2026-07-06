@@ -278,8 +278,11 @@ class ReadingTemplates extends Table {
 /// membrane"). Typed rows derive "last done" from their action log, so logging
 /// the action anywhere in the app advances the plan; custom rows carry their
 /// own [lastDoneAt], stamped by "Mark done". Due math lives in
-/// `domain/reminders.dart` ([nextElasticDue]); recurrence is elastic (next due
-/// = completion + cadence), [scheduledAt] only seeds the first occurrence.
+/// `domain/reminders.dart` ([nextMaintenanceDue]): interval repeats
+/// ([cadenceDays] in days/weeks/months) are elastic (next due = completion +
+/// cadence) while [weekdays]/[monthDay] repeats are calendar anchored (next
+/// matching date after completion); [scheduledAt] only seeds the first
+/// occurrence.
 @TableIndex(name: 'idx_maintenance_schedules_tank', columns: {#tankId})
 @DataClassName('MaintenanceSchedule')
 class MaintenanceSchedules extends Table {
@@ -295,9 +298,23 @@ class MaintenanceSchedules extends Table {
   /// localized action name instead.
   TextColumn get title => text().nullable()();
 
-  /// Repeat every N days after the last completion; null = one-off (due at
-  /// [scheduledAt], retired once done).
+  /// Repeat every N units ([cadenceUnit]) after the last completion; null =
+  /// one-off (due at [scheduledAt], retired once done) unless a calendar
+  /// repeat ([weekdays]/[monthDay]) is set instead.
   IntColumn get cadenceDays => integer().nullable()();
+
+  /// Unit of [cadenceDays] (`MaintenanceCadenceUnit.name`: days/weeks/
+  /// months); null = days (pre-v17 rows).
+  TextColumn get cadenceUnit => text().nullable()();
+
+  /// Comma-separated weekday numbers (1=Mon … 7=Sun) for a fixed-weekday
+  /// repeat ("every Monday") — same format as `DosingEntries.weekdays`.
+  /// Takes precedence over [cadenceDays]/[monthDay] when non-empty.
+  TextColumn get weekdays => text().nullable()();
+
+  /// Day of month (1–31, clamped to short months) for a fixed-date repeat
+  /// ("every 1st of the month"). Takes precedence over [cadenceDays].
+  IntColumn get monthDay => integer().nullable()();
 
   /// Planned first (or one-off) due date; ignored once the task has ever been
   /// completed.
@@ -345,7 +362,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -493,6 +510,19 @@ class AppDatabase extends _$AppDatabase {
           'CREATE INDEX IF NOT EXISTS idx_maintenance_schedules_tank '
           'ON maintenance_schedules (tank_id)',
         );
+      }
+      if (from < 17) {
+        // Maintenance repeat modes beyond every-N-days: interval unit
+        // (weeks/months), fixed weekdays, fixed day of month.
+        if (!await _columnExists('maintenance_schedules', 'cadence_unit')) {
+          await m.addColumn(maintenanceSchedules, maintenanceSchedules.cadenceUnit);
+        }
+        if (!await _columnExists('maintenance_schedules', 'weekdays')) {
+          await m.addColumn(maintenanceSchedules, maintenanceSchedules.weekdays);
+        }
+        if (!await _columnExists('maintenance_schedules', 'month_day')) {
+          await m.addColumn(maintenanceSchedules, maintenanceSchedules.monthDay);
+        }
       }
     },
     beforeOpen: (details) async {
@@ -1294,6 +1324,9 @@ class AppDatabase extends _$AppDatabase {
     String? actionType,
     String? title,
     int? cadenceDays,
+    String? cadenceUnit,
+    String? weekdays,
+    int? monthDay,
     DateTime? scheduledAt,
     bool remindEnabled = true,
     String? note,
@@ -1314,6 +1347,9 @@ class AppDatabase extends _$AppDatabase {
           actionType: Value(actionType),
           title: Value(title),
           cadenceDays: Value(cadenceDays),
+          cadenceUnit: Value(cadenceUnit),
+          weekdays: Value(weekdays),
+          monthDay: Value(monthDay),
           scheduledAt: Value(scheduledAt),
           remindEnabled: Value(remindEnabled),
           note: Value(note),
@@ -1323,12 +1359,15 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  /// Rewrites a plan's editable fields (type/title/cadence/date/remind/note).
+  /// Rewrites a plan's editable fields (type/title/repeat/date/remind/note).
   Future<void> updateMaintenanceSchedule(
     int id, {
     String? actionType,
     String? title,
     int? cadenceDays,
+    String? cadenceUnit,
+    String? weekdays,
+    int? monthDay,
     DateTime? scheduledAt,
     required bool remindEnabled,
     String? note,
@@ -1337,6 +1376,9 @@ class AppDatabase extends _$AppDatabase {
       actionType: Value(actionType),
       title: Value(title),
       cadenceDays: Value(cadenceDays),
+      cadenceUnit: Value(cadenceUnit),
+      weekdays: Value(weekdays),
+      monthDay: Value(monthDay),
       scheduledAt: Value(scheduledAt),
       remindEnabled: Value(remindEnabled),
       note: Value(note),

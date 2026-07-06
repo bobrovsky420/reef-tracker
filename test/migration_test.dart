@@ -416,6 +416,51 @@ void main() {
     );
   });
 
+  test('upgrading from v16 adds the maintenance repeat columns', () async {
+    // seedFullSchemaAt builds the current schema, so drop the three columns
+    // to reconstruct a genuine v16 file where the from<17 step must add them.
+    final file = File('${tempDir.path}/from16-norepeat.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    await seed.getAllTanks();
+    for (final col in const ['cadence_unit', 'weekdays', 'month_day']) {
+      await seed.customStatement(
+        'ALTER TABLE maintenance_schedules DROP COLUMN $col',
+      );
+    }
+    await seed.customStatement('PRAGMA user_version = 16');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    // Exercise all three columns on real write + read paths.
+    final id = await db.insertMaintenanceSchedule(
+      tankId: tankId,
+      actionType: 'waterChange',
+      weekdays: '1,4',
+    );
+    var row = (await db.getMaintenanceSchedules(tankId)).single;
+    expect(row.id, id);
+    expect(row.weekdays, '1,4');
+    expect(row.cadenceUnit, isNull);
+    expect(row.monthDay, isNull);
+    await db.updateMaintenanceSchedule(
+      id,
+      actionType: 'waterChange',
+      cadenceDays: 2,
+      cadenceUnit: 'weeks',
+      monthDay: 15,
+      remindEnabled: true,
+    );
+    row = (await db.getMaintenanceSchedules(tankId)).single;
+    expect(row.cadenceUnit, 'weeks');
+    expect(row.monthDay, 15);
+    expect(row.weekdays, isNull);
+  });
+
   group('guarded migration steps are idempotent', () {
     // v3..(schemaVersion-1): re-running each upgrade against a schema that
     // already has every table/column must not throw.

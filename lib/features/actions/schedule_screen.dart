@@ -91,12 +91,37 @@ class MaintenanceScheduleScreen extends ConsumerWidget {
     MaintenanceSchedule s,
     DueStatus? due,
   ) {
-    final repeat = s.cadenceDays != null
-        ? l.dosingEveryDaysN(s.cadenceDays!)
-        : l.oneOff;
+    final repeat = maintenanceRepeatText(context, l, s);
     if (due == null) return repeat;
     return '$repeat • ${dueText(l, due)}';
   }
+}
+
+/// Whether a plan repeats at all (any of the three repeat fields set); a
+/// non-repeating plan is a one-off, retired once done.
+bool maintenanceRepeats(MaintenanceSchedule s) =>
+    s.cadenceDays != null ||
+    s.monthDay != null ||
+    parseWeekdays(s.weekdays).isNotEmpty;
+
+/// Human-readable repeat line for a plan row: "Every 2 weeks", "Every Mon,
+/// Thu", "Monthly on day 1", … or "One-off". Mirrors [nextMaintenanceDue]'s
+/// field priority (weekdays > monthDay > cadence).
+String maintenanceRepeatText(
+  BuildContext context,
+  AppLocalizations l,
+  MaintenanceSchedule s,
+) {
+  final days = parseWeekdays(s.weekdays);
+  if (days.isNotEmpty) return l.everyWeekdays(formatWeekdays(context, days));
+  if (s.monthDay != null) return l.monthlyOnDayN(s.monthDay!);
+  final n = s.cadenceDays;
+  if (n == null) return l.oneOff;
+  return switch (MaintenanceCadenceUnit.fromName(s.cadenceUnit)) {
+    MaintenanceCadenceUnit.weeks => l.everyWeeksN(n),
+    MaintenanceCadenceUnit.months => l.everyMonthsN(n),
+    _ => l.dosingEveryDaysN(n),
+  };
 }
 
 /// Icon for a plan row/chip: the action-log glyphs for typed plans, a generic
@@ -135,7 +160,7 @@ Future<void> markMaintenanceDoneWithUndo(
 ) async {
   final l = AppLocalizations.of(context);
   final db = ref.read(dbProvider);
-  if (task.cadenceDays == null) {
+  if (!maintenanceRepeats(task)) {
     // A finished one-off has no next occurrence: retire the row.
     await db.deleteMaintenanceSchedule(task.id);
   } else {
@@ -203,6 +228,9 @@ Future<void> showMaintenanceTaskSheet(
       actionType: result.actionType,
       title: result.title,
       cadenceDays: result.cadenceDays,
+      cadenceUnit: result.cadenceUnit,
+      weekdays: result.weekdays,
+      monthDay: result.monthDay,
       scheduledAt: result.scheduledAt,
       remindEnabled: result.remindEnabled,
       note: result.note,
@@ -213,6 +241,9 @@ Future<void> showMaintenanceTaskSheet(
       actionType: result.actionType,
       title: result.title,
       cadenceDays: result.cadenceDays,
+      cadenceUnit: result.cadenceUnit,
+      weekdays: result.weekdays,
+      monthDay: result.monthDay,
       scheduledAt: result.scheduledAt,
       remindEnabled: result.remindEnabled,
       note: result.note,
@@ -233,6 +264,9 @@ class _TaskResult extends _TaskOutcome {
     required this.actionType,
     required this.title,
     required this.cadenceDays,
+    required this.cadenceUnit,
+    required this.weekdays,
+    required this.monthDay,
     required this.scheduledAt,
     required this.remindEnabled,
     required this.note,
@@ -241,10 +275,17 @@ class _TaskResult extends _TaskOutcome {
   final String? actionType;
   final String? title;
   final int? cadenceDays;
+  final String? cadenceUnit;
+  final String? weekdays;
+  final int? monthDay;
   final DateTime? scheduledAt;
   final bool remindEnabled;
   final String? note;
 }
+
+/// The five repeat modes offered by the sheet's "Repeats" dropdown, mapping
+/// 1:1 onto how [nextMaintenanceDue] reads the stored fields.
+enum _RepeatMode { everyDays, everyWeeks, everyMonths, weekdays, monthDay }
 
 class _TaskSheet extends StatefulWidget {
   const _TaskSheet({this.task});
@@ -259,11 +300,14 @@ class _TaskSheetState extends State<_TaskSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _title;
   late final TextEditingController _days;
+  late final TextEditingController _monthDayCtrl;
   late final TextEditingController _note;
 
   /// null = custom task.
   MaintenanceActionType? _type = MaintenanceActionType.waterChange;
   bool _repeats = true;
+  _RepeatMode _mode = _RepeatMode.everyDays;
+  final Set<int> _weekdays = {};
   DateTime? _scheduledAt;
   bool _remind = true;
 
@@ -274,9 +318,20 @@ class _TaskSheetState extends State<_TaskSheet> {
     _type = t == null
         ? MaintenanceActionType.waterChange
         : MaintenanceActionType.fromName(t.actionType);
-    _repeats = t == null || t.cadenceDays != null;
+    _repeats = t == null || maintenanceRepeats(t);
+    _weekdays.addAll(parseWeekdays(t?.weekdays));
+    _mode = _weekdays.isNotEmpty
+        ? _RepeatMode.weekdays
+        : t?.monthDay != null
+        ? _RepeatMode.monthDay
+        : switch (MaintenanceCadenceUnit.fromName(t?.cadenceUnit)) {
+            MaintenanceCadenceUnit.weeks => _RepeatMode.everyWeeks,
+            MaintenanceCadenceUnit.months => _RepeatMode.everyMonths,
+            _ => _RepeatMode.everyDays,
+          };
     _title = TextEditingController(text: t?.title ?? '');
     _days = TextEditingController(text: '${t?.cadenceDays ?? 14}');
+    _monthDayCtrl = TextEditingController(text: '${t?.monthDay ?? 1}');
     _note = TextEditingController(text: t?.note ?? '');
     _scheduledAt = t?.scheduledAt;
     _remind = t?.remindEnabled ?? true;
@@ -286,9 +341,18 @@ class _TaskSheetState extends State<_TaskSheet> {
   void dispose() {
     _title.dispose();
     _days.dispose();
+    _monthDayCtrl.dispose();
     _note.dispose();
     super.dispose();
   }
+
+  /// Prefill for the interval field per mode (14 days / 2 weeks / 1 month) —
+  /// used to re-seed on mode switch only while the user hasn't typed a value.
+  static String _intervalDefault(_RepeatMode m) => switch (m) {
+    _RepeatMode.everyWeeks => '2',
+    _RepeatMode.everyMonths => '1',
+    _ => '14',
+  };
 
   Future<void> _pickDueDate() async {
     final now = DateTime.now();
@@ -310,13 +374,43 @@ class _TaskSheetState extends State<_TaskSheet> {
       ).showSnackBar(SnackBar(content: Text(l.dueDateRequired)));
       return;
     }
+    if (_repeats && _mode == _RepeatMode.weekdays && _weekdays.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.weekdaysRequired)));
+      return;
+    }
+    int? cadenceDays;
+    String? cadenceUnit;
+    String? weekdays;
+    int? monthDay;
+    if (_repeats) {
+      switch (_mode) {
+        case _RepeatMode.everyDays:
+        case _RepeatMode.everyWeeks:
+        case _RepeatMode.everyMonths:
+          cadenceDays = int.parse(_days.text.trim());
+          cadenceUnit = switch (_mode) {
+            _RepeatMode.everyWeeks => MaintenanceCadenceUnit.weeks,
+            _RepeatMode.everyMonths => MaintenanceCadenceUnit.months,
+            _ => MaintenanceCadenceUnit.days,
+          }.name;
+        case _RepeatMode.weekdays:
+          weekdays = (_weekdays.toList()..sort()).join(',');
+        case _RepeatMode.monthDay:
+          monthDay = int.parse(_monthDayCtrl.text.trim());
+      }
+    }
     final title = _title.text.trim();
     Navigator.pop(
       context,
       _TaskResult(
         actionType: _type?.name,
         title: _type == null ? title : null,
-        cadenceDays: _repeats ? int.parse(_days.text.trim()) : null,
+        cadenceDays: cadenceDays,
+        cadenceUnit: cadenceUnit,
+        weekdays: weekdays,
+        monthDay: monthDay,
         scheduledAt: _scheduledAt,
         remindEnabled: _remind,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
@@ -385,21 +479,88 @@ class _TaskSheetState extends State<_TaskSheet> {
             ),
             if (_repeats) ...[
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _days,
-                keyboardType: TextInputType.number,
+              DropdownButtonFormField<_RepeatMode>(
+                initialValue: _mode,
                 decoration: InputDecoration(
-                  labelText: l.customDaysLabel,
+                  labelText: l.repeatModeLabel,
                   border: const OutlineInputBorder(),
                 ),
-                validator: (v) {
-                  if (!_repeats) return null;
-                  final parsed = int.tryParse((v ?? '').trim());
-                  return (parsed == null || parsed < 1)
-                      ? l.invalidIntervalDays
-                      : null;
+                items: [
+                  for (final m in _RepeatMode.values)
+                    DropdownMenuItem(
+                      value: m,
+                      child: Text(switch (m) {
+                        _RepeatMode.everyDays => l.repeatEveryDays,
+                        _RepeatMode.everyWeeks => l.repeatEveryWeeks,
+                        _RepeatMode.everyMonths => l.repeatEveryMonths,
+                        _RepeatMode.weekdays => l.repeatOnWeekdays,
+                        _RepeatMode.monthDay => l.repeatOnMonthDay,
+                      }),
+                    ),
+                ],
+                onChanged: (m) {
+                  if (m == null) return;
+                  setState(() {
+                    // Re-seed the interval field with the new unit's typical
+                    // value unless the user already typed their own.
+                    if (_days.text.trim() == _intervalDefault(_mode)) {
+                      _days.text = _intervalDefault(m);
+                    }
+                    _mode = m;
+                  });
                 },
               ),
+              const SizedBox(height: 12),
+              switch (_mode) {
+                _RepeatMode.everyDays ||
+                _RepeatMode.everyWeeks ||
+                _RepeatMode.everyMonths => TextFormField(
+                  controller: _days,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: switch (_mode) {
+                      _RepeatMode.everyWeeks => l.weeksLabel,
+                      _RepeatMode.everyMonths => l.monthsLabel,
+                      _ => l.customDaysLabel,
+                    },
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    final parsed = int.tryParse((v ?? '').trim());
+                    if (parsed != null && parsed >= 1) return null;
+                    return _mode == _RepeatMode.everyDays
+                        ? l.invalidIntervalDays
+                        : l.invalidInterval;
+                  },
+                ),
+                _RepeatMode.weekdays => Wrap(
+                  spacing: 8,
+                  children: [
+                    for (var d = DateTime.monday; d <= DateTime.sunday; d++)
+                      FilterChip(
+                        label: Text(formatWeekdays(context, [d])),
+                        selected: _weekdays.contains(d),
+                        onSelected: (sel) => setState(() {
+                          sel ? _weekdays.add(d) : _weekdays.remove(d);
+                        }),
+                      ),
+                  ],
+                ),
+                _RepeatMode.monthDay => TextFormField(
+                  controller: _monthDayCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: l.monthDayLabel,
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    final parsed = int.tryParse((v ?? '').trim());
+                    return (parsed == null || parsed < 1 || parsed > 31)
+                        ? l.invalidMonthDay
+                        : null;
+                  },
+                ),
+              },
             ],
             const SizedBox(height: 12),
             ListTile(

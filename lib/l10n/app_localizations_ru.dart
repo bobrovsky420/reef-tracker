@@ -1437,4 +1437,76 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get scheduleEmptyBody =>
       'Пока нет задач обслуживания. Запланируйте подмены воды или свои задачи, чтобы видеть сроки и получать напоминания.';
+
+  @override
+  String get repeatModeLabel => 'Повтор';
+
+  @override
+  String get repeatEveryDays => 'Каждые X дней';
+
+  @override
+  String get repeatEveryWeeks => 'Каждые X недель';
+
+  @override
+  String get repeatEveryMonths => 'Каждые X месяцев';
+
+  @override
+  String get repeatOnWeekdays => 'Дни недели';
+
+  @override
+  String get repeatOnMonthDay => 'День месяца';
+
+  @override
+  String get weeksLabel => 'Недели';
+
+  @override
+  String get monthsLabel => 'Месяцы';
+
+  @override
+  String get monthDayLabel => 'День месяца (1–31)';
+
+  @override
+  String get invalidInterval => 'Введите целое число (не менее 1).';
+
+  @override
+  String get invalidMonthDay => 'Введите день от 1 до 31.';
+
+  @override
+  String get weekdaysRequired => 'Выберите хотя бы один день.';
+
+  @override
+  String everyWeeksN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Каждые $n недели',
+      many: 'Каждые $n недель',
+      few: 'Каждые $n недели',
+      one: 'Каждую $n-ю неделю',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyMonthsN(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Каждые $n месяца',
+      many: 'Каждые $n месяцев',
+      few: 'Каждые $n месяца',
+      one: 'Каждый $n-й месяц',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyWeekdays(String days) {
+    return 'По $days';
+  }
+
+  @override
+  String monthlyOnDayN(int n) {
+    return 'Ежемесячно $n-го числа';
+  }
 }

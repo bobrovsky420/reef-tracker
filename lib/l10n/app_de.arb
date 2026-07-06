@@ -434,5 +434,22 @@
   "markDone": "Erledigt",
   "taskMarkedDone": "Als erledigt markiert",
   "taskDeleted": "Aufgabe gelöscht",
-  "scheduleEmptyBody": "Noch keine Wartungsaufgaben. Plane Wasserwechsel oder eigene Aufgaben für Fälligkeits-Chips und Erinnerungen."
+  "scheduleEmptyBody": "Noch keine Wartungsaufgaben. Plane Wasserwechsel oder eigene Aufgaben für Fälligkeits-Chips und Erinnerungen.",
+
+  "repeatModeLabel": "Wiederholung",
+  "repeatEveryDays": "Alle X Tage",
+  "repeatEveryWeeks": "Alle X Wochen",
+  "repeatEveryMonths": "Alle X Monate",
+  "repeatOnWeekdays": "Wochentage",
+  "repeatOnMonthDay": "Tag im Monat",
+  "weeksLabel": "Wochen",
+  "monthsLabel": "Monate",
+  "monthDayLabel": "Tag im Monat (1–31)",
+  "invalidInterval": "Ganze Zahl eingeben (mindestens 1).",
+  "invalidMonthDay": "Tag zwischen 1 und 31 eingeben.",
+  "weekdaysRequired": "Mindestens einen Tag auswählen.",
+  "everyWeeksN": "{n, plural, one{Jede Woche} other{Alle {n} Wochen}}",
+  "everyMonthsN": "{n, plural, one{Jeden Monat} other{Alle {n} Monate}}",
+  "everyWeekdays": "Jeden {days}",
+  "monthlyOnDayN": "Monatlich am {n}."
 }

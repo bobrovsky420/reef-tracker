@@ -3,9 +3,12 @@
 ///
 /// Two anchoring models, deliberately different:
 ///
-/// * **Elastic** (testing, maintenance): due = last done + cadence. Logging a
-///   reading / action resets the timer — reefers test "a week after the last
-///   test", not "every Monday". [nextElasticDue].
+/// * **Elastic** (testing, maintenance intervals): due = last done + cadence.
+///   Logging a reading / action resets the timer — reefers test "a week after
+///   the last test", not "every Monday". [nextElasticDue]. Maintenance plans
+///   can also repeat on **fixed weekdays or a day of the month** — calendar
+///   anchored, the next matching date after the last completion — all routed
+///   through [nextMaintenanceDue].
 /// * **Calendar** (dosing): occurrences expand from the dosing entry's own
 ///   schedule (frequency / interval / weekdays / time of day), anchored on the
 ///   segment's `startedAt`, regardless of what was logged. [doseOccurrences].
@@ -85,6 +88,139 @@ DateTime? nextElasticDue({
     lastDone.hour,
     lastDone.minute,
   );
+}
+
+/// Unit of a maintenance plan's interval cadence ("every N days/weeks/
+/// months"). Stored as [name] in `MaintenanceSchedules.cadenceUnit`; a null
+/// column means days (the only unit that existed before v17).
+enum MaintenanceCadenceUnit {
+  days,
+  weeks,
+  months;
+
+  /// Strict lookup: unknown names return null so garbage from a hand-edited
+  /// backup reads as "unknown cadence" (#8), never as a guessed unit — a
+  /// "months" plan misread as "days" would nag 30× too often.
+  static MaintenanceCadenceUnit? fromName(String? name) {
+    if (name == null) return days;
+    for (final u in values) {
+      if (u.name == name) return u;
+    }
+    return null;
+  }
+}
+
+/// Next due date of a maintenance plan, or null when it cannot be due.
+///
+/// Three repeat models, resolved in priority order from the stored fields:
+///
+/// 1. **Fixed weekdays** ([weekdays] parses non-empty, e.g. "every Monday"):
+///    the first matching calendar day strictly after [lastDone]. A present
+///    but garbage list → null (#8), never a guess.
+/// 2. **Fixed day of month** ([monthDay] 1–31, e.g. "every 1st"): the first
+///    calendar day strictly after [lastDone] whose day-of-month matches;
+///    short months clamp ("every 31st" fires Feb 28 / Apr 30). Out of range
+///    → null.
+/// 3. **Elastic interval** ([cadenceDays] ≥ 1 in [cadenceUnit] units): due =
+///    [lastDone] + N days / weeks / months — logging resets the timer.
+///    Month steps clamp the day (Jan 31 + 1 month = Feb 28). A cadence < 1
+///    or an unknown unit → null (#8).
+///
+/// With no repeat field set the plan is a one-off: due at [scheduledAt],
+/// retired once done. Never-done plans fall back to [scheduledAt] as the
+/// anchor (calendar modes: first match on/after it; elastic: due exactly
+/// then), else they are due now (elastic) / on the next matching day
+/// (calendar — "every Monday" created on a Wednesday means next Monday, not
+/// overdue since a completion that never happened).
+///
+/// Calendar-mode results are pinned to **noon** so the whole due day rounds
+/// to "due today" in [daysLeftUntil]; elastic results keep [lastDone]'s
+/// time of day (the pre-v17 behavior). The notification layer only uses the
+/// date part either way.
+DateTime? nextMaintenanceDue({
+  DateTime? lastDone,
+  int? cadenceDays,
+  String? cadenceUnit,
+  String? weekdays,
+  int? monthDay,
+  DateTime? scheduledAt,
+  DateTime? now,
+}) {
+  if (weekdays != null && weekdays.trim().isNotEmpty) {
+    final days = parseWeekdays(weekdays);
+    if (days.isEmpty) return null;
+    return _nextCalendarDue(
+      lastDone: lastDone,
+      scheduledAt: scheduledAt,
+      now: now,
+      matches: (day) => days.contains(day.weekday),
+    );
+  }
+  if (monthDay != null) {
+    if (monthDay < 1 || monthDay > 31) return null;
+    return _nextCalendarDue(
+      lastDone: lastDone,
+      scheduledAt: scheduledAt,
+      now: now,
+      // Clamp to short months: "day 31" matches the month's last day.
+      matches: (day) => day.day == _clampToMonth(monthDay, day),
+    );
+  }
+  final unit = MaintenanceCadenceUnit.fromName(cadenceUnit);
+  if (unit == null) return null;
+  if (unit != MaintenanceCadenceUnit.months || cadenceDays == null) {
+    // Days/weeks (and the one-off / invalid-cadence cases) are the existing
+    // elastic math with the interval expressed in days.
+    return nextElasticDue(
+      lastDone: lastDone,
+      cadenceDays: unit == MaintenanceCadenceUnit.weeks && cadenceDays != null
+          ? cadenceDays * 7
+          : cadenceDays,
+      scheduledAt: scheduledAt,
+      now: now,
+    );
+  }
+  if (cadenceDays < 1) return null;
+  if (lastDone == null) return scheduledAt ?? (now ?? DateTime.now());
+  final targetMonth = DateTime(lastDone.year, lastDone.month + cadenceDays);
+  return DateTime(
+    targetMonth.year,
+    targetMonth.month,
+    _clampToMonth(lastDone.day, targetMonth),
+    lastDone.hour,
+    lastDone.minute,
+  );
+}
+
+/// [day] clamped to the number of days in [month]'s month.
+int _clampToMonth(int day, DateTime month) {
+  final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+  return day < daysInMonth ? day : daysInMonth;
+}
+
+/// First calendar day accepted by [matches], at noon: strictly after
+/// [lastDone] when the task has been done, else on/after [scheduledAt] when
+/// planned, else on/after today (so "every Monday" is due this Monday,
+/// including today). Scans a bounded window — a month-day match is at most
+/// ~31 days out, a weekday at most 7; null past the bound (unmatchable).
+DateTime? _nextCalendarDue({
+  required bool Function(DateTime day) matches,
+  DateTime? lastDone,
+  DateTime? scheduledAt,
+  DateTime? now,
+}) {
+  final anchor = lastDone ?? scheduledAt ?? now ?? DateTime.now();
+  var day = DateTime(
+    anchor.year,
+    anchor.month,
+    anchor.day + (lastDone != null ? 1 : 0),
+    12,
+  );
+  for (var i = 0; i <= 62; i++) {
+    if (matches(day)) return day;
+    day = DateTime(day.year, day.month, day.day + 1, 12);
+  }
+  return null;
 }
 
 /// Parses a stored `HH:mm` dose time; null for anything else. Shared by the

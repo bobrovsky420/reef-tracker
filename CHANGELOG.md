@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.1] - 2026-07-06
+
+### Added
+- Maintenance schedule repeat modes: besides "every X days", a plan can now
+  repeat every X weeks, every X months (short months clamp — "the 31st"
+  falls on Feb 28 / Apr 30), on fixed days of the week ("every Monday and
+  Thursday"), or on a fixed day of the month ("every 1st"). Day/week/month
+  intervals still count from the last completion; weekday and day-of-month
+  plans are due on the next matching date after it. Due chips, reminders and
+  backups all understand the new modes.
+
 ## [0.18.0] - 2026-07-05
 
 ### Added

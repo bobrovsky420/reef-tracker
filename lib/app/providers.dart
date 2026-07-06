@@ -305,12 +305,15 @@ final maintenanceDueProvider = Provider<List<MaintenanceDue>>((ref) {
   final now = DateTime.now();
   return [
     for (final s in schedules)
-      if (nextElasticDue(
+      if (nextMaintenanceDue(
             lastDone: switch (MaintenanceActionType.fromName(s.actionType)) {
               final type? => lastByType[type],
               null => s.lastDoneAt,
             },
             cadenceDays: s.cadenceDays,
+            cadenceUnit: s.cadenceUnit,
+            weekdays: s.weekdays,
+            monthDay: s.monthDay,
             scheduledAt: s.scheduledAt,
             now: now,
           )
