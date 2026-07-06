@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.18.1] - 2026-07-06
 
 ### Added
+- Supplement catalog: added ATI (Essentials Mixed Reef and Essentials SPS
+  two-part systems, Essential Daily Traces #A/#B, ICP Element Iodine). Both
+  two-part systems and the iodine supplement carry ATI's published dose
+  strengths, so the dose calculator works with them.
+- Supplement catalog: added Fauna Marin Elementals Trace I (iodine) with its
+  published dose strength.
 - Maintenance schedule repeat modes: besides "every X days", a plan can now
   repeat every X weeks, every X months (short months clamp — "the 31st"
   falls on Feb 28 / Apr 30), on fixed days of the week ("every Monday and

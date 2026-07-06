@@ -134,6 +134,13 @@ vendors:
 
   - key: faunamarin
     name: Fauna Marin
+    products:
+      # Elementals Trace I: Fauna Marin's dosing text states 1 ml / 100 L
+      # daily = +10 µg/l iodine (= 0.01 ppm) → 1.0 (max +30 µg/l per day).
+      - key: faunamarin.trace_i
+        name: Elementals Trace I — Iodine
+        element: iodine
+        strength: { iodine: 1.0 }
     programs:
       - key: balling_light
         name: Balling Light
@@ -183,6 +190,56 @@ vendors:
             name: Component 3+ (Mg)
             element: magnesium
             strength: { magnesium: 1.52 }
+
+  - key: ati
+    name: ATI
+    # https://atiaquaristik.com/en/essentials/
+    products:
+      # Daily Traces are broad multi-trace mixes (A: Cr/Co/Fe/Cu/Mn/Ni/Zn,
+      # B: F/I/Se) — no single element, no published per-element chart.
+      - key: ati.daily_traces_a
+        name: "Essential Daily Traces #A"
+      - key: ati.daily_traces_b
+        name: "Essential Daily Traces #B"
+      # ICP Element Iodine: ATI's shop page states 1 ml / 100 L raises iodine
+      # by 10 µg/l (= 0.01 ppm) → 1.0; cross-checked against the stated bottle
+      # content (1,000,000 µg per 1000 ml = 1 mg per ml).
+      - key: ati.icp_iodine
+        name: ICP Element Iodine
+        element: iodine
+        strength: { iodine: 1.0 }
+    programs:
+      - key: essentials_mixed_reef
+        name: Essentials Mixed Reef
+        # Two-part system, dose equal volumes (guideline 3-7 ml / 100 L / day).
+        # strength from ATI's stated bottle concentrations:
+        #  - #1: 38,500 °dKH per 2700 ml (14,250 °dKH/L) → 14.25
+        #  - #2: 270,000 mg Ca per 2700 ml (100,000 mg Ca/L) → 100.0
+        products:
+          - key: ati.mixed_reef_1
+            name: "#1 KH Complex"
+            element: alkalinity
+            strength: { alkalinity: 14.25 }
+          - key: ati.mixed_reef_2
+            name: "#2 Calcium Complex"
+            element: calcium
+            strength: { calcium: 100.0 }
+      - key: essentials_sps
+        name: Essentials SPS
+        # Two-part system, dose equal volumes (guideline 5-10 ml / 100 L / day).
+        # strength from ATI's stated bottle concentrations:
+        #  - #1: 27,000 °dKH per 2700 ml (10,000 °dKH/L) → 10.0
+        #    (matches ATI's chart: 1 ml / 100 L raises KH +0.1 °dKH)
+        #  - #2: 200,000 mg Ca per 2700 ml (74,000 mg Ca/L) → 74.0
+        products:
+          - key: ati.sps_1
+            name: "#1 KH Complex"
+            element: alkalinity
+            strength: { alkalinity: 10.0 }
+          - key: ati.sps_2
+            name: "#2 Calcium Complex"
+            element: calcium
+            strength: { calcium: 74.0 }
 
   - key: generic
     name: Generic / DIY

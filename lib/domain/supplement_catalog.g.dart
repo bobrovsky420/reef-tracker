@@ -146,6 +146,14 @@ const List<SupplementVendor> kSupplementVendors = [
   SupplementVendor(
     key: 'faunamarin',
     name: 'Fauna Marin',
+    products: [
+      SupplementProduct(
+        key: 'faunamarin.trace_i',
+        name: 'Elementals Trace I — Iodine',
+        elementKey: 'iodine',
+        strength: {'iodine': 1.0},
+      ),
+    ],
     programs: [
       SupplementProgram(
         key: 'balling_light',
@@ -198,6 +206,64 @@ const List<SupplementVendor> kSupplementVendors = [
             name: 'Component 3+ (Mg)',
             elementKey: 'magnesium',
             strength: {'magnesium': 1.52},
+          ),
+        ],
+      ),
+    ],
+  ),
+  SupplementVendor(
+    key: 'ati',
+    name: 'ATI',
+    products: [
+      SupplementProduct(
+        key: 'ati.daily_traces_a',
+        name: 'Essential Daily Traces #A',
+      ),
+      SupplementProduct(
+        key: 'ati.daily_traces_b',
+        name: 'Essential Daily Traces #B',
+      ),
+      SupplementProduct(
+        key: 'ati.icp_iodine',
+        name: 'ICP Element Iodine',
+        elementKey: 'iodine',
+        strength: {'iodine': 1.0},
+      ),
+    ],
+    programs: [
+      SupplementProgram(
+        key: 'essentials_mixed_reef',
+        name: 'Essentials Mixed Reef',
+        products: [
+          SupplementProduct(
+            key: 'ati.mixed_reef_1',
+            name: '#1 KH Complex',
+            elementKey: 'alkalinity',
+            strength: {'alkalinity': 14.25},
+          ),
+          SupplementProduct(
+            key: 'ati.mixed_reef_2',
+            name: '#2 Calcium Complex',
+            elementKey: 'calcium',
+            strength: {'calcium': 100.0},
+          ),
+        ],
+      ),
+      SupplementProgram(
+        key: 'essentials_sps',
+        name: 'Essentials SPS',
+        products: [
+          SupplementProduct(
+            key: 'ati.sps_1',
+            name: '#1 KH Complex',
+            elementKey: 'alkalinity',
+            strength: {'alkalinity': 10.0},
+          ),
+          SupplementProduct(
+            key: 'ati.sps_2',
+            name: '#2 Calcium Complex',
+            elementKey: 'calcium',
+            strength: {'calcium': 74.0},
           ),
         ],
       ),
