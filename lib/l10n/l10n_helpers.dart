@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../data/backup.dart';
 import '../domain/health_score.dart';
 import '../domain/ratio.dart';
+import '../domain/ro.dart';
 import '../domain/setup_type.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
@@ -227,6 +228,18 @@ extension L10nDomain on AppLocalizations {
         return zoneUnknown;
     }
   }
+
+  /// Display name of an RO stage: the localized type name, or the stored
+  /// title for custom stages (an unknown stored type — hand-edited data —
+  /// falls back to the title too, never crashes).
+  String roStageName(String stageType, String? title) =>
+      switch (RoStageType.fromName(stageType)) {
+        RoStageType.sediment => roStageSediment,
+        RoStageType.carbonBlock => roStageCarbonBlock,
+        RoStageType.membrane => roStageMembrane,
+        RoStageType.diResin => roStageDiResin,
+        RoStageType.custom || null => title ?? '',
+      };
 
   /// The localized message explaining why a backup file was rejected.
   String backupRejection(BackupRejection reason) {

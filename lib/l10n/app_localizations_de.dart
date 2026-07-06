@@ -1498,4 +1498,88 @@ class AppLocalizationsDe extends AppLocalizations {
   String monthlyOnDayN(int n) {
     return 'Monatlich am $n.';
   }
+
+  @override
+  String get roUnitTitle => 'Umkehrosmoseanlage';
+
+  @override
+  String get roStageSediment => 'Sedimentfilter';
+
+  @override
+  String get roStageCarbonBlock => 'Kohleblock';
+
+  @override
+  String get roStageMembrane => 'RO-Membran';
+
+  @override
+  String get roStageDiResin => 'DI-Harz';
+
+  @override
+  String get roCustomStage => 'Eigenes Teil';
+
+  @override
+  String get roAddStage => 'Teil hinzufügen';
+
+  @override
+  String get roEditStage => 'Teil bearbeiten';
+
+  @override
+  String get roLifespanLabel => 'Wechseln alle';
+
+  @override
+  String get roUnitDays => 'Tage';
+
+  @override
+  String get roUnitWeeks => 'Wochen';
+
+  @override
+  String get roUnitMonths => 'Monate';
+
+  @override
+  String get roPartOfUnit => 'Teil meiner Anlage';
+
+  @override
+  String get roPartOfUnitHint =>
+      'Ausschalten, wenn Ihre Anlage diese Stufe nicht hat';
+
+  @override
+  String get roHiddenStages => 'Nicht an meiner Anlage';
+
+  @override
+  String get roMarkReplaced => 'Gewechselt';
+
+  @override
+  String get roReplacedRecorded => 'Wechsel erfasst';
+
+  @override
+  String roLastReplaced(String date) {
+    return 'Gewechselt am $date';
+  }
+
+  @override
+  String get roNoReplacementYet => 'Noch kein Wechsel erfasst';
+
+  @override
+  String get roDeleteStageTitle => 'Teil löschen?';
+
+  @override
+  String get roDeleteStageBody =>
+      'Entfernt das Teil samt Wechselverlauf. Kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get roEmptyBody =>
+      'Keine Teile. Fügen Sie die Filter Ihrer Osmoseanlage mit + hinzu.';
+
+  @override
+  String get roSetupPrompt => 'Filter- und Membranwechsel im Blick behalten';
+
+  @override
+  String get roUnitToggleSubtitle =>
+      'Im Aktionen-Tab anzeigen, mit Erinnerungen an Filterwechsel';
+
+  @override
+  String get roAllOk => 'Alle Teile in Ordnung';
+
+  @override
+  String get notifRoTitle => 'Osmose-Filter wechseln';
 }

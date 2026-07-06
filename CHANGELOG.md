@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-07-06
+
+### Added
+- Reverse-osmosis unit tracking: a new screen (reachable from the row at the
+  top of the Actions tab) tracks the RO/RODI unit's filter stages — sediment
+  filter, carbon block, membrane, DI resin, plus custom parts — with each
+  stage's remaining life shown as a color-coded progress bar. "Mark replaced"
+  logs a replacement (backdatable, with Undo) and resets the stage's timer;
+  each stage's lifespan is editable in days, weeks or months. The unit is
+  shared across all aquariums — it is the household's water supply, not a
+  per-tank item — and stages a smaller unit doesn't have (e.g. no DI resin)
+  can be unchecked without losing their history. Stages due for replacement
+  ride the existing maintenance reminder notifications, and the whole unit
+  (stages + replacement history) is included in backups. A switch in
+  Settings (on by default) hides the whole feature — the Actions-tab row and
+  the reminders — for owners without an RO unit, keeping any recorded data.
+
 ## [0.18.2] - 2026-07-06
 
 ### Fixed

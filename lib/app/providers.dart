@@ -10,6 +10,7 @@ import '../data/settings.dart';
 import '../domain/health_score.dart';
 import '../domain/ratio.dart';
 import '../domain/reminders.dart';
+import '../domain/ro.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 
@@ -322,6 +323,63 @@ final maintenanceDueProvider = Provider<List<MaintenanceDue>>((ref) {
   ];
 });
 
+// --- RO unit (U16) — device-scoped, shared across tanks ----------------------
+//
+// Deliberately *not* tank-family providers: the RO unit serves the whole
+// household, so these streams are plain app-lifetime StreamProviders like
+// [tanksProvider].
+
+/// Every RO stage (enabled and disabled), in overview order.
+final roStagesProvider = StreamProvider<List<RoStage>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchRoStages()),
+);
+
+/// The full RO replacement log, newest first (small by nature).
+final roReplacementsProvider = StreamProvider<List<RoStageReplacement>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchRoReplacements()),
+);
+
+/// One RO overview row: the stage, its latest replacement, and its due status.
+/// [due] is null when it cannot be computed — no replacement logged yet
+/// (unknown filter age, never guessed) or an invalid stored lifespan.
+typedef RoStageStatus = ({
+  RoStage stage,
+  DateTime? lastReplacedAt,
+  DueStatus? due,
+});
+
+/// Status for every RO stage (disabled ones included — the overview shows
+/// them in its hidden section; due-driven surfaces filter on
+/// `stage.enabled`). Derived like [maintenanceDueProvider]: recomputes when
+/// the stages or the replacement log change.
+final roStageStatusProvider = Provider<List<RoStageStatus>>((ref) {
+  final stages = ref.watch(roStagesProvider).value ?? const <RoStage>[];
+  if (stages.isEmpty) return const [];
+  final replacements =
+      ref.watch(roReplacementsProvider).value ?? const <RoStageReplacement>[];
+  // Log arrives newest-first, so the first row seen per stage is its latest.
+  final latest = <int, DateTime>{};
+  for (final r in replacements) {
+    latest.putIfAbsent(r.stageId, () => r.replacedAt);
+  }
+  final now = DateTime.now();
+  return [
+    for (final s in stages)
+      (
+        stage: s,
+        lastReplacedAt: latest[s.id],
+        due: switch (roStageDue(
+          lastReplacedAt: latest[s.id],
+          lifespanDays: s.lifespanDays,
+          now: now,
+        )) {
+          final d? => dueStatus(d, now: now),
+          null => null,
+        },
+      ),
+  ];
+});
+
 final _paramReadingsFamily = StreamProvider.autoDispose
     .family<List<Reading>, ({int tankId, String paramKey})>(
       (ref, key) => _dedup(
@@ -454,6 +512,13 @@ final remindersMaintenanceProvider = _setting(
 final reminderTimeProvider = _setting(
   SettingKey.reminderTime,
   AppSettings.decodeReminderTime,
+);
+
+/// Whether the RO-unit feature is surfaced at all (U16, default on): gates
+/// the Actions-tab summary row (and, in the scheduler, RO reminders).
+final roUnitEnabledProvider = _setting(
+  SettingKey.roUnitEnabled,
+  AppSettings.decodeRoUnitEnabled,
 );
 
 /// When the most recent automatic or manual backup completed, or null if none

@@ -54,9 +54,11 @@ typedef DueStatus = ({DateTime dueAt, int daysLeft});
 /// absorb DST-length days (23/25 h) in the date-only difference.
 int daysLeftUntil(DateTime t, {DateTime? now}) {
   final ref = now ?? DateTime.now();
-  return (DateTime(t.year, t.month, t.day)
-              .difference(DateTime(ref.year, ref.month, ref.day))
-              .inHours /
+  return (DateTime(
+            t.year,
+            t.month,
+            t.day,
+          ).difference(DateTime(ref.year, ref.month, ref.day)).inHours /
           24)
       .round();
 }
@@ -336,10 +338,11 @@ List<DateTime> doseOccurrences({
   return result;
 }
 
-/// One thing to remind about: where ([tankId]), which channel ([kind]), when
-/// ([fireAt], local time), and the display line it contributes ([label]).
+/// One thing to remind about: where ([tankId] — null for device-scoped items
+/// like the shared RO unit, U16), which channel ([kind]), when ([fireAt],
+/// local time), and the display line it contributes ([label]).
 typedef ReminderItem = ({
-  int tankId,
+  int? tankId,
   ReminderKind kind,
   DateTime fireAt,
   String label,
@@ -347,9 +350,10 @@ typedef ReminderItem = ({
 
 /// A coalesced notification: every [ReminderItem] of one (tank, kind,
 /// calendar day) merged into a single notification, fired at the earliest
-/// member's time.
+/// member's time. Null-tank (device-scoped) items form their own group and
+/// never merge into a tank's notification.
 typedef PlannedReminder = ({
-  int tankId,
+  int? tankId,
   ReminderKind kind,
   DateTime fireAt,
   List<String> labels,
@@ -360,7 +364,7 @@ typedef PlannedReminder = ({
 /// are deduplicated; the result is sorted by fire time (then tank for a
 /// stable order).
 List<PlannedReminder> coalesceReminders(Iterable<ReminderItem> items) {
-  final groups = <(int, ReminderKind, int, int, int), List<ReminderItem>>{};
+  final groups = <(int?, ReminderKind, int, int, int), List<ReminderItem>>{};
   for (final item in items) {
     final key = (
       item.tankId,
@@ -388,7 +392,9 @@ List<PlannedReminder> coalesceReminders(Iterable<ReminderItem> items) {
   }
   result.sort((a, b) {
     final byTime = a.fireAt.compareTo(b.fireAt);
-    return byTime != 0 ? byTime : a.tankId.compareTo(b.tankId);
+    // Device-scoped (null-tank) reminders sort before the tanks' for a
+    // stable order.
+    return byTime != 0 ? byTime : (a.tankId ?? -1).compareTo(b.tankId ?? -1);
   });
   return result;
 }

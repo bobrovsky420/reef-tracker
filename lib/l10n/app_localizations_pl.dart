@@ -1511,4 +1511,88 @@ class AppLocalizationsPl extends AppLocalizations {
   String monthlyOnDayN(int n) {
     return 'Co miesiąc $n. dnia';
   }
+
+  @override
+  String get roUnitTitle => 'Odwrócona osmoza';
+
+  @override
+  String get roStageSediment => 'Wkład sedymentacyjny';
+
+  @override
+  String get roStageCarbonBlock => 'Wkład węglowy';
+
+  @override
+  String get roStageMembrane => 'Membrana RO';
+
+  @override
+  String get roStageDiResin => 'Żywica DI';
+
+  @override
+  String get roCustomStage => 'Własny element';
+
+  @override
+  String get roAddStage => 'Dodaj element';
+
+  @override
+  String get roEditStage => 'Edytuj element';
+
+  @override
+  String get roLifespanLabel => 'Wymieniaj co';
+
+  @override
+  String get roUnitDays => 'dni';
+
+  @override
+  String get roUnitWeeks => 'tygodni';
+
+  @override
+  String get roUnitMonths => 'miesięcy';
+
+  @override
+  String get roPartOfUnit => 'Część mojego zestawu';
+
+  @override
+  String get roPartOfUnitHint =>
+      'Wyłącz, jeśli twój zestaw nie ma tego stopnia';
+
+  @override
+  String get roHiddenStages => 'Nie ma w moim zestawie';
+
+  @override
+  String get roMarkReplaced => 'Wymieniono';
+
+  @override
+  String get roReplacedRecorded => 'Zapisano wymianę';
+
+  @override
+  String roLastReplaced(String date) {
+    return 'Wymieniono $date';
+  }
+
+  @override
+  String get roNoReplacementYet => 'Nie zapisano jeszcze żadnej wymiany';
+
+  @override
+  String get roDeleteStageTitle => 'Usunąć element?';
+
+  @override
+  String get roDeleteStageBody =>
+      'Usunie element wraz z historią wymian. Nie można tego cofnąć.';
+
+  @override
+  String get roEmptyBody =>
+      'Brak elementów. Dodaj filtry swojego zestawu RO przyciskiem +.';
+
+  @override
+  String get roSetupPrompt => 'Śledź wymiany filtrów i membrany';
+
+  @override
+  String get roUnitToggleSubtitle =>
+      'Pokazuj na karcie Akcje, z przypomnieniami o wymianie filtrów';
+
+  @override
+  String get roAllOk => 'Wszystkie elementy w porządku';
+
+  @override
+  String get notifRoTitle => 'Wymień filtry odwróconej osmozy';
 }

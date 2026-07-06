@@ -1495,4 +1495,88 @@ class AppLocalizationsCs extends AppLocalizations {
   String monthlyOnDayN(int n) {
     return 'Každý měsíc $n. den';
   }
+
+  @override
+  String get roUnitTitle => 'Reverzní osmóza';
+
+  @override
+  String get roStageSediment => 'Sedimentový filtr';
+
+  @override
+  String get roStageCarbonBlock => 'Uhlíkový blok';
+
+  @override
+  String get roStageMembrane => 'Membrána RO';
+
+  @override
+  String get roStageDiResin => 'DI pryskyřice';
+
+  @override
+  String get roCustomStage => 'Vlastní díl';
+
+  @override
+  String get roAddStage => 'Přidat díl';
+
+  @override
+  String get roEditStage => 'Upravit díl';
+
+  @override
+  String get roLifespanLabel => 'Vyměnit každých';
+
+  @override
+  String get roUnitDays => 'dní';
+
+  @override
+  String get roUnitWeeks => 'týdnů';
+
+  @override
+  String get roUnitMonths => 'měsíců';
+
+  @override
+  String get roPartOfUnit => 'Součást mé jednotky';
+
+  @override
+  String get roPartOfUnitHint =>
+      'Vypněte, pokud vaše jednotka tento stupeň nemá';
+
+  @override
+  String get roHiddenStages => 'Není na mé jednotce';
+
+  @override
+  String get roMarkReplaced => 'Vyměněno';
+
+  @override
+  String get roReplacedRecorded => 'Výměna zaznamenána';
+
+  @override
+  String roLastReplaced(String date) {
+    return 'Vyměněno $date';
+  }
+
+  @override
+  String get roNoReplacementYet => 'Zatím žádná zaznamenaná výměna';
+
+  @override
+  String get roDeleteStageTitle => 'Smazat díl?';
+
+  @override
+  String get roDeleteStageBody =>
+      'Odstraní díl i historii jeho výměn. Nelze vzít zpět.';
+
+  @override
+  String get roEmptyBody =>
+      'Žádné díly. Přidejte filtry své RO jednotky tlačítkem +.';
+
+  @override
+  String get roSetupPrompt => 'Sledujte výměny filtrů a membrány';
+
+  @override
+  String get roUnitToggleSubtitle =>
+      'Zobrazit na kartě Akce, s připomínkami výměn filtrů';
+
+  @override
+  String get roAllOk => 'Všechny díly v pořádku';
+
+  @override
+  String get notifRoTitle => 'Vyměňte filtry reverzní osmózy';
 }

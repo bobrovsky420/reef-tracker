@@ -112,13 +112,16 @@ void main() {
   });
 
   group('SettingKey registry', () {
-    test('deviceLocalKeys covers every current key (all are preferences)', () {
-      // Today the Settings table holds only device/user preferences, so every
-      // registered key is device-local (#18). This guards against a new domain
-      // setting being added without deciding its restore behaviour.
+    test('deviceLocalKeys covers every preference key', () {
+      // Every registered key is device-local (#18) except the RO seed flag
+      // (U16), which describes domain data and must travel with the RO rows
+      // it guards on a backup restore. This pins the split so a new setting
+      // can't be added without deciding its restore behaviour.
       expect(SettingKey.deviceLocalKeys, {
-        for (final k in SettingKey.values) k.storageKey,
+        for (final k in SettingKey.values)
+          if (k != SettingKey.roSeeded) k.storageKey,
       });
+      expect(SettingKey.roSeeded.deviceLocal, isFalse);
     });
 
     test('storage keys are unique', () {

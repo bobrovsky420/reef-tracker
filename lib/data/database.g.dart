@@ -5198,8 +5198,10 @@ class MaintenanceSchedule extends DataClass
   /// ("every 1st of the month"). Takes precedence over [cadenceDays].
   final int? monthDay;
 
-  /// Planned first (or one-off) due date; ignored once the task has ever been
-  /// completed.
+  /// Planned first (or one-off) due date. Floors the computed due date while
+  /// it lies after the last completion (typed rows anchor on their action
+  /// log, which predates the plan); irrelevant once a completion moves past
+  /// it.
   final DateTime? scheduledAt;
 
   /// Completion stamp for **custom** rows only (typed rows read their action
@@ -5631,6 +5633,837 @@ class MaintenanceSchedulesCompanion
   }
 }
 
+class $RoStagesTable extends RoStages with TableInfo<$RoStagesTable, RoStage> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RoStagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _stageTypeMeta = const VerificationMeta(
+    'stageType',
+  );
+  @override
+  late final GeneratedColumn<String> stageType = GeneratedColumn<String>(
+    'stage_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lifespanDaysMeta = const VerificationMeta(
+    'lifespanDays',
+  );
+  @override
+  late final GeneratedColumn<int> lifespanDays = GeneratedColumn<int>(
+    'lifespan_days',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _remindEnabledMeta = const VerificationMeta(
+    'remindEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> remindEnabled = GeneratedColumn<bool>(
+    'remind_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("remind_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    stageType,
+    title,
+    lifespanDays,
+    enabled,
+    remindEnabled,
+    note,
+    displayOrder,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ro_stages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RoStage> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('stage_type')) {
+      context.handle(
+        _stageTypeMeta,
+        stageType.isAcceptableOrUnknown(data['stage_type']!, _stageTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stageTypeMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    }
+    if (data.containsKey('lifespan_days')) {
+      context.handle(
+        _lifespanDaysMeta,
+        lifespanDays.isAcceptableOrUnknown(
+          data['lifespan_days']!,
+          _lifespanDaysMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_lifespanDaysMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('remind_enabled')) {
+      context.handle(
+        _remindEnabledMeta,
+        remindEnabled.isAcceptableOrUnknown(
+          data['remind_enabled']!,
+          _remindEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RoStage map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RoStage(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      stageType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stage_type'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
+      lifespanDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lifespan_days'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      remindEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}remind_enabled'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
+    );
+  }
+
+  @override
+  $RoStagesTable createAlias(String alias) {
+    return $RoStagesTable(attachedDatabase, alias);
+  }
+}
+
+class RoStage extends DataClass implements Insertable<RoStage> {
+  final int id;
+
+  /// [RoStageType.name]; `custom` rows carry their display name in [title],
+  /// typed rows render a localized name.
+  final String stageType;
+
+  /// Display name for a custom stage; null for typed rows.
+  final String? title;
+
+  /// Replace every N days (edited as days/weeks/months in the UI). Due math
+  /// is elastic on the latest logged replacement (`domain/ro.dart`).
+  final int lifespanDays;
+
+  /// Whether this stage exists on the user's unit (the "uncheck if a lower
+  /// model is used" flag).
+  final bool enabled;
+
+  /// Per-stage reminder opt-out; the maintenance master switch still gates
+  /// all RO reminders.
+  final bool remindEnabled;
+  final String? note;
+
+  /// Position in the overview list (the water path through the unit).
+  final int displayOrder;
+  const RoStage({
+    required this.id,
+    required this.stageType,
+    this.title,
+    required this.lifespanDays,
+    required this.enabled,
+    required this.remindEnabled,
+    this.note,
+    required this.displayOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['stage_type'] = Variable<String>(stageType);
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    map['lifespan_days'] = Variable<int>(lifespanDays);
+    map['enabled'] = Variable<bool>(enabled);
+    map['remind_enabled'] = Variable<bool>(remindEnabled);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['display_order'] = Variable<int>(displayOrder);
+    return map;
+  }
+
+  RoStagesCompanion toCompanion(bool nullToAbsent) {
+    return RoStagesCompanion(
+      id: Value(id),
+      stageType: Value(stageType),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
+      lifespanDays: Value(lifespanDays),
+      enabled: Value(enabled),
+      remindEnabled: Value(remindEnabled),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      displayOrder: Value(displayOrder),
+    );
+  }
+
+  factory RoStage.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RoStage(
+      id: serializer.fromJson<int>(json['id']),
+      stageType: serializer.fromJson<String>(json['stageType']),
+      title: serializer.fromJson<String?>(json['title']),
+      lifespanDays: serializer.fromJson<int>(json['lifespanDays']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      remindEnabled: serializer.fromJson<bool>(json['remindEnabled']),
+      note: serializer.fromJson<String?>(json['note']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'stageType': serializer.toJson<String>(stageType),
+      'title': serializer.toJson<String?>(title),
+      'lifespanDays': serializer.toJson<int>(lifespanDays),
+      'enabled': serializer.toJson<bool>(enabled),
+      'remindEnabled': serializer.toJson<bool>(remindEnabled),
+      'note': serializer.toJson<String?>(note),
+      'displayOrder': serializer.toJson<int>(displayOrder),
+    };
+  }
+
+  RoStage copyWith({
+    int? id,
+    String? stageType,
+    Value<String?> title = const Value.absent(),
+    int? lifespanDays,
+    bool? enabled,
+    bool? remindEnabled,
+    Value<String?> note = const Value.absent(),
+    int? displayOrder,
+  }) => RoStage(
+    id: id ?? this.id,
+    stageType: stageType ?? this.stageType,
+    title: title.present ? title.value : this.title,
+    lifespanDays: lifespanDays ?? this.lifespanDays,
+    enabled: enabled ?? this.enabled,
+    remindEnabled: remindEnabled ?? this.remindEnabled,
+    note: note.present ? note.value : this.note,
+    displayOrder: displayOrder ?? this.displayOrder,
+  );
+  RoStage copyWithCompanion(RoStagesCompanion data) {
+    return RoStage(
+      id: data.id.present ? data.id.value : this.id,
+      stageType: data.stageType.present ? data.stageType.value : this.stageType,
+      title: data.title.present ? data.title.value : this.title,
+      lifespanDays: data.lifespanDays.present
+          ? data.lifespanDays.value
+          : this.lifespanDays,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      remindEnabled: data.remindEnabled.present
+          ? data.remindEnabled.value
+          : this.remindEnabled,
+      note: data.note.present ? data.note.value : this.note,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoStage(')
+          ..write('id: $id, ')
+          ..write('stageType: $stageType, ')
+          ..write('title: $title, ')
+          ..write('lifespanDays: $lifespanDays, ')
+          ..write('enabled: $enabled, ')
+          ..write('remindEnabled: $remindEnabled, ')
+          ..write('note: $note, ')
+          ..write('displayOrder: $displayOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    stageType,
+    title,
+    lifespanDays,
+    enabled,
+    remindEnabled,
+    note,
+    displayOrder,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RoStage &&
+          other.id == this.id &&
+          other.stageType == this.stageType &&
+          other.title == this.title &&
+          other.lifespanDays == this.lifespanDays &&
+          other.enabled == this.enabled &&
+          other.remindEnabled == this.remindEnabled &&
+          other.note == this.note &&
+          other.displayOrder == this.displayOrder);
+}
+
+class RoStagesCompanion extends UpdateCompanion<RoStage> {
+  final Value<int> id;
+  final Value<String> stageType;
+  final Value<String?> title;
+  final Value<int> lifespanDays;
+  final Value<bool> enabled;
+  final Value<bool> remindEnabled;
+  final Value<String?> note;
+  final Value<int> displayOrder;
+  const RoStagesCompanion({
+    this.id = const Value.absent(),
+    this.stageType = const Value.absent(),
+    this.title = const Value.absent(),
+    this.lifespanDays = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.remindEnabled = const Value.absent(),
+    this.note = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+  });
+  RoStagesCompanion.insert({
+    this.id = const Value.absent(),
+    required String stageType,
+    this.title = const Value.absent(),
+    required int lifespanDays,
+    this.enabled = const Value.absent(),
+    this.remindEnabled = const Value.absent(),
+    this.note = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+  }) : stageType = Value(stageType),
+       lifespanDays = Value(lifespanDays);
+  static Insertable<RoStage> custom({
+    Expression<int>? id,
+    Expression<String>? stageType,
+    Expression<String>? title,
+    Expression<int>? lifespanDays,
+    Expression<bool>? enabled,
+    Expression<bool>? remindEnabled,
+    Expression<String>? note,
+    Expression<int>? displayOrder,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (stageType != null) 'stage_type': stageType,
+      if (title != null) 'title': title,
+      if (lifespanDays != null) 'lifespan_days': lifespanDays,
+      if (enabled != null) 'enabled': enabled,
+      if (remindEnabled != null) 'remind_enabled': remindEnabled,
+      if (note != null) 'note': note,
+      if (displayOrder != null) 'display_order': displayOrder,
+    });
+  }
+
+  RoStagesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? stageType,
+    Value<String?>? title,
+    Value<int>? lifespanDays,
+    Value<bool>? enabled,
+    Value<bool>? remindEnabled,
+    Value<String?>? note,
+    Value<int>? displayOrder,
+  }) {
+    return RoStagesCompanion(
+      id: id ?? this.id,
+      stageType: stageType ?? this.stageType,
+      title: title ?? this.title,
+      lifespanDays: lifespanDays ?? this.lifespanDays,
+      enabled: enabled ?? this.enabled,
+      remindEnabled: remindEnabled ?? this.remindEnabled,
+      note: note ?? this.note,
+      displayOrder: displayOrder ?? this.displayOrder,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (stageType.present) {
+      map['stage_type'] = Variable<String>(stageType.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (lifespanDays.present) {
+      map['lifespan_days'] = Variable<int>(lifespanDays.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (remindEnabled.present) {
+      map['remind_enabled'] = Variable<bool>(remindEnabled.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoStagesCompanion(')
+          ..write('id: $id, ')
+          ..write('stageType: $stageType, ')
+          ..write('title: $title, ')
+          ..write('lifespanDays: $lifespanDays, ')
+          ..write('enabled: $enabled, ')
+          ..write('remindEnabled: $remindEnabled, ')
+          ..write('note: $note, ')
+          ..write('displayOrder: $displayOrder')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RoStageReplacementsTable extends RoStageReplacements
+    with TableInfo<$RoStageReplacementsTable, RoStageReplacement> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RoStageReplacementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _stageIdMeta = const VerificationMeta(
+    'stageId',
+  );
+  @override
+  late final GeneratedColumn<int> stageId = GeneratedColumn<int>(
+    'stage_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES ro_stages (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _replacedAtMeta = const VerificationMeta(
+    'replacedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> replacedAt = GeneratedColumn<DateTime>(
+    'replaced_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, stageId, replacedAt, note];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ro_stage_replacements';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RoStageReplacement> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('stage_id')) {
+      context.handle(
+        _stageIdMeta,
+        stageId.isAcceptableOrUnknown(data['stage_id']!, _stageIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stageIdMeta);
+    }
+    if (data.containsKey('replaced_at')) {
+      context.handle(
+        _replacedAtMeta,
+        replacedAt.isAcceptableOrUnknown(data['replaced_at']!, _replacedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_replacedAtMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RoStageReplacement map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RoStageReplacement(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      stageId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}stage_id'],
+      )!,
+      replacedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}replaced_at'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+    );
+  }
+
+  @override
+  $RoStageReplacementsTable createAlias(String alias) {
+    return $RoStageReplacementsTable(attachedDatabase, alias);
+  }
+}
+
+class RoStageReplacement extends DataClass
+    implements Insertable<RoStageReplacement> {
+  final int id;
+  final int stageId;
+  final DateTime replacedAt;
+  final String? note;
+  const RoStageReplacement({
+    required this.id,
+    required this.stageId,
+    required this.replacedAt,
+    this.note,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['stage_id'] = Variable<int>(stageId);
+    map['replaced_at'] = Variable<DateTime>(replacedAt);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    return map;
+  }
+
+  RoStageReplacementsCompanion toCompanion(bool nullToAbsent) {
+    return RoStageReplacementsCompanion(
+      id: Value(id),
+      stageId: Value(stageId),
+      replacedAt: Value(replacedAt),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+    );
+  }
+
+  factory RoStageReplacement.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RoStageReplacement(
+      id: serializer.fromJson<int>(json['id']),
+      stageId: serializer.fromJson<int>(json['stageId']),
+      replacedAt: serializer.fromJson<DateTime>(json['replacedAt']),
+      note: serializer.fromJson<String?>(json['note']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'stageId': serializer.toJson<int>(stageId),
+      'replacedAt': serializer.toJson<DateTime>(replacedAt),
+      'note': serializer.toJson<String?>(note),
+    };
+  }
+
+  RoStageReplacement copyWith({
+    int? id,
+    int? stageId,
+    DateTime? replacedAt,
+    Value<String?> note = const Value.absent(),
+  }) => RoStageReplacement(
+    id: id ?? this.id,
+    stageId: stageId ?? this.stageId,
+    replacedAt: replacedAt ?? this.replacedAt,
+    note: note.present ? note.value : this.note,
+  );
+  RoStageReplacement copyWithCompanion(RoStageReplacementsCompanion data) {
+    return RoStageReplacement(
+      id: data.id.present ? data.id.value : this.id,
+      stageId: data.stageId.present ? data.stageId.value : this.stageId,
+      replacedAt: data.replacedAt.present
+          ? data.replacedAt.value
+          : this.replacedAt,
+      note: data.note.present ? data.note.value : this.note,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoStageReplacement(')
+          ..write('id: $id, ')
+          ..write('stageId: $stageId, ')
+          ..write('replacedAt: $replacedAt, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, stageId, replacedAt, note);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RoStageReplacement &&
+          other.id == this.id &&
+          other.stageId == this.stageId &&
+          other.replacedAt == this.replacedAt &&
+          other.note == this.note);
+}
+
+class RoStageReplacementsCompanion extends UpdateCompanion<RoStageReplacement> {
+  final Value<int> id;
+  final Value<int> stageId;
+  final Value<DateTime> replacedAt;
+  final Value<String?> note;
+  const RoStageReplacementsCompanion({
+    this.id = const Value.absent(),
+    this.stageId = const Value.absent(),
+    this.replacedAt = const Value.absent(),
+    this.note = const Value.absent(),
+  });
+  RoStageReplacementsCompanion.insert({
+    this.id = const Value.absent(),
+    required int stageId,
+    required DateTime replacedAt,
+    this.note = const Value.absent(),
+  }) : stageId = Value(stageId),
+       replacedAt = Value(replacedAt);
+  static Insertable<RoStageReplacement> custom({
+    Expression<int>? id,
+    Expression<int>? stageId,
+    Expression<DateTime>? replacedAt,
+    Expression<String>? note,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (stageId != null) 'stage_id': stageId,
+      if (replacedAt != null) 'replaced_at': replacedAt,
+      if (note != null) 'note': note,
+    });
+  }
+
+  RoStageReplacementsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? stageId,
+    Value<DateTime>? replacedAt,
+    Value<String?>? note,
+  }) {
+    return RoStageReplacementsCompanion(
+      id: id ?? this.id,
+      stageId: stageId ?? this.stageId,
+      replacedAt: replacedAt ?? this.replacedAt,
+      note: note ?? this.note,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (stageId.present) {
+      map['stage_id'] = Variable<int>(stageId.value);
+    }
+    if (replacedAt.present) {
+      map['replaced_at'] = Variable<DateTime>(replacedAt.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoStageReplacementsCompanion(')
+          ..write('id: $id, ')
+          ..write('stageId: $stageId, ')
+          ..write('replacedAt: $replacedAt, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -5864,6 +6697,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $MaintenanceSchedulesTable maintenanceSchedules =
       $MaintenanceSchedulesTable(this);
+  late final $RoStagesTable roStages = $RoStagesTable(this);
+  late final $RoStageReplacementsTable roStageReplacements =
+      $RoStageReplacementsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index idxReadingsTankParamTaken = Index(
     'idx_readings_tank_param_taken',
@@ -5897,6 +6733,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_maintenance_schedules_tank',
     'CREATE INDEX idx_maintenance_schedules_tank ON maintenance_schedules (tank_id)',
   );
+  late final Index idxRoReplacementsStage = Index(
+    'idx_ro_replacements_stage',
+    'CREATE INDEX idx_ro_replacements_stage ON ro_stage_replacements (stage_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5912,6 +6752,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     dosingEntries,
     readingTemplates,
     maintenanceSchedules,
+    roStages,
+    roStageReplacements,
     settings,
     idxReadingsTankParamTaken,
     idxReadingsTankTaken,
@@ -5921,6 +6763,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     idxDosingEntriesTank,
     idxReadingTemplatesTank,
     idxMaintenanceSchedulesTank,
+    idxRoReplacementsStage,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -5986,6 +6829,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('maintenance_schedules', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'ro_stages',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('ro_stage_replacements', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -10724,6 +11574,685 @@ typedef $$MaintenanceSchedulesTableProcessedTableManager =
       MaintenanceSchedule,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$RoStagesTableCreateCompanionBuilder =
+    RoStagesCompanion Function({
+      Value<int> id,
+      required String stageType,
+      Value<String?> title,
+      required int lifespanDays,
+      Value<bool> enabled,
+      Value<bool> remindEnabled,
+      Value<String?> note,
+      Value<int> displayOrder,
+    });
+typedef $$RoStagesTableUpdateCompanionBuilder =
+    RoStagesCompanion Function({
+      Value<int> id,
+      Value<String> stageType,
+      Value<String?> title,
+      Value<int> lifespanDays,
+      Value<bool> enabled,
+      Value<bool> remindEnabled,
+      Value<String?> note,
+      Value<int> displayOrder,
+    });
+
+final class $$RoStagesTableReferences
+    extends BaseReferences<_$AppDatabase, $RoStagesTable, RoStage> {
+  $$RoStagesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<
+    $RoStageReplacementsTable,
+    List<RoStageReplacement>
+  >
+  _roStageReplacementsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.roStageReplacements,
+        aliasName: 'ro_stages__id__ro_stage_replacements__stage_id',
+      );
+
+  $$RoStageReplacementsTableProcessedTableManager get roStageReplacementsRefs {
+    final manager = $$RoStageReplacementsTableTableManager(
+      $_db,
+      $_db.roStageReplacements,
+    ).filter((f) => f.stageId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _roStageReplacementsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$RoStagesTableFilterComposer
+    extends Composer<_$AppDatabase, $RoStagesTable> {
+  $$RoStagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stageType => $composableBuilder(
+    column: $table.stageType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lifespanDays => $composableBuilder(
+    column: $table.lifespanDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> roStageReplacementsRefs(
+    Expression<bool> Function($$RoStageReplacementsTableFilterComposer f) f,
+  ) {
+    final $$RoStageReplacementsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.roStageReplacements,
+      getReferencedColumn: (t) => t.stageId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RoStageReplacementsTableFilterComposer(
+            $db: $db,
+            $table: $db.roStageReplacements,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$RoStagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RoStagesTable> {
+  $$RoStagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stageType => $composableBuilder(
+    column: $table.stageType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lifespanDays => $composableBuilder(
+    column: $table.lifespanDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RoStagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RoStagesTable> {
+  $$RoStagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get stageType =>
+      $composableBuilder(column: $table.stageType, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<int> get lifespanDays => $composableBuilder(
+    column: $table.lifespanDays,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
+  Expression<T> roStageReplacementsRefs<T extends Object>(
+    Expression<T> Function($$RoStageReplacementsTableAnnotationComposer a) f,
+  ) {
+    final $$RoStageReplacementsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.roStageReplacements,
+          getReferencedColumn: (t) => t.stageId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RoStageReplacementsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.roStageReplacements,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$RoStagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RoStagesTable,
+          RoStage,
+          $$RoStagesTableFilterComposer,
+          $$RoStagesTableOrderingComposer,
+          $$RoStagesTableAnnotationComposer,
+          $$RoStagesTableCreateCompanionBuilder,
+          $$RoStagesTableUpdateCompanionBuilder,
+          (RoStage, $$RoStagesTableReferences),
+          RoStage,
+          PrefetchHooks Function({bool roStageReplacementsRefs})
+        > {
+  $$RoStagesTableTableManager(_$AppDatabase db, $RoStagesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RoStagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RoStagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RoStagesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> stageType = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<int> lifespanDays = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<bool> remindEnabled = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+              }) => RoStagesCompanion(
+                id: id,
+                stageType: stageType,
+                title: title,
+                lifespanDays: lifespanDays,
+                enabled: enabled,
+                remindEnabled: remindEnabled,
+                note: note,
+                displayOrder: displayOrder,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String stageType,
+                Value<String?> title = const Value.absent(),
+                required int lifespanDays,
+                Value<bool> enabled = const Value.absent(),
+                Value<bool> remindEnabled = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+              }) => RoStagesCompanion.insert(
+                id: id,
+                stageType: stageType,
+                title: title,
+                lifespanDays: lifespanDays,
+                enabled: enabled,
+                remindEnabled: remindEnabled,
+                note: note,
+                displayOrder: displayOrder,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RoStagesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({roStageReplacementsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (roStageReplacementsRefs) db.roStageReplacements,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (roStageReplacementsRefs)
+                    await $_getPrefetchedData<
+                      RoStage,
+                      $RoStagesTable,
+                      RoStageReplacement
+                    >(
+                      currentTable: table,
+                      referencedTable: $$RoStagesTableReferences
+                          ._roStageReplacementsRefsTable(db),
+                      managerFromTypedResult: (p0) => $$RoStagesTableReferences(
+                        db,
+                        table,
+                        p0,
+                      ).roStageReplacementsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.stageId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RoStagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RoStagesTable,
+      RoStage,
+      $$RoStagesTableFilterComposer,
+      $$RoStagesTableOrderingComposer,
+      $$RoStagesTableAnnotationComposer,
+      $$RoStagesTableCreateCompanionBuilder,
+      $$RoStagesTableUpdateCompanionBuilder,
+      (RoStage, $$RoStagesTableReferences),
+      RoStage,
+      PrefetchHooks Function({bool roStageReplacementsRefs})
+    >;
+typedef $$RoStageReplacementsTableCreateCompanionBuilder =
+    RoStageReplacementsCompanion Function({
+      Value<int> id,
+      required int stageId,
+      required DateTime replacedAt,
+      Value<String?> note,
+    });
+typedef $$RoStageReplacementsTableUpdateCompanionBuilder =
+    RoStageReplacementsCompanion Function({
+      Value<int> id,
+      Value<int> stageId,
+      Value<DateTime> replacedAt,
+      Value<String?> note,
+    });
+
+final class $$RoStageReplacementsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $RoStageReplacementsTable,
+          RoStageReplacement
+        > {
+  $$RoStageReplacementsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $RoStagesTable _stageIdTable(_$AppDatabase db) =>
+      db.roStages.createAlias('ro_stage_replacements__stage_id__ro_stages__id');
+
+  $$RoStagesTableProcessedTableManager get stageId {
+    final $_column = $_itemColumn<int>('stage_id')!;
+
+    final manager = $$RoStagesTableTableManager(
+      $_db,
+      $_db.roStages,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_stageIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RoStageReplacementsTableFilterComposer
+    extends Composer<_$AppDatabase, $RoStageReplacementsTable> {
+  $$RoStageReplacementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get replacedAt => $composableBuilder(
+    column: $table.replacedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$RoStagesTableFilterComposer get stageId {
+    final $$RoStagesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.stageId,
+      referencedTable: $db.roStages,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RoStagesTableFilterComposer(
+            $db: $db,
+            $table: $db.roStages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RoStageReplacementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RoStageReplacementsTable> {
+  $$RoStageReplacementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get replacedAt => $composableBuilder(
+    column: $table.replacedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$RoStagesTableOrderingComposer get stageId {
+    final $$RoStagesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.stageId,
+      referencedTable: $db.roStages,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RoStagesTableOrderingComposer(
+            $db: $db,
+            $table: $db.roStages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RoStageReplacementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RoStageReplacementsTable> {
+  $$RoStageReplacementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get replacedAt => $composableBuilder(
+    column: $table.replacedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  $$RoStagesTableAnnotationComposer get stageId {
+    final $$RoStagesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.stageId,
+      referencedTable: $db.roStages,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RoStagesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.roStages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RoStageReplacementsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RoStageReplacementsTable,
+          RoStageReplacement,
+          $$RoStageReplacementsTableFilterComposer,
+          $$RoStageReplacementsTableOrderingComposer,
+          $$RoStageReplacementsTableAnnotationComposer,
+          $$RoStageReplacementsTableCreateCompanionBuilder,
+          $$RoStageReplacementsTableUpdateCompanionBuilder,
+          (RoStageReplacement, $$RoStageReplacementsTableReferences),
+          RoStageReplacement,
+          PrefetchHooks Function({bool stageId})
+        > {
+  $$RoStageReplacementsTableTableManager(
+    _$AppDatabase db,
+    $RoStageReplacementsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RoStageReplacementsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RoStageReplacementsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RoStageReplacementsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> stageId = const Value.absent(),
+                Value<DateTime> replacedAt = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+              }) => RoStageReplacementsCompanion(
+                id: id,
+                stageId: stageId,
+                replacedAt: replacedAt,
+                note: note,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int stageId,
+                required DateTime replacedAt,
+                Value<String?> note = const Value.absent(),
+              }) => RoStageReplacementsCompanion.insert(
+                id: id,
+                stageId: stageId,
+                replacedAt: replacedAt,
+                note: note,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RoStageReplacementsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({stageId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (stageId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.stageId,
+                                referencedTable:
+                                    $$RoStageReplacementsTableReferences
+                                        ._stageIdTable(db),
+                                referencedColumn:
+                                    $$RoStageReplacementsTableReferences
+                                        ._stageIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RoStageReplacementsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RoStageReplacementsTable,
+      RoStageReplacement,
+      $$RoStageReplacementsTableFilterComposer,
+      $$RoStageReplacementsTableOrderingComposer,
+      $$RoStageReplacementsTableAnnotationComposer,
+      $$RoStageReplacementsTableCreateCompanionBuilder,
+      $$RoStageReplacementsTableUpdateCompanionBuilder,
+      (RoStageReplacement, $$RoStageReplacementsTableReferences),
+      RoStageReplacement,
+      PrefetchHooks Function({bool stageId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -10881,6 +12410,10 @@ class $AppDatabaseManager {
       $$ReadingTemplatesTableTableManager(_db, _db.readingTemplates);
   $$MaintenanceSchedulesTableTableManager get maintenanceSchedules =>
       $$MaintenanceSchedulesTableTableManager(_db, _db.maintenanceSchedules);
+  $$RoStagesTableTableManager get roStages =>
+      $$RoStagesTableTableManager(_db, _db.roStages);
+  $$RoStageReplacementsTableTableManager get roStageReplacements =>
+      $$RoStageReplacementsTableTableManager(_db, _db.roStageReplacements);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

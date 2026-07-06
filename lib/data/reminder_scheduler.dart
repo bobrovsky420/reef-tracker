@@ -20,6 +20,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 
 import '../domain/reminders.dart';
+import '../domain/ro.dart';
 import '../domain/supplement_catalog.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
@@ -61,6 +62,8 @@ class ReminderScheduler {
             _db.equipmentCleanings,
             _db.dosingEntries,
             _db.maintenanceSchedules,
+            _db.roStages,
+            _db.roStageReplacements,
             _db.settings,
           ]),
         )
@@ -191,6 +194,36 @@ class ReminderScheduler {
         }
       }
     }
+    if (maintenanceOn && await settings.readRoUnitEnabled()) {
+      // The shared RO unit (U16) — device-scoped, so outside the tank loop
+      // and carrying no tankId; the Settings feature switch silences it
+      // wholesale. A stage with no logged replacement has no
+      // computable due date and is silently skipped (the overview screen
+      // prompts for it instead — never a guessed reminder).
+      final stages = await _db.getRoStages();
+      if (stages.isNotEmpty) {
+        final lastReplaced = await _db.latestRoReplacementTimes();
+        for (final s in stages) {
+          if (!s.enabled || !s.remindEnabled) continue;
+          final fireAt = fireAtFor(
+            roStageDue(
+              lastReplacedAt: lastReplaced[s.id],
+              lifespanDays: s.lifespanDays,
+              now: now,
+            ),
+          );
+          if (fireAt == null) continue;
+          final label = _roStageName(l, s);
+          if (label.isEmpty) continue;
+          items.add((
+            tankId: null,
+            kind: ReminderKind.maintenance,
+            fireAt: fireAt,
+            label: label,
+          ));
+        }
+      }
+    }
     if (dosingOn) {
       final visibleTanks = {for (final t in tanks) t.id};
       for (final d in await _db.getAllDosingEntries()) {
@@ -224,7 +257,11 @@ class ReminderScheduler {
         (
           kind: p.kind,
           channelName: _channelName(l, p.kind),
-          title: multiTank
+          // Device-scoped (null-tank) reminders — the RO unit — get their own
+          // title and never a tank name: they belong to no aquarium.
+          title: p.tankId == null
+              ? l.notifRoTitle
+              : multiTank
               ? l.notifTitleWithTank(
                   _title(l, p.kind),
                   tankNames[p.tankId] ?? '',
@@ -232,7 +269,10 @@ class ReminderScheduler {
               : _title(l, p.kind),
           body: p.labels.join(', '),
           fireAtLocal: p.fireAt,
-          payload: jsonEncode({'tankId': p.tankId, 'route': _routeFor(p.kind)}),
+          payload: jsonEncode({
+            'tankId': p.tankId,
+            'route': p.tankId == null ? '/ro' : _routeFor(p.kind),
+          }),
         ),
     ];
   }
@@ -271,6 +311,9 @@ class ReminderScheduler {
         MaintenanceActionType.carbonChange => l.carbonChange,
         MaintenanceActionType.equipmentCleaning => l.equipmentCleaning,
       };
+
+  static String _roStageName(AppLocalizations l, RoStage s) =>
+      l.roStageName(s.stageType, s.title);
 
   static String _routeFor(ReminderKind kind) => switch (kind) {
     ReminderKind.testing => '/add-reading',

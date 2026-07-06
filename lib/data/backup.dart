@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../domain/reminders.dart';
+import '../domain/ro.dart';
 import '../domain/setup_type.dart';
 import '../domain/supplement_catalog.dart';
 import 'database.dart';
@@ -70,6 +71,8 @@ class BackupData {
     required this.dosingEntries,
     this.readingTemplates = const [],
     this.maintenanceSchedules = const [],
+    this.roStages = const [],
+    this.roStageReplacements = const [],
     required this.settings,
   });
 
@@ -93,6 +96,11 @@ class BackupData {
   /// Maintenance plans (U12). Defaults to empty for pre-U12 backups, same
   /// policy as [readingTemplates].
   final List<MaintenanceSchedulesCompanion> maintenanceSchedules;
+
+  /// RO unit stages + replacement log (U16). Defaults to empty for pre-U16
+  /// backups, same policy as [readingTemplates].
+  final List<RoStagesCompanion> roStages;
+  final List<RoStageReplacementsCompanion> roStageReplacements;
   final List<SettingsCompanion> settings;
 }
 
@@ -114,6 +122,8 @@ String encodeBackup({
   required List<DosingEntry> dosingEntries,
   List<ReadingTemplate> readingTemplates = const [],
   List<MaintenanceSchedule> maintenanceSchedules = const [],
+  List<RoStage> roStages = const [],
+  List<RoStageReplacement> roStageReplacements = const [],
   required List<Setting> settings,
 }) {
   final map = <String, dynamic>{
@@ -134,6 +144,10 @@ String encodeBackup({
     'readingTemplates': readingTemplates.map(_readingTemplateToJson).toList(),
     'maintenanceSchedules': maintenanceSchedules
         .map(_maintenanceScheduleToJson)
+        .toList(),
+    'roStages': roStages.map(_roStageToJson).toList(),
+    'roStageReplacements': roStageReplacements
+        .map(_roStageReplacementToJson)
         .toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
@@ -292,6 +306,12 @@ BackupData decodeBackup(String jsonString) {
       _maintenanceScheduleFromJson,
       required: false,
     ),
+    roStages: section('roStages', _roStageFromJson, required: false),
+    roStageReplacements: section(
+      'roStageReplacements',
+      _roStageReplacementFromJson,
+      required: false,
+    ),
     settings: section('settings', _settingFromJson),
   );
 }
@@ -342,6 +362,11 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     'maintenanceSchedules',
     data.maintenanceSchedules.map((r) => r.id),
   );
+  requireSaneIds('roStages', data.roStages.map((r) => r.id));
+  requireSaneIds(
+    'roStageReplacements',
+    data.roStageReplacements.map((r) => r.id),
+  );
 
   // Unique aquarium ids (they are the FK target for every other table).
   final tankIds = <int>{};
@@ -387,6 +412,26 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     'maintenanceSchedules',
     data.maintenanceSchedules.map((r) => r.tankId.value),
   );
+
+  // RO stages are the FK target of the replacement log — same unique-id +
+  // no-dangling-reference checks the tanks get (U16).
+  final roStageIds = <int>{};
+  for (final s in data.roStages) {
+    if (!roStageIds.add(s.id.value)) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'duplicate roStages id ${s.id.value}',
+      );
+    }
+  }
+  for (final r in data.roStageReplacements) {
+    if (!roStageIds.contains(r.stageId.value)) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'roStageReplacements references missing stage ${r.stageId.value}',
+      );
+    }
+  }
 
   // A test set's name is user-visible text on a chip; a whitespace-only name
   // would render an invisible, untappable-looking chip (the SQL length check
@@ -465,6 +510,35 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     ),
     names(MaintenanceCadenceUnit.values),
   );
+
+  requireKnown(
+    'roStages.stageType',
+    data.roStages.map((s) => s.stageType.present ? s.stageType.value : null),
+    names(RoStageType.values),
+  );
+
+  // The same at-the-door rules the maintenance plans get (#8): a custom stage
+  // without a title is unrenderable, and a lifespan below 1 day is the
+  // unknown-cadence garbage the domain refuses to guess about — either would
+  // restore a permanently silent stage.
+  for (final s in data.roStages) {
+    final type = s.stageType.present ? s.stageType.value : null;
+    final title = s.title.present ? s.title.value : null;
+    if (type == RoStageType.custom.name &&
+        (title == null || title.trim().isEmpty)) {
+      throw const InvalidBackupException(
+        BackupRejection.inconsistent,
+        'roStages: custom stage with blank title',
+      );
+    }
+    final lifespan = s.lifespanDays.present ? s.lifespanDays.value : null;
+    if (lifespan != null && lifespan < 1) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'roStages: lifespanDays $lifespan out of range',
+      );
+    }
+  }
 
   // A maintenance plan is either typed (a known actionType) or a custom task,
   // which must carry a visible title; a plan with neither is unrenderable. A
@@ -574,6 +648,8 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       dosingEntryRows: data.dosingEntries,
       readingTemplateRows: data.readingTemplates,
       maintenanceScheduleRows: data.maintenanceSchedules,
+      roStageRows: data.roStages,
+      roStageReplacementRows: data.roStageReplacements,
       settingRows: data.settings,
       // Never overwrite this device's own preferences with the backup's (#18).
       preserveSettingKeys: SettingKey.deviceLocalKeys,
@@ -600,6 +676,9 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   var dosingEntries = await db.getAllDosingEntries();
   var readingTemplates = await db.getAllReadingTemplates();
   var maintenanceSchedules = await db.getAllMaintenanceSchedules();
+  // Device-scoped (no tankId) — never subject to the soft-delete filtering.
+  final roStages = await db.getAllRoStages();
+  final roStageReplacements = await db.getAllRoStageReplacements();
   final settings = await db.getAllSettings();
   // Soft-deleted tanks (U10) are conceptually deleted — their rows only
   // persist through the brief undo window. Exclude them and their child rows
@@ -654,6 +733,8 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       dosingEntries: dosingEntries,
       readingTemplates: readingTemplates,
       maintenanceSchedules: maintenanceSchedules,
+      roStages: roStages,
+      roStageReplacements: roStageReplacements,
       settings: settings,
     ),
   );
@@ -990,6 +1071,44 @@ MaintenanceSchedulesCompanion _maintenanceScheduleFromJson(
   remindEnabled: Value((m['remindEnabled'] as bool?) ?? true),
   note: Value(m['note'] as String?),
   displayOrder: Value(m['displayOrder'] as int),
+);
+
+Map<String, dynamic> _roStageToJson(RoStage s) => {
+  'id': s.id,
+  'stageType': s.stageType,
+  'title': s.title,
+  'lifespanDays': s.lifespanDays,
+  'enabled': s.enabled,
+  'remindEnabled': s.remindEnabled,
+  'note': s.note,
+  'displayOrder': s.displayOrder,
+};
+
+RoStagesCompanion _roStageFromJson(Map<String, dynamic> m) => RoStagesCompanion(
+  id: Value(m['id'] as int),
+  stageType: Value(m['stageType'] as String),
+  title: Value(m['title'] as String?),
+  lifespanDays: Value(m['lifespanDays'] as int),
+  enabled: Value(m['enabled'] as bool),
+  remindEnabled: Value(m['remindEnabled'] as bool),
+  note: Value(m['note'] as String?),
+  displayOrder: Value(m['displayOrder'] as int),
+);
+
+Map<String, dynamic> _roStageReplacementToJson(RoStageReplacement r) => {
+  'id': r.id,
+  'stageId': r.stageId,
+  'replacedAt': r.replacedAt.millisecondsSinceEpoch,
+  'note': r.note,
+};
+
+RoStageReplacementsCompanion _roStageReplacementFromJson(
+  Map<String, dynamic> m,
+) => RoStageReplacementsCompanion(
+  id: Value(m['id'] as int),
+  stageId: Value(m['stageId'] as int),
+  replacedAt: Value(_date(m['replacedAt'])),
+  note: Value(m['note'] as String?),
 );
 
 Map<String, dynamic> _settingToJson(Setting s) => {

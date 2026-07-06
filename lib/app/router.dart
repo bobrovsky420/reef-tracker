@@ -18,6 +18,7 @@ import '../features/home/home_shell.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
+import '../features/ro/ro_screen.dart';
 import '../features/settings/backups_screen.dart';
 import '../features/settings/reminders_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -122,6 +123,7 @@ final appRouter = GoRouter(
       path: '/schedule',
       builder: (context, state) => const MaintenanceScheduleScreen(),
     ),
+    GoRoute(path: '/ro', builder: (context, state) => const RoScreen()),
     GoRoute(
       path: '/calculator/salinity',
       builder: (context, state) => const SalinityCalculatorScreen(),

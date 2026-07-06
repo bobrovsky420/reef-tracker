@@ -461,6 +461,43 @@ void main() {
     expect(row.weekdays, isNull);
   });
 
+  test('upgrading from v17 creates the RO tables (U16)', () async {
+    // seedFullSchemaAt builds the current schema, so drop both tables (and
+    // the replacement index) to reconstruct a genuine v17 file where the
+    // from<18 step must actually create them.
+    final file = File('${tempDir.path}/from17-noro.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    await seed.getAllTanks();
+    await seed.customStatement(
+      'DROP INDEX IF EXISTS idx_ro_replacements_stage',
+    );
+    await seed.customStatement('DROP TABLE ro_stage_replacements');
+    await seed.customStatement('DROP TABLE ro_stages');
+    await seed.customStatement('PRAGMA user_version = 17');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    // Exercise both new tables on real write + read paths.
+    await db.seedDefaultRoStages();
+    final stages = await db.getRoStages();
+    expect(stages, hasLength(4));
+    final replacedAt = DateTime(2026, 7, 1, 12);
+    await db.insertRoReplacement(
+      stageId: stages.first.id,
+      replacedAt: replacedAt,
+    );
+    expect(await db.latestRoReplacementTimes(), {stages.first.id: replacedAt});
+    expect(await indexNames(db), contains('idx_ro_replacements_stage'));
+    // Seeding is guarded by the settings flag, not the row count: deleting
+    // every stage must stick across the next seed call.
+    for (final s in stages) {
+      await db.deleteRoStage(s.id);
+    }
+    await db.seedDefaultRoStages();
+    expect(await db.getRoStages(), isEmpty);
+  });
+
   group('guarded migration steps are idempotent', () {
     // v3..(schemaVersion-1): re-running each upgrade against a schema that
     // already has every table/column must not throw.

@@ -244,6 +244,42 @@ void main() {
       const Setting(key: 'active_tank_id', value: '1'),
       const Setting(key: 'locale', value: null),
     ];
+    final roStages = [
+      const RoStage(
+        id: 80,
+        stageType: 'membrane',
+        title: null,
+        lifespanDays: 720,
+        enabled: true,
+        remindEnabled: true,
+        note: '75 GPD',
+        displayOrder: 2,
+      ),
+      const RoStage(
+        id: 81,
+        stageType: 'custom',
+        title: 'Second DI cartridge',
+        lifespanDays: 120,
+        enabled: false,
+        remindEnabled: false,
+        note: null,
+        displayOrder: 4,
+      ),
+    ];
+    final roStageReplacements = [
+      RoStageReplacement(
+        id: 90,
+        stageId: 80,
+        replacedAt: DateTime.fromMillisecondsSinceEpoch(1700010000000),
+        note: 'new Filmtec',
+      ),
+      RoStageReplacement(
+        id: 91,
+        stageId: 81,
+        replacedAt: DateTime.fromMillisecondsSinceEpoch(1700011000000),
+        note: null,
+      ),
+    ];
 
     test('round-trips every table preserving ids and values', () {
       final json = encodeBackup(
@@ -258,6 +294,8 @@ void main() {
         dosingEntries: dosingEntries,
         readingTemplates: readingTemplates,
         maintenanceSchedules: maintenanceSchedules,
+        roStages: roStages,
+        roStageReplacements: roStageReplacements,
         settings: settings,
       );
       final data = decodeBackup(json);
@@ -389,6 +427,27 @@ void main() {
       expect(data.dosingEntries[0].remindEnabled.value, isTrue);
       expect(data.dosingEntries[1].remindEnabled.value, isFalse);
 
+      // RO unit sections (U16) — no tankId by design.
+      final rs0 = data.roStages[0];
+      expect(rs0.id.value, 80);
+      expect(rs0.stageType.value, 'membrane');
+      expect(rs0.title.value, isNull);
+      expect(rs0.lifespanDays.value, 720);
+      expect(rs0.enabled.value, isTrue);
+      expect(rs0.remindEnabled.value, isTrue);
+      expect(rs0.note.value, '75 GPD');
+      expect(rs0.displayOrder.value, 2);
+      final rs1 = data.roStages[1];
+      expect(rs1.stageType.value, 'custom');
+      expect(rs1.title.value, 'Second DI cartridge');
+      expect(rs1.enabled.value, isFalse);
+      final rr0 = data.roStageReplacements[0];
+      expect(rr0.id.value, 90);
+      expect(rr0.stageId.value, 80);
+      expect(rr0.replacedAt.value, roStageReplacements[0].replacedAt);
+      expect(rr0.note.value, 'new Filmtec');
+      expect(data.roStageReplacements[1].note.value, isNull);
+
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
       expect(data.settings[0].value.value, 'fahrenheit');
@@ -472,6 +531,14 @@ void main() {
                 RegExp(r',\s*"maintenanceSchedules":\s*\[.*?\]', dotAll: true),
                 '',
               )
+              .replaceFirst(
+                RegExp(r',\s*"roStages":\s*\[.*?\]', dotAll: true),
+                '',
+              )
+              .replaceFirst(
+                RegExp(r',\s*"roStageReplacements":\s*\[.*?\]', dotAll: true),
+                '',
+              )
               // Older backups predate the checksum too (T7); with it left in,
               // the stripped document would (correctly) fail verification.
               .replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
@@ -483,6 +550,8 @@ void main() {
       expect(data.dosingEntries, isEmpty);
       expect(data.readingTemplates, isEmpty);
       expect(data.maintenanceSchedules, isEmpty);
+      expect(data.roStages, isEmpty);
+      expect(data.roStageReplacements, isEmpty);
       expect(data.readings.length, 2);
     });
 
@@ -781,6 +850,8 @@ void main() {
       List<ReadingsCompanion> readings = const [],
       List<ReadingTemplatesCompanion> readingTemplates = const [],
       List<MaintenanceSchedulesCompanion> maintenanceSchedules = const [],
+      List<RoStagesCompanion> roStages = const [],
+      List<RoStageReplacementsCompanion> roStageReplacements = const [],
       int schemaVersion = 1,
     }) => BackupData(
       schemaVersion: schemaVersion,
@@ -794,6 +865,8 @@ void main() {
       dosingEntries: const [],
       readingTemplates: readingTemplates,
       maintenanceSchedules: maintenanceSchedules,
+      roStages: roStages,
+      roStageReplacements: roStageReplacements,
       settings: const [],
     );
 
@@ -1044,6 +1117,87 @@ void main() {
         rejectedWith(BackupRejection.inconsistent),
       );
     });
+
+    RoStagesCompanion roStage(
+      int id, {
+      String stageType = 'sediment',
+      String? title,
+      int lifespanDays = 90,
+    }) => RoStagesCompanion(
+      id: Value(id),
+      stageType: Value(stageType),
+      title: Value(title),
+      lifespanDays: Value(lifespanDays),
+      enabled: const Value(true),
+      remindEnabled: const Value(true),
+      displayOrder: const Value(0),
+    );
+
+    RoStageReplacementsCompanion roReplacement(int id, int stageId) =>
+        RoStageReplacementsCompanion(
+          id: Value(id),
+          stageId: Value(stageId),
+          replacedAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+        );
+
+    test('accepts consistent RO stages and replacements (U16)', () {
+      final d = dataWith(
+        roStages: [
+          roStage(80),
+          roStage(81, stageType: 'custom', title: 'Second DI'),
+        ],
+        roStageReplacements: [roReplacement(90, 80)],
+      );
+      expect(() => validateBackup(d, appSchemaVersion: 18), returnsNormally);
+    });
+
+    test('rejects duplicate RO stage ids (U16)', () {
+      final d = dataWith(roStages: [roStage(80), roStage(80)]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 18),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a replacement referencing a missing stage (U16)', () {
+      final d = dataWith(
+        roStages: [roStage(80)],
+        roStageReplacements: [roReplacement(90, 99)],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 18),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects an unknown RO stage type (U16, #34)', () {
+      final d = dataWith(roStages: [roStage(80, stageType: 'uvLamp')]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 18),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a custom RO stage with a blank title (U16)', () {
+      for (final title in const [null, '   ']) {
+        final d = dataWith(
+          roStages: [roStage(80, stageType: 'custom', title: title)],
+        );
+        expect(
+          () => validateBackup(d, appSchemaVersion: 18),
+          rejectedWith(BackupRejection.inconsistent),
+          reason: 'title=$title',
+        );
+      }
+    });
+
+    test('rejects a sub-1-day RO lifespan (U16, #8 rule)', () {
+      final d = dataWith(roStages: [roStage(80, lifespanDays: 0)]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 18),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
   });
 
   group('full database round-trip', () {
@@ -1110,6 +1264,16 @@ void main() {
       );
       await db.setTestCadence((await db.getTrackedParameters(id)).first.id, 7);
       await db.setSetting('temp_unit', 'fahrenheit');
+      // The device-scoped RO unit (U16).
+      final stageId = await db.insertRoStage(
+        stageType: 'diResin',
+        lifespanDays: 120,
+      );
+      await db.insertRoReplacement(
+        stageId: stageId,
+        replacedAt: DateTime(2026, 1, 5),
+        note: 'fresh resin',
+      );
       return id;
     }
 
@@ -1156,6 +1320,14 @@ void main() {
         (await dst.getAllTrackedParameters()).length,
         (await src.getAllTrackedParameters()).length,
       );
+      // The RO unit (U16) rides the backup, ids and FK link intact.
+      final restoredStage = (await dst.getAllRoStages()).single;
+      expect(restoredStage.stageType, 'diResin');
+      expect(restoredStage.lifespanDays, 120);
+      final restoredReplacement =
+          (await dst.getAllRoStageReplacements()).single;
+      expect(restoredReplacement.stageId, restoredStage.id);
+      expect(restoredReplacement.note, 'fresh resin');
       // temp_unit is a device-local preference: the backup's value must NOT be
       // imported (#18). dst had none, so it stays unset after restore.
       expect(await dst.getSetting('temp_unit'), isNull);

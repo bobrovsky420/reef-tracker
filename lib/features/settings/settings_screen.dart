@@ -178,6 +178,13 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/settings/reminders'),
           ),
+          SwitchListTile(
+            secondary: const Icon(Icons.water_drop_outlined),
+            title: Text(l.roUnitTitle),
+            subtitle: Text(l.roUnitToggleSubtitle),
+            value: ref.watch(roUnitEnabledProvider).value ?? true,
+            onChanged: (v) => settings.setRoUnitEnabled(v),
+          ),
           const Divider(),
           _SectionHeader(l.toolsSection),
           ListTile(

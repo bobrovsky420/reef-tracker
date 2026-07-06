@@ -1509,4 +1509,88 @@ class AppLocalizationsRu extends AppLocalizations {
   String monthlyOnDayN(int n) {
     return 'Ежемесячно $n-го числа';
   }
+
+  @override
+  String get roUnitTitle => 'Установка обратного осмоса';
+
+  @override
+  String get roStageSediment => 'Механический фильтр';
+
+  @override
+  String get roStageCarbonBlock => 'Угольный блок';
+
+  @override
+  String get roStageMembrane => 'Мембрана обратного осмоса';
+
+  @override
+  String get roStageDiResin => 'DI-смола';
+
+  @override
+  String get roCustomStage => 'Свой элемент';
+
+  @override
+  String get roAddStage => 'Добавить элемент';
+
+  @override
+  String get roEditStage => 'Изменить элемент';
+
+  @override
+  String get roLifespanLabel => 'Менять каждые';
+
+  @override
+  String get roUnitDays => 'дней';
+
+  @override
+  String get roUnitWeeks => 'недель';
+
+  @override
+  String get roUnitMonths => 'месяцев';
+
+  @override
+  String get roPartOfUnit => 'Есть в моей установке';
+
+  @override
+  String get roPartOfUnitHint =>
+      'Выключите, если в вашей установке нет этой ступени';
+
+  @override
+  String get roHiddenStages => 'Нет в моей установке';
+
+  @override
+  String get roMarkReplaced => 'Заменено';
+
+  @override
+  String get roReplacedRecorded => 'Замена записана';
+
+  @override
+  String roLastReplaced(String date) {
+    return 'Заменено $date';
+  }
+
+  @override
+  String get roNoReplacementYet => 'Замены ещё не записаны';
+
+  @override
+  String get roDeleteStageTitle => 'Удалить элемент?';
+
+  @override
+  String get roDeleteStageBody =>
+      'Элемент и история его замен будут удалены. Это нельзя отменить.';
+
+  @override
+  String get roEmptyBody =>
+      'Нет элементов. Добавьте фильтры вашей установки кнопкой +.';
+
+  @override
+  String get roSetupPrompt => 'Следите за заменой фильтров и мембраны';
+
+  @override
+  String get roUnitToggleSubtitle =>
+      'Показывать на вкладке «Действия», с напоминаниями о замене фильтров';
+
+  @override
+  String get roAllOk => 'Все элементы в порядке';
+
+  @override
+  String get notifRoTitle => 'Замените фильтры обратного осмоса';
 }

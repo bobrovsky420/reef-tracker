@@ -7,6 +7,7 @@ import '../../domain/reminders.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../ro/ro_summary_tile.dart';
 import 'schedule_screen.dart';
 
 /// Combined log of tank actions (water changes and activated-carbon changes)
@@ -30,10 +31,12 @@ class ActionsBody extends ConsumerWidget {
       ...equipment.map(_EquipmentEntry.new),
     ]..sort((a, b) => b.time.compareTo(a.time));
 
-    // Due chips for the maintenance schedule (U12) sit above the log; logging
-    // the matching action (or Mark done) resets a chip's timer.
+    // The shared RO unit's summary (U16) and the maintenance due chips (U12)
+    // sit above the log; logging the matching action (or Mark done) resets a
+    // chip's timer.
     return Column(
       children: [
+        const RoSummaryTile(),
         const MaintenanceDueChips(),
         Expanded(
           child: entries.isEmpty

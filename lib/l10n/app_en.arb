@@ -600,5 +600,36 @@
   "@monthlyOnDayN": {
     "description": "Schedule subtitle: the task repeats every month on day {n} (1–31, clamped to short months).",
     "placeholders": { "n": { "type": "int" } }
-  }
+  },
+
+  "roUnitTitle": "Reverse osmosis unit",
+  "roStageSediment": "Sediment filter",
+  "roStageCarbonBlock": "Carbon block",
+  "roStageMembrane": "RO membrane",
+  "roStageDiResin": "DI resin",
+  "roCustomStage": "Custom part",
+  "roAddStage": "Add part",
+  "roEditStage": "Edit part",
+  "roLifespanLabel": "Replace every",
+  "roUnitDays": "days",
+  "roUnitWeeks": "weeks",
+  "roUnitMonths": "months",
+  "roPartOfUnit": "Part of my unit",
+  "roPartOfUnitHint": "Turn off if your unit doesn't have this stage",
+  "roHiddenStages": "Not on my unit",
+  "roMarkReplaced": "Mark replaced",
+  "roReplacedRecorded": "Replacement recorded",
+  "roLastReplaced": "Replaced {date}",
+  "@roLastReplaced": {
+    "description": "RO stage subtitle: when the stage was last replaced; {date} is a localized date.",
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "roNoReplacementYet": "No replacement recorded yet",
+  "roDeleteStageTitle": "Delete part?",
+  "roDeleteStageBody": "This removes the part and its replacement history. This cannot be undone.",
+  "roEmptyBody": "No parts. Add your RO unit's filters with +.",
+  "roSetupPrompt": "Track filter and membrane replacements",
+  "roUnitToggleSubtitle": "Show on the Actions tab, with filter-replacement reminders",
+  "roAllOk": "All parts OK",
+  "notifRoTitle": "Replace RO filters"
 }

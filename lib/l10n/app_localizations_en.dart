@@ -1493,4 +1493,87 @@ class AppLocalizationsEn extends AppLocalizations {
   String monthlyOnDayN(int n) {
     return 'Monthly on day $n';
   }
+
+  @override
+  String get roUnitTitle => 'Reverse osmosis unit';
+
+  @override
+  String get roStageSediment => 'Sediment filter';
+
+  @override
+  String get roStageCarbonBlock => 'Carbon block';
+
+  @override
+  String get roStageMembrane => 'RO membrane';
+
+  @override
+  String get roStageDiResin => 'DI resin';
+
+  @override
+  String get roCustomStage => 'Custom part';
+
+  @override
+  String get roAddStage => 'Add part';
+
+  @override
+  String get roEditStage => 'Edit part';
+
+  @override
+  String get roLifespanLabel => 'Replace every';
+
+  @override
+  String get roUnitDays => 'days';
+
+  @override
+  String get roUnitWeeks => 'weeks';
+
+  @override
+  String get roUnitMonths => 'months';
+
+  @override
+  String get roPartOfUnit => 'Part of my unit';
+
+  @override
+  String get roPartOfUnitHint =>
+      'Turn off if your unit doesn\'t have this stage';
+
+  @override
+  String get roHiddenStages => 'Not on my unit';
+
+  @override
+  String get roMarkReplaced => 'Mark replaced';
+
+  @override
+  String get roReplacedRecorded => 'Replacement recorded';
+
+  @override
+  String roLastReplaced(String date) {
+    return 'Replaced $date';
+  }
+
+  @override
+  String get roNoReplacementYet => 'No replacement recorded yet';
+
+  @override
+  String get roDeleteStageTitle => 'Delete part?';
+
+  @override
+  String get roDeleteStageBody =>
+      'This removes the part and its replacement history. This cannot be undone.';
+
+  @override
+  String get roEmptyBody => 'No parts. Add your RO unit\'s filters with +.';
+
+  @override
+  String get roSetupPrompt => 'Track filter and membrane replacements';
+
+  @override
+  String get roUnitToggleSubtitle =>
+      'Show on the Actions tab, with filter-replacement reminders';
+
+  @override
+  String get roAllOk => 'All parts OK';
+
+  @override
+  String get notifRoTitle => 'Replace RO filters';
 }

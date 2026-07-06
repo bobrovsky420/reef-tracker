@@ -244,6 +244,81 @@ void main() {
     });
   });
 
+  group('RO unit reminders (U16)', () {
+    test('enabled stages fire on the maintenance channel with the RO title, '
+        'never a tank name', () async {
+      // Two tanks: tank-scoped maintenance would carry a tank suffix, the
+      // device-scoped RO notification must not.
+      await tank('Reef A');
+      await tank('Reef B');
+      await settings.setRemindersMaintenance(true);
+      await db.seedDefaultRoStages();
+      final sediment = (await db.getRoStages()).firstWhere(
+        (s) => s.stageType == 'sediment',
+      );
+      // Last replaced 84 days ago on a 90-day lifespan → due 21 Jul.
+      await db.insertRoReplacement(
+        stageId: sediment.id,
+        replacedAt: DateTime(2026, 4, 22, 12),
+      );
+
+      final planned = await scheduler.plan(now: now);
+      expect(planned, hasLength(1));
+      final n = planned.single;
+      expect(n.kind, ReminderKind.maintenance);
+      expect(n.fireAtLocal, DateTime(2026, 7, 21, 9));
+      expect(n.title, 'Replace RO filters');
+      expect(n.body, 'Sediment filter');
+      expect(n.payload, contains('/ro'));
+      expect(n.payload, contains('"tankId":null'));
+    });
+
+    test('the Settings feature switch silences all RO reminders', () async {
+      await tank('Reef');
+      await settings.setRemindersMaintenance(true);
+      await db.seedDefaultRoStages();
+      final sediment = (await db.getRoStages()).firstWhere(
+        (s) => s.stageType == 'sediment',
+      );
+      await db.insertRoReplacement(
+        stageId: sediment.id,
+        replacedAt: DateTime(2026, 4, 22, 12),
+      );
+      expect(await scheduler.plan(now: now), hasLength(1));
+
+      await settings.setRoUnitEnabled(false);
+      expect(await scheduler.plan(now: now), isEmpty);
+    });
+
+    test('disabled and opted-out stages, and stages with no logged '
+        'replacement, are silent', () async {
+      await tank('Reef');
+      await settings.setRemindersMaintenance(true);
+      await db.seedDefaultRoStages();
+      final stages = await db.getRoStages();
+      final sediment = stages.firstWhere((s) => s.stageType == 'sediment');
+      final carbon = stages.firstWhere((s) => s.stageType == 'carbonBlock');
+      // Anchored but disabled.
+      await db.insertRoReplacement(
+        stageId: sediment.id,
+        replacedAt: DateTime(2026, 4, 22, 12),
+      );
+      await db.setRoStageEnabled(sediment.id, false);
+      // Anchored but reminder opted out (due 20 Jul, within horizon).
+      await db.insertRoReplacement(
+        stageId: carbon.id,
+        replacedAt: DateTime(2026, 1, 21, 12),
+      );
+      await db.updateRoStage(
+        (await db.getRoStages())
+            .firstWhere((s) => s.id == carbon.id)
+            .copyWith(remindEnabled: false),
+      );
+      // The remaining stages have no replacement logged → no guessed due.
+      expect(await scheduler.plan(now: now), isEmpty);
+    });
+  });
+
   test('multi-tank titles carry the tank name; soft-deleted tanks are '
       'excluded', () async {
     final a = await tank('Reef A');

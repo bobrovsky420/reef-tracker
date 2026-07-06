@@ -106,7 +106,14 @@ enum SettingKey {
   remindersTesting(kRemindersTestingKey, deviceLocal: true),
   remindersDosing(kRemindersDosingKey, deviceLocal: true),
   remindersMaintenance(kRemindersMaintenanceKey, deviceLocal: true),
-  reminderTime(kReminderTimeKey, deviceLocal: true);
+  reminderTime(kReminderTimeKey, deviceLocal: true),
+  // NOT device-local: the flag travels with the RO stages it describes (both
+  // ride the backup), so a restore either brings stages + flag together or
+  // clears both — the next RO-screen visit then re-seeds the defaults.
+  roSeeded(kRoSeededKey, deviceLocal: false),
+  // The RO-unit feature switch (U16) is an ordinary display preference like
+  // trendEnabled: device-local, default on.
+  roUnitEnabled(kRoUnitEnabledKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -226,6 +233,19 @@ class AppSettings {
       _watch(SettingKey.healthDisplay).map(decodeHealthDisplay);
   Future<void> setHealthDisplay(HealthDisplay display) =>
       _write(SettingKey.healthDisplay, display.name);
+
+  // --- RO unit (U16) -----------------------------------------------------------
+
+  /// Whether the reverse-osmosis unit feature is shown at all (default on):
+  /// off hides the Actions-tab summary row and silences RO reminders. Purely
+  /// a visibility preference — the stages and their history stay stored.
+  static bool decodeRoUnitEnabled(String? raw) => raw == null || raw == 'true';
+  Stream<bool> watchRoUnitEnabled() =>
+      _watch(SettingKey.roUnitEnabled).map(decodeRoUnitEnabled);
+  Future<bool> readRoUnitEnabled() async =>
+      decodeRoUnitEnabled(await _read(SettingKey.roUnitEnabled));
+  Future<void> setRoUnitEnabled(bool enabled) =>
+      _write(SettingKey.roUnitEnabled, enabled.toString());
 
   // --- feature tour ----------------------------------------------------------
 

@@ -2634,6 +2634,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Monthly on day {n}'**
   String monthlyOnDayN(int n);
+
+  /// No description provided for @roUnitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverse osmosis unit'**
+  String get roUnitTitle;
+
+  /// No description provided for @roStageSediment.
+  ///
+  /// In en, this message translates to:
+  /// **'Sediment filter'**
+  String get roStageSediment;
+
+  /// No description provided for @roStageCarbonBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbon block'**
+  String get roStageCarbonBlock;
+
+  /// No description provided for @roStageMembrane.
+  ///
+  /// In en, this message translates to:
+  /// **'RO membrane'**
+  String get roStageMembrane;
+
+  /// No description provided for @roStageDiResin.
+  ///
+  /// In en, this message translates to:
+  /// **'DI resin'**
+  String get roStageDiResin;
+
+  /// No description provided for @roCustomStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom part'**
+  String get roCustomStage;
+
+  /// No description provided for @roAddStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add part'**
+  String get roAddStage;
+
+  /// No description provided for @roEditStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit part'**
+  String get roEditStage;
+
+  /// No description provided for @roLifespanLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace every'**
+  String get roLifespanLabel;
+
+  /// No description provided for @roUnitDays.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get roUnitDays;
+
+  /// No description provided for @roUnitWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'weeks'**
+  String get roUnitWeeks;
+
+  /// No description provided for @roUnitMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'months'**
+  String get roUnitMonths;
+
+  /// No description provided for @roPartOfUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Part of my unit'**
+  String get roPartOfUnit;
+
+  /// No description provided for @roPartOfUnitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off if your unit doesn\'t have this stage'**
+  String get roPartOfUnitHint;
+
+  /// No description provided for @roHiddenStages.
+  ///
+  /// In en, this message translates to:
+  /// **'Not on my unit'**
+  String get roHiddenStages;
+
+  /// No description provided for @roMarkReplaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark replaced'**
+  String get roMarkReplaced;
+
+  /// No description provided for @roReplacedRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacement recorded'**
+  String get roReplacedRecorded;
+
+  /// RO stage subtitle: when the stage was last replaced; {date} is a localized date.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced {date}'**
+  String roLastReplaced(String date);
+
+  /// No description provided for @roNoReplacementYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No replacement recorded yet'**
+  String get roNoReplacementYet;
+
+  /// No description provided for @roDeleteStageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete part?'**
+  String get roDeleteStageTitle;
+
+  /// No description provided for @roDeleteStageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the part and its replacement history. This cannot be undone.'**
+  String get roDeleteStageBody;
+
+  /// No description provided for @roEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No parts. Add your RO unit\'s filters with +.'**
+  String get roEmptyBody;
+
+  /// No description provided for @roSetupPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Track filter and membrane replacements'**
+  String get roSetupPrompt;
+
+  /// No description provided for @roUnitToggleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on the Actions tab, with filter-replacement reminders'**
+  String get roUnitToggleSubtitle;
+
+  /// No description provided for @roAllOk.
+  ///
+  /// In en, this message translates to:
+  /// **'All parts OK'**
+  String get roAllOk;
+
+  /// No description provided for @notifRoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace RO filters'**
+  String get notifRoTitle;
 }
 
 class _AppLocalizationsDelegate

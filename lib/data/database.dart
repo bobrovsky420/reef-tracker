@@ -13,6 +13,7 @@ import '../domain/parameter_catalog.dart';
 import '../domain/presets.dart';
 import '../domain/ratio.dart';
 import '../domain/reminders.dart';
+import '../domain/ro.dart';
 import '../domain/setup_type.dart';
 import '../domain/supplement_catalog.dart';
 import '../domain/units.dart';
@@ -336,6 +337,56 @@ class MaintenanceSchedules extends Table {
   IntColumn get displayOrder => integer().withDefault(const Constant(0))();
 }
 
+/// One stage (filter/part) of the reverse-osmosis unit (U16). Deliberately
+/// **no tankId** — like [Settings], the RO unit is a property of the
+/// household and is shared by every aquarium.
+///
+/// The default 4-stage set is seeded the first time the RO screen is opened
+/// ([AppDatabase.seedDefaultRoStages]); a user whose unit lacks a stage (e.g.
+/// no DI resin) unchecks it: [enabled] = false hides it from the overview and
+/// silences its reminders, but the row and its replacement history survive.
+@DataClassName('RoStage')
+class RoStages extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// [RoStageType.name]; `custom` rows carry their display name in [title],
+  /// typed rows render a localized name.
+  TextColumn get stageType => text()();
+
+  /// Display name for a custom stage; null for typed rows.
+  TextColumn get title => text().nullable()();
+
+  /// Replace every N days (edited as days/weeks/months in the UI). Due math
+  /// is elastic on the latest logged replacement (`domain/ro.dart`).
+  IntColumn get lifespanDays => integer()();
+
+  /// Whether this stage exists on the user's unit (the "uncheck if a lower
+  /// model is used" flag).
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+
+  /// Per-stage reminder opt-out; the maintenance master switch still gates
+  /// all RO reminders.
+  BoolColumn get remindEnabled => boolean().withDefault(const Constant(true))();
+
+  TextColumn get note => text().nullable()();
+
+  /// Position in the overview list (the water path through the unit).
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+}
+
+/// A logged replacement of one RO stage — the elastic anchor for that stage's
+/// next due date. A log (not a single `lastReplacedAt` column) so "mark
+/// replaced" gets the standard undo treatment and the history stays visible.
+@TableIndex(name: 'idx_ro_replacements_stage', columns: {#stageId})
+@DataClassName('RoStageReplacement')
+class RoStageReplacements extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get stageId =>
+      integer().references(RoStages, #id, onDelete: KeyAction.cascade)();
+  DateTimeColumn get replacedAt => dateTime()();
+  TextColumn get note => text().nullable()();
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -357,6 +408,8 @@ class Settings extends Table {
     DosingEntries,
     ReadingTemplates,
     MaintenanceSchedules,
+    RoStages,
+    RoStageReplacements,
     Settings,
   ],
 )
@@ -364,7 +417,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -517,14 +570,36 @@ class AppDatabase extends _$AppDatabase {
         // Maintenance repeat modes beyond every-N-days: interval unit
         // (weeks/months), fixed weekdays, fixed day of month.
         if (!await _columnExists('maintenance_schedules', 'cadence_unit')) {
-          await m.addColumn(maintenanceSchedules, maintenanceSchedules.cadenceUnit);
+          await m.addColumn(
+            maintenanceSchedules,
+            maintenanceSchedules.cadenceUnit,
+          );
         }
         if (!await _columnExists('maintenance_schedules', 'weekdays')) {
-          await m.addColumn(maintenanceSchedules, maintenanceSchedules.weekdays);
+          await m.addColumn(
+            maintenanceSchedules,
+            maintenanceSchedules.weekdays,
+          );
         }
         if (!await _columnExists('maintenance_schedules', 'month_day')) {
-          await m.addColumn(maintenanceSchedules, maintenanceSchedules.monthDay);
+          await m.addColumn(
+            maintenanceSchedules,
+            maintenanceSchedules.monthDay,
+          );
         }
+      }
+      if (from < 18) {
+        // Shared reverse-osmosis unit (U16): stages + replacement log.
+        if (!await _tableExists('ro_stages')) {
+          await m.createTable(roStages);
+        }
+        if (!await _tableExists('ro_stage_replacements')) {
+          await m.createTable(roStageReplacements);
+        }
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_ro_replacements_stage '
+          'ON ro_stage_replacements (stage_id)',
+        );
       }
     },
     beforeOpen: (details) async {
@@ -1419,6 +1494,142 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  // --- RO unit (U16) — device-scoped, shared across tanks --------------------
+
+  /// Every RO stage (enabled and disabled), in overview order.
+  Stream<List<RoStage>> watchRoStages() =>
+      (select(roStages)..orderBy([
+            (s) => OrderingTerm(expression: s.displayOrder),
+            (s) => OrderingTerm(expression: s.id),
+          ]))
+          .watch();
+
+  /// One-shot read for the background reminder scheduler.
+  Future<List<RoStage>> getRoStages() =>
+      (select(roStages)..orderBy([
+            (s) => OrderingTerm(expression: s.displayOrder),
+            (s) => OrderingTerm(expression: s.id),
+          ]))
+          .get();
+
+  /// Seeds the default 4-stage set on first use. Exists-check + insert run in
+  /// one transaction (#10) so a double-fire can't seed twice; a user who
+  /// deleted every stage on purpose is *not* re-seeded on the next visit —
+  /// the guard is a dedicated settings flag, not the row count.
+  Future<void> seedDefaultRoStages() async {
+    await transaction(() async {
+      if (await getSetting(kRoSeededKey) != null) return;
+      final existing = await (selectOnly(
+        roStages,
+      )..addColumns([roStages.id.count()])).getSingle();
+      if ((existing.read(roStages.id.count()) ?? 0) == 0) {
+        await batch((b) {
+          for (var i = 0; i < kRoDefaultStageOrder.length; i++) {
+            final type = kRoDefaultStageOrder[i];
+            b.insert(
+              roStages,
+              RoStagesCompanion.insert(
+                stageType: type.name,
+                lifespanDays: kRoDefaultLifespanDays[type]!,
+                displayOrder: Value(i),
+              ),
+            );
+          }
+        });
+      }
+      await setSetting(kRoSeededKey, 'true');
+    });
+  }
+
+  /// Creates an RO stage and returns its id. Max-order read + insert in one
+  /// transaction (#10); max(displayOrder) + 1, not the row count.
+  Future<int> insertRoStage({
+    required String stageType,
+    String? title,
+    required int lifespanDays,
+    bool enabled = true,
+    bool remindEnabled = true,
+    String? note,
+  }) {
+    return transaction(() async {
+      final existing = await select(roStages).get();
+      final order =
+          existing.fold<int>(
+            -1,
+            (m, s) => s.displayOrder > m ? s.displayOrder : m,
+          ) +
+          1;
+      return into(roStages).insert(
+        RoStagesCompanion.insert(
+          stageType: stageType,
+          title: Value(title),
+          lifespanDays: lifespanDays,
+          enabled: Value(enabled),
+          remindEnabled: Value(remindEnabled),
+          note: Value(note),
+          displayOrder: Value(order),
+        ),
+      );
+    });
+  }
+
+  Future<void> updateRoStage(RoStage stage) => update(roStages).replace(stage);
+
+  /// Shows/hides a stage without touching its other fields — the "my unit has
+  /// no DI resin" toggle. History is kept either way.
+  Future<void> setRoStageEnabled(int id, bool enabled) =>
+      (update(roStages)..where((s) => s.id.equals(id))).write(
+        RoStagesCompanion(enabled: Value(enabled)),
+      );
+
+  /// Permanently removes a stage **and its replacement history** (FK
+  /// cascade). Irreversible — callers confirm first (U10 conventions).
+  Future<void> deleteRoStage(int id) =>
+      (delete(roStages)..where((s) => s.id.equals(id))).go();
+
+  /// The full replacement log, newest first (small by nature: a handful of
+  /// stages replaced a few times a year).
+  Stream<List<RoStageReplacement>> watchRoReplacements() =>
+      (select(roStageReplacements)..orderBy([
+            (r) =>
+                OrderingTerm(expression: r.replacedAt, mode: OrderingMode.desc),
+            (r) => OrderingTerm(expression: r.id, mode: OrderingMode.desc),
+          ]))
+          .watch();
+
+  /// Logs a stage replacement; returns the row id (the undo handle).
+  Future<int> insertRoReplacement({
+    required int stageId,
+    required DateTime replacedAt,
+    String? note,
+  }) => into(roStageReplacements).insert(
+    RoStageReplacementsCompanion.insert(
+      stageId: stageId,
+      replacedAt: replacedAt,
+      note: Value(note),
+    ),
+  );
+
+  /// Removes a logged replacement — the Undo of a just-tapped "mark
+  /// replaced".
+  Future<void> deleteRoReplacement(int id) =>
+      (delete(roStageReplacements)..where((r) => r.id.equals(id))).go();
+
+  /// Latest replacement time per stage id — the elastic anchor for RO
+  /// reminders. One aggregate query, mirroring [latestReadingTimesPerParam].
+  Future<Map<int, DateTime>> latestRoReplacementTimes() async {
+    final maxReplaced = roStageReplacements.replacedAt.max();
+    final query = selectOnly(roStageReplacements)
+      ..addColumns([roStageReplacements.stageId, maxReplaced])
+      ..groupBy([roStageReplacements.stageId]);
+    final rows = await query.get();
+    return {
+      for (final r in rows)
+        if (r.read(maxReplaced) != null)
+          r.read(roStageReplacements.stageId)!: r.read(maxReplaced)!,
+    };
+  }
+
   // --- Reminder-scheduler reads (U1/U12) -------------------------------------
 
   /// Latest reading timestamp per parameter key — the elastic anchor for
@@ -1565,6 +1776,13 @@ class AppDatabase extends _$AppDatabase {
   Future<List<MaintenanceSchedule>> getAllMaintenanceSchedules() =>
       select(maintenanceSchedules).get();
 
+  /// Every RO stage (device-scoped — no tank filter applies).
+  Future<List<RoStage>> getAllRoStages() => select(roStages).get();
+
+  /// Every logged RO stage replacement.
+  Future<List<RoStageReplacement>> getAllRoStageReplacements() =>
+      select(roStageReplacements).get();
+
   /// Every settings key/value pair.
   Future<List<Setting>> getAllSettings() => select(settings).get();
 
@@ -1589,6 +1807,10 @@ class AppDatabase extends _$AppDatabase {
     required List<DosingEntriesCompanion> dosingEntryRows,
     required List<ReadingTemplatesCompanion> readingTemplateRows,
     required List<MaintenanceSchedulesCompanion> maintenanceScheduleRows,
+    // Optional with empty defaults: the RO tables (U16) postdate several
+    // callers/tests, and an absent backup section decodes to empty anyway.
+    List<RoStagesCompanion> roStageRows = const [],
+    List<RoStageReplacementsCompanion> roStageReplacementRows = const [],
     required List<SettingsCompanion> settingRows,
     Set<String> preserveSettingKeys = const {},
   }) async {
@@ -1605,6 +1827,8 @@ class AppDatabase extends _$AppDatabase {
       await delete(dosingEntries).go();
       await delete(readingTemplates).go();
       await delete(maintenanceSchedules).go();
+      await delete(roStageReplacements).go();
+      await delete(roStages).go();
       await delete(trackedParameters).go();
       // Preserve device-local preferences: wipe only the settings the restore
       // is allowed to replace.
@@ -1628,6 +1852,8 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(dosingEntries, dosingEntryRows);
         b.insertAll(readingTemplates, readingTemplateRows);
         b.insertAll(maintenanceSchedules, maintenanceScheduleRows);
+        b.insertAll(roStages, roStageRows);
+        b.insertAll(roStageReplacements, roStageReplacementRows);
         b.insertAll(settings, incomingSettings);
       });
     });
