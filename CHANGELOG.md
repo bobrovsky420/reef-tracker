@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.2] - 2026-07-06
+
+### Fixed
+- A task planned for tomorrow no longer shows "Due today" from the afternoon
+  before (and a task due today no longer turns "1 d overdue" by the
+  afternoon): due-in/overdue day counts now compare calendar dates instead of
+  rounding the remaining hours.
+- Creating a recurring plan for an already-logged action type (e.g. "water
+  change every 4 weeks, first due tomorrow") no longer shows it as overdue
+  right away: the picked due date now takes precedence until it passes, even
+  though the action's log history (which the repeat timer counts from)
+  started before the plan existed.
+
 ## [0.18.1] - 2026-07-06
 
 ### Added

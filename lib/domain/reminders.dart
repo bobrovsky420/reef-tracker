@@ -45,11 +45,21 @@ enum MaintenanceActionType {
 /// days, 0 = due today, < 0 = N days overdue.
 typedef DueStatus = ({DateTime dueAt, int daysLeft});
 
-/// Signed whole days from [now] to [t], rounded to the nearest day (the same
-/// rounding convention as `clock.daysSince`, but not clamped — the sign is
-/// the information here).
-int daysLeftUntil(DateTime t, {DateTime? now}) =>
-    (t.difference(now ?? DateTime.now()).inMinutes / (60 * 24)).round();
+/// Signed calendar days from [now]'s date to [t]'s date: "due in 1 d" means
+/// *tomorrow*, whatever the clock says. Comparing dates (not rounding the raw
+/// time difference to 24 h buckets) matters because picked due dates are
+/// stored at midnight: from the afternoon before, a midnight due date is
+/// < 12 h away and would round to "due today" — and a task due today at
+/// midnight would read "1 d overdue" by noon. The division rounds only to
+/// absorb DST-length days (23/25 h) in the date-only difference.
+int daysLeftUntil(DateTime t, {DateTime? now}) {
+  final ref = now ?? DateTime.now();
+  return (DateTime(t.year, t.month, t.day)
+              .difference(DateTime(ref.year, ref.month, ref.day))
+              .inHours /
+          24)
+      .round();
+}
 
 /// Bundles [dueAt] with its [daysLeftUntil] relative to [now].
 DueStatus dueStatus(DateTime dueAt, {DateTime? now}) =>
@@ -60,7 +70,12 @@ DueStatus dueStatus(DateTime dueAt, {DateTime? now}) =>
 ///
 /// * Recurring ([cadenceDays] >= 1): due [cadenceDays] after [lastDone].
 ///   Never done → [scheduledAt] when set (a planned first occurrence),
-///   otherwise due immediately ([now]).
+///   otherwise due immediately ([now]). A [scheduledAt] *later* than the
+///   elastic due acts as a **floor**: a typed plan's anchor is its action
+///   log, which predates the plan itself, so without the floor a freshly
+///   created "every 4 weeks, first due tomorrow" plan whose action was last
+///   logged 5 weeks ago would read overdue on day one — the user's explicit
+///   first-due date must win until a completion moves past it.
 /// * One-off ([cadenceDays] null): due at [scheduledAt]; once done (or with
 ///   no date at all) it is never due again — the caller retires the plan.
 /// * A stored cadence < 1 (possible only via restored/hand-edited data) means
@@ -81,13 +96,15 @@ DateTime? nextElasticDue({
   }
   if (cadenceDays < 1) return null;
   if (lastDone == null) return scheduledAt ?? (now ?? DateTime.now());
-  return DateTime(
+  final due = DateTime(
     lastDone.year,
     lastDone.month,
     lastDone.day + cadenceDays,
     lastDone.hour,
     lastDone.minute,
   );
+  if (scheduledAt != null && scheduledAt.isAfter(due)) return scheduledAt;
+  return due;
 }
 
 /// Unit of a maintenance plan's interval cadence ("every N days/weeks/
@@ -131,12 +148,15 @@ enum MaintenanceCadenceUnit {
 /// anchor (calendar modes: first match on/after it; elastic: due exactly
 /// then), else they are due now (elastic) / on the next matching day
 /// (calendar — "every Monday" created on a Wednesday means next Monday, not
-/// overdue since a completion that never happened).
+/// overdue since a completion that never happened). A [scheduledAt] later
+/// than the last completion **floors** the result in every mode: typed
+/// plans anchor on their action log, which predates the plan itself, and
+/// the user's explicit first-due date must not read as already overdue.
 ///
-/// Calendar-mode results are pinned to **noon** so the whole due day rounds
-/// to "due today" in [daysLeftUntil]; elastic results keep [lastDone]'s
-/// time of day (the pre-v17 behavior). The notification layer only uses the
-/// date part either way.
+/// Due dates are day-granular everywhere ([daysLeftUntil] compares calendar
+/// dates and the notification layer only uses the date part): calendar-mode
+/// results carry a neutral **noon** stamp, elastic results keep [lastDone]'s
+/// time of day (the pre-v17 behavior).
 DateTime? nextMaintenanceDue({
   DateTime? lastDone,
   int? cadenceDays,
@@ -198,22 +218,27 @@ int _clampToMonth(int day, DateTime month) {
   return day < daysInMonth ? day : daysInMonth;
 }
 
-/// First calendar day accepted by [matches], at noon: strictly after
-/// [lastDone] when the task has been done, else on/after [scheduledAt] when
-/// planned, else on/after today (so "every Monday" is due this Monday,
-/// including today). Scans a bounded window — a month-day match is at most
-/// ~31 days out, a weekday at most 7; null past the bound (unmatchable).
+/// First calendar day accepted by [matches], at noon: on/after [scheduledAt]
+/// while that planned first-due date lies after [lastDone] (the same floor
+/// rule as [nextElasticDue] — a typed plan's action-log anchor predates the
+/// plan), else strictly after [lastDone] when the task has been done, else
+/// on/after today (so "every Monday" is due this Monday, including today).
+/// Scans a bounded window — a month-day match is at most ~31 days out, a
+/// weekday at most 7; null past the bound (unmatchable).
 DateTime? _nextCalendarDue({
   required bool Function(DateTime day) matches,
   DateTime? lastDone,
   DateTime? scheduledAt,
   DateTime? now,
 }) {
-  final anchor = lastDone ?? scheduledAt ?? now ?? DateTime.now();
+  final seeded =
+      scheduledAt != null &&
+      (lastDone == null || scheduledAt.isAfter(lastDone));
+  final anchor = seeded ? scheduledAt : (lastDone ?? now ?? DateTime.now());
   var day = DateTime(
     anchor.year,
     anchor.month,
-    anchor.day + (lastDone != null ? 1 : 0),
+    anchor.day + (!seeded && lastDone != null ? 1 : 0),
     12,
   );
   for (var i = 0; i <= 62; i++) {

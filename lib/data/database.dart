@@ -316,8 +316,10 @@ class MaintenanceSchedules extends Table {
   /// ("every 1st of the month"). Takes precedence over [cadenceDays].
   IntColumn get monthDay => integer().nullable()();
 
-  /// Planned first (or one-off) due date; ignored once the task has ever been
-  /// completed.
+  /// Planned first (or one-off) due date. Floors the computed due date while
+  /// it lies after the last completion (typed rows anchor on their action
+  /// log, which predates the plan); irrelevant once a completion moves past
+  /// it.
   DateTimeColumn get scheduledAt => dateTime().nullable()();
 
   /// Completion stamp for **custom** rows only (typed rows read their action

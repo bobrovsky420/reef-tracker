@@ -27,14 +27,25 @@ void main() {
       );
     });
 
-    test('recurring, done: seed no longer matters', () {
+    test('recurring, done: a seed earlier than the elastic due is ignored', () {
       final due = nextElasticDue(
         lastDone: DateTime(2026, 7, 14),
         cadenceDays: 3,
-        scheduledAt: DateTime(2026, 9, 1),
+        scheduledAt: DateTime(2026, 7, 1),
         now: now,
       );
       expect(due, DateTime(2026, 7, 17));
+    });
+
+    test('recurring, done: a later planned first-due floors the elastic due '
+        '(typed plans: the action log predates the plan)', () {
+      final due = nextElasticDue(
+        lastDone: DateTime(2026, 6, 6),
+        cadenceDays: 28,
+        scheduledAt: DateTime(2026, 7, 16),
+        now: now,
+      );
+      expect(due, DateTime(2026, 7, 16));
     });
 
     test('one-off: due at its planned date until completed', () {
@@ -219,6 +230,32 @@ void main() {
       );
     });
 
+    test('a fresh "every 4 weeks, first due tomorrow" plan is due tomorrow, '
+        'not overdue (regression: action logged 5+ weeks before the plan)', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 6, 6), // last logged action, pre-plan
+          cadenceDays: 4,
+          cadenceUnit: 'weeks',
+          scheduledAt: DateTime(2026, 7, 16), // "tomorrow" for now = 15 Jul
+          now: now,
+        ),
+        DateTime(2026, 7, 16),
+      );
+    });
+
+    test('weekdays: a planned first-due after last done seeds the scan', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: now, // Wed 15 Jul
+          weekdays: '1',
+          scheduledAt: DateTime(2026, 8, 1), // a Saturday
+          now: now,
+        ),
+        DateTime(2026, 8, 3, 12), // first Monday on/after the seed, not 20 Jul
+      );
+    });
+
     test('weekdays take precedence over a stored cadence', () {
       expect(
         nextMaintenanceDue(
@@ -324,12 +361,25 @@ void main() {
       );
     });
 
-    test('rounds to the nearest day like clock.daysSince', () {
+    test('compares calendar dates, not 24 h buckets', () {
       expect(daysLeftUntil(now.add(const Duration(hours: 30)), now: now), 1);
       expect(daysLeftUntil(now.add(const Duration(hours: 42)), now: now), 2);
       expect(
         daysLeftUntil(now.subtract(const Duration(hours: 42)), now: now),
         -2,
+      );
+      // A due date picked in the calendar is stored at midnight. From the
+      // afternoon before (now = 10:30, and even later), tomorrow-at-midnight
+      // is < 24 h away but must read "due in 1 d", never "due today"...
+      expect(
+        daysLeftUntil(DateTime(2026, 7, 16), now: DateTime(2026, 7, 15, 22)),
+        1,
+      );
+      // ...and today-at-midnight must read "due today" all day, not become
+      // "1 d overdue" by the afternoon.
+      expect(
+        daysLeftUntil(DateTime(2026, 7, 15), now: DateTime(2026, 7, 15, 22)),
+        0,
       );
     });
 
