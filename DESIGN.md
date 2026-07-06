@@ -28,6 +28,7 @@ and no account.
 | Backup I/O         | `share_plus` (export via OS share sheet) + `file_picker` (import) + `crypto` (sha256 integrity checksum) |
 | App metadata       | `package_info_plus` (real version/build for the About box) |
 | Feature tour       | `showcaseview` (first-run spotlight tour of the top bar) |
+| Reminders          | `flutter_local_notifications` (scheduled local notifications; requires core-library desugaring in `android/app/build.gradle.kts` and the two receivers declared in the app manifest) + `timezone` (pure Dart; instants are scheduled as absolute UTC — no timezone-lookup plugin) |
 
 > ⚠️ **Pinned plugins.** `share_plus` (10.1.4) and `file_picker` (11.0.0) are
 > pinned to exact known-good versions, and `package_info_plus` is held below 10:
@@ -90,25 +91,27 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. Pure (no DB): consumes plain `RatioReading` (`{takenAt, value}`) records and `RatioSettings` (`{visible, displayOrder, bounds}`) instead of drift rows — `database.dart` hosts the thin row→record mappers (#52). |
 | `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.linearFit`, `TrendDirection`, projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward — and a `recovering` flag). Uses the most recent `window` readings and returns null until that many exist. The projection is **anchored on the fitted (regression) value at the last timestamp**, not the raw last reading, so one noisy endpoint can't swing the forecast. A value already *outside* its green range but moving back toward it is **recovering**: no crossing is forecast (the only bounds ahead are on the far side of green — forecasting them would warn about an improving parameter) and `recovering` is set so the UI could one day surface it positively (TODO U15). Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). Slopes with magnitude < 1e-9 (`_flatEpsilon`) classify as flat (no forecast), a bound projection is dropped when the bound lies opposite the direction of travel ("the bound is behind us"), and bounds failing `ZoneBounds.isValid` produce no forecast at all. See Features. |
 | `health_score.dart` | Pure, testable tank-health scoring (no Flutter/DB). `computeTankHealth(inputs)` → `TankHealth` (optional 0–100 `score`, worst-case `Zone` `band`, coarse `HealthGrade`, and per-parameter `ParameterHealth` breakdown). Each fresh, bounded parameter gets a 0–100 sub-score from its position in/beyond its bands (green 70–100, amber 40–69, red 0–39), interpolated linearly within the band: centred in green = 100, at a green bound = 70; amber runs 69→40 from the green toward the amber bound; red falls 39→0 with distance measured in *amber-band widths* past the amber bound (so a wide amber band forgives overshoot proportionally); one-sided/unmeasurable cases use flat 90 / 55 / 20. The aggregate is the importance-weighted mean — **weights:** 3 = temp, salinity, alk, NH₃/₄, NO₂ · 2.5 = pH · 2 = Ca, Mg, NO₃, PO₄ · 1 = everything else — then **capped to the worst zone's ceiling** (any red ⇒ ≤ 39, else any amber ⇒ ≤ 69) so one red can't be hidden behind greens. **Grade thresholds:** excellent ≥ 85, good ≥ 70, caution ≥ 40, critical < 40. Readings older than `kHealthFreshnessDays`=30 are excluded and surfaced separately; a value carrying no timestamp counts as stale too (freshness can't be verified), never as eternally fresh. See Features. |
+| `reminders.dart` | Pure due-date math for reminders & schedules (U1/U2/U12). `ReminderKind` (testing/dosing/maintenance — one notification channel + master switch each), `MaintenanceActionType` (the three logged action types; null stored type = custom task), `DueStatus` (`{dueAt, daysLeft}` — signed, negative = overdue). Two anchoring models, deliberately different: **elastic** for testing/maintenance (`nextElasticDue`: due = last done + cadence; logging resets the timer; never-done → `scheduledAt` seed or due now; one-off = due at `scheduledAt`, retired once done; a stored cadence < 1 is *unknown*, not daily — the #8 rule) and **calendar** for dosing (`doseOccurrences` expands frequency/interval/weekdays/`doseTime` from the segment's `startedAt`; no/garbage dose time, empty weekly weekdays, or an invalid interval → no occurrences, never a guess). `coalesceReminders` merges items into one notification per (tank, kind, day) — earliest fire time, deduped labels. `parseDoseTime`/`parseWeekdays` are the shared strict parsers. |
 | `dose_calculator.dart` | Pure, testable math for the dose calculator (no Flutter/DB): `linearFit` (least-squares slope/day + fitted value at the last timestamp; `slopePerDay` is its slope-only wrapper), `potencyFromReference` (vendor reference dose → potency per unit per litre), `dailyEquivalentDose` (a dosing plan's average daily amount from its `DoseSchedule` record — amount + frequency/interval/weekdays, mapped from the `DosingEntry` row via `DosingEntry.schedule`; the stored basis is deliberately not an input since both bases mean "amount per active day"; a stored every-N-days interval ≤ 0 — possible only in pre-validation rows — counts as an *unknown* cadence contributing 0, not as daily), and `computeDoseCalc` → `DoseCalcResult` (consumption/day + maintenance-dose recommendation + `DoseCalcStatus`). Sign convention: `consumption = dosingInput − slope`, so a falling element (negative slope) means consumption exceeds the dose. Statuses: `consumption ≤ 0` reports `overdosing` when something is dosed, `noDoseNeeded` when nothing is (there is nothing to "reduce or pause"); with consumption but no current dose the result is always `increase` (never "keep your current dose" of nothing); otherwise `stable` when \|suggested − current\| ≤ max(5% of the current dose (`stableFraction`), 0.1 ml/g (`stableThreshold`)) — relative, so "stable" means the same chemical mismatch regardless of product potency — else `increase`/`decrease`. Water changes ignored. See Features. |
 | `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Product `key`s are **never reused or repurposed** — stored entries (and the future dose log) resolve display names and potency through them. `strength` is recorded **only when verified against the vendor's own dosing chart**; an unverified potency would silently corrupt consumption estimates (e.g. Triton Core7 carries none because the vendor publishes no concentrations). Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker. **The data (`kSupplementVendors`) is generated** — see below. |
 | `supplements.yaml` + `supplement_catalog.g.dart` | `supplements.yaml` (commented, hand-edited) is the **source of truth** for the catalog data; `dart run tool/gen_supplements.dart` validates it (unique product keys; every `element`/`strength` key is a real param key; `unit` ∈ ml/g) and generates the `part` file `supplement_catalog.g.dart` (`const kSupplementVendors`). Edit the YAML, never the `.g.dart`. `test/supplement_catalog_test.dart` re-checks the same invariants on the generated catalog. |
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 15**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 16**
 
 | Table | Key columns |
 |-------|-------------|
 | `Tanks` | id, name, setupType, volumeLiters?, startDate?, notes?, vendor?, model?, createdAt, deletedAt? — `deletedAt` is the soft-delete stamp (U10): non-null rows are hidden from every read path during the delete-undo window and finalized by `hardDeleteTank`/`purgeDeletedTanks` |
-| `TrackedParameters` | id, tankId (FK cascade), paramKey, unit, enabled, displayOrder, + 4 zone bounds (amberLow/greenLow/greenHigh/amberHigh) |
+| `TrackedParameters` | id, tankId (FK cascade), paramKey, unit, enabled, displayOrder, + 4 zone bounds (amberLow/greenLow/greenHigh/amberHigh), testCadenceDays? — "remind to test every N days" (U1), null = no reminder |
 | `Readings` | id, tankId (FK cascade), paramKey, value (canonical), takenAt, note?, groupId? — `groupId` tags readings entered together as one add-reading batch (generated by `newReadingGroupId`, no uuid dependency); null on pre-v13 rows, which fall back to same-timestamp grouping |
 | `WaterChanges` | id, tankId (FK cascade), changedAt, amountLiters?, note? |
 | `CarbonChanges` | id, tankId (FK cascade), changedAt, grams?, note? |
 | `EquipmentCleanings` | id, tankId (FK cascade), cleanedAt, note? |
 | `RatioVisibilities` | tankId + ratioKey (composite PK), tankId FK cascade, visible, displayOrder, amberLow?/greenLow?/greenHigh?/amberHigh? — per-tank ratio-card visibility, dashboard position (shared order space with `TrackedParameters.displayOrder`), and editable zone bounds; a missing row (or all-null bounds) = visible, ordered last, default zones |
-| `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), note?, displayOrder, createdAt, startedAt? (segment start; backfilled from createdAt), endedAt? (null = current), state (`DosingState`: active/ended/paused) — per-tank supplement-dosing plan (info-only). A plan is a chain of **dated segments**: editing a dose-affecting field ends the current segment (`state=ended`, `endedAt` set) and starts a new active one; stopping soft-ends it. Only `active` rows show in the Dosing tab and feed the calculator; `ended` rows are retained history. `paused` is reserved for a later phase. |
+| `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), remindEnabled (U2 dosing reminders — opt-in, effective only while active with a parsable doseTime), note?, displayOrder, createdAt, startedAt? (segment start; backfilled from createdAt), endedAt? (null = current), state (`DosingState`: active/ended/paused) — per-tank supplement-dosing plan (info-only). A plan is a chain of **dated segments**: editing a dose-affecting field ends the current segment (`state=ended`, `endedAt` set) and starts a new active one; stopping soft-ends it. Only `active` rows show in the Dosing tab and feed the calculator; `ended` rows are retained history. `paused` is reserved for a later phase. |
 | `ReadingTemplates` | id, tankId (FK cascade), name, paramKeys (JSON array of stable *catalog* keys — `encodeTemplateParamKeys`/`decodeTemplateParamKeys`, tolerant decode), displayOrder — per-tank **test sets** (U9): named parameter subsets whose chips filter the Add Reading form. Catalog keys, not `TrackedParameters` ids, so a set survives disable/untrack + re-add; keys not currently tracked+enabled are skipped at display, never deleted |
+| `MaintenanceSchedules` | id, tankId (FK cascade), actionType? (`MaintenanceActionType.name`, null = custom task), title? (required iff custom), cadenceDays? (null = one-off), scheduledAt? (seeds the first occurrence), lastDoneAt? (completion stamp for **custom** rows — typed rows derive last-done from their action log), remindEnabled, note?, displayOrder — the user-maintained maintenance plan list (U12); due math in `domain/reminders.dart` |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -118,7 +121,8 @@ and orders by a timestamp: `Readings(tankId, paramKey, takenAt)` and
 `Readings(tankId, takenAt)` (both kept — the 3-column one can't order by
 `takenAt` when only `tankId` is filtered), `WaterChanges(tankId, changedAt)`,
 `CarbonChanges(tankId, changedAt)`, `EquipmentCleanings(tankId, cleanedAt)`,
-`DosingEntries(tankId)`, and `ReadingTemplates(tankId)`.
+`DosingEntries(tankId)`, `ReadingTemplates(tankId)`, and
+`MaintenanceSchedules(tankId)`.
 
 `Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
 `volume_unit`, `locale`, `chart_range`, `auto_backup_enabled`,
@@ -126,7 +130,12 @@ and orders by a timestamp: `Readings(tankId, paramKey, takenAt)` and
 `trend_enabled`, `trend_window`, `trend_horizon`, `health_display` (tank-health
 surfacing: both/badge/off), `tour_v1_seen` (first-run feature-tour flag),
 `last_reading_template` (last-used test set per tank as one JSON object
-`{"<tankId>": <templateId>}`; missing/dangling entries mean "All").
+`{"<tankId>": <templateId>}`; missing/dangling entries mean "All"),
+`reminders_testing` / `reminders_dosing` / `reminders_maintenance` (the
+notification master switches, all default off — opt-in), and `reminder_time`
+(`HH:mm` delivery time for testing/maintenance reminders, default 09:00). The
+reminder keys are device-local: notification preferences must not ride a
+backup onto another device.
 
 All settings access goes through the typed **`AppSettings` facade**
 (`data/settings.dart`, exposed as `settingsProvider`) — the single source of
@@ -156,7 +165,10 @@ for new installs); v13 added `Readings.groupId` (`addColumn`, guarded — pre-v1
 rows stay null and keep legacy timestamp grouping); v14 added the
 `ReadingTemplates` table (`createTable`, guarded by `_tableExists`) and its
 `tankId` index (U9); v15 added `Tanks.deletedAt` (`addColumn`, guarded — U10
-soft delete). Foreign keys are enabled in
+soft delete); v16 added `TrackedParameters.testCadenceDays` +
+`DosingEntries.remindEnabled` (`addColumn` ×2, guarded) and the
+`MaintenanceSchedules` table + its `tankId` index (U1/U2/U12 reminders).
+Foreign keys are enabled in
 `beforeOpen` (`PRAGMA foreign_keys = ON`), and the database opens in **WAL
 journal mode** (`pragma journal_mode = WAL` in the
 `NativeDatabase.createInBackground` setup callback, T6) so readers and writers
@@ -230,7 +242,9 @@ format/version guard (distinguishing a missing version = not a backup file, a
 non-int version = corrupted, and a genuinely newer document) and is
 **forward-tolerant** (older backups without the
 `waterChanges` / `carbonChanges` / `equipmentCleanings` / `ratioVisibilities` /
-`dosingEntries` / `readingTemplates` keys decode to empty lists). Each table is decoded in isolation,
+`dosingEntries` / `readingTemplates` / `maintenanceSchedules` keys decode to
+empty lists, and pre-v16 rows without `testCadenceDays`/`remindEnabled` decode
+to null/off). Each table is decoded in isolation,
 so a failure throws an `InvalidBackupException` naming the offending section
 rather than one catch-all "corrupted". Field-level decoding is likewise
 forward-tolerant: a pre-v11 `dosingEntries` row without `startedAt`/`endedAt`/
@@ -278,7 +292,10 @@ never wipes live data:
    whitelisted against the app's enums so a garbage `state` can't restore an
    unmanageable zombie row, and test-set names must not be blank (their
    `paramKeys` must be a JSON list of strings — enforced by the section
-   decoder).
+   decoder). Maintenance plans are checked the same way: `actionType` must be
+   a known `MaintenanceActionType` name or null-with-a-non-blank-`title`
+   (custom task), and a present `cadenceDays` must be ≥ 1 (the #8
+   unknown-cadence rule applied at the door).
 2. *Rehearsal* — the restore is run against a throwaway temp database so the real
    SQLite engine (FK / NOT NULL / uniqueness) proves the rows insert cleanly.
 3. The actual transactional `restoreFromBackup` into the live DB.
@@ -367,6 +384,49 @@ Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 `autoBackupIntervalProvider`, `lastBackupAtProvider`,
 `lastBackupErrorAtProvider`.
 
+### Reminders & notification scheduling (`notifications.dart`, `reminder_scheduler.dart`)
+
+Local, opt-in reminder notifications (U1 testing, U2 dosing, U12 maintenance).
+Two layers with a test seam between them:
+
+- **`notifications.dart` — the platform wrapper.** Thin service over
+  `flutter_local_notifications`: init + tap callback, the Android 13+
+  POST_NOTIFICATIONS request (asked when the user first enables a category —
+  never at startup), three notification channels (one per `ReminderKind`, so
+  system settings can tune each), and `syncPlanned(list)` = `cancelAll()` +
+  schedule fresh (safe: the app owns no other notifications and every sync
+  recomputes the full set). Scheduling is **inexact**
+  (`AndroidScheduleMode.inexactAllowWhileIdle` — reminders don't need minute
+  precision, and it avoids the SCHEDULE_EXACT_ALARM permission/Play review;
+  observed delivery windows are minutes). Instants are scheduled as **absolute
+  UTC** (`tz.TZDateTime.from(utc, tz.UTC)`), so no timezone-lookup plugin is
+  needed; a DST shift is at most an hour off until the next resync. The
+  `ReminderSink` interface is the seam scheduler tests fake. The app manifest
+  declares the plugin's `ScheduledNotificationReceiver` +
+  `ScheduledNotificationBootReceiver` (with RECEIVE_BOOT_COMPLETED), which the
+  plugin does **not** declare itself — reminders would otherwise silently not
+  fire / not survive reboots.
+- **`reminder_scheduler.dart` — the brains.** Reads the whole database with
+  **cross-tank one-shot queries** (deliberately not the active-tank-scoped UI
+  providers; soft-deleted tanks are excluded for free by the U10 read filter),
+  computes every due event in a rolling **14-day horizon** via the pure domain
+  math, coalesces per (tank, kind, day) — the tank is named in the title only
+  when more than one tank exists — and hands ≤ 50 `PlannedNotification`s to
+  the sink. Notification strings are rendered at schedule time through
+  `lookupAppLocalizations` (stored app language, falling back to the system
+  locale, then English), so they localize without a BuildContext. Triggers:
+  post-first-frame + every resume (`main.dart`), plus a drift `tableUpdates`
+  listener over the reminder-relevant tables debounced ~2 s — every launch
+  recomputes everything, so the design is self-healing. `resync()` is
+  single-flight with a dirty re-loop. Trade-off accepted by design: local
+  notifications only exist while scheduled ahead, so a user who doesn't open
+  the app for 14+ days stops getting reminders (the in-app due chips catch up
+  instantly). Notification payloads carry `{tankId, route}` as JSON;
+  `handleReminderPayload` activates the tank (if it still exists) and
+  navigates — `/add-reading` for testing, `/?tab=dosing` / `/?tab=actions`
+  for the others; a cold-start tap is replayed via
+  `getNotificationAppLaunchDetails` after the first frame.
+
 ## State layer (`lib/app/providers.dart`)
 
 All app state is Riverpod providers over the singleton `dbProvider`. Two
@@ -392,7 +452,8 @@ provider (`trackedParametersProvider`, `tankReadingsProvider`,
 `recentReadingsProvider`, `waterChangesProvider`, `carbonChangesProvider`,
 `equipmentCleaningsProvider`, `dosingEntriesProvider`,
 `dosingHistoryProvider`, `paramReadingsProvider`, `ratioSettingsProvider`,
-`readingTemplatesProvider`) is a plain `Provider<AsyncValue<…>>` delegating to a
+`readingTemplatesProvider`, `maintenanceSchedulesProvider`) is a plain
+`Provider<AsyncValue<…>>` delegating to a
 private **autoDispose `StreamProvider` family keyed by tank id**. Switching the
 active tank swaps to a fresh family instance, so consumers briefly see
 loading/empty instead of the previous tank's rows flashing under the new tank's
@@ -502,6 +563,15 @@ The graph:
   `Map<RatioKind.name, RatioVisibility>` for ratio-card visibility/order/bounds.
 - `autoBackupEnabledProvider` / `autoBackupIntervalProvider` /
   `lastBackupAtProvider` — see Data → Automatic backup.
+- Reminders: `remindersTestingProvider` / `remindersDosingProvider` /
+  `remindersMaintenanceProvider` (master switches, default off) +
+  `reminderTimeProvider` (delivery time) ride the settings map;
+  `maintenanceSchedulesProvider` (tank family) feeds the schedule screen, and
+  the derived `maintenanceDueProvider` joins it with the three action-log
+  streams into the Actions-tab due chips (`{schedule, DueStatus}` per plan,
+  recomputed live when an action is logged). `reminderNotificationsProvider` /
+  `reminderSchedulerProvider` hold the platform wrapper and the background
+  scheduler (see Data → Reminders).
 - `appVersionProvider` — `FutureProvider` over `package_info_plus`; feeds the
   About box so the version is never hardcoded.
 
@@ -521,6 +591,12 @@ lifecycle wiring that are easy to miss:
   `initState`: the builder runs after Flutter has resolved the effective locale
   (and re-runs when it changes), so `DateFormat` immediately renders dates in a
   newly selected language without an app restart.
+- **Reminder wiring** (`_initReminders`, post-first-frame — the notification
+  plugin's init is a platform-channel call, and those can hang before the
+  first frame, flutter/flutter#72872): initializes the plugin with the tap
+  handler, starts the scheduler's table listener, plans the initial
+  notification set, and replays a cold-start notification tap. Every resume
+  also `resync()`s, refreshing the 14-day scheduling horizon.
 
 ## Routing (`lib/app/router.dart`)
 
@@ -536,12 +612,16 @@ lifecycle wiring that are easy to miss:
 | `/dosing/edit` | Add / edit a supplement-dosing entry (`extra` = `DosingEntry?`) |
 | `/dosing/calculator` | Consumption / dose-adjustment calculator |
 | `/dosing/history` | Read-only timeline of all dose segments (active + ended) with permanent-delete |
-| `/settings` | Units, language, backup/restore, automatic backup |
+| `/settings` | Units, language, reminders, backup/restore, automatic backup |
 | `/settings/backups` | Manage automatic backups (list / restore / share / delete) |
+| `/settings/reminders` | Reminder master switches + delivery time + permission warning |
+| `/schedule` | Maintenance schedule (U12): the user-maintained plan list |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
-home shell (see Features).
+home shell (see Features). `/` accepts a `?tab=measurements|actions|dosing`
+query selecting a bottom-nav tab — the only URL form a notification tap can
+carry; `HomeShell` applies it in `initState`/`didUpdateWidget`.
 
 The two `:id` edit routes treat `state.extra` (the object passed by in-app
 `context.push`) as a fast path only: when it is absent — deep link, state
@@ -809,6 +889,50 @@ first. Rendered as the **Actions tab** of the home shell.
   the comparison view draws one shared legend above its stack. Ratio graphs
   draw no markers (computed series, not measurements).
 
+### Reminders & maintenance schedule (U1/U2/U12)
+
+One reminders subsystem, three sources — the shared shape is *cadence/schedule
++ last-done anchor → due date → in-app chips + notification*. The due math is
+`domain/reminders.dart`; scheduling/delivery is Data → Reminders. All
+notifications are **opt-in** (Settings → Reminders, three master switches; the
+first enable triggers the permission request, and a persistent error-colored
+row warns while the system permission is denied — the "last backup failed"
+pattern).
+
+- **Testing reminders (U1), elastic.** Each tracked parameter's edit screen
+  has a "Remind to test" cadence (preset chips Off/3/7/14/30 d + Custom days,
+  validated ≥ 1). The reminder anchors on the parameter's *latest reading*
+  (`latestReadingTimesPerParam`) — logging a test resets the timer. Parameters
+  due the same day coalesce into one notification ("Time to test: Alkalinity,
+  Calcium"); tapping opens `/add-reading` for the right tank. The dashboard
+  needs no new chrome — health's "not tested in N d" already covers in-app
+  staleness.
+- **Dosing reminders (U2), calendar-based.** The dosing edit screen has a
+  per-entry "Remind me" switch, enabled only while a dose time is set (a
+  cleared time also clears the stored opt-in). Occurrences follow the entry's
+  own schedule (daily / every N days from `startedAt` / weekly weekdays) at
+  its own `doseTime`; only **active** segments of visible tanks remind.
+  Toggling the switch is a cosmetic edit (no new dose segment).
+- **Maintenance schedule (U12), elastic + planned.** `/schedule` (calendar
+  button in the Actions tab's app bar) lists the tank's user-maintained plans:
+  recurring or one-off, for the three logged action types or custom-titled
+  tasks. The add/edit sheet picks type (incl. Custom + required title), repeat
+  (every N days ↔ one-off), an optional first-due date (`scheduledAt`, required
+  for one-offs), a per-plan remind switch, and a note; rows drag-reorder;
+  delete and "Mark done" act immediately with an Undo SnackBar restoring the
+  captured row verbatim (`restoreMaintenanceSchedule` — U10's cheap-restore
+  convention; a completed one-off is retired the same way). **Typed plans
+  advance automatically** when the matching action is logged anywhere in the
+  app (anchor = newest action-log row); custom plans stamp their own
+  `lastDoneAt`. The Actions tab shows a horizontally scrollable **due-chip
+  row** above the log (`maintenanceDueProvider`, most-urgent first, overdue in
+  error color): a typed chip opens the pre-selected add-action dialog, a
+  custom chip marks the task done.
+- Testing/maintenance notifications arrive at the configurable reminder time
+  (default 09:00) on the due day; an overdue item is not re-notified — the
+  chips carry the overdue state persistently. Dosing notifications use each
+  entry's own time.
+
 ### Dosing (`features/dosing/`) — Dosing tab
 
 An information-only, per-tank **supplement-dosing plan** (a standing regimen, not
@@ -960,6 +1084,8 @@ the primary colour for the active tank).
 Unit selectors (temp/salinity/volume), language selector, a **Trends** section
 (on/off switch + recent-readings window selector `kTrendMinWindow`..`kTrendMaxWindow`
 + alert-horizon selector within `kTrendMinHorizon`..`kTrendMaxHorizon`),
+a **Reminders** link (`/settings/reminders` — see Reminders & maintenance
+schedule above),
 and **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency and a link to the **Manage backups**
 screen (see Data → Automatic backup). Link to the salinity calculator. The About box shows the live app version via
@@ -1003,8 +1129,10 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   weighting, staleness), `test/zone_bands_test.dart` (chart band geometry);
   data — `test/database_test.dart`, `test/migration_test.dart` (multi-version
   upgrade idempotency), `test/backup_test.dart`, `test/auto_backup_test.dart`,
-  `test/settings_test.dart`, `test/dosing_history_test.dart`; plus the widget
-  tests (e.g. `test/zone_chip_test.dart`).
+  `test/settings_test.dart`, `test/dosing_history_test.dart`,
+  `test/reminders_test.dart` (due math), `test/reminder_scheduler_test.dart`
+  (planning against a fake notification sink); plus the widget
+  tests (e.g. `test/zone_chip_test.dart`, `test/reminder_widgets_test.dart`).
 - `test/tool/seed_sample_data.dart` is a *tool in test clothing*: running
   `flutter test test/tool/seed_sample_data.dart` generates a seeded
   `reeftracker.sqlite` at the current schema, for pushing into an emulator's

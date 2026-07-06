@@ -171,6 +171,14 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ],
           const Divider(),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined),
+            title: Text(l.remindersTitle),
+            subtitle: Text(l.remindersSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/reminders'),
+          ),
+          const Divider(),
           _SectionHeader(l.toolsSection),
           ListTile(
             leading: const Icon(Icons.calculate_outlined),

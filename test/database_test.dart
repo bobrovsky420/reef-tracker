@@ -6,6 +6,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/presets.dart';
+import 'package:reeftracker/domain/reminders.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/units.dart';
 
@@ -647,6 +648,187 @@ void main() {
         PathProviderPlatform.instance = prev;
         await dir.delete(recursive: true);
       }
+    });
+  });
+
+  group('maintenance schedules (U12)', () {
+    late int tankId;
+    setUp(() async {
+      tankId = await db.createTankWithPreset(name: 'R', type: SetupType.mixed);
+    });
+
+    test('insert assigns max(displayOrder)+1, not the row count', () async {
+      final a = await db.insertMaintenanceSchedule(
+        tankId: tankId,
+        actionType: 'waterChange',
+        cadenceDays: 14,
+      );
+      final b = await db.insertMaintenanceSchedule(
+        tankId: tankId,
+        title: 'Clean skimmer',
+        cadenceDays: 7,
+      );
+      await db.deleteMaintenanceSchedule(a);
+      final c = await db.insertMaintenanceSchedule(
+        tankId: tankId,
+        actionType: 'carbonChange',
+        cadenceDays: 30,
+      );
+      final rows = await db.getMaintenanceSchedules(tankId);
+      expect(rows.map((s) => s.id), [b, c]);
+      // b kept order 1; c must be 2 (max+1), not 1 (the row count).
+      expect(rows.map((s) => s.displayOrder), [1, 2]);
+    });
+
+    test(
+      'markMaintenanceDone stamps lastDoneAt; restore undoes verbatim',
+      () async {
+        final id = await db.insertMaintenanceSchedule(
+          tankId: tankId,
+          title: 'Replace RO membrane',
+        );
+        final before = (await db.getMaintenanceSchedules(tankId)).single;
+        expect(before.lastDoneAt, isNull);
+
+        final at = DateTime(2026, 7, 5, 12);
+        await db.markMaintenanceDone(id, at);
+        expect(
+          (await db.getMaintenanceSchedules(tankId)).single.lastDoneAt,
+          at,
+        );
+
+        await db.restoreMaintenanceSchedule(before);
+        expect(
+          (await db.getMaintenanceSchedules(tankId)).single.lastDoneAt,
+          isNull,
+        );
+      },
+    );
+
+    test('restore after delete brings the identical row back', () async {
+      final id = await db.insertMaintenanceSchedule(
+        tankId: tankId,
+        actionType: 'equipmentCleaning',
+        cadenceDays: 21,
+        note: 'skimmer cup',
+      );
+      final row = (await db.getMaintenanceSchedules(tankId)).single;
+      await db.deleteMaintenanceSchedule(id);
+      expect(await db.getMaintenanceSchedules(tankId), isEmpty);
+      await db.restoreMaintenanceSchedule(row);
+      expect((await db.getMaintenanceSchedules(tankId)).single, row);
+    });
+
+    test('reorder persists the given id order', () async {
+      final a = await db.insertMaintenanceSchedule(
+        tankId: tankId,
+        actionType: 'waterChange',
+      );
+      final b = await db.insertMaintenanceSchedule(
+        tankId: tankId,
+        actionType: 'carbonChange',
+      );
+      await db.reorderMaintenanceSchedules([b, a]);
+      expect((await db.getMaintenanceSchedules(tankId)).map((s) => s.id), [
+        b,
+        a,
+      ]);
+    });
+
+    test('tank delete cascades its schedules', () async {
+      await db.insertMaintenanceSchedule(tankId: tankId, title: 'X');
+      await db.softDeleteTank(tankId);
+      await db.hardDeleteTank(tankId);
+      expect(await db.getAllMaintenanceSchedules(), isEmpty);
+    });
+  });
+
+  group('reminder-scheduler reads (U1/U12)', () {
+    late int tankId;
+    setUp(() async {
+      tankId = await db.createTankWithPreset(name: 'R', type: SetupType.mixed);
+    });
+
+    test('latestReadingTimesPerParam returns MAX(takenAt) per key', () async {
+      await db.insertReading(
+        tankId: tankId,
+        paramKey: 'alkalinity',
+        value: 8,
+        takenAt: DateTime(2026, 7, 1, 9),
+      );
+      await db.insertReading(
+        tankId: tankId,
+        paramKey: 'alkalinity',
+        value: 8.2,
+        takenAt: DateTime(2026, 7, 3, 9),
+      );
+      await db.insertReading(
+        tankId: tankId,
+        paramKey: 'calcium',
+        value: 420,
+        takenAt: DateTime(2026, 6, 20, 10),
+      );
+      final times = await db.latestReadingTimesPerParam(tankId);
+      expect(times, {
+        'alkalinity': DateTime(2026, 7, 3, 9),
+        'calcium': DateTime(2026, 6, 20, 10),
+      });
+    });
+
+    test('latestReadingTimesPerParam is tank-scoped and empty-safe', () async {
+      final other = await db.createTankWithPreset(
+        name: 'Other',
+        type: SetupType.mixed,
+      );
+      await db.insertReading(
+        tankId: other,
+        paramKey: 'alkalinity',
+        value: 7,
+        takenAt: DateTime(2026, 7, 1),
+      );
+      expect(await db.latestReadingTimesPerParam(tankId), isEmpty);
+    });
+
+    test('latestActionTimes returns the newest per action type', () async {
+      await db.insertWaterChange(
+        tankId: tankId,
+        changedAt: DateTime(2026, 6, 20),
+      );
+      await db.insertWaterChange(
+        tankId: tankId,
+        changedAt: DateTime(2026, 7, 1),
+      );
+      await db.insertCarbonChange(
+        tankId: tankId,
+        changedAt: DateTime(2026, 6, 25),
+      );
+      final times = await db.latestActionTimes(tankId);
+      expect(times, {
+        MaintenanceActionType.waterChange: DateTime(2026, 7, 1),
+        MaintenanceActionType.carbonChange: DateTime(2026, 6, 25),
+      });
+      expect(
+        times.containsKey(MaintenanceActionType.equipmentCleaning),
+        isFalse,
+      );
+    });
+  });
+
+  group('setTestCadence (U1)', () {
+    test('sets and clears the cadence', () async {
+      final tankId = await db.createTankWithPreset(
+        name: 'R',
+        type: SetupType.mixed,
+      );
+      final param = (await db.getTrackedParameters(tankId)).first;
+      expect(param.testCadenceDays, isNull);
+      await db.setTestCadence(param.id, 7);
+      expect((await db.getTrackedParameters(tankId)).first.testCadenceDays, 7);
+      await db.setTestCadence(param.id, null);
+      expect(
+        (await db.getTrackedParameters(tankId)).first.testCadenceDays,
+        isNull,
+      );
     });
   });
 }

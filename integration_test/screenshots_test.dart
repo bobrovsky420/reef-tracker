@@ -33,6 +33,7 @@ Future<void> _seedDatabase() async {
     ratioVisibilityRows: data.ratioVisibilities,
     dosingEntryRows: data.dosingEntries,
     readingTemplateRows: data.readingTemplates,
+    maintenanceScheduleRows: data.maintenanceSchedules,
     settingRows: data.settings,
   );
   await db.close();

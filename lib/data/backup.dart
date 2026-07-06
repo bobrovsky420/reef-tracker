@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../domain/reminders.dart';
 import '../domain/setup_type.dart';
 import '../domain/supplement_catalog.dart';
 import 'database.dart';
@@ -68,6 +69,7 @@ class BackupData {
     required this.ratioVisibilities,
     required this.dosingEntries,
     this.readingTemplates = const [],
+    this.maintenanceSchedules = const [],
     required this.settings,
   });
 
@@ -87,6 +89,10 @@ class BackupData {
   /// Test sets (U9). Defaults to empty: pre-U9 backups have no section, and
   /// the round-trip test pins that new backups carry it.
   final List<ReadingTemplatesCompanion> readingTemplates;
+
+  /// Maintenance plans (U12). Defaults to empty for pre-U12 backups, same
+  /// policy as [readingTemplates].
+  final List<MaintenanceSchedulesCompanion> maintenanceSchedules;
   final List<SettingsCompanion> settings;
 }
 
@@ -107,6 +113,7 @@ String encodeBackup({
   required List<RatioVisibility> ratioVisibilities,
   required List<DosingEntry> dosingEntries,
   List<ReadingTemplate> readingTemplates = const [],
+  List<MaintenanceSchedule> maintenanceSchedules = const [],
   required List<Setting> settings,
 }) {
   final map = <String, dynamic>{
@@ -125,6 +132,9 @@ String encodeBackup({
     'ratioVisibilities': ratioVisibilities.map(_ratioVisibilityToJson).toList(),
     'dosingEntries': dosingEntries.map(_dosingEntryToJson).toList(),
     'readingTemplates': readingTemplates.map(_readingTemplateToJson).toList(),
+    'maintenanceSchedules': maintenanceSchedules
+        .map(_maintenanceScheduleToJson)
+        .toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
   final payload = jsonEncode(map);
@@ -277,6 +287,11 @@ BackupData decodeBackup(String jsonString) {
       _readingTemplateFromJson,
       required: false,
     ),
+    maintenanceSchedules: section(
+      'maintenanceSchedules',
+      _maintenanceScheduleFromJson,
+      required: false,
+    ),
     settings: section('settings', _settingFromJson),
   );
 }
@@ -323,6 +338,10 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   );
   requireSaneIds('dosingEntries', data.dosingEntries.map((r) => r.id));
   requireSaneIds('readingTemplates', data.readingTemplates.map((r) => r.id));
+  requireSaneIds(
+    'maintenanceSchedules',
+    data.maintenanceSchedules.map((r) => r.id),
+  );
 
   // Unique aquarium ids (they are the FK target for every other table).
   final tankIds = <int>{};
@@ -363,6 +382,10 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   requireTank(
     'readingTemplates',
     data.readingTemplates.map((r) => r.tankId.value),
+  );
+  requireTank(
+    'maintenanceSchedules',
+    data.maintenanceSchedules.map((r) => r.tankId.value),
   );
 
   // A test set's name is user-visible text on a chip; a whitespace-only name
@@ -428,6 +451,36 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     data.dosingEntries.map((d) => d.basis.present ? d.basis.value : null),
     names(DoseBasis.values),
   );
+  requireKnown(
+    'maintenanceSchedules.actionType',
+    data.maintenanceSchedules.map(
+      (s) => s.actionType.present ? s.actionType.value : null,
+    ),
+    names(MaintenanceActionType.values),
+  );
+
+  // A maintenance plan is either typed (a known actionType) or a custom task,
+  // which must carry a visible title; a plan with neither is unrenderable. A
+  // stored cadence below 1 day is the same unknown-cadence garbage the domain
+  // refuses to guess about (#8) — reject it at the door instead of restoring
+  // a permanently silent plan.
+  for (final s in data.maintenanceSchedules) {
+    final actionType = s.actionType.present ? s.actionType.value : null;
+    final title = s.title.present ? s.title.value : null;
+    if (actionType == null && (title == null || title.trim().isEmpty)) {
+      throw const InvalidBackupException(
+        BackupRejection.inconsistent,
+        'maintenanceSchedules: custom task with blank title',
+      );
+    }
+    final cadence = s.cadenceDays.present ? s.cadenceDays.value : null;
+    if (cadence != null && cadence < 1) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'maintenanceSchedules: cadenceDays $cadence out of range',
+      );
+    }
+  }
 }
 
 /// Imports [data] into the live database safely:
@@ -495,6 +548,7 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       ratioVisibilityRows: data.ratioVisibilities,
       dosingEntryRows: data.dosingEntries,
       readingTemplateRows: data.readingTemplates,
+      maintenanceScheduleRows: data.maintenanceSchedules,
       settingRows: data.settings,
       // Never overwrite this device's own preferences with the backup's (#18).
       preserveSettingKeys: SettingKey.deviceLocalKeys,
@@ -520,6 +574,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   var ratioVisibilities = await db.getAllRatioVisibilities();
   var dosingEntries = await db.getAllDosingEntries();
   var readingTemplates = await db.getAllReadingTemplates();
+  var maintenanceSchedules = await db.getAllMaintenanceSchedules();
   final settings = await db.getAllSettings();
   // Soft-deleted tanks (U10) are conceptually deleted — their rows only
   // persist through the brief undo window. Exclude them and their child rows
@@ -555,6 +610,9 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
     readingTemplates = readingTemplates
         .where((r) => !hidden.contains(r.tankId))
         .toList();
+    maintenanceSchedules = maintenanceSchedules
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
   }
   // The closure must capture only sendable plain data — never [db]: an open
   // database (ports, native handles) cannot cross the isolate boundary.
@@ -570,6 +628,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       ratioVisibilities: ratioVisibilities,
       dosingEntries: dosingEntries,
       readingTemplates: readingTemplates,
+      maintenanceSchedules: maintenanceSchedules,
       settings: settings,
     ),
   );
@@ -681,6 +740,7 @@ Map<String, dynamic> _paramToJson(TrackedParameter t) => {
   'greenLow': t.greenLow,
   'greenHigh': t.greenHigh,
   'amberHigh': t.amberHigh,
+  'testCadenceDays': t.testCadenceDays,
 };
 
 TrackedParametersCompanion _paramFromJson(Map<String, dynamic> m) =>
@@ -695,6 +755,8 @@ TrackedParametersCompanion _paramFromJson(Map<String, dynamic> m) =>
       greenLow: Value((m['greenLow'] as num?)?.toDouble()),
       greenHigh: Value((m['greenHigh'] as num?)?.toDouble()),
       amberHigh: Value((m['amberHigh'] as num?)?.toDouble()),
+      // Absent in pre-v16 backups → no test reminder (U1).
+      testCadenceDays: Value(m['testCadenceDays'] as int?),
     );
 
 Map<String, dynamic> _readingToJson(Reading r) => {
@@ -809,6 +871,7 @@ Map<String, dynamic> _dosingEntryToJson(DosingEntry d) => {
   'intervalDays': d.intervalDays,
   'weekdays': d.weekdays,
   'doseTime': d.doseTime,
+  'remindEnabled': d.remindEnabled,
   'note': d.note,
   'displayOrder': d.displayOrder,
   'createdAt': d.createdAt.millisecondsSinceEpoch,
@@ -833,6 +896,8 @@ DosingEntriesCompanion _dosingEntryFromJson(Map<String, dynamic> m) =>
       intervalDays: Value(m['intervalDays'] as int?),
       weekdays: Value(m['weekdays'] as String?),
       doseTime: Value(m['doseTime'] as String?),
+      // Absent in pre-v16 backups → reminders stay opt-in (U2).
+      remindEnabled: Value((m['remindEnabled'] as bool?) ?? false),
       note: Value(m['note'] as String?),
       displayOrder: Value(m['displayOrder'] as int),
       createdAt: Value(_date(m['createdAt'])),
@@ -866,6 +931,34 @@ ReadingTemplatesCompanion _readingTemplateFromJson(Map<String, dynamic> m) =>
       ),
       displayOrder: Value(m['displayOrder'] as int),
     );
+
+Map<String, dynamic> _maintenanceScheduleToJson(MaintenanceSchedule s) => {
+  'id': s.id,
+  'tankId': s.tankId,
+  'actionType': s.actionType,
+  'title': s.title,
+  'cadenceDays': s.cadenceDays,
+  'scheduledAt': s.scheduledAt?.millisecondsSinceEpoch,
+  'lastDoneAt': s.lastDoneAt?.millisecondsSinceEpoch,
+  'remindEnabled': s.remindEnabled,
+  'note': s.note,
+  'displayOrder': s.displayOrder,
+};
+
+MaintenanceSchedulesCompanion _maintenanceScheduleFromJson(
+  Map<String, dynamic> m,
+) => MaintenanceSchedulesCompanion(
+  id: Value(m['id'] as int),
+  tankId: Value(m['tankId'] as int),
+  actionType: Value(m['actionType'] as String?),
+  title: Value(m['title'] as String?),
+  cadenceDays: Value(m['cadenceDays'] as int?),
+  scheduledAt: Value(_dateOrNull(m['scheduledAt'])),
+  lastDoneAt: Value(_dateOrNull(m['lastDoneAt'])),
+  remindEnabled: Value((m['remindEnabled'] as bool?) ?? true),
+  note: Value(m['note'] as String?),
+  displayOrder: Value(m['displayOrder'] as int),
+);
 
 Map<String, dynamic> _settingToJson(Setting s) => {
   'key': s.key,

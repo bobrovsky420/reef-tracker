@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../data/database.dart';
+import '../data/notifications.dart';
+import '../data/reminder_scheduler.dart';
 import '../data/settings.dart';
 import '../domain/health_score.dart';
 import '../domain/ratio.dart';
+import '../domain/reminders.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 
@@ -47,6 +50,22 @@ final dbProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
   ref.onDispose(db.close);
   return db;
+});
+
+/// Platform wrapper for reminder notifications (U1/U2/U12).
+final reminderNotificationsProvider = Provider<ReminderNotifications>(
+  (ref) => ReminderNotifications(),
+);
+
+/// The background reminder scheduler; started (and resynced) from
+/// `main.dart`'s post-first-frame hook and on resume.
+final reminderSchedulerProvider = Provider<ReminderScheduler>((ref) {
+  final scheduler = ReminderScheduler(
+    ref.watch(dbProvider),
+    ref.watch(reminderNotificationsProvider),
+  );
+  ref.onDispose(scheduler.dispose);
+  return scheduler;
 });
 
 /// Drift query streams re-emit a freshly built list on *any* write to a
@@ -235,6 +254,71 @@ final readingTemplatesProvider = Provider<AsyncValue<List<ReadingTemplate>>>((
   return ref.watch(_readingTemplatesFamily(tank.id));
 });
 
+final _maintenanceSchedulesFamily = StreamProvider.autoDispose
+    .family<List<MaintenanceSchedule>, int>(
+      (ref, tankId) =>
+          _dedup(ref.watch(dbProvider).watchMaintenanceSchedules(tankId)),
+    );
+
+/// Maintenance plans (U12) for the active tank, in user order.
+final maintenanceSchedulesProvider =
+    Provider<AsyncValue<List<MaintenanceSchedule>>>((ref) {
+      final tank = ref.watch(activeTankProvider);
+      if (tank == null) return const AsyncValue.data([]);
+      return ref.watch(_maintenanceSchedulesFamily(tank.id));
+    });
+
+/// One due chip on the Actions tab: the plan row plus its current due status
+/// (null [DueStatus] = not due-able, e.g. a finished one-off — those rows are
+/// filtered out here).
+typedef MaintenanceDue = ({MaintenanceSchedule schedule, DueStatus due});
+
+/// Due status for every plan of the active tank, in plan order. Derived from
+/// the schedule list + the three action logs (their newest rows are the
+/// elastic anchors for typed plans), so logging an action updates the chips
+/// live. Time-dependent ("due in N d") but cheap: it recomputes whenever any
+/// input stream emits, and screens rebuild on resume/navigation anyway.
+final maintenanceDueProvider = Provider<List<MaintenanceDue>>((ref) {
+  final schedules =
+      ref.watch(maintenanceSchedulesProvider).value ??
+      const <MaintenanceSchedule>[];
+  if (schedules.isEmpty) return const [];
+  DateTime? newest(Iterable<DateTime> times) =>
+      times.isEmpty ? null : times.reduce((a, b) => a.isAfter(b) ? a : b);
+  final lastByType = {
+    MaintenanceActionType.waterChange: newest(
+      (ref.watch(waterChangesProvider).value ?? const []).map(
+        (w) => w.changedAt,
+      ),
+    ),
+    MaintenanceActionType.carbonChange: newest(
+      (ref.watch(carbonChangesProvider).value ?? const []).map(
+        (c) => c.changedAt,
+      ),
+    ),
+    MaintenanceActionType.equipmentCleaning: newest(
+      (ref.watch(equipmentCleaningsProvider).value ?? const []).map(
+        (c) => c.cleanedAt,
+      ),
+    ),
+  };
+  final now = DateTime.now();
+  return [
+    for (final s in schedules)
+      if (nextElasticDue(
+            lastDone: switch (MaintenanceActionType.fromName(s.actionType)) {
+              final type? => lastByType[type],
+              null => s.lastDoneAt,
+            },
+            cadenceDays: s.cadenceDays,
+            scheduledAt: s.scheduledAt,
+            now: now,
+          )
+          case final due?)
+        (schedule: s, due: dueStatus(due, now: now)),
+  ];
+});
+
 final _paramReadingsFamily = StreamProvider.autoDispose
     .family<List<Reading>, ({int tankId, String paramKey})>(
       (ref, key) => _dedup(
@@ -347,6 +431,26 @@ final autoBackupEnabledProvider = _setting(
 final autoBackupIntervalProvider = _setting(
   SettingKey.autoBackupInterval,
   AppSettings.decodeAutoBackupInterval,
+);
+
+/// Reminder master switches (U1/U2/U12), all default **off** (opt-in).
+final remindersTestingProvider = _setting(
+  SettingKey.remindersTesting,
+  AppSettings.decodeRemindersTesting,
+);
+final remindersDosingProvider = _setting(
+  SettingKey.remindersDosing,
+  AppSettings.decodeRemindersDosing,
+);
+final remindersMaintenanceProvider = _setting(
+  SettingKey.remindersMaintenance,
+  AppSettings.decodeRemindersMaintenance,
+);
+
+/// Delivery time for testing/maintenance reminders (default 09:00).
+final reminderTimeProvider = _setting(
+  SettingKey.reminderTime,
+  AppSettings.decodeReminderTime,
 );
 
 /// When the most recent automatic or manual backup completed, or null if none

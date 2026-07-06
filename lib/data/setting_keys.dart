@@ -25,3 +25,7 @@ const kAutoBackupKeepKey = 'auto_backup_keep';
 const kLastAutoBackupAtKey = 'last_auto_backup_at';
 const kLastBackupErrorAtKey = 'last_backup_error_at';
 const kLastReadingTemplateKey = 'last_reading_template';
+const kRemindersTestingKey = 'reminders_testing';
+const kRemindersDosingKey = 'reminders_dosing';
+const kRemindersMaintenanceKey = 'reminders_maintenance';
+const kReminderTimeKey = 'reminder_time';

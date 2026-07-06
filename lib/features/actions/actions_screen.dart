@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../domain/reminders.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import 'schedule_screen.dart';
 
 /// Combined log of tank actions (water changes and activated-carbon changes)
 /// for the active tank, newest first, with edit/delete. Hosted by `HomeShell`,
@@ -28,10 +30,21 @@ class ActionsBody extends ConsumerWidget {
       ...equipment.map(_EquipmentEntry.new),
     ]..sort((a, b) => b.time.compareTo(a.time));
 
-    if (entries.isEmpty) return Center(child: Text(l.noActions));
-    return ListView.builder(
-      itemCount: entries.length,
-      itemBuilder: (context, i) => _tile(context, ref, l, entries[i], unit),
+    // Due chips for the maintenance schedule (U12) sit above the log; logging
+    // the matching action (or Mark done) resets a chip's timer.
+    return Column(
+      children: [
+        const MaintenanceDueChips(),
+        Expanded(
+          child: entries.isEmpty
+              ? Center(child: Text(l.noActions))
+              : ListView.builder(
+                  itemCount: entries.length,
+                  itemBuilder: (context, i) =>
+                      _tile(context, ref, l, entries[i], unit),
+                ),
+        ),
+      ],
     );
   }
 
@@ -98,8 +111,24 @@ class ActionsBody extends ConsumerWidget {
 
 /// Shows the add-action chooser sheet, then opens the editor for the chosen
 /// action type. Driven by `HomeShell`'s FAB on the Actions tab.
-Future<void> showAddActionSheet(BuildContext context, WidgetRef ref) async {
+Future<void> showAddActionSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  MaintenanceActionType? preset,
+}) async {
   final l = AppLocalizations.of(context);
+  // A due chip already names the action — skip the kind sheet (U12).
+  if (preset != null) {
+    switch (preset) {
+      case MaintenanceActionType.waterChange:
+        await _editWater(context, ref, null);
+      case MaintenanceActionType.carbonChange:
+        await _editCarbon(context, ref, null);
+      case MaintenanceActionType.equipmentCleaning:
+        await _editEquipment(context, ref, null);
+    }
+    return;
+  }
   final kind = await showModalBottomSheet<_Kind>(
     context: context,
     builder: (ctx) => SafeArea(

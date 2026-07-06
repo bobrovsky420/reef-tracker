@@ -2298,6 +2298,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to home screen'**
   String get routeNotFoundGoHome;
+
+  /// User-visible name of the Android notification channel for water-testing reminders (shown in system notification settings).
+  ///
+  /// In en, this message translates to:
+  /// **'Testing reminders'**
+  String get notifChannelTesting;
+
+  /// User-visible name of the Android notification channel for supplement-dosing reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosing reminders'**
+  String get notifChannelDosing;
+
+  /// User-visible name of the Android notification channel for maintenance-schedule reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance reminders'**
+  String get notifChannelMaintenance;
+
+  /// Notification title for a testing reminder; the body lists the parameter names due for testing.
+  ///
+  /// In en, this message translates to:
+  /// **'Time to test'**
+  String get notifTestingTitle;
+
+  /// Notification title for a dosing reminder; the body lists the supplement product names.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosing due'**
+  String get notifDosingTitle;
+
+  /// Notification title for a maintenance reminder; the body lists the due tasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance due'**
+  String get notifMaintenanceTitle;
+
+  /// Combines a notification title with the tank name when more than one tank exists.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} — {tank}'**
+  String notifTitleWithTank(String title, String tank);
+
+  /// No description provided for @remindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get remindersTitle;
+
+  /// No description provided for @remindersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing, dosing and maintenance notifications'**
+  String get remindersSubtitle;
+
+  /// No description provided for @remindersTestingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When a parameter\'s test is due'**
+  String get remindersTestingSubtitle;
+
+  /// No description provided for @remindersDosingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'At each supplement\'s dose time'**
+  String get remindersDosingSubtitle;
+
+  /// No description provided for @remindersMaintenanceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When scheduled maintenance is due'**
+  String get remindersMaintenanceSubtitle;
+
+  /// No description provided for @reminderTimeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder time'**
+  String get reminderTimeTitle;
+
+  /// No description provided for @reminderTimeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery time for testing and maintenance reminders'**
+  String get reminderTimeSubtitle;
+
+  /// No description provided for @remindersPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are blocked in system settings, so reminders can\'t be shown.'**
+  String get remindersPermissionDenied;
+
+  /// No description provided for @remindToTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind to test'**
+  String get remindToTest;
+
+  /// No description provided for @cadenceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get cadenceOff;
+
+  /// Compact day count used on cadence preset chips (e.g. "7 d").
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d'**
+  String daysShortN(int count);
+
+  /// No description provided for @cadenceCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get cadenceCustom;
+
+  /// No description provided for @customDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get customDaysLabel;
+
+  /// No description provided for @remindMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me'**
+  String get remindMe;
+
+  /// No description provided for @remindMeNeedsTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a time of day to enable reminders'**
+  String get remindMeNeedsTime;
+
+  /// No description provided for @maintenanceSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance schedule'**
+  String get maintenanceSchedule;
+
+  /// No description provided for @addMaintenanceTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Add task'**
+  String get addMaintenanceTask;
+
+  /// No description provided for @editMaintenanceTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit task'**
+  String get editMaintenanceTask;
+
+  /// No description provided for @taskTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get taskTypeLabel;
+
+  /// No description provided for @customTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom task'**
+  String get customTask;
+
+  /// No description provided for @taskTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get taskTitleLabel;
+
+  /// No description provided for @taskTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title'**
+  String get taskTitleRequired;
+
+  /// No description provided for @repeatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get repeatLabel;
+
+  /// No description provided for @oneOff.
+  ///
+  /// In en, this message translates to:
+  /// **'One-off'**
+  String get oneOff;
+
+  /// No description provided for @dueDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get dueDateLabel;
+
+  /// No description provided for @dueDateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a due date'**
+  String get dueDateRequired;
+
+  /// No description provided for @dueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get dueToday;
+
+  /// Due chip: the task is due in {count} days (compact d abbreviation).
+  ///
+  /// In en, this message translates to:
+  /// **'Due in {count} d'**
+  String dueInDaysN(int count);
+
+  /// Due chip: the task is {count} days past its due date (compact d abbreviation).
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d overdue'**
+  String overdueDaysN(int count);
+
+  /// No description provided for @markDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark done'**
+  String get markDone;
+
+  /// No description provided for @taskMarkedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as done'**
+  String get taskMarkedDone;
+
+  /// No description provided for @taskDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task deleted'**
+  String get taskDeleted;
+
+  /// No description provided for @scheduleEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No maintenance tasks yet. Plan water changes or custom tasks to get due chips and reminders.'**
+  String get scheduleEmptyBody;
 }
 
 class _AppLocalizationsDelegate

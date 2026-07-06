@@ -1298,4 +1298,136 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get routeNotFoundGoHome => 'Zum Startbildschirm';
+
+  @override
+  String get notifChannelTesting => 'Test-Erinnerungen';
+
+  @override
+  String get notifChannelDosing => 'Dosier-Erinnerungen';
+
+  @override
+  String get notifChannelMaintenance => 'Wartungs-Erinnerungen';
+
+  @override
+  String get notifTestingTitle => 'Zeit zum Testen';
+
+  @override
+  String get notifDosingTitle => 'Dosierung fällig';
+
+  @override
+  String get notifMaintenanceTitle => 'Wartung fällig';
+
+  @override
+  String notifTitleWithTank(String title, String tank) {
+    return '$title — $tank';
+  }
+
+  @override
+  String get remindersTitle => 'Erinnerungen';
+
+  @override
+  String get remindersSubtitle =>
+      'Benachrichtigungen für Tests, Dosierung und Wartung';
+
+  @override
+  String get remindersTestingSubtitle => 'Wenn ein Parametertest fällig ist';
+
+  @override
+  String get remindersDosingSubtitle => 'Zur Dosierzeit jedes Präparats';
+
+  @override
+  String get remindersMaintenanceSubtitle => 'Wenn geplante Wartung fällig ist';
+
+  @override
+  String get reminderTimeTitle => 'Erinnerungszeit';
+
+  @override
+  String get reminderTimeSubtitle =>
+      'Uhrzeit für Test- und Wartungserinnerungen';
+
+  @override
+  String get remindersPermissionDenied =>
+      'Benachrichtigungen sind in den Systemeinstellungen blockiert – Erinnerungen können nicht angezeigt werden.';
+
+  @override
+  String get remindToTest => 'An Tests erinnern';
+
+  @override
+  String get cadenceOff => 'Aus';
+
+  @override
+  String daysShortN(int count) {
+    return '$count T.';
+  }
+
+  @override
+  String get cadenceCustom => 'Eigene';
+
+  @override
+  String get customDaysLabel => 'Tage';
+
+  @override
+  String get remindMe => 'Erinnern';
+
+  @override
+  String get remindMeNeedsTime => 'Für Erinnerungen eine Uhrzeit festlegen';
+
+  @override
+  String get maintenanceSchedule => 'Wartungsplan';
+
+  @override
+  String get addMaintenanceTask => 'Aufgabe hinzufügen';
+
+  @override
+  String get editMaintenanceTask => 'Aufgabe bearbeiten';
+
+  @override
+  String get taskTypeLabel => 'Typ';
+
+  @override
+  String get customTask => 'Eigene Aufgabe';
+
+  @override
+  String get taskTitleLabel => 'Titel';
+
+  @override
+  String get taskTitleRequired => 'Titel eingeben';
+
+  @override
+  String get repeatLabel => 'Wiederholung';
+
+  @override
+  String get oneOff => 'Einmalig';
+
+  @override
+  String get dueDateLabel => 'Fälligkeitsdatum';
+
+  @override
+  String get dueDateRequired => 'Fälligkeitsdatum wählen';
+
+  @override
+  String get dueToday => 'Heute fällig';
+
+  @override
+  String dueInDaysN(int count) {
+    return 'Fällig in $count T.';
+  }
+
+  @override
+  String overdueDaysN(int count) {
+    return '$count T. überfällig';
+  }
+
+  @override
+  String get markDone => 'Erledigt';
+
+  @override
+  String get taskMarkedDone => 'Als erledigt markiert';
+
+  @override
+  String get taskDeleted => 'Aufgabe gelöscht';
+
+  @override
+  String get scheduleEmptyBody =>
+      'Noch keine Wartungsaufgaben. Plane Wasserwechsel oder eigene Aufgaben für Fälligkeits-Chips und Erinnerungen.';
 }

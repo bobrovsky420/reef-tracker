@@ -12,6 +12,7 @@ import '../domain/dose_calculator.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/presets.dart';
 import '../domain/ratio.dart';
+import '../domain/reminders.dart';
 import '../domain/setup_type.dart';
 import '../domain/supplement_catalog.dart';
 import '../domain/units.dart';
@@ -67,6 +68,11 @@ class TrackedParameters extends Table {
   RealColumn get greenLow => real().nullable()();
   RealColumn get greenHigh => real().nullable()();
   RealColumn get amberHigh => real().nullable()();
+
+  /// "Remind to test every N days" (U1); null = no reminder for this
+  /// parameter. The reminder anchors elastically on the parameter's latest
+  /// reading (see `domain/reminders.dart`).
+  IntColumn get testCadenceDays => integer().nullable()();
 }
 
 /// A single logged measurement.
@@ -218,6 +224,12 @@ class DosingEntries extends Table {
   /// Time of day as `HH:mm`, optional.
   TextColumn get doseTime => text().nullable()();
 
+  /// Whether this entry fires dosing reminders (U2). Opt-in (default off);
+  /// only effective while the entry is active, has a parsable [doseTime], and
+  /// the Settings master switch for dosing reminders is on.
+  BoolColumn get remindEnabled =>
+      boolean().withDefault(const Constant(false))();
+
   TextColumn get note => text().nullable()();
   IntColumn get displayOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -261,6 +273,50 @@ class ReadingTemplates extends Table {
   IntColumn get displayOrder => integer().withDefault(const Constant(0))();
 }
 
+/// A user-maintained maintenance plan (U12): a recurring or one-off task for
+/// one of the logged action types — or a custom-titled task ("replace RO
+/// membrane"). Typed rows derive "last done" from their action log, so logging
+/// the action anywhere in the app advances the plan; custom rows carry their
+/// own [lastDoneAt], stamped by "Mark done". Due math lives in
+/// `domain/reminders.dart` ([nextElasticDue]); recurrence is elastic (next due
+/// = completion + cadence), [scheduledAt] only seeds the first occurrence.
+@TableIndex(name: 'idx_maintenance_schedules_tank', columns: {#tankId})
+@DataClassName('MaintenanceSchedule')
+class MaintenanceSchedules extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+
+  /// [MaintenanceActionType.name] (`waterChange`/`carbonChange`/
+  /// `equipmentCleaning`), or null = custom task ([title] required then).
+  TextColumn get actionType => text().nullable()();
+
+  /// Display name for a custom task; null for typed rows, which render the
+  /// localized action name instead.
+  TextColumn get title => text().nullable()();
+
+  /// Repeat every N days after the last completion; null = one-off (due at
+  /// [scheduledAt], retired once done).
+  IntColumn get cadenceDays => integer().nullable()();
+
+  /// Planned first (or one-off) due date; ignored once the task has ever been
+  /// completed.
+  DateTimeColumn get scheduledAt => dateTime().nullable()();
+
+  /// Completion stamp for **custom** rows only (typed rows read their action
+  /// log). For a one-off custom task, non-null means finished.
+  DateTimeColumn get lastDoneAt => dateTime().nullable()();
+
+  /// Per-plan reminder opt-out; the Settings maintenance master switch still
+  /// gates all of them.
+  BoolColumn get remindEnabled => boolean().withDefault(const Constant(true))();
+
+  TextColumn get note => text().nullable()();
+
+  /// Position in the schedule list / due-chip row.
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -281,6 +337,7 @@ class Settings extends Table {
     RatioVisibilities,
     DosingEntries,
     ReadingTemplates,
+    MaintenanceSchedules,
     Settings,
   ],
 )
@@ -288,7 +345,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -417,6 +474,25 @@ class AppDatabase extends _$AppDatabase {
         if (!await _columnExists('tanks', 'deleted_at')) {
           await m.addColumn(tanks, tanks.deletedAt);
         }
+      }
+      if (from < 16) {
+        // Reminders & schedules (U1/U2/U12).
+        if (!await _columnExists('tracked_parameters', 'test_cadence_days')) {
+          await m.addColumn(
+            trackedParameters,
+            trackedParameters.testCadenceDays,
+          );
+        }
+        if (!await _columnExists('dosing_entries', 'remind_enabled')) {
+          await m.addColumn(dosingEntries, dosingEntries.remindEnabled);
+        }
+        if (!await _tableExists('maintenance_schedules')) {
+          await m.createTable(maintenanceSchedules);
+        }
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_maintenance_schedules_tank '
+          'ON maintenance_schedules (tank_id)',
+        );
       }
     },
     beforeOpen: (details) async {
@@ -618,6 +694,13 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> removeTrackedParameter(int id) =>
       (delete(trackedParameters)..where((t) => t.id.equals(id))).go();
+
+  /// Sets (or clears, with null) a parameter's "remind to test every N days"
+  /// cadence (U1).
+  Future<void> setTestCadence(int id, int? days) =>
+      (update(trackedParameters)..where((t) => t.id.equals(id))).write(
+        TrackedParametersCompanion(testCadenceDays: Value(days)),
+      );
 
   Future<void> reorderTrackedParameters(List<int> orderedIds) async {
     await batch((b) {
@@ -1182,6 +1265,174 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  // --- Maintenance schedules (U12) -------------------------------------------
+
+  /// A tank's maintenance plans, in user (drag) order, then insertion order.
+  Stream<List<MaintenanceSchedule>> watchMaintenanceSchedules(int tankId) =>
+      (select(maintenanceSchedules)
+            ..where((s) => s.tankId.equals(tankId))
+            ..orderBy([
+              (s) => OrderingTerm(expression: s.displayOrder),
+              (s) => OrderingTerm(expression: s.id),
+            ]))
+          .watch();
+
+  /// One-shot read for the background reminder scheduler.
+  Future<List<MaintenanceSchedule>> getMaintenanceSchedules(int tankId) =>
+      (select(maintenanceSchedules)
+            ..where((s) => s.tankId.equals(tankId))
+            ..orderBy([
+              (s) => OrderingTerm(expression: s.displayOrder),
+              (s) => OrderingTerm(expression: s.id),
+            ]))
+          .get();
+
+  /// Creates a maintenance plan and returns its id. Max-order read + insert in
+  /// one transaction (#10); max(displayOrder) + 1, not the row count.
+  Future<int> insertMaintenanceSchedule({
+    required int tankId,
+    String? actionType,
+    String? title,
+    int? cadenceDays,
+    DateTime? scheduledAt,
+    bool remindEnabled = true,
+    String? note,
+  }) {
+    return transaction(() async {
+      final existing = await (select(
+        maintenanceSchedules,
+      )..where((s) => s.tankId.equals(tankId))).get();
+      final order =
+          existing.fold<int>(
+            -1,
+            (m, s) => s.displayOrder > m ? s.displayOrder : m,
+          ) +
+          1;
+      return into(maintenanceSchedules).insert(
+        MaintenanceSchedulesCompanion.insert(
+          tankId: tankId,
+          actionType: Value(actionType),
+          title: Value(title),
+          cadenceDays: Value(cadenceDays),
+          scheduledAt: Value(scheduledAt),
+          remindEnabled: Value(remindEnabled),
+          note: Value(note),
+          displayOrder: Value(order),
+        ),
+      );
+    });
+  }
+
+  /// Rewrites a plan's editable fields (type/title/cadence/date/remind/note).
+  Future<void> updateMaintenanceSchedule(
+    int id, {
+    String? actionType,
+    String? title,
+    int? cadenceDays,
+    DateTime? scheduledAt,
+    required bool remindEnabled,
+    String? note,
+  }) => (update(maintenanceSchedules)..where((s) => s.id.equals(id))).write(
+    MaintenanceSchedulesCompanion(
+      actionType: Value(actionType),
+      title: Value(title),
+      cadenceDays: Value(cadenceDays),
+      scheduledAt: Value(scheduledAt),
+      remindEnabled: Value(remindEnabled),
+      note: Value(note),
+    ),
+  );
+
+  /// Stamps a custom task done (typed tasks advance via their action log).
+  Future<void> markMaintenanceDone(int id, DateTime at) =>
+      (update(maintenanceSchedules)..where((s) => s.id.equals(id))).write(
+        MaintenanceSchedulesCompanion(lastDoneAt: Value(at)),
+      );
+
+  Future<void> deleteMaintenanceSchedule(int id) =>
+      (delete(maintenanceSchedules)..where((s) => s.id.equals(id))).go();
+
+  /// Writes a captured row back verbatim — the undo path for both delete
+  /// (row gone → re-insert) and "Mark done" (row present → full replace).
+  /// `toCompanion(false)` keeps null fields *present* so the replace clears
+  /// them (a bare data-class insert maps nulls to absent, which would leave
+  /// e.g. a stamped `lastDoneAt` in place).
+  Future<void> restoreMaintenanceSchedule(MaintenanceSchedule row) => into(
+    maintenanceSchedules,
+  ).insert(row.toCompanion(false), mode: InsertMode.insertOrReplace);
+
+  /// Persists a new manual ordering of a tank's plans, given their ids in the
+  /// desired order.
+  Future<void> reorderMaintenanceSchedules(List<int> orderedIds) async {
+    await batch((b) {
+      for (var i = 0; i < orderedIds.length; i++) {
+        b.update(
+          maintenanceSchedules,
+          MaintenanceSchedulesCompanion(displayOrder: Value(i)),
+          where: (s) => s.id.equals(orderedIds[i]),
+        );
+      }
+    });
+  }
+
+  // --- Reminder-scheduler reads (U1/U12) -------------------------------------
+
+  /// Latest reading timestamp per parameter key — the elastic anchor for
+  /// testing reminders (U1). One aggregate query; never materializes rows.
+  Future<Map<String, DateTime>> latestReadingTimesPerParam(int tankId) async {
+    final maxTaken = readings.takenAt.max();
+    final query = selectOnly(readings)
+      ..addColumns([readings.paramKey, maxTaken])
+      ..where(readings.tankId.equals(tankId))
+      ..groupBy([readings.paramKey]);
+    final rows = await query.get();
+    return {
+      for (final r in rows)
+        if (r.read(maxTaken) != null)
+          r.read(readings.paramKey)!: r.read(maxTaken)!,
+    };
+  }
+
+  /// Newest logged action per maintenance action type — the elastic anchor
+  /// for typed maintenance plans (U12).
+  Future<Map<MaintenanceActionType, DateTime>> latestActionTimes(
+    int tankId,
+  ) async {
+    Future<DateTime?> newest<T extends Table, R>(
+      TableInfo<T, R> table,
+      GeneratedColumn<int> tankColumn,
+      GeneratedColumn<DateTime> timeColumn,
+    ) async {
+      final maxTime = timeColumn.max();
+      final query = selectOnly(table)
+        ..addColumns([maxTime])
+        ..where(tankColumn.equals(tankId));
+      final row = await query.getSingle();
+      return row.read(maxTime);
+    }
+
+    final water = await newest(
+      waterChanges,
+      waterChanges.tankId,
+      waterChanges.changedAt,
+    );
+    final carbon = await newest(
+      carbonChanges,
+      carbonChanges.tankId,
+      carbonChanges.changedAt,
+    );
+    final cleaning = await newest(
+      equipmentCleanings,
+      equipmentCleanings.tankId,
+      equipmentCleanings.cleanedAt,
+    );
+    return {
+      MaintenanceActionType.waterChange: ?water,
+      MaintenanceActionType.carbonChange: ?carbon,
+      MaintenanceActionType.equipmentCleaning: ?cleaning,
+    };
+  }
+
   // --- Settings ------------------------------------------------------------
 
   Future<void> setActiveTank(int? tankId) =>
@@ -1266,6 +1517,10 @@ class AppDatabase extends _$AppDatabase {
   Future<List<ReadingTemplate>> getAllReadingTemplates() =>
       select(readingTemplates).get();
 
+  /// Every maintenance plan, across all tanks.
+  Future<List<MaintenanceSchedule>> getAllMaintenanceSchedules() =>
+      select(maintenanceSchedules).get();
+
   /// Every settings key/value pair.
   Future<List<Setting>> getAllSettings() => select(settings).get();
 
@@ -1289,6 +1544,7 @@ class AppDatabase extends _$AppDatabase {
     required List<RatioVisibilitiesCompanion> ratioVisibilityRows,
     required List<DosingEntriesCompanion> dosingEntryRows,
     required List<ReadingTemplatesCompanion> readingTemplateRows,
+    required List<MaintenanceSchedulesCompanion> maintenanceScheduleRows,
     required List<SettingsCompanion> settingRows,
     Set<String> preserveSettingKeys = const {},
   }) async {
@@ -1304,6 +1560,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(ratioVisibilities).go();
       await delete(dosingEntries).go();
       await delete(readingTemplates).go();
+      await delete(maintenanceSchedules).go();
       await delete(trackedParameters).go();
       // Preserve device-local preferences: wipe only the settings the restore
       // is allowed to replace.
@@ -1326,6 +1583,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(ratioVisibilities, ratioVisibilityRows);
         b.insertAll(dosingEntries, dosingEntryRows);
         b.insertAll(readingTemplates, readingTemplateRows);
+        b.insertAll(maintenanceSchedules, maintenanceScheduleRows);
         b.insertAll(settings, incomingSettings);
       });
     });

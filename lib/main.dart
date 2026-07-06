@@ -8,6 +8,7 @@ import 'app/provider_errors.dart';
 import 'app/providers.dart';
 import 'app/router.dart';
 import 'data/auto_backup.dart';
+import 'data/reminder_scheduler.dart';
 import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
@@ -84,6 +85,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _purgeDeletedTanks();
       _maybeBackUp();
+      _initReminders();
     });
   }
 
@@ -95,7 +97,51 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _maybeBackUp();
+    if (state == AppLifecycleState.resumed) {
+      _maybeBackUp();
+      // Re-plan reminders on every resume: the 14-day scheduling horizon is
+      // only refreshed while the app runs, and a resume is also when a DST
+      // shift or a long background stretch would have drifted the schedule.
+      unawaited(
+        ref.read(reminderSchedulerProvider).resync().catchError((_) {}),
+      );
+    }
+  }
+
+  /// One-time reminder wiring (U1/U2/U12), deliberately after the first frame:
+  /// the notification plugin's init is a platform-channel call, and those can
+  /// hang forever before the first frame (flutter/flutter#72872 — see the
+  /// pre-warm note in [main]). Initializes the plugin with the tap handler,
+  /// starts the write-triggered scheduler, plans the initial set, and replays
+  /// the payload of a notification that cold-started the app.
+  void _initReminders() {
+    Future<void> run() async {
+      final notifications = ref.read(reminderNotificationsProvider);
+      final db = ref.read(dbProvider);
+      await notifications.init(
+        onTap: (payload) =>
+            unawaited(handleReminderPayload(db, payload, appRouter.go)),
+      );
+      final scheduler = ref.read(reminderSchedulerProvider)..start();
+      await scheduler.resync();
+      final launch = await notifications.launchPayload();
+      if (launch != null) {
+        await handleReminderPayload(db, launch, appRouter.go);
+      }
+    }
+
+    unawaited(
+      run().catchError((Object e, StackTrace s) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'reminders',
+            context: ErrorSummary('initializing reminder notifications'),
+          ),
+        );
+      }),
+    );
   }
 
   /// Finalizes tanks soft-deleted in a previous session (U10). Normally a

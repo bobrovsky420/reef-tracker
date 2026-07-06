@@ -488,5 +488,84 @@
     "description": "Title of the error screen shown when a navigation link or deep link points to a screen that doesn't exist."
   },
   "routeNotFoundBody": "This link doesn't lead anywhere in the app.",
-  "routeNotFoundGoHome": "Go to home screen"
+  "routeNotFoundGoHome": "Go to home screen",
+
+  "notifChannelTesting": "Testing reminders",
+  "@notifChannelTesting": {
+    "description": "User-visible name of the Android notification channel for water-testing reminders (shown in system notification settings)."
+  },
+  "notifChannelDosing": "Dosing reminders",
+  "@notifChannelDosing": {
+    "description": "User-visible name of the Android notification channel for supplement-dosing reminders."
+  },
+  "notifChannelMaintenance": "Maintenance reminders",
+  "@notifChannelMaintenance": {
+    "description": "User-visible name of the Android notification channel for maintenance-schedule reminders."
+  },
+  "notifTestingTitle": "Time to test",
+  "@notifTestingTitle": {
+    "description": "Notification title for a testing reminder; the body lists the parameter names due for testing."
+  },
+  "notifDosingTitle": "Dosing due",
+  "@notifDosingTitle": {
+    "description": "Notification title for a dosing reminder; the body lists the supplement product names."
+  },
+  "notifMaintenanceTitle": "Maintenance due",
+  "@notifMaintenanceTitle": {
+    "description": "Notification title for a maintenance reminder; the body lists the due tasks."
+  },
+  "notifTitleWithTank": "{title} — {tank}",
+  "@notifTitleWithTank": {
+    "description": "Combines a notification title with the tank name when more than one tank exists.",
+    "placeholders": {
+      "title": { "type": "String" },
+      "tank": { "type": "String" }
+    }
+  },
+
+  "remindersTitle": "Reminders",
+  "remindersSubtitle": "Testing, dosing and maintenance notifications",
+  "remindersTestingSubtitle": "When a parameter's test is due",
+  "remindersDosingSubtitle": "At each supplement's dose time",
+  "remindersMaintenanceSubtitle": "When scheduled maintenance is due",
+  "reminderTimeTitle": "Reminder time",
+  "reminderTimeSubtitle": "Delivery time for testing and maintenance reminders",
+  "remindersPermissionDenied": "Notifications are blocked in system settings, so reminders can't be shown.",
+  "remindToTest": "Remind to test",
+  "cadenceOff": "Off",
+  "daysShortN": "{count} d",
+  "@daysShortN": {
+    "description": "Compact day count used on cadence preset chips (e.g. \"7 d\").",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "cadenceCustom": "Custom",
+  "customDaysLabel": "Days",
+  "remindMe": "Remind me",
+  "remindMeNeedsTime": "Set a time of day to enable reminders",
+  "maintenanceSchedule": "Maintenance schedule",
+  "addMaintenanceTask": "Add task",
+  "editMaintenanceTask": "Edit task",
+  "taskTypeLabel": "Type",
+  "customTask": "Custom task",
+  "taskTitleLabel": "Title",
+  "taskTitleRequired": "Enter a title",
+  "repeatLabel": "Repeat",
+  "oneOff": "One-off",
+  "dueDateLabel": "Due date",
+  "dueDateRequired": "Pick a due date",
+  "dueToday": "Due today",
+  "dueInDaysN": "Due in {count} d",
+  "@dueInDaysN": {
+    "description": "Due chip: the task is due in {count} days (compact d abbreviation).",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "overdueDaysN": "{count} d overdue",
+  "@overdueDaysN": {
+    "description": "Due chip: the task is {count} days past its due date (compact d abbreviation).",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "markDone": "Mark done",
+  "taskMarkedDone": "Marked as done",
+  "taskDeleted": "Task deleted",
+  "scheduleEmptyBody": "No maintenance tasks yet. Plan water changes or custom tasks to get due chips and reminders."
 }

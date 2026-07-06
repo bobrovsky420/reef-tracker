@@ -16,7 +16,12 @@ import '../dosing/dosing_screen.dart';
 /// per-tab FAB. Tab bodies are kept alive via [IndexedStack] so each preserves
 /// its scroll position and state when switching.
 class HomeShell extends ConsumerStatefulWidget {
-  const HomeShell({super.key});
+  const HomeShell({super.key, this.tab});
+
+  /// Optional tab request from a deep link (`/?tab=actions|dosing`), e.g. a
+  /// reminder-notification tap. Null (or an unknown value) leaves the current
+  /// tab alone.
+  final String? tab;
 
   @override
   ConsumerState<HomeShell> createState() => _HomeShellState();
@@ -32,6 +37,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   static _HomeShellState? _showcaseOwner;
 
   int _index = 0;
+
+  /// Maps the deep-link `tab` value to a bottom-nav index; null = no change.
+  static int? _tabIndex(String? tab) => switch (tab) {
+    'measurements' => 0,
+    'actions' => 1,
+    'dosing' => 2,
+    _ => null,
+  };
 
   /// On the Measurements tab, whether to show the stacked-graph comparison view
   /// instead of the card grid. Kept here so it survives tab switches.
@@ -58,8 +71,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   int _tourPhase = 0;
 
   @override
+  void didUpdateWidget(covariant HomeShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A repeat navigation to '/' with a tab query (notification tap while the
+    // shell is already mounted) re-runs the route builder on this same state.
+    final requested = _tabIndex(widget.tab);
+    if (widget.tab != oldWidget.tab && requested != null) {
+      setState(() => _index = requested);
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    _index = _tabIndex(widget.tab) ?? 0;
     // Register the showcase controller for this screen's scope. Localized
     // tooltip text/buttons are supplied per-Showcase in build (where
     // AppLocalizations is available).
@@ -210,6 +235,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 ),
                 onPressed: () => setState(() => _compare = !_compare),
               ),
+            ),
+          // Maintenance schedule (U12), contextual to the Actions tab.
+          if (hasTanks && _index == 1)
+            IconButton(
+              tooltip: l.maintenanceSchedule,
+              icon: const Icon(Icons.event_repeat),
+              onPressed: () => context.push('/schedule'),
             ),
           // Dosing history, contextual to the Dosing tab. First step of phase 2.
           if (hasTanks && _index == 2)

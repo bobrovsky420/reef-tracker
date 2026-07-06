@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../domain/reminders.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 import 'database.dart';
@@ -32,6 +33,9 @@ const kDefaultChartRange = '30d';
 /// Defaults applied when the corresponding auto-backup setting is unset.
 const bool kAutoBackupDefaultEnabled = true;
 const int kAutoBackupDefaultKeep = 5;
+
+/// Default delivery time for testing/maintenance reminder notifications.
+const kDefaultReminderTime = (hour: 9, minute: 0);
 
 /// How often an automatic backup is taken (opportunistically, on app launch
 /// or resume — see `runAutoBackupIfDue`).
@@ -96,7 +100,13 @@ enum SettingKey {
   autoBackupKeep(kAutoBackupKeepKey, deviceLocal: true),
   lastAutoBackupAt(kLastAutoBackupAtKey, deviceLocal: true),
   lastBackupErrorAt(kLastBackupErrorAtKey, deviceLocal: true),
-  lastReadingTemplate(kLastReadingTemplateKey, deviceLocal: true);
+  lastReadingTemplate(kLastReadingTemplateKey, deviceLocal: true),
+  // Notification prefs are per-device by nature: restoring another device's
+  // backup must not silently start (or stop) notifications on this one.
+  remindersTesting(kRemindersTestingKey, deviceLocal: true),
+  remindersDosing(kRemindersDosingKey, deviceLocal: true),
+  remindersMaintenance(kRemindersMaintenanceKey, deviceLocal: true),
+  reminderTime(kReminderTimeKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -303,6 +313,49 @@ class AppSettings {
 
   Stream<Map<int, int>> watchLastReadingTemplates() =>
       _watch(SettingKey.lastReadingTemplate).map(decodeLastReadingTemplates);
+
+  // --- reminders (U1/U2/U12) ---------------------------------------------------
+
+  /// All three category switches default **off**: notifications are opt-in,
+  /// and the first enable is what triggers the permission request.
+  static bool decodeRemindersTesting(String? raw) => raw == 'true';
+  Stream<bool> watchRemindersTesting() =>
+      _watch(SettingKey.remindersTesting).map(decodeRemindersTesting);
+  Future<bool> readRemindersTesting() async =>
+      decodeRemindersTesting(await _read(SettingKey.remindersTesting));
+  Future<void> setRemindersTesting(bool enabled) =>
+      _write(SettingKey.remindersTesting, enabled.toString());
+
+  static bool decodeRemindersDosing(String? raw) => raw == 'true';
+  Stream<bool> watchRemindersDosing() =>
+      _watch(SettingKey.remindersDosing).map(decodeRemindersDosing);
+  Future<bool> readRemindersDosing() async =>
+      decodeRemindersDosing(await _read(SettingKey.remindersDosing));
+  Future<void> setRemindersDosing(bool enabled) =>
+      _write(SettingKey.remindersDosing, enabled.toString());
+
+  static bool decodeRemindersMaintenance(String? raw) => raw == 'true';
+  Stream<bool> watchRemindersMaintenance() =>
+      _watch(SettingKey.remindersMaintenance).map(decodeRemindersMaintenance);
+  Future<bool> readRemindersMaintenance() async =>
+      decodeRemindersMaintenance(await _read(SettingKey.remindersMaintenance));
+  Future<void> setRemindersMaintenance(bool enabled) =>
+      _write(SettingKey.remindersMaintenance, enabled.toString());
+
+  /// Delivery time of day for testing/maintenance reminders (dosing reminders
+  /// use each entry's own `doseTime`). Stored as `HH:mm`; malformed/unset
+  /// values decode to the 09:00 default via the same strict parser the dosing
+  /// schedule uses.
+  static ({int hour, int minute}) decodeReminderTime(String? raw) =>
+      parseDoseTime(raw) ?? kDefaultReminderTime;
+  Stream<({int hour, int minute})> watchReminderTime() =>
+      _watch(SettingKey.reminderTime).map(decodeReminderTime);
+  Future<({int hour, int minute})> readReminderTime() async =>
+      decodeReminderTime(await _read(SettingKey.reminderTime));
+  Future<void> setReminderTime(int hour, int minute) => _write(
+    SettingKey.reminderTime,
+    '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}',
+  );
 
   /// Records [templateId] as the last-used test set for [tankId]; null selects
   /// "All" (removes the entry).

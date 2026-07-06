@@ -363,6 +363,59 @@ void main() {
     expect((await db.getTanks()).single.id, id);
   });
 
+  test('upgrading from v15 adds the reminders schema (U1/U2/U12)', () async {
+    // seedFullSchemaAt builds the current schema, so drop everything v16
+    // added to reconstruct a genuine v15 file where the from<16 step must
+    // add the two columns and create the table + index.
+    final file = File('${tempDir.path}/from15-noreminders.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    await seed.getAllTanks();
+    await seed.customStatement(
+      'ALTER TABLE tracked_parameters DROP COLUMN test_cadence_days',
+    );
+    await seed.customStatement(
+      'ALTER TABLE dosing_entries DROP COLUMN remind_enabled',
+    );
+    await seed.customStatement(
+      'DROP INDEX IF EXISTS idx_maintenance_schedules_tank',
+    );
+    await seed.customStatement('DROP TABLE maintenance_schedules');
+    await seed.customStatement('PRAGMA user_version = 15');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    // Exercise all three additions on real write + read paths.
+    final param = (await db.getTrackedParameters(tankId)).first;
+    await db.setTestCadence(param.id, 7);
+    expect(
+      (await db.getTrackedParameters(
+        tankId,
+      )).firstWhere((p) => p.id == param.id).testCadenceDays,
+      7,
+    );
+    final scheduleId = await db.insertMaintenanceSchedule(
+      tankId: tankId,
+      actionType: 'waterChange',
+      cadenceDays: 14,
+    );
+    expect(scheduleId, greaterThan(0));
+    expect(await indexNames(db), contains('idx_maintenance_schedules_tank'));
+    final entryId = await db.insertDosingEntry(
+      DosingEntriesCompanion.insert(tankId: tankId, product: 'Kalk'),
+    );
+    expect(
+      (await db.getAllDosingEntries())
+          .firstWhere((d) => d.id == entryId)
+          .remindEnabled,
+      isFalse,
+    );
+  });
+
   group('guarded migration steps are idempotent', () {
     // v3..(schemaVersion-1): re-running each upgrade against a schema that
     // already has every table/column must not throw.

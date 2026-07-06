@@ -81,6 +81,34 @@ void main() {
         3: 7,
       });
     });
+
+    test(
+      'reminder category switches default off and round-trip (U1/U2/U12)',
+      () async {
+        expect(await settings.readRemindersTesting(), isFalse);
+        expect(await settings.readRemindersDosing(), isFalse);
+        expect(await settings.readRemindersMaintenance(), isFalse);
+
+        await settings.setRemindersTesting(true);
+        await settings.setRemindersMaintenance(true);
+        expect(await settings.watchRemindersTesting().first, isTrue);
+        expect(await settings.watchRemindersDosing().first, isFalse);
+        expect(await settings.readRemindersMaintenance(), isTrue);
+      },
+    );
+
+    test('reminder time defaults to 09:00, round-trips zero-padded, and '
+        'garbage decodes to the default', () async {
+      expect(await settings.readReminderTime(), kDefaultReminderTime);
+
+      await settings.setReminderTime(7, 5);
+      expect(await db.getSetting(kReminderTimeKey), '07:05');
+      expect(await settings.watchReminderTime().first, (hour: 7, minute: 5));
+
+      expect(AppSettings.decodeReminderTime('25:99'), kDefaultReminderTime);
+      expect(AppSettings.decodeReminderTime('soon'), kDefaultReminderTime);
+      expect(AppSettings.decodeReminderTime(null), kDefaultReminderTime);
+    });
   });
 
   group('SettingKey registry', () {

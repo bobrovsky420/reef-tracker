@@ -56,6 +56,7 @@ void main() {
         greenLow: 7.5,
         greenHigh: 9.0,
         amberHigh: 9.5,
+        testCadenceDays: 7,
       ),
       TrackedParameter(
         id: 6,
@@ -166,6 +167,7 @@ void main() {
         basis: 'perDay',
         frequency: 'daily',
         doseTime: '21:00',
+        remindEnabled: true,
         note: 'Auto-doser line 2',
         displayOrder: 0,
         createdAt: DateTime.fromMillisecondsSinceEpoch(1700004000000),
@@ -176,6 +178,7 @@ void main() {
         id: 51,
         tankId: 1,
         product: 'Custom kalk mix',
+        remindEnabled: false,
         displayOrder: 1,
         createdAt: DateTime.fromMillisecondsSinceEpoch(1700005000000),
         startedAt: DateTime.fromMillisecondsSinceEpoch(1700005000000),
@@ -199,6 +202,32 @@ void main() {
         displayOrder: 1,
       ),
     ];
+    final maintenanceSchedules = [
+      MaintenanceSchedule(
+        id: 70,
+        tankId: 1,
+        actionType: 'waterChange',
+        title: null,
+        cadenceDays: 14,
+        scheduledAt: null,
+        lastDoneAt: null,
+        remindEnabled: true,
+        note: null,
+        displayOrder: 0,
+      ),
+      MaintenanceSchedule(
+        id: 71,
+        tankId: 2,
+        actionType: null,
+        title: 'Replace RO membrane',
+        cadenceDays: null,
+        scheduledAt: DateTime.fromMillisecondsSinceEpoch(1700009000000),
+        lastDoneAt: DateTime.fromMillisecondsSinceEpoch(1700009500000),
+        remindEnabled: false,
+        note: 'under the sink',
+        displayOrder: 1,
+      ),
+    ];
     final settings = [
       const Setting(key: 'temp_unit', value: 'fahrenheit'),
       const Setting(key: 'active_tank_id', value: '1'),
@@ -217,6 +246,7 @@ void main() {
         ratioVisibilities: ratioVisibilities,
         dosingEntries: dosingEntries,
         readingTemplates: readingTemplates,
+        maintenanceSchedules: maintenanceSchedules,
         settings: settings,
       );
       final data = decodeBackup(json);
@@ -318,6 +348,29 @@ void main() {
       expect(rt0.displayOrder.value, 0);
       expect(data.readingTemplates[1].name.value, 'Daily Alk');
 
+      final ms0 = data.maintenanceSchedules[0];
+      expect(ms0.id.value, 70);
+      expect(ms0.tankId.value, 1);
+      expect(ms0.actionType.value, 'waterChange');
+      expect(ms0.title.value, isNull);
+      expect(ms0.cadenceDays.value, 14);
+      expect(ms0.scheduledAt.value, isNull);
+      expect(ms0.lastDoneAt.value, isNull);
+      expect(ms0.remindEnabled.value, isTrue);
+      final ms1 = data.maintenanceSchedules[1];
+      expect(ms1.actionType.value, isNull);
+      expect(ms1.title.value, 'Replace RO membrane');
+      expect(ms1.cadenceDays.value, isNull);
+      expect(ms1.scheduledAt.value, maintenanceSchedules[1].scheduledAt);
+      expect(ms1.lastDoneAt.value, maintenanceSchedules[1].lastDoneAt);
+      expect(ms1.remindEnabled.value, isFalse);
+      expect(ms1.note.value, 'under the sink');
+
+      // The v16 columns on existing sections round-trip too.
+      expect(data.params[0].testCadenceDays.value, params[0].testCadenceDays);
+      expect(data.dosingEntries[0].remindEnabled.value, isTrue);
+      expect(data.dosingEntries[1].remindEnabled.value, isFalse);
+
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
       expect(data.settings[0].value.value, 'fahrenheit');
@@ -397,6 +450,10 @@ void main() {
                 RegExp(r',\s*"readingTemplates":\s*\[.*?\]', dotAll: true),
                 '',
               )
+              .replaceFirst(
+                RegExp(r',\s*"maintenanceSchedules":\s*\[.*?\]', dotAll: true),
+                '',
+              )
               // Older backups predate the checksum too (T7); with it left in,
               // the stripped document would (correctly) fail verification.
               .replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
@@ -407,7 +464,35 @@ void main() {
       expect(data.ratioVisibilities, isEmpty);
       expect(data.dosingEntries, isEmpty);
       expect(data.readingTemplates, isEmpty);
+      expect(data.maintenanceSchedules, isEmpty);
       expect(data.readings.length, 2);
+    });
+
+    test('tolerates pre-v16 rows without the reminder fields', () {
+      final json = encodeBackup(
+        schemaVersion: 15,
+        tanks: tanks,
+        params: params,
+        readings: readings,
+        waterChanges: waterChanges,
+        carbonChanges: carbonChanges,
+        equipmentCleanings: equipmentCleanings,
+        ratioVisibilities: ratioVisibilities,
+        dosingEntries: dosingEntries,
+        settings: settings,
+      );
+      final doc = jsonDecode(json) as Map<String, dynamic>;
+      doc.remove('checksum');
+      for (final p in doc['trackedParameters'] as List) {
+        (p as Map<String, dynamic>).remove('testCadenceDays');
+      }
+      for (final d in doc['dosingEntries'] as List) {
+        (d as Map<String, dynamic>).remove('remindEnabled');
+      }
+      final data = decodeBackup(jsonEncode(doc));
+      expect(data.params[0].testCadenceDays.value, isNull);
+      // Reminders stay opt-in for restored pre-v16 entries.
+      expect(data.dosingEntries[0].remindEnabled.value, isFalse);
     });
 
     test('tolerates dosing entries without segment fields (pre-v11)', () {
@@ -677,6 +762,7 @@ void main() {
       List<TanksCompanion> tanks = const [],
       List<ReadingsCompanion> readings = const [],
       List<ReadingTemplatesCompanion> readingTemplates = const [],
+      List<MaintenanceSchedulesCompanion> maintenanceSchedules = const [],
       int schemaVersion = 1,
     }) => BackupData(
       schemaVersion: schemaVersion,
@@ -689,6 +775,7 @@ void main() {
       ratioVisibilities: const [],
       dosingEntries: const [],
       readingTemplates: readingTemplates,
+      maintenanceSchedules: maintenanceSchedules,
       settings: const [],
     );
 
@@ -791,6 +878,96 @@ void main() {
         rejectedWith(BackupRejection.inconsistent),
       );
     });
+
+    MaintenanceSchedulesCompanion schedule(
+      int id,
+      int tankId, {
+      String? actionType = 'waterChange',
+      String? title,
+      int? cadenceDays = 14,
+    }) => MaintenanceSchedulesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      actionType: Value(actionType),
+      title: Value(title),
+      cadenceDays: Value(cadenceDays),
+      displayOrder: const Value(0),
+    );
+
+    test('accepts typed and custom maintenance plans (U12)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [
+          schedule(70, 1),
+          schedule(71, 1, actionType: null, title: 'Replace RO membrane'),
+          schedule(72, 1, cadenceDays: null), // one-off typed
+        ],
+      );
+      expect(() => validateBackup(d, appSchemaVersion: 16), returnsNormally);
+    });
+
+    test('rejects a plan referencing a missing aquarium (U12)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [schedule(70, 99)],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 16),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a plan with an unknown actionType (U12, #34)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [schedule(70, 1, actionType: 'bogus')],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 16),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a custom plan with a blank title (U12)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [schedule(70, 1, actionType: null, title: '   ')],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 16),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+      final noTitle = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [schedule(70, 1, actionType: null)],
+      );
+      expect(
+        () => validateBackup(noTitle, appSchemaVersion: 16),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a plan with a sub-1-day cadence (U12, #8 rule)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [schedule(70, 1, cadenceDays: 0)],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 16),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a plan with an out-of-range id (U12, #33)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        maintenanceSchedules: [schedule(-1, 1)],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 16),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
   });
 
   group('full database round-trip', () {
@@ -850,6 +1027,12 @@ void main() {
         name: 'Weekly big test',
         paramKeys: ['alkalinity', 'calcium'],
       );
+      await db.insertMaintenanceSchedule(
+        tankId: id,
+        actionType: 'waterChange',
+        cadenceDays: 14,
+      );
+      await db.setTestCadence((await db.getTrackedParameters(id)).first.id, 7);
       await db.setSetting('temp_unit', 'fahrenheit');
       return id;
     }
@@ -884,6 +1067,15 @@ void main() {
       final restoredTemplate = (await dst.getAllReadingTemplates()).single;
       expect(restoredTemplate.name, 'Weekly big test');
       expect(restoredTemplate.keys, ['alkalinity', 'calcium']);
+      final restoredSchedule = (await dst.getAllMaintenanceSchedules()).single;
+      expect(restoredSchedule.actionType, 'waterChange');
+      expect(restoredSchedule.cadenceDays, 14);
+      expect(
+        (await dst.getAllTrackedParameters())
+            .firstWhere((p) => p.testCadenceDays != null)
+            .testCadenceDays,
+        7,
+      );
       expect(
         (await dst.getAllTrackedParameters()).length,
         (await src.getAllTrackedParameters()).length,
@@ -911,6 +1103,11 @@ void main() {
           value: 8.0,
           takenAt: DateTime(2026, 3, 1),
         );
+        await src.insertMaintenanceSchedule(
+          tankId: doomed,
+          actionType: 'waterChange',
+          cadenceDays: 7,
+        );
         await src.softDeleteTank(doomed);
 
         final data = decodeBackup(await encodeBackupFromDb(src));
@@ -918,6 +1115,10 @@ void main() {
         expect(data.params.map((p) => p.tankId.value), isNot(contains(doomed)));
         expect(
           data.readings.map((r) => r.tankId.value),
+          isNot(contains(doomed)),
+        );
+        expect(
+          data.maintenanceSchedules.map((s) => s.tankId.value),
           isNot(contains(doomed)),
         );
       },

@@ -10,6 +10,7 @@ import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/features/actions/schedule_screen.dart';
 import 'package:reeftracker/features/add_reading/add_reading_screen.dart';
 import 'package:reeftracker/features/calculator/salinity_calculator_screen.dart';
 import 'package:reeftracker/features/dosing/dose_calculator_screen.dart';
@@ -21,6 +22,7 @@ import 'package:reeftracker/features/manage_parameters/manage_parameters_screen.
 import 'package:reeftracker/features/ratio/ratio_edit_screen.dart';
 import 'package:reeftracker/features/ratio/ratio_screen.dart';
 import 'package:reeftracker/features/settings/backups_screen.dart';
+import 'package:reeftracker/features/settings/reminders_screen.dart';
 import 'package:reeftracker/features/settings/settings_screen.dart';
 import 'package:reeftracker/features/tanks/tanks_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
@@ -119,6 +121,8 @@ void main() {
     ('/dosing/history', DosingHistoryScreen),
     ('/settings', SettingsScreen),
     ('/settings/backups', BackupsScreen),
+    ('/settings/reminders', RemindersScreen),
+    ('/schedule', MaintenanceScheduleScreen),
     ('/calculator/salinity', SalinityCalculatorScreen),
     ('/', HomeShell),
   ];

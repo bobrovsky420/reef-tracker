@@ -46,6 +46,10 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
   final Set<int> _weekdays = {};
   TimeOfDay? _time;
 
+  /// Dosing reminders for this entry (U2). Opt-in; only offered while a dose
+  /// time is set (the notification needs a time of day).
+  bool _remindEnabled = false;
+
   final _noteCtrl = TextEditingController();
 
   /// True while a save is in flight; blocks re-entrant saves (double-tap).
@@ -89,6 +93,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
         minute: int.tryParse(p[1]) ?? 0,
       );
     }
+    _remindEnabled = e.remindEnabled;
     _noteCtrl.text = e.note ?? '';
   }
 
@@ -195,6 +200,9 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
       intervalDays: Value(interval),
       weekdays: Value(weekdays),
       doseTime: Value(doseTime),
+      // The switch is disabled without a time; clearing the time also clears
+      // the stored opt-in so a later time edit starts from "off".
+      remindEnabled: Value(_remindEnabled && doseTime != null),
       note: Value(note.isEmpty ? null : note),
     );
 
@@ -207,11 +215,13 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
         // segment.
         await db.supersedeDosingEntry(existing, companion);
       } else {
-        // Cosmetic-only edit (display name, note, time): update in place.
+        // Cosmetic-only edit (display name, note, time, reminder): update in
+        // place.
         await db.updateDosingEntry(
           existing.copyWith(
             product: _productName,
             doseTime: companion.doseTime,
+            remindEnabled: companion.remindEnabled.value,
             note: companion.note,
           ),
         );
@@ -551,6 +561,15 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
               },
             ),
           ],
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _remindEnabled && _time != null,
+          onChanged: _time == null
+              ? null
+              : (v) => setState(() => _remindEnabled = v),
+          title: Text(l.remindMe),
+          subtitle: _time == null ? Text(l.remindMeNeedsTime) : null,
         ),
       ],
     );

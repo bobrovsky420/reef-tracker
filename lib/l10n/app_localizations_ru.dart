@@ -1303,4 +1303,138 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get routeNotFoundGoHome => 'На главный экран';
+
+  @override
+  String get notifChannelTesting => 'Напоминания об измерениях';
+
+  @override
+  String get notifChannelDosing => 'Напоминания о дозировании';
+
+  @override
+  String get notifChannelMaintenance => 'Напоминания об обслуживании';
+
+  @override
+  String get notifTestingTitle => 'Пора сделать тесты';
+
+  @override
+  String get notifDosingTitle => 'Пора дозировать';
+
+  @override
+  String get notifMaintenanceTitle => 'Пора провести обслуживание';
+
+  @override
+  String notifTitleWithTank(String title, String tank) {
+    return '$title — $tank';
+  }
+
+  @override
+  String get remindersTitle => 'Напоминания';
+
+  @override
+  String get remindersSubtitle =>
+      'Уведомления об измерениях, дозировании и обслуживании';
+
+  @override
+  String get remindersTestingSubtitle => 'Когда пора сделать тест параметра';
+
+  @override
+  String get remindersDosingSubtitle =>
+      'Во время дозирования каждого препарата';
+
+  @override
+  String get remindersMaintenanceSubtitle => 'Когда подходит срок обслуживания';
+
+  @override
+  String get reminderTimeTitle => 'Время напоминаний';
+
+  @override
+  String get reminderTimeSubtitle =>
+      'Когда приходят напоминания об измерениях и обслуживании';
+
+  @override
+  String get remindersPermissionDenied =>
+      'Уведомления заблокированы в настройках системы — напоминания не будут показаны.';
+
+  @override
+  String get remindToTest => 'Напоминать об измерении';
+
+  @override
+  String get cadenceOff => 'Выкл.';
+
+  @override
+  String daysShortN(int count) {
+    return '$count дн';
+  }
+
+  @override
+  String get cadenceCustom => 'Свой';
+
+  @override
+  String get customDaysLabel => 'Дней';
+
+  @override
+  String get remindMe => 'Напоминать';
+
+  @override
+  String get remindMeNeedsTime =>
+      'Укажите время дозирования, чтобы включить напоминания';
+
+  @override
+  String get maintenanceSchedule => 'План обслуживания';
+
+  @override
+  String get addMaintenanceTask => 'Добавить задачу';
+
+  @override
+  String get editMaintenanceTask => 'Изменить задачу';
+
+  @override
+  String get taskTypeLabel => 'Тип';
+
+  @override
+  String get customTask => 'Своя задача';
+
+  @override
+  String get taskTitleLabel => 'Название';
+
+  @override
+  String get taskTitleRequired => 'Введите название';
+
+  @override
+  String get repeatLabel => 'Повтор';
+
+  @override
+  String get oneOff => 'Однократно';
+
+  @override
+  String get dueDateLabel => 'Срок';
+
+  @override
+  String get dueDateRequired => 'Выберите срок';
+
+  @override
+  String get dueToday => 'Сегодня';
+
+  @override
+  String dueInDaysN(int count) {
+    return 'Через $count дн';
+  }
+
+  @override
+  String overdueDaysN(int count) {
+    return 'Просрочено на $count дн';
+  }
+
+  @override
+  String get markDone => 'Готово';
+
+  @override
+  String get taskMarkedDone => 'Отмечено выполненным';
+
+  @override
+  String get taskDeleted => 'Задача удалена';
+
+  @override
+  String get scheduleEmptyBody =>
+      'Пока нет задач обслуживания. Запланируйте подмены воды или свои задачи, чтобы видеть сроки и получать напоминания.';
 }

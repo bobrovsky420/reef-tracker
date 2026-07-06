@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../data/database.dart';
 import '../domain/ratio.dart';
+import '../features/actions/schedule_screen.dart';
 import '../features/add_reading/add_reading_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
 import '../features/dosing/dose_calculator_screen.dart';
@@ -18,6 +19,7 @@ import '../features/manage_parameters/manage_parameters_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
 import '../features/settings/backups_screen.dart';
+import '../features/settings/reminders_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
 import '../l10n/app_localizations.dart';
@@ -25,7 +27,13 @@ import 'providers.dart';
 
 final appRouter = GoRouter(
   routes: [
-    GoRoute(path: '/', builder: (context, state) => const HomeShell()),
+    GoRoute(
+      path: '/',
+      // `?tab=actions|dosing` selects a bottom-nav tab — used by reminder
+      // notification taps, which can only carry a URL.
+      builder: (context, state) =>
+          HomeShell(tab: state.uri.queryParameters['tab']),
+    ),
     GoRoute(path: '/tanks', builder: (context, state) => const TanksScreen()),
     GoRoute(
       path: '/tanks/new',
@@ -105,6 +113,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings/backups',
       builder: (context, state) => const BackupsScreen(),
+    ),
+    GoRoute(
+      path: '/settings/reminders',
+      builder: (context, state) => const RemindersScreen(),
+    ),
+    GoRoute(
+      path: '/schedule',
+      builder: (context, state) => const MaintenanceScheduleScreen(),
     ),
     GoRoute(
       path: '/calculator/salinity',

@@ -133,7 +133,6 @@ class DosingBody extends ConsumerWidget {
       ),
     );
   }
-
 }
 
 /// Stops the supplement immediately and shows an "Undo" SnackBar that writes

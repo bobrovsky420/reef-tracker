@@ -1292,4 +1292,137 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get routeNotFoundGoHome => 'Go to home screen';
+
+  @override
+  String get notifChannelTesting => 'Testing reminders';
+
+  @override
+  String get notifChannelDosing => 'Dosing reminders';
+
+  @override
+  String get notifChannelMaintenance => 'Maintenance reminders';
+
+  @override
+  String get notifTestingTitle => 'Time to test';
+
+  @override
+  String get notifDosingTitle => 'Dosing due';
+
+  @override
+  String get notifMaintenanceTitle => 'Maintenance due';
+
+  @override
+  String notifTitleWithTank(String title, String tank) {
+    return '$title — $tank';
+  }
+
+  @override
+  String get remindersTitle => 'Reminders';
+
+  @override
+  String get remindersSubtitle =>
+      'Testing, dosing and maintenance notifications';
+
+  @override
+  String get remindersTestingSubtitle => 'When a parameter\'s test is due';
+
+  @override
+  String get remindersDosingSubtitle => 'At each supplement\'s dose time';
+
+  @override
+  String get remindersMaintenanceSubtitle =>
+      'When scheduled maintenance is due';
+
+  @override
+  String get reminderTimeTitle => 'Reminder time';
+
+  @override
+  String get reminderTimeSubtitle =>
+      'Delivery time for testing and maintenance reminders';
+
+  @override
+  String get remindersPermissionDenied =>
+      'Notifications are blocked in system settings, so reminders can\'t be shown.';
+
+  @override
+  String get remindToTest => 'Remind to test';
+
+  @override
+  String get cadenceOff => 'Off';
+
+  @override
+  String daysShortN(int count) {
+    return '$count d';
+  }
+
+  @override
+  String get cadenceCustom => 'Custom';
+
+  @override
+  String get customDaysLabel => 'Days';
+
+  @override
+  String get remindMe => 'Remind me';
+
+  @override
+  String get remindMeNeedsTime => 'Set a time of day to enable reminders';
+
+  @override
+  String get maintenanceSchedule => 'Maintenance schedule';
+
+  @override
+  String get addMaintenanceTask => 'Add task';
+
+  @override
+  String get editMaintenanceTask => 'Edit task';
+
+  @override
+  String get taskTypeLabel => 'Type';
+
+  @override
+  String get customTask => 'Custom task';
+
+  @override
+  String get taskTitleLabel => 'Title';
+
+  @override
+  String get taskTitleRequired => 'Enter a title';
+
+  @override
+  String get repeatLabel => 'Repeat';
+
+  @override
+  String get oneOff => 'One-off';
+
+  @override
+  String get dueDateLabel => 'Due date';
+
+  @override
+  String get dueDateRequired => 'Pick a due date';
+
+  @override
+  String get dueToday => 'Due today';
+
+  @override
+  String dueInDaysN(int count) {
+    return 'Due in $count d';
+  }
+
+  @override
+  String overdueDaysN(int count) {
+    return '$count d overdue';
+  }
+
+  @override
+  String get markDone => 'Mark done';
+
+  @override
+  String get taskMarkedDone => 'Marked as done';
+
+  @override
+  String get taskDeleted => 'Task deleted';
+
+  @override
+  String get scheduleEmptyBody =>
+      'No maintenance tasks yet. Plan water changes or custom tasks to get due chips and reminders.';
 }

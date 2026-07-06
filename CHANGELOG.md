@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2026-07-05
+
+### Added
+- Reminders: the app can now send notifications — all off by default, enabled
+  per category under Settings → Reminders (turning one on asks for the
+  Android notification permission).
+  - **Testing reminders**: give any tracked parameter a "Remind to test"
+    cadence (preset chips or a custom number of days) on its edit screen;
+    you'll be reminded that many days after its latest measurement, so
+    logging a test resets the timer. Parameters due the same day arrive as
+    one notification.
+  - **Dosing reminders**: supplements with a scheduled time of day gained a
+    per-entry "Remind me" switch — notifications follow the entry's own
+    schedule (daily, every N days, or weekdays).
+  - **Maintenance schedule**: plan recurring or one-off maintenance — water
+    changes, carbon changes, equipment cleanings, or custom-titled tasks
+    ("replace RO membrane") — from the new calendar button on the Actions
+    tab. Due tasks show as chips above the actions log ("Water change ·
+    2 d overdue"); tapping a chip logs the action (which resets its timer)
+    or marks a custom task done (with Undo). Recurring plans count from the
+    last time the action was done; one-offs retire once completed.
+    Maintenance plans are included in backups.
+  - Testing and maintenance reminders arrive at a configurable time of day
+    (default 9:00); tapping any reminder opens the right screen for the
+    right aquarium. Reminders never require exact-alarm permissions and may
+    arrive a few minutes after their nominal time.
+
 ## [0.17.0] - 2026-07-05
 
 ### Added

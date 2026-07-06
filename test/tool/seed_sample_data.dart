@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/supplement_catalog.dart';
 
@@ -156,6 +157,49 @@ void main() {
     await db.stopDosingEntry(traceId);
     await (db.update(db.dosingEntries)..where((d) => d.id.equals(traceId)))
         .write(DosingEntriesCompanion(endedAt: Value(daysAgo(20))));
+
+    // --- Reminders & maintenance schedule (U1/U2/U12) ------------------------
+    // All three categories pre-enabled so a device smoke can check that the
+    // scheduler registers OS alarms right after first launch.
+    final settings = AppSettings(db);
+    await settings.setRemindersTesting(true);
+    await settings.setRemindersDosing(true);
+    await settings.setRemindersMaintenance(true);
+    // Alkalinity tested every 4 days (latest reading is "today" per the series
+    // above → next testing reminder in 4 days).
+    final alkParam = (await db.getTrackedParameters(
+      tank,
+    )).firstWhere((p) => p.paramKey == 'alkalinity');
+    await db.setTestCadence(alkParam.id, 4);
+    // The active Alk supplement reminds at its dose time.
+    await (db.update(
+      db.dosingEntries,
+    )..where((d) => d.id.equals(newAlkId))).write(
+      const DosingEntriesCompanion(
+        doseTime: Value('21:00'),
+        remindEnabled: Value(true),
+      ),
+    );
+    // Maintenance plans: a recurring typed one (water change every 14 d, last
+    // done 10 d ago → due in 4 d), a recurring custom task, and an overdue
+    // one-off so the due chips show all states.
+    await db.insertMaintenanceSchedule(
+      tankId: tank,
+      actionType: 'waterChange',
+      cadenceDays: 14,
+    );
+    final skimmer = await db.insertMaintenanceSchedule(
+      tankId: tank,
+      title: 'Clean skimmer cup',
+      cadenceDays: 7,
+    );
+    await db.markMaintenanceDone(skimmer, daysAgo(6));
+    await db.insertMaintenanceSchedule(
+      tankId: tank,
+      title: 'Replace RO membrane',
+      scheduledAt: daysAgo(2),
+      note: 'Cartridge is in the cabinet',
+    );
 
     await db.close();
 

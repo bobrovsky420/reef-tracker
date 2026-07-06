@@ -344,10 +344,17 @@ class ParameterEditScreen extends ConsumerStatefulWidget {
 }
 
 class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
+  /// Preset "remind to test" cadences (U1); anything else is Custom.
+  static const _cadencePresets = [3, 7, 14, 30];
+
   final _formKey = GlobalKey<FormState>();
   final _editorKey = GlobalKey<ZoneBoundsEditorState>();
   late final TextEditingController _unit;
   late final ParamPresentation _pres;
+
+  int? _cadence;
+  bool _customCadence = false;
+  late final TextEditingController _customDays;
 
   @override
   void initState() {
@@ -355,11 +362,17 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     // Edit boundaries in the user's display unit; values are stored canonically.
     _pres = presentationOf(widget.param, ref.read(unitPrefsProvider));
     _unit = TextEditingController(text: widget.param.unit);
+    _cadence = widget.param.testCadenceDays;
+    _customCadence = _cadence != null && !_cadencePresets.contains(_cadence);
+    _customDays = TextEditingController(
+      text: _customCadence ? '$_cadence' : '',
+    );
   }
 
   @override
   void dispose() {
     _unit.dispose();
+    _customDays.dispose();
     super.dispose();
   }
 
@@ -394,6 +407,9 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     // Editor values are in display space; convert back to canonical storage.
     final b = editor.values;
     double? canon(double? v) => v == null ? null : _pres.toCanonical(v);
+    final cadence = _customCadence
+        ? int.parse(_customDays.text.trim())
+        : _cadence;
     await ref
         .read(dbProvider)
         .updateTrackedParameter(
@@ -406,6 +422,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
             greenLow: Value(canon(b.greenLow)),
             greenHigh: Value(canon(b.greenHigh)),
             amberHigh: Value(canon(b.amberHigh)),
+            testCadenceDays: Value(cadence),
           ),
         );
     if (mounted) context.pop();
@@ -448,6 +465,56 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
+            const SizedBox(height: 24),
+            // "Remind to test" cadence (U1). The reminder anchors on the
+            // parameter's latest reading, so logging a test resets the timer.
+            Text(l.remindToTest, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                ChoiceChip(
+                  label: Text(l.cadenceOff),
+                  selected: !_customCadence && _cadence == null,
+                  onSelected: (_) => setState(() {
+                    _cadence = null;
+                    _customCadence = false;
+                  }),
+                ),
+                for (final d in _cadencePresets)
+                  ChoiceChip(
+                    label: Text(l.daysShortN(d)),
+                    selected: !_customCadence && _cadence == d,
+                    onSelected: (_) => setState(() {
+                      _cadence = d;
+                      _customCadence = false;
+                    }),
+                  ),
+                ChoiceChip(
+                  label: Text(l.cadenceCustom),
+                  selected: _customCadence,
+                  onSelected: (_) => setState(() => _customCadence = true),
+                ),
+              ],
+            ),
+            if (_customCadence) ...[
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _customDays,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l.customDaysLabel,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (v) {
+                  final parsed = int.tryParse((v ?? '').trim());
+                  return (parsed == null || parsed < 1)
+                      ? l.invalidIntervalDays
+                      : null;
+                },
+              ),
+            ],
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _save,

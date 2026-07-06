@@ -742,6 +742,17 @@ class $TrackedParametersTable extends TrackedParameters
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _testCadenceDaysMeta = const VerificationMeta(
+    'testCadenceDays',
+  );
+  @override
+  late final GeneratedColumn<int> testCadenceDays = GeneratedColumn<int>(
+    'test_cadence_days',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -754,6 +765,7 @@ class $TrackedParametersTable extends TrackedParameters
     greenLow,
     greenHigh,
     amberHigh,
+    testCadenceDays,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -833,6 +845,15 @@ class $TrackedParametersTable extends TrackedParameters
         amberHigh.isAcceptableOrUnknown(data['amber_high']!, _amberHighMeta),
       );
     }
+    if (data.containsKey('test_cadence_days')) {
+      context.handle(
+        _testCadenceDaysMeta,
+        testCadenceDays.isAcceptableOrUnknown(
+          data['test_cadence_days']!,
+          _testCadenceDaysMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -882,6 +903,10 @@ class $TrackedParametersTable extends TrackedParameters
         DriftSqlType.double,
         data['${effectivePrefix}amber_high'],
       ),
+      testCadenceDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}test_cadence_days'],
+      ),
     );
   }
 
@@ -903,6 +928,11 @@ class TrackedParameter extends DataClass
   final double? greenLow;
   final double? greenHigh;
   final double? amberHigh;
+
+  /// "Remind to test every N days" (U1); null = no reminder for this
+  /// parameter. The reminder anchors elastically on the parameter's latest
+  /// reading (see `domain/reminders.dart`).
+  final int? testCadenceDays;
   const TrackedParameter({
     required this.id,
     required this.tankId,
@@ -914,6 +944,7 @@ class TrackedParameter extends DataClass
     this.greenLow,
     this.greenHigh,
     this.amberHigh,
+    this.testCadenceDays,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -935,6 +966,9 @@ class TrackedParameter extends DataClass
     }
     if (!nullToAbsent || amberHigh != null) {
       map['amber_high'] = Variable<double>(amberHigh);
+    }
+    if (!nullToAbsent || testCadenceDays != null) {
+      map['test_cadence_days'] = Variable<int>(testCadenceDays);
     }
     return map;
   }
@@ -959,6 +993,9 @@ class TrackedParameter extends DataClass
       amberHigh: amberHigh == null && nullToAbsent
           ? const Value.absent()
           : Value(amberHigh),
+      testCadenceDays: testCadenceDays == null && nullToAbsent
+          ? const Value.absent()
+          : Value(testCadenceDays),
     );
   }
 
@@ -978,6 +1015,7 @@ class TrackedParameter extends DataClass
       greenLow: serializer.fromJson<double?>(json['greenLow']),
       greenHigh: serializer.fromJson<double?>(json['greenHigh']),
       amberHigh: serializer.fromJson<double?>(json['amberHigh']),
+      testCadenceDays: serializer.fromJson<int?>(json['testCadenceDays']),
     );
   }
   @override
@@ -994,6 +1032,7 @@ class TrackedParameter extends DataClass
       'greenLow': serializer.toJson<double?>(greenLow),
       'greenHigh': serializer.toJson<double?>(greenHigh),
       'amberHigh': serializer.toJson<double?>(amberHigh),
+      'testCadenceDays': serializer.toJson<int?>(testCadenceDays),
     };
   }
 
@@ -1008,6 +1047,7 @@ class TrackedParameter extends DataClass
     Value<double?> greenLow = const Value.absent(),
     Value<double?> greenHigh = const Value.absent(),
     Value<double?> amberHigh = const Value.absent(),
+    Value<int?> testCadenceDays = const Value.absent(),
   }) => TrackedParameter(
     id: id ?? this.id,
     tankId: tankId ?? this.tankId,
@@ -1019,6 +1059,9 @@ class TrackedParameter extends DataClass
     greenLow: greenLow.present ? greenLow.value : this.greenLow,
     greenHigh: greenHigh.present ? greenHigh.value : this.greenHigh,
     amberHigh: amberHigh.present ? amberHigh.value : this.amberHigh,
+    testCadenceDays: testCadenceDays.present
+        ? testCadenceDays.value
+        : this.testCadenceDays,
   );
   TrackedParameter copyWithCompanion(TrackedParametersCompanion data) {
     return TrackedParameter(
@@ -1034,6 +1077,9 @@ class TrackedParameter extends DataClass
       greenLow: data.greenLow.present ? data.greenLow.value : this.greenLow,
       greenHigh: data.greenHigh.present ? data.greenHigh.value : this.greenHigh,
       amberHigh: data.amberHigh.present ? data.amberHigh.value : this.amberHigh,
+      testCadenceDays: data.testCadenceDays.present
+          ? data.testCadenceDays.value
+          : this.testCadenceDays,
     );
   }
 
@@ -1049,7 +1095,8 @@ class TrackedParameter extends DataClass
           ..write('amberLow: $amberLow, ')
           ..write('greenLow: $greenLow, ')
           ..write('greenHigh: $greenHigh, ')
-          ..write('amberHigh: $amberHigh')
+          ..write('amberHigh: $amberHigh, ')
+          ..write('testCadenceDays: $testCadenceDays')
           ..write(')'))
         .toString();
   }
@@ -1066,6 +1113,7 @@ class TrackedParameter extends DataClass
     greenLow,
     greenHigh,
     amberHigh,
+    testCadenceDays,
   );
   @override
   bool operator ==(Object other) =>
@@ -1080,7 +1128,8 @@ class TrackedParameter extends DataClass
           other.amberLow == this.amberLow &&
           other.greenLow == this.greenLow &&
           other.greenHigh == this.greenHigh &&
-          other.amberHigh == this.amberHigh);
+          other.amberHigh == this.amberHigh &&
+          other.testCadenceDays == this.testCadenceDays);
 }
 
 class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
@@ -1094,6 +1143,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
   final Value<double?> greenLow;
   final Value<double?> greenHigh;
   final Value<double?> amberHigh;
+  final Value<int?> testCadenceDays;
   const TrackedParametersCompanion({
     this.id = const Value.absent(),
     this.tankId = const Value.absent(),
@@ -1105,6 +1155,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     this.greenLow = const Value.absent(),
     this.greenHigh = const Value.absent(),
     this.amberHigh = const Value.absent(),
+    this.testCadenceDays = const Value.absent(),
   });
   TrackedParametersCompanion.insert({
     this.id = const Value.absent(),
@@ -1117,6 +1168,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     this.greenLow = const Value.absent(),
     this.greenHigh = const Value.absent(),
     this.amberHigh = const Value.absent(),
+    this.testCadenceDays = const Value.absent(),
   }) : tankId = Value(tankId),
        paramKey = Value(paramKey),
        unit = Value(unit);
@@ -1131,6 +1183,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     Expression<double>? greenLow,
     Expression<double>? greenHigh,
     Expression<double>? amberHigh,
+    Expression<int>? testCadenceDays,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1143,6 +1196,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
       if (greenLow != null) 'green_low': greenLow,
       if (greenHigh != null) 'green_high': greenHigh,
       if (amberHigh != null) 'amber_high': amberHigh,
+      if (testCadenceDays != null) 'test_cadence_days': testCadenceDays,
     });
   }
 
@@ -1157,6 +1211,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     Value<double?>? greenLow,
     Value<double?>? greenHigh,
     Value<double?>? amberHigh,
+    Value<int?>? testCadenceDays,
   }) {
     return TrackedParametersCompanion(
       id: id ?? this.id,
@@ -1169,6 +1224,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
       greenLow: greenLow ?? this.greenLow,
       greenHigh: greenHigh ?? this.greenHigh,
       amberHigh: amberHigh ?? this.amberHigh,
+      testCadenceDays: testCadenceDays ?? this.testCadenceDays,
     );
   }
 
@@ -1205,6 +1261,9 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     if (amberHigh.present) {
       map['amber_high'] = Variable<double>(amberHigh.value);
     }
+    if (testCadenceDays.present) {
+      map['test_cadence_days'] = Variable<int>(testCadenceDays.value);
+    }
     return map;
   }
 
@@ -1220,7 +1279,8 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
           ..write('amberLow: $amberLow, ')
           ..write('greenLow: $greenLow, ')
           ..write('greenHigh: $greenHigh, ')
-          ..write('amberHigh: $amberHigh')
+          ..write('amberHigh: $amberHigh, ')
+          ..write('testCadenceDays: $testCadenceDays')
           ..write(')'))
         .toString();
   }
@@ -3372,6 +3432,21 @@ class $DosingEntriesTable extends DosingEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _remindEnabledMeta = const VerificationMeta(
+    'remindEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> remindEnabled = GeneratedColumn<bool>(
+    'remind_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("remind_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _noteMeta = const VerificationMeta('note');
   @override
   late final GeneratedColumn<String> note = GeneratedColumn<String>(
@@ -3453,6 +3528,7 @@ class $DosingEntriesTable extends DosingEntries
     intervalDays,
     weekdays,
     doseTime,
+    remindEnabled,
     note,
     displayOrder,
     createdAt,
@@ -3560,6 +3636,15 @@ class $DosingEntriesTable extends DosingEntries
         doseTime.isAcceptableOrUnknown(data['dose_time']!, _doseTimeMeta),
       );
     }
+    if (data.containsKey('remind_enabled')) {
+      context.handle(
+        _remindEnabledMeta,
+        remindEnabled.isAcceptableOrUnknown(
+          data['remind_enabled']!,
+          _remindEnabledMeta,
+        ),
+      );
+    }
     if (data.containsKey('note')) {
       context.handle(
         _noteMeta,
@@ -3664,6 +3749,10 @@ class $DosingEntriesTable extends DosingEntries
         DriftSqlType.string,
         data['${effectivePrefix}dose_time'],
       ),
+      remindEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}remind_enabled'],
+      )!,
       note: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}note'],
@@ -3736,6 +3825,11 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
 
   /// Time of day as `HH:mm`, optional.
   final String? doseTime;
+
+  /// Whether this entry fires dosing reminders (U2). Opt-in (default off);
+  /// only effective while the entry is active, has a parsable [doseTime], and
+  /// the Settings master switch for dosing reminders is on.
+  final bool remindEnabled;
   final String? note;
   final int displayOrder;
   final DateTime createdAt;
@@ -3768,6 +3862,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     this.intervalDays,
     this.weekdays,
     this.doseTime,
+    required this.remindEnabled,
     this.note,
     required this.displayOrder,
     required this.createdAt,
@@ -3814,6 +3909,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     if (!nullToAbsent || doseTime != null) {
       map['dose_time'] = Variable<String>(doseTime);
     }
+    map['remind_enabled'] = Variable<bool>(remindEnabled);
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
@@ -3867,6 +3963,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
       doseTime: doseTime == null && nullToAbsent
           ? const Value.absent()
           : Value(doseTime),
+      remindEnabled: Value(remindEnabled),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       displayOrder: Value(displayOrder),
       createdAt: Value(createdAt),
@@ -3900,6 +3997,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
       intervalDays: serializer.fromJson<int?>(json['intervalDays']),
       weekdays: serializer.fromJson<String?>(json['weekdays']),
       doseTime: serializer.fromJson<String?>(json['doseTime']),
+      remindEnabled: serializer.fromJson<bool>(json['remindEnabled']),
       note: serializer.fromJson<String?>(json['note']),
       displayOrder: serializer.fromJson<int>(json['displayOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -3926,6 +4024,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
       'intervalDays': serializer.toJson<int?>(intervalDays),
       'weekdays': serializer.toJson<String?>(weekdays),
       'doseTime': serializer.toJson<String?>(doseTime),
+      'remindEnabled': serializer.toJson<bool>(remindEnabled),
       'note': serializer.toJson<String?>(note),
       'displayOrder': serializer.toJson<int>(displayOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -3950,6 +4049,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     Value<int?> intervalDays = const Value.absent(),
     Value<String?> weekdays = const Value.absent(),
     Value<String?> doseTime = const Value.absent(),
+    bool? remindEnabled,
     Value<String?> note = const Value.absent(),
     int? displayOrder,
     DateTime? createdAt,
@@ -3971,6 +4071,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     intervalDays: intervalDays.present ? intervalDays.value : this.intervalDays,
     weekdays: weekdays.present ? weekdays.value : this.weekdays,
     doseTime: doseTime.present ? doseTime.value : this.doseTime,
+    remindEnabled: remindEnabled ?? this.remindEnabled,
     note: note.present ? note.value : this.note,
     displayOrder: displayOrder ?? this.displayOrder,
     createdAt: createdAt ?? this.createdAt,
@@ -4002,6 +4103,9 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
           : this.intervalDays,
       weekdays: data.weekdays.present ? data.weekdays.value : this.weekdays,
       doseTime: data.doseTime.present ? data.doseTime.value : this.doseTime,
+      remindEnabled: data.remindEnabled.present
+          ? data.remindEnabled.value
+          : this.remindEnabled,
       note: data.note.present ? data.note.value : this.note,
       displayOrder: data.displayOrder.present
           ? data.displayOrder.value
@@ -4030,6 +4134,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
           ..write('intervalDays: $intervalDays, ')
           ..write('weekdays: $weekdays, ')
           ..write('doseTime: $doseTime, ')
+          ..write('remindEnabled: $remindEnabled, ')
           ..write('note: $note, ')
           ..write('displayOrder: $displayOrder, ')
           ..write('createdAt: $createdAt, ')
@@ -4041,7 +4146,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     tankId,
     productKey,
@@ -4056,13 +4161,14 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
     intervalDays,
     weekdays,
     doseTime,
+    remindEnabled,
     note,
     displayOrder,
     createdAt,
     startedAt,
     endedAt,
     state,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4081,6 +4187,7 @@ class DosingEntry extends DataClass implements Insertable<DosingEntry> {
           other.intervalDays == this.intervalDays &&
           other.weekdays == this.weekdays &&
           other.doseTime == this.doseTime &&
+          other.remindEnabled == this.remindEnabled &&
           other.note == this.note &&
           other.displayOrder == this.displayOrder &&
           other.createdAt == this.createdAt &&
@@ -4104,6 +4211,7 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
   final Value<int?> intervalDays;
   final Value<String?> weekdays;
   final Value<String?> doseTime;
+  final Value<bool> remindEnabled;
   final Value<String?> note;
   final Value<int> displayOrder;
   final Value<DateTime> createdAt;
@@ -4125,6 +4233,7 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     this.intervalDays = const Value.absent(),
     this.weekdays = const Value.absent(),
     this.doseTime = const Value.absent(),
+    this.remindEnabled = const Value.absent(),
     this.note = const Value.absent(),
     this.displayOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -4147,6 +4256,7 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     this.intervalDays = const Value.absent(),
     this.weekdays = const Value.absent(),
     this.doseTime = const Value.absent(),
+    this.remindEnabled = const Value.absent(),
     this.note = const Value.absent(),
     this.displayOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -4170,6 +4280,7 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     Expression<int>? intervalDays,
     Expression<String>? weekdays,
     Expression<String>? doseTime,
+    Expression<bool>? remindEnabled,
     Expression<String>? note,
     Expression<int>? displayOrder,
     Expression<DateTime>? createdAt,
@@ -4192,6 +4303,7 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
       if (intervalDays != null) 'interval_days': intervalDays,
       if (weekdays != null) 'weekdays': weekdays,
       if (doseTime != null) 'dose_time': doseTime,
+      if (remindEnabled != null) 'remind_enabled': remindEnabled,
       if (note != null) 'note': note,
       if (displayOrder != null) 'display_order': displayOrder,
       if (createdAt != null) 'created_at': createdAt,
@@ -4216,6 +4328,7 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     Value<int?>? intervalDays,
     Value<String?>? weekdays,
     Value<String?>? doseTime,
+    Value<bool>? remindEnabled,
     Value<String?>? note,
     Value<int>? displayOrder,
     Value<DateTime>? createdAt,
@@ -4238,6 +4351,7 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
       intervalDays: intervalDays ?? this.intervalDays,
       weekdays: weekdays ?? this.weekdays,
       doseTime: doseTime ?? this.doseTime,
+      remindEnabled: remindEnabled ?? this.remindEnabled,
       note: note ?? this.note,
       displayOrder: displayOrder ?? this.displayOrder,
       createdAt: createdAt ?? this.createdAt,
@@ -4292,6 +4406,9 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
     if (doseTime.present) {
       map['dose_time'] = Variable<String>(doseTime.value);
     }
+    if (remindEnabled.present) {
+      map['remind_enabled'] = Variable<bool>(remindEnabled.value);
+    }
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
@@ -4330,6 +4447,7 @@ class DosingEntriesCompanion extends UpdateCompanion<DosingEntry> {
           ..write('intervalDays: $intervalDays, ')
           ..write('weekdays: $weekdays, ')
           ..write('doseTime: $doseTime, ')
+          ..write('remindEnabled: $remindEnabled, ')
           ..write('note: $note, ')
           ..write('displayOrder: $displayOrder, ')
           ..write('createdAt: $createdAt, ')
@@ -4703,6 +4821,653 @@ class ReadingTemplatesCompanion extends UpdateCompanion<ReadingTemplate> {
   }
 }
 
+class $MaintenanceSchedulesTable extends MaintenanceSchedules
+    with TableInfo<$MaintenanceSchedulesTable, MaintenanceSchedule> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MaintenanceSchedulesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _actionTypeMeta = const VerificationMeta(
+    'actionType',
+  );
+  @override
+  late final GeneratedColumn<String> actionType = GeneratedColumn<String>(
+    'action_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cadenceDaysMeta = const VerificationMeta(
+    'cadenceDays',
+  );
+  @override
+  late final GeneratedColumn<int> cadenceDays = GeneratedColumn<int>(
+    'cadence_days',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scheduledAtMeta = const VerificationMeta(
+    'scheduledAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> scheduledAt = GeneratedColumn<DateTime>(
+    'scheduled_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastDoneAtMeta = const VerificationMeta(
+    'lastDoneAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastDoneAt = GeneratedColumn<DateTime>(
+    'last_done_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _remindEnabledMeta = const VerificationMeta(
+    'remindEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> remindEnabled = GeneratedColumn<bool>(
+    'remind_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("remind_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tankId,
+    actionType,
+    title,
+    cadenceDays,
+    scheduledAt,
+    lastDoneAt,
+    remindEnabled,
+    note,
+    displayOrder,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'maintenance_schedules';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MaintenanceSchedule> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('action_type')) {
+      context.handle(
+        _actionTypeMeta,
+        actionType.isAcceptableOrUnknown(data['action_type']!, _actionTypeMeta),
+      );
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    }
+    if (data.containsKey('cadence_days')) {
+      context.handle(
+        _cadenceDaysMeta,
+        cadenceDays.isAcceptableOrUnknown(
+          data['cadence_days']!,
+          _cadenceDaysMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scheduled_at')) {
+      context.handle(
+        _scheduledAtMeta,
+        scheduledAt.isAcceptableOrUnknown(
+          data['scheduled_at']!,
+          _scheduledAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_done_at')) {
+      context.handle(
+        _lastDoneAtMeta,
+        lastDoneAt.isAcceptableOrUnknown(
+          data['last_done_at']!,
+          _lastDoneAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('remind_enabled')) {
+      context.handle(
+        _remindEnabledMeta,
+        remindEnabled.isAcceptableOrUnknown(
+          data['remind_enabled']!,
+          _remindEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MaintenanceSchedule map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MaintenanceSchedule(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      actionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_type'],
+      ),
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
+      cadenceDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cadence_days'],
+      ),
+      scheduledAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}scheduled_at'],
+      ),
+      lastDoneAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_done_at'],
+      ),
+      remindEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}remind_enabled'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
+    );
+  }
+
+  @override
+  $MaintenanceSchedulesTable createAlias(String alias) {
+    return $MaintenanceSchedulesTable(attachedDatabase, alias);
+  }
+}
+
+class MaintenanceSchedule extends DataClass
+    implements Insertable<MaintenanceSchedule> {
+  final int id;
+  final int tankId;
+
+  /// [MaintenanceActionType.name] (`waterChange`/`carbonChange`/
+  /// `equipmentCleaning`), or null = custom task ([title] required then).
+  final String? actionType;
+
+  /// Display name for a custom task; null for typed rows, which render the
+  /// localized action name instead.
+  final String? title;
+
+  /// Repeat every N days after the last completion; null = one-off (due at
+  /// [scheduledAt], retired once done).
+  final int? cadenceDays;
+
+  /// Planned first (or one-off) due date; ignored once the task has ever been
+  /// completed.
+  final DateTime? scheduledAt;
+
+  /// Completion stamp for **custom** rows only (typed rows read their action
+  /// log). For a one-off custom task, non-null means finished.
+  final DateTime? lastDoneAt;
+
+  /// Per-plan reminder opt-out; the Settings maintenance master switch still
+  /// gates all of them.
+  final bool remindEnabled;
+  final String? note;
+
+  /// Position in the schedule list / due-chip row.
+  final int displayOrder;
+  const MaintenanceSchedule({
+    required this.id,
+    required this.tankId,
+    this.actionType,
+    this.title,
+    this.cadenceDays,
+    this.scheduledAt,
+    this.lastDoneAt,
+    required this.remindEnabled,
+    this.note,
+    required this.displayOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tank_id'] = Variable<int>(tankId);
+    if (!nullToAbsent || actionType != null) {
+      map['action_type'] = Variable<String>(actionType);
+    }
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    if (!nullToAbsent || cadenceDays != null) {
+      map['cadence_days'] = Variable<int>(cadenceDays);
+    }
+    if (!nullToAbsent || scheduledAt != null) {
+      map['scheduled_at'] = Variable<DateTime>(scheduledAt);
+    }
+    if (!nullToAbsent || lastDoneAt != null) {
+      map['last_done_at'] = Variable<DateTime>(lastDoneAt);
+    }
+    map['remind_enabled'] = Variable<bool>(remindEnabled);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['display_order'] = Variable<int>(displayOrder);
+    return map;
+  }
+
+  MaintenanceSchedulesCompanion toCompanion(bool nullToAbsent) {
+    return MaintenanceSchedulesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      actionType: actionType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actionType),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
+      cadenceDays: cadenceDays == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cadenceDays),
+      scheduledAt: scheduledAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduledAt),
+      lastDoneAt: lastDoneAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastDoneAt),
+      remindEnabled: Value(remindEnabled),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      displayOrder: Value(displayOrder),
+    );
+  }
+
+  factory MaintenanceSchedule.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MaintenanceSchedule(
+      id: serializer.fromJson<int>(json['id']),
+      tankId: serializer.fromJson<int>(json['tankId']),
+      actionType: serializer.fromJson<String?>(json['actionType']),
+      title: serializer.fromJson<String?>(json['title']),
+      cadenceDays: serializer.fromJson<int?>(json['cadenceDays']),
+      scheduledAt: serializer.fromJson<DateTime?>(json['scheduledAt']),
+      lastDoneAt: serializer.fromJson<DateTime?>(json['lastDoneAt']),
+      remindEnabled: serializer.fromJson<bool>(json['remindEnabled']),
+      note: serializer.fromJson<String?>(json['note']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tankId': serializer.toJson<int>(tankId),
+      'actionType': serializer.toJson<String?>(actionType),
+      'title': serializer.toJson<String?>(title),
+      'cadenceDays': serializer.toJson<int?>(cadenceDays),
+      'scheduledAt': serializer.toJson<DateTime?>(scheduledAt),
+      'lastDoneAt': serializer.toJson<DateTime?>(lastDoneAt),
+      'remindEnabled': serializer.toJson<bool>(remindEnabled),
+      'note': serializer.toJson<String?>(note),
+      'displayOrder': serializer.toJson<int>(displayOrder),
+    };
+  }
+
+  MaintenanceSchedule copyWith({
+    int? id,
+    int? tankId,
+    Value<String?> actionType = const Value.absent(),
+    Value<String?> title = const Value.absent(),
+    Value<int?> cadenceDays = const Value.absent(),
+    Value<DateTime?> scheduledAt = const Value.absent(),
+    Value<DateTime?> lastDoneAt = const Value.absent(),
+    bool? remindEnabled,
+    Value<String?> note = const Value.absent(),
+    int? displayOrder,
+  }) => MaintenanceSchedule(
+    id: id ?? this.id,
+    tankId: tankId ?? this.tankId,
+    actionType: actionType.present ? actionType.value : this.actionType,
+    title: title.present ? title.value : this.title,
+    cadenceDays: cadenceDays.present ? cadenceDays.value : this.cadenceDays,
+    scheduledAt: scheduledAt.present ? scheduledAt.value : this.scheduledAt,
+    lastDoneAt: lastDoneAt.present ? lastDoneAt.value : this.lastDoneAt,
+    remindEnabled: remindEnabled ?? this.remindEnabled,
+    note: note.present ? note.value : this.note,
+    displayOrder: displayOrder ?? this.displayOrder,
+  );
+  MaintenanceSchedule copyWithCompanion(MaintenanceSchedulesCompanion data) {
+    return MaintenanceSchedule(
+      id: data.id.present ? data.id.value : this.id,
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      actionType: data.actionType.present
+          ? data.actionType.value
+          : this.actionType,
+      title: data.title.present ? data.title.value : this.title,
+      cadenceDays: data.cadenceDays.present
+          ? data.cadenceDays.value
+          : this.cadenceDays,
+      scheduledAt: data.scheduledAt.present
+          ? data.scheduledAt.value
+          : this.scheduledAt,
+      lastDoneAt: data.lastDoneAt.present
+          ? data.lastDoneAt.value
+          : this.lastDoneAt,
+      remindEnabled: data.remindEnabled.present
+          ? data.remindEnabled.value
+          : this.remindEnabled,
+      note: data.note.present ? data.note.value : this.note,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MaintenanceSchedule(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('actionType: $actionType, ')
+          ..write('title: $title, ')
+          ..write('cadenceDays: $cadenceDays, ')
+          ..write('scheduledAt: $scheduledAt, ')
+          ..write('lastDoneAt: $lastDoneAt, ')
+          ..write('remindEnabled: $remindEnabled, ')
+          ..write('note: $note, ')
+          ..write('displayOrder: $displayOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    tankId,
+    actionType,
+    title,
+    cadenceDays,
+    scheduledAt,
+    lastDoneAt,
+    remindEnabled,
+    note,
+    displayOrder,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MaintenanceSchedule &&
+          other.id == this.id &&
+          other.tankId == this.tankId &&
+          other.actionType == this.actionType &&
+          other.title == this.title &&
+          other.cadenceDays == this.cadenceDays &&
+          other.scheduledAt == this.scheduledAt &&
+          other.lastDoneAt == this.lastDoneAt &&
+          other.remindEnabled == this.remindEnabled &&
+          other.note == this.note &&
+          other.displayOrder == this.displayOrder);
+}
+
+class MaintenanceSchedulesCompanion
+    extends UpdateCompanion<MaintenanceSchedule> {
+  final Value<int> id;
+  final Value<int> tankId;
+  final Value<String?> actionType;
+  final Value<String?> title;
+  final Value<int?> cadenceDays;
+  final Value<DateTime?> scheduledAt;
+  final Value<DateTime?> lastDoneAt;
+  final Value<bool> remindEnabled;
+  final Value<String?> note;
+  final Value<int> displayOrder;
+  const MaintenanceSchedulesCompanion({
+    this.id = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.actionType = const Value.absent(),
+    this.title = const Value.absent(),
+    this.cadenceDays = const Value.absent(),
+    this.scheduledAt = const Value.absent(),
+    this.lastDoneAt = const Value.absent(),
+    this.remindEnabled = const Value.absent(),
+    this.note = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+  });
+  MaintenanceSchedulesCompanion.insert({
+    this.id = const Value.absent(),
+    required int tankId,
+    this.actionType = const Value.absent(),
+    this.title = const Value.absent(),
+    this.cadenceDays = const Value.absent(),
+    this.scheduledAt = const Value.absent(),
+    this.lastDoneAt = const Value.absent(),
+    this.remindEnabled = const Value.absent(),
+    this.note = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+  }) : tankId = Value(tankId);
+  static Insertable<MaintenanceSchedule> custom({
+    Expression<int>? id,
+    Expression<int>? tankId,
+    Expression<String>? actionType,
+    Expression<String>? title,
+    Expression<int>? cadenceDays,
+    Expression<DateTime>? scheduledAt,
+    Expression<DateTime>? lastDoneAt,
+    Expression<bool>? remindEnabled,
+    Expression<String>? note,
+    Expression<int>? displayOrder,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tankId != null) 'tank_id': tankId,
+      if (actionType != null) 'action_type': actionType,
+      if (title != null) 'title': title,
+      if (cadenceDays != null) 'cadence_days': cadenceDays,
+      if (scheduledAt != null) 'scheduled_at': scheduledAt,
+      if (lastDoneAt != null) 'last_done_at': lastDoneAt,
+      if (remindEnabled != null) 'remind_enabled': remindEnabled,
+      if (note != null) 'note': note,
+      if (displayOrder != null) 'display_order': displayOrder,
+    });
+  }
+
+  MaintenanceSchedulesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? tankId,
+    Value<String?>? actionType,
+    Value<String?>? title,
+    Value<int?>? cadenceDays,
+    Value<DateTime?>? scheduledAt,
+    Value<DateTime?>? lastDoneAt,
+    Value<bool>? remindEnabled,
+    Value<String?>? note,
+    Value<int>? displayOrder,
+  }) {
+    return MaintenanceSchedulesCompanion(
+      id: id ?? this.id,
+      tankId: tankId ?? this.tankId,
+      actionType: actionType ?? this.actionType,
+      title: title ?? this.title,
+      cadenceDays: cadenceDays ?? this.cadenceDays,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      lastDoneAt: lastDoneAt ?? this.lastDoneAt,
+      remindEnabled: remindEnabled ?? this.remindEnabled,
+      note: note ?? this.note,
+      displayOrder: displayOrder ?? this.displayOrder,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (actionType.present) {
+      map['action_type'] = Variable<String>(actionType.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (cadenceDays.present) {
+      map['cadence_days'] = Variable<int>(cadenceDays.value);
+    }
+    if (scheduledAt.present) {
+      map['scheduled_at'] = Variable<DateTime>(scheduledAt.value);
+    }
+    if (lastDoneAt.present) {
+      map['last_done_at'] = Variable<DateTime>(lastDoneAt.value);
+    }
+    if (remindEnabled.present) {
+      map['remind_enabled'] = Variable<bool>(remindEnabled.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MaintenanceSchedulesCompanion(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('actionType: $actionType, ')
+          ..write('title: $title, ')
+          ..write('cadenceDays: $cadenceDays, ')
+          ..write('scheduledAt: $scheduledAt, ')
+          ..write('lastDoneAt: $lastDoneAt, ')
+          ..write('remindEnabled: $remindEnabled, ')
+          ..write('note: $note, ')
+          ..write('displayOrder: $displayOrder')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -4934,6 +5699,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReadingTemplatesTable readingTemplates = $ReadingTemplatesTable(
     this,
   );
+  late final $MaintenanceSchedulesTable maintenanceSchedules =
+      $MaintenanceSchedulesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index idxReadingsTankParamTaken = Index(
     'idx_readings_tank_param_taken',
@@ -4963,6 +5730,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_reading_templates_tank',
     'CREATE INDEX idx_reading_templates_tank ON reading_templates (tank_id)',
   );
+  late final Index idxMaintenanceSchedulesTank = Index(
+    'idx_maintenance_schedules_tank',
+    'CREATE INDEX idx_maintenance_schedules_tank ON maintenance_schedules (tank_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4977,6 +5748,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ratioVisibilities,
     dosingEntries,
     readingTemplates,
+    maintenanceSchedules,
     settings,
     idxReadingsTankParamTaken,
     idxReadingsTankTaken,
@@ -4985,6 +5757,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     idxEquipmentCleaningsTankCleaned,
     idxDosingEntriesTank,
     idxReadingTemplatesTank,
+    idxMaintenanceSchedulesTank,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -5043,6 +5816,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('reading_templates', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('maintenance_schedules', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -5228,6 +6008,31 @@ final class $$TanksTableReferences
 
     final cache = $_typedResult.readTableOrNull(
       _readingTemplatesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $MaintenanceSchedulesTable,
+    List<MaintenanceSchedule>
+  >
+  _maintenanceSchedulesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.maintenanceSchedules,
+        aliasName: 'tanks__id__maintenance_schedules__tank_id',
+      );
+
+  $$MaintenanceSchedulesTableProcessedTableManager
+  get maintenanceSchedulesRefs {
+    final manager = $$MaintenanceSchedulesTableTableManager(
+      $_db,
+      $_db.maintenanceSchedules,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _maintenanceSchedulesRefsTable($_db),
     );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
@@ -5484,6 +6289,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$ReadingTemplatesTableFilterComposer(
             $db: $db,
             $table: $db.readingTemplates,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> maintenanceSchedulesRefs(
+    Expression<bool> Function($$MaintenanceSchedulesTableFilterComposer f) f,
+  ) {
+    final $$MaintenanceSchedulesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.maintenanceSchedules,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MaintenanceSchedulesTableFilterComposer(
+            $db: $db,
+            $table: $db.maintenanceSchedules,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5797,6 +6627,32 @@ class $$TanksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> maintenanceSchedulesRefs<T extends Object>(
+    Expression<T> Function($$MaintenanceSchedulesTableAnnotationComposer a) f,
+  ) {
+    final $$MaintenanceSchedulesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.maintenanceSchedules,
+          getReferencedColumn: (t) => t.tankId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$MaintenanceSchedulesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.maintenanceSchedules,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -5821,6 +6677,7 @@ class $$TanksTableTableManager
             bool ratioVisibilitiesRefs,
             bool dosingEntriesRefs,
             bool readingTemplatesRefs,
+            bool maintenanceSchedulesRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -5898,6 +6755,7 @@ class $$TanksTableTableManager
                 ratioVisibilitiesRefs = false,
                 dosingEntriesRefs = false,
                 readingTemplatesRefs = false,
+                maintenanceSchedulesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -5910,6 +6768,7 @@ class $$TanksTableTableManager
                     if (ratioVisibilitiesRefs) db.ratioVisibilities,
                     if (dosingEntriesRefs) db.dosingEntries,
                     if (readingTemplatesRefs) db.readingTemplates,
+                    if (maintenanceSchedulesRefs) db.maintenanceSchedules,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -6078,6 +6937,27 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (maintenanceSchedulesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          MaintenanceSchedule
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._maintenanceSchedulesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).maintenanceSchedulesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -6107,6 +6987,7 @@ typedef $$TanksTableProcessedTableManager =
         bool ratioVisibilitiesRefs,
         bool dosingEntriesRefs,
         bool readingTemplatesRefs,
+        bool maintenanceSchedulesRefs,
       })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
@@ -6121,6 +7002,7 @@ typedef $$TrackedParametersTableCreateCompanionBuilder =
       Value<double?> greenLow,
       Value<double?> greenHigh,
       Value<double?> amberHigh,
+      Value<int?> testCadenceDays,
     });
 typedef $$TrackedParametersTableUpdateCompanionBuilder =
     TrackedParametersCompanion Function({
@@ -6134,6 +7016,7 @@ typedef $$TrackedParametersTableUpdateCompanionBuilder =
       Value<double?> greenLow,
       Value<double?> greenHigh,
       Value<double?> amberHigh,
+      Value<int?> testCadenceDays,
     });
 
 final class $$TrackedParametersTableReferences
@@ -6221,6 +7104,11 @@ class $$TrackedParametersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get testCadenceDays => $composableBuilder(
+    column: $table.testCadenceDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$TanksTableFilterComposer get tankId {
     final $$TanksTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -6299,6 +7187,11 @@ class $$TrackedParametersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get testCadenceDays => $composableBuilder(
+    column: $table.testCadenceDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TanksTableOrderingComposer get tankId {
     final $$TanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -6360,6 +7253,11 @@ class $$TrackedParametersTableAnnotationComposer
 
   GeneratedColumn<double> get amberHigh =>
       $composableBuilder(column: $table.amberHigh, builder: (column) => column);
+
+  GeneratedColumn<int> get testCadenceDays => $composableBuilder(
+    column: $table.testCadenceDays,
+    builder: (column) => column,
+  );
 
   $$TanksTableAnnotationComposer get tankId {
     final $$TanksTableAnnotationComposer composer = $composerBuilder(
@@ -6428,6 +7326,7 @@ class $$TrackedParametersTableTableManager
                 Value<double?> greenLow = const Value.absent(),
                 Value<double?> greenHigh = const Value.absent(),
                 Value<double?> amberHigh = const Value.absent(),
+                Value<int?> testCadenceDays = const Value.absent(),
               }) => TrackedParametersCompanion(
                 id: id,
                 tankId: tankId,
@@ -6439,6 +7338,7 @@ class $$TrackedParametersTableTableManager
                 greenLow: greenLow,
                 greenHigh: greenHigh,
                 amberHigh: amberHigh,
+                testCadenceDays: testCadenceDays,
               ),
           createCompanionCallback:
               ({
@@ -6452,6 +7352,7 @@ class $$TrackedParametersTableTableManager
                 Value<double?> greenLow = const Value.absent(),
                 Value<double?> greenHigh = const Value.absent(),
                 Value<double?> amberHigh = const Value.absent(),
+                Value<int?> testCadenceDays = const Value.absent(),
               }) => TrackedParametersCompanion.insert(
                 id: id,
                 tankId: tankId,
@@ -6463,6 +7364,7 @@ class $$TrackedParametersTableTableManager
                 greenLow: greenLow,
                 greenHigh: greenHigh,
                 amberHigh: amberHigh,
+                testCadenceDays: testCadenceDays,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -8226,6 +9128,7 @@ typedef $$DosingEntriesTableCreateCompanionBuilder =
       Value<int?> intervalDays,
       Value<String?> weekdays,
       Value<String?> doseTime,
+      Value<bool> remindEnabled,
       Value<String?> note,
       Value<int> displayOrder,
       Value<DateTime> createdAt,
@@ -8249,6 +9152,7 @@ typedef $$DosingEntriesTableUpdateCompanionBuilder =
       Value<int?> intervalDays,
       Value<String?> weekdays,
       Value<String?> doseTime,
+      Value<bool> remindEnabled,
       Value<String?> note,
       Value<int> displayOrder,
       Value<DateTime> createdAt,
@@ -8354,6 +9258,11 @@ class $$DosingEntriesTableFilterComposer
 
   ColumnFilters<String> get doseTime => $composableBuilder(
     column: $table.doseTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8485,6 +9394,11 @@ class $$DosingEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get note => $composableBuilder(
     column: $table.note,
     builder: (column) => ColumnOrderings(column),
@@ -8595,6 +9509,11 @@ class $$DosingEntriesTableAnnotationComposer
   GeneratedColumn<String> get doseTime =>
       $composableBuilder(column: $table.doseTime, builder: (column) => column);
 
+  GeneratedColumn<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
 
@@ -8681,6 +9600,7 @@ class $$DosingEntriesTableTableManager
                 Value<int?> intervalDays = const Value.absent(),
                 Value<String?> weekdays = const Value.absent(),
                 Value<String?> doseTime = const Value.absent(),
+                Value<bool> remindEnabled = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -8702,6 +9622,7 @@ class $$DosingEntriesTableTableManager
                 intervalDays: intervalDays,
                 weekdays: weekdays,
                 doseTime: doseTime,
+                remindEnabled: remindEnabled,
                 note: note,
                 displayOrder: displayOrder,
                 createdAt: createdAt,
@@ -8725,6 +9646,7 @@ class $$DosingEntriesTableTableManager
                 Value<int?> intervalDays = const Value.absent(),
                 Value<String?> weekdays = const Value.absent(),
                 Value<String?> doseTime = const Value.absent(),
+                Value<bool> remindEnabled = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -8746,6 +9668,7 @@ class $$DosingEntriesTableTableManager
                 intervalDays: intervalDays,
                 weekdays: weekdays,
                 doseTime: doseTime,
+                remindEnabled: remindEnabled,
                 note: note,
                 displayOrder: displayOrder,
                 createdAt: createdAt,
@@ -9142,6 +10065,443 @@ typedef $$ReadingTemplatesTableProcessedTableManager =
       ReadingTemplate,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$MaintenanceSchedulesTableCreateCompanionBuilder =
+    MaintenanceSchedulesCompanion Function({
+      Value<int> id,
+      required int tankId,
+      Value<String?> actionType,
+      Value<String?> title,
+      Value<int?> cadenceDays,
+      Value<DateTime?> scheduledAt,
+      Value<DateTime?> lastDoneAt,
+      Value<bool> remindEnabled,
+      Value<String?> note,
+      Value<int> displayOrder,
+    });
+typedef $$MaintenanceSchedulesTableUpdateCompanionBuilder =
+    MaintenanceSchedulesCompanion Function({
+      Value<int> id,
+      Value<int> tankId,
+      Value<String?> actionType,
+      Value<String?> title,
+      Value<int?> cadenceDays,
+      Value<DateTime?> scheduledAt,
+      Value<DateTime?> lastDoneAt,
+      Value<bool> remindEnabled,
+      Value<String?> note,
+      Value<int> displayOrder,
+    });
+
+final class $$MaintenanceSchedulesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $MaintenanceSchedulesTable,
+          MaintenanceSchedule
+        > {
+  $$MaintenanceSchedulesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('maintenance_schedules__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$MaintenanceSchedulesTableFilterComposer
+    extends Composer<_$AppDatabase, $MaintenanceSchedulesTable> {
+  $$MaintenanceSchedulesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionType => $composableBuilder(
+    column: $table.actionType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cadenceDays => $composableBuilder(
+    column: $table.cadenceDays,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastDoneAt => $composableBuilder(
+    column: $table.lastDoneAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MaintenanceSchedulesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MaintenanceSchedulesTable> {
+  $$MaintenanceSchedulesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actionType => $composableBuilder(
+    column: $table.actionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cadenceDays => $composableBuilder(
+    column: $table.cadenceDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastDoneAt => $composableBuilder(
+    column: $table.lastDoneAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MaintenanceSchedulesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MaintenanceSchedulesTable> {
+  $$MaintenanceSchedulesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get actionType => $composableBuilder(
+    column: $table.actionType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<int> get cadenceDays => $composableBuilder(
+    column: $table.cadenceDays,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastDoneAt => $composableBuilder(
+    column: $table.lastDoneAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get remindEnabled => $composableBuilder(
+    column: $table.remindEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MaintenanceSchedulesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MaintenanceSchedulesTable,
+          MaintenanceSchedule,
+          $$MaintenanceSchedulesTableFilterComposer,
+          $$MaintenanceSchedulesTableOrderingComposer,
+          $$MaintenanceSchedulesTableAnnotationComposer,
+          $$MaintenanceSchedulesTableCreateCompanionBuilder,
+          $$MaintenanceSchedulesTableUpdateCompanionBuilder,
+          (MaintenanceSchedule, $$MaintenanceSchedulesTableReferences),
+          MaintenanceSchedule,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$MaintenanceSchedulesTableTableManager(
+    _$AppDatabase db,
+    $MaintenanceSchedulesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MaintenanceSchedulesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MaintenanceSchedulesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MaintenanceSchedulesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> tankId = const Value.absent(),
+                Value<String?> actionType = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<int?> cadenceDays = const Value.absent(),
+                Value<DateTime?> scheduledAt = const Value.absent(),
+                Value<DateTime?> lastDoneAt = const Value.absent(),
+                Value<bool> remindEnabled = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+              }) => MaintenanceSchedulesCompanion(
+                id: id,
+                tankId: tankId,
+                actionType: actionType,
+                title: title,
+                cadenceDays: cadenceDays,
+                scheduledAt: scheduledAt,
+                lastDoneAt: lastDoneAt,
+                remindEnabled: remindEnabled,
+                note: note,
+                displayOrder: displayOrder,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int tankId,
+                Value<String?> actionType = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<int?> cadenceDays = const Value.absent(),
+                Value<DateTime?> scheduledAt = const Value.absent(),
+                Value<DateTime?> lastDoneAt = const Value.absent(),
+                Value<bool> remindEnabled = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+              }) => MaintenanceSchedulesCompanion.insert(
+                id: id,
+                tankId: tankId,
+                actionType: actionType,
+                title: title,
+                cadenceDays: cadenceDays,
+                scheduledAt: scheduledAt,
+                lastDoneAt: lastDoneAt,
+                remindEnabled: remindEnabled,
+                note: note,
+                displayOrder: displayOrder,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$MaintenanceSchedulesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable:
+                                    $$MaintenanceSchedulesTableReferences
+                                        ._tankIdTable(db),
+                                referencedColumn:
+                                    $$MaintenanceSchedulesTableReferences
+                                        ._tankIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$MaintenanceSchedulesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MaintenanceSchedulesTable,
+      MaintenanceSchedule,
+      $$MaintenanceSchedulesTableFilterComposer,
+      $$MaintenanceSchedulesTableOrderingComposer,
+      $$MaintenanceSchedulesTableAnnotationComposer,
+      $$MaintenanceSchedulesTableCreateCompanionBuilder,
+      $$MaintenanceSchedulesTableUpdateCompanionBuilder,
+      (MaintenanceSchedule, $$MaintenanceSchedulesTableReferences),
+      MaintenanceSchedule,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -9297,6 +10657,8 @@ class $AppDatabaseManager {
       $$DosingEntriesTableTableManager(_db, _db.dosingEntries);
   $$ReadingTemplatesTableTableManager get readingTemplates =>
       $$ReadingTemplatesTableTableManager(_db, _db.readingTemplates);
+  $$MaintenanceSchedulesTableTableManager get maintenanceSchedules =>
+      $$MaintenanceSchedulesTableTableManager(_db, _db.maintenanceSchedules);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

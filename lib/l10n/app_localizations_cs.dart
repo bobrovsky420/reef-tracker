@@ -1295,4 +1295,134 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get routeNotFoundGoHome => 'Přejít na hlavní obrazovku';
+
+  @override
+  String get notifChannelTesting => 'Připomínky měření';
+
+  @override
+  String get notifChannelDosing => 'Připomínky dávkování';
+
+  @override
+  String get notifChannelMaintenance => 'Připomínky údržby';
+
+  @override
+  String get notifTestingTitle => 'Čas na měření';
+
+  @override
+  String get notifDosingTitle => 'Čas na dávkování';
+
+  @override
+  String get notifMaintenanceTitle => 'Čas na údržbu';
+
+  @override
+  String notifTitleWithTank(String title, String tank) {
+    return '$title — $tank';
+  }
+
+  @override
+  String get remindersTitle => 'Připomínky';
+
+  @override
+  String get remindersSubtitle => 'Oznámení pro měření, dávkování a údržbu';
+
+  @override
+  String get remindersTestingSubtitle => 'Když je čas na test parametru';
+
+  @override
+  String get remindersDosingSubtitle => 'V čase dávkování každého přípravku';
+
+  @override
+  String get remindersMaintenanceSubtitle => 'Když je na řadě plánovaná údržba';
+
+  @override
+  String get reminderTimeTitle => 'Čas připomínek';
+
+  @override
+  String get reminderTimeSubtitle => 'Kdy chodí připomínky měření a údržby';
+
+  @override
+  String get remindersPermissionDenied =>
+      'Oznámení jsou v nastavení systému blokovaná, připomínky se nezobrazí.';
+
+  @override
+  String get remindToTest => 'Připomínat testování';
+
+  @override
+  String get cadenceOff => 'Vypnuto';
+
+  @override
+  String daysShortN(int count) {
+    return '$count d';
+  }
+
+  @override
+  String get cadenceCustom => 'Vlastní';
+
+  @override
+  String get customDaysLabel => 'Dny';
+
+  @override
+  String get remindMe => 'Připomínat';
+
+  @override
+  String get remindMeNeedsTime => 'Pro připomínky nastavte čas dávkování';
+
+  @override
+  String get maintenanceSchedule => 'Plán údržby';
+
+  @override
+  String get addMaintenanceTask => 'Přidat úkol';
+
+  @override
+  String get editMaintenanceTask => 'Upravit úkol';
+
+  @override
+  String get taskTypeLabel => 'Typ';
+
+  @override
+  String get customTask => 'Vlastní úkol';
+
+  @override
+  String get taskTitleLabel => 'Název';
+
+  @override
+  String get taskTitleRequired => 'Zadejte název';
+
+  @override
+  String get repeatLabel => 'Opakování';
+
+  @override
+  String get oneOff => 'Jednorázově';
+
+  @override
+  String get dueDateLabel => 'Termín';
+
+  @override
+  String get dueDateRequired => 'Vyberte termín';
+
+  @override
+  String get dueToday => 'Dnes';
+
+  @override
+  String dueInDaysN(int count) {
+    return 'Za $count d';
+  }
+
+  @override
+  String overdueDaysN(int count) {
+    return '$count d po termínu';
+  }
+
+  @override
+  String get markDone => 'Hotovo';
+
+  @override
+  String get taskMarkedDone => 'Označeno jako hotové';
+
+  @override
+  String get taskDeleted => 'Úkol smazán';
+
+  @override
+  String get scheduleEmptyBody =>
+      'Zatím žádné úkoly údržby. Naplánujte výměny vody nebo vlastní úkoly a získáte štítky termínů a připomínky.';
 }

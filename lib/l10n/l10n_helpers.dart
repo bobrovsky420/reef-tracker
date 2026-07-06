@@ -24,6 +24,10 @@ String formatDateTime(BuildContext context, DateTime t, {bool weekday = true}) {
   return '${date.format(t)} ${time.format(t)}';
 }
 
+/// Date-only companion of [formatDateTime] (due dates, schedules) — follows
+/// `Intl.defaultLocale`, which MaterialApp keeps in sync with the app locale.
+String formatDate(DateTime t) => DateFormat.yMMMd().format(t);
+
 /// Shows a date picker followed by a time picker and returns the composed
 /// [DateTime], **clamped so it can never land in the future** — readings,
 /// water changes and cleanings are always logged in the past or now. Returns

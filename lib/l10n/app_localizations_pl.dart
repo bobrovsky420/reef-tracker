@@ -1304,4 +1304,139 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get routeNotFoundGoHome => 'Przejdź do ekranu głównego';
+
+  @override
+  String get notifChannelTesting => 'Przypomnienia o testach';
+
+  @override
+  String get notifChannelDosing => 'Przypomnienia o dawkowaniu';
+
+  @override
+  String get notifChannelMaintenance => 'Przypomnienia o konserwacji';
+
+  @override
+  String get notifTestingTitle => 'Czas na test';
+
+  @override
+  String get notifDosingTitle => 'Czas na dawkowanie';
+
+  @override
+  String get notifMaintenanceTitle => 'Czas na konserwację';
+
+  @override
+  String notifTitleWithTank(String title, String tank) {
+    return '$title — $tank';
+  }
+
+  @override
+  String get remindersTitle => 'Przypomnienia';
+
+  @override
+  String get remindersSubtitle =>
+      'Powiadomienia o testach, dawkowaniu i konserwacji';
+
+  @override
+  String get remindersTestingSubtitle =>
+      'Gdy zbliża się termin testu parametru';
+
+  @override
+  String get remindersDosingSubtitle => 'O porze dawkowania każdego preparatu';
+
+  @override
+  String get remindersMaintenanceSubtitle =>
+      'Gdy przypada zaplanowana konserwacja';
+
+  @override
+  String get reminderTimeTitle => 'Godzina przypomnień';
+
+  @override
+  String get reminderTimeSubtitle =>
+      'O której przychodzą przypomnienia o testach i konserwacji';
+
+  @override
+  String get remindersPermissionDenied =>
+      'Powiadomienia są zablokowane w ustawieniach systemu — przypomnienia nie będą wyświetlane.';
+
+  @override
+  String get remindToTest => 'Przypominaj o teście';
+
+  @override
+  String get cadenceOff => 'Wył.';
+
+  @override
+  String daysShortN(int count) {
+    return '$count d';
+  }
+
+  @override
+  String get cadenceCustom => 'Własny';
+
+  @override
+  String get customDaysLabel => 'Dni';
+
+  @override
+  String get remindMe => 'Przypominaj';
+
+  @override
+  String get remindMeNeedsTime =>
+      'Ustaw porę dawkowania, aby włączyć przypomnienia';
+
+  @override
+  String get maintenanceSchedule => 'Harmonogram konserwacji';
+
+  @override
+  String get addMaintenanceTask => 'Dodaj zadanie';
+
+  @override
+  String get editMaintenanceTask => 'Edytuj zadanie';
+
+  @override
+  String get taskTypeLabel => 'Typ';
+
+  @override
+  String get customTask => 'Własne zadanie';
+
+  @override
+  String get taskTitleLabel => 'Nazwa';
+
+  @override
+  String get taskTitleRequired => 'Podaj nazwę';
+
+  @override
+  String get repeatLabel => 'Powtarzanie';
+
+  @override
+  String get oneOff => 'Jednorazowo';
+
+  @override
+  String get dueDateLabel => 'Termin';
+
+  @override
+  String get dueDateRequired => 'Wybierz termin';
+
+  @override
+  String get dueToday => 'Dziś';
+
+  @override
+  String dueInDaysN(int count) {
+    return 'Za $count d';
+  }
+
+  @override
+  String overdueDaysN(int count) {
+    return '$count d po terminie';
+  }
+
+  @override
+  String get markDone => 'Zrobione';
+
+  @override
+  String get taskMarkedDone => 'Oznaczono jako zrobione';
+
+  @override
+  String get taskDeleted => 'Zadanie usunięte';
+
+  @override
+  String get scheduleEmptyBody =>
+      'Brak zadań konserwacji. Zaplanuj podmiany wody lub własne zadania, aby widzieć terminy i otrzymywać przypomnienia.';
 }
