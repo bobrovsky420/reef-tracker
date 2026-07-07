@@ -163,7 +163,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 
   /// Edits a reading's value and/or its date/time. When the timestamp is moved
-  /// and the reading was saved together with others (same moment), asks whether
+  /// and the reading was saved together with others (same batch), asks whether
   /// to re-time just this value or the whole batch — mirroring delete's choice.
   Future<void> _editReading(
     BuildContext context,
@@ -215,20 +215,22 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     if (applyTimeToAll) {
       await db.updateReadingGroupTime(r, edit.time);
     }
-    // Re-timing only this value detaches it from its batch (#15): it no longer
-    // shares the group's moment, so group delete/edit must not drag it along.
+    // Re-timing only this value detaches it from its batch (#15): it gets a
+    // fresh group id of its own, so group delete/edit can't drag it along —
+    // and, unlike a null, it can never be re-absorbed into a legacy cluster
+    // by the restore-time group-id backfill.
     final detach = timeChanged && !applyTimeToAll && hadSiblings;
     await db.updateReading(
       r.copyWith(
         value: edit.value,
         takenAt: edit.time,
-        groupId: detach ? const Value(null) : Value(r.groupId),
+        groupId: detach ? Value(newReadingGroupId()) : Value(r.groupId),
       ),
     );
   }
 
   /// Asks whether a re-timing should affect only this reading or all [others]+1
-  /// readings entered together at the same moment.
+  /// readings entered together as one batch.
   Future<_EditChoice?> _askEditScope(BuildContext context, int others) {
     final l = AppLocalizations.of(context);
     return showDialog<_EditChoice>(
@@ -256,7 +258,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   /// Handles a swipe-to-delete. A standalone measurement is deleted immediately
   /// with an "Undo" SnackBar; one saved together with other measurements (same
-  /// timestamp) still prompts whether to delete just this value or the whole
+  /// batch id) still prompts whether to delete just this value or the whole
   /// batch, then offers the same undo. Returns true if the row should dismiss.
   Future<bool> _confirmDelete(BuildContext context, Reading r) async {
     final l = AppLocalizations.of(context);

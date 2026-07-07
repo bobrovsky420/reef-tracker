@@ -451,14 +451,15 @@ void main() {
     });
 
     test(
-      'legacy rows without groupId fall back to timestamp grouping (#15)',
+      'a reading without groupId is standalone — never grouped by time (#15)',
       () async {
         final id = await db.createTankWithPreset(
           name: 'A',
           type: SetupType.mixed,
         );
         final t = DateTime(2026, 3, 1, 9, 30);
-        // Pre-v13 rows: inserted individually, no group id.
+        // Ungrouped rows on the same second (only creatable outside the app
+        // flows — the v19 migration/restore backfills stored legacy rows).
         await db.insertReading(
           tankId: id,
           paramKey: 'ph',
@@ -471,22 +472,21 @@ void main() {
           value: 8.5,
           takenAt: t,
         );
-        // A new grouped batch on the very same second.
-        await db.insertReadingGroup(
-          tankId: id,
-          takenAt: t,
-          values: const [(paramKey: 'calcium', value: 420)],
-        );
 
-        final legacy = (await db.getAllReadings()).firstWhere(
+        final ungrouped = (await db.getAllReadings()).firstWhere(
           (r) => r.paramKey == 'ph',
         );
-        expect(legacy.groupId, isNull);
-        final group = await db.readingGroup(legacy);
+        expect(ungrouped.groupId, isNull);
+        final group = await db.readingGroup(ungrouped);
         expect(
           group.map((r) => r.paramKey),
-          unorderedEquals(['ph', 'alkalinity']),
-          reason: 'legacy grouping must not swallow the new grouped batch',
+          ['ph'],
+          reason: 'null groupId must match only the reading itself',
+        );
+        expect(await db.deleteReadingGroup(ungrouped), 1);
+        expect(
+          (await db.getAllReadings()).map((r) => r.paramKey),
+          ['alkalinity'],
         );
       },
     );

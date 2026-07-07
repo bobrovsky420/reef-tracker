@@ -882,7 +882,8 @@ ReadingsCompanion _readingFromJson(Map<String, dynamic> m) => ReadingsCompanion(
   value: Value((m['value'] as num).toDouble()),
   takenAt: Value(_date(m['takenAt'])),
   note: Value(m['note'] as String?),
-  // Absent in pre-v13 backups; such rows keep timestamp grouping (#15).
+  // Absent in pre-v13 backups; restore backfills those rows with a legacy
+  // group id derived from their old timestamp grouping (#15).
   groupId: Value(m['groupId'] as String?),
 );
 

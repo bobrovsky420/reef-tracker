@@ -82,6 +82,17 @@ void main() {
         takenAt: daysAgo((2 - i) * 7),
       );
     }
+    // Nitrate coming down after a spike: above greenHigh (10 in the mixed
+    // preset) but falling ~1.5/day → back in range in ~3 d. Exercises the
+    // positive "Recovering" trend chip/card (U15).
+    for (final (i, v) in [22.0, 20.5, 19.0, 17.5, 16.0, 14.5].indexed) {
+      await db.insertReading(
+        tankId: tank,
+        paramKey: 'nitrate',
+        value: v,
+        takenAt: daysAgo(5 - i),
+      );
+    }
 
     // --- Dosing plan with real history --------------------------------------
     // Alk: an OLD segment (5 ml/day, 40d ago → superseded 12d ago) plus the

@@ -94,8 +94,10 @@ class Readings extends Table {
   /// Identifies readings entered together as one batch on the add-reading
   /// screen (#15). Group edit/delete keys on this instead of the second-level
   /// `takenAt` timestamp, which silently merged distinct groups saved (or
-  /// re-timed onto) the same second. Null for rows from before schema v13,
-  /// which fall back to timestamp grouping.
+  /// re-timed onto) the same second. Since schema v19 every stored row has one
+  /// (pre-v13 rows get a deterministic `legacy-` id backfilled from their old
+  /// tank+timestamp grouping, both on upgrade and on backup restore); a null
+  /// is treated as a standalone reading.
   TextColumn get groupId => text().nullable()();
 }
 
@@ -417,7 +419,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -601,10 +603,28 @@ class AppDatabase extends _$AppDatabase {
           'ON ro_stage_replacements (stage_id)',
         );
       }
+      if (from < 19) {
+        // Pre-v13 rows relied on a runtime same-timestamp fallback for batch
+        // grouping (#15). Freeze that rule into data: every ungrouped row
+        // gets a deterministic group id derived from its legacy
+        // (tank, taken_at) cluster, so all grouping now keys on group_id
+        // alone. Naturally idempotent — only NULL rows are touched.
+        await _backfillLegacyReadingGroupIds();
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
+  );
+
+  /// Gives every ungrouped reading a group id derived from its legacy
+  /// (tank, timestamp) grouping cluster, so rows saved together before schema
+  /// v13 — or restored from a pre-v13 backup — keep behaving as one batch now
+  /// that grouping keys on [Readings.groupId] alone. The `legacy-` prefix
+  /// cannot collide with [newReadingGroupId]'s ids (#15).
+  Future<void> _backfillLegacyReadingGroupIds() => customStatement(
+    "UPDATE readings SET group_id = 'legacy-' || tank_id || '-' || taken_at "
+    'WHERE group_id IS NULL',
   );
 
   /// Whether a table with [name] currently exists (used to keep migrations
@@ -949,15 +969,14 @@ class AppDatabase extends _$AppDatabase {
       (delete(readings)..where((r) => r.id.equals(id))).go();
 
   /// Predicate matching every reading saved together with [r] (#15): rows
-  /// sharing its group id when it has one, otherwise (pre-v13 rows) the legacy
-  /// same-timestamp rule — restricted to other ungrouped rows so a legacy group
-  /// can't swallow a new batch that lands on the same second.
+  /// sharing its group id. The v19 migration (and every restore) backfills a
+  /// group id onto legacy ungrouped rows, so a null here can only come from a
+  /// row created outside the app flows — treated as standalone, matching
+  /// nothing but [r] itself.
   Expression<bool> _sameGroupAs(Readings tbl, Reading r) {
     final gid = r.groupId;
     if (gid != null) return tbl.groupId.equals(gid);
-    return tbl.tankId.equals(r.tankId) &
-        tbl.takenAt.equals(r.takenAt) &
-        tbl.groupId.isNull();
+    return tbl.id.equals(r.id);
   }
 
   /// Readings saved together with [r] (entered in one go on the add-reading
@@ -1856,6 +1875,9 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(roStageReplacements, roStageReplacementRows);
         b.insertAll(settings, incomingSettings);
       });
+      // Pre-v13 backups carry readings without group ids; give their legacy
+      // timestamp clusters real ids so grouping keys on group_id alone (#15).
+      await _backfillLegacyReadingGroupIds();
     });
   }
 }

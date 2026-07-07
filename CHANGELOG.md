@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.20.0] - 2026-07-07
 
+### Changed
+- Measurements recorded together are now recognized as one batch by a stored
+  batch id in every case (delete one-vs-all prompt, re-timing a batch), never
+  by their shared timestamp. Measurements from very old app versions (and
+  restored old backups) are migrated to batch ids automatically, so two
+  batches saved at the same second can no longer be mixed up.
+
+### Fixed
+- The first-run tour's spotlight around the aquarium selector hugged the text
+  too tightly; it now has a little breathing room.
+
 ### Added
 - A parameter that is out of range but trending back toward its healthy range
   now shows an encouraging green "Recovering" state instead of staying silent:

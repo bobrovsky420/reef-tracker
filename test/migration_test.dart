@@ -207,8 +207,8 @@ void main() {
           expect(reading.value, 8.2);
           expect(
             reading.groupId,
-            isNull,
-            reason: 'pre-v13 rows keep timestamp grouping (#15)',
+            startsWith('legacy-'),
+            reason: 'the v19 backfill freezes timestamp grouping into an id',
           );
           expect(
             (await db.getTrackedParameters(tank.id)).single.paramKey,
@@ -496,6 +496,69 @@ void main() {
     }
     await db.seedDefaultRoStages();
     expect(await db.getRoStages(), isEmpty);
+  });
+
+  test('upgrading from v18 backfills legacy reading group ids (#15)', () async {
+    final file = File('${tempDir.path}/from18-nullgroups.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    final tankId = await seed.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    // A modern batch whose generated id must survive the backfill untouched.
+    await seed.insertReadingGroup(
+      tankId: tankId,
+      takenAt: DateTime(2026, 3, 1, 9, 30),
+      values: const [
+        (paramKey: 'ph', value: 8.1),
+        (paramKey: 'alkalinity', value: 8.5),
+      ],
+    );
+    final modernId = (await seed.getAllReadings()).first.groupId;
+    // Legacy ungrouped rows: two clusters, one shared timestamp each.
+    final t1 = DateTime(2026, 1, 1, 8);
+    final t2 = DateTime(2026, 1, 2, 8);
+    for (final (key, value, t) in [
+      ('ph', 8.0, t1),
+      ('alkalinity', 8.4, t1),
+      ('calcium', 420.0, t2),
+    ]) {
+      await seed.insertReading(
+        tankId: tankId,
+        paramKey: key,
+        value: value,
+        takenAt: t,
+      );
+    }
+    await seed.customStatement('PRAGMA user_version = 18');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final all = await db.getAllReadings();
+    expect(
+      all.every((r) => r.groupId != null),
+      isTrue,
+      reason: 'the backfill must leave no ungrouped rows behind',
+    );
+    // Same legacy timestamp cluster -> one shared id; other cluster differs.
+    final legacyPh = all.firstWhere(
+      (r) => r.paramKey == 'ph' && r.takenAt.isAtSameMomentAs(t1),
+    );
+    expect(legacyPh.groupId, startsWith('legacy-'));
+    final group = await db.readingGroup(legacyPh);
+    expect(
+      group.map((r) => r.paramKey),
+      unorderedEquals(['ph', 'alkalinity']),
+      reason: 'a legacy cluster groups by its old tank+timestamp rule',
+    );
+    final calcium = all.firstWhere((r) => r.paramKey == 'calcium');
+    expect(calcium.groupId, isNot(legacyPh.groupId));
+    // The modern batch kept its generated id.
+    expect(
+      all.firstWhere((r) => r.takenAt == DateTime(2026, 3, 1, 9, 30)).groupId,
+      modernId,
+    );
   });
 
   group('guarded migration steps are idempotent', () {

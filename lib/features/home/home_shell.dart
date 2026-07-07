@@ -193,11 +193,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       String title,
       String description,
       String nextLabel,
-      Widget child,
-    ) => Showcase(
+      Widget child, {
+      // IconButton targets carry their own tap-target padding; bare widgets
+      // like the tank selector need explicit breathing room in the spotlight.
+      EdgeInsets targetPadding = EdgeInsets.zero,
+    }) => Showcase(
       key: key,
       title: title,
       description: description,
+      targetPadding: targetPadding,
       tooltipActions: [skipAction, nextAction(nextLabel)],
       tooltipBackgroundColor: cs.surfaceContainerHighest,
       textColor: cs.onSurface,
@@ -218,6 +222,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           l.tourTankDesc,
           l.tourNext,
           const TankSelector(),
+          targetPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         ),
         actions: [
           // Toggle the Measurements tab between the card grid and the stacked
