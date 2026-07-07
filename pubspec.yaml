@@ -96,9 +96,14 @@ dev_dependencies:
 # Launcher icon generation. The light icon is the base; -night variants for the
 # dark icon are added manually afterwards (flutter_launcher_icons has no Android
 # day/night support). Regenerate with: dart run flutter_launcher_icons
+# iOS icons must be opaque: the alpha channel is flattened onto the splash
+# background color (matches the icon's own pale-cyan base, so the pre-rounded
+# corners blend into iOS's superellipse mask).
 flutter_launcher_icons:
   android: "ic_launcher"
-  ios: false
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#DEF5F8"
   image_path: "store_assets/app-icon-512.png"
   adaptive_icon_background: "#DEF5F8"
   adaptive_icon_foreground: "store_assets/app-icon-512.png"
