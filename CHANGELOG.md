@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   too tightly; it now has a little breathing room.
 
 ### Added
+- The parameter history screen has a Share button that exports the chart as an
+  image — ready for posting to reef forums or sending to a fellow reefer.
 - A parameter that is out of range but trending back toward its healthy range
   now shows an encouraging green "Recovering" state instead of staying silent:
   the dashboard tile gets a "Recovering ~N d" chip and the history trend card

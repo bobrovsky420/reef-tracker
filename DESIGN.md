@@ -291,8 +291,9 @@ which cleans up the plaintext copies: the staging file as soon as the sheet
 returns, share_plus's internal copy (under `<temp>/share_plus/`) immediately
 when the sheet was dismissed, and any copy a completed share left behind at
 the start of the next export (deleting it right away could break a receiver
-still streaming the content URI). The sweep recognizes both export naming
-patterns (backup JSON and measurement CSV) and never touches foreign files.
+still streaming the content URI). The sweep recognizes all three export naming
+patterns (backup JSON, measurement CSV, chart PNG) and never touches foreign
+files.
 `pickBackupData` uses the file
 picker; read/UTF-8 failures stay inside the `InvalidBackupException` contract
 so a binary file renamed `.json` gets the specific rejection message. `restoreFromBackup`
@@ -817,7 +818,13 @@ non-zoomable — they must keep their shared aligned time window.
 
 Per-parameter history built on the shared `TrendChart` (zone bands + water-change
 markers) with the shared `ChartRangeSelector`. Values are presented in the user's
-units while bounds/zones stay canonical. Below the chart is the readings list:
+units while bounds/zones stay canonical. A **share action** in the AppBar (U14,
+shown only when the range holds readings) captures the chart's
+`RepaintBoundary` as a PNG (≥2× pixel ratio, opaque theme background) and hands
+it to the OS share sheet via `shareExportBytes` — the same staging/sweep
+lifecycle as the JSON/CSV exports; since the chart sliver is unpainted when
+scrolled away, the handler first jumps the list back to the top and waits a
+frame. Below the chart is the readings list:
 tap a row to edit its **value and date/time** (`_ReadingDialog`, the date/time
 picker mirroring the actions log); when the moved reading belongs to a batch of
 sibling measurements, the user is asked whether to re-time only that value

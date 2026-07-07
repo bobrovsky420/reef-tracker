@@ -1,8 +1,14 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../data/export_share.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
@@ -24,6 +30,16 @@ class HistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  /// Marks the exact chart area captured by the share-as-image action (U14).
+  final GlobalKey _chartBoundaryKey = GlobalKey();
+  final ScrollController _scrollCtrl = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -56,18 +72,31 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             prefs,
           );
 
+    final cutoff = range.days == null
+        ? null
+        : DateTime.now().subtract(Duration(days: range.days!));
+    List<Reading> inRange(List<Reading> all) => cutoff == null
+        ? all
+        : all.where((r) => r.takenAt.isAfter(cutoff)).toList();
+    final hasChart = inRange(readingsAsync.value ?? const []).isNotEmpty;
+
     return Scaffold(
-      appBar: AppBar(title: Text(l.paramName(widget.paramKey))),
+      appBar: AppBar(
+        title: Text(l.paramName(widget.paramKey)),
+        actions: [
+          if (hasChart)
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: l.share,
+              onPressed: _shareChart,
+            ),
+        ],
+      ),
       body: readingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (all) {
-          final cutoff = range.days == null
-              ? null
-              : DateTime.now().subtract(Duration(days: range.days!));
-          final data = cutoff == null
-              ? all
-              : all.where((r) => r.takenAt.isAfter(cutoff)).toList();
+          final data = inRange(all);
 
           return Column(
             children: [
@@ -79,24 +108,36 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 child: data.isEmpty
                     ? Center(child: Text(l.noReadingsInRange))
                     : CustomScrollView(
+                        controller: _scrollCtrl,
                         slivers: [
                           SliverToBoxAdapter(
-                            child: SizedBox(
-                              height: 280,
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  8,
-                                  16,
-                                  16,
-                                  8,
-                                ),
-                                child: TrendChart(
-                                  readings: data,
-                                  param: param,
-                                  pres: pres,
-                                  markers: markers,
-                                  zoomable: true,
-                                  showMarkerLegend: true,
+                            // The ColoredBox gives the shared PNG an opaque
+                            // background — a bare capture would be transparent
+                            // and unreadable on forum dark/light themes.
+                            child: RepaintBoundary(
+                              key: _chartBoundaryKey,
+                              child: ColoredBox(
+                                color: Theme.of(
+                                  context,
+                                ).scaffoldBackgroundColor,
+                                child: SizedBox(
+                                  height: 280,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      8,
+                                      16,
+                                      16,
+                                      8,
+                                    ),
+                                    child: TrendChart(
+                                      readings: data,
+                                      param: param,
+                                      pres: pres,
+                                      markers: markers,
+                                      zoomable: true,
+                                      showMarkerLegend: true,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -120,6 +161,45 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         },
       ),
     );
+  }
+
+  /// Captures the chart's [RepaintBoundary] as a PNG and hands it to the OS
+  /// share sheet (U14) — reef forums live on parameter-graph screenshots.
+  Future<void> _shareChart() async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    // At least 2× so the image survives forum re-compression; higher-density
+    // screens capture at their native ratio.
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final pixelRatio = dpr < 2.0 ? 2.0 : dpr;
+    try {
+      // The chart sliver is only painted while on screen — if the user
+      // scrolled down to the readings list, bring it back first.
+      if (_scrollCtrl.hasClients && _scrollCtrl.offset > 0) {
+        _scrollCtrl.jumpTo(0);
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+      }
+      final boundary = _chartBoundaryKey.currentContext?.findRenderObject();
+      if (boundary is! RenderRepaintBoundary) return;
+      final image = await boundary.toImage(pixelRatio: pixelRatio);
+      final ByteData? png;
+      try {
+        png = await image.toByteData(format: ui.ImageByteFormat.png);
+      } finally {
+        image.dispose();
+      }
+      if (png == null) throw StateError('PNG encoding failed');
+
+      final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
+      await shareExportBytes(
+        fileName: '$kChartExportPrefix$stamp-${widget.paramKey}.png',
+        bytes: png.buffer.asUint8List(),
+        mimeType: 'image/png',
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(l.errorWith('$e'))));
+    }
   }
 
   Widget _readingsSliver(

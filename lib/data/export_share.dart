@@ -11,11 +11,15 @@ const String kBackupExportPrefix = 'reeftracker-backup-';
 /// Filename prefix of measurement CSV exports (`exportReadingsCsv`).
 const String kCsvExportPrefix = 'reeftracker-readings-';
 
+/// Filename prefix of chart-image exports (history screen's share action).
+const String kChartExportPrefix = 'reeftracker-chart-';
+
 /// Whether [name] matches one of our export naming patterns. Only such files
 /// are ever swept — foreign files in the shared temp/cache dirs are untouched.
 bool _isOurExport(String name) =>
     (name.startsWith(kBackupExportPrefix) && name.endsWith('.json')) ||
-    (name.startsWith(kCsvExportPrefix) && name.endsWith('.csv'));
+    (name.startsWith(kCsvExportPrefix) && name.endsWith('.csv')) ||
+    (name.startsWith(kChartExportPrefix) && name.endsWith('.png'));
 
 /// Stages [content] as a temp file named [fileName] and hands it to the OS
 /// share sheet.
@@ -32,11 +36,33 @@ Future<void> shareExportFile({
   required String fileName,
   required String content,
   required String mimeType,
+}) => _shareStaged(
+  fileName: fileName,
+  mimeType: mimeType,
+  write: (file) => file.writeAsString(content),
+);
+
+/// Binary variant of [shareExportFile] (chart PNGs) — same staging/sweep
+/// lifecycle.
+Future<void> shareExportBytes({
+  required String fileName,
+  required List<int> bytes,
+  required String mimeType,
+}) => _shareStaged(
+  fileName: fileName,
+  mimeType: mimeType,
+  write: (file) => file.writeAsBytes(bytes),
+);
+
+Future<void> _shareStaged({
+  required String fileName,
+  required String mimeType,
+  required Future<void> Function(File file) write,
 }) async {
   final dir = await getTemporaryDirectory();
   await _sweepStaleExports(dir);
   final file = File(p.join(dir.path, fileName));
-  await file.writeAsString(content);
+  await write(file);
 
   try {
     final result = await Share.shareXFiles([
