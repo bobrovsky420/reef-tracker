@@ -57,6 +57,42 @@ void main() {
     });
   });
 
+  group('micro view presets (U17)', () {
+    test('the Fauna Marin preset names only real catalog elements', () {
+      final catalog = kMicroParameters.map((p) => p.key).toSet();
+      for (final k in kMicroViewFaunaMarinKeys) {
+        expect(catalog, contains(k));
+      }
+    });
+
+    test('the Fauna Marin preset has no duplicates', () {
+      expect(
+        kMicroViewFaunaMarinKeys.toSet().length,
+        kMicroViewFaunaMarinKeys.length,
+      );
+    });
+
+    test('today the Fauna Marin panel equals the whole catalog — this pin '
+        'must be UPDATED (not the preset) when other labs\' elements join '
+        'the catalog', () {
+      expect(
+        kMicroViewFaunaMarinKeys.toSet(),
+        kMicroParameters.map((p) => p.key).toSet(),
+      );
+    });
+
+    test('microPresetKeys resolves known presets and nothing else', () {
+      expect(
+        microPresetKeys(kMicroViewFaunaMarinToken),
+        kMicroViewFaunaMarinKeys.toSet(),
+      );
+      // Full = no filtering; custom/dangling tokens resolve via the DB.
+      expect(microPresetKeys(kMicroViewFullToken), isNull);
+      expect(microPresetKeys('view:12'), isNull);
+      expect(microPresetKeys('preset:nope'), isNull);
+    });
+  });
+
   group('kMicroDefaultBounds', () {
     test('every micro element has default bounds and nothing else does', () {
       expect(

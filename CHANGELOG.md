@@ -27,6 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A Microelements switch in Settings (on by default): switching it off hides
   the dashboard tile and mutes microelement test reminders without deleting
   any measurements — everything reappears when switched back on.
+- Element views on the Microelements screen: chips switch between "Full
+  list", the built-in "Fauna Marin ICP" panel, and your own custom views —
+  named element subsets matching what your lab reports (create them with the
+  "+" chip, starting from what is currently shown; edit or delete them from
+  the manage sheet). The chosen view also scopes the entry form and the
+  out-of-range summary, is remembered per aquarium, and never deletes
+  measurements — elements outside the view keep their history and come back
+  when you switch views. Custom views are included in backups.
 
 ### Changed
 - Strontium, iodine and iron moved from the dashboard grid to the new

@@ -1358,6 +1358,48 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show on the Measurements tab, with test reminders. Hiding keeps your measurements.';
 
   @override
+  String get microViewFull => 'Full list';
+
+  @override
+  String get microViewNew => 'New view';
+
+  @override
+  String get microViewEdit => 'Edit view';
+
+  @override
+  String get microViewManage => 'Manage views';
+
+  @override
+  String get microViewNone =>
+      'No custom views yet. A view shows just the elements your lab reports.';
+
+  @override
+  String get microViewNameHint => 'e.g. My lab\'s panel';
+
+  @override
+  String get microViewNeedElement => 'Select at least one element.';
+
+  @override
+  String microViewElementCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count elements',
+      one: '1 element',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String microViewDeleteTitle(Object name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String get microViewDeleteBody =>
+      'This removes the view. Your measurements are kept.';
+
+  @override
   String get unitFixedNote => 'This parameter always uses this unit.';
 
   @override

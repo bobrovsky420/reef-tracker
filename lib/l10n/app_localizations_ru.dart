@@ -1370,6 +1370,50 @@ class AppLocalizationsRu extends AppLocalizations {
       'Показывать на вкладке «Измерения», с напоминаниями о тестах. При скрытии измерения сохраняются.';
 
   @override
+  String get microViewFull => 'Полный список';
+
+  @override
+  String get microViewNew => 'Новый набор';
+
+  @override
+  String get microViewEdit => 'Изменить набор';
+
+  @override
+  String get microViewManage => 'Управление наборами';
+
+  @override
+  String get microViewNone =>
+      'Пока нет своих наборов. Набор показывает только те элементы, которые измеряет ваша лаборатория.';
+
+  @override
+  String get microViewNameHint => 'напр. Панель моей лаборатории';
+
+  @override
+  String get microViewNeedElement => 'Выберите хотя бы один элемент.';
+
+  @override
+  String microViewElementCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count элемента',
+      many: '$count элементов',
+      few: '$count элемента',
+      one: '$count элемент',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String microViewDeleteTitle(Object name) {
+    return 'Удалить «$name»?';
+  }
+
+  @override
+  String get microViewDeleteBody =>
+      'Удаляется только набор. Измерения сохранятся.';
+
+  @override
   String get unitFixedNote => 'Этот параметр всегда использует эту единицу.';
 
   @override

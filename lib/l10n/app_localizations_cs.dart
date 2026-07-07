@@ -1361,6 +1361,50 @@ class AppLocalizationsCs extends AppLocalizations {
       'Zobrazit na kartě Měření, s připomínkami testů. Skrytí zachová naměřené hodnoty.';
 
   @override
+  String get microViewFull => 'Úplný seznam';
+
+  @override
+  String get microViewNew => 'Nový pohled';
+
+  @override
+  String get microViewEdit => 'Upravit pohled';
+
+  @override
+  String get microViewManage => 'Spravovat pohledy';
+
+  @override
+  String get microViewNone =>
+      'Zatím žádné vlastní pohledy. Pohled zobrazuje jen prvky, které vaše laboratoř měří.';
+
+  @override
+  String get microViewNameHint => 'např. Panel mé laboratoře';
+
+  @override
+  String get microViewNeedElement => 'Vyberte alespoň jeden prvek.';
+
+  @override
+  String microViewElementCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count prvků',
+      many: '$count prvku',
+      few: '$count prvky',
+      one: '1 prvek',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String microViewDeleteTitle(Object name) {
+    return 'Smazat „$name“?';
+  }
+
+  @override
+  String get microViewDeleteBody =>
+      'Odstraní pouze pohled. Naměřené hodnoty zůstanou zachovány.';
+
+  @override
   String get unitFixedNote => 'Tento parametr vždy používá tuto jednotku.';
 
   @override

@@ -202,6 +202,15 @@ void main() {
         displayOrder: 1,
       ),
     ];
+    final microViews = [
+      MicroView(
+        id: 65,
+        tankId: 1,
+        name: 'My lab panel',
+        paramKeys: encodeTemplateParamKeys(['iodine', 'iron', 'lead']),
+        displayOrder: 0,
+      ),
+    ];
     final maintenanceSchedules = [
       MaintenanceSchedule(
         id: 70,
@@ -293,6 +302,7 @@ void main() {
         ratioVisibilities: ratioVisibilities,
         dosingEntries: dosingEntries,
         readingTemplates: readingTemplates,
+        microViews: microViews,
         maintenanceSchedules: maintenanceSchedules,
         roStages: roStages,
         roStageReplacements: roStageReplacements,
@@ -396,6 +406,18 @@ void main() {
       ]);
       expect(rt0.displayOrder.value, 0);
       expect(data.readingTemplates[1].name.value, 'Daily Alk');
+
+      // Micro views (U17).
+      final mv0 = data.microViews[0];
+      expect(mv0.id.value, 65);
+      expect(mv0.tankId.value, 1);
+      expect(mv0.name.value, 'My lab panel');
+      expect(decodeTemplateParamKeys(mv0.paramKeys.value), [
+        'iodine',
+        'iron',
+        'lead',
+      ]);
+      expect(mv0.displayOrder.value, 0);
 
       final ms0 = data.maintenanceSchedules[0];
       expect(ms0.id.value, 70);
@@ -849,6 +871,7 @@ void main() {
       List<TanksCompanion> tanks = const [],
       List<ReadingsCompanion> readings = const [],
       List<ReadingTemplatesCompanion> readingTemplates = const [],
+      List<MicroViewsCompanion> microViews = const [],
       List<MaintenanceSchedulesCompanion> maintenanceSchedules = const [],
       List<RoStagesCompanion> roStages = const [],
       List<RoStageReplacementsCompanion> roStageReplacements = const [],
@@ -864,6 +887,7 @@ void main() {
       ratioVisibilities: const [],
       dosingEntries: const [],
       readingTemplates: readingTemplates,
+      microViews: microViews,
       maintenanceSchedules: maintenanceSchedules,
       roStages: roStages,
       roStageReplacements: roStageReplacements,
@@ -966,6 +990,39 @@ void main() {
       );
       expect(
         () => validateBackup(d, appSchemaVersion: 14),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    MicroViewsCompanion microView(int id, int tankId, {String name = 'Lab'}) =>
+        MicroViewsCompanion(
+          id: Value(id),
+          tankId: Value(tankId),
+          name: Value(name),
+          paramKeys: Value(encodeTemplateParamKeys(['iodine'])),
+          displayOrder: const Value(0),
+        );
+
+    test('accepts a consistent micro view (U17)', () {
+      final d = dataWith(tanks: [tank(1)], microViews: [microView(65, 1)]);
+      expect(() => validateBackup(d, appSchemaVersion: 20), returnsNormally);
+    });
+
+    test('rejects a micro view referencing a missing aquarium (U17)', () {
+      final d = dataWith(tanks: [tank(1)], microViews: [microView(65, 99)]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 20),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a micro view with a blank name (U17)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        microViews: [microView(65, 1, name: '  ')],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 20),
         rejectedWith(BackupRejection.inconsistent),
       );
     });

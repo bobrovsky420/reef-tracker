@@ -1364,6 +1364,48 @@ class AppLocalizationsDe extends AppLocalizations {
       'Im Messwerte-Tab anzeigen, mit Test-Erinnerungen. Beim Ausblenden bleiben die Messwerte erhalten.';
 
   @override
+  String get microViewFull => 'Vollständige Liste';
+
+  @override
+  String get microViewNew => 'Neue Ansicht';
+
+  @override
+  String get microViewEdit => 'Ansicht bearbeiten';
+
+  @override
+  String get microViewManage => 'Ansichten verwalten';
+
+  @override
+  String get microViewNone =>
+      'Noch keine eigenen Ansichten. Eine Ansicht zeigt nur die Elemente, die Ihr Labor misst.';
+
+  @override
+  String get microViewNameHint => 'z. B. Panel meines Labors';
+
+  @override
+  String get microViewNeedElement => 'Mindestens ein Element auswählen.';
+
+  @override
+  String microViewElementCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Elemente',
+      one: '1 Element',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String microViewDeleteTitle(Object name) {
+    return '„$name“ löschen?';
+  }
+
+  @override
+  String get microViewDeleteBody =>
+      'Entfernt nur die Ansicht. Die Messwerte bleiben erhalten.';
+
+  @override
   String get unitFixedNote => 'Dieser Parameter verwendet immer diese Einheit.';
 
   @override

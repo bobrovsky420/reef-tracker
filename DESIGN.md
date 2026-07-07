@@ -100,7 +100,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 18**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 20**
 
 | Table | Key columns |
 |-------|-------------|
@@ -113,6 +113,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RatioVisibilities` | tankId + ratioKey (composite PK), tankId FK cascade, visible, displayOrder, amberLow?/greenLow?/greenHigh?/amberHigh? — per-tank ratio-card visibility, dashboard position (shared order space with `TrackedParameters.displayOrder`), and editable zone bounds; a missing row (or all-null bounds) = visible, ordered last, default zones |
 | `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), remindEnabled (U2 dosing reminders — opt-in, effective only while active with a parsable doseTime), note?, displayOrder, createdAt, startedAt? (segment start; backfilled from createdAt), endedAt? (null = current), state (`DosingState`: active/ended/paused) — per-tank supplement-dosing plan (info-only). A plan is a chain of **dated segments**: editing a dose-affecting field ends the current segment (`state=ended`, `endedAt` set) and starts a new active one; stopping soft-ends it. Only `active` rows show in the Dosing tab and feed the calculator; `ended` rows are retained history. `paused` is reserved for a later phase. |
 | `ReadingTemplates` | id, tankId (FK cascade), name, paramKeys (JSON array of stable *catalog* keys — `encodeTemplateParamKeys`/`decodeTemplateParamKeys`, tolerant decode), displayOrder — per-tank **test sets** (U9): named parameter subsets whose chips filter the Add Reading form. Catalog keys, not `TrackedParameters` ids, so a set survives disable/untrack + re-add; keys not currently tracked+enabled are skipped at display, never deleted |
+| `MicroViews` | id, tankId (FK cascade), name, paramKeys (JSON array of stable catalog keys — same encode/decode as `ReadingTemplates`), displayOrder — user-created **microelement views** (U17): named element subsets whose chips filter the Microelements screen ("the elements my lab reports"). Built-in lab presets (Full list, Fauna Marin ICP) are code-side in `domain/micro.dart`, not rows; the active selection is the device-local `micro_view` setting |
 | `MaintenanceSchedules` | id, tankId (FK cascade), actionType? (`MaintenanceActionType.name`, null = custom task), title? (required iff custom), cadenceDays? + cadenceUnit? (`MaintenanceCadenceUnit.name` days/weeks/months, null = days — repeat every N units; all repeat fields null = one-off), weekdays? (comma list 1=Mon…7=Sun — fixed-weekday repeat, same format as `DosingEntries.weekdays`), monthDay? (1–31, clamped to short months — fixed-date repeat), scheduledAt? (planned first due; floors the computed due while it lies after the last completion), lastDoneAt? (completion stamp for **custom** rows — typed rows derive last-done from their action log), remindEnabled, note?, displayOrder — the user-maintained maintenance plan list (U12); due math in `domain/reminders.dart` (`nextMaintenanceDue`, field priority weekdays > monthDay > cadence) |
 | `RoStages` | id, stageType (`RoStageType.name`; `custom` rows carry [title]), title?, lifespanDays (replace every N days), enabled (the "uncheck if a lower model is used" flag — hidden + silent but history kept), remindEnabled, note?, displayOrder — the shared RO unit's stages (U16). **No tankId by design**: like `Settings`, the RO unit is a property of the household, shared by every aquarium. Default 4-stage set seeded on first RO-screen visit (`seedDefaultRoStages`, guarded by the `ro_stages_seeded` settings flag — not the row count, so deleting every stage sticks) |
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
@@ -142,9 +143,13 @@ notification master switches, all default off — opt-in), `reminder_time`
 `ro_stages_seeded` (the RO default-stage seed guard, U16),
 `ro_unit_enabled` (the RO feature switch, default on — off hides the
 Actions-tab summary row and silences RO reminders while keeping the data),
-and `micro_enabled` (the microelements feature switch, U17 — same shape:
+`micro_enabled` (the microelements feature switch, U17 — same shape:
 off hides the dashboard tile and silences micro test reminders; the stored
-measurements are untouched and reappear when re-enabled). The
+measurements are untouched and reappear when re-enabled), and `micro_view`
+(the active microelement view per tank as one JSON object
+`{"<tankId>": "<token>"}` — `preset:full`, `preset:faunaMarin`, or
+`view:<MicroViews id>`; missing/dangling entries mean the full list; the
+`lastReadingTemplate` pattern). The
 reminder keys are device-local: notification preferences must not ride a
 backup onto another device. `ro_stages_seeded` is the one **non**-device-local
 key: it describes domain data and travels with the RO rows it guards, so a
@@ -189,7 +194,8 @@ plain every-N-days); v18 added the `RoStages` + `RoStageReplacements` tables
 (U16); v19 backfills `Readings.groupId` for pre-v13 rows (a deterministic
 `legacy-<tankId>-<takenAt>` id per old same-timestamp cluster via
 `customStatement`, idempotent — only NULL rows change), retiring the runtime
-timestamp-grouping fallback.
+timestamp-grouping fallback; v20 added the `MicroViews` table + its `tankId`
+index (`createTable` guarded by `_tableExists` — U17 element views).
 Foreign keys are enabled in
 `beforeOpen` (`PRAGMA foreign_keys = ON`), and the database opens in **WAL
 journal mode** (`pragma journal_mode = WAL` in the
@@ -603,7 +609,10 @@ The graph:
   a scope refresh mid-build (setState-during-build crash).
   `microEnabledProvider` is the feature switch (default on), gating the
   dashboard tile; the scheduler reads the same setting to gate micro test
-  reminders.
+  reminders. `microViewsProvider` (tank family) streams the custom views;
+  `microViewSelectionProvider` resolves the active view token to its element
+  filter (widgets watch this one; `microStatusProvider` re-derives via the
+  shared pure helper instead of chaining on it — same no-plain-chaining rule).
 - `healthDisplayProvider` — `HealthDisplay` (both / badge / off, default both):
   how much of the tank-health feature to surface. `showCard` gates the dashboard
   card, `showBadge` gates the compact app-bar badge.
@@ -1106,6 +1115,24 @@ Parameters list/add-sheet and the health-score inputs to core).
   makes the reminder scheduler skip micro-element test cadences; core
   reminders and all stored measurements are unaffected, so re-enabling
   restores everything.
+- **Element views** (U17): a chip row on the screen — `[Full list]
+  [Fauna Marin ICP] [custom views…] [+ new]` — filters which elements the
+  screen, the entry form's "Full ICP" list, and the status summary cover
+  (an element outside the view doesn't count toward "out of range"; hiding
+  is the user's explicit choice). Built-in presets are code-side:
+  the **Fauna Marin ICP** preset is a *frozen explicit key list*
+  (`kMicroViewFaunaMarinKeys` — deliberately not derived from the catalog,
+  so future elements added for other labs don't silently join it; a test
+  pins that today it equals the whole catalog), "Full list" = everything;
+  lab preset names are proper nouns, not localized. Custom views live in
+  `MicroViews` (create via the `+` chip — pre-checked with the active
+  view's elements — or the app-bar manage sheet; chip long-press is the
+  edit shortcut, the manage sheet the accessible path, #45). The selection
+  persists per tank (`micro_view` setting, device-local); a token naming a
+  deleted view falls back to the full list, never a guessed subset.
+  Views only filter — measurements of elements outside the view stay
+  stored. No view/element reordering in this phase (catalog order matches
+  the lab reports).
 
 ### Dosing (`features/dosing/`) — Dosing tab
 

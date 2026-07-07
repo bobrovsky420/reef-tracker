@@ -74,6 +74,74 @@ ZoneBounds microDefaultBounds(String paramKey) =>
 /// exist for these) — the compact filter of the micro entry form.
 const List<String> kMicroHobbyKitKeys = ['iodine', 'iron', 'strontium'];
 
+// --- Element views ------------------------------------------------------------
+//
+// A *view* is a named subset of the panel the Microelements screen (and its
+// entry form) is filtered to — typically "the elements my ICP lab reports".
+// Two kinds exist: built-in presets below (code-defined, per lab panel) and
+// user-created views (the `MicroViews` table). The active selection is a
+// device-local per-tank setting holding one of the tokens below.
+
+/// Active-view token for the built-in "everything in the catalog" view.
+const String kMicroViewFullToken = 'preset:full';
+
+/// Active-view token for the built-in Fauna Marin Reef ICP preset.
+const String kMicroViewFaunaMarinToken = 'preset:faunaMarin';
+
+/// Token prefix for user-created views: `view:<MicroViews row id>`.
+const String kMicroViewCustomPrefix = 'view:';
+
+/// Display name of the Fauna Marin preset — a proper noun, **not** localized
+/// (same policy as supplement brand names).
+const String kMicroViewFaunaMarinName = 'Fauna Marin ICP';
+
+/// The Fauna Marin Reef ICP panel as a **frozen explicit list** — today it
+/// happens to equal the whole catalog, but it must NOT be derived from it:
+/// elements added later for other labs' panels (fluoride, rubidium, …) would
+/// otherwise silently join this preset.
+const List<String> kMicroViewFaunaMarinKeys = [
+  'sodium',
+  'sulfur',
+  'boron',
+  'bromine',
+  'silicon',
+  'strontium',
+  'iodine',
+  'iron',
+  'zinc',
+  'vanadium',
+  'copper',
+  'nickel',
+  'manganese',
+  'molybdenum',
+  'chromium',
+  'cobalt',
+  'lithium',
+  'barium',
+  'selenium',
+  'aluminium',
+  'antimony',
+  'tin',
+  'beryllium',
+  'silver',
+  'tungsten',
+  'lanthanum',
+  'titanium',
+  'zirconium',
+  'arsenic',
+  'cadmium',
+  'mercury',
+  'lead',
+];
+
+/// Resolves a built-in preset token to its element keys. Returns null for the
+/// full view (= no filtering) and for anything that isn't a known preset
+/// token (custom-view tokens are resolved against the DB by the caller).
+Set<String>? microPresetKeys(String token) => switch (token) {
+  kMicroViewFaunaMarinToken => kMicroViewFaunaMarinKeys.toSet(),
+  _ => null,
+};
+
 /// One element's inputs for [computeMicroStatus]: its effective bounds and
 /// latest reading (null = never measured).
 typedef MicroInput = ({

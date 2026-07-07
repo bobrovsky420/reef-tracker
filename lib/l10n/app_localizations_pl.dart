@@ -1371,6 +1371,50 @@ class AppLocalizationsPl extends AppLocalizations {
       'Pokazuj na karcie Pomiary, z przypomnieniami o testach. Ukrycie nie usuwa pomiarów.';
 
   @override
+  String get microViewFull => 'Pełna lista';
+
+  @override
+  String get microViewNew => 'Nowy widok';
+
+  @override
+  String get microViewEdit => 'Edytuj widok';
+
+  @override
+  String get microViewManage => 'Zarządzaj widokami';
+
+  @override
+  String get microViewNone =>
+      'Brak własnych widoków. Widok pokazuje tylko pierwiastki raportowane przez Twoje laboratorium.';
+
+  @override
+  String get microViewNameHint => 'np. Panel mojego laboratorium';
+
+  @override
+  String get microViewNeedElement => 'Wybierz co najmniej jeden pierwiastek.';
+
+  @override
+  String microViewElementCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pierwiastka',
+      many: '$count pierwiastków',
+      few: '$count pierwiastki',
+      one: '1 pierwiastek',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String microViewDeleteTitle(Object name) {
+    return 'Usunąć „$name”?';
+  }
+
+  @override
+  String get microViewDeleteBody =>
+      'Usuwa tylko widok. Pomiary zostaną zachowane.';
+
+  @override
   String get unitFixedNote => 'Ten parametr zawsze używa tej jednostki.';
 
   @override

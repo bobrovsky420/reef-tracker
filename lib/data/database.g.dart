@@ -1493,8 +1493,10 @@ class Reading extends DataClass implements Insertable<Reading> {
   /// Identifies readings entered together as one batch on the add-reading
   /// screen (#15). Group edit/delete keys on this instead of the second-level
   /// `takenAt` timestamp, which silently merged distinct groups saved (or
-  /// re-timed onto) the same second. Null for rows from before schema v13,
-  /// which fall back to timestamp grouping.
+  /// re-timed onto) the same second. Since schema v19 every stored row has one
+  /// (pre-v13 rows get a deterministic `legacy-` id backfilled from their old
+  /// tank+timestamp grouping, both on upgrade and on backup restore); a null
+  /// is treated as a standalone reading.
   final String? groupId;
   const Reading({
     required this.id,
@@ -4821,6 +4823,368 @@ class ReadingTemplatesCompanion extends UpdateCompanion<ReadingTemplate> {
   }
 }
 
+class $MicroViewsTable extends MicroViews
+    with TableInfo<$MicroViewsTable, MicroView> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MicroViewsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 80,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _paramKeysMeta = const VerificationMeta(
+    'paramKeys',
+  );
+  @override
+  late final GeneratedColumn<String> paramKeys = GeneratedColumn<String>(
+    'param_keys',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tankId,
+    name,
+    paramKeys,
+    displayOrder,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'micro_views';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MicroView> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('param_keys')) {
+      context.handle(
+        _paramKeysMeta,
+        paramKeys.isAcceptableOrUnknown(data['param_keys']!, _paramKeysMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_paramKeysMeta);
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MicroView map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MicroView(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      paramKeys: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}param_keys'],
+      )!,
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
+    );
+  }
+
+  @override
+  $MicroViewsTable createAlias(String alias) {
+    return $MicroViewsTable(attachedDatabase, alias);
+  }
+}
+
+class MicroView extends DataClass implements Insertable<MicroView> {
+  final int id;
+  final int tankId;
+  final String name;
+
+  /// JSON array of catalog `paramKey` strings, e.g. `["iodine","iron"]`.
+  final String paramKeys;
+
+  /// Position of the view's chip on the Microelements screen.
+  final int displayOrder;
+  const MicroView({
+    required this.id,
+    required this.tankId,
+    required this.name,
+    required this.paramKeys,
+    required this.displayOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tank_id'] = Variable<int>(tankId);
+    map['name'] = Variable<String>(name);
+    map['param_keys'] = Variable<String>(paramKeys);
+    map['display_order'] = Variable<int>(displayOrder);
+    return map;
+  }
+
+  MicroViewsCompanion toCompanion(bool nullToAbsent) {
+    return MicroViewsCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      name: Value(name),
+      paramKeys: Value(paramKeys),
+      displayOrder: Value(displayOrder),
+    );
+  }
+
+  factory MicroView.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MicroView(
+      id: serializer.fromJson<int>(json['id']),
+      tankId: serializer.fromJson<int>(json['tankId']),
+      name: serializer.fromJson<String>(json['name']),
+      paramKeys: serializer.fromJson<String>(json['paramKeys']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tankId': serializer.toJson<int>(tankId),
+      'name': serializer.toJson<String>(name),
+      'paramKeys': serializer.toJson<String>(paramKeys),
+      'displayOrder': serializer.toJson<int>(displayOrder),
+    };
+  }
+
+  MicroView copyWith({
+    int? id,
+    int? tankId,
+    String? name,
+    String? paramKeys,
+    int? displayOrder,
+  }) => MicroView(
+    id: id ?? this.id,
+    tankId: tankId ?? this.tankId,
+    name: name ?? this.name,
+    paramKeys: paramKeys ?? this.paramKeys,
+    displayOrder: displayOrder ?? this.displayOrder,
+  );
+  MicroView copyWithCompanion(MicroViewsCompanion data) {
+    return MicroView(
+      id: data.id.present ? data.id.value : this.id,
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      name: data.name.present ? data.name.value : this.name,
+      paramKeys: data.paramKeys.present ? data.paramKeys.value : this.paramKeys,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MicroView(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('name: $name, ')
+          ..write('paramKeys: $paramKeys, ')
+          ..write('displayOrder: $displayOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, tankId, name, paramKeys, displayOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MicroView &&
+          other.id == this.id &&
+          other.tankId == this.tankId &&
+          other.name == this.name &&
+          other.paramKeys == this.paramKeys &&
+          other.displayOrder == this.displayOrder);
+}
+
+class MicroViewsCompanion extends UpdateCompanion<MicroView> {
+  final Value<int> id;
+  final Value<int> tankId;
+  final Value<String> name;
+  final Value<String> paramKeys;
+  final Value<int> displayOrder;
+  const MicroViewsCompanion({
+    this.id = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.paramKeys = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+  });
+  MicroViewsCompanion.insert({
+    this.id = const Value.absent(),
+    required int tankId,
+    required String name,
+    required String paramKeys,
+    this.displayOrder = const Value.absent(),
+  }) : tankId = Value(tankId),
+       name = Value(name),
+       paramKeys = Value(paramKeys);
+  static Insertable<MicroView> custom({
+    Expression<int>? id,
+    Expression<int>? tankId,
+    Expression<String>? name,
+    Expression<String>? paramKeys,
+    Expression<int>? displayOrder,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tankId != null) 'tank_id': tankId,
+      if (name != null) 'name': name,
+      if (paramKeys != null) 'param_keys': paramKeys,
+      if (displayOrder != null) 'display_order': displayOrder,
+    });
+  }
+
+  MicroViewsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? tankId,
+    Value<String>? name,
+    Value<String>? paramKeys,
+    Value<int>? displayOrder,
+  }) {
+    return MicroViewsCompanion(
+      id: id ?? this.id,
+      tankId: tankId ?? this.tankId,
+      name: name ?? this.name,
+      paramKeys: paramKeys ?? this.paramKeys,
+      displayOrder: displayOrder ?? this.displayOrder,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (paramKeys.present) {
+      map['param_keys'] = Variable<String>(paramKeys.value);
+    }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MicroViewsCompanion(')
+          ..write('id: $id, ')
+          ..write('tankId: $tankId, ')
+          ..write('name: $name, ')
+          ..write('paramKeys: $paramKeys, ')
+          ..write('displayOrder: $displayOrder')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $MaintenanceSchedulesTable extends MaintenanceSchedules
     with TableInfo<$MaintenanceSchedulesTable, MaintenanceSchedule> {
   @override
@@ -6695,6 +7059,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReadingTemplatesTable readingTemplates = $ReadingTemplatesTable(
     this,
   );
+  late final $MicroViewsTable microViews = $MicroViewsTable(this);
   late final $MaintenanceSchedulesTable maintenanceSchedules =
       $MaintenanceSchedulesTable(this);
   late final $RoStagesTable roStages = $RoStagesTable(this);
@@ -6729,6 +7094,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_reading_templates_tank',
     'CREATE INDEX idx_reading_templates_tank ON reading_templates (tank_id)',
   );
+  late final Index idxMicroViewsTank = Index(
+    'idx_micro_views_tank',
+    'CREATE INDEX idx_micro_views_tank ON micro_views (tank_id)',
+  );
   late final Index idxMaintenanceSchedulesTank = Index(
     'idx_maintenance_schedules_tank',
     'CREATE INDEX idx_maintenance_schedules_tank ON maintenance_schedules (tank_id)',
@@ -6751,6 +7120,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ratioVisibilities,
     dosingEntries,
     readingTemplates,
+    microViews,
     maintenanceSchedules,
     roStages,
     roStageReplacements,
@@ -6762,6 +7132,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     idxEquipmentCleaningsTankCleaned,
     idxDosingEntriesTank,
     idxReadingTemplatesTank,
+    idxMicroViewsTank,
     idxMaintenanceSchedulesTank,
     idxRoReplacementsStage,
   ];
@@ -6822,6 +7193,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('reading_templates', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('micro_views', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -7022,6 +7400,24 @@ final class $$TanksTableReferences
     final cache = $_typedResult.readTableOrNull(
       _readingTemplatesRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$MicroViewsTable, List<MicroView>>
+  _microViewsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.microViews,
+    aliasName: 'tanks__id__micro_views__tank_id',
+  );
+
+  $$MicroViewsTableProcessedTableManager get microViewsRefs {
+    final manager = $$MicroViewsTableTableManager(
+      $_db,
+      $_db.microViews,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_microViewsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -7302,6 +7698,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$ReadingTemplatesTableFilterComposer(
             $db: $db,
             $table: $db.readingTemplates,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> microViewsRefs(
+    Expression<bool> Function($$MicroViewsTableFilterComposer f) f,
+  ) {
+    final $$MicroViewsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.microViews,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MicroViewsTableFilterComposer(
+            $db: $db,
+            $table: $db.microViews,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -7641,6 +8062,31 @@ class $$TanksTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> microViewsRefs<T extends Object>(
+    Expression<T> Function($$MicroViewsTableAnnotationComposer a) f,
+  ) {
+    final $$MicroViewsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.microViews,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MicroViewsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.microViews,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> maintenanceSchedulesRefs<T extends Object>(
     Expression<T> Function($$MaintenanceSchedulesTableAnnotationComposer a) f,
   ) {
@@ -7690,6 +8136,7 @@ class $$TanksTableTableManager
             bool ratioVisibilitiesRefs,
             bool dosingEntriesRefs,
             bool readingTemplatesRefs,
+            bool microViewsRefs,
             bool maintenanceSchedulesRefs,
           })
         > {
@@ -7768,6 +8215,7 @@ class $$TanksTableTableManager
                 ratioVisibilitiesRefs = false,
                 dosingEntriesRefs = false,
                 readingTemplatesRefs = false,
+                microViewsRefs = false,
                 maintenanceSchedulesRefs = false,
               }) {
                 return PrefetchHooks(
@@ -7781,6 +8229,7 @@ class $$TanksTableTableManager
                     if (ratioVisibilitiesRefs) db.ratioVisibilities,
                     if (dosingEntriesRefs) db.dosingEntries,
                     if (readingTemplatesRefs) db.readingTemplates,
+                    if (microViewsRefs) db.microViews,
                     if (maintenanceSchedulesRefs) db.maintenanceSchedules,
                   ],
                   addJoins: null,
@@ -7950,6 +8399,23 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (microViewsRefs)
+                        await $_getPrefetchedData<Tank, $TanksTable, MicroView>(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._microViewsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).microViewsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (maintenanceSchedulesRefs)
                         await $_getPrefetchedData<
                           Tank,
@@ -8000,6 +8466,7 @@ typedef $$TanksTableProcessedTableManager =
         bool ratioVisibilitiesRefs,
         bool dosingEntriesRefs,
         bool readingTemplatesRefs,
+        bool microViewsRefs,
         bool maintenanceSchedulesRefs,
       })
     >;
@@ -11078,6 +11545,319 @@ typedef $$ReadingTemplatesTableProcessedTableManager =
       ReadingTemplate,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$MicroViewsTableCreateCompanionBuilder =
+    MicroViewsCompanion Function({
+      Value<int> id,
+      required int tankId,
+      required String name,
+      required String paramKeys,
+      Value<int> displayOrder,
+    });
+typedef $$MicroViewsTableUpdateCompanionBuilder =
+    MicroViewsCompanion Function({
+      Value<int> id,
+      Value<int> tankId,
+      Value<String> name,
+      Value<String> paramKeys,
+      Value<int> displayOrder,
+    });
+
+final class $$MicroViewsTableReferences
+    extends BaseReferences<_$AppDatabase, $MicroViewsTable, MicroView> {
+  $$MicroViewsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('micro_views__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$MicroViewsTableFilterComposer
+    extends Composer<_$AppDatabase, $MicroViewsTable> {
+  $$MicroViewsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paramKeys => $composableBuilder(
+    column: $table.paramKeys,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MicroViewsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MicroViewsTable> {
+  $$MicroViewsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paramKeys => $composableBuilder(
+    column: $table.paramKeys,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MicroViewsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MicroViewsTable> {
+  $$MicroViewsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get paramKeys =>
+      $composableBuilder(column: $table.paramKeys, builder: (column) => column);
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MicroViewsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MicroViewsTable,
+          MicroView,
+          $$MicroViewsTableFilterComposer,
+          $$MicroViewsTableOrderingComposer,
+          $$MicroViewsTableAnnotationComposer,
+          $$MicroViewsTableCreateCompanionBuilder,
+          $$MicroViewsTableUpdateCompanionBuilder,
+          (MicroView, $$MicroViewsTableReferences),
+          MicroView,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$MicroViewsTableTableManager(_$AppDatabase db, $MicroViewsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MicroViewsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MicroViewsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MicroViewsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> tankId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> paramKeys = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+              }) => MicroViewsCompanion(
+                id: id,
+                tankId: tankId,
+                name: name,
+                paramKeys: paramKeys,
+                displayOrder: displayOrder,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int tankId,
+                required String name,
+                required String paramKeys,
+                Value<int> displayOrder = const Value.absent(),
+              }) => MicroViewsCompanion.insert(
+                id: id,
+                tankId: tankId,
+                name: name,
+                paramKeys: paramKeys,
+                displayOrder: displayOrder,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$MicroViewsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable: $$MicroViewsTableReferences
+                                    ._tankIdTable(db),
+                                referencedColumn: $$MicroViewsTableReferences
+                                    ._tankIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$MicroViewsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MicroViewsTable,
+      MicroView,
+      $$MicroViewsTableFilterComposer,
+      $$MicroViewsTableOrderingComposer,
+      $$MicroViewsTableAnnotationComposer,
+      $$MicroViewsTableCreateCompanionBuilder,
+      $$MicroViewsTableUpdateCompanionBuilder,
+      (MicroView, $$MicroViewsTableReferences),
+      MicroView,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$MaintenanceSchedulesTableCreateCompanionBuilder =
     MaintenanceSchedulesCompanion Function({
       Value<int> id,
@@ -12408,6 +13188,8 @@ class $AppDatabaseManager {
       $$DosingEntriesTableTableManager(_db, _db.dosingEntries);
   $$ReadingTemplatesTableTableManager get readingTemplates =>
       $$ReadingTemplatesTableTableManager(_db, _db.readingTemplates);
+  $$MicroViewsTableTableManager get microViews =>
+      $$MicroViewsTableTableManager(_db, _db.microViews);
   $$MaintenanceSchedulesTableTableManager get maintenanceSchedules =>
       $$MaintenanceSchedulesTableTableManager(_db, _db.maintenanceSchedules);
   $$RoStagesTableTableManager get roStages =>

@@ -2425,6 +2425,66 @@ abstract class AppLocalizations {
   /// **'Show on the Measurements tab, with test reminders. Hiding keeps your measurements.'**
   String get microToggleSubtitle;
 
+  /// Chip label of the built-in microelement view showing every catalog element. Lab preset names (Fauna Marin ICP) are proper nouns and not localized.
+  ///
+  /// In en, this message translates to:
+  /// **'Full list'**
+  String get microViewFull;
+
+  /// No description provided for @microViewNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New view'**
+  String get microViewNew;
+
+  /// No description provided for @microViewEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit view'**
+  String get microViewEdit;
+
+  /// No description provided for @microViewManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage views'**
+  String get microViewManage;
+
+  /// No description provided for @microViewNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No custom views yet. A view shows just the elements your lab reports.'**
+  String get microViewNone;
+
+  /// Hint text for the microelement-view name field.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. My lab\'s panel'**
+  String get microViewNameHint;
+
+  /// No description provided for @microViewNeedElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one element.'**
+  String get microViewNeedElement;
+
+  /// Subtitle in the manage sheet: how many elements a view shows.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 element} other{{count} elements}}'**
+  String microViewElementCount(int count);
+
+  /// No description provided for @microViewDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?'**
+  String microViewDeleteTitle(Object name);
+
+  /// No description provided for @microViewDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the view. Your measurements are kept.'**
+  String get microViewDeleteBody;
+
   /// Shown in the parameter editor instead of the unit field for µg/L microelements, whose display unit is fixed by the catalog.
   ///
   /// In en, this message translates to:

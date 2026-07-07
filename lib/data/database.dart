@@ -277,6 +277,28 @@ class ReadingTemplates extends Table {
   IntColumn get displayOrder => integer().withDefault(const Constant(0))();
 }
 
+/// A user-created microelement view (U17): a named subset of the ICP panel
+/// the Microelements screen can be filtered to — "the elements my lab
+/// reports". Built-in lab presets (Full list, Fauna Marin ICP) are code-side
+/// (`domain/micro.dart`), not rows; this table holds only the user's own
+/// views. Like [ReadingTemplates], [paramKeys] holds stable catalog keys as a
+/// JSON array, so a view survives catalog growth and bounds/row churn; keys
+/// unknown to the running catalog are skipped at display, never dropped.
+@TableIndex(name: 'idx_micro_views_tank', columns: {#tankId})
+@DataClassName('MicroView')
+class MicroViews extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+  TextColumn get name => text().withLength(min: 1, max: 80)();
+
+  /// JSON array of catalog `paramKey` strings, e.g. `["iodine","iron"]`.
+  TextColumn get paramKeys => text()();
+
+  /// Position of the view's chip on the Microelements screen.
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+}
+
 /// A user-maintained maintenance plan (U12): a recurring or one-off task for
 /// one of the logged action types — or a custom-titled task ("replace RO
 /// membrane"). Typed rows derive "last done" from their action log, so logging
@@ -410,6 +432,7 @@ class Settings extends Table {
     RatioVisibilities,
     DosingEntries,
     ReadingTemplates,
+    MicroViews,
     MaintenanceSchedules,
     RoStages,
     RoStageReplacements,
@@ -420,7 +443,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -611,6 +634,16 @@ class AppDatabase extends _$AppDatabase {
         // (tank, taken_at) cluster, so all grouping now keys on group_id
         // alone. Naturally idempotent — only NULL rows are touched.
         await _backfillLegacyReadingGroupIds();
+      }
+      if (from < 20) {
+        // Custom microelement views (U17).
+        if (!await _tableExists('micro_views')) {
+          await m.createTable(microViews);
+        }
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_micro_views_tank '
+          'ON micro_views (tank_id)',
+        );
       }
     },
     beforeOpen: (details) async {
@@ -1381,6 +1414,61 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteReadingTemplate(int id) =>
       (delete(readingTemplates)..where((t) => t.id.equals(id))).go();
 
+  // --- Microelement views (U17) ----------------------------------------------
+
+  /// Custom microelement views for a tank, in user order, then insertion
+  /// order.
+  Stream<List<MicroView>> watchMicroViews(int tankId) =>
+      (select(microViews)
+            ..where((t) => t.tankId.equals(tankId))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.displayOrder),
+              (t) => OrderingTerm(expression: t.id),
+            ]))
+          .watch();
+
+  /// Creates a custom view and returns its id. Same transactional
+  /// max-order + 1 shape as [insertReadingTemplate] (#10).
+  Future<int> insertMicroView({
+    required int tankId,
+    required String name,
+    required List<String> paramKeys,
+  }) {
+    return transaction(() async {
+      final existing = await (select(
+        microViews,
+      )..where((t) => t.tankId.equals(tankId))).get();
+      final order =
+          existing.fold<int>(
+            -1,
+            (m, t) => t.displayOrder > m ? t.displayOrder : m,
+          ) +
+          1;
+      return into(microViews).insert(
+        MicroViewsCompanion.insert(
+          tankId: tankId,
+          name: name,
+          paramKeys: encodeTemplateParamKeys(paramKeys),
+          displayOrder: Value(order),
+        ),
+      );
+    });
+  }
+
+  Future<void> updateMicroView(
+    int id, {
+    required String name,
+    required List<String> paramKeys,
+  }) => (update(microViews)..where((t) => t.id.equals(id))).write(
+    MicroViewsCompanion(
+      name: Value(name),
+      paramKeys: Value(encodeTemplateParamKeys(paramKeys)),
+    ),
+  );
+
+  Future<void> deleteMicroView(int id) =>
+      (delete(microViews)..where((t) => t.id.equals(id))).go();
+
   /// Persists a new manual ordering of a tank's test sets, given their ids in
   /// the desired left-to-right chip order.
   Future<void> reorderReadingTemplates(List<int> orderedIds) async {
@@ -1795,6 +1883,9 @@ class AppDatabase extends _$AppDatabase {
   Future<List<ReadingTemplate>> getAllReadingTemplates() =>
       select(readingTemplates).get();
 
+  /// Every custom microelement view, across all tanks.
+  Future<List<MicroView>> getAllMicroViews() => select(microViews).get();
+
   /// Every maintenance plan, across all tanks.
   Future<List<MaintenanceSchedule>> getAllMaintenanceSchedules() =>
       select(maintenanceSchedules).get();
@@ -1830,10 +1921,12 @@ class AppDatabase extends _$AppDatabase {
     required List<DosingEntriesCompanion> dosingEntryRows,
     required List<ReadingTemplatesCompanion> readingTemplateRows,
     required List<MaintenanceSchedulesCompanion> maintenanceScheduleRows,
-    // Optional with empty defaults: the RO tables (U16) postdate several
-    // callers/tests, and an absent backup section decodes to empty anyway.
+    // Optional with empty defaults: the RO tables (U16) and micro views
+    // (U17) postdate several callers/tests, and an absent backup section
+    // decodes to empty anyway.
     List<RoStagesCompanion> roStageRows = const [],
     List<RoStageReplacementsCompanion> roStageReplacementRows = const [],
+    List<MicroViewsCompanion> microViewRows = const [],
     required List<SettingsCompanion> settingRows,
     Set<String> preserveSettingKeys = const {},
   }) async {
@@ -1849,6 +1942,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(ratioVisibilities).go();
       await delete(dosingEntries).go();
       await delete(readingTemplates).go();
+      await delete(microViews).go();
       await delete(maintenanceSchedules).go();
       await delete(roStageReplacements).go();
       await delete(roStages).go();
@@ -1874,6 +1968,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(ratioVisibilities, ratioVisibilityRows);
         b.insertAll(dosingEntries, dosingEntryRows);
         b.insertAll(readingTemplates, readingTemplateRows);
+        b.insertAll(microViews, microViewRows);
         b.insertAll(maintenanceSchedules, maintenanceScheduleRows);
         b.insertAll(roStages, roStageRows);
         b.insertAll(roStageReplacements, roStageReplacementRows);
@@ -1909,6 +2004,12 @@ List<String> decodeTemplateParamKeys(String raw) {
 
 extension ReadingTemplateKeys on ReadingTemplate {
   /// The set's catalog parameter keys, decoded from the stored JSON array.
+  List<String> get keys => decodeTemplateParamKeys(paramKeys);
+}
+
+extension MicroViewKeys on MicroView {
+  /// The view's catalog element keys, decoded from the stored JSON array
+  /// (same tolerant decode as test sets).
   List<String> get keys => decodeTemplateParamKeys(paramKeys);
 }
 

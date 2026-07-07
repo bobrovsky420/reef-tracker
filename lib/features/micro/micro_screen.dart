@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../data/database.dart';
 import '../../domain/micro.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/setup_type.dart';
@@ -11,6 +14,7 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/zone_visuals.dart';
+import 'micro_view_sheets.dart';
 
 /// The microelement panel (U17) for the active tank: every ICP element in
 /// catalog order, sectioned the way lab reports group them (major ions /
@@ -35,26 +39,36 @@ class MicroScreen extends ConsumerWidget {
     final elements = ref.watch(microElementsProvider);
     final status = ref.watch(microStatusProvider);
     final prefs = ref.watch(unitPrefsProvider);
+    final selection = ref.watch(microViewSelectionProvider);
+    final views = ref.watch(microViewsProvider).value ?? const <MicroView>[];
 
+    // The active view (U17) filters which elements are listed; null keys =
+    // full list. The status card above already follows the same selection
+    // (microStatusProvider).
+    final keys = selection.keys;
+    final visible = [
+      for (final e in elements)
+        if (keys == null || keys.contains(e.def.key)) e,
+    ];
     final sections = <(String, List<MicroElementStatus>)>[
       (
         l.microSectionMajor,
         [
-          for (final e in elements)
+          for (final e in visible)
             if (e.def.category == ParamCategory.major) e,
         ],
       ),
       (
         l.microSectionTrace,
         [
-          for (final e in elements)
+          for (final e in visible)
             if (e.def.category == ParamCategory.trace) e,
         ],
       ),
       (
         l.microSectionContaminants,
         [
-          for (final e in elements)
+          for (final e in visible)
             if (e.def.category == ParamCategory.contaminant) e,
         ],
       ),
@@ -64,6 +78,11 @@ class MicroScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l.microTitle),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.checklist),
+            tooltip: l.microViewManage,
+            onPressed: () => showMicroViewsManageSheet(context),
+          ),
           IconButton(
             icon: const Icon(Icons.alarm_add),
             tooltip: l.microReminderTooltip,
@@ -78,13 +97,25 @@ class MicroScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: _SummaryCard(status: status),
           ),
-          for (final (title, items) in sections) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 0, 0),
+            child: _ViewChips(
+              tankId: tank.id,
+              selection: selection,
+              views: views,
             ),
-            for (final e in items) _ElementRow(element: e, prefs: prefs),
-          ],
+          ),
+          for (final (title, items) in sections)
+            if (items.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              for (final e in items) _ElementRow(element: e, prefs: prefs),
+            ],
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -167,6 +198,88 @@ class MicroScreen extends ConsumerWidget {
         context,
       ).showSnackBar(SnackBar(content: Text(l.microReminderCreated)));
     }
+  }
+}
+
+/// The view-switcher chip row (U17): `[Full list] [Fauna Marin ICP]
+/// [custom views…] [+ new]`. Selecting persists the token per tank; a custom
+/// chip's long-press is an edit shortcut (the app-bar manage sheet is the
+/// accessible path, #45 precedent).
+class _ViewChips extends ConsumerWidget {
+  const _ViewChips({
+    required this.tankId,
+    required this.selection,
+    required this.views,
+  });
+
+  final int tankId;
+  final MicroViewSelection selection;
+  final List<MicroView> views;
+
+  void _select(WidgetRef ref, String? token) {
+    unawaited(ref.read(settingsProvider).setMicroView(tankId, token));
+  }
+
+  Future<void> _create(BuildContext context, WidgetRef ref) async {
+    final catalogKeys = {for (final d in kMicroParameters) d.key};
+    final id = await showMicroViewEditSheet(
+      context,
+      db: ref.read(dbProvider),
+      tankId: tankId,
+      // Start from what is currently shown.
+      initialKeys: selection.keys ?? catalogKeys,
+    );
+    if (id != null) _select(ref, '$kMicroViewCustomPrefix$id');
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          ChoiceChip(
+            label: Text(l.microViewFull),
+            selected: selection.token == kMicroViewFullToken,
+            onSelected: (_) => _select(ref, null),
+          ),
+          const SizedBox(width: 8),
+          ChoiceChip(
+            // Lab name — a proper noun, deliberately not localized.
+            label: const Text(kMicroViewFaunaMarinName),
+            selected: selection.token == kMicroViewFaunaMarinToken,
+            onSelected: (_) => _select(ref, kMicroViewFaunaMarinToken),
+          ),
+          for (final v in views)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: GestureDetector(
+                onLongPress: () => showMicroViewEditSheet(
+                  context,
+                  db: ref.read(dbProvider),
+                  tankId: tankId,
+                  view: v,
+                ),
+                child: ChoiceChip(
+                  label: Text(v.name),
+                  selected: selection.custom?.id == v.id,
+                  onSelected: (_) =>
+                      _select(ref, '$kMicroViewCustomPrefix${v.id}'),
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8, right: 16),
+            child: ActionChip(
+              avatar: const Icon(Icons.add, size: 18),
+              label: Text(l.microViewNew),
+              onPressed: () => _create(context, ref),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

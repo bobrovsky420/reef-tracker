@@ -70,6 +70,7 @@ class BackupData {
     required this.ratioVisibilities,
     required this.dosingEntries,
     this.readingTemplates = const [],
+    this.microViews = const [],
     this.maintenanceSchedules = const [],
     this.roStages = const [],
     this.roStageReplacements = const [],
@@ -92,6 +93,10 @@ class BackupData {
   /// Test sets (U9). Defaults to empty: pre-U9 backups have no section, and
   /// the round-trip test pins that new backups carry it.
   final List<ReadingTemplatesCompanion> readingTemplates;
+
+  /// Custom microelement views (U17). Defaults to empty for older backups,
+  /// same policy as [readingTemplates].
+  final List<MicroViewsCompanion> microViews;
 
   /// Maintenance plans (U12). Defaults to empty for pre-U12 backups, same
   /// policy as [readingTemplates].
@@ -121,6 +126,7 @@ String encodeBackup({
   required List<RatioVisibility> ratioVisibilities,
   required List<DosingEntry> dosingEntries,
   List<ReadingTemplate> readingTemplates = const [],
+  List<MicroView> microViews = const [],
   List<MaintenanceSchedule> maintenanceSchedules = const [],
   List<RoStage> roStages = const [],
   List<RoStageReplacement> roStageReplacements = const [],
@@ -142,6 +148,7 @@ String encodeBackup({
     'ratioVisibilities': ratioVisibilities.map(_ratioVisibilityToJson).toList(),
     'dosingEntries': dosingEntries.map(_dosingEntryToJson).toList(),
     'readingTemplates': readingTemplates.map(_readingTemplateToJson).toList(),
+    'microViews': microViews.map(_microViewToJson).toList(),
     'maintenanceSchedules': maintenanceSchedules
         .map(_maintenanceScheduleToJson)
         .toList(),
@@ -301,6 +308,7 @@ BackupData decodeBackup(String jsonString) {
       _readingTemplateFromJson,
       required: false,
     ),
+    microViews: section('microViews', _microViewFromJson, required: false),
     maintenanceSchedules: section(
       'maintenanceSchedules',
       _maintenanceScheduleFromJson,
@@ -358,6 +366,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   );
   requireSaneIds('dosingEntries', data.dosingEntries.map((r) => r.id));
   requireSaneIds('readingTemplates', data.readingTemplates.map((r) => r.id));
+  requireSaneIds('microViews', data.microViews.map((r) => r.id));
   requireSaneIds(
     'maintenanceSchedules',
     data.maintenanceSchedules.map((r) => r.id),
@@ -408,6 +417,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     'readingTemplates',
     data.readingTemplates.map((r) => r.tankId.value),
   );
+  requireTank('microViews', data.microViews.map((r) => r.tankId.value));
   requireTank(
     'maintenanceSchedules',
     data.maintenanceSchedules.map((r) => r.tankId.value),
@@ -441,6 +451,16 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
       throw const InvalidBackupException(
         BackupRejection.inconsistent,
         'readingTemplates: blank name',
+      );
+    }
+  }
+
+  // Micro views (U17) render as chips too — same blank-name rule.
+  for (final v in data.microViews) {
+    if (v.name.present && v.name.value.trim().isEmpty) {
+      throw const InvalidBackupException(
+        BackupRejection.inconsistent,
+        'microViews: blank name',
       );
     }
   }
@@ -647,6 +667,7 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       ratioVisibilityRows: data.ratioVisibilities,
       dosingEntryRows: data.dosingEntries,
       readingTemplateRows: data.readingTemplates,
+      microViewRows: data.microViews,
       maintenanceScheduleRows: data.maintenanceSchedules,
       roStageRows: data.roStages,
       roStageReplacementRows: data.roStageReplacements,
@@ -675,6 +696,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   var ratioVisibilities = await db.getAllRatioVisibilities();
   var dosingEntries = await db.getAllDosingEntries();
   var readingTemplates = await db.getAllReadingTemplates();
+  var microViews = await db.getAllMicroViews();
   var maintenanceSchedules = await db.getAllMaintenanceSchedules();
   // Device-scoped (no tankId) — never subject to the soft-delete filtering.
   final roStages = await db.getAllRoStages();
@@ -714,6 +736,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
     readingTemplates = readingTemplates
         .where((r) => !hidden.contains(r.tankId))
         .toList();
+    microViews = microViews.where((r) => !hidden.contains(r.tankId)).toList();
     maintenanceSchedules = maintenanceSchedules
         .where((r) => !hidden.contains(r.tankId))
         .toList();
@@ -732,6 +755,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       ratioVisibilities: ratioVisibilities,
       dosingEntries: dosingEntries,
       readingTemplates: readingTemplates,
+      microViews: microViews,
       maintenanceSchedules: maintenanceSchedules,
       roStages: roStages,
       roStageReplacements: roStageReplacements,
@@ -1033,6 +1057,26 @@ ReadingTemplatesCompanion _readingTemplateFromJson(Map<String, dynamic> m) =>
       name: Value(m['name'] as String),
       // List.from checks every element eagerly: a non-string key throws here,
       // inside section(), and reports as a corrupted readingTemplates section.
+      paramKeys: Value(
+        encodeTemplateParamKeys(List<String>.from(m['paramKeys'] as List)),
+      ),
+      displayOrder: Value(m['displayOrder'] as int),
+    );
+
+Map<String, dynamic> _microViewToJson(MicroView v) => {
+  'id': v.id,
+  'tankId': v.tankId,
+  'name': v.name,
+  // Embedded as a real JSON array, exactly like test sets above.
+  'paramKeys': decodeTemplateParamKeys(v.paramKeys),
+  'displayOrder': v.displayOrder,
+};
+
+MicroViewsCompanion _microViewFromJson(Map<String, dynamic> m) =>
+    MicroViewsCompanion(
+      id: Value(m['id'] as int),
+      tankId: Value(m['tankId'] as int),
+      name: Value(m['name'] as String),
       paramKeys: Value(
         encodeTemplateParamKeys(List<String>.from(m['paramKeys'] as List)),
       ),

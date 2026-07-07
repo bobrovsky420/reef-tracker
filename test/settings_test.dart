@@ -72,6 +72,30 @@ void main() {
       expect(await settings.watchLastReadingTemplates().first, {2: 9});
     });
 
+    test('active micro view round-trips per tank; null clears (U17)', () async {
+      await settings.setMicroView(1, 'preset:faunaMarin');
+      await settings.setMicroView(2, 'view:7');
+      expect(await settings.watchMicroViewSelections().first, {
+        1: 'preset:faunaMarin',
+        2: 'view:7',
+      });
+
+      // Selecting the full list removes the tank's entry, leaving others.
+      await settings.setMicroView(1, null);
+      expect(await settings.watchMicroViewSelections().first, {2: 'view:7'});
+    });
+
+    test('garbage micro-view selections decode as empty (U17)', () {
+      expect(AppSettings.decodeMicroViewSelections(null), isEmpty);
+      expect(AppSettings.decodeMicroViewSelections('not json'), isEmpty);
+      expect(AppSettings.decodeMicroViewSelections('[1]'), isEmpty);
+      // Non-numeric keys / non-string values are skipped, not crashed on.
+      expect(
+        AppSettings.decodeMicroViewSelections('{"x":"a","2":3,"4":"view:9"}'),
+        {4: 'view:9'},
+      );
+    });
+
     test('garbage last-used test set values decode as empty (U9)', () {
       expect(AppSettings.decodeLastReadingTemplates(null), isEmpty);
       expect(AppSettings.decodeLastReadingTemplates('not json'), isEmpty);

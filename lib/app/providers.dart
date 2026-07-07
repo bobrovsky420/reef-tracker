@@ -258,6 +258,18 @@ final readingTemplatesProvider = Provider<AsyncValue<List<ReadingTemplate>>>((
   return ref.watch(_readingTemplatesFamily(tank.id));
 });
 
+final _microViewsFamily = StreamProvider.autoDispose
+    .family<List<MicroView>, int>(
+      (ref, tankId) => _dedup(ref.watch(dbProvider).watchMicroViews(tankId)),
+    );
+
+/// Custom microelement views (U17) for the active tank, in user chip order.
+final microViewsProvider = Provider<AsyncValue<List<MicroView>>>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_microViewsFamily(tank.id));
+});
+
 final _maintenanceSchedulesFamily = StreamProvider.autoDispose
     .family<List<MaintenanceSchedule>, int>(
       (ref, tankId) =>
@@ -702,23 +714,85 @@ final microElementsProvider = Provider<List<MicroElementStatus>>(
   ),
 );
 
+/// The active microelement view (U17): its selection token, display info and
+/// the element-key filter (null keys = full list, no filtering). A stored
+/// token naming a deleted custom view falls back to the full list.
+typedef MicroViewSelection = ({
+  String token,
+  MicroView? custom,
+  Set<String>? keys,
+});
+
+/// Resolves the active view for [tankId] from the stored per-tank token and
+/// the tank's custom views. Pure helper shared by [microViewSelectionProvider]
+/// and [microStatusProvider] — the status provider deliberately re-derives
+/// instead of watching the selection provider (see [_microElements] on why
+/// plain providers aren't chained here).
+MicroViewSelection _resolveMicroView(
+  String? rawSetting,
+  int? tankId,
+  List<MicroView> views,
+) {
+  const full = (token: kMicroViewFullToken, custom: null, keys: null);
+  if (tankId == null) return full;
+  final token = AppSettings.decodeMicroViewSelections(rawSetting)[tankId];
+  if (token == null || token == kMicroViewFullToken) return full;
+  final presetKeys = microPresetKeys(token);
+  if (presetKeys != null) return (token: token, custom: null, keys: presetKeys);
+  if (token.startsWith(kMicroViewCustomPrefix)) {
+    final id = int.tryParse(token.substring(kMicroViewCustomPrefix.length));
+    for (final v in views) {
+      if (v.id == id) {
+        return (token: token, custom: v, keys: v.keys.toSet());
+      }
+    }
+  }
+  // Unknown/dangling token — never guess a subset.
+  return full;
+}
+
+/// The active tank's current microelement view selection.
+final microViewSelectionProvider = Provider<MicroViewSelection>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  final raw = ref.watch(
+    settingsMapProvider.select(
+      (async) => async.value?[SettingKey.microView.storageKey],
+    ),
+  );
+  final views = ref.watch(microViewsProvider).value ?? const [];
+  return _resolveMicroView(raw, tank?.id, views);
+});
+
 /// Panel summary (measured / out-of-range counts, worst zone, newest sample
-/// date) for the dashboard tile and the Microelements screen header.
-/// [MicroStatus] is a record (value-equal), so a write that doesn't change
-/// the summary doesn't rebuild the tile (T2).
+/// date) for the dashboard tile and the Microelements screen header —
+/// **scoped to the active view**: an element outside the view doesn't count
+/// toward "out of range" (hiding it is the user's explicit choice, like
+/// untracking a core parameter). [MicroStatus] is a record (value-equal), so
+/// a write that doesn't change the summary doesn't rebuild the tile (T2).
 final microStatusProvider = Provider<MicroStatus>((ref) {
   final elements = _microElements(
     ref.watch(trackedParametersProvider).value ?? const [],
     ref.watch(recentReadingsProvider).value ?? const [],
   );
+  final selection = _resolveMicroView(
+    ref.watch(
+      settingsMapProvider.select(
+        (async) => async.value?[SettingKey.microView.storageKey],
+      ),
+    ),
+    ref.watch(activeTankProvider)?.id,
+    ref.watch(microViewsProvider).value ?? const [],
+  );
+  final keys = selection.keys;
   return computeMicroStatus([
     for (final e in elements)
-      (
-        paramKey: e.def.key,
-        bounds: e.bounds,
-        latest: e.latest?.value,
-        takenAt: e.latest?.takenAt,
-      ),
+      if (keys == null || keys.contains(e.def.key))
+        (
+          paramKey: e.def.key,
+          bounds: e.bounds,
+          latest: e.latest?.value,
+          takenAt: e.latest?.takenAt,
+        ),
   ]);
 });
 

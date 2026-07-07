@@ -191,9 +191,16 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
     final elements = ref.watch(microElementsProvider);
     final prefs = ref.watch(unitPrefsProvider);
 
+    // The active view (U17) scopes the "Full ICP" list — typing in a lab
+    // report only offers the elements that lab actually reports.
+    final viewKeys = ref.watch(microViewSelectionProvider).keys;
+    final inView = [
+      for (final e in elements)
+        if (viewKeys == null || viewKeys.contains(e.def.key)) e,
+    ];
     final hobby = [
       for (final key in kMicroHobbyKitKeys)
-        for (final e in elements)
+        for (final e in inView)
           if (e.def.key == key) e,
     ];
 
@@ -243,18 +250,17 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
           const SizedBox(height: 8),
           if (!_fullPanel)
             for (final e in hobby) _elementRow(e, prefs)
-          else ...[
-            _sectionHeader(l.microSectionMajor),
-            for (final e in elements)
-              if (e.def.category == ParamCategory.major) _elementRow(e, prefs),
-            _sectionHeader(l.microSectionTrace),
-            for (final e in elements)
-              if (e.def.category == ParamCategory.trace) _elementRow(e, prefs),
-            _sectionHeader(l.microSectionContaminants),
-            for (final e in elements)
-              if (e.def.category == ParamCategory.contaminant)
-                _elementRow(e, prefs),
-          ],
+          else
+            for (final (title, category) in [
+              (l.microSectionMajor, ParamCategory.major),
+              (l.microSectionTrace, ParamCategory.trace),
+              (l.microSectionContaminants, ParamCategory.contaminant),
+            ])
+              if (inView.any((e) => e.def.category == category)) ...[
+                _sectionHeader(title),
+                for (final e in inView)
+                  if (e.def.category == category) _elementRow(e, prefs),
+              ],
           const SizedBox(height: 8),
           TextField(
             controller: _noteCtrl,

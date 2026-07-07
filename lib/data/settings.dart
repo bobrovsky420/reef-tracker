@@ -117,7 +117,11 @@ enum SettingKey {
   // The microelements feature switch (U17): same shape as roUnitEnabled —
   // off only *hides* the panel (dashboard tile + micro test reminders); the
   // stored measurements are untouched and reappear when re-enabled.
-  microEnabled(kMicroEnabledKey, deviceLocal: true);
+  microEnabled(kMicroEnabledKey, deviceLocal: true),
+  // The active microelement view per tank (U17) — a display selection like
+  // lastReadingTemplate: device-local, the custom views themselves ride the
+  // backup in the MicroViews table.
+  microView(kMicroViewKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -388,6 +392,51 @@ class AppSettings {
     SettingKey.reminderTime,
     '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}',
   );
+
+  // --- microelement views (U17) --------------------------------------------
+
+  /// Active microelement view per tank, as tank id → view *token*
+  /// (`preset:full`, `preset:faunaMarin`, or `view:<MicroViews id>`; see
+  /// `domain/micro.dart`). A missing entry means the full list; a dangling
+  /// custom-view token (view deleted, ids replaced by a restore) is simply
+  /// not found by the UI and falls back to the full list too. Same
+  /// one-JSON-object storage shape as [decodeLastReadingTemplates].
+  static Map<int, String> decodeMicroViewSelections(String? raw) {
+    if (raw == null) return const {};
+    try {
+      final v = jsonDecode(raw);
+      if (v is Map<String, dynamic>) {
+        return {
+          for (final e in v.entries)
+            if (int.tryParse(e.key) != null && e.value is String)
+              int.parse(e.key): e.value as String,
+        };
+      }
+    } on FormatException {
+      // Malformed stored value — treat as "no selections".
+    }
+    return const {};
+  }
+
+  Stream<Map<int, String>> watchMicroViewSelections() =>
+      _watch(SettingKey.microView).map(decodeMicroViewSelections);
+
+  /// Records [token] as the active micro view for [tankId]; null selects the
+  /// full list (removes the entry).
+  Future<void> setMicroView(int tankId, String? token) async {
+    final map = Map<int, String>.of(
+      decodeMicroViewSelections(await _read(SettingKey.microView)),
+    );
+    if (token == null) {
+      map.remove(tankId);
+    } else {
+      map[tankId] = token;
+    }
+    await _write(
+      SettingKey.microView,
+      jsonEncode({for (final e in map.entries) '${e.key}': e.value}),
+    );
+  }
 
   /// Records [templateId] as the last-used test set for [tankId]; null selects
   /// "All" (removes the entry).
