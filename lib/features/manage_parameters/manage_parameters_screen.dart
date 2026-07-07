@@ -230,19 +230,21 @@ class ManageParametersScreen extends ConsumerWidget {
     final key = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      builder: (ctx) => ListView(
-        shrinkWrap: true,
-        children: [
-          for (final p in available)
-            ListTile(
-              title: Text(l.paramName(p.key)),
-              trailing: Text(
-                p.unit,
-                style: TextStyle(color: Theme.of(ctx).hintColor),
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final p in available)
+              ListTile(
+                title: Text(l.paramName(p.key)),
+                trailing: Text(
+                  p.unit,
+                  style: TextStyle(color: Theme.of(ctx).hintColor),
+                ),
+                onTap: () => Navigator.pop(ctx, p.key),
               ),
-              onTap: () => Navigator.pop(ctx, p.key),
-            ),
-        ],
+          ],
+        ),
       ),
     );
     if (key != null) {

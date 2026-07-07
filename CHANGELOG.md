@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2026-07-07
+
+### Added
+- iOS: initial iPhone version of the app, with full feature parity — water
+  parameters, trends, dosing, maintenance schedule, RO unit, microelements,
+  backups via the share sheet and file picker, chart image sharing, reminder
+  notifications (asked for permission only when a reminder is first enabled,
+  grouped by kind in Notification Center), all five languages, light and dark
+  mode. First App Store release.
+
+### Fixed
+- The list in the "add parameter" sheet could run under the system navigation
+  area at the bottom of the screen; it now keeps clear of it.
+
 ## [0.21.0] - 2026-07-07
 
 ### Added

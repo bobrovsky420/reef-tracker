@@ -19,11 +19,15 @@ The version lives in [pubspec.yaml](pubspec.yaml) as `major.minor.patch+build`. 
     - if current patch > 0 → **do nothing**.
     - if current patch = 0 → bump the **patch**.
 
-Always increment the `+build` number by 1 on any version change (it must stay monotonic for Android).
+Always increment the `+build` number by 1 on any version change (it must stay monotonic for Android's `versionCode` and iOS's `CFBundleVersion`).
+
+**Both platforms share this one version stream** — Flutter maps it to Android `versionName`/`versionCode` and iOS `CFBundleShortVersionString`/`CFBundleVersion` automatically; never fork per-platform versions. A given version may be released to only one store (the other store simply skips it — both tolerate gaps as long as the build number is monotonic).
 
 ## Changelog
 
 [CHANGELOG.md](CHANGELOG.md) follows [Keep a Changelog](https://keepachangelog.com/) format. **Update it with every change that affects users or behavior, in the same change.** Add entries under the appropriate version heading, grouped into `Added` / `Changed` / `Fixed` / `Removed`. When the version is bumped (see above), add a new `## [<version>] - <date>` section for it; otherwise record entries under the most recent version section. Skip purely internal edits with no user-facing or behavioral effect (formatting, comments).
+
+There is **one changelog for both platforms**: prefix an entry with `iOS:` or `Android:` when it applies to a single platform; untagged entries apply to both. Store release notes (Play "What's new", App Store "What's New") are curated, localized excerpts written per release — CHANGELOG.md stays the English master.
 
 ## Localization
 
