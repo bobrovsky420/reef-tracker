@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2026-07-07
+
+### Added
+- A parameter that is out of range but trending back toward its healthy range
+  now shows an encouraging green "Recovering" state instead of staying silent:
+  the dashboard tile gets a "Recovering ~N d" chip and the history trend card
+  a "Recovering — back in range in ~N d" line, estimating when the value will
+  be back in its green range (in all five languages).
+
 ## [0.19.0] - 2026-07-06
 
 ### Added

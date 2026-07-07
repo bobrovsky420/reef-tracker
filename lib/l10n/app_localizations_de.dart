@@ -1119,6 +1119,16 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String trendBackInRangeDays(int days) {
+    return 'Erholt sich — wieder im Bereich in ~$days T';
+  }
+
+  @override
+  String trendChipRecovering(int days) {
+    return 'Erholt sich ~$days T';
+  }
+
+  @override
   String get trendHorizon => 'Warnhorizont';
 
   @override

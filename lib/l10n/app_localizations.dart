@@ -1963,6 +1963,18 @@ abstract class AppLocalizations {
   /// **'Act now ~{days} d'**
   String trendChipRed(int days);
 
+  /// Positive history-card trend line for a value that is out of range but heading back toward its green range.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovering — back in range in ~{days} d'**
+  String trendBackInRangeDays(int days);
+
+  /// Compact dashboard chip for a recovering value; {days} is the estimate until it is back in its green range.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovering ~{days} d'**
+  String trendChipRecovering(int days);
+
   /// No description provided for @trendHorizon.
   ///
   /// In en, this message translates to:

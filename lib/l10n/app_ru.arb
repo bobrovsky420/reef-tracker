@@ -330,6 +330,8 @@
   "trendRedInDays": "Достигнет критической зоны через ~{days} дн",
   "trendChipAmber": "Внимание ~{days} дн",
   "trendChipRed": "Действие ~{days} дн",
+  "trendBackInRangeDays": "Восстанавливается — вернётся в диапазон через ~{days} дн",
+  "trendChipRecovering": "Восстановление ~{days} дн",
   "trendHorizon": "Горизонт оповещения",
   "trendHorizonSubtitle": "Отмечать параметр, только если он выйдет за пределы в течение этого срока",
   "trendHorizonDays": "{days} дн",

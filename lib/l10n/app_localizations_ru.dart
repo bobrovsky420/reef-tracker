@@ -1124,6 +1124,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String trendBackInRangeDays(int days) {
+    return 'Восстанавливается — вернётся в диапазон через ~$days дн';
+  }
+
+  @override
+  String trendChipRecovering(int days) {
+    return 'Восстановление ~$days дн';
+  }
+
+  @override
   String get trendHorizon => 'Горизонт оповещения';
 
   @override

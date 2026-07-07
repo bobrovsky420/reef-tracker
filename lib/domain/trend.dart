@@ -57,6 +57,7 @@ class TrendResult {
     required this.window,
     this.daysToAmber,
     this.daysToRed,
+    this.daysToGreen,
     this.recovering = false,
   });
 
@@ -80,11 +81,16 @@ class TrendResult {
   /// [daysToAmber].
   final double? daysToRed;
 
+  /// Projected days until a [recovering] value re-enters its green range
+  /// (crosses the *near* green bound), or null when not recovering. The
+  /// positive counterpart of [daysToAmber]/[daysToRed] (U15).
+  final double? daysToGreen;
+
   /// True when the value is currently *outside* its green range but moving
   /// back toward it. No crossing forecast is produced then — projecting the
   /// trajectory across the green zone to the far bound would warn about a
-  /// parameter that is actively improving (#25). Kept as a distinct state so
-  /// the UI can one day surface it positively (see TODO U15).
+  /// parameter that is actively improving (#25). Instead [daysToGreen]
+  /// estimates when it will be back in range, surfaced positively (U15).
   final bool recovering;
 
   /// True when the value is heading out of its healthy range and we can say
@@ -105,6 +111,7 @@ class TrendResult {
       other.window == window &&
       other.daysToAmber == daysToAmber &&
       other.daysToRed == daysToRed &&
+      other.daysToGreen == daysToGreen &&
       other.recovering == recovering;
 
   @override
@@ -114,6 +121,7 @@ class TrendResult {
     window,
     daysToAmber,
     daysToRed,
+    daysToGreen,
     recovering,
   );
 }
@@ -191,7 +199,14 @@ TrendResult? computeTrend({
 
   double? toAmber;
   double? toRed;
-  if (!recovering) {
+  double? toGreen;
+  if (recovering) {
+    // The near green bound the value is heading back across (U15). With
+    // amber-only bounds (#30) green starts at the amber bound itself.
+    toGreen = direction == TrendDirection.rising
+        ? daysTo(b.greenLow ?? b.amberLow)
+        : daysTo(b.greenHigh ?? b.amberHigh);
+  } else {
     switch (direction) {
       case TrendDirection.rising:
         toAmber = daysTo(b.greenHigh);
@@ -210,6 +225,7 @@ TrendResult? computeTrend({
     window: recent.length,
     daysToAmber: toAmber,
     daysToRed: toRed,
+    daysToGreen: toGreen,
     recovering: recovering,
   );
 }

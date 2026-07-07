@@ -34,7 +34,8 @@ String _signedRate(TrendResult t, ParamPresentation pres) {
 }
 
 /// Full recent-trend block shown under the history chart: the per-day rate plus
-/// any projected amber/red crossings, or a "holding steady / within range" note.
+/// any projected amber/red crossings, a positive "back in range in ~N d" line
+/// for a recovering value, or a "holding steady / within range" note.
 class TrendCard extends StatelessWidget {
   const TrendCard({super.key, required this.trend, required this.pres});
 
@@ -51,6 +52,14 @@ class TrendCard extends StatelessWidget {
     );
 
     final lines = <Widget>[];
+    if (trend.daysToGreen != null) {
+      lines.add(
+        _forecastLine(
+          l.trendBackInRangeDays(_days(trend.daysToGreen!)),
+          Zone.green.color,
+        ),
+      );
+    }
     if (trend.daysToAmber != null) {
       lines.add(
         _forecastLine(
@@ -111,8 +120,8 @@ class TrendCard extends StatelessWidget {
 }
 
 /// Compact dashboard-tile forecast: the soonest threshold the value is heading
-/// for, shown only when that crossing is within [horizonDays]. Renders nothing
-/// otherwise.
+/// for — or, for a recovering value, when it is back in its green range — shown
+/// only when that crossing is within [horizonDays]. Renders nothing otherwise.
 class TrendChip extends StatelessWidget {
   const TrendChip({super.key, required this.trend, required this.horizonDays});
 
@@ -124,7 +133,10 @@ class TrendChip extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final String text;
     final Color color;
-    if (trend.daysToAmber != null && trend.daysToAmber! <= horizonDays) {
+    if (trend.daysToGreen != null && trend.daysToGreen! <= horizonDays) {
+      text = l.trendChipRecovering(_days(trend.daysToGreen!));
+      color = Zone.green.color;
+    } else if (trend.daysToAmber != null && trend.daysToAmber! <= horizonDays) {
       text = l.trendChipAmber(_days(trend.daysToAmber!));
       color = Zone.amber.color;
     } else if (trend.daysToRed != null && trend.daysToRed! <= horizonDays) {

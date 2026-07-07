@@ -190,11 +190,12 @@ void main() {
     });
   });
 
-  group('recovering values (#25)', () {
-    test('a recovering low-amber value gets no forecast, only the flag', () {
+  group('recovering values (#25, U15)', () {
+    test('a recovering low-amber value forecasts green, not amber/red', () {
       // 7.2 sits in the LOW amber zone and is rising back toward green: the
-      // only bounds ahead lie on the far side of green, so no crossing is
-      // forecast — the parameter is actively improving.
+      // only bounds ahead lie on the far side of green, so no warning is
+      // forecast — instead the near green bound (7.5 at 0.05/day) gives the
+      // positive "back in range" estimate.
       final t = computeTrend(
         points: series([7.0, 7.05, 7.1, 7.15, 7.2]),
         bounds: bounds,
@@ -205,12 +206,13 @@ void main() {
       expect(t.daysToAmber, isNull);
       expect(t.daysToRed, isNull);
       expect(t.hasForecast, isFalse);
+      expect(t.daysToGreen, closeTo(6, 1e-9));
     });
 
     test(
       'a recovering high-side value (falling back to green) is symmetric',
       () {
-        // 9.4 in high amber, falling toward green.
+        // 9.4 in high amber, falling toward green (9.0 at 0.1/day).
         final t = computeTrend(
           points: series([9.8, 9.7, 9.6, 9.5, 9.4]),
           bounds: bounds,
@@ -219,8 +221,21 @@ void main() {
         expect(t.direction, TrendDirection.falling);
         expect(t.recovering, isTrue);
         expect(t.hasForecast, isFalse);
+        expect(t.daysToGreen, closeTo(4, 1e-9));
       },
     );
+
+    test('amber-only bounds recover toward the amber bound itself', () {
+      // With no green bounds, "green" is the region between the amber bounds
+      // (#30): 6.4 rising at 0.1/day reaches amberLow 7 in 6 days.
+      final t = computeTrend(
+        points: series([6.0, 6.1, 6.2, 6.3, 6.4]),
+        bounds: const ZoneBounds(amberLow: 7, amberHigh: 10),
+        window: 5,
+      )!;
+      expect(t.recovering, isTrue);
+      expect(t.daysToGreen, closeTo(6, 1e-9));
+    });
 
     test('a worsening amber value still forecasts the red crossing', () {
       // 9.2 in high amber and still rising: not recovering — red ahead.
@@ -231,6 +246,7 @@ void main() {
       )!;
       expect(t.recovering, isFalse);
       expect(t.daysToRed, closeTo(8, 1e-9));
+      expect(t.daysToGreen, isNull);
     });
 
     test('an out-of-range value holding flat is not "recovering"', () {
@@ -242,6 +258,7 @@ void main() {
       expect(t.direction, TrendDirection.flat);
       expect(t.recovering, isFalse);
       expect(t.hasForecast, isFalse);
+      expect(t.daysToGreen, isNull);
     });
   });
 

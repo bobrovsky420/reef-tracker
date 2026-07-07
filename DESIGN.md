@@ -848,8 +848,13 @@ widgets render a `TrendResult`:
   (`trendHorizonProvider`, default 14): the soonest of attention (amber) /
   act-now (red) with its day estimate, drawn in the matching zone color. The
   horizon gates only this dashboard chip — the history `TrendCard` always shows
-  the full projection. A **recovering** value (out of range but heading back
-  toward green) carries no forecast, so neither widget warns about it.
+  the full projection.
+
+A **recovering** value (out of range but heading back toward green) never gets
+a warning forecast; instead `TrendResult.daysToGreen` projects the crossing of
+the *near* green bound and both widgets surface it positively (U15): the card
+adds a green "Recovering — back in range in ~N d" line, the dashboard chip
+shows "Recovering ~N d" in green under the same horizon gate.
 
 Enable/disable, the window size, and the alert horizon live in **Settings →
 Trends**; both widgets disappear when the feature is off (the provider returns

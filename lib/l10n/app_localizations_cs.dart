@@ -1116,6 +1116,16 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String trendBackInRangeDays(int days) {
+    return 'Zlepšuje se — zpět v rozsahu za ~$days d';
+  }
+
+  @override
+  String trendChipRecovering(int days) {
+    return 'Zlepšuje se ~$days d';
+  }
+
+  @override
   String get trendHorizon => 'Horizont upozornění';
 
   @override
