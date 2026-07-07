@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../data/backup.dart';
+import '../domain/clock.dart';
 import '../domain/health_score.dart';
 import '../domain/ratio.dart';
 import '../domain/ro.dart';
@@ -28,6 +29,19 @@ String formatDateTime(BuildContext context, DateTime t, {bool weekday = true}) {
 /// Date-only companion of [formatDateTime] (due dates, schedules) — follows
 /// `Intl.defaultLocale`, which MaterialApp keeps in sync with the app locale.
 String formatDate(DateTime t) => DateFormat.yMMMd().format(t);
+
+/// "Just now" / "N min ago" / "N h ago" / "N d ago", falling back to a plain
+/// date past a week — the timestamp line of the dashboard tiles and the
+/// Microelements rows. `ageSince` clamps a future/clock-skewed timestamp to
+/// zero → "just now" instead of a negative "-N min ago".
+String relativeTimeLabel(AppLocalizations l, DateTime t) {
+  final d = ageSince(t);
+  if (d.inMinutes < 1) return l.timeJustNow;
+  if (d.inMinutes < 60) return l.timeMinAgo(d.inMinutes);
+  if (d.inHours < 24) return l.timeHoursAgo(d.inHours);
+  if (d.inDays < 7) return l.timeDaysAgo(d.inDays);
+  return DateFormat.yMMMd().format(t);
+}
 
 /// Localized short weekday names (e.g. "Mon, Thu") for [days] (1=Mon … 7=Sun,
 /// rendered in ascending order). Shared by the dosing rows and the
@@ -124,6 +138,66 @@ extension L10nDomain on AppLocalizations {
         return paramIodine;
       case 'iron':
         return paramIron;
+      // Microelements (U17). Names carry the element symbol ("Zinc (Zn)") so
+      // rows match the symbols on an ICP report.
+      case 'sodium':
+        return paramSodium;
+      case 'sulfur':
+        return paramSulfur;
+      case 'boron':
+        return paramBoron;
+      case 'bromine':
+        return paramBromine;
+      case 'silicon':
+        return paramSilicon;
+      case 'zinc':
+        return paramZinc;
+      case 'vanadium':
+        return paramVanadium;
+      case 'copper':
+        return paramCopper;
+      case 'nickel':
+        return paramNickel;
+      case 'manganese':
+        return paramManganese;
+      case 'molybdenum':
+        return paramMolybdenum;
+      case 'chromium':
+        return paramChromium;
+      case 'cobalt':
+        return paramCobalt;
+      case 'lithium':
+        return paramLithium;
+      case 'barium':
+        return paramBarium;
+      case 'selenium':
+        return paramSelenium;
+      case 'aluminium':
+        return paramAluminium;
+      case 'antimony':
+        return paramAntimony;
+      case 'tin':
+        return paramTin;
+      case 'beryllium':
+        return paramBeryllium;
+      case 'silver':
+        return paramSilver;
+      case 'tungsten':
+        return paramTungsten;
+      case 'lanthanum':
+        return paramLanthanum;
+      case 'titanium':
+        return paramTitanium;
+      case 'zirconium':
+        return paramZirconium;
+      case 'arsenic':
+        return paramArsenic;
+      case 'cadmium':
+        return paramCadmium;
+      case 'mercury':
+        return paramMercury;
+      case 'lead':
+        return paramLead;
       default:
         return key;
     }

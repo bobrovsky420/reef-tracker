@@ -19,6 +19,7 @@ import 'dart:ui' show Locale, PlatformDispatcher;
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 
+import '../domain/parameter_catalog.dart';
 import '../domain/reminders.dart';
 import '../domain/ro.dart';
 import '../domain/supplement_catalog.dart';
@@ -142,6 +143,11 @@ class ReminderScheduler {
       return fireAt;
     }
 
+    // The microelements switch (U17) silences micro-element test reminders
+    // the way the RO switch silences RO ones — hidden features must not keep
+    // notifying. Core-parameter reminders are unaffected.
+    final microOn = await settings.readMicroEnabled();
+
     final items = <ReminderItem>[];
     for (final tank in tanks) {
       if (testingOn) {
@@ -149,6 +155,7 @@ class ReminderScheduler {
         final latest = await _db.latestReadingTimesPerParam(tank.id);
         for (final p in params) {
           if (!p.enabled || p.testCadenceDays == null) continue;
+          if (!microOn && !isCoreParam(p.paramKey)) continue;
           final fireAt = fireAtFor(
             nextElasticDue(
               lastDone: latest[p.paramKey],

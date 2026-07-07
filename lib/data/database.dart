@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../domain/dose_calculator.dart';
+import '../domain/micro.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/presets.dart';
 import '../domain/ratio.dart';
@@ -792,7 +793,10 @@ class AppDatabase extends _$AppDatabase {
               .get();
       if (existing.isNotEmpty) return;
       final def = kParameterByKey[paramKey];
-      final bounds = presetBounds(type, paramKey);
+      // Setup-type presets cover core parameters; microelements (U17) seed
+      // from their catalog defaults instead (empty for anything else).
+      final preset = presetBounds(type, paramKey);
+      final bounds = preset.isEmpty ? microDefaultBounds(paramKey) : preset;
       // max(displayOrder) + 1, not the row count: after removing a middle
       // parameter the count could collide with an existing order (same fix as
       // insertDosingEntry).

@@ -484,10 +484,9 @@ void main() {
           reason: 'null groupId must match only the reading itself',
         );
         expect(await db.deleteReadingGroup(ungrouped), 1);
-        expect(
-          (await db.getAllReadings()).map((r) => r.paramKey),
-          ['alkalinity'],
-        );
+        expect((await db.getAllReadings()).map((r) => r.paramKey), [
+          'alkalinity',
+        ]);
       },
     );
   });

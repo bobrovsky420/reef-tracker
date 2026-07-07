@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2026-07-07
+
+### Added
+- Microelement tracking: a new Microelements screen (opened from a summary
+  tile at the end of the dashboard) covers the full ICP element panel —
+  32 elements in the groups major ions, trace elements and contaminants,
+  matching how ICP lab reports (e.g. Fauna Marin Reef ICP) present them.
+  Each element shows its latest value colored by editable target ranges
+  (sensible natural-seawater defaults built in; contaminants are "green up
+  to a ceiling") and opens the familiar history graph. Trace elements are
+  entered and displayed in µg/L, exactly as labs report them.
+- Measurements are entered from the panel's own form with a single sample
+  date and two quick filters: "Hobby kit" (iodine, iron, strontium — the
+  elements home test kits exist for) and "Full ICP" (the whole panel, for
+  typing in a lab report). All five languages include the chemical element
+  names.
+- A bell action on the Microelements screen creates a recurring "Microelement
+  test (ICP)" task in the maintenance schedule (default every 90 days), with
+  the usual reminder notifications.
+- A Microelements switch in Settings (on by default): switching it off hides
+  the dashboard tile and mutes microelement test reminders without deleting
+  any measurements — everything reappears when switched back on.
+
+### Changed
+- Strontium, iodine and iron moved from the dashboard grid to the new
+  Microelements panel (existing measurements and target ranges are kept;
+  iodine and iron values now display in µg/L instead of ppm).
+- The tank health score is now computed from the core dashboard parameters
+  only; microelements report their status on their own panel instead of
+  permanently dragging the score down as "stale" between quarterly ICP tests.
+
 ## [0.20.0] - 2026-07-07
 
 ### Changed

@@ -1333,58 +1333,61 @@ void main() {
       expect(await dst.getSetting('temp_unit'), isNull);
     });
 
-    test('restore backfills group ids for readings without one (#15)', () async {
-      final src = newDb();
-      addTearDown(src.close);
-      final id = await src.createTankWithPreset(
-        name: 'Reef',
-        type: SetupType.mixed,
-      );
-      // Rows the way a pre-v13 backup delivers them: no group id, a batch
-      // recognizable only by its shared timestamp.
-      final t = DateTime(2026, 2, 1, 9);
-      await src.insertReading(
-        tankId: id,
-        paramKey: 'ph',
-        value: 8.1,
-        takenAt: t,
-      );
-      await src.insertReading(
-        tankId: id,
-        paramKey: 'alkalinity',
-        value: 8.5,
-        takenAt: t,
-      );
-      await src.insertReading(
-        tankId: id,
-        paramKey: 'calcium',
-        value: 420,
-        takenAt: DateTime(2026, 2, 2, 9),
-      );
+    test(
+      'restore backfills group ids for readings without one (#15)',
+      () async {
+        final src = newDb();
+        addTearDown(src.close);
+        final id = await src.createTankWithPreset(
+          name: 'Reef',
+          type: SetupType.mixed,
+        );
+        // Rows the way a pre-v13 backup delivers them: no group id, a batch
+        // recognizable only by its shared timestamp.
+        final t = DateTime(2026, 2, 1, 9);
+        await src.insertReading(
+          tankId: id,
+          paramKey: 'ph',
+          value: 8.1,
+          takenAt: t,
+        );
+        await src.insertReading(
+          tankId: id,
+          paramKey: 'alkalinity',
+          value: 8.5,
+          takenAt: t,
+        );
+        await src.insertReading(
+          tankId: id,
+          paramKey: 'calcium',
+          value: 420,
+          takenAt: DateTime(2026, 2, 2, 9),
+        );
 
-      final data = decodeBackup(await encodeBackupFromDb(src));
-      final dst = newDb();
-      addTearDown(dst.close);
-      await importBackup(dst, data);
+        final data = decodeBackup(await encodeBackupFromDb(src));
+        final dst = newDb();
+        addTearDown(dst.close);
+        await importBackup(dst, data);
 
-      final all = await dst.getAllReadings();
-      expect(
-        all.every((r) => r.groupId != null),
-        isTrue,
-        reason: 'restore must leave no ungrouped rows behind',
-      );
-      final ph = all.firstWhere((r) => r.paramKey == 'ph');
-      final group = await dst.readingGroup(ph);
-      expect(
-        group.map((r) => r.paramKey),
-        unorderedEquals(['ph', 'alkalinity']),
-        reason: 'the legacy same-timestamp batch stays one group',
-      );
-      expect(
-        all.firstWhere((r) => r.paramKey == 'calcium').groupId,
-        isNot(ph.groupId),
-      );
-    });
+        final all = await dst.getAllReadings();
+        expect(
+          all.every((r) => r.groupId != null),
+          isTrue,
+          reason: 'restore must leave no ungrouped rows behind',
+        );
+        final ph = all.firstWhere((r) => r.paramKey == 'ph');
+        final group = await dst.readingGroup(ph);
+        expect(
+          group.map((r) => r.paramKey),
+          unorderedEquals(['ph', 'alkalinity']),
+          reason: 'the legacy same-timestamp batch stays one group',
+        );
+        expect(
+          all.firstWhere((r) => r.paramKey == 'calcium').groupId,
+          isNot(ph.groupId),
+        );
+      },
+    );
 
     test(
       'encode excludes soft-deleted tanks and their child rows (U10)',

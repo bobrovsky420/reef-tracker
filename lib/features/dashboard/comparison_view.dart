@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
@@ -42,9 +43,11 @@ class ComparisonBody extends ConsumerWidget {
         );
         final range = chartRangeFromLabel(ref.watch(chartRangeProvider).value);
 
-        // Enabled params in dashboard order.
-        final params = tracked.where((t) => t.enabled).toList()
-          ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+        // Enabled core params in dashboard order (microelements live on the
+        // Microelements screen, U17).
+        final params =
+            tracked.where((t) => t.enabled && isCoreParam(t.paramKey)).toList()
+              ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
         if (params.isEmpty) return Center(child: Text(l.noParamsTracked));
 
         // Group readings (already newest-first) per parameter.

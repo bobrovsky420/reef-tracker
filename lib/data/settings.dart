@@ -113,7 +113,11 @@ enum SettingKey {
   roSeeded(kRoSeededKey, deviceLocal: false),
   // The RO-unit feature switch (U16) is an ordinary display preference like
   // trendEnabled: device-local, default on.
-  roUnitEnabled(kRoUnitEnabledKey, deviceLocal: true);
+  roUnitEnabled(kRoUnitEnabledKey, deviceLocal: true),
+  // The microelements feature switch (U17): same shape as roUnitEnabled —
+  // off only *hides* the panel (dashboard tile + micro test reminders); the
+  // stored measurements are untouched and reappear when re-enabled.
+  microEnabled(kMicroEnabledKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -246,6 +250,14 @@ class AppSettings {
       decodeRoUnitEnabled(await _read(SettingKey.roUnitEnabled));
   Future<void> setRoUnitEnabled(bool enabled) =>
       _write(SettingKey.roUnitEnabled, enabled.toString());
+
+  static bool decodeMicroEnabled(String? raw) => raw == null || raw == 'true';
+  Stream<bool> watchMicroEnabled() =>
+      _watch(SettingKey.microEnabled).map(decodeMicroEnabled);
+  Future<bool> readMicroEnabled() async =>
+      decodeMicroEnabled(await _read(SettingKey.microEnabled));
+  Future<void> setMicroEnabled(bool enabled) =>
+      _write(SettingKey.microEnabled, enabled.toString());
 
   // --- feature tour ----------------------------------------------------------
 

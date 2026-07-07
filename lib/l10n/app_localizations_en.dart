@@ -1197,13 +1197,168 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paramPotassium => 'Potassium';
 
   @override
-  String get paramStrontium => 'Strontium';
+  String get paramStrontium => 'Strontium (Sr)';
 
   @override
-  String get paramIodine => 'Iodine';
+  String get paramIodine => 'Iodine (I)';
 
   @override
-  String get paramIron => 'Iron';
+  String get paramIron => 'Iron (Fe)';
+
+  @override
+  String get paramSodium => 'Sodium (Na)';
+
+  @override
+  String get paramSulfur => 'Sulfur (S)';
+
+  @override
+  String get paramBoron => 'Boron (B)';
+
+  @override
+  String get paramBromine => 'Bromine (Br)';
+
+  @override
+  String get paramSilicon => 'Silicon (Si)';
+
+  @override
+  String get paramZinc => 'Zinc (Zn)';
+
+  @override
+  String get paramVanadium => 'Vanadium (V)';
+
+  @override
+  String get paramCopper => 'Copper (Cu)';
+
+  @override
+  String get paramNickel => 'Nickel (Ni)';
+
+  @override
+  String get paramManganese => 'Manganese (Mn)';
+
+  @override
+  String get paramMolybdenum => 'Molybdenum (Mo)';
+
+  @override
+  String get paramChromium => 'Chromium (Cr)';
+
+  @override
+  String get paramCobalt => 'Cobalt (Co)';
+
+  @override
+  String get paramLithium => 'Lithium (Li)';
+
+  @override
+  String get paramBarium => 'Barium (Ba)';
+
+  @override
+  String get paramSelenium => 'Selenium (Se)';
+
+  @override
+  String get paramAluminium => 'Aluminium (Al)';
+
+  @override
+  String get paramAntimony => 'Antimony (Sb)';
+
+  @override
+  String get paramTin => 'Tin (Sn)';
+
+  @override
+  String get paramBeryllium => 'Beryllium (Be)';
+
+  @override
+  String get paramSilver => 'Silver (Ag)';
+
+  @override
+  String get paramTungsten => 'Tungsten (W)';
+
+  @override
+  String get paramLanthanum => 'Lanthanum (La)';
+
+  @override
+  String get paramTitanium => 'Titanium (Ti)';
+
+  @override
+  String get paramZirconium => 'Zirconium (Zr)';
+
+  @override
+  String get paramArsenic => 'Arsenic (As)';
+
+  @override
+  String get paramCadmium => 'Cadmium (Cd)';
+
+  @override
+  String get paramMercury => 'Mercury (Hg)';
+
+  @override
+  String get paramLead => 'Lead (Pb)';
+
+  @override
+  String get microTitle => 'Microelements';
+
+  @override
+  String get microSectionMajor => 'Major elements';
+
+  @override
+  String get microSectionTrace => 'Trace elements';
+
+  @override
+  String get microSectionContaminants => 'Contaminants';
+
+  @override
+  String get microNotMeasured => 'Not measured';
+
+  @override
+  String get microEmptyHint =>
+      'Track trace elements from home test kits or ICP lab reports.';
+
+  @override
+  String get microAllOk => 'All within range';
+
+  @override
+  String microOutOfRangeN(int count) {
+    return '$count out of range';
+  }
+
+  @override
+  String microLastMeasured(String date) {
+    return 'Last measured $date';
+  }
+
+  @override
+  String get microAddMeasurements => 'Add measurements';
+
+  @override
+  String get microAddTitle => 'Microelement measurements';
+
+  @override
+  String get microChipHobby => 'Hobby kit';
+
+  @override
+  String get microChipFullIcp => 'Full ICP';
+
+  @override
+  String get microReminderTooltip => 'Test reminder';
+
+  @override
+  String get microReminderTitle => 'Microelement test reminder';
+
+  @override
+  String get microReminderHint =>
+      'Adds a maintenance task reminding you to test microelements regularly.';
+
+  @override
+  String get microReminderCreated =>
+      'Reminder added to the maintenance schedule';
+
+  @override
+  String get microIcpTaskTitle => 'Microelement test (ICP)';
+
+  @override
+  String get microToggleSubtitle =>
+      'Show on the Measurements tab, with test reminders. Hiding keeps your measurements.';
+
+  @override
+  String get unitFixedNote => 'This parameter always uses this unit.';
 
   @override
   String get helpTemperature =>

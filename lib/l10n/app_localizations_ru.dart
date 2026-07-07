@@ -1209,13 +1209,168 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paramPotassium => 'Калий';
 
   @override
-  String get paramStrontium => 'Стронций';
+  String get paramStrontium => 'Стронций (Sr)';
 
   @override
-  String get paramIodine => 'Йод';
+  String get paramIodine => 'Йод (I)';
 
   @override
-  String get paramIron => 'Железо';
+  String get paramIron => 'Железо (Fe)';
+
+  @override
+  String get paramSodium => 'Натрий (Na)';
+
+  @override
+  String get paramSulfur => 'Сера (S)';
+
+  @override
+  String get paramBoron => 'Бор (B)';
+
+  @override
+  String get paramBromine => 'Бром (Br)';
+
+  @override
+  String get paramSilicon => 'Кремний (Si)';
+
+  @override
+  String get paramZinc => 'Цинк (Zn)';
+
+  @override
+  String get paramVanadium => 'Ванадий (V)';
+
+  @override
+  String get paramCopper => 'Медь (Cu)';
+
+  @override
+  String get paramNickel => 'Никель (Ni)';
+
+  @override
+  String get paramManganese => 'Марганец (Mn)';
+
+  @override
+  String get paramMolybdenum => 'Молибден (Mo)';
+
+  @override
+  String get paramChromium => 'Хром (Cr)';
+
+  @override
+  String get paramCobalt => 'Кобальт (Co)';
+
+  @override
+  String get paramLithium => 'Литий (Li)';
+
+  @override
+  String get paramBarium => 'Барий (Ba)';
+
+  @override
+  String get paramSelenium => 'Селен (Se)';
+
+  @override
+  String get paramAluminium => 'Алюминий (Al)';
+
+  @override
+  String get paramAntimony => 'Сурьма (Sb)';
+
+  @override
+  String get paramTin => 'Олово (Sn)';
+
+  @override
+  String get paramBeryllium => 'Бериллий (Be)';
+
+  @override
+  String get paramSilver => 'Серебро (Ag)';
+
+  @override
+  String get paramTungsten => 'Вольфрам (W)';
+
+  @override
+  String get paramLanthanum => 'Лантан (La)';
+
+  @override
+  String get paramTitanium => 'Титан (Ti)';
+
+  @override
+  String get paramZirconium => 'Цирконий (Zr)';
+
+  @override
+  String get paramArsenic => 'Мышьяк (As)';
+
+  @override
+  String get paramCadmium => 'Кадмий (Cd)';
+
+  @override
+  String get paramMercury => 'Ртуть (Hg)';
+
+  @override
+  String get paramLead => 'Свинец (Pb)';
+
+  @override
+  String get microTitle => 'Микроэлементы';
+
+  @override
+  String get microSectionMajor => 'Основные элементы';
+
+  @override
+  String get microSectionTrace => 'Следовые элементы';
+
+  @override
+  String get microSectionContaminants => 'Загрязнители';
+
+  @override
+  String get microNotMeasured => 'Не измерялось';
+
+  @override
+  String get microEmptyHint =>
+      'Отслеживайте микроэлементы по домашним тестам или ICP-анализам.';
+
+  @override
+  String get microAllOk => 'Всё в пределах диапазона';
+
+  @override
+  String microOutOfRangeN(int count) {
+    return '$count вне диапазона';
+  }
+
+  @override
+  String microLastMeasured(String date) {
+    return 'Последнее измерение $date';
+  }
+
+  @override
+  String get microAddMeasurements => 'Добавить измерения';
+
+  @override
+  String get microAddTitle => 'Измерения микроэлементов';
+
+  @override
+  String get microChipHobby => 'Домашние тесты';
+
+  @override
+  String get microChipFullIcp => 'Полный ICP';
+
+  @override
+  String get microReminderTooltip => 'Напоминание о тесте';
+
+  @override
+  String get microReminderTitle => 'Напоминание о тесте микроэлементов';
+
+  @override
+  String get microReminderHint =>
+      'Добавляет в план обслуживания задачу с напоминанием регулярно проверять микроэлементы.';
+
+  @override
+  String get microReminderCreated =>
+      'Напоминание добавлено в план обслуживания';
+
+  @override
+  String get microIcpTaskTitle => 'Тест микроэлементов (ICP)';
+
+  @override
+  String get microToggleSubtitle =>
+      'Показывать на вкладке «Измерения», с напоминаниями о тестах. При скрытии измерения сохраняются.';
+
+  @override
+  String get unitFixedNote => 'Этот параметр всегда использует эту единицу.';
 
   @override
   String get helpTemperature =>

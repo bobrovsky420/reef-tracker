@@ -61,9 +61,12 @@ class ManageParametersScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tracked) {
           // One reorderable list holding both measurements and ratio cards,
-          // ordered by their shared display order.
+          // ordered by their shared display order. Core parameters only:
+          // microelement rows (U17) are managed from the Microelements
+          // screen, and listing ~30 of them here would bury the dashboard set.
           final items = <_DashItem>[
-            for (final p in tracked) _ParamItem(p),
+            for (final p in tracked)
+              if (isCoreParam(p.paramKey)) _ParamItem(p),
             for (final kind in RatioKind.values)
               _RatioItem(kind, ratioSettings[kind.name]),
           ]..sort((a, b) => a.order.compareTo(b.order));
@@ -216,7 +219,7 @@ class ManageParametersScreen extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final existing = tracked.map((e) => e.paramKey).toSet();
     final available = kReefParameters
-        .where((p) => !existing.contains(p.key))
+        .where((p) => !existing.contains(p.key) && !p.isMicro)
         .toList();
     if (available.isEmpty) {
       ScaffoldMessenger.of(
@@ -414,8 +417,9 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
         .read(dbProvider)
         .updateTrackedParameter(
           widget.param.copyWith(
-            // Temp/salinity unit follows app settings; keep stored canonical unit.
-            unit: _pres.unitFollowsSettings
+            // Temp/salinity unit follows app settings, µg/L microelement
+            // units are fixed by the catalog; keep the stored unit either way.
+            unit: _pres.unitFollowsSettings || _pres.unitFixed
                 ? widget.param.unit
                 : _unit.text.trim(),
             amberLow: Value(canon(b.amberLow)),
@@ -443,12 +447,18 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
               Text(help, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 16),
             ],
-            if (_pres.unitFollowsSettings)
+            if (_pres.unitFollowsSettings || _pres.unitFixed)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.straighten),
                 title: Text(l.unitWithValue(_pres.unitLabel)),
-                subtitle: Text(l.unitFromSettingsNote),
+                // µg/L microelements: the unit is fixed by the catalog (the
+                // stored unit field is ignored), not driven by app settings.
+                subtitle: Text(
+                  _pres.unitFollowsSettings
+                      ? l.unitFromSettingsNote
+                      : l.unitFixedNote,
+                ),
               )
             else
               TextFormField(

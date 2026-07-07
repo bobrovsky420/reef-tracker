@@ -94,6 +94,44 @@ void main() {
       );
     }
 
+    // --- Microelements (U17) -------------------------------------------------
+    // One full ICP batch a month ago: mostly natural-seawater values, copper
+    // slightly elevated (amber) and lead contaminated (red) so the summary
+    // tile shows "2 out of range" in red. Iodine was low (amber) on the ICP
+    // and a fresh hobby-kit retest brings it back green — the panel then
+    // shows a recent "last measured" date.
+    const icp = <String, double>{
+      'sodium': 10600,
+      'sulfur': 910,
+      'boron': 4.3,
+      'bromine': 63,
+      'silicon': 0.09,
+      'strontium': 7.8,
+      'iodine': 0.045,
+      'iron': 0.003,
+      'zinc': 0.006,
+      'copper': 0.004,
+      'lithium': 0.19,
+      'barium': 0.012,
+      'molybdenum': 0.011,
+      'aluminium': 0.006,
+      'lead': 0.012,
+    };
+    for (final key in icp.keys) {
+      await db.addTrackedParameter(tank, key, SetupType.mixed);
+    }
+    await db.insertReadingGroup(
+      tankId: tank,
+      takenAt: daysAgo(32),
+      note: 'Fauna Marin Reef ICP #4711',
+      values: [for (final e in icp.entries) (paramKey: e.key, value: e.value)],
+    );
+    await db.insertReadingGroup(
+      tankId: tank,
+      takenAt: daysAgo(3),
+      values: const [(paramKey: 'iodine', value: 0.06)],
+    );
+
     // --- Dosing plan with real history --------------------------------------
     // Alk: an OLD segment (5 ml/day, 40d ago → superseded 12d ago) plus the
     // CURRENT active segment (7 ml/day since 12d ago). This makes the dose

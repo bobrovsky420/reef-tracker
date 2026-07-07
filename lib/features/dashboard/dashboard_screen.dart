@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
-import '../../domain/clock.dart';
+import '../../domain/parameter_catalog.dart';
 import '../../domain/ratio.dart';
 import '../../domain/trend.dart';
 import '../../domain/units.dart';
@@ -17,6 +16,7 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/tank_health_badge.dart';
 import '../../widgets/trend_view.dart';
 import '../../widgets/zone_visuals.dart';
+import '../micro/micro_summary_tile.dart';
 
 /// Grid of parameter status tiles for the active tank. Hosted by `HomeShell`,
 /// which owns the surrounding `Scaffold`, app bar, bottom navigation and FAB.
@@ -56,7 +56,11 @@ class DashboardBody extends ConsumerWidget {
         // one list sharing a single display order, then render them together so
         // ratios look and reorder exactly like measurements.
         final items = <({double order, Widget tile})>[];
-        for (final param in tracked.where((t) => t.enabled)) {
+        // Core parameters only: microelements (U17) live behind the summary
+        // tile appended below, not as individual dashboard tiles.
+        for (final param in tracked.where(
+          (t) => t.enabled && isCoreParam(t.paramKey),
+        )) {
           items.add((
             order: param.displayOrder.toDouble(),
             tile: _ParameterTile(
@@ -102,6 +106,15 @@ class DashboardBody extends ConsumerWidget {
         items.sort((a, b) => a.order.compareTo(b.order));
 
         if (items.isEmpty) return const _NoParamsView();
+
+        // The Microelements front door (U17): one summary tile pinned after
+        // the reorderable cards — it advertises the panel; before any
+        // measurement it reads "No readings". Gated here (not inside the
+        // tile) so the Settings switch removes the grid *cell*, not just its
+        // content; measurements stay stored while hidden.
+        if (ref.watch(microEnabledProvider).value ?? true) {
+          items.add((order: double.infinity, tile: const MicroSummaryTile()));
+        }
 
         final display =
             ref.watch(healthDisplayProvider).value ?? HealthDisplay.both;
@@ -209,7 +222,7 @@ class _RatioTile extends StatelessWidget {
                 ),
               const SizedBox(height: 4),
               Text(
-                latest == null ? '—' : _relativeTime(l, latest.time),
+                latest == null ? '—' : relativeTimeLabel(l, latest.time),
                 style: TextStyle(fontSize: 11, color: hint),
               ),
             ],
@@ -327,7 +340,7 @@ class _ParameterTile extends StatelessWidget {
                 ),
               const SizedBox(height: 4),
               Text(
-                latest == null ? '—' : _relativeTime(l, latest.takenAt),
+                latest == null ? '—' : relativeTimeLabel(l, latest.takenAt),
                 style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context).hintColor,
@@ -371,17 +384,6 @@ class _ChangeIndicator extends StatelessWidget {
       ],
     );
   }
-}
-
-String _relativeTime(AppLocalizations l, DateTime t) {
-  // ageSince clamps a future/clock-skewed timestamp to zero → "just now"
-  // instead of a negative "-N min ago".
-  final d = ageSince(t);
-  if (d.inMinutes < 1) return l.timeJustNow;
-  if (d.inMinutes < 60) return l.timeMinAgo(d.inMinutes);
-  if (d.inHours < 24) return l.timeHoursAgo(d.inHours);
-  if (d.inDays < 7) return l.timeDaysAgo(d.inDays);
-  return DateFormat.yMMMd().format(t);
 }
 
 /// App-bar widget that shows the active tank and lets the user switch / add.

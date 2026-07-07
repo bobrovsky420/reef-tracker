@@ -187,6 +187,7 @@ class ParamPresentation {
     required this.toDisplay,
     required this.toCanonical,
     this.unitFollowsSettings = false,
+    this.unitFixed = false,
   });
 
   final String unitLabel;
@@ -197,6 +198,11 @@ class ParamPresentation {
   /// True for temperature/salinity, whose unit comes from app settings rather
   /// than the per-parameter unit field.
   final bool unitFollowsSettings;
+
+  /// True for parameters with a fixed catalog display unit (µg/L trace
+  /// elements): the unit is not editable per tank, and the stored unit field
+  /// is ignored in favor of the catalog label.
+  final bool unitFixed;
 
   /// Formats a canonical value for display in the preferred unit, using the
   /// active locale's decimal separator.
@@ -251,6 +257,21 @@ ParamPresentation presentationFor(
         unitFollowsSettings: true,
       );
     default:
+      // Microelements displayed in µg/L (U17): storage stays canonical ppm,
+      // display multiplies by the catalog's fixed factor. The stored unit
+      // field is ignored — rows created before the element joined the micro
+      // panel carry 'ppm', which would mislabel the converted value.
+      final def = kParameterByKey[paramKey];
+      if (def != null && def.displayFactor != 1) {
+        final f = def.displayFactor;
+        return ParamPresentation(
+          unitLabel: def.unit,
+          decimals: def.decimals,
+          toDisplay: (v) => v * f,
+          toCanonical: (v) => v / f,
+          unitFixed: true,
+        );
+      }
       return ParamPresentation(
         unitLabel: storedUnit,
         decimals: storedDecimals,

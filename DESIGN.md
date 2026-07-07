@@ -84,9 +84,10 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 |------|----------------|
 | `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** (How a zone *renders* — its color/icon — is the `ZoneVisuals` extension in `widgets/zone_visuals.dart`, keeping this file Flutter-free; #53.) Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. `classify` deliberately tests **red before green**, so a beyond-amber value can't short-circuit to "green" through an open (null) green side. Bounds violating the ordering invariant (`isValid` = present bounds non-decreasing; violations are possible only via restored/hand-edited backups, the editors validate) are treated as **unusable**: `classify` returns `unknown` and `zoneBands` paints nothing, instead of labeling every value amber. Amber-only bounds (both greens null) classify — and paint — the region between the ambers as green, keeping tile color and chart bands in agreement. |
 | `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). Rounding (not truncating) avoids under-counting: a reading 18 h into its 7th day reads as 7 days, not 6 — which matters right at the 30-day health-freshness cutoff. |
-| `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. Display formatting is the mirror image: `formatLocaleNumber`/`formatLocaleNumberTrim` render with the locale's decimal separator (grouping deliberately off — grouped output with decimals would mix separators, which the parser rejects, and formatted values are seeded back into edit fields); all user-facing number formatting routes through them (`ParamPresentation.format`, volumes, dose amounts, ratios, chart axes). |
-| `parameter_catalog.dart` | `kReefParameters` — the master list (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP, K, Sr, I, Fe) with default units, plus `kParameterByKey` lookup and `formatParamValue`. Each `ParameterDef` also carries **value-sanity limits in canonical units**: `minValue` = hard physical floor (0 for concentrations, 1.0 for SG; ORP has none — legitimately negative) and a deliberately generous `plausibleMin`/`plausibleMax` pair (e.g. Mg 800–2000, SG 1.0–1.05). `checkParamValue(paramKey, canonicalValue)` → `ParamValueCheck` (ok / impossible / implausible): **impossible** values are rejected by the reading inputs outright; **implausible** ones require an explicit "Save anyway" confirmation that echoes the value as parsed next to the typical range — the backstop that turns a locale decimal-separator mis-parse (`1,300` → 1.3) into a visible prompt instead of silent data corruption, while keeping extreme-but-real crash readings recordable. Enforced in Add Reading and the history value-edit dialog, always on the canonical value (after °F/ppt conversion). |
+| `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse) — including the fixed ×`displayFactor` µg/L presentation for micro elements (U17): canonical storage stays ppm, the stored per-tank unit label is **ignored** in favor of the catalog's (`unitFixed`, so pre-panel iodine/iron rows carrying 'ppm' can't mislabel a ×1000 value). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. Display formatting is the mirror image: `formatLocaleNumber`/`formatLocaleNumberTrim` render with the locale's decimal separator (grouping deliberately off — grouped output with decimals would mix separators, which the parser rejects, and formatted values are seeded back into edit fields); all user-facing number formatting routes through them (`ParamPresentation.format`, volumes, dose amounts, ratios, chart axes). |
+| `parameter_catalog.dart` | `kReefParameters` — the master list: the **core** dashboard set (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP, K) plus the 32-element ICP **micro panel** (U17). Each `ParameterDef` carries a `ParamCategory` (core / major / trace / contaminant — `isCoreParam` and `kMicroParameters` are the surface filters), an element `symbol` for micro elements, and a `displayFactor` (µg/L display over canonical-ppm storage, fixed per parameter). Sr/I/Fe predate the panel and were recategorized to `trace` (keys and stored ppm values unchanged; iodine/iron additionally display in µg/L — presentation-only). Plus `kParameterByKey` lookup and `formatParamValue`. Each `ParameterDef` also carries **value-sanity limits in canonical units**: `minValue` = hard physical floor (0 for concentrations, 1.0 for SG; ORP has none — legitimately negative) and a deliberately generous `plausibleMin`/`plausibleMax` pair (e.g. Mg 800–2000, SG 1.0–1.05). `checkParamValue(paramKey, canonicalValue)` → `ParamValueCheck` (ok / impossible / implausible): **impossible** values are rejected by the reading inputs outright; **implausible** ones require an explicit "Save anyway" confirmation that echoes the value as parsed next to the typical range — the backstop that turns a locale decimal-separator mis-parse (`1,300` → 1.3) into a visible prompt instead of silent data corruption, while keeping extreme-but-real crash readings recordable. Enforced in Add Reading and the history value-edit dialog, always on the canonical value (after °F/ppt conversion). |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type. `presetBounds`, `defaultTrackedKeys`. |
+| `micro.dart` | Microelements (U17) domain rules. `kMicroDefaultBounds` — default zone bounds per element in canonical ppm, anchored on natural seawater / ICP-lab target ranges; contaminants (and silicon) are **one-sided** (green up to a ceiling — no "too little lead"). Used as the fallback when a tank has no `TrackedParameters` row for an element and as the seed when one is created. `kMicroHobbyKitKeys` (I/Fe/Sr — the elements home test kits exist for), and `computeMicroStatus(inputs)` → `MicroStatus` (measured / out-of-range counts, worst zone, newest sample date) — the panel's own summary, deliberately **outside** the tank health score: micro is measured on an ICP cadence (months), which the 30-day core freshness rule would permanently read as stale. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. Pure (no DB): consumes plain `RatioReading` (`{takenAt, value}`) records and `RatioSettings` (`{visible, displayOrder, bounds}`) instead of drift rows — `database.dart` hosts the thin row→record mappers (#52). |
 | `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.linearFit`, `TrendDirection`, projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward — and a `recovering` flag). Uses the most recent `window` readings and returns null until that many exist. The projection is **anchored on the fitted (regression) value at the last timestamp**, not the raw last reading, so one noisy endpoint can't swing the forecast. A value already *outside* its green range but moving back toward it is **recovering**: no crossing is forecast (the only bounds ahead are on the far side of green — forecasting them would warn about an improving parameter) and `recovering` is set so the UI could one day surface it positively (TODO U15). Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). Slopes with magnitude < 1e-9 (`_flatEpsilon`) classify as flat (no forecast), a bound projection is dropped when the bound lies opposite the direction of travel ("the bound is behind us"), and bounds failing `ZoneBounds.isValid` produce no forecast at all. See Features. |
@@ -138,9 +139,12 @@ surfacing: both/badge/off), `tour_v1_seen` (first-run feature-tour flag),
 `reminders_testing` / `reminders_dosing` / `reminders_maintenance` (the
 notification master switches, all default off — opt-in), `reminder_time`
 (`HH:mm` delivery time for testing/maintenance reminders, default 09:00), and
-`ro_stages_seeded` (the RO default-stage seed guard, U16), and
+`ro_stages_seeded` (the RO default-stage seed guard, U16),
 `ro_unit_enabled` (the RO feature switch, default on — off hides the
-Actions-tab summary row and silences RO reminders while keeping the data). The
+Actions-tab summary row and silences RO reminders while keeping the data),
+and `micro_enabled` (the microelements feature switch, U17 — same shape:
+off hides the dashboard tile and silences micro test reminders; the stored
+measurements are untouched and reappear when re-enabled). The
 reminder keys are device-local: notification preferences must not ride a
 backup onto another device. `ro_stages_seeded` is the one **non**-device-local
 key: it describes domain data and travels with the RO rows it guards, so a
@@ -584,7 +588,22 @@ The graph:
 - `tankHealthProvider` — `TankHealth` for the active tank. Like `tankTrendsProvider`,
   a memoized plain `Provider` derived from `trackedParametersProvider` +
   `recentReadingsProvider`; collapses each parameter's latest reading + bounds into
-  the overall score/band/grade via `computeTankHealth`.
+  the overall score/band/grade via `computeTankHealth`. **Core parameters
+  only** — microelements are excluded (ICP cadence vs the 30-day freshness
+  rule; the panel has its own summary via `microStatusProvider`).
+- Microelements (U17): `microElementsProvider` (per-element
+  `{def, row?, latest?, effective bounds}` in catalog order — row bounds when
+  a tracked row exists, else `kMicroDefaultBounds`) and `microStatusProvider`
+  (the `MicroStatus` summary for the dashboard tile / screen header;
+  value-equal record, T2). Both are plain memoized Providers deriving
+  **directly** from `trackedParametersProvider` + `recentReadingsProvider` —
+  deliberately not chained on each other: a plain Provider watching another
+  plain Provider is notified synchronously when the inner one is lazily
+  recomputed during a widget build, and its self-invalidation then schedules
+  a scope refresh mid-build (setState-during-build crash).
+  `microEnabledProvider` is the feature switch (default on), gating the
+  dashboard tile; the scheduler reads the same setting to gate micro test
+  reminders.
 - `healthDisplayProvider` — `HealthDisplay` (both / badge / off, default both):
   how much of the tank-health feature to surface. `showCard` gates the dashboard
   card, `showBadge` gates the compact app-bar badge.
@@ -657,6 +676,8 @@ lifecycle wiring that are easy to miss:
 | `/settings/reminders` | Reminder master switches + delivery time + permission warning |
 | `/schedule` | Maintenance schedule (U12): the user-maintained plan list |
 | `/ro` | Reverse-osmosis unit (U16): shared stage overview + replacement log |
+| `/micro` | Microelements (U17): the ICP element panel for the active tank |
+| `/micro/add` | Batch entry of microelement measurements (Hobby kit / Full ICP) |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
@@ -746,7 +767,8 @@ behind a confirmation dialog**:
   `TankHealthBadgeCompact` also sits beside the tank name in `TankSelector`.
   `healthDisplayProvider` (Settings → Dashboard) chooses badge & card / badge
   only / off. Both read `tankHealthProvider`.
-- One grid mixing `_ParameterTile`s (enabled tracked params) and `_RatioTile`s
+- One grid mixing `_ParameterTile`s (enabled tracked **core** params —
+  microelements live behind their summary tile, U17) and `_RatioTile`s
   (visible ratio cards), ordered together by a **shared display order**
   (`TrackedParameters.displayOrder` and `RatioVisibilities.displayOrder` live in
   the same integer space). Both tile types are the same size/layout: latest value
@@ -765,13 +787,20 @@ behind a confirmation dialog**:
   (ratios and measurements share one reorderable list) and stored **per tank** in
   `RatioVisibilities` (`ratioSettingsProvider` → `Map<RatioKind.name,
   RatioVisibility>`, resolved with `ratioRowVisible` / `ratioRowOrder`).
+- A `MicroSummaryTile` (U17) is pinned after the reorderable cards whenever
+  the grid renders: same tile layout, headline = "N out of range" in the worst
+  micro zone's color / "All within range" / "No readings", timestamp = newest
+  micro sample. Tapping opens `/micro`. Gated by the Settings **microelements
+  switch** (`microEnabledProvider`, default on) — gated in the grid builder,
+  not inside the tile, so switching off removes the grid cell; the switch
+  only hides (measurements stay stored).
 - Empty states: `NoTanksView` (first-run welcome: a language selector +
   add-aquarium prompt — lets the user pick their language before creating a tank
   without opening Settings) and `_NoParamsView`.
 - **Compare graphs view** (`dashboard/comparison_view.dart`, `ComparisonBody`):
   an app-bar toggle on the Measurements tab (state `_compare` in `HomeShell`)
   swaps the tile grid for a vertical stack of trend charts — one per enabled
-  tracked parameter, **in the same `displayOrder`** as the grid. Every chart is
+  tracked **core** parameter, **in the same `displayOrder`** as the grid. Every chart is
   pinned to **one shared time window** (`minX`/`maxX` = range start → now; for
   "All" the oldest reading across params) so the X axes align and a vertical
   time-slice reads all parameters at once; each chart keeps its own auto Y scale,
@@ -1026,6 +1055,58 @@ unit — a pure visibility preference, the stages and history stay stored.
   titled "Replace RO filters", stage names coalesced into the body, tap
   opens `/ro`.
 
+### Microelements (U17) — `features/micro/`, routes `/micro` + `/micro/add`
+
+Tracking of the ICP element panel (32 elements — modeled on the Fauna Marin
+Reef ICP: 5 major ions incl. silicon, 14 desirable traces, 13 contaminants),
+measured manually now; ICP-report import is a planned later phase. Design
+pivot: **an ICP result is just a reading group** (one sample date, many
+values) and **an element is just a catalog parameter** — so readings ride the
+existing `Readings`/`TrackedParameters` tables with **no schema change**, and
+history graphs, zone bands, reading edit/delete, backup, CSV export and
+per-parameter test reminders all work unchanged. What differs is cadence
+(months, not days) and count (~30), so micro elements get their own surfaces
+instead of dashboard tiles; the split is `ParamCategory` (`isCoreParam`
+filters the dashboard grid, comparison view, Add Reading form, Manage
+Parameters list/add-sheet and the health-score inputs to core).
+
+- **`MicroScreen`** (`/micro`): summary header card (worst zone icon +
+  out-of-range headline + "Last measured", from `microStatusProvider`), then
+  every element in catalog order, sectioned like the lab reports: major ions /
+  trace elements / contaminants. Rows show the latest value zone-colored
+  against the *effective* bounds and a relative timestamp; unmeasured
+  elements render muted ("Not measured") but stay listed. Tap → the standard
+  `/history/:paramKey`; the edit action opens the standard
+  `ParameterEditScreen`, creating the element's tracked row on demand.
+  **Tracked rows are lazy** (U17): created only when the user saves a value
+  or edits bounds — `addTrackedParameter` seeds them from
+  `kMicroDefaultBounds` (setup presets don't cover micro); until then the
+  screen classifies against the catalog defaults directly, so zones work with
+  zero rows. An app-bar action creates a **test reminder** as a plain custom
+  `MaintenanceSchedules` task (default every 90 d) — reusing the whole
+  U12 reminder machinery, no parallel path.
+- **`MicroAddScreen`** (`/micro/add`): the Add Reading mechanics (one
+  timestamp via `pickPastDateTime`, locale parsing, impossible/implausible
+  sanity gate, atomic `insertReadingGroup`) scoped to the panel. Two fixed
+  filter chips instead of test sets: **Hobby kit** (`kMicroHobbyKitKeys`)
+  and **Full ICP** (all elements with section headers, for typing in a lab
+  report). Like test sets, the filter narrows what is shown — hidden typed
+  values still save. Saving first ensures tracked rows for the entered keys.
+- **`MicroSummaryTile`**: the dashboard front door (see Dashboard above).
+- Values are entered and displayed in **µg/L** for trace/contaminant elements
+  (fixed `displayFactor` 1000; storage stays canonical ppm) and ppm/mg-L for
+  majors + strontium. Localized element names carry the symbol ("Zinc (Zn)")
+  so rows match an ICP report across languages.
+- Deliberately **not** in the tank health score (see `domain/micro.dart`);
+  trends need no special casing — quarterly data fills a 5-reading window
+  after ~a year, at which point the history `TrendCard` shows genuine
+  long-term drift while the 14-day dashboard horizon naturally never fires.
+- **Feature switch** (`micro_enabled`, Settings, default on — the RO-unit
+  switch pattern): off hides the dashboard tile (the only entry point) and
+  makes the reminder scheduler skip micro-element test cadences; core
+  reminders and all stored measurements are unaffected, so re-enabling
+  restores everything.
+
 ### Dosing (`features/dosing/`) — Dosing tab
 
 An information-only, per-tank **supplement-dosing plan** (a standing regimen, not
@@ -1117,8 +1198,9 @@ just inputs + a result card and stores nothing.
 ### Manage parameters (`manage_parameters_screen.dart`)
 
 One reorderable list (`_DashItem` sealed type: `_ParamItem` | `_RatioItem`)
-mixing tracked parameters and ratio cards, ordered by their shared
-`displayOrder`. Toggle which parameters are tracked / which ratio cards are
+mixing tracked **core** parameters and ratio cards, ordered by their shared
+`displayOrder` (microelement rows are managed from the Microelements screen,
+U17; the add-sheet likewise offers only core catalog entries). Toggle which parameters are tracked / which ratio cards are
 shown, drag to reorder either, and edit a parameter's zone bounds
 (`ParameterEditScreen`). Reordering writes the new combined order back via
 `applyDashboardOrder` (params → `TrackedParameters`, ratios →
@@ -1133,7 +1215,9 @@ Re-applying a setup-type preset is available.
 
 ### Add reading (`add_reading_screen.dart`)
 
-Enter several parameters at once for a single timestamp (group). Inputs accept
+Enter several **core** parameters at once for a single timestamp (group) —
+microelement values are entered from the Microelements screen's own form
+(U17), keeping this one compact. Inputs accept
 values in the user's display units and are converted to canonical on save. The
 timestamp is chosen via the shared `pickPastDateTime` helper (in
 [l10n_helpers.dart](lib/l10n/l10n_helpers.dart)) — also used by the reading-edit
@@ -1179,7 +1263,9 @@ Unit selectors (temp/salinity/volume), language selector, a **Trends** section
 + alert-horizon selector within `kTrendMinHorizon`..`kTrendMaxHorizon`),
 a **Reminders** link (`/settings/reminders` — see Reminders & maintenance
 schedule above), the **Reverse osmosis unit** feature switch (U16 — hides the
-Actions-tab row and silences RO reminders),
+Actions-tab row and silences RO reminders), the **Microelements** feature
+switch (U17 — hides the dashboard tile and silences micro test reminders;
+measurements are kept),
 and **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency and a link to the **Manage backups**
 screen (see Data → Automatic backup). Link to the salinity calculator. The About box shows the live app version via

@@ -244,7 +244,11 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tracked) {
-          final params = tracked.where((t) => t.enabled).toList();
+          // Core parameters only — microelement values are entered from the
+          // Microelements screen's own form (U17), keeping this one compact.
+          final params = tracked
+              .where((t) => t.enabled && isCoreParam(t.paramKey))
+              .toList();
           if (params.isEmpty) {
             return Center(child: Text(l.noTrackedToRecord));
           }

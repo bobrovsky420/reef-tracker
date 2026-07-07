@@ -1201,13 +1201,167 @@ class AppLocalizationsCs extends AppLocalizations {
   String get paramPotassium => 'Draslík';
 
   @override
-  String get paramStrontium => 'Stroncium';
+  String get paramStrontium => 'Stroncium (Sr)';
 
   @override
-  String get paramIodine => 'Jód';
+  String get paramIodine => 'Jód (I)';
 
   @override
-  String get paramIron => 'Železo';
+  String get paramIron => 'Železo (Fe)';
+
+  @override
+  String get paramSodium => 'Sodík (Na)';
+
+  @override
+  String get paramSulfur => 'Síra (S)';
+
+  @override
+  String get paramBoron => 'Bor (B)';
+
+  @override
+  String get paramBromine => 'Brom (Br)';
+
+  @override
+  String get paramSilicon => 'Křemík (Si)';
+
+  @override
+  String get paramZinc => 'Zinek (Zn)';
+
+  @override
+  String get paramVanadium => 'Vanad (V)';
+
+  @override
+  String get paramCopper => 'Měď (Cu)';
+
+  @override
+  String get paramNickel => 'Nikl (Ni)';
+
+  @override
+  String get paramManganese => 'Mangan (Mn)';
+
+  @override
+  String get paramMolybdenum => 'Molybden (Mo)';
+
+  @override
+  String get paramChromium => 'Chrom (Cr)';
+
+  @override
+  String get paramCobalt => 'Kobalt (Co)';
+
+  @override
+  String get paramLithium => 'Lithium (Li)';
+
+  @override
+  String get paramBarium => 'Baryum (Ba)';
+
+  @override
+  String get paramSelenium => 'Selen (Se)';
+
+  @override
+  String get paramAluminium => 'Hliník (Al)';
+
+  @override
+  String get paramAntimony => 'Antimon (Sb)';
+
+  @override
+  String get paramTin => 'Cín (Sn)';
+
+  @override
+  String get paramBeryllium => 'Beryllium (Be)';
+
+  @override
+  String get paramSilver => 'Stříbro (Ag)';
+
+  @override
+  String get paramTungsten => 'Wolfram (W)';
+
+  @override
+  String get paramLanthanum => 'Lanthan (La)';
+
+  @override
+  String get paramTitanium => 'Titan (Ti)';
+
+  @override
+  String get paramZirconium => 'Zirkonium (Zr)';
+
+  @override
+  String get paramArsenic => 'Arsen (As)';
+
+  @override
+  String get paramCadmium => 'Kadmium (Cd)';
+
+  @override
+  String get paramMercury => 'Rtuť (Hg)';
+
+  @override
+  String get paramLead => 'Olovo (Pb)';
+
+  @override
+  String get microTitle => 'Mikroprvky';
+
+  @override
+  String get microSectionMajor => 'Hlavní prvky';
+
+  @override
+  String get microSectionTrace => 'Stopové prvky';
+
+  @override
+  String get microSectionContaminants => 'Kontaminanty';
+
+  @override
+  String get microNotMeasured => 'Neměřeno';
+
+  @override
+  String get microEmptyHint =>
+      'Sledujte stopové prvky z domácích testů nebo laboratorních ICP rozborů.';
+
+  @override
+  String get microAllOk => 'Vše v rozmezí';
+
+  @override
+  String microOutOfRangeN(int count) {
+    return '$count mimo rozmezí';
+  }
+
+  @override
+  String microLastMeasured(String date) {
+    return 'Naposledy měřeno $date';
+  }
+
+  @override
+  String get microAddMeasurements => 'Přidat měření';
+
+  @override
+  String get microAddTitle => 'Měření mikroprvků';
+
+  @override
+  String get microChipHobby => 'Domácí testy';
+
+  @override
+  String get microChipFullIcp => 'Kompletní ICP';
+
+  @override
+  String get microReminderTooltip => 'Připomínka testu';
+
+  @override
+  String get microReminderTitle => 'Připomínka testu mikroprvků';
+
+  @override
+  String get microReminderHint =>
+      'Přidá do plánu údržby úkol připomínající pravidelný test mikroprvků.';
+
+  @override
+  String get microReminderCreated => 'Připomínka přidána do plánu údržby';
+
+  @override
+  String get microIcpTaskTitle => 'Test mikroprvků (ICP)';
+
+  @override
+  String get microToggleSubtitle =>
+      'Zobrazit na kartě Měření, s připomínkami testů. Skrytí zachová naměřené hodnoty.';
+
+  @override
+  String get unitFixedNote => 'Tento parametr vždy používá tuto jednotku.';
 
   @override
   String get helpTemperature =>

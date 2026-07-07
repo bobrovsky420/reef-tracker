@@ -8,11 +8,14 @@ import '../data/notifications.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/settings.dart';
 import '../domain/health_score.dart';
+import '../domain/micro.dart';
+import '../domain/parameter_catalog.dart';
 import '../domain/ratio.dart';
 import '../domain/reminders.dart';
 import '../domain/ro.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
+import '../domain/zones.dart';
 
 // The settings keys, the [HealthDisplay] enum, and the typed [Settings] facade
 // live in `data/settings.dart`. Re-export the symbols widgets reach through this
@@ -521,6 +524,15 @@ final roUnitEnabledProvider = _setting(
   AppSettings.decodeRoUnitEnabled,
 );
 
+/// Whether the microelements panel is surfaced at all (U17, default on):
+/// gates the dashboard summary tile (and, in the scheduler, micro test
+/// reminders). Off only hides — measurements stay stored and reappear when
+/// re-enabled.
+final microEnabledProvider = _setting(
+  SettingKey.microEnabled,
+  AppSettings.decodeMicroEnabled,
+);
+
 /// When the most recent automatic or manual backup completed, or null if none
 /// has run yet. Reacts to the stored timestamp, so it refreshes as soon as a
 /// backup is written.
@@ -621,7 +633,11 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
   }
 
   final inputs = <HealthInput>[
-    for (final p in tracked.where((t) => t.enabled))
+    // Core parameters only: microelements (U17) are measured on an ICP
+    // cadence (months), which the 30-day freshness rule would permanently
+    // read as stale — the micro panel carries its own status summary instead
+    // ([microStatusProvider]).
+    for (final p in tracked.where((t) => t.enabled && isCoreParam(t.paramKey)))
       (
         paramKey: p.paramKey,
         bounds: boundsOf(p),
@@ -630,6 +646,80 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
       ),
   ];
   return computeTankHealth(inputs);
+});
+
+// --- Microelements (U17) ------------------------------------------------------
+
+/// One Microelements-screen row: the catalog element, its tracked row when one
+/// exists (created lazily on first save/bounds-edit), the latest reading, and
+/// the *effective* bounds — the row's when present, else the catalog defaults.
+typedef MicroElementStatus = ({
+  ParameterDef def,
+  TrackedParameter? row,
+  Reading? latest,
+  ZoneBounds bounds,
+});
+
+/// Builds the panel rows from the two source streams. Shared by
+/// [microElementsProvider] and [microStatusProvider], which each derive
+/// **directly** from the stream wrappers — deliberately not chained on each
+/// other: a plain Provider watching another plain Provider gets notified
+/// synchronously when the inner one is lazily recomputed during a widget
+/// build, and the resulting self-invalidation schedules a scope refresh
+/// mid-build (setState-during-build crash). Single-layer derivation is the
+/// same proven shape as [tankHealthProvider].
+List<MicroElementStatus> _microElements(
+  List<TrackedParameter> tracked,
+  List<Reading> readings,
+) {
+  final rowByKey = {for (final t in tracked) t.paramKey: t};
+  // Latest reading per parameter (readings arrive newest-first).
+  final latest = <String, Reading>{};
+  for (final r in readings) {
+    latest.putIfAbsent(r.paramKey, () => r);
+  }
+  return [
+    for (final def in kMicroParameters)
+      (
+        def: def,
+        row: rowByKey[def.key],
+        latest: latest[def.key],
+        bounds: switch (rowByKey[def.key]) {
+          final row? => boundsOf(row),
+          null => microDefaultBounds(def.key),
+        },
+      ),
+  ];
+}
+
+/// Status for every microelement of the active tank, in catalog order (the
+/// order ICP reports list them). Derived from the same bounded streams as the
+/// dashboard, so a saved measurement updates the panel live.
+final microElementsProvider = Provider<List<MicroElementStatus>>(
+  (ref) => _microElements(
+    ref.watch(trackedParametersProvider).value ?? const [],
+    ref.watch(recentReadingsProvider).value ?? const [],
+  ),
+);
+
+/// Panel summary (measured / out-of-range counts, worst zone, newest sample
+/// date) for the dashboard tile and the Microelements screen header.
+/// [MicroStatus] is a record (value-equal), so a write that doesn't change
+/// the summary doesn't rebuild the tile (T2).
+final microStatusProvider = Provider<MicroStatus>((ref) {
+  final elements = _microElements(
+    ref.watch(trackedParametersProvider).value ?? const [],
+    ref.watch(recentReadingsProvider).value ?? const [],
+  );
+  return computeMicroStatus([
+    for (final e in elements)
+      (
+        paramKey: e.def.key,
+        bounds: e.bounds,
+        latest: e.latest?.value,
+        takenAt: e.latest?.takenAt,
+      ),
+  ]);
 });
 
 final _ratioSettingsFamily = StreamProvider.autoDispose

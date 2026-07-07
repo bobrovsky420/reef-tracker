@@ -31,3 +31,4 @@ const kRemindersMaintenanceKey = 'reminders_maintenance';
 const kReminderTimeKey = 'reminder_time';
 const kRoSeededKey = 'ro_stages_seeded';
 const kRoUnitEnabledKey = 'ro_unit_enabled';
+const kMicroEnabledKey = 'micro_enabled';

@@ -16,6 +16,8 @@ import '../features/dosing/dosing_history_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/home/home_shell.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
+import '../features/micro/micro_add_screen.dart';
+import '../features/micro/micro_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
 import '../features/ro/ro_screen.dart';
@@ -124,6 +126,11 @@ final appRouter = GoRouter(
       builder: (context, state) => const MaintenanceScheduleScreen(),
     ),
     GoRoute(path: '/ro', builder: (context, state) => const RoScreen()),
+    GoRoute(path: '/micro', builder: (context, state) => const MicroScreen()),
+    GoRoute(
+      path: '/micro/add',
+      builder: (context, state) => const MicroAddScreen(),
+    ),
     GoRoute(
       path: '/calculator/salinity',
       builder: (context, state) => const SalinityCalculatorScreen(),

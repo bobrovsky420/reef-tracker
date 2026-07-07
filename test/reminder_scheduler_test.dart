@@ -107,6 +107,38 @@ void main() {
       expect(await scheduler.plan(now: now), isEmpty);
     });
 
+    test('the microelements switch silences micro test reminders but not '
+        'core ones (U17)', () async {
+      final t = await tank('Reef');
+      await settings.setRemindersTesting(true);
+      // One core and one micro parameter, both with a cadence and a reading
+      // on the same day → both due 17 Jul.
+      final alk = (await db.getTrackedParameters(
+        t,
+      )).firstWhere((p) => p.paramKey == 'alkalinity');
+      await db.setTestCadence(alk.id, 7);
+      await db.addTrackedParameter(t, 'iodine', SetupType.mixed);
+      final iodine = (await db.getTrackedParameters(
+        t,
+      )).firstWhere((p) => p.paramKey == 'iodine');
+      await db.setTestCadence(iodine.id, 7);
+      for (final key in ['alkalinity', 'iodine']) {
+        await db.insertReading(
+          tankId: t,
+          paramKey: key,
+          value: 1,
+          takenAt: DateTime(2026, 7, 10, 18),
+        );
+      }
+      // Both due → coalesced into one notification naming both.
+      expect((await scheduler.plan(now: now)).single.body, contains('Iodine'));
+
+      await settings.setMicroEnabled(false);
+      final planned = await scheduler.plan(now: now);
+      expect(planned, hasLength(1));
+      expect(planned.single.body, 'Alkalinity');
+    });
+
     test('same-day dues coalesce into one notification', () async {
       final t = await tank('Reef');
       await settings.setRemindersTesting(true);

@@ -2122,20 +2122,314 @@ abstract class AppLocalizations {
   /// No description provided for @paramStrontium.
   ///
   /// In en, this message translates to:
-  /// **'Strontium'**
+  /// **'Strontium (Sr)'**
   String get paramStrontium;
 
   /// No description provided for @paramIodine.
   ///
   /// In en, this message translates to:
-  /// **'Iodine'**
+  /// **'Iodine (I)'**
   String get paramIodine;
 
   /// No description provided for @paramIron.
   ///
   /// In en, this message translates to:
-  /// **'Iron'**
+  /// **'Iron (Fe)'**
   String get paramIron;
+
+  /// No description provided for @paramSodium.
+  ///
+  /// In en, this message translates to:
+  /// **'Sodium (Na)'**
+  String get paramSodium;
+
+  /// No description provided for @paramSulfur.
+  ///
+  /// In en, this message translates to:
+  /// **'Sulfur (S)'**
+  String get paramSulfur;
+
+  /// No description provided for @paramBoron.
+  ///
+  /// In en, this message translates to:
+  /// **'Boron (B)'**
+  String get paramBoron;
+
+  /// No description provided for @paramBromine.
+  ///
+  /// In en, this message translates to:
+  /// **'Bromine (Br)'**
+  String get paramBromine;
+
+  /// No description provided for @paramSilicon.
+  ///
+  /// In en, this message translates to:
+  /// **'Silicon (Si)'**
+  String get paramSilicon;
+
+  /// No description provided for @paramZinc.
+  ///
+  /// In en, this message translates to:
+  /// **'Zinc (Zn)'**
+  String get paramZinc;
+
+  /// No description provided for @paramVanadium.
+  ///
+  /// In en, this message translates to:
+  /// **'Vanadium (V)'**
+  String get paramVanadium;
+
+  /// No description provided for @paramCopper.
+  ///
+  /// In en, this message translates to:
+  /// **'Copper (Cu)'**
+  String get paramCopper;
+
+  /// No description provided for @paramNickel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickel (Ni)'**
+  String get paramNickel;
+
+  /// No description provided for @paramManganese.
+  ///
+  /// In en, this message translates to:
+  /// **'Manganese (Mn)'**
+  String get paramManganese;
+
+  /// No description provided for @paramMolybdenum.
+  ///
+  /// In en, this message translates to:
+  /// **'Molybdenum (Mo)'**
+  String get paramMolybdenum;
+
+  /// No description provided for @paramChromium.
+  ///
+  /// In en, this message translates to:
+  /// **'Chromium (Cr)'**
+  String get paramChromium;
+
+  /// No description provided for @paramCobalt.
+  ///
+  /// In en, this message translates to:
+  /// **'Cobalt (Co)'**
+  String get paramCobalt;
+
+  /// No description provided for @paramLithium.
+  ///
+  /// In en, this message translates to:
+  /// **'Lithium (Li)'**
+  String get paramLithium;
+
+  /// No description provided for @paramBarium.
+  ///
+  /// In en, this message translates to:
+  /// **'Barium (Ba)'**
+  String get paramBarium;
+
+  /// No description provided for @paramSelenium.
+  ///
+  /// In en, this message translates to:
+  /// **'Selenium (Se)'**
+  String get paramSelenium;
+
+  /// No description provided for @paramAluminium.
+  ///
+  /// In en, this message translates to:
+  /// **'Aluminium (Al)'**
+  String get paramAluminium;
+
+  /// No description provided for @paramAntimony.
+  ///
+  /// In en, this message translates to:
+  /// **'Antimony (Sb)'**
+  String get paramAntimony;
+
+  /// No description provided for @paramTin.
+  ///
+  /// In en, this message translates to:
+  /// **'Tin (Sn)'**
+  String get paramTin;
+
+  /// No description provided for @paramBeryllium.
+  ///
+  /// In en, this message translates to:
+  /// **'Beryllium (Be)'**
+  String get paramBeryllium;
+
+  /// No description provided for @paramSilver.
+  ///
+  /// In en, this message translates to:
+  /// **'Silver (Ag)'**
+  String get paramSilver;
+
+  /// No description provided for @paramTungsten.
+  ///
+  /// In en, this message translates to:
+  /// **'Tungsten (W)'**
+  String get paramTungsten;
+
+  /// No description provided for @paramLanthanum.
+  ///
+  /// In en, this message translates to:
+  /// **'Lanthanum (La)'**
+  String get paramLanthanum;
+
+  /// No description provided for @paramTitanium.
+  ///
+  /// In en, this message translates to:
+  /// **'Titanium (Ti)'**
+  String get paramTitanium;
+
+  /// No description provided for @paramZirconium.
+  ///
+  /// In en, this message translates to:
+  /// **'Zirconium (Zr)'**
+  String get paramZirconium;
+
+  /// No description provided for @paramArsenic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arsenic (As)'**
+  String get paramArsenic;
+
+  /// No description provided for @paramCadmium.
+  ///
+  /// In en, this message translates to:
+  /// **'Cadmium (Cd)'**
+  String get paramCadmium;
+
+  /// No description provided for @paramMercury.
+  ///
+  /// In en, this message translates to:
+  /// **'Mercury (Hg)'**
+  String get paramMercury;
+
+  /// No description provided for @paramLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead (Pb)'**
+  String get paramLead;
+
+  /// Title of the microelement (ICP trace element) panel screen and its dashboard tile (U17).
+  ///
+  /// In en, this message translates to:
+  /// **'Microelements'**
+  String get microTitle;
+
+  /// No description provided for @microSectionMajor.
+  ///
+  /// In en, this message translates to:
+  /// **'Major elements'**
+  String get microSectionMajor;
+
+  /// No description provided for @microSectionTrace.
+  ///
+  /// In en, this message translates to:
+  /// **'Trace elements'**
+  String get microSectionTrace;
+
+  /// No description provided for @microSectionContaminants.
+  ///
+  /// In en, this message translates to:
+  /// **'Contaminants'**
+  String get microSectionContaminants;
+
+  /// Subtitle of a microelement row that has no reading yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not measured'**
+  String get microNotMeasured;
+
+  /// No description provided for @microEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Track trace elements from home test kits or ICP lab reports.'**
+  String get microEmptyHint;
+
+  /// No description provided for @microAllOk.
+  ///
+  /// In en, this message translates to:
+  /// **'All within range'**
+  String get microAllOk;
+
+  /// Headline when some measured microelements are outside their green range.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} out of range'**
+  String microOutOfRangeN(int count);
+
+  /// Newest microelement sample date on the panel header.
+  ///
+  /// In en, this message translates to:
+  /// **'Last measured {date}'**
+  String microLastMeasured(String date);
+
+  /// No description provided for @microAddMeasurements.
+  ///
+  /// In en, this message translates to:
+  /// **'Add measurements'**
+  String get microAddMeasurements;
+
+  /// No description provided for @microAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Microelement measurements'**
+  String get microAddTitle;
+
+  /// Entry-form filter chip: only the elements home test kits exist for (iodine, iron, strontium).
+  ///
+  /// In en, this message translates to:
+  /// **'Hobby kit'**
+  String get microChipHobby;
+
+  /// Entry-form filter chip: the whole ICP element panel, for typing in a lab report.
+  ///
+  /// In en, this message translates to:
+  /// **'Full ICP'**
+  String get microChipFullIcp;
+
+  /// No description provided for @microReminderTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Test reminder'**
+  String get microReminderTooltip;
+
+  /// No description provided for @microReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Microelement test reminder'**
+  String get microReminderTitle;
+
+  /// No description provided for @microReminderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds a maintenance task reminding you to test microelements regularly.'**
+  String get microReminderHint;
+
+  /// No description provided for @microReminderCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder added to the maintenance schedule'**
+  String get microReminderCreated;
+
+  /// Title of the maintenance task created by the microelement test reminder shortcut (stored as the task's name).
+  ///
+  /// In en, this message translates to:
+  /// **'Microelement test (ICP)'**
+  String get microIcpTaskTitle;
+
+  /// Subtitle of the Settings switch for the microelements feature (U17). Off only hides the panel; stored measurements are untouched.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on the Measurements tab, with test reminders. Hiding keeps your measurements.'**
+  String get microToggleSubtitle;
+
+  /// Shown in the parameter editor instead of the unit field for µg/L microelements, whose display unit is fixed by the catalog.
+  ///
+  /// In en, this message translates to:
+  /// **'This parameter always uses this unit.'**
+  String get unitFixedNote;
 
   /// No description provided for @helpTemperature.
   ///

@@ -185,6 +185,15 @@ class SettingsScreen extends ConsumerWidget {
             value: ref.watch(roUnitEnabledProvider).value ?? true,
             onChanged: (v) => settings.setRoUnitEnabled(v),
           ),
+          // Microelements feature switch (U17): off hides the dashboard tile
+          // and silences micro test reminders — measurements stay stored.
+          SwitchListTile(
+            secondary: const Icon(Icons.science_outlined),
+            title: Text(l.microTitle),
+            subtitle: Text(l.microToggleSubtitle),
+            value: ref.watch(microEnabledProvider).value ?? true,
+            onChanged: (v) => settings.setMicroEnabled(v),
+          ),
           const Divider(),
           _SectionHeader(l.toolsSection),
           ListTile(

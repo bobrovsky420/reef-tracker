@@ -451,9 +451,88 @@
   "paramNitrite": "Nitrite (NO₂)",
   "paramOrp": "ORP",
   "paramPotassium": "Potassium",
-  "paramStrontium": "Strontium",
-  "paramIodine": "Iodine",
-  "paramIron": "Iron",
+  "paramStrontium": "Strontium (Sr)",
+  "paramIodine": "Iodine (I)",
+  "paramIron": "Iron (Fe)",
+  "paramSodium": "Sodium (Na)",
+  "paramSulfur": "Sulfur (S)",
+  "paramBoron": "Boron (B)",
+  "paramBromine": "Bromine (Br)",
+  "paramSilicon": "Silicon (Si)",
+  "paramZinc": "Zinc (Zn)",
+  "paramVanadium": "Vanadium (V)",
+  "paramCopper": "Copper (Cu)",
+  "paramNickel": "Nickel (Ni)",
+  "paramManganese": "Manganese (Mn)",
+  "paramMolybdenum": "Molybdenum (Mo)",
+  "paramChromium": "Chromium (Cr)",
+  "paramCobalt": "Cobalt (Co)",
+  "paramLithium": "Lithium (Li)",
+  "paramBarium": "Barium (Ba)",
+  "paramSelenium": "Selenium (Se)",
+  "paramAluminium": "Aluminium (Al)",
+  "paramAntimony": "Antimony (Sb)",
+  "paramTin": "Tin (Sn)",
+  "paramBeryllium": "Beryllium (Be)",
+  "paramSilver": "Silver (Ag)",
+  "paramTungsten": "Tungsten (W)",
+  "paramLanthanum": "Lanthanum (La)",
+  "paramTitanium": "Titanium (Ti)",
+  "paramZirconium": "Zirconium (Zr)",
+  "paramArsenic": "Arsenic (As)",
+  "paramCadmium": "Cadmium (Cd)",
+  "paramMercury": "Mercury (Hg)",
+  "paramLead": "Lead (Pb)",
+
+  "microTitle": "Microelements",
+  "@microTitle": {
+    "description": "Title of the microelement (ICP trace element) panel screen and its dashboard tile (U17)."
+  },
+  "microSectionMajor": "Major elements",
+  "microSectionTrace": "Trace elements",
+  "microSectionContaminants": "Contaminants",
+  "microNotMeasured": "Not measured",
+  "@microNotMeasured": {
+    "description": "Subtitle of a microelement row that has no reading yet."
+  },
+  "microEmptyHint": "Track trace elements from home test kits or ICP lab reports.",
+  "microAllOk": "All within range",
+  "microOutOfRangeN": "{count} out of range",
+  "@microOutOfRangeN": {
+    "description": "Headline when some measured microelements are outside their green range.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "microLastMeasured": "Last measured {date}",
+  "@microLastMeasured": {
+    "description": "Newest microelement sample date on the panel header.",
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "microAddMeasurements": "Add measurements",
+  "microAddTitle": "Microelement measurements",
+  "microChipHobby": "Hobby kit",
+  "@microChipHobby": {
+    "description": "Entry-form filter chip: only the elements home test kits exist for (iodine, iron, strontium)."
+  },
+  "microChipFullIcp": "Full ICP",
+  "@microChipFullIcp": {
+    "description": "Entry-form filter chip: the whole ICP element panel, for typing in a lab report."
+  },
+  "microReminderTooltip": "Test reminder",
+  "microReminderTitle": "Microelement test reminder",
+  "microReminderHint": "Adds a maintenance task reminding you to test microelements regularly.",
+  "microReminderCreated": "Reminder added to the maintenance schedule",
+  "microIcpTaskTitle": "Microelement test (ICP)",
+  "@microIcpTaskTitle": {
+    "description": "Title of the maintenance task created by the microelement test reminder shortcut (stored as the task's name)."
+  },
+  "microToggleSubtitle": "Show on the Measurements tab, with test reminders. Hiding keeps your measurements.",
+  "@microToggleSubtitle": {
+    "description": "Subtitle of the Settings switch for the microelements feature (U17). Off only hides the panel; stored measurements are untouched."
+  },
+  "unitFixedNote": "This parameter always uses this unit.",
+  "@unitFixedNote": {
+    "description": "Shown in the parameter editor instead of the unit field for µg/L microelements, whose display unit is fixed by the catalog."
+  },
 
   "helpTemperature": "Water temperature. Stability matters more than the exact value.",
   "helpSalinity": "Specific gravity. ~1.026 SG ≈ 35 ppt.",
