@@ -1400,6 +1400,71 @@ class AppLocalizationsEn extends AppLocalizations {
       'This removes the view. Your measurements are kept.';
 
   @override
+  String get icpImportTitle => 'Import ICP report';
+
+  @override
+  String get icpImportFormatHint => 'Choose the export format of the file.';
+
+  @override
+  String get icpImportFormatFaunaMarinHint =>
+      'CSV export from the Fauna Marin lab portal';
+
+  @override
+  String get icpImportFormatZimsHint =>
+      'Universal measurement CSV (date, measurement, value, unit)';
+
+  @override
+  String get icpImportUnreadable => 'The file could not be read.';
+
+  @override
+  String icpImportWrongFormat(String format) {
+    return 'This does not look like a $format export.';
+  }
+
+  @override
+  String get icpImportNoValues =>
+      'No importable values were found in the file.';
+
+  @override
+  String get icpImportSampleDateHint =>
+      'Prefilled with the analysis date from the report. Change it to the day you took the water sample.';
+
+  @override
+  String get icpImportSectionCore => 'Core parameters';
+
+  @override
+  String icpImportSkipped(String list) {
+    return 'Not imported (no matching parameter): $list';
+  }
+
+  @override
+  String icpImportValueCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Import $count values',
+      one: 'Import 1 value',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get icpImportDuplicateTitle => 'Sample already imported?';
+
+  @override
+  String icpImportDuplicateBody(String id) {
+    return 'Existing readings already mention sample $id. Import it again anyway?';
+  }
+
+  @override
+  String get icpImportAnyway => 'Import anyway';
+
+  @override
+  String icpImportNotePrefill(String id) {
+    return 'ICP sample $id';
+  }
+
+  @override
   String get unitFixedNote => 'This parameter always uses this unit.';
 
   @override

@@ -1414,6 +1414,72 @@ class AppLocalizationsRu extends AppLocalizations {
       'Удаляется только набор. Измерения сохранятся.';
 
   @override
+  String get icpImportTitle => 'Импорт ICP-отчёта';
+
+  @override
+  String get icpImportFormatHint => 'Выберите формат экспортированного файла.';
+
+  @override
+  String get icpImportFormatFaunaMarinHint =>
+      'CSV-экспорт из лабораторного портала Fauna Marin';
+
+  @override
+  String get icpImportFormatZimsHint =>
+      'Универсальный CSV с измерениями (дата, измерение, значение, единица)';
+
+  @override
+  String get icpImportUnreadable => 'Не удалось прочитать файл.';
+
+  @override
+  String icpImportWrongFormat(String format) {
+    return 'Файл не похож на экспорт $format.';
+  }
+
+  @override
+  String get icpImportNoValues => 'В файле не найдено значений для импорта.';
+
+  @override
+  String get icpImportSampleDateHint =>
+      'Заполнено датой анализа из отчёта. Измените на день, когда вы взяли пробу воды.';
+
+  @override
+  String get icpImportSectionCore => 'Основные параметры';
+
+  @override
+  String icpImportSkipped(String list) {
+    return 'Не импортировано (нет подходящего параметра): $list';
+  }
+
+  @override
+  String icpImportValueCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Импортировать $count значения',
+      many: 'Импортировать $count значений',
+      few: 'Импортировать $count значения',
+      one: 'Импортировать $count значение',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get icpImportDuplicateTitle => 'Проба уже импортирована?';
+
+  @override
+  String icpImportDuplicateBody(String id) {
+    return 'Существующие измерения уже упоминают пробу $id. Всё равно импортировать ещё раз?';
+  }
+
+  @override
+  String get icpImportAnyway => 'Всё равно импортировать';
+
+  @override
+  String icpImportNotePrefill(String id) {
+    return 'ICP-проба $id';
+  }
+
+  @override
   String get unitFixedNote => 'Этот параметр всегда использует эту единицу.';
 
   @override

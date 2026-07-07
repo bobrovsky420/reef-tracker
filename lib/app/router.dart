@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:go_router/go_router.dart';
 
 import '../data/database.dart';
+import '../domain/icp_import.dart';
 import '../domain/ratio.dart';
 import '../features/actions/schedule_screen.dart';
 import '../features/add_reading/add_reading_screen.dart';
@@ -16,6 +17,7 @@ import '../features/dosing/dosing_history_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/home/home_shell.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
+import '../features/micro/icp_import_screen.dart';
 import '../features/micro/micro_add_screen.dart';
 import '../features/micro/micro_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
@@ -130,6 +132,15 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/micro/add',
       builder: (context, state) => const MicroAddScreen(),
+    ),
+    GoRoute(
+      path: '/micro/import',
+      // Only reachable with a parsed report in tow — a bare deep link has
+      // nothing to preview (same guard style as the ratio routes, T8).
+      redirect: (context, state) =>
+          state.extra is IcpImportResult ? null : '/micro',
+      builder: (context, state) =>
+          IcpImportScreen(result: state.extra as IcpImportResult),
     ),
     GoRoute(
       path: '/calculator/salinity',

@@ -1406,6 +1406,71 @@ class AppLocalizationsDe extends AppLocalizations {
       'Entfernt nur die Ansicht. Die Messwerte bleiben erhalten.';
 
   @override
+  String get icpImportTitle => 'ICP-Bericht importieren';
+
+  @override
+  String get icpImportFormatHint => 'Wählen Sie das Exportformat der Datei.';
+
+  @override
+  String get icpImportFormatFaunaMarinHint =>
+      'CSV-Export aus dem Fauna-Marin-Laborportal';
+
+  @override
+  String get icpImportFormatZimsHint =>
+      'Universelles Mess-CSV (Datum, Messung, Wert, Einheit)';
+
+  @override
+  String get icpImportUnreadable => 'Die Datei konnte nicht gelesen werden.';
+
+  @override
+  String icpImportWrongFormat(String format) {
+    return 'Dies sieht nicht nach einem $format-Export aus.';
+  }
+
+  @override
+  String get icpImportNoValues =>
+      'In der Datei wurden keine importierbaren Werte gefunden.';
+
+  @override
+  String get icpImportSampleDateHint =>
+      'Vorausgefüllt mit dem Analysedatum aus dem Bericht. Ändern Sie es auf den Tag der Probenentnahme.';
+
+  @override
+  String get icpImportSectionCore => 'Basisparameter';
+
+  @override
+  String icpImportSkipped(String list) {
+    return 'Nicht importiert (kein passender Parameter): $list';
+  }
+
+  @override
+  String icpImportValueCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Werte importieren',
+      one: '1 Wert importieren',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get icpImportDuplicateTitle => 'Probe bereits importiert?';
+
+  @override
+  String icpImportDuplicateBody(String id) {
+    return 'Vorhandene Messungen erwähnen bereits Probe $id. Trotzdem erneut importieren?';
+  }
+
+  @override
+  String get icpImportAnyway => 'Trotzdem importieren';
+
+  @override
+  String icpImportNotePrefill(String id) {
+    return 'ICP-Probe $id';
+  }
+
+  @override
   String get unitFixedNote => 'Dieser Parameter verwendet immer diese Einheit.';
 
   @override

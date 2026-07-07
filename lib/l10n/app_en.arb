@@ -550,6 +550,53 @@
   "microViewDeleteTitle": "Delete \"{name}\"?",
   "@microViewDeleteTitle": { "placeholders": { "name": {} } },
   "microViewDeleteBody": "This removes the view. Your measurements are kept.",
+  "icpImportTitle": "Import ICP report",
+  "@icpImportTitle": {
+    "description": "Title of the ICP report CSV import: the Microelements app-bar action, the format-choice sheet and the preview screen (U17 phase 2)."
+  },
+  "icpImportFormatHint": "Choose the export format of the file.",
+  "icpImportFormatFaunaMarinHint": "CSV export from the Fauna Marin lab portal",
+  "@icpImportFormatFaunaMarinHint": {
+    "description": "Subtitle of the Fauna Marin option in the import format sheet. Format names themselves (Fauna Marin ICP, ZIMS) are proper nouns and not localized."
+  },
+  "icpImportFormatZimsHint": "Universal measurement CSV (date, measurement, value, unit)",
+  "icpImportUnreadable": "The file could not be read.",
+  "icpImportWrongFormat": "This does not look like a {format} export.",
+  "@icpImportWrongFormat": {
+    "description": "Import rejection: the CSV header does not match the chosen format.",
+    "placeholders": { "format": { "type": "String" } }
+  },
+  "icpImportNoValues": "No importable values were found in the file.",
+  "icpImportSampleDateHint": "Prefilled with the analysis date from the report. Change it to the day you took the water sample.",
+  "@icpImportSampleDateHint": {
+    "description": "Hint under the date card on the import preview: the water sample predates the lab's analysis date."
+  },
+  "icpImportSectionCore": "Core parameters",
+  "@icpImportSectionCore": {
+    "description": "Import-preview section header for dashboard (non-microelement) parameters the report carries (Ca, Mg, K, PO4, ...)."
+  },
+  "icpImportSkipped": "Not imported (no matching parameter): {list}",
+  "@icpImportSkipped": {
+    "description": "Import-preview footnote listing report fields the app tracks no parameter for.",
+    "placeholders": { "list": { "type": "String" } }
+  },
+  "icpImportValueCount": "{count, plural, one{Import 1 value} other{Import {count} values}}",
+  "@icpImportValueCount": {
+    "description": "Confirm button of the import preview.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "icpImportDuplicateTitle": "Sample already imported?",
+  "icpImportDuplicateBody": "Existing readings already mention sample {id}. Import it again anyway?",
+  "@icpImportDuplicateBody": {
+    "description": "Re-import warning body; {id} is the lab's sample identifier.",
+    "placeholders": { "id": { "type": "String" } }
+  },
+  "icpImportAnyway": "Import anyway",
+  "icpImportNotePrefill": "ICP sample {id}",
+  "@icpImportNotePrefill": {
+    "description": "Default note attached to imported readings; carries the lab sample id, which the re-import warning looks for.",
+    "placeholders": { "id": { "type": "String" } }
+  },
   "unitFixedNote": "This parameter always uses this unit.",
   "@unitFixedNote": {
     "description": "Shown in the parameter editor instead of the unit field for µg/L microelements, whose display unit is fixed by the catalog."

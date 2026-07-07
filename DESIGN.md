@@ -712,6 +712,7 @@ lifecycle wiring that are easy to miss:
 | `/ro` | Reverse-osmosis unit (U16): shared stage overview + replacement log |
 | `/micro` | Microelements (U17): the ICP element panel for the active tank |
 | `/micro/add` | Batch entry of microelement measurements (Hobby kit / Full ICP) |
+| `/micro/import` | ICP report CSV import preview (`extra` = `IcpImportResult`; redirects to `/micro` without one) |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
@@ -1089,11 +1090,11 @@ unit — a pure visibility preference, the stages and history stay stored.
   titled "Replace RO filters", stage names coalesced into the body, tap
   opens `/ro`.
 
-### Microelements (U17) — `features/micro/`, routes `/micro` + `/micro/add`
+### Microelements (U17) — `features/micro/`, routes `/micro` + `/micro/add` + `/micro/import`
 
 Tracking of the ICP element panel (32 elements — modeled on the Fauna Marin
 Reef ICP: 5 major ions incl. silicon, 14 desirable traces, 13 contaminants),
-measured manually now; ICP-report import is a planned later phase. Design
+entered manually or imported from lab CSV exports (see ICP import below). Design
 pivot: **an ICP result is just a reading group** (one sample date, many
 values) and **an element is just a catalog parameter** — so readings ride the
 existing `Readings`/`TrackedParameters` tables with **no schema change**, and
@@ -1126,6 +1127,30 @@ Parameters list/add-sheet and the health-score inputs to core).
   and **Full ICP** (all elements with section headers, for typing in a lab
   report). Like test sets, the filter narrows what is shown — hidden typed
   values still save. Saving first ensures tracked rows for the entered keys.
+- **ICP report import** (U17 phase 2): an app-bar action on `MicroScreen` —
+  format choice sheet (the format is the user's explicit pick, never sniffed)
+  → CSV file picker → `parseIcpCsv` (`domain/icp_import.dart`, pure) →
+  **`IcpImportScreen`** (`/micro/import`) preview → one atomic
+  `insertReadingGroup`, identical mechanics to `MicroAddScreen` (lazy tracked
+  rows, impossible/implausible gate). Two formats:
+  - **Fauna Marin ICP** (wide, `;`-separated, `,` or `.` decimals): fixed
+    column→key map with **implicit units** (majors mg/L, traces µg/L —
+    verified against the ZIMS export of the same analysis). Also imports the
+    report's core-parameter extras (Ca/Mg/K, NO3/NO2, pH, dKH; phosphate =
+    `po4g` photometric, falling back to `po4er` calculated-from-P; elemental
+    `p` never — double-logging). `salinity` is deliberately skipped (ppt vs
+    canonical SG).
+  - **ZIMS** (long, quoted CSV, one measurement per row with an explicit unit
+    column): two-tier name matching — parenthetical element symbol stripped
+    of charges/digits ("Sr2+"→Sr, "I2"→I) against catalog symbols, then a
+    lowercase name-alias map (en-US/GB spellings, Orthophosphate→phosphate);
+    unrecognized units are skipped per row, never guessed.
+  Unmapped-but-populated fields surface in a "not imported" footnote (data
+  never silently disappears); below-detection zeros import as real 0 readings.
+  The preview's date defaults to the file's analysis date but is user-edited
+  to the **sample date** (the sample predates the analysis by days). The
+  Fauna Marin `sample_id` rides in the (editable) note prefill and powers a
+  re-import warning that scans existing notes for it.
 - **`MicroSummaryTile`**: the dashboard front door (see Dashboard above).
 - Values are entered and displayed in **µg/L** for trace/contaminant elements
   (fixed `displayFactor` 1000; storage stays canonical ppm) and ppm/mg-L for

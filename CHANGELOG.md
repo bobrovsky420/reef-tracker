@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0] - 2026-07-07
+
+### Added
+- ICP report import: the Microelements screen can now import a lab's CSV
+  export instead of typing the values in. Two formats are supported — the
+  Fauna Marin lab portal's CSV export and the universal ZIMS measurement
+  export — chosen when importing. A preview shows every recognized value
+  (microelements plus the core parameters the report carries, such as
+  calcium, magnesium, potassium and phosphate) with range indicators, lists
+  any report fields the app doesn't track, and lets you set the sample date
+  (prefilled with the report's analysis date — the water sample is usually
+  taken days earlier). Everything saves as one measurement batch, and
+  re-importing the same Fauna Marin sample is detected and warned about.
+
 ## [0.22.0] - 2026-07-07
 
 ### Added

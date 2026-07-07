@@ -1415,6 +1415,73 @@ class AppLocalizationsPl extends AppLocalizations {
       'Usuwa tylko widok. Pomiary zostaną zachowane.';
 
   @override
+  String get icpImportTitle => 'Import raportu ICP';
+
+  @override
+  String get icpImportFormatHint => 'Wybierz format wyeksportowanego pliku.';
+
+  @override
+  String get icpImportFormatFaunaMarinHint =>
+      'Eksport CSV z portalu laboratorium Fauna Marin';
+
+  @override
+  String get icpImportFormatZimsHint =>
+      'Uniwersalny CSV z pomiarami (data, pomiar, wartość, jednostka)';
+
+  @override
+  String get icpImportUnreadable => 'Nie udało się odczytać pliku.';
+
+  @override
+  String icpImportWrongFormat(String format) {
+    return 'Ten plik nie wygląda na eksport $format.';
+  }
+
+  @override
+  String get icpImportNoValues =>
+      'Nie znaleziono w pliku wartości do zaimportowania.';
+
+  @override
+  String get icpImportSampleDateHint =>
+      'Wstępnie wypełniono datą analizy z raportu. Zmień ją na dzień pobrania próbki wody.';
+
+  @override
+  String get icpImportSectionCore => 'Parametry podstawowe';
+
+  @override
+  String icpImportSkipped(String list) {
+    return 'Nie zaimportowano (brak pasującego parametru): $list';
+  }
+
+  @override
+  String icpImportValueCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Importuj $count wartości',
+      many: 'Importuj $count wartości',
+      few: 'Importuj $count wartości',
+      one: 'Importuj 1 wartość',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get icpImportDuplicateTitle => 'Próbka już zaimportowana?';
+
+  @override
+  String icpImportDuplicateBody(String id) {
+    return 'Istniejące pomiary już wspominają próbkę $id. Mimo to zaimportować ponownie?';
+  }
+
+  @override
+  String get icpImportAnyway => 'Importuj mimo to';
+
+  @override
+  String icpImportNotePrefill(String id) {
+    return 'Próbka ICP $id';
+  }
+
+  @override
   String get unitFixedNote => 'Ten parametr zawsze używa tej jednostki.';
 
   @override

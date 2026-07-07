@@ -1405,6 +1405,72 @@ class AppLocalizationsCs extends AppLocalizations {
       'Odstraní pouze pohled. Naměřené hodnoty zůstanou zachovány.';
 
   @override
+  String get icpImportTitle => 'Import ICP analýzy';
+
+  @override
+  String get icpImportFormatHint => 'Zvolte formát exportovaného souboru.';
+
+  @override
+  String get icpImportFormatFaunaMarinHint =>
+      'CSV export z laboratorního portálu Fauna Marin';
+
+  @override
+  String get icpImportFormatZimsHint =>
+      'Univerzální CSV s měřeními (datum, měření, hodnota, jednotka)';
+
+  @override
+  String get icpImportUnreadable => 'Soubor se nepodařilo přečíst.';
+
+  @override
+  String icpImportWrongFormat(String format) {
+    return 'Toto nevypadá jako export $format.';
+  }
+
+  @override
+  String get icpImportNoValues =>
+      'V souboru nebyly nalezeny žádné importovatelné hodnoty.';
+
+  @override
+  String get icpImportSampleDateHint =>
+      'Předvyplněno datem analýzy z reportu. Změňte je na den, kdy jste odebrali vzorek vody.';
+
+  @override
+  String get icpImportSectionCore => 'Základní parametry';
+
+  @override
+  String icpImportSkipped(String list) {
+    return 'Neimportováno (bez odpovídajícího parametru): $list';
+  }
+
+  @override
+  String icpImportValueCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Importovat $count hodnot',
+      few: 'Importovat $count hodnoty',
+      one: 'Importovat 1 hodnotu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get icpImportDuplicateTitle => 'Vzorek už byl importován?';
+
+  @override
+  String icpImportDuplicateBody(String id) {
+    return 'Existující měření už zmiňují vzorek $id. Přesto importovat znovu?';
+  }
+
+  @override
+  String get icpImportAnyway => 'Přesto importovat';
+
+  @override
+  String icpImportNotePrefill(String id) {
+    return 'ICP vzorek $id';
+  }
+
+  @override
   String get unitFixedNote => 'Tento parametr vždy používá tuto jednotku.';
 
   @override

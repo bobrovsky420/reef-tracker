@@ -2485,6 +2485,96 @@ abstract class AppLocalizations {
   /// **'This removes the view. Your measurements are kept.'**
   String get microViewDeleteBody;
 
+  /// Title of the ICP report CSV import: the Microelements app-bar action, the format-choice sheet and the preview screen (U17 phase 2).
+  ///
+  /// In en, this message translates to:
+  /// **'Import ICP report'**
+  String get icpImportTitle;
+
+  /// No description provided for @icpImportFormatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the export format of the file.'**
+  String get icpImportFormatHint;
+
+  /// Subtitle of the Fauna Marin option in the import format sheet. Format names themselves (Fauna Marin ICP, ZIMS) are proper nouns and not localized.
+  ///
+  /// In en, this message translates to:
+  /// **'CSV export from the Fauna Marin lab portal'**
+  String get icpImportFormatFaunaMarinHint;
+
+  /// No description provided for @icpImportFormatZimsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Universal measurement CSV (date, measurement, value, unit)'**
+  String get icpImportFormatZimsHint;
+
+  /// No description provided for @icpImportUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be read.'**
+  String get icpImportUnreadable;
+
+  /// Import rejection: the CSV header does not match the chosen format.
+  ///
+  /// In en, this message translates to:
+  /// **'This does not look like a {format} export.'**
+  String icpImportWrongFormat(String format);
+
+  /// No description provided for @icpImportNoValues.
+  ///
+  /// In en, this message translates to:
+  /// **'No importable values were found in the file.'**
+  String get icpImportNoValues;
+
+  /// Hint under the date card on the import preview: the water sample predates the lab's analysis date.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefilled with the analysis date from the report. Change it to the day you took the water sample.'**
+  String get icpImportSampleDateHint;
+
+  /// Import-preview section header for dashboard (non-microelement) parameters the report carries (Ca, Mg, K, PO4, ...).
+  ///
+  /// In en, this message translates to:
+  /// **'Core parameters'**
+  String get icpImportSectionCore;
+
+  /// Import-preview footnote listing report fields the app tracks no parameter for.
+  ///
+  /// In en, this message translates to:
+  /// **'Not imported (no matching parameter): {list}'**
+  String icpImportSkipped(String list);
+
+  /// Confirm button of the import preview.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Import 1 value} other{Import {count} values}}'**
+  String icpImportValueCount(int count);
+
+  /// No description provided for @icpImportDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample already imported?'**
+  String get icpImportDuplicateTitle;
+
+  /// Re-import warning body; {id} is the lab's sample identifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing readings already mention sample {id}. Import it again anyway?'**
+  String icpImportDuplicateBody(String id);
+
+  /// No description provided for @icpImportAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Import anyway'**
+  String get icpImportAnyway;
+
+  /// Default note attached to imported readings; carries the lab sample id, which the re-import warning looks for.
+  ///
+  /// In en, this message translates to:
+  /// **'ICP sample {id}'**
+  String icpImportNotePrefill(String id);
+
   /// Shown in the parameter editor instead of the unit field for µg/L microelements, whose display unit is fixed by the catalog.
   ///
   /// In en, this message translates to:
