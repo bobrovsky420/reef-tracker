@@ -419,8 +419,8 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
         .read(dbProvider)
         .updateTrackedParameter(
           widget.param.copyWith(
-            // Temp/salinity unit follows app settings, µg/L microelement
-            // units are fixed by the catalog; keep the stored unit either way.
+            // Temp/salinity unit follows app settings, microelement units
+            // are fixed by the catalog; keep the stored unit either way.
             unit: _pres.unitFollowsSettings || _pres.unitFixed
                 ? widget.param.unit
                 : _unit.text.trim(),
@@ -454,7 +454,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.straighten),
                 title: Text(l.unitWithValue(_pres.unitLabel)),
-                // µg/L microelements: the unit is fixed by the catalog (the
+                // Microelements: the unit is fixed by the catalog (the
                 // stored unit field is ignored), not driven by app settings.
                 subtitle: Text(
                   _pres.unitFollowsSettings

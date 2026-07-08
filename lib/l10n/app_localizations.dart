@@ -2575,7 +2575,7 @@ abstract class AppLocalizations {
   /// **'ICP sample {id}'**
   String icpImportNotePrefill(String id);
 
-  /// Shown in the parameter editor instead of the unit field for µg/L microelements, whose display unit is fixed by the catalog.
+  /// Shown in the parameter editor instead of the unit field for microelements, whose display unit (mg/L or µg/L, as on an ICP report) is fixed by the catalog.
   ///
   /// In en, this message translates to:
   /// **'This parameter always uses this unit.'**

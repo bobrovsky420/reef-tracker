@@ -1,0 +1,443 @@
+# Parameter catalog — SOURCE OF TRUTH for every trackable water parameter
+# (core dashboard set + the ICP microelement panel).
+#
+# After editing this file, regenerate the Dart catalog with:
+#     dart run tool/gen_parameters.dart
+# (the generator validates this file and writes parameter_catalog.g.dart).
+#
+# Notes:
+#  - `key` is a STABLE identifier persisted in the database (readings,
+#    tracked-parameter rows, dosing entries) — never rename or reuse a key.
+#  - Catalog ORDER matters: it is the display order of the micro panel and
+#    the fallback order elsewhere.
+#  - `unit` is the display unit label. Editable per tank for core parameters;
+#    FIXED for microelements (category other than core), where it must be the
+#    unit printed on an ICP report: mg/L or µg/L.
+#  - `decimals` = display precision (0–4).
+#  - `category`: core (dashboard; the default when omitted), major, trace or
+#    contaminant (the latter three = the Microelements screen, U17).
+#  - `symbol` = chemical element symbol ("Zn"), REQUIRED for microelements so
+#    rows match an ICP report; omit for core parameters.
+#  - `displayFactor` = canonical→display multiplier (default 1). Storage stays
+#    canonical ppm (mg/L) for every concentration; µg/L elements display
+#    through factor 1000.
+#  - `minValue` / `plausibleMin` / `plausibleMax` are in the CANONICAL unit:
+#    minValue = hard physical floor (reject below), the plausible pair = the
+#    generous range outside which a value needs explicit confirmation (#31).
+#    Define both plausible bounds or neither.
+
+parameters:
+  # --- Core dashboard parameters -------------------------------------------
+  - key: temperature
+    unit: "°C"
+    decimals: 1
+    minValue: 0
+    plausibleMin: 10
+    plausibleMax: 40
+
+  - key: ph
+    unit: pH
+    decimals: 2
+    minValue: 0
+    plausibleMin: 5
+    plausibleMax: 10
+
+  - key: salinity
+    unit: SG
+    decimals: 3
+    minValue: 1.0
+    plausibleMin: 1.0
+    plausibleMax: 1.05
+
+  - key: alkalinity
+    unit: dKH
+    decimals: 1
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 30
+
+  - key: calcium
+    unit: ppm
+    decimals: 0
+    minValue: 0
+    plausibleMin: 100
+    plausibleMax: 1000
+
+  - key: magnesium
+    unit: ppm
+    decimals: 0
+    minValue: 0
+    plausibleMin: 800
+    plausibleMax: 2000
+
+  - key: nitrate
+    unit: ppm
+    decimals: 1
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 250
+
+  - key: phosphate
+    unit: ppm
+    decimals: 2
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 5
+
+  - key: ammonia
+    unit: ppm
+    decimals: 2
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 10
+
+  - key: nitrite
+    unit: ppm
+    decimals: 2
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 10
+
+  # ORP can dip below zero in anoxic conditions — no hard floor.
+  - key: orp
+    unit: mV
+    decimals: 0
+    plausibleMin: -300
+    plausibleMax: 700
+
+  - key: potassium
+    unit: ppm
+    decimals: 0
+    minValue: 0
+    plausibleMin: 100
+    plausibleMax: 800
+
+  # --- Microelements (U17): the ICP panel ----------------------------------
+  # Categories major/trace/contaminant surface on the Microelements screen,
+  # not the dashboard. Canonical storage stays ppm (mg/L) for every
+  # concentration; display units are fixed per element to match the ICP
+  # report (Fauna Marin): mg/L for the macroelement/halogen/nutrient rows
+  # (Na, S, B, Br, Sr, I, Si), µg/L via displayFactor 1000 for trace elements
+  # and contaminants. Strontium, iodine and iron predate the panel: their
+  # keys and stored ppm values are unchanged, they only moved category (iron
+  # additionally gained the µg/L display, which is presentation-only).
+  - key: strontium
+    unit: mg/L
+    decimals: 1
+    category: trace
+    symbol: Sr
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 50
+
+  # Iodine sits with the halogens on the report, in mg/L (e.g. 0.102) —
+  # three decimals cover the reference-range resolution (0.055–0.080).
+  - key: iodine
+    unit: mg/L
+    decimals: 3
+    category: trace
+    symbol: I
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 2
+
+  - key: iron
+    unit: "µg/L"
+    decimals: 1
+    category: trace
+    symbol: Fe
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 2
+
+  # Major ions (mg/L on ICP reports; wide tolerances).
+  - key: sodium
+    unit: mg/L
+    decimals: 0
+    category: major
+    symbol: Na
+    minValue: 0
+    plausibleMin: 3000
+    plausibleMax: 20000
+
+  - key: sulfur
+    unit: mg/L
+    decimals: 0
+    category: major
+    symbol: S
+    minValue: 0
+    plausibleMin: 200
+    plausibleMax: 2000
+
+  - key: boron
+    unit: mg/L
+    decimals: 1
+    category: major
+    symbol: B
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 20
+
+  - key: bromine
+    unit: mg/L
+    decimals: 0
+    category: major
+    symbol: Br
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 300
+
+  # Silicon sits with the majors on ICP reports — in mg/L like them (e.g.
+  # 0.2) — but is wanted *low* (diatoms), so its default bounds are
+  # one-sided like a contaminant's.
+  - key: silicon
+    unit: mg/L
+    decimals: 2
+    category: major
+    symbol: Si
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 10
+
+  # Desirable trace elements (µg/L range).
+  - key: zinc
+    unit: "µg/L"
+    decimals: 1
+    category: trace
+    symbol: Zn
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: vanadium
+    unit: "µg/L"
+    decimals: 1
+    category: trace
+    symbol: V
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: copper
+    unit: "µg/L"
+    decimals: 1
+    category: trace
+    symbol: Cu
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: nickel
+    unit: "µg/L"
+    decimals: 1
+    category: trace
+    symbol: Ni
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: manganese
+    unit: "µg/L"
+    decimals: 1
+    category: trace
+    symbol: Mn
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: molybdenum
+    unit: "µg/L"
+    decimals: 1
+    category: trace
+    symbol: Mo
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: chromium
+    unit: "µg/L"
+    decimals: 2
+    category: trace
+    symbol: Cr
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: cobalt
+    unit: "µg/L"
+    decimals: 2
+    category: trace
+    symbol: Co
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: lithium
+    unit: "µg/L"
+    decimals: 0
+    category: trace
+    symbol: Li
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 5
+
+  - key: barium
+    unit: "µg/L"
+    decimals: 1
+    category: trace
+    symbol: Ba
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: selenium
+    unit: "µg/L"
+    decimals: 2
+    category: trace
+    symbol: Se
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  # Contaminants: wanted near zero, one-sided default bounds.
+  - key: aluminium
+    unit: "µg/L"
+    decimals: 1
+    category: contaminant
+    symbol: Al
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 2
+
+  - key: antimony
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: Sb
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: tin
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: Sn
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: beryllium
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: Be
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: silver
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: Ag
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: tungsten
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: W
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: lanthanum
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: La
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: titanium
+    unit: "µg/L"
+    decimals: 1
+    category: contaminant
+    symbol: Ti
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: zirconium
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: Zr
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: arsenic
+    unit: "µg/L"
+    decimals: 1
+    category: contaminant
+    symbol: As
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: cadmium
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: Cd
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: mercury
+    unit: "µg/L"
+    decimals: 2
+    category: contaminant
+    symbol: Hg
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1
+
+  - key: lead
+    unit: "µg/L"
+    decimals: 1
+    category: contaminant
+    symbol: Pb
+    displayFactor: 1000
+    minValue: 0
+    plausibleMin: 0
+    plausibleMax: 1

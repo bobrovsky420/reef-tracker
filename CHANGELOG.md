@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.1] - 2026-07-08
+
+### Changed
+- Microelements screen: the view-configuration button now uses the same
+  "tune" icon as the parameter configuration on the main dashboard.
+- Microelements are now shown in the same concentration units as on the ICP
+  report: iodine and silicon in mg/L (e.g. 0.102 instead of 102 µg/L), and
+  the major elements (sodium, sulfur, boron, bromine, strontium) labeled
+  mg/L instead of ppm. Microelement units are fixed by the app and no longer
+  editable per tank; stored values are unaffected.
+
 ## [0.23.0] - 2026-07-07
 
 ### Added

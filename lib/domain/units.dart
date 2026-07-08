@@ -199,9 +199,9 @@ class ParamPresentation {
   /// than the per-parameter unit field.
   final bool unitFollowsSettings;
 
-  /// True for parameters with a fixed catalog display unit (µg/L trace
-  /// elements): the unit is not editable per tank, and the stored unit field
-  /// is ignored in favor of the catalog label.
+  /// True for parameters with a fixed catalog display unit (microelements,
+  /// shown in the ICP report's mg/L or µg/L): the unit is not editable per
+  /// tank, and the stored unit field is ignored in favor of the catalog label.
   final bool unitFixed;
 
   /// Formats a canonical value for display in the preferred unit, using the
@@ -257,12 +257,14 @@ ParamPresentation presentationFor(
         unitFollowsSettings: true,
       );
     default:
-      // Microelements displayed in µg/L (U17): storage stays canonical ppm,
-      // display multiplies by the catalog's fixed factor. The stored unit
-      // field is ignored — rows created before the element joined the micro
-      // panel carry 'ppm', which would mislabel the converted value.
+      // Microelements (U17): storage stays canonical ppm; unit and decimals
+      // come from the catalog so the panel mirrors the ICP report — mg/L for
+      // the majors/halogens, µg/L (displayFactor 1000) for traces and
+      // contaminants. The stored unit field is ignored — rows seeded under an
+      // earlier catalog carry stale labels ('ppm', or 'µg/L' for iodine and
+      // silicon before they moved to mg/L) that would mislabel the value.
       final def = kParameterByKey[paramKey];
-      if (def != null && def.displayFactor != 1) {
+      if (def != null && def.isMicro) {
         final f = def.displayFactor;
         return ParamPresentation(
           unitLabel: def.unit,

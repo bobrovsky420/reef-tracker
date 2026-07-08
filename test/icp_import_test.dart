@@ -67,8 +67,8 @@ void main() {
       expect(r.values['boron'], 5.61);
       expect(r.values['bromine'], 67);
       expect(r.values['strontium'], 5.97);
-      // Iodine and silicon are mg/L on the report even though the app
-      // *displays* them in µg/L — no ÷1000 here.
+      // Iodine and silicon are mg/L on the report (and in the app's
+      // display) — no ÷1000 here.
       expect(r.values['iodine'], 0.102);
       expect(r.values['silicon'], 0.204);
       expect(r.values['calcium'], 392);

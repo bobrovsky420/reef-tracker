@@ -599,7 +599,7 @@
   },
   "unitFixedNote": "This parameter always uses this unit.",
   "@unitFixedNote": {
-    "description": "Shown in the parameter editor instead of the unit field for µg/L microelements, whose display unit is fixed by the catalog."
+    "description": "Shown in the parameter editor instead of the unit field for microelements, whose display unit (mg/L or µg/L, as on an ICP report) is fixed by the catalog."
   },
 
   "helpTemperature": "Water temperature. Stability matters more than the exact value.",

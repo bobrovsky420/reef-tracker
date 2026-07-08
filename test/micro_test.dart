@@ -44,16 +44,33 @@ void main() {
       }
     });
 
-    test('µg/L elements declare the fixed unit with factor 1000; ppm ones '
-        'stay factor 1', () {
+    test('units mirror the ICP report: µg/L elements use factor 1000, mg/L '
+        'ones factor 1', () {
       for (final p in kMicroParameters) {
         if (p.displayFactor != 1) {
           expect(p.displayFactor, 1000, reason: p.key);
           expect(p.unit, 'µg/L', reason: p.key);
         } else {
-          expect(p.unit, 'ppm', reason: p.key);
+          expect(p.unit, 'mg/L', reason: p.key);
         }
       }
+    });
+
+    test('the mg/L rows are exactly the report\'s macro/halogen/nutrient '
+        'section', () {
+      final mgL = kMicroParameters
+          .where((p) => p.unit == 'mg/L')
+          .map((p) => p.key)
+          .toSet();
+      expect(mgL, {
+        'sodium',
+        'sulfur',
+        'boron',
+        'bromine',
+        'silicon',
+        'strontium',
+        'iodine',
+      });
     });
   });
 
@@ -159,27 +176,39 @@ void main() {
     });
   });
 
-  group('µg/L presentation', () {
-    test('converts canonical ppm to display µg/L and back', () {
-      final pres = presentationForKey('iodine', 'ppm', const UnitPrefs());
+  group('micro presentation', () {
+    test('µg/L elements convert canonical ppm to display µg/L and back', () {
+      final pres = presentationForKey('iron', 'ppm', const UnitPrefs());
       expect(pres.unitLabel, 'µg/L');
       expect(pres.unitFixed, isTrue);
-      expect(pres.toDisplay(0.06), closeTo(60, 1e-9));
-      expect(pres.toCanonical(60), closeTo(0.06, 1e-9));
-      expect(pres.format(0.06), '60');
+      expect(pres.toDisplay(0.0009), closeTo(0.9, 1e-9));
+      expect(pres.toCanonical(0.9), closeTo(0.0009, 1e-9));
+      expect(pres.format(0.0009), '0.9');
     });
 
-    test('ignores the stored unit label — pre-panel iodine rows carry "ppm" '
-        'but must not display a ×1000 value as ppm', () {
-      final pres = presentationForKey('iodine', 'ppm', const UnitPrefs());
-      expect(pres.unitLabel, 'µg/L');
+    test('mg/L elements keep the identity conversion but still fix the '
+        'catalog label — stored rows carry stale seeded units ("ppm", or '
+        '"µg/L" for iodine/silicon before they moved to mg/L)', () {
+      final iodine = presentationForKey('iodine', 'µg/L', const UnitPrefs());
+      expect(iodine.unitLabel, 'mg/L');
+      expect(iodine.unitFixed, isTrue);
+      expect(iodine.toDisplay(0.102), 0.102);
+      expect(iodine.format(0.102), '0.102');
+
+      final strontium = presentationForKey(
+        'strontium',
+        'ppm',
+        const UnitPrefs(),
+      );
+      expect(strontium.unitLabel, 'mg/L');
+      expect(strontium.unitFixed, isTrue);
+      expect(strontium.toDisplay(8.1), 8.1);
     });
 
-    test('ppm micro elements keep the identity presentation', () {
-      final pres = presentationForKey('strontium', 'ppm', const UnitPrefs());
-      expect(pres.unitLabel, 'ppm');
-      expect(pres.unitFixed, isFalse);
-      expect(pres.toDisplay(8.1), 8.1);
+    test('silicon displays in mg/L like the report\'s nutrient section', () {
+      final pres = presentationForKey('silicon', 'µg/L', const UnitPrefs());
+      expect(pres.unitLabel, 'mg/L');
+      expect(pres.format(0.2), '0.20');
     });
   });
 

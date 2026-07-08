@@ -86,7 +86,7 @@ class MicroScreen extends ConsumerWidget {
             onPressed: () => _importReport(context),
           ),
           IconButton(
-            icon: const Icon(Icons.checklist),
+            icon: const Icon(Icons.tune),
             tooltip: l.microViewManage,
             onPressed: () => showMicroViewsManageSheet(context),
           ),
