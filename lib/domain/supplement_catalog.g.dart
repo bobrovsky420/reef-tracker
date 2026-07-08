@@ -146,15 +146,100 @@ const List<SupplementVendor> kSupplementVendors = [
   SupplementVendor(
     key: 'faunamarin',
     name: 'Fauna Marin',
-    products: [
-      SupplementProduct(
-        key: 'faunamarin.trace_i',
-        name: 'Elementals Trace I — Iodine',
-        elementKey: 'iodine',
-        strength: {'iodine': 1.0},
-      ),
-    ],
     programs: [
+      SupplementProgram(
+        key: 'elementals_trace',
+        name: 'Elementals Trace',
+        products: [
+          SupplementProduct(
+            key: 'faunamarin.trace_ba',
+            name: 'Elementals Trace Ba — Barium',
+            elementKey: 'barium',
+            strength: {'barium': 0.05},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_co',
+            name: 'Elementals Trace Co — Cobalt',
+            elementKey: 'cobalt',
+            strength: {'cobalt': 0.4},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_cr',
+            name: 'Elementals Trace Cr — Chromium',
+            elementKey: 'chromium',
+            strength: {'chromium': 0.05},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_cu',
+            name: 'Elementals Trace Cu — Copper',
+            elementKey: 'copper',
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_fe',
+            name: 'Elementals Trace Fe — Iron',
+            elementKey: 'iron',
+            strength: {'iron': 0.4},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_i',
+            name: 'Elementals Trace I — Iodine',
+            elementKey: 'iodine',
+            strength: {'iodine': 1.0},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_li',
+            name: 'Elementals Trace Li — Lithium',
+            elementKey: 'lithium',
+            strength: {'lithium': 1.5},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_mn',
+            name: 'Elementals Trace Mn — Manganese',
+            elementKey: 'manganese',
+            strength: {'manganese': 0.4},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_mo',
+            name: 'Elementals Trace Mo — Molybdenum',
+            elementKey: 'molybdenum',
+            strength: {'molybdenum': 0.6},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_ni',
+            name: 'Elementals Trace Ni — Nickel',
+            elementKey: 'nickel',
+            strength: {'nickel': 0.4},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_rb',
+            name: 'Elementals Trace Rb — Rubidium',
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_s',
+            name: 'Elementals Trace S — Sulfur',
+            elementKey: 'sulfur',
+            strength: {'sulfur': 70.0, 'magnesium': 50.0},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_se',
+            name: 'Elementals Trace Se — Selenium',
+            elementKey: 'selenium',
+            strength: {'selenium': 0.05},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_v',
+            name: 'Elementals Trace V — Vanadium',
+            elementKey: 'vanadium',
+            strength: {'vanadium': 0.5},
+          ),
+          SupplementProduct(
+            key: 'faunamarin.trace_zn',
+            name: 'Elementals Trace Zn — Zinc',
+            elementKey: 'zinc',
+            strength: {'zinc': 1.0},
+          ),
+        ],
+      ),
       SupplementProgram(
         key: 'balling_light',
         name: 'Balling Light',

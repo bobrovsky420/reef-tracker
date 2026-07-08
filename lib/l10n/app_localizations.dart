@@ -2116,7 +2116,7 @@ abstract class AppLocalizations {
   /// No description provided for @paramPotassium.
   ///
   /// In en, this message translates to:
-  /// **'Potassium'**
+  /// **'Potassium (K)'**
   String get paramPotassium;
 
   /// No description provided for @paramStrontium.

@@ -1206,7 +1206,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paramOrp => 'ORP';
 
   @override
-  String get paramPotassium => 'Калий';
+  String get paramPotassium => 'Калий (K)';
 
   @override
   String get paramStrontium => 'Стронций (Sr)';

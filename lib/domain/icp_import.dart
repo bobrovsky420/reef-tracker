@@ -243,7 +243,6 @@ final Map<String, String> _kSymbolToKey = {
     if (p.symbol != null) p.symbol!: p.key,
   'Ca': 'calcium',
   'Mg': 'magnesium',
-  'K': 'potassium',
 };
 
 /// Lowercased measurement-name aliases, covering en-US/en-GB spelling

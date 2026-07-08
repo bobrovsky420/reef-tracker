@@ -96,14 +96,6 @@ const List<ParameterDef> kReefParameters = [
     plausibleMax: 700,
   ),
   ParameterDef(
-    key: 'potassium',
-    unit: 'ppm',
-    decimals: 0,
-    minValue: 0,
-    plausibleMin: 100,
-    plausibleMax: 800,
-  ),
-  ParameterDef(
     key: 'strontium',
     unit: 'mg/L',
     decimals: 1,
@@ -143,6 +135,16 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 3000,
     plausibleMax: 20000,
+  ),
+  ParameterDef(
+    key: 'potassium',
+    unit: 'mg/L',
+    decimals: 0,
+    category: ParamCategory.major,
+    symbol: 'K',
+    minValue: 0,
+    plausibleMin: 100,
+    plausibleMax: 800,
   ),
   ParameterDef(
     key: 'sulfur',

@@ -105,22 +105,16 @@ parameters:
     plausibleMin: -300
     plausibleMax: 700
 
-  - key: potassium
-    unit: ppm
-    decimals: 0
-    minValue: 0
-    plausibleMin: 100
-    plausibleMax: 800
-
   # --- Microelements (U17): the ICP panel ----------------------------------
   # Categories major/trace/contaminant surface on the Microelements screen,
   # not the dashboard. Canonical storage stays ppm (mg/L) for every
   # concentration; display units are fixed per element to match the ICP
   # report (Fauna Marin): mg/L for the macroelement/halogen/nutrient rows
-  # (Na, S, B, Br, Sr, I, Si), µg/L via displayFactor 1000 for trace elements
-  # and contaminants. Strontium, iodine and iron predate the panel: their
-  # keys and stored ppm values are unchanged, they only moved category (iron
-  # additionally gained the µg/L display, which is presentation-only).
+  # (Na, K, S, B, Br, Sr, I, Si), µg/L via displayFactor 1000 for trace
+  # elements and contaminants. Strontium, iodine, iron and potassium predate
+  # the panel: their keys and stored ppm values are unchanged, they only
+  # moved category (iron additionally gained the µg/L display, which is
+  # presentation-only).
   - key: strontium
     unit: mg/L
     decimals: 1
@@ -160,6 +154,18 @@ parameters:
     minValue: 0
     plausibleMin: 3000
     plausibleMax: 20000
+
+  # Potassium predates the panel as a core dashboard parameter — key and
+  # stored ppm values unchanged, it only moved category (and its label from
+  # ppm to the equivalent mg/L).
+  - key: potassium
+    unit: mg/L
+    decimals: 0
+    category: major
+    symbol: K
+    minValue: 0
+    plausibleMin: 100
+    plausibleMax: 800
 
   - key: sulfur
     unit: mg/L

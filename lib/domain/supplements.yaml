@@ -134,14 +134,82 @@ vendors:
 
   - key: faunamarin
     name: Fauna Marin
-    products:
-      # Elementals Trace I: Fauna Marin's dosing text states 1 ml / 100 L
-      # daily = +10 µg/l iodine (= 0.01 ppm) → 1.0 (max +30 µg/l per day).
-      - key: faunamarin.trace_i
-        name: Elementals Trace I — Iodine
-        element: iodine
-        strength: { iodine: 1.0 }
     programs:
+      - key: elementals_trace
+        name: Elementals Trace
+        # Single-element trace solutions, one bottle per element. Line-up from
+        # https://www.faunamarin.de/en/category/products/water-treatment/
+        # (15 products: Ba Co Cr Cu Fe I Li Mn Mo Ni Rb S Se V Zn).
+        #
+        # strength = element rise (mg/L, the canonical unit even for µg/L-
+        # displayed traces) per 1 ml of product per 1 L of tank. Sources:
+        #  - Fauna Marin "ELEMENTALS | TRACE — HOW TO USE" PDF (Ba Co Cr Fe I
+        #    Li Mn Mo Ni V Zn): per 1 ml / 100 L — Ba +0.5 µg/l (10 ml → +5),
+        #    Co +4, Cr +0.5, Fe +4, I +10, Li +15, Mn +4, Mo +6, Ni +4, V +5,
+        #    Zn +10 µg/l → µg-value * 100 / 1000.
+        #  - Shop pages for the newer Se (+0.5 µg/l per 1 ml / 100 L),
+        #    S (10 ml / 100 L → S +7 mg/l and Mg +5 mg/l) and Rb (+5 µg/l per
+        #    1 ml / 100 L; the app has no rubidium parameter → no mapping).
+        #  - Cu publishes no per-ml figure ("dosage per ICP analysis") → no
+        #    strength (verified-only rule).
+        products:
+          - key: faunamarin.trace_ba
+            name: Elementals Trace Ba — Barium
+            element: barium
+            strength: { barium: 0.05 }
+          - key: faunamarin.trace_co
+            name: Elementals Trace Co — Cobalt
+            element: cobalt
+            strength: { cobalt: 0.4 }
+          - key: faunamarin.trace_cr
+            name: Elementals Trace Cr — Chromium
+            element: chromium
+            strength: { chromium: 0.05 }
+          - key: faunamarin.trace_cu
+            name: Elementals Trace Cu — Copper
+            element: copper
+          - key: faunamarin.trace_fe
+            name: Elementals Trace Fe — Iron
+            element: iron
+            strength: { iron: 0.4 }
+          - key: faunamarin.trace_i
+            name: Elementals Trace I — Iodine
+            element: iodine
+            strength: { iodine: 1.0 }
+          - key: faunamarin.trace_li
+            name: Elementals Trace Li — Lithium
+            element: lithium
+            strength: { lithium: 1.5 }
+          - key: faunamarin.trace_mn
+            name: Elementals Trace Mn — Manganese
+            element: manganese
+            strength: { manganese: 0.4 }
+          - key: faunamarin.trace_mo
+            name: Elementals Trace Mo — Molybdenum
+            element: molybdenum
+            strength: { molybdenum: 0.6 }
+          - key: faunamarin.trace_ni
+            name: Elementals Trace Ni — Nickel
+            element: nickel
+            strength: { nickel: 0.4 }
+          - key: faunamarin.trace_rb
+            name: Elementals Trace Rb — Rubidium
+          - key: faunamarin.trace_s
+            name: Elementals Trace S — Sulfur
+            element: sulfur
+            strength: { sulfur: 70.0, magnesium: 50.0 }
+          - key: faunamarin.trace_se
+            name: Elementals Trace Se — Selenium
+            element: selenium
+            strength: { selenium: 0.05 }
+          - key: faunamarin.trace_v
+            name: Elementals Trace V — Vanadium
+            element: vanadium
+            strength: { vanadium: 0.5 }
+          - key: faunamarin.trace_zn
+            name: Elementals Trace Zn — Zinc
+            element: zinc
+            strength: { zinc: 1.0 }
       - key: balling_light
         name: Balling Light
         # Components of the Balling Light Set:

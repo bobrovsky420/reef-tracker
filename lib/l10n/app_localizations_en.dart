@@ -1194,7 +1194,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paramOrp => 'ORP';
 
   @override
-  String get paramPotassium => 'Potassium';
+  String get paramPotassium => 'Potassium (K)';
 
   @override
   String get paramStrontium => 'Strontium (Sr)';

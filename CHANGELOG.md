@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.2] - 2026-07-08
+
+### Added
+- Supplement catalog: new Fauna Marin "Elementals Trace" program with all 15
+  single-element trace solutions (Ba, Co, Cr, Cu, Fe, I, Li, Mn, Mo, Ni, Rb,
+  S, Se, V, Zn). Potencies come from Fauna Marin's official dosing guide and
+  shop pages; Elementals Trace I (iodine) moved from the standalone Fauna
+  Marin list into the program (existing dosing entries are unaffected).
+
+### Changed
+- Potassium moved from the main dashboard to the Microelements screen, under
+  major elements: it now shows its element symbol — "Potassium (K)" — and a
+  fixed mg/L unit like the other ICP-panel elements. Stored readings are
+  unchanged (ppm and mg/L are equivalent), custom zone bounds carry over, and
+  ICP imports keep filling it in.
+
 ## [0.23.1] - 2026-07-08
 
 ### Changed

@@ -1198,7 +1198,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get paramOrp => 'ORP';
 
   @override
-  String get paramPotassium => 'Draslík';
+  String get paramPotassium => 'Draslík (K)';
 
   @override
   String get paramStrontium => 'Stroncium (Sr)';

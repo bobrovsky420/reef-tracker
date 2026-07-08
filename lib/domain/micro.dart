@@ -28,8 +28,9 @@ ZoneBounds _b(
 /// element yet (rows are created lazily on first save/edit), and as the seed
 /// when such a row is created.
 final Map<String, ZoneBounds> kMicroDefaultBounds = {
-  // Major ions (NSW at 35 ppt: Na ~10 760, S ~905, B ~4.4, Br ~65).
+  // Major ions (NSW at 35 ppt: Na ~10 760, K ~400, S ~905, B ~4.4, Br ~65).
   'sodium': _b(9500, 10000, 11200, 12000),
+  'potassium': _b(340, 380, 440, 480),
   'sulfur': _b(780, 850, 980, 1100),
   'boron': _b(3.0, 3.8, 5.5, 7.0),
   'bromine': _b(45, 55, 75, 95),
@@ -101,6 +102,7 @@ const String kMicroViewFaunaMarinName = 'Fauna Marin ICP';
 /// otherwise silently join this preset.
 const List<String> kMicroViewFaunaMarinKeys = [
   'sodium',
+  'potassium',
   'sulfur',
   'boron',
   'bromine',

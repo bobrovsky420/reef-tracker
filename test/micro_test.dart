@@ -10,12 +10,12 @@ void main() {
 
   group('micro catalog (U17)', () {
     test('the panel covers the Fauna Marin Reef ICP elements', () {
-      // 37 lab parameters − nitrogen/pH-style core overlaps (Ca, Mg, K,
+      // 37 lab parameters − nitrogen/pH-style core overlaps (Ca, Mg,
       // PO₄ stay core) − elemental P (redundant with total phosphate)
-      // = 32 micro keys, 3 of which predate the panel (Sr, I, Fe).
+      // = 33 micro keys, 4 of which predate the panel (Sr, I, Fe, K).
       const expected = {
         // Majors.
-        'sodium', 'sulfur', 'boron', 'bromine', 'silicon',
+        'sodium', 'potassium', 'sulfur', 'boron', 'bromine', 'silicon',
         // Traces.
         'strontium', 'iodine', 'iron', 'zinc', 'vanadium', 'copper',
         'nickel', 'manganese', 'molybdenum', 'chromium', 'cobalt',
@@ -31,7 +31,7 @@ void main() {
     test('isCoreParam: core keys stay core, micro keys do not, unknown keys '
         'fall back to core (legacy rows keep their surfaces)', () {
       expect(isCoreParam('calcium'), isTrue);
-      expect(isCoreParam('potassium'), isTrue);
+      expect(isCoreParam('potassium'), isFalse);
       expect(isCoreParam('iodine'), isFalse);
       expect(isCoreParam('lead'), isFalse);
       expect(isCoreParam('not-a-param'), isTrue);
@@ -64,6 +64,7 @@ void main() {
           .toSet();
       expect(mgL, {
         'sodium',
+        'potassium',
         'sulfur',
         'boron',
         'bromine',
