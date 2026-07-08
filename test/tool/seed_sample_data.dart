@@ -102,6 +102,7 @@ void main() {
     // shows a recent "last measured" date.
     const icp = <String, double>{
       'sodium': 10600,
+      'potassium': 412,
       'sulfur': 910,
       'boron': 4.3,
       'bromine': 63,
@@ -131,6 +132,16 @@ void main() {
       takenAt: daysAgo(3),
       values: const [(paramKey: 'iodine', value: 0.06)],
     );
+    // A potassium series drifting up out of the green zone (380–420) so its
+    // graph shows the line crossing green → amber with all three bands.
+    for (final (i, v) in [396.0, 412.0, 431.0].indexed) {
+      await db.insertReading(
+        tankId: tank,
+        paramKey: 'potassium',
+        value: v,
+        takenAt: daysAgo((2 - i) * 12),
+      );
+    }
 
     // --- Dosing plan with real history --------------------------------------
     // Alk: an OLD segment (5 ml/day, 40d ago → superseded 12d ago) plus the

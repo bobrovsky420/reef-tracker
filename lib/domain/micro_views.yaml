@@ -1,0 +1,64 @@
+# Built-in microelement view presets — SOURCE OF TRUTH for the code-defined
+# lab presets ("the elements my ICP lab reports") on the Microelements screen.
+#
+# After editing this file, regenerate the Dart presets with:
+#     dart run tool/gen_micro_views.dart
+# (the generator validates this file against parameters.yaml and writes
+# micro_views.g.dart).
+#
+# Notes:
+#  - `id` becomes the active-view token `preset:<id>`, which is PERSISTED in
+#    the device-local `micro_view` setting — never rename or reuse an id.
+#  - `name` is the chip label. Lab names are proper nouns, deliberately NOT
+#    localized (same policy as supplement brand names).
+#  - `keys` must be microelement keys from parameters.yaml (category major /
+#    trace / contaminant — core parameters never appear on the micro panel).
+#  - Preset ORDER here = chip order on the screen (after "Full list"). Key
+#    order within a preset is irrelevant (the panel renders in catalog order);
+#    keep it in catalog order anyway for readability.
+#  - Every preset is a FROZEN explicit list — deliberately not derived from
+#    the catalog, so elements added later for other panels don't silently
+#    join it. When a new element joins the catalog, add it here only to the
+#    presets whose lab report actually covers it.
+
+presets:
+  # The regular Fauna Marin Reef ICP panel: the element columns that actually
+  # carry a value in a real regular-ICP CSV export (the ICP-Total-only
+  # columns — Cs, Ga, Hf, Nd, Sc, Te, Th, Tl, U — come back empty there and
+  # are not in the catalog).
+  - id: faunaMarin
+    name: Fauna Marin ICP
+    keys:
+      - sodium
+      - potassium
+      - sulfur
+      - boron
+      - bromine
+      - silicon
+      - strontium
+      - iodine
+      - iron
+      - zinc
+      - vanadium
+      - copper
+      - nickel
+      - manganese
+      - molybdenum
+      - chromium
+      - cobalt
+      - lithium
+      - barium
+      - selenium
+      - aluminium
+      - antimony
+      - tin
+      - beryllium
+      - silver
+      - tungsten
+      - lanthanum
+      - titanium
+      - zirconium
+      - arsenic
+      - cadmium
+      - mercury
+      - lead

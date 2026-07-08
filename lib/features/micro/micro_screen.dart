@@ -325,13 +325,17 @@ class _ViewChips extends ConsumerWidget {
             selected: selection.token == kMicroViewFullToken,
             onSelected: (_) => _select(ref, null),
           ),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            // Lab name — a proper noun, deliberately not localized.
-            label: const Text(kMicroViewFaunaMarinName),
-            selected: selection.token == kMicroViewFaunaMarinToken,
-            onSelected: (_) => _select(ref, kMicroViewFaunaMarinToken),
-          ),
+          // Lab presets from micro_views.yaml — names are proper nouns,
+          // deliberately not localized.
+          for (final preset in kMicroViewPresets)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: ChoiceChip(
+                label: Text(preset.name),
+                selected: selection.token == preset.token,
+                onSelected: (_) => _select(ref, preset.token),
+              ),
+            ),
           for (final v in views)
             Padding(
               padding: const EdgeInsets.only(left: 8),

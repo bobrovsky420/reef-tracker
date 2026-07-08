@@ -76,34 +76,41 @@ void main() {
   });
 
   group('micro view presets (U17)', () {
-    test('the Fauna Marin preset names only real catalog elements', () {
+    MicroViewPreset byToken(String token) =>
+        kMicroViewPresets.singleWhere((p) => p.token == token);
+
+    test('every preset names only real catalog elements, without duplicates '
+        '(the generator validates this too — this guards a stale .g.dart)', () {
       final catalog = kMicroParameters.map((p) => p.key).toSet();
-      for (final k in kMicroViewFaunaMarinKeys) {
-        expect(catalog, contains(k));
+      for (final preset in kMicroViewPresets) {
+        for (final k in preset.keys) {
+          expect(catalog, contains(k), reason: preset.token);
+        }
+        expect(
+          preset.keys.toSet().length,
+          preset.keys.length,
+          reason: preset.token,
+        );
       }
     });
 
-    test('the Fauna Marin preset has no duplicates', () {
-      expect(
-        kMicroViewFaunaMarinKeys.toSet().length,
-        kMicroViewFaunaMarinKeys.length,
-      );
+    test('the Fauna Marin preset exists under its stored token — tokens '
+        'are persisted in device settings and must never change', () {
+      expect(byToken('preset:faunaMarin').name, 'Fauna Marin ICP');
     });
 
     test('today the Fauna Marin panel equals the whole catalog — this pin '
-        'must be UPDATED (not the preset) when other labs\' elements join '
-        'the catalog', () {
-      expect(
-        kMicroViewFaunaMarinKeys.toSet(),
-        kMicroParameters.map((p) => p.key).toSet(),
-      );
+        'must be UPDATED (not the preset) when other panels\' elements '
+        '(ICP Total, other labs) join the catalog: they never belong in '
+        'this preset', () {
+      final catalog = kMicroParameters.map((p) => p.key).toSet();
+      expect(byToken('preset:faunaMarin').keys.toSet(), catalog);
     });
 
     test('microPresetKeys resolves known presets and nothing else', () {
-      expect(
-        microPresetKeys(kMicroViewFaunaMarinToken),
-        kMicroViewFaunaMarinKeys.toSet(),
-      );
+      for (final preset in kMicroViewPresets) {
+        expect(microPresetKeys(preset.token), preset.keys.toSet());
+      }
       // Full = no filtering; custom/dangling tokens resolve via the DB.
       expect(microPresetKeys(kMicroViewFullToken), isNull);
       expect(microPresetKeys('view:12'), isNull);

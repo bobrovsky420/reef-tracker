@@ -130,7 +130,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RatioVisibilities` | tankId + ratioKey (composite PK), tankId FK cascade, visible, displayOrder, amberLow?/greenLow?/greenHigh?/amberHigh? — per-tank ratio-card visibility, dashboard position (shared order space with `TrackedParameters.displayOrder`), and editable zone bounds; a missing row (or all-null bounds) = visible, ordered last, default zones |
 | `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), remindEnabled (U2 dosing reminders — opt-in, effective only while active with a parsable doseTime), note?, displayOrder, createdAt, startedAt? (segment start; backfilled from createdAt), endedAt? (null = current), state (`DosingState`: active/ended/paused) — per-tank supplement-dosing plan (info-only). A plan is a chain of **dated segments**: editing a dose-affecting field ends the current segment (`state=ended`, `endedAt` set) and starts a new active one; stopping soft-ends it. Only `active` rows show in the Dosing tab and feed the calculator; `ended` rows are retained history. `paused` is reserved for a later phase. |
 | `ReadingTemplates` | id, tankId (FK cascade), name, paramKeys (JSON array of stable *catalog* keys — `encodeTemplateParamKeys`/`decodeTemplateParamKeys`, tolerant decode), displayOrder — per-tank **test sets** (U9): named parameter subsets whose chips filter the Add Reading form. Catalog keys, not `TrackedParameters` ids, so a set survives disable/untrack + re-add; keys not currently tracked+enabled are skipped at display, never deleted |
-| `MicroViews` | id, tankId (FK cascade), name, paramKeys (JSON array of stable catalog keys — same encode/decode as `ReadingTemplates`), displayOrder — user-created **microelement views** (U17): named element subsets whose chips filter the Microelements screen ("the elements my lab reports"). Built-in lab presets (Full list, Fauna Marin ICP) are code-side in `domain/micro.dart`, not rows; the active selection is the device-local `micro_view` setting |
+| `MicroViews` | id, tankId (FK cascade), name, paramKeys (JSON array of stable catalog keys — same encode/decode as `ReadingTemplates`), displayOrder — user-created **microelement views** (U17): named element subsets whose chips filter the Microelements screen ("the elements my lab reports"). Built-in lab presets (Full list, Fauna Marin ICP) are code-side (generated from `domain/micro_views.yaml`), not rows; the active selection is the device-local `micro_view` setting |
 | `MaintenanceSchedules` | id, tankId (FK cascade), actionType? (`MaintenanceActionType.name`, null = custom task), title? (required iff custom), cadenceDays? + cadenceUnit? (`MaintenanceCadenceUnit.name` days/weeks/months, null = days — repeat every N units; all repeat fields null = one-off), weekdays? (comma list 1=Mon…7=Sun — fixed-weekday repeat, same format as `DosingEntries.weekdays`), monthDay? (1–31, clamped to short months — fixed-date repeat), scheduledAt? (planned first due; floors the computed due while it lies after the last completion), lastDoneAt? (completion stamp for **custom** rows — typed rows derive last-done from their action log), remindEnabled, note?, displayOrder — the user-maintained maintenance plan list (U12); due math in `domain/reminders.dart` (`nextMaintenanceDue`, field priority weekdays > monthDay > cadence) |
 | `RoStages` | id, stageType (`RoStageType.name`; `custom` rows carry [title]), title?, lifespanDays (replace every N days), enabled (the "uncheck if a lower model is used" flag — hidden + silent but history kept), remindEnabled, note?, displayOrder — the shared RO unit's stages (U16). **No tankId by design**: like `Settings`, the RO unit is a property of the household, shared by every aquarium. Default 4-stage set seeded on first RO-screen visit (`seedDefaultRoStages`, guarded by the `ro_stages_seeded` settings flag — not the row count, so deleting every stage sticks) |
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
@@ -1172,11 +1172,19 @@ Parameters list/add-sheet and the health-score inputs to core).
   [Fauna Marin ICP] [custom views…] [+ new]` — filters which elements the
   screen, the entry form's "Full ICP" list, and the status summary cover
   (an element outside the view doesn't count toward "out of range"; hiding
-  is the user's explicit choice). Built-in presets are code-side:
-  the **Fauna Marin ICP** preset is a *frozen explicit key list*
-  (`kMicroViewFaunaMarinKeys` — deliberately not derived from the catalog,
-  so future elements added for other labs don't silently join it; a test
-  pins that today it equals the whole catalog), "Full list" = everything;
+  is the user's explicit choice). Built-in lab presets are **data, not
+  code**: `domain/micro_views.yaml` is the source of truth, generated into
+  `kMicroViewPresets` (`micro_views.g.dart`, a part of `micro.dart`) by
+  `tool/gen_micro_views.dart` — the parameters/supplements YAML pattern;
+  the chip row renders whatever the list contains, so adding a lab preset
+  is a YAML-only change. The **Fauna Marin ICP** preset
+  (`preset:faunaMarin`) is the regular test's panel — the element columns
+  that carry values in a real regular-ICP CSV export (the ICP-Total-only
+  columns come back empty and aren't in the catalog). Every preset is a
+  *frozen explicit key list* — deliberately not derived from the catalog,
+  so future elements added for other panels (ICP Total, other labs) don't
+  silently join it; a test pins that today it equals the whole catalog.
+  "Full list" = everything;
   lab preset names are proper nouns, not localized. Custom views live in
   `MicroViews` (create via the `+` chip — pre-checked with the active
   view's elements — or the app-bar manage sheet; chip long-press is the
@@ -1383,6 +1391,9 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 - Regenerate the supplement catalog after editing `lib/domain/supplements.yaml`:
   `dart run tool/gen_supplements.dart` (validates + writes
   `supplement_catalog.g.dart`).
+- Regenerate the micro view presets after editing `lib/domain/micro_views.yaml`:
+  `dart run tool/gen_micro_views.dart` (validates against `parameters.yaml` +
+  writes `micro_views.g.dart`).
 - Localization codegen: `flutter gen-l10n`.
 - Tests (`flutter test`): domain — `test/zones_test.dart`,
   `test/presets_test.dart`, `test/units_test.dart`, `test/ratio_test.dart`,
@@ -1413,10 +1424,12 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   are cancelled). The main job runs `dart format --set-exit-if-changed`, a
   regenerate-and-diff guard for all committed generated sources
   (`flutter gen-l10n`, `dart run build_runner build`, then
-  `dart run tool/gen_parameters.dart` and `dart run tool/gen_supplements.dart`
+  `dart run tool/gen_parameters.dart`, `dart run tool/gen_supplements.dart`
+  and `dart run tool/gen_micro_views.dart`
   — build_runner deletes the catalog `.g.dart` files as unclaimed outputs, so
   the catalog generators must run after it, and gen_parameters before
-  gen_supplements, which imports the parameter catalog), `flutter analyze`, and
+  gen_supplements, which imports the parameter catalog; gen_micro_views reads
+  only the YAML sources, so its position is free), `flutter analyze`, and
   `flutter test --coverage` with the lcov file uploaded as an artifact. A
   second job builds a **debug** APK on JDK 21 (Temurin) to exercise the
   Android platform layer — debug needs no `key.properties` and works with the

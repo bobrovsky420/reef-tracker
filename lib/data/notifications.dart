@@ -154,8 +154,9 @@ class ReminderNotifications implements ReminderSink {
     // The plugin throws on past dates; anything that slipped this close is
     // already visible in the in-app due chips.
     final cutoff = DateTime.now().add(const Duration(minutes: 1));
-    final upcoming = planned.where((n) => n.fireAtLocal.isAfter(cutoff)).toList()
-      ..sort((a, b) => a.fireAtLocal.compareTo(b.fireAtLocal));
+    final upcoming =
+        planned.where((n) => n.fireAtLocal.isAfter(cutoff)).toList()
+          ..sort((a, b) => a.fireAtLocal.compareTo(b.fireAtLocal));
     var id = 1;
     for (final n in upcoming.take(_maxPending)) {
       await _plugin.zonedSchedule(

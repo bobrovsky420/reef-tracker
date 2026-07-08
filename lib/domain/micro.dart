@@ -1,5 +1,7 @@
 import 'zones.dart';
 
+part 'micro_views.g.dart';
+
 /// Microelements (U17) — pure domain rules for the ICP panel: default zone
 /// bounds per element and the status summary the dashboard tile / screen
 /// header show. No Flutter, no DB.
@@ -30,7 +32,7 @@ ZoneBounds _b(
 final Map<String, ZoneBounds> kMicroDefaultBounds = {
   // Major ions (NSW at 35 ppt: Na ~10 760, K ~400, S ~905, B ~4.4, Br ~65).
   'sodium': _b(9500, 10000, 11200, 12000),
-  'potassium': _b(340, 380, 440, 480),
+  'potassium': _b(340, 380, 420, 460),
   'sulfur': _b(780, 850, 980, 1100),
   'boron': _b(3.0, 3.8, 5.5, 7.0),
   'bromine': _b(45, 55, 75, 95),
@@ -86,63 +88,38 @@ const List<String> kMicroHobbyKitKeys = ['iodine', 'iron', 'strontium'];
 /// Active-view token for the built-in "everything in the catalog" view.
 const String kMicroViewFullToken = 'preset:full';
 
-/// Active-view token for the built-in Fauna Marin Reef ICP preset.
-const String kMicroViewFaunaMarinToken = 'preset:faunaMarin';
-
 /// Token prefix for user-created views: `view:<MicroViews row id>`.
 const String kMicroViewCustomPrefix = 'view:';
 
-/// Display name of the Fauna Marin preset — a proper noun, **not** localized
-/// (same policy as supplement brand names).
-const String kMicroViewFaunaMarinName = 'Fauna Marin ICP';
+/// One built-in lab view preset ("the elements my ICP lab reports").
+///
+/// The presets themselves are data, not code: they are edited in
+/// `micro_views.yaml` and generated into [kMicroViewPresets] (in
+/// `micro_views.g.dart`) by `tool/gen_micro_views.dart` — the same
+/// source-of-truth pattern as `parameters.yaml` / `supplements.yaml`. Tokens
+/// (`preset:<id>`) are persisted in the device-local `micro_view` setting;
+/// names are lab proper nouns, deliberately not localized.
+class MicroViewPreset {
+  const MicroViewPreset({
+    required this.token,
+    required this.name,
+    required this.keys,
+  });
 
-/// The Fauna Marin Reef ICP panel as a **frozen explicit list** — today it
-/// happens to equal the whole catalog, but it must NOT be derived from it:
-/// elements added later for other labs' panels (fluoride, rubidium, …) would
-/// otherwise silently join this preset.
-const List<String> kMicroViewFaunaMarinKeys = [
-  'sodium',
-  'potassium',
-  'sulfur',
-  'boron',
-  'bromine',
-  'silicon',
-  'strontium',
-  'iodine',
-  'iron',
-  'zinc',
-  'vanadium',
-  'copper',
-  'nickel',
-  'manganese',
-  'molybdenum',
-  'chromium',
-  'cobalt',
-  'lithium',
-  'barium',
-  'selenium',
-  'aluminium',
-  'antimony',
-  'tin',
-  'beryllium',
-  'silver',
-  'tungsten',
-  'lanthanum',
-  'titanium',
-  'zirconium',
-  'arsenic',
-  'cadmium',
-  'mercury',
-  'lead',
-];
+  final String token;
+  final String name;
+  final List<String> keys;
+}
 
 /// Resolves a built-in preset token to its element keys. Returns null for the
 /// full view (= no filtering) and for anything that isn't a known preset
 /// token (custom-view tokens are resolved against the DB by the caller).
-Set<String>? microPresetKeys(String token) => switch (token) {
-  kMicroViewFaunaMarinToken => kMicroViewFaunaMarinKeys.toSet(),
-  _ => null,
-};
+Set<String>? microPresetKeys(String token) {
+  for (final p in kMicroViewPresets) {
+    if (p.token == token) return p.keys.toSet();
+  }
+  return null;
+}
 
 /// One element's inputs for [computeMicroStatus]: its effective bounds and
 /// latest reading (null = never measured).
