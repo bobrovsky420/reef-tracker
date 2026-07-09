@@ -129,6 +129,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `EquipmentCleanings` | id, tankId (FK cascade), cleanedAt, note? |
 | `RatioVisibilities` | tankId + ratioKey (composite PK), tankId FK cascade, visible, displayOrder, amberLow?/greenLow?/greenHigh?/amberHigh? — per-tank ratio-card visibility, dashboard position (shared order space with `TrackedParameters.displayOrder`), and editable zone bounds; a missing row (or all-null bounds) = visible, ordered last, default zones |
 | `DosingEntries` | id, tankId (FK cascade), productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names), elementKey? (real param key), amount?/amountUnit? (canonical ml or g)/basis? (per day/dose), frequency?/intervalDays?/weekdays?/doseTime? (descriptive schedule), remindEnabled (U2 dosing reminders — opt-in, effective only while active with a parsable doseTime), note?, displayOrder, createdAt, startedAt? (segment start; backfilled from createdAt), endedAt? (null = current), state (`DosingState`: active/ended/paused) — per-tank supplement-dosing plan (info-only). A plan is a chain of **dated segments**: editing a dose-affecting field ends the current segment (`state=ended`, `endedAt` set) and starts a new active one; stopping soft-ends it. Only `active` rows show in the Dosing tab and feed the calculator; `ended` rows are retained history. `paused` is reserved for a later phase. |
+| `ManualDoses` | id, tankId (FK cascade), dosedAt, productKey? (stable catalog id; null = custom), vendor?/program?/product (denormalized display names, same convention as `DosingEntries`), elementKey? (real param key; null for vitamins/medicines/trace mixes), amount + amountUnit (canonical ml or g — required, unlike the plan's optional dosage), note? — logged **one-off manual doses** (supplement/vitamin/medicine given by hand outside the plan). An event log like `WaterChanges`, not a segment: rows never chain or supersede. Feeds the dosing-history timeline and the dose calculator's logged-doses default; loggable for elements not in any plan |
 | `ReadingTemplates` | id, tankId (FK cascade), name, paramKeys (JSON array of stable *catalog* keys — `encodeTemplateParamKeys`/`decodeTemplateParamKeys`, tolerant decode), displayOrder — per-tank **test sets** (U9): named parameter subsets whose chips filter the Add Reading form. Catalog keys, not `TrackedParameters` ids, so a set survives disable/untrack + re-add; keys not currently tracked+enabled are skipped at display, never deleted |
 | `MicroViews` | id, tankId (FK cascade), name, paramKeys (JSON array of stable catalog keys — same encode/decode as `ReadingTemplates`), displayOrder — user-created **microelement views** (U17): named element subsets whose chips filter the Microelements screen ("the elements my lab reports"). Built-in lab presets (Full list, Fauna Marin ICP) are code-side (generated from `domain/micro_views.yaml`), not rows; the active selection is the device-local `micro_view` setting |
 | `MaintenanceSchedules` | id, tankId (FK cascade), actionType? (`MaintenanceActionType.name`, null = custom task), title? (required iff custom), cadenceDays? + cadenceUnit? (`MaintenanceCadenceUnit.name` days/weeks/months, null = days — repeat every N units; all repeat fields null = one-off), weekdays? (comma list 1=Mon…7=Sun — fixed-weekday repeat, same format as `DosingEntries.weekdays`), monthDay? (1–31, clamped to short months — fixed-date repeat), scheduledAt? (planned first due; floors the computed due while it lies after the last completion), lastDoneAt? (completion stamp for **custom** rows — typed rows derive last-done from their action log), remindEnabled, note?, displayOrder — the user-maintained maintenance plan list (U12); due math in `domain/reminders.dart` (`nextMaintenanceDue`, field priority weekdays > monthDay > cadence) |
@@ -143,7 +144,8 @@ and orders by a timestamp: `Readings(tankId, paramKey, takenAt)` and
 `Readings(tankId, takenAt)` (both kept — the 3-column one can't order by
 `takenAt` when only `tankId` is filtered), `WaterChanges(tankId, changedAt)`,
 `CarbonChanges(tankId, changedAt)`, `EquipmentCleanings(tankId, cleanedAt)`,
-`DosingEntries(tankId)`, `ReadingTemplates(tankId)`,
+`DosingEntries(tankId)`, `ManualDoses(tankId, dosedAt)` (v21),
+`ReadingTemplates(tankId)`,
 `MaintenanceSchedules(tankId)`, and `RoStageReplacements(stageId)`
 (v18 for existing DBs).
 
@@ -212,7 +214,9 @@ plain every-N-days); v18 added the `RoStages` + `RoStageReplacements` tables
 `legacy-<tankId>-<takenAt>` id per old same-timestamp cluster via
 `customStatement`, idempotent — only NULL rows change), retiring the runtime
 timestamp-grouping fallback; v20 added the `MicroViews` table + its `tankId`
-index (`createTable` guarded by `_tableExists` — U17 element views).
+index (`createTable` guarded by `_tableExists` — U17 element views); v21 added
+the `ManualDoses` table + its `(tankId, dosedAt)` index (`createTable` guarded
+by `_tableExists` — the manual dose log).
 Foreign keys are enabled in
 `beforeOpen` (`PRAGMA foreign_keys = ON`), and the database opens in **WAL
 journal mode** (`pragma journal_mode = WAL` in the
@@ -709,7 +713,8 @@ lifecycle wiring that are easy to miss:
 | `/ratio/:type/edit` | Edit a ratio card's per-tank zone bounds |
 | `/dosing/edit` | Add / edit a supplement-dosing entry (`extra` = `DosingEntry?`) |
 | `/dosing/calculator` | Consumption / dose-adjustment calculator |
-| `/dosing/history` | Read-only timeline of all dose segments (active + ended) with permanent-delete |
+| `/dosing/history` | Timeline of all dose segments (active + ended) merged with logged manual doses; permanent-delete, FAB to log a manual dose |
+| `/dosing/manual` | Add/edit a logged one-off manual dose (`extra`: `ManualDose?`) |
 | `/settings` | Units, language, reminders, backup/restore, automatic backup |
 | `/settings/backups` | Manage automatic backups (list / restore / share / delete) |
 | `/settings/reminders` | Reminder master switches + delivery time + permission warning |
@@ -1250,14 +1255,27 @@ Rendered as the **Dosing tab** of the home shell.
   value.
 - `dosing_history_screen.dart` — `DosingHistoryScreen` (route `/dosing/history`,
   opened from a **history icon in the Dosing tab's app bar**, contextual to
-  `_index == 2`) is a read-only timeline of **all** segments for the active tank
-  (`watchDosingHistory` / `dosingHistoryProvider`, active + ended, newest first).
-  Each row reuses `dosingDetailLine` for the dosage and shows the segment's period
-  (`Since {date}` for active, `{from} – {to}` for ended). A trailing delete
+  `_index == 2`) is a timeline of **all** segments for the active tank
+  (`watchDosingHistory` / `dosingHistoryProvider`, active + ended) **merged**
+  with the logged manual doses (`manualDosesProvider`) into one date-sorted
+  list (newest first; segments key on `startedAt ?? createdAt`, manual doses on
+  `dosedAt`; a `_TimelineItem` sealed type). Segment rows reuse
+  `dosingDetailLine` for the dosage and show the segment's period (`Since
+  {date}` for active, `{from} – {to}` for ended). A trailing delete
   **permanently** removes a record entered by mistake (`deleteDosingEntry`, a real
   hard delete — distinct from the reversible `stopDosingEntry`), behind an
   irreversible confirmation that warns when the record isn't the most recent for
   its element.
+- **Manual doses** (`manual_dose_edit_screen.dart`, route `/dosing/manual`):
+  one-off doses given by hand — a supplement correction, vitamins, medicine —
+  logged from the history screen's FAB into `ManualDoses`. The form reuses the
+  plan editor's Vendor → Product → Element cascade (custom free-text allowed;
+  element may be "none" and needn't be in any plan) plus a **required** amount
+  (ml/g) and the date/time given (date+time pickers, default now). Timeline
+  rows show a distinct `vaccines` icon and a highlighted "Manual" chip; tapping
+  a row edits it in place (plain `updateManualDose` — events don't chain like
+  segments, so no supersede), and the trailing delete permanently removes it
+  behind its own confirmation.
 
 **Future-proofing (decided up front):** dose amounts are stored canonically (ml/g
 only — no unit-preference conversion), `elementKey` is always a real
@@ -1265,6 +1283,8 @@ only — no unit-preference conversion), `elementKey` is always a real
 `strength` potency slot — so a later phase can log actual doses and compute
 element consumption by joining entries → product → potency → readings. The plan's
 schedule is purely descriptive and is **not** the source of truth for that math.
+The first slice of that phase exists: the `ManualDoses` log feeds the dose
+calculator's manual-input default (per-dose potency is phase 2 — TODO U18).
 The Fauna Marin Balling Light products now carry verified `strength` values
 (from the vendor's dosing chart); the dose calculator (below) consumes them.
 
@@ -1284,10 +1304,22 @@ just inputs + a result card and stores nothing.
   the entry's ml/g); an **optional manual dose in window** (total of one-off/extra
   doses given inside the window — spread over the fitted span (first → last
   reading) it joins the input side as `manualInputPerDay`, shares the supplement's
-  potency, and counts as active dosing for the overdosing/needs-potency logic;
-  later pre-fillable from a manual dosing log); and supplement strength (catalog
-  `strength[element]` when a plan entry's product has it, else a vendor reference
-  dose → `potencyFromReference`, with reference volume converted to litres).
+  potency, and counts as active dosing for the overdosing/needs-potency logic);
+  and supplement strength (catalog `strength[element]` when a plan entry's
+  product has it, else a vendor reference dose → `potencyFromReference`, with
+  reference volume converted to litres).
+- **Logged manual doses feed the manual field's default.** The `ManualDoses`
+  rows matching the selected element, the plan's dose unit, and the fitted span
+  (`manualDosesInWindow` — from-inclusive/to-exclusive: a dose at the first
+  reading's instant influenced later readings, one at/after the last reading
+  hasn't shown up yet) are summed; the total shows as the empty field's
+  `hintText` and is what the math uses **until the user types an override**
+  (clearing the field returns to the logged default). Captions under the field
+  report the count+total, warn when in-window doses use the **other unit** (they
+  can't join a ml sum and are excluded), and warn when a logged dose is a
+  **different catalog product** whose `strength[element]` differs >0.5% from
+  the effective potency (phase 1 warns only — per-dose potency is phase 2, see
+  TODO.md).
 - **Output card:** measured change/day, consumption/day, current dosing input/day,
   manual dosing input/day (when given),
   suggested daily dose + adjustment, and a `DoseCalcStatus` guidance banner

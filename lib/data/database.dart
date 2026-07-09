@@ -254,6 +254,43 @@ class DosingEntries extends Table {
       text().withDefault(Constant(DosingState.active.name))();
 }
 
+/// A logged one-off manual dose: a supplement, vitamin or medicine given by
+/// hand outside the regular plan — supplement identity + date/time + amount.
+/// Feeds the dosing-history timeline and the dose calculator's "manual dose
+/// in window" default. An event log like [WaterChanges], not a segment.
+@TableIndex(name: 'idx_manual_doses_tank_dosed', columns: {#tankId, #dosedAt})
+class ManualDoses extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+
+  /// When the dose was given.
+  DateTimeColumn get dosedAt => dateTime()();
+
+  /// Stable `SupplementProduct.key` from the catalog, or null for a custom
+  /// (free-text) entry — same convention as [DosingEntries].
+  TextColumn get productKey => text().nullable()();
+
+  /// Denormalized display names (the catalog values at entry time, or the
+  /// user's free text for a custom entry).
+  TextColumn get vendor => text().nullable()();
+  TextColumn get program => text().nullable()();
+  TextColumn get product => text()();
+
+  /// Target element as a real `Readings.paramKey`, or null for products with
+  /// no single element (vitamins, medicines, trace mixes).
+  TextColumn get elementKey => text().nullable()();
+
+  /// Amount given, in [amountUnit]. Required — unlike the plan's optional
+  /// dosage, the given volume is the point of the record.
+  RealColumn get amount => real()();
+
+  /// Amount unit, stored as [DoseUnit.name] (`ml`/`g`).
+  TextColumn get amountUnit => text()();
+
+  TextColumn get note => text().nullable()();
+}
+
 /// A named subset of a tank's parameters used to filter the Add Reading form
 /// (U9, a "test set" like "weekly big test" or "daily Alk").
 ///
@@ -431,6 +468,7 @@ class Settings extends Table {
     EquipmentCleanings,
     RatioVisibilities,
     DosingEntries,
+    ManualDoses,
     ReadingTemplates,
     MicroViews,
     MaintenanceSchedules,
@@ -443,7 +481,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -643,6 +681,16 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'CREATE INDEX IF NOT EXISTS idx_micro_views_tank '
           'ON micro_views (tank_id)',
+        );
+      }
+      if (from < 21) {
+        // Manual dose log (history timeline + calculator prefill).
+        if (!await _tableExists('manual_doses')) {
+          await m.createTable(manualDoses);
+        }
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_manual_doses_tank_dosed '
+          'ON manual_doses (tank_id, dosed_at)',
         );
       }
     },
@@ -1364,6 +1412,28 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  // --- Manual doses ----------------------------------------------------------
+
+  /// One-off manual doses for a tank, newest first.
+  Stream<List<ManualDose>> watchManualDoses(int tankId) =>
+      (select(manualDoses)
+            ..where((d) => d.tankId.equals(tankId))
+            ..orderBy([
+              (d) =>
+                  OrderingTerm(expression: d.dosedAt, mode: OrderingMode.desc),
+              (d) => OrderingTerm(expression: d.id, mode: OrderingMode.desc),
+            ]))
+          .watch();
+
+  Future<int> insertManualDose(ManualDosesCompanion dose) =>
+      into(manualDoses).insert(dose);
+
+  Future<void> updateManualDose(ManualDose dose) =>
+      update(manualDoses).replace(dose);
+
+  Future<void> deleteManualDose(int id) =>
+      (delete(manualDoses)..where((d) => d.id.equals(id))).go();
+
   // --- Reading templates (test sets, U9) ------------------------------------
 
   /// Test sets for a tank, in user (drag) order, then insertion order.
@@ -1885,6 +1955,9 @@ class AppDatabase extends _$AppDatabase {
   Future<List<DosingEntry>> getAllDosingEntries() =>
       select(dosingEntries).get();
 
+  /// Every logged manual dose, across all tanks.
+  Future<List<ManualDose>> getAllManualDoses() => select(manualDoses).get();
+
   /// Every test set, across all tanks.
   Future<List<ReadingTemplate>> getAllReadingTemplates() =>
       select(readingTemplates).get();
@@ -1927,12 +2000,13 @@ class AppDatabase extends _$AppDatabase {
     required List<DosingEntriesCompanion> dosingEntryRows,
     required List<ReadingTemplatesCompanion> readingTemplateRows,
     required List<MaintenanceSchedulesCompanion> maintenanceScheduleRows,
-    // Optional with empty defaults: the RO tables (U16) and micro views
-    // (U17) postdate several callers/tests, and an absent backup section
-    // decodes to empty anyway.
+    // Optional with empty defaults: the RO tables (U16), micro views (U17)
+    // and the manual dose log postdate several callers/tests, and an absent
+    // backup section decodes to empty anyway.
     List<RoStagesCompanion> roStageRows = const [],
     List<RoStageReplacementsCompanion> roStageReplacementRows = const [],
     List<MicroViewsCompanion> microViewRows = const [],
+    List<ManualDosesCompanion> manualDoseRows = const [],
     required List<SettingsCompanion> settingRows,
     Set<String> preserveSettingKeys = const {},
   }) async {
@@ -1947,6 +2021,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(equipmentCleanings).go();
       await delete(ratioVisibilities).go();
       await delete(dosingEntries).go();
+      await delete(manualDoses).go();
       await delete(readingTemplates).go();
       await delete(microViews).go();
       await delete(maintenanceSchedules).go();
@@ -1973,6 +2048,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(equipmentCleanings, equipmentCleaningRows);
         b.insertAll(ratioVisibilities, ratioVisibilityRows);
         b.insertAll(dosingEntries, dosingEntryRows);
+        b.insertAll(manualDoses, manualDoseRows);
         b.insertAll(readingTemplates, readingTemplateRows);
         b.insertAll(microViews, microViewRows);
         b.insertAll(maintenanceSchedules, maintenanceScheduleRows);

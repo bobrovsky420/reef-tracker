@@ -64,6 +64,39 @@ void main() {
     });
   });
 
+  group('manualDosesInWindow', () {
+    final from = DateTime(2026, 1, 1);
+    final to = DateTime(2026, 1, 11);
+
+    test('includes the start boundary, excludes the end boundary', () {
+      // A dose at the first reading's instant influences every later reading;
+      // a dose at (or after) the last reading hasn't shown up in any yet.
+      final doses = [
+        (t: from, amount: 5.0),
+        (t: DateTime(2026, 1, 5), amount: 3.0),
+        (t: to, amount: 7.0),
+      ];
+      final inWindow = manualDosesInWindow(
+        doses,
+        time: (d) => d.t,
+        from: from,
+        to: to,
+      );
+      expect(inWindow.map((d) => d.amount), [5.0, 3.0]);
+    });
+
+    test('drops doses before and after the window', () {
+      final doses = [
+        (t: from.subtract(const Duration(minutes: 1)), amount: 5.0),
+        (t: to.add(const Duration(days: 2)), amount: 3.0),
+      ];
+      expect(
+        manualDosesInWindow(doses, time: (d) => d.t, from: from, to: to),
+        isEmpty,
+      );
+    });
+  });
+
   group('potencyFromReference', () {
     test('matches the Fauna Marin Calcium chart (10 ml/100 L -> +11)', () {
       final p = potencyFromReference(

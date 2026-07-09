@@ -137,6 +137,22 @@ LinearFit? linearFit(List<DosePoint> points) {
 /// fewer than two points or they share a single instant (zero time span).
 double? slopePerDay(List<DosePoint> points) => linearFit(points)?.slopePerDay;
 
+/// The subset of [doses] given inside the slope-fit window: from [from]
+/// (inclusive — a dose at the first reading's instant influences every later
+/// reading) up to but excluding [to] (a dose at or after the last reading has
+/// not shown up in any measurement yet). [time] extracts each dose's
+/// timestamp, so callers pass their own row type (the DB's `ManualDose`)
+/// without coupling the domain to it. Element/unit filtering is the caller's.
+List<T> manualDosesInWindow<T>(
+  Iterable<T> doses, {
+  required DateTime Function(T) time,
+  required DateTime from,
+  required DateTime to,
+}) => [
+  for (final d in doses)
+    if (!time(d).isBefore(from) && time(d).isBefore(to)) d,
+];
+
 /// Potency `p` (element rise per 1 unit of product per 1 litre) from a vendor
 /// reference dose: [doseAmount] units in [refVolumeLiters] litres raises the
 /// element by [rise]. Returns null for non-positive inputs.

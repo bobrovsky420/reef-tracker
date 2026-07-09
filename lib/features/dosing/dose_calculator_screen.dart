@@ -179,13 +179,44 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         : volumeToCanonical(volDisp, volUnit);
     final potency = _effectivePotency(volUnit);
 
+    // Logged one-off doses inside the fitted span (first → last reading, same
+    // element). Doses in the plan's other unit can't join the sum — they are
+    // counted and warned about instead. Doses of a *different catalog product*
+    // still count but may not share the potency below; warn (phase 1).
+    final allManual = ref.watch(manualDosesProvider).value ?? const [];
+    var logged = const <ManualDose>[];
+    var unitMismatch = 0;
+    if (points.length >= 2) {
+      final inWindow = manualDosesInWindow(
+        allManual.where((d) => d.elementKey == element),
+        time: (d) => d.dosedAt,
+        from: points.first.t,
+        to: points.last.t,
+      );
+      logged = [
+        for (final d in inWindow)
+          if (DoseUnit.fromName(d.amountUnit) == _doseUnit) d,
+      ];
+      unitMismatch = inWindow.length - logged.length;
+    }
+    final loggedTotal = logged.fold(0.0, (sum, d) => sum + d.amount);
+    final productMismatch =
+        potency != null &&
+        logged.any((d) {
+          final strength =
+              kSupplementProductByKey[d.productKey]?.strength?[element];
+          return strength != null &&
+              (strength - potency).abs() > 0.005 * potency;
+        });
+
     // A one-off manual total is averaged over the span the slope was fitted
     // on (first → last reading), so both sides of the math cover the same
-    // period. With fewer than two readings the slope is null anyway.
+    // period. With fewer than two readings the slope is null anyway. An empty
+    // field defaults to the logged total; typing overrides it.
     final spanDays = points.length < 2
         ? 0.0
         : points.last.t.difference(points.first.t).inMilliseconds / 86400000.0;
-    final manualTotal = _parse(_manualDoseCtrl.text) ?? 0;
+    final manualTotal = _parse(_manualDoseCtrl.text) ?? loggedTotal;
     final manualDaily = spanDays > 0 ? manualTotal / spanDays : 0.0;
 
     final result = computeDoseCalc(
@@ -216,7 +247,13 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
           const SizedBox(height: 16),
           _doseField(l),
           const SizedBox(height: 16),
-          _manualDoseField(l),
+          _manualDoseField(
+            l,
+            loggedCount: logged.length,
+            loggedTotal: loggedTotal,
+            unitMismatch: unitMismatch,
+            productMismatch: productMismatch,
+          ),
           const Divider(height: 32),
           _potencySection(l, element, volUnit, volLiters, potency),
           const Divider(height: 32),
@@ -362,18 +399,58 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     );
   }
 
-  Widget _manualDoseField(AppLocalizations l) {
-    return TextField(
-      controller: _manualDoseCtrl,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      decoration: InputDecoration(
-        labelText: l.doseCalcManualDose,
-        helperText: l.doseCalcManualDoseHelp,
-        helperMaxLines: 3,
-        suffixText: _doseUnit.symbol,
-        border: const OutlineInputBorder(),
-      ),
-      onChanged: (_) => setState(() {}),
+  Widget _manualDoseField(
+    AppLocalizations l, {
+    required int loggedCount,
+    required double loggedTotal,
+    required int unitMismatch,
+    required bool productMismatch,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final small = Theme.of(context).textTheme.bodySmall;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _manualDoseCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: l.doseCalcManualDose,
+            helperText: l.doseCalcManualDoseHelp,
+            helperMaxLines: 3,
+            // The logged total shows in place while the field is empty — it
+            // is what the calculation uses until the user overrides it.
+            hintText: loggedCount > 0 ? formatDoseAmount(loggedTotal) : null,
+            suffixText: _doseUnit.symbol,
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        if (loggedCount > 0) ...[
+          const SizedBox(height: 6),
+          Text(
+            l.doseCalcLoggedDoses(
+              loggedCount,
+              '${formatDoseAmount(loggedTotal)} ${_doseUnit.symbol}',
+            ),
+            style: small?.copyWith(color: scheme.outline),
+          ),
+        ],
+        if (unitMismatch > 0) ...[
+          const SizedBox(height: 6),
+          Text(
+            l.doseCalcLoggedUnitMismatch(unitMismatch),
+            style: small?.copyWith(color: scheme.error),
+          ),
+        ],
+        if (productMismatch) ...[
+          const SizedBox(height: 6),
+          Text(
+            l.doseCalcLoggedProductMismatch,
+            style: small?.copyWith(color: scheme.tertiary),
+          ),
+        ],
+      ],
     );
   }
 

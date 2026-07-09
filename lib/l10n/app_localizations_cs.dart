@@ -644,6 +644,22 @@ class AppLocalizationsCs extends AppLocalizations {
       'Toto není nejnovější záznam pro tento prvek; jeho smazání neovlivní pozdější záznamy.';
 
   @override
+  String get dosingHistoryManual => 'Ruční';
+
+  @override
+  String get manualDoseNew => 'Zaznamenat ruční dávku';
+
+  @override
+  String get manualDoseEdit => 'Upravit ruční dávku';
+
+  @override
+  String get deleteManualDoseTitle => 'Smazat ruční dávku?';
+
+  @override
+  String get deleteManualDoseBody =>
+      'Tím se tato zaznamenaná dávka trvale odstraní z historie i z výpočtu dávkování. Nelze to vrátit zpět.';
+
+  @override
   String get dosingNew => 'Přidat přípravek';
 
   @override
@@ -993,10 +1009,40 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get doseCalcManualDoseHelp =>
-      'Volitelné: součet jednorázových či mimořádných dávek podaných během měřicího okna.';
+      'Volitelné: součet jednorázových či mimořádných dávek podaných během měřicího okna. Je-li pole prázdné, použijí se zaznamenané ruční dávky.';
 
   @override
   String get doseCalcManualInput => 'Ruční dávky přidávají';
+
+  @override
+  String doseCalcLoggedDoses(int count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zaznamenaných dávek v okně: $total',
+      few: '$count zaznamenané dávky v okně: $total',
+      one: '1 zaznamenaná dávka v okně: $total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doseCalcLoggedUnitMismatch(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count zaznamenaných dávek používá jinou jednotku a není započteno.',
+      few:
+          '$count zaznamenané dávky používají jinou jednotku a nejsou započteny.',
+      one: '1 zaznamenaná dávka používá jinou jednotku a není započtena.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcLoggedProductMismatch =>
+      'Některé zaznamenané dávky jsou jiný přípravek — jejich síla se může lišit od zadané výše.';
 
   @override
   String get doseCalcPerDay => 'den';

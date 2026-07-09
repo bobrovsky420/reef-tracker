@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/supplement_catalog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
-import 'dosing_screen.dart' show dosingDetailLine;
+import 'dosing_screen.dart' show dosingDetailLine, formatDoseAmount;
 
-/// Read-only timeline of every dosing segment for the active tank — current and
-/// past (superseded/stopped) — reached from the Dosing tab's app bar. Each
-/// record can be permanently deleted if it was entered by mistake (distinct from
+/// Timeline of every dosing event for the active tank — plan segments (current
+/// and past) merged with logged one-off manual doses, newest first. Manual
+/// doses are logged from the FAB, can be edited by tapping, and each record
+/// can be permanently deleted if it was entered by mistake (distinct from
 /// stopping a supplement, which soft-ends and is kept as history).
 class DosingHistoryScreen extends ConsumerWidget {
   const DosingHistoryScreen({super.key});
@@ -19,19 +21,56 @@ class DosingHistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final entries = ref.watch(dosingHistoryProvider).value ?? const [];
+    final manual = ref.watch(manualDosesProvider).value ?? const [];
+
+    // One date-sorted timeline: segments key on when they began, manual doses
+    // on when they were given. Both source lists arrive newest-first.
+    final items = <_TimelineItem>[
+      for (final e in entries) _SegmentItem(e),
+      for (final d in manual) _ManualItem(d),
+    ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     return Scaffold(
       appBar: AppBar(title: Text(l.dosingHistoryTitle)),
-      body: entries.isEmpty
+      body: items.isEmpty
           ? _EmptyState(l: l)
           : ListView.separated(
-              itemCount: entries.length,
+              itemCount: items.length,
               separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, i) =>
-                  _HistoryTile(entry: entries[i], all: entries),
+              itemBuilder: (context, i) => switch (items[i]) {
+                _SegmentItem(entry: final e) => _HistoryTile(
+                  entry: e,
+                  all: entries,
+                ),
+                _ManualItem(dose: final d) => _ManualDoseTile(dose: d),
+              },
             ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.vaccines_outlined),
+        label: Text(l.manualDoseNew),
+        onPressed: () => context.push('/dosing/manual'),
+      ),
     );
   }
+}
+
+/// One row of the merged timeline, ordered by [timestamp] (newest first).
+sealed class _TimelineItem {
+  DateTime get timestamp;
+}
+
+class _SegmentItem extends _TimelineItem {
+  _SegmentItem(this.entry);
+  final DosingEntry entry;
+  @override
+  DateTime get timestamp => entry.startedAt ?? entry.createdAt;
+}
+
+class _ManualItem extends _TimelineItem {
+  _ManualItem(this.dose);
+  final ManualDose dose;
+  @override
+  DateTime get timestamp => dose.dosedAt;
 }
 
 class _EmptyState extends StatelessWidget {
@@ -190,6 +229,115 @@ class _HistoryTile extends ConsumerWidget {
       ),
     );
     if (ok == true) await ref.read(dbProvider).deleteDosingEntry(entry.id);
+  }
+}
+
+/// Timeline row for a logged one-off manual dose. Tap to edit; the trailing
+/// icon permanently deletes (no soft-end — events don't chain like segments).
+class _ManualDoseTile extends ConsumerWidget {
+  const _ManualDoseTile({required this.dose});
+
+  final ManualDose dose;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final loc = MaterialLocalizations.of(context);
+    final names = resolveSupplementNames(
+      productKey: dose.productKey,
+      storedVendor: dose.vendor,
+      storedProgram: dose.program,
+      storedProduct: dose.product,
+    );
+    final source = [
+      names.vendor,
+      names.program,
+    ].where((s) => s != null && s.isNotEmpty).join(' · ');
+    final unit = DoseUnit.fromName(dose.amountUnit);
+    final when =
+        '${loc.formatMediumDate(dose.dosedAt)} '
+        '${TimeOfDay.fromDateTime(dose.dosedAt).format(context)}';
+
+    return ListTile(
+      titleAlignment: ListTileTitleAlignment.center,
+      leading: const Icon(Icons.vaccines_outlined),
+      title: Text(names.product),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 2),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (dose.elementKey != null)
+                _Chip(label: l.paramName(dose.elementKey!)),
+              _Chip(label: l.dosingHistoryManual, highlight: true),
+            ],
+          ),
+          if (source.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                source,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.outline),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              '${formatDoseAmount(dose.amount)} ${unit.symbol} · $when',
+            ),
+          ),
+          if (dose.note != null && dose.note!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                dose.note!,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.outline),
+              ),
+            ),
+        ],
+      ),
+      isThreeLine: true,
+      onTap: () => context.push('/dosing/manual', extra: dose),
+      trailing: IconButton(
+        icon: const Icon(Icons.delete_outline),
+        tooltip: l.delete,
+        onPressed: () => _confirmDelete(context, ref, l),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.deleteManualDoseTitle),
+        content: Text(l.deleteManualDoseBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.delete),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await ref.read(dbProvider).deleteManualDose(dose.id);
   }
 }
 

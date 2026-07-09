@@ -1153,6 +1153,36 @@ abstract class AppLocalizations {
   /// **'This isn\'t the most recent record for this element; deleting it won\'t change later records.'**
   String get deleteDosingRecordNotLatest;
 
+  /// Chip on a dosing-history tile marking a logged one-off manual dose.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get dosingHistoryManual;
+
+  /// No description provided for @manualDoseNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Log manual dose'**
+  String get manualDoseNew;
+
+  /// No description provided for @manualDoseEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit manual dose'**
+  String get manualDoseEdit;
+
+  /// No description provided for @deleteManualDoseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete manual dose?'**
+  String get deleteManualDoseTitle;
+
+  /// No description provided for @deleteManualDoseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes this logged dose from history and the dose calculation. It can\'t be undone.'**
+  String get deleteManualDoseBody;
+
   /// No description provided for @dosingNew.
   ///
   /// In en, this message translates to:
@@ -1762,7 +1792,7 @@ abstract class AppLocalizations {
   /// No description provided for @doseCalcManualDoseHelp.
   ///
   /// In en, this message translates to:
-  /// **'Optional: total of one-time or extra doses given during the measurement window.'**
+  /// **'Optional: total of one-time or extra doses given during the measurement window. When empty, logged manual doses are used.'**
   String get doseCalcManualDoseHelp;
 
   /// Result row label: element rise per day contributed by the one-off manual doses.
@@ -1770,6 +1800,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manual doses add'**
   String get doseCalcManualInput;
+
+  /// Caption under the manual-dose field: how many logged doses fall in the window and their total.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 logged dose in window: {total}} other{{count} logged doses in window: {total}}}'**
+  String doseCalcLoggedDoses(int count, Object total);
+
+  /// No description provided for @doseCalcLoggedUnitMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 logged dose uses a different unit and is not included.} other{{count} logged doses use a different unit and are not included.}}'**
+  String doseCalcLoggedUnitMismatch(int count);
+
+  /// No description provided for @doseCalcLoggedProductMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Some logged doses are a different product — their strength may differ from the one entered above.'**
+  String get doseCalcLoggedProductMismatch;
 
   /// No description provided for @doseCalcPerDay.
   ///

@@ -69,6 +69,7 @@ class BackupData {
     required this.equipmentCleanings,
     required this.ratioVisibilities,
     required this.dosingEntries,
+    this.manualDoses = const [],
     this.readingTemplates = const [],
     this.microViews = const [],
     this.maintenanceSchedules = const [],
@@ -89,6 +90,10 @@ class BackupData {
   final List<EquipmentCleaningsCompanion> equipmentCleanings;
   final List<RatioVisibilitiesCompanion> ratioVisibilities;
   final List<DosingEntriesCompanion> dosingEntries;
+
+  /// Logged one-off manual doses. Defaults to empty for older backups, same
+  /// policy as [readingTemplates].
+  final List<ManualDosesCompanion> manualDoses;
 
   /// Test sets (U9). Defaults to empty: pre-U9 backups have no section, and
   /// the round-trip test pins that new backups carry it.
@@ -125,6 +130,7 @@ String encodeBackup({
   required List<EquipmentCleaning> equipmentCleanings,
   required List<RatioVisibility> ratioVisibilities,
   required List<DosingEntry> dosingEntries,
+  List<ManualDose> manualDoses = const [],
   List<ReadingTemplate> readingTemplates = const [],
   List<MicroView> microViews = const [],
   List<MaintenanceSchedule> maintenanceSchedules = const [],
@@ -147,6 +153,7 @@ String encodeBackup({
         .toList(),
     'ratioVisibilities': ratioVisibilities.map(_ratioVisibilityToJson).toList(),
     'dosingEntries': dosingEntries.map(_dosingEntryToJson).toList(),
+    'manualDoses': manualDoses.map(_manualDoseToJson).toList(),
     'readingTemplates': readingTemplates.map(_readingTemplateToJson).toList(),
     'microViews': microViews.map(_microViewToJson).toList(),
     'maintenanceSchedules': maintenanceSchedules
@@ -303,6 +310,7 @@ BackupData decodeBackup(String jsonString) {
       _dosingEntryFromJson,
       required: false,
     ),
+    manualDoses: section('manualDoses', _manualDoseFromJson, required: false),
     readingTemplates: section(
       'readingTemplates',
       _readingTemplateFromJson,
@@ -365,6 +373,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     data.equipmentCleanings.map((r) => r.id),
   );
   requireSaneIds('dosingEntries', data.dosingEntries.map((r) => r.id));
+  requireSaneIds('manualDoses', data.manualDoses.map((r) => r.id));
   requireSaneIds('readingTemplates', data.readingTemplates.map((r) => r.id));
   requireSaneIds('microViews', data.microViews.map((r) => r.id));
   requireSaneIds(
@@ -413,6 +422,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     data.ratioVisibilities.map((r) => r.tankId.value),
   );
   requireTank('dosingEntries', data.dosingEntries.map((r) => r.tankId.value));
+  requireTank('manualDoses', data.manualDoses.map((r) => r.tankId.value));
   requireTank(
     'readingTemplates',
     data.readingTemplates.map((r) => r.tankId.value),
@@ -516,6 +526,25 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     data.dosingEntries.map((d) => d.basis.present ? d.basis.value : null),
     names(DoseBasis.values),
   );
+  requireKnown(
+    'manualDoses.amountUnit',
+    data.manualDoses.map(
+      (d) => d.amountUnit.present ? d.amountUnit.value : null,
+    ),
+    names(DoseUnit.values),
+  );
+  // A manual dose is a record of a given volume — a non-positive amount is
+  // the same at-the-door garbage as an invalid cadence (#8): it would skew
+  // the calculator's logged-doses total instead of failing loudly here.
+  for (final d in data.manualDoses) {
+    final amount = d.amount.present ? d.amount.value : null;
+    if (amount != null && amount <= 0) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'manualDoses: amount $amount out of range',
+      );
+    }
+  }
   requireKnown(
     'maintenanceSchedules.actionType',
     data.maintenanceSchedules.map(
@@ -666,6 +695,7 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       equipmentCleaningRows: data.equipmentCleanings,
       ratioVisibilityRows: data.ratioVisibilities,
       dosingEntryRows: data.dosingEntries,
+      manualDoseRows: data.manualDoses,
       readingTemplateRows: data.readingTemplates,
       microViewRows: data.microViews,
       maintenanceScheduleRows: data.maintenanceSchedules,
@@ -695,6 +725,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   var equipmentCleanings = await db.getAllEquipmentCleanings();
   var ratioVisibilities = await db.getAllRatioVisibilities();
   var dosingEntries = await db.getAllDosingEntries();
+  var manualDoses = await db.getAllManualDoses();
   var readingTemplates = await db.getAllReadingTemplates();
   var microViews = await db.getAllMicroViews();
   var maintenanceSchedules = await db.getAllMaintenanceSchedules();
@@ -733,6 +764,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
     dosingEntries = dosingEntries
         .where((r) => !hidden.contains(r.tankId))
         .toList();
+    manualDoses = manualDoses.where((r) => !hidden.contains(r.tankId)).toList();
     readingTemplates = readingTemplates
         .where((r) => !hidden.contains(r.tankId))
         .toList();
@@ -754,6 +786,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       equipmentCleanings: equipmentCleanings,
       ratioVisibilities: ratioVisibilities,
       dosingEntries: dosingEntries,
+      manualDoses: manualDoses,
       readingTemplates: readingTemplates,
       microViews: microViews,
       maintenanceSchedules: maintenanceSchedules,
@@ -1037,6 +1070,35 @@ DosingEntriesCompanion _dosingEntryFromJson(Map<String, dynamic> m) =>
       startedAt: Value(_dateOrNull(m['startedAt']) ?? _date(m['createdAt'])),
       endedAt: Value(_dateOrNull(m['endedAt'])),
       state: Value((m['state'] as String?) ?? DosingState.active.name),
+    );
+
+Map<String, dynamic> _manualDoseToJson(ManualDose d) => {
+  'id': d.id,
+  'tankId': d.tankId,
+  'dosedAt': d.dosedAt.millisecondsSinceEpoch,
+  'productKey': d.productKey,
+  'vendor': d.vendor,
+  'program': d.program,
+  'product': d.product,
+  'elementKey': d.elementKey,
+  'amount': d.amount,
+  'amountUnit': d.amountUnit,
+  'note': d.note,
+};
+
+ManualDosesCompanion _manualDoseFromJson(Map<String, dynamic> m) =>
+    ManualDosesCompanion(
+      id: Value(m['id'] as int),
+      tankId: Value(m['tankId'] as int),
+      dosedAt: Value(_date(m['dosedAt'])),
+      productKey: Value(m['productKey'] as String?),
+      vendor: Value(m['vendor'] as String?),
+      program: Value(m['program'] as String?),
+      product: Value(m['product'] as String),
+      elementKey: Value(m['elementKey'] as String?),
+      amount: Value((m['amount'] as num).toDouble()),
+      amountUnit: Value(m['amountUnit'] as String),
+      note: Value(m['note'] as String?),
     );
 
 Map<String, dynamic> _readingTemplateToJson(ReadingTemplate t) => {

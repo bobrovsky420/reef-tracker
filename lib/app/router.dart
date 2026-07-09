@@ -14,6 +14,7 @@ import '../features/calculator/salinity_calculator_screen.dart';
 import '../features/dosing/dose_calculator_screen.dart';
 import '../features/dosing/dosing_edit_screen.dart';
 import '../features/dosing/dosing_history_screen.dart';
+import '../features/dosing/manual_dose_edit_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/home/home_shell.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
@@ -110,6 +111,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/dosing/history',
       builder: (context, state) => const DosingHistoryScreen(),
+    ),
+    GoRoute(
+      path: '/dosing/manual',
+      builder: (context, state) =>
+          ManualDoseEditScreen(dose: state.extra as ManualDose?),
     ),
     GoRoute(
       path: '/settings',

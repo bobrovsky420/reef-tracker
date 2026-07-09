@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.24.0] - 2026-07-09
 
 ### Added
+- Manual dose log: one-off doses given by hand (a supplement correction,
+  vitamins, medicine) can now be recorded from the dosing history screen —
+  supplement (or free text), amount, and the date/time given; the element
+  doesn't have to be in the dosing plan. Logged doses appear in the dosing
+  history timeline with their own icon and can be edited or deleted.
+- Dose calculator: logged manual doses for the selected element that fall
+  inside the measurement window are summed automatically and used as the
+  "Manual dose in window" default (typing a value still overrides). Captions
+  under the field show the count and total, and warn when a logged dose uses
+  a different unit (excluded) or a different product (its strength may
+  differ).
 - Dose calculator: optional "Manual dose in window" field — the total of
   one-time or extra doses given during the measurement window. It is factored
   into the consumption estimate and the suggested daily dose (a spike from a

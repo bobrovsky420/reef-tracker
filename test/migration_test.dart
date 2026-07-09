@@ -498,6 +498,44 @@ void main() {
     expect(await db.getRoStages(), isEmpty);
   });
 
+  test('upgrading from v20 creates the manual_doses table', () async {
+    // seedFullSchemaAt builds the current schema, so drop the table (and its
+    // index) to reconstruct a genuine v20 file where the from<21 step must
+    // actually create it.
+    final file = File('${tempDir.path}/from20-nomanual.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    await seed.getAllTanks();
+    await seed.customStatement(
+      'DROP INDEX IF EXISTS idx_manual_doses_tank_dosed',
+    );
+    await seed.customStatement('DROP TABLE manual_doses');
+    await seed.customStatement('PRAGMA user_version = 20');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    // Exercise the new table on real write + read paths.
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    final dosedAt = DateTime(2026, 7, 8, 14, 30);
+    await db.insertManualDose(
+      ManualDosesCompanion(
+        tankId: Value(tankId),
+        dosedAt: Value(dosedAt),
+        product: const Value('KH+'),
+        elementKey: const Value('alkalinity'),
+        amount: const Value(12.5),
+        amountUnit: const Value('ml'),
+      ),
+    );
+    final restored = (await db.getAllManualDoses()).single;
+    expect(restored.amount, 12.5);
+    expect(restored.dosedAt, dosedAt);
+    expect(await indexNames(db), contains('idx_manual_doses_tank_dosed'));
+  });
+
   test('upgrading from v18 backfills legacy reading group ids (#15)', () async {
     final file = File('${tempDir.path}/from18-nullgroups.sqlite');
     final seed = AppDatabase(NativeDatabase(file));

@@ -242,6 +242,18 @@ final dosingHistoryProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
   return ref.watch(_dosingHistoryFamily(tank.id));
 });
 
+final _manualDosesFamily = StreamProvider.autoDispose
+    .family<List<ManualDose>, int>(
+      (ref, tankId) => _dedup(ref.watch(dbProvider).watchManualDoses(tankId)),
+    );
+
+/// Logged one-off manual doses for the active tank (newest first).
+final manualDosesProvider = Provider<AsyncValue<List<ManualDose>>>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_manualDosesFamily(tank.id));
+});
+
 final _readingTemplatesFamily = StreamProvider.autoDispose
     .family<List<ReadingTemplate>, int>(
       (ref, tankId) =>

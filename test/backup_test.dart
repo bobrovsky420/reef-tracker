@@ -186,6 +186,29 @@ void main() {
         state: DosingState.ended.name,
       ),
     ];
+    final manualDoses = [
+      ManualDose(
+        id: 55,
+        tankId: 1,
+        dosedAt: DateTime.fromMillisecondsSinceEpoch(1700007000000),
+        productKey: 'redsea.foundation_b',
+        vendor: 'Red Sea',
+        program: 'Reef Care Program',
+        product: 'Reef Foundation B (KH/Alk)',
+        elementKey: 'alkalinity',
+        amount: 12.5,
+        amountUnit: 'ml',
+        note: 'correction after low Alk test',
+      ),
+      ManualDose(
+        id: 56,
+        tankId: 2,
+        dosedAt: DateTime.fromMillisecondsSinceEpoch(1700008000000),
+        product: 'Vitamin mix',
+        amount: 3,
+        amountUnit: 'g',
+      ),
+    ];
     final readingTemplates = [
       ReadingTemplate(
         id: 60,
@@ -301,6 +324,7 @@ void main() {
         equipmentCleanings: equipmentCleanings,
         ratioVisibilities: ratioVisibilities,
         dosingEntries: dosingEntries,
+        manualDoses: manualDoses,
         readingTemplates: readingTemplates,
         microViews: microViews,
         maintenanceSchedules: maintenanceSchedules,
@@ -395,6 +419,23 @@ void main() {
       expect(d1.startedAt.value, dosingEntries[1].startedAt);
       expect(d1.endedAt.value, dosingEntries[1].endedAt);
       expect(d1.state.value, DosingState.ended.name);
+
+      final md0 = data.manualDoses[0];
+      expect(md0.id.value, 55);
+      expect(md0.tankId.value, 1);
+      expect(md0.dosedAt.value, manualDoses[0].dosedAt);
+      expect(md0.productKey.value, 'redsea.foundation_b');
+      expect(md0.product.value, 'Reef Foundation B (KH/Alk)');
+      expect(md0.elementKey.value, 'alkalinity');
+      expect(md0.amount.value, 12.5);
+      expect(md0.amountUnit.value, 'ml');
+      expect(md0.note.value, 'correction after low Alk test');
+      final md1 = data.manualDoses[1];
+      expect(md1.productKey.value, isNull);
+      expect(md1.elementKey.value, isNull);
+      expect(md1.amount.value, 3.0);
+      expect(md1.amountUnit.value, 'g');
+      expect(md1.note.value, isNull);
 
       final rt0 = data.readingTemplates[0];
       expect(rt0.id.value, 60);
@@ -870,6 +911,7 @@ void main() {
     BackupData dataWith({
       List<TanksCompanion> tanks = const [],
       List<ReadingsCompanion> readings = const [],
+      List<ManualDosesCompanion> manualDoses = const [],
       List<ReadingTemplatesCompanion> readingTemplates = const [],
       List<MicroViewsCompanion> microViews = const [],
       List<MaintenanceSchedulesCompanion> maintenanceSchedules = const [],
@@ -886,6 +928,7 @@ void main() {
       equipmentCleanings: const [],
       ratioVisibilities: const [],
       dosingEntries: const [],
+      manualDoses: manualDoses,
       readingTemplates: readingTemplates,
       microViews: microViews,
       maintenanceSchedules: maintenanceSchedules,
@@ -992,6 +1035,57 @@ void main() {
         () => validateBackup(d, appSchemaVersion: 14),
         rejectedWith(BackupRejection.inconsistent),
       );
+    });
+
+    ManualDosesCompanion manualDose(
+      int id,
+      int tankId, {
+      double amount = 12.5,
+      String unit = 'ml',
+    }) => ManualDosesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      dosedAt: Value(DateTime.fromMillisecondsSinceEpoch(1700007000000)),
+      product: const Value('Reef Foundation B (KH/Alk)'),
+      amount: Value(amount),
+      amountUnit: Value(unit),
+    );
+
+    test('accepts a consistent manual dose', () {
+      final d = dataWith(tanks: [tank(1)], manualDoses: [manualDose(55, 1)]);
+      expect(() => validateBackup(d, appSchemaVersion: 21), returnsNormally);
+    });
+
+    test('rejects a manual dose referencing a missing aquarium', () {
+      final d = dataWith(tanks: [tank(1)], manualDoses: [manualDose(55, 99)]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 21),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a manual dose with an unknown amount unit (#34)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        manualDoses: [manualDose(55, 1, unit: 'drops')],
+      );
+      expect(
+        () => validateBackup(d, appSchemaVersion: 21),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a manual dose with a non-positive amount (#8)', () {
+      for (final amount in [0.0, -5.0]) {
+        final d = dataWith(
+          tanks: [tank(1)],
+          manualDoses: [manualDose(55, 1, amount: amount)],
+        );
+        expect(
+          () => validateBackup(d, appSchemaVersion: 21),
+          rejectedWith(BackupRejection.inconsistent),
+        );
+      }
     });
 
     MicroViewsCompanion microView(int id, int tankId, {String name = 'Lab'}) =>
@@ -1301,6 +1395,16 @@ void main() {
         cleanedAt: DateTime(2026, 1, 4),
         note: 'skimmer',
       );
+      await db.insertManualDose(
+        ManualDosesCompanion(
+          tankId: Value(id),
+          dosedAt: Value(DateTime(2026, 1, 6, 14, 30)),
+          product: const Value('Reef Foundation B (KH/Alk)'),
+          elementKey: const Value('alkalinity'),
+          amount: const Value(12.5),
+          amountUnit: const Value('ml'),
+        ),
+      );
       await db.setRatioBounds(
         id,
         'mgca',
@@ -1361,6 +1465,11 @@ void main() {
       expect((await dst.getAllCarbonChanges()).length, 1);
       expect((await dst.getAllEquipmentCleanings()).length, 1);
       expect((await dst.getAllRatioVisibilities()).length, 1);
+      final restoredManual = (await dst.getAllManualDoses()).single;
+      expect(restoredManual.product, 'Reef Foundation B (KH/Alk)');
+      expect(restoredManual.elementKey, 'alkalinity');
+      expect(restoredManual.amount, 12.5);
+      expect(restoredManual.dosedAt, DateTime(2026, 1, 6, 14, 30));
       final restoredTemplate = (await dst.getAllReadingTemplates()).single;
       expect(restoredTemplate.name, 'Weekly big test');
       expect(restoredTemplate.keys, ['alkalinity', 'calcium']);

@@ -647,6 +647,22 @@ class AppLocalizationsRu extends AppLocalizations {
       'Это не самая последняя запись для этого элемента; её удаление не изменит более поздние записи.';
 
   @override
+  String get dosingHistoryManual => 'Вручную';
+
+  @override
+  String get manualDoseNew => 'Записать ручную дозу';
+
+  @override
+  String get manualDoseEdit => 'Изменить ручную дозу';
+
+  @override
+  String get deleteManualDoseTitle => 'Удалить ручную дозу?';
+
+  @override
+  String get deleteManualDoseBody =>
+      'Эта записанная доза будет безвозвратно удалена из истории и расчёта дозирования. Отменить это нельзя.';
+
+  @override
   String get dosingNew => 'Добавить добавку';
 
   @override
@@ -1000,10 +1016,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get doseCalcManualDoseHelp =>
-      'Необязательно: сумма разовых или дополнительных доз, внесённых за период измерений.';
+      'Необязательно: сумма разовых или дополнительных доз, внесённых за период измерений. Если поле пустое, используются записанные ручные дозы.';
 
   @override
   String get doseCalcManualInput => 'Ручные дозы добавляют';
+
+  @override
+  String doseCalcLoggedDoses(int count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записанных доз за период: $total',
+      few: '$count записанные дозы за период: $total',
+      one: '1 записанная доза за период: $total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doseCalcLoggedUnitMismatch(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count записанных доз используют другую единицу и не учитываются.',
+      few: '$count записанные дозы используют другую единицу и не учитываются.',
+      one: '1 записанная доза использует другую единицу и не учитывается.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcLoggedProductMismatch =>
+      'Некоторые записанные дозы — другой препарат; их сила может отличаться от указанной выше.';
 
   @override
   String get doseCalcPerDay => 'сут';

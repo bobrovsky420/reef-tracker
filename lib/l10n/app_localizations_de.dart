@@ -644,6 +644,22 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dies ist nicht der neueste Eintrag für dieses Element; das Löschen ändert spätere Einträge nicht.';
 
   @override
+  String get dosingHistoryManual => 'Manuell';
+
+  @override
+  String get manualDoseNew => 'Manuelle Dosis erfassen';
+
+  @override
+  String get manualDoseEdit => 'Manuelle Dosis bearbeiten';
+
+  @override
+  String get deleteManualDoseTitle => 'Manuelle Dosis löschen?';
+
+  @override
+  String get deleteManualDoseBody =>
+      'Diese erfasste Dosis wird dauerhaft aus dem Verlauf und der Dosisberechnung entfernt. Das kann nicht rückgängig gemacht werden.';
+
+  @override
   String get dosingNew => 'Präparat hinzufügen';
 
   @override
@@ -995,10 +1011,38 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get doseCalcManualDoseHelp =>
-      'Optional: Summe der einmaligen oder zusätzlichen Dosen, die im Messzeitraum gegeben wurden.';
+      'Optional: Summe der einmaligen oder zusätzlichen Dosen, die im Messzeitraum gegeben wurden. Bleibt das Feld leer, werden die erfassten manuellen Dosen verwendet.';
 
   @override
   String get doseCalcManualInput => 'Manuelle Dosen erhöhen um';
+
+  @override
+  String doseCalcLoggedDoses(int count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count erfasste Dosen im Zeitraum: $total',
+      one: '1 erfasste Dosis im Zeitraum: $total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doseCalcLoggedUnitMismatch(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count erfasste Dosen verwenden eine andere Einheit und werden nicht mitgezählt.',
+      one:
+          '1 erfasste Dosis verwendet eine andere Einheit und wird nicht mitgezählt.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcLoggedProductMismatch =>
+      'Einige erfasste Dosen sind ein anderes Produkt — ihre Stärke kann von der oben angegebenen abweichen.';
 
   @override
   String get doseCalcPerDay => 'Tag';

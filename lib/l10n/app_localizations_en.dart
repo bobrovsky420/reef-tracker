@@ -641,6 +641,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'This isn\'t the most recent record for this element; deleting it won\'t change later records.';
 
   @override
+  String get dosingHistoryManual => 'Manual';
+
+  @override
+  String get manualDoseNew => 'Log manual dose';
+
+  @override
+  String get manualDoseEdit => 'Edit manual dose';
+
+  @override
+  String get deleteManualDoseTitle => 'Delete manual dose?';
+
+  @override
+  String get deleteManualDoseBody =>
+      'This permanently removes this logged dose from history and the dose calculation. It can\'t be undone.';
+
+  @override
   String get dosingNew => 'Add supplement';
 
   @override
@@ -988,10 +1004,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get doseCalcManualDoseHelp =>
-      'Optional: total of one-time or extra doses given during the measurement window.';
+      'Optional: total of one-time or extra doses given during the measurement window. When empty, logged manual doses are used.';
 
   @override
   String get doseCalcManualInput => 'Manual doses add';
+
+  @override
+  String doseCalcLoggedDoses(int count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count logged doses in window: $total',
+      one: '1 logged dose in window: $total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doseCalcLoggedUnitMismatch(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count logged doses use a different unit and are not included.',
+      one: '1 logged dose uses a different unit and is not included.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcLoggedProductMismatch =>
+      'Some logged doses are a different product — their strength may differ from the one entered above.';
 
   @override
   String get doseCalcPerDay => 'day';

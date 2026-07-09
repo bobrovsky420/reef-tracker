@@ -647,6 +647,22 @@ class AppLocalizationsPl extends AppLocalizations {
       'To nie jest najnowszy wpis dla tego pierwiastka; jego usunięcie nie zmieni późniejszych wpisów.';
 
   @override
+  String get dosingHistoryManual => 'Ręczna';
+
+  @override
+  String get manualDoseNew => 'Zapisz dawkę ręczną';
+
+  @override
+  String get manualDoseEdit => 'Edytuj dawkę ręczną';
+
+  @override
+  String get deleteManualDoseTitle => 'Usunąć dawkę ręczną?';
+
+  @override
+  String get deleteManualDoseBody =>
+      'Ta zapisana dawka zostanie trwale usunięta z historii i z obliczeń dawkowania. Nie można tego cofnąć.';
+
+  @override
   String get dosingNew => 'Dodaj preparat';
 
   @override
@@ -1001,10 +1017,43 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get doseCalcManualDoseHelp =>
-      'Opcjonalnie: suma jednorazowych lub dodatkowych dawek podanych w oknie pomiarowym.';
+      'Opcjonalnie: suma jednorazowych lub dodatkowych dawek podanych w oknie pomiarowym. Gdy pole jest puste, używane są zapisane dawki ręczne.';
 
   @override
   String get doseCalcManualInput => 'Dawki ręczne dodają';
+
+  @override
+  String doseCalcLoggedDoses(int count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zapisanej dawki w oknie: $total',
+      many: '$count zapisanych dawek w oknie: $total',
+      few: '$count zapisane dawki w oknie: $total',
+      one: '1 zapisana dawka w oknie: $total',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doseCalcLoggedUnitMismatch(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count zapisanej dawki używa innej jednostki i nie jest uwzględnione.',
+      many:
+          '$count zapisanych dawek używa innej jednostki i nie jest uwzględnionych.',
+      few:
+          '$count zapisane dawki używają innej jednostki i nie są uwzględnione.',
+      one: '1 zapisana dawka używa innej jednostki i nie jest uwzględniona.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcLoggedProductMismatch =>
+      'Niektóre zapisane dawki to inny preparat — ich siła może różnić się od podanej powyżej.';
 
   @override
   String get doseCalcPerDay => 'dzień';
