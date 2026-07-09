@@ -1753,6 +1753,24 @@ abstract class AppLocalizations {
   /// **'Current daily dose'**
   String get doseCalcCurrentDose;
 
+  /// Optional input: total amount of one-time/extra manual doses of the supplement given during the measurement window.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual dose in window'**
+  String get doseCalcManualDose;
+
+  /// No description provided for @doseCalcManualDoseHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional: total of one-time or extra doses given during the measurement window.'**
+  String get doseCalcManualDoseHelp;
+
+  /// Result row label: element rise per day contributed by the one-off manual doses.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual doses add'**
+  String get doseCalcManualInput;
+
   /// No description provided for @doseCalcPerDay.
   ///
   /// In en, this message translates to:

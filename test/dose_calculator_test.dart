@@ -309,6 +309,88 @@ void main() {
       });
     });
 
+    group('manual (one-off) doses in the window', () {
+      test('manual input joins consumption and is reported separately', () {
+        // Dosing 10 ml/day (+11 ppm/day) plus manual doses averaging
+        // 5 ml/day (+5.5 ppm/day); Ca flat → the tank actually consumes
+        // 16.5 ppm/day, so the scheduled dose alone must grow to 15 ml/day.
+        final r = computeDoseCalc(
+          slopePerDay: 0,
+          currentDailyDose: 10,
+          manualDailyDose: 5,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        expect(r.dosingInputPerDay, closeTo(11, 1e-9));
+        expect(r.manualInputPerDay, closeTo(5.5, 1e-9));
+        expect(r.consumptionPerDay, closeTo(16.5, 1e-9));
+        expect(r.suggestedDailyDose, closeTo(15, 1e-9));
+        expect(r.status, DoseCalcStatus.increase);
+      });
+
+      test('a rise explained by manual doses is not called overdosing', () {
+        // No scheduled dose; manual doses add 11 ppm/day but Ca only rises
+        // 5.5 ppm/day → the tank still consumes 5.5 ppm/day → recommend a
+        // 5 ml/day scheduled dose rather than "reduce dosing".
+        final r = computeDoseCalc(
+          slopePerDay: 5.5,
+          currentDailyDose: 0,
+          manualDailyDose: 10,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        expect(r.consumptionPerDay, closeTo(5.5, 1e-9));
+        expect(r.suggestedDailyDose, closeTo(5, 1e-9));
+        expect(r.status, DoseCalcStatus.increase);
+      });
+
+      test('manual dosing with a rising element beyond it is overdosing', () {
+        // Manual doses add 5.5 ppm/day but Ca rises 11 ppm/day → nothing is
+        // consumed; with manual doses active this is overdosing, not
+        // noDoseNeeded.
+        final r = computeDoseCalc(
+          slopePerDay: 11,
+          currentDailyDose: 0,
+          manualDailyDose: 5,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        expect(r.consumptionPerDay! <= 0, isTrue);
+        expect(r.status, DoseCalcStatus.overdosing);
+      });
+
+      test('manual dose without potency needs potency', () {
+        final r = computeDoseCalc(
+          slopePerDay: -5,
+          currentDailyDose: 0,
+          manualDailyDose: 5,
+          potency: null,
+          volumeLiters: volume,
+        );
+        expect(r.status, DoseCalcStatus.needsPotency);
+        expect(r.consumptionPerDay, isNull);
+      });
+
+      test('omitting the manual dose keeps the previous behaviour', () {
+        final base = computeDoseCalc(
+          slopePerDay: -5,
+          currentDailyDose: 10,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        final zero = computeDoseCalc(
+          slopePerDay: -5,
+          currentDailyDose: 10,
+          manualDailyDose: 0,
+          potency: potency,
+          volumeLiters: volume,
+        );
+        expect(zero.status, base.status);
+        expect(zero.suggestedDailyDose, base.suggestedDailyDose);
+        expect(zero.manualInputPerDay, 0);
+      });
+    });
+
     group('stability tolerance scales with the dose (#28)', () {
       // Same chemical mismatch (suggested = dose + 0.4 ml/day) judged against
       // a 10 ml/day dose (within ±5%) and a 1 ml/day dose (way past ±5%).

@@ -1281,10 +1281,15 @@ just inputs + a result card and stores nothing.
   selector that does **not** touch the shared `chartRangeProvider`); tank volume
   (from `activeTankProvider.volumeLiters`, shown/parsed in the user's volume unit);
   current daily dose (Σ `dailyEquivalentDose` over the element's plan entries, in
-  the entry's ml/g); and supplement strength (catalog `strength[element]` when a
-  plan entry's product has it, else a vendor reference dose → `potencyFromReference`,
-  with reference volume converted to litres).
+  the entry's ml/g); an **optional manual dose in window** (total of one-off/extra
+  doses given inside the window — spread over the fitted span (first → last
+  reading) it joins the input side as `manualInputPerDay`, shares the supplement's
+  potency, and counts as active dosing for the overdosing/needs-potency logic;
+  later pre-fillable from a manual dosing log); and supplement strength (catalog
+  `strength[element]` when a plan entry's product has it, else a vendor reference
+  dose → `potencyFromReference`, with reference volume converted to litres).
 - **Output card:** measured change/day, consumption/day, current dosing input/day,
+  manual dosing input/day (when given),
   suggested daily dose + adjustment, and a `DoseCalcStatus` guidance banner
   (stable / increase / decrease / overdosing / no-dose-needed / needs-potency /
   insufficient-data). Works with no dosing: consumption = the measured drop, any

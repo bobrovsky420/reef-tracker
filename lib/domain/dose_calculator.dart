@@ -11,11 +11,15 @@
 /// `observedChangePerDay` (the least-squares slope; negative = falling). Dosing
 /// `currentDailyDose` units/day of a supplement with potency `p` into a tank of
 /// `volumeLiters` raises the concentration by `dosingInputPerDay = p *
-/// currentDailyDose / volumeLiters`. Therefore:
+/// currentDailyDose / volumeLiters`. One-off manual doses given during the
+/// window (total spread over its span, `manualDailyDose` units/day) add
+/// `manualInputPerDay` the same way. Therefore:
 ///
-///   consumptionPerDay = dosingInputPerDay - observedChangePerDay
+///   consumptionPerDay =
+///       dosingInputPerDay + manualInputPerDay - observedChangePerDay
 ///
-/// and the dose that holds the element steady (net change 0) is
+/// and the scheduled dose that holds the element steady (net change 0,
+/// assuming no further manual doses) is
 ///
 ///   suggestedDailyDose = consumptionPerDay * volumeLiters / p   (clamped >= 0)
 library;
@@ -70,6 +74,7 @@ class DoseCalcResult {
     required this.status,
     this.observedChangePerDay,
     this.dosingInputPerDay,
+    this.manualInputPerDay,
     this.consumptionPerDay,
     this.suggestedDailyDose,
     this.adjustment,
@@ -82,6 +87,9 @@ class DoseCalcResult {
 
   /// Element-unit per day currently contributed by the dosing.
   final double? dosingInputPerDay;
+
+  /// Element-unit per day contributed by one-off manual doses in the window.
+  final double? manualInputPerDay;
 
   /// Real daily consumption of the element, in element-unit per day.
   final double? consumptionPerDay;
@@ -187,8 +195,10 @@ int _weekdayCount(String? raw) {
 ///
 /// [slopePerDay] is the measured change/day (null = not enough data),
 /// [currentDailyDose] the average daily dose in ml/g (0 = not dosing),
-/// [potency] the element rise per unit per litre (null = unknown), and
-/// [volumeLiters] the tank volume.
+/// [manualDailyDose] the average ml/g per day contributed by one-off manual
+/// doses in the window (the total spread over the window's span; 0 = none —
+/// it shares the supplement's [potency]), [potency] the element rise per unit
+/// per litre (null = unknown), and [volumeLiters] the tank volume.
 ///
 /// The current dose is reported as [DoseCalcStatus.stable] when the suggested
 /// adjustment is within `max(stableFraction * currentDailyDose,
@@ -199,6 +209,7 @@ int _weekdayCount(String? raw) {
 DoseCalcResult computeDoseCalc({
   required double? slopePerDay,
   required double currentDailyDose,
+  double manualDailyDose = 0,
   required double? potency,
   required double? volumeLiters,
   double stableThreshold = 0.1,
@@ -208,16 +219,21 @@ DoseCalcResult computeDoseCalc({
     return const DoseCalcResult(status: DoseCalcStatus.insufficientData);
   }
 
-  // Rise/day the current dose contributes (0 when not dosing, even if potency
-  // is unknown).
-  final dosingInputPerDay =
-      (currentDailyDose > 0 && potency != null && potency > 0)
+  final hasPotency = potency != null && potency > 0;
+
+  // Rise/day the current dose and the window's manual doses contribute (0 when
+  // not dosing, even if potency is unknown).
+  final dosingInputPerDay = (currentDailyDose > 0 && hasPotency)
       ? potency * currentDailyDose / volumeLiters
       : 0.0;
+  final manualInputPerDay = (manualDailyDose > 0 && hasPotency)
+      ? potency * manualDailyDose / volumeLiters
+      : 0.0;
 
-  // If something is dosed but we don't know its potency, we can't separate
-  // input from consumption — fall back to needing potency.
-  if (currentDailyDose > 0 && (potency == null || potency <= 0)) {
+  // If something is dosed (scheduled or manually) but we don't know its
+  // potency, we can't separate input from consumption — fall back to needing
+  // potency.
+  if ((currentDailyDose > 0 || manualDailyDose > 0) && !hasPotency) {
     return DoseCalcResult(
       status: DoseCalcStatus.needsPotency,
       observedChangePerDay: slopePerDay,
@@ -227,11 +243,11 @@ DoseCalcResult computeDoseCalc({
   // Sign convention: a falling element (slope < 0) means the tank consumes
   // more than the dose adds, so consumption = input − slope grows; a rising
   // element makes it shrink (and go negative when input exceeds consumption).
-  final consumptionPerDay = dosingInputPerDay - slopePerDay;
+  final consumptionPerDay = dosingInputPerDay + manualInputPerDay - slopePerDay;
 
   // Without a potency we can still report consumption (no dosing case) but
   // cannot turn it into a dose.
-  if (potency == null || potency <= 0) {
+  if (!hasPotency) {
     return DoseCalcResult(
       status: DoseCalcStatus.needsPotency,
       observedChangePerDay: slopePerDay,
@@ -246,10 +262,10 @@ DoseCalcResult computeDoseCalc({
 
   final DoseCalcStatus status;
   if (consumptionPerDay <= 0) {
-    // Nothing is being consumed. With an active dose that's overdosing; with
-    // no dose there is nothing to "reduce or pause" — the element holds (or
-    // rises) on its own.
-    status = currentDailyDose > 0
+    // Nothing is being consumed. With an active dose (scheduled or manual)
+    // that's overdosing; with no dose there is nothing to "reduce or pause" —
+    // the element holds (or rises) on its own.
+    status = currentDailyDose > 0 || manualDailyDose > 0
         ? DoseCalcStatus.overdosing
         : DoseCalcStatus.noDoseNeeded;
   } else if (currentDailyDose <= 0) {
@@ -269,6 +285,7 @@ DoseCalcResult computeDoseCalc({
     status: status,
     observedChangePerDay: slopePerDay,
     dosingInputPerDay: dosingInputPerDay,
+    manualInputPerDay: manualInputPerDay,
     consumptionPerDay: consumptionPerDay,
     suggestedDailyDose: suggested,
     adjustment: adjustment,

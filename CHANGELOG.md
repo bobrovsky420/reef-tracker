@@ -5,15 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.23.3] - 2026-07-08
+## [0.24.0] - 2026-07-09
 
 ### Added
+- Dose calculator: optional "Manual dose in window" field — the total of
+  one-time or extra doses given during the measurement window. It is factored
+  into the consumption estimate and the suggested daily dose (a spike from a
+  manual correction is no longer misread as lower consumption), and the result
+  card shows how much the manual doses added per day.
 - Microelements screen: two quick-filter switches under the view chips —
   "Hide undetectable (zero)" and "Only elements needing attention". Hiding
   zeros keeps elements for which a zero is abnormal (e.g. sodium, potassium,
   iodine — a deficiency, not "not detected") visible. Both filters only trim
   the list; the summary card keeps counting hidden elements. The choices are
   remembered on the device.
+
+## [0.23.3] - 2026-07-08
 
 ### Changed
 - Potassium default zone bounds tightened: green is now 380–420 mg/L and red

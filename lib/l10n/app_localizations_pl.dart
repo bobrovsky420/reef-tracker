@@ -997,6 +997,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcCurrentDose => 'Obecna dawka dzienna';
 
   @override
+  String get doseCalcManualDose => 'Dawka ręczna w oknie';
+
+  @override
+  String get doseCalcManualDoseHelp =>
+      'Opcjonalnie: suma jednorazowych lub dodatkowych dawek podanych w oknie pomiarowym.';
+
+  @override
+  String get doseCalcManualInput => 'Dawki ręczne dodają';
+
+  @override
   String get doseCalcPerDay => 'dzień';
 
   @override

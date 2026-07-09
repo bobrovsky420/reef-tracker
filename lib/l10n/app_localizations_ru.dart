@@ -996,6 +996,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get doseCalcCurrentDose => 'Текущая суточная доза';
 
   @override
+  String get doseCalcManualDose => 'Ручная доза за период';
+
+  @override
+  String get doseCalcManualDoseHelp =>
+      'Необязательно: сумма разовых или дополнительных доз, внесённых за период измерений.';
+
+  @override
+  String get doseCalcManualInput => 'Ручные дозы добавляют';
+
+  @override
   String get doseCalcPerDay => 'сут';
 
   @override

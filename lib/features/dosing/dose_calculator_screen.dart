@@ -32,6 +32,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
 
   final _volumeCtrl = TextEditingController();
   final _doseCtrl = TextEditingController();
+  // Optional total of one-off manual doses given inside the window. Spread
+  // over the window's span it joins the input side of the consumption math.
+  // Later this can be pre-filled from a manual dosing log.
+  final _manualDoseCtrl = TextEditingController();
   DoseUnit _doseUnit = DoseUnit.ml;
 
   // Potency: either pulled from the catalog or entered as a reference dose.
@@ -74,6 +78,7 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
   void dispose() {
     _volumeCtrl.dispose();
     _doseCtrl.dispose();
+    _manualDoseCtrl.dispose();
     _refAmountCtrl.dispose();
     _refVolCtrl.dispose();
     _riseCtrl.dispose();
@@ -174,9 +179,19 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         : volumeToCanonical(volDisp, volUnit);
     final potency = _effectivePotency(volUnit);
 
+    // A one-off manual total is averaged over the span the slope was fitted
+    // on (first → last reading), so both sides of the math cover the same
+    // period. With fewer than two readings the slope is null anyway.
+    final spanDays = points.length < 2
+        ? 0.0
+        : points.last.t.difference(points.first.t).inMilliseconds / 86400000.0;
+    final manualTotal = _parse(_manualDoseCtrl.text) ?? 0;
+    final manualDaily = spanDays > 0 ? manualTotal / spanDays : 0.0;
+
     final result = computeDoseCalc(
       slopePerDay: slope,
       currentDailyDose: dose,
+      manualDailyDose: manualDaily,
       potency: potency,
       volumeLiters: volLiters,
     );
@@ -200,6 +215,8 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
           _volumeField(l, volUnit),
           const SizedBox(height: 16),
           _doseField(l),
+          const SizedBox(height: 16),
+          _manualDoseField(l),
           const Divider(height: 32),
           _potencySection(l, element, volUnit, volLiters, potency),
           const Divider(height: 32),
@@ -345,6 +362,21 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     );
   }
 
+  Widget _manualDoseField(AppLocalizations l) {
+    return TextField(
+      controller: _manualDoseCtrl,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: l.doseCalcManualDose,
+        helperText: l.doseCalcManualDoseHelp,
+        helperMaxLines: 3,
+        suffixText: _doseUnit.symbol,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (_) => setState(() {}),
+    );
+  }
+
   Widget _potencySection(
     AppLocalizations l,
     String element,
@@ -471,6 +503,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
       rows.add(
         _resultRow(l.doseCalcCurrentInput, addRate(r.dosingInputPerDay)),
       );
+    }
+    if ((r.manualInputPerDay ?? 0) > 0) {
+      rows.add(_resultRow(l.doseCalcManualInput, addRate(r.manualInputPerDay)));
     }
     if (r.suggestedDailyDose != null) {
       rows.add(

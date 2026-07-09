@@ -991,6 +991,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get doseCalcCurrentDose => 'Aktuelle Tagesdosis';
 
   @override
+  String get doseCalcManualDose => 'Manuelle Dosis im Zeitraum';
+
+  @override
+  String get doseCalcManualDoseHelp =>
+      'Optional: Summe der einmaligen oder zusätzlichen Dosen, die im Messzeitraum gegeben wurden.';
+
+  @override
+  String get doseCalcManualInput => 'Manuelle Dosen erhöhen um';
+
+  @override
   String get doseCalcPerDay => 'Tag';
 
   @override

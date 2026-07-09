@@ -984,6 +984,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get doseCalcCurrentDose => 'Current daily dose';
 
   @override
+  String get doseCalcManualDose => 'Manual dose in window';
+
+  @override
+  String get doseCalcManualDoseHelp =>
+      'Optional: total of one-time or extra doses given during the measurement window.';
+
+  @override
+  String get doseCalcManualInput => 'Manual doses add';
+
+  @override
   String get doseCalcPerDay => 'day';
 
   @override

@@ -989,6 +989,16 @@ class AppLocalizationsCs extends AppLocalizations {
   String get doseCalcCurrentDose => 'Aktuální denní dávka';
 
   @override
+  String get doseCalcManualDose => 'Ruční dávka v okně';
+
+  @override
+  String get doseCalcManualDoseHelp =>
+      'Volitelné: součet jednorázových či mimořádných dávek podaných během měřicího okna.';
+
+  @override
+  String get doseCalcManualInput => 'Ruční dávky přidávají';
+
+  @override
   String get doseCalcPerDay => 'den';
 
   @override
