@@ -129,42 +129,10 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
     });
   }
 
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _dosedAt,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && mounted) {
-      setState(() {
-        _dosedAt = DateTime(
-          picked.year,
-          picked.month,
-          picked.day,
-          _dosedAt.hour,
-          _dosedAt.minute,
-        );
-      });
-    }
-  }
-
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_dosedAt),
-    );
-    if (picked != null && mounted) {
-      setState(() {
-        _dosedAt = DateTime(
-          _dosedAt.year,
-          _dosedAt.month,
-          _dosedAt.day,
-          picked.hour,
-          picked.minute,
-        );
-      });
-    }
+  Future<void> _pickDateTime() async {
+    final picked = await pickPastDateTime(context, _dosedAt);
+    if (picked == null || !mounted) return;
+    setState(() => _dosedAt = picked);
   }
 
   Future<void> _save() async {
@@ -392,23 +360,20 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
   }
 
   Widget _dosedAtRow(AppLocalizations l) {
-    final loc = MaterialLocalizations.of(context);
     return Row(
       children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.calendar_today_outlined, size: 18),
-            label: Text(loc.formatMediumDate(_dosedAt)),
-            onPressed: _pickDate,
-          ),
-        ),
+        const Icon(Icons.schedule),
         const SizedBox(width: 12),
         Expanded(
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.schedule_outlined, size: 18),
-            label: Text(TimeOfDay.fromDateTime(_dosedAt).format(context)),
-            onPressed: _pickTime,
+          child: Text(
+            formatDateTime(context, _dosedAt, weekday: false),
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          tooltip: l.change,
+          onPressed: _pickDateTime,
         ),
       ],
     );

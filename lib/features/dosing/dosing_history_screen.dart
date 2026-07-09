@@ -46,7 +46,7 @@ class DosingHistoryScreen extends ConsumerWidget {
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.vaccines_outlined),
+        icon: const Icon(Icons.add),
         label: Text(l.manualDoseNew),
         onPressed: () => context.push('/dosing/manual'),
       ),

@@ -1271,7 +1271,8 @@ Rendered as the **Dosing tab** of the home shell.
   logged from the history screen's FAB into `ManualDoses`. The form reuses the
   plan editor's Vendor → Product → Element cascade (custom free-text allowed;
   element may be "none" and needn't be in any plan) plus a **required** amount
-  (ml/g) and the date/time given (date+time pickers, default now). Timeline
+  (ml/g) and the date/time given (the shared `pickPastDateTime` row, default
+  now). Timeline
   rows show a distinct `vaccines` icon and a highlighted "Manual" chip; tapping
   a row edits it in place (plain `updateManualDose` — events don't chain like
   segments, so no supersede), and the trailing delete permanently removes it
