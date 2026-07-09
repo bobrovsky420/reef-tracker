@@ -7,10 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.23.3] - 2026-07-08
 
+### Added
+- Microelements screen: two quick-filter switches under the view chips —
+  "Hide undetectable (zero)" and "Only elements needing attention". Hiding
+  zeros keeps elements for which a zero is abnormal (e.g. sodium, potassium,
+  iodine — a deficiency, not "not detected") visible. Both filters only trim
+  the list; the summary card keeps counting hidden elements. The choices are
+  remembered on the device.
+
 ### Changed
 - Potassium default zone bounds tightened: green is now 380–420 mg/L and red
   starts below 340 / above 460 (was green 380–440, red below 340 / above 480).
   Tanks with customized potassium bounds are unaffected.
+- "Re-apply preset" (Parameters screen menu) now resets **all** tracked
+  parameters of the aquarium to their default ranges: dashboard parameters get
+  the aquarium-type preset values and microelements their built-in defaults.
+  This also repairs elements tracked since before defaults existed (e.g. a
+  potassium row with no ranges, shown black and without graph bands).
 
 ## [0.23.2] - 2026-07-08
 

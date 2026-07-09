@@ -272,7 +272,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reapplyPresetBody =>
-      'Dadurch werden die grün/orange/rot-Grenzen aller verfolgten Parameter mit den Standardwerten der Voreinstellung überschrieben. Deine Messungen bleiben erhalten.';
+      'Dadurch werden die grün/orange/rot-Grenzen aller verfolgten Parameter mit den Standardwerten überschrieben: Dashboard-Parameter mit der Voreinstellung des Aquarientyps, Spurenelemente mit ihren eingebauten Standardwerten. Deine Messungen bleiben erhalten.';
 
   @override
   String get presetApplied => 'Voreinstellung angewendet.';
@@ -1404,6 +1404,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get microViewDeleteBody =>
       'Entfernt nur die Ansicht. Die Messwerte bleiben erhalten.';
+
+  @override
+  String get microHideUndetectable => 'Nicht nachweisbare ausblenden (null)';
+
+  @override
+  String get microAttentionOnly => 'Nur Elemente, die Aufmerksamkeit brauchen';
+
+  @override
+  String get microFilterAllHidden =>
+      'Keine Elemente entsprechen den aktuellen Filtern.';
 
   @override
   String get icpImportTitle => 'ICP-Bericht importieren';

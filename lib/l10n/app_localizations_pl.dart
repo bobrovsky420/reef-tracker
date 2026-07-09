@@ -272,7 +272,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reapplyPresetBody =>
-      'Spowoduje to nadpisanie granic zielona/pomarańczowa/czerwona wszystkich śledzonych parametrów domyślnymi wartościami presetu. Twoje pomiary zostaną zachowane.';
+      'Spowoduje to nadpisanie granic zielona/pomarańczowa/czerwona wszystkich śledzonych parametrów wartościami domyślnymi: parametry pulpitu według presetu typu akwarium, mikroelementy według wbudowanych wartości domyślnych. Twoje pomiary zostaną zachowane.';
 
   @override
   String get presetApplied => 'Preset zastosowany.';
@@ -1413,6 +1413,16 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get microViewDeleteBody =>
       'Usuwa tylko widok. Pomiary zostaną zachowane.';
+
+  @override
+  String get microHideUndetectable => 'Ukryj niewykrywalne (zero)';
+
+  @override
+  String get microAttentionOnly => 'Tylko pierwiastki wymagające uwagi';
+
+  @override
+  String get microFilterAllHidden =>
+      'Żadne pierwiastki nie pasują do bieżących filtrów.';
 
   @override
   String get icpImportTitle => 'Import raportu ICP';

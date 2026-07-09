@@ -237,7 +237,11 @@ Notable DB behavior:
   makes the tank active, all in one transaction.
 - `boundsOf(TrackedParameter)` builds `ZoneBounds`; `presentationOf` bridges a
   tracked param + prefs to a `ParamPresentation`.
-- `applyPreset` re-applies preset bounds to known params without adding/removing.
+- `applyPreset` re-applies default bounds to every tracked param without
+  adding/removing: setup-type preset values where the preset knows the key,
+  microelement catalog defaults otherwise (the `addTrackedParameter` source
+  rule); params with no default from either source keep their bounds. Also the
+  user-facing repair for legacy micro rows seeded with all-null bounds.
 - `readingGroup` / `deleteReadingGroup` / `updateReadingGroupTime` operate on a
   batch of readings entered together, keyed **solely** on `Readings.groupId`
   (`insertReadingGroup` stamps each batch). Pre-v13 rows get a `legacy-` group
@@ -1194,6 +1198,17 @@ Parameters list/add-sheet and the health-score inputs to core).
   Views only filter — measurements of elements outside the view stay
   stored. No view/element reordering in this phase (catalog order matches
   the lab reports).
+- **Quick filters** (U17): two switches under the view chips — **Hide
+  undetectable (zero)** and **Only elements needing attention** (latest value
+  classifies amber/red). Hide-undetectable has a domain-rule exception: a
+  zero reading of a *lower-bounded* element (Na, K, iodine, …) means a
+  deficiency, not "not detected", so it stays visible
+  (`microHiddenAsUndetectable` / `microNeedsAttention` in
+  `domain/micro.dart`, pure + unit-tested). Unlike element views, the
+  filters are display-only trims of the list: the status summary keeps
+  counting hidden elements. Persisted device-locally
+  (`micro_hide_undetectable` / `micro_attention_only`, both default off);
+  a placeholder line appears when the filters hide every element.
 
 ### Dosing (`features/dosing/`) — Dosing tab
 
@@ -1299,7 +1314,9 @@ Both editors render their four bound fields through the shared
 which owns the controllers, draws the legend + zone-colored fields, and centralizes
 the order (`amberLow ≤ … ≤ amberHigh`) and amber-implies-green pairing rules; each
 screen keeps only its own seeding (display-unit vs. ratio-metric) and save target.
-Re-applying a setup-type preset is available.
+Re-applying the default ranges is available from the app-bar menu (per tank):
+core parameters take the setup-type preset values, microelements their catalog
+defaults (`applyPreset`).
 
 ### Add reading (`add_reading_screen.dart`)
 

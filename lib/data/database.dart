@@ -878,14 +878,20 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  /// Re-applies the setup-type preset bounds to every tracked parameter of a
-  /// tank that the preset knows about. Does not add/remove parameters.
+  /// Re-applies the default zone bounds to every tracked parameter of a tank:
+  /// the setup-type preset for parameters it knows about, the microelement
+  /// catalog defaults otherwise (the same source rule as [addTrackedParameter]).
+  /// Rows with no default from either source (core parameters outside the
+  /// preset) keep their current bounds. Does not add/remove parameters.
   Future<void> applyPreset(int tankId, SetupType type) async {
     final params = await getTrackedParameters(tankId);
     await batch((b) {
       for (final param in params) {
-        final bounds = kPresets[type]?[param.paramKey];
-        if (bounds == null) continue;
+        final preset = presetBounds(type, param.paramKey);
+        final bounds = preset.isEmpty
+            ? microDefaultBounds(param.paramKey)
+            : preset;
+        if (bounds.isEmpty) continue;
         b.update(
           trackedParameters,
           TrackedParametersCompanion(

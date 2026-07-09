@@ -271,7 +271,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reapplyPresetBody =>
-      'This overwrites the green/amber/red boundaries of all tracked parameters with the preset defaults. Your readings are kept.';
+      'This overwrites the green/amber/red boundaries of all tracked parameters: dashboard parameters get the aquarium-type preset values, microelements their built-in defaults. Your readings are kept.';
 
   @override
   String get presetApplied => 'Preset applied.';
@@ -1398,6 +1398,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get microViewDeleteBody =>
       'This removes the view. Your measurements are kept.';
+
+  @override
+  String get microHideUndetectable => 'Hide undetectable (zero)';
+
+  @override
+  String get microAttentionOnly => 'Only elements needing attention';
+
+  @override
+  String get microFilterAllHidden => 'No elements match the current filters.';
 
   @override
   String get icpImportTitle => 'Import ICP report';

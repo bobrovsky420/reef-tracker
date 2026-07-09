@@ -282,4 +282,49 @@ void main() {
       expect(s.worstZone, Zone.red);
     });
   });
+
+  group('panel filters (U17)', () {
+    ZoneBounds b(String key) => kMicroDefaultBounds[key]!;
+
+    test('microNeedsAttention: amber/red need attention, green and '
+        'never-measured do not', () {
+      // Lead: one-sided ceiling (green ≤ 0.002, amber ≤ 0.008).
+      expect(microNeedsAttention(b('lead'), 0.001), isFalse); // Green.
+      expect(microNeedsAttention(b('lead'), 0.005), isTrue); // Amber.
+      expect(microNeedsAttention(b('lead'), 0.02), isTrue); // Red.
+      expect(microNeedsAttention(b('lead'), null), isFalse); // Unmeasured.
+    });
+
+    test('microNeedsAttention: unclassifiable bounds never need attention',
+        () {
+      expect(microNeedsAttention(const ZoneBounds(), 0.5), isFalse);
+      // Inverted bounds are invalid → Zone.unknown.
+      const inverted = ZoneBounds(greenLow: 10, greenHigh: 5);
+      expect(microNeedsAttention(inverted, 7), isFalse);
+    });
+
+    test('microHiddenAsUndetectable: a zero contaminant reading is hidden '
+        '(zero is fine for "keep low" elements)', () {
+      expect(microHiddenAsUndetectable(b('lead'), 0), isTrue);
+      expect(microHiddenAsUndetectable(b('zinc'), 0), isTrue);
+    });
+
+    test('microHiddenAsUndetectable: zero stays visible where it means a '
+        'deficiency (lower-bounded elements)', () {
+      expect(microHiddenAsUndetectable(b('sodium'), 0), isFalse);
+      expect(microHiddenAsUndetectable(b('iodine'), 0), isFalse);
+      expect(microHiddenAsUndetectable(b('potassium'), 0), isFalse);
+    });
+
+    test('microHiddenAsUndetectable: only exact zeros are hidden, not '
+        'unmeasured or small values', () {
+      expect(microHiddenAsUndetectable(b('lead'), null), isFalse);
+      expect(microHiddenAsUndetectable(b('lead'), 0.001), isFalse);
+    });
+
+    test('microHiddenAsUndetectable: zero with unclassifiable bounds is '
+        'hidden (cannot be called abnormal)', () {
+      expect(microHiddenAsUndetectable(const ZoneBounds(), 0), isTrue);
+    });
+  });
 }

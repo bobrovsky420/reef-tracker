@@ -563,7 +563,7 @@ abstract class AppLocalizations {
   /// No description provided for @reapplyPresetBody.
   ///
   /// In en, this message translates to:
-  /// **'This overwrites the green/amber/red boundaries of all tracked parameters with the preset defaults. Your readings are kept.'**
+  /// **'This overwrites the green/amber/red boundaries of all tracked parameters: dashboard parameters get the aquarium-type preset values, microelements their built-in defaults. Your readings are kept.'**
   String get reapplyPresetBody;
 
   /// No description provided for @presetApplied.
@@ -2484,6 +2484,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This removes the view. Your measurements are kept.'**
   String get microViewDeleteBody;
+
+  /// Filter switch on the Microelements screen: hides elements whose latest reading is 0 (ICP labs report undetectable elements as zero). Elements for which zero is abnormal (a deficiency) stay visible.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide undetectable (zero)'**
+  String get microHideUndetectable;
+
+  /// Filter switch on the Microelements screen: shows only elements whose latest reading is outside the green range (amber or red).
+  ///
+  /// In en, this message translates to:
+  /// **'Only elements needing attention'**
+  String get microAttentionOnly;
+
+  /// Placeholder shown on the Microelements screen when the filter switches hide every element.
+  ///
+  /// In en, this message translates to:
+  /// **'No elements match the current filters.'**
+  String get microFilterAllHidden;
 
   /// Title of the ICP report CSV import: the Microelements app-bar action, the format-choice sheet and the preview screen (U17 phase 2).
   ///

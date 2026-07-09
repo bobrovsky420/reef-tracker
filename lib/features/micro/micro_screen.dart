@@ -44,13 +44,22 @@ class MicroScreen extends ConsumerWidget {
     final selection = ref.watch(microViewSelectionProvider);
     final views = ref.watch(microViewsProvider).value ?? const <MicroView>[];
 
+    final hideUndetectable =
+        ref.watch(microHideUndetectableProvider).value ?? false;
+    final attentionOnly = ref.watch(microAttentionOnlyProvider).value ?? false;
+
     // The active view (U17) filters which elements are listed; null keys =
     // full list. The status card above already follows the same selection
-    // (microStatusProvider).
+    // (microStatusProvider). The two quick-filter switches only trim this
+    // list — the status card deliberately keeps counting hidden elements.
     final keys = selection.keys;
     final visible = [
       for (final e in elements)
-        if (keys == null || keys.contains(e.def.key)) e,
+        if ((keys == null || keys.contains(e.def.key)) &&
+            !(hideUndetectable &&
+                microHiddenAsUndetectable(e.bounds, e.latest?.value)) &&
+            (!attentionOnly || microNeedsAttention(e.bounds, e.latest?.value)))
+          e,
     ];
     final sections = <(String, List<MicroElementStatus>)>[
       (
@@ -112,6 +121,37 @@ class MicroScreen extends ConsumerWidget {
               views: views,
             ),
           ),
+          SwitchListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: Text(l.microHideUndetectable),
+            value: hideUndetectable,
+            onChanged: (v) => unawaited(
+              ref.read(settingsProvider).setMicroHideUndetectable(v),
+            ),
+          ),
+          SwitchListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: Text(l.microAttentionOnly),
+            value: attentionOnly,
+            onChanged: (v) => unawaited(
+              ref.read(settingsProvider).setMicroAttentionOnly(v),
+            ),
+          ),
+          if (visible.isEmpty && (hideUndetectable || attentionOnly))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+              child: Text(
+                l.microFilterAllHidden,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).hintColor,
+                ),
+              ),
+            ),
           for (final (title, items) in sections)
             if (items.isNotEmpty) ...[
               Padding(

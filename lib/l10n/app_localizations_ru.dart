@@ -272,7 +272,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reapplyPresetBody =>
-      'Это перезапишет границы зелёная/жёлтая/красная всех отслеживаемых параметров значениями пресета по умолчанию. Ваши измерения сохранятся.';
+      'Это перезапишет границы зелёная/жёлтая/красная всех отслеживаемых параметров значениями по умолчанию: параметры на главном экране — по пресету типа аквариума, микроэлементы — встроенными значениями по умолчанию. Ваши измерения сохранятся.';
 
   @override
   String get presetApplied => 'Пресет применён.';
@@ -1412,6 +1412,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get microViewDeleteBody =>
       'Удаляется только набор. Измерения сохранятся.';
+
+  @override
+  String get microHideUndetectable => 'Скрыть неопределяемые (ноль)';
+
+  @override
+  String get microAttentionOnly => 'Только элементы, требующие внимания';
+
+  @override
+  String get microFilterAllHidden =>
+      'Нет элементов, соответствующих текущим фильтрам.';
 
   @override
   String get icpImportTitle => 'Импорт ICP-отчёта';

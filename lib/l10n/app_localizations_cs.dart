@@ -271,7 +271,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reapplyPresetBody =>
-      'Tím se hranice zelená/oranžová/červená u všech sledovaných parametrů přepíší výchozími hodnotami přednastavení. Vaše měření zůstanou zachována.';
+      'Tím se hranice zelená/oranžová/červená u všech sledovaných parametrů přepíší výchozími hodnotami: parametry na přehledu podle přednastavení typu akvária, mikroprvky podle vestavěných výchozích hodnot. Vaše měření zůstanou zachována.';
 
   @override
   String get presetApplied => 'Přednastavení použito.';
@@ -1403,6 +1403,16 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get microViewDeleteBody =>
       'Odstraní pouze pohled. Naměřené hodnoty zůstanou zachovány.';
+
+  @override
+  String get microHideUndetectable => 'Skrýt neměřitelné (nula)';
+
+  @override
+  String get microAttentionOnly => 'Jen prvky vyžadující pozornost';
+
+  @override
+  String get microFilterAllHidden =>
+      'Aktuálním filtrům neodpovídají žádné prvky.';
 
   @override
   String get icpImportTitle => 'Import ICP analýzy';

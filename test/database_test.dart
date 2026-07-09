@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/micro.dart';
 import 'package:reeftracker/domain/presets.dart';
 import 'package:reeftracker/domain/reminders.dart';
 import 'package:reeftracker/domain/setup_type.dart';
@@ -122,6 +123,77 @@ void main() {
       // All orders stay unique.
       final orders = after.map((p) => p.displayOrder).toList();
       expect(orders.toSet().length, orders.length);
+    });
+  });
+
+  group('applyPreset', () {
+    test('resets core bounds from the preset and micro bounds from the '
+        'catalog defaults (backfills legacy all-null micro rows)', () async {
+      final id = await db.createTankWithPreset(
+        name: 'R',
+        type: SetupType.mixed,
+      );
+      // Customize a core parameter away from the preset.
+      final alk = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'alkalinity');
+      await db.updateTrackedParameter(
+        alk.copyWith(greenLow: const Value(1.0), greenHigh: const Value(2.0)),
+      );
+      // A legacy microelement row with no bounds — the pre-microelements
+      // upgrade state (potassium tracked before catalog defaults existed).
+      await db
+          .into(db.trackedParameters)
+          .insert(
+            TrackedParametersCompanion.insert(
+              tankId: id,
+              paramKey: 'potassium',
+              unit: 'ppm',
+            ),
+          );
+
+      await db.applyPreset(id, SetupType.mixed);
+
+      final after = await db.getTrackedParameters(id);
+      final alkAfter = after.firstWhere((p) => p.paramKey == 'alkalinity');
+      final preset = presetBounds(SetupType.mixed, 'alkalinity');
+      expect(alkAfter.greenLow, preset.greenLow);
+      expect(alkAfter.greenHigh, preset.greenHigh);
+
+      final k = after.firstWhere((p) => p.paramKey == 'potassium');
+      final defaults = microDefaultBounds('potassium');
+      expect(k.amberLow, defaults.amberLow);
+      expect(k.greenLow, defaults.greenLow);
+      expect(k.greenHigh, defaults.greenHigh);
+      expect(k.amberHigh, defaults.amberHigh);
+    });
+
+    test('a core parameter outside the setup-type preset keeps its custom '
+        'bounds', () async {
+      final id = await db.createTankWithPreset(
+        name: 'F',
+        type: SetupType.fishOnly,
+      );
+      // 'calcium' is not in the fish-only preset and is not a microelement,
+      // so applyPreset has no default source for it.
+      await db.addTrackedParameter(id, 'calcium', SetupType.fishOnly);
+      final ca = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'calcium');
+      await db.updateTrackedParameter(
+        ca.copyWith(
+          greenLow: const Value(400.0),
+          greenHigh: const Value(450.0),
+        ),
+      );
+
+      await db.applyPreset(id, SetupType.fishOnly);
+
+      final after = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'calcium');
+      expect(after.greenLow, 400.0);
+      expect(after.greenHigh, 450.0);
     });
   });
 

@@ -121,7 +121,11 @@ enum SettingKey {
   // The active microelement view per tank (U17) — a display selection like
   // lastReadingTemplate: device-local, the custom views themselves ride the
   // backup in the MicroViews table.
-  microView(kMicroViewKey, deviceLocal: true);
+  microView(kMicroViewKey, deviceLocal: true),
+  // The Microelements-screen quick filters (U17): plain display preferences
+  // like trendEnabled — device-local, default off.
+  microHideUndetectable(kMicroHideUndetectableKey, deviceLocal: true),
+  microAttentionOnly(kMicroAttentionOnlyKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -256,6 +260,23 @@ class AppSettings {
       _write(SettingKey.roUnitEnabled, enabled.toString());
 
   static bool decodeMicroEnabled(String? raw) => raw == null || raw == 'true';
+
+  /// The Microelements-screen quick filters (U17): hide zero readings
+  /// (undetectable — unless zero is abnormal for the element) and show only
+  /// elements needing attention. Both default off.
+  static bool decodeMicroHideUndetectable(String? raw) => raw == 'true';
+  Stream<bool> watchMicroHideUndetectable() => _watch(
+    SettingKey.microHideUndetectable,
+  ).map(decodeMicroHideUndetectable);
+  Future<void> setMicroHideUndetectable(bool enabled) =>
+      _write(SettingKey.microHideUndetectable, enabled.toString());
+
+  static bool decodeMicroAttentionOnly(String? raw) => raw == 'true';
+  Stream<bool> watchMicroAttentionOnly() =>
+      _watch(SettingKey.microAttentionOnly).map(decodeMicroAttentionOnly);
+  Future<void> setMicroAttentionOnly(bool enabled) =>
+      _write(SettingKey.microAttentionOnly, enabled.toString());
+
   Stream<bool> watchMicroEnabled() =>
       _watch(SettingKey.microEnabled).map(decodeMicroEnabled);
   Future<bool> readMicroEnabled() async =>

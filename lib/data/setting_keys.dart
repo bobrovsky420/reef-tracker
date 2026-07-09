@@ -33,3 +33,5 @@ const kRoSeededKey = 'ro_stages_seeded';
 const kRoUnitEnabledKey = 'ro_unit_enabled';
 const kMicroEnabledKey = 'micro_enabled';
 const kMicroViewKey = 'micro_view';
+const kMicroHideUndetectableKey = 'micro_hide_undetectable';
+const kMicroAttentionOnlyKey = 'micro_attention_only';

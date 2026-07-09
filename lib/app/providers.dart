@@ -545,6 +545,20 @@ final microEnabledProvider = _setting(
   AppSettings.decodeMicroEnabled,
 );
 
+/// The Microelements-screen quick filters (U17, both default off): hide
+/// undetectable (zero) readings — except where zero is abnormal — and show
+/// only elements needing attention. Display-only: neither affects
+/// [microStatusProvider]'s counts.
+final microHideUndetectableProvider = _setting(
+  SettingKey.microHideUndetectable,
+  AppSettings.decodeMicroHideUndetectable,
+);
+
+final microAttentionOnlyProvider = _setting(
+  SettingKey.microAttentionOnly,
+  AppSettings.decodeMicroAttentionOnly,
+);
+
 /// When the most recent automatic or manual backup completed, or null if none
 /// has run yet. Reacts to the stored timestamp, so it refreshes as soon as a
 /// backup is written.

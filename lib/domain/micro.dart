@@ -121,6 +121,30 @@ Set<String>? microPresetKeys(String token) {
   return null;
 }
 
+// --- Panel filters --------------------------------------------------------
+//
+// The two quick filter switches on the Microelements screen. Pure predicates
+// on (effective bounds, latest value) so they are unit-testable and shared
+// with nothing UI-specific.
+
+/// Whether an element's latest value calls for attention: it classifies
+/// amber or red against the effective bounds. Never-measured elements and
+/// unclassifiable values (empty/invalid bounds) don't need attention.
+bool microNeedsAttention(ZoneBounds bounds, double? latest) {
+  if (latest == null) return false;
+  final zone = bounds.classify(latest);
+  return zone == Zone.amber || zone == Zone.red;
+}
+
+/// Whether the "hide undetectable" filter hides this element: the latest
+/// reading is exactly 0 (ICP reports print undetectable elements as zero)
+/// **and** zero is not itself abnormal. For elements with a lower bound
+/// (sodium, potassium, iodine, …) a zero means a real deficiency — those stay
+/// visible even with the filter on; one-sided "keep low" elements
+/// (contaminants and most traces) classify zero as fine and are hidden.
+bool microHiddenAsUndetectable(ZoneBounds bounds, double? latest) =>
+    latest == 0 && !microNeedsAttention(bounds, latest);
+
 /// One element's inputs for [computeMicroStatus]: its effective bounds and
 /// latest reading (null = never measured).
 typedef MicroInput = ({
