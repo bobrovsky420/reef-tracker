@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.1] - 2026-07-10
+
+### Changed
+- Microelements screen: zone editing moved off the list — the per-row pencil
+  icon is gone; a new "Element settings" app-bar action (sliders icon) opens
+  a list of all elements where tapping a row edits its zones and test
+  reminder. "Manage views" now uses a checklist icon.
+
 ## [0.24.0] - 2026-07-09
 
 ### Added
