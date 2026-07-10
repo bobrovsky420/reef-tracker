@@ -1645,6 +1645,84 @@ abstract class AppLocalizations {
   /// **'{size} MB'**
   String sizeMegabytes(Object size);
 
+  /// Switch in Settings → Backup enabling the cloud-folder backup sync (U20).
+  ///
+  /// In en, this message translates to:
+  /// **'Sync to cloud folder'**
+  String get cloudSyncTitle;
+
+  /// No description provided for @cloudSyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy each backup into a folder you choose (e.g. Google Drive) so other devices can restore it'**
+  String get cloudSyncSubtitle;
+
+  /// Row showing the picked cloud folder; tapping re-opens the system folder picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced folder'**
+  String get cloudSyncFolder;
+
+  /// No description provided for @cloudSyncNoFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder selected'**
+  String get cloudSyncNoFolder;
+
+  /// Status row: when this device last pushed a backup into the synced folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced: {when}'**
+  String cloudSyncLastSynced(Object when);
+
+  /// No description provided for @cloudSyncNeverSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet'**
+  String get cloudSyncNeverSynced;
+
+  /// Persistent warning row while pushes into the synced folder fail; cleared by the next successful push.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync failed on {when}'**
+  String cloudSyncLastFailed(Object when);
+
+  /// No description provided for @cloudSyncRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from synced folder'**
+  String get cloudSyncRestoreTitle;
+
+  /// No description provided for @cloudSyncRestoreSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all data with a backup from the synced folder'**
+  String get cloudSyncRestoreSubtitle;
+
+  /// Title of the bottom sheet listing the backups found in the synced folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a backup to restore'**
+  String get cloudSyncChooseBackup;
+
+  /// No description provided for @cloudSyncNoBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups in the synced folder yet'**
+  String get cloudSyncNoBackups;
+
+  /// No description provided for @cloudSyncListFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the synced folder'**
+  String get cloudSyncListFailed;
+
+  /// No description provided for @cloudSyncPickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not select the folder'**
+  String get cloudSyncPickFailed;
+
   /// No description provided for @aboutAppName.
   ///
   /// In en, this message translates to:
@@ -2514,6 +2592,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manage views'**
   String get microViewManage;
+
+  /// App-bar action tooltip on the Microelements screen and title of the screen it opens: the list of all catalog elements where each row opens the standard zone-bounds editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Element settings'**
+  String get microConfigureTitle;
 
   /// No description provided for @microViewNone.
   ///

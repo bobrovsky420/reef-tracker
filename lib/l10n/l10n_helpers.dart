@@ -43,6 +43,15 @@ String relativeTimeLabel(AppLocalizations l, DateTime t) {
   return DateFormat.yMMMd().format(t);
 }
 
+/// Localized file size (translated unit symbols, locale decimal separator,
+/// #42) — backup tiles and the cloud-restore sheet.
+String formatFileSize(AppLocalizations l, int bytes) {
+  if (bytes < 1024) return l.sizeBytes('$bytes');
+  final kb = bytes / 1024;
+  if (kb < 1024) return l.sizeKilobytes(formatLocaleNumber(kb, 1));
+  return l.sizeMegabytes(formatLocaleNumber(kb / 1024, 1));
+}
+
 /// Localized short weekday names (e.g. "Mon, Thu") for [days] (1=Mon … 7=Sun,
 /// rendered in ascending order). Shared by the dosing rows and the
 /// maintenance-schedule subtitles.

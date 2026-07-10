@@ -921,6 +921,53 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncTitle => 'Synchronizace do cloudové složky';
+
+  @override
+  String get cloudSyncSubtitle =>
+      'Kopíruje každou zálohu do zvolené složky (např. Google Drive), aby ji mohla obnovit další zařízení';
+
+  @override
+  String get cloudSyncFolder => 'Synchronizovaná složka';
+
+  @override
+  String get cloudSyncNoFolder => 'Není vybrána žádná složka';
+
+  @override
+  String cloudSyncLastSynced(Object when) {
+    return 'Naposledy synchronizováno: $when';
+  }
+
+  @override
+  String get cloudSyncNeverSynced => 'Zatím nesynchronizováno';
+
+  @override
+  String cloudSyncLastFailed(Object when) {
+    return 'Synchronizace selhala $when';
+  }
+
+  @override
+  String get cloudSyncRestoreTitle => 'Obnovit ze synchronizované složky';
+
+  @override
+  String get cloudSyncRestoreSubtitle =>
+      'Nahradí všechna data zálohou ze synchronizované složky';
+
+  @override
+  String get cloudSyncChooseBackup => 'Vyberte zálohu k obnovení';
+
+  @override
+  String get cloudSyncNoBackups =>
+      'V synchronizované složce zatím nejsou žádné zálohy';
+
+  @override
+  String get cloudSyncListFailed =>
+      'Synchronizovanou složku se nepodařilo přečíst';
+
+  @override
+  String get cloudSyncPickFailed => 'Složku se nepodařilo vybrat';
+
+  @override
   String get aboutAppName => 'O aplikaci ReefTracker';
 
   @override
@@ -1427,6 +1474,9 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get microViewManage => 'Spravovat pohledy';
+
+  @override
+  String get microConfigureTitle => 'Nastavení prvků';
 
   @override
   String get microViewNone =>

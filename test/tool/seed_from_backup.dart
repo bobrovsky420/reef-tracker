@@ -11,8 +11,8 @@ import 'package:reeftracker/data/database.dart';
 /// app_flutter/ dir (same flow as `seed_sample_data.dart`).
 ///
 /// Paths come from dart-defines:
-///   --dart-define=BACKUP_IN=<backup json>   (required)
-///   --dart-define=SEED_OUT=<sqlite out>     (default C:\Android\reefbuild\seed.sqlite)
+///   `--dart-define=BACKUP_IN=<backup json>`   (required)
+///   `--dart-define=SEED_OUT=<sqlite out>`     (default C:\Android\reefbuild\seed.sqlite)
 const _in = String.fromEnvironment('BACKUP_IN');
 const _out = String.fromEnvironment(
   'SEED_OUT',

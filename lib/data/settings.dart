@@ -125,7 +125,18 @@ enum SettingKey {
   // The Microelements-screen quick filters (U17): plain display preferences
   // like trendEnabled — device-local, default off.
   microHideUndetectable(kMicroHideUndetectableKey, deviceLocal: true),
-  microAttentionOnly(kMicroAttentionOnlyKey, deviceLocal: true);
+  microAttentionOnly(kMicroAttentionOnlyKey, deviceLocal: true),
+  // Cloud folder sync (U20) — all device-local by necessity, not just
+  // preference: the SAF tree uri and its permission grant only exist on the
+  // device that picked the folder, and the sync stamps/hash describe what
+  // *this* device last pushed. A restore importing another device's uri
+  // would leave sync pointing at a folder this device cannot open.
+  cloudSyncEnabled(kCloudSyncEnabledKey, deviceLocal: true),
+  cloudSyncFolderUri(kCloudSyncFolderUriKey, deviceLocal: true),
+  cloudSyncFolderName(kCloudSyncFolderNameKey, deviceLocal: true),
+  lastCloudSyncAt(kLastCloudSyncAtKey, deviceLocal: true),
+  lastCloudSyncErrorAt(kLastCloudSyncErrorAtKey, deviceLocal: true),
+  lastCloudSyncHash(kLastCloudSyncHashKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -265,9 +276,8 @@ class AppSettings {
   /// (undetectable — unless zero is abnormal for the element) and show only
   /// elements needing attention. Both default off.
   static bool decodeMicroHideUndetectable(String? raw) => raw == 'true';
-  Stream<bool> watchMicroHideUndetectable() => _watch(
-    SettingKey.microHideUndetectable,
-  ).map(decodeMicroHideUndetectable);
+  Stream<bool> watchMicroHideUndetectable() =>
+      _watch(SettingKey.microHideUndetectable).map(decodeMicroHideUndetectable);
   Future<void> setMicroHideUndetectable(bool enabled) =>
       _write(SettingKey.microHideUndetectable, enabled.toString());
 
@@ -343,6 +353,74 @@ class AppSettings {
     SettingKey.lastBackupErrorAt,
     when?.millisecondsSinceEpoch.toString(),
   );
+
+  // --- cloud folder sync (U20) -------------------------------------------------
+
+  /// Whether each backup is also pushed into the user-picked synced folder
+  /// (default **off** — the feature needs a folder pick to be useful).
+  static bool decodeCloudSyncEnabled(String? raw) => raw == 'true';
+  Stream<bool> watchCloudSyncEnabled() =>
+      _watch(SettingKey.cloudSyncEnabled).map(decodeCloudSyncEnabled);
+  Future<bool> readCloudSyncEnabled() async =>
+      decodeCloudSyncEnabled(await _read(SettingKey.cloudSyncEnabled));
+  Future<void> setCloudSyncEnabled(bool enabled) =>
+      _write(SettingKey.cloudSyncEnabled, enabled.toString());
+
+  /// The picked folder's SAF tree uri (null = never picked). Opaque: only
+  /// ever handed back to [CloudFolder] methods, never shown to the user.
+  Future<String?> readCloudSyncFolderUri() =>
+      _read(SettingKey.cloudSyncFolderUri);
+
+  /// The picked folder's display name, for the Settings row.
+  static String? decodeCloudSyncFolderName(String? raw) => raw;
+  Stream<String?> watchCloudSyncFolderName() =>
+      _watch(SettingKey.cloudSyncFolderName).map(decodeCloudSyncFolderName);
+
+  /// Records a (re)picked folder. Clears the last-pushed hash so the next
+  /// backup pushes unconditionally — the new folder starts empty of our
+  /// files even when the data hasn't changed — and clears the stale
+  /// stamps, which described the previous folder.
+  Future<void> setCloudSyncFolder({
+    required String uri,
+    required String name,
+  }) async {
+    await _write(SettingKey.cloudSyncFolderUri, uri);
+    await _write(SettingKey.cloudSyncFolderName, name);
+    await _write(SettingKey.lastCloudSyncHash, null);
+    await _write(SettingKey.lastCloudSyncAt, null);
+    await _write(SettingKey.lastCloudSyncErrorAt, null);
+  }
+
+  /// When this device last successfully pushed a backup into the synced
+  /// folder (null = never, or the folder was since re-picked).
+  static DateTime? decodeLastCloudSyncAt(String? raw) => _parseEpochMillis(raw);
+  Stream<DateTime?> watchLastCloudSyncAt() =>
+      _watch(SettingKey.lastCloudSyncAt).map(decodeLastCloudSyncAt);
+  Future<void> setLastCloudSyncAt(DateTime? when) => _write(
+    SettingKey.lastCloudSyncAt,
+    when?.millisecondsSinceEpoch.toString(),
+  );
+
+  /// When the most recent push attempt failed; cleared by the next
+  /// successful push (same contract as [decodeLastBackupErrorAt]).
+  static DateTime? decodeLastCloudSyncErrorAt(String? raw) =>
+      _parseEpochMillis(raw);
+  Stream<DateTime?> watchLastCloudSyncErrorAt() =>
+      _watch(SettingKey.lastCloudSyncErrorAt).map(decodeLastCloudSyncErrorAt);
+  Future<void> setLastCloudSyncErrorAt(DateTime? when) => _write(
+    SettingKey.lastCloudSyncErrorAt,
+    when?.millisecondsSinceEpoch.toString(),
+  );
+
+  /// Content hash of the last backup this device successfully pushed — the
+  /// dirty-check that keeps an unchanged device from re-uploading (and from
+  /// burying another device's genuinely newer file under an identical copy).
+  /// Only ever written on a successful push, so a failed push retries on
+  /// every subsequent backup until one succeeds.
+  Future<String?> readLastCloudSyncHash() =>
+      _read(SettingKey.lastCloudSyncHash);
+  Future<void> setLastCloudSyncHash(String? hash) =>
+      _write(SettingKey.lastCloudSyncHash, hash);
 
   // --- test sets (U9) ----------------------------------------------------------
 

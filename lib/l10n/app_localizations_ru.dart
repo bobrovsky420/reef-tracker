@@ -926,6 +926,54 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncTitle => 'Синхронизация с облачной папкой';
+
+  @override
+  String get cloudSyncSubtitle =>
+      'Копирует каждую резервную копию в выбранную папку (например, Google Диск), чтобы её могли восстановить другие устройства';
+
+  @override
+  String get cloudSyncFolder => 'Синхронизируемая папка';
+
+  @override
+  String get cloudSyncNoFolder => 'Папка не выбрана';
+
+  @override
+  String cloudSyncLastSynced(Object when) {
+    return 'Последняя синхронизация: $when';
+  }
+
+  @override
+  String get cloudSyncNeverSynced => 'Синхронизация ещё не выполнялась';
+
+  @override
+  String cloudSyncLastFailed(Object when) {
+    return 'Ошибка синхронизации: $when';
+  }
+
+  @override
+  String get cloudSyncRestoreTitle => 'Восстановить из синхронизируемой папки';
+
+  @override
+  String get cloudSyncRestoreSubtitle =>
+      'Заменяет все данные резервной копией из синхронизируемой папки';
+
+  @override
+  String get cloudSyncChooseBackup =>
+      'Выберите резервную копию для восстановления';
+
+  @override
+  String get cloudSyncNoBackups =>
+      'В синхронизируемой папке пока нет резервных копий';
+
+  @override
+  String get cloudSyncListFailed =>
+      'Не удалось прочитать синхронизируемую папку';
+
+  @override
+  String get cloudSyncPickFailed => 'Не удалось выбрать папку';
+
+  @override
   String get aboutAppName => 'О приложении ReefTracker';
 
   @override
@@ -1435,6 +1483,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get microViewManage => 'Управление наборами';
+
+  @override
+  String get microConfigureTitle => 'Настройки элементов';
 
   @override
   String get microViewNone =>

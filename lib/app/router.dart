@@ -20,6 +20,7 @@ import '../features/home/home_shell.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
 import '../features/micro/icp_import_screen.dart';
 import '../features/micro/micro_add_screen.dart';
+import '../features/micro/micro_configure_screen.dart';
 import '../features/micro/micro_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
@@ -138,6 +139,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/micro/add',
       builder: (context, state) => const MicroAddScreen(),
+    ),
+    GoRoute(
+      path: '/micro/configure',
+      builder: (context, state) => const MicroConfigureScreen(),
     ),
     GoRoute(
       path: '/micro/import',

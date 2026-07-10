@@ -10,7 +10,6 @@ import '../../data/icp_import_file.dart';
 import '../../domain/icp_import.dart';
 import '../../domain/micro.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
@@ -21,9 +20,8 @@ import 'micro_view_sheets.dart';
 /// The microelement panel (U17) for the active tank: every ICP element in
 /// catalog order, sectioned the way lab reports group them (major ions /
 /// trace elements / contaminants). Each row shows the latest value colored by
-/// its zone and links to the standard parameter history; the edit action
-/// opens the standard bounds editor (creating the element's tracked row on
-/// demand — rows exist only for elements the user has saved or configured).
+/// its zone and links to the standard parameter history; zone bounds are
+/// configured from the app-bar's element-settings action (`/micro/configure`).
 /// Elements without a reading render muted, advertising what can be tracked.
 class MicroScreen extends ConsumerWidget {
   const MicroScreen({super.key});
@@ -95,9 +93,14 @@ class MicroScreen extends ConsumerWidget {
             onPressed: () => _importReport(context),
           ),
           IconButton(
-            icon: const Icon(Icons.tune),
+            icon: const Icon(Icons.checklist),
             tooltip: l.microViewManage,
             onPressed: () => showMicroViewsManageSheet(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: l.microConfigureTitle,
+            onPressed: () => context.push('/micro/configure'),
           ),
           IconButton(
             icon: const Icon(Icons.alarm_add),
@@ -461,14 +464,14 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _ElementRow extends ConsumerWidget {
+class _ElementRow extends StatelessWidget {
   const _ElementRow({required this.element, required this.prefs});
 
   final MicroElementStatus element;
   final UnitPrefs prefs;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final hint = Theme.of(context).hintColor;
     final def = element.def;
@@ -492,11 +495,9 @@ class _ElementRow extends ConsumerWidget {
             : relativeTimeLabel(l, latest.takenAt),
         style: TextStyle(color: hint),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (latest != null)
-            Text(
+      trailing: latest == null
+          ? null
+          : Text(
               '${pres.format(latest.value)} ${pres.unitLabel}',
               style: TextStyle(
                 fontSize: 16,
@@ -506,40 +507,7 @@ class _ElementRow extends ConsumerWidget {
                 color: zone == Zone.unknown ? null : zone.color,
               ),
             ),
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: l.editZones,
-            onPressed: () => _editBounds(context, ref),
-          ),
-        ],
-      ),
       onTap: () => context.push('/history/${def.key}'),
     );
-  }
-
-  /// Opens the standard bounds editor, creating the element's tracked row
-  /// first when it doesn't exist yet (seeded with the catalog defaults by
-  /// `addTrackedParameter`).
-  Future<void> _editBounds(BuildContext context, WidgetRef ref) async {
-    final tank = ref.read(activeTankProvider);
-    if (tank == null) return;
-    var row = element.row;
-    if (row == null) {
-      final db = ref.read(dbProvider);
-      await db.addTrackedParameter(
-        tank.id,
-        element.def.key,
-        SetupType.fromName(tank.setupType),
-      );
-      for (final t in await db.getTrackedParameters(tank.id)) {
-        if (t.paramKey == element.def.key) {
-          row = t;
-          break;
-        }
-      }
-    }
-    if (row != null && context.mounted) {
-      await context.push('/parameters/${row.id}/edit', extra: row);
-    }
   }
 }

@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:isolate';
+
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,8 +10,11 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
+import '../../data/cloud_folder.dart';
+import '../../data/cloud_sync.dart';
 import '../../data/csv_export.dart';
 import '../../data/database.dart';
+import '../../data/settings.dart';
 import '../../domain/trend.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
@@ -303,6 +311,70 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/settings/backups'),
             ),
           ],
+          // Cloud folder sync (U20). Android-only until the iOS CloudFolder
+          // implementation lands (TODO U20 phase 3); gated on the target
+          // platform, not dart:io, so widget tests exercise the tiles.
+          if (defaultTargetPlatform == TargetPlatform.android) ...[
+            SwitchListTile(
+              secondary: const Icon(Icons.cloud_sync_outlined),
+              title: Text(l.cloudSyncTitle),
+              subtitle: Text(l.cloudSyncSubtitle),
+              value: ref.watch(cloudSyncEnabledProvider).value ?? false,
+              onChanged: (v) => _toggleCloudSync(context, ref, l, v),
+            ),
+            if (ref.watch(cloudSyncEnabledProvider).value ?? false) ...[
+              ListTile(
+                leading: const Icon(Icons.folder_shared_outlined),
+                title: Text(l.cloudSyncFolder),
+                subtitle: Text(switch (ref
+                    .watch(cloudSyncFolderNameProvider)
+                    .value) {
+                  final name? when name.isNotEmpty => name,
+                  _ => l.cloudSyncNoFolder,
+                }),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _changeCloudFolder(context, ref, l),
+              ),
+              ListTile(
+                leading: const Icon(Icons.cloud_done_outlined),
+                title: Text(switch (ref.watch(lastCloudSyncAtProvider).value) {
+                  final at? => l.cloudSyncLastSynced(
+                    formatDateTime(context, at.toLocal(), weekday: false),
+                  ),
+                  null => l.cloudSyncNeverSynced,
+                }),
+              ),
+              // Persistent warning while pushes fail (same contract as the
+              // backup-error row above); the folder tile is the recovery
+              // path when the grant was revoked or the folder deleted.
+              if (ref.watch(lastCloudSyncErrorAtProvider).value
+                  case final errorAt?)
+                ListTile(
+                  leading: Icon(
+                    Icons.cloud_off_outlined,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(
+                    l.cloudSyncLastFailed(
+                      formatDateTime(
+                        context,
+                        errorAt.toLocal(),
+                        weekday: false,
+                      ),
+                    ),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ListTile(
+                leading: const Icon(Icons.cloud_download_outlined),
+                title: Text(l.cloudSyncRestoreTitle),
+                subtitle: Text(l.cloudSyncRestoreSubtitle),
+                onTap: () => _restoreFromCloud(context, ref, l),
+              ),
+            ],
+          ],
           const Divider(),
           _SectionHeader(l.aboutSection),
           ListTile(
@@ -394,6 +466,182 @@ class SettingsScreen extends ConsumerWidget {
       if (!shared && context.mounted) _snack(context, l.csvExportNoData);
     } catch (_) {
       if (context.mounted) _snack(context, l.csvExportFailed);
+    }
+  }
+
+  // --- cloud folder sync (U20) -----------------------------------------------
+
+  /// Turns cloud sync on/off. Enabling requires a usable folder first: reuse
+  /// the stored one when its grant is still valid, otherwise open the system
+  /// picker (cancel = the switch stays off). On enable, an immediate manual
+  /// backup runs so the folder holds current data right away — its push (and
+  /// any failure stamps) ride the normal pipeline.
+  Future<void> _toggleCloudSync(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+    bool enable,
+  ) async {
+    final settings = ref.read(settingsProvider);
+    if (!enable) {
+      await settings.setCloudSyncEnabled(false);
+      return;
+    }
+    final db = ref.read(dbProvider);
+    final uri = await settings.readCloudSyncFolderUri();
+    var haveFolder = uri != null && await _cloudAccess(uri);
+    if (!haveFolder && context.mounted) {
+      haveFolder = await _pickCloudFolder(context, settings, l);
+    }
+    if (!haveFolder) return;
+    await settings.setCloudSyncEnabled(true);
+    // Fire-and-forget: failures stamp the backup/sync error rows themselves.
+    unawaited(backupNow(db).then<void>((_) {}, onError: (_) {}));
+  }
+
+  /// The folder tile: re-pick at any time (also the recovery path for a
+  /// revoked grant). A successful pick clears the push hash (see
+  /// [AppSettings.setCloudSyncFolder]), so the backup triggered here pushes
+  /// into the new folder unconditionally.
+  Future<void> _changeCloudFolder(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final settings = ref.read(settingsProvider);
+    final db = ref.read(dbProvider);
+    if (await _pickCloudFolder(context, settings, l)) {
+      unawaited(backupNow(db).then<void>((_) {}, onError: (_) {}));
+    }
+  }
+
+  /// Lists the synced folder's backups in a bottom sheet and funnels the
+  /// chosen one through the exact same confirm + three-stage import pipeline
+  /// as a file-picker restore.
+  Future<void> _restoreFromCloud(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final settings = ref.read(settingsProvider);
+    final db = ref.read(dbProvider);
+    final uri = await settings.readCloudSyncFolderUri();
+    if (uri == null) {
+      if (context.mounted) _snack(context, l.cloudSyncNoFolder);
+      return;
+    }
+    final List<CloudFileInfo> files;
+    try {
+      files = await listCloudSyncBackups(cloudFolderBackend, uri);
+    } catch (_) {
+      if (context.mounted) _snack(context, l.cloudSyncListFailed);
+      return;
+    }
+    if (files.isEmpty) {
+      if (context.mounted) _snack(context, l.cloudSyncNoBackups);
+      return;
+    }
+    if (!context.mounted) return;
+
+    final chosen = await showModalBottomSheet<CloudFileInfo>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                l.cloudSyncChooseBackup,
+                style: Theme.of(ctx).textTheme.titleMedium,
+              ),
+            ),
+            for (final f in files)
+              ListTile(
+                leading: const Icon(Icons.history),
+                // The provider-reported time is best-effort (can be the
+                // upload time), but it is the only human-readable stamp we
+                // have — the list itself is ordered by the filename's UTC
+                // stamp, which is authoritative.
+                title: Text(
+                  formatDateTime(ctx, f.modified.toLocal(), weekday: false),
+                ),
+                subtitle: Text(formatFileSize(l, f.size)),
+                onTap: () => Navigator.pop(ctx, f),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (chosen == null || !context.mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.backupRestoreConfirmTitle),
+        content: Text(l.backupRestoreConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.restore),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      final bytes = await cloudFolderBackend.read(uri, chosen.name);
+      // Decode in a worker isolate (T5); InvalidBackupException crosses the
+      // boundary typed.
+      final data = await Isolate.run(() => decodeBackupBytes(bytes));
+      await importBackup(db, data);
+      // Suppress the echo push: local data now equals this file, so record
+      // its content hash as "already pushed" — otherwise the next backup
+      // would bury the folder's newest file under an identical copy. If the
+      // re-encode doesn't reproduce the hash exactly (e.g. the file came
+      // from an older app version whose sections encode differently), the
+      // cost is one redundant push — fail-safe. utf8 can't throw here:
+      // decodeBackupBytes already decoded these bytes.
+      await settings.setLastCloudSyncHash(
+        cloudSyncContentHash(utf8.decode(bytes)),
+      );
+      if (context.mounted) _snack(context, l.backupRestored);
+    } on InvalidBackupException catch (e) {
+      if (context.mounted) _snack(context, l.backupRejection(e.reason));
+    } catch (_) {
+      if (context.mounted) _snack(context, l.backupImportFailed);
+    }
+  }
+
+  /// Opens the system folder picker and stores the choice. Returns whether a
+  /// folder was picked (false = cancelled or the picker failed).
+  Future<bool> _pickCloudFolder(
+    BuildContext context,
+    AppSettings settings,
+    AppLocalizations l,
+  ) async {
+    try {
+      final picked = await cloudFolderBackend.pickFolder();
+      if (picked == null) return false;
+      await settings.setCloudSyncFolder(uri: picked.uri, name: picked.name);
+      return true;
+    } catch (_) {
+      if (context.mounted) _snack(context, l.cloudSyncPickFailed);
+      return false;
+    }
+  }
+
+  /// Whether the stored folder is still usable; channel errors read as "no".
+  Future<bool> _cloudAccess(String uri) async {
+    try {
+      return await cloudFolderBackend.checkAccess(uri);
+    } catch (_) {
+      return false;
     }
   }
 

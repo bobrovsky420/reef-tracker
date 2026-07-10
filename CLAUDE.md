@@ -4,6 +4,15 @@
 
 [DESIGN.md](DESIGN.md) is the high-level map of the app's architecture and most important features. **Keep it up to date: after any change that alters the design, update the relevant section of `DESIGN.md` in the same change.** This includes new or changed database tables/migrations, new screens or routes, new domain rules, new features, or changes to the layering/state model. Skip updates for purely cosmetic or trivial edits that don't affect the design (wording tweaks, styling, refactors with no behavioral or structural effect).
 
+## Platform parity (Android + iOS)
+
+The app ships on **both Android and iOS** from this single Flutter codebase. Pure Dart changes (`lib/`, l10n, tests) apply to both platforms automatically — nothing extra to do. But **whenever a change touches anything platform-sensitive, apply it to both platforms in the same change**, or state explicitly why one side is deferred:
+
+- New dependencies with native code → verify setup on both sides: [android/](android/) (manifest entries, permissions, Gradle config) **and** [ios/](ios/) (`Info.plist` usage keys, capabilities). Don't assume a plugin that works on Android is configured for iOS.
+- Features involving permissions, notifications, file access, sharing, deep links, background work, or app icons/splash are the usual suspects — check both platforms even when the Dart code is shared.
+- Avoid `Platform.isAndroid`/`isIOS` branching unless genuinely required (there is currently none in `lib/` — keep it that way where possible). If you must branch, implement and test both branches.
+- iOS builds only on macOS/CI (Codemagic) — it cannot be built or run on this Windows machine. When a change affects iOS behavior but can't be validated locally, say so in the changelog/commit rather than silently assuming it works.
+
 ## Version bumping
 
 The version lives in [pubspec.yaml](pubspec.yaml) as `major.minor.patch+build`. When asked to bump the version, decide based on whether there are **uncommitted changes** in the working tree:
