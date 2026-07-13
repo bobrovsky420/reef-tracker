@@ -7,7 +7,7 @@ part of 'pro_features.dart';
 
 /// Every feature behind the Pro gate, generated from
 /// `pro_features.yaml`.
-enum ProFeature { icpImport, doseCalculator }
+enum ProFeature { icpImport, doseCalculator, unlimitedTanks }
 
 /// Features that existed at the monetization cutoff: free
 /// FOREVER for Founder's Edition installs. Entries are never
@@ -15,4 +15,5 @@ enum ProFeature { icpImport, doseCalculator }
 const Set<ProFeature> kGrandfatheredFeatures = {
   ProFeature.icpImport,
   ProFeature.doseCalculator,
+  ProFeature.unlimitedTanks,
 };

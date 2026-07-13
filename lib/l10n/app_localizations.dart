@@ -1699,6 +1699,18 @@ abstract class AppLocalizations {
   /// **'{feature} is part of ReefTracker Pro.'**
   String proFeatureBody(Object feature);
 
+  /// Display name of the Pro feature that lifts the free-tier aquarium cap; used in the Pro-feature dialog and future paywall listings.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited aquariums'**
+  String get unlimitedTanksTitle;
+
+  /// Pro-feature dialog body shown when a non-entitled install tries to create an aquarium beyond the free cap; limit is kFreeTankLimit (currently 2).
+  ///
+  /// In en, this message translates to:
+  /// **'The standard edition includes up to {limit} aquariums — for example a display tank and a quarantine tank. Unlimited aquariums are part of ReefTracker Pro.'**
+  String tankLimitBody(Object limit);
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

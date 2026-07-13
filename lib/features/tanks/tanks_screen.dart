@@ -7,10 +7,12 @@ import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../domain/pro_features.dart';
 import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/pro_feature_dialog.dart';
 
 /// Lists all aquariums with add / edit / delete / switch actions.
 class TanksScreen extends ConsumerWidget {
@@ -87,8 +89,25 @@ class TanksScreen extends ConsumerWidget {
           );
         },
       ),
+      // The tank cap (U21): a Standard install may hold at most kFreeTankLimit
+      // live tanks — Pro/Founder lifts it. Gated at creation only, so tanks
+      // beyond the cap (restored backup) stay fully usable. While the list is
+      // still loading the gate stays open, matching proFeatureProvider's
+      // never-flash-a-lock rule; _save() holds the authoritative check.
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/tanks/new'),
+        onPressed:
+            canCreateTank(
+              tanksAsync.value?.length ?? 0,
+              unlimitedTanks: ref.watch(
+                proFeatureProvider(ProFeature.unlimitedTanks),
+              ),
+            )
+            ? () => context.push('/tanks/new')
+            : () => showProFeatureDialog(
+                context,
+                ProFeature.unlimitedTanks,
+                body: l.tankLimitBody(kFreeTankLimit),
+              ),
         icon: const Icon(Icons.add),
         label: Text(l.addAquarium),
       ),
@@ -280,6 +299,24 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
           ),
         );
       } else {
+        // Authoritative tank-cap check (U21). The FAB gate is only cosmetic —
+        // deep links and restored routes reach this screen without it.
+        final unlimited = ref.read(
+          proFeatureProvider(ProFeature.unlimitedTanks),
+        );
+        final tankCount = (await db.getTanks()).length;
+        if (!canCreateTank(tankCount, unlimitedTanks: unlimited)) {
+          if (mounted) {
+            unawaited(
+              showProFeatureDialog(
+                context,
+                ProFeature.unlimitedTanks,
+                body: l.tankLimitBody(kFreeTankLimit),
+              ),
+            );
+          }
+          return;
+        }
         await db.createTankWithPreset(
           name: _name.text.trim(),
           type: _type,

@@ -9,14 +9,20 @@ import '../l10n/l10n_helpers.dart';
 /// the paid tier ships it becomes the paywall entry point. Unreachable in
 /// practice until then: every current install is Founder's Edition and
 /// founders pass the gate for all grandfathered features.
-Future<void> showProFeatureDialog(BuildContext context, ProFeature feature) {
+/// [body] replaces the generic "… is part of ReefTracker Pro." line when the
+/// gate needs more context (e.g. the tank cap explains the limit).
+Future<void> showProFeatureDialog(
+  BuildContext context,
+  ProFeature feature, {
+  String? body,
+}) {
   final l = AppLocalizations.of(context);
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
       icon: const Icon(Icons.workspace_premium_outlined),
       title: Text(l.proFeatureTitle),
-      content: Text(l.proFeatureBody(l.proFeatureName(feature))),
+      content: Text(body ?? l.proFeatureBody(l.proFeatureName(feature))),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),

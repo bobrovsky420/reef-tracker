@@ -1444,11 +1444,26 @@ seed/sticky coverage in `test/settings_test.dart` / `test/backup_test.dart`.
 Feature gating on top of the marker lives in the domain layer
 (`pro_features.yaml` → generated `ProFeature`/`kGrandfatheredFeatures`, gate
 rule in `domain/pro_features.dart` — see the Domain table) and is consumed via
-`proFeatureProvider(feature)`; the gated surfaces are **ICP report import**
-and the **dose calculator** (both grandfathered: founders keep them free
-forever; a non-entitled install gets `showProFeatureDialog` instead of the
-feature — dormant until a Pro build ships, exercised by
+`proFeatureProvider(feature)`; the gated surfaces are **ICP report import**,
+the **dose calculator**, and the **tank cap** (all grandfathered: founders
+keep them free forever; a non-entitled install gets `showProFeatureDialog`
+instead of the feature — dormant until a Pro build ships, exercised by
 `test/pro_gate_test.dart`).
+
+**Tank cap (U21):** a Standard install may hold at most `kFreeTankLimit` (2 —
+a display tank plus a quarantine tank, so the free tier never penalizes
+quarantining) live tanks; `ProFeature.unlimitedTanks` lifts it. The rule
+(`canCreateTank`, `domain/pro_features.dart`) gates **creation only** — tanks
+beyond the cap (restored backup, lapsed entitlement) stay fully viewable and
+editable; data is never locked away. Enforced twice in
+`tanks_screen.dart`: cosmetically on the tanks-list FAB (swaps the push for
+`showProFeatureDialog` with the cap-specific `tankLimitBody` message) and
+authoritatively in `_save()` before `createTankWithPreset` (deep links and
+restored routes bypass the FAB). While providers are still loading the gate
+stays open (same never-flash-a-lock rule as `proFeatureProvider`). The
+delete-undo flow is deliberately not gated: restoring your own just-deleted
+tank must never be blocked, even if a concurrent create pushed the count past
+the cap.
 
 ### Settings (`settings_screen.dart`)
 

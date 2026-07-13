@@ -41,7 +41,32 @@ void main() {
       expect(kGrandfatheredFeatures, {
         ProFeature.icpImport,
         ProFeature.doseCalculator,
+        ProFeature.unlimitedTanks,
       });
+    });
+  });
+
+  group('tank cap (U21)', () {
+    test('unlimitedTanks entitlement lifts the cap entirely', () {
+      for (final count in [0, kFreeTankLimit, 100]) {
+        expect(canCreateTank(count, unlimitedTanks: true), isTrue);
+      }
+    });
+
+    test('a non-entitled install may create up to kFreeTankLimit tanks', () {
+      for (var count = 0; count < kFreeTankLimit; count++) {
+        expect(canCreateTank(count, unlimitedTanks: false), isTrue);
+      }
+      expect(canCreateTank(kFreeTankLimit, unlimitedTanks: false), isFalse);
+      // Over the cap (restored backup): existing tanks stay usable, but no
+      // further creation.
+      expect(canCreateTank(kFreeTankLimit + 1, unlimitedTanks: false), isFalse);
+    });
+
+    test('the free tier covers a display tank plus a quarantine tank', () {
+      // Product decision pin: lowering the limit below 2 would punish
+      // quarantining — don't.
+      expect(kFreeTankLimit, greaterThanOrEqualTo(2));
     });
   });
 }

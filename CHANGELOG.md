@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The dose calculator (Dosing tab) is covered by the Founder's Edition
   promise: it stays free forever for Founder installs, and nothing changes
   for anyone today.
+- Unlimited aquariums join the Founder's Edition promise: the standard
+  edition includes up to 2 aquariums (for example a display tank plus a
+  quarantine tank), while Founder installs keep adding aquariums without
+  limit, free forever. Nothing changes for anyone today — every current
+  install is Founder's Edition. Existing aquariums are never locked or
+  removed by the limit; it only applies to creating new ones.
 
 ## [0.26.1] - 2026-07-13
 

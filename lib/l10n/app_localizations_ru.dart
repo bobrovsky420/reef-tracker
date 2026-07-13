@@ -958,6 +958,14 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get unlimitedTanksTitle => 'Неограниченное число аквариумов';
+
+  @override
+  String tankLimitBody(Object limit) {
+    return 'Стандартная версия включает до $limit аквариумов — например, основной аквариум и карантинный. Неограниченное число аквариумов — часть ReefTracker Pro.';
+  }
+
+  @override
   String get language => 'Язык';
 
   @override

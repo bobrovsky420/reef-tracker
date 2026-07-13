@@ -23,3 +23,15 @@ bool hasProFeature(
   required bool purchased,
   required bool legacyFree,
 }) => purchased || (legacyFree && kGrandfatheredFeatures.contains(feature));
+
+/// How many aquariums a non-entitled install may hold: a display tank plus a
+/// quarantine tank, so the free tier never penalizes quarantining.
+const int kFreeTankLimit = 2;
+
+/// Whether an install already holding [tankCount] live (non-deleted) aquariums
+/// may create another. The cap gates only CREATION — existing tanks beyond the
+/// limit (restored backup, lapsed entitlement) stay fully usable; data is
+/// never locked away. [unlimitedTanks] is the caller's
+/// `ProFeature.unlimitedTanks` gate result.
+bool canCreateTank(int tankCount, {required bool unlimitedTanks}) =>
+    unlimitedTanks || tankCount < kFreeTankLimit;

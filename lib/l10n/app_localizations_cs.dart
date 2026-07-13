@@ -953,6 +953,14 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get unlimitedTanksTitle => 'Neomezený počet akvárií';
+
+  @override
+  String tankLimitBody(Object limit) {
+    return 'Standardní edice zahrnuje až $limit akvária — například hlavní nádrž a karanténu. Neomezený počet akvárií je součástí ReefTracker Pro.';
+  }
+
+  @override
   String get language => 'Jazyk';
 
   @override

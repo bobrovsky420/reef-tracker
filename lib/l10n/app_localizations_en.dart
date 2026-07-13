@@ -949,6 +949,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get unlimitedTanksTitle => 'Unlimited aquariums';
+
+  @override
+  String tankLimitBody(Object limit) {
+    return 'The standard edition includes up to $limit aquariums — for example a display tank and a quarantine tank. Unlimited aquariums are part of ReefTracker Pro.';
+  }
+
+  @override
   String get language => 'Language';
 
   @override

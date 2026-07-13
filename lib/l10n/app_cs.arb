@@ -284,6 +284,8 @@
   "standardInfoBody": "Používáte standardní edici aplikace ReefTracker.",
   "proFeatureTitle": "Funkce Pro",
   "proFeatureBody": "{feature} je součástí ReefTracker Pro.",
+  "unlimitedTanksTitle": "Neomezený počet akvárií",
+  "tankLimitBody": "Standardní edice zahrnuje až {limit} akvária — například hlavní nádrž a karanténu. Neomezený počet akvárií je součástí ReefTracker Pro.",
   "language": "Jazyk",
   "languageSystem": "Podle systému",
   "languageEnglish": "English",

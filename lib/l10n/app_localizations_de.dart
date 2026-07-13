@@ -956,6 +956,14 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get unlimitedTanksTitle => 'Unbegrenzte Aquarien';
+
+  @override
+  String tankLimitBody(Object limit) {
+    return 'Die Standard-Edition umfasst bis zu $limit Aquarien — zum Beispiel ein Hauptbecken und ein Quarantänebecken. Unbegrenzte Aquarien sind Teil von ReefTracker Pro.';
+  }
+
+  @override
   String get language => 'Sprache';
 
   @override

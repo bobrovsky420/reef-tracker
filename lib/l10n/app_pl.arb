@@ -284,6 +284,8 @@
   "standardInfoBody": "Korzystasz ze standardowej edycji aplikacji ReefTracker.",
   "proFeatureTitle": "Funkcja Pro",
   "proFeatureBody": "{feature} jest częścią ReefTracker Pro.",
+  "unlimitedTanksTitle": "Nieograniczona liczba akwariów",
+  "tankLimitBody": "Wersja standardowa obejmuje do {limit} akwariów — na przykład zbiornik główny i kwarantannę. Nieograniczona liczba akwariów jest częścią ReefTracker Pro.",
   "language": "Język",
   "languageSystem": "Domyślny systemu",
   "languageEnglish": "English",

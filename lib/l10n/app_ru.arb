@@ -284,6 +284,8 @@
   "standardInfoBody": "Вы используете стандартное издание ReefTracker.",
   "proFeatureTitle": "Функция Pro",
   "proFeatureBody": "{feature} — часть ReefTracker Pro.",
+  "unlimitedTanksTitle": "Неограниченное число аквариумов",
+  "tankLimitBody": "Стандартная версия включает до {limit} аквариумов — например, основной аквариум и карантинный. Неограниченное число аквариумов — часть ReefTracker Pro.",
   "language": "Язык",
   "languageSystem": "Как в системе",
   "languageEnglish": "English",

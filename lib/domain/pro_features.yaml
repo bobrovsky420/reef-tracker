@@ -24,3 +24,5 @@ features:
     grandfathered: true
   - key: doseCalculator
     grandfathered: true
+  - key: unlimitedTanks
+    grandfathered: true

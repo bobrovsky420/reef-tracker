@@ -114,6 +114,7 @@ extension L10nDomain on AppLocalizations {
   String proFeatureName(ProFeature feature) => switch (feature) {
     ProFeature.icpImport => icpImportTitle,
     ProFeature.doseCalculator => doseCalcTitle,
+    ProFeature.unlimitedTanks => unlimitedTanksTitle,
   };
 
   String paramName(String key) {

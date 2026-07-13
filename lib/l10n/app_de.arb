@@ -284,6 +284,8 @@
   "standardInfoBody": "Du verwendest die Standard-Edition von ReefTracker.",
   "proFeatureTitle": "Pro-Funktion",
   "proFeatureBody": "{feature} ist Teil von ReefTracker Pro.",
+  "unlimitedTanksTitle": "Unbegrenzte Aquarien",
+  "tankLimitBody": "Die Standard-Edition umfasst bis zu {limit} Aquarien — zum Beispiel ein Hauptbecken und ein Quarantänebecken. Unbegrenzte Aquarien sind Teil von ReefTracker Pro.",
   "language": "Sprache",
   "languageSystem": "Systemstandard",
   "languageEnglish": "English",
