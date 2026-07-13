@@ -22,3 +22,5 @@
 features:
   - key: icpImport
     grandfathered: true
+  - key: doseCalculator
+    grandfathered: true

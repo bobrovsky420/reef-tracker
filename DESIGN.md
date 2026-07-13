@@ -1312,7 +1312,10 @@ The Fauna Marin Balling Light products now carry verified `strength` values
 ### Dose calculator (`features/dosing/dose_calculator_screen.dart`) — `/dosing/calculator`
 
 Opened from the Dosing tab's app-bar calculator icon (`HomeShell`, shown when
-`_index == 2`). Estimates an element's real daily consumption and proposes the
+`_index == 2`). **Pro-gated** (U19, grandfathered — see Editions): a
+non-entitled install gets the Pro-feature dialog instead of the screen
+(dormant until a Pro build ships; every current install is Founder's
+Edition). Estimates an element's real daily consumption and proposes the
 maintenance dose, **ignoring water changes** (only dosing is assumed to add the
 element back). The math is the pure `domain/dose_calculator.dart`; the screen is
 just inputs + a result card and stores nothing.
@@ -1441,10 +1444,11 @@ seed/sticky coverage in `test/settings_test.dart` / `test/backup_test.dart`.
 Feature gating on top of the marker lives in the domain layer
 (`pro_features.yaml` → generated `ProFeature`/`kGrandfatheredFeatures`, gate
 rule in `domain/pro_features.dart` — see the Domain table) and is consumed via
-`proFeatureProvider(feature)`; the first gated surface is **ICP report
-import** (grandfathered: founders keep it free forever; a non-entitled
-install gets `showProFeatureDialog` instead of the import flow — dormant
-until a Pro build ships, exercised by `test/pro_gate_test.dart`).
+`proFeatureProvider(feature)`; the gated surfaces are **ICP report import**
+and the **dose calculator** (both grandfathered: founders keep them free
+forever; a non-entitled install gets `showProFeatureDialog` instead of the
+feature — dormant until a Pro build ships, exercised by
+`test/pro_gate_test.dart`).
 
 ### Settings (`settings_screen.dart`)
 

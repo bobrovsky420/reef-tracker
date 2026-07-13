@@ -113,6 +113,7 @@ extension L10nDomain on AppLocalizations {
   /// feature to pro_features.yaml won't compile until it gets a name here.
   String proFeatureName(ProFeature feature) => switch (feature) {
     ProFeature.icpImport => icpImportTitle,
+    ProFeature.doseCalculator => doseCalcTitle,
   };
 
   String paramName(String key) {

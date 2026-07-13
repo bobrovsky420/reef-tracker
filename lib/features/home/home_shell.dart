@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:showcaseview/showcaseview.dart';
 
 import '../../app/providers.dart';
+import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/pro_feature_dialog.dart';
 import '../actions/actions_screen.dart';
 import '../dashboard/comparison_view.dart';
 import '../dashboard/dashboard_screen.dart';
@@ -272,7 +274,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               IconButton(
                 tooltip: l.doseCalcTitle,
                 icon: const Icon(Icons.calculate_outlined),
-                onPressed: () => context.push('/dosing/calculator'),
+                // Pro-gated (U19): founders (and, later, Pro purchasers) open
+                // the calculator; anyone else gets the explanation dialog.
+                onPressed:
+                    ref.watch(proFeatureProvider(ProFeature.doseCalculator))
+                    ? () => context.push('/dosing/calculator')
+                    : () => showProFeatureDialog(
+                        context,
+                        ProFeature.doseCalculator,
+                      ),
               ),
             ),
           tourStep(

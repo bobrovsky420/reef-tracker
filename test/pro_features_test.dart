@@ -38,7 +38,10 @@ void main() {
       // Pro must grandfather), but an existing entry must NEVER be removed.
       // If this test fails because a key disappeared, revert the
       // pro_features.yaml change — don't update the expectation.
-      expect(kGrandfatheredFeatures, {ProFeature.icpImport});
+      expect(kGrandfatheredFeatures, {
+        ProFeature.icpImport,
+        ProFeature.doseCalculator,
+      });
     });
   });
 }
