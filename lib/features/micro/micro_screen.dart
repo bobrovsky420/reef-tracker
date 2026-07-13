@@ -10,10 +10,12 @@ import '../../data/icp_import_file.dart';
 import '../../domain/icp_import.dart';
 import '../../domain/micro.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/pro_features.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/zone_visuals.dart';
 import 'micro_view_sheets.dart';
 
@@ -90,7 +92,11 @@ class MicroScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.upload_file_outlined),
             tooltip: l.icpImportTitle,
-            onPressed: () => _importReport(context),
+            // Pro-gated (U19): founders (and, later, Pro purchasers) import;
+            // anyone else gets the explanation dialog instead of the picker.
+            onPressed: ref.watch(proFeatureProvider(ProFeature.icpImport))
+                ? () => _importReport(context)
+                : () => showProFeatureDialog(context, ProFeature.icpImport),
           ),
           IconButton(
             icon: const Icon(Icons.checklist),

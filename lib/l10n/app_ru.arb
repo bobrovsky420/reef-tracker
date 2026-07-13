@@ -282,6 +282,8 @@
   "editionStandard": "Стандартное",
   "founderInfoBody": "Вы с ReefTracker с самых первых дней. В знак благодарности все доступные сегодня функции останутся для вас бесплатными навсегда.",
   "standardInfoBody": "Вы используете стандартное издание ReefTracker.",
+  "proFeatureTitle": "Функция Pro",
+  "proFeatureBody": "{feature} — часть ReefTracker Pro.",
   "language": "Язык",
   "languageSystem": "Как в системе",
   "languageEnglish": "English",

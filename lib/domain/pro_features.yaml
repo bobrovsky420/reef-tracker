@@ -1,0 +1,24 @@
+# The Pro feature registry (U19) — source of truth for which features sit
+# behind the future paid tier and which of them early adopters keep for free.
+#
+# Edit this file, then regenerate:
+#     dart run tool/gen_pro_features.dart
+#
+# Each entry:
+#   key:           camelCase Dart identifier — becomes a `ProFeature` enum value.
+#                  Keys are never persisted anywhere (entitlement state is the
+#                  `legacy_free_since` marker + the future purchase), so they
+#                  can be renamed freely.
+#   grandfathered: true  = the feature existed at the monetization cutoff and
+#                          stays free FOREVER for Founder's Edition installs.
+#                          NEVER flip true -> false — that breaks the public
+#                          promise (test/pro_features_test.dart pins the set).
+#                  false = built after the cutoff; paid for everyone once the
+#                          Pro tier exists.
+#
+# Retiering a feature (free -> Pro) = adding an entry here + gating its UI
+# surfaces with `proFeatureProvider`; git history is the audit trail.
+
+features:
+  - key: icpImport
+    grandfathered: true

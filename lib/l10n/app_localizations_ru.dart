@@ -950,6 +950,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Вы используете стандартное издание ReefTracker.';
 
   @override
+  String get proFeatureTitle => 'Функция Pro';
+
+  @override
+  String proFeatureBody(Object feature) {
+    return '$feature — часть ReefTracker Pro.';
+  }
+
+  @override
   String get language => 'Язык';
 
   @override

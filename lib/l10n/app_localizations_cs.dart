@@ -945,6 +945,14 @@ class AppLocalizationsCs extends AppLocalizations {
       'Používáte standardní edici aplikace ReefTracker.';
 
   @override
+  String get proFeatureTitle => 'Funkce Pro';
+
+  @override
+  String proFeatureBody(Object feature) {
+    return '$feature je součástí ReefTracker Pro.';
+  }
+
+  @override
   String get language => 'Jazyk';
 
   @override

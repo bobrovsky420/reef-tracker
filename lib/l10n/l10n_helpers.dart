@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../data/backup.dart';
 import '../domain/clock.dart';
 import '../domain/health_score.dart';
+import '../domain/pro_features.dart';
 import '../domain/ratio.dart';
 import '../domain/ro.dart';
 import '../domain/setup_type.dart';
@@ -106,6 +107,14 @@ Future<DateTime?> pickPastDateTime(
 /// Localized labels for domain values (parameter names/help, setup types,
 /// zones) that live as keys/enums rather than free text.
 extension L10nDomain on AppLocalizations {
+  /// Localized display name of a Pro-gated feature (U19), used by the
+  /// Pro-feature dialog and future paywall listings. The exhaustive switch is
+  /// what keeps this in sync with the generated [ProFeature] enum: adding a
+  /// feature to pro_features.yaml won't compile until it gets a name here.
+  String proFeatureName(ProFeature feature) => switch (feature) {
+    ProFeature.icpImport => icpImportTitle,
+  };
+
   String paramName(String key) {
     switch (key) {
       case 'temperature':

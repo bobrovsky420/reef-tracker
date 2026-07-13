@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.1] - 2026-07-13
+
+### Added
+- ICP report import is the first feature covered by the Founder's Edition
+  promise: it stays free forever for Founder installs. Nothing changes for
+  anyone today — every current install is Founder's Edition; the marking only
+  matters if a paid tier is introduced later.
+
 ## [0.26.0] - 2026-07-13
 
 ### Added

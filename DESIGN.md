@@ -114,6 +114,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Product `key`s are **never reused or repurposed** — stored entries (and the future dose log) resolve display names and potency through them. `strength` is recorded **only when verified against the vendor's own dosing chart**; an unverified potency would silently corrupt consumption estimates (e.g. Triton Core7 carries none because the vendor publishes no concentrations). Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker. **The data (`kSupplementVendors`) is generated** — see below. |
 | `supplements.yaml` + `supplement_catalog.g.dart` | `supplements.yaml` (commented, hand-edited) is the **source of truth** for the catalog data; `dart run tool/gen_supplements.dart` validates it (unique product keys; every `element`/`strength` key is a real param key; `unit` ∈ ml/g) and generates the `part` file `supplement_catalog.g.dart` (`const kSupplementVendors`). Edit the YAML, never the `.g.dart`. `test/supplement_catalog_test.dart` re-checks the same invariants on the generated catalog. |
 | `parameters.yaml` + `parameter_catalog.g.dart` | Same pattern for the parameter catalog: `parameters.yaml` (commented, hand-edited, **order = micro-panel row order**) is the source of truth; `dart run tool/gen_parameters.dart` validates it (unique keys/symbols; category ∈ core/major/trace/contaminant; microelements carry a symbol; `displayFactor` micro-only; ordered bounds, plausible bounds paired) and generates the `part` file `parameter_catalog.g.dart` (`const kReefParameters`). The generator deliberately does **not** import the package (its output *is* part of it — must stay runnable right after build_runner deletes the file), unlike `gen_supplements`, which imports the parameter catalog and therefore runs after `gen_parameters`. |
+| `pro_features.dart` + `pro_features.yaml` + `pro_features.g.dart` | Pro-tier feature gating (U19). `pro_features.yaml` is the source of truth for which features sit behind the future paid tier (`key` → `ProFeature` enum value) and which are **grandfathered** (existed at the monetization cutoff — free forever for Founder's Edition installs; entries are never removed, pinned by `test/pro_features_test.dart`); `dart run tool/gen_pro_features.dart` validates (unique camelCase keys, bool flags, non-empty list) and generates the `part` file (enum + `kGrandfatheredFeatures`). The handwritten file owns the single gate rule: `hasProFeature(f, purchased:, legacyFree:) = purchased ∥ (legacyFree ∧ grandfathered)`. UI never calls it directly — widgets watch `proFeatureProvider(feature)` (providers.dart), which feeds `purchased: false` (no IAP yet) and `legacyFree` from `editionProvider`; a gated action falls back to `showProFeatureDialog` (`widgets/pro_feature_dialog.dart`, the future paywall entry point; feature names localize via `L10nDomain.proFeatureName`, whose exhaustive switch won't compile without a name for a new feature). First gated surface: ICP report import (micro screen app-bar action; the `/micro/import` route needs no extra guard — it already redirects to `/micro` without a parsed-result `extra`, which only the gated action produces). Keys are never persisted — rename freely. |
 
 ## Data layer (`lib/data/`)
 
@@ -1153,7 +1154,10 @@ Parameters list/add-sheet and the health-score inputs to core).
   and **Full ICP** (all elements with section headers, for typing in a lab
   report). Like test sets, the filter narrows what is shown — hidden typed
   values still save. Saving first ensures tracked rows for the entered keys.
-- **ICP report import** (U17 phase 2): an app-bar action on `MicroScreen` —
+- **ICP report import** (U17 phase 2): an app-bar action on `MicroScreen`.
+  **Pro-gated** (U19, grandfathered — see Editions): a non-entitled install
+  gets the Pro-feature dialog instead of the flow below (dormant until a Pro
+  build ships; every current install is Founder's Edition). The entitled flow:
   format choice sheet (the format is the user's explicit pick, never sniffed)
   → CSV file picker → `parseIcpCsv` (`domain/icp_import.dart`, pure) →
   **`IcpImportScreen`** (`/micro/import`) preview → one atomic
@@ -1434,6 +1438,14 @@ info dialog); until a Pro build exists every install seeds, so the Standard
 branch is dormant future-proofing. Tests: `test/edition_test.dart`, plus
 seed/sticky coverage in `test/settings_test.dart` / `test/backup_test.dart`.
 
+Feature gating on top of the marker lives in the domain layer
+(`pro_features.yaml` → generated `ProFeature`/`kGrandfatheredFeatures`, gate
+rule in `domain/pro_features.dart` — see the Domain table) and is consumed via
+`proFeatureProvider(feature)`; the first gated surface is **ICP report
+import** (grandfathered: founders keep it free forever; a non-entitled
+install gets `showProFeatureDialog` instead of the import flow — dormant
+until a Pro build ships, exercised by `test/pro_gate_test.dart`).
+
 ### Settings (`settings_screen.dart`)
 
 Unit selectors (temp/salinity/volume), language selector, a **Trends** section
@@ -1485,6 +1497,9 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 - Regenerate the micro view presets after editing `lib/domain/micro_views.yaml`:
   `dart run tool/gen_micro_views.dart` (validates against `parameters.yaml` +
   writes `micro_views.g.dart`).
+- Regenerate the Pro feature registry after editing `lib/domain/pro_features.yaml`:
+  `dart run tool/gen_pro_features.dart` (validates + writes
+  `pro_features.g.dart`).
 - Localization codegen: `flutter gen-l10n`.
 - Tests (`flutter test`): domain — `test/zones_test.dart`,
   `test/presets_test.dart`, `test/units_test.dart`, `test/ratio_test.dart`,
@@ -1515,12 +1530,13 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   are cancelled). The main job runs `dart format --set-exit-if-changed`, a
   regenerate-and-diff guard for all committed generated sources
   (`flutter gen-l10n`, `dart run build_runner build`, then
-  `dart run tool/gen_parameters.dart`, `dart run tool/gen_supplements.dart`
-  and `dart run tool/gen_micro_views.dart`
+  `dart run tool/gen_parameters.dart`, `dart run tool/gen_supplements.dart`,
+  `dart run tool/gen_micro_views.dart` and `dart run tool/gen_pro_features.dart`
   — build_runner deletes the catalog `.g.dart` files as unclaimed outputs, so
   the catalog generators must run after it, and gen_parameters before
-  gen_supplements, which imports the parameter catalog; gen_micro_views reads
-  only the YAML sources, so its position is free), `flutter analyze`, and
+  gen_supplements, which imports the parameter catalog; gen_micro_views and
+  gen_pro_features read only the YAML sources, so their position is free),
+  `flutter analyze`, and
   `flutter test --coverage` with the lcov file uploaded as an artifact. A
   second job builds a **debug** APK on JDK 21 (Temurin) to exercise the
   Android platform layer — debug needs no `key.properties` and works with the

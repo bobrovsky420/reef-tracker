@@ -1687,6 +1687,18 @@ abstract class AppLocalizations {
   /// **'You\'re using the standard edition of ReefTracker.'**
   String get standardInfoBody;
 
+  /// Title of the dialog shown when a non-entitled install taps a Pro-gated feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro feature'**
+  String get proFeatureTitle;
+
+  /// Body of the Pro-feature dialog; feature is the localized feature name (e.g. "Import ICP report").
+  ///
+  /// In en, this message translates to:
+  /// **'{feature} is part of ReefTracker Pro.'**
+  String proFeatureBody(Object feature);
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

@@ -10,6 +10,7 @@ import '../data/settings.dart';
 import '../domain/health_score.dart';
 import '../domain/micro.dart';
 import '../domain/parameter_catalog.dart';
+import '../domain/pro_features.dart';
 import '../domain/ratio.dart';
 import '../domain/reminders.dart';
 import '../domain/ro.dart';
@@ -581,6 +582,20 @@ final editionProvider = _setting(
   SettingKey.legacyFreeSince,
   AppSettings.decodeEdition,
 );
+
+/// Whether this install may use [ProFeature] (U19): a purchased Pro unlock
+/// (no purchase mechanism exists yet — always false today) or a Founder's
+/// Edition install using a grandfathered feature. While the settings map is
+/// still loading (only possible before `main`'s pre-warm completes) the gate
+/// stays open — never flash a lock at a founder.
+final proFeatureProvider = Provider.family<bool, ProFeature>((ref, feature) {
+  final edition = ref.watch(editionProvider).value ?? AppEdition.founder;
+  return hasProFeature(
+    feature,
+    purchased: false,
+    legacyFree: edition == AppEdition.founder,
+  );
+});
 
 /// When the most recent automatic or manual backup completed, or null if none
 /// has run yet. Reacts to the stored timestamp, so it refreshes as soon as a

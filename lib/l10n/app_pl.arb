@@ -282,6 +282,8 @@
   "editionStandard": "Standardowa",
   "founderInfoBody": "Korzystasz z ReefTrackera od samego początku. W podziękowaniu wszystkie dostępne dziś funkcje pozostaną dla Ciebie bezpłatne na zawsze.",
   "standardInfoBody": "Korzystasz ze standardowej edycji aplikacji ReefTracker.",
+  "proFeatureTitle": "Funkcja Pro",
+  "proFeatureBody": "{feature} jest częścią ReefTracker Pro.",
   "language": "Język",
   "languageSystem": "Domyślny systemu",
   "languageEnglish": "English",
