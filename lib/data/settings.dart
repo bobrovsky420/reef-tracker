@@ -78,6 +78,19 @@ enum HealthDisplay {
   bool get showCard => this == HealthDisplay.both;
 }
 
+/// Which edition of the app this install is entitled to (U19 phase 0).
+/// Derived from [SettingKey.legacyFreeSince]; a `pro` value joins when the
+/// paid tier ships.
+enum AppEdition {
+  /// The regular edition — reachable only once the Pro build has shipped
+  /// (until then every install is seeded as [founder]).
+  standard,
+
+  /// Early adopter: installed while everything was free; the features
+  /// available at the monetization cutoff stay free for them forever.
+  founder,
+}
+
 /// Registry of every settings key together with whether it is a device-local
 /// preference. **Device-local** keys (units, language, chart range, trend /
 /// health display, the tour flag, auto-backup config and its timestamp, and the
@@ -125,7 +138,17 @@ enum SettingKey {
   // The Microelements-screen quick filters (U17): plain display preferences
   // like trendEnabled — device-local, default off.
   microHideUndetectable(kMicroHideUndetectableKey, deviceLocal: true),
-  microAttentionOnly(kMicroAttentionOnlyKey, deviceLocal: true);
+  microAttentionOnly(kMicroAttentionOnlyKey, deviceLocal: true),
+  // The early-adopter ("Founder's Edition") marker for the future paid tier
+  // (U19 phase 0): presence ⇒ this user installed while everything was free
+  // and keeps today's features free forever. NOT device-local — the status
+  // must travel with the aquarium data to a new device via backup restore.
+  // It is additionally *sticky* on restore (see [AppDatabase.restoreFromBackup]
+  // `stickySettingKeys`): a restore may add the status, never remove it —
+  // once the seeding stops shipping, nothing could ever re-seed a wiped
+  // marker. Seeded by every pre-Pro version on launch (`seedLegacyFreeSince`);
+  // the Pro build must delete the seeder and only read the key.
+  legacyFreeSince(kLegacyFreeSinceKey, deviceLocal: false);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -282,6 +305,37 @@ class AppSettings {
       decodeMicroEnabled(await _read(SettingKey.microEnabled));
   Future<void> setMicroEnabled(bool enabled) =>
       _write(SettingKey.microEnabled, enabled.toString());
+
+  // --- edition / early-adopter marker (U19 phase 0) ----------------------------
+
+  /// The app version that first seeded the early-adopter marker on this
+  /// install (e.g. "0.26.0"), or null when the marker is absent. Presence —
+  /// not the value — is what grants [AppEdition.founder]; the version is kept
+  /// as an audit trail (a version string, not a date, so a device clock can't
+  /// fake early adoption once seeding stops shipping).
+  static String? decodeLegacyFreeSince(String? raw) =>
+      (raw == null || raw.isEmpty) ? null : raw;
+
+  static AppEdition decodeEdition(String? raw) =>
+      decodeLegacyFreeSince(raw) == null
+      ? AppEdition.standard
+      : AppEdition.founder;
+
+  Stream<AppEdition> watchEdition() =>
+      _watch(SettingKey.legacyFreeSince).map(decodeEdition);
+
+  /// Stamps the early-adopter marker with [version] if — and only if — it has
+  /// never been written; an existing value (even from an older version) is
+  /// never overwritten. Called on every launch of a pre-Pro build; the Pro
+  /// build must NOT call this.
+  Future<void> seedLegacyFreeSince(String version) async {
+    final existing = decodeLegacyFreeSince(
+      await _read(SettingKey.legacyFreeSince),
+    );
+    if (existing == null) {
+      await _write(SettingKey.legacyFreeSince, version);
+    }
+  }
 
   // --- feature tour ----------------------------------------------------------
 

@@ -933,6 +933,23 @@ class AppLocalizationsRu extends AppLocalizations {
       'Офлайн-трекер параметров морского аквариума с историей, графиками по времени и зонами здоровья зелёная/жёлтая/красная.';
 
   @override
+  String get editionLabel => 'Издание';
+
+  @override
+  String get editionFounder => 'Издание основателя';
+
+  @override
+  String get editionStandard => 'Стандартное';
+
+  @override
+  String get founderInfoBody =>
+      'Вы с ReefTracker с самых первых дней. В знак благодарности все доступные сегодня функции останутся для вас бесплатными навсегда.';
+
+  @override
+  String get standardInfoBody =>
+      'Вы используете стандартное издание ReefTracker.';
+
+  @override
   String get language => 'Язык';
 
   @override

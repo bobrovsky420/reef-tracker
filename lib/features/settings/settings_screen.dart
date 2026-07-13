@@ -328,6 +328,9 @@ class SettingsScreen extends ConsumerWidget {
               if (context.mounted) context.go('/');
             },
           ),
+          _EditionTile(
+            edition: ref.watch(editionProvider).value ?? AppEdition.standard,
+          ),
           AboutListTile(
             icon: const Icon(Icons.info_outline),
             applicationName: l.appTitle,
@@ -449,6 +452,40 @@ class SettingsScreen extends ConsumerWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+/// The Edition row (U19 phase 0): shows whether this install is recognized as
+/// an early adopter ("Founder's Edition") or the standard edition; tapping
+/// opens a short explanation. Until a Pro build exists every install is
+/// seeded as Founder, so the standard branch is dormant future-proofing.
+class _EditionTile extends StatelessWidget {
+  const _EditionTile({required this.edition});
+  final AppEdition edition;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final founder = edition == AppEdition.founder;
+    final name = founder ? l.editionFounder : l.editionStandard;
+    return ListTile(
+      leading: const Icon(Icons.workspace_premium_outlined),
+      title: Text(l.editionLabel),
+      subtitle: Text(name),
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(name),
+          content: Text(founder ? l.founderInfoBody : l.standardInfoBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(MaterialLocalizations.of(context).okButtonLabel),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -276,6 +276,12 @@
 
   "aboutAppName": "Über ReefTracker",
   "aboutDescription": "Offline-Tracker für Meerwasseraquarium-Parameter mit Verlauf, Zeitdiagrammen und grün/orange/rot-Gesundheitszonen.",
+
+  "editionLabel": "Edition",
+  "editionFounder": "Gründer-Edition",
+  "editionStandard": "Standard",
+  "founderInfoBody": "Du bist seit den Anfängen bei ReefTracker dabei. Als Dankeschön bleiben alle heute verfügbaren Funktionen für dich für immer kostenlos.",
+  "standardInfoBody": "Du verwendest die Standard-Edition von ReefTracker.",
   "language": "Sprache",
   "languageSystem": "Systemstandard",
   "languageEnglish": "English",

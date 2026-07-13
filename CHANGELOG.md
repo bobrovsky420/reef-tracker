@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0] - 2026-07-13
+
+### Added
+- Settings shows an "Edition" row: installs from the current free era are
+  recognized as **Founder's Edition** — a thank-you to early adopters. If a
+  paid tier is ever introduced, every feature available today stays free
+  forever for Founder's Edition users. The status travels with backups to a
+  new device, and restoring a backup can never take it away.
+
 ## [0.25.1] - 2026-07-13
 
 ### Removed

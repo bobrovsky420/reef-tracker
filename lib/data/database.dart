@@ -1989,6 +1989,13 @@ class AppDatabase extends _$AppDatabase {
   /// [settingRows] are dropped, so restoring a backup from another device never
   /// silently overwrites the local preferences (#18). Callers pass
   /// `SettingKey.deviceLocalKeys`.
+  ///
+  /// [stickySettingKeys] are settings a restore may *add* but never *remove*:
+  /// when such a key exists locally it wins over whatever the backup carries
+  /// (including its absence); when it doesn't, the backup's value (if any)
+  /// applies. Used for the early-adopter marker (U19): restoring a marker-less
+  /// backup — a pre-marker file, or one made by a fresh post-Pro install —
+  /// must not wipe a status nothing could ever re-seed.
   Future<void> restoreFromBackup({
     required List<TanksCompanion> tankRows,
     required List<TrackedParametersCompanion> paramRows,
@@ -2009,11 +2016,23 @@ class AppDatabase extends _$AppDatabase {
     List<ManualDosesCompanion> manualDoseRows = const [],
     required List<SettingsCompanion> settingRows,
     Set<String> preserveSettingKeys = const {},
+    Set<String> stickySettingKeys = const {},
   }) async {
     final incomingSettings = settingRows
         .where((r) => !preserveSettingKeys.contains(r.key.value))
         .toList();
     await transaction(() async {
+      // Capture locally present sticky values before anything is deleted;
+      // they are written back after the insert so the local value wins.
+      final stickyLocal = <String, String?>{};
+      if (stickySettingKeys.isNotEmpty) {
+        final rows = await (select(
+          settings,
+        )..where((s) => s.key.isIn(stickySettingKeys.toList()))).get();
+        for (final row in rows) {
+          stickyLocal[row.key] = row.value;
+        }
+      }
       // Delete children before parents to satisfy foreign keys.
       await delete(readings).go();
       await delete(waterChanges).go();
@@ -2056,6 +2075,12 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(roStageReplacements, roStageReplacementRows);
         b.insertAll(settings, incomingSettings);
       });
+      // Sticky keys: the pre-restore local value overrides the backup's.
+      for (final e in stickyLocal.entries) {
+        await into(settings).insertOnConflictUpdate(
+          SettingsCompanion(key: Value(e.key), value: Value(e.value)),
+        );
+      }
       // Pre-v13 backups carry readings without group ids; give their legacy
       // timestamp clusters real ids so grouping keys on group_id alone (#15).
       await _backfillLegacyReadingGroupIds();

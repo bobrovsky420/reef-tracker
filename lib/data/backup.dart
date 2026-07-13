@@ -704,6 +704,9 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       settingRows: data.settings,
       // Never overwrite this device's own preferences with the backup's (#18).
       preserveSettingKeys: SettingKey.deviceLocalKeys,
+      // The early-adopter marker may be added by a restore, never removed
+      // (U19): once seeding stops shipping, nothing could re-seed it.
+      stickySettingKeys: const {kLegacyFreeSinceKey},
     );
 
 /// Serializes the entire database to a backup JSON string by reading every

@@ -1657,6 +1657,36 @@ abstract class AppLocalizations {
   /// **'Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.'**
   String get aboutDescription;
 
+  /// Settings row label showing which edition of the app this install is entitled to.
+  ///
+  /// In en, this message translates to:
+  /// **'Edition'**
+  String get editionLabel;
+
+  /// Edition name for early adopters who installed while the app was fully free.
+  ///
+  /// In en, this message translates to:
+  /// **'Founder\'s Edition'**
+  String get editionFounder;
+
+  /// Edition name for regular installs (only reachable once a paid tier exists).
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get editionStandard;
+
+  /// Dialog body explaining the Founder's Edition promise. Promise covers only features available today, never future ones.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve been with ReefTracker since its early days. As a thank-you, every feature available today stays free for you — forever.'**
+  String get founderInfoBody;
+
+  /// Dialog body for the standard edition (dormant until a paid tier exists).
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re using the standard edition of ReefTracker.'**
+  String get standardInfoBody;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

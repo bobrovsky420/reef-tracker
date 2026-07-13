@@ -928,6 +928,23 @@ class AppLocalizationsCs extends AppLocalizations {
       'Offline sledování parametrů mořského akvária s historií, časovými grafy a zónami zdraví zelená/oranžová/červená.';
 
   @override
+  String get editionLabel => 'Edice';
+
+  @override
+  String get editionFounder => 'Zakladatelská edice';
+
+  @override
+  String get editionStandard => 'Standardní';
+
+  @override
+  String get founderInfoBody =>
+      'Používáte ReefTracker od jeho začátků. Jako poděkování pro vás všechny dnes dostupné funkce zůstanou navždy zdarma.';
+
+  @override
+  String get standardInfoBody =>
+      'Používáte standardní edici aplikace ReefTracker.';
+
+  @override
   String get language => 'Jazyk';
 
   @override

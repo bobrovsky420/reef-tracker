@@ -121,6 +121,28 @@ void main() {
       },
     );
 
+    test('early-adopter marker seeds once and never overwrites (U19)', () async {
+      // Fresh install before seeding: standard edition.
+      expect(await settings.watchEdition().first, AppEdition.standard);
+
+      await settings.seedLegacyFreeSince('0.26.0');
+      expect(await db.getSetting(kLegacyFreeSinceKey), '0.26.0');
+      expect(await settings.watchEdition().first, AppEdition.founder);
+
+      // A later launch (newer version) must not overwrite the original stamp.
+      await settings.seedLegacyFreeSince('0.27.0');
+      expect(await db.getSetting(kLegacyFreeSinceKey), '0.26.0');
+    });
+
+    test('edition decodes from the raw marker value (U19)', () {
+      expect(AppSettings.decodeLegacyFreeSince(null), isNull);
+      expect(AppSettings.decodeLegacyFreeSince(''), isNull);
+      expect(AppSettings.decodeLegacyFreeSince('0.26.0'), '0.26.0');
+      expect(AppSettings.decodeEdition(null), AppEdition.standard);
+      expect(AppSettings.decodeEdition(''), AppEdition.standard);
+      expect(AppSettings.decodeEdition('0.26.0'), AppEdition.founder);
+    });
+
     test('reminder time defaults to 09:00, round-trips zero-padded, and '
         'garbage decodes to the default', () async {
       expect(await settings.readReminderTime(), kDefaultReminderTime);
@@ -139,13 +161,17 @@ void main() {
     test('deviceLocalKeys covers every preference key', () {
       // Every registered key is device-local (#18) except the RO seed flag
       // (U16), which describes domain data and must travel with the RO rows
-      // it guards on a backup restore. This pins the split so a new setting
-      // can't be added without deciding its restore behaviour.
+      // it guards on a backup restore, and the early-adopter marker (U19),
+      // which must ride backups to carry the status to a new device. This
+      // pins the split so a new setting can't be added without deciding its
+      // restore behaviour.
       expect(SettingKey.deviceLocalKeys, {
         for (final k in SettingKey.values)
-          if (k != SettingKey.roSeeded) k.storageKey,
+          if (k != SettingKey.roSeeded && k != SettingKey.legacyFreeSince)
+            k.storageKey,
       });
       expect(SettingKey.roSeeded.deviceLocal, isFalse);
+      expect(SettingKey.legacyFreeSince.deviceLocal, isFalse);
     });
 
     test('storage keys are unique', () {

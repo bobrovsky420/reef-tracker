@@ -276,6 +276,12 @@
 
   "aboutAppName": "O aplikaci ReefTracker",
   "aboutDescription": "Offline sledování parametrů mořského akvária s historií, časovými grafy a zónami zdraví zelená/oranžová/červená.",
+
+  "editionLabel": "Edice",
+  "editionFounder": "Zakladatelská edice",
+  "editionStandard": "Standardní",
+  "founderInfoBody": "Používáte ReefTracker od jeho začátků. Jako poděkování pro vás všechny dnes dostupné funkce zůstanou navždy zdarma.",
+  "standardInfoBody": "Používáte standardní edici aplikace ReefTracker.",
   "language": "Jazyk",
   "languageSystem": "Podle systému",
   "languageEnglish": "English",

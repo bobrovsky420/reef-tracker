@@ -935,6 +935,23 @@ class AppLocalizationsPl extends AppLocalizations {
       'Offline\'owy tracker parametrów akwarium morskiego z historią, wykresami czasowymi i strefami zdrowia zielona/pomarańczowa/czerwona.';
 
   @override
+  String get editionLabel => 'Edycja';
+
+  @override
+  String get editionFounder => 'Edycja założycielska';
+
+  @override
+  String get editionStandard => 'Standardowa';
+
+  @override
+  String get founderInfoBody =>
+      'Korzystasz z ReefTrackera od samego początku. W podziękowaniu wszystkie dostępne dziś funkcje pozostaną dla Ciebie bezpłatne na zawsze.';
+
+  @override
+  String get standardInfoBody =>
+      'Korzystasz ze standardowej edycji aplikacji ReefTracker.';
+
+  @override
   String get language => 'Język';
 
   @override

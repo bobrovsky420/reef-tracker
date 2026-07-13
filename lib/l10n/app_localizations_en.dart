@@ -924,6 +924,23 @@ class AppLocalizationsEn extends AppLocalizations {
       'Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.';
 
   @override
+  String get editionLabel => 'Edition';
+
+  @override
+  String get editionFounder => 'Founder\'s Edition';
+
+  @override
+  String get editionStandard => 'Standard';
+
+  @override
+  String get founderInfoBody =>
+      'You\'ve been with ReefTracker since its early days. As a thank-you, every feature available today stays free for you — forever.';
+
+  @override
+  String get standardInfoBody =>
+      'You\'re using the standard edition of ReefTracker.';
+
+  @override
   String get language => 'Language';
 
   @override

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'app/provider_errors.dart';
 import 'app/providers.dart';
@@ -83,6 +84,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     // Opportunistic housekeeping + backup: run once at launch, after the
     // first frame so they never block startup.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _seedEdition();
       _purgeDeletedTanks();
       _maybeBackUp();
       _initReminders();
@@ -138,6 +140,32 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
             stack: s,
             library: 'reminders',
             context: ErrorSummary('initializing reminder notifications'),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Seeds the early-adopter marker (U19 phase 0): every launch of a pre-Pro
+  /// build stamps `legacy_free_since` with the current app version unless it
+  /// is already set — these installs keep today's features free forever once
+  /// the paid tier ships. The Pro build must remove this call (it only reads
+  /// the marker). After the first frame because [PackageInfo.fromPlatform] is
+  /// a platform-channel call (see the pre-warm note in [main]).
+  void _seedEdition() {
+    Future<void> run() async {
+      final info = await PackageInfo.fromPlatform();
+      await ref.read(settingsProvider).seedLegacyFreeSince(info.version);
+    }
+
+    unawaited(
+      run().catchError((Object e, StackTrace s) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'edition',
+            context: ErrorSummary('seeding the early-adopter marker'),
           ),
         );
       }),

@@ -931,6 +931,23 @@ class AppLocalizationsDe extends AppLocalizations {
       'Offline-Tracker für Meerwasseraquarium-Parameter mit Verlauf, Zeitdiagrammen und grün/orange/rot-Gesundheitszonen.';
 
   @override
+  String get editionLabel => 'Edition';
+
+  @override
+  String get editionFounder => 'Gründer-Edition';
+
+  @override
+  String get editionStandard => 'Standard';
+
+  @override
+  String get founderInfoBody =>
+      'Du bist seit den Anfängen bei ReefTracker dabei. Als Dankeschön bleiben alle heute verfügbaren Funktionen für dich für immer kostenlos.';
+
+  @override
+  String get standardInfoBody =>
+      'Du verwendest die Standard-Edition von ReefTracker.';
+
+  @override
   String get language => 'Sprache';
 
   @override

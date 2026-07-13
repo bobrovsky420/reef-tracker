@@ -338,7 +338,12 @@ a `preserveSettingKeys` set (the caller passes `SettingKey.deviceLocalKeys`):
 those settings rows are neither deleted nor imported, so restoring a backup —
 possibly from another device — **never overwrites this device's own preferences**
 (units, language, active tank, chart range, trend/health display, the tour flag,
-auto-backup config; #18). Only the aquarium/domain data is replaced.
+auto-backup config; #18). Only the aquarium/domain data is replaced. It also
+takes a `stickySettingKeys` set (the caller passes `{kLegacyFreeSinceKey}`,
+U19): keys a restore may **add but never remove** — a locally present value
+wins over whatever the backup carries, including its absence, so restoring a
+marker-less backup can't wipe the early-adopter status that nothing could
+re-seed (see Editions below).
 
 **Importing is a three-stage safety pipeline** (`importBackup`), so a bad file
 never wipes live data:
@@ -693,6 +698,10 @@ lifecycle wiring that are easy to miss:
   `initState`: the builder runs after Flutter has resolved the effective locale
   (and re-runs when it changes), so `DateFormat` immediately renders dates in a
   newly selected language without an app restart.
+- **Early-adopter marker seeding** (`_seedEdition`, post-first-frame,
+  fire-and-forget): stamps `legacy_free_since` with the current app version if
+  absent — see Features → Editions (U19 phase 0). The Pro build must remove
+  this call.
 - **Reminder wiring** (`_initReminders`, post-first-frame — the notification
   plugin's init is a platform-channel call, and those can hang before the
   first frame, flutter/flutter#72872): initializes the plugin with the tap
@@ -1406,6 +1415,25 @@ captures optional free-text `vendor` and `model` (single line) plus multi-line
 Settings → About row use the `Icons.waves` glyph for an aquarium (tinted with
 the primary colour for the active tank).
 
+### Editions & the early-adopter marker (U19 phase 0)
+
+Groundwork for a future paid Pro tier (see TODO U19; no purchase code exists
+yet). Every launch of a **pre-Pro** build seeds the Settings-kv key
+`legacy_free_since` with the current app version if absent (`_seedEdition` in
+`main.dart`, post-first-frame — `PackageInfo` is a platform-channel call;
+`AppSettings.seedLegacyFreeSince` never overwrites an existing stamp). Presence
+of the marker ⇒ `AppEdition.founder` (`editionProvider`): this install predates
+monetization and the features available at the cutoff stay free for it forever.
+A version string rather than a date makes the status immune to clock
+manipulation once seeding stops shipping; **the Pro build must delete the
+seeder and only read the key.** The marker is deliberately **not**
+device-local (it rides backups — the app's only cross-device continuity path)
+and is additionally *sticky* on restore (`stickySettingKeys`, see Backup
+above). Settings shows an **Edition** row ("Founder's Edition" / "Standard" +
+info dialog); until a Pro build exists every install seeds, so the Standard
+branch is dormant future-proofing. Tests: `test/edition_test.dart`, plus
+seed/sticky coverage in `test/settings_test.dart` / `test/backup_test.dart`.
+
 ### Settings (`settings_screen.dart`)
 
 Unit selectors (temp/salinity/volume), language selector, a **Trends** section
@@ -1418,7 +1446,8 @@ switch (U17 — hides the dashboard tile and silences micro test reminders;
 measurements are kept),
 and **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency and a link to the **Manage backups**
-screen (see Data → Automatic backup). Link to the salinity calculator. The About box shows the live app version via
+screen (see Data → Automatic backup). Link to the salinity calculator. An
+**Edition** row (see Editions above) sits in the About section. The About box shows the live app version via
 `appVersionProvider` (`package_info_plus`), never a hardcoded string.
 
 ### Salinity calculator (`calculator/salinity_calculator_screen.dart`)

@@ -1615,6 +1615,59 @@ void main() {
       expect((await dst.getAllTanks()).length, 1);
     });
 
+    test('the early-adopter marker rides a backup onto a new device '
+        '(U19)', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src);
+      await src.setSetting('legacy_free_since', '0.26.0');
+      final data = decodeBackup(await encodeBackupFromDb(src));
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      await importBackup(dst, data);
+
+      expect(await dst.getSetting('legacy_free_since'), '0.26.0');
+    });
+
+    test('restore never removes a locally present early-adopter marker '
+        '(U19 sticky rule)', () async {
+      // A backup with no marker: made by a pre-marker version, or by a fresh
+      // post-Pro install (whose builds no longer seed it).
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src);
+      final data = decodeBackup(await encodeBackupFromDb(src));
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      await dst.setSetting('legacy_free_since', '0.26.0');
+      await importBackup(dst, data);
+
+      // The local status survives — nothing could ever re-seed it once the
+      // seeding stops shipping.
+      expect(await dst.getSetting('legacy_free_since'), '0.26.0');
+      // The aquarium data was still restored as usual.
+      expect((await dst.getAllTanks()).length, 1);
+    });
+
+    test('the local early-adopter marker wins over the backup\'s '
+        '(U19 sticky rule)', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src);
+      await src.setSetting('legacy_free_since', '0.30.0');
+      final data = decodeBackup(await encodeBackupFromDb(src));
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      await dst.setSetting('legacy_free_since', '0.26.0');
+      await importBackup(dst, data);
+
+      // This device's own (earlier) stamp is kept, not the backup's.
+      expect(await dst.getSetting('legacy_free_since'), '0.26.0');
+    });
+
     test('import replaces existing data rather than appending', () async {
       final src = newDb();
       addTearDown(src.close);

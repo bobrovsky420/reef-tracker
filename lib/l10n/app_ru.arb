@@ -276,6 +276,12 @@
 
   "aboutAppName": "О приложении ReefTracker",
   "aboutDescription": "Офлайн-трекер параметров морского аквариума с историей, графиками по времени и зонами здоровья зелёная/жёлтая/красная.",
+
+  "editionLabel": "Издание",
+  "editionFounder": "Издание основателя",
+  "editionStandard": "Стандартное",
+  "founderInfoBody": "Вы с ReefTracker с самых первых дней. В знак благодарности все доступные сегодня функции останутся для вас бесплатными навсегда.",
+  "standardInfoBody": "Вы используете стандартное издание ReefTracker.",
   "language": "Язык",
   "languageSystem": "Как в системе",
   "languageEnglish": "English",

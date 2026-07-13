@@ -35,3 +35,4 @@ const kMicroEnabledKey = 'micro_enabled';
 const kMicroViewKey = 'micro_view';
 const kMicroHideUndetectableKey = 'micro_hide_undetectable';
 const kMicroAttentionOnlyKey = 'micro_attention_only';
+const kLegacyFreeSinceKey = 'legacy_free_since';

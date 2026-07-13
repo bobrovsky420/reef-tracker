@@ -23,6 +23,7 @@ import '../domain/zones.dart';
 export '../data/settings.dart'
     show
         HealthDisplay,
+        AppEdition,
         AppSettings,
         SettingKey,
         kTourSeenKey,
@@ -569,6 +570,16 @@ final microHideUndetectableProvider = _setting(
 final microAttentionOnlyProvider = _setting(
   SettingKey.microAttentionOnly,
   AppSettings.decodeMicroAttentionOnly,
+);
+
+/// Which edition this install is entitled to (U19 phase 0):
+/// [AppEdition.founder] when the early-adopter marker is present (seeded on
+/// launch by every pre-Pro version — so, until a Pro build exists, every
+/// install), [AppEdition.standard] otherwise. Drives the Edition row in
+/// Settings.
+final editionProvider = _setting(
+  SettingKey.legacyFreeSince,
+  AppSettings.decodeEdition,
 );
 
 /// When the most recent automatic or manual backup completed, or null if none
