@@ -5,17 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.1] - 2026-07-13
+
+### Removed
+- Android: the "Sync to cloud folder" feature introduced in 0.25.0. The
+  Android system folder picker cannot select Google Drive, OneDrive, or
+  Dropbox folders (those apps don't support folder access through it), so
+  the feature could only ever offer local folders and did not work as
+  described. Regular backups, automatic backups, and export/import are
+  unaffected; any sync preference saved in 0.25.0 is simply ignored.
+
 ## [0.25.0] - 2026-07-10
 
 ### Added
-- Android: Cloud folder sync — Settings → Backup can now copy every backup
-  into a folder you pick once (Google Drive, Dropbox, OneDrive, an SD card —
-  anything the Android Files interface offers). Other devices pointed at the
-  same folder can restore the newest backup via the new "Restore from synced
-  folder" action, giving a simple share-my-data-across-devices flow (one
-  device edits, others pull — restores replace all data, nothing merges).
-  Unchanged data is never re-uploaded, the folder keeps the last 5 backups,
-  and a persistent warning row appears in Settings if syncing starts failing.
+- Android: Cloud folder sync — Settings → Backup could copy every backup into
+  a folder picked via the system folder picker, intended for cloud-synced
+  folders. **Withdrawn in 0.25.1** — see above.
 
 ## [0.24.1] - 2026-07-10
 

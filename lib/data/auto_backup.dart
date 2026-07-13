@@ -5,7 +5,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'backup.dart';
-import 'cloud_sync.dart';
 import 'database.dart';
 import 'settings.dart';
 
@@ -141,10 +140,10 @@ Future<File> _backupNow(AppDatabase db) async {
 /// `last_backup_error_at` before rethrowing, so the UI can tell the user their
 /// safety net is not being written (#22).
 Future<File> _writeAndStamp(AppDatabase db, {required int keep}) async {
-  final File file;
   try {
-    file = await writeAutoBackup(db, keep: keep);
+    final file = await writeAutoBackup(db, keep: keep);
     await _stampLastBackup(db);
+    return file;
   } catch (_) {
     try {
       await AppSettings(db).setLastBackupErrorAt(DateTime.now());
@@ -154,12 +153,6 @@ Future<File> _writeAndStamp(AppDatabase db, {required int keep}) async {
     }
     rethrow;
   }
-  // Cloud folder sync (U20) rides every successful backup, inside the same
-  // single-flight slot so pushes never overlap. Outside the try: the push
-  // handles (and stamps) its own failures — a failed *push* must never be
-  // recorded as a failed *backup*.
-  await runCloudSyncPushIfEnabled(db, file);
-  return file;
 }
 
 /// Records "a backup just completed" so the schedule and the visible

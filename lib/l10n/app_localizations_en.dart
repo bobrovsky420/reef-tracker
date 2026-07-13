@@ -917,51 +917,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cloudSyncTitle => 'Sync to cloud folder';
-
-  @override
-  String get cloudSyncSubtitle =>
-      'Copy each backup into a folder you choose (e.g. Google Drive) so other devices can restore it';
-
-  @override
-  String get cloudSyncFolder => 'Synced folder';
-
-  @override
-  String get cloudSyncNoFolder => 'No folder selected';
-
-  @override
-  String cloudSyncLastSynced(Object when) {
-    return 'Last synced: $when';
-  }
-
-  @override
-  String get cloudSyncNeverSynced => 'Not synced yet';
-
-  @override
-  String cloudSyncLastFailed(Object when) {
-    return 'Cloud sync failed on $when';
-  }
-
-  @override
-  String get cloudSyncRestoreTitle => 'Restore from synced folder';
-
-  @override
-  String get cloudSyncRestoreSubtitle =>
-      'Replace all data with a backup from the synced folder';
-
-  @override
-  String get cloudSyncChooseBackup => 'Choose a backup to restore';
-
-  @override
-  String get cloudSyncNoBackups => 'No backups in the synced folder yet';
-
-  @override
-  String get cloudSyncListFailed => 'Could not read the synced folder';
-
-  @override
-  String get cloudSyncPickFailed => 'Could not select the folder';
-
-  @override
   String get aboutAppName => 'About ReefTracker';
 
   @override

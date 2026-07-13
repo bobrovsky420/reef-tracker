@@ -587,26 +587,6 @@ final lastBackupErrorAtProvider = _setting(
   AppSettings.decodeLastBackupErrorAt,
 );
 
-/// Cloud folder sync (U20): master switch (default off), the picked folder's
-/// display name, and this device's push stamps. All device-local — see the
-/// [SettingKey] registry for why sync state must never ride a backup.
-final cloudSyncEnabledProvider = _setting(
-  SettingKey.cloudSyncEnabled,
-  AppSettings.decodeCloudSyncEnabled,
-);
-final cloudSyncFolderNameProvider = _setting(
-  SettingKey.cloudSyncFolderName,
-  AppSettings.decodeCloudSyncFolderName,
-);
-final lastCloudSyncAtProvider = _setting(
-  SettingKey.lastCloudSyncAt,
-  AppSettings.decodeLastCloudSyncAt,
-);
-final lastCloudSyncErrorAtProvider = _setting(
-  SettingKey.lastCloudSyncErrorAt,
-  AppSettings.decodeLastCloudSyncErrorAt,
-);
-
 /// Last-used test set per tank id (device-local UI state, U9). A missing or
 /// dangling entry means "All parameters".
 final lastReadingTemplatesProvider = _setting(

@@ -928,53 +928,6 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get cloudSyncTitle => 'Synchronizacja z folderem w chmurze';
-
-  @override
-  String get cloudSyncSubtitle =>
-      'Kopiuje każdą kopię zapasową do wybranego folderu (np. Google Drive), aby inne urządzenia mogły ją przywrócić';
-
-  @override
-  String get cloudSyncFolder => 'Synchronizowany folder';
-
-  @override
-  String get cloudSyncNoFolder => 'Nie wybrano folderu';
-
-  @override
-  String cloudSyncLastSynced(Object when) {
-    return 'Ostatnia synchronizacja: $when';
-  }
-
-  @override
-  String get cloudSyncNeverSynced => 'Jeszcze nie synchronizowano';
-
-  @override
-  String cloudSyncLastFailed(Object when) {
-    return 'Synchronizacja nie powiodła się: $when';
-  }
-
-  @override
-  String get cloudSyncRestoreTitle => 'Przywróć z synchronizowanego folderu';
-
-  @override
-  String get cloudSyncRestoreSubtitle =>
-      'Zastępuje wszystkie dane kopią zapasową z synchronizowanego folderu';
-
-  @override
-  String get cloudSyncChooseBackup => 'Wybierz kopię zapasową do przywrócenia';
-
-  @override
-  String get cloudSyncNoBackups =>
-      'W synchronizowanym folderze nie ma jeszcze kopii zapasowych';
-
-  @override
-  String get cloudSyncListFailed =>
-      'Nie udało się odczytać synchronizowanego folderu';
-
-  @override
-  String get cloudSyncPickFailed => 'Nie udało się wybrać folderu';
-
-  @override
   String get aboutAppName => 'O aplikacji ReefTracker';
 
   @override

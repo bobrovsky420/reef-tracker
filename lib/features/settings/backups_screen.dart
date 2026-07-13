@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
+import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
@@ -124,7 +125,7 @@ class _BackupTile extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     // Shared helper honors the device 12/24-hour preference (#41).
     final when = formatDateTime(context, stat.modified, weekday: false);
-    final size = formatFileSize(l, stat.size);
+    final size = _formatSize(l, stat.size);
 
     return ListTile(
       leading: const Icon(Icons.history),
@@ -225,6 +226,15 @@ class _BackupTile extends ConsumerWidget {
       // Ignore; the list reload below reflects the real state either way.
     }
     onChanged();
+  }
+
+  /// Localized file size: translated unit symbols and the locale's decimal
+  /// separator (#42).
+  static String _formatSize(AppLocalizations l, int bytes) {
+    if (bytes < 1024) return l.sizeBytes('$bytes');
+    final kb = bytes / 1024;
+    if (kb < 1024) return l.sizeKilobytes(formatLocaleNumber(kb, 1));
+    return l.sizeMegabytes(formatLocaleNumber(kb / 1024, 1));
   }
 
   void _snack(BuildContext context, String message) {

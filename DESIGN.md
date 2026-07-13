@@ -168,12 +168,7 @@ measurements are untouched and reappear when re-enabled), and `micro_view`
 (the active microelement view per tank as one JSON object
 `{"<tankId>": "<token>"}` — `preset:full`, `preset:faunaMarin`, or
 `view:<MicroViews id>`; missing/dangling entries mean the full list; the
-`lastReadingTemplate` pattern), and the cloud-folder-sync keys
-(`cloud_sync_enabled` default off, `cloud_sync_folder_uri` /
-`cloud_sync_folder_name`, `last_cloud_sync_at`, `last_cloud_sync_error_at`,
-`last_cloud_sync_hash` — see Data → Cloud folder sync; device-local by
-necessity, the SAF uri and grant only exist on the device that picked the
-folder). The
+`lastReadingTemplate` pattern). The
 reminder keys are device-local: notification preferences must not ride a
 backup onto another device. `ro_stages_seeded` is the one **non**-device-local
 key: it describes domain data and travels with the RO rows it guards, so a
@@ -453,73 +448,6 @@ Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 `last_backup_error_at`. Providers: `autoBackupEnabledProvider`,
 `autoBackupIntervalProvider`, `lastBackupAtProvider`,
 `lastBackupErrorAtProvider`.
-
-### Cloud folder sync (`cloud_sync.dart`, `cloud_folder.dart`) — U20, Android
-
-Multi-device data sharing without a backend: after every successful backup
-(scheduled or Back up now), the backup JSON is also pushed into a **folder the
-user picked once** via the Storage Access Framework — Google Drive, Dropbox,
-OneDrive, an SD card, anything with a documents provider does the actual cloud
-transport. A second device points its sync at the same folder and restores
-from it. Explicitly a **one-writer / read-mostly model**: restore stays a full
-replace (the unchanged three-stage import pipeline); nothing merges.
-
-- **`CloudFolder` seam (`cloud_folder.dart`).** Interface (pick / checkAccess
-  / list / read / write / delete over an opaque tree-uri string) with the SAF
-  implementation behind it; tests swap in a fake (the `ReminderSink` pattern).
-  The module-global `cloudFolderBackend` is the production instance. The
-  platform half is an **in-house MethodChannel in `MainActivity.kt`**
-  (`cz.reeftracker.reeftracker/cloud_folder`, ~180 lines of Kotlin +
-  `androidx.documentfile`), deliberately not a third-party SAF plugin — the
-  pinned plugin trio (#50) is the cautionary tale. Provider I/O runs on a
-  background executor (documents providers can be network-backed); picking
-  takes a persistable grant and releases grants for previously picked folders.
-- **Push (`runCloudSyncPushIfEnabled`).** Runs at the end of `_writeAndStamp`
-  inside the same auto-backup single-flight slot (never overlaps itself or a
-  backup), reading the just-written rotation file. **Never throws**: failures
-  stamp `last_cloud_sync_error_at` (persistent Settings warning row, mirroring
-  the backup-error row; cleared by the next successful push) — a failed push
-  is never recorded as a failed backup. Files are named
-  `reeftracker-sync-<UTC stamp>.json` (same stamp discipline as the rotation)
-  and pruned to the newest `kCloudSyncKeep` (5) — insurance against a
-  truncated newest upload (SAF writes aren't atomic; the import checksum
-  rejects a damaged file and the previous one is still there). Matching is by
-  prefix only (a provider may adjust the stored display name); foreign files
-  in the folder are never listed or touched.
-- **The hash gate.** A push happens only when `cloudSyncContentHash` differs
-  from `last_cloud_sync_hash` (written only on success, so failures retry).
-  The hash is sha256 over the encoded document minus `exportedAt`, `checksum`,
-  and the **whole `settings` section** — device-local stamps
-  (`last_auto_backup_at` is rewritten by every backup) would otherwise make
-  every encode hash differently, and restore drops device-local settings
-  anyway, so the hash covers exactly what a restore transfers. This is what
-  makes multi-device safe-ish: an unchanged (read-only) device never buries
-  another device's genuinely newer file under an identical copy. Implemented
-  as string surgery on the compact JSON (`settings` must stay the encoder's
-  last section — pinned by a comment in `encodeBackup` and a stability test);
-  if the invariant ever broke, the failure mode is over-pushing, never a
-  missed push.
-- **UX (Settings → Backup, Android-target only until U20 phase 3).** A "Sync
-  to cloud folder" switch (enabling requires a valid folder — reuses the
-  stored grant or opens the picker; cancel leaves it off — then triggers an
-  immediate `backupNow` so the folder holds current data); a folder row
-  (re-pick at any time — also the recovery path for a revoked grant; a new
-  folder clears the hash so the next push is unconditional); last-synced /
-  error status rows; and **Restore from synced folder** — a bottom sheet
-  listing the folder's backups (newest first by filename stamp), feeding the
-  chosen file through the standard confirm + `decodeBackupBytes` (worker
-  isolate) + `importBackup` pipeline. After a successful cloud restore the
-  imported file's content hash is recorded as "already pushed", suppressing
-  the echo push that would otherwise re-upload identical data.
-
-Settings keys (all device-local — the uri/grant only exist on this device):
-`cloud_sync_enabled` (default off), `cloud_sync_folder_uri`,
-`cloud_sync_folder_name`, `last_cloud_sync_at`, `last_cloud_sync_error_at`,
-`last_cloud_sync_hash`. Providers: `cloudSyncEnabledProvider`,
-`cloudSyncFolderNameProvider`, `lastCloudSyncAtProvider`,
-`lastCloudSyncErrorAtProvider`. Deferred follow-ups are TODO **U20** phases
-2 (launch-time "newer backup in the folder" prompt) and 3 (iOS `CloudFolder`
-implementation).
 
 ### Reminders & notification scheduling (`notifications.dart`, `reminder_scheduler.dart`)
 
@@ -1490,9 +1418,7 @@ switch (U17 — hides the dashboard tile and silences micro test reminders;
 measurements are kept),
 and **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency and a link to the **Manage backups**
-screen (see Data → Automatic backup), and the **Cloud folder sync** block
-(switch + folder picker + status/error rows + restore-from-folder bottom
-sheet; Android target only — see Data → Cloud folder sync). Link to the salinity calculator. The About box shows the live app version via
+screen (see Data → Automatic backup). Link to the salinity calculator. The About box shows the live app version via
 `appVersionProvider` (`package_info_plus`), never a hardcoded string.
 
 ### Salinity calculator (`calculator/salinity_calculator_screen.dart`)

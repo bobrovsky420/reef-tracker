@@ -163,10 +163,6 @@ String encodeBackup({
     'roStageReplacements': roStageReplacements
         .map(_roStageReplacementToJson)
         .toList(),
-    // Keep `settings` the LAST section: `cloudSyncContentHash` (U20) strips
-    // it by truncating the encoded document at `,"settings":`. Breaking this
-    // only over-pushes (the hash gate stops matching), but keep it anyway —
-    // pinned by the stability test in test/cloud_sync_test.dart.
     'settings': settings.map(_settingToJson).toList(),
   };
   final payload = jsonEncode(map);
