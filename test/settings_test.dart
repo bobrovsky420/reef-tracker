@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/settings.dart';
+import 'package:reeftracker/domain/stability_score.dart';
 import 'package:reeftracker/domain/trend.dart';
 import 'package:reeftracker/domain/units.dart';
 
@@ -121,18 +122,21 @@ void main() {
       },
     );
 
-    test('early-adopter marker seeds once and never overwrites (U19)', () async {
-      // Fresh install before seeding: standard edition.
-      expect(await settings.watchEdition().first, AppEdition.standard);
+    test(
+      'early-adopter marker seeds once and never overwrites (U19)',
+      () async {
+        // Fresh install before seeding: standard edition.
+        expect(await settings.watchEdition().first, AppEdition.standard);
 
-      await settings.seedLegacyFreeSince('0.26.0');
-      expect(await db.getSetting(kLegacyFreeSinceKey), '0.26.0');
-      expect(await settings.watchEdition().first, AppEdition.founder);
+        await settings.seedLegacyFreeSince('0.26.0');
+        expect(await db.getSetting(kLegacyFreeSinceKey), '0.26.0');
+        expect(await settings.watchEdition().first, AppEdition.founder);
 
-      // A later launch (newer version) must not overwrite the original stamp.
-      await settings.seedLegacyFreeSince('0.27.0');
-      expect(await db.getSetting(kLegacyFreeSinceKey), '0.26.0');
-    });
+        // A later launch (newer version) must not overwrite the original stamp.
+        await settings.seedLegacyFreeSince('0.27.0');
+        expect(await db.getSetting(kLegacyFreeSinceKey), '0.26.0');
+      },
+    );
 
     test('edition decodes from the raw marker value (U19)', () {
       expect(AppSettings.decodeLegacyFreeSince(null), isNull);
@@ -154,6 +158,21 @@ void main() {
       expect(AppSettings.decodeReminderTime('25:99'), kDefaultReminderTime);
       expect(AppSettings.decodeReminderTime('soon'), kDefaultReminderTime);
       expect(AppSettings.decodeReminderTime(null), kDefaultReminderTime);
+    });
+
+    test('stability window decodes whitelisted values only (U26)', () async {
+      expect(AppSettings.decodeStabilityWindow(null), kStabilityWindowDays);
+      for (final choice in kStabilityWindowChoices) {
+        expect(AppSettings.decodeStabilityWindow('$choice'), choice);
+      }
+      // A value the dropdown doesn't offer would crash Settings (the
+      // trend-window clamp rationale) — hand-edited/garbage input falls back
+      // to the default instead.
+      expect(AppSettings.decodeStabilityWindow('45'), kStabilityWindowDays);
+      expect(AppSettings.decodeStabilityWindow('soon'), kStabilityWindowDays);
+
+      await settings.setStabilityWindow(90);
+      expect(await settings.watchStabilityWindow().first, 90);
     });
   });
 

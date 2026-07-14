@@ -1240,7 +1240,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get zoneUnknown => '—';
 
   @override
-  String get setupFishOnly => 'Nur Fische / FOWLR';
+  String get setupFishOnly => 'Nur Fische';
 
   @override
   String get setupSoft => 'Weichkorallen';
@@ -1642,6 +1642,60 @@ class AppLocalizationsDe extends AppLocalizations {
   String healthScoreOf(int score) {
     return '$score von 100';
   }
+
+  @override
+  String get stabilityTitle => 'Stabilität';
+
+  @override
+  String get stabilityScoreProName => 'Stabilitätswert';
+
+  @override
+  String get stabilityGradeRockSolid => 'Felsenfest';
+
+  @override
+  String get stabilityGradeSteady => 'Stabil';
+
+  @override
+  String get stabilityGradeVariable => 'Schwankend';
+
+  @override
+  String get stabilityGradeUnstable => 'Instabil';
+
+  @override
+  String get stabilityGradeUnknown => 'Keine Daten';
+
+  @override
+  String stabilityIntro(int days) {
+    return 'Wie gleichmäßig sich die Parameter in den letzten $days Tagen gehalten haben.';
+  }
+
+  @override
+  String get stabilitySectionVariable => 'Schwankt am stärksten';
+
+  @override
+  String get stabilitySectionSteady => 'Hält stabil';
+
+  @override
+  String get stabilitySectionInsufficient => 'Zu wenig Daten';
+
+  @override
+  String stabilityTestCount(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Messungen in den letzten $days Tagen',
+      one: '1 Messung in den letzten $days Tagen',
+      zero: 'Keine Messungen in den letzten $days Tagen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stabilityWindowTitle => 'Stabilitätsfenster';
+
+  @override
+  String get stabilityWindowSubtitle =>
+      'Zeitraum, den der Stabilitätswert betrachtet';
 
   @override
   String get dashboardSection => 'Dashboard';

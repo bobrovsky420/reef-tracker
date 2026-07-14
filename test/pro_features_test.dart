@@ -42,6 +42,7 @@ void main() {
         ProFeature.icpImport,
         ProFeature.doseCalculator,
         ProFeature.unlimitedTanks,
+        ProFeature.stabilityScore,
       });
     });
   });

@@ -2140,7 +2140,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupFishOnly.
   ///
   /// In en, this message translates to:
-  /// **'Fish-only / FOWLR'**
+  /// **'Fish only'**
   String get setupFishOnly;
 
   /// No description provided for @setupSoft.
@@ -2844,6 +2844,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{score} of 100'**
   String healthScoreOf(int score);
+
+  /// No description provided for @stabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stability'**
+  String get stabilityTitle;
+
+  /// Feature name shown by the Pro-feature dialog and future paywall listings (U26).
+  ///
+  /// In en, this message translates to:
+  /// **'Stability score'**
+  String get stabilityScoreProName;
+
+  /// No description provided for @stabilityGradeRockSolid.
+  ///
+  /// In en, this message translates to:
+  /// **'Rock solid'**
+  String get stabilityGradeRockSolid;
+
+  /// No description provided for @stabilityGradeSteady.
+  ///
+  /// In en, this message translates to:
+  /// **'Steady'**
+  String get stabilityGradeSteady;
+
+  /// No description provided for @stabilityGradeVariable.
+  ///
+  /// In en, this message translates to:
+  /// **'Variable'**
+  String get stabilityGradeVariable;
+
+  /// No description provided for @stabilityGradeUnstable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstable'**
+  String get stabilityGradeUnstable;
+
+  /// No description provided for @stabilityGradeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'No data'**
+  String get stabilityGradeUnknown;
+
+  /// No description provided for @stabilityIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'How steadily each parameter has held over the last {days} days.'**
+  String stabilityIntro(int days);
+
+  /// No description provided for @stabilitySectionVariable.
+  ///
+  /// In en, this message translates to:
+  /// **'Most variable'**
+  String get stabilitySectionVariable;
+
+  /// No description provided for @stabilitySectionSteady.
+  ///
+  /// In en, this message translates to:
+  /// **'Holding steady'**
+  String get stabilitySectionSteady;
+
+  /// No description provided for @stabilitySectionInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough data'**
+  String get stabilitySectionInsufficient;
+
+  /// Why a parameter has no stability sub-score: too few tests in the window.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No tests in the last {days} days} one{1 test in the last {days} days} other{{count} tests in the last {days} days}}'**
+  String stabilityTestCount(int count, int days);
+
+  /// No description provided for @stabilityWindowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stability window'**
+  String get stabilityWindowTitle;
+
+  /// No description provided for @stabilityWindowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Period the stability score looks at'**
+  String get stabilityWindowSubtitle;
 
   /// No description provided for @dashboardSection.
   ///

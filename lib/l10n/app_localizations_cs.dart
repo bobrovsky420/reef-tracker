@@ -1239,7 +1239,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get zoneUnknown => '—';
 
   @override
-  String get setupFishOnly => 'Pouze ryby / FOWLR';
+  String get setupFishOnly => 'Pouze ryby';
 
   @override
   String get setupSoft => 'Měkké korály';
@@ -1644,6 +1644,60 @@ class AppLocalizationsCs extends AppLocalizations {
   String healthScoreOf(int score) {
     return '$score ze 100';
   }
+
+  @override
+  String get stabilityTitle => 'Stabilita';
+
+  @override
+  String get stabilityScoreProName => 'Skóre stability';
+
+  @override
+  String get stabilityGradeRockSolid => 'Naprosto stabilní';
+
+  @override
+  String get stabilityGradeSteady => 'Stabilní';
+
+  @override
+  String get stabilityGradeVariable => 'Kolísavá';
+
+  @override
+  String get stabilityGradeUnstable => 'Nestabilní';
+
+  @override
+  String get stabilityGradeUnknown => 'Bez dat';
+
+  @override
+  String stabilityIntro(int days) {
+    return 'Jak vyrovnaně se jednotlivé parametry držely za posledních $days dní.';
+  }
+
+  @override
+  String get stabilitySectionVariable => 'Nejvíce kolísá';
+
+  @override
+  String get stabilitySectionSteady => 'Drží se stabilně';
+
+  @override
+  String get stabilitySectionInsufficient => 'Málo dat';
+
+  @override
+  String stabilityTestCount(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count měření za posledních $days dní',
+      few: '$count měření za posledních $days dní',
+      one: '1 měření za posledních $days dní',
+      zero: 'Žádné měření za posledních $days dní',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stabilityWindowTitle => 'Okno stability';
+
+  @override
+  String get stabilityWindowSubtitle => 'Období, které skóre stability hodnotí';
 
   @override
   String get dashboardSection => 'Přehled';

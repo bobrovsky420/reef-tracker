@@ -8,6 +8,7 @@ import '../domain/pro_features.dart';
 import '../domain/ratio.dart';
 import '../domain/ro.dart';
 import '../domain/setup_type.dart';
+import '../domain/stability_score.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
 import 'app_localizations.dart';
@@ -115,6 +116,7 @@ extension L10nDomain on AppLocalizations {
     ProFeature.icpImport => icpImportTitle,
     ProFeature.doseCalculator => doseCalcTitle,
     ProFeature.unlimitedTanks => unlimitedTanksTitle,
+    ProFeature.stabilityScore => stabilityScoreProName,
   };
 
   String paramName(String key) {
@@ -298,6 +300,21 @@ extension L10nDomain on AppLocalizations {
         return healthGradeCritical;
       case HealthGrade.unknown:
         return healthGradeUnknown;
+    }
+  }
+
+  String stabilityGradeLabel(StabilityGrade grade) {
+    switch (grade) {
+      case StabilityGrade.rockSolid:
+        return stabilityGradeRockSolid;
+      case StabilityGrade.steady:
+        return stabilityGradeSteady;
+      case StabilityGrade.variable:
+        return stabilityGradeVariable;
+      case StabilityGrade.unstable:
+        return stabilityGradeUnstable;
+      case StabilityGrade.unknown:
+        return stabilityGradeUnknown;
     }
   }
 

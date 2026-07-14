@@ -7,6 +7,8 @@ import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
 import '../../data/csv_export.dart';
 import '../../data/database.dart';
+import '../../domain/pro_features.dart';
+import '../../domain/stability_score.dart';
 import '../../domain/trend.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
@@ -122,6 +124,29 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          // Stability window (U26). Only shown to installs entitled to the
+          // stability score — a knob for a locked feature would just confuse.
+          if (ref.watch(proFeatureProvider(ProFeature.stabilityScore)))
+            ListTile(
+              leading: const Icon(Icons.waves),
+              title: Text(l.stabilityWindowTitle),
+              subtitle: Text(l.stabilityWindowSubtitle),
+              trailing: DropdownButton<int>(
+                value:
+                    ref.watch(stabilityWindowProvider).value ??
+                    kStabilityWindowDays,
+                underline: const SizedBox.shrink(),
+                onChanged: (v) =>
+                    v == null ? null : settings.setStabilityWindow(v),
+                items: [
+                  for (final n in kStabilityWindowChoices)
+                    DropdownMenuItem(
+                      value: n,
+                      child: Text(l.trendHorizonDays(n)),
+                    ),
+                ],
+              ),
+            ),
           const Divider(),
           _SectionHeader(l.trendSection),
           SwitchListTile(

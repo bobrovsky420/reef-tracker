@@ -26,3 +26,5 @@ features:
     grandfathered: true
   - key: unlimitedTanks
     grandfathered: true
+  - key: stabilityScore
+    grandfathered: true

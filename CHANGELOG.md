@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.0] - 2026-07-14
+
+### Added
+- Stability score: the dashboard health card now has a second half showing
+  how steadily each parameter has held over the last 30 days. Swings are
+  measured against your own target ranges (after removing steady drifts,
+  which the trend forecasts already cover) and combined into a 0–100 score;
+  tapping it opens a breakdown listing the most variable parameters with
+  their typical swing ("±0.4 dKH"), the steady ones, and those without
+  enough recent tests. Part of ReefTracker Pro and covered by the Founder's
+  Edition promise: free forever for Founder installs — which, today, is
+  every install.
+- The stability window is configurable in Settings → Dashboard: 30 days
+  (default), 60, or 90 — so relaxed testing schedules can still collect the
+  three tests a score needs, and dedicated testers can judge a whole quarter.
+
 ## [0.26.2] - 2026-07-13
 
 ### Added

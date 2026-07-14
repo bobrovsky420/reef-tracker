@@ -13,7 +13,7 @@ history, time-series graphs, and at-a-glance health zones.
   - green = value is OK,
   - amber = needs attention,
   - red = act immediately.
-- **Setup-type presets** (Fish-only/FOWLR, Soft, LPS, SPS, Mixed reef) seed
+- **Setup-type presets** (Fish only, Soft, LPS, SPS, Mixed reef) seed
   sensible default boundaries — every bound is editable per tank.
 - **History & charts**: time-series graph per parameter with colored zone
   bands and 7d/30d/90d/all ranges; edit or delete past readings.

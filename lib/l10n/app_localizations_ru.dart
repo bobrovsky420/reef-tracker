@@ -1246,7 +1246,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get zoneUnknown => '—';
 
   @override
-  String get setupFishOnly => 'Только рыбы / FOWLR';
+  String get setupFishOnly => 'Только рыбы';
 
   @override
   String get setupSoft => 'Мягкие кораллы';
@@ -1652,6 +1652,62 @@ class AppLocalizationsRu extends AppLocalizations {
   String healthScoreOf(int score) {
     return '$score из 100';
   }
+
+  @override
+  String get stabilityTitle => 'Стабильность';
+
+  @override
+  String get stabilityScoreProName => 'Оценка стабильности';
+
+  @override
+  String get stabilityGradeRockSolid => 'Очень стабильно';
+
+  @override
+  String get stabilityGradeSteady => 'Стабильно';
+
+  @override
+  String get stabilityGradeVariable => 'Колеблется';
+
+  @override
+  String get stabilityGradeUnstable => 'Нестабильно';
+
+  @override
+  String get stabilityGradeUnknown => 'Нет данных';
+
+  @override
+  String stabilityIntro(int days) {
+    return 'Насколько ровно держались параметры за последние $days дней.';
+  }
+
+  @override
+  String get stabilitySectionVariable => 'Колеблются сильнее всего';
+
+  @override
+  String get stabilitySectionSteady => 'Держатся стабильно';
+
+  @override
+  String get stabilitySectionInsufficient => 'Мало данных';
+
+  @override
+  String stabilityTestCount(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count измерения за последние $days дн.',
+      many: '$count измерений за последние $days дн.',
+      few: '$count измерения за последние $days дн.',
+      one: '$count измерение за последние $days дн.',
+      zero: 'Нет измерений за последние $days дн.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stabilityWindowTitle => 'Окно стабильности';
+
+  @override
+  String get stabilityWindowSubtitle =>
+      'Период, который учитывает оценка стабильности';
 
   @override
   String get dashboardSection => 'Панель';

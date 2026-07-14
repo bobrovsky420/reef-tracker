@@ -468,7 +468,7 @@
   "zoneActNow": "Act now",
   "zoneUnknown": "—",
 
-  "setupFishOnly": "Fish-only / FOWLR",
+  "setupFishOnly": "Fish only",
   "setupSoft": "Soft coral",
   "setupLps": "LPS",
   "setupSps": "SPS",
@@ -677,6 +677,29 @@
   "healthNoReadingsYet": "No readings yet",
   "healthScoreOf": "{score} of 100",
   "@healthScoreOf": { "placeholders": { "score": { "type": "int" } } },
+
+  "stabilityTitle": "Stability",
+  "stabilityScoreProName": "Stability score",
+  "@stabilityScoreProName": {
+    "description": "Feature name shown by the Pro-feature dialog and future paywall listings (U26)."
+  },
+  "stabilityGradeRockSolid": "Rock solid",
+  "stabilityGradeSteady": "Steady",
+  "stabilityGradeVariable": "Variable",
+  "stabilityGradeUnstable": "Unstable",
+  "stabilityGradeUnknown": "No data",
+  "stabilityIntro": "How steadily each parameter has held over the last {days} days.",
+  "@stabilityIntro": { "placeholders": { "days": { "type": "int" } } },
+  "stabilitySectionVariable": "Most variable",
+  "stabilitySectionSteady": "Holding steady",
+  "stabilitySectionInsufficient": "Not enough data",
+  "stabilityTestCount": "{count, plural, =0{No tests in the last {days} days} one{1 test in the last {days} days} other{{count} tests in the last {days} days}}",
+  "@stabilityTestCount": {
+    "description": "Why a parameter has no stability sub-score: too few tests in the window.",
+    "placeholders": { "count": { "type": "int" }, "days": { "type": "int" } }
+  },
+  "stabilityWindowTitle": "Stability window",
+  "stabilityWindowSubtitle": "Period the stability score looks at",
 
   "dashboardSection": "Dashboard",
   "healthDisplayTitle": "Tank health",

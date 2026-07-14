@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../domain/reminders.dart';
+import '../domain/stability_score.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 import 'database.dart';
@@ -107,6 +108,7 @@ enum SettingKey {
   trendWindow(kTrendWindowKey, deviceLocal: true),
   trendHorizon(kTrendHorizonKey, deviceLocal: true),
   healthDisplay(kHealthDisplayKey, deviceLocal: true),
+  stabilityWindow(kStabilityWindowKey, deviceLocal: true),
   tourSeen(kTourSeenKey, deviceLocal: true),
   autoBackupEnabled(kAutoBackupEnabledKey, deviceLocal: true),
   autoBackupInterval(kAutoBackupIntervalKey, deviceLocal: true),
@@ -259,6 +261,21 @@ class AppSettings {
       _watch(SettingKey.trendHorizon).map(decodeTrendHorizon);
   Future<void> setTrendHorizon(int days) =>
       _write(SettingKey.trendHorizon, days.toString());
+
+  // --- stability window (U26) -------------------------------------------------
+
+  /// Whitelisted to [kStabilityWindowChoices] (not clamped): the settings
+  /// dropdown crashes on a value it doesn't offer, so a hand-edited "45"
+  /// falls back to the default rather than crashing Settings.
+  static int decodeStabilityWindow(String? raw) {
+    final v = int.tryParse(raw ?? '');
+    return kStabilityWindowChoices.contains(v) ? v! : kStabilityWindowDays;
+  }
+
+  Stream<int> watchStabilityWindow() =>
+      _watch(SettingKey.stabilityWindow).map(decodeStabilityWindow);
+  Future<void> setStabilityWindow(int days) =>
+      _write(SettingKey.stabilityWindow, days.toString());
 
   // --- health display --------------------------------------------------------
 

@@ -1008,6 +1008,28 @@ class AppDatabase extends _$AppDatabase {
         readsFrom: {readings},
       ).asyncMap(readings.mapFromRow).watch();
 
+  /// All of a tank's readings taken on/after [cutoff], newest first (U26).
+  ///
+  /// The *time*-bounded companion of [watchRecentReadingsPerParam]'s count cap:
+  /// the stability score's 60/90-day windows would silently truncate for a
+  /// frequent tester under a per-parameter row limit, while a time window stays
+  /// exact and its per-write re-query cost is bounded by the testing cadence.
+  /// Rides `idx_readings_tank_taken`; the `id` tiebreaker keeps same-second
+  /// readings deterministic.
+  Stream<List<Reading>> watchReadingsSince(int tankId, DateTime cutoff) =>
+      (select(readings)
+            ..where(
+              (r) =>
+                  r.tankId.equals(tankId) &
+                  r.takenAt.isBiggerOrEqualValue(cutoff),
+            )
+            ..orderBy([
+              (r) =>
+                  OrderingTerm(expression: r.takenAt, mode: OrderingMode.desc),
+              (r) => OrderingTerm(expression: r.id, mode: OrderingMode.desc),
+            ]))
+          .watch();
+
   Future<void> insertReading({
     required int tankId,
     required String paramKey,

@@ -9,9 +9,13 @@ import '../app/providers.dart';
 import '../data/database.dart';
 import '../domain/clock.dart';
 import '../domain/health_score.dart';
+import '../domain/pro_features.dart';
+import '../domain/stability_score.dart';
 import '../domain/units.dart';
+import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
+import 'pro_feature_dialog.dart';
 import 'zone_visuals.dart';
 
 /// A circular progress ring filled to [score]/100 in [color], with [center]
@@ -128,8 +132,10 @@ class TankHealthBadgeCompact extends ConsumerWidget {
   }
 }
 
-/// Full-width health header for the dashboard: ring + score, grade word, and a
-/// one-line summary of what needs attention. Tapping opens the breakdown sheet.
+/// Full-width health header for the dashboard, split into two tap targets:
+/// the health half (ring + score, grade word, one-line attention summary) and
+/// the stability half (U26, Pro — how much the measurements oscillate).
+/// Tapping each opens its own breakdown sheet.
 class TankHealthHeader extends ConsumerWidget {
   const TankHealthHeader({super.key});
 
@@ -152,51 +158,150 @@ class TankHealthHeader extends ConsumerWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      // IntrinsicHeight sizes the divider and both ink surfaces to the taller
+      // half, so the ripple covers each panel edge-to-edge.
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: health.hasData
+                    ? () => showTankHealthSheet(context)
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      _ScoreRing(
+                        score: health.score,
+                        color: color,
+                        size: 52,
+                        stroke: 5,
+                        center: Text(
+                          health.hasData ? '${health.score}' : '—',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              l.healthGradeLabel(health.grade),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.hintColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const VerticalDivider(width: 1, indent: 12, endIndent: 12),
+            const _StabilityHeaderPanel(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The stability half of the dashboard header (U26). Pro-gated: entitled
+/// installs see the stability ring and tap through to the breakdown sheet;
+/// anyone else sees a Pro marker whose tap explains the gate.
+class _StabilityHeaderPanel extends ConsumerWidget {
+  const _StabilityHeaderPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final unlocked = ref.watch(proFeatureProvider(ProFeature.stabilityScore));
+
+    if (!unlocked) {
+      return Semantics(
+        button: true,
+        label: '${l.stabilityTitle}: ${l.proFeatureTitle}',
+        child: InkWell(
+          onTap: () => showProFeatureDialog(context, ProFeature.stabilityScore),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.workspace_premium_outlined,
+                  size: 26,
+                  color: theme.hintColor,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l.stabilityTitle,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final stability = ref.watch(tankStabilityProvider);
+    final color = stability.band.color;
+    return Semantics(
+      button: true,
+      label:
+          '${l.stabilityTitle}: ${l.stabilityGradeLabel(stability.grade)}'
+          '${stability.hasData ? ', ${l.healthScoreOf(stability.score!)}' : ''}',
       child: InkWell(
-        onTap: health.hasData ? () => showTankHealthSheet(context) : null,
+        onTap: () => showTankStabilitySheet(context),
         child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _ScoreRing(
-                score: health.score,
+                score: stability.score,
                 color: color,
-                size: 52,
-                stroke: 5,
+                size: 38,
+                stroke: 4,
                 center: Text(
-                  health.hasData ? '${health.score}' : '—',
+                  stability.hasData ? '${stability.score}' : '—',
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l.healthGradeLabel(health.grade),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.hintColor,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 5),
+              Text(
+                l.stabilityTitle,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.hintColor,
                 ),
               ),
-              if (health.hasData)
-                Icon(Icons.chevron_right, color: theme.hintColor),
             ],
           ),
         ),
@@ -294,6 +399,223 @@ class _TankHealthSheet extends ConsumerWidget {
                   muted: true,
                 ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens the tank-stability breakdown as a modal bottom sheet, grouping
+/// parameters into "most variable", "holding steady", and "not enough data".
+Future<void> showTankStabilitySheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => const _TankStabilitySheet(),
+  );
+}
+
+class _TankStabilitySheet extends ConsumerWidget {
+  const _TankStabilitySheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final stability = ref.watch(tankStabilityProvider);
+    final windowDays =
+        ref.watch(stabilityWindowProvider).value ?? kStabilityWindowDays;
+    final prefs = ref.watch(unitPrefsProvider);
+    final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+    final byKey = {for (final p in tracked) p.paramKey: p};
+    final color = stability.band.color;
+
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          children: [
+            // Header: ring + grade + score.
+            Row(
+              children: [
+                _ScoreRing(
+                  score: stability.score,
+                  color: color,
+                  size: 56,
+                  stroke: 5,
+                  center: Text(
+                    stability.hasData ? '${stability.score}' : '—',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l.stabilityTitle, style: theme.textTheme.labelMedium),
+                    Text(
+                      l.stabilityGradeLabel(stability.grade),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l.stabilityIntro(windowDays),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.hintColor,
+              ),
+            ),
+
+            if (stability.mostVariable.isNotEmpty) ...[
+              _SectionHeader(l.stabilitySectionVariable),
+              for (final p in stability.mostVariable)
+                _StabilityParamRow(
+                  stability: p,
+                  param: byKey[p.paramKey],
+                  prefs: prefs,
+                  windowDays: windowDays,
+                ),
+            ],
+            if (stability.steady.isNotEmpty) ...[
+              _SectionHeader(l.stabilitySectionSteady),
+              for (final p in stability.steady)
+                _StabilityParamRow(
+                  stability: p,
+                  param: byKey[p.paramKey],
+                  prefs: prefs,
+                  windowDays: windowDays,
+                ),
+            ],
+            if (stability.insufficient.isNotEmpty) ...[
+              _SectionHeader(l.stabilitySectionInsufficient),
+              for (final p in stability.insufficient)
+                _StabilityParamRow(
+                  stability: p,
+                  param: byKey[p.paramKey],
+                  prefs: prefs,
+                  windowDays: windowDays,
+                  muted: true,
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One parameter line in the stability breakdown: wave icon colored by the
+/// sub-score band, name, and the typical swing ("±0.4 dKH") — or, for muted
+/// rows, how many tests the window held. Taps through to the history graph.
+class _StabilityParamRow extends StatelessWidget {
+  const _StabilityParamRow({
+    required this.stability,
+    required this.param,
+    required this.prefs,
+    required this.windowDays,
+    this.muted = false,
+  });
+
+  final ParameterStability stability;
+  final TrackedParameter? param;
+  final UnitPrefs prefs;
+
+  /// Effective stability window, for the muted rows' "N tests in D d" note.
+  final int windowDays;
+
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final sub = stability.subScore;
+    final zone = (muted || sub == null)
+        ? Zone.unknown
+        : sub >= 70
+        ? Zone.green
+        : sub >= 40
+        ? Zone.amber
+        : Zone.red;
+    final color = muted ? theme.hintColor : zone.color;
+
+    // "±σ" in display units. The σ is a *delta*, so it converts by scale only —
+    // subtracting toDisplay(0) cancels an affine offset (°F) that would
+    // otherwise inflate a 0.5 °C swing to "±32.9 °F".
+    String trailing = '';
+    if (!muted && stability.sigma != null && param != null) {
+      final pres = presentationOf(param!, prefs);
+      final sigmaDisplay =
+          (pres.toDisplay(stability.sigma!) - pres.toDisplay(0)).abs();
+      trailing =
+          '±${formatLocaleNumber(sigmaDisplay, pres.decimals)} ${pres.unitLabel}';
+    }
+
+    final note = muted
+        ? l.stabilityTestCount(stability.sampleCount, windowDays)
+        : null;
+
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).pop();
+        unawaited(context.push('/history/${stability.paramKey}'));
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(
+              muted ? Icons.remove_circle_outline : Icons.waves,
+              size: 18,
+              color: color,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l.paramName(stability.paramKey),
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  if (note != null)
+                    Text(
+                      note,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.hintColor,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (trailing.isNotEmpty)
+              Text(
+                trailing,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, size: 18, color: theme.hintColor),
           ],
         ),
       ),

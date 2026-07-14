@@ -14,6 +14,7 @@ import '../domain/pro_features.dart';
 import '../domain/ratio.dart';
 import '../domain/reminders.dart';
 import '../domain/ro.dart';
+import '../domain/stability_score.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
@@ -710,6 +711,75 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
       ),
   ];
   return computeTankHealth(inputs);
+});
+
+/// Days of history the stability score examines (30/60/90, default
+/// [kStabilityWindowDays] = 30 — matching health's freshness horizon). The
+/// longer windows exist for relaxed testing cadences that can't accumulate
+/// three tests in 30 days.
+final stabilityWindowProvider = _setting(
+  SettingKey.stabilityWindow,
+  AppSettings.decodeStabilityWindow,
+);
+
+/// Time-bounded readings feed for the stability score (U26), keyed by
+/// (tank, window). A *time* window rather than [kRecentReadingsPerParam]'s
+/// count cap — a 90-day window under a per-parameter row limit would silently
+/// truncate for a daily tester. The cutoff is fixed at stream creation, which
+/// is safe in the conservative direction: real time only moves the true
+/// window start *forward*, so the feed is always a superset of the window and
+/// [computeTankStability] re-filters precisely with its own clock.
+final _stabilityReadingsFamily = StreamProvider.autoDispose
+    .family<List<Reading>, ({int tankId, int days})>(
+      (ref, key) => _dedup(
+        ref
+            .watch(dbProvider)
+            .watchReadingsSince(
+              key.tankId,
+              DateTime.now().subtract(Duration(days: key.days)),
+            ),
+      ),
+    );
+
+/// Overall stability score for the active tank (U26, Pro): how much each core
+/// parameter has been oscillating over the configured window
+/// ([stabilityWindowProvider]). Same memoized single-layer derivation as
+/// [tankHealthProvider]; [TankStability] is value-equal (T2). Changing the
+/// window or the active tank switches to a fresh family instance (#20), so a
+/// brief no-data state replaces stale-window flashes.
+final tankStabilityProvider = Provider<TankStability>((ref) {
+  final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+  final windowDays =
+      ref.watch(stabilityWindowProvider).value ?? kStabilityWindowDays;
+  final tank = ref.watch(activeTankProvider);
+  final readings = tank == null
+      ? const <Reading>[]
+      : ref
+                .watch(
+                  _stabilityReadingsFamily((tankId: tank.id, days: windowDays)),
+                )
+                .value ??
+            const <Reading>[];
+
+  // Per-parameter series (order is irrelevant — the domain sorts and
+  // window-filters).
+  final byParam = <String, List<DosePoint>>{};
+  for (final r in readings) {
+    (byParam[r.paramKey] ??= []).add((t: r.takenAt, value: r.value));
+  }
+
+  final inputs = <StabilityInput>[
+    // Core parameters only, matching the health score: microelements are
+    // measured on an ICP cadence (months) — a 30-day oscillation window can
+    // never hold enough of their samples to mean anything.
+    for (final p in tracked.where((t) => t.enabled && isCoreParam(t.paramKey)))
+      (
+        paramKey: p.paramKey,
+        bounds: boundsOf(p),
+        points: byParam[p.paramKey] ?? const [],
+      ),
+  ];
+  return computeTankStability(inputs, windowDays: windowDays);
 });
 
 // --- Microelements (U17) ------------------------------------------------------

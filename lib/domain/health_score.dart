@@ -35,7 +35,10 @@ const Map<String, double> _kImportance = {
   'phosphate': 2,
 };
 
-double _weightFor(String paramKey) => _kImportance[paramKey] ?? _kDefaultWeight;
+/// Public so the stability score (`stability_score.dart`) weighs parameters
+/// identically — one importance table for both aggregates.
+double importanceWeightFor(String paramKey) =>
+    _kImportance[paramKey] ?? _kDefaultWeight;
 
 /// Per-parameter input for scoring: its bounds and latest reading (if any).
 typedef HealthInput = ({
@@ -200,7 +203,7 @@ TankHealth computeTankHealth(
     final included = sub != null;
 
     if (included) {
-      final w = _weightFor(input.paramKey);
+      final w = importanceWeightFor(input.paramKey);
       weightedSum += w * sub;
       weightTotal += w;
       if (zone == Zone.red) {

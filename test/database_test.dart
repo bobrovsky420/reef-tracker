@@ -563,6 +563,39 @@ void main() {
     );
   });
 
+  group('watchReadingsSince (U26)', () {
+    test('returns only readings on/after the cutoff, newest first, '
+        'excluding other tanks', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+      for (var i = 0; i < 5; i++) {
+        await db.insertReading(
+          tankId: a,
+          paramKey: 'alkalinity',
+          value: 8.0 + i * 0.1,
+          takenAt: DateTime(2026, 1, 1 + i * 10), // Jan 1/11/21/31, Feb 10
+        );
+      }
+      await db.insertReading(
+        tankId: b,
+        paramKey: 'alkalinity',
+        value: 7,
+        takenAt: DateTime(2026, 1, 25),
+      );
+
+      final rows = await db.watchReadingsSince(a, DateTime(2026, 1, 11)).first;
+
+      expect(rows.every((r) => r.tankId == a), isTrue);
+      // Cutoff is inclusive (Jan 11 in, Jan 1 out); newest first.
+      expect(rows.map((r) => r.takenAt), [
+        DateTime(2026, 2, 10),
+        DateTime(2026, 1, 31),
+        DateTime(2026, 1, 21),
+        DateTime(2026, 1, 11),
+      ]);
+    });
+  });
+
   group('watchRecentReadingsPerParam (T1)', () {
     test('caps each parameter at the limit, newest first, and excludes '
         'other tanks', () async {
