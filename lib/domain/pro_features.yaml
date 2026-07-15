@@ -28,9 +28,7 @@ features:
     grandfathered: true
   - key: stabilityScore
     grandfathered: true
-  # Google Drive backup sync (U24): grandfathered by explicit decision
-  # 2026-07-15 (like stabilityScore, overriding the competitor-survey
-  # section's `false` default) — Founder installs keep it free forever, and
-  # the feature is usable immediately instead of dormant until the U19 IAP.
   - key: driveSync
+    grandfathered: true
+  - key: smartInsights
     grandfathered: true

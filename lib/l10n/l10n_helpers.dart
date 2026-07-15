@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../data/backup.dart';
 import '../domain/clock.dart';
 import '../domain/health_score.dart';
+import '../domain/insights.dart';
 import '../domain/pro_features.dart';
 import '../domain/ratio.dart';
 import '../domain/ro.dart';
@@ -118,7 +119,33 @@ extension L10nDomain on AppLocalizations {
     ProFeature.unlimitedTanks => unlimitedTanksTitle,
     ProFeature.stabilityScore => stabilityScoreProName,
     ProFeature.driveSync => syncGdriveTitle,
+    ProFeature.smartInsights => insightsProName,
   };
+
+  /// Localized message for a rule-based insight (U28). The [Insight] carries
+  /// only typed facts (kind, side, days); this switch is the single place
+  /// they become words, one ARB key per message shape.
+  String insightLabel(Insight i) {
+    final name = paramName(i.paramKey);
+    switch (i.kind) {
+      case InsightKind.outOfRange:
+        return switch (i.isLow) {
+          true => i.worsening ? insightLowWorsening(name) : insightLow(name),
+          false => i.worsening ? insightHighWorsening(name) : insightHigh(name),
+          null => insightOutOfRange(name),
+        };
+      case InsightKind.forecast:
+        return (i.isLow ?? false)
+            ? insightForecastLow(name, i.days!)
+            : insightForecastHigh(name, i.days!);
+      case InsightKind.recovering:
+        return i.days != null
+            ? insightRecoveringDays(name, i.days!)
+            : insightRecovering(name);
+      case InsightKind.staleTest:
+        return insightStale(name, i.days!);
+    }
+  }
 
   String paramName(String key) {
     switch (key) {

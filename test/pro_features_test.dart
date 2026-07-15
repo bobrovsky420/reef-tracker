@@ -44,6 +44,7 @@ void main() {
         ProFeature.unlimitedTanks,
         ProFeature.stabilityScore,
         ProFeature.driveSync,
+        ProFeature.smartInsights,
       });
     });
   });

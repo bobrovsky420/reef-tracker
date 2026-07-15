@@ -13,6 +13,7 @@ enum ProFeature {
   unlimitedTanks,
   stabilityScore,
   driveSync,
+  smartInsights,
 }
 
 /// Features that existed at the monetization cutoff: free
@@ -24,4 +25,5 @@ const Set<ProFeature> kGrandfatheredFeatures = {
   ProFeature.unlimitedTanks,
   ProFeature.stabilityScore,
   ProFeature.driveSync,
+  ProFeature.smartInsights,
 };

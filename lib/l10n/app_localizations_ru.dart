@@ -1764,6 +1764,79 @@ class AppLocalizationsRu extends AppLocalizations {
       'Период, который учитывает оценка стабильности';
 
   @override
+  String get insightsTitle => 'Подсказки';
+
+  @override
+  String get insightsProName => 'Умные подсказки';
+
+  @override
+  String get insightsIntro =>
+      'На что стоит обратить внимание по последним измерениям.';
+
+  @override
+  String insightsMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+ещё $count',
+      many: '+ещё $count',
+      few: '+ещё $count',
+      one: '+ещё $count',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String insightLow(Object param) {
+    return '$param ниже целевого диапазона';
+  }
+
+  @override
+  String insightLowWorsening(Object param) {
+    return '$param ниже диапазона и продолжает падать';
+  }
+
+  @override
+  String insightHigh(Object param) {
+    return '$param выше целевого диапазона';
+  }
+
+  @override
+  String insightHighWorsening(Object param) {
+    return '$param выше диапазона и продолжает расти';
+  }
+
+  @override
+  String insightOutOfRange(Object param) {
+    return '$param вне целевого диапазона';
+  }
+
+  @override
+  String insightForecastLow(Object param, int days) {
+    return '$param снижается — может выйти из диапазона через ~$days дн';
+  }
+
+  @override
+  String insightForecastHigh(Object param, int days) {
+    return '$param растёт — может выйти из диапазона через ~$days дн';
+  }
+
+  @override
+  String insightRecovering(Object param) {
+    return '$param возвращается в диапазон';
+  }
+
+  @override
+  String insightRecoveringDays(Object param, int days) {
+    return '$param восстанавливается — в диапазоне через ~$days дн';
+  }
+
+  @override
+  String insightStale(Object param, int days) {
+    return '$param: не измерялось $days дн.';
+  }
+
+  @override
   String get dashboardSection => 'Панель';
 
   @override

@@ -11,6 +11,7 @@ import '../data/notifications.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/settings.dart';
 import '../domain/health_score.dart';
+import '../domain/insights.dart';
 import '../domain/micro.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/pro_features.dart';
@@ -816,6 +817,69 @@ final tankStabilityProvider = Provider<TankStability>((ref) {
       ),
   ];
   return computeTankStability(inputs, windowDays: windowDays);
+});
+
+/// Rule-based insights for the active tank (U28, Pro): the prioritized
+/// observations list behind the dashboard Insights card. Computed regardless
+/// of entitlement (the U26 split — only presentation is gated).
+///
+/// Deliberately a **single-layer derivation** from the stream wrappers and
+/// settings, re-running the (cheap) health/trend math instead of watching
+/// [tankHealthProvider]/[tankTrendsProvider]: chaining plain providers can
+/// self-invalidate mid-build when the inner one is lazily recomputed during a
+/// widget build (see [_microElements]).
+final tankInsightsProvider = Provider<List<Insight>>((ref) {
+  final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+  final readings = ref.watch(recentReadingsProvider).value ?? const [];
+  final horizon = ref.watch(trendHorizonProvider).value ?? kTrendDefaultHorizon;
+  final trendsOn =
+      ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled;
+  final window = ref.watch(trendWindowProvider).value ?? kTrendDefaultWindow;
+
+  // Same groupings as [tankHealthProvider] / [tankTrendsProvider]: latest
+  // reading per parameter (arrives newest-first) and oldest-first series.
+  final latest = <String, Reading>{};
+  for (final r in readings) {
+    latest.putIfAbsent(r.paramKey, () => r);
+  }
+  final byParam = <String, List<DosePoint>>{};
+  for (final r in readings.reversed) {
+    (byParam[r.paramKey] ??= []).add((t: r.takenAt, value: r.value));
+  }
+
+  final core = tracked.where((t) => t.enabled && isCoreParam(t.paramKey));
+  final bounds = {for (final p in core) p.paramKey: boundsOf(p)};
+
+  final health = computeTankHealth([
+    for (final p in core)
+      (
+        paramKey: p.paramKey,
+        bounds: bounds[p.paramKey]!,
+        latest: latest[p.paramKey]?.value,
+        takenAt: latest[p.paramKey]?.takenAt,
+      ),
+  ]);
+
+  final trends = <String, TrendResult>{};
+  if (trendsOn) {
+    for (final p in core) {
+      final pts = byParam[p.paramKey];
+      if (pts == null) continue;
+      final t = computeTrend(
+        points: pts,
+        bounds: bounds[p.paramKey]!,
+        window: window,
+      );
+      if (t != null) trends[p.paramKey] = t;
+    }
+  }
+
+  return computeInsights(
+    health: health,
+    trends: trends,
+    bounds: bounds,
+    horizonDays: horizon,
+  );
 });
 
 // --- Microelements (U17) ------------------------------------------------------

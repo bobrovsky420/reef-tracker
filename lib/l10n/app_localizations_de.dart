@@ -1751,6 +1751,76 @@ class AppLocalizationsDe extends AppLocalizations {
       'Zeitraum, den der Stabilitätswert betrachtet';
 
   @override
+  String get insightsTitle => 'Hinweise';
+
+  @override
+  String get insightsProName => 'Smarte Hinweise';
+
+  @override
+  String get insightsIntro => 'Worauf die letzten Messungen hindeuten.';
+
+  @override
+  String insightsMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count weitere',
+      one: '+1 weiterer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String insightLow(Object param) {
+    return '$param liegt unter dem Zielbereich';
+  }
+
+  @override
+  String insightLowWorsening(Object param) {
+    return '$param ist niedrig und fällt weiter';
+  }
+
+  @override
+  String insightHigh(Object param) {
+    return '$param liegt über dem Zielbereich';
+  }
+
+  @override
+  String insightHighWorsening(Object param) {
+    return '$param ist hoch und steigt weiter';
+  }
+
+  @override
+  String insightOutOfRange(Object param) {
+    return '$param liegt außerhalb des Zielbereichs';
+  }
+
+  @override
+  String insightForecastLow(Object param, int days) {
+    return '$param sinkt — verlässt den Bereich evtl. in ~$days T';
+  }
+
+  @override
+  String insightForecastHigh(Object param, int days) {
+    return '$param steigt — verlässt den Bereich evtl. in ~$days T';
+  }
+
+  @override
+  String insightRecovering(Object param) {
+    return '$param erholt sich Richtung Zielbereich';
+  }
+
+  @override
+  String insightRecoveringDays(Object param, int days) {
+    return '$param erholt sich — wieder im Bereich in ~$days T';
+  }
+
+  @override
+  String insightStale(Object param, int days) {
+    return '$param seit $days d nicht gemessen';
+  }
+
+  @override
   String get dashboardSection => 'Dashboard';
 
   @override

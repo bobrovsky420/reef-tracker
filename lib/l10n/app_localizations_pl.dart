@@ -1771,6 +1771,78 @@ class AppLocalizationsPl extends AppLocalizations {
       'Okres oceniany przez wskaźnik stabilności';
 
   @override
+  String get insightsTitle => 'Wskazówki';
+
+  @override
+  String get insightsProName => 'Inteligentne wskazówki';
+
+  @override
+  String get insightsIntro => 'Na co zwrócić uwagę według ostatnich pomiarów.';
+
+  @override
+  String insightsMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count więcej',
+      many: '+$count więcej',
+      few: '+$count więcej',
+      one: '+1 więcej',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String insightLow(Object param) {
+    return '$param jest poniżej zakresu docelowego';
+  }
+
+  @override
+  String insightLowWorsening(Object param) {
+    return '$param jest nisko i nadal spada';
+  }
+
+  @override
+  String insightHigh(Object param) {
+    return '$param jest powyżej zakresu docelowego';
+  }
+
+  @override
+  String insightHighWorsening(Object param) {
+    return '$param jest wysoko i nadal rośnie';
+  }
+
+  @override
+  String insightOutOfRange(Object param) {
+    return '$param jest poza zakresem docelowym';
+  }
+
+  @override
+  String insightForecastLow(Object param, int days) {
+    return '$param spada — może opuścić zakres za ~$days dni';
+  }
+
+  @override
+  String insightForecastHigh(Object param, int days) {
+    return '$param rośnie — może opuścić zakres za ~$days dni';
+  }
+
+  @override
+  String insightRecovering(Object param) {
+    return '$param wraca do zakresu';
+  }
+
+  @override
+  String insightRecoveringDays(Object param, int days) {
+    return '$param poprawia się — wróci do zakresu za ~$days dni';
+  }
+
+  @override
+  String insightStale(Object param, int days) {
+    return '$param: nie mierzone od $days d';
+  }
+
+  @override
   String get dashboardSection => 'Pulpit';
 
   @override

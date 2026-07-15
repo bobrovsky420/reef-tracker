@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0] - 2026-07-15
+
+### Added
+- Smart insights: a new dashboard card under the health summary that turns
+  your recent readings into a short, prioritized list of plain-language
+  observations — parameters out of range (and whether they are still
+  worsening), values still in range but trending toward a limit, values
+  recovering back toward their range, and tests that are overdue. Tap the
+  card for the full list; each insight links to the parameter's history. All
+  computed on the device from your own data — no internet, no AI service.
+  Part of ReefTracker Pro and covered by the Founder's Edition promise: free
+  forever for Founder installs — which, today, is every install.
+
 ## [0.28.1] - 2026-07-15
 
 ### Fixed

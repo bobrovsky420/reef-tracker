@@ -3013,6 +3013,90 @@ abstract class AppLocalizations {
   /// **'Period the stability score looks at'**
   String get stabilityWindowSubtitle;
 
+  /// Title of the dashboard card and bottom sheet listing rule-based observations about the tank (U28).
+  ///
+  /// In en, this message translates to:
+  /// **'Insights'**
+  String get insightsTitle;
+
+  /// Feature name shown by the Pro-feature dialog and future paywall listings (U28).
+  ///
+  /// In en, this message translates to:
+  /// **'Smart insights'**
+  String get insightsProName;
+
+  /// One-line explanation under the insights sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'What your recent readings suggest to keep an eye on.'**
+  String get insightsIntro;
+
+  /// Trailing note on the insights card when more insights exist than the card previews.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{+1 more} other{+{count} more}}'**
+  String insightsMore(int count);
+
+  /// Insight: value in the amber/red zone on the low side, not currently falling further. {param} is the localized parameter name.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is below its target range'**
+  String insightLow(Object param);
+
+  /// Insight: value below range and the trend still points down.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is low and still falling'**
+  String insightLowWorsening(Object param);
+
+  /// Insight: value in the amber/red zone on the high side, not currently rising further.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is above its target range'**
+  String insightHigh(Object param);
+
+  /// Insight: value above range and the trend still points up.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is high and still rising'**
+  String insightHighWorsening(Object param);
+
+  /// Insight: value out of range but the side (low/high) can't be determined.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is outside its target range'**
+  String insightOutOfRange(Object param);
+
+  /// Insight: value still in range but trending down toward a zone bound. "d" is the abbreviation for days, as in the trend chips.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is heading low — may leave its range in ~{days} d'**
+  String insightForecastLow(Object param, int days);
+
+  /// Insight: value still in range but trending up toward a zone bound.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is heading high — may leave its range in ~{days} d'**
+  String insightForecastHigh(Object param, int days);
+
+  /// Positive insight: value out of range but moving back toward it; no time estimate available.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is recovering toward its range'**
+  String insightRecovering(Object param);
+
+  /// Positive insight: value out of range but moving back toward it, with an estimated re-entry.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is recovering — back in range in ~{days} d'**
+  String insightRecoveringDays(Object param, int days);
+
+  /// Insight: the parameter's latest test is older than the health score's freshness window.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} not tested in {days} d'**
+  String insightStale(Object param, int days);
+
   /// No description provided for @dashboardSection.
   ///
   /// In en, this message translates to:

@@ -13,6 +13,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/insights_card.dart';
 import '../../widgets/tank_health_badge.dart';
 import '../../widgets/trend_view.dart';
 import '../../widgets/zone_visuals.dart';
@@ -120,10 +121,14 @@ class DashboardBody extends ConsumerWidget {
             ref.watch(healthDisplayProvider).value ?? HealthDisplay.both;
 
         // One scroll view so the health card scrolls together with the tiles.
+        // The Insights card (U28) rides the same visibility setting as the
+        // health header: both are derived summaries of the same readings.
         return CustomScrollView(
           slivers: [
-            if (display.showCard)
+            if (display.showCard) ...[
               const SliverToBoxAdapter(child: TankHealthHeader()),
+              const SliverToBoxAdapter(child: InsightsCard()),
+            ],
             SliverPadding(
               padding: const EdgeInsets.all(12),
               sliver: SliverGrid.builder(

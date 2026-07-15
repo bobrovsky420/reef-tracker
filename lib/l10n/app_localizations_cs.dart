@@ -1753,6 +1753,77 @@ class AppLocalizationsCs extends AppLocalizations {
   String get stabilityWindowSubtitle => 'Období, které skóre stability hodnotí';
 
   @override
+  String get insightsTitle => 'Postřehy';
+
+  @override
+  String get insightsProName => 'Chytré postřehy';
+
+  @override
+  String get insightsIntro => 'Na co se podle posledních měření zaměřit.';
+
+  @override
+  String insightsMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count dalších',
+      few: '+$count další',
+      one: '+1 další',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String insightLow(Object param) {
+    return '$param je pod cílovým rozsahem';
+  }
+
+  @override
+  String insightLowWorsening(Object param) {
+    return '$param je nízko a dál klesá';
+  }
+
+  @override
+  String insightHigh(Object param) {
+    return '$param je nad cílovým rozsahem';
+  }
+
+  @override
+  String insightHighWorsening(Object param) {
+    return '$param je vysoko a dál stoupá';
+  }
+
+  @override
+  String insightOutOfRange(Object param) {
+    return '$param je mimo cílový rozsah';
+  }
+
+  @override
+  String insightForecastLow(Object param, int days) {
+    return '$param klesá — může opustit rozsah za ~$days d';
+  }
+
+  @override
+  String insightForecastHigh(Object param, int days) {
+    return '$param stoupá — může opustit rozsah za ~$days d';
+  }
+
+  @override
+  String insightRecovering(Object param) {
+    return '$param se vrací do rozsahu';
+  }
+
+  @override
+  String insightRecoveringDays(Object param, int days) {
+    return '$param se zlepšuje — zpět v rozsahu za ~$days d';
+  }
+
+  @override
+  String insightStale(Object param, int days) {
+    return '$param: neměřeno $days d';
+  }
+
+  @override
   String get dashboardSection => 'Přehled';
 
   @override
