@@ -1,4 +1,6 @@
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart'
+    show debugDefaultTargetPlatformOverride, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -139,6 +141,24 @@ void main() {
         findsOneWidget,
       );
     } finally {
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('the entire Drive UI is absent on iOS (Android-only surface)',
+      (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      await pumpSettings(
+        tester,
+        account: 'reef@test.dev',
+        lastErrorAt: DateTime(2026, 7, 15, 8, 30),
+      );
+      expect(find.text('Google Drive sync'), findsNothing);
+      expect(find.textContaining('reef@test.dev'), findsNothing);
+      expect(find.textContaining('Google Drive upload failed'), findsNothing);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
       await unmountApp(tester);
     }
   });

@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.1] - 2026-07-15
+
+### Fixed
+- "Back up now" also uploads to Google Drive right away (when connected and
+  the data actually changed since the last upload); previously the manual
+  backup only reached Drive at the next app launch or resume.
+- iOS: the Google Drive sync entries no longer appear in Settings and Manage
+  backups — the feature is Android-only (iOS will get its own cloud-backup
+  solution); on iOS the row could only ever have produced a connection error.
+
 ## [0.28.0] - 2026-07-15
 
 ### Added

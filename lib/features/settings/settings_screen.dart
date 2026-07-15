@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -255,7 +257,7 @@ class SettingsScreen extends ConsumerWidget {
                     orElse: () => l.backupNeverRun,
                   ),
             ),
-            onTap: () => _backupNow(context, db, l),
+            onTap: () => _backupNow(context, ref, l),
           ),
           // A failed backup attempt is worth a loud, persistent warning: the
           // user believes they are protected while nothing is being written
@@ -332,52 +334,64 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/settings/backups'),
             ),
           ],
-          // Google Drive sync (U24). Presence of the connected account IS the
-          // "on" state (no separate toggle); Pro-gated on the connect action
-          // only — a connected account keeps working (U19: limits gate
-          // creation, never access).
-          if (ref.watch(syncGdriveAccountProvider).value case final account?)
-            ListTile(
-              leading: const Icon(Icons.add_to_drive),
-              title: Text(l.syncGdriveTitle),
-              subtitle: Text(
-                '$account\n'
-                '${switch (ref.watch(syncGdriveLastPushAtProvider).value) {
-                  final at? => l.syncGdriveLastPush(
-                    formatDateTime(context, at.toLocal(), weekday: false),
-                  ),
-                  null => l.syncGdriveNeverPushed,
-                }}',
-              ),
-              isThreeLine: true,
-              onTap: () => _gdriveOptions(context, ref, l, account),
-            )
-          else
-            ListTile(
-              leading: const Icon(Icons.add_to_drive),
-              title: Text(l.syncGdriveTitle),
-              subtitle: Text(l.syncGdriveSubtitle),
-              onTap: ref.watch(proFeatureProvider(ProFeature.driveSync))
-                  ? () => _connectGdrive(context, ref, l)
-                  : () => showProFeatureDialog(context, ProFeature.driveSync),
-            ),
-          // Same loud-persistent-warning idiom as the local backup (#22):
-          // non-null means the latest push attempt failed (offline skips are
-          // not recorded), cleared by the next successful push.
-          if (ref.watch(syncGdriveLastErrorAtProvider).value
-              case final syncErrorAt?)
-            ListTile(
-              leading: Icon(
-                Icons.cloud_off,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              title: Text(
-                l.syncGdriveLastFailed(
-                  formatDateTime(context, syncErrorAt.toLocal(), weekday: false),
+          // Google Drive sync (U24) — **Android-only surface** (iOS gets its
+          // own cloud-backup solution later; the plugin is unconfigured
+          // there, so the row would only ever produce an error snackbar).
+          // This is the codebase's one deliberate platform branch;
+          // defaultTargetPlatform (not dart:io Platform) so widget tests can
+          // exercise both sides via debugDefaultTargetPlatformOverride.
+          if (defaultTargetPlatform == TargetPlatform.android) ...[
+            // Presence of the connected account IS the "on" state (no
+            // separate toggle); Pro-gated on the connect action only — a
+            // connected account keeps working (U19: limits gate creation,
+            // never access).
+            if (ref.watch(syncGdriveAccountProvider).value case final account?)
+              ListTile(
+                leading: const Icon(Icons.add_to_drive),
+                title: Text(l.syncGdriveTitle),
+                subtitle: Text(
+                  '$account\n'
+                  '${switch (ref.watch(syncGdriveLastPushAtProvider).value) {
+                    final at? => l.syncGdriveLastPush(
+                      formatDateTime(context, at.toLocal(), weekday: false),
+                    ),
+                    null => l.syncGdriveNeverPushed,
+                  }}',
                 ),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                isThreeLine: true,
+                onTap: () => _gdriveOptions(context, ref, l, account),
+              )
+            else
+              ListTile(
+                leading: const Icon(Icons.add_to_drive),
+                title: Text(l.syncGdriveTitle),
+                subtitle: Text(l.syncGdriveSubtitle),
+                onTap: ref.watch(proFeatureProvider(ProFeature.driveSync))
+                    ? () => _connectGdrive(context, ref, l)
+                    : () => showProFeatureDialog(context, ProFeature.driveSync),
               ),
-            ),
+            // Same loud-persistent-warning idiom as the local backup (#22):
+            // non-null means the latest push attempt failed (offline skips
+            // are not recorded), cleared by the next successful push.
+            if (ref.watch(syncGdriveLastErrorAtProvider).value
+                case final syncErrorAt?)
+              ListTile(
+                leading: Icon(
+                  Icons.cloud_off,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                title: Text(
+                  l.syncGdriveLastFailed(
+                    formatDateTime(
+                      context,
+                      syncErrorAt.toLocal(),
+                      weekday: false,
+                    ),
+                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+          ],
           const Divider(),
           _SectionHeader(l.aboutSection),
           ListTile(
@@ -420,17 +434,27 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _backupNow(
     BuildContext context,
-    AppDatabase db,
+    WidgetRef ref,
     AppLocalizations l,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final db = ref.read(dbProvider);
     try {
       await backupNow(db);
       messenger.showSnackBar(SnackBar(content: Text(l.backupDone)));
     } catch (_) {
       // A local write failed — not an export, so don't claim one did (#23).
       messenger.showSnackBar(SnackBar(content: Text(l.backupNowFailed)));
+      return;
     }
+    // A manual backup is the user's explicit "protect this now" — mirror it
+    // to Drive immediately (U24) instead of waiting for the next launch or
+    // resume. The engine's own dirty gate still applies: unchanged data
+    // uploads nothing. Fire-and-forget; failures land in the persistent
+    // `sync_gdrive_last_error_at` row like every other push.
+    unawaited(
+      runGDriveSyncIfDirty(db, store: ref.read(cloudBackupStoreProvider)),
+    );
   }
 
   /// Interactive Drive connect (U24): system account picker + consent sheet,

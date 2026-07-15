@@ -471,7 +471,11 @@ Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 
 **Android-only by decision** (iOS will get a separate proprietary solution;
 the plugin compiles into the iOS app but is never invoked or configured
-there). Backup-**file** sync, not record-level data sync: the engine pushes
+there — the Settings row and the Manage-backups Drive section are hidden
+behind `defaultTargetPlatform == TargetPlatform.android`, the codebase's one
+deliberate platform branch, testable via
+`debugDefaultTargetPlatformOverride`). Backup-**file** sync, not record-level
+data sync: the engine pushes
 the current database state as one more timestamped document
 (`reeftracker-auto-<UTC stamp>.json`, the local rotation's naming) into an
 app-owned **visible "ReefTracker" folder** in the user's My Drive, and prunes

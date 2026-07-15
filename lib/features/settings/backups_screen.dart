@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -50,9 +52,11 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    // Drive section only when connected: without an account there is nothing
-    // to list and the screen keeps its original local-only layout.
+    // Drive section only on Android (the U24 surface is Android-only — same
+    // deliberate platform branch as the Settings row) and only when
+    // connected: otherwise the screen keeps its original local-only layout.
     final driveConnected =
+        defaultTargetPlatform == TargetPlatform.android &&
         ref.watch(syncGdriveAccountProvider).value != null;
     return Scaffold(
       appBar: AppBar(title: Text(l.backupsScreenTitle)),
