@@ -274,6 +274,21 @@
   "sizeKilobytes": "{size} КБ",
   "sizeMegabytes": "{size} МБ",
 
+  "syncGdriveTitle": "Синхронизация с Google Диском",
+  "syncGdriveSubtitle": "Автоматически сохранять резервные копии на ваш Google Диск",
+  "syncGdriveLastPush": "Последняя загрузка: {when}",
+  "syncGdriveNeverPushed": "Пока ничего не загружено",
+  "syncGdriveConnectedSnack": "Резервные копии будут синхронизироваться с Google Диском аккаунта {email}",
+  "syncGdriveConnectFailed": "Не удалось подключиться к Google Диску",
+  "syncGdriveDialogBody": "Резервные копии загружаются в папку «ReefTracker» на Google Диске аккаунта {email}. Их можно просмотреть и скачать на drive.google.com.",
+  "syncGdriveDisconnect": "Отключить",
+  "syncGdriveDisconnectedSnack": "Google Диск отключён. Уже загруженные резервные копии останутся на вашем Диске.",
+  "syncGdriveLastFailed": "Загрузка на Google Диск не удалась {when}",
+  "backupsLocalSection": "На этом устройстве",
+  "backupsDriveSection": "Google Диск",
+  "backupsDriveEmpty": "На Google Диске пока нет резервных копий",
+  "backupsDriveLoadFailed": "Не удалось загрузить список резервных копий с Google Диска",
+
   "aboutAppName": "О приложении ReefTracker",
   "aboutDescription": "Офлайн-трекер параметров морского аквариума с историей, графиками по времени и зонами здоровья зелёная/жёлтая/красная.",
 

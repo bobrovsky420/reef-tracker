@@ -274,6 +274,21 @@
   "sizeKilobytes": "{size} KB",
   "sizeMegabytes": "{size} MB",
 
+  "syncGdriveTitle": "Synchronizacja z Dyskiem Google",
+  "syncGdriveSubtitle": "Automatycznie twórz kopie zapasowe na Twoim Dysku Google",
+  "syncGdriveLastPush": "Ostatnie przesłanie: {when}",
+  "syncGdriveNeverPushed": "Nic jeszcze nie przesłano",
+  "syncGdriveConnectedSnack": "Kopie zapasowe będą synchronizowane z Dyskiem Google konta {email}",
+  "syncGdriveConnectFailed": "Nie udało się połączyć z Dyskiem Google",
+  "syncGdriveDialogBody": "Kopie zapasowe są przesyłane do folderu „ReefTracker” na Dysku Google konta {email}. Możesz je przeglądać i pobierać na drive.google.com.",
+  "syncGdriveDisconnect": "Odłącz",
+  "syncGdriveDisconnectedSnack": "Dysk Google odłączony. Przesłane już kopie zapasowe pozostaną na Twoim Dysku.",
+  "syncGdriveLastFailed": "Przesyłanie na Dysk Google nie powiodło się {when}",
+  "backupsLocalSection": "Na tym urządzeniu",
+  "backupsDriveSection": "Dysk Google",
+  "backupsDriveEmpty": "Na Dysku Google nie ma jeszcze kopii zapasowych",
+  "backupsDriveLoadFailed": "Nie udało się wczytać kopii zapasowych z Dysku Google",
+
   "aboutAppName": "O aplikacji ReefTracker",
   "aboutDescription": "Offline'owy tracker parametrów akwarium morskiego z historią, wykresami czasowymi i strefami zdrowia zielona/pomarańczowa/czerwona.",
 

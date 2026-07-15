@@ -917,6 +917,58 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get syncGdriveTitle => 'Google Drive sync';
+
+  @override
+  String get syncGdriveSubtitle => 'Back up automatically to your Google Drive';
+
+  @override
+  String syncGdriveLastPush(String when) {
+    return 'Last upload: $when';
+  }
+
+  @override
+  String get syncGdriveNeverPushed => 'Nothing uploaded yet';
+
+  @override
+  String syncGdriveConnectedSnack(String email) {
+    return 'Backups will sync to the Google Drive of $email';
+  }
+
+  @override
+  String get syncGdriveConnectFailed => 'Couldn\'t connect to Google Drive';
+
+  @override
+  String syncGdriveDialogBody(String email) {
+    return 'Backups are uploaded to the \"ReefTracker\" folder in the Google Drive of $email. You can browse and download them at drive.google.com.';
+  }
+
+  @override
+  String get syncGdriveDisconnect => 'Disconnect';
+
+  @override
+  String get syncGdriveDisconnectedSnack =>
+      'Google Drive disconnected. Backups already uploaded stay in your Drive.';
+
+  @override
+  String syncGdriveLastFailed(String when) {
+    return 'Google Drive upload failed on $when';
+  }
+
+  @override
+  String get backupsLocalSection => 'On this device';
+
+  @override
+  String get backupsDriveSection => 'Google Drive';
+
+  @override
+  String get backupsDriveEmpty => 'No backups in Google Drive yet';
+
+  @override
+  String get backupsDriveLoadFailed =>
+      'Couldn\'t load backups from Google Drive';
+
+  @override
   String get aboutAppName => 'About ReefTracker';
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
+import '../../data/cloud_sync.dart';
 import '../../data/csv_export.dart';
 import '../../data/database.dart';
 import '../../domain/pro_features.dart';
@@ -13,6 +16,7 @@ import '../../domain/trend.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/pro_feature_dialog.dart';
 
 /// Selectable forecast-horizon values (days), within
 /// [kTrendMinHorizon]..[kTrendMaxHorizon].
@@ -328,6 +332,52 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/settings/backups'),
             ),
           ],
+          // Google Drive sync (U24). Presence of the connected account IS the
+          // "on" state (no separate toggle); Pro-gated on the connect action
+          // only — a connected account keeps working (U19: limits gate
+          // creation, never access).
+          if (ref.watch(syncGdriveAccountProvider).value case final account?)
+            ListTile(
+              leading: const Icon(Icons.add_to_drive),
+              title: Text(l.syncGdriveTitle),
+              subtitle: Text(
+                '$account\n'
+                '${switch (ref.watch(syncGdriveLastPushAtProvider).value) {
+                  final at? => l.syncGdriveLastPush(
+                    formatDateTime(context, at.toLocal(), weekday: false),
+                  ),
+                  null => l.syncGdriveNeverPushed,
+                }}',
+              ),
+              isThreeLine: true,
+              onTap: () => _gdriveOptions(context, ref, l, account),
+            )
+          else
+            ListTile(
+              leading: const Icon(Icons.add_to_drive),
+              title: Text(l.syncGdriveTitle),
+              subtitle: Text(l.syncGdriveSubtitle),
+              onTap: ref.watch(proFeatureProvider(ProFeature.driveSync))
+                  ? () => _connectGdrive(context, ref, l)
+                  : () => showProFeatureDialog(context, ProFeature.driveSync),
+            ),
+          // Same loud-persistent-warning idiom as the local backup (#22):
+          // non-null means the latest push attempt failed (offline skips are
+          // not recorded), cleared by the next successful push.
+          if (ref.watch(syncGdriveLastErrorAtProvider).value
+              case final syncErrorAt?)
+            ListTile(
+              leading: Icon(
+                Icons.cloud_off,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                l.syncGdriveLastFailed(
+                  formatDateTime(context, syncErrorAt.toLocal(), weekday: false),
+                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           const Divider(),
           _SectionHeader(l.aboutSection),
           ListTile(
@@ -381,6 +431,65 @@ class SettingsScreen extends ConsumerWidget {
       // A local write failed — not an export, so don't claim one did (#23).
       messenger.showSnackBar(SnackBar(content: Text(l.backupNowFailed)));
     }
+  }
+
+  /// Interactive Drive connect (U24): system account picker + consent sheet,
+  /// then an immediate first push — the user just asked for cloud backups,
+  /// so don't make them wait for the next launch.
+  Future<void> _connectGdrive(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final db = ref.read(dbProvider);
+    try {
+      final account = await connectGDrive(db, ref.read(cloudAuthProvider));
+      if (account == null) return; // Cancelled the picker/consent — no noise.
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.syncGdriveConnectedSnack(account.email))),
+      );
+      unawaited(
+        runGDriveSyncIfDirty(db, store: ref.read(cloudBackupStoreProvider)),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.syncGdriveConnectFailed)),
+      );
+    }
+  }
+
+  Future<void> _gdriveOptions(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+    String account,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final db = ref.read(dbProvider);
+    final disconnect = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.add_to_drive),
+        title: Text(l.syncGdriveTitle),
+        content: Text(l.syncGdriveDialogBody(account)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.syncGdriveDisconnect),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(MaterialLocalizations.of(ctx).okButtonLabel),
+          ),
+        ],
+      ),
+    );
+    if (disconnect != true) return;
+    await disconnectGDrive(db, ref.read(cloudAuthProvider));
+    messenger.showSnackBar(
+      SnackBar(content: Text(l.syncGdriveDisconnectedSnack)),
+    );
   }
 
   Future<void> _export(

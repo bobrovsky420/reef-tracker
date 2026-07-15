@@ -117,6 +117,7 @@ extension L10nDomain on AppLocalizations {
     ProFeature.doseCalculator => doseCalcTitle,
     ProFeature.unlimitedTanks => unlimitedTanksTitle,
     ProFeature.stabilityScore => stabilityScoreProName,
+    ProFeature.driveSync => syncGdriveTitle,
   };
 
   String paramName(String key) {

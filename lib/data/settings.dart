@@ -150,7 +150,17 @@ enum SettingKey {
   // once the seeding stops shipping, nothing could ever re-seed a wiped
   // marker. Seeded by every pre-Pro version on launch (`seedLegacyFreeSince`);
   // the Pro build must delete the seeder and only read the key.
-  legacyFreeSince(kLegacyFreeSinceKey, deviceLocal: false);
+  legacyFreeSince(kLegacyFreeSinceKey, deviceLocal: false),
+  // Google Drive sync state (U24) — all device-local: sync identity is
+  // per-device by nature (restoring another device's backup must not
+  // silently start pushing to, or claim the push history of, that device's
+  // account), and the pushed-hash/echo-suppression bookkeeping describes
+  // *this* device's relationship to the cloud folder.
+  syncGdriveAccount(kSyncGdriveAccountKey, deviceLocal: true),
+  syncGdriveFolderId(kSyncGdriveFolderIdKey, deviceLocal: true),
+  syncGdriveLastPushedHash(kSyncGdriveLastPushedHashKey, deviceLocal: true),
+  syncGdriveLastPushAt(kSyncGdriveLastPushAtKey, deviceLocal: true),
+  syncGdriveLastErrorAt(kSyncGdriveLastErrorAtKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -411,6 +421,57 @@ class AppSettings {
       _watch(SettingKey.lastBackupErrorAt).map(decodeLastBackupErrorAt);
   Future<void> setLastBackupErrorAt(DateTime? when) => _write(
     SettingKey.lastBackupErrorAt,
+    when?.millisecondsSinceEpoch.toString(),
+  );
+
+  // --- Google Drive sync (U24) -------------------------------------------------
+
+  /// The Google account email backups are pushed to, or null when Drive sync
+  /// is not connected. Presence of the account IS the "sync enabled" state —
+  /// there is no separate toggle.
+  static String? decodeSyncGdriveAccount(String? raw) =>
+      (raw == null || raw.isEmpty) ? null : raw;
+  Stream<String?> watchSyncGdriveAccount() =>
+      _watch(SettingKey.syncGdriveAccount).map(decodeSyncGdriveAccount);
+  Future<String?> readSyncGdriveAccount() async =>
+      decodeSyncGdriveAccount(await _read(SettingKey.syncGdriveAccount));
+  Future<void> setSyncGdriveAccount(String? email) =>
+      _write(SettingKey.syncGdriveAccount, email);
+
+  /// Cached Drive id of the app's backup folder; re-resolved (and re-created
+  /// if the user deleted it) by the sync engine when stale.
+  Future<String?> readSyncGdriveFolderId() =>
+      _read(SettingKey.syncGdriveFolderId);
+  Future<void> setSyncGdriveFolderId(String? id) =>
+      _write(SettingKey.syncGdriveFolderId, id);
+
+  /// Content hash (see `backupContentHash`) of the last document pushed to —
+  /// or restored from — Drive: the dirty gate that keeps an unchanged device
+  /// from re-uploading, and the echo-suppression marker after a restore.
+  Future<String?> readSyncGdriveLastPushedHash() =>
+      _read(SettingKey.syncGdriveLastPushedHash);
+  Future<void> setSyncGdriveLastPushedHash(String? hash) =>
+      _write(SettingKey.syncGdriveLastPushedHash, hash);
+
+  static DateTime? decodeSyncGdriveLastPushAt(String? raw) =>
+      _parseEpochMillis(raw);
+  Stream<DateTime?> watchSyncGdriveLastPushAt() =>
+      _watch(SettingKey.syncGdriveLastPushAt).map(decodeSyncGdriveLastPushAt);
+  Future<void> setSyncGdriveLastPushAt(DateTime? when) => _write(
+    SettingKey.syncGdriveLastPushAt,
+    when?.millisecondsSinceEpoch.toString(),
+  );
+
+  /// When the most recent push attempt failed (provider rejection or dead
+  /// grant — being offline is not recorded), or null if the latest attempt
+  /// succeeded. Same contract as [decodeLastBackupErrorAt]: cleared by every
+  /// successful push.
+  static DateTime? decodeSyncGdriveLastErrorAt(String? raw) =>
+      _parseEpochMillis(raw);
+  Stream<DateTime?> watchSyncGdriveLastErrorAt() =>
+      _watch(SettingKey.syncGdriveLastErrorAt).map(decodeSyncGdriveLastErrorAt);
+  Future<void> setSyncGdriveLastErrorAt(DateTime? when) => _write(
+    SettingKey.syncGdriveLastErrorAt,
     when?.millisecondsSinceEpoch.toString(),
   );
 

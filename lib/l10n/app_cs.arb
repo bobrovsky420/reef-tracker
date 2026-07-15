@@ -274,6 +274,21 @@
   "sizeKilobytes": "{size} kB",
   "sizeMegabytes": "{size} MB",
 
+  "syncGdriveTitle": "Synchronizace s Google Diskem",
+  "syncGdriveSubtitle": "Automaticky zálohovat na váš Google Disk",
+  "syncGdriveLastPush": "Poslední nahrání: {when}",
+  "syncGdriveNeverPushed": "Zatím nic nenahráno",
+  "syncGdriveConnectedSnack": "Zálohy se budou synchronizovat na Google Disk účtu {email}",
+  "syncGdriveConnectFailed": "Připojení ke Google Disku se nezdařilo",
+  "syncGdriveDialogBody": "Zálohy se nahrávají do složky „ReefTracker“ na Google Disku účtu {email}. Můžete si je prohlédnout a stáhnout na drive.google.com.",
+  "syncGdriveDisconnect": "Odpojit",
+  "syncGdriveDisconnectedSnack": "Google Disk odpojen. Již nahrané zálohy zůstávají na vašem Disku.",
+  "syncGdriveLastFailed": "Nahrání na Google Disk selhalo {when}",
+  "backupsLocalSection": "V tomto zařízení",
+  "backupsDriveSection": "Google Disk",
+  "backupsDriveEmpty": "Na Google Disku zatím nejsou žádné zálohy",
+  "backupsDriveLoadFailed": "Zálohy z Google Disku se nepodařilo načíst",
+
   "aboutAppName": "O aplikaci ReefTracker",
   "aboutDescription": "Offline sledování parametrů mořského akvária s historií, časovými grafy a zónami zdraví zelená/oranžová/červená.",
 

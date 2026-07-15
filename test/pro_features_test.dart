@@ -43,6 +43,7 @@ void main() {
         ProFeature.doseCalculator,
         ProFeature.unlimitedTanks,
         ProFeature.stabilityScore,
+        ProFeature.driveSync,
       });
     });
   });

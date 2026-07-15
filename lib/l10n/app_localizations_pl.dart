@@ -928,6 +928,61 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get syncGdriveTitle => 'Synchronizacja z Dyskiem Google';
+
+  @override
+  String get syncGdriveSubtitle =>
+      'Automatycznie twórz kopie zapasowe na Twoim Dysku Google';
+
+  @override
+  String syncGdriveLastPush(String when) {
+    return 'Ostatnie przesłanie: $when';
+  }
+
+  @override
+  String get syncGdriveNeverPushed => 'Nic jeszcze nie przesłano';
+
+  @override
+  String syncGdriveConnectedSnack(String email) {
+    return 'Kopie zapasowe będą synchronizowane z Dyskiem Google konta $email';
+  }
+
+  @override
+  String get syncGdriveConnectFailed =>
+      'Nie udało się połączyć z Dyskiem Google';
+
+  @override
+  String syncGdriveDialogBody(String email) {
+    return 'Kopie zapasowe są przesyłane do folderu „ReefTracker” na Dysku Google konta $email. Możesz je przeglądać i pobierać na drive.google.com.';
+  }
+
+  @override
+  String get syncGdriveDisconnect => 'Odłącz';
+
+  @override
+  String get syncGdriveDisconnectedSnack =>
+      'Dysk Google odłączony. Przesłane już kopie zapasowe pozostaną na Twoim Dysku.';
+
+  @override
+  String syncGdriveLastFailed(String when) {
+    return 'Przesyłanie na Dysk Google nie powiodło się $when';
+  }
+
+  @override
+  String get backupsLocalSection => 'Na tym urządzeniu';
+
+  @override
+  String get backupsDriveSection => 'Dysk Google';
+
+  @override
+  String get backupsDriveEmpty =>
+      'Na Dysku Google nie ma jeszcze kopii zapasowych';
+
+  @override
+  String get backupsDriveLoadFailed =>
+      'Nie udało się wczytać kopii zapasowych z Dysku Google';
+
+  @override
   String get aboutAppName => 'O aplikacji ReefTracker';
 
   @override

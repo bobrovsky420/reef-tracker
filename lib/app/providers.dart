@@ -3,6 +3,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../data/cloud_auth.dart';
+import '../data/cloud_auth_google.dart';
+import '../data/cloud_backup_store.dart';
 import '../data/database.dart';
 import '../data/notifications.dart';
 import '../data/reminder_scheduler.dart';
@@ -612,6 +615,39 @@ final lastBackupAtProvider = _setting(
 final lastBackupErrorAtProvider = _setting(
   SettingKey.lastBackupErrorAt,
   AppSettings.decodeLastBackupErrorAt,
+);
+
+/// Google auth for Drive sync (U24). A provider so tests (and any future
+/// platform without the Google path) can override it with a fake — nothing
+/// else in the app touches the `google_sign_in` plugin.
+final cloudAuthProvider = Provider<CloudAuth>((ref) => GoogleDriveAuth());
+
+/// The Drive-backed [CloudBackupStore] the sync engine and the Manage-backups
+/// Drive section talk to. Same override story as [cloudAuthProvider].
+final cloudBackupStoreProvider = Provider<CloudBackupStore>(
+  (ref) => DriveBackupStore(ref.watch(cloudAuthProvider).accessToken),
+);
+
+/// The Google account Drive sync pushes to, or null when not connected
+/// (U24) — presence is the "sync on" state. Drives the Settings row and the
+/// Drive section in Manage backups.
+final syncGdriveAccountProvider = _setting(
+  SettingKey.syncGdriveAccount,
+  AppSettings.decodeSyncGdriveAccount,
+);
+
+/// When the most recent Drive push completed, or null before the first one.
+final syncGdriveLastPushAtProvider = _setting(
+  SettingKey.syncGdriveLastPushAt,
+  AppSettings.decodeSyncGdriveLastPushAt,
+);
+
+/// When the most recent Drive push attempt failed (offline doesn't count),
+/// or null if the latest attempt succeeded. Non-null drives the warning row
+/// in Settings → Backup, same idiom as [lastBackupErrorAtProvider].
+final syncGdriveLastErrorAtProvider = _setting(
+  SettingKey.syncGdriveLastErrorAt,
+  AppSettings.decodeSyncGdriveLastErrorAt,
 );
 
 /// Last-used test set per tank id (device-local UI state, U9). A missing or

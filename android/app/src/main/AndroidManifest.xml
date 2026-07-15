@@ -3,6 +3,11 @@
          flutter_local_notifications itself; RECEIVE_BOOT_COMPLETED lets the
          plugin's boot receiver re-schedule pending reminders after a reboot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Drive backup sync (U24): the app's only network use. Debug/profile
+         manifests carry INTERNET for hot reload; release needs it declared
+         explicitly or every Drive call fails with SocketException. Not a
+         runtime (user-facing) permission. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="ReefTracker"
         android:name="${applicationName}"

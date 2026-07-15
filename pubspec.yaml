@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 # NOTE: build 55 (0.25.0) is deployed on Play — versionCode 55 is burned and
 # the next upload must be 56+; the 0.25.0 version name is also taken.
-version: 0.27.0+60
+version: 0.28.0+61
 
 environment:
   sdk: ^3.12.2
@@ -69,6 +69,13 @@ dependencies:
   # instants, so no timezone-lookup plugin is needed.
   flutter_local_notifications: ^22.0.1
   timezone: ^0.11.1
+  # Drive backup sync (U24, Android-only surface): Google account SSO +
+  # short-lived scoped OAuth tokens for the Drive REST calls (plain
+  # dart:io HttpClient — deliberately no googleapis package). Native plugin
+  # (#50 pin-risk class) — passed the scripts/build-release.ps1 gate before
+  # any feature code was committed. Not configured on iOS (feature is
+  # Android-only by decision; iOS gets a separate solution later).
+  google_sign_in: ^7.1.0
 
 dev_dependencies:
   flutter_test:

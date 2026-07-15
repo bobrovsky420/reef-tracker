@@ -9,6 +9,7 @@ import 'app/provider_errors.dart';
 import 'app/providers.dart';
 import 'app/router.dart';
 import 'data/auto_backup.dart';
+import 'data/cloud_sync.dart';
 import 'data/reminder_scheduler.dart';
 import 'l10n/app_localizations.dart';
 
@@ -199,21 +200,48 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   /// Fire-and-forget automatic backup; failures must never disrupt the app.
   /// The backup layer persists a failure as `last_backup_error_at` (surfaced
   /// in Settings), so here it only needs to be logged, not swallowed silently.
+  /// The Drive push (U24) runs strictly *after* the local backup settles —
+  /// its own single-flight slot plus this ordering keep encode/write work
+  /// serialized — and its failures are likewise persisted by the engine
+  /// (`sync_gdrive_last_error_at`), so they too are only logged here.
   void _maybeBackUp() {
+    final db = ref.read(dbProvider);
     unawaited(
-      runAutoBackupIfDue(ref.read(dbProvider)).catchError((
-        Object e,
-        StackTrace s,
-      ) {
-        FlutterError.reportError(
-          FlutterErrorDetails(
-            exception: e,
-            stack: s,
-            library: 'auto_backup',
-            context: ErrorSummary('running the automatic backup'),
-          ),
-        );
-      }),
+      runAutoBackupIfDue(db)
+          .then(
+            (_) async {
+              await runGDriveSyncIfDirty(
+                db,
+                store: ref.read(cloudBackupStoreProvider),
+              );
+            },
+            // A failed local backup must not suppress the cloud push — the
+            // Drive copy matters most exactly when local storage misbehaves.
+            onError: (Object e, StackTrace s) async {
+              FlutterError.reportError(
+                FlutterErrorDetails(
+                  exception: e,
+                  stack: s,
+                  library: 'auto_backup',
+                  context: ErrorSummary('running the automatic backup'),
+                ),
+              );
+              await runGDriveSyncIfDirty(
+                db,
+                store: ref.read(cloudBackupStoreProvider),
+              );
+            },
+          )
+          .catchError((Object e, StackTrace s) {
+            FlutterError.reportError(
+              FlutterErrorDetails(
+                exception: e,
+                stack: s,
+                library: 'cloud_sync',
+                context: ErrorSummary('running the Drive backup sync'),
+              ),
+            );
+          }),
     );
   }
 

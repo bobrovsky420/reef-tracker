@@ -921,6 +921,59 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get syncGdriveTitle => 'Synchronizace s Google Diskem';
+
+  @override
+  String get syncGdriveSubtitle => 'Automaticky zálohovat na váš Google Disk';
+
+  @override
+  String syncGdriveLastPush(String when) {
+    return 'Poslední nahrání: $when';
+  }
+
+  @override
+  String get syncGdriveNeverPushed => 'Zatím nic nenahráno';
+
+  @override
+  String syncGdriveConnectedSnack(String email) {
+    return 'Zálohy se budou synchronizovat na Google Disk účtu $email';
+  }
+
+  @override
+  String get syncGdriveConnectFailed =>
+      'Připojení ke Google Disku se nezdařilo';
+
+  @override
+  String syncGdriveDialogBody(String email) {
+    return 'Zálohy se nahrávají do složky „ReefTracker“ na Google Disku účtu $email. Můžete si je prohlédnout a stáhnout na drive.google.com.';
+  }
+
+  @override
+  String get syncGdriveDisconnect => 'Odpojit';
+
+  @override
+  String get syncGdriveDisconnectedSnack =>
+      'Google Disk odpojen. Již nahrané zálohy zůstávají na vašem Disku.';
+
+  @override
+  String syncGdriveLastFailed(String when) {
+    return 'Nahrání na Google Disk selhalo $when';
+  }
+
+  @override
+  String get backupsLocalSection => 'V tomto zařízení';
+
+  @override
+  String get backupsDriveSection => 'Google Disk';
+
+  @override
+  String get backupsDriveEmpty => 'Na Google Disku zatím nejsou žádné zálohy';
+
+  @override
+  String get backupsDriveLoadFailed =>
+      'Zálohy z Google Disku se nepodařilo načíst';
+
+  @override
   String get aboutAppName => 'O aplikaci ReefTracker';
 
   @override

@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.0] - 2026-07-15
+
+### Added
+- Android: Google Drive backup sync. Connect a Google account in Settings →
+  Backup (system account picker — no password ever enters the app) and every
+  backup is uploaded automatically to a visible "ReefTracker" folder in your
+  Drive, where you can browse and download the files even without the app.
+  Uploads happen opportunistically (app launch/resume and "Back up now"),
+  skip untouched data, keep the newest few files, and never merge or
+  overwrite newer backups from another device. The Manage backups screen
+  lists the Drive copies alongside the on-device ones for restore or delete;
+  restoring from Drive won't immediately re-upload what was just downloaded.
+  A failed upload shows a persistent warning in Settings until the next one
+  succeeds; being offline just waits for the next opportunity. Part of
+  ReefTracker Pro and covered by the Founder's Edition promise: free forever
+  for Founder installs — which, today, is every install. Requires the Google
+  sign-in configuration to be registered before release; iOS will get its own
+  cloud-backup solution separately.
+
 ## [0.27.0] - 2026-07-14
 
 ### Added

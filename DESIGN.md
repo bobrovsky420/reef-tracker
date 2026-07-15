@@ -45,6 +45,7 @@ and no account.
 | App metadata       | `package_info_plus` (real version/build for the About box) |
 | Feature tour       | `showcaseview` (first-run spotlight tour of the top bar) |
 | Reminders          | `flutter_local_notifications` (scheduled local notifications; requires core-library desugaring in `android/app/build.gradle.kts` and the two receivers declared in the app manifest) + `timezone` (pure Dart; instants are scheduled as absolute UTC — no timezone-lookup plugin) |
+| Cloud backup sync  | `google_sign_in` v7 (Google SSO + short-lived `drive.file` tokens, U24; **Android-only surface** — iOS gets its own solution later) + plain `dart:io` REST for the Drive calls (deliberately no `googleapis` package) |
 
 > ⚠️ **Pinned plugins.** `share_plus` (10.1.4) and `file_picker` (11.0.0) are
 > pinned to exact known-good versions, and `package_info_plus` is held below 10:
@@ -325,6 +326,13 @@ mismatch (in-field corruption that keeps the JSON parseable) rejects as
 unverified, and `kBackupVersion` stays 1 so older apps can import new files
 (they ignore the extra key).
 
+Distinct from the checksum, `backupContentHash` (U24) is the cloud-sync
+**dirty gate**: sha256 of the document with `exportedAt`, `checksum`, and the
+**entire `settings` section** stripped (decode–strip–re-encode), so two
+backups of the same aquarium data hash identically even though every encode
+stamps a fresh `exportedAt` and settings carry per-device stamps. Equal hash ⇒
+nothing to upload (see Google Drive sync below).
+
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet via the shared `shareExportFile` helper (`export_share.dart`),
 which cleans up the plaintext copies: the staging file as soon as the sheet
@@ -458,6 +466,84 @@ Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 `last_backup_error_at`. Providers: `autoBackupEnabledProvider`,
 `autoBackupIntervalProvider`, `lastBackupAtProvider`,
 `lastBackupErrorAtProvider`.
+
+### Google Drive backup sync (U24) — `cloud_sync.dart`, `cloud_backup_store.dart`, `cloud_auth.dart`/`cloud_auth_google.dart`
+
+**Android-only by decision** (iOS will get a separate proprietary solution;
+the plugin compiles into the iOS app but is never invoked or configured
+there). Backup-**file** sync, not record-level data sync: the engine pushes
+the current database state as one more timestamped document
+(`reeftracker-auto-<UTC stamp>.json`, the local rotation's naming) into an
+app-owned **visible "ReefTracker" folder** in the user's My Drive, and prunes
+the folder to `auto_backup_keep` newest. No folder picker anywhere — the U20
+lesson — because the `drive.file` scope (non-sensitive, no OAuth verification
+review) sees exactly the files the app created.
+
+Layers, all injected and plugin-free below the adapter:
+
+- **`CloudBackupStore`** (seam): `ensureFolder`/`list`/`read`/`write`/`delete`
+  over opaque provider ids, provider-neutral so OneDrive can slot in later;
+  in-memory `FakeCloudBackupStore` in `test/fakes/`. Errors are typed:
+  `CloudApiException` (HTTP 4xx/5xx, `isAuthError` for 401/403) vs.
+  `dart:io` `IOException` = offline.
+- **`DriveBackupStore`**: plain REST over `dart:io` `HttpClient` — four
+  endpoints (`files.list` with a `q` filter, multipart `files.create`,
+  `files.get?alt=media`, `files.delete`); no `googleapis` package. Takes a
+  token-provider function; throws `CloudAuthRequiredException` when it
+  returns null.
+- **`CloudAuth`** (seam) + **`GoogleDriveAuth`** (`google_sign_in` v7,
+  Credential Manager): interactive `connect()` = system account picker +
+  consent (cancel ⇒ null, never an error); silent `accessToken()` =
+  lightweight re-auth + `authorizationForScopes` (null ⇒ reconnect needed);
+  `disconnect()` revokes the grant. The engine and all tests never touch the
+  plugin (plugin calls throw under `flutter test` — the notifications
+  lesson). Providers: `cloudAuthProvider`, `cloudBackupStoreProvider`
+  (overridable in tests).
+- **Engine** (`runGDriveSyncIfDirty`, own single-flight slot): opportunistic,
+  launch/resume after `runAutoBackupIfDue` settles (`main.dart`) and after
+  connect / Back-up-now (Settings). Flow: connected account? tanks exist? →
+  `encodeBackupFromDb` → `backupContentHash` in `Isolate.run` → **equal to
+  `sync_gdrive_last_pushed_hash` ⇒ skip** (the dirty gate: an unchanged
+  read-mostly device never re-uploads, so it can't bury the writer device's
+  newer file) → upload (stale cached folder id 404s once → folder recreated,
+  retried) → prune → stamp hash/time, clear error. **Offline is silent**
+  (retry next launch, no nagging); real failures stamp
+  `sync_gdrive_last_error_at` (cleared by the next success — the #22 idiom,
+  surfaced as a persistent error row in Settings). Outcomes are reported as
+  `CloudSyncOutcome` for tests/UI.
+- **Echo suppression**: restoring *from* Drive records the downloaded
+  document's content hash as already-pushed (`recordRestoredCloudBackup`), so
+  the next launch doesn't re-upload what was just downloaded.
+
+Settings keys — **fresh names, deliberately not U20's orphaned
+`cloud_sync_*`** — all device-local (sync identity must not ride backups):
+`sync_gdrive_account` (presence = enabled; there is no separate toggle),
+`sync_gdrive_folder_id`, `sync_gdrive_last_pushed_hash`,
+`sync_gdrive_last_push_at`, `sync_gdrive_last_error_at`. Providers:
+`syncGdriveAccountProvider`, `syncGdriveLastPushAtProvider`,
+`syncGdriveLastErrorAtProvider`.
+
+UI: a Settings → Backup row (connect when absent — **Pro-gated**,
+`ProFeature.driveSync`, **`grandfathered: true`** (explicit 2026-07-15
+decision, like the stability score): Founder installs — today, every install —
+use it free forever, Standard installs get the Pro dialog; gate on the connect
+action only per U19's "limits gate creation, never access"; when connected:
+account + last-upload status, tap → dialog with Disconnect, which keeps the
+cloud files)
+plus the persistent upload-error row; the **Manage backups** screen gains an
+"On this device" / "Google Drive" split when connected — Drive tiles offer
+restore (download → the same 3-stage `importBackup` pipeline → echo
+suppression) and delete, and a section-level unavailable row when listing
+fails (local backups stay usable).
+
+Platform config: `INTERNET` permission in the main Android manifest (the
+app's only network use; debug/profile carry it implicitly for hot reload).
+The Google Cloud console side (project "ReefTracker", set up 2026-07-15):
+OAuth consent screen published to production + Android client ids registered
+for the debug, upload, **and Play App Signing** SHA-1s, plus a **Web
+application client whose id is embedded as `serverClientId`** in
+`cloud_auth_google.dart` (Credential Manager requires it on Android; it is a
+public identifier, not a secret). No schema change; no new backup sections.
 
 ### Reminders & notification scheduling (`notifications.dart`, `reminder_scheduler.dart`)
 
@@ -1505,8 +1591,10 @@ Actions-tab row and silences RO reminders), the **Microelements** feature
 switch (U17 — hides the dashboard tile and silences micro test reminders;
 measurements are kept),
 and **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
-**Automatic backup** toggle + frequency and a link to the **Manage backups**
-screen (see Data → Automatic backup). Link to the salinity calculator. An
+**Automatic backup** toggle + frequency, a link to the **Manage backups**
+screen (see Data → Automatic backup), and the **Google Drive sync** row +
+persistent upload-error row (U24 — see Data → Google Drive backup sync;
+connect is Pro-gated via `ProFeature.driveSync`). Link to the salinity calculator. An
 **Edition** row (see Editions above) sits in the About section. The About box shows the live app version via
 `appVersionProvider` (`package_info_plus`), never a hardcoded string.
 

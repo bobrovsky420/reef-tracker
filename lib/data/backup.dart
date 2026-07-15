@@ -176,6 +176,47 @@ String encodeBackup({
       '"checksum":"$checksum"}';
 }
 
+/// Content hash for the cloud-sync dirty gate (U24): sha256 hex of the backup
+/// document with `exportedAt`, `checksum`, and the **entire `settings`
+/// section** removed.
+///
+/// Two backups of the same aquarium data must hash identically even though
+/// every encode stamps a fresh `exportedAt` and settings carry per-device
+/// stamps (`last_auto_backup_at`, `sync_gdrive_last_push_at`, …) that differ
+/// between devices and between encodes — without stripping these, every
+/// encode would look "dirty", so a read-only device would re-upload on every
+/// launch and bury the writer device's newer file. Decode–strip–re-encode
+/// (rather than assuming key positions) keeps the function total over any
+/// well-formed backup document, including files downloaded from the cloud
+/// (echo-push suppression after a restore hashes the downloaded document with
+/// this same function). jsonDecode preserves key order and Dart's number
+/// encoding round-trips, so equal documents re-encode to equal bytes.
+///
+/// Throws [InvalidBackupException] ([BackupRejection.notBackupFile]) when
+/// [jsonString] is not a JSON object at all.
+String backupContentHash(String jsonString) {
+  late final dynamic decoded;
+  try {
+    decoded = jsonDecode(jsonString);
+  } on FormatException {
+    throw const InvalidBackupException(
+      BackupRejection.notBackupFile,
+      'not valid JSON',
+    );
+  }
+  if (decoded is! Map<String, dynamic>) {
+    throw const InvalidBackupException(
+      BackupRejection.notBackupFile,
+      'top level is not an object',
+    );
+  }
+  decoded
+    ..remove('exportedAt')
+    ..remove('checksum')
+    ..remove('settings');
+  return sha256.convert(utf8.encode(jsonEncode(decoded))).toString();
+}
+
 /// Parses a backup JSON string into companion rows. Throws
 /// [InvalidBackupException] if the document is not a ReefTracker backup or is
 /// structurally broken.

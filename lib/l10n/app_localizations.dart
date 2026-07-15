@@ -1645,6 +1645,90 @@ abstract class AppLocalizations {
   /// **'{size} MB'**
   String sizeMegabytes(Object size);
 
+  /// Settings row + dialog title for the Google Drive backup sync (U24); also the feature's name in the Pro dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive sync'**
+  String get syncGdriveTitle;
+
+  /// Settings row subtitle while not connected — tapping starts the Google connect flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up automatically to your Google Drive'**
+  String get syncGdriveSubtitle;
+
+  /// Status line under the connected account in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Last upload: {when}'**
+  String syncGdriveLastPush(String when);
+
+  /// Status line under the connected account before the first upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing uploaded yet'**
+  String get syncGdriveNeverPushed;
+
+  /// Snackbar after the Google connect flow succeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups will sync to the Google Drive of {email}'**
+  String syncGdriveConnectedSnack(String email);
+
+  /// Snackbar when the Google connect flow fails (not when the user cancels it).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t connect to Google Drive'**
+  String get syncGdriveConnectFailed;
+
+  /// Body of the dialog shown when tapping the connected Google Drive sync row.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups are uploaded to the \"ReefTracker\" folder in the Google Drive of {email}. You can browse and download them at drive.google.com.'**
+  String syncGdriveDialogBody(String email);
+
+  /// Dialog action that disconnects the Google account from backup sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get syncGdriveDisconnect;
+
+  /// Snackbar after disconnecting; reassures that no cloud files were deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive disconnected. Backups already uploaded stay in your Drive.'**
+  String get syncGdriveDisconnectedSnack;
+
+  /// Warning row in Settings while the most recent Drive upload attempt failed (being offline doesn't count); cleared by the next successful upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive upload failed on {when}'**
+  String syncGdriveLastFailed(String when);
+
+  /// Section header for the local backups list in Manage backups; only shown when the Google Drive section is present too.
+  ///
+  /// In en, this message translates to:
+  /// **'On this device'**
+  String get backupsLocalSection;
+
+  /// Section header for the Google Drive backups list in Manage backups.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive'**
+  String get backupsDriveSection;
+
+  /// Shown in the Google Drive section while the app's Drive folder holds no backups.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups in Google Drive yet'**
+  String get backupsDriveEmpty;
+
+  /// Shown in the Google Drive section when listing the Drive folder fails (offline, revoked access).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load backups from Google Drive'**
+  String get backupsDriveLoadFailed;
+
   /// No description provided for @aboutAppName.
   ///
   /// In en, this message translates to:

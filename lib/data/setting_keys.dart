@@ -37,3 +37,12 @@ const kMicroViewKey = 'micro_view';
 const kMicroHideUndetectableKey = 'micro_hide_undetectable';
 const kMicroAttentionOnlyKey = 'micro_attention_only';
 const kLegacyFreeSinceKey = 'legacy_free_since';
+// Google Drive sync (U24). Deliberately NOT the removed U20 feature's
+// `cloud_sync_*` names: 0.25.0 devices in the wild carry inert orphan rows
+// under those keys, and reusing them could resurrect stale values. The
+// `sync_<provider>_` shape leaves room for `sync_onedrive_*` etc. later.
+const kSyncGdriveAccountKey = 'sync_gdrive_account';
+const kSyncGdriveFolderIdKey = 'sync_gdrive_folder_id';
+const kSyncGdriveLastPushedHashKey = 'sync_gdrive_last_pushed_hash';
+const kSyncGdriveLastPushAtKey = 'sync_gdrive_last_push_at';
+const kSyncGdriveLastErrorAtKey = 'sync_gdrive_last_error_at';

@@ -355,6 +355,47 @@
   "sizeMegabytes": "{size} MB",
   "@sizeMegabytes": { "description": "File size in megabytes; size is already locale-formatted.", "placeholders": { "size": {} } },
 
+  "syncGdriveTitle": "Google Drive sync",
+  "@syncGdriveTitle": { "description": "Settings row + dialog title for the Google Drive backup sync (U24); also the feature's name in the Pro dialog." },
+  "syncGdriveSubtitle": "Back up automatically to your Google Drive",
+  "@syncGdriveSubtitle": { "description": "Settings row subtitle while not connected — tapping starts the Google connect flow." },
+  "syncGdriveLastPush": "Last upload: {when}",
+  "@syncGdriveLastPush": {
+    "description": "Status line under the connected account in Settings.",
+    "placeholders": { "when": { "type": "String", "example": "Jul 15, 2026, 8:30 AM" } }
+  },
+  "syncGdriveNeverPushed": "Nothing uploaded yet",
+  "@syncGdriveNeverPushed": { "description": "Status line under the connected account before the first upload." },
+  "syncGdriveConnectedSnack": "Backups will sync to the Google Drive of {email}",
+  "@syncGdriveConnectedSnack": {
+    "description": "Snackbar after the Google connect flow succeeds.",
+    "placeholders": { "email": { "type": "String", "example": "reefer@gmail.com" } }
+  },
+  "syncGdriveConnectFailed": "Couldn't connect to Google Drive",
+  "@syncGdriveConnectFailed": { "description": "Snackbar when the Google connect flow fails (not when the user cancels it)." },
+  "syncGdriveDialogBody": "Backups are uploaded to the \"ReefTracker\" folder in the Google Drive of {email}. You can browse and download them at drive.google.com.",
+  "@syncGdriveDialogBody": {
+    "description": "Body of the dialog shown when tapping the connected Google Drive sync row.",
+    "placeholders": { "email": { "type": "String", "example": "reefer@gmail.com" } }
+  },
+  "syncGdriveDisconnect": "Disconnect",
+  "@syncGdriveDisconnect": { "description": "Dialog action that disconnects the Google account from backup sync." },
+  "syncGdriveDisconnectedSnack": "Google Drive disconnected. Backups already uploaded stay in your Drive.",
+  "@syncGdriveDisconnectedSnack": { "description": "Snackbar after disconnecting; reassures that no cloud files were deleted." },
+  "syncGdriveLastFailed": "Google Drive upload failed on {when}",
+  "@syncGdriveLastFailed": {
+    "description": "Warning row in Settings while the most recent Drive upload attempt failed (being offline doesn't count); cleared by the next successful upload.",
+    "placeholders": { "when": { "type": "String", "example": "Jul 15, 2026, 8:30 AM" } }
+  },
+  "backupsLocalSection": "On this device",
+  "@backupsLocalSection": { "description": "Section header for the local backups list in Manage backups; only shown when the Google Drive section is present too." },
+  "backupsDriveSection": "Google Drive",
+  "@backupsDriveSection": { "description": "Section header for the Google Drive backups list in Manage backups." },
+  "backupsDriveEmpty": "No backups in Google Drive yet",
+  "@backupsDriveEmpty": { "description": "Shown in the Google Drive section while the app's Drive folder holds no backups." },
+  "backupsDriveLoadFailed": "Couldn't load backups from Google Drive",
+  "@backupsDriveLoadFailed": { "description": "Shown in the Google Drive section when listing the Drive folder fails (offline, revoked access)." },
+
   "aboutAppName": "About ReefTracker",
   "aboutDescription": "Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.",
 

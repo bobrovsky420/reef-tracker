@@ -48,7 +48,18 @@ try {
     $symbolsDir = Join-Path $script:RepoRoot 'symbols'
     New-Item -ItemType Directory -Force $symbolsDir | Out-Null
     $symbolsZip = Join-Path $symbolsDir ("symbols-{0}.zip" -f ($version -replace '\+', '-'))
-    Compress-Archive -Path (Join-Path $symbolsSrc '*') -DestinationPath $symbolsZip -Force
+    # NEVER overwrite an existing symbols zip: obfuscation maps are per-build,
+    # so a rebuild at the same version (dev/plugin-gate builds) would destroy
+    # the only way to symbolicate crashes from the ALREADY-SHIPPED build of
+    # that version. A same-version rebuild archives to a -rebuild zip instead;
+    # a real re-release bumps the version first, so its zip name is fresh.
+    if (Test-Path $symbolsZip) {
+        $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+        $symbolsZip = Join-Path $symbolsDir ("symbols-{0}-rebuild-{1}.zip" -f ($version -replace '\+', '-'), $stamp)
+        Write-Host "  WARNING: symbols zip for $version already exists (shipped build?) - keeping it," -ForegroundColor Yellow
+        Write-Host "           this rebuild's symbols go to $(Split-Path -Leaf $symbolsZip)" -ForegroundColor Yellow
+    }
+    Compress-Archive -Path (Join-Path $symbolsSrc '*') -DestinationPath $symbolsZip
     Write-Host ("  symbols: {0}" -f $symbolsZip)
 
     # 5. Best-effort signing check (should be CN=Alexandr Bobrovsky, not debug).

@@ -274,6 +274,21 @@
   "sizeKilobytes": "{size} KB",
   "sizeMegabytes": "{size} MB",
 
+  "syncGdriveTitle": "Google Drive-Synchronisierung",
+  "syncGdriveSubtitle": "Automatisch in Ihr Google Drive sichern",
+  "syncGdriveLastPush": "Letzter Upload: {when}",
+  "syncGdriveNeverPushed": "Noch nichts hochgeladen",
+  "syncGdriveConnectedSnack": "Backups werden in das Google Drive von {email} synchronisiert",
+  "syncGdriveConnectFailed": "Verbindung mit Google Drive fehlgeschlagen",
+  "syncGdriveDialogBody": "Backups werden in den Ordner „ReefTracker“ im Google Drive von {email} hochgeladen. Sie können sie unter drive.google.com ansehen und herunterladen.",
+  "syncGdriveDisconnect": "Trennen",
+  "syncGdriveDisconnectedSnack": "Google Drive getrennt. Bereits hochgeladene Backups bleiben in Ihrem Drive erhalten.",
+  "syncGdriveLastFailed": "Upload zu Google Drive fehlgeschlagen am {when}",
+  "backupsLocalSection": "Auf diesem Gerät",
+  "backupsDriveSection": "Google Drive",
+  "backupsDriveEmpty": "Noch keine Backups in Google Drive",
+  "backupsDriveLoadFailed": "Backups konnten nicht aus Google Drive geladen werden",
+
   "aboutAppName": "Über ReefTracker",
   "aboutDescription": "Offline-Tracker für Meerwasseraquarium-Parameter mit Verlauf, Zeitdiagrammen und grün/orange/rot-Gesundheitszonen.",
 

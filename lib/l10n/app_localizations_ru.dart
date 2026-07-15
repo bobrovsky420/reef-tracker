@@ -926,6 +926,60 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get syncGdriveTitle => 'Синхронизация с Google Диском';
+
+  @override
+  String get syncGdriveSubtitle =>
+      'Автоматически сохранять резервные копии на ваш Google Диск';
+
+  @override
+  String syncGdriveLastPush(String when) {
+    return 'Последняя загрузка: $when';
+  }
+
+  @override
+  String get syncGdriveNeverPushed => 'Пока ничего не загружено';
+
+  @override
+  String syncGdriveConnectedSnack(String email) {
+    return 'Резервные копии будут синхронизироваться с Google Диском аккаунта $email';
+  }
+
+  @override
+  String get syncGdriveConnectFailed =>
+      'Не удалось подключиться к Google Диску';
+
+  @override
+  String syncGdriveDialogBody(String email) {
+    return 'Резервные копии загружаются в папку «ReefTracker» на Google Диске аккаунта $email. Их можно просмотреть и скачать на drive.google.com.';
+  }
+
+  @override
+  String get syncGdriveDisconnect => 'Отключить';
+
+  @override
+  String get syncGdriveDisconnectedSnack =>
+      'Google Диск отключён. Уже загруженные резервные копии останутся на вашем Диске.';
+
+  @override
+  String syncGdriveLastFailed(String when) {
+    return 'Загрузка на Google Диск не удалась $when';
+  }
+
+  @override
+  String get backupsLocalSection => 'На этом устройстве';
+
+  @override
+  String get backupsDriveSection => 'Google Диск';
+
+  @override
+  String get backupsDriveEmpty => 'На Google Диске пока нет резервных копий';
+
+  @override
+  String get backupsDriveLoadFailed =>
+      'Не удалось загрузить список резервных копий с Google Диска';
+
+  @override
   String get aboutAppName => 'О приложении ReefTracker';
 
   @override
