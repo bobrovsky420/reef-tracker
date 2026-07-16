@@ -910,7 +910,9 @@ void main() {
   group('validateBackup', () {
     BackupData dataWith({
       List<TanksCompanion> tanks = const [],
+      List<TrackedParametersCompanion> params = const [],
       List<ReadingsCompanion> readings = const [],
+      List<DosingEntriesCompanion> dosingEntries = const [],
       List<ManualDosesCompanion> manualDoses = const [],
       List<ReadingTemplatesCompanion> readingTemplates = const [],
       List<MicroViewsCompanion> microViews = const [],
@@ -921,13 +923,13 @@ void main() {
     }) => BackupData(
       schemaVersion: schemaVersion,
       tanks: tanks,
-      params: const [],
+      params: params,
       readings: readings,
       waterChanges: const [],
       carbonChanges: const [],
       equipmentCleanings: const [],
       ratioVisibilities: const [],
-      dosingEntries: const [],
+      dosingEntries: dosingEntries,
       manualDoses: manualDoses,
       readingTemplates: readingTemplates,
       microViews: microViews,
@@ -1348,6 +1350,89 @@ void main() {
         () => validateBackup(d, appSchemaVersion: 18),
         rejectedWith(BackupRejection.inconsistent),
       );
+    });
+
+    TrackedParametersCompanion param(
+      int id,
+      int tankId, {
+      int? testCadenceDays,
+    }) => TrackedParametersCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      paramKey: const Value('alkalinity'),
+      unit: const Value('dKH'),
+      enabled: const Value(true),
+      displayOrder: const Value(0),
+      testCadenceDays: Value(testCadenceDays),
+    );
+
+    DosingEntriesCompanion dosingEntry(
+      int id,
+      int tankId, {
+      int? intervalDays,
+    }) => DosingEntriesCompanion(
+      id: Value(id),
+      tankId: Value(tankId),
+      product: const Value('All-For-Reef'),
+      state: const Value('active'),
+      frequency: const Value('everyNDays'),
+      intervalDays: Value(intervalDays),
+      createdAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+      startedAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+    );
+
+    test('rejects day-count fields large enough to overflow due-date math '
+        '(#59)', () {
+      // DateTime(y, m, d + 1e8) exceeds the year-275760 ceiling → the
+      // synchronous due-date providers would throw on every rebuild after a
+      // "clean" restore. All four recurring day-count fields are bounded.
+      const huge = 100000000;
+      final bad = <String, BackupData>{
+        'maintenanceSchedules.cadenceDays': dataWith(
+          tanks: [tank(1)],
+          maintenanceSchedules: [schedule(70, 1, cadenceDays: huge)],
+        ),
+        'roStages.lifespanDays': dataWith(
+          roStages: [roStage(80, lifespanDays: huge)],
+        ),
+        'trackedParameters.testCadenceDays': dataWith(
+          tanks: [tank(1)],
+          params: [param(20, 1, testCadenceDays: huge)],
+        ),
+        'dosingEntries.intervalDays': dataWith(
+          tanks: [tank(1)],
+          dosingEntries: [dosingEntry(50, 1, intervalDays: huge)],
+        ),
+      };
+      bad.forEach((field, d) {
+        expect(
+          () => validateBackup(d, appSchemaVersion: 21),
+          rejectedWith(BackupRejection.inconsistent),
+          reason: field,
+        );
+      });
+    });
+
+    test('accepts the ~100-year cadence ceiling itself (#59)', () {
+      const max = 36525;
+      final d = dataWith(
+        tanks: [tank(1)],
+        params: [param(20, 1, testCadenceDays: max)],
+        dosingEntries: [dosingEntry(50, 1, intervalDays: max)],
+        maintenanceSchedules: [schedule(70, 1, cadenceDays: max)],
+        roStages: [roStage(80, lifespanDays: max)],
+      );
+      expect(() => validateBackup(d, appSchemaVersion: 21), returnsNormally);
+    });
+
+    test('tolerates sub-1 test cadences and dosing intervals (#59): pre-#8 '
+        'rows must stay restorable — the domain reads them as unknown', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        params: [param(20, 1, testCadenceDays: 0)],
+        dosingEntries: [dosingEntry(50, 1, intervalDays: -3)],
+      );
+      expect(() => validateBackup(d, appSchemaVersion: 21), returnsNormally);
     });
   });
 

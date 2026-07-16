@@ -78,14 +78,28 @@ class CloudAuthRequiredException implements Exception {
 /// and [list] only its own uploads, so no user data outside the app's folder
 /// is even visible to the queries.
 class DriveBackupStore implements CloudBackupStore {
-  DriveBackupStore(this._accessToken, {HttpClient Function()? clientFactory})
-    : _clientFactory = clientFactory ?? HttpClient.new;
+  DriveBackupStore(
+    this._accessToken, {
+    HttpClient Function()? clientFactory,
+    this.connectionTimeout = const Duration(seconds: 15),
+    this.requestTimeout = const Duration(seconds: 60),
+  }) : _clientFactory = clientFactory ?? HttpClient.new;
 
   /// Returns a currently valid OAuth access token, or null when silent
   /// authorization failed (→ [CloudAuthRequiredException]). Called per
   /// request; token caching is the auth layer's business.
   final Future<String?> Function() _accessToken;
   final HttpClient Function() _clientFactory;
+
+  /// Wall-clock bounds on one REST call (#58). Without them a half-open
+  /// socket (captive portal, Wi-Fi dropped mid-request) hangs the send or the
+  /// response drain forever: the sync engine's single-flight slot then stays
+  /// pinned to the dead future for the rest of the session and the
+  /// Manage-backups list spins indefinitely. A timeout surfaces as
+  /// [SocketException] so it rides the engine's IOException → offline branch
+  /// (silent retry next launch), never a recorded failure.
+  final Duration connectionTimeout;
+  final Duration requestTimeout;
 
   /// Human-visible folder created in the user's My Drive. Deliberately the
   /// plain app name: the user can browse drive.google.com and download a
@@ -213,29 +227,42 @@ class DriveBackupStore implements CloudBackupStore {
   }) async {
     final token = await _accessToken();
     if (token == null) throw const CloudAuthRequiredException();
-    final client = _clientFactory();
+    final client = _clientFactory()..connectionTimeout = connectionTimeout;
     try {
-      final request = await client.openUrl(method, uri);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
-      if (body != null) {
-        request.headers.set(HttpHeaders.contentTypeHeader, contentType!);
-        request.contentLength = body.length;
-        request.add(body);
+      Future<List<int>> send() async {
+        final request = await client.openUrl(method, uri);
+        request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+        if (body != null) {
+          request.headers.set(HttpHeaders.contentTypeHeader, contentType!);
+          request.contentLength = body.length;
+          request.add(body);
+        }
+        final response = await request.close();
+        final payload = <int>[];
+        await for (final chunk in response) {
+          payload.addAll(chunk);
+        }
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw CloudApiException(
+            response.statusCode,
+            '$method ${uri.path}: ${utf8.decode(payload, allowMalformed: true)}',
+          );
+        }
+        return payload;
       }
-      final response = await request.close();
-      final payload = <int>[];
-      await for (final chunk in response) {
-        payload.addAll(chunk);
-      }
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw CloudApiException(
-          response.statusCode,
-          '$method ${uri.path}: ${utf8.decode(payload, allowMalformed: true)}',
-        );
-      }
-      return payload;
+
+      // One cap over send + drain: a server that accepts the socket but never
+      // answers stalls past connectionTimeout's reach.
+      return await send().timeout(
+        requestTimeout,
+        onTimeout: () => throw SocketException(
+          '$method ${uri.path}: no response within $requestTimeout',
+        ),
+      );
     } finally {
-      client.close();
+      // force: on timeout the stalled socket would otherwise linger; the
+      // client is created per request, so nothing else shares it.
+      client.close(force: true);
     }
   }
 }

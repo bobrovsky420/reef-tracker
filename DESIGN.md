@@ -384,7 +384,13 @@ never wipes live data:
    restore a permanently silent plan). RO sections (U16) get the same
    treatment: unique stage ids, no replacement referencing a missing stage,
    `stageType` whitelisted against `RoStageType`, a custom stage must carry a
-   non-blank title, and `lifespanDays` must be ≥ 1.
+   non-blank title, and `lifespanDays` must be ≥ 1. All four recurring
+   day-count fields (`cadenceDays`, `lifespanDays`, `testCadenceDays`, dosing
+   `intervalDays`) are also capped at ~100 years (#59): a huge day count
+   would overflow `DateTime`'s year ceiling and crash the due-date providers
+   after a "clean" restore. The latter two keep their lower bound open —
+   pre-#8 rows could store 0/negative intervals, which the domain already
+   reads as "unknown cadence".
 2. *Rehearsal* — the restore is run against a throwaway temp database so the real
    SQLite engine (FK / NOT NULL / uniqueness) proves the rows insert cleanly.
 3. The actual transactional `restoreFromBackup` into the live DB.
@@ -557,7 +563,10 @@ Layers, all injected and plugin-free below the adapter:
   endpoints (`files.list` with a `q` filter, multipart `files.create`,
   `files.get?alt=media`, `files.delete`); no `googleapis` package. Takes a
   token-provider function; throws `CloudAuthRequiredException` when it
-  returns null.
+  returns null. Every call is time-bounded (15 s connect, 60 s
+  send-to-drain, #58) and a stall surfaces as `SocketException`, so a
+  half-open socket rides the offline path instead of pinning the engine's
+  single-flight slot for the rest of the session.
 - **`CloudAuth`** (seam) + **`GoogleDriveAuth`** (`google_sign_in` v7,
   Credential Manager): interactive `connect()` = system account picker +
   consent (cancel ⇒ null, never an error); silent `accessToken()` =

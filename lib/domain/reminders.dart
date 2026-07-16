@@ -310,6 +310,18 @@ List<DateTime> doseOccurrences({
       final n = intervalDays ?? 0;
       if (n < 1) return const [];
       var day = DateTime(startedAt.year, startedAt.month, startedAt.day);
+      // Phase-jump to the last on-cadence day at/before the window start
+      // instead of stepping there: a far-past startedAt (a restored backup's
+      // unchecked epoch, or a device clock once set years back) would
+      // otherwise walk decades of days on the main isolate on every resync
+      // (#61). Whole multiples of n keep the every-N phase; `~/` never
+      // overshoots (DST hours only make `inDays` truncate low, landing a
+      // step early at worst), and `inWindow` filters pre-window occurrences.
+      final startDay = DateTime(start.year, start.month, start.day);
+      if (day.isBefore(startDay)) {
+        final steps = startDay.difference(day).inDays ~/ n;
+        day = DateTime(day.year, day.month, day.day + steps * n);
+      }
       while (!day.isAfter(until)) {
         final t = atTime(day);
         if (inWindow(t)) result.add(t);

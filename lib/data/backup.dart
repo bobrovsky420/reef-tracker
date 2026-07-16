@@ -607,6 +607,14 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     names(RoStageType.values),
   );
 
+  // Recurring-interval day counts feed unguarded DateTime day-addition
+  // (`nextElasticDue`, `doseOccurrences`): past ~1e8 days the computed due
+  // date exceeds DateTime's year-275760 ceiling and the synchronous due-date
+  // providers then throw on every rebuild — a persistent error screen after a
+  // "clean" restore (#59). Bounded far below that; ~100 years is beyond any
+  // real cadence.
+  const maxSaneCadenceDays = 36525;
+
   // The same at-the-door rules the maintenance plans get (#8): a custom stage
   // without a title is unrenderable, and a lifespan below 1 day is the
   // unknown-cadence garbage the domain refuses to guess about — either would
@@ -622,7 +630,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
       );
     }
     final lifespan = s.lifespanDays.present ? s.lifespanDays.value : null;
-    if (lifespan != null && lifespan < 1) {
+    if (lifespan != null && (lifespan < 1 || lifespan > maxSaneCadenceDays)) {
       throw InvalidBackupException(
         BackupRejection.inconsistent,
         'roStages: lifespanDays $lifespan out of range',
@@ -645,7 +653,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
       );
     }
     final cadence = s.cadenceDays.present ? s.cadenceDays.value : null;
-    if (cadence != null && cadence < 1) {
+    if (cadence != null && (cadence < 1 || cadence > maxSaneCadenceDays)) {
       throw InvalidBackupException(
         BackupRejection.inconsistent,
         'maintenanceSchedules: cadenceDays $cadence out of range',
@@ -670,6 +678,36 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
       );
     }
   }
+
+  // The remaining day-count fields get the same overflow ceiling (#59) but —
+  // unlike the plan/stage cadences above — keep their lower bound open:
+  // pre-#8 app versions could store a 0/negative dosing interval, and the
+  // domain deliberately reads those as "unknown cadence" (contributes
+  // nothing, `nextElasticDue`/`dailyEquivalentDose`) rather than crashing.
+  // Rejecting them here would brick legitimate old backups.
+  void requireSaneDayCount(String field, Iterable<int?> values) {
+    for (final v in values) {
+      if (v != null && v > maxSaneCadenceDays) {
+        throw InvalidBackupException(
+          BackupRejection.inconsistent,
+          '$field: $v out of range',
+        );
+      }
+    }
+  }
+
+  requireSaneDayCount(
+    'trackedParameters.testCadenceDays',
+    data.params.map(
+      (p) => p.testCadenceDays.present ? p.testCadenceDays.value : null,
+    ),
+  );
+  requireSaneDayCount(
+    'dosingEntries.intervalDays',
+    data.dosingEntries.map(
+      (d) => d.intervalDays.present ? d.intervalDays.value : null,
+    ),
+  );
 }
 
 /// Imports [data] into the live database safely:

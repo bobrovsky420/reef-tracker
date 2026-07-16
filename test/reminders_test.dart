@@ -515,6 +515,24 @@ void main() {
       expect(occ, [DateTime(2026, 7, 16, 7), DateTime(2026, 7, 21, 7)]);
     });
 
+    test('everyNDays with a far-past startedAt keeps the anchor phase '
+        'without scanning the whole span (#61)', () {
+      // 2000-01-01 + 9690 days (= 1938 × 5) lands on 2026-07-13, so the two
+      // anchors are phase-equivalent; the phase-jump must produce exactly the
+      // same occurrences a plain scan would (first in-window hit: 18 Jul).
+      List<DateTime> occ(DateTime startedAt) => doseOccurrences(
+        frequency: 'everyNDays',
+        intervalDays: 5,
+        doseTime: '07:00',
+        startedAt: startedAt,
+        from: from,
+        until: until,
+      );
+      final farPast = occ(DateTime(2000, 1, 1, 12));
+      expect(farPast, [DateTime(2026, 7, 18, 7)]);
+      expect(farPast, occ(DateTime(2026, 7, 13, 12)));
+    });
+
     test(
       'everyNDays with missing/invalid interval is unknown → silent (#8)',
       () {

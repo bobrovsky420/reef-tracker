@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.3] - 2026-07-16
+
+### Fixed
+- Android: Google Drive sync no longer hangs for the rest of the session
+  when a connection stalls mid-request (e.g. captive-portal Wi-Fi or a
+  dropped network): Drive calls now time out, the sync quietly retries on
+  the next launch or resume, and the Drive list in Manage backups shows its
+  offline row instead of loading forever.
+- Importing a backup now rejects absurd repeat intervals (over ~100 years)
+  in maintenance plans, test reminders, dosing schedules and RO stage
+  lifespans — a corrupted or hand-edited file with such a value used to
+  import cleanly and then crash the due-date displays on every visit.
+- An "every N days" dosing schedule whose start date lies years in the past
+  no longer causes a noticeable freeze each time the app resumes and
+  reminders are rescheduled.
+
 ## [0.29.2] - 2026-07-16
 
 ### Changed
