@@ -1,0 +1,56 @@
+# Codemagic CI — iOS release builds (U-iOS phase 3).
+#
+# Android releases stay local (scripts/build-release.ps1); this workflow exists
+# because iOS can only be built on macOS. Personal Codemagic accounts get
+# 500 free mac_mini_m2 minutes/month — builds are started manually from the
+# Codemagic UI (no `triggering:` section) so pushes don't burn minutes.
+#
+# One-time setup in the Codemagic UI before the first build:
+#   1. Teams > Personal account > Integrations > Developer Portal: add the
+#      App Store Connect API key (.p8) and name it exactly as referenced
+#      below in `integrations.app_store_connect`.
+#   2. Nothing else — `ios_signing` makes Codemagic create and manage the
+#      distribution certificate + provisioning profile for the bundle id.
+workflows:
+  ios-release:
+    name: iOS release → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    integrations:
+      # Must match the API-key name added in Codemagic > Integrations.
+      app_store_connect: ReefTracker ASC key
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: cz.reeftracker.reeftracker
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Run tests
+        # The full suite runs locally before every release too; drop this step
+        # if free minutes get tight — it's a repeat, not the only gate.
+        script: flutter test
+      - name: Apply provisioning profiles
+        script: xcode-project use-profiles
+      - name: Build signed IPA
+        # Version + build number come from pubspec.yaml (single stream shared
+        # with Android, see CLAUDE.md) — no CI-side overrides.
+        script: flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integrations
+        # Upload every successful build to TestFlight; promotion to the App
+        # Store release is done manually in App Store Connect.
+        submit_to_testflight: true
+      email:
+        recipients:
+          - bobrovsky@seznam.cz
+        notify:
+          success: true
+          failure: true
