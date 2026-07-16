@@ -88,14 +88,21 @@ Future<bool> exportReadingsCsv(
 
 /// Quotes a field when it contains the delimiter, a quote, or a line break
 /// (RFC 4180), doubling embedded quotes.
+///
+/// Fields starting with a spreadsheet formula-lead character (`=`, `+`, `-`,
+/// `@`, tab, CR) are prefixed with an apostrophe first: the export is a share
+/// artifact opened in spreadsheets, and a note like `=HYPERLINK(...)` would
+/// otherwise execute as a live formula there (CSV formula injection).
 String _csvField(String s) {
-  if (s.contains(',') ||
-      s.contains('"') ||
-      s.contains('\n') ||
-      s.contains('\r')) {
-    return '"${s.replaceAll('"', '""')}"';
+  var v = s;
+  if (v.isNotEmpty && '=+-@\t\r'.contains(v[0])) v = "'$v";
+  if (v.contains(',') ||
+      v.contains('"') ||
+      v.contains('\n') ||
+      v.contains('\r')) {
+    return '"${v.replaceAll('"', '""')}"';
   }
-  return s;
+  return v;
 }
 
 /// Local timestamp as `yyyy-MM-dd HH:mm:ss`, locale-independent (no

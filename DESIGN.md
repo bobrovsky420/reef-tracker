@@ -419,6 +419,12 @@ values are converted to the user's display units at display precision but
 always with a `.` decimal separator (locale decimals would fight the comma
 delimiter); timestamps are device-local `yyyy-MM-dd HH:mm:ss`. Readings whose
 tracked-parameter row was removed fall back to the catalog's default unit.
+Fields starting with a spreadsheet formula-lead character (`=`, `+`, `-`,
+`@`, TAB, CR) get an apostrophe prefix before quoting, so a crafted note —
+user-typed or arrived via a restored backup — can't execute as a live
+formula when the shared file opens in Excel/Sheets (CSV formula injection);
+in practice only the note column is affected (keys/units are catalog-derived,
+the value column is numeric).
 Encoding runs in `Isolate.run` (readings are the largest table); the fetch is
 a one-shot `getReadingsForTank`, not a watcher. An empty tank shows a
 localized "nothing to export" SnackBar instead of opening the share sheet.

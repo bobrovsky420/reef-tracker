@@ -72,6 +72,28 @@ void main() {
       expect(csv, contains('"salt ""AB"", batch 2\nredose"'));
     });
 
+    test('neutralizes notes starting with spreadsheet formula characters', () {
+      final csv = encodeReadingsCsv(
+        readings: [
+          reading('nitrate', 5.0, note: '=1+2'),
+          reading('nitrate', 5.0, note: '@SUM(A1:A9)'),
+          reading('nitrate', 5.0, note: '+0.5 after dosing'),
+          reading('nitrate', 5.0, note: '-0.3 vs last week'),
+          reading('nitrate', 5.0, note: '=HYPERLINK("http://evil",A1)'),
+        ],
+        params: [param('nitrate', 'ppm')],
+        prefs: const UnitPrefs(),
+      );
+      expect(csv, contains(",'=1+2\r\n"));
+      expect(csv, contains(",'@SUM(A1:A9)\r\n"));
+      expect(csv, contains(",'+0.5 after dosing\r\n"));
+      expect(csv, contains(",'-0.3 vs last week\r\n"));
+      // Neutralization composes with RFC 4180 quoting/escaping.
+      expect(csv, contains(',"\'=HYPERLINK(""http://evil"",A1)"\r\n'));
+      // The numeric value column stays untouched (a plain number, not text).
+      expect(csv, contains(',nitrate,5.0,ppm,'));
+    });
+
     test('converts temperature and salinity to the preferred display unit', () {
       final readings = [
         reading('temperature', 25.0),

@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An "every N days" dosing schedule whose start date lies years in the past
   no longer causes a noticeable freeze each time the app resumes and
   reminders are rescheduled.
+- CSV export now neutralizes measurement notes that start with a spreadsheet
+  formula character (`=`, `+`, `-`, `@`) by prefixing an apostrophe, so a
+  crafted note can no longer execute as a live formula (e.g. fetch an
+  external URL) when the shared file is opened in Excel or Google Sheets.
 
 ## [0.29.2] - 2026-07-16
 
