@@ -1843,6 +1843,146 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get aiSummaryAction => 'Zapytaj swoją AI';
+
+  @override
+  String get aiSummaryPrivacyNote =>
+      'Wszystko powstaje na Twoim urządzeniu — nic nigdzie nie jest wysyłane. Sam decydujesz, gdzie wkleić tekst.';
+
+  @override
+  String aiSummaryWeeksChip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tygodnia',
+      many: '$count tygodni',
+      few: '$count tygodnie',
+      one: '1 tydzień',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiSummaryCopied => 'Skopiowano — wklej do czatu ze swoją AI.';
+
+  @override
+  String get aiSummaryEmpty => 'Brak pomiarów — nie ma czego podsumować.';
+
+  @override
+  String get aiSummaryInsightsFooter =>
+      'Chcesz głębszej analizy? Zapytaj swoją AI';
+
+  @override
+  String aiSummaryPreamble(int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      weeks,
+      locale: localeName,
+      other:
+          'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodnia. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
+      many:
+          'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodni. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
+      few:
+          'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodni. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
+      one:
+          'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatniego tygodnia. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiSummaryDocTitle(Object tank) {
+    return '$tank — podsumowanie akwarium morskiego';
+  }
+
+  @override
+  String aiSummaryRunningSince(Object date) {
+    return 'działa od $date';
+  }
+
+  @override
+  String aiSummaryExportedLine(Object date) {
+    return 'Wyeksportowano $date.';
+  }
+
+  @override
+  String get aiSummaryStatusHeading => 'Stan';
+
+  @override
+  String aiSummaryHealthLine(int score, Object grade) {
+    return 'Wskaźnik zdrowia: $score na 100 ($grade)';
+  }
+
+  @override
+  String aiSummaryStabilityLine(int score, Object grade, int days) {
+    return 'Wskaźnik stabilności: $score na 100 ($grade) z ostatnich $days dni';
+  }
+
+  @override
+  String get aiSummaryObservationsLead =>
+      'Obserwacje aplikacji (na podstawie reguł):';
+
+  @override
+  String get aiSummaryParamsHeading => 'Parametry';
+
+  @override
+  String aiSummaryTestedOn(Object date) {
+    return 'ostatni pomiar $date';
+  }
+
+  @override
+  String aiSummaryTargetRange(Object range) {
+    return 'Cel $range';
+  }
+
+  @override
+  String aiSummaryAcceptableRange(Object range) {
+    return 'akceptowalne $range';
+  }
+
+  @override
+  String get aiSummaryColDate => 'Data';
+
+  @override
+  String get aiSummaryColValue => 'Wartość';
+
+  @override
+  String get aiSummaryColNote => 'Notatka';
+
+  @override
+  String get aiSummaryColElement => 'Pierwiastek';
+
+  @override
+  String get aiSummaryColStatus => 'Status';
+
+  @override
+  String aiSummaryShowingTests(int shown, int total) {
+    return 'Pokazano $shown najnowszych z $total pomiarów.';
+  }
+
+  @override
+  String get aiSummaryDosingHeading => 'Plan dozowania';
+
+  @override
+  String aiSummaryDailyEquivalent(Object amount) {
+    return '≈$amount dziennie';
+  }
+
+  @override
+  String aiSummarySinceDate(Object date) {
+    return 'od $date';
+  }
+
+  @override
+  String get aiSummaryOneOff => 'dawka jednorazowa';
+
+  @override
+  String get aiSummaryActionsHeading => 'Konserwacja w tym okresie';
+
+  @override
+  String get aiSummaryMicroHeading =>
+      'Pierwiastki śladowe (ostatnie zmierzone wartości)';
+
+  @override
   String get dashboardSection => 'Pulpit';
 
   @override

@@ -103,8 +103,7 @@ class FakeCloudAuth implements CloudAuth {
   }
 
   @override
-  Future<String?> accessToken() async =>
-      account == null ? null : 'fake-token';
+  Future<String?> accessToken() async => account == null ? null : 'fake-token';
 
   @override
   Future<void> disconnect() async {

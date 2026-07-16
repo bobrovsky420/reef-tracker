@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,7 @@ import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../actions/actions_screen.dart';
+import '../ai_summary/ai_summary_sheet.dart';
 import '../dashboard/comparison_view.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../dosing/dosing_screen.dart';
@@ -301,6 +304,27 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             icon: const Icon(Icons.settings),
             onPressed: () => context.push('/settings'),
           ),
+          // Overflow menu, contextual to the Measurements tab (the bar is at
+          // icon capacity). Currently one action: the "Ask your AI" summary
+          // export (U27); future share-ish actions join here.
+          if (hasTanks && _index == 0)
+            PopupMenuButton<String>(
+              onSelected: (v) {
+                if (v == 'ai-summary') unawaited(showAiSummarySheet(context));
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'ai-summary',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.auto_awesome_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text(l.aiSummaryAction),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
       body: tanksAsync.when(

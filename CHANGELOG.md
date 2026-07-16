@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.29.0] - 2026-07-15
 
 ### Added
+- "Ask your AI": prepare a shareable summary of your tank — recent
+  parameters with your target ranges, trends, scores and observations,
+  dosing, maintenance and trace elements — ready to paste into ChatGPT,
+  Claude or any AI chat for a deeper analysis. Found in the menu on the
+  Measurements tab and at the bottom of the Insights list. You choose the
+  period (4/8/12 weeks), see exactly what will be shared, and copy or share
+  it as plain text. Everything is prepared on your device — the app itself
+  sends nothing anywhere.
 - Smart insights: a new dashboard card under the health summary that turns
   your recent readings into a short, prioritized list of plain-language
   observations — parameters out of range (and whether they are still

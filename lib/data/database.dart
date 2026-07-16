@@ -996,7 +996,7 @@ class AppDatabase extends _$AppDatabase {
   /// readings accumulate. Drift's fluent API has no window functions, hence
   /// custom SQL; the partition rides `idx_readings_tank_param_taken`. The `id`
   /// tiebreaker makes same-second readings deterministic.
-  Stream<List<Reading>> watchRecentReadingsPerParam(int tankId, int limit) =>
+  Selectable<Reading> _recentReadingsPerParam(int tankId, int limit) =>
       customSelect(
         'SELECT * FROM ('
         'SELECT r.*, ROW_NUMBER() OVER '
@@ -1006,7 +1006,16 @@ class AppDatabase extends _$AppDatabase {
         'ORDER BY taken_at DESC, id DESC',
         variables: [Variable.withInt(tankId), Variable.withInt(limit)],
         readsFrom: {readings},
-      ).asyncMap(readings.mapFromRow).watch();
+      ).asyncMap(readings.mapFromRow);
+
+  Stream<List<Reading>> watchRecentReadingsPerParam(int tankId, int limit) =>
+      _recentReadingsPerParam(tankId, limit).watch();
+
+  /// One-shot variant of [watchRecentReadingsPerParam] (U27 collector; also
+  /// the widget-test-safe form — drift stream emissions ride zero-duration
+  /// timers that FakeAsync only fires during pumps, so `.first` deadlocks).
+  Future<List<Reading>> getRecentReadingsPerParam(int tankId, int limit) =>
+      _recentReadingsPerParam(tankId, limit).get();
 
   /// All of a tank's readings taken on/after [cutoff], newest first (U26).
   ///
@@ -1016,19 +1025,24 @@ class AppDatabase extends _$AppDatabase {
   /// exact and its per-write re-query cost is bounded by the testing cadence.
   /// Rides `idx_readings_tank_taken`; the `id` tiebreaker keeps same-second
   /// readings deterministic.
+  SimpleSelectStatement<$ReadingsTable, Reading> _readingsSince(
+    int tankId,
+    DateTime cutoff,
+  ) => select(readings)
+    ..where(
+      (r) => r.tankId.equals(tankId) & r.takenAt.isBiggerOrEqualValue(cutoff),
+    )
+    ..orderBy([
+      (r) => OrderingTerm(expression: r.takenAt, mode: OrderingMode.desc),
+      (r) => OrderingTerm(expression: r.id, mode: OrderingMode.desc),
+    ]);
+
   Stream<List<Reading>> watchReadingsSince(int tankId, DateTime cutoff) =>
-      (select(readings)
-            ..where(
-              (r) =>
-                  r.tankId.equals(tankId) &
-                  r.takenAt.isBiggerOrEqualValue(cutoff),
-            )
-            ..orderBy([
-              (r) =>
-                  OrderingTerm(expression: r.takenAt, mode: OrderingMode.desc),
-              (r) => OrderingTerm(expression: r.id, mode: OrderingMode.desc),
-            ]))
-          .watch();
+      _readingsSince(tankId, cutoff).watch();
+
+  /// One-shot variant of [watchReadingsSince] (U27 collector).
+  Future<List<Reading>> getReadingsSince(int tankId, DateTime cutoff) =>
+      _readingsSince(tankId, cutoff).get();
 
   Future<void> insertReading({
     required int tankId,
@@ -1112,16 +1126,20 @@ class AppDatabase extends _$AppDatabase {
   // --- Water changes -------------------------------------------------------
 
   /// Water changes for a tank, newest first.
+  SimpleSelectStatement<$WaterChangesTable, WaterChange> _waterChanges(
+    int tankId,
+  ) => select(waterChanges)
+    ..where((w) => w.tankId.equals(tankId))
+    ..orderBy([
+      (w) => OrderingTerm(expression: w.changedAt, mode: OrderingMode.desc),
+    ]);
+
   Stream<List<WaterChange>> watchWaterChanges(int tankId) =>
-      (select(waterChanges)
-            ..where((w) => w.tankId.equals(tankId))
-            ..orderBy([
-              (w) => OrderingTerm(
-                expression: w.changedAt,
-                mode: OrderingMode.desc,
-              ),
-            ]))
-          .watch();
+      _waterChanges(tankId).watch();
+
+  /// One-shot variant of [watchWaterChanges] (U27 collector).
+  Future<List<WaterChange>> getWaterChanges(int tankId) =>
+      _waterChanges(tankId).get();
 
   Future<void> insertWaterChange({
     required int tankId,
@@ -1146,16 +1164,20 @@ class AppDatabase extends _$AppDatabase {
   // --- Carbon changes ------------------------------------------------------
 
   /// Activated-carbon changes for a tank, newest first.
+  SimpleSelectStatement<$CarbonChangesTable, CarbonChange> _carbonChanges(
+    int tankId,
+  ) => select(carbonChanges)
+    ..where((c) => c.tankId.equals(tankId))
+    ..orderBy([
+      (c) => OrderingTerm(expression: c.changedAt, mode: OrderingMode.desc),
+    ]);
+
   Stream<List<CarbonChange>> watchCarbonChanges(int tankId) =>
-      (select(carbonChanges)
-            ..where((c) => c.tankId.equals(tankId))
-            ..orderBy([
-              (c) => OrderingTerm(
-                expression: c.changedAt,
-                mode: OrderingMode.desc,
-              ),
-            ]))
-          .watch();
+      _carbonChanges(tankId).watch();
+
+  /// One-shot variant of [watchCarbonChanges] (U27 collector).
+  Future<List<CarbonChange>> getCarbonChanges(int tankId) =>
+      _carbonChanges(tankId).get();
 
   Future<void> insertCarbonChange({
     required int tankId,
@@ -1180,16 +1202,19 @@ class AppDatabase extends _$AppDatabase {
   // --- Equipment cleanings -------------------------------------------------
 
   /// Equipment cleanings for a tank, newest first.
+  SimpleSelectStatement<$EquipmentCleaningsTable, EquipmentCleaning>
+  _equipmentCleanings(int tankId) => select(equipmentCleanings)
+    ..where((c) => c.tankId.equals(tankId))
+    ..orderBy([
+      (c) => OrderingTerm(expression: c.cleanedAt, mode: OrderingMode.desc),
+    ]);
+
   Stream<List<EquipmentCleaning>> watchEquipmentCleanings(int tankId) =>
-      (select(equipmentCleanings)
-            ..where((c) => c.tankId.equals(tankId))
-            ..orderBy([
-              (c) => OrderingTerm(
-                expression: c.cleanedAt,
-                mode: OrderingMode.desc,
-              ),
-            ]))
-          .watch();
+      _equipmentCleanings(tankId).watch();
+
+  /// One-shot variant of [watchEquipmentCleanings] (U27 collector).
+  Future<List<EquipmentCleaning>> getEquipmentCleanings(int tankId) =>
+      _equipmentCleanings(tankId).get();
 
   Future<void> insertEquipmentCleaning({
     required int tankId,
@@ -1299,24 +1324,26 @@ class AppDatabase extends _$AppDatabase {
 
   // --- Dosing entries ------------------------------------------------------
 
+  SimpleSelectStatement<$DosingEntriesTable, DosingEntry> _activeDosingEntries(
+    int tankId,
+  ) => select(dosingEntries)
+    ..where(
+      (d) => d.tankId.equals(tankId) & d.state.equals(DosingState.active.name),
+    )
+    ..orderBy([
+      (d) => OrderingTerm(expression: d.displayOrder),
+      (d) => OrderingTerm(expression: d.createdAt, mode: OrderingMode.desc),
+    ]);
+
   /// Active dosing-plan entries for a tank, in dashboard order then newest
   /// first. Ended (superseded/stopped) segments are retained as history but
   /// excluded here.
   Stream<List<DosingEntry>> watchDosingEntries(int tankId) =>
-      (select(dosingEntries)
-            ..where(
-              (d) =>
-                  d.tankId.equals(tankId) &
-                  d.state.equals(DosingState.active.name),
-            )
-            ..orderBy([
-              (d) => OrderingTerm(expression: d.displayOrder),
-              (d) => OrderingTerm(
-                expression: d.createdAt,
-                mode: OrderingMode.desc,
-              ),
-            ]))
-          .watch();
+      _activeDosingEntries(tankId).watch();
+
+  /// One-shot variant of [watchDosingEntries] (U27 collector).
+  Future<List<DosingEntry>> getDosingEntries(int tankId) =>
+      _activeDosingEntries(tankId).get();
 
   /// Every dosing segment for a tank — active **and** ended (superseded/stopped)
   /// — newest first, for the history timeline. Ordered by when each segment
@@ -1437,15 +1464,21 @@ class AppDatabase extends _$AppDatabase {
   // --- Manual doses ----------------------------------------------------------
 
   /// One-off manual doses for a tank, newest first.
+  SimpleSelectStatement<$ManualDosesTable, ManualDose> _manualDoses(
+    int tankId,
+  ) => select(manualDoses)
+    ..where((d) => d.tankId.equals(tankId))
+    ..orderBy([
+      (d) => OrderingTerm(expression: d.dosedAt, mode: OrderingMode.desc),
+      (d) => OrderingTerm(expression: d.id, mode: OrderingMode.desc),
+    ]);
+
   Stream<List<ManualDose>> watchManualDoses(int tankId) =>
-      (select(manualDoses)
-            ..where((d) => d.tankId.equals(tankId))
-            ..orderBy([
-              (d) =>
-                  OrderingTerm(expression: d.dosedAt, mode: OrderingMode.desc),
-              (d) => OrderingTerm(expression: d.id, mode: OrderingMode.desc),
-            ]))
-          .watch();
+      _manualDoses(tankId).watch();
+
+  /// One-shot variant of [watchManualDoses] (U27 collector).
+  Future<List<ManualDose>> getManualDoses(int tankId) =>
+      _manualDoses(tankId).get();
 
   Future<int> insertManualDose(ManualDosesCompanion dose) =>
       into(manualDoses).insert(dose);

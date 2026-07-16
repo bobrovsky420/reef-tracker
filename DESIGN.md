@@ -412,6 +412,63 @@ Encoding runs in `Isolate.run` (readings are the largest table); the fetch is
 a one-shot `getReadingsForTank`, not a watcher. An empty tank shows a
 localized "nothing to export" SnackBar instead of opening the share sheet.
 
+### "Ask your AI" tank summary export (`tank_summary_export.dart`, U27)
+
+A **Standard** (ungated) share action that renders the active tank's recent
+state as a markdown document for pasting into the user's own AI chat
+(ChatGPT/Claude/…) — the app does the data-assembly half, the user's AI does
+the inference half. Zero network, zero inference cost; the offline philosophy
+made into a feature (the pre-share sheet says so: "everything is prepared on
+your device — nothing is sent anywhere").
+
+- **Split** like the CSV export: async `collectTankSummary(db, tankId,
+  weeks)` gathers one-shot snapshots (`get*` query twins added beside the
+  watch queries — drift `.first` awaits deadlock under widget tests) and
+  re-runs the domain math via the same pure functions the providers use
+  (`computeTankHealth`/`computeTankStability`/`computeTrend`/
+  `computeInsights`); sync `encodeTankSummary(data, l, prefs,
+  includeStability:, includeInsights:)` renders it, taking `AppLocalizations`
+  directly (plain class, usable off-context) so the document localizes
+  through the normal ARB pipeline. **No `Isolate.run`**: windowed + capped
+  input means microseconds (T5 applies only to the unbounded CSV). The two
+  required flags carry the sheet's Pro entitlements: the exported document is
+  *presentation*, so the U26 stability line and the U28 observations block
+  are omitted for a non-entitled export instead of leaking what the in-app
+  teasers hide (collector stays entitlement-unaware — the U26 split; the
+  free health line always renders).
+- **Document order** (most diagnostic first): localized preamble prompt →
+  tank profile → Status (health + stability scores + the U28 insights
+  verbatim, so the AI builds on what the app already concluded) → per-core-
+  parameter sections (latest value, zone as words, the user's own
+  target/acceptable ranges, trend rate + forecast lines reusing the trend ARB
+  keys, and a newest-first table **including reading notes** — capped at
+  `kAiSummaryMaxRowsPerParam` = 20 with a visible "showing N of M" line) →
+  dosing plan (+ manual doses in window, daily-equivalent amounts) →
+  maintenance log in window → trace elements as **latest value per micro
+  element** with per-row dates (deliberately not "the latest ICP group" — a
+  lone hobby-kit retest would make group hunting misleading). Names are
+  localized + stable catalog key in parens; dates ISO `yyyy-MM-dd`; numbers
+  locale-formatted; empty sections are omitted.
+- **UX**: two entry points into one pre-share bottom sheet
+  (`features/ai_summary/ai_summary_sheet.dart`) — the Measurements-tab
+  app-bar **overflow menu** ("Ask your AI", `HomeShell`) and a footer action
+  on the U28 insights sheet ("Want a deeper look?"). The sheet shows the
+  privacy line, window chips (4/8/12 weeks, `ai_summary_weeks` device-local
+  setting, default 8 — bounded so the paste fits chat context limits), a
+  scrollable **preview of the exact markdown** that will leave the app, then
+  **Copy** (primary — chat inputs are paste-first; copying dismisses the
+  sheet and confirms via SnackBar — the copy is the job done, and a
+  root-scaffold SnackBar would be hidden behind the modal barrier) and
+  **Share** (share_plus *text*, not a file — no staging, none of the #35
+  share-cache cleanup applies). No readings → a "nothing to summarize" state
+  with no buttons. The sheet gates its FutureBuilder on `activeTankProvider`
+  having resolved — memoizing a still-loading tank would freeze it on the
+  empty state.
+- Tests: `test/tank_summary_test.dart` (collector windowing/empty rules,
+  document structure, cap note, pipe-escaping in notes),
+  `test/ai_summary_sheet_test.dart` (preview, clipboard, chip switch, empty
+  state).
+
 ### Automatic backup (`auto_backup.dart`)
 
 Two layers, **no new dependencies and no runtime permissions**:

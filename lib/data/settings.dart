@@ -38,6 +38,12 @@ const int kAutoBackupDefaultKeep = 5;
 /// Default delivery time for testing/maintenance reminder notifications.
 const kDefaultReminderTime = (hour: 9, minute: 0);
 
+/// "Ask your AI" summary window (U27): the week counts the pre-share sheet
+/// offers, and the default. Bounded on purpose — an unbounded history dump
+/// would blow past chat context limits and drown the signal.
+const List<int> kAiSummaryWeekChoices = [4, 8, 12];
+const int kAiSummaryDefaultWeeks = 8;
+
 /// How often an automatic backup is taken (opportunistically, on app launch
 /// or resume — see `runAutoBackupIfDue`).
 enum AutoBackupInterval {
@@ -109,6 +115,7 @@ enum SettingKey {
   trendHorizon(kTrendHorizonKey, deviceLocal: true),
   healthDisplay(kHealthDisplayKey, deviceLocal: true),
   stabilityWindow(kStabilityWindowKey, deviceLocal: true),
+  aiSummaryWeeks(kAiSummaryWeeksKey, deviceLocal: true),
   tourSeen(kTourSeenKey, deviceLocal: true),
   autoBackupEnabled(kAutoBackupEnabledKey, deviceLocal: true),
   autoBackupInterval(kAutoBackupIntervalKey, deviceLocal: true),
@@ -286,6 +293,21 @@ class AppSettings {
       _watch(SettingKey.stabilityWindow).map(decodeStabilityWindow);
   Future<void> setStabilityWindow(int days) =>
       _write(SettingKey.stabilityWindow, days.toString());
+
+  // --- AI summary window (U27) -------------------------------------------------
+
+  /// Whitelisted like [decodeStabilityWindow]: the pre-share sheet's chips
+  /// only offer [kAiSummaryWeekChoices], so an unknown stored value falls
+  /// back to the default instead of selecting nothing.
+  static int decodeAiSummaryWeeks(String? raw) {
+    final v = int.tryParse(raw ?? '');
+    return kAiSummaryWeekChoices.contains(v) ? v! : kAiSummaryDefaultWeeks;
+  }
+
+  Stream<int> watchAiSummaryWeeks() =>
+      _watch(SettingKey.aiSummaryWeeks).map(decodeAiSummaryWeeks);
+  Future<void> setAiSummaryWeeks(int weeks) =>
+      _write(SettingKey.aiSummaryWeeks, weeks.toString());
 
   // --- health display --------------------------------------------------------
 

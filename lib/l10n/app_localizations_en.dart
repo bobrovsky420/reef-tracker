@@ -1811,6 +1811,137 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get aiSummaryAction => 'Ask your AI';
+
+  @override
+  String get aiSummaryPrivacyNote =>
+      'Everything is prepared on your device — nothing is sent anywhere. You choose where to paste it.';
+
+  @override
+  String aiSummaryWeeksChip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count weeks',
+      one: '1 week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiSummaryCopied => 'Copied — paste it into your AI chat.';
+
+  @override
+  String get aiSummaryEmpty => 'No readings yet — nothing to summarize.';
+
+  @override
+  String get aiSummaryInsightsFooter => 'Want a deeper look? Ask your AI';
+
+  @override
+  String aiSummaryPreamble(int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      weeks,
+      locale: localeName,
+      other:
+          'I keep a saltwater reef aquarium and track it with an app. Below is my tank\'s data from the last $weeks weeks. Please analyze it, point out risks or trends I should address, and suggest what to check or adjust.',
+      one:
+          'I keep a saltwater reef aquarium and track it with an app. Below is my tank\'s data from the last week. Please analyze it, point out risks or trends I should address, and suggest what to check or adjust.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiSummaryDocTitle(Object tank) {
+    return '$tank — saltwater aquarium summary';
+  }
+
+  @override
+  String aiSummaryRunningSince(Object date) {
+    return 'running since $date';
+  }
+
+  @override
+  String aiSummaryExportedLine(Object date) {
+    return 'Exported $date.';
+  }
+
+  @override
+  String get aiSummaryStatusHeading => 'Status';
+
+  @override
+  String aiSummaryHealthLine(int score, Object grade) {
+    return 'Health score: $score of 100 ($grade)';
+  }
+
+  @override
+  String aiSummaryStabilityLine(int score, Object grade, int days) {
+    return 'Stability score: $score of 100 ($grade) over the last $days days';
+  }
+
+  @override
+  String get aiSummaryObservationsLead => 'The app\'s rule-based observations:';
+
+  @override
+  String get aiSummaryParamsHeading => 'Parameters';
+
+  @override
+  String aiSummaryTestedOn(Object date) {
+    return 'last tested $date';
+  }
+
+  @override
+  String aiSummaryTargetRange(Object range) {
+    return 'Target $range';
+  }
+
+  @override
+  String aiSummaryAcceptableRange(Object range) {
+    return 'acceptable $range';
+  }
+
+  @override
+  String get aiSummaryColDate => 'Date';
+
+  @override
+  String get aiSummaryColValue => 'Value';
+
+  @override
+  String get aiSummaryColNote => 'Note';
+
+  @override
+  String get aiSummaryColElement => 'Element';
+
+  @override
+  String get aiSummaryColStatus => 'Status';
+
+  @override
+  String aiSummaryShowingTests(int shown, int total) {
+    return 'Showing the $shown most recent of $total tests.';
+  }
+
+  @override
+  String get aiSummaryDosingHeading => 'Dosing plan';
+
+  @override
+  String aiSummaryDailyEquivalent(Object amount) {
+    return '≈$amount per day';
+  }
+
+  @override
+  String aiSummarySinceDate(Object date) {
+    return 'since $date';
+  }
+
+  @override
+  String get aiSummaryOneOff => 'one-off dose';
+
+  @override
+  String get aiSummaryActionsHeading => 'Maintenance in this period';
+
+  @override
+  String get aiSummaryMicroHeading => 'Trace elements (latest measured values)';
+
+  @override
   String get dashboardSection => 'Dashboard';
 
   @override

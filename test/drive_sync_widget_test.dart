@@ -114,14 +114,12 @@ void main() {
     }
   });
 
-  testWidgets('connected: shows account + status, and the dialog disconnects',
-      (tester) async {
+  testWidgets('connected: shows account + status, and the dialog disconnects', (
+    tester,
+  ) async {
     try {
       final db = await pumpSettings(tester, account: 'reef@test.dev');
-      expect(
-        find.textContaining('reef@test.dev'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('reef@test.dev'), findsOneWidget);
       expect(find.textContaining('Nothing uploaded yet'), findsOneWidget);
 
       await tester.tap(find.text('Google Drive sync'));
@@ -145,8 +143,9 @@ void main() {
     }
   });
 
-  testWidgets('the entire Drive UI is absent on iOS (Android-only surface)',
-      (tester) async {
+  testWidgets('the entire Drive UI is absent on iOS (Android-only surface)', (
+    tester,
+  ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     try {
       await pumpSettings(
@@ -163,18 +162,16 @@ void main() {
     }
   });
 
-  testWidgets('a recorded upload failure shows the persistent warning row',
-      (tester) async {
+  testWidgets('a recorded upload failure shows the persistent warning row', (
+    tester,
+  ) async {
     try {
       await pumpSettings(
         tester,
         account: 'reef@test.dev',
         lastErrorAt: DateTime(2026, 7, 15, 8, 30),
       );
-      expect(
-        find.textContaining('Google Drive upload failed'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Google Drive upload failed'), findsOneWidget);
     } finally {
       await unmountApp(tester);
     }

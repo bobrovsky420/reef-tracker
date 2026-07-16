@@ -42,9 +42,10 @@ void main() {
 
     test('changes when aquarium data changes', () {
       final a = doc();
-      final b = doc()..['tanks'] = [
-        {'id': 1, 'name': 'Nano'},
-      ];
+      final b = doc()
+        ..['tanks'] = [
+          {'id': 1, 'name': 'Nano'},
+        ];
       expect(
         backupContentHash(jsonEncode(a)),
         isNot(backupContentHash(jsonEncode(b))),
@@ -200,18 +201,20 @@ void main() {
       );
     });
 
-    test('dead grant (no token → CloudAuthRequiredException) is a failure',
-        () async {
-      await connectAndSeed();
-      // The real store throws CloudAuthRequiredException when the token
-      // provider returns null; simulate via a store-level failure of the
-      // same non-IOException kind.
-      store.failWrites = true;
-      expect(
-        await runGDriveSyncIfDirty(db, store: store),
-        CloudSyncOutcome.failed,
-      );
-    });
+    test(
+      'dead grant (no token → CloudAuthRequiredException) is a failure',
+      () async {
+        await connectAndSeed();
+        // The real store throws CloudAuthRequiredException when the token
+        // provider returns null; simulate via a store-level failure of the
+        // same non-IOException kind.
+        store.failWrites = true;
+        expect(
+          await runGDriveSyncIfDirty(db, store: store),
+          CloudSyncOutcome.failed,
+        );
+      },
+    );
 
     test('recreates the folder when the cached id went stale', () async {
       await connectAndSeed();
@@ -254,17 +257,19 @@ void main() {
       );
     });
 
-    test('echo suppression: a cloud-restored document is not re-pushed',
-        () async {
-      await connectAndSeed();
-      final json = await encodeBackupFromDb(db);
-      await recordRestoredCloudBackup(db, json);
-      expect(
-        await runGDriveSyncIfDirty(db, store: store),
-        CloudSyncOutcome.skippedClean,
-      );
-      expect(store.writeCalls, 0);
-    });
+    test(
+      'echo suppression: a cloud-restored document is not re-pushed',
+      () async {
+        await connectAndSeed();
+        final json = await encodeBackupFromDb(db);
+        await recordRestoredCloudBackup(db, json);
+        expect(
+          await runGDriveSyncIfDirty(db, store: store),
+          CloudSyncOutcome.skippedClean,
+        );
+        expect(store.writeCalls, 0);
+      },
+    );
   });
 
   group('connect / disconnect', () {
@@ -309,14 +314,16 @@ void main() {
       expect(await db.getSetting(kSyncGdriveLastErrorAtKey), isNull);
     });
 
-    test('disconnect still clears local state when revocation throws',
-        () async {
-      final auth = FakeCloudAuth()..connectThrows = false;
-      await connectGDrive(db, auth);
-      final throwing = _ThrowingDisconnectAuth();
-      await disconnectGDrive(db, throwing);
-      expect(await settings.readSyncGdriveAccount(), isNull);
-    });
+    test(
+      'disconnect still clears local state when revocation throws',
+      () async {
+        final auth = FakeCloudAuth()..connectThrows = false;
+        await connectGDrive(db, auth);
+        final throwing = _ThrowingDisconnectAuth();
+        await disconnectGDrive(db, throwing);
+        expect(await settings.readSyncGdriveAccount(), isNull);
+      },
+    );
   });
 }
 

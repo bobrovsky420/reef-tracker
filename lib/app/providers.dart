@@ -750,6 +750,14 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
   return computeTankHealth(inputs);
 });
 
+/// Weeks the "Ask your AI" summary export covers (4/8/12, default
+/// [kAiSummaryDefaultWeeks] — U27). Device-local UI preference, persisted so
+/// the pre-share sheet reopens on the last-used window.
+final aiSummaryWeeksProvider = _setting(
+  SettingKey.aiSummaryWeeks,
+  AppSettings.decodeAiSummaryWeeks,
+);
+
 /// Days of history the stability score examines (30/60/90, default
 /// [kStabilityWindowDays] = 30 — matching health's freshness horizon). The
 /// longer windows exist for relaxed testing cadences that can't accumulate

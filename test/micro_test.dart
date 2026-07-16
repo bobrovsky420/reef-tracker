@@ -295,8 +295,7 @@ void main() {
       expect(microNeedsAttention(b('lead'), null), isFalse); // Unmeasured.
     });
 
-    test('microNeedsAttention: unclassifiable bounds never need attention',
-        () {
+    test('microNeedsAttention: unclassifiable bounds never need attention', () {
       expect(microNeedsAttention(const ZoneBounds(), 0.5), isFalse);
       // Inverted bounds are invalid → Zone.unknown.
       const inverted = ZoneBounds(greenLow: 10, greenHigh: 5);

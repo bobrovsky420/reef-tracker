@@ -1824,6 +1824,142 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get aiSummaryAction => 'Zeptejte se své AI';
+
+  @override
+  String get aiSummaryPrivacyNote =>
+      'Vše se připraví ve vašem zařízení — nic se nikam neodesílá. Sami zvolíte, kam text vložíte.';
+
+  @override
+  String aiSummaryWeeksChip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count týdnů',
+      few: '$count týdny',
+      one: '1 týden',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiSummaryCopied => 'Zkopírováno — vložte do chatu s vaší AI.';
+
+  @override
+  String get aiSummaryEmpty => 'Zatím žádná měření — není co shrnout.';
+
+  @override
+  String get aiSummaryInsightsFooter =>
+      'Chcete hlubší rozbor? Zeptejte se své AI';
+
+  @override
+  String aiSummaryPreamble(int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      weeks,
+      locale: localeName,
+      other:
+          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za posledních $weeks týdnů. Prosím analyzuj je, upozorni na rizika či trendy, které bych měl řešit, a doporuč, co zkontrolovat nebo upravit.',
+      few:
+          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za poslední $weeks týdny. Prosím analyzuj je, upozorni na rizika či trendy, které bych měl řešit, a doporuč, co zkontrolovat nebo upravit.',
+      one:
+          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za poslední týden. Prosím analyzuj je, upozorni na rizika či trendy, které bych měl řešit, a doporuč, co zkontrolovat nebo upravit.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiSummaryDocTitle(Object tank) {
+    return '$tank — shrnutí mořského akvária';
+  }
+
+  @override
+  String aiSummaryRunningSince(Object date) {
+    return 'v provozu od $date';
+  }
+
+  @override
+  String aiSummaryExportedLine(Object date) {
+    return 'Exportováno $date.';
+  }
+
+  @override
+  String get aiSummaryStatusHeading => 'Stav';
+
+  @override
+  String aiSummaryHealthLine(int score, Object grade) {
+    return 'Skóre zdraví: $score ze 100 ($grade)';
+  }
+
+  @override
+  String aiSummaryStabilityLine(int score, Object grade, int days) {
+    return 'Skóre stability: $score ze 100 ($grade) za posledních $days dní';
+  }
+
+  @override
+  String get aiSummaryObservationsLead => 'Postřehy aplikace (podle pravidel):';
+
+  @override
+  String get aiSummaryParamsHeading => 'Parametry';
+
+  @override
+  String aiSummaryTestedOn(Object date) {
+    return 'naposledy měřeno $date';
+  }
+
+  @override
+  String aiSummaryTargetRange(Object range) {
+    return 'Cíl $range';
+  }
+
+  @override
+  String aiSummaryAcceptableRange(Object range) {
+    return 'přijatelné $range';
+  }
+
+  @override
+  String get aiSummaryColDate => 'Datum';
+
+  @override
+  String get aiSummaryColValue => 'Hodnota';
+
+  @override
+  String get aiSummaryColNote => 'Poznámka';
+
+  @override
+  String get aiSummaryColElement => 'Prvek';
+
+  @override
+  String get aiSummaryColStatus => 'Stav';
+
+  @override
+  String aiSummaryShowingTests(int shown, int total) {
+    return 'Zobrazeno $shown nejnovějších z $total měření.';
+  }
+
+  @override
+  String get aiSummaryDosingHeading => 'Dávkovací plán';
+
+  @override
+  String aiSummaryDailyEquivalent(Object amount) {
+    return '≈$amount denně';
+  }
+
+  @override
+  String aiSummarySinceDate(Object date) {
+    return 'od $date';
+  }
+
+  @override
+  String get aiSummaryOneOff => 'jednorázová dávka';
+
+  @override
+  String get aiSummaryActionsHeading => 'Údržba v tomto období';
+
+  @override
+  String get aiSummaryMicroHeading =>
+      'Stopové prvky (poslední naměřené hodnoty)';
+
+  @override
   String get dashboardSection => 'Přehled';
 
   @override

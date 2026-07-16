@@ -352,9 +352,7 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: Text(
                   '$account\n'
                   '${switch (ref.watch(syncGdriveLastPushAtProvider).value) {
-                    final at? => l.syncGdriveLastPush(
-                      formatDateTime(context, at.toLocal(), weekday: false),
-                    ),
+                    final at? => l.syncGdriveLastPush(formatDateTime(context, at.toLocal(), weekday: false)),
                     null => l.syncGdriveNeverPushed,
                   }}',
                 ),

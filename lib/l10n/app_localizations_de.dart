@@ -1821,6 +1821,139 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get aiSummaryAction => 'Frag deine KI';
+
+  @override
+  String get aiSummaryPrivacyNote =>
+      'Alles wird auf deinem Gerät erstellt — nichts wird irgendwohin gesendet. Du entscheidest, wo du den Text einfügst.';
+
+  @override
+  String aiSummaryWeeksChip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Wochen',
+      one: '1 Woche',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiSummaryCopied => 'Kopiert — füge es in deinen KI-Chat ein.';
+
+  @override
+  String get aiSummaryEmpty =>
+      'Noch keine Messungen — nichts zusammenzufassen.';
+
+  @override
+  String get aiSummaryInsightsFooter => 'Tiefer einsteigen? Frag deine KI';
+
+  @override
+  String aiSummaryPreamble(int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      weeks,
+      locale: localeName,
+      other:
+          'Ich pflege ein Meerwasser-Riffaquarium und erfasse es mit einer App. Unten stehen die Daten meines Beckens aus den letzten $weeks Wochen. Bitte analysiere sie, weise auf Risiken oder Trends hin und schlage vor, was ich prüfen oder anpassen sollte.',
+      one:
+          'Ich pflege ein Meerwasser-Riffaquarium und erfasse es mit einer App. Unten stehen die Daten meines Beckens aus der letzten Woche. Bitte analysiere sie, weise auf Risiken oder Trends hin und schlage vor, was ich prüfen oder anpassen sollte.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiSummaryDocTitle(Object tank) {
+    return '$tank — Zusammenfassung Meerwasseraquarium';
+  }
+
+  @override
+  String aiSummaryRunningSince(Object date) {
+    return 'läuft seit $date';
+  }
+
+  @override
+  String aiSummaryExportedLine(Object date) {
+    return 'Exportiert am $date.';
+  }
+
+  @override
+  String get aiSummaryStatusHeading => 'Status';
+
+  @override
+  String aiSummaryHealthLine(int score, Object grade) {
+    return 'Gesundheitswert: $score von 100 ($grade)';
+  }
+
+  @override
+  String aiSummaryStabilityLine(int score, Object grade, int days) {
+    return 'Stabilitätswert: $score von 100 ($grade) über die letzten $days Tage';
+  }
+
+  @override
+  String get aiSummaryObservationsLead => 'Regelbasierte Hinweise der App:';
+
+  @override
+  String get aiSummaryParamsHeading => 'Parameter';
+
+  @override
+  String aiSummaryTestedOn(Object date) {
+    return 'zuletzt gemessen am $date';
+  }
+
+  @override
+  String aiSummaryTargetRange(Object range) {
+    return 'Ziel $range';
+  }
+
+  @override
+  String aiSummaryAcceptableRange(Object range) {
+    return 'akzeptabel $range';
+  }
+
+  @override
+  String get aiSummaryColDate => 'Datum';
+
+  @override
+  String get aiSummaryColValue => 'Wert';
+
+  @override
+  String get aiSummaryColNote => 'Notiz';
+
+  @override
+  String get aiSummaryColElement => 'Element';
+
+  @override
+  String get aiSummaryColStatus => 'Status';
+
+  @override
+  String aiSummaryShowingTests(int shown, int total) {
+    return 'Die $shown neuesten von $total Messungen.';
+  }
+
+  @override
+  String get aiSummaryDosingHeading => 'Dosierplan';
+
+  @override
+  String aiSummaryDailyEquivalent(Object amount) {
+    return '≈$amount pro Tag';
+  }
+
+  @override
+  String aiSummarySinceDate(Object date) {
+    return 'seit $date';
+  }
+
+  @override
+  String get aiSummaryOneOff => 'Einmaldosis';
+
+  @override
+  String get aiSummaryActionsHeading => 'Wartung in diesem Zeitraum';
+
+  @override
+  String get aiSummaryMicroHeading =>
+      'Spurenelemente (zuletzt gemessene Werte)';
+
+  @override
   String get dashboardSection => 'Dashboard';
 
   @override

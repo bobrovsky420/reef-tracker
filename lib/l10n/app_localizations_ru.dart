@@ -1837,6 +1837,146 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get aiSummaryAction => 'Спросите свой ИИ';
+
+  @override
+  String get aiSummaryPrivacyNote =>
+      'Всё готовится на вашем устройстве — никуда ничего не отправляется. Вы сами решаете, куда вставить текст.';
+
+  @override
+  String aiSummaryWeeksChip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count недели',
+      many: '$count недель',
+      few: '$count недели',
+      one: '$count неделя',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiSummaryCopied => 'Скопировано — вставьте в чат с вашим ИИ.';
+
+  @override
+  String get aiSummaryEmpty => 'Пока нет измерений — нечего обобщать.';
+
+  @override
+  String get aiSummaryInsightsFooter =>
+      'Нужен более глубокий разбор? Спросите свой ИИ';
+
+  @override
+  String aiSummaryPreamble(int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      weeks,
+      locale: localeName,
+      other:
+          'У меня морской рифовый аквариум, я веду учёт в приложении. Ниже данные моего аквариума за последние $weeks недели. Проанализируй их, укажи на риски и тенденции, требующие внимания, и подскажи, что проверить или изменить.',
+      many:
+          'У меня морской рифовый аквариум, я веду учёт в приложении. Ниже данные моего аквариума за последние $weeks недель. Проанализируй их, укажи на риски и тенденции, требующие внимания, и подскажи, что проверить или изменить.',
+      few:
+          'У меня морской рифовый аквариум, я веду учёт в приложении. Ниже данные моего аквариума за последние $weeks недели. Проанализируй их, укажи на риски и тенденции, требующие внимания, и подскажи, что проверить или изменить.',
+      one:
+          'У меня морской рифовый аквариум, я веду учёт в приложении. Ниже данные моего аквариума за последнюю неделю. Проанализируй их, укажи на риски и тенденции, требующие внимания, и подскажи, что проверить или изменить.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiSummaryDocTitle(Object tank) {
+    return '$tank — сводка морского аквариума';
+  }
+
+  @override
+  String aiSummaryRunningSince(Object date) {
+    return 'запущен $date';
+  }
+
+  @override
+  String aiSummaryExportedLine(Object date) {
+    return 'Экспортировано $date.';
+  }
+
+  @override
+  String get aiSummaryStatusHeading => 'Состояние';
+
+  @override
+  String aiSummaryHealthLine(int score, Object grade) {
+    return 'Оценка здоровья: $score из 100 ($grade)';
+  }
+
+  @override
+  String aiSummaryStabilityLine(int score, Object grade, int days) {
+    return 'Оценка стабильности: $score из 100 ($grade) за последние $days дн.';
+  }
+
+  @override
+  String get aiSummaryObservationsLead =>
+      'Наблюдения приложения (по правилам):';
+
+  @override
+  String get aiSummaryParamsHeading => 'Параметры';
+
+  @override
+  String aiSummaryTestedOn(Object date) {
+    return 'последний тест $date';
+  }
+
+  @override
+  String aiSummaryTargetRange(Object range) {
+    return 'Цель $range';
+  }
+
+  @override
+  String aiSummaryAcceptableRange(Object range) {
+    return 'допустимо $range';
+  }
+
+  @override
+  String get aiSummaryColDate => 'Дата';
+
+  @override
+  String get aiSummaryColValue => 'Значение';
+
+  @override
+  String get aiSummaryColNote => 'Заметка';
+
+  @override
+  String get aiSummaryColElement => 'Элемент';
+
+  @override
+  String get aiSummaryColStatus => 'Статус';
+
+  @override
+  String aiSummaryShowingTests(int shown, int total) {
+    return 'Показаны $shown последних из $total измерений.';
+  }
+
+  @override
+  String get aiSummaryDosingHeading => 'План дозирования';
+
+  @override
+  String aiSummaryDailyEquivalent(Object amount) {
+    return '≈$amount в день';
+  }
+
+  @override
+  String aiSummarySinceDate(Object date) {
+    return 'с $date';
+  }
+
+  @override
+  String get aiSummaryOneOff => 'разовая доза';
+
+  @override
+  String get aiSummaryActionsHeading => 'Обслуживание за этот период';
+
+  @override
+  String get aiSummaryMicroHeading =>
+      'Микроэлементы (последние измеренные значения)';
+
+  @override
   String get dashboardSection => 'Панель';
 
   @override

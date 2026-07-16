@@ -3097,6 +3097,186 @@ abstract class AppLocalizations {
   /// **'{param} not tested in {days} d'**
   String insightStale(Object param, int days);
 
+  /// Menu action and sheet title for the tank-summary export the user pastes into their own AI chat (U27).
+  ///
+  /// In en, this message translates to:
+  /// **'Ask your AI'**
+  String get aiSummaryAction;
+
+  /// Privacy line at the top of the pre-share sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is prepared on your device — nothing is sent anywhere. You choose where to paste it.'**
+  String get aiSummaryPrivacyNote;
+
+  /// Window-length chip on the pre-share sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 week} other{{count} weeks}}'**
+  String aiSummaryWeeksChip(int count);
+
+  /// SnackBar after the summary was copied to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied — paste it into your AI chat.'**
+  String get aiSummaryCopied;
+
+  /// Shown in the pre-share sheet when the tank has no readings at all.
+  ///
+  /// In en, this message translates to:
+  /// **'No readings yet — nothing to summarize.'**
+  String get aiSummaryEmpty;
+
+  /// Footer action on the Insights sheet linking to the AI-summary export.
+  ///
+  /// In en, this message translates to:
+  /// **'Want a deeper look? Ask your AI'**
+  String get aiSummaryInsightsFooter;
+
+  /// Instruction paragraph at the top of the exported document, addressed to the AI the user pastes it into.
+  ///
+  /// In en, this message translates to:
+  /// **'{weeks, plural, one{I keep a saltwater reef aquarium and track it with an app. Below is my tank\'s data from the last week. Please analyze it, point out risks or trends I should address, and suggest what to check or adjust.} other{I keep a saltwater reef aquarium and track it with an app. Below is my tank\'s data from the last {weeks} weeks. Please analyze it, point out risks or trends I should address, and suggest what to check or adjust.}}'**
+  String aiSummaryPreamble(int weeks);
+
+  /// Markdown H1 of the exported document.
+  ///
+  /// In en, this message translates to:
+  /// **'{tank} — saltwater aquarium summary'**
+  String aiSummaryDocTitle(Object tank);
+
+  /// Tank-profile fragment; {date} is an ISO date.
+  ///
+  /// In en, this message translates to:
+  /// **'running since {date}'**
+  String aiSummaryRunningSince(Object date);
+
+  /// No description provided for @aiSummaryExportedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported {date}.'**
+  String aiSummaryExportedLine(Object date);
+
+  /// No description provided for @aiSummaryStatusHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get aiSummaryStatusHeading;
+
+  /// No description provided for @aiSummaryHealthLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Health score: {score} of 100 ({grade})'**
+  String aiSummaryHealthLine(int score, Object grade);
+
+  /// No description provided for @aiSummaryStabilityLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Stability score: {score} of 100 ({grade}) over the last {days} days'**
+  String aiSummaryStabilityLine(int score, Object grade, int days);
+
+  /// Lead-in line before the exported insight list.
+  ///
+  /// In en, this message translates to:
+  /// **'The app\'s rule-based observations:'**
+  String get aiSummaryObservationsLead;
+
+  /// No description provided for @aiSummaryParamsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Parameters'**
+  String get aiSummaryParamsHeading;
+
+  /// No description provided for @aiSummaryTestedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'last tested {date}'**
+  String aiSummaryTestedOn(Object date);
+
+  /// Green-range fragment, e.g. "Target 7.5–9".
+  ///
+  /// In en, this message translates to:
+  /// **'Target {range}'**
+  String aiSummaryTargetRange(Object range);
+
+  /// Amber-range fragment, e.g. "acceptable 7–11".
+  ///
+  /// In en, this message translates to:
+  /// **'acceptable {range}'**
+  String aiSummaryAcceptableRange(Object range);
+
+  /// No description provided for @aiSummaryColDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get aiSummaryColDate;
+
+  /// No description provided for @aiSummaryColValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get aiSummaryColValue;
+
+  /// No description provided for @aiSummaryColNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get aiSummaryColNote;
+
+  /// No description provided for @aiSummaryColElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Element'**
+  String get aiSummaryColElement;
+
+  /// No description provided for @aiSummaryColStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get aiSummaryColStatus;
+
+  /// Cap note under a truncated per-parameter history table.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the {shown} most recent of {total} tests.'**
+  String aiSummaryShowingTests(int shown, int total);
+
+  /// No description provided for @aiSummaryDosingHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosing plan'**
+  String get aiSummaryDosingHeading;
+
+  /// Average daily dose fragment; {amount} carries value + unit.
+  ///
+  /// In en, this message translates to:
+  /// **'≈{amount} per day'**
+  String aiSummaryDailyEquivalent(Object amount);
+
+  /// No description provided for @aiSummarySinceDate.
+  ///
+  /// In en, this message translates to:
+  /// **'since {date}'**
+  String aiSummarySinceDate(Object date);
+
+  /// Label for a logged manual dose line in the export.
+  ///
+  /// In en, this message translates to:
+  /// **'one-off dose'**
+  String get aiSummaryOneOff;
+
+  /// No description provided for @aiSummaryActionsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance in this period'**
+  String get aiSummaryActionsHeading;
+
+  /// No description provided for @aiSummaryMicroHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Trace elements (latest measured values)'**
+  String get aiSummaryMicroHeading;
+
   /// No description provided for @dashboardSection.
   ///
   /// In en, this message translates to:

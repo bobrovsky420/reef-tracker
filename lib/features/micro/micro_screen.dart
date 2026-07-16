@@ -146,9 +146,8 @@ class MicroScreen extends ConsumerWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             title: Text(l.microAttentionOnly),
             value: attentionOnly,
-            onChanged: (v) => unawaited(
-              ref.read(settingsProvider).setMicroAttentionOnly(v),
-            ),
+            onChanged: (v) =>
+                unawaited(ref.read(settingsProvider).setMicroAttentionOnly(v)),
           ),
           if (visible.isEmpty && (hideUndetectable || attentionOnly))
             Padding(

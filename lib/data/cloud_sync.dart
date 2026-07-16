@@ -145,7 +145,11 @@ String cloudBackupFileName(DateTime now) {
 /// Deletes the oldest backup files beyond [keep], newest-by-name kept
 /// (backup names are UTC-timestamped ⇒ lexical == chronological). Foreign
 /// files in the folder (a user could drop anything into it) are ignored.
-Future<void> _pruneCloud(CloudBackupStore store, String folderId, int keep) async {
+Future<void> _pruneCloud(
+  CloudBackupStore store,
+  String folderId,
+  int keep,
+) async {
   if (keep < 0) keep = 0;
   final files =
       (await store.list(folderId))

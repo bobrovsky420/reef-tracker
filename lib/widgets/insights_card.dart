@@ -8,6 +8,7 @@ import '../app/providers.dart';
 import '../domain/insights.dart';
 import '../domain/pro_features.dart';
 import '../domain/zones.dart';
+import '../features/ai_summary/ai_summary_sheet.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import 'pro_feature_dialog.dart';
@@ -223,6 +224,22 @@ class _InsightsSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             for (final i in insights) _InsightRow(insight: i),
+            // The rules cover the routine reading of the data; for the
+            // open-ended "why?" the U27 summary export is the escape hatch —
+            // this is the natural moment to offer it.
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () {
+                  final nav = Navigator.of(context);
+                  nav.pop();
+                  unawaited(showAiSummarySheet(nav.context));
+                },
+                icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                label: Text(l.aiSummaryInsightsFooter),
+              ),
+            ),
           ],
         ),
       ),
