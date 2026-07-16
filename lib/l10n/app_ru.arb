@@ -531,7 +531,9 @@
   "insightStale": "{param}: не измерялось {days} дн.",
 
   "aiSummaryAction": "Спросите свой ИИ",
-  "aiSummaryPrivacyNote": "Всё готовится на вашем устройстве — никуда ничего не отправляется. Вы сами решаете, куда вставить текст.",
+  "aiSummaryPrivacyNote": "Это готовый промпт с данными вашего аквариума. Вставьте его в ChatGPT, Claude, Gemini или другой ИИ-инструмент — всё готовится на вашем устройстве, никуда ничего не отправляется.",
+  "aiSummaryPromptPreview": "Предпросмотр промпта",
+  "aiSummaryCopyPrompt": "Копировать промпт",
   "aiSummaryWeeksChip": "{count, plural, one{{count} неделя} few{{count} недели} many{{count} недель} other{{count} недели}}",
   "aiSummaryCopied": "Скопировано — вставьте в чат с вашим ИИ.",
   "aiSummaryEmpty": "Пока нет измерений — нечего обобщать.",

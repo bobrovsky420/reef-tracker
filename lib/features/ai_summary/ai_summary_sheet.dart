@@ -176,7 +176,16 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
                       }
                       return Column(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            l.aiSummaryPromptPreview.toUpperCase(),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.hintColor,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
                           Flexible(
                             child: Container(
                               width: double.infinity,
@@ -204,11 +213,7 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
                                 child: FilledButton.icon(
                                   onPressed: () => unawaited(_copy(text)),
                                   icon: const Icon(Icons.copy),
-                                  label: Text(
-                                    MaterialLocalizations.of(
-                                      context,
-                                    ).copyButtonLabel,
-                                  ),
+                                  label: Text(l.aiSummaryCopyPrompt),
                                 ),
                               ),
                               const SizedBox(width: 8),

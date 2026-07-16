@@ -531,7 +531,9 @@
   "insightStale": "{param}: neměřeno {days} d",
 
   "aiSummaryAction": "Zeptejte se své AI",
-  "aiSummaryPrivacyNote": "Vše se připraví ve vašem zařízení — nic se nikam neodesílá. Sami zvolíte, kam text vložíte.",
+  "aiSummaryPrivacyNote": "Toto je připravený prompt s daty vaší nádrže. Vložte ho do ChatGPT, Claude, Gemini nebo jiného AI nástroje — vše se připraví ve vašem zařízení, nic se nikam neodesílá.",
+  "aiSummaryPromptPreview": "Náhled promptu",
+  "aiSummaryCopyPrompt": "Kopírovat prompt",
   "aiSummaryWeeksChip": "{count, plural, one{1 týden} few{{count} týdny} other{{count} týdnů}}",
   "aiSummaryCopied": "Zkopírováno — vložte do chatu s vaší AI.",
   "aiSummaryEmpty": "Zatím žádná měření — není co shrnout.",

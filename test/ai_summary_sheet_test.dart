@@ -94,7 +94,7 @@ void main() {
       );
       expect(find.textContaining('Alkalinity (alkalinity)'), findsOneWidget);
 
-      await tester.tap(find.text('Copy'));
+      await tester.tap(find.text('Copy prompt'));
       await settle(tester);
       expect(copied, hasLength(1));
       expect(copied.single, contains('# Reef — saltwater aquarium summary'));
@@ -128,7 +128,7 @@ void main() {
         find.text('No readings yet — nothing to summarize.'),
         findsOneWidget,
       );
-      expect(find.text('Copy'), findsNothing);
+      expect(find.text('Copy prompt'), findsNothing);
       expect(find.text('Share'), findsNothing);
     } finally {
       await unmountApp(tester);

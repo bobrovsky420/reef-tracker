@@ -1828,7 +1828,13 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get aiSummaryPrivacyNote =>
-      'Vše se připraví ve vašem zařízení — nic se nikam neodesílá. Sami zvolíte, kam text vložíte.';
+      'Toto je připravený prompt s daty vaší nádrže. Vložte ho do ChatGPT, Claude, Gemini nebo jiného AI nástroje — vše se připraví ve vašem zařízení, nic se nikam neodesílá.';
+
+  @override
+  String get aiSummaryPromptPreview => 'Náhled promptu';
+
+  @override
+  String get aiSummaryCopyPrompt => 'Kopírovat prompt';
 
   @override
   String aiSummaryWeeksChip(int count) {

@@ -1847,7 +1847,13 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aiSummaryPrivacyNote =>
-      'Wszystko powstaje na Twoim urządzeniu — nic nigdzie nie jest wysyłane. Sam decydujesz, gdzie wkleić tekst.';
+      'To gotowy prompt z danymi Twojego zbiornika. Wklej go do ChatGPT, Claude, Gemini lub innego narzędzia AI — wszystko powstaje na Twoim urządzeniu, nic nigdzie nie jest wysyłane.';
+
+  @override
+  String get aiSummaryPromptPreview => 'Podgląd promptu';
+
+  @override
+  String get aiSummaryCopyPrompt => 'Kopiuj prompt';
 
   @override
   String aiSummaryWeeksChip(int count) {

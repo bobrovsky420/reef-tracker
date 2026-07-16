@@ -5,17 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.1] - 2026-07-16
+
+### Changed
+- The "Ask your AI" sheet now makes clearer that the text is a ready-made
+  prompt to paste into an AI tool: a rewritten explainer naming ChatGPT,
+  Claude and Gemini as examples, a "Prompt preview" label above the text,
+  and a "Copy prompt" button.
+
+### Fixed
+- The "Ask your AI" export no longer includes the stability score and the
+  smart-insights observations when the install is not entitled to those Pro
+  features — the document now matches what the app itself shows. (No effect
+  for current installs: every Founder's Edition install keeps both features.)
+
 ## [0.29.0] - 2026-07-15
 
 ### Added
-- "Ask your AI": prepare a shareable summary of your tank — recent
-  parameters with your target ranges, trends, scores and observations,
-  dosing, maintenance and trace elements — ready to paste into ChatGPT,
-  Claude or any AI chat for a deeper analysis. Found in the menu on the
-  Measurements tab and at the bottom of the Insights list. You choose the
-  period (4/8/12 weeks), see exactly what will be shared, and copy or share
-  it as plain text. Everything is prepared on your device — the app itself
-  sends nothing anywhere.
+- "Ask your AI": prepare a ready-made AI prompt summarizing your tank —
+  recent parameters with your target ranges, trends, scores and
+  observations, dosing, maintenance and trace elements — to paste into
+  ChatGPT, Claude, Gemini or any other AI tool for a deeper analysis. Found
+  in the menu on the Measurements tab and at the bottom of the Insights
+  list. You choose the period (4/8/12 weeks), preview the exact prompt
+  before it leaves the app, and copy or share it as plain text. Everything
+  is prepared on your device — the app itself sends nothing anywhere.
 - Smart insights: a new dashboard card under the health summary that turns
   your recent readings into a short, prioritized list of plain-language
   observations — parameters out of range (and whether they are still

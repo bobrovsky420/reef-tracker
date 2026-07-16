@@ -1841,7 +1841,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aiSummaryPrivacyNote =>
-      'Всё готовится на вашем устройстве — никуда ничего не отправляется. Вы сами решаете, куда вставить текст.';
+      'Это готовый промпт с данными вашего аквариума. Вставьте его в ChatGPT, Claude, Gemini или другой ИИ-инструмент — всё готовится на вашем устройстве, никуда ничего не отправляется.';
+
+  @override
+  String get aiSummaryPromptPreview => 'Предпросмотр промпта';
+
+  @override
+  String get aiSummaryCopyPrompt => 'Копировать промпт';
 
   @override
   String aiSummaryWeeksChip(int count) {

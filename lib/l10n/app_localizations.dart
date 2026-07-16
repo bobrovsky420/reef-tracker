@@ -3103,11 +3103,23 @@ abstract class AppLocalizations {
   /// **'Ask your AI'**
   String get aiSummaryAction;
 
-  /// Privacy line at the top of the pre-share sheet.
+  /// Explainer + privacy line at the top of the pre-share sheet: makes clear the text is a prompt the user pastes into an AI chat of their choice, and that the app sends nothing itself.
   ///
   /// In en, this message translates to:
-  /// **'Everything is prepared on your device — nothing is sent anywhere. You choose where to paste it.'**
+  /// **'This is a ready-made prompt with your tank\'s data. Paste it into ChatGPT, Claude, Gemini or any other AI tool — everything is prepared on your device, nothing is sent anywhere.'**
   String get aiSummaryPrivacyNote;
+
+  /// Small label above the preview box showing the exact prompt text.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt preview'**
+  String get aiSummaryPromptPreview;
+
+  /// Primary button copying the prompt to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy prompt'**
+  String get aiSummaryCopyPrompt;
 
   /// Window-length chip on the pre-share sheet.
   ///

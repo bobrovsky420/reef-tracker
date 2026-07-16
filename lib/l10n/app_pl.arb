@@ -531,7 +531,9 @@
   "insightStale": "{param}: nie mierzone od {days} d",
 
   "aiSummaryAction": "Zapytaj swoją AI",
-  "aiSummaryPrivacyNote": "Wszystko powstaje na Twoim urządzeniu — nic nigdzie nie jest wysyłane. Sam decydujesz, gdzie wkleić tekst.",
+  "aiSummaryPrivacyNote": "To gotowy prompt z danymi Twojego zbiornika. Wklej go do ChatGPT, Claude, Gemini lub innego narzędzia AI — wszystko powstaje na Twoim urządzeniu, nic nigdzie nie jest wysyłane.",
+  "aiSummaryPromptPreview": "Podgląd promptu",
+  "aiSummaryCopyPrompt": "Kopiuj prompt",
   "aiSummaryWeeksChip": "{count, plural, one{1 tydzień} few{{count} tygodnie} many{{count} tygodni} other{{count} tygodnia}}",
   "aiSummaryCopied": "Skopiowano — wklej do czatu ze swoją AI.",
   "aiSummaryEmpty": "Brak pomiarów — nie ma czego podsumować.",

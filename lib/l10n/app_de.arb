@@ -531,7 +531,9 @@
   "insightStale": "{param} seit {days} d nicht gemessen",
 
   "aiSummaryAction": "Frag deine KI",
-  "aiSummaryPrivacyNote": "Alles wird auf deinem Gerät erstellt — nichts wird irgendwohin gesendet. Du entscheidest, wo du den Text einfügst.",
+  "aiSummaryPrivacyNote": "Das ist ein fertiger Prompt mit den Daten deines Beckens. Füge ihn in ChatGPT, Claude, Gemini oder ein anderes KI-Tool ein — alles wird auf deinem Gerät erstellt, nichts wird irgendwohin gesendet.",
+  "aiSummaryPromptPreview": "Prompt-Vorschau",
+  "aiSummaryCopyPrompt": "Prompt kopieren",
   "aiSummaryWeeksChip": "{count, plural, one{1 Woche} other{{count} Wochen}}",
   "aiSummaryCopied": "Kopiert — füge es in deinen KI-Chat ein.",
   "aiSummaryEmpty": "Noch keine Messungen — nichts zusammenzufassen.",

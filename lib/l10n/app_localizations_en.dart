@@ -1815,7 +1815,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiSummaryPrivacyNote =>
-      'Everything is prepared on your device — nothing is sent anywhere. You choose where to paste it.';
+      'This is a ready-made prompt with your tank\'s data. Paste it into ChatGPT, Claude, Gemini or any other AI tool — everything is prepared on your device, nothing is sent anywhere.';
+
+  @override
+  String get aiSummaryPromptPreview => 'Prompt preview';
+
+  @override
+  String get aiSummaryCopyPrompt => 'Copy prompt';
 
   @override
   String aiSummaryWeeksChip(int count) {
