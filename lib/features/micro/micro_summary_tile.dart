@@ -10,8 +10,9 @@ import '../../widgets/zone_visuals.dart';
 /// Dashboard grid tile summarizing the microelement panel (U17) — the
 /// feature's front door, laid out like the measurement/ratio tiles (title,
 /// headline, timestamp) and pinned after them. Headline: "N out of range"
-/// in the worst zone's color, or "All within range"; "No readings" before the
-/// first measurement. Tapping opens `/micro`.
+/// in the dominant deviation zone's color (see `computeMicroStatus`), or
+/// "All within range"; "No readings" before the first measurement. Tapping
+/// opens `/micro`.
 class MicroSummaryTile extends ConsumerWidget {
   const MicroSummaryTile({super.key});
 
@@ -54,7 +55,7 @@ class MicroSummaryTile extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: status.worstZone.color,
+                    color: status.statusZone.color,
                   ),
                 ),
               const SizedBox(height: 4),

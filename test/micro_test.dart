@@ -223,11 +223,11 @@ void main() {
   group('computeMicroStatus', () {
     ZoneBounds b(String key) => kMicroDefaultBounds[key]!;
 
-    test('empty panel: nothing measured, worst zone unknown', () {
+    test('empty panel: nothing measured, status zone unknown', () {
       final s = computeMicroStatus(const []);
       expect(s.measured, 0);
       expect(s.outOfRange, 0);
-      expect(s.worstZone, Zone.unknown);
+      expect(s.statusZone, Zone.unknown);
       expect(s.lastMeasuredAt, isNull);
     });
 
@@ -239,8 +239,8 @@ void main() {
       expect(s.outOfRange, 0);
     });
 
-    test('counts out-of-range elements and keeps the worst zone + newest '
-        'sample date', () {
+    test('counts out-of-range elements and keeps the newest sample date; '
+        'a red tying the amber count reads red', () {
       final old = DateTime(2026, 5, 1);
       final recent = DateTime(2026, 7, 1);
       final s = computeMicroStatus([
@@ -253,8 +253,23 @@ void main() {
       ]);
       expect(s.measured, 3);
       expect(s.outOfRange, 2);
-      expect(s.worstZone, Zone.red);
+      expect(s.statusZone, Zone.red); // 1 red vs 1 amber: tie goes to red.
       expect(s.lastMeasuredAt, recent);
+    });
+
+    test('status zone is the dominant deviation: an amber majority reads '
+        'amber even with a red present', () {
+      final t = DateTime(2026, 6, 1);
+      final s = computeMicroStatus([
+        // Red (beyond the amber ceiling 0.001).
+        (paramKey: 'mercury', bounds: b('mercury'), latest: 0.01, takenAt: t),
+        // Two ambers (between green ceiling and amber ceiling).
+        (paramKey: 'lead', bounds: b('lead'), latest: 0.005, takenAt: t),
+        // Amber (between tin's green ceiling 0.003 and amber ceiling 0.01).
+        (paramKey: 'tin', bounds: b('tin'), latest: 0.005, takenAt: t),
+      ]);
+      expect(s.outOfRange, 3);
+      expect(s.statusZone, Zone.amber);
     });
 
     test('a value without classifiable bounds counts as measured but not '
@@ -269,17 +284,17 @@ void main() {
       ]);
       expect(s.measured, 1);
       expect(s.outOfRange, 0);
-      expect(s.worstZone, Zone.unknown);
+      expect(s.statusZone, Zone.unknown);
     });
 
-    test('a green result does not mask an earlier red (worst zone is '
+    test('a green result does not mask an earlier red (status zone is '
         'order-independent)', () {
       final t = DateTime(2026, 6, 1);
       final s = computeMicroStatus([
         (paramKey: 'mercury', bounds: b('mercury'), latest: 0.01, takenAt: t),
         (paramKey: 'iodine', bounds: b('iodine'), latest: 0.06, takenAt: t),
       ]);
-      expect(s.worstZone, Zone.red);
+      expect(s.statusZone, Zone.red);
     });
   });
 

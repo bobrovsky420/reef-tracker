@@ -1030,9 +1030,10 @@ behind a confirmation dialog**:
   `RatioVisibilities` (`ratioSettingsProvider` → `Map<RatioKind.name,
   RatioVisibility>`, resolved with `ratioRowVisible` / `ratioRowOrder`).
 - A `MicroSummaryTile` (U17) is pinned after the reorderable cards whenever
-  the grid renders: same tile layout, headline = "N out of range" in the worst
-  micro zone's color / "All within range" / "No readings", timestamp = newest
-  micro sample. Tapping opens `/micro`. Gated by the Settings **microelements
+  the grid renders: same tile layout, headline = "N out of range" in the
+  **dominant** deviation zone's color (red only when reds ≥ ambers — a lone
+  red among mostly-amber ICP deviations reads amber, see `computeMicroStatus`)
+  / "All within range" / "No readings", timestamp = newest micro sample. Tapping opens `/micro`. Gated by the Settings **microelements
   switch** (`microEnabledProvider`, default on) — gated in the grid builder,
   not inside the tile, so switching off removes the grid cell; the switch
   only hides (measurements stay stored).
@@ -1312,7 +1313,7 @@ instead of dashboard tiles; the split is `ParamCategory` (`isCoreParam`
 filters the dashboard grid, comparison view, Add Reading form, Manage
 Parameters list/add-sheet and the health-score inputs to core).
 
-- **`MicroScreen`** (`/micro`): summary header card (worst zone icon +
+- **`MicroScreen`** (`/micro`): summary header card (dominant-zone icon +
   out-of-range headline + "Last measured", from `microStatusProvider`), then
   every element in catalog order, sectioned like the lab reports: major ions /
   trace elements / contaminants. Rows show the latest value zone-colored

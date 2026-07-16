@@ -416,7 +416,7 @@ class _ViewChips extends ConsumerWidget {
   }
 }
 
-/// Panel status header: worst-zone icon, out-of-range headline, newest sample
+/// Panel status header: dominant-zone icon, out-of-range headline, newest sample
 /// date — the micro panel's own freshness framing (deliberately outside the
 /// 30-day core health model; see `domain/micro.dart`).
 class _SummaryCard extends StatelessWidget {
@@ -429,7 +429,7 @@ class _SummaryCard extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final hint = Theme.of(context).hintColor;
     final measured = status.measured > 0;
-    final color = measured ? status.worstZone.color : hint;
+    final color = measured ? status.statusZone.color : hint;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

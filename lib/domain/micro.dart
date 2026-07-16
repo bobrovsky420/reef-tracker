@@ -161,18 +161,25 @@ typedef MicroInput = ({
 typedef MicroStatus = ({
   int measured,
   int outOfRange,
-  Zone worstZone,
+  Zone statusZone,
   DateTime? lastMeasuredAt,
 });
 
-/// Collapses the panel into (measured count, out-of-range count, worst zone,
+/// Collapses the panel into (measured count, out-of-range count, status zone,
 /// newest measurement). Elements without a reading are skipped — never
 /// counted as a problem; an element whose bounds can't classify (empty or
 /// invalid) counts as measured but not against the range.
+///
+/// The status zone is the **dominant** deviation zone, not the worst single
+/// element: an ICP report covers ~30 trace elements, so "any red wins" would
+/// leave the summary permanently red. Red only when reds are at least as
+/// numerous as ambers; a red minority reads amber (the headline count still
+/// includes it).
 MicroStatus computeMicroStatus(Iterable<MicroInput> inputs) {
   var measured = 0;
-  var outOfRange = 0;
-  var worst = Zone.unknown;
+  var ambers = 0;
+  var reds = 0;
+  var greens = 0;
   DateTime? lastAt;
   for (final i in inputs) {
     final latest = i.latest;
@@ -180,19 +187,28 @@ MicroStatus computeMicroStatus(Iterable<MicroInput> inputs) {
     measured++;
     final at = i.takenAt;
     if (at != null && (lastAt == null || at.isAfter(lastAt))) lastAt = at;
-    final zone = i.bounds.classify(latest);
-    if (zone == Zone.amber || zone == Zone.red) outOfRange++;
-    worst = switch ((worst, zone)) {
-      (_, Zone.red) || (Zone.red, _) => Zone.red,
-      (_, Zone.amber) || (Zone.amber, _) => Zone.amber,
-      (_, Zone.green) || (Zone.green, _) => Zone.green,
-      _ => Zone.unknown,
-    };
+    switch (i.bounds.classify(latest)) {
+      case Zone.red:
+        reds++;
+      case Zone.amber:
+        ambers++;
+      case Zone.green:
+        greens++;
+      case Zone.unknown:
+        break;
+    }
   }
+  final zone = reds > 0 && reds >= ambers
+      ? Zone.red
+      : ambers > 0
+      ? Zone.amber
+      : greens > 0
+      ? Zone.green
+      : Zone.unknown;
   return (
     measured: measured,
-    outOfRange: outOfRange,
-    worstZone: worst,
+    outOfRange: reds + ambers,
+    statusZone: zone,
     lastMeasuredAt: lastAt,
   );
 }
