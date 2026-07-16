@@ -468,6 +468,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noReadingsInRange => 'Keine Messungen in diesem Zeitraum.';
 
   @override
+  String get recordFirstReading => 'Erste Messung erfassen';
+
+  @override
   String get editMeasurement => 'Messung bearbeiten';
 
   @override

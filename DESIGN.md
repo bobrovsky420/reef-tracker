@@ -1116,7 +1116,15 @@ shown only when the range holds readings) captures the chart's
 it to the OS share sheet via `shareExportBytes` — the same staging/sweep
 lifecycle as the JSON/CSV exports; since the chart sliver is unpainted when
 scrolled away, the handler first jumps the list back to the top and waits a
-frame. Below the chart is the readings list:
+frame. A **quick-add FAB** (U30) records a fresh reading for the viewed
+parameter in place: it opens `_ReadingDialog` in new-reading mode (empty
+value, timestamp now, no Delete action; the same plausibility validation as
+editing) and saves via `insertReading`. When the selected range holds no
+readings the FAB yields to a centered CTA under the empty-state text —
+"Record your first reading" if the parameter has never been tested (that
+path is reachable from the health sheet's "never tested" rows and used to
+dead-end), plain "Add reading" if only the range is empty. Below the chart
+is the readings list:
 tap a row to edit its **value and date/time** (`_ReadingDialog`, the date/time
 picker mirroring the actions log); when the moved reading belongs to a batch of
 sibling measurements, the user is asked whether to re-time only that value

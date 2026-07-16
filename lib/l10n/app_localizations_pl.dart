@@ -472,6 +472,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noReadingsInRange => 'Brak pomiarów w tym zakresie.';
 
   @override
+  String get recordFirstReading => 'Zapisz pierwszy pomiar';
+
+  @override
   String get editMeasurement => 'Edytuj pomiar';
 
   @override

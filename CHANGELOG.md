@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.29.3] - 2026-07-16
 
+### Added
+- A parameter's history screen now has an "Add reading" button, so a new
+  value can be logged right where the data is being viewed instead of
+  backing out to the Measurements tab and finding the parameter again. When
+  the parameter has no readings yet (e.g. opened from the health
+  breakdown's "never tested" row), the empty screen offers a "Record your
+  first reading" button instead of a dead end.
+
 ### Fixed
 - Android: Google Drive sync no longer hangs for the rest of the session
   when a connection stalls mid-request (e.g. captive-portal Wi-Fi or a

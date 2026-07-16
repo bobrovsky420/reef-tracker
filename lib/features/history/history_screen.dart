@@ -92,6 +92,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             ),
         ],
       ),
+      // Quick-add without leaving the screen (U30). Hidden while the empty
+      // state is showing — its centered CTA is the same action.
+      floatingActionButton: hasChart
+          ? FloatingActionButton.extended(
+              icon: const Icon(Icons.add),
+              label: Text(l.addReading),
+              onPressed: () => _addReading(pres),
+            )
+          : null,
       body: readingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
@@ -106,7 +115,27 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 // instantiated — on "All" the old ListView(children:) built
                 // hundreds of Dismissible tiles per rebuild.
                 child: data.isEmpty
-                    ? Center(child: Text(l.noReadingsInRange))
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(l.noReadingsInRange),
+                            const SizedBox(height: 16),
+                            // A never-tested parameter used to dead-end here
+                            // (reached via the health sheet's "never tested"
+                            // rows) — offer the first reading in place (U30).
+                            FilledButton.icon(
+                              icon: const Icon(Icons.add),
+                              label: Text(
+                                all.isEmpty
+                                    ? l.recordFirstReading
+                                    : l.addReading,
+                              ),
+                              onPressed: () => _addReading(pres),
+                            ),
+                          ],
+                        ),
+                      )
                     : CustomScrollView(
                         controller: _scrollCtrl,
                         slivers: [
@@ -153,6 +182,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             ),
                           const SliverToBoxAdapter(child: Divider()),
                           _readingsSliver(context, data, param, pres),
+                          // Keeps the last row tappable under the FAB.
+                          const SliverToBoxAdapter(child: SizedBox(height: 88)),
                         ],
                       ),
               ),
@@ -200,6 +231,31 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(l.errorWith('$e'))));
     }
+  }
+
+  /// Quick-adds a reading for this parameter right from its history (U30) —
+  /// reuses [_ReadingDialog] in new-reading mode, so the #31 plausibility
+  /// validation applies unchanged.
+  Future<void> _addReading(ParamPresentation pres) async {
+    final db = ref.read(dbProvider);
+    final tank = ref.read(activeTankProvider);
+    if (tank == null) return;
+    final result = await showDialog<_ReadingDialogResult>(
+      context: context,
+      builder: (ctx) => _ReadingDialog(
+        paramKey: widget.paramKey,
+        pres: pres,
+        initialTime: DateTime.now(),
+        isNew: true,
+      ),
+    );
+    if (result is! _ReadingEdit) return;
+    await db.insertReading(
+      tankId: tank.id,
+      paramKey: widget.paramKey,
+      value: result.value,
+      takenAt: result.time,
+    );
   }
 
   Widget _readingsSliver(
@@ -452,22 +508,28 @@ class _ReadingEdit extends _ReadingDialogResult {
   final double value;
 }
 
-/// Edits one reading's value (in the user's display unit) and its date/time.
+/// Edits one reading's value (in the user's display unit) and its date/time,
+/// or — with [isNew] — records a fresh one (U30: quick-add from history).
 /// The date/time picker mirrors the actions log's `_ActionDialog`.
 class _ReadingDialog extends StatefulWidget {
   const _ReadingDialog({
     required this.paramKey,
     required this.pres,
-    required this.initialValue,
+    this.initialValue,
     required this.initialTime,
+    this.isNew = false,
   });
 
   final String paramKey;
   final ParamPresentation pres;
 
-  /// Canonical value to seed the field (shown converted to the display unit).
-  final double initialValue;
+  /// Canonical value to seed the field (shown converted to the display unit);
+  /// null starts the field empty (new-reading mode).
+  final double? initialValue;
   final DateTime initialTime;
+
+  /// New-reading mode: "Add reading" title, no Delete action, empty value.
+  final bool isNew;
 
   @override
   State<_ReadingDialog> createState() => _ReadingDialogState();
@@ -477,7 +539,9 @@ class _ReadingDialogState extends State<_ReadingDialog> {
   final _formKey = GlobalKey<FormState>();
   late DateTime _time = widget.initialTime;
   late final TextEditingController _valueCtrl = TextEditingController(
-    text: widget.pres.format(widget.initialValue),
+    text: widget.initialValue == null
+        ? ''
+        : widget.pres.format(widget.initialValue!),
   );
 
   @override
@@ -496,7 +560,7 @@ class _ReadingDialogState extends State<_ReadingDialog> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(l.editMeasurement),
+      title: Text(widget.isNew ? l.addReading : l.editMeasurement),
       content: Form(
         key: _formKey,
         child: Column(
@@ -547,13 +611,14 @@ class _ReadingDialogState extends State<_ReadingDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context).colorScheme.error,
+        if (!widget.isNew)
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, const _ReadingDelete()),
+            child: Text(l.delete),
           ),
-          onPressed: () => Navigator.pop(context, const _ReadingDelete()),
-          child: Text(l.delete),
-        ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(l.cancel),

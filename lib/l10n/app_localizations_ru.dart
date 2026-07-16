@@ -471,6 +471,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noReadingsInRange => 'Нет измерений в этом диапазоне.';
 
   @override
+  String get recordFirstReading => 'Записать первое измерение';
+
+  @override
   String get editMeasurement => 'Изменить измерение';
 
   @override

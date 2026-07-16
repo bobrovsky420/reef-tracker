@@ -468,6 +468,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get noReadingsInRange => 'V tomto rozsahu nejsou žádná měření.';
 
   @override
+  String get recordFirstReading => 'Zaznamenat první měření';
+
+  @override
   String get editMeasurement => 'Upravit měření';
 
   @override

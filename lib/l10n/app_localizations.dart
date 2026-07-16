@@ -865,6 +865,12 @@ abstract class AppLocalizations {
   /// **'No readings in this range.'**
   String get noReadingsInRange;
 
+  /// No description provided for @recordFirstReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Record your first reading'**
+  String get recordFirstReading;
+
   /// No description provided for @editMeasurement.
   ///
   /// In en, this message translates to:

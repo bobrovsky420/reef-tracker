@@ -136,6 +136,7 @@
   "rangeQuarter": "90 T",
   "rangeAll": "Alle",
   "noReadingsInRange": "Keine Messungen in diesem Zeitraum.",
+  "recordFirstReading": "Erste Messung erfassen",
   "editMeasurement": "Messung bearbeiten",
   "deleteTogetherTitle": "Messung löschen",
   "deleteTogetherBody": "{count, plural, one{Dieser Wert wurde zusammen mit 1 weiteren Messung erfasst. Nur diesen Wert oder alle zusammen erfassten Werte löschen?} other{Dieser Wert wurde zusammen mit {count} weiteren Messungen erfasst. Nur diesen Wert oder alle zusammen erfassten Werte löschen?}}",

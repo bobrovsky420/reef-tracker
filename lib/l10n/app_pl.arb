@@ -136,6 +136,7 @@
   "rangeQuarter": "90 dni",
   "rangeAll": "Wszystko",
   "noReadingsInRange": "Brak pomiarów w tym zakresie.",
+  "recordFirstReading": "Zapisz pierwszy pomiar",
   "editMeasurement": "Edytuj pomiar",
   "deleteTogetherTitle": "Usuń pomiar",
   "deleteTogetherBody": "{count, plural, one{Ta wartość została wprowadzona razem z 1 innym pomiarem. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?} other{Ta wartość została wprowadzona razem z {count} innymi pomiarami. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?}}",

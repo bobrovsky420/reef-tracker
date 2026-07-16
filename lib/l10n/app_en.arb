@@ -173,6 +173,7 @@
   "rangeQuarter": "90d",
   "rangeAll": "All",
   "noReadingsInRange": "No readings in this range.",
+  "recordFirstReading": "Record your first reading",
   "editMeasurement": "Edit measurement",
   "deleteTogetherTitle": "Delete measurement",
   "deleteTogetherBody": "{count, plural, one{This value was entered together with 1 other measurement. Delete only this value, or all values entered together?} other{This value was entered together with {count} other measurements. Delete only this value, or all values entered together?}}",

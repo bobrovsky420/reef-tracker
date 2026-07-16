@@ -136,6 +136,7 @@
   "rangeQuarter": "90 d",
   "rangeAll": "Vše",
   "noReadingsInRange": "V tomto rozsahu nejsou žádná měření.",
+  "recordFirstReading": "Zaznamenat první měření",
   "editMeasurement": "Upravit měření",
   "deleteTogetherTitle": "Smazat měření",
   "deleteTogetherBody": "{count, plural, one{Tato hodnota byla zadána společně s 1 dalším měřením. Smazat pouze tuto hodnotu, nebo všechny hodnoty zadané společně?} other{Tato hodnota byla zadána společně s {count} dalšími měřeními. Smazat pouze tuto hodnotu, nebo všechny hodnoty zadané společně?}}",

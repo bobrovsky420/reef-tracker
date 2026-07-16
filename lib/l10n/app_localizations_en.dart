@@ -466,6 +466,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noReadingsInRange => 'No readings in this range.';
 
   @override
+  String get recordFirstReading => 'Record your first reading';
+
+  @override
   String get editMeasurement => 'Edit measurement';
 
   @override
