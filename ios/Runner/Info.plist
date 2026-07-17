@@ -36,6 +36,10 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>ReefTracker does not take photos. Camera access is referenced by the system file picker component but is never requested during normal use.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ReefTracker only reads files you explicitly select when importing a backup or CSV file. It does not browse or modify your photo library.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
