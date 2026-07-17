@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.30.0] - 2026-07-17
 
 ### Changed
+- The dashboard health card takes on the redesign's score-card look: larger
+  health (72 px) and stability (60 px) rings drawn over a neutral track with
+  the score in the new monospace numerals, the grade word colored by the
+  grade, and a hairline divider between the two halves. Taps, breakdown
+  sheets, the Pro-gated stability half, and the health-display setting are
+  unchanged.
+- The Insights card is restyled to match: a bolder header row with the
+  lightbulb icon and "+N more" note, and tighter insight rows whose icons are
+  colored by severity (informational rows now render faint). The insight
+  texts, ordering, bottom sheet, and Pro teaser are unchanged.
 - New app-wide color scheme — the first step of a visual redesign: a teal
   "actinic" accent replaces the previous blue theme, and the green/amber/red
   status colors are retuned with dedicated dark-mode variants for better

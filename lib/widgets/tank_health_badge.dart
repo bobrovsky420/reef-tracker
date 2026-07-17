@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app/providers.dart';
+import '../app/theme.dart';
 import '../data/database.dart';
 import '../domain/clock.dart';
 import '../domain/health_score.dart';
@@ -19,8 +20,18 @@ import 'pro_feature_dialog.dart';
 import 'reef_card.dart';
 import 'zone_visuals.dart';
 
-/// A circular progress ring filled to [score]/100 in [color], with [center]
-/// drawn in the middle. Used at several sizes by the health badges below.
+/// The mono numeral drawn inside a score ring (REDESIGN §A.2: JetBrains Mono
+/// w700 at 0.28× the ring size, in the ring's score color).
+TextStyle _ringNumberStyle(double ringSize, Color color) =>
+    ReefTokens.monoTextStyle.copyWith(
+      fontSize: ringSize * 0.28,
+      fontWeight: FontWeight.w700,
+      color: color,
+    );
+
+/// A circular progress ring filled to [score]/100 in [color] over a neutral
+/// `track` circle (REDESIGN §A.2), with [center] drawn in the middle. Used at
+/// several sizes by the health badges below.
 class _ScoreRing extends StatelessWidget {
   const _ScoreRing({
     required this.score,
@@ -46,6 +57,7 @@ class _ScoreRing extends StatelessWidget {
         painter: _RingPainter(
           fraction: (score ?? 0) / 100,
           color: color,
+          trackColor: ReefTokens.of(context).track,
           stroke: stroke,
         ),
         child: Center(child: center),
@@ -58,23 +70,26 @@ class _RingPainter extends CustomPainter {
   _RingPainter({
     required this.fraction,
     required this.color,
+    required this.trackColor,
     required this.stroke,
   });
 
   final double fraction;
   final Color color;
+  final Color trackColor;
   final double stroke;
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final center = rect.center;
-    final radius = (math.min(size.width, size.height) - stroke) / 2;
+    // §A.2 ring geometry: r = 0.40·size (the stroke stays inside the canvas).
+    final radius = 0.40 * math.min(size.width, size.height);
 
     final track = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
-      ..color = color.withValues(alpha: 0.18);
+      ..color = trackColor;
     canvas.drawCircle(center, radius, track);
 
     if (fraction > 0) {
@@ -95,7 +110,10 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingPainter old) =>
-      old.fraction != fraction || old.color != color || old.stroke != stroke;
+      old.fraction != fraction ||
+      old.color != color ||
+      old.trackColor != trackColor ||
+      old.stroke != stroke;
 }
 
 /// Compact health badge for the app bar: a small ring around the band icon, no
@@ -133,9 +151,10 @@ class TankHealthBadgeCompact extends ConsumerWidget {
   }
 }
 
-/// Full-width health header for the dashboard, split into two tap targets:
-/// the health half (ring + score, grade word, one-line attention summary) and
-/// the stability half (U26, Pro — how much the measurements oscillate).
+/// Full-width health header for the dashboard (REDESIGN #4: the mockup score
+/// card), split into two tap targets: the health half (72 px ring + grade word
+/// in the grade color + one-line attention summary) and the stability half
+/// (U26, Pro — a smaller 60 px ring; how much the measurements oscillate).
 /// Tapping each opens its own breakdown sheet.
 class TankHealthHeader extends ConsumerWidget {
   const TankHealthHeader({super.key});
@@ -145,7 +164,7 @@ class TankHealthHeader extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final health = ref.watch(tankHealthProvider);
     final color = health.band.colorOf(context);
-    final theme = Theme.of(context);
+    final tokens = ReefTokens.of(context);
 
     final String subtitle;
     if (!health.hasData) {
@@ -170,24 +189,20 @@ class TankHealthHeader extends ConsumerWidget {
                     ? () => showTankHealthSheet(context)
                     : null,
                 child: Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
                   child: Row(
                     children: [
                       _ScoreRing(
                         score: health.score,
                         color: color,
-                        size: 52,
-                        stroke: 5,
+                        size: 72,
+                        stroke: 7,
                         center: Text(
                           health.hasData ? '${health.score}' : '—',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
+                          style: _ringNumberStyle(72, color),
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,16 +211,20 @@ class TankHealthHeader extends ConsumerWidget {
                           children: [
                             Text(
                               l.healthGradeLabel(health.grade),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: color,
+                              // Mock: w800 — rounded to w700 (Roboto/SF ship
+                              // no 800; it risks resolving to Black).
+                              style: TextStyle(
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
+                                color: color,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               subtitle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.hintColor,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: tokens.textDim,
                               ),
                             ),
                           ],
@@ -216,7 +235,7 @@ class TankHealthHeader extends ConsumerWidget {
                 ),
               ),
             ),
-            const VerticalDivider(width: 1, indent: 12, endIndent: 12),
+            Container(width: 1, color: tokens.surfaceBorder),
             const _StabilityHeaderPanel(),
           ],
         ),
@@ -234,8 +253,11 @@ class _StabilityHeaderPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final tokens = ReefTokens.of(context);
     final unlocked = ref.watch(proFeatureProvider(ProFeature.stabilityScore));
+
+    final caption = TextStyle(fontSize: 12, color: tokens.textDim);
+    const padding = EdgeInsets.fromLTRB(14, 16, 18, 16);
 
     if (!unlocked) {
       return Semantics(
@@ -244,22 +266,17 @@ class _StabilityHeaderPanel extends ConsumerWidget {
         child: InkWell(
           onTap: () => showProFeatureDialog(context, ProFeature.stabilityScore),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            padding: padding,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.workspace_premium_outlined,
                   size: 26,
-                  color: theme.hintColor,
+                  color: tokens.textDim,
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  l.stabilityTitle,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.hintColor,
-                  ),
-                ),
+                Text(l.stabilityTitle, style: caption),
               ],
             ),
           ),
@@ -277,31 +294,22 @@ class _StabilityHeaderPanel extends ConsumerWidget {
       child: InkWell(
         onTap: () => showTankStabilitySheet(context),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          padding: padding,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _ScoreRing(
                 score: stability.score,
                 color: color,
-                size: 38,
-                stroke: 4,
+                size: 60,
+                stroke: 7,
                 center: Text(
                   stability.hasData ? '${stability.score}' : '—',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
+                  style: _ringNumberStyle(60, color),
                 ),
               ),
               const SizedBox(height: 5),
-              Text(
-                l.stabilityTitle,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.hintColor,
-                ),
-              ),
+              Text(l.stabilityTitle, style: caption),
             ],
           ),
         ),
@@ -353,11 +361,7 @@ class _TankHealthSheet extends ConsumerWidget {
                   stroke: 5,
                   center: Text(
                     health.hasData ? '${health.score}' : '—',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
+                    style: _ringNumberStyle(56, color),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -451,11 +455,7 @@ class _TankStabilitySheet extends ConsumerWidget {
                   stroke: 5,
                   center: Text(
                     stability.hasData ? '${stability.score}' : '—',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
+                    style: _ringNumberStyle(56, color),
                   ),
                 ),
                 const SizedBox(width: 14),

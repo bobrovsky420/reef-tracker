@@ -1102,10 +1102,14 @@ behind a confirmation dialog**:
   surrounding chrome (app bar with `TankSelector`, bottom nav, FAB) is owned by
   `HomeShell`.
 - A `CustomScrollView` whose first sliver is the **tank-health card**
-  (`TankHealthHeader`, `widgets/tank_health_badge.dart`), split into two tap
-  targets: the **health half** — a ring score + grade + "N to watch", tappable
+  (`TankHealthHeader`, `widgets/tank_health_badge.dart`), styled as the
+  redesign's score card (REDESIGN #4: rings are a rounded-cap arc in the
+  band's zone color over the neutral `track` token, score numerals in the mono
+  font at 0.28× the ring size) and split into two tap targets separated by a
+  hairline `surfaceBorder` divider: the **health half** — a 72 px ring score +
+  grade word in the grade color + "N to watch", tappable
   to a breakdown sheet grouping parameters by zone, each row linking to its
-  history — and the **stability half** (U26, Pro-gated) — a smaller ring for
+  history — and the **stability half** (U26, Pro-gated) — a 60 px ring for
   `tankStabilityProvider`'s score, tappable to its own sheet grouping
   parameters into most variable (worst first, each with its "±σ" typical swing
   in display units — converted as a *delta*, so the °F offset cancels) /
@@ -1117,9 +1121,11 @@ behind a confirmation dialog**:
   both halves of the card together.
 - Directly under the health card sits the **Insights card** (U28, Pro-gated;
   `widgets/insights_card.dart`, fed by `tankInsightsProvider`): the top 3
-  rule-based observations (kind icon in severity color + localized one-liner
+  rule-based observations (kind icon in severity color — notice-level rows
+  render in `textFaint` — + localized one-liner
   via `L10nDomain.insightLabel`), with a "+N more" note when the list is
-  longer; tapping anywhere opens a bottom sheet listing every insight, each
+  longer (REDESIGN #5 header/row styling); tapping anywhere opens a bottom
+  sheet listing every insight, each
   row linking to its parameter history (the health/stability sheet idiom).
   When there is nothing to say the card renders nothing at all — an
   all-green, fresh, steady tank gets no banner. Non-entitled installs see a

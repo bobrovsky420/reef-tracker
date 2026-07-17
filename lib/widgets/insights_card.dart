@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app/providers.dart';
+import '../app/theme.dart';
 import '../domain/insights.dart';
 import '../domain/pro_features.dart';
 import '../domain/zones.dart';
@@ -30,7 +31,7 @@ class InsightsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final tokens = ReefTokens.of(context);
     final unlocked = ref.watch(proFeatureProvider(ProFeature.smartInsights));
 
     if (!unlocked) {
@@ -45,24 +46,26 @@ class InsightsCard extends ConsumerWidget {
             onTap: () =>
                 showProFeatureDialog(context, ProFeature.smartInsights),
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               child: Row(
                 children: [
                   Icon(
                     Icons.workspace_premium_outlined,
                     size: 22,
-                    color: theme.hintColor,
+                    color: tokens.textDim,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       l.insightsTitle,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: theme.hintColor,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: tokens.textDim,
                       ),
                     ),
                   ),
-                  Icon(Icons.chevron_right, size: 18, color: theme.hintColor),
+                  Icon(Icons.chevron_right, size: 18, color: tokens.textDim),
                 ],
               ),
             ),
@@ -84,37 +87,35 @@ class InsightsCard extends ConsumerWidget {
       child: InkWell(
         onTap: () => showInsightsSheet(context),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.lightbulb_outline,
-                    size: 18,
-                    color: theme.hintColor,
-                  ),
+                  Icon(Icons.lightbulb_outline, size: 16, color: tokens.text),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       l.insightsTitle,
-                      style: theme.textTheme.titleSmall,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: tokens.text,
+                      ),
                     ),
                   ),
                   if (more > 0)
                     Text(
                       l.insightsMore(more),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.hintColor,
-                      ),
+                      style: TextStyle(fontSize: 12, color: tokens.textDim),
                     ),
                 ],
               ),
-              const SizedBox(height: 6),
-              for (final i in visible)
+              const SizedBox(height: 12),
+              for (final (index, i) in visible.indexed)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  padding: EdgeInsets.only(top: index == 0 ? 0 : 10),
                   child: _InsightLine(insight: i),
                 ),
             ],
@@ -126,12 +127,13 @@ class InsightsCard extends ConsumerWidget {
 }
 
 /// Icon + color for an insight: color follows severity (the app-wide zone
-/// palette), the icon follows the rule kind.
+/// palette; notice-level rows render faint per the mockup's trend rows), the
+/// icon follows the rule kind.
 (IconData, Color) _insightVisual(Insight i, BuildContext context) {
   final color = switch (i.severity) {
     InsightSeverity.critical => Zone.red.colorOf(context),
     InsightSeverity.warning => Zone.amber.colorOf(context),
-    InsightSeverity.notice => Theme.of(context).hintColor,
+    InsightSeverity.notice => ReefTokens.of(context).textFaint,
     InsightSeverity.positive => Zone.green.colorOf(context),
   };
   final icon = switch (i.kind) {
@@ -157,20 +159,20 @@ class _InsightLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final tokens = ReefTokens.of(context);
     final (icon, color) = _insightVisual(insight, context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 1),
-          child: Icon(icon, size: 16, color: color),
+          child: Icon(icon, size: 15, color: color),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             l.insightLabel(insight),
-            style: theme.textTheme.bodySmall,
+            style: TextStyle(fontSize: 12.5, height: 1.4, color: tokens.text),
           ),
         ),
       ],
