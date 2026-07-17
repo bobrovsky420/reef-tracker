@@ -45,6 +45,11 @@
   "noParamsTracked": "Dla tego akwarium nie są śledzone żadne parametry.",
   "noReadings": "Brak pomiarów",
 
+  "dashSectionCoreChemistry": "Chemia podstawowa",
+  "dashSectionNutrients": "Biogeny",
+  "dashSectionRatios": "Proporcje",
+  "dashSectionEnvironment": "Środowisko",
+
   "timeJustNow": "przed chwilą",
   "timeMinAgo": "{count} min temu",
   "timeHoursAgo": "{count} godz. temu",

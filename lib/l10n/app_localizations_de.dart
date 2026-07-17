@@ -144,6 +144,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noReadings => 'Keine Messungen';
 
   @override
+  String get dashSectionCoreChemistry => 'Basischemie';
+
+  @override
+  String get dashSectionNutrients => 'Nährstoffe';
+
+  @override
+  String get dashSectionRatios => 'Verhältnisse';
+
+  @override
+  String get dashSectionEnvironment => 'Umgebung';
+
+  @override
   String get timeJustNow => 'gerade eben';
 
   @override

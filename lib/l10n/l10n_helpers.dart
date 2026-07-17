@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../data/backup.dart';
 import '../domain/clock.dart';
+import '../domain/dashboard_sections.dart';
 import '../domain/health_score.dart';
 import '../domain/insights.dart';
 import '../domain/pro_features.dart';
@@ -287,6 +288,17 @@ extension L10nDomain on AppLocalizations {
         return gallonsSuffix(value);
     }
   }
+
+  /// Header label of a grouped-dashboard section (REDESIGN #6); null for the
+  /// headerless trailing bucket of unknown legacy keys. Also the per-row group
+  /// caption in Manage Parameters.
+  String? dashSectionLabel(DashboardSection section) => switch (section) {
+    DashboardSection.coreChemistry => dashSectionCoreChemistry,
+    DashboardSection.nutrients => dashSectionNutrients,
+    DashboardSection.ratios => dashSectionRatios,
+    DashboardSection.environment => dashSectionEnvironment,
+    DashboardSection.other => null,
+  };
 
   /// Short label for a ratio card/segment (e.g. "PO₄ : NO₃", "Mg : Ca").
   String ratioCardLabel(RatioKind kind) {

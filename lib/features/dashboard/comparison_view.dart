@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../domain/dashboard_sections.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
@@ -14,8 +15,8 @@ import '../../widgets/zone_visuals.dart';
 import '../actions/action_markers.dart';
 
 /// Stacked-graph comparison view for the Measurements tab. Renders one compact
-/// line chart per enabled tracked parameter — in the same `displayOrder` as the
-/// dashboard grid — with all charts pinned to a single, shared time window so
+/// line chart per enabled tracked parameter — in the same grouped order as the
+/// dashboard grid (#6) — with all charts pinned to a single, shared time window so
 /// their X axes align. Reading a vertical time-slice across the stack reveals
 /// how parameters move together. Tapping a chart opens its history screen.
 class ComparisonBody extends ConsumerWidget {
@@ -43,11 +44,18 @@ class ComparisonBody extends ConsumerWidget {
         );
         final range = chartRangeFromLabel(ref.watch(chartRangeProvider).value);
 
-        // Enabled core params in dashboard order (microelements live on the
-        // Microelements screen, U17).
+        // Enabled core params in the dashboard's grouped order (#6, composite
+        // section-then-displayOrder key; microelements live on the
+        // Microelements screen, U17). The stack stays flat — no headers — so
+        // a vertical time-slice still reads across every chart.
         final params =
             tracked.where((t) => t.enabled && isCoreParam(t.paramKey)).toList()
-              ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+              ..sort(
+                (a, b) => paramSortKey(
+                  a.paramKey,
+                  a.displayOrder,
+                ).compareTo(paramSortKey(b.paramKey, b.displayOrder)),
+              );
         if (params.isEmpty) return Center(child: Text(l.noParamsTracked));
 
         // Group readings (already newest-first) per parameter.

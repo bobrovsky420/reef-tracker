@@ -144,6 +144,18 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noReadings => 'Brak pomiarów';
 
   @override
+  String get dashSectionCoreChemistry => 'Chemia podstawowa';
+
+  @override
+  String get dashSectionNutrients => 'Biogeny';
+
+  @override
+  String get dashSectionRatios => 'Proporcje';
+
+  @override
+  String get dashSectionEnvironment => 'Środowisko';
+
+  @override
   String get timeJustNow => 'przed chwilą';
 
   @override

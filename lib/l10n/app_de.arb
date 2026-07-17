@@ -45,6 +45,11 @@
   "noParamsTracked": "Für dieses Aquarium werden keine Parameter verfolgt.",
   "noReadings": "Keine Messungen",
 
+  "dashSectionCoreChemistry": "Basischemie",
+  "dashSectionNutrients": "Nährstoffe",
+  "dashSectionRatios": "Verhältnisse",
+  "dashSectionEnvironment": "Umgebung",
+
   "timeJustNow": "gerade eben",
   "timeMinAgo": "vor {count} Min.",
   "timeHoursAgo": "vor {count} Std.",

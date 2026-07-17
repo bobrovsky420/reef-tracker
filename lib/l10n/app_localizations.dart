@@ -354,6 +354,30 @@ abstract class AppLocalizations {
   /// **'No readings'**
   String get noReadings;
 
+  /// Dashboard section header over the alkalinity/calcium/magnesium tiles (rendered uppercase; keep short).
+  ///
+  /// In en, this message translates to:
+  /// **'Core chemistry'**
+  String get dashSectionCoreChemistry;
+
+  /// Dashboard section header over the nitrate/phosphate/ammonia/nitrite tiles (rendered uppercase; keep short).
+  ///
+  /// In en, this message translates to:
+  /// **'Nutrients'**
+  String get dashSectionNutrients;
+
+  /// Dashboard section header over the ratio cards (rendered uppercase; keep short).
+  ///
+  /// In en, this message translates to:
+  /// **'Ratios'**
+  String get dashSectionRatios;
+
+  /// Dashboard section header over the temperature/pH/salinity/ORP tiles (rendered uppercase; keep short).
+  ///
+  /// In en, this message translates to:
+  /// **'Environment'**
+  String get dashSectionEnvironment;
+
   /// No description provided for @timeJustNow.
   ///
   /// In en, this message translates to:

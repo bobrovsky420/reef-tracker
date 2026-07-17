@@ -45,6 +45,11 @@
   "noParamsTracked": "Pro toto akvárium nejsou sledovány žádné parametry.",
   "noReadings": "Žádná měření",
 
+  "dashSectionCoreChemistry": "Základní chemie",
+  "dashSectionNutrients": "Živiny",
+  "dashSectionRatios": "Poměry",
+  "dashSectionEnvironment": "Prostředí",
+
   "timeJustNow": "právě teď",
   "timeMinAgo": "před {count} min",
   "timeHoursAgo": "před {count} h",

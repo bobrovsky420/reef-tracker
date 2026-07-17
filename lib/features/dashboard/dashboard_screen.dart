@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../domain/dashboard_sections.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/ratio.dart';
 import '../../domain/trend.dart';
@@ -16,6 +17,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/insights_card.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/section_header.dart';
 import '../../widgets/tank_health_badge.dart';
 import '../../widgets/trend_view.dart';
 import '../../widgets/zone_visuals.dart';
@@ -55,17 +57,19 @@ class DashboardBody extends ConsumerWidget {
           (byParam[r.paramKey] ??= []).add(r); // already newest-first
         }
 
-        // Build all dashboard cards — measurement tiles and ratio tiles — into
-        // one list sharing a single display order, then render them together so
-        // ratios look and reorder exactly like measurements.
-        final items = <({double order, Widget tile})>[];
+        // Partition the dashboard cards into the fixed sections (#6):
+        // measurement tiles by their catalog group, ratio tiles into their own
+        // section — then sort each section by the shared display order (the
+        // composite key's section rank is the partition itself).
+        final sections =
+            <DashboardSection, List<({DashboardSortKey key, Widget tile})>>{};
         // Core parameters only: microelements (U17) live behind the summary
         // tile appended below, not as individual dashboard tiles.
         for (final param in tracked.where(
           (t) => t.enabled && isCoreParam(t.paramKey),
         )) {
-          items.add((
-            order: param.displayOrder.toDouble(),
+          (sections[sectionOfParam(param.paramKey)] ??= []).add((
+            key: paramSortKey(param.paramKey, param.displayOrder),
             tile: _ParameterTile(
               param: param,
               history: byParam[param.paramKey] ?? const [],
@@ -96,8 +100,8 @@ class DashboardBody extends ConsumerWidget {
           // instead of confidently zone-colored (#32).
           final stale =
               series.isNotEmpty && latestRatio(numHist, denHist) == null;
-          items.add((
-            order: ratioRowOrder(kind, row),
+          (sections[DashboardSection.ratios] ??= []).add((
+            key: ratioSortKey(kind, row),
             tile: _RatioTile(
               kind: kind,
               points: series,
@@ -106,18 +110,11 @@ class DashboardBody extends ConsumerWidget {
             ),
           ));
         }
-        items.sort((a, b) => a.order.compareTo(b.order));
-
-        if (items.isEmpty) return const _NoParamsView();
-
-        // The Microelements front door (U17): one summary tile pinned after
-        // the reorderable cards — it advertises the panel; before any
-        // measurement it reads "No readings". Gated here (not inside the
-        // tile) so the Settings switch removes the grid *cell*, not just its
-        // content; measurements stay stored while hidden.
-        if (ref.watch(microEnabledProvider).value ?? true) {
-          items.add((order: double.infinity, tile: const MicroSummaryTile()));
+        for (final items in sections.values) {
+          items.sort((a, b) => a.key.compareTo(b.key));
         }
+
+        if (sections.isEmpty) return const _NoParamsView();
 
         final display =
             ref.watch(healthDisplayProvider).value ?? HealthDisplay.both;
@@ -125,40 +122,80 @@ class DashboardBody extends ConsumerWidget {
         // One scroll view so the health card scrolls together with the tiles.
         // The Insights card (U28) rides the same visibility setting as the
         // health header: both are derived summaries of the same readings.
-        return CustomScrollView(
-          slivers: [
-            if (display.showCard) ...[
-              const SliverToBoxAdapter(child: TankHealthHeader()),
-              const SliverToBoxAdapter(child: InsightsCard()),
-            ],
-            SliverPadding(
-              // The bottom inset keeps the last row scrollable past the
-              // translucent tab bar (`extendBody` — a CustomScrollView gets
-              // no automatic MediaQuery inset).
-              padding: EdgeInsets.fromLTRB(
-                12,
-                12,
-                12,
-                12 + MediaQuery.paddingOf(context).bottom,
-              ),
-              sliver: SliverGrid.builder(
-                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 219,
-                  // The tile is mostly stacked text, so its height must grow
-                  // with the system font scale or it clips at 1.3–2.0× (#44).
-                  mainAxisExtent: MediaQuery.textScalerOf(context).scale(143),
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, i) => items[i].tile,
-              ),
-            ),
+        final slivers = <Widget>[
+          if (display.showCard) ...[
+            const SliverToBoxAdapter(child: TankHealthHeader()),
+            const SliverToBoxAdapter(child: InsightsCard()),
           ],
+        ];
+        // Sections render in the enum's fixed order; a section with nothing
+        // to show renders nothing at all, header included. The `other` bucket
+        // (unknown legacy keys) is headerless — `dashSectionLabel` is null.
+        for (final section in DashboardSection.values) {
+          final items = sections[section];
+          if (items == null) continue;
+          final label = l.dashSectionLabel(section);
+          if (label != null) {
+            slivers.add(
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                sliver: SliverToBoxAdapter(child: SectionHeader(label)),
+              ),
+            );
+          }
+          slivers.add(
+            SliverPadding(
+              // Headerless sections carry their own top gap (a header brings
+              // its 16 px margin).
+              padding: EdgeInsets.fromLTRB(12, label == null ? 12 : 0, 12, 0),
+              sliver: _tileGrid(context, [for (final it in items) it.tile]),
+            ),
+          );
+        }
+
+        // The Microelements front door (U17): one summary tile pinned after
+        // every section — it advertises the panel; before any measurement it
+        // reads "No readings". Gated here (not inside the tile) so the
+        // Settings switch removes the grid *cell*, not just its content;
+        // measurements stay stored while hidden.
+        if (ref.watch(microEnabledProvider).value ?? true) {
+          slivers.add(
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              sliver: _tileGrid(context, const [MicroSummaryTile()]),
+            ),
+          );
+        }
+
+        // The bottom inset keeps the last row scrollable past the translucent
+        // tab bar (`extendBody` — a CustomScrollView gets no automatic
+        // MediaQuery inset).
+        slivers.add(
+          SliverToBoxAdapter(
+            child: SizedBox(height: 12 + MediaQuery.paddingOf(context).bottom),
+          ),
         );
+
+        return CustomScrollView(slivers: slivers);
       },
     );
   }
+
+  /// One section's tile grid — the same cell geometry the pre-#6 single grid
+  /// used, so the tiles themselves render unchanged.
+  SliverGrid _tileGrid(BuildContext context, List<Widget> tiles) =>
+      SliverGrid.builder(
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 219,
+          // The tile is mostly stacked text, so its height must grow with the
+          // system font scale or it clips at 1.3–2.0× (#44).
+          mainAxisExtent: MediaQuery.textScalerOf(context).scale(143),
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: tiles.length,
+        itemBuilder: (context, i) => tiles[i],
+      );
 }
 
 /// Dashboard tile for a [RatioKind], laid out identically to [_ParameterTile]:
@@ -342,10 +379,7 @@ class _ParameterTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             latest == null ? '—' : relativeTimeLabel(l, latest.takenAt),
-            style: TextStyle(
-              fontSize: 11,
-              color: Theme.of(context).hintColor,
-            ),
+            style: TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
           ),
           if (trend != null) ...[
             const SizedBox(height: 2),

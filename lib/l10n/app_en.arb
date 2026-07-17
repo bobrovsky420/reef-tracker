@@ -50,6 +50,23 @@
   "noParamsTracked": "No parameters are being tracked for this tank.",
   "noReadings": "No readings",
 
+  "dashSectionCoreChemistry": "Core chemistry",
+  "@dashSectionCoreChemistry": {
+    "description": "Dashboard section header over the alkalinity/calcium/magnesium tiles (rendered uppercase; keep short)."
+  },
+  "dashSectionNutrients": "Nutrients",
+  "@dashSectionNutrients": {
+    "description": "Dashboard section header over the nitrate/phosphate/ammonia/nitrite tiles (rendered uppercase; keep short)."
+  },
+  "dashSectionRatios": "Ratios",
+  "@dashSectionRatios": {
+    "description": "Dashboard section header over the ratio cards (rendered uppercase; keep short)."
+  },
+  "dashSectionEnvironment": "Environment",
+  "@dashSectionEnvironment": {
+    "description": "Dashboard section header over the temperature/pH/salinity/ORP tiles (rendered uppercase; keep short)."
+  },
+
   "timeJustNow": "just now",
   "timeMinAgo": "{count} min ago",
   "@timeMinAgo": { "placeholders": { "count": { "type": "int" } } },

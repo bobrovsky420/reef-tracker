@@ -143,6 +143,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noReadings => 'No readings';
 
   @override
+  String get dashSectionCoreChemistry => 'Core chemistry';
+
+  @override
+  String get dashSectionNutrients => 'Nutrients';
+
+  @override
+  String get dashSectionRatios => 'Ratios';
+
+  @override
+  String get dashSectionEnvironment => 'Environment';
+
+  @override
   String get timeJustNow => 'just now';
 
   @override

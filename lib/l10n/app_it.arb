@@ -45,6 +45,11 @@
   "noParamsTracked": "Nessun parametro monitorato per questa vasca.",
   "noReadings": "Nessuna misurazione",
 
+  "dashSectionCoreChemistry": "Chimica di base",
+  "dashSectionNutrients": "Nutrienti",
+  "dashSectionRatios": "Rapporti",
+  "dashSectionEnvironment": "Ambiente",
+
   "timeJustNow": "proprio ora",
   "timeMinAgo": "{count} min fa",
   "timeHoursAgo": "{count} h fa",

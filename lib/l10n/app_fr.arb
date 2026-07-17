@@ -45,6 +45,11 @@
   "noParamsTracked": "Aucun paramètre n'est suivi pour ce bac.",
   "noReadings": "Aucune mesure",
 
+  "dashSectionCoreChemistry": "Chimie de base",
+  "dashSectionNutrients": "Nutriments",
+  "dashSectionRatios": "Ratios",
+  "dashSectionEnvironment": "Environnement",
+
   "timeJustNow": "à l'instant",
   "timeMinAgo": "il y a {count} min",
   "timeHoursAgo": "il y a {count} h",

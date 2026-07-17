@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.30.0] - 2026-07-17
 
 ### Changed
+- The dashboard is now grouped into fixed sections — Core chemistry
+  (alkalinity, calcium, magnesium), Nutrients (nitrate, phosphate, ammonia,
+  nitrite), Ratios, and Environment (temperature, pH, salinity, ORP) — each
+  under its own label, instead of one mixed grid. A section with nothing
+  enabled/visible (including Ratios, with all four cards hidden) doesn't show
+  its header. The tile cards themselves are unchanged. The Compare graphs view
+  and the Manage Parameters screen adopt the same grouped order — Manage
+  Parameters now mirrors the dashboard exactly and shows each row's section;
+  reordering within a section still works, and dragging a row past a section
+  boundary settles it at the top or bottom of its own section rather than
+  crossing into the next one.
 - The dashboard health card takes on the redesign's score-card look: larger
   health (72 px) and stability (60 px) rings drawn over a neutral track with
   the score in the new monospace numerals, the grade word colored by the

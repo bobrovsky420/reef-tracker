@@ -143,6 +143,18 @@ class AppLocalizationsCs extends AppLocalizations {
   String get noReadings => 'Žádná měření';
 
   @override
+  String get dashSectionCoreChemistry => 'Základní chemie';
+
+  @override
+  String get dashSectionNutrients => 'Živiny';
+
+  @override
+  String get dashSectionRatios => 'Poměry';
+
+  @override
+  String get dashSectionEnvironment => 'Prostředí';
+
+  @override
   String get timeJustNow => 'právě teď';
 
   @override

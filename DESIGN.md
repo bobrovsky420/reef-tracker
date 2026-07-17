@@ -1134,14 +1134,37 @@ behind a confirmation dialog**:
   (the U26 split — presentation-only gate). Rides the same
   `healthDisplayProvider` card visibility as the health header, since both
   are derived summaries of the same readings.
-- One grid mixing `_ParameterTile`s (enabled tracked **core** params —
-  microelements live behind their summary tile, U17) and `_RatioTile`s
-  (visible ratio cards), ordered together by a **shared display order**
-  (`TrackedParameters.displayOrder` and `RatioVisibilities.displayOrder` live in
-  the same integer space). Both tile types are the same size/layout: latest value
-  **colored by its zone**, a trend indicator (delta vs. previous), and a relative
-  timestamp; tapping opens the parameter history or `/ratio/<kind>`. Measurement
-  tiles also show a `TrendChip` forecast when a zone crossing is due (see Trend
+- **Grouped into fixed sections** (REDESIGN #6, `domain/dashboard_sections.dart`):
+  Core chemistry (alkalinity, calcium, magnesium) → Nutrients (nitrate,
+  phosphate, ammonia, nitrite) → Ratios → Environment (temperature, pH,
+  salinity, ORP), each preceded by an uppercase `SectionHeader`; unknown
+  tracked keys with no catalog entry (legacy/hand-edited rows, which count as
+  core via `isCoreParam`) fall into a headerless trailing section so nothing a
+  user tracks silently disappears. A section with nothing enabled/visible
+  renders **nothing at all, header included** — e.g. disabling every Core
+  chemistry parameter removes that whole section, and hiding all four ratio
+  cards removes "Ratios". No enabled params and no visible ratios at all still
+  falls back to `_NoParamsView`. Each section is its own `SliverGrid`, same
+  cell geometry as before (max extent 219, text-scaled height); tile widgets
+  themselves — `_ParameterTile`, `_RatioTile` — are unchanged by this phase.
+  A `MicroSummaryTile` (U17) is pinned after every section whenever the grid
+  renders (see below); the mockups' single collapsed Ratios card is deferred
+  to a later phase (REDESIGN #8) — the Ratios section here is still one
+  `_RatioTile` per card.
+- **Sort key** (`DashboardSortKey` = `(section, displayOrder, tiebreak)`):
+  section placement is fixed and not user-controllable; the existing shared
+  `displayOrder` space (`TrackedParameters.displayOrder` and
+  `RatioVisibilities.displayOrder` in one integer space, unchanged in the DB)
+  only orders items **within** a section now; ties break on a stable catalog
+  index so a fresh install's ratio `defaultOrder` (1000+) can't collide
+  unpredictably with a parameter's order. `sectionOfParam` maps a tracked key
+  to its section via the catalog's `dashboardGroup` (`parameters.yaml`, one of
+  `coreChemistry`/`nutrients`/`environment` — required for every core
+  parameter, forbidden for microelements; the generator enforces both).
+- Both tile types share the same size/layout: latest value **colored by its
+  zone**, a trend indicator (delta vs. previous), and a relative timestamp;
+  tapping opens the parameter history or `/ratio/<kind>`. Measurement tiles
+  also show a `TrendChip` forecast when a zone crossing is due (see Trend
   detection); ratio tiles do not.
 - A ratio tile shows whenever its card is visible (per settings), regardless of
   whether a value can be computed yet: with no computable ratio — a parameter is
@@ -1150,35 +1173,49 @@ behind a confirmation dialog**:
   reading. When the latest pair of readings is more than `kRatioMaxSkew` (30 d)
   apart (`latestRatio` returns null while the series isn't empty), the headline
   value renders **muted** (hint color) instead of zone-colored — it no longer
-  describes a single current tank state. Visibility + order are set in the **Manage Parameters** screen
-  (ratios and measurements share one reorderable list) and stored **per tank** in
-  `RatioVisibilities` (`ratioSettingsProvider` → `Map<RatioKind.name,
-  RatioVisibility>`, resolved with `ratioRowVisible` / `ratioRowOrder`).
-- A `MicroSummaryTile` (U17) is pinned after the reorderable cards whenever
-  the grid renders: same tile layout, headline = "N out of range" in the
+  describes a single current tank state. Visibility + order are set in the
+  **Manage Parameters** screen and stored **per tank** in `RatioVisibilities`
+  (`ratioSettingsProvider` → `Map<RatioKind.name, RatioVisibility>`, resolved
+  with `ratioRowVisible` / `ratioRowOrder`).
+- A `MicroSummaryTile` (U17) is pinned after every section whenever at least
+  one section renders: same tile layout, headline = "N out of range" in the
   **dominant** deviation zone's color (red only when reds ≥ ambers — a lone
   red among mostly-amber ICP deviations reads amber, see `computeMicroStatus`)
   / "All within range" / "No readings", timestamp = newest micro sample. Tapping opens `/micro`. Gated by the Settings **microelements
-  switch** (`microEnabledProvider`, default on) — gated in the grid builder,
+  switch** (`microEnabledProvider`, default on) — gated at the top level,
   not inside the tile, so switching off removes the grid cell; the switch
   only hides (measurements stay stored).
 - Empty states: `NoTanksView` (first-run welcome: a language selector +
   add-aquarium prompt — lets the user pick their language before creating a tank
   without opening Settings) and `_NoParamsView`.
+- **Manage Parameters** (`ManageParametersScreen`) keeps its single
+  reorderable list (measurements + ratio cards together — microelements are
+  managed from the Microelements screen), but is now **mirror-sorted to the
+  same `DashboardSortKey`** as the dashboard, so the manage order always
+  matches what's on screen, and each row shows a faint trailing caption
+  naming its dashboard section. The reorder writeback
+  (`applyDashboardOrder`, flat sequential indices) is unchanged: because the
+  displayed list is already grouped, the first drag after this change writes
+  group-clustered order values, and a drag dropped past a section boundary
+  settles at the top/bottom of the item's own section rather than crossing
+  into the next one — sections stay fixed, only within-section order is
+  user-controlled.
 - **Compare graphs view** (`dashboard/comparison_view.dart`, `ComparisonBody`):
   an app-bar toggle on the Measurements tab (state `_compare` in `HomeShell`)
   swaps the tile grid for a vertical stack of trend charts — one per enabled
-  tracked **core** parameter, **in the same `displayOrder`** as the grid. Every chart is
+  tracked **core** parameter, sorted by the same `DashboardSortKey` as the
+  grid (grouped, not a flat `displayOrder`) — but the chart stack itself
+  stays one flat list with **no section headers**, so a vertical time-slice
+  still reads every parameter at once. Every chart is
   pinned to **one shared time window** (`minX`/`maxX` = range start → now; for
-  "All" the oldest reading across params) so the X axes align and a vertical
-  time-slice reads all parameters at once; each chart keeps its own auto Y scale,
-  zone bands, and water-change markers (which line up across charts). Only the
-  last chart draws date labels (alignment is fixed by the constant left-axis
-  width). Each chart's header shows its newest **in-range** reading (zone-colored
-  from that value), so the number always matches the chart below; empty-in-range
-  params show no header value and a muted placeholder to preserve order. Tapping a
-  chart opens `/history/:paramKey`. Measurements only — ratio cards are not
-  included.
+  "All" the oldest reading across params) so the X axes align; each chart keeps
+  its own auto Y scale, zone bands, and water-change markers (which line up
+  across charts). Only the last chart draws date labels (alignment is fixed by
+  the constant left-axis width). Each chart's header shows its newest
+  **in-range** reading (zone-colored from that value), so the number always
+  matches the chart below; empty-in-range params show no header value and a
+  muted placeholder to preserve order. Tapping a chart opens
+  `/history/:paramKey`. Measurements only — ratio cards are not included.
 
 ### Trend chart widget (`widgets/trend_chart.dart`)
 

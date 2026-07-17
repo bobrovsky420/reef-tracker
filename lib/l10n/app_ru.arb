@@ -45,6 +45,11 @@
   "noParamsTracked": "Для этого аквариума не отслеживаются параметры.",
   "noReadings": "Нет измерений",
 
+  "dashSectionCoreChemistry": "Основная химия",
+  "dashSectionNutrients": "Биогены",
+  "dashSectionRatios": "Соотношения",
+  "dashSectionEnvironment": "Среда",
+
   "timeJustNow": "только что",
   "timeMinAgo": "{count} мин назад",
   "timeHoursAgo": "{count} ч назад",

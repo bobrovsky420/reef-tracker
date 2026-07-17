@@ -25,6 +25,9 @@ const _outPath = 'lib/domain/parameter_catalog.g.dart';
 /// and is omitted from the generated constructor calls.
 const _categories = {'core', 'major', 'trace', 'contaminant'};
 
+/// Mirrors `DashboardGroup` in parameter_catalog.dart (REDESIGN #6).
+const _dashboardGroups = {'coreChemistry', 'nutrients', 'environment'};
+
 void main() {
   final src = File(_srcPath);
   if (!src.existsSync()) {
@@ -70,6 +73,19 @@ void main() {
       errors.add('"$key": unknown category "$category"');
     }
 
+    final dashboardGroup = p['dashboardGroup'] as String?;
+    if (category == 'core') {
+      if (dashboardGroup == null ||
+          !_dashboardGroups.contains(dashboardGroup)) {
+        errors.add(
+          '"$key": core parameters must carry a dashboardGroup '
+          '(one of ${_dashboardGroups.join(', ')})',
+        );
+      }
+    } else if (dashboardGroup != null) {
+      errors.add('"$key": dashboardGroup is a core-dashboard mechanism');
+    }
+
     final symbol = p['symbol'] as String?;
     if (category != 'core' && (symbol == null || symbol.isEmpty)) {
       errors.add('"$key": microelements must carry an element symbol');
@@ -108,6 +124,9 @@ void main() {
       ..writeln('    decimals: $decimals,');
     if (category != 'core') {
       buf.writeln('    category: ParamCategory.$category,');
+    }
+    if (dashboardGroup != null) {
+      buf.writeln('    dashboardGroup: DashboardGroup.$dashboardGroup,');
     }
     if (symbol != null) buf.writeln("    symbol: '${_esc(symbol)}',");
     if (displayFactor != null) {

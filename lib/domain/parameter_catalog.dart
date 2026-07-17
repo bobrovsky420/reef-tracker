@@ -23,6 +23,7 @@ class ParameterDef {
     required this.unit,
     required this.decimals,
     this.category = ParamCategory.core,
+    this.dashboardGroup,
     this.symbol,
     this.displayFactor = 1,
     this.minValue,
@@ -45,6 +46,13 @@ class ParameterDef {
   /// the dashboard/Add Reading; everything else lives on the Microelements
   /// screen (U17).
   final ParamCategory category;
+
+  /// Fixed dashboard section a core parameter renders in (REDESIGN #6).
+  /// Always set for [ParamCategory.core] entries (the generator enforces it),
+  /// null for microelements — and null for unknown legacy keys looked up via
+  /// [kParameterByKey], which the dashboard renders in a trailing headerless
+  /// section.
+  final DashboardGroup? dashboardGroup;
 
   /// Chemical element symbol ("Zn") for microelements, shown next to the
   /// localized name so rows match the symbols on an ICP report. Null for the
@@ -83,6 +91,13 @@ class ParameterDef {
 /// [major] = bulk ions with wide tolerances, [trace] = desirable at low
 /// levels, [contaminant] = wanted near zero (one-sided bounds).
 enum ParamCategory { core, major, trace, contaminant }
+
+/// The grouped dashboard's fixed sections for core parameters (REDESIGN #6):
+/// [coreChemistry] = the reef-building trio (alk, Ca, Mg), [nutrients] = the
+/// nitrogen/phosphorus cycle (NO₃, PO₄, NH₃, NO₂), [environment] = physical
+/// water state (temperature, pH, salinity, ORP). Ratios and the micro summary
+/// tile have their own dashboard sections outside this enum.
+enum DashboardGroup { coreChemistry, nutrients, environment }
 
 /// True when [paramKey] belongs to a core (dashboard) parameter. Unknown keys
 /// count as core — the pre-catalog behavior, so hand-edited/legacy rows keep
@@ -131,6 +146,13 @@ ParamValueCheck checkParamValue(String paramKey, double value) {
 /// Lookup by key for O(1) access.
 final Map<String, ParameterDef> kParameterByKey = {
   for (final p in kReefParameters) p.key: p,
+};
+
+/// Catalog position by key — the stable tiebreak of the dashboard sort
+/// (REDESIGN #6) for the fresh-install case where a ratio's default order
+/// collides numerically with a parameter's stored order.
+final Map<String, int> kParameterIndexByKey = {
+  for (var i = 0; i < kReefParameters.length; i++) kReefParameters[i].key: i,
 };
 
 /// Formats [value] using the parameter's configured precision.

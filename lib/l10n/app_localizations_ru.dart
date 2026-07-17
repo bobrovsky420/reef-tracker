@@ -144,6 +144,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noReadings => 'Нет измерений';
 
   @override
+  String get dashSectionCoreChemistry => 'Основная химия';
+
+  @override
+  String get dashSectionNutrients => 'Биогены';
+
+  @override
+  String get dashSectionRatios => 'Соотношения';
+
+  @override
+  String get dashSectionEnvironment => 'Среда';
+
+  @override
   String get timeJustNow => 'только что';
 
   @override

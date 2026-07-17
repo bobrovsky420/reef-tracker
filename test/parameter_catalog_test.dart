@@ -19,6 +19,25 @@ void main() {
       }
     });
 
+    test('core parameters carry a dashboardGroup, microelements never do '
+        '(REDESIGN #6)', () {
+      for (final p in kReefParameters) {
+        if (p.isMicro) {
+          expect(
+            p.dashboardGroup,
+            isNull,
+            reason: '${p.key}: dashboardGroup is a core-dashboard mechanism',
+          );
+        } else {
+          expect(
+            p.dashboardGroup,
+            isNotNull,
+            reason: '${p.key}: core parameters must map to a dashboard section',
+          );
+        }
+      }
+    });
+
     test('every definition is well-formed', () {
       for (final p in kReefParameters) {
         expect(p.key, isNotEmpty, reason: 'empty key');
