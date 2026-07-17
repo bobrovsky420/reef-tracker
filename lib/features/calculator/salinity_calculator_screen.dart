@@ -14,11 +14,17 @@ class SalinityCalculatorScreen extends StatefulWidget {
 }
 
 class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
+  /// Reference salinity both fields open with (natural seawater, ppt).
+  static const _seedPpt = 35.0;
+
   // Seed the fields through the locale formatter so a cs/de user sees "35,0"
-  // from the start, matching what the fields echo while typing (#39).
-  late final _pptCtrl = TextEditingController(text: formatLocaleNumber(35, 1));
+  // from the start, matching what the fields echo while typing (#39). The SG
+  // seed is derived via pptToSg so the two fields agree by construction.
+  late final _pptCtrl = TextEditingController(
+    text: formatLocaleNumber(_seedPpt, 1),
+  );
   late final _sgCtrl = TextEditingController(
-    text: formatLocaleNumber(1.0264, 4),
+    text: formatLocaleNumber(pptToSg(_seedPpt), 4),
   );
   bool _updating = false;
 
