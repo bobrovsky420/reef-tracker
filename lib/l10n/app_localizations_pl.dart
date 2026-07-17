@@ -475,6 +475,18 @@ class AppLocalizationsPl extends AppLocalizations {
   String get recordFirstReading => 'Zapisz pierwszy pomiar';
 
   @override
+  String get statMin => 'Min';
+
+  @override
+  String get statAvg => 'Średnia';
+
+  @override
+  String get statMax => 'Maks';
+
+  @override
+  String get statTests => 'Testy';
+
+  @override
   String get editMeasurement => 'Edytuj pomiar';
 
   @override

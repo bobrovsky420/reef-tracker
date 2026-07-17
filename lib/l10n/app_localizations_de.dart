@@ -471,6 +471,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recordFirstReading => 'Erste Messung erfassen';
 
   @override
+  String get statMin => 'Min';
+
+  @override
+  String get statAvg => 'Mittel';
+
+  @override
+  String get statMax => 'Max';
+
+  @override
+  String get statTests => 'Tests';
+
+  @override
   String get editMeasurement => 'Messung bearbeiten';
 
   @override

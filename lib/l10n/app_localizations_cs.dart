@@ -471,6 +471,18 @@ class AppLocalizationsCs extends AppLocalizations {
   String get recordFirstReading => 'Zaznamenat první měření';
 
   @override
+  String get statMin => 'Min';
+
+  @override
+  String get statAvg => 'Průměr';
+
+  @override
+  String get statMax => 'Max';
+
+  @override
+  String get statTests => 'Testy';
+
+  @override
   String get editMeasurement => 'Upravit měření';
 
   @override

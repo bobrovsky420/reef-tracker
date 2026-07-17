@@ -871,6 +871,30 @@ abstract class AppLocalizations {
   /// **'Record your first reading'**
   String get recordFirstReading;
 
+  /// Cell labels in the compact min/average/max/test-count summary row under the history chart; values are formatted numbers with unit, the test count is a bare integer.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get statMin;
+
+  /// No description provided for @statAvg.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg'**
+  String get statAvg;
+
+  /// No description provided for @statMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get statMax;
+
+  /// No description provided for @statTests.
+  ///
+  /// In en, this message translates to:
+  /// **'Tests'**
+  String get statTests;
+
   /// No description provided for @editMeasurement.
   ///
   /// In en, this message translates to:

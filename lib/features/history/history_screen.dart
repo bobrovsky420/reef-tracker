@@ -181,6 +181,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                               ),
                             ),
                           const SliverToBoxAdapter(child: Divider()),
+                          // Numeric summary of the plotted range (U31): the
+                          // swing and center the user would otherwise eyeball
+                          // off the line or scroll the list for.
+                          SliverToBoxAdapter(
+                            child: _RangeStats(data: data, pres: pres),
+                          ),
+                          const SliverToBoxAdapter(child: Divider()),
                           _readingsSliver(context, data, param, pres),
                           // Keeps the last row tappable under the FAB.
                           const SliverToBoxAdapter(child: SizedBox(height: 88)),
@@ -484,6 +491,61 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           ),
         ),
       );
+  }
+}
+
+/// Min / Avg / Max / test-count summary row for the readings in the selected
+/// range (U31), derived from the same in-memory list the chart plots. Stats
+/// are computed on canonical values: the display conversion is an increasing
+/// affine map, so min/max/mean commute with it.
+class _RangeStats extends StatelessWidget {
+  const _RangeStats({required this.data, required this.pres});
+
+  /// Non-empty — the enclosing branch only renders when the range has data.
+  final List<Reading> data;
+  final ParamPresentation pres;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    var min = data.first.value;
+    var max = min;
+    var sum = 0.0;
+    for (final r in data) {
+      if (r.value < min) min = r.value;
+      if (r.value > max) max = r.value;
+      sum += r.value;
+    }
+    String fmt(double v) => '${pres.format(v)} ${pres.unitLabel}';
+
+    Widget cell(String label, String value) => Expanded(
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(value, style: theme.textTheme.titleSmall),
+          ),
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Row(
+        children: [
+          cell(l.statMin, fmt(min)),
+          cell(l.statAvg, fmt(sum / data.length)),
+          cell(l.statMax, fmt(max)),
+          cell(l.statTests, '${data.length}'),
+        ],
+      ),
+    );
   }
 }
 

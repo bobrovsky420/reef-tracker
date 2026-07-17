@@ -1123,7 +1123,12 @@ editing) and saves via `insertReading`. When the selected range holds no
 readings the FAB yields to a centered CTA under the empty-state text —
 "Record your first reading" if the parameter has never been tested (that
 path is reachable from the health sheet's "never tested" rows and used to
-dead-end), plain "Add reading" if only the range is empty. Below the chart
+dead-end), plain "Add reading" if only the range is empty. Between the trend
+card and the readings list sits a compact **range summary row** (U31): min /
+average / max / test count of the readings in the selected range, derived
+from the same in-memory list the chart plots (stats are computed on
+canonical values — the display conversion is an increasing affine map, so
+min/max/mean commute with it). Below the chart
 is the readings list:
 tap a row to edit its **value and date/time** (`_ReadingDialog`, the date/time
 picker mirroring the actions log); when the moved reading belongs to a batch of

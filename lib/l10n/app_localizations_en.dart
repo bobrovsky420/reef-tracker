@@ -469,6 +469,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordFirstReading => 'Record your first reading';
 
   @override
+  String get statMin => 'Min';
+
+  @override
+  String get statAvg => 'Avg';
+
+  @override
+  String get statMax => 'Max';
+
+  @override
+  String get statTests => 'Tests';
+
+  @override
   String get editMeasurement => 'Edit measurement';
 
   @override

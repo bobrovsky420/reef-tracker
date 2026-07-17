@@ -474,6 +474,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recordFirstReading => 'Записать первое измерение';
 
   @override
+  String get statMin => 'Мин.';
+
+  @override
+  String get statAvg => 'Средн.';
+
+  @override
+  String get statMax => 'Макс.';
+
+  @override
+  String get statTests => 'Тесты';
+
+  @override
   String get editMeasurement => 'Изменить измерение';
 
   @override

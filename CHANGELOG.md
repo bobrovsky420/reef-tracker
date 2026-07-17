@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the parameter has no readings yet (e.g. opened from the health
   breakdown's "never tested" row), the empty screen offers a "Record your
   first reading" button instead of a dead end.
+- The history screen shows a compact summary row under the chart — minimum,
+  average, maximum and number of tests for the selected time range — so how
+  much a parameter swings and where it sits on average is visible at a
+  glance instead of eyeballing the line.
 
 ### Fixed
 - Android: Google Drive sync no longer hangs for the rest of the session
