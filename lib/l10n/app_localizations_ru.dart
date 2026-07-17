@@ -158,7 +158,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String timeDaysAgo(int count) {
-    return '$count дн назад';
+    return '$count дн. назад';
   }
 
   @override
@@ -456,13 +456,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Наборов тестов пока нет. Набор позволяет записывать только те параметры, которые вы тестируете вместе.';
 
   @override
-  String get rangeWeek => '7 дн';
+  String get rangeWeek => '7 дн.';
 
   @override
-  String get rangeMonth => '30 дн';
+  String get rangeMonth => '30 дн.';
 
   @override
-  String get rangeQuarter => '90 дн';
+  String get rangeQuarter => '90 дн.';
 
   @override
   String get rangeAll => 'Все';
@@ -787,7 +787,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get salinityCalculator => 'Калькулятор солёности';
 
   @override
-  String get salinityCalculatorSubtitle => 'Перевод ppt ↔ удельный вес (SG)';
+  String get salinityCalculatorSubtitle => 'Перевод ppt ↔ плотность (SG)';
 
   @override
   String get backupSection => 'Резервная копия';
@@ -1057,10 +1057,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Перевод между практической солёностью (ppt) и удельным весом (SG). Вводите в любое поле.';
+      'Перевод между практической солёностью (ppt) и плотностью (SG). Вводите в любое поле.';
 
   @override
-  String get specificGravity => 'Удельный вес';
+  String get specificGravity => 'Плотность (SG)';
 
   @override
   String get referencePoints => 'Опорные значения';
@@ -1150,7 +1150,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get doseCalcLoggedProductMismatch =>
-      'Некоторые записанные дозы — другой препарат; их сила может отличаться от указанной выше.';
+      'Некоторые записанные дозы — другой продукт; их концентрация может отличаться от указанной выше.';
 
   @override
   String get doseCalcPerDay => 'сут';
@@ -1262,32 +1262,32 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String trendAmberInDays(int days) {
-    return 'Достигнет зоны внимания через ~$days дн';
+    return 'Достигнет зоны внимания через ~$days дн.';
   }
 
   @override
   String trendRedInDays(int days) {
-    return 'Достигнет критической зоны через ~$days дн';
+    return 'Достигнет критической зоны через ~$days дн.';
   }
 
   @override
   String trendChipAmber(int days) {
-    return 'Внимание ~$days дн';
+    return 'Внимание ~$days дн.';
   }
 
   @override
   String trendChipRed(int days) {
-    return 'Действие ~$days дн';
+    return 'Действие ~$days дн.';
   }
 
   @override
   String trendBackInRangeDays(int days) {
-    return 'Восстанавливается — вернётся в диапазон через ~$days дн';
+    return 'Восстанавливается — вернётся в диапазон через ~$days дн.';
   }
 
   @override
   String trendChipRecovering(int days) {
-    return 'Восстановление ~$days дн';
+    return 'Восстановление ~$days дн.';
   }
 
   @override
@@ -1299,7 +1299,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String trendHorizonDays(int days) {
-    return '$days дн';
+    return '$days дн.';
   }
 
   @override
@@ -1339,7 +1339,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paramSalinity => 'Солёность';
 
   @override
-  String get paramAlkalinity => 'Щёлочность (KH)';
+  String get paramAlkalinity => 'Карб. жёсткость';
 
   @override
   String get paramCalcium => 'Кальций (Ca)';
@@ -1657,7 +1657,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Температура воды. Стабильность важнее точного значения.';
 
   @override
-  String get helpSalinity => 'Удельный вес. ~1,026 SG ≈ 35 ppt.';
+  String get helpSalinity => 'Плотность. ~1,026 SG ≈ 35 ppt.';
 
   @override
   String get helpAlkalinity =>
@@ -1669,7 +1669,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get helpAmmonia =>
-      'Токсичен. В запущенном аквариуме должен быть практически нулевым.';
+      'Токсичен. В созревшем аквариуме должен быть практически нулевым.';
 
   @override
   String get healthTitle => 'Состояние аквариума';
@@ -1828,12 +1828,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String insightForecastLow(Object param, int days) {
-    return '$param снижается — может выйти из диапазона через ~$days дн';
+    return '$param снижается — может выйти из диапазона через ~$days дн.';
   }
 
   @override
   String insightForecastHigh(Object param, int days) {
-    return '$param растёт — может выйти из диапазона через ~$days дн';
+    return '$param растёт — может выйти из диапазона через ~$days дн.';
   }
 
   @override
@@ -1843,7 +1843,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String insightRecoveringDays(Object param, int days) {
-    return '$param восстанавливается — в диапазоне через ~$days дн';
+    return '$param восстанавливается — в диапазоне через ~$days дн.';
   }
 
   @override
@@ -2059,7 +2059,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get remindersDosingSubtitle =>
-      'Во время дозирования каждого препарата';
+      'В заданное время дозирования каждой добавки';
 
   @override
   String get remindersMaintenanceSubtitle => 'Когда подходит срок обслуживания';
@@ -2083,7 +2083,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String daysShortN(int count) {
-    return '$count дн';
+    return '$count дн.';
   }
 
   @override
@@ -2137,12 +2137,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String dueInDaysN(int count) {
-    return 'Через $count дн';
+    return 'Через $count дн.';
   }
 
   @override
   String overdueDaysN(int count) {
-    return 'Просрочено на $count дн';
+    return 'Просрочено на $count дн.';
   }
 
   @override

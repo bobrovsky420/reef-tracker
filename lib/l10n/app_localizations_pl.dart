@@ -52,7 +52,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Przejrzyj wszystkie dawne i bieżące okresy dozowania oraz usuń wpis dodany przez pomyłkę.';
 
   @override
-  String get tourDoseCalcTitle => 'Kalkulator dawkowania';
+  String get tourDoseCalcTitle => 'Kalkulator dozowania';
 
   @override
   String get tourDoseCalcDesc =>
@@ -158,7 +158,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String timeDaysAgo(int count) {
-    return '$count dni temu';
+    return '$count dn. temu';
   }
 
   @override
@@ -675,7 +675,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get deleteManualDoseBody =>
-      'Ta zapisana dawka zostanie trwale usunięta z historii i z obliczeń dawkowania. Nie można tego cofnąć.';
+      'Ta zapisana dawka zostanie trwale usunięta z historii i z obliczeń dozowania. Nie można tego cofnąć.';
 
   @override
   String get dosingNew => 'Dodaj preparat';
@@ -1079,7 +1079,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'SG odniesione do 25 °C. Przeliczenie to przybliżenie liniowe: SG = 1 + ppt × 0,0264/35.';
 
   @override
-  String get doseCalcTitle => 'Kalkulator dawkowania';
+  String get doseCalcTitle => 'Kalkulator dozowania';
 
   @override
   String get doseCalcIntro =>
@@ -1198,7 +1198,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcConsumption => 'Zużycie';
 
   @override
-  String get doseCalcCurrentInput => 'Obecne dawkowanie dodaje';
+  String get doseCalcCurrentInput => 'Obecne dozowanie dodaje';
 
   @override
   String get doseCalcSuggestedDose => 'Sugerowana dawka dzienna';
@@ -1220,11 +1220,11 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get doseCalcOverdosing =>
-      'Ten pierwiastek rośnie — zmniejsz lub wstrzymaj dawkowanie.';
+      'Ten pierwiastek rośnie — zmniejsz lub wstrzymaj dozowanie.';
 
   @override
   String get doseCalcNoDoseNeeded =>
-      'Nic nie jest dozowane, a ten pierwiastek nie spada — dawkowanie nie jest potrzebne.';
+      'Nic nie jest dozowane, a ten pierwiastek nie spada — dozowanie nie jest potrzebne.';
 
   @override
   String get doseCalcNeedsPotency =>
@@ -1268,32 +1268,32 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String trendAmberInDays(int days) {
-    return 'Osiągnie strefę uwagi za ~$days dni';
+    return 'Osiągnie strefę uwagi za ~$days dn.';
   }
 
   @override
   String trendRedInDays(int days) {
-    return 'Osiągnie strefę krytyczną za ~$days dni';
+    return 'Osiągnie strefę krytyczną za ~$days dn.';
   }
 
   @override
   String trendChipAmber(int days) {
-    return 'Uwaga ~$days dni';
+    return 'Uwaga ~$days dn.';
   }
 
   @override
   String trendChipRed(int days) {
-    return 'Działaj ~$days dni';
+    return 'Działaj ~$days dn.';
   }
 
   @override
   String trendBackInRangeDays(int days) {
-    return 'Poprawia się — wróci do zakresu za ~$days dni';
+    return 'Poprawia się — wróci do zakresu za ~$days dn.';
   }
 
   @override
   String trendChipRecovering(int days) {
-    return 'Poprawia się ~$days dni';
+    return 'Poprawia się ~$days dn.';
   }
 
   @override
@@ -1345,7 +1345,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get paramSalinity => 'Zasolenie';
 
   @override
-  String get paramAlkalinity => 'Zasadowość (KH)';
+  String get paramAlkalinity => 'Twardość węglanowa';
 
   @override
   String get paramCalcium => 'Wapń (Ca)';
@@ -1834,12 +1834,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String insightForecastLow(Object param, int days) {
-    return '$param spada — może opuścić zakres za ~$days dni';
+    return '$param spada — może opuścić zakres za ~$days dn.';
   }
 
   @override
   String insightForecastHigh(Object param, int days) {
-    return '$param rośnie — może opuścić zakres za ~$days dni';
+    return '$param rośnie — może opuścić zakres za ~$days dn.';
   }
 
   @override
@@ -1849,7 +1849,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String insightRecoveringDays(Object param, int days) {
-    return '$param poprawia się — wróci do zakresu za ~$days dni';
+    return '$param poprawia się — wróci do zakresu za ~$days dn.';
   }
 
   @override
@@ -2034,7 +2034,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get notifChannelTesting => 'Przypomnienia o testach';
 
   @override
-  String get notifChannelDosing => 'Przypomnienia o dawkowaniu';
+  String get notifChannelDosing => 'Przypomnienia o dozowaniu';
 
   @override
   String get notifChannelMaintenance => 'Przypomnienia o konserwacji';
@@ -2043,7 +2043,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get notifTestingTitle => 'Czas na test';
 
   @override
-  String get notifDosingTitle => 'Czas na dawkowanie';
+  String get notifDosingTitle => 'Czas na dozowanie';
 
   @override
   String get notifMaintenanceTitle => 'Czas na konserwację';
@@ -2058,14 +2058,14 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get remindersSubtitle =>
-      'Powiadomienia o testach, dawkowaniu i konserwacji';
+      'Powiadomienia o testach, dozowaniu i konserwacji';
 
   @override
   String get remindersTestingSubtitle =>
       'Gdy zbliża się termin testu parametru';
 
   @override
-  String get remindersDosingSubtitle => 'O porze dawkowania każdego preparatu';
+  String get remindersDosingSubtitle => 'O porze dozowania każdego preparatu';
 
   @override
   String get remindersMaintenanceSubtitle =>
@@ -2104,7 +2104,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get remindMeNeedsTime =>
-      'Ustaw porę dawkowania, aby włączyć przypomnienia';
+      'Ustaw porę dozowania, aby włączyć przypomnienia';
 
   @override
   String get maintenanceSchedule => 'Harmonogram konserwacji';
@@ -2313,7 +2313,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get roUnitToggleSubtitle =>
-      'Pokazuj na karcie Akcje, z przypomnieniami o wymianie filtrów';
+      'Pokazuj na karcie Czynności, z przypomnieniami o wymianie filtrów';
 
   @override
   String get roAllOk => 'Wszystkie elementy w porządku';

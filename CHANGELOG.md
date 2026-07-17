@@ -17,6 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Android: the "Signing in to Google" sheet no longer pops up two or three
   times in a row while a Drive backup uploads; the app now signs in silently
   once and reuses that session for all Drive calls until it is closed.
+- Translation review across all languages. Reef-hobby terms corrected: the
+  alkalinity parameter is now "Карб. жёсткость" in Russian and "Twardość
+  węglanowa" in Polish, the "(KH)" suffix was dropped from the label in all
+  languages, and specific gravity is now "плотность" (Russian) / "Dichte"
+  (German) as used in the hobby.
+- German now consistently addresses the user with informal "du" (a dozen
+  strings were formal "Sie"), uses "Backup" instead of a mix of
+  "Sicherung"/"Backup", says "Aktivkohle" for carbon changes, and
+  abbreviates days uniformly as "T.".
+- Polish: fixed ungrammatical "1 dni temu", the dosing feature is
+  consistently called "dozowanie", and compact day counts use "dn.".
+- Russian: ammonia help no longer says "запущенный аквариум" (ambiguous
+  with "neglected"; now "созревший"), the dosing-reminder subtitle now
+  describes the scheduled dose time, and day abbreviations are uniformly
+  "дн.".
+- German, Czech and Polish: the reverse-osmosis setting now refers to the
+  Actions tab by its actual localized name; Czech AI-summary prompt is
+  gender-neutral and the "hide undetectable" filter wording was corrected.
 
 ## [0.29.3] - 2026-07-16
 

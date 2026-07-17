@@ -352,14 +352,14 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get invalidVolume => 'Geben Sie ein gültiges positives Volumen ein.';
+  String get invalidVolume => 'Gib ein gültiges positives Volumen ein.';
 
   @override
-  String get invalidPositiveNumber => 'Geben Sie eine positive Zahl ein.';
+  String get invalidPositiveNumber => 'Gib eine positive Zahl ein.';
 
   @override
   String get invalidIntervalDays =>
-      'Geben Sie eine ganze Anzahl von Tagen ein (mindestens 1).';
+      'Gib eine ganze Anzahl von Tagen ein (mindestens 1).';
 
   @override
   String impossibleValueFor(Object name) {
@@ -374,7 +374,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get implausibleIntro =>
-      'Der folgende Wert liegt außerhalb des üblichen Bereichs. Prüfen Sie vor dem Speichern auf Tippfehler.';
+      'Der folgende Wert liegt außerhalb des üblichen Bereichs. Prüfe vor dem Speichern auf Tippfehler.';
 
   @override
   String implausibleValueLine(
@@ -453,13 +453,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Noch keine Test-Sets. Ein Test-Set erfasst nur die Parameter, die du gemeinsam testest.';
 
   @override
-  String get rangeWeek => '7 T';
+  String get rangeWeek => '7 T.';
 
   @override
-  String get rangeMonth => '30 T';
+  String get rangeMonth => '30 T.';
 
   @override
-  String get rangeQuarter => '90 T';
+  String get rangeQuarter => '90 T.';
 
   @override
   String get rangeAll => 'Alle';
@@ -584,10 +584,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get waterChange => 'Wasserwechsel';
 
   @override
-  String get carbonChange => 'Kohlewechsel';
+  String get carbonChange => 'Aktivkohle-Wechsel';
 
   @override
-  String get recordCarbonChange => 'Kohlewechsel erfassen';
+  String get recordCarbonChange => 'Aktivkohle-Wechsel erfassen';
 
   @override
   String get weightOptional => 'Gewicht (optional)';
@@ -782,33 +782,32 @@ class AppLocalizationsDe extends AppLocalizations {
   String get salinityCalculator => 'Salinitäts-Rechner';
 
   @override
-  String get salinityCalculatorSubtitle =>
-      'Umrechnung ppt ↔ spezifisches Gewicht (SG)';
+  String get salinityCalculatorSubtitle => 'Umrechnung ppt ↔ Dichte (SG)';
 
   @override
-  String get backupSection => 'Sicherung';
+  String get backupSection => 'Backup';
 
   @override
   String get backupNow => 'Jetzt sichern';
 
   @override
   String backupLastRun(String when) {
-    return 'Letzte Sicherung: $when';
+    return 'Letztes Backup: $when';
   }
 
   @override
-  String get backupNeverRun => 'Noch keine Sicherung';
+  String get backupNeverRun => 'Noch kein Backup';
 
   @override
   String backupLastFailed(String when) {
-    return 'Letzte Sicherung fehlgeschlagen am $when';
+    return 'Letztes Backup fehlgeschlagen am $when';
   }
 
   @override
-  String get backupDone => 'Sicherung gespeichert';
+  String get backupDone => 'Backup gespeichert';
 
   @override
-  String get backupExport => 'Sicherung exportieren';
+  String get backupExport => 'Backup exportieren';
 
   @override
   String get backupExportSubtitle =>
@@ -828,60 +827,60 @@ class AppLocalizationsDe extends AppLocalizations {
   String get csvExportFailed => 'Messwerte konnten nicht exportiert werden';
 
   @override
-  String get backupImport => 'Aus Sicherung wiederherstellen';
+  String get backupImport => 'Aus Backup wiederherstellen';
 
   @override
   String get backupImportSubtitle =>
-      'Alle Daten durch eine Sicherungsdatei ersetzen';
+      'Alle Daten durch eine Backup-Datei ersetzen';
 
   @override
-  String get backupRestoreConfirmTitle => 'Sicherung wiederherstellen?';
+  String get backupRestoreConfirmTitle => 'Backup wiederherstellen?';
 
   @override
   String get backupRestoreConfirmBody =>
-      'Dadurch werden ALLE Ihre Aquariendaten — alle Aquarien, Parameter und Messwerte — durch den Inhalt der Sicherungsdatei ersetzt. Ihre Einstellungen auf diesem Gerät (Sprache, Einheiten und Präferenzen) bleiben erhalten. Dies kann nicht rückgängig gemacht werden.';
+      'Dadurch werden ALLE deine Aquariendaten — alle Aquarien, Parameter und Messwerte — durch den Inhalt der Backup-Datei ersetzt. Deine Einstellungen auf diesem Gerät (Sprache, Einheiten und Präferenzen) bleiben erhalten. Dies kann nicht rückgängig gemacht werden.';
 
   @override
   String get restore => 'Wiederherstellen';
 
   @override
-  String get backupRestored => 'Sicherung wiederhergestellt';
+  String get backupRestored => 'Backup wiederhergestellt';
 
   @override
-  String get backupNowFailed => 'Die Sicherung konnte nicht gespeichert werden';
+  String get backupNowFailed => 'Das Backup konnte nicht gespeichert werden';
 
   @override
-  String get backupShareFailed => 'Die Sicherung konnte nicht geteilt werden';
+  String get backupShareFailed => 'Das Backup konnte nicht geteilt werden';
 
   @override
-  String get backupExportFailed => 'Sicherung konnte nicht exportiert werden';
+  String get backupExportFailed => 'Backup konnte nicht exportiert werden';
 
   @override
   String get backupImportFailed =>
-      'Sicherung konnte nicht wiederhergestellt werden';
+      'Backup konnte nicht wiederhergestellt werden';
 
   @override
   String get backupInvalidFile =>
-      'Diese Datei ist keine gültige ReefTracker-Sicherung';
+      'Diese Datei ist kein gültiges ReefTracker-Backup';
 
   @override
   String get backupTooNew =>
-      'Diese Sicherung wurde mit einer neueren App-Version erstellt und kann hier nicht wiederhergestellt werden';
+      'Dieses Backup wurde mit einer neueren App-Version erstellt und kann hier nicht wiederhergestellt werden';
 
   @override
   String get backupCorrupted =>
-      'Die Sicherungsdatei ist beschädigt oder unvollständig';
+      'Die Backup-Datei ist beschädigt oder unvollständig';
 
   @override
   String get backupInconsistent =>
-      'Die Sicherung ist inkonsistent und kann nicht wiederhergestellt werden';
+      'Das Backup ist inkonsistent und kann nicht wiederhergestellt werden';
 
   @override
   String get dataLoadFailed =>
-      'Einige Daten konnten nicht geladen werden. Falls das wiederholt auftritt, starte die App neu oder stelle eine Sicherung wieder her.';
+      'Einige Daten konnten nicht geladen werden. Falls das wiederholt auftritt, starte die App neu oder stelle ein Backup wieder her.';
 
   @override
-  String get autoBackupTitle => 'Automatische Sicherung';
+  String get autoBackupTitle => 'Automatisches Backup';
 
   @override
   String get autoBackupSubtitle =>
@@ -897,31 +896,31 @@ class AppLocalizationsDe extends AppLocalizations {
   String get autoBackupWeekly => 'Wöchentlich';
 
   @override
-  String get manageBackups => 'Sicherungen verwalten';
+  String get manageBackups => 'Backups verwalten';
 
   @override
   String get manageBackupsSubtitle =>
-      'Automatische Sicherungen ansehen, wiederherstellen oder teilen';
+      'Automatische Backups ansehen, wiederherstellen oder teilen';
 
   @override
-  String get backupsScreenTitle => 'Automatische Sicherungen';
+  String get backupsScreenTitle => 'Automatische Backups';
 
   @override
-  String get noAutoBackups => 'Noch keine automatischen Sicherungen';
+  String get noAutoBackups => 'Noch keine automatischen Backups';
 
   @override
   String get noAutoBackupsHint =>
-      'Eine Sicherung wird automatisch erstellt, während du die App nutzt.';
+      'Ein Backup wird automatisch erstellt, während du die App nutzt.';
 
   @override
   String get share => 'Teilen';
 
   @override
-  String get backupDeleteConfirmTitle => 'Sicherung löschen?';
+  String get backupDeleteConfirmTitle => 'Backup löschen?';
 
   @override
   String get backupDeleteConfirmBody =>
-      'Dadurch wird diese Sicherungsdatei dauerhaft von deinem Gerät entfernt.';
+      'Dadurch wird diese Backup-Datei dauerhaft von deinem Gerät entfernt.';
 
   @override
   String sizeBytes(Object size) {
@@ -942,7 +941,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get syncGdriveTitle => 'Google Drive-Synchronisierung';
 
   @override
-  String get syncGdriveSubtitle => 'Automatisch in Ihr Google Drive sichern';
+  String get syncGdriveSubtitle => 'Automatisch in dein Google Drive sichern';
 
   @override
   String syncGdriveLastPush(String when) {
@@ -963,7 +962,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String syncGdriveDialogBody(String email) {
-    return 'Backups werden in den Ordner „ReefTracker“ im Google Drive von $email hochgeladen. Sie können sie unter drive.google.com ansehen und herunterladen.';
+    return 'Backups werden in den Ordner „ReefTracker“ im Google Drive von $email hochgeladen. Du kannst sie unter drive.google.com ansehen und herunterladen.';
   }
 
   @override
@@ -971,7 +970,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncGdriveDisconnectedSnack =>
-      'Google Drive getrennt. Bereits hochgeladene Backups bleiben in Ihrem Drive erhalten.';
+      'Google Drive getrennt. Bereits hochgeladene Backups bleiben in deinem Drive erhalten.';
 
   @override
   String syncGdriveLastFailed(String when) {
@@ -1054,10 +1053,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Umrechnung zwischen praktischer Salinität (ppt) und spezifischem Gewicht (SG). Tippe in eines der Felder.';
+      'Umrechnung zwischen praktischer Salinität (ppt) und Dichte (SG). Tippe in eines der Felder.';
 
   @override
-  String get specificGravity => 'Spezifisches Gewicht';
+  String get specificGravity => 'Dichte (SG)';
 
   @override
   String get referencePoints => 'Referenzwerte';
@@ -1255,32 +1254,32 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String trendAmberInDays(int days) {
-    return 'Erreicht die Achtung-Zone in ~$days T';
+    return 'Erreicht die Achtung-Zone in ~$days T.';
   }
 
   @override
   String trendRedInDays(int days) {
-    return 'Erreicht die kritische Zone in ~$days T';
+    return 'Erreicht die kritische Zone in ~$days T.';
   }
 
   @override
   String trendChipAmber(int days) {
-    return 'Achtung ~$days T';
+    return 'Achtung ~$days T.';
   }
 
   @override
   String trendChipRed(int days) {
-    return 'Handeln ~$days T';
+    return 'Handeln ~$days T.';
   }
 
   @override
   String trendBackInRangeDays(int days) {
-    return 'Erholt sich — wieder im Bereich in ~$days T';
+    return 'Erholt sich — wieder im Bereich in ~$days T.';
   }
 
   @override
   String trendChipRecovering(int days) {
-    return 'Erholt sich ~$days T';
+    return 'Erholt sich ~$days T.';
   }
 
   @override
@@ -1332,7 +1331,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get paramSalinity => 'Salinität';
 
   @override
-  String get paramAlkalinity => 'Alkalinität (KH)';
+  String get paramAlkalinity => 'Alkalinität';
 
   @override
   String get paramCalcium => 'Kalzium (Ca)';
@@ -1535,7 +1534,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get microViewNone =>
-      'Noch keine eigenen Ansichten. Eine Ansicht zeigt nur die Elemente, die Ihr Labor misst.';
+      'Noch keine eigenen Ansichten. Eine Ansicht zeigt nur die Elemente, die dein Labor misst.';
 
   @override
   String get microViewNameHint => 'z. B. Panel meines Labors';
@@ -1577,7 +1576,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get icpImportTitle => 'ICP-Bericht importieren';
 
   @override
-  String get icpImportFormatHint => 'Wählen Sie das Exportformat der Datei.';
+  String get icpImportFormatHint => 'Wähle das Exportformat der Datei.';
 
   @override
   String get icpImportFormatFaunaMarinHint =>
@@ -1601,7 +1600,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get icpImportSampleDateHint =>
-      'Vorausgefüllt mit dem Analysedatum aus dem Bericht. Ändern Sie es auf den Tag der Probenentnahme.';
+      'Vorausgefüllt mit dem Analysedatum aus dem Bericht. Ändere es auf den Tag der Probenentnahme.';
 
   @override
   String get icpImportSectionCore => 'Basisparameter';
@@ -1646,7 +1645,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wassertemperatur. Stabilität ist wichtiger als der exakte Wert.';
 
   @override
-  String get helpSalinity => 'Spezifisches Gewicht. ~1,026 SG ≈ 35 ppt.';
+  String get helpSalinity => 'Dichte. ~1,026 SG ≈ 35 ppt.';
 
   @override
   String get helpAlkalinity =>
@@ -1697,7 +1696,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String healthNotTestedDays(int count) {
-    return 'Seit $count d nicht gemessen';
+    return 'Seit $count T. nicht gemessen';
   }
 
   @override
@@ -1812,12 +1811,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String insightForecastLow(Object param, int days) {
-    return '$param sinkt — verlässt den Bereich evtl. in ~$days T';
+    return '$param sinkt — verlässt den Bereich evtl. in ~$days T.';
   }
 
   @override
   String insightForecastHigh(Object param, int days) {
-    return '$param steigt — verlässt den Bereich evtl. in ~$days T';
+    return '$param steigt — verlässt den Bereich evtl. in ~$days T.';
   }
 
   @override
@@ -1827,12 +1826,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String insightRecoveringDays(Object param, int days) {
-    return '$param erholt sich — wieder im Bereich in ~$days T';
+    return '$param erholt sich — wieder im Bereich in ~$days T.';
   }
 
   @override
   String insightStale(Object param, int days) {
-    return '$param seit $days d nicht gemessen';
+    return '$param seit $days T. nicht gemessen';
   }
 
   @override
@@ -2208,7 +2207,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get roStageSediment => 'Sedimentfilter';
 
   @override
-  String get roStageCarbonBlock => 'Kohleblock';
+  String get roStageCarbonBlock => 'Aktivkohleblock';
 
   @override
   String get roStageMembrane => 'RO-Membran';
@@ -2242,7 +2241,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get roPartOfUnitHint =>
-      'Ausschalten, wenn Ihre Anlage diese Stufe nicht hat';
+      'Ausschalten, wenn deine Anlage diese Stufe nicht hat';
 
   @override
   String get roHiddenStages => 'Nicht an meiner Anlage';
@@ -2270,14 +2269,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get roEmptyBody =>
-      'Keine Teile. Fügen Sie die Filter Ihrer Osmoseanlage mit + hinzu.';
+      'Keine Teile. Füge die Filter deiner Osmoseanlage mit + hinzu.';
 
   @override
   String get roSetupPrompt => 'Filter- und Membranwechsel im Blick behalten';
 
   @override
   String get roUnitToggleSubtitle =>
-      'Im Aktionen-Tab anzeigen, mit Erinnerungen an Filterwechsel';
+      'Im Maßnahmen-Tab anzeigen, mit Erinnerungen an Filterwechsel';
 
   @override
   String get roAllOk => 'Alle Teile in Ordnung';

@@ -1331,7 +1331,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get paramSalinity => 'Salinita';
 
   @override
-  String get paramAlkalinity => 'Alkalita (KH)';
+  String get paramAlkalinity => 'Alkalita';
 
   @override
   String get paramCalcium => 'Vápník (Ca)';
@@ -1565,7 +1565,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Odstraní pouze pohled. Naměřené hodnoty zůstanou zachovány.';
 
   @override
-  String get microHideUndetectable => 'Skrýt neměřitelné (nula)';
+  String get microHideUndetectable => 'Skrýt nedetekovatelné (nula)';
 
   @override
   String get microAttentionOnly => 'Jen prvky vyžadující pozornost';
@@ -1879,11 +1879,11 @@ class AppLocalizationsCs extends AppLocalizations {
       weeks,
       locale: localeName,
       other:
-          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za posledních $weeks týdnů. Prosím analyzuj je, upozorni na rizika či trendy, které bych měl řešit, a doporuč, co zkontrolovat nebo upravit.',
+          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za posledních $weeks týdnů. Prosím analyzuj je, upozorni na rizika či trendy, které je třeba řešit, a doporuč, co zkontrolovat nebo upravit.',
       few:
-          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za poslední $weeks týdny. Prosím analyzuj je, upozorni na rizika či trendy, které bych měl řešit, a doporuč, co zkontrolovat nebo upravit.',
+          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za poslední $weeks týdny. Prosím analyzuj je, upozorni na rizika či trendy, které je třeba řešit, a doporuč, co zkontrolovat nebo upravit.',
       one:
-          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za poslední týden. Prosím analyzuj je, upozorni na rizika či trendy, které bych měl řešit, a doporuč, co zkontrolovat nebo upravit.',
+          'Mám mořské útesové akvárium a sleduji ho v aplikaci. Níže jsou data mé nádrže za poslední týden. Prosím analyzuj je, upozorni na rizika či trendy, které je třeba řešit, a doporuč, co zkontrolovat nebo upravit.',
     );
     return '$_temp0';
   }
@@ -2283,7 +2283,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get roUnitToggleSubtitle =>
-      'Zobrazit na kartě Akce, s připomínkami výměn filtrů';
+      'Zobrazit na kartě Úkony, s připomínkami výměn filtrů';
 
   @override
   String get roAllOk => 'Všechny díly v pořádku';
