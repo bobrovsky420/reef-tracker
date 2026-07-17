@@ -1045,6 +1045,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languagePolish => 'Polski';
 
   @override
+  String get languageFrench => 'Français';
+
+  @override
+  String get languageItalian => 'Italiano';
+
+  @override
   String get calculatorIntro =>
       'Convert between practical salinity (ppt) and specific gravity (SG). Type in either field.';
 

@@ -313,6 +313,8 @@
   "languageGerman": "Deutsch",
   "languageRussian": "Русский",
   "languagePolish": "Polski",
+  "languageFrench": "Français",
+  "languageItalian": "Italiano",
 
   "calculatorIntro": "Перевод между практической солёностью (ppt) и плотностью (SG). Вводите в любое поле.",
   "specificGravity": "Плотность (SG)",

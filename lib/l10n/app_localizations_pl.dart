@@ -1059,6 +1059,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get languagePolish => 'Polski';
 
   @override
+  String get languageFrench => 'Français';
+
+  @override
+  String get languageItalian => 'Italiano';
+
+  @override
   String get calculatorIntro =>
       'Przelicz między praktycznym zasoleniem (ppt) a gęstością względną (SG). Wpisuj w dowolne pole.';
 

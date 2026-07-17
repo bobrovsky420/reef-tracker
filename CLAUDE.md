@@ -43,7 +43,7 @@ There is **one changelog for both platforms**: prefix an entry with `iOS:` or `A
 This app is fully localized. **Whenever you add or change any user-facing text, you MUST update the translations for every existing language — no language may be left out of sync.**
 
 - ARB files live in [lib/l10n/](lib/l10n/). The template is [app_en.arb](lib/l10n/app_en.arb).
-- Existing languages: English (`app_en.arb`), Czech (`app_cs.arb`), German (`app_de.arb`), Russian (`app_ru.arb`), Polish (`app_pl.arb`).
+- Existing languages: English (`app_en.arb`), Czech (`app_cs.arb`), German (`app_de.arb`), Russian (`app_ru.arb`), Polish (`app_pl.arb`), French (`app_fr.arb`), Italian (`app_it.arb`).
 - Config: [l10n.yaml](l10n.yaml).
 
 Rules:

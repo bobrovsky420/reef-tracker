@@ -54,11 +54,15 @@ class SettingsScreen extends ConsumerWidget {
                   value: 'system',
                   child: Text(l.languageSystem),
                 ),
-                DropdownMenuItem(value: 'en', child: Text(l.languageEnglish)),
+                // Sorted alphabetically by native language name (Latin
+                // scripts first), with the system default pinned on top.
                 DropdownMenuItem(value: 'cs', child: Text(l.languageCzech)),
                 DropdownMenuItem(value: 'de', child: Text(l.languageGerman)),
-                DropdownMenuItem(value: 'ru', child: Text(l.languageRussian)),
+                DropdownMenuItem(value: 'en', child: Text(l.languageEnglish)),
+                DropdownMenuItem(value: 'fr', child: Text(l.languageFrench)),
+                DropdownMenuItem(value: 'it', child: Text(l.languageItalian)),
                 DropdownMenuItem(value: 'pl', child: Text(l.languagePolish)),
+                DropdownMenuItem(value: 'ru', child: Text(l.languageRussian)),
               ],
             ),
           ),

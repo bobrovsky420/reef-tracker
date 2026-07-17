@@ -432,6 +432,8 @@
   "languageGerman": "Deutsch",
   "languageRussian": "Русский",
   "languagePolish": "Polski",
+  "languageFrench": "Français",
+  "languageItalian": "Italiano",
 
   "calculatorIntro": "Convert between practical salinity (ppt) and specific gravity (SG). Type in either field.",
   "specificGravity": "Specific gravity",

@@ -15,7 +15,7 @@ and no account.
   (`flutter create --platforms=ios --org cz.reeftracker`) with bundle id
   `cz.reeftracker.reeftracker` (matches the Android application id), deployment
   target iOS 13, display name `ReefTracker`. `Info.plist` declares
-  `CFBundleLocalizations` (en/cs/de/ru/pl), `ITSAppUsesNonExemptEncryption=false`
+  `CFBundleLocalizations` (en/cs/de/ru/pl/fr/it), `ITSAppUsesNonExemptEncryption=false`
   (no custom crypto — skips export-compliance questions on upload), and
   camera/photo-library purpose strings (ITMS-90683: required because
   `file_picker`'s iOS code references those APIs; English-only on purpose — no
@@ -1730,7 +1730,7 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 
 - Source strings: `lib/l10n/app_<locale>.arb`; template is `app_en.arb`. Config
   in `l10n.yaml` (output to `lib/l10n`, non-synthetic).
-- Languages: en (template), cs, de, pl, ru — every key kept in sync across all
+- Languages: en (template), cs, de, fr, it, pl, ru — every key kept in sync across all
   files; non-template ARBs need no `@` metadata but must contain every key and
   placeholder or `gen-l10n` errors.
 - Domain labels (parameter names/help, setup types, zones) are localized through

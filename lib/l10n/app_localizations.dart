@@ -8,6 +8,8 @@ import 'package:intl/intl.dart' as intl;
 import 'app_localizations_cs.dart';
 import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_fr.dart';
+import 'app_localizations_it.dart';
 import 'app_localizations_pl.dart';
 import 'app_localizations_ru.dart';
 
@@ -100,6 +102,8 @@ abstract class AppLocalizations {
     Locale('cs'),
     Locale('de'),
     Locale('en'),
+    Locale('fr'),
+    Locale('it'),
     Locale('pl'),
     Locale('ru'),
   ];
@@ -1866,6 +1870,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Polski'**
   String get languagePolish;
+
+  /// No description provided for @languageFrench.
+  ///
+  /// In en, this message translates to:
+  /// **'Français'**
+  String get languageFrench;
+
+  /// No description provided for @languageItalian.
+  ///
+  /// In en, this message translates to:
+  /// **'Italiano'**
+  String get languageItalian;
 
   /// No description provided for @calculatorIntro.
   ///
@@ -3876,8 +3892,15 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['cs', 'de', 'en', 'pl', 'ru'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'cs',
+    'de',
+    'en',
+    'fr',
+    'it',
+    'pl',
+    'ru',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -3892,6 +3915,10 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsDe();
     case 'en':
       return AppLocalizationsEn();
+    case 'fr':
+      return AppLocalizationsFr();
+    case 'it':
+      return AppLocalizationsIt();
     case 'pl':
       return AppLocalizationsPl();
     case 'ru':

@@ -1050,6 +1050,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get languagePolish => 'Polski';
 
   @override
+  String get languageFrench => 'Français';
+
+  @override
+  String get languageItalian => 'Italiano';
+
+  @override
   String get calculatorIntro =>
       'Převod mezi praktickou salinitou (ppt) a specifickou hustotou (SG). Pište do kteréhokoli pole.';
 

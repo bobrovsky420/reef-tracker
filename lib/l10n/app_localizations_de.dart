@@ -1052,6 +1052,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get languagePolish => 'Polski';
 
   @override
+  String get languageFrench => 'Français';
+
+  @override
+  String get languageItalian => 'Italiano';
+
+  @override
   String get calculatorIntro =>
       'Umrechnung zwischen praktischer Salinität (ppt) und Dichte (SG). Tippe in eines der Felder.';
 

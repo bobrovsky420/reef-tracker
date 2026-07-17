@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.29.4] - 2026-07-17
 
+### Added
+- French and Italian translations — the app is now fully localized in seven
+  languages (English, Czech, German, Russian, Polish, French, Italian), using
+  the reef-hobby terminology of each (e.g. French "osmoseur", "bac rodé",
+  "oligo-éléments"; Italian "vasca matura", "integratore").
+
 ### Changed
+- The language picker lists languages alphabetically by their native names
+  instead of the order they were added.
 - Android: Google Drive backups are now taken together with the local
   automatic backup — on the configured daily/weekly schedule, or immediately
   on a manual "Back up now" — instead of on nearly every app open after a

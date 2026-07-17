@@ -1056,6 +1056,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get languagePolish => 'Polski';
 
   @override
+  String get languageFrench => 'Français';
+
+  @override
+  String get languageItalian => 'Italiano';
+
+  @override
   String get calculatorIntro =>
       'Перевод между практической солёностью (ppt) и плотностью (SG). Вводите в любое поле.';
 
