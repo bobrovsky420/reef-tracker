@@ -62,7 +62,7 @@ class RoSummaryTile extends ConsumerWidget {
           subtitle =
               '${l.roStageName(worst.stage.stageType, worst.stage.title)}'
               ' • ${dueText(l, worst.due!)}';
-          color = zone == Zone.red ? zone.color : null;
+          color = zone == Zone.red ? zone.colorOf(context) : null;
         }
       }
     }

@@ -1,0 +1,349 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+/// The ReefTracker design language (REDESIGN §2): a fixed token palette per
+/// brightness, exposed as a [ThemeExtension] so widgets read colors via
+/// `ReefTokens.of(context)` — no hardcoded colors in feature code.
+///
+/// Zone→color mapping lives in `widgets/zone_visuals.dart` (this file stays
+/// domain-free); the tokens here are the single source for both that mapping
+/// and the Material [ColorScheme] built in [buildReefTheme].
+@immutable
+class ReefTokens extends ThemeExtension<ReefTokens> {
+  const ReefTokens({
+    required this.scaffoldTop,
+    required this.scaffoldBody,
+    required this.surface,
+    required this.surfaceBorder,
+    required this.primary,
+    required this.onPrimary,
+    required this.healthy,
+    required this.caution,
+    required this.critical,
+    required this.healthySoft,
+    required this.cautionSoft,
+    required this.criticalSoft,
+    required this.criticalBorder,
+    required this.band,
+    required this.track,
+    required this.tick,
+    required this.text,
+    required this.textDim,
+    required this.textFaint,
+    required this.cardShadow,
+    required this.markerRing,
+    required this.tabBarBg,
+  });
+
+  /// Vertical scaffold gradient endpoints (top → body, stop at 14%).
+  final Color scaffoldTop;
+  final Color scaffoldBody;
+
+  /// Card background and its 1 px border.
+  final Color surface;
+  final Color surfaceBorder;
+
+  /// "Actinic" accent: FAB, active tab, links, segmented-control accents.
+  final Color primary;
+  final Color onPrimary;
+
+  /// Status colors (Zone.green / amber / red map onto these).
+  final Color healthy;
+  final Color caution;
+  final Color critical;
+
+  /// Soft fills for the status colors: tag/chip backgrounds, band fills.
+  final Color healthySoft;
+  final Color cautionSoft;
+  final Color criticalSoft;
+
+  /// Border of the critical (equipment-alert) card.
+  final Color criticalBorder;
+
+  /// Ideal-range band on gauges/ratio tracks.
+  final Color band;
+
+  /// Background track of gauges/bars/rings.
+  final Color track;
+
+  /// Gauge tick marks.
+  final Color tick;
+
+  /// Primary / secondary / tertiary text.
+  final Color text;
+  final Color textDim;
+  final Color textFaint;
+
+  /// Card elevation (empty in dark — the border carries structure).
+  final List<BoxShadow> cardShadow;
+
+  /// Ring around gauge/ratio marker dots.
+  final Color markerRing;
+
+  /// Translucent bottom tab-bar background (blurred behind).
+  final Color tabBarBg;
+
+  /// The bundled monospace family for numeric values (gauge values, deltas,
+  /// scores, dose amounts). Weights 400/500/700 are available.
+  static const String monoFamily = 'JetBrainsMono';
+
+  /// Base style for numeric values; `copyWith` size/weight/color at use sites.
+  static const TextStyle monoTextStyle = TextStyle(fontFamily: monoFamily);
+
+  /// The active theme's tokens. Falls back to the brightness-matched default
+  /// set when the theme wasn't built by [buildReefTheme] (bare-`MaterialApp`
+  /// widget tests), so token reads never crash.
+  static ReefTokens of(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.extension<ReefTokens>() ??
+        (theme.brightness == Brightness.dark ? dark : light);
+  }
+
+  static const ReefTokens light = ReefTokens(
+    scaffoldTop: Color(0xFFFFFFFF),
+    scaffoldBody: Color(0xFFF2FAFA),
+    surface: Color(0xFFFFFFFF),
+    surfaceBorder: Color(0x1A10262A), // 10% ink
+    primary: Color(0xFF0A8599),
+    onPrimary: Color(0xFFFFFFFF),
+    healthy: Color(0xFF2FA968),
+    caution: Color(0xFFC97F1E),
+    critical: Color(0xFFE2593A),
+    healthySoft: Color(0x292FA968), // 16%
+    cautionSoft: Color(0x1FC97F1E), // 12%
+    criticalSoft: Color(0x1AE2593A), // 10%
+    criticalBorder: Color(0x47E2593A), // 28%
+    band: Color(0x332FA968), // 20%
+    track: Color(0x1710262A), // 9% ink
+    tick: Color(0x2E10262A), // 18% ink
+    text: Color(0xFF10262A),
+    textDim: Color(0x9410262A), // 58%
+    textFaint: Color(0x5C10262A), // 36%
+    cardShadow: [
+      BoxShadow(offset: Offset(0, 1), blurRadius: 3, color: Color(0x1210262A)),
+      BoxShadow(offset: Offset(0, 6), blurRadius: 16, color: Color(0x0D10262A)),
+    ],
+    markerRing: Color(0xFFFFFFFF),
+    tabBarBg: Color(0xD9FFFFFF), // 85%
+  );
+
+  static const ReefTokens dark = ReefTokens(
+    scaffoldTop: Color(0xFF0D2124),
+    scaffoldBody: Color(0xFF0A1A1D),
+    surface: Color(0x0BFFFFFF), // 4.5% white over the gradient
+    surfaceBorder: Color(0x17FFFFFF), // 9%
+    primary: Color(0xFF3FD1E0),
+    onPrimary: Color(0xFF04262B),
+    healthy: Color(0xFF7DE8A0),
+    caution: Color(0xFFF5B95B),
+    critical: Color(0xFFFF7A59),
+    healthySoft: Color(0x297DE8A0), // 16%
+    cautionSoft: Color(0x29F5B95B), // 16%
+    criticalSoft: Color(0x24FF7A59), // 14%
+    criticalBorder: Color(0x59FF7A59), // 35%
+    band: Color(0x617DE8A0), // 38%
+    track: Color(0x14EAF6F3), // 8%
+    tick: Color(0x2EEAF6F3), // 18%
+    text: Color(0xFFEAF6F3),
+    textDim: Color(0x8FEAF6F3), // 56%
+    textFaint: Color(0x57EAF6F3), // 34%
+    cardShadow: [],
+    markerRing: Color(0xFF0A1A1D),
+    tabBarBg: Color(0xB306100F), // 70%
+  );
+
+  @override
+  ReefTokens copyWith({
+    Color? scaffoldTop,
+    Color? scaffoldBody,
+    Color? surface,
+    Color? surfaceBorder,
+    Color? primary,
+    Color? onPrimary,
+    Color? healthy,
+    Color? caution,
+    Color? critical,
+    Color? healthySoft,
+    Color? cautionSoft,
+    Color? criticalSoft,
+    Color? criticalBorder,
+    Color? band,
+    Color? track,
+    Color? tick,
+    Color? text,
+    Color? textDim,
+    Color? textFaint,
+    List<BoxShadow>? cardShadow,
+    Color? markerRing,
+    Color? tabBarBg,
+  }) {
+    return ReefTokens(
+      scaffoldTop: scaffoldTop ?? this.scaffoldTop,
+      scaffoldBody: scaffoldBody ?? this.scaffoldBody,
+      surface: surface ?? this.surface,
+      surfaceBorder: surfaceBorder ?? this.surfaceBorder,
+      primary: primary ?? this.primary,
+      onPrimary: onPrimary ?? this.onPrimary,
+      healthy: healthy ?? this.healthy,
+      caution: caution ?? this.caution,
+      critical: critical ?? this.critical,
+      healthySoft: healthySoft ?? this.healthySoft,
+      cautionSoft: cautionSoft ?? this.cautionSoft,
+      criticalSoft: criticalSoft ?? this.criticalSoft,
+      criticalBorder: criticalBorder ?? this.criticalBorder,
+      band: band ?? this.band,
+      track: track ?? this.track,
+      tick: tick ?? this.tick,
+      text: text ?? this.text,
+      textDim: textDim ?? this.textDim,
+      textFaint: textFaint ?? this.textFaint,
+      cardShadow: cardShadow ?? this.cardShadow,
+      markerRing: markerRing ?? this.markerRing,
+      tabBarBg: tabBarBg ?? this.tabBarBg,
+    );
+  }
+
+  @override
+  ReefTokens lerp(ReefTokens? other, double t) {
+    if (other == null) return this;
+    return ReefTokens(
+      scaffoldTop: Color.lerp(scaffoldTop, other.scaffoldTop, t)!,
+      scaffoldBody: Color.lerp(scaffoldBody, other.scaffoldBody, t)!,
+      surface: Color.lerp(surface, other.surface, t)!,
+      surfaceBorder: Color.lerp(surfaceBorder, other.surfaceBorder, t)!,
+      primary: Color.lerp(primary, other.primary, t)!,
+      onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
+      healthy: Color.lerp(healthy, other.healthy, t)!,
+      caution: Color.lerp(caution, other.caution, t)!,
+      critical: Color.lerp(critical, other.critical, t)!,
+      healthySoft: Color.lerp(healthySoft, other.healthySoft, t)!,
+      cautionSoft: Color.lerp(cautionSoft, other.cautionSoft, t)!,
+      criticalSoft: Color.lerp(criticalSoft, other.criticalSoft, t)!,
+      criticalBorder: Color.lerp(criticalBorder, other.criticalBorder, t)!,
+      band: Color.lerp(band, other.band, t)!,
+      track: Color.lerp(track, other.track, t)!,
+      tick: Color.lerp(tick, other.tick, t)!,
+      text: Color.lerp(text, other.text, t)!,
+      textDim: Color.lerp(textDim, other.textDim, t)!,
+      textFaint: Color.lerp(textFaint, other.textFaint, t)!,
+      cardShadow: BoxShadow.lerpList(cardShadow, other.cardShadow, t) ?? cardShadow,
+      markerRing: Color.lerp(markerRing, other.markerRing, t)!,
+      tabBarBg: Color.lerp(tabBarBg, other.tabBarBg, t)!,
+    );
+  }
+}
+
+/// Explicit [ColorScheme]s built from the token palette (REDESIGN #1: no
+/// `fromSeed` — the old reef-blue seed is retired). Slots that Material
+/// widgets consume are set deliberately:
+///
+/// - `primary` = actinic teal (series lines, FAB, switches, buttons).
+/// - `secondary` = violet — the carbon-change chart marker (#47: markers must
+///   stay distinct from the primary-colored series line on both brightnesses).
+/// - `tertiary` = ocean blue — the water-change marker + noted-reading dots
+///   ("annotation" family) and informational hints.
+/// - `error` = darkened coral in light (destructive UI + validation text keeps
+///   AA contrast); pure coral in dark. Status "critical" reads use the
+///   [ReefTokens.critical] token, not `error`.
+/// - `secondaryContainer` = soft actinic (M3 NavigationBar active pill).
+const ColorScheme _lightScheme = ColorScheme(
+  brightness: Brightness.light,
+  primary: Color(0xFF0A8599),
+  onPrimary: Color(0xFFFFFFFF),
+  primaryContainer: Color(0xFFC8EDF2),
+  onPrimaryContainer: Color(0xFF053A42),
+  secondary: Color(0xFF7A5BC4),
+  onSecondary: Color(0xFFFFFFFF),
+  secondaryContainer: Color(0xFFD2EEF2),
+  onSecondaryContainer: Color(0xFF0A3A42),
+  tertiary: Color(0xFF3E6FC4),
+  onTertiary: Color(0xFFFFFFFF),
+  tertiaryContainer: Color(0xFFDCE7FA),
+  onTertiaryContainer: Color(0xFF1C3260),
+  error: Color(0xFFC64B2E),
+  onError: Color(0xFFFFFFFF),
+  errorContainer: Color(0xFFFADCD4),
+  onErrorContainer: Color(0xFF5C1A0B),
+  surface: Color(0xFFFFFFFF),
+  onSurface: Color(0xFF10262A),
+  onSurfaceVariant: Color(0x9410262A),
+  surfaceContainerLowest: Color(0xFFFFFFFF),
+  surfaceContainerLow: Color(0xFFF7FBFB),
+  surfaceContainer: Color(0xFFF2FAFA),
+  surfaceContainerHigh: Color(0xFFECF5F5),
+  surfaceContainerHighest: Color(0xFFE6F0F0),
+  outline: Color(0xFF607D82),
+  outlineVariant: Color(0xFFC3D6D8),
+  inverseSurface: Color(0xFF2C3E41),
+  onInverseSurface: Color(0xFFECF5F5),
+  inversePrimary: Color(0xFF3FD1E0),
+  surfaceTint: Colors.transparent,
+);
+
+const ColorScheme _darkScheme = ColorScheme(
+  brightness: Brightness.dark,
+  primary: Color(0xFF3FD1E0),
+  onPrimary: Color(0xFF04262B),
+  primaryContainer: Color(0xFF0E4A54),
+  onPrimaryContainer: Color(0xFFB8ECF2),
+  secondary: Color(0xFFB9A3F0),
+  onSecondary: Color(0xFF2A1A55),
+  secondaryContainer: Color(0xFF123E44),
+  onSecondaryContainer: Color(0xFFB8ECF2),
+  tertiary: Color(0xFF8FB8F0),
+  onTertiary: Color(0xFF102A55),
+  tertiaryContainer: Color(0xFF2A3E66),
+  onTertiaryContainer: Color(0xFFC8D8F8),
+  error: Color(0xFFFF7A59),
+  onError: Color(0xFF3A1105),
+  errorContainer: Color(0xFF5C2415),
+  onErrorContainer: Color(0xFFFFD9CE),
+  surface: Color(0xFF0D2124),
+  onSurface: Color(0xFFEAF6F3),
+  onSurfaceVariant: Color(0x8FEAF6F3),
+  surfaceContainerLowest: Color(0xFF071214),
+  surfaceContainerLow: Color(0xFF102629),
+  surfaceContainer: Color(0xFF132B2E),
+  surfaceContainerHigh: Color(0xFF163135),
+  surfaceContainerHighest: Color(0xFF1A373B),
+  outline: Color(0xFF7C989C),
+  outlineVariant: Color(0xFF294246),
+  inverseSurface: Color(0xFFEAF6F3),
+  onInverseSurface: Color(0xFF10262A),
+  inversePrimary: Color(0xFF0A8599),
+  surfaceTint: Colors.transparent,
+);
+
+/// Builds the app [ThemeData] for a brightness × platform pair. Platform
+/// dialects (radii, chrome shapes — REDESIGN #15) resolve here and only here;
+/// feature code never branches on the platform (CLAUDE.md rule).
+ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
+  final dark = brightness == Brightness.dark;
+  final tokens = dark ? ReefTokens.dark : ReefTokens.light;
+  return ThemeData(
+    colorScheme: dark ? _darkScheme : _lightScheme,
+    platform: platform,
+    // Screens are transparent over the shared `ReefBackground` gradient
+    // mounted in MaterialApp's `builder` (scaffoldTop→scaffoldBody, 14% stop).
+    scaffoldBackgroundColor: Colors.transparent,
+    // The app bar is transparent too, so the gradient's top glow shows behind
+    // the status-bar/app-bar area. Zero scrolled-under elevation: the M3
+    // default would flash `surface`→`surfaceContainer` when content scrolls
+    // under. With no background to derive it from, the status-bar icon
+    // brightness must be set explicitly.
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      systemOverlayStyle: dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
+    ),
+    // Bottom tab bar per the mockup: translucent `tabBarBg` (the hairline top
+    // border lives in HomeShell — NavigationBar has no border slot).
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: tokens.tabBarBg,
+      elevation: 0,
+    ),
+    extensions: [tokens],
+  );
+}

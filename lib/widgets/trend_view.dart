@@ -56,7 +56,7 @@ class TrendCard extends StatelessWidget {
       lines.add(
         _forecastLine(
           l.trendBackInRangeDays(_days(trend.daysToGreen!)),
-          Zone.green.color,
+          Zone.green.colorOf(context),
         ),
       );
     }
@@ -64,7 +64,7 @@ class TrendCard extends StatelessWidget {
       lines.add(
         _forecastLine(
           l.trendAmberInDays(_days(trend.daysToAmber!)),
-          Zone.amber.color,
+          Zone.amber.colorOf(context),
         ),
       );
     }
@@ -72,7 +72,7 @@ class TrendCard extends StatelessWidget {
       lines.add(
         _forecastLine(
           l.trendRedInDays(_days(trend.daysToRed!)),
-          Zone.red.color,
+          Zone.red.colorOf(context),
         ),
       );
     }
@@ -135,13 +135,13 @@ class TrendChip extends StatelessWidget {
     final Color color;
     if (trend.daysToGreen != null && trend.daysToGreen! <= horizonDays) {
       text = l.trendChipRecovering(_days(trend.daysToGreen!));
-      color = Zone.green.color;
+      color = Zone.green.colorOf(context);
     } else if (trend.daysToAmber != null && trend.daysToAmber! <= horizonDays) {
       text = l.trendChipAmber(_days(trend.daysToAmber!));
-      color = Zone.amber.color;
+      color = Zone.amber.colorOf(context);
     } else if (trend.daysToRed != null && trend.daysToRed! <= horizonDays) {
       text = l.trendChipRed(_days(trend.daysToRed!));
-      color = Zone.red.color;
+      color = Zone.red.colorOf(context);
     } else {
       return const SizedBox.shrink();
     }

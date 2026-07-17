@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/reminders.dart';
 import '../../l10n/app_localizations.dart';
@@ -635,7 +636,9 @@ class MaintenanceDueChips extends ConsumerWidget {
     final dues = [...ref.watch(maintenanceDueProvider)]
       ..sort((a, b) => a.due.daysLeft.compareTo(b.due.daysLeft));
     if (dues.isEmpty) return const SizedBox.shrink();
-    final cs = Theme.of(context).colorScheme;
+    // Overdue is a *status*, not a form error — painted with the critical
+    // token, not colorScheme.error (REDESIGN #1 straggler audit).
+    final overdueColor = ReefTokens.of(context).critical;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
@@ -648,11 +651,13 @@ class MaintenanceDueChips extends ConsumerWidget {
                 avatar: Icon(
                   maintenanceIcon(d.schedule),
                   size: 18,
-                  color: d.due.daysLeft < 0 ? cs.error : null,
+                  color: d.due.daysLeft < 0 ? overdueColor : null,
                 ),
                 label: Text(
                   '${maintenanceName(l, d.schedule)} • ${dueText(l, d.due)}',
-                  style: d.due.daysLeft < 0 ? TextStyle(color: cs.error) : null,
+                  style: d.due.daysLeft < 0
+                      ? TextStyle(color: overdueColor)
+                      : null,
                 ),
                 onPressed: () async {
                   final type = MaintenanceActionType.fromName(

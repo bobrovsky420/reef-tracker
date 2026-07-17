@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:showcaseview/showcaseview.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/pro_feature_dialog.dart';
@@ -343,35 +344,52 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         },
       ),
       bottomNavigationBar: hasTanks
-          ? NavigationBar(
-              // Default M3 height is 80; trim it down for a more compact bar
-              // while still leaving room for the always-visible labels.
-              height: 64,
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
-              destinations: [
-                NavigationDestination(
-                  icon: const Icon(Icons.speed_outlined),
-                  selectedIcon: const Icon(Icons.speed),
-                  label: l.measurements,
+          // Foreground decoration: the mockup's 1 px hairline between content
+          // and tab bar must paint *over* the bar's own translucent
+          // background, and NavigationBar has no border slot of its own.
+          ? DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: ReefTokens.of(context).surfaceBorder,
+                  ),
                 ),
-                NavigationDestination(
-                  // Keep the outlined glyph even when selected.
-                  icon: const Icon(Icons.fact_check_outlined),
-                  selectedIcon: const Icon(Icons.fact_check_outlined),
-                  label: l.actions,
-                ),
-                NavigationDestination(
-                  // Keep the outlined glyph even when selected.
-                  icon: const Icon(Icons.science_outlined),
-                  selectedIcon: const Icon(Icons.science_outlined),
-                  label: l.dosing,
-                ),
-              ],
+              ),
+              child: _buildNavigationBar(l),
             )
           : null,
       floatingActionButton: hasTanks ? _buildFab(context, l) : null,
+    );
+  }
+
+  NavigationBar _buildNavigationBar(AppLocalizations l) {
+    return NavigationBar(
+      // Default M3 height is 80; trim it down for a more compact bar
+      // while still leaving room for the always-visible labels.
+      height: 64,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      selectedIndex: _index,
+      onDestinationSelected: (i) => setState(() => _index = i),
+      destinations: [
+        NavigationDestination(
+          icon: const Icon(Icons.speed_outlined),
+          selectedIcon: const Icon(Icons.speed),
+          label: l.measurements,
+        ),
+        NavigationDestination(
+          // Keep the outlined glyph even when selected.
+          icon: const Icon(Icons.fact_check_outlined),
+          selectedIcon: const Icon(Icons.fact_check_outlined),
+          label: l.actions,
+        ),
+        NavigationDestination(
+          // Keep the outlined glyph even when selected.
+          icon: const Icon(Icons.science_outlined),
+          selectedIcon: const Icon(Icons.science_outlined),
+          label: l.dosing,
+        ),
+      ],
     );
   }
 

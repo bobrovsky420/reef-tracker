@@ -53,3 +53,5 @@ app.*.map.json
 key.properties
 
 TODO.md
+REDESIGN.md
+/design/

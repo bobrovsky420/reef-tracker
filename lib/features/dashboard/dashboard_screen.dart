@@ -218,7 +218,11 @@ class _RatioTile extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: stale
                             ? hint
-                            : ratioZone(kind, bounds, latest.ratio).color,
+                            : ratioZone(
+                                kind,
+                                bounds,
+                                latest.ratio,
+                              ).colorOf(context),
                       ),
                     ),
                     const Spacer(),
@@ -331,7 +335,7 @@ class _ParameterTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: zone.color,
+                        color: zone.colorOf(context),
                       ),
                     ),
                     const SizedBox(width: 4),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -8,10 +9,12 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'app/provider_errors.dart';
 import 'app/providers.dart';
 import 'app/router.dart';
+import 'app/theme.dart';
 import 'data/auto_backup.dart';
 import 'data/cloud_sync.dart';
 import 'data/reminder_scheduler.dart';
 import 'l10n/app_localizations.dart';
+import 'widgets/reef_background.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -252,7 +255,6 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
 
   @override
   Widget build(BuildContext context) {
-    const seed = Color(0xFF0277BD); // reef blue
     final locale = ref.watch(localeProvider);
     return MaterialApp.router(
       scaffoldMessengerKey: _messengerKey,
@@ -262,18 +264,15 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       // Keep intl date/number formatting in sync with the resolved app locale
-      // so DateFormat(...) renders dates in the selected language.
+      // so DateFormat(...) renders dates in the selected language. The
+      // ReefBackground gradient sits here, behind the Navigator, so every
+      // screen (scaffolds are transparent) shares one background.
       builder: (context, child) {
         Intl.defaultLocale = Localizations.localeOf(context).toLanguageTag();
-        return child ?? const SizedBox.shrink();
+        return ReefBackground(child: child ?? const SizedBox.shrink());
       },
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: seed)),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seed,
-          brightness: Brightness.dark,
-        ),
-      ),
+      theme: buildReefTheme(Brightness.light, defaultTargetPlatform),
+      darkTheme: buildReefTheme(Brightness.dark, defaultTargetPlatform),
       routerConfig: appRouter,
     );
   }

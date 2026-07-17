@@ -422,7 +422,7 @@ class _TrendChartState extends State<TrendChart> {
     double minY,
     double maxY,
   ) {
-    Color c(Zone z) => z.color.withValues(alpha: 0.10);
+    Color c(Zone z) => z.softColorOf(context);
     // Band geometry (fallbacks, overlap/inversion dropping) lives in the pure,
     // unit-tested `zoneBands`; here we only map it onto fl_chart annotations.
     return [

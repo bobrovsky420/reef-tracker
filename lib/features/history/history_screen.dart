@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/export_share.dart';
 import '../../domain/parameter_catalog.dart';
@@ -142,13 +143,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           SliverToBoxAdapter(
                             // The ColoredBox gives the shared PNG an opaque
                             // background — a bare capture would be transparent
-                            // and unreadable on forum dark/light themes.
+                            // and unreadable on forum dark/light themes. Must
+                            // be the solid body token: scaffoldBackgroundColor
+                            // is transparent over the ReefBackground gradient.
                             child: RepaintBoundary(
                               key: _chartBoundaryKey,
                               child: ColoredBox(
-                                color: Theme.of(
-                                  context,
-                                ).scaffoldBackgroundColor,
+                                color: ReefTokens.of(context).scaffoldBody,
                                 child: SizedBox(
                                   height: 280,
                                   child: Padding(

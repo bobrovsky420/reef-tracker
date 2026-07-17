@@ -128,12 +128,12 @@ class InsightsCard extends ConsumerWidget {
 
 /// Icon + color for an insight: color follows severity (the app-wide zone
 /// palette), the icon follows the rule kind.
-(IconData, Color) _insightVisual(Insight i, ThemeData theme) {
+(IconData, Color) _insightVisual(Insight i, BuildContext context) {
   final color = switch (i.severity) {
-    InsightSeverity.critical => Zone.red.color,
-    InsightSeverity.warning => Zone.amber.color,
-    InsightSeverity.notice => theme.hintColor,
-    InsightSeverity.positive => Zone.green.color,
+    InsightSeverity.critical => Zone.red.colorOf(context),
+    InsightSeverity.warning => Zone.amber.colorOf(context),
+    InsightSeverity.notice => Theme.of(context).hintColor,
+    InsightSeverity.positive => Zone.green.colorOf(context),
   };
   final icon = switch (i.kind) {
     InsightKind.outOfRange =>
@@ -159,7 +159,7 @@ class _InsightLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final (icon, color) = _insightVisual(insight, theme);
+    final (icon, color) = _insightVisual(insight, context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -257,7 +257,7 @@ class _InsightRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final (icon, color) = _insightVisual(insight, theme);
+    final (icon, color) = _insightVisual(insight, context);
 
     return InkWell(
       onTap: () {

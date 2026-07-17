@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.0] - 2026-07-17
+
+### Changed
+- New app-wide color scheme — the first step of a visual redesign: a teal
+  "actinic" accent replaces the previous blue theme, and the green/amber/red
+  status colors are retuned with dedicated dark-mode variants for better
+  legibility (status colors now adapt to light/dark instead of being fixed).
+- The app background is now a subtle top-glow gradient (white fading to pale
+  aqua in light mode; lighter teal-navy fading to the dark base in dark mode),
+  and the bottom navigation bar is set off from the content by a hairline and
+  its own translucent background.
+
 ## [0.29.4] - 2026-07-17
 
 ### Added

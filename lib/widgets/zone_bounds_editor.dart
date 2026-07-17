@@ -130,7 +130,7 @@ class ZoneBoundsEditorState extends State<ZoneBoundsEditor> {
         ),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(Icons.circle, color: zone.color, size: 14),
+          prefixIcon: Icon(Icons.circle, color: zone.colorOf(context), size: 14),
           prefixIconConstraints: const BoxConstraints(
             minWidth: 36,
             minHeight: 0,
@@ -154,7 +154,7 @@ class _ZoneLegendRow extends StatelessWidget {
     Widget dot(Zone z, String label) => Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.circle, color: z.color, size: 12),
+        Icon(Icons.circle, color: z.colorOf(context), size: 12),
         const SizedBox(width: 4),
         Text(label),
       ],

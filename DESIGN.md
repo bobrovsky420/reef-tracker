@@ -43,7 +43,7 @@ and no account.
 
 | Concern            | Choice |
 |--------------------|--------|
-| UI framework       | Flutter (Material 3, seed color reef-blue `0xFF0277BD`, light + dark themes) |
+| UI framework       | Flutter (Material 3, explicit token palette in `lib/app/theme.dart` — actinic-teal primary, light + dark; see Theming) |
 | State management   | `flutter_riverpod` 3.x (note: in v3 `AsyncValue.value` is the nullable getter; `valueOrNull` does not exist) |
 | Persistence        | `drift` over SQLite (native library built by `sqlite3` 3.x build hooks), code-generated via `dart run build_runner build` |
 | Charts             | `fl_chart` |
@@ -907,6 +907,59 @@ lifecycle wiring that are easy to miss:
   handler, starts the scheduler's table listener, plans the initial
   notification set, and replays a cold-start notification tap. Every resume
   also `resync()`s, refreshing the 14-day scheduling horizon.
+
+## Theming (`lib/app/theme.dart`)
+
+The design language (REDESIGN phase 1) is an **explicit token palette**, not a
+Material seed: `ReefTokens`, a `ThemeExtension` with a fixed light and dark
+instance (scaffold gradient endpoints, card surface/border/shadow, "actinic"
+primary, healthy/caution/critical status colors + their soft fills, gauge
+band/track/tick, text/textDim/textFaint, marker ring, tab-bar background).
+`buildReefTheme(Brightness, TargetPlatform)` builds the `ThemeData` — the
+`ColorScheme` is hand-set from the palette (the old reef-blue `fromSeed` is
+retired) — and `main.dart` passes it to `theme:`/`darkTheme:`.
+
+**Background gradient (`widgets/reef_background.dart`).** The app background
+is a vertical gradient fading `scaffoldTop`→`scaffoldBody` within the top 14%
+of the screen, flat below — a subtle glow behind the status-bar area.
+`ReefBackground` is mounted **once**, in `MaterialApp.builder` behind the
+Navigator; `scaffoldBackgroundColor` and the app bar are transparent over it
+(so every pushed screen shares the one background — never per-screen copies),
+with `scrolledUnderElevation: 0` (the M3 default would flash
+`surface`→`surfaceContainer` on scroll) and an explicit
+`systemOverlayStyle` (a transparent app bar can't derive status-bar icon
+brightness). The chart PNG export can't sit on a transparent scaffold — it
+paints the solid `scaffoldBody` token as its opaque backdrop
+(`history_screen.dart`).
+
+**Bottom tab bar.** `NavigationBarThemeData` sets the translucent `tabBarBg`
+(elevation 0); the mockup's 1 px `surfaceBorder` hairline above the bar is a
+foreground `DecoratedBox` in `HomeShell` (NavigationBar has no border slot).
+The blur + behind-bar scrolling (`extendBody`) is deferred to the redesign's
+chrome phase. Widgets read
+tokens via `ReefTokens.of(context)` (falls back to the brightness-matched
+default set under bare-`MaterialApp` widget tests); **no hardcoded colors in
+feature code**. Platform dialects (radii, chrome shapes — later phases) resolve
+only inside this factory, keeping feature code free of platform branches.
+
+Deliberate `ColorScheme` slot meanings (documented in the file): `secondary` =
+violet (carbon-change chart marker), `tertiary` = ocean blue (water-change
+marker, noted-reading dots, informational hints), `error` = darkened coral
+reserved for destructive UI + form/failure messages — *status* reds always use
+the `critical` token instead (e.g. the overdue due-chips).
+
+Zone→color mapping lives in `widgets/zone_visuals.dart`: `Zone.colorOf(context)`
+(green→`healthy`, amber→`caution`, red→`critical`, unknown→`textFaint`) and
+`softColorOf(context)` (soft fills; chart zone bands, RO bar track, chip
+backgrounds). Because every zone-colored surface routes through this extension,
+the palette recolors tiles, chips, rings, chart bands and RO bars app-wide.
+Colors are per-brightness, hence the `context` (the pre-redesign fixed-color
+`Zone.color` getter is gone).
+
+Numeric values use bundled **JetBrains Mono** 400/500/700
+(`assets/fonts/`, OFL license alongside; declared in `pubspec.yaml`), exposed
+as `ReefTokens.monoFamily`/`monoTextStyle` — offline-first, so no google_fonts.
+Body text stays the platform default (SF/Roboto).
 
 ## Routing (`lib/app/router.dart`)
 

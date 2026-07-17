@@ -184,7 +184,7 @@ class _ParamChartCard extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: zone.color,
+                        color: zone.colorOf(context),
                       ),
                     ),
                     const SizedBox(width: 3),

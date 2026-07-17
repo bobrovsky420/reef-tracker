@@ -429,7 +429,7 @@ class _SummaryCard extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final hint = Theme.of(context).hintColor;
     final measured = status.measured > 0;
-    final color = measured ? status.statusZone.color : hint;
+    final color = measured ? status.statusZone.colorOf(context) : hint;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -509,7 +509,7 @@ class _ElementRow extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 // An unclassifiable value (empty/invalid bounds) renders in
                 // the default color, not painted as any zone.
-                color: zone == Zone.unknown ? null : zone.color,
+                color: zone == Zone.unknown ? null : zone.colorOf(context),
               ),
             ),
       onTap: () => context.push('/history/${def.key}'),

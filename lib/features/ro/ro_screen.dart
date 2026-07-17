@@ -178,7 +178,7 @@ class _StageCard extends ConsumerWidget {
                         color: roStageZone(
                           daysLeft: due.daysLeft,
                           lifespanDays: stage.lifespanDays,
-                        ).color,
+                        ).colorOf(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -219,8 +219,8 @@ class _RemainingBar extends StatelessWidget {
       ),
       minHeight: 6,
       borderRadius: BorderRadius.circular(3),
-      color: zone.color,
-      backgroundColor: zone.color.withValues(alpha: 0.15),
+      color: zone.colorOf(context),
+      backgroundColor: zone.softColorOf(context),
     );
   }
 }

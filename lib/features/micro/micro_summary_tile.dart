@@ -55,7 +55,7 @@ class MicroSummaryTile extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: status.statusZone.color,
+                    color: status.statusZone.colorOf(context),
                   ),
                 ),
               const SizedBox(height: 4),

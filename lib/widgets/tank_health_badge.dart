@@ -107,7 +107,7 @@ class TankHealthBadgeCompact extends ConsumerWidget {
     final health = ref.watch(tankHealthProvider);
     if (!health.hasData) return const SizedBox.shrink();
     final l = AppLocalizations.of(context);
-    final color = health.band.color;
+    final color = health.band.colorOf(context);
 
     return Semantics(
       button: true,
@@ -143,7 +143,7 @@ class TankHealthHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final health = ref.watch(tankHealthProvider);
-    final color = health.band.color;
+    final color = health.band.colorOf(context);
     final theme = Theme.of(context);
 
     final String subtitle;
@@ -268,7 +268,7 @@ class _StabilityHeaderPanel extends ConsumerWidget {
     }
 
     final stability = ref.watch(tankStabilityProvider);
-    final color = stability.band.color;
+    final color = stability.band.colorOf(context);
     return Semantics(
       button: true,
       label:
@@ -332,7 +332,7 @@ class _TankHealthSheet extends ConsumerWidget {
     final prefs = ref.watch(unitPrefsProvider);
     final tracked = ref.watch(trackedParametersProvider).value ?? const [];
     final byKey = {for (final p in tracked) p.paramKey: p};
-    final color = health.band.color;
+    final color = health.band.colorOf(context);
 
     return SafeArea(
       child: ConstrainedBox(
@@ -430,7 +430,7 @@ class _TankStabilitySheet extends ConsumerWidget {
     final prefs = ref.watch(unitPrefsProvider);
     final tracked = ref.watch(trackedParametersProvider).value ?? const [];
     final byKey = {for (final p in tracked) p.paramKey: p};
-    final color = stability.band.color;
+    final color = stability.band.colorOf(context);
 
     return SafeArea(
       child: ConstrainedBox(
@@ -554,7 +554,7 @@ class _StabilityParamRow extends StatelessWidget {
         : sub >= 40
         ? Zone.amber
         : Zone.red;
-    final color = muted ? theme.hintColor : zone.color;
+    final color = muted ? theme.hintColor : zone.colorOf(context);
 
     // "±σ" in display units. The σ is a *delta*, so it converts by scale only —
     // subtracting toDisplay(0) cancels an affine offset (°F) that would
@@ -661,7 +661,7 @@ class _ParamRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final zoneColor = muted ? theme.hintColor : health.zone.color;
+    final zoneColor = muted ? theme.hintColor : health.zone.colorOf(context);
 
     final String trailing;
     if (health.value != null && param != null) {

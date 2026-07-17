@@ -216,7 +216,7 @@ class _RatioChart extends StatelessWidget {
         minX: minX,
         maxX: maxX,
         rangeAnnotations: RangeAnnotations(
-          horizontalRangeAnnotations: _zoneBands(bounds, minY, maxY),
+          horizontalRangeAnnotations: _zoneBands(context, bounds, minY, maxY),
         ),
         gridData: const FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),
@@ -290,12 +290,13 @@ class _RatioChart extends StatelessWidget {
 
   /// Green/amber/red bands from the kind's recommended bounds (chart-Y space).
   List<HorizontalRangeAnnotation> _zoneBands(
+    BuildContext context,
     ZoneBounds b,
     double minY,
     double maxY,
   ) {
     final bands = <HorizontalRangeAnnotation>[];
-    Color c(Zone z) => z.color.withValues(alpha: 0.10);
+    Color c(Zone z) => z.softColorOf(context);
     if (b.greenLow != null || b.greenHigh != null) {
       bands.add(
         HorizontalRangeAnnotation(

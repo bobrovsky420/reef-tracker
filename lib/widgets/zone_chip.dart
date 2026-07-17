@@ -14,7 +14,7 @@ class ZoneChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = zone.color;
+    final color = zone.colorOf(context);
     // In compact mode the chip is a bare colored icon; the explicit label keeps
     // it readable for screen readers (#46). The full mode already shows text.
     return Semantics(

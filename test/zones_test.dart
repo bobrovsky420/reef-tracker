@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/app/theme.dart';
 import 'package:reeftracker/domain/zones.dart';
 import 'package:reeftracker/widgets/zone_visuals.dart';
 
@@ -103,11 +105,32 @@ void main() {
   });
 
   group('ZoneVisuals', () {
-    test('every zone maps to a distinct colour and icon', () {
-      final colors = Zone.values.map((z) => z.color).toSet();
+    test('every zone maps to a distinct icon', () {
       final icons = Zone.values.map((z) => z.icon).toSet();
-      expect(colors.length, Zone.values.length);
       expect(icons.length, Zone.values.length);
     });
+
+    for (final brightness in Brightness.values) {
+      testWidgets('every zone maps to a distinct colour ($brightness)', (
+        tester,
+      ) async {
+        late BuildContext ctx;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildReefTheme(brightness, TargetPlatform.android),
+            home: Builder(
+              builder: (context) {
+                ctx = context;
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        );
+        final colors = Zone.values.map((z) => z.colorOf(ctx)).toSet();
+        final softs = Zone.values.map((z) => z.softColorOf(ctx)).toSet();
+        expect(colors.length, Zone.values.length);
+        expect(softs.length, Zone.values.length);
+      });
+    }
   });
 }
