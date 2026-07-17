@@ -932,15 +932,49 @@ brightness). The chart PNG export can't sit on a transparent scaffold — it
 paints the solid `scaffoldBody` token as its opaque backdrop
 (`history_screen.dart`).
 
-**Bottom tab bar.** `NavigationBarThemeData` sets the translucent `tabBarBg`
-(elevation 0); the mockup's 1 px `surfaceBorder` hairline above the bar is a
+**Home-shell chrome (REDESIGN phase 3).** The bottom tab bar is fully themed
+in `NavigationBarThemeData`: translucent `tabBarBg`, height 64, 21 px icons +
+always-shown 10 px labels (active = `primary`, inactive = `textFaint`), and
+the per-dialect active-tab treatment — Android gets the `healthySoft` pill
+(M3's indicator), iOS is indicator-less (transparent indicator). `HomeShell`
+wraps the bar in `ClipRect`+`BackdropFilter` (blur σ10) with
+`extendBody: true`, so tab content scrolls behind the frosted bar; scroll
+views inside the tabs must keep their bottom `MediaQuery` inset (plain
+`ListView`s do automatically; the dashboard's `CustomScrollView`, the
+comparison list's explicit padding and the dosing `ReorderableListView` add
+`MediaQuery.paddingOf(context).bottom` themselves). If the blur ever regresses
+frame times on low-end devices, the fallback is an opaque `tabBarBg` (REDESIGN
+open question #5). The 1 px `surfaceBorder` hairline above the bar is a
 foreground `DecoratedBox` in `HomeShell` (NavigationBar has no border slot).
-The blur + behind-bar scrolling (`extendBody`) is deferred to the redesign's
-chrome phase. Widgets read
+FABs are themed app-wide (`FloatingActionButtonThemeData`): `primary` on
+`onPrimary`, 14 w700 label, 48-high extended pill — `StadiumBorder` on iOS,
+r16 on Android. App-bar action icons on the home shell are "mini-card" icon
+buttons (`widgets/reef_icon_button.dart`, `ReefIconButton`): a 32 px `surface`
+card with `surfaceBorder`, r9 squircle iOS / circle Android
+(`reefIconButtonShape` in the theme), 16 px `textDim` icon, 48 px hit target;
+the overflow `PopupMenuButton` shares the look via `reefIconButtonStyle`. The
+tank switcher title renders at 19 px w700 in the `text` token with a compact
+chevron. Widgets read
 tokens via `ReefTokens.of(context)` (falls back to the brightness-matched
 default set under bare-`MaterialApp` widget tests); **no hardcoded colors in
-feature code**. Platform dialects (radii, chrome shapes — later phases) resolve
-only inside this factory, keeping feature code free of platform branches.
+feature code**. Platform dialects (radii, chrome shapes) resolve
+only inside this factory and the shared widgets, keeping feature code free of
+platform branches.
+
+**Card language (`widgets/reef_card.dart`).** Cards are flat `surface` with a
+1 px `surfaceBorder` at the platform radius (20 on iOS/macOS, 16 elsewhere —
+`reefCardRadius`, resolved only in theme/shared-widget code). `buildReefTheme`
+sets a `CardThemeData` so every plain `Card` picks up the surface, border and
+radius; the shared `ReefCard` widget additionally paints the two-layer
+light-mode `cardShadow` (none in dark — the border carries the structure) and
+is what the primary cards use: the dashboard parameter/ratio tiles, the
+health header, the insights card and teaser, and the microelements summary
+tile (later redesign phases convert the remaining screens). `ReefCard` takes
+optional `onTap` (whole-card ink target), `padding`, `margin`, and
+`color`/`borderColor` overrides for alert-card variants; it has no default
+margin — callers own their spacing. `widgets/section_header.dart`
+(`SectionHeader`) is the matching uppercase faint group label rendered between
+card groups (grouped dashboard, restyled Settings — later phases).
 
 Deliberate `ColorScheme` slot meanings (documented in the file): `secondary` =
 violet (carbon-change chart marker), `tertiary` = ocean blue (water-change

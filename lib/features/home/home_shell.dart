@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import '../../app/theme.dart';
 import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/pro_feature_dialog.dart';
+import '../../widgets/reef_icon_button.dart';
 import '../actions/actions_screen.dart';
 import '../ai_summary/ai_summary_sheet.dart';
 import '../dashboard/comparison_view.dart';
@@ -239,19 +241,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               l.tourCompareTitle,
               l.tourCompareDesc,
               l.tourNext,
-              IconButton(
+              ReefIconButton(
                 tooltip: _compare ? l.gridView : l.compareView,
-                icon: Icon(
-                  _compare ? Icons.grid_view : Icons.stacked_line_chart,
-                ),
+                icon: _compare ? Icons.grid_view : Icons.stacked_line_chart,
                 onPressed: () => setState(() => _compare = !_compare),
               ),
             ),
           // Maintenance schedule (U12), contextual to the Actions tab.
           if (hasTanks && _index == 1)
-            IconButton(
+            ReefIconButton(
               tooltip: l.maintenanceSchedule,
-              icon: const Icon(Icons.event_repeat),
+              icon: Icons.event_repeat,
               onPressed: () => context.push('/schedule'),
             ),
           // Dosing history, contextual to the Dosing tab. First step of phase 2.
@@ -261,9 +261,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               l.tourDosingHistoryTitle,
               l.tourDosingHistoryDesc,
               l.tourNext,
-              IconButton(
+              ReefIconButton(
                 tooltip: l.dosingHistoryTitle,
-                icon: const Icon(Icons.history),
+                icon: Icons.history,
                 onPressed: () => context.push('/dosing/history'),
               ),
             ),
@@ -275,9 +275,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               l.tourDoseCalcTitle,
               l.tourDoseCalcDesc,
               l.tourDone,
-              IconButton(
+              ReefIconButton(
                 tooltip: l.doseCalcTitle,
-                icon: const Icon(Icons.calculate_outlined),
+                icon: Icons.calculate_outlined,
                 // Pro-gated (U19): founders (and, later, Pro purchasers) open
                 // the calculator; anyone else gets the explanation dialog.
                 onPressed:
@@ -294,15 +294,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             l.tourParamsTitle,
             l.tourParamsDesc,
             l.tourNext,
-            IconButton(
+            ReefIconButton(
               tooltip: l.manageParameters,
-              icon: const Icon(Icons.tune),
+              icon: Icons.tune,
               onPressed: () => context.push('/parameters'),
             ),
           ),
-          IconButton(
+          ReefIconButton(
             tooltip: l.settings,
-            icon: const Icon(Icons.settings),
+            icon: Icons.settings,
             onPressed: () => context.push('/settings'),
           ),
           // Overflow menu, contextual to the Measurements tab (the bar is at
@@ -310,6 +310,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           // export (U27); future share-ish actions join here.
           if (hasTanks && _index == 0)
             PopupMenuButton<String>(
+              // Same mini-card look as the ReefIconButtons; the button style
+              // is forwarded to PopupMenuButton's internal icon button.
+              style: reefIconButtonStyle(context),
+              iconSize: 16,
               onSelected: (v) {
                 if (v == 'ai-summary') unawaited(showAiSummarySheet(context));
               },
@@ -343,20 +347,33 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           );
         },
       ),
+      // Tab content extends behind the translucent tab bar so the backdrop
+      // blur has something to frost; scrollables inside the tabs take the
+      // bar's height as MediaQuery bottom padding.
+      extendBody: true,
       bottomNavigationBar: hasTanks
-          // Foreground decoration: the mockup's 1 px hairline between content
-          // and tab bar must paint *over* the bar's own translucent
-          // background, and NavigationBar has no border slot of its own.
-          ? DecoratedBox(
-              position: DecorationPosition.foreground,
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: ReefTokens.of(context).surfaceBorder,
+          // The mockup's tab bar is translucent `tabBarBg` over a blur. The
+          // ClipRect bounds the BackdropFilter to the bar; the foreground
+          // DecoratedBox paints the 1 px hairline *over* the bar's own
+          // translucent background (NavigationBar has no border slot).
+          // Open question #5: if the blur regresses frame times on low-end
+          // devices, drop the ClipRect+BackdropFilter and make `tabBarBg`
+          // opaque.
+          ? ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: DecoratedBox(
+                  position: DecorationPosition.foreground,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: ReefTokens.of(context).surfaceBorder,
+                      ),
+                    ),
                   ),
+                  child: _buildNavigationBar(l),
                 ),
               ),
-              child: _buildNavigationBar(l),
             )
           : null,
       floatingActionButton: hasTanks ? _buildFab(context, l) : null,
@@ -365,10 +382,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   NavigationBar _buildNavigationBar(AppLocalizations l) {
     return NavigationBar(
-      // Default M3 height is 80; trim it down for a more compact bar
-      // while still leaving room for the always-visible labels.
-      height: 64,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      // Height (64 — compact vs the 80 M3 default), label behavior, colors
+      // and the per-platform active-tab treatment come from
+      // `navigationBarTheme` in theme.dart.
       selectedIndex: _index,
       onDestinationSelected: (i) => setState(() => _index = i),
       destinations: [

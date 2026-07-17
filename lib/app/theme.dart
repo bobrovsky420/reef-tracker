@@ -314,6 +314,24 @@ const ColorScheme _darkScheme = ColorScheme(
   surfaceTint: Colors.transparent,
 );
 
+/// Card corner radius per platform dialect (§2.3: r20 iOS, r16 Android).
+/// Shared by [buildReefTheme]'s `CardThemeData` and the `ReefCard` widget so
+/// both card paths agree on the shape.
+double reefCardRadius(TargetPlatform platform) => switch (platform) {
+  TargetPlatform.iOS || TargetPlatform.macOS => 20,
+  _ => 16,
+};
+
+/// App-bar mini-card icon-button shape per platform dialect (§2.3: r9
+/// squircle on iOS, circle on Android). Consumed by `ReefIconButton`.
+OutlinedBorder reefIconButtonShape(TargetPlatform platform) =>
+    switch (platform) {
+      TargetPlatform.iOS || TargetPlatform.macOS => RoundedSuperellipseBorder(
+        borderRadius: BorderRadius.circular(9),
+      ),
+      _ => const CircleBorder(),
+    };
+
 /// Builds the app [ThemeData] for a brightness × platform pair. Platform
 /// dialects (radii, chrome shapes — REDESIGN #15) resolve here and only here;
 /// feature code never branches on the platform (CLAUDE.md rule).
@@ -323,6 +341,19 @@ ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
   return ThemeData(
     colorScheme: dark ? _darkScheme : _lightScheme,
     platform: platform,
+    // Card language (REDESIGN #2): flat `surface` + 1 px `surfaceBorder` at
+    // the platform radius. This restyles every plain `Card`; the exact
+    // two-layer light shadow needs a multi-shadow decoration `Card` can't
+    // paint, so the shared `ReefCard` widget carries it and the main cards
+    // adopt it incrementally.
+    cardTheme: CardThemeData(
+      color: tokens.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(reefCardRadius(platform)),
+        side: BorderSide(color: tokens.surfaceBorder),
+      ),
+    ),
     // Screens are transparent over the shared `ReefBackground` gradient
     // mounted in MaterialApp's `builder` (scaffoldTop→scaffoldBody, 14% stop).
     scaffoldBackgroundColor: Colors.transparent,
@@ -338,11 +369,52 @@ ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
     ),
-    // Bottom tab bar per the mockup: translucent `tabBarBg` (the hairline top
-    // border lives in HomeShell — NavigationBar has no border slot).
+    // Bottom tab bar per the mockup (§A.6): translucent `tabBarBg` (the
+    // hairline top border and the backdrop blur live in HomeShell —
+    // NavigationBar has no slots for either), 21 px icons + 10 px w600
+    // labels, active = actinic. Dialects: the Android active tab gets the
+    // `healthySoft` pill (M3's indicator), iOS is indicator-less.
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: tokens.tabBarBg,
       elevation: 0,
+      height: 64,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      indicatorColor: switch (platform) {
+        TargetPlatform.iOS || TargetPlatform.macOS => Colors.transparent,
+        _ => tokens.healthySoft,
+      },
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          size: 21,
+          color: states.contains(WidgetState.selected)
+              ? tokens.primary
+              : tokens.textFaint,
+        ),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: states.contains(WidgetState.selected)
+              ? tokens.primary
+              : tokens.textFaint,
+        ),
+      ),
+    ),
+    // FABs (§A.6): actinic pill — stadium on iOS, r16 on Android (all FABs
+    // app-wide, extended or not). M3's default would use primaryContainer.
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: tokens.primary,
+      foregroundColor: tokens.onPrimary,
+      shape: switch (platform) {
+        TargetPlatform.iOS || TargetPlatform.macOS => const StadiumBorder(),
+        _ => RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      },
+      extendedTextStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+      ),
+      extendedSizeConstraints: const BoxConstraints.tightFor(height: 48),
     ),
     extensions: [tokens],
   );

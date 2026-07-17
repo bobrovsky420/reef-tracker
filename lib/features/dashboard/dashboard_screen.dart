@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/ratio.dart';
@@ -14,6 +15,7 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/insights_card.dart';
+import '../../widgets/reef_card.dart';
 import '../../widgets/tank_health_badge.dart';
 import '../../widgets/trend_view.dart';
 import '../../widgets/zone_visuals.dart';
@@ -130,7 +132,15 @@ class DashboardBody extends ConsumerWidget {
               const SliverToBoxAdapter(child: InsightsCard()),
             ],
             SliverPadding(
-              padding: const EdgeInsets.all(12),
+              // The bottom inset keeps the last row scrollable past the
+              // translucent tab bar (`extendBody` — a CustomScrollView gets
+              // no automatic MediaQuery inset).
+              padding: EdgeInsets.fromLTRB(
+                12,
+                12,
+                12,
+                12 + MediaQuery.paddingOf(context).bottom,
+              ),
               sliver: SliverGrid.builder(
                 gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 219,
@@ -181,62 +191,51 @@ class _RatioTile extends StatelessWidget {
     final hint = Theme.of(context).hintColor;
     final latest = points.isNotEmpty ? points.last : null;
 
-    return Card(
-      // The grid's padding/spacing fully define the layout; the default Card
-      // margin would inset tiles 4px inside their cells, leaving the row of
-      // tiles narrower than the health header card above.
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push('/ratio/${kind.name}'),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l.ratioCardLabel(kind),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-              const Spacer(),
-              if (latest == null)
-                Text(l.noReadings, style: TextStyle(color: hint))
-              else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      formatRatioValue(kind, latest.ratio),
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: stale
-                            ? hint
-                            : ratioZone(
-                                kind,
-                                bounds,
-                                latest.ratio,
-                              ).colorOf(context),
-                      ),
-                    ),
-                    const Spacer(),
-                    _RatioChangeIndicator(kind: kind, points: points),
-                  ],
-                ),
-              const SizedBox(height: 4),
-              Text(
-                latest == null ? '—' : relativeTimeLabel(l, latest.time),
-                style: TextStyle(fontSize: 11, color: hint),
-              ),
-            ],
+    // No margin: the grid's padding/spacing fully define the layout.
+    return ReefCard(
+      onTap: () => context.push('/ratio/${kind.name}'),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l.ratioCardLabel(kind),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
-        ),
+          const Spacer(),
+          if (latest == null)
+            Text(l.noReadings, style: TextStyle(color: hint))
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  formatRatioValue(kind, latest.ratio),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: stale
+                        ? hint
+                        : ratioZone(
+                            kind,
+                            bounds,
+                            latest.ratio,
+                          ).colorOf(context),
+                  ),
+                ),
+                const Spacer(),
+                _RatioChangeIndicator(kind: kind, points: points),
+              ],
+            ),
+          const SizedBox(height: 4),
+          Text(
+            latest == null ? '—' : relativeTimeLabel(l, latest.time),
+            style: TextStyle(fontSize: 11, color: hint),
+          ),
+        ],
       ),
     );
   }
@@ -299,69 +298,60 @@ class _ParameterTile extends StatelessWidget {
     final zone = latest != null ? bounds.classify(latest.value) : Zone.unknown;
     final pres = presentationOf(param, prefs);
 
-    return Card(
-      // Same as _RatioTile: let the grid own all spacing.
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push('/history/${param.paramKey}'),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-              const Spacer(),
-              if (latest == null)
-                Text(
-                  l.noReadings,
-                  style: TextStyle(color: Theme.of(context).hintColor),
-                )
-              else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      pres.format(latest.value),
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: zone.colorOf(context),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      pres.unitLabel,
-                      style: TextStyle(color: Theme.of(context).hintColor),
-                    ),
-                    const Spacer(),
-                    _ChangeIndicator(history: history, pres: pres),
-                  ],
-                ),
-              const SizedBox(height: 4),
-              Text(
-                latest == null ? '—' : relativeTimeLabel(l, latest.takenAt),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).hintColor,
-                ),
-              ),
-              if (trend != null) ...[
-                const SizedBox(height: 2),
-                TrendChip(trend: trend!, horizonDays: trendHorizon),
-              ],
-            ],
+    // Same as _RatioTile: no margin, the grid owns all spacing.
+    return ReefCard(
+      onTap: () => context.push('/history/${param.paramKey}'),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
-        ),
+          const Spacer(),
+          if (latest == null)
+            Text(
+              l.noReadings,
+              style: TextStyle(color: Theme.of(context).hintColor),
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  pres.format(latest.value),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: zone.colorOf(context),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  pres.unitLabel,
+                  style: TextStyle(color: Theme.of(context).hintColor),
+                ),
+                const Spacer(),
+                _ChangeIndicator(history: history, pres: pres),
+              ],
+            ),
+          const SizedBox(height: 4),
+          Text(
+            latest == null ? '—' : relativeTimeLabel(l, latest.takenAt),
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).hintColor,
+            ),
+          ),
+          if (trend != null) ...[
+            const SizedBox(height: 2),
+            TrendChip(trend: trend!, horizonDays: trendHorizon),
+          ],
+        ],
       ),
     );
   }
@@ -404,7 +394,15 @@ class TankSelector extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final tanks = ref.watch(tanksProvider).value ?? const [];
     final active = ref.watch(activeTankProvider);
-    if (tanks.isEmpty) return Text(l.appTitle);
+    // Mockup tank-switcher type (§A.6): 19 px bold + compact chevron, in the
+    // `text` token rather than the app bar's default title style.
+    final tokens = ReefTokens.of(context);
+    final titleStyle = TextStyle(
+      fontSize: 19,
+      fontWeight: FontWeight.w700,
+      color: tokens.text,
+    );
+    if (tanks.isEmpty) return Text(l.appTitle, style: titleStyle);
 
     final selector = PopupMenuButton<int>(
       onSelected: (id) {
@@ -448,9 +446,11 @@ class TankSelector extends ConsumerWidget {
             child: Text(
               active?.name ?? l.appTitle,
               overflow: TextOverflow.ellipsis,
+              style: titleStyle,
             ),
           ),
-          const Icon(Icons.arrow_drop_down),
+          const SizedBox(width: 4),
+          Icon(Icons.expand_more, size: 18, color: tokens.text),
         ],
       ),
     );

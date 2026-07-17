@@ -16,6 +16,7 @@ import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import 'pro_feature_dialog.dart';
+import 'reef_card.dart';
 import 'zone_visuals.dart';
 
 /// A circular progress ring filled to [score]/100 in [color], with [center]
@@ -155,8 +156,7 @@ class TankHealthHeader extends ConsumerWidget {
       subtitle = l.healthParamsToWatch(health.offenders.length);
     }
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return ReefCard(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       // IntrinsicHeight sizes the divider and both ink surfaces to the taller
       // half, so the ripple covers each panel edge-to-edge.

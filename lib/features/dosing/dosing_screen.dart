@@ -57,6 +57,9 @@ class DosingBody extends ConsumerWidget {
 
     return ReorderableListView.builder(
       buildDefaultDragHandles: false,
+      // ReorderableListView never applies the MediaQuery inset itself; keep
+      // the last row scrollable past the translucent tab bar (`extendBody`).
+      padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
       itemCount: entries.length,
       // ignore: deprecated_member_use
       onReorder: (oldIndex, newIndex) {

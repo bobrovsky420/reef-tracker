@@ -88,7 +88,14 @@ class ComparisonBody extends ConsumerWidget {
             ),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(4, 0, 12, 16),
+                // Explicit padding drops the automatic MediaQuery inset, so
+                // add back the tab bar's height (`extendBody`) ourselves.
+                padding: EdgeInsets.fromLTRB(
+                  4,
+                  0,
+                  12,
+                  16 + MediaQuery.paddingOf(context).bottom,
+                ),
                 itemCount: params.length,
                 itemBuilder: (context, i) {
                   final param = params[i];

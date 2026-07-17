@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   aqua in light mode; lighter teal-navy fading to the dark base in dark mode),
   and the bottom navigation bar is set off from the content by a hairline and
   its own translucent background.
+- Cards across the app take on the redesign's card language: flat surfaces
+  with a hairline border and a soft shadow in light mode (in dark mode the
+  border alone carries the structure), with slightly rounder corners on iOS
+  than on Android.
+- New home-screen chrome: the top-bar icons become compact "mini-card"
+  buttons (rounded squares on iOS, circles on Android), the tank switcher
+  title is bolder with a neater chevron, the bottom tab bar is frosted glass
+  (content scrolls behind it, blurred) with the active tab highlighted in
+  teal — on Android with a soft green pill — and the add buttons become teal
+  pill buttons. iOS rendering of the platform-specific shapes is unverified
+  on this machine (needs a CI build).
 
 ## [0.29.4] - 2026-07-17
 

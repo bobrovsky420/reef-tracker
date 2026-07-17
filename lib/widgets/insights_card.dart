@@ -12,6 +12,7 @@ import '../features/ai_summary/ai_summary_sheet.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import 'pro_feature_dialog.dart';
+import 'reef_card.dart';
 import 'zone_visuals.dart';
 
 /// How many insights the dashboard card previews; the rest live in the sheet.
@@ -35,8 +36,7 @@ class InsightsCard extends ConsumerWidget {
     if (!unlocked) {
       // Teaser: same slim-card footprint as a one-row insights card, so the
       // upgrade doesn't reflow the dashboard.
-      return Card(
-        clipBehavior: Clip.antiAlias,
+      return ReefCard(
         margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
         child: Semantics(
           button: true,
@@ -79,8 +79,7 @@ class InsightsCard extends ConsumerWidget {
     final visible = insights.take(_kCardMaxRows).toList();
     final more = insights.length - visible.length;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return ReefCard(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: InkWell(
         onTap: () => showInsightsSheet(context),

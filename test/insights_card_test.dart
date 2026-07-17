@@ -8,6 +8,7 @@ import 'package:reeftracker/data/setting_keys.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 import 'package:reeftracker/widgets/insights_card.dart';
+import 'package:reeftracker/widgets/reef_card.dart';
 
 /// Widget tests for the dashboard Insights card (U28): the Pro teaser for a
 /// non-entitled install, the insight rows + sheet for a Founder install, and
@@ -123,7 +124,7 @@ void main() {
         withRedAlkalinity: false,
       );
       expect(find.text('Insights'), findsNothing);
-      expect(find.byType(Card), findsNothing);
+      expect(find.byType(ReefCard), findsNothing);
     } finally {
       await unmountApp(tester);
     }
