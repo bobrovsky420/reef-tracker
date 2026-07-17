@@ -312,7 +312,7 @@ void main() {
       await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
       await db.setSetting(kAutoBackupEnabledKey, 'false');
 
-      await runAutoBackupIfDue(db);
+      expect(await runAutoBackupIfDue(db), isFalse);
       expect(await listAutoBackups(), isEmpty);
       expect(await db.getSetting(kLastAutoBackupAtKey), isNull);
     });
@@ -321,7 +321,7 @@ void main() {
       final db = newDb();
       addTearDown(db.close);
       // enabled by default
-      await runAutoBackupIfDue(db);
+      expect(await runAutoBackupIfDue(db), isFalse);
       expect(await listAutoBackups(), isEmpty);
     });
 
@@ -330,7 +330,9 @@ void main() {
       addTearDown(db.close);
       await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
 
-      await runAutoBackupIfDue(db);
+      // True = "a backup event happened", the trigger for the Drive push
+      // (U24 coupling): main.dart only syncs when this reports a write.
+      expect(await runAutoBackupIfDue(db), isTrue);
 
       expect((await listAutoBackups()).length, 1);
       expect(await db.getSetting(kLastAutoBackupAtKey), isNotNull);
@@ -346,7 +348,7 @@ void main() {
         DateTime.now().millisecondsSinceEpoch.toString(),
       );
 
-      await runAutoBackupIfDue(db);
+      expect(await runAutoBackupIfDue(db), isFalse);
       expect(await listAutoBackups(), isEmpty);
     });
 
@@ -361,7 +363,7 @@ void main() {
         twoDaysAgo.millisecondsSinceEpoch.toString(),
       );
 
-      await runAutoBackupIfDue(db);
+      expect(await runAutoBackupIfDue(db), isTrue);
       expect((await listAutoBackups()).length, 1);
       // Timestamp advanced past the old value.
       final recorded = int.parse((await db.getSetting(kLastAutoBackupAtKey))!);
@@ -441,8 +443,10 @@ void main() {
 
         final manual = backupNow(db);
         // The scheduled run sees the manual backup in flight and awaits it
-        // instead of encoding a second, overlapping backup.
-        await runAutoBackupIfDue(db);
+        // instead of encoding a second, overlapping backup. It reports true —
+        // the shared slot resolved with a backup event — so a launch racing a
+        // manual backup still triggers the coupled Drive push.
+        expect(await runAutoBackupIfDue(db), isTrue);
         await manual;
 
         expect((await listAutoBackups()).length, 1);
@@ -461,7 +465,7 @@ void main() {
         oneDayAgo.millisecondsSinceEpoch.toString(),
       );
 
-      await runAutoBackupIfDue(db);
+      expect(await runAutoBackupIfDue(db), isFalse);
       expect(await listAutoBackups(), isEmpty);
     });
   });

@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.4] - 2026-07-17
+
+### Changed
+- Android: Google Drive backups are now taken together with the local
+  automatic backup — on the configured daily/weekly schedule, or immediately
+  on a manual "Back up now" — instead of on nearly every app open after a
+  data change. Unchanged data still uploads nothing.
+
+### Fixed
+- Android: the "Signing in to Google" sheet no longer pops up two or three
+  times in a row while a Drive backup uploads; the app now signs in silently
+  once and reuses that session for all Drive calls until it is closed.
+
 ## [0.29.3] - 2026-07-16
 
 ### Added

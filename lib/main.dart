@@ -200,16 +200,21 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   /// Fire-and-forget automatic backup; failures must never disrupt the app.
   /// The backup layer persists a failure as `last_backup_error_at` (surfaced
   /// in Settings), so here it only needs to be logged, not swallowed silently.
-  /// The Drive push (U24) runs strictly *after* the local backup settles —
-  /// its own single-flight slot plus this ordering keep encode/write work
-  /// serialized — and its failures are likewise persisted by the engine
-  /// (`sync_gdrive_last_error_at`), so they too are only logged here.
+  /// The Drive push (U24) is coupled to local backup *events*: it runs only
+  /// when the scheduled local backup actually wrote (or attempted and failed
+  /// — see below), strictly after it settles, so Drive uploads follow the
+  /// daily/weekly cadence instead of firing on every launch/resume with
+  /// changed data. (The other backup events — manual Back-up-now and the
+  /// initial connect — chain their own push in `settings_screen.dart`.) Push
+  /// failures are persisted by the engine (`sync_gdrive_last_error_at`), so
+  /// they too are only logged here.
   void _maybeBackUp() {
     final db = ref.read(dbProvider);
     unawaited(
       runAutoBackupIfDue(db)
           .then(
-            (_) async {
+            (wrote) async {
+              if (!wrote) return;
               await runGDriveSyncIfDirty(
                 db,
                 store: ref.read(cloudBackupStoreProvider),

@@ -578,15 +578,24 @@ Layers, all injected and plugin-free below the adapter:
   single-flight slot for the rest of the session.
 - **`CloudAuth`** (seam) + **`GoogleDriveAuth`** (`google_sign_in` v7,
   Credential Manager): interactive `connect()` = system account picker +
-  consent (cancel ⇒ null, never an error); silent `accessToken()` =
-  lightweight re-auth + `authorizationForScopes` (null ⇒ reconnect needed);
-  `disconnect()` revokes the grant. The engine and all tests never touch the
+  consent (cancel ⇒ null, never an error); silent `accessToken()` serves a
+  **process-lifetime cached account** (filled by `connect()` or one
+  lightweight re-auth, single-flighted — Credential Manager's "Signing in to
+  Google" sheet shows at most once per process, not once per REST call) and
+  asks `authorizationForScopes` per call for a fresh token (null ⇒ reconnect
+  needed); `disconnect()` drops the cache and revokes the grant. The engine and all tests never touch the
   plugin (plugin calls throw under `flutter test` — the notifications
   lesson). Providers: `cloudAuthProvider`, `cloudBackupStoreProvider`
   (overridable in tests).
-- **Engine** (`runGDriveSyncIfDirty`, own single-flight slot): opportunistic,
-  launch/resume after `runAutoBackupIfDue` settles (`main.dart`) and after
-  connect / Back-up-now (Settings). Flow: connected account? tanks exist? →
+- **Engine** (`runGDriveSyncIfDirty`, own single-flight slot): coupled to
+  **local backup events**. On launch/resume it runs only when
+  `runAutoBackupIfDue` reports it wrote a backup — or threw: an
+  attempted-but-failed local write still pushes, because the cloud copy
+  matters most when local storage misbehaves — so uploads follow the local
+  daily/weekly cadence (`main.dart`); the other backup events, connect and
+  Back-up-now, chain their own push (Settings). Note the coupling's flip
+  side: disabling the local auto-backup also stops scheduled pushes (manual
+  Back-up-now still pushes). Flow: connected account? tanks exist? →
   `encodeBackupFromDb` → `backupContentHash` in `Isolate.run` → **equal to
   `sync_gdrive_last_pushed_hash` ⇒ skip** (the dirty gate: an unchanged
   read-mostly device never re-uploads, so it can't bury the writer device's

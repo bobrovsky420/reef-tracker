@@ -120,11 +120,14 @@ Future<File> backupNow(AppDatabase db) {
   final Future<File> run = prior == null
       ? _backupNow(db)
       // A failed scheduled run must not block the manual one queued behind it.
-      : prior.catchError((_) {}).then((_) => _backupNow(db));
+      : prior.catchError((_) => false).then((_) => _backupNow(db));
   // The slot future swallows errors: [run] (returned to the caller) is where
   // failures are handled; the slot only signals "a backup attempt is active".
-  late final Future<void> slot;
-  slot = run.then<void>((_) {}, onError: (_) {}).whenComplete(() {
+  // It resolves true either way: a manual backup is a backup event, and even a
+  // failed attempt must let a concurrent scheduled caller run the Drive push
+  // (the cloud copy matters most when local storage misbehaves).
+  late final Future<bool> slot;
+  slot = run.then<bool>((_) => true, onError: (_) => true).whenComplete(() {
     if (identical(_autoBackupInFlight, slot)) _autoBackupInFlight = null;
   });
   _autoBackupInFlight = slot;
@@ -169,19 +172,25 @@ Future<void> _stampLastBackup(AppDatabase db) async {
 /// simultaneously (e.g. resume right after cold start); without this, two runs
 /// could both pass the "is due" check and each do the full encode/write before
 /// either records `last_auto_backup_at`. [backupNow] occupies the same slot so
-/// a manual backup never overlaps a scheduled one (#13).
-Future<void>? _autoBackupInFlight;
+/// a manual backup never overlaps a scheduled one (#13). Resolves to whether a
+/// backup event happened (see [runAutoBackupIfDue]'s return value).
+Future<bool>? _autoBackupInFlight;
 
 /// Takes an automatic backup if the feature is enabled, there is data worth
 /// saving, and at least one [AutoBackupInterval] has elapsed since the last
 /// one. Safe to call on every launch/resume; it returns quickly when not due.
 ///
+/// Returns whether a backup was written — the Drive push (U24) is coupled to
+/// local backup events, so `main.dart` only syncs when this reports true (or
+/// the run threw: an attempted-but-failed local write must still push, because
+/// the cloud copy matters most when local storage misbehaves).
+///
 /// Single-flight: while one run is in progress, concurrent callers await the
 /// same future instead of starting a second, overlapping backup.
-Future<void> runAutoBackupIfDue(AppDatabase db) {
+Future<bool> runAutoBackupIfDue(AppDatabase db) {
   final existing = _autoBackupInFlight;
   if (existing != null) return existing;
-  late final Future<void> run;
+  late final Future<bool> run;
   run = _runAutoBackupIfDue(db).whenComplete(() {
     // Only clear the slot if a newer run (e.g. a manual backupNow chained
     // behind this one) hasn't taken it over meanwhile.
@@ -190,15 +199,15 @@ Future<void> runAutoBackupIfDue(AppDatabase db) {
   return _autoBackupInFlight = run;
 }
 
-Future<void> _runAutoBackupIfDue(AppDatabase db) async {
+Future<bool> _runAutoBackupIfDue(AppDatabase db) async {
   final settings = AppSettings(db);
-  if (!await settings.readAutoBackupEnabled()) return;
+  if (!await settings.readAutoBackupEnabled()) return false;
 
   // Nothing to protect until the user has created at least one aquarium.
   // Visible tanks only: soft-deleted ones (U10) are excluded from the encode,
   // so backing up a database holding nothing else would write an empty file
   // into the rotation, evicting a useful older backup.
-  if ((await db.getTanks()).isEmpty) return;
+  if ((await db.getTanks()).isEmpty) return false;
 
   final last = await settings.readLastBackupAt();
   if (last != null) {
@@ -207,8 +216,11 @@ Future<void> _runAutoBackupIfDue(AppDatabase db) async {
     // A negative difference means the device clock was rolled back past the
     // stamp; treat that as due instead of silently never backing up until the
     // clock catches up with the stamp again (#12).
-    if (sinceLast >= Duration.zero && sinceLast < interval.period) return;
+    if (sinceLast >= Duration.zero && sinceLast < interval.period) {
+      return false;
+    }
   }
 
   await _writeAndStamp(db, keep: await settings.readAutoBackupKeep());
+  return true;
 }
