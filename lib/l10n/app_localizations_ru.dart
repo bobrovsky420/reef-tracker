@@ -544,6 +544,60 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get freeAmmoniaLabel => 'Свободный аммиак (NH₃)';
+
+  @override
+  String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
+    return '$percent% токсичного · pH $ph · $temp';
+  }
+
+  @override
+  String freeAmmoniaPercent(Object percent) {
+    return '$percent% токсичного';
+  }
+
+  @override
+  String get freeAmmoniaExplain =>
+      'Тест на аммиак измеряет общий аммиак, но токсична только неионизированная часть (NH₃). Её доля растёт с pH и температурой, поэтому рифовый аквариум превращает в токсичную форму больше аммиака, чем аквариум с низким pH. Эта оценка разделяет последнее измерение общего аммиака по последним значениям pH, температуры и солёности.';
+
+  @override
+  String freeAmmoniaDialogFree(Object value) {
+    return 'Токсичный свободный аммиак: $value ppm NH₃';
+  }
+
+  @override
+  String freeAmmoniaDialogFraction(Object percent, Object total) {
+    return '$percent% из ваших $total ppm общего аммиака находится в токсичной форме NH₃.';
+  }
+
+  @override
+  String freeAmmoniaDialogInputs(Object ph, Object temp, Object salinity) {
+    return 'На основе pH $ph, $temp и $salinity.';
+  }
+
+  @override
+  String freeAmmoniaSalinityAssumed(Object value) {
+    return '$value (предположительно)';
+  }
+
+  @override
+  String get freeAmmoniaOutdatedWarning =>
+      'pH или температура последний раз измерялись более чем за неделю до этого измерения аммиака, поэтому доля токсичной формы может быть неточной.';
+
+  @override
+  String get freeAmmoniaShowTitle => 'Показывать свободный аммиак (NH₃)';
+
+  @override
+  String get freeAmmoniaShowSubtitle =>
+      'Добавляет карточку с оценкой токсичной неионизированной доли по pH, температуре и солёности.';
+
+  @override
+  String get freeAmmoniaNeedsAmmonia => 'Включите аммиак, чтобы показать.';
+
+  @override
+  String get close => 'Закрыть';
+
+  @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override

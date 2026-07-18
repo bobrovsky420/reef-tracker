@@ -539,6 +539,60 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get freeAmmoniaLabel => 'Free ammonia (NH₃)';
+
+  @override
+  String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
+    return '$percent% toxic · pH $ph · $temp';
+  }
+
+  @override
+  String freeAmmoniaPercent(Object percent) {
+    return '$percent% toxic';
+  }
+
+  @override
+  String get freeAmmoniaExplain =>
+      'An ammonia test measures total ammonia, but only the un-ionized part (NH₃) is toxic. Its share rises with pH and temperature, so a reef tank turns more of it into the toxic form than a low-pH tank. This estimate splits your latest total-ammonia reading using the latest pH, temperature and salinity.';
+
+  @override
+  String freeAmmoniaDialogFree(Object value) {
+    return 'Toxic free ammonia: $value ppm NH₃';
+  }
+
+  @override
+  String freeAmmoniaDialogFraction(Object percent, Object total) {
+    return '$percent% of your $total ppm total ammonia is in the toxic NH₃ form.';
+  }
+
+  @override
+  String freeAmmoniaDialogInputs(Object ph, Object temp, Object salinity) {
+    return 'Based on pH $ph, $temp and $salinity.';
+  }
+
+  @override
+  String freeAmmoniaSalinityAssumed(Object value) {
+    return '$value (assumed)';
+  }
+
+  @override
+  String get freeAmmoniaOutdatedWarning =>
+      'pH or temperature was last measured more than a week from this ammonia reading, so the toxic fraction may be inaccurate.';
+
+  @override
+  String get freeAmmoniaShowTitle => 'Show free ammonia (NH₃)';
+
+  @override
+  String get freeAmmoniaShowSubtitle =>
+      'Adds a card estimating the toxic un-ionized fraction from pH, temperature and salinity.';
+
+  @override
+  String get freeAmmoniaNeedsAmmonia => 'Enable ammonia to show this.';
+
+  @override
+  String get close => 'Close';
+
+  @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override

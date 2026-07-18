@@ -115,6 +115,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `micro.dart` | Microelements (U17) domain rules. `kMicroDefaultBounds` — default zone bounds per element in canonical ppm, anchored on natural seawater / ICP-lab target ranges; contaminants (and silicon) are **one-sided** (green up to a ceiling — no "too little lead"). Used as the fallback when a tank has no `TrackedParameters` row for an element and as the seed when one is created. `kMicroHobbyKitKeys` (I/Fe/Sr — the elements home test kits exist for), and `computeMicroStatus(inputs)` → `MicroStatus` (measured / out-of-range counts, worst zone, newest sample date) — the panel's own summary, deliberately **outside** the tank health score: micro is measured on an ICP cadence (months), which the 30-day core freshness rule would permanently read as stale. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. Pure (no DB): consumes plain `RatioReading` (`{takenAt, value}`) records and `RatioSettings` (`{visible, displayOrder, bounds}`) instead of drift rows — `database.dart` hosts the thin row→record mappers (#52). |
+| `ammonia_toxicity.dart` | Free (toxic) un-ionized ammonia (NH₃) math — pure, DB-free, like `ratio.dart`. A total-ammonia test measures TAN (NH₄⁺ + NH₃); only NH₃ is toxic and its share climbs with pH and temperature (and, mildly, falls with salinity), so a reef converts far more of the same total to the toxic form than a low-pH tank. `freeAmmoniaFraction(pH, tempC, salinityPpt)` = `1 / (1 + 10^(pKa − pH))` with `pKa = 0.09018 + 2729.92/T_K` (**Emerson 1975**) plus a salinity/ionic-strength term (**US EPA 1989** Eq. 5 `I = 19.9273·S/(1000 − 1.005109·S)` + NH₃ salting-out); validated against reef-chemistry reference values (~9–10 % NH₃ at pH 8.3 / 25 °C / 35 ppt, +13 % at 27 °C). `computeFreeAmmonia({ammonia, ph, temperature, salinity})` → `FreeAmmonia?` (total, `freeNh3`, `fraction`, inputs used, `salinityMeasured`, `inputsOutdated`) from each input's latest reading (newest-first records mapped from `Reading`); null until ammonia + pH + temperature all exist; salinity is optional (falls back to `kDefaultSalinityPpt` 35, flagged). Fixed one-sided toxicity bounds `kFreeAmmoniaBounds` (green ≤ 0.02, amber ≤ 0.05 ppm NH₃, anchored on the EPA saltwater chronic criterion 0.035). `inputsOutdated` is set when pH/temp are more than `kAmmoniaInputMaxAge` (7 d) from the ammonia reading — the value still shows, flagged approximate. Basis decision: total ammonia is treated **as NH₃** (matching the `ammonia` parameter's canonical unit); presentation-only (does not feed the health score). See Features. |
 | `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.linearFit`, `TrendDirection`, projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward — and a `recovering` flag). Uses the most recent `window` readings and returns null until that many exist. The projection is **anchored on the fitted (regression) value at the last timestamp**, not the raw last reading, so one noisy endpoint can't swing the forecast. A value already *outside* its green range but moving back toward it is **recovering**: no crossing is forecast (the only bounds ahead are on the far side of green — forecasting them would warn about an improving parameter) and `recovering` is set so the UI could one day surface it positively (TODO U15). Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). Slopes with magnitude < 1e-9 (`_flatEpsilon`) classify as flat (no forecast), a bound projection is dropped when the bound lies opposite the direction of travel ("the bound is behind us"), and bounds failing `ZoneBounds.isValid` produce no forecast at all. See Features. |
 | `health_score.dart` | Pure, testable tank-health scoring (no Flutter/DB). `computeTankHealth(inputs)` → `TankHealth` (optional 0–100 `score`, worst-case `Zone` `band`, coarse `HealthGrade`, and per-parameter `ParameterHealth` breakdown). Each fresh, bounded parameter gets a 0–100 sub-score from its position in/beyond its bands (green 70–100, amber 40–69, red 0–39), interpolated linearly within the band: centred in green = 100, at a green bound = 70; amber runs 69→40 from the green toward the amber bound; red falls 39→0 with distance measured in *amber-band widths* past the amber bound (so a wide amber band forgives overshoot proportionally); one-sided/unmeasurable cases use flat 90 / 55 / 20. The aggregate is the importance-weighted mean — **weights:** 3 = temp, salinity, alk, NH₃/₄, NO₂ · 2.5 = pH · 2 = Ca, Mg, NO₃, PO₄ · 1 = everything else — then **capped to the worst zone's ceiling** (any red ⇒ ≤ 39, else any amber ⇒ ≤ 69) so one red can't be hidden behind greens. **Grade thresholds:** excellent ≥ 85, good ≥ 70, caution ≥ 40, critical < 40. Readings older than `kHealthFreshnessDays`=30 are excluded and surfaced separately; a value carrying no timestamp counts as stale too (freshness can't be verified), never as eternally fresh. See Features. |
 | `stability_score.dart` | Pure, testable tank-stability scoring (U26, Pro) — health's second axis: *"how much have the values been swinging?"* vs health's *"where do they sit now?"*. `computeTankStability(inputs)` → `TankStability` (optional 0–100 `score`, `Zone` band via the health thresholds green ≥ 70 / amber ≥ 40 / red below, coarse `StabilityGrade` rockSolid ≥ 85 / steady ≥ 70 / variable ≥ 40 / unstable, per-parameter breakdown with the residual σ). Per parameter, readings inside the stability window (the `stability_window` setting — `kStabilityWindowChoices` 30/60/90 d, default `kStabilityWindowDays`=30; ≥ `kStabilityMinReadings`=3 of them spanning ≥ `kStabilityMinSpanHours`=48 — a same-evening burst measures kit repeatability, not the tank) are **detrended** with `linearFit` (a steady drift is a *trend*, `trend.dart`'s job — without detrending an alk consumer would read unstable for consuming) and the residual RMS (n−2 dof) is normalized by the **green half-width** (one-sided ranges fall back to their green→amber gap; no usable scale = unmeasurable), so pH swings of 0.2 and Ca swings of 20 ppm compare fairly. Sub-score: 100 within the 0.1 relative deadband (kit noise), falling linearly to 0 at full-scale (swing = the half-band). Aggregate = importance-weighted mean (**same weights as health**, via the shared `importanceWeightFor`); any sub-score < 40 caps the aggregate at 69 — one band softer than health's worst-zone ceiling, since a single noisy series is often the test kit, not the tank. Core parameters only (micro's ICP cadence can't fill a 30-day window). |
@@ -183,7 +184,9 @@ measurements are untouched and reappear when re-enabled), and `micro_view`
 (the active microelement view per tank as one JSON object
 `{"<tankId>": "<token>"}` — `preset:full`, `preset:faunaMarin`, or
 `view:<MicroViews id>`; missing/dangling entries mean the full list; the
-`lastReadingTemplate` pattern). The
+`lastReadingTemplate` pattern), and `free_ammonia_hidden` (the per-tank on/off
+for the free-ammonia visualization, device-local — a JSON list of tank ids
+where it is **hidden**; an absent tank is shown, so the default is on). The
 reminder keys are device-local: notification preferences must not ride a
 backup onto another device. `ro_stages_seeded` is the one **non**-device-local
 key: it describes domain data and travels with the RO rows it guards, so a
@@ -1471,6 +1474,42 @@ the last three shown as a single number = numerator/denominator to one decimal.
   draws the same bands as `RangeAnnotations`.
 - Adding a ratio = add a `RatioKind` value (with symbols, display form, and
   `defaultBounds`) + its ARB label/title keys.
+
+### Free (toxic) ammonia (`domain/ammonia_toxicity.dart` + `widgets/free_ammonia_view.dart`)
+
+A derived value like the ratios, shown in the dashboard's **Ratios area**
+(pinned first). A total-ammonia reading is TAN (NH₄⁺ + NH₃); only the
+un-ionized NH₃ is toxic, and its share rises steeply with pH and temperature —
+so at reef pH (8.0–8.4) a much larger fraction of the same total is toxic than
+in a low-pH tank. The domain math + sourcing live in `ammonia_toxicity.dart`
+(see the Domain layer table); this section covers the presentation.
+
+- **Two forms, one per dashboard layout** (mirroring the ratio row/card split,
+  built in `dashboard_screen.dart`): the **grouped/gauge** layout renders
+  `FreeAmmoniaRow` — a `RatioRow`-style label + zone-colored value over a 6 px
+  one-sided toxicity track (safe band from 0, ringed marker at the value on
+  `kFreeAmmoniaAxis`); the **classic** layout renders `FreeAmmoniaTile`, a
+  standard grid card like `_RatioTile`. Both color by `FreeAmmonia.zone`
+  (`kFreeAmmoniaBounds`) and open `showFreeAmmoniaInfo`, a dialog explaining
+  the split, the exact inputs used, and the staleness warning.
+- **Gating (two conditions):** shown only when the `ammonia` parameter is
+  tracked **and enabled** (so disabling ammonia hides it automatically —
+  `dashboard_screen.dart` checks `t.paramKey == kAmmoniaKey && t.enabled`) and
+  the per-tank `freeAmmoniaVisibleProvider` is on. The visibility toggle is a
+  dedicated **row in Manage Parameters** (`_FreeAmmoniaItem`, pinned first in
+  the Ratios group, appears only when ammonia is tracked; no zone editor or
+  drag handle — fixed thresholds, fixed position), writing the
+  `free_ammonia_hidden` setting via `AppSettings.setFreeAmmoniaVisible`. Its
+  switch is disabled while the ammonia parameter is off (with a
+  `freeAmmoniaNeedsAmmonia` hint), reflecting the same gate.
+- **Staleness:** when pH or temperature is more than `kAmmoniaInputMaxAge`
+  (7 d) from the ammonia reading, the value still renders but carries an amber
+  warning glyph (tooltip + full sentence in the info dialog) — the same
+  half-stale idea as the ratios' `kRatioMaxSkew`, tightened because pH cycles
+  daily.
+- Presentation-only (a **v1 decision**): does not feed the health/stability
+  scores or the AI summary. Thresholds are fixed app defaults (not per-tank
+  editable) for now. Both are candidate follow-ups.
 
 ### Actions log (`features/actions/`)
 

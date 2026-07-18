@@ -971,6 +971,84 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{This value was entered together with 1 other measurement. Update the time for only this value, or all values entered together?} other{This value was entered together with {count} other measurements. Update the time for only this value, or all values entered together?}}'**
   String editTogetherBody(int count);
 
+  /// Label of the derived free/toxic ammonia card in the Ratios area (calculated from total ammonia + pH + temperature + salinity).
+  ///
+  /// In en, this message translates to:
+  /// **'Free ammonia (NH₃)'**
+  String get freeAmmoniaLabel;
+
+  /// Compact breakdown under the free-ammonia gauge: toxic percentage, and the pH and temperature used.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% toxic · pH {ph} · {temp}'**
+  String freeAmmoniaBreakdown(Object percent, Object ph, Object temp);
+
+  /// Toxic-fraction note on the classic free-ammonia tile.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% toxic'**
+  String freeAmmoniaPercent(Object percent);
+
+  /// Explainer paragraph in the free-ammonia info dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'An ammonia test measures total ammonia, but only the un-ionized part (NH₃) is toxic. Its share rises with pH and temperature, so a reef tank turns more of it into the toxic form than a low-pH tank. This estimate splits your latest total-ammonia reading using the latest pH, temperature and salinity.'**
+  String get freeAmmoniaExplain;
+
+  /// Free-ammonia value line in the info dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Toxic free ammonia: {value} ppm NH₃'**
+  String freeAmmoniaDialogFree(Object value);
+
+  /// Toxic-fraction sentence in the info dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of your {total} ppm total ammonia is in the toxic NH₃ form.'**
+  String freeAmmoniaDialogFraction(Object percent, Object total);
+
+  /// Inputs line in the info dialog: the pH, temperature and salinity used.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on pH {ph}, {temp} and {salinity}.'**
+  String freeAmmoniaDialogInputs(Object ph, Object temp, Object salinity);
+
+  /// Wraps the salinity value when none was measured and 35 ppt is assumed.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} (assumed)'**
+  String freeAmmoniaSalinityAssumed(Object value);
+
+  /// Shown when the pH/temperature inputs are too old relative to the ammonia reading.
+  ///
+  /// In en, this message translates to:
+  /// **'pH or temperature was last measured more than a week from this ammonia reading, so the toxic fraction may be inaccurate.'**
+  String get freeAmmoniaOutdatedWarning;
+
+  /// Toggle title on the ammonia parameter's edit screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Show free ammonia (NH₃)'**
+  String get freeAmmoniaShowTitle;
+
+  /// Toggle subtitle on the ammonia parameter's edit screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds a card estimating the toxic un-ionized fraction from pH, temperature and salinity.'**
+  String get freeAmmoniaShowSubtitle;
+
+  /// Subtitle on the free-ammonia row in Manage parameters when the ammonia parameter is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable ammonia to show this.'**
+  String get freeAmmoniaNeedsAmmonia;
+
+  /// Generic dialog dismiss button.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
   /// No description provided for @ratioPo4No3Label.
   ///
   /// In en, this message translates to:

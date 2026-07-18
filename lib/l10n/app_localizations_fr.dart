@@ -540,6 +540,60 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get freeAmmoniaLabel => 'Ammoniac libre (NH₃)';
+
+  @override
+  String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
+    return '$percent % toxique · pH $ph · $temp';
+  }
+
+  @override
+  String freeAmmoniaPercent(Object percent) {
+    return '$percent % toxique';
+  }
+
+  @override
+  String get freeAmmoniaExplain =>
+      'Un test d\'ammoniac mesure l\'ammoniac total, mais seule la partie non ionisée (NH₃) est toxique. Sa proportion augmente avec le pH et la température, si bien qu\'un aquarium récifal en convertit une plus grande part sous la forme toxique qu\'un bac à pH bas. Cette estimation répartit votre dernière mesure d\'ammoniac total à partir des dernières valeurs de pH, de température et de salinité.';
+
+  @override
+  String freeAmmoniaDialogFree(Object value) {
+    return 'Ammoniac libre toxique : $value ppm NH₃';
+  }
+
+  @override
+  String freeAmmoniaDialogFraction(Object percent, Object total) {
+    return '$percent % de vos $total ppm d\'ammoniac total sont sous la forme toxique NH₃.';
+  }
+
+  @override
+  String freeAmmoniaDialogInputs(Object ph, Object temp, Object salinity) {
+    return 'D\'après un pH de $ph, $temp et $salinity.';
+  }
+
+  @override
+  String freeAmmoniaSalinityAssumed(Object value) {
+    return '$value (supposée)';
+  }
+
+  @override
+  String get freeAmmoniaOutdatedWarning =>
+      'Le pH ou la température ont été mesurés pour la dernière fois plus d\'une semaine avant cette mesure d\'ammoniac ; la fraction toxique peut donc être imprécise.';
+
+  @override
+  String get freeAmmoniaShowTitle => 'Afficher l\'ammoniac libre (NH₃)';
+
+  @override
+  String get freeAmmoniaShowSubtitle =>
+      'Ajoute une carte estimant la fraction toxique non ionisée à partir du pH, de la température et de la salinité.';
+
+  @override
+  String get freeAmmoniaNeedsAmmonia => 'Activez l\'ammoniac pour l\'afficher.';
+
+  @override
+  String get close => 'Fermer';
+
+  @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override

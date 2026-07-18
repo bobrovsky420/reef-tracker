@@ -541,6 +541,60 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get freeAmmoniaLabel => 'Volný amoniak (NH₃)';
+
+  @override
+  String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
+    return '$percent % toxických · pH $ph · $temp';
+  }
+
+  @override
+  String freeAmmoniaPercent(Object percent) {
+    return '$percent % toxických';
+  }
+
+  @override
+  String get freeAmmoniaExplain =>
+      'Test amoniaku měří celkový amoniak, ale toxická je jen neionizovaná část (NH₃). Její podíl roste s pH a teplotou, takže rifové akvárium přeměňuje na toxickou formu více amoniaku než nádrž s nízkým pH. Tento odhad rozdělí poslední naměřený celkový amoniak podle posledního pH, teploty a salinity.';
+
+  @override
+  String freeAmmoniaDialogFree(Object value) {
+    return 'Toxický volný amoniak: $value ppm NH₃';
+  }
+
+  @override
+  String freeAmmoniaDialogFraction(Object percent, Object total) {
+    return '$percent % z vašich $total ppm celkového amoniaku je v toxické formě NH₃.';
+  }
+
+  @override
+  String freeAmmoniaDialogInputs(Object ph, Object temp, Object salinity) {
+    return 'Na základě pH $ph, $temp a $salinity.';
+  }
+
+  @override
+  String freeAmmoniaSalinityAssumed(Object value) {
+    return '$value (předpoklad)';
+  }
+
+  @override
+  String get freeAmmoniaOutdatedWarning =>
+      'pH nebo teplota byly naposledy měřeny více než týden od tohoto měření amoniaku, takže podíl toxické formy může být nepřesný.';
+
+  @override
+  String get freeAmmoniaShowTitle => 'Zobrazit volný amoniak (NH₃)';
+
+  @override
+  String get freeAmmoniaShowSubtitle =>
+      'Přidá kartu odhadující toxický neionizovaný podíl z pH, teploty a salinity.';
+
+  @override
+  String get freeAmmoniaNeedsAmmonia => 'Zobrazí se po zapnutí amoniaku.';
+
+  @override
+  String get close => 'Zavřít';
+
+  @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override

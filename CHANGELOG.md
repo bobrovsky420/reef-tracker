@@ -5,7 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.31.2] - 2026-07-18
+## [0.32.0] - 2026-07-18
+
+### Added
+- **Free (toxic) ammonia (NH₃).** An ammonia test measures *total* ammonia,
+  but only the un-ionized part (NH₃) is toxic — and its share climbs with pH
+  and temperature, so a reef tank turns far more of it into the toxic form
+  than a low-pH tank. The dashboard now derives free NH₃ from your latest
+  ammonia, pH, temperature and salinity and shows it in the Ratios area: a
+  horizontal safe→toxic gauge on the grouped dashboard and a standard card on
+  the classic dashboard, colored green/amber/red against toxicity limits
+  anchored on the US EPA saltwater criterion. Tapping it explains the split
+  and the inputs used. The estimate uses a temperature- and salinity-corrected
+  model (Emerson 1975 + EPA 1989 / Whitfield ionic-strength correction).
+- Toggle the free-ammonia card on or off per tank from the ammonia
+  parameter's edit screen (Manage parameters → ammonia). Turning ammonia off
+  hides it automatically.
+- The free-ammonia value warns that it may be inaccurate when the pH or
+  temperature reading is more than a week older than the ammonia reading.
 
 ### Changed
 - Gauge dials and environment pills now label parameters with a compact

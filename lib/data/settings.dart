@@ -176,6 +176,10 @@ enum SettingKey {
   // like trendEnabled — device-local, default off.
   microHideUndetectable(kMicroHideUndetectableKey, deviceLocal: true),
   microAttentionOnly(kMicroAttentionOnlyKey, deviceLocal: true),
+  // Per-tank on/off for the free (toxic) ammonia visualization: a display
+  // preference like microView — device-local, default visible. Stored as the
+  // set of tank ids where it is *hidden* (absent tank = shown).
+  freeAmmoniaHidden(kFreeAmmoniaHiddenKey, deviceLocal: true),
   // The early-adopter ("Founder's Edition") marker for the future paid tier
   // (U19 phase 0): presence ⇒ this user installed while everything was free
   // and keeps today's features free forever. NOT device-local — the status
@@ -384,6 +388,47 @@ class AppSettings {
       _watch(SettingKey.microAttentionOnly).map(decodeMicroAttentionOnly);
   Future<void> setMicroAttentionOnly(bool enabled) =>
       _write(SettingKey.microAttentionOnly, enabled.toString());
+
+  // --- free ammonia visualization ---------------------------------------------
+
+  /// The tank ids for which the free (toxic) ammonia visualization is hidden.
+  /// Stored as a JSON list of ids; an absent tank is shown (default on). Same
+  /// one-JSON-value storage idea as [decodeMicroViewSelections], keeping the
+  /// [SettingKey] registry a closed list.
+  static Set<int> decodeFreeAmmoniaHidden(String? raw) {
+    if (raw == null) return const {};
+    try {
+      final v = jsonDecode(raw);
+      if (v is List) {
+        return {
+          for (final e in v)
+            if (e is int) e,
+        };
+      }
+    } on FormatException {
+      // Malformed stored value — treat as "none hidden".
+    }
+    return const {};
+  }
+
+  Stream<Set<int>> watchFreeAmmoniaHidden() =>
+      _watch(SettingKey.freeAmmoniaHidden).map(decodeFreeAmmoniaHidden);
+
+  /// Shows or hides the free-ammonia visualization for [tankId].
+  Future<void> setFreeAmmoniaVisible(int tankId, bool visible) async {
+    final hidden = Set<int>.of(
+      decodeFreeAmmoniaHidden(await _read(SettingKey.freeAmmoniaHidden)),
+    );
+    if (visible) {
+      hidden.remove(tankId);
+    } else {
+      hidden.add(tankId);
+    }
+    await _write(
+      SettingKey.freeAmmoniaHidden,
+      hidden.isEmpty ? null : jsonEncode(hidden.toList()),
+    );
+  }
 
   Stream<bool> watchMicroEnabled() =>
       _watch(SettingKey.microEnabled).map(decodeMicroEnabled);

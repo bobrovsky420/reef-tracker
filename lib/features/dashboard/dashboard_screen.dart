@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../domain/ammonia_toxicity.dart';
 import '../../domain/dashboard_sections.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/ratio.dart';
@@ -16,6 +17,7 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/env_pill.dart';
+import '../../widgets/free_ammonia_view.dart';
 import '../../widgets/insights_card.dart';
 import '../../widgets/param_gauge.dart';
 import '../../widgets/ratio_row.dart';
@@ -154,6 +156,34 @@ class DashboardBody extends ConsumerWidget {
               stale: stale,
               onTap: () => context.push('/ratio/${kind.name}'),
             ),
+          ));
+        }
+
+        // Free (toxic) ammonia (NH₃): a derived value shown in the Ratios area,
+        // pinned first. Gated on the ammonia parameter being tracked + enabled
+        // (so disabling ammonia hides it automatically) and the per-tank
+        // visibility preference. Computed from each input's latest readings.
+        final ammoniaEnabled = tracked.any(
+          (t) => t.paramKey == kAmmoniaKey && t.enabled,
+        );
+        if (ammoniaEnabled && ref.watch(freeAmmoniaVisibleProvider)) {
+          List<AmmoniaInput> inputsFor(String key) => [
+            for (final r in byParam[key] ?? const <Reading>[])
+              (takenAt: r.takenAt, value: r.value),
+          ];
+          final fa = computeFreeAmmonia(
+            ammonia: inputsFor(kAmmoniaKey),
+            ph: inputsFor(kPhKey),
+            temperature: inputsFor(kTemperatureKey),
+            salinity: inputsFor(kSalinityKey),
+          );
+          entries.add((
+            section: DashboardSection.ratios,
+            // Pinned ahead of the ratio rows (order ≥ 1000) in both layouts.
+            groupedKey: const DashboardSortKey(DashboardSection.ratios, -1, -1),
+            flatOrder: 999.5,
+            tile: FreeAmmoniaTile(data: fa, prefs: prefs),
+            grouped: FreeAmmoniaRow(data: fa, prefs: prefs),
           ));
         }
 

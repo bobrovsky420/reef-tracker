@@ -540,6 +540,60 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get freeAmmoniaLabel => 'Ammoniaca libera (NH₃)';
+
+  @override
+  String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
+    return '$percent% tossica · pH $ph · $temp';
+  }
+
+  @override
+  String freeAmmoniaPercent(Object percent) {
+    return '$percent% tossica';
+  }
+
+  @override
+  String get freeAmmoniaExplain =>
+      'Un test dell\'ammoniaca misura l\'ammoniaca totale, ma solo la parte non ionizzata (NH₃) è tossica. La sua quota aumenta con pH e temperatura, quindi un acquario di barriera ne converte una parte maggiore nella forma tossica rispetto a una vasca a pH basso. Questa stima suddivide l\'ultima misura di ammoniaca totale usando gli ultimi valori di pH, temperatura e salinità.';
+
+  @override
+  String freeAmmoniaDialogFree(Object value) {
+    return 'Ammoniaca libera tossica: $value ppm NH₃';
+  }
+
+  @override
+  String freeAmmoniaDialogFraction(Object percent, Object total) {
+    return 'Il $percent% dei tuoi $total ppm di ammoniaca totale è nella forma tossica NH₃.';
+  }
+
+  @override
+  String freeAmmoniaDialogInputs(Object ph, Object temp, Object salinity) {
+    return 'In base a pH $ph, $temp e $salinity.';
+  }
+
+  @override
+  String freeAmmoniaSalinityAssumed(Object value) {
+    return '$value (presunta)';
+  }
+
+  @override
+  String get freeAmmoniaOutdatedWarning =>
+      'pH o temperatura sono stati misurati l\'ultima volta più di una settimana prima di questa misura dell\'ammoniaca, quindi la frazione tossica potrebbe essere imprecisa.';
+
+  @override
+  String get freeAmmoniaShowTitle => 'Mostra ammoniaca libera (NH₃)';
+
+  @override
+  String get freeAmmoniaShowSubtitle =>
+      'Aggiunge una scheda che stima la frazione tossica non ionizzata da pH, temperatura e salinità.';
+
+  @override
+  String get freeAmmoniaNeedsAmmonia => 'Attiva l\'ammoniaca per mostrarlo.';
+
+  @override
+  String get close => 'Chiudi';
+
+  @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override

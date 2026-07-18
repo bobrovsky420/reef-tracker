@@ -541,6 +541,60 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get freeAmmoniaLabel => 'Freies Ammoniak (NH₃)';
+
+  @override
+  String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
+    return '$percent % toxisch · pH $ph · $temp';
+  }
+
+  @override
+  String freeAmmoniaPercent(Object percent) {
+    return '$percent % toxisch';
+  }
+
+  @override
+  String get freeAmmoniaExplain =>
+      'Ein Ammoniaktest misst das Gesamtammoniak, aber nur der nicht-ionisierte Anteil (NH₃) ist giftig. Sein Anteil steigt mit pH-Wert und Temperatur, daher wandelt ein Riffaquarium mehr davon in die giftige Form um als ein Becken mit niedrigem pH-Wert. Diese Schätzung teilt deinen letzten Gesamtammoniak-Messwert anhand des letzten pH-Werts, der Temperatur und der Salinität auf.';
+
+  @override
+  String freeAmmoniaDialogFree(Object value) {
+    return 'Giftiges freies Ammoniak: $value ppm NH₃';
+  }
+
+  @override
+  String freeAmmoniaDialogFraction(Object percent, Object total) {
+    return '$percent % deiner $total ppm Gesamtammoniak liegen in der giftigen NH₃-Form vor.';
+  }
+
+  @override
+  String freeAmmoniaDialogInputs(Object ph, Object temp, Object salinity) {
+    return 'Basierend auf pH $ph, $temp und $salinity.';
+  }
+
+  @override
+  String freeAmmoniaSalinityAssumed(Object value) {
+    return '$value (angenommen)';
+  }
+
+  @override
+  String get freeAmmoniaOutdatedWarning =>
+      'pH-Wert oder Temperatur wurden zuletzt mehr als eine Woche vor diesem Ammoniak-Messwert gemessen, daher kann der giftige Anteil ungenau sein.';
+
+  @override
+  String get freeAmmoniaShowTitle => 'Freies Ammoniak (NH₃) anzeigen';
+
+  @override
+  String get freeAmmoniaShowSubtitle =>
+      'Fügt eine Karte hinzu, die den giftigen nicht-ionisierten Anteil aus pH-Wert, Temperatur und Salinität schätzt.';
+
+  @override
+  String get freeAmmoniaNeedsAmmonia => 'Zum Anzeigen Ammoniak aktivieren.';
+
+  @override
+  String get close => 'Schließen';
+
+  @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override

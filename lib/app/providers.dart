@@ -1104,3 +1104,19 @@ final ratioSettingsProvider = Provider<AsyncValue<Map<String, RatioSettings>>>((
   if (tank == null) return const AsyncValue.data({});
   return ref.watch(_ratioSettingsFamily(tank.id));
 });
+
+/// Whether the free (toxic) ammonia visualization is shown for the active tank
+/// (default on). A per-tank display preference; the dashboard additionally
+/// gates the card on the `ammonia` parameter being tracked + enabled, so
+/// turning ammonia off automatically hides it. Selecting the raw setting string
+/// keeps this from re-notifying on unrelated settings writes.
+final freeAmmoniaVisibleProvider = Provider<bool>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return true;
+  final raw = ref.watch(
+    settingsMapProvider.select(
+      (async) => async.value?[SettingKey.freeAmmoniaHidden.storageKey],
+    ),
+  );
+  return !AppSettings.decodeFreeAmmoniaHidden(raw).contains(tank.id);
+});

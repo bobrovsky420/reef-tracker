@@ -545,6 +545,60 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get freeAmmoniaLabel => 'Wolny amoniak (NH₃)';
+
+  @override
+  String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
+    return '$percent% toksyczne · pH $ph · $temp';
+  }
+
+  @override
+  String freeAmmoniaPercent(Object percent) {
+    return '$percent% toksyczne';
+  }
+
+  @override
+  String get freeAmmoniaExplain =>
+      'Test amoniaku mierzy amoniak całkowity, ale toksyczna jest tylko część niezjonizowana (NH₃). Jej udział rośnie wraz z pH i temperaturą, więc akwarium rafowe zamienia w formę toksyczną więcej amoniaku niż zbiornik o niskim pH. Ta ocena dzieli ostatni pomiar amoniaku całkowitego na podstawie ostatniego pH, temperatury i zasolenia.';
+
+  @override
+  String freeAmmoniaDialogFree(Object value) {
+    return 'Toksyczny wolny amoniak: $value ppm NH₃';
+  }
+
+  @override
+  String freeAmmoniaDialogFraction(Object percent, Object total) {
+    return '$percent% z Twoich $total ppm amoniaku całkowitego jest w toksycznej formie NH₃.';
+  }
+
+  @override
+  String freeAmmoniaDialogInputs(Object ph, Object temp, Object salinity) {
+    return 'Na podstawie pH $ph, $temp i $salinity.';
+  }
+
+  @override
+  String freeAmmoniaSalinityAssumed(Object value) {
+    return '$value (założone)';
+  }
+
+  @override
+  String get freeAmmoniaOutdatedWarning =>
+      'pH lub temperaturę zmierzono ostatnio ponad tydzień od tego pomiaru amoniaku, więc udział formy toksycznej może być niedokładny.';
+
+  @override
+  String get freeAmmoniaShowTitle => 'Pokaż wolny amoniak (NH₃)';
+
+  @override
+  String get freeAmmoniaShowSubtitle =>
+      'Dodaje kartę szacującą toksyczną frakcję niezjonizowaną na podstawie pH, temperatury i zasolenia.';
+
+  @override
+  String get freeAmmoniaNeedsAmmonia => 'Włącz amoniak, aby to pokazać.';
+
+  @override
+  String get close => 'Zamknij';
+
+  @override
   String get ratioPo4No3Label => 'PO₄ : NO₃';
 
   @override

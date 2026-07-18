@@ -93,6 +93,40 @@ void main() {
         takenAt: daysAgo(5 - i),
       );
     }
+    // Environment series (temperature/pH/salinity) so the Environment section
+    // and the derived free-ammonia calc have inputs.
+    for (final (i, v) in [25.8, 26.0, 26.1].indexed) {
+      await db.insertReading(
+        tankId: tank,
+        paramKey: 'temperature',
+        value: v,
+        takenAt: daysAgo((2 - i) * 2),
+      );
+    }
+    for (final (i, v) in [8.15, 8.20, 8.25].indexed) {
+      await db.insertReading(
+        tankId: tank,
+        paramKey: 'ph',
+        value: v,
+        takenAt: daysAgo((2 - i) * 2),
+      );
+    }
+    await db.insertReading(
+      tankId: tank,
+      paramKey: 'salinity',
+      value: 1.0264, // 35 ppt at 25 °C
+      takenAt: daysAgo(2),
+    );
+    // A minor ammonia event after adding livestock: 0.30 ppm total. At pH 8.25
+    // / 26 °C / 35 ppt ≈ 9 % is the toxic un-ionized NH₃ form (~0.027 ppm) —
+    // amber on the free-ammonia gauge, exercising the derived-value card.
+    await db.insertReading(
+      tankId: tank,
+      paramKey: 'ammonia',
+      value: 0.30,
+      takenAt: daysAgo(1),
+      note: 'Added two new fish yesterday',
+    );
 
     // --- Microelements (U17) -------------------------------------------------
     // One full ICP batch a month ago: mostly natural-seawater values, copper

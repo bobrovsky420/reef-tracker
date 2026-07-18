@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../domain/ammonia_toxicity.dart';
 import '../../domain/dashboard_sections.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/ratio.dart';
@@ -72,12 +73,21 @@ class ManageParametersScreen extends ConsumerWidget {
               (ref.watch(dashboardLayoutProvider).value ??
                   DashboardLayout.grouped) ==
               DashboardLayout.grouped;
+          // Free ammonia is a derived value of the ammonia parameter: its
+          // visibility row only appears when ammonia is tracked, and its
+          // toggle is disabled while ammonia is disabled (matching the
+          // dashboard gate that hides the card when ammonia is off).
+          final hasAmmonia = tracked.any((p) => p.paramKey == kAmmoniaKey);
+          final ammoniaEnabled = tracked.any(
+            (p) => p.paramKey == kAmmoniaKey && p.enabled,
+          );
           final items =
               <_DashItem>[
                 for (final p in tracked)
                   if (isCoreParam(p.paramKey)) _ParamItem(p),
                 for (final kind in RatioKind.values)
                   _RatioItem(kind, ratioSettings[kind.name]),
+                if (hasAmmonia) _FreeAmmoniaItem(),
               ]..sort(
                 (a, b) => grouped
                     ? a.key.compareTo(b.key)
@@ -89,6 +99,9 @@ class ManageParametersScreen extends ConsumerWidget {
             itemCount: items.length,
             // ignore: deprecated_member_use
             onReorder: (oldIndex, newIndex) {
+              // The free-ammonia row is pinned (a derived value): ignore drags
+              // of it, and skip it when writing back the param/ratio orders.
+              if (items[oldIndex] is _FreeAmmoniaItem) return;
               if (newIndex > oldIndex) newIndex -= 1;
               final reordered = [...items];
               reordered.insert(newIndex, reordered.removeAt(oldIndex));
@@ -101,6 +114,8 @@ class ManageParametersScreen extends ConsumerWidget {
                     paramOrders.add((id: it.param.id, order: i));
                   case _RatioItem():
                     ratioOrders.add((key: it.kind.name, order: i));
+                  case _FreeAmmoniaItem():
+                    break; // not user-orderable
                 }
               }
               unawaited(
@@ -130,6 +145,13 @@ class ManageParametersScreen extends ConsumerWidget {
                   tank.id,
                   item,
                   i,
+                  grouped: grouped,
+                ),
+                _FreeAmmoniaItem() => _freeAmmoniaRow(
+                  context,
+                  ref,
+                  tank.id,
+                  ammoniaEnabled: ammoniaEnabled,
                   grouped: grouped,
                 ),
               };
@@ -244,6 +266,42 @@ class ManageParametersScreen extends ConsumerWidget {
             child: Icon(Icons.drag_handle, semanticLabel: l.reorder),
           ),
         ],
+      ),
+    );
+  }
+
+  /// The free (toxic) ammonia visibility row — a derived value shown in the
+  /// Ratios area. No zone editor (fixed toxicity thresholds in v1) and no drag
+  /// handle (pinned first among ratios). The switch is disabled while the
+  /// ammonia parameter is off, since the dashboard card is gated on it.
+  Widget _freeAmmoniaRow(
+    BuildContext context,
+    WidgetRef ref,
+    int tankId, {
+    required bool ammoniaEnabled,
+    required bool grouped,
+  }) {
+    final l = AppLocalizations.of(context);
+    final visible = ref.watch(freeAmmoniaVisibleProvider);
+    return ListTile(
+      key: const ValueKey('free-ammonia'),
+      title: _titleWithGroup(
+        context,
+        l.freeAmmoniaLabel,
+        grouped ? l.dashSectionLabel(DashboardSection.ratios) : null,
+      ),
+      subtitle: Text(
+        ammoniaEnabled ? l.freeAmmoniaShowSubtitle : l.freeAmmoniaNeedsAmmonia,
+      ),
+      leading: Semantics(
+        label: l.freeAmmoniaLabel,
+        child: Switch.adaptive(
+          value: ammoniaEnabled && visible,
+          onChanged: ammoniaEnabled
+              ? (v) =>
+                    ref.read(settingsProvider).setFreeAmmoniaVisible(tankId, v)
+              : null,
+        ),
       ),
     );
   }
@@ -375,6 +433,16 @@ class _RatioItem extends _DashItem {
   DashboardSortKey get key => ratioSortKey(kind, settings);
   @override
   double get flatOrder => ratioRowOrder(kind, settings);
+}
+
+/// The free-ammonia visibility row — pinned first in the Ratios area in both
+/// layouts (matching the dashboard's fixed placement), not user-orderable.
+class _FreeAmmoniaItem extends _DashItem {
+  @override
+  DashboardSortKey get key =>
+      const DashboardSortKey(DashboardSection.ratios, -1.0, -1.0);
+  @override
+  double get flatOrder => 999.5;
 }
 
 String _boundsSummary(
