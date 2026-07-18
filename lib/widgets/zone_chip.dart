@@ -5,6 +5,32 @@ import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import 'zone_visuals.dart';
 
+/// 28 px circular status badge for list-card rows (REDESIGN #17): zone-soft
+/// fill with the zone's bare-glyph mark in the zone color. Like [ZoneChip]'s
+/// compact mode, the explicit label keeps it readable for screen readers
+/// (#46).
+class ZoneBadge extends StatelessWidget {
+  const ZoneBadge(this.zone, {super.key});
+
+  final Zone zone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: AppLocalizations.of(context).zoneLabel(zone),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: zone.softColorOf(context),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(zone.badgeIcon, size: 14, color: zone.colorOf(context)),
+      ),
+    );
+  }
+}
+
 /// A small colored pill showing a zone's status (OK / Attention / Act now).
 class ZoneChip extends StatelessWidget {
   const ZoneChip(this.zone, {super.key, this.compact = false});

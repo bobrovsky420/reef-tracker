@@ -52,4 +52,20 @@ extension ZoneVisuals on Zone {
         return Icons.help_outline;
     }
   }
+
+  /// Bare-glyph variant for the circular list badges (REDESIGN #17): the
+  /// filled-circle icons above would read as a solid dot inside a 28 px disc,
+  /// so the badge draws the stroke-only mark (mockup: a plain check).
+  IconData get badgeIcon {
+    switch (this) {
+      case Zone.green:
+        return Icons.check_rounded;
+      case Zone.amber:
+        return Icons.warning_amber_rounded;
+      case Zone.red:
+        return Icons.priority_high_rounded;
+      case Zone.unknown:
+        return Icons.question_mark_rounded;
+    }
+  }
 }

@@ -15,6 +15,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
 import '../../widgets/trend_chart.dart';
 import '../../widgets/trend_view.dart';
 import '../../widgets/zone_chip.dart';
@@ -110,7 +111,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
           return Column(
             children: [
-              const ChartRangeSelector(),
+              const ChartRangeSelector(
+                padding: EdgeInsets.fromLTRB(20, 2, 20, 4),
+              ),
               Expanded(
                 // Builder-based slivers (T14): only visible reading rows are
                 // instantiated — on "All" the old ListView(children:) built
@@ -141,31 +144,42 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         controller: _scrollCtrl,
                         slivers: [
                           SliverToBoxAdapter(
-                            // The ColoredBox gives the shared PNG an opaque
-                            // background — a bare capture would be transparent
-                            // and unreadable on forum dark/light themes. Must
-                            // be the solid body token: scaffoldBackgroundColor
-                            // is transparent over the ReefBackground gradient.
+                            // The boundary wraps backdrop + card so the shared
+                            // PNG comes out as "chart card on solid background"
+                            // (REDESIGN #17). The ColoredBox keeps the capture
+                            // opaque — a bare capture would be transparent and
+                            // unreadable on forum dark/light themes, and the
+                            // dark card fill is itself translucent. Must be the
+                            // solid body token: scaffoldBackgroundColor is
+                            // transparent over the ReefBackground gradient.
                             child: RepaintBoundary(
                               key: _chartBoundaryKey,
                               child: ColoredBox(
                                 color: ReefTokens.of(context).scaffoldBody,
-                                child: SizedBox(
-                                  height: 280,
-                                  child: Padding(
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    20,
+                                    12,
+                                    20,
+                                    12,
+                                  ),
+                                  child: ReefCard(
                                     padding: const EdgeInsets.fromLTRB(
                                       8,
-                                      16,
-                                      16,
+                                      14,
                                       8,
+                                      12,
                                     ),
-                                    child: TrendChart(
-                                      readings: data,
-                                      param: param,
-                                      pres: pres,
-                                      markers: markers,
-                                      zoomable: true,
-                                      showMarkerLegend: true,
+                                    child: SizedBox(
+                                      height: 280,
+                                      child: TrendChart(
+                                        readings: data,
+                                        param: param,
+                                        pres: pres,
+                                        markers: markers,
+                                        zoomable: true,
+                                        showMarkerLegend: true,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -174,22 +188,29 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           ),
                           if (trend != null)
                             SliverToBoxAdapter(
-                              child: Column(
-                                children: [
-                                  const Divider(),
-                                  TrendCard(trend: trend, pres: pres),
-                                ],
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  0,
+                                  20,
+                                  12,
+                                ),
+                                child: TrendCard(trend: trend, pres: pres),
                               ),
                             ),
-                          const SliverToBoxAdapter(child: Divider()),
                           // Numeric summary of the plotted range (U31): the
                           // swing and center the user would otherwise eyeball
                           // off the line or scroll the list for.
                           SliverToBoxAdapter(
-                            child: _RangeStats(data: data, pres: pres),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                              child: _RangeStats(data: data, pres: pres),
+                            ),
                           ),
-                          const SliverToBoxAdapter(child: Divider()),
-                          _readingsSliver(context, data, param, pres),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            sliver: _readingsSliver(context, data, param, pres),
+                          ),
                           // Keeps the last row tappable under the FAB.
                           const SliverToBoxAdapter(child: SizedBox(height: 88)),
                         ],
@@ -273,36 +294,85 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     ParamPresentation pres,
   ) {
     final bounds = param != null ? boundsOf(param) : const ZoneBounds();
-    return SliverList.builder(
-      itemCount: data.length,
-      itemBuilder: (context, i) {
-        final r = data[data.length - 1 - i]; // newest first
-        return Dismissible(
-          key: ValueKey(r.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            color: Theme.of(context).colorScheme.error,
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 16),
-            child: const Icon(Icons.delete, color: Colors.white),
-          ),
-          confirmDismiss: (_) => _confirmDelete(context, r),
-          child: ListTile(
-            leading: ZoneChip(bounds.classify(r.value), compact: true),
-            title: Text('${pres.format(r.value)} ${pres.unitLabel}'),
-            subtitle: Text(
-              formatDateTime(context, r.takenAt) +
-                  (r.note != null ? '\n${r.note}' : ''),
+    final tokens = ReefTokens.of(context);
+    return ReefSliverCard(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      sliver: SliverList.builder(
+        itemCount: data.length,
+        itemBuilder: (context, i) {
+          final r = data[data.length - 1 - i]; // newest first
+          return Dismissible(
+            key: ValueKey(r.id),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              color: Theme.of(context).colorScheme.error,
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 16),
+              child: const Icon(Icons.delete, color: Colors.white),
             ),
-            isThreeLine: r.note != null,
-            trailing: Icon(
-              Icons.chevron_right,
-              color: Theme.of(context).colorScheme.outline,
+            confirmDismiss: (_) => _confirmDelete(context, r),
+            // Rows sit inside the sliver card, whose fill paints over the
+            // scaffold Material — each row brings a transparent Material so
+            // ink and the swipe background render above the card (#11
+            // pattern).
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: () => _editReading(context, r, pres),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 8,
+                  ),
+                  decoration: i == data.length - 1
+                      ? null
+                      : BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: tokens.surfaceBorder),
+                          ),
+                        ),
+                  child: Row(
+                    children: [
+                      ZoneBadge(bounds.classify(r.value)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${pres.format(r.value)} ${pres.unitLabel}',
+                              style: ReefTokens.monoTextStyle.copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: tokens.text,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              formatDateTime(context, r.takenAt) +
+                                  (r.note != null ? '\n${r.note}' : ''),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: tokens.textDim,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 15,
+                        color: tokens.textFaint,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            onTap: () => _editReading(context, r, pres),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -495,10 +565,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 }
 
-/// Min / Avg / Max / test-count summary row for the readings in the selected
+/// Min / Avg / Max / test-count summary card for the readings in the selected
 /// range (U31), derived from the same in-memory list the chart plots. Stats
 /// are computed on canonical values: the display conversion is an increasing
 /// affine map, so min/max/mean commute with it.
+///
+/// Styling per REDESIGN §A.8: four equal columns divided by 1 px hairlines,
+/// uppercase faint labels over mono w700 values. Values keep the unit suffix
+/// and the `FittedBox` down-scaling — the mock's bare numbers don't survive
+/// `350 µg/L`-class value+unit widths.
 class _RangeStats extends StatelessWidget {
   const _RangeStats({required this.data, required this.pres});
 
@@ -509,7 +584,7 @@ class _RangeStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final tokens = ReefTokens.of(context);
     var min = data.first.value;
     var max = min;
     var sum = 0.0;
@@ -520,31 +595,57 @@ class _RangeStats extends StatelessWidget {
     }
     String fmt(double v) => '${pres.format(v)} ${pres.unitLabel}';
 
-    Widget cell(String label, String value) => Expanded(
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
-          ),
-          const SizedBox(height: 2),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(value, style: theme.textTheme.titleSmall),
-          ),
-        ],
+    Widget cell(String label, String value, {bool last = false}) => Expanded(
+      child: Container(
+        decoration: last
+            ? null
+            : BoxDecoration(
+                border: Border(
+                  right: BorderSide(color: tokens.surfaceBorder),
+                ),
+              ),
+        child: Column(
+          children: [
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                fontSize: 11,
+                letterSpacing: 0.33,
+                color: tokens.textFaint,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  style: ReefTokens.monoTextStyle.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.text,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      child: Row(
-        children: [
-          cell(l.statMin, fmt(min)),
-          cell(l.statAvg, fmt(sum / data.length)),
-          cell(l.statMax, fmt(max)),
-          cell(l.statTests, '${data.length}'),
-        ],
+    return ReefCard(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            cell(l.statMin, fmt(min)),
+            cell(l.statAvg, fmt(sum / data.length)),
+            cell(l.statMax, fmt(max)),
+            cell(l.statTests, '${data.length}', last: true),
+          ],
+        ),
       ),
     );
   }

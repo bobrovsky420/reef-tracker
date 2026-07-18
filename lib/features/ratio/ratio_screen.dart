@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/ratio.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
 import '../../widgets/reef_segmented.dart';
 import '../../widgets/trend_chart.dart';
 import '../../widgets/zone_visuals.dart';
@@ -79,7 +81,7 @@ class RatioScreen extends ConsumerWidget {
                 return Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.fromLTRB(20, 2, 20, 4),
                       child: ReefSegmented<String>(
                         options: [
                           for (final r in _ranges) (r.$1, _rangeLabel(l, r.$1)),
@@ -98,25 +100,40 @@ class RatioScreen extends ConsumerWidget {
                           : CustomScrollView(
                               slivers: [
                                 SliverToBoxAdapter(
-                                  child: SizedBox(
-                                    height: 280,
-                                    child: Padding(
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      20,
+                                      12,
+                                      20,
+                                      12,
+                                    ),
+                                    child: ReefCard(
                                       padding: const EdgeInsets.fromLTRB(
                                         8,
-                                        16,
-                                        16,
+                                        14,
                                         8,
+                                        12,
                                       ),
-                                      child: _RatioChart(
-                                        kind: kind,
-                                        points: data,
-                                        bounds: bounds,
+                                      child: SizedBox(
+                                        height: 280,
+                                        child: _RatioChart(
+                                          kind: kind,
+                                          points: data,
+                                          bounds: bounds,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SliverToBoxAdapter(child: Divider()),
-                                _pointsSliver(context, data),
+                                SliverPadding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    20,
+                                    0,
+                                    20,
+                                    12 + MediaQuery.paddingOf(context).bottom,
+                                  ),
+                                  sliver: _pointsSliver(context, data),
+                                ),
                               ],
                             ),
                     ),
@@ -127,20 +144,58 @@ class RatioScreen extends ConsumerWidget {
     );
   }
 
+  /// The computed ratio points as one card of hairline-divided rows
+  /// (REDESIGN #17 rider): value mono w700, component breakdown sub, date
+  /// trailing. Rows have no tap/swipe behavior (derived data, unchanged).
   Widget _pointsSliver(BuildContext context, List<RatioPoint> data) {
-    return SliverList.builder(
-      itemCount: data.length,
-      itemBuilder: (context, i) {
-        final p = data[data.length - 1 - i]; // newest first
-        return ListTile(
-          title: Text(formatRatioValue(kind, p.ratio)),
-          subtitle: Text(ratioBreakdown(kind, p)),
-          trailing: Text(
-            DateFormat.yMMMEd().format(p.time),
-            style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
-          ),
-        );
-      },
+    final tokens = ReefTokens.of(context);
+    return ReefSliverCard(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      sliver: SliverList.builder(
+        itemCount: data.length,
+        itemBuilder: (context, i) {
+          final p = data[data.length - 1 - i]; // newest first
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            decoration: i == data.length - 1
+                ? null
+                : BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: tokens.surfaceBorder),
+                    ),
+                  ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        formatRatioValue(kind, p.ratio),
+                        style: ReefTokens.monoTextStyle.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: tokens.text,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        ratioBreakdown(kind, p),
+                        style: TextStyle(fontSize: 12, color: tokens.textDim),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  DateFormat.yMMMEd().format(p.time),
+                  style: TextStyle(fontSize: 12, color: tokens.textDim),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -278,7 +333,17 @@ class _RatioChart extends StatelessWidget {
             isCurved: false,
             barWidth: 2.5,
             color: Theme.of(context).colorScheme.primary,
-            dotData: FlDotData(show: spots.length <= 40),
+            // Hollow dots like the parameter chart (REDESIGN #17): the opaque
+            // scheme surface masks the line under the dot.
+            dotData: FlDotData(
+              show: spots.length <= 40,
+              getDotPainter: (spot, xPct, bar, index) => FlDotCirclePainter(
+                radius: 3,
+                color: Theme.of(context).colorScheme.surface,
+                strokeWidth: 2,
+                strokeColor: Theme.of(context).colorScheme.primary,
+              ),
+            ),
           ),
         ],
       ),

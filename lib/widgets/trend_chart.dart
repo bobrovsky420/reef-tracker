@@ -377,7 +377,9 @@ class _TrendChartState extends State<TrendChart> {
                   showAllDots || notedXs.contains(spot.x),
               // Noted readings get a ringed accent dot in the same tertiary
               // "annotation" family as the water-change markers; shape keeps
-              // them apart (dot vs vertical line).
+              // them apart (dot vs vertical line). Regular dots are hollow
+              // (REDESIGN #17) — the opaque scheme surface (not the
+              // translucent card token) masks the line under the dot.
               getDotPainter: (spot, xPct, bar, index) => hasNote[index]
                   ? FlDotCirclePainter(
                       radius: 4.5,
@@ -387,9 +389,9 @@ class _TrendChartState extends State<TrendChart> {
                     )
                   : FlDotCirclePainter(
                       radius: 3,
-                      color: scheme.primary,
-                      strokeWidth: 0,
-                      strokeColor: Colors.transparent,
+                      color: scheme.surface,
+                      strokeWidth: 2,
+                      strokeColor: scheme.primary,
                     ),
             ),
           ),

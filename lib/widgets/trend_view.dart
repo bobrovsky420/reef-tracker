@@ -2,10 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../app/theme.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
+import 'reef_card.dart';
 import 'zone_visuals.dart';
 
 IconData _directionIcon(TrendDirection d) {
@@ -33,9 +35,12 @@ String _signedRate(TrendResult t, ParamPresentation pres) {
   return s;
 }
 
-/// Full recent-trend block shown under the history chart: the per-day rate plus
-/// any projected amber/red crossings, a positive "back in range in ~N d" line
-/// for a recovering value, or a "holding steady / within range" note.
+/// Full recent-trend card shown under the history chart: the per-day rate as
+/// a mono headline plus any projected amber/red crossings, a positive "back in
+/// range in ~N d" line for a recovering value, or a "holding steady / within
+/// range" note. Styling per REDESIGN §A.8: a 32 px `track` icon chip around
+/// the direction icon, the rate as the mono w700 headline (the old "Recent
+/// trend" title line is dropped), forecast lines 12.5 w600 in zone colors.
 class TrendCard extends StatelessWidget {
   const TrendCard({super.key, required this.trend, required this.pres});
 
@@ -45,8 +50,7 @@ class TrendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final hint = theme.hintColor;
+    final tokens = ReefTokens.of(context);
     final rate = l.trendRatePerDay(
       '${_signedRate(trend, pres)} ${pres.unitLabel}',
     );
@@ -78,29 +82,46 @@ class TrendCard extends StatelessWidget {
     }
     if (lines.isEmpty) {
       lines.add(
-        Text(
+        _forecastLine(
           trend.direction == TrendDirection.flat
               ? l.trendFlat
               : l.trendWithinRange,
-          style: TextStyle(color: hint),
+          tokens.textDim,
         ),
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+    return ReefCard(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(_directionIcon(trend.direction), color: hint),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: tokens.track,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              _directionIcon(trend.direction),
+              size: 16,
+              color: tokens.textDim,
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l.trendTitle, style: theme.textTheme.titleSmall),
-                const SizedBox(height: 2),
-                Text(rate, style: TextStyle(color: hint)),
+                Text(
+                  rate,
+                  style: ReefTokens.monoTextStyle.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.text,
+                  ),
+                ),
                 ...lines,
               ],
             ),
@@ -111,10 +132,14 @@ class TrendCard extends StatelessWidget {
   }
 
   Widget _forecastLine(String text, Color color) => Padding(
-    padding: const EdgeInsets.only(top: 2),
+    padding: const EdgeInsets.only(top: 6),
     child: Text(
       text,
-      style: TextStyle(color: color, fontWeight: FontWeight.w600),
+      style: TextStyle(
+        fontSize: 12.5,
+        color: color,
+        fontWeight: FontWeight.w600,
+      ),
     ),
   );
 }

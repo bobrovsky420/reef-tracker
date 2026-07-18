@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   consistent. Future visual improvements land in the grouped layout.
 
 ### Changed
+- The parameter history screen takes on the redesign's card look: the graph,
+  the trend forecast, the Min/Avg/Max/Tests summary, and the readings list now
+  sit in four cards. Readings get a round status badge and monospace values
+  with hairline dividers between rows, the trend card leads with the per-day
+  rate in monospace, and graph dots become small rings on the series line.
+  Shared graph images now come out as the chart card on a solid background.
+  Everything still works the same — tap a reading to edit, swipe to delete
+  with Undo, pinch to zoom, share from the top bar. The ratio detail screens
+  take the same card treatment.
 - The Settings screen is restyled into the redesign's grouped layout: compact
   rows (icon, title, description, trailing control) under uppercase section
   labels — Language, Units, Dashboard, Trends, Tools, Backup, and About. All

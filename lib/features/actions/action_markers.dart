@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -108,13 +109,16 @@ class ActionMarkerLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     if (kinds.isEmpty) return const SizedBox.shrink();
     final l = AppLocalizations.of(context);
-    final style = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: Theme.of(context).hintColor);
+    // §A.8 legend typography; the swatches keep the app's per-kind marker
+    // colors (the mock's all-faint legend loses the color coding).
+    final style = TextStyle(
+      fontSize: 11.5,
+      color: ReefTokens.of(context).textDim,
+    );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
       child: Wrap(
-        spacing: 16,
+        spacing: 18,
         runSpacing: 4,
         alignment: WrapAlignment.center,
         crossAxisAlignment: WrapCrossAlignment.center,
