@@ -104,6 +104,49 @@ void main() {
     });
   });
 
+  group('gaugeAxis (REDESIGN #7/#8)', () {
+    test('amber range expanded by 10% each side', () {
+      const b = ZoneBounds(
+        amberLow: 7,
+        greenLow: 7.5,
+        greenHigh: 8.5,
+        amberHigh: 9,
+      );
+      final axis = gaugeAxis(b)!;
+      expect(axis.min, closeTo(6.8, 1e-9)); // 7 − 0.1·2
+      expect(axis.max, closeTo(9.2, 1e-9)); // 9 + 0.1·2
+    });
+
+    test('missing amber bound falls back to the supplied plausible bound', () {
+      // Ammonia-style one-sided bounds: no lower limits at all.
+      const b = ZoneBounds(greenHigh: 0.05, amberHigh: 0.25);
+      final axis = gaugeAxis(b, fallbackLow: 0)!;
+      expect(axis.min, closeTo(-0.025, 1e-9));
+      expect(axis.max, closeTo(0.275, 1e-9));
+    });
+
+    test('unboundable side yields no axis', () {
+      const b = ZoneBounds(greenHigh: 0.05, amberHigh: 0.25);
+      expect(gaugeAxis(b), isNull); // no amberLow, no fallback
+      expect(gaugeAxis(const ZoneBounds()), isNull);
+    });
+
+    test('invalid or empty spans yield no axis', () {
+      const inverted = ZoneBounds(greenLow: 9, greenHigh: 8);
+      expect(gaugeAxis(inverted, fallbackLow: 0, fallbackHigh: 10), isNull);
+      // Degenerate span (lo == hi) can't position anything.
+      const point = ZoneBounds(amberLow: 5, amberHigh: 5);
+      expect(gaugeAxis(point), isNull);
+    });
+
+    test('fallbacks are ignored when the amber bounds exist', () {
+      const b = ZoneBounds(amberLow: 7, amberHigh: 9);
+      final axis = gaugeAxis(b, fallbackLow: 0, fallbackHigh: 100)!;
+      expect(axis.min, closeTo(6.8, 1e-9));
+      expect(axis.max, closeTo(9.2, 1e-9));
+    });
+  });
+
   group('ZoneVisuals', () {
     test('every zone maps to a distinct icon', () {
       final icons = Zone.values.map((z) => z.icon).toSet();

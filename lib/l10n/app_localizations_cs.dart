@@ -155,6 +155,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get dashSectionEnvironment => 'Prostředí';
 
   @override
+  String gaugeIdealRange(String min, String max) {
+    return 'ideálně $min–$max';
+  }
+
+  @override
   String get timeJustNow => 'právě teď';
 
   @override

@@ -245,6 +245,19 @@ extension L10nDomain on AppLocalizations {
     }
   }
 
+  /// Compact parameter name for tight spots — the gauge-dial and env-pill
+  /// labels (REDESIGN #7/#9, mockups show "CALCIUM", not "CALCIUM (CA)"):
+  /// [paramName] minus its trailing " (Symbol)" parenthetical. Every ARB
+  /// follows the "Name (Symbol)" convention, so stripping the suffix is
+  /// locale-safe and needs no extra keys; names without a parenthetical
+  /// (Alkalinity, Temperature) pass through unchanged. Lists, history and
+  /// Add reading keep the full symbol-carrying name.
+  String paramShortName(String key) {
+    final name = paramName(key);
+    final short = name.replaceFirst(RegExp(r'\s*\([^()]*\)$'), '');
+    return short.isEmpty ? name : short;
+  }
+
   String? paramHelp(String key) {
     switch (key) {
       case 'temperature':

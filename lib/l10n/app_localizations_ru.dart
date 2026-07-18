@@ -156,6 +156,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dashSectionEnvironment => 'Среда';
 
   @override
+  String gaugeIdealRange(String min, String max) {
+    return 'норма $min–$max';
+  }
+
+  @override
   String get timeJustNow => 'только что';
 
   @override

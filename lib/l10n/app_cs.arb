@@ -49,6 +49,7 @@
   "dashSectionNutrients": "Živiny",
   "dashSectionRatios": "Poměry",
   "dashSectionEnvironment": "Prostředí",
+  "gaugeIdealRange": "ideálně {min}–{max}",
 
   "timeJustNow": "právě teď",
   "timeMinAgo": "před {count} min",

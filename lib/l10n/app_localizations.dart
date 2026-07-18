@@ -378,6 +378,12 @@ abstract class AppLocalizations {
   /// **'Environment'**
   String get dashSectionEnvironment;
 
+  /// Screen-reader label for the ideal-range line inside a dashboard gauge dial (visually the line shows only the bare range, e.g. "7.5–9", to fit the dial); keep short, lowercase.
+  ///
+  /// In en, this message translates to:
+  /// **'ideal {min}–{max}'**
+  String gaugeIdealRange(String min, String max);
+
   /// No description provided for @timeJustNow.
   ///
   /// In en, this message translates to:

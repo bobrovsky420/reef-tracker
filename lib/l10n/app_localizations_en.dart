@@ -155,6 +155,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashSectionEnvironment => 'Environment';
 
   @override
+  String gaugeIdealRange(String min, String max) {
+    return 'ideal $min–$max';
+  }
+
+  @override
   String get timeJustNow => 'just now';
 
   @override

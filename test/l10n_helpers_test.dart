@@ -1,11 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/l10n/app_localizations.dart';
 import 'package:reeftracker/l10n/l10n_helpers.dart';
 
 import 'support/pump.dart';
 
 void main() {
   final initial = DateTime(2026, 6, 1, 10, 30);
+
+  group('paramShortName (REDESIGN #7 dial labels)', () {
+    test('strips the trailing " (Symbol)" parenthetical in every locale', () {
+      for (final locale in AppLocalizations.supportedLocales) {
+        final l = lookupAppLocalizations(locale);
+        expect(
+          l.paramShortName('calcium'),
+          isNot(contains('(')),
+          reason: 'calcium dial label must drop the symbol ($locale)',
+        );
+        expect(l.paramShortName('calcium'), isNotEmpty);
+        // Ammonia's parenthetical carries subscripts/slashes — still one
+        // trailing group.
+        expect(l.paramShortName('ammonia'), isNot(contains('(')));
+      }
+    });
+
+    test('names without a parenthetical pass through unchanged', () {
+      final l = lookupAppLocalizations(const Locale('en'));
+      expect(l.paramShortName('calcium'), 'Calcium');
+      expect(l.paramShortName('alkalinity'), l.paramName('alkalinity'));
+      // Unknown keys fall back to the key itself, like paramName.
+      expect(l.paramShortName('custom_key'), 'custom_key');
+    });
+  });
 
   /// Pumps a button that runs [pickPastDateTime] and records its result.
   Future<void Function()> pumpPicker(

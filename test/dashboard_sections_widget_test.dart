@@ -6,16 +6,23 @@ import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/dashboard/dashboard_screen.dart';
+import 'package:reeftracker/features/micro/micro_summary_tile.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
+import 'package:reeftracker/widgets/env_pill.dart';
+import 'package:reeftracker/widgets/param_gauge.dart';
+import 'package:reeftracker/widgets/ratio_row.dart';
 import 'package:reeftracker/widgets/reef_card.dart';
 
-/// Structural widget tests for the dashboard layouts (REDESIGN #6): in the
-/// grouped layout, section headers render for populated groups and a group
+/// Structural widget tests for the dashboard layouts (REDESIGN #6–#10): in
+/// the grouped layout, section headers render for populated groups, a group
 /// with every parameter disabled disappears entirely — header included (the
-/// user's explicit requirement); in the classic layout the tiles render with
-/// no section headers at all. Same in-memory-drift + bounded-settle harness as
+/// user's explicit requirement) — and the sections carry the redesign forms
+/// (gauge dials, env pills, the collapsed ratio card, the micro list-card);
+/// the classic layout renders the frozen flat tiles with no section headers
+/// and none of those forms. Same in-memory-drift + bounded-settle harness as
 /// insights_card_test.dart. Sort/section-mapping logic is unit-tested in
-/// dashboard_sections_test.dart; this only asserts the sliver wiring.
+/// dashboard_sections_test.dart, the gauge axis rule in zones_test.dart; this
+/// only asserts the sliver wiring.
 void main() {
   Future<void> settle(WidgetTester tester) async {
     for (var i = 0; i < 20; i++) {
@@ -107,6 +114,58 @@ void main() {
     await unmountApp(tester);
   });
 
+  testWidgets('grouped layout renders the redesign forms per section '
+      '(#7 gauges, #8 ratio card, #9 pills, #10 micro list-card)', (
+    tester,
+  ) async {
+    await pumpDashboard(tester);
+
+    // Mixed preset: 3 core-chemistry + 4 nutrient params → 7 gauge dials
+    // (ammonia/nitrite have one-sided bounds and ride the plausible-range
+    // fallback), 3 environment pills, all 4 default-visible ratios as rows.
+    expect(find.byType(ParamGaugeCard), findsNWidgets(7));
+    expect(find.byType(EnvPill), findsNWidgets(3));
+    expect(find.byType(RatioRow), findsNWidgets(4));
+    // The micro tile is the #10 list-card (trailing chevron).
+    expect(
+      find.descendant(
+        of: find.byType(MicroSummaryTile),
+        matching: find.byIcon(Icons.chevron_right),
+      ),
+      findsOneWidget,
+    );
+    // Gauge overlays render the uppercase (symbol-stripped) label + the
+    // ideal range as a bare trimmed-zero pair (mixed preset: alkalinity
+    // green 7.5–9).
+    expect(find.text('ALKALINITY'), findsOneWidget);
+    expect(find.text('7.5–9'), findsOneWidget);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('a parameter whose bounds yield no honest axis falls back to '
+      'the flat tile instead of a gauge', (tester) async {
+    final db = await pumpDashboard(tester);
+
+    // Invert alkalinity's green range (possible via restored/hand-edited
+    // backups): gaugeAxis returns null for invalid bounds, so the section
+    // must show the flat tile — never a misleading arc.
+    final tracked = await db.getTrackedParameters(
+      (await db.getActiveTankId())!,
+    );
+    final alk = tracked.firstWhere((p) => p.paramKey == 'alkalinity');
+    await db.updateTrackedParameter(
+      alk.copyWith(greenLow: const Value(12), greenHigh: const Value(8)),
+    );
+    await settle(tester);
+
+    expect(find.byType(ParamGaugeCard), findsNWidgets(6));
+    expect(find.text('ALKALINITY'), findsNothing);
+    expect(find.text('Alkalinity'), findsOneWidget); // flat tile title
+
+    await unmountApp(tester);
+  });
+
   testWidgets('classic layout renders the tiles with no section headers', (
     tester,
   ) async {
@@ -120,6 +179,18 @@ void main() {
     expect(nutrientHeader, findsNothing);
     expect(envHeader, findsNothing);
     expect(microHeader, findsNothing);
+    // The classic grid is frozen pre-redesign: no gauges/pills/ratio rows,
+    // and the micro tile keeps its vertical grid form (no chevron).
+    expect(find.byType(ParamGaugeCard), findsNothing);
+    expect(find.byType(EnvPill), findsNothing);
+    expect(find.byType(RatioRow), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(MicroSummaryTile),
+        matching: find.byIcon(Icons.chevron_right),
+      ),
+      findsNothing,
+    );
 
     await unmountApp(tester);
   });
@@ -127,14 +198,15 @@ void main() {
   testWidgets('an odd last tile in a section is horizontally centered', (
     tester,
   ) async {
-    // A phone-width viewport → 2 columns, so Core chemistry's 3rd tile
-    // (Magnesium) is alone in the last row and must be centered rather than
-    // sitting in the bottom-left slot. Viewport width 480 → the tile grid's
-    // center is at x = 240.
+    // A phone-width viewport → 2 columns, so Core chemistry's 3rd dial
+    // (Magnesium — uppercase short name inside the gauge, symbol stripped)
+    // is alone in the last row and must be centered rather than sitting in
+    // the bottom-left slot. Viewport width 480 → the tile grid's center is
+    // at x = 240.
     await pumpDashboard(tester, viewport: const Size(480, 3000));
 
     final magCard = find.ancestor(
-      of: find.text('Magnesium (Mg)'),
+      of: find.text('MAGNESIUM'),
       matching: find.byType(ReefCard),
     );
     expect(magCard, findsOneWidget);

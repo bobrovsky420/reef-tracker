@@ -66,6 +66,11 @@
   "@dashSectionEnvironment": {
     "description": "Dashboard section header over the temperature/pH/salinity/ORP tiles (rendered uppercase; keep short)."
   },
+  "gaugeIdealRange": "ideal {min}–{max}",
+  "@gaugeIdealRange": {
+    "description": "Screen-reader label for the ideal-range line inside a dashboard gauge dial (visually the line shows only the bare range, e.g. \"7.5–9\", to fit the dial); keep short, lowercase.",
+    "placeholders": { "min": { "type": "String" }, "max": { "type": "String" } }
+  },
 
   "timeJustNow": "just now",
   "timeMinAgo": "{count} min ago",

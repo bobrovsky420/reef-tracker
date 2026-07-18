@@ -985,9 +985,10 @@ platform branches.
 sets a `CardThemeData` so every plain `Card` picks up the surface, border and
 radius; the shared `ReefCard` widget additionally paints the two-layer
 light-mode `cardShadow` (none in dark — the border carries the structure) and
-is what the primary cards use: the dashboard parameter/ratio tiles, the
+is what the primary cards use: the dashboard tiles (gauge dials, env pills,
+the collapsed Ratios card, the classic flat tiles), the
 health header, the insights card and teaser, the microelements summary
-tile, the RO summary/alert card and the RO detail's stage card (later
+card, the RO summary/alert card and the RO detail's stage card (later
 redesign phases convert the remaining screens). `ReefCard` takes
 optional `onTap` (whole-card ink target), `padding`, `margin`, and
 `color`/`borderColor` overrides for alert-card variants; it has no default
@@ -1200,20 +1201,58 @@ behind a confirmation dialog**:
   renders **nothing at all, header included** — e.g. disabling every Core
   chemistry parameter removes that whole section, and hiding all four ratio
   cards removes "Ratios". No enabled params and no visible ratios at all still
-  falls back to `_NoParamsView`. Each section renders through the shared
+  falls back to `_NoParamsView`. Grid sections render through the shared
   `_tileGrid` helper (a `LayoutBuilder` + `Wrap` whose column count and tile
-  width mirror `SliverGridDelegateWithMaxCrossAxisExtent(219)`, text-scaled
-  height): full rows are flush-left with the header, but a **non-full last row
-  is centered** — an odd 3rd tile in a 2-column phone grid, a lone tile, or a
-  partly-filled last row on a tablet. Tile widgets themselves —
-  `_ParameterTile`, `_RatioTile` — are unchanged. A `MicroSummaryTile` (U17)
-  is pinned after every section whenever the grid renders (see below), under
-  its own **"Microelements" `SectionHeader`** (reusing `microTitle`) — the
-  header is redundant for a single card but gives it the same footing as the
-  other sections and separates it from Environment; being a solo tile it
-  centers too. The mockups' single collapsed Ratios card
-  is deferred to a later phase (REDESIGN #8) — the Ratios section here is still
-  one `_RatioTile` per card.
+  width mirror `SliverGridDelegateWithMaxCrossAxisExtent`, with per-section
+  max-extent/spacing/height): full rows are flush-left with the header, but a
+  **non-full last row is centered** — an odd 3rd tile in a 2-column phone
+  grid, a lone tile, or a partly-filled last row on a tablet. A
+  `MicroSummaryTile` (U17) is pinned after every section whenever the grid
+  renders (see below), under its own **"Microelements" `SectionHeader`**
+  (reusing `microTitle`) — the header is redundant for a single card but gives
+  it the same footing as the other sections and separates it from Environment.
+- **Grouped tile forms (REDESIGN #7–#10).** Each grouped section renders its
+  own card form; the classic layout keeps the frozen flat `_ParameterTile` /
+  `_RatioTile` grid throughout. `DashboardBody._groupedParamTile` picks the
+  form per section:
+  - **Core chemistry & Nutrients → gauge dials** (`widgets/param_gauge.dart`,
+    `ParamGaugeCard` — L ≈ 148 px dial for core chemistry, S ≈ 104 px for
+    nutrients): a 270° arc with ticks, a `track` arc, a `band` arc over the
+    ideal (green) range and a ringed marker dot in the zone color; center
+    overlay = uppercase **short name** (`L10nDomain.paramShortName` — the
+    localized name minus its trailing " (Symbol)" parenthetical), mono
+    value+unit in the zone color and the ideal (green) range as a bare
+    trimmed-zero "min–max" pair in display units (the localized
+    `gaugeIdealRange` phrase is its `semanticsLabel` for screen readers),
+    each line independently scale-down-fitted to the dial. L cards add a mono
+    delta + relative-timestamp footer; both sizes append the existing
+    `TrendChip` forecast as the urgency line. The **axis rule** lives in
+    `zones.dart#gaugeAxis`: span = the amber range expanded by 10% of that
+    span per side, a missing amber bound substitutes the catalog
+    `plausibleMin`/`plausibleMax` (ammonia/nitrite's one-sided ranges), the
+    marker clamps into range; if a side stays unboundable or the bounds are
+    invalid the parameter renders the **flat classic tile instead — never a
+    misleading arc**. The band segment reuses `zoneBands`' green band, so
+    one-sided green ranges extend to the gauge edge. "No readings" = track +
+    band only, muted "—", no marker.
+  - **Ratios → one collapsed card** (REDESIGN #8): all visible ratio rows in
+    a single `ReefCard` with hairline dividers, one `RatioRow`
+    (`widgets/ratio_row.dart`) per kind — label, mono value in the zone
+    color, small mono delta, and a 6 px linear `track` bar with the `band`
+    segment over the green range and a 10 px ringed marker dot. The axis uses
+    the same `gaugeAxis` rule over `ratioBounds` (no fallback tier — kinds
+    always have `defaultBounds`; hand-restored partial bounds render the row
+    without the bar). Per-row tap → `/ratio/<kind>`; rows follow the #11
+    transparent-`Material` row pattern.
+  - **Environment → pills** (REDESIGN #9, `widgets/env_pill.dart`, `EnvPill`):
+    compact centered cards (r16, ~3 per row on a phone via a 140 px
+    max-extent `_tileGrid`) — 7 px zone status dot, uppercase label, mono
+    value+unit in the plain `text` color (the dot carries the zone), small
+    mono delta, optional `TrendChip` urgency line.
+  - **Unknown legacy keys** (headerless `other` section) keep the flat tile —
+    no catalog entry means no axis data.
+  `ParamGaugeCard`/`EnvPill` are pure widgets (plain values in, no DB/provider
+  reads) so they stay golden/widget-testable in isolation.
 - **Sort key** (`DashboardSortKey` = `(section, displayOrder, tiebreak)`):
   section placement is fixed and not user-controllable; the existing shared
   `displayOrder` space (`TrackedParameters.displayOrder` and
@@ -1224,31 +1263,37 @@ behind a confirmation dialog**:
   to its section via the catalog's `dashboardGroup` (`parameters.yaml`, one of
   `coreChemistry`/`nutrients`/`environment` — required for every core
   parameter, forbidden for microelements; the generator enforces both).
-- Both tile types share the same size/layout: latest value **colored by its
-  zone**, a trend indicator (delta vs. previous), and a relative timestamp;
-  tapping opens the parameter history or `/ratio/<kind>`. Measurement tiles
-  also show a `TrendChip` forecast when a zone crossing is due (see Trend
-  detection); ratio tiles do not.
-- A ratio tile shows whenever its card is visible (per settings), regardless of
+- The classic flat tiles (and the grouped layout's fallback) share one
+  size/layout: latest value **colored by its zone**, a trend indicator (delta
+  vs. previous), and a relative timestamp. Every form of a parameter's card —
+  gauge, pill, flat tile — taps through to its history; ratio tiles/rows to
+  `/ratio/<kind>`. Measurement cards also show a `TrendChip` forecast when a
+  zone crossing is due (see Trend detection); ratio cards do not.
+- A ratio card/row shows whenever it is visible (per settings), regardless of
   whether a value can be computed yet: with no computable ratio — a parameter is
-  missing or the denominator is zero, so `computeRatioSeries` is empty — the tile
+  missing or the denominator is zero, so `computeRatioSeries` is empty — it
   shows **"No readings"**, exactly like a measurement tile before its first
   reading. When the latest pair of readings is more than `kRatioMaxSkew` (30 d)
   apart (`latestRatio` returns null while the series isn't empty), the headline
-  value renders **muted** (hint color) instead of zone-colored — it no longer
-  describes a single current tank state. Visibility + order are set in the
+  value renders **muted** instead of zone-colored — it no longer
+  describes a single current tank state — and the grouped row hides its bar
+  marker too. Visibility + order are set in the
   **Manage Parameters** screen and stored **per tank** in `RatioVisibilities`
   (`ratioSettingsProvider` → `Map<RatioKind.name, RatioVisibility>`, resolved
   with `ratioRowVisible` / `ratioRowOrder`).
 - A `MicroSummaryTile` (U17) is pinned after every section whenever at least
-  one section renders (in the grouped layout under a "Microelements" header,
-  see above; in the classic layout as the flat grid's last cell): same tile
-  layout, headline = "N out of range" in the
+  one section renders, in two forms: the grouped layout renders the REDESIGN
+  #10 **list-card** (full-width under its "Microelements" header — leading
+  icon in a rounded square filled with the dominant zone's soft color,
+  title / headline / date column, trailing chevron); the classic layout keeps
+  the frozen vertical grid-cell variant (`MicroSummaryTile(grid: true)`) as
+  the flat grid's last cell. Both share the logic: headline = "N out of
+  range" in the
   **dominant** deviation zone's color (red only when reds ≥ ambers — a lone
   red among mostly-amber ICP deviations reads amber, see `computeMicroStatus`)
   / "All within range" / "No readings", timestamp = newest micro sample. Tapping opens `/micro`. Gated by the Settings **microelements
   switch** (`microEnabledProvider`, default on) — gated at the top level,
-  not inside the tile, so switching off removes the grid cell (and, in the
+  not inside the tile, so switching off removes the whole card (and, in the
   grouped layout, its header); the switch
   only hides (measurements stay stored).
 - Empty states: `NoTanksView` (first-run welcome: a language selector +

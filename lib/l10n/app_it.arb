@@ -49,6 +49,7 @@
   "dashSectionNutrients": "Nutrienti",
   "dashSectionRatios": "Rapporti",
   "dashSectionEnvironment": "Ambiente",
+  "gaugeIdealRange": "ideale {min}–{max}",
 
   "timeJustNow": "proprio ora",
   "timeMinAgo": "{count} min fa",

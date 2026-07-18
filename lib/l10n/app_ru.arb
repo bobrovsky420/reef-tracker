@@ -49,6 +49,7 @@
   "dashSectionNutrients": "Биогены",
   "dashSectionRatios": "Соотношения",
   "dashSectionEnvironment": "Среда",
+  "gaugeIdealRange": "норма {min}–{max}",
 
   "timeJustNow": "только что",
   "timeMinAgo": "{count} мин назад",

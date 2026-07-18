@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.1] - 2026-07-18
+
+### Changed
+- The grouped dashboard's measurement cards take on the redesign's final
+  forms. Core chemistry (alkalinity, calcium, magnesium) and nutrients
+  (nitrate, phosphate, ammonia, nitrite) render as **gauge dials**: a 270°
+  arc with the ideal range shaded, a dot marking the latest value in its
+  status color, the value in monospace with its ideal range below, plus
+  the change vs. the previous test, the reading's age (large dials) and the
+  existing early-warning forecast line. A parameter without usable range
+  bounds keeps the previous flat card rather than showing a misleading dial.
+- The four ratio cards collapse into one **Ratios card**: each row shows the
+  value with a small change indicator over a slim band bar (ideal range
+  shaded, dot at the current value). Rows still open the ratio's graph, show
+  "No readings" until both parameters are measured, and mute the value when
+  the two readings are more than a month apart.
+- Temperature, pH, salinity and ORP become compact **environment pills** —
+  status dot, monospace value, change, and forecast line — three to a row.
+- The Microelements summary becomes a full-width row card with a tinted
+  icon, the "N out of range" headline in the dominant status color, and the
+  last-measurement date.
+- The Classic dashboard layout (Settings → Dashboard) is unchanged and keeps
+  the original flat cards.
+- iOS: dial cards use slightly rounder corners than the standard cards, per
+  the platform dialect (pure Dart, shared with Android; visually verified on
+  Android only — iOS rendering awaits the next Codemagic/TestFlight build).
+
 ## [0.30.1] - 2026-07-18
 
 ### Changed

@@ -97,6 +97,30 @@ class ZoneBounds {
   }
 }
 
+/// The canonical `[min, max]` axis a gauge dial or linear ratio track renders
+/// (REDESIGN #7/#8).
+typedef GaugeAxis = ({double min, double max});
+
+/// Computes the rendered axis for a gauge dial / ratio track from [b]: the
+/// amber range `[amberLow, amberHigh]` expanded by 10% of that span on each
+/// side. A missing amber bound falls back to [fallbackLow]/[fallbackHigh]
+/// (the catalog's plausible range for parameters; ratios pass nothing — their
+/// effective bounds always carry the kind's defaults).
+///
+/// Returns null when the axis would be misleading — bounds violating the
+/// ordering invariant ([ZoneBounds.isValid]), a side that stays unboundable,
+/// or an empty span — so callers render their non-gauge fallback (the flat
+/// tile / a bar-less row) instead of a wrong arc. Values are positioned with
+/// `(v - min) / (max - min)` clamped into the axis.
+GaugeAxis? gaugeAxis(ZoneBounds b, {double? fallbackLow, double? fallbackHigh}) {
+  if (!b.isValid) return null;
+  final lo = b.amberLow ?? fallbackLow;
+  final hi = b.amberHigh ?? fallbackHigh;
+  if (lo == null || hi == null || lo >= hi) return null;
+  final pad = (hi - lo) * 0.1;
+  return (min: lo - pad, max: hi + pad);
+}
+
 /// A single horizontal zone band for a chart: fill the vertical range
 /// `[y1, y2)` with [zone]'s colour. [y1] is always strictly less than [y2] —
 /// [zoneBands] drops empty/inverted bands.

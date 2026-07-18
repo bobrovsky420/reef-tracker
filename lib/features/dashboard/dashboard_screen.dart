@@ -15,7 +15,10 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/env_pill.dart';
 import '../../widgets/insights_card.dart';
+import '../../widgets/param_gauge.dart';
+import '../../widgets/ratio_row.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/tank_health_badge.dart';
@@ -23,15 +26,19 @@ import '../../widgets/trend_view.dart';
 import '../../widgets/zone_visuals.dart';
 import '../micro/micro_summary_tile.dart';
 
-/// One built dashboard card plus both ordering keys, so the classic and
-/// grouped layouts share a single tile-construction pass (see [DashboardBody]):
-/// [groupedKey] drives the sectioned layout (#6), [flatOrder] the original
-/// single user-ordered grid.
+/// One dashboard item built for both layouts in a single pass (see
+/// [DashboardBody]): [groupedKey] orders the sectioned layout (#6), [flatOrder]
+/// the original single user-ordered grid. Each layout gets its own widget —
+/// [tile] is the classic flat-grid card (frozen pre-redesign look), [grouped]
+/// the grouped-layout form (#7 gauge dial / #9 env pill / #8 ratio *row* —
+/// assembled into one card per section — falling back to the flat tile where
+/// no richer form applies).
 typedef _DashEntry = ({
   DashboardSection section,
   DashboardSortKey groupedKey,
   double flatOrder,
   Widget tile,
+  Widget grouped,
 });
 
 /// Grid of parameter status tiles for the active tank. Hosted by `HomeShell`,
@@ -79,16 +86,30 @@ class DashboardBody extends ConsumerWidget {
         for (final param in tracked.where(
           (t) => t.enabled && isCoreParam(t.paramKey),
         )) {
+          final section = sectionOfParam(param.paramKey);
+          final history = byParam[param.paramKey] ?? const <Reading>[];
+          final tile = _ParameterTile(
+            param: param,
+            history: history,
+            prefs: prefs,
+            trend: trends[param.paramKey],
+            trendHorizon: trendHorizon,
+          );
           entries.add((
-            section: sectionOfParam(param.paramKey),
+            section: section,
             groupedKey: paramSortKey(param.paramKey, param.displayOrder),
             flatOrder: param.displayOrder.toDouble(),
-            tile: _ParameterTile(
-              param: param,
-              history: byParam[param.paramKey] ?? const [],
-              prefs: prefs,
-              trend: trends[param.paramKey],
-              trendHorizon: trendHorizon,
+            tile: tile,
+            grouped: _groupedParamTile(
+              context,
+              l,
+              section,
+              param,
+              history,
+              prefs,
+              trends[param.paramKey],
+              trendHorizon,
+              fallback: tile,
             ),
           ));
         }
@@ -113,6 +134,7 @@ class DashboardBody extends ConsumerWidget {
           // instead of confidently zone-colored (#32).
           final stale =
               series.isNotEmpty && latestRatio(numHist, denHist) == null;
+          final bounds = ratioBounds(kind, row);
           entries.add((
             section: DashboardSection.ratios,
             groupedKey: ratioSortKey(kind, row),
@@ -120,8 +142,17 @@ class DashboardBody extends ConsumerWidget {
             tile: _RatioTile(
               kind: kind,
               points: series,
-              bounds: ratioBounds(kind, row),
+              bounds: bounds,
               stale: stale,
+            ),
+            // The grouped layout collapses the section into one card of rows
+            // (#8); `_appendGrouped` interleaves the hairline dividers.
+            grouped: RatioRow(
+              kind: kind,
+              points: series,
+              bounds: bounds,
+              stale: stale,
+              onTap: () => context.push('/ratio/${kind.name}'),
             ),
           ));
         }
@@ -170,9 +201,72 @@ class DashboardBody extends ConsumerWidget {
     );
   }
 
+  /// The grouped-layout form of one core parameter's card: a gauge dial for
+  /// the core-chemistry (L) and nutrients (S) sections (#7), a compact pill
+  /// for environment (#9). Falls back to [fallback] — the flat classic tile —
+  /// for the `other` bucket (unknown keys have no catalog axis data) and
+  /// whenever `gaugeAxis` can't produce an honest span (missing/invalid
+  /// bounds must never render as a misleading arc).
+  Widget _groupedParamTile(
+    BuildContext context,
+    AppLocalizations l,
+    DashboardSection section,
+    TrackedParameter param,
+    List<Reading> history,
+    UnitPrefs prefs,
+    TrendResult? trend,
+    int trendHorizon, {
+    required Widget fallback,
+  }) {
+    final latest = history.isNotEmpty ? history.first : null;
+    final previous = history.length > 1 ? history[1] : null;
+    switch (section) {
+      case DashboardSection.coreChemistry:
+      case DashboardSection.nutrients:
+        final bounds = boundsOf(param);
+        final def = kParameterByKey[param.paramKey];
+        final axis = gaugeAxis(
+          bounds,
+          fallbackLow: def?.plausibleMin,
+          fallbackHigh: def?.plausibleMax,
+        );
+        if (axis == null) return fallback;
+        return ParamGaugeCard(
+          title: l.paramShortName(param.paramKey),
+          pres: presentationOf(param, prefs),
+          bounds: bounds,
+          axis: axis,
+          large: section == DashboardSection.coreChemistry,
+          latest: latest?.value,
+          previous: previous?.value,
+          takenAt: latest?.takenAt,
+          trend: trend,
+          horizonDays: trendHorizon,
+          onTap: () => context.push('/history/${param.paramKey}'),
+        );
+      case DashboardSection.environment:
+        return EnvPill(
+          title: l.paramShortName(param.paramKey),
+          pres: presentationOf(param, prefs),
+          zone: latest != null
+              ? boundsOf(param).classify(latest.value)
+              : Zone.unknown,
+          latest: latest?.value,
+          previous: previous?.value,
+          trend: trend,
+          horizonDays: trendHorizon,
+          onTap: () => context.push('/history/${param.paramKey}'),
+        );
+      case DashboardSection.ratios:
+      case DashboardSection.other:
+        return fallback;
+    }
+  }
+
   /// Classic layout: the original single grid mixing measurements and ratios
   /// in one user-managed order, with the Microelements tile (U17) pinned as
-  /// the last cell. All future visual work targets the grouped layout instead.
+  /// the last cell. Frozen pre-redesign look — the gauge/pill/row forms
+  /// (#7–#10) target the grouped layout only.
   void _appendClassic(
     BuildContext context,
     List<Widget> slivers,
@@ -183,20 +277,26 @@ class DashboardBody extends ConsumerWidget {
       ..sort((a, b) => a.flatOrder.compareTo(b.flatOrder));
     final tiles = [
       for (final e in sorted) e.tile,
-      if (microEnabled) const MicroSummaryTile(),
+      if (microEnabled) const MicroSummaryTile(grid: true),
     ];
     slivers.add(
       SliverPadding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-        sliver: _tileGrid(context, tiles),
+        sliver: _tileGrid(
+          context,
+          tiles,
+          height: MediaQuery.textScalerOf(context).scale(143),
+        ),
       ),
     );
   }
 
-  /// Grouped layout (#6): one section per non-empty group, each under its
+  /// Grouped layout (#6–#10): one section per non-empty group, each under its
   /// header, in the enum's fixed order; a section with nothing to show renders
-  /// nothing at all, header included. The `other` bucket (unknown legacy keys)
-  /// and the pinned Microelements tile are headerless.
+  /// nothing at all, header included. Core chemistry and nutrients are gauge
+  /// grids (#7), Ratios one card of band rows (#8), Environment a pill row
+  /// (#9); the `other` bucket (unknown legacy keys) stays a headerless flat
+  /// grid. The Microelements list-card (#10) is pinned last.
   void _appendGrouped(
     BuildContext context,
     AppLocalizations l,
@@ -204,13 +304,15 @@ class DashboardBody extends ConsumerWidget {
     List<_DashEntry> entries, {
     required bool microEnabled,
   }) {
+    final tokens = ReefTokens.of(context);
+    final textScaler = MediaQuery.textScalerOf(context);
     // Sorting by the composite key (section rank first) then partitioning keeps
     // each section's tiles in their within-section display order.
     final sorted = [...entries]
       ..sort((a, b) => a.groupedKey.compareTo(b.groupedKey));
     final bySection = <DashboardSection, List<Widget>>{};
     for (final e in sorted) {
-      (bySection[e.section] ??= []).add(e.tile);
+      (bySection[e.section] ??= []).add(e.grouped);
     }
     for (final section in DashboardSection.values) {
       final tiles = bySection[section];
@@ -224,21 +326,70 @@ class DashboardBody extends ConsumerWidget {
           ),
         );
       }
+      // Per-section geometry: dial cards are dominated by their fixed-size
+      // dial, so only the text portion under it scales with the font setting;
+      // the flat tiles and pills are all stacked text and scale wholesale
+      // (#44).
+      final Widget sliver = switch (section) {
+        DashboardSection.coreChemistry => _tileGrid(
+          context,
+          tiles,
+          height: 176 + textScaler.scale(52),
+        ),
+        DashboardSection.nutrients => _tileGrid(
+          context,
+          tiles,
+          height: 124 + textScaler.scale(30),
+        ),
+        // All visible ratio rows collapse into one card with hairline
+        // dividers (#8).
+        DashboardSection.ratios => SliverToBoxAdapter(
+          child: ReefCard(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            child: Column(
+              children: [
+                for (var i = 0; i < tiles.length; i++) ...[
+                  if (i > 0)
+                    Container(
+                      height: 1,
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      color: tokens.surfaceBorder,
+                    ),
+                  tiles[i],
+                ],
+              ],
+            ),
+          ),
+        ),
+        // Compact pills, 3 per row on a phone (§A.5), wrapping beyond that.
+        DashboardSection.environment => _tileGrid(
+          context,
+          tiles,
+          maxExtent: 140,
+          spacing: 10,
+          height: textScaler.scale(112),
+        ),
+        DashboardSection.other => _tileGrid(
+          context,
+          tiles,
+          height: textScaler.scale(143),
+        ),
+      };
       slivers.add(
         SliverPadding(
           // Headerless sections carry their own top gap (a header brings its
           // 16 px margin).
           padding: EdgeInsets.fromLTRB(12, label == null ? 12 : 0, 12, 0),
-          sliver: _tileGrid(context, tiles),
+          sliver: sliver,
         ),
       );
     }
-    // The Microelements front door (U17): one summary tile pinned after every
-    // section, under its own "Microelements" header. The header is visually
-    // redundant (the section is always a single card) but gives it the same
-    // footing as the other sections and separates it from Environment. Gated
-    // here (not inside the tile) so the Settings switch removes the whole
-    // section, not just its content; measurements stay stored.
+    // The Microelements front door (U17): the #10 list-card pinned after
+    // every section, full-width, under its own "Microelements" header — the
+    // header keeps its footing among the sections and separates it from
+    // Environment. Gated here (not inside the tile) so the Settings switch
+    // removes the whole section, not just its content; measurements stay
+    // stored.
     if (microEnabled) {
       slivers.add(
         SliverPadding(
@@ -247,10 +398,10 @@ class DashboardBody extends ConsumerWidget {
         ),
       );
       slivers.add(
-        SliverPadding(
+        const SliverPadding(
           // The header brings its own 16 px top margin.
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-          sliver: _tileGrid(context, const [MicroSummaryTile()]),
+          padding: EdgeInsets.fromLTRB(12, 0, 12, 0),
+          sliver: SliverToBoxAdapter(child: MicroSummaryTile()),
         ),
       );
     }
@@ -258,23 +409,24 @@ class DashboardBody extends ConsumerWidget {
 
   /// One section's tile grid: fixed-size tiles laid out left-to-right, with the
   /// last row **centered when it isn't full** — including a section that is a
-  /// single lone tile (e.g. the Microelements card, or an odd 3rd tile in a
-  /// 2-column phone grid, or a non-full last row on a wide tablet). Full rows
-  /// consume the width exactly, so `WrapAlignment.center` leaves them flush
-  /// left, aligned with the section header.
+  /// single lone tile (an odd 3rd gauge in a 2-column phone grid, or a
+  /// non-full last row on a wide tablet). Full rows consume the width exactly,
+  /// so `WrapAlignment.center` leaves them flush left, aligned with the
+  /// section header.
   ///
   /// Column count and tile width mirror the Material max-extent grid delegate
-  /// (`SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 219)`), so
-  /// full rows keep the exact geometry the pre-centering `SliverGrid` produced.
-  /// A `Wrap` (rather than a `SliverGrid`) is what makes per-row centering
-  /// possible; each section is small (≤ ~4 tiles), so building it eagerly costs
-  /// nothing. The tiles themselves are unchanged.
-  Widget _tileGrid(BuildContext context, List<Widget> tiles) {
-    const spacing = 12.0;
-    const maxExtent = 219.0;
-    // The tile is mostly stacked text, so its height must grow with the system
-    // font scale or it clips at 1.3–2.0× (#44).
-    final height = MediaQuery.textScalerOf(context).scale(143);
+  /// (`SliverGridDelegateWithMaxCrossAxisExtent`), so full rows keep the exact
+  /// geometry a `SliverGrid` would produce. A `Wrap` (rather than a
+  /// `SliverGrid`) is what makes per-row centering possible; each section is
+  /// small, so building it eagerly costs nothing. [height] is uniform within a
+  /// section — a flat fallback tile in a gauge section simply stretches.
+  Widget _tileGrid(
+    BuildContext context,
+    List<Widget> tiles, {
+    double maxExtent = 219,
+    double spacing = 12,
+    required double height,
+  }) {
     return SliverToBoxAdapter(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -288,8 +440,8 @@ class DashboardBody extends ConsumerWidget {
           final tileWidth = (width - spacing * (columns - 1)) / columns;
           // Force the Wrap to the full width so `WrapAlignment.center` centers
           // every partial run against the section, not against its own
-          // shrink-wrapped width — otherwise a lone tile (e.g. Microelements)
-          // would collapse to tile width and sit left-aligned.
+          // shrink-wrapped width — otherwise a lone tile would collapse to
+          // tile width and sit left-aligned.
           return SizedBox(
             width: double.infinity,
             child: Wrap(

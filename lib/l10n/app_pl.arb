@@ -49,6 +49,7 @@
   "dashSectionNutrients": "Biogeny",
   "dashSectionRatios": "Proporcje",
   "dashSectionEnvironment": "Środowisko",
+  "gaugeIdealRange": "norma {min}–{max}",
 
   "timeJustNow": "przed chwilą",
   "timeMinAgo": "{count} min temu",
