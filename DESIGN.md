@@ -1309,10 +1309,13 @@ line, and (TrendChart only) the reading's note collapsed to one truncated
 italic line. **Note markers:** readings with a note draw a ringed
 tertiary-colored accent dot (same "annotation" color family as the
 water-change lines; shape tells them apart) and stay visible even on dense
-series where regular dots are hidden (> 40 points). **Zoom/pan** (`zoomable`,
-history screen only): horizontal pinch-zoom (max 10×) + pan via fl_chart's
-`FlTransformationConfig`; double-tap resets. Comparison-view charts stay
-non-zoomable — they must keep their shared aligned time window.
+series where regular dots are hidden (> 40 points). **Zoom/pan** (`zoomable` on the
+history screen; the ratio graph replicates the same config): horizontal
+pinch-zoom (max 10×) + pan via fl_chart's `FlTransformationConfig`; double-tap
+resets. The scalable touch setup also makes the tap tooltip linger briefly
+after release — the ratio chart adopts it partly for that parity.
+Comparison-view charts stay non-zoomable — they must keep their shared aligned
+time window.
 **Action markers** (`markers` + `showMarkerLegend`): see
 `features/actions/action_markers.dart` under the Actions section.
 

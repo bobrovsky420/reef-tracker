@@ -200,7 +200,7 @@ class RatioScreen extends ConsumerWidget {
   }
 }
 
-class _RatioChart extends StatelessWidget {
+class _RatioChart extends StatefulWidget {
   const _RatioChart({
     required this.kind,
     required this.points,
@@ -212,10 +212,26 @@ class _RatioChart extends StatelessWidget {
   final ZoneBounds bounds;
 
   @override
+  State<_RatioChart> createState() => _RatioChartState();
+}
+
+class _RatioChartState extends State<_RatioChart> {
+  /// Owned here (not by fl_chart) so double-tap can reset the zoom/pan.
+  final _transformation = TransformationController();
+
+  @override
+  void dispose() {
+    _transformation.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final kind = widget.kind;
+    final bounds = widget.bounds;
     // Plot the value implied by the display form (e.g. the `N` of `1 : N`).
     final spots = [
-      for (final p in points)
+      for (final p in widget.points)
         if (ratioChartY(kind, p.ratio).isFinite)
           FlSpot(
             p.time.millisecondsSinceEpoch.toDouble(),
@@ -261,7 +277,16 @@ class _RatioChart extends StatelessWidget {
     }
     final spanMs = (maxX - minX).abs();
 
-    return LineChart(
+    // Zoom/pan config identical to the parameter history chart. Besides the
+    // zoom itself, this equalizes the tap tooltip's lifetime: the scalable
+    // touch setup plus the double-tap recognizer keep the tooltip up briefly
+    // after the finger lifts, where a plain chart drops it on release.
+    final chart = LineChart(
+      transformationConfig: FlTransformationConfig(
+        scaleAxis: FlScaleAxis.horizontal,
+        maxScale: 10,
+        transformationController: _transformation,
+      ),
       LineChartData(
         minY: minY,
         maxY: maxY,
@@ -347,6 +372,10 @@ class _RatioChart extends StatelessWidget {
           ),
         ],
       ),
+    );
+    return GestureDetector(
+      onDoubleTap: () => _transformation.value = Matrix4.identity(),
+      child: chart,
     );
   }
 

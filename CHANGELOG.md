@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.1] - 2026-07-18
+
+### Changed
+- Ratio graphs (PO₄ : NO₃, Mg : Ca, …) now support the same pinch-zoom and pan
+  as the parameter graphs, with double-tap to reset. Tapping a point also keeps
+  the value popup up as long as on the parameter graphs (it used to vanish the
+  moment the finger lifted).
+
 ## [0.30.0] - 2026-07-18
 
 ### Added
