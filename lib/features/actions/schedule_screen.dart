@@ -9,6 +9,7 @@ import '../../data/database.dart';
 import '../../domain/reminders.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_segmented.dart';
 import 'actions_screen.dart';
 
 /// The user-maintained maintenance schedule (U12), route `/schedule`: recurring
@@ -469,14 +470,10 @@ class _TaskSheetState extends State<_TaskSheet> {
               ),
             ],
             const SizedBox(height: 12),
-            SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(value: true, label: Text(l.repeatLabel)),
-                ButtonSegment(value: false, label: Text(l.oneOff)),
-              ],
-              selected: {_repeats},
-              onSelectionChanged: (sel) =>
-                  setState(() => _repeats = sel.single),
+            ReefSegmented<bool>(
+              options: [(true, l.repeatLabel), (false, l.oneOff)],
+              selected: _repeats,
+              onChanged: (v) => setState(() => _repeats = v),
             ),
             if (_repeats) ...[
               const SizedBox(height: 12),
@@ -582,7 +579,7 @@ class _TaskSheetState extends State<_TaskSheet> {
                       onPressed: () => setState(() => _scheduledAt = null),
                     ),
             ),
-            SwitchListTile(
+            SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               value: _remind,
               onChanged: (v) => setState(() => _remind = v),

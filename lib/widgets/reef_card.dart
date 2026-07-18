@@ -18,6 +18,7 @@ class ReefCard extends StatelessWidget {
     this.margin,
     this.color,
     this.borderColor,
+    this.radius,
     required this.child,
   });
 
@@ -34,13 +35,17 @@ class ReefCard extends StatelessWidget {
   final Color? color;
   final Color? borderColor;
 
+  /// Corner radius override; default is the platform card radius
+  /// (`reefCardRadius`). The iOS-dialect settings group card uses r14 (§A.7).
+  final double? radius;
+
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final tokens = ReefTokens.of(context);
     final radius = BorderRadius.circular(
-      reefCardRadius(Theme.of(context).platform),
+      this.radius ?? reefCardRadius(Theme.of(context).platform),
     );
 
     Widget content = child;

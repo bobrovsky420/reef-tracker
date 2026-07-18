@@ -10,6 +10,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_segmented.dart';
 import '../../widgets/trend_chart.dart';
 import '../../widgets/zone_visuals.dart';
 
@@ -79,17 +80,13 @@ class RatioScreen extends ConsumerWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(8),
-                      child: SegmentedButton<String>(
-                        segments: [
-                          for (final r in _ranges)
-                            ButtonSegment(
-                              value: r.$1,
-                              label: Text(_rangeLabel(l, r.$1)),
-                            ),
+                      child: ReefSegmented<String>(
+                        options: [
+                          for (final r in _ranges) (r.$1, _rangeLabel(l, r.$1)),
                         ],
-                        selected: {rangeKey},
-                        onSelectionChanged: (s) =>
-                            ref.read(settingsProvider).setChartRange(s.first),
+                        selected: rangeKey,
+                        onChanged: (r) =>
+                            ref.read(settingsProvider).setChartRange(r),
                       ),
                     ),
                     Expanded(

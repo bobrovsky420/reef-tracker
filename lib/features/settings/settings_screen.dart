@@ -19,12 +19,17 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
+import '../../widgets/reef_segmented.dart';
+import '../../widgets/reef_settings.dart';
 
 /// Selectable forecast-horizon values (days), within
 /// [kTrendMinHorizon]..[kTrendMaxHorizon].
 const _trendHorizonOptions = [3, 7, 14, 30, 60, 90];
 
-/// Settings: language, unit preferences, tools, and about.
+/// Settings: language, unit preferences, tools, and about — grouped sections
+/// rendered by the dialect-aware `ReefSettings*` widgets (REDESIGN #14/#15):
+/// inset-grouped cards on the Cupertino dialect, full-width rows with
+/// dividers on the M3 dialect.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -36,421 +41,414 @@ class SettingsScreen extends ConsumerWidget {
     final localeCode = ref.watch(localeCodeProvider).value ?? 'system';
     final db = ref.read(dbProvider);
     final settings = ref.read(settingsProvider);
+    final trendEnabled =
+        ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled;
+    final roEnabled = ref.watch(roUnitEnabledProvider).value ?? true;
+    final microEnabled = ref.watch(microEnabledProvider).value ?? true;
+    final autoBackupEnabled =
+        ref.watch(autoBackupEnabledProvider).value ?? kAutoBackupDefaultEnabled;
+    final appVersion = ref.watch(appVersionProvider).value ?? '';
 
     return Scaffold(
       appBar: AppBar(title: Text(l.settings)),
-      body: ListView(
-        children: [
-          _SectionHeader(l.languageSection),
-          ListTile(
-            leading: const Icon(Icons.translate),
-            title: Text(l.language),
-            trailing: DropdownButton<String>(
-              value: localeCode,
-              underline: const SizedBox.shrink(),
-              onChanged: (v) => settings.setLocaleCode(v),
-              items: [
-                DropdownMenuItem(
-                  value: 'system',
-                  child: Text(l.languageSystem),
+      body: ReefSettingsList(
+        sections: [
+          ReefSettingsSection(
+            label: l.languageSection,
+            children: [
+              ReefSettingsRow(
+                icon: Icons.translate,
+                title: l.language,
+                trailing: ReefSettingsDropdown<String>(
+                  value: localeCode,
+                  onChanged: (v) => settings.setLocaleCode(v),
+                  items: [
+                    ('system', l.languageSystem),
+                    // Sorted alphabetically by native language name (Latin
+                    // scripts first), with the system default pinned on top.
+                    ('cs', l.languageCzech),
+                    ('de', l.languageGerman),
+                    ('en', l.languageEnglish),
+                    ('fr', l.languageFrench),
+                    ('it', l.languageItalian),
+                    ('pl', l.languagePolish),
+                    ('ru', l.languageRussian),
+                  ],
                 ),
-                // Sorted alphabetically by native language name (Latin
-                // scripts first), with the system default pinned on top.
-                DropdownMenuItem(value: 'cs', child: Text(l.languageCzech)),
-                DropdownMenuItem(value: 'de', child: Text(l.languageGerman)),
-                DropdownMenuItem(value: 'en', child: Text(l.languageEnglish)),
-                DropdownMenuItem(value: 'fr', child: Text(l.languageFrench)),
-                DropdownMenuItem(value: 'it', child: Text(l.languageItalian)),
-                DropdownMenuItem(value: 'pl', child: Text(l.languagePolish)),
-                DropdownMenuItem(value: 'ru', child: Text(l.languageRussian)),
-              ],
-            ),
-          ),
-          const Divider(),
-          _SectionHeader(l.unitsSection),
-          ListTile(
-            leading: const Icon(Icons.thermostat),
-            title: Text(l.temperature),
-            subtitle: Text(l.unitUsedAcrossApp),
-            trailing: SegmentedButton<TempUnit>(
-              segments: const [
-                ButtonSegment(value: TempUnit.celsius, label: Text('°C')),
-                ButtonSegment(value: TempUnit.fahrenheit, label: Text('°F')),
-              ],
-              selected: {prefs.temp},
-              onSelectionChanged: (s) => settings.setTempUnit(s.first),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.water_drop_outlined),
-            title: Text(l.salinity),
-            subtitle: Text(l.unitUsedAcrossApp),
-            trailing: SegmentedButton<SalinityUnit>(
-              segments: const [
-                ButtonSegment(value: SalinityUnit.ppt, label: Text('ppt')),
-                ButtonSegment(value: SalinityUnit.sg, label: Text('SG')),
-              ],
-              selected: {prefs.salinity},
-              onSelectionChanged: (s) => settings.setSalinityUnit(s.first),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.local_drink_outlined),
-            title: Text(l.volume),
-            subtitle: Text(l.unitUsedAcrossApp),
-            trailing: SegmentedButton<VolumeUnit>(
-              segments: const [
-                ButtonSegment(value: VolumeUnit.liters, label: Text('L')),
-                ButtonSegment(value: VolumeUnit.gallons, label: Text('gal')),
-              ],
-              selected: {prefs.volume},
-              onSelectionChanged: (s) => settings.setVolumeUnit(s.first),
-            ),
-          ),
-          const Divider(),
-          _SectionHeader(l.dashboardSection),
-          ListTile(
-            leading: const Icon(Icons.dashboard_customize),
-            title: Text(l.dashboardLayoutTitle),
-            subtitle: Text(l.dashboardLayoutSubtitle),
-            trailing: DropdownButton<DashboardLayout>(
-              value:
-                  ref.watch(dashboardLayoutProvider).value ??
-                  DashboardLayout.grouped,
-              underline: const SizedBox.shrink(),
-              onChanged: (v) =>
-                  v == null ? null : settings.setDashboardLayout(v),
-              items: [
-                DropdownMenuItem(
-                  value: DashboardLayout.grouped,
-                  child: Text(l.dashboardLayoutGrouped),
-                ),
-                DropdownMenuItem(
-                  value: DashboardLayout.classic,
-                  child: Text(l.dashboardLayoutClassic),
-                ),
-              ],
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.speed),
-            title: Text(l.healthDisplayTitle),
-            subtitle: Text(l.healthDisplaySubtitle),
-            trailing: DropdownButton<HealthDisplay>(
-              value:
-                  ref.watch(healthDisplayProvider).value ?? HealthDisplay.both,
-              underline: const SizedBox.shrink(),
-              onChanged: (v) => v == null ? null : settings.setHealthDisplay(v),
-              items: [
-                DropdownMenuItem(
-                  value: HealthDisplay.both,
-                  child: Text(l.healthDisplayBoth),
-                ),
-                DropdownMenuItem(
-                  value: HealthDisplay.badge,
-                  child: Text(l.healthDisplayBadge),
-                ),
-                DropdownMenuItem(
-                  value: HealthDisplay.off,
-                  child: Text(l.healthDisplayOff),
-                ),
-              ],
-            ),
-          ),
-          // Stability window (U26). Only shown to installs entitled to the
-          // stability score — a knob for a locked feature would just confuse.
-          if (ref.watch(proFeatureProvider(ProFeature.stabilityScore)))
-            ListTile(
-              leading: const Icon(Icons.waves),
-              title: Text(l.stabilityWindowTitle),
-              subtitle: Text(l.stabilityWindowSubtitle),
-              trailing: DropdownButton<int>(
-                value:
-                    ref.watch(stabilityWindowProvider).value ??
-                    kStabilityWindowDays,
-                underline: const SizedBox.shrink(),
-                onChanged: (v) =>
-                    v == null ? null : settings.setStabilityWindow(v),
-                items: [
-                  for (final n in kStabilityWindowChoices)
-                    DropdownMenuItem(
-                      value: n,
-                      child: Text(l.trendHorizonDays(n)),
-                    ),
-                ],
               ),
-            ),
-          const Divider(),
-          _SectionHeader(l.trendSection),
-          SwitchListTile(
-            secondary: const Icon(Icons.trending_up),
-            title: Text(l.trendShowTitle),
-            subtitle: Text(l.trendShowSubtitle),
-            value:
-                ref.watch(trendEnabledProvider).value ?? kTrendDefaultEnabled,
-            onChanged: (v) => settings.setTrendEnabled(v),
+            ],
           ),
-          if (ref.watch(trendEnabledProvider).value ??
-              kTrendDefaultEnabled) ...[
-            ListTile(
-              leading: const Icon(Icons.timeline),
-              title: Text(l.trendWindow),
-              subtitle: Text(l.trendWindowSubtitle(kTrendMinSpanDays)),
-              trailing: DropdownButton<int>(
-                value:
-                    ref.watch(trendWindowProvider).value ?? kTrendDefaultWindow,
-                underline: const SizedBox.shrink(),
-                onChanged: (v) => v == null ? null : settings.setTrendWindow(v),
-                items: [
-                  for (var n = kTrendMinWindow; n <= kTrendMaxWindow; n++)
-                    DropdownMenuItem(value: n, child: Text('$n')),
-                ],
+          ReefSettingsSection(
+            label: l.unitsSection,
+            children: [
+              ReefSettingsRow(
+                icon: Icons.thermostat,
+                title: l.temperature,
+                description: l.unitUsedAcrossApp,
+                trailing: ReefSegmented<TempUnit>(
+                  options: const [
+                    (TempUnit.celsius, '°C'),
+                    (TempUnit.fahrenheit, '°F'),
+                  ],
+                  selected: prefs.temp,
+                  onChanged: settings.setTempUnit,
+                ),
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.notifications_active_outlined),
-              title: Text(l.trendHorizon),
-              subtitle: Text(l.trendHorizonSubtitle),
-              trailing: DropdownButton<int>(
-                value:
-                    ref.watch(trendHorizonProvider).value ??
-                    kTrendDefaultHorizon,
-                underline: const SizedBox.shrink(),
-                onChanged: (v) =>
-                    v == null ? null : settings.setTrendHorizon(v),
-                items: [
-                  for (final n in _trendHorizonOptions)
-                    DropdownMenuItem(
-                      value: n,
-                      child: Text(l.trendHorizonDays(n)),
-                    ),
-                ],
+              ReefSettingsRow(
+                icon: Icons.water_drop_outlined,
+                title: l.salinity,
+                description: l.unitUsedAcrossApp,
+                trailing: ReefSegmented<SalinityUnit>(
+                  options: const [
+                    (SalinityUnit.ppt, 'ppt'),
+                    (SalinityUnit.sg, 'SG'),
+                  ],
+                  selected: prefs.salinity,
+                  onChanged: settings.setSalinityUnit,
+                ),
               ),
-            ),
-          ],
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.notifications_outlined),
-            title: Text(l.remindersTitle),
-            subtitle: Text(l.remindersSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/settings/reminders'),
+              ReefSettingsRow(
+                icon: Icons.local_drink_outlined,
+                title: l.volume,
+                description: l.unitUsedAcrossApp,
+                trailing: ReefSegmented<VolumeUnit>(
+                  options: const [
+                    (VolumeUnit.liters, 'L'),
+                    (VolumeUnit.gallons, 'gal'),
+                  ],
+                  selected: prefs.volume,
+                  onChanged: settings.setVolumeUnit,
+                ),
+              ),
+            ],
           ),
-          SwitchListTile(
-            secondary: const Icon(Icons.water_drop_outlined),
-            title: Text(l.roUnitTitle),
-            subtitle: Text(l.roUnitToggleSubtitle),
-            value: ref.watch(roUnitEnabledProvider).value ?? true,
-            onChanged: (v) => settings.setRoUnitEnabled(v),
+          ReefSettingsSection(
+            label: l.dashboardSection,
+            children: [
+              ReefSettingsRow(
+                icon: Icons.dashboard_customize,
+                title: l.dashboardLayoutTitle,
+                description: l.dashboardLayoutSubtitle,
+                trailing: ReefSettingsDropdown<DashboardLayout>(
+                  value:
+                      ref.watch(dashboardLayoutProvider).value ??
+                      DashboardLayout.grouped,
+                  onChanged: settings.setDashboardLayout,
+                  items: [
+                    (DashboardLayout.grouped, l.dashboardLayoutGrouped),
+                    (DashboardLayout.classic, l.dashboardLayoutClassic),
+                  ],
+                ),
+              ),
+              ReefSettingsRow(
+                icon: Icons.speed,
+                title: l.healthDisplayTitle,
+                description: l.healthDisplaySubtitle,
+                trailing: ReefSettingsDropdown<HealthDisplay>(
+                  value:
+                      ref.watch(healthDisplayProvider).value ??
+                      HealthDisplay.both,
+                  onChanged: settings.setHealthDisplay,
+                  items: [
+                    (HealthDisplay.both, l.healthDisplayBoth),
+                    (HealthDisplay.badge, l.healthDisplayBadge),
+                    (HealthDisplay.off, l.healthDisplayOff),
+                  ],
+                ),
+              ),
+              // Stability window (U26). Only shown to installs entitled to
+              // the stability score — a knob for a locked feature would just
+              // confuse.
+              if (ref.watch(proFeatureProvider(ProFeature.stabilityScore)))
+                ReefSettingsRow(
+                  icon: Icons.waves,
+                  title: l.stabilityWindowTitle,
+                  description: l.stabilityWindowSubtitle,
+                  trailing: ReefSettingsDropdown<int>(
+                    value:
+                        ref.watch(stabilityWindowProvider).value ??
+                        kStabilityWindowDays,
+                    onChanged: settings.setStabilityWindow,
+                    items: [
+                      for (final n in kStabilityWindowChoices)
+                        (n, l.trendHorizonDays(n)),
+                    ],
+                  ),
+                ),
+            ],
           ),
-          // Microelements feature switch (U17): off hides the dashboard tile
-          // and silences micro test reminders — measurements stay stored.
-          SwitchListTile(
-            secondary: const Icon(Icons.science_outlined),
-            title: Text(l.microTitle),
-            subtitle: Text(l.microToggleSubtitle),
-            value: ref.watch(microEnabledProvider).value ?? true,
-            onChanged: (v) => settings.setMicroEnabled(v),
+          ReefSettingsSection(
+            label: l.trendSection,
+            children: [
+              ReefSettingsRow(
+                icon: Icons.trending_up,
+                title: l.trendShowTitle,
+                description: l.trendShowSubtitle,
+                trailing: Switch.adaptive(
+                  value: trendEnabled,
+                  onChanged: (v) => settings.setTrendEnabled(v),
+                ),
+                onTap: () => settings.setTrendEnabled(!trendEnabled),
+              ),
+              if (trendEnabled) ...[
+                ReefSettingsRow(
+                  icon: Icons.timeline,
+                  title: l.trendWindow,
+                  description: l.trendWindowSubtitle(kTrendMinSpanDays),
+                  trailing: ReefSettingsDropdown<int>(
+                    value:
+                        ref.watch(trendWindowProvider).value ??
+                        kTrendDefaultWindow,
+                    onChanged: settings.setTrendWindow,
+                    items: [
+                      for (var n = kTrendMinWindow; n <= kTrendMaxWindow; n++)
+                        (n, '$n'),
+                    ],
+                  ),
+                ),
+                ReefSettingsRow(
+                  icon: Icons.notifications_active_outlined,
+                  title: l.trendHorizon,
+                  description: l.trendHorizonSubtitle,
+                  trailing: ReefSettingsDropdown<int>(
+                    value:
+                        ref.watch(trendHorizonProvider).value ??
+                        kTrendDefaultHorizon,
+                    onChanged: settings.setTrendHorizon,
+                    items: [
+                      for (final n in _trendHorizonOptions)
+                        (n, l.trendHorizonDays(n)),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
-          const Divider(),
-          _SectionHeader(l.toolsSection),
-          ListTile(
-            leading: const Icon(Icons.calculate_outlined),
-            title: Text(l.salinityCalculator),
-            subtitle: Text(l.salinityCalculatorSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/calculator/salinity'),
+          ReefSettingsSection(
+            children: [
+              ReefSettingsRow(
+                icon: Icons.notifications_outlined,
+                title: l.remindersTitle,
+                description: l.remindersSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: () => context.push('/settings/reminders'),
+              ),
+              ReefSettingsRow(
+                icon: Icons.water_drop_outlined,
+                title: l.roUnitTitle,
+                description: l.roUnitToggleSubtitle,
+                trailing: Switch.adaptive(
+                  value: roEnabled,
+                  onChanged: (v) => settings.setRoUnitEnabled(v),
+                ),
+                onTap: () => settings.setRoUnitEnabled(!roEnabled),
+              ),
+              // Microelements feature switch (U17): off hides the dashboard
+              // tile and silences micro test reminders — measurements stay
+              // stored.
+              ReefSettingsRow(
+                icon: Icons.science_outlined,
+                title: l.microTitle,
+                description: l.microToggleSubtitle,
+                trailing: Switch.adaptive(
+                  value: microEnabled,
+                  onChanged: (v) => settings.setMicroEnabled(v),
+                ),
+                onTap: () => settings.setMicroEnabled(!microEnabled),
+              ),
+            ],
           ),
-          const Divider(),
-          _SectionHeader(l.backupSection),
-          ListTile(
-            leading: const Icon(Icons.backup),
-            title: Text(l.backupNow),
-            subtitle: Text(
-              ref
-                  .watch(lastBackupAtProvider)
-                  .maybeWhen(
-                    data: (t) => t == null
-                        ? l.backupNeverRun
-                        // Shared helper honors the device 12/24-hour
-                        // preference (#41).
-                        : l.backupLastRun(
-                            formatDateTime(
-                              context,
-                              t.toLocal(),
-                              weekday: false,
+          ReefSettingsSection(
+            label: l.toolsSection,
+            children: [
+              ReefSettingsRow(
+                icon: Icons.calculate_outlined,
+                title: l.salinityCalculator,
+                description: l.salinityCalculatorSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: () => context.push('/calculator/salinity'),
+              ),
+            ],
+          ),
+          ReefSettingsSection(
+            label: l.backupSection,
+            children: [
+              ReefSettingsRow(
+                icon: Icons.backup,
+                title: l.backupNow,
+                description: ref
+                    .watch(lastBackupAtProvider)
+                    .maybeWhen(
+                      data: (t) => t == null
+                          ? l.backupNeverRun
+                          // Shared helper honors the device 12/24-hour
+                          // preference (#41).
+                          : l.backupLastRun(
+                              formatDateTime(
+                                context,
+                                t.toLocal(),
+                                weekday: false,
+                              ),
                             ),
-                          ),
-                    orElse: () => l.backupNeverRun,
-                  ),
-            ),
-            onTap: () => _backupNow(context, ref, l),
-          ),
-          // A failed backup attempt is worth a loud, persistent warning: the
-          // user believes they are protected while nothing is being written
-          // (#22). Cleared automatically by the next successful backup.
-          if (ref.watch(lastBackupErrorAtProvider).value case final errorAt?)
-            ListTile(
-              leading: Icon(
-                Icons.error_outline,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              title: Text(
-                l.backupLastFailed(
-                  formatDateTime(context, errorAt.toLocal(), weekday: false),
-                ),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ),
-          ListTile(
-            leading: const Icon(Icons.upload_file_outlined),
-            title: Text(l.backupExport),
-            subtitle: Text(l.backupExportSubtitle),
-            onTap: () => _export(context, db, l),
-          ),
-          ListTile(
-            leading: const Icon(Icons.table_chart_outlined),
-            title: Text(l.csvExportTitle),
-            subtitle: Text(l.csvExportSubtitle),
-            onTap: () => _exportCsv(context, ref, l),
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings_backup_restore),
-            title: Text(l.backupImport),
-            subtitle: Text(l.backupImportSubtitle),
-            onTap: () => _import(context, db, l),
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.backup_outlined),
-            title: Text(l.autoBackupTitle),
-            subtitle: Text(l.autoBackupSubtitle),
-            value:
-                ref.watch(autoBackupEnabledProvider).value ??
-                kAutoBackupDefaultEnabled,
-            onChanged: (v) => settings.setAutoBackupEnabled(v),
-          ),
-          if (ref.watch(autoBackupEnabledProvider).value ??
-              kAutoBackupDefaultEnabled) ...[
-            ListTile(
-              leading: const Icon(Icons.schedule),
-              title: Text(l.autoBackupFrequency),
-              trailing: DropdownButton<AutoBackupInterval>(
-                value:
-                    ref.watch(autoBackupIntervalProvider).value ??
-                    AutoBackupInterval.daily,
-                underline: const SizedBox.shrink(),
-                onChanged: (v) =>
-                    v == null ? null : settings.setAutoBackupInterval(v),
-                items: [
-                  DropdownMenuItem(
-                    value: AutoBackupInterval.daily,
-                    child: Text(l.autoBackupDaily),
-                  ),
-                  DropdownMenuItem(
-                    value: AutoBackupInterval.weekly,
-                    child: Text(l.autoBackupWeekly),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.folder_outlined),
-              title: Text(l.manageBackups),
-              subtitle: Text(l.manageBackupsSubtitle),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/settings/backups'),
-            ),
-          ],
-          // Google Drive sync (U24) — **Android-only surface** (iOS gets its
-          // own cloud-backup solution later; the plugin is unconfigured
-          // there, so the row would only ever produce an error snackbar).
-          // This is the codebase's one deliberate platform branch;
-          // defaultTargetPlatform (not dart:io Platform) so widget tests can
-          // exercise both sides via debugDefaultTargetPlatformOverride.
-          if (defaultTargetPlatform == TargetPlatform.android) ...[
-            // Presence of the connected account IS the "on" state (no
-            // separate toggle); Pro-gated on the connect action only — a
-            // connected account keeps working (U19: limits gate creation,
-            // never access).
-            if (ref.watch(syncGdriveAccountProvider).value case final account?)
-              ListTile(
-                leading: const Icon(Icons.add_to_drive),
-                title: Text(l.syncGdriveTitle),
-                subtitle: Text(
-                  '$account\n'
-                  '${switch (ref.watch(syncGdriveLastPushAtProvider).value) {
-                    final at? => l.syncGdriveLastPush(formatDateTime(context, at.toLocal(), weekday: false)),
-                    null => l.syncGdriveNeverPushed,
-                  }}',
-                ),
-                isThreeLine: true,
-                onTap: () => _gdriveOptions(context, ref, l, account),
-              )
-            else
-              ListTile(
-                leading: const Icon(Icons.add_to_drive),
-                title: Text(l.syncGdriveTitle),
-                subtitle: Text(l.syncGdriveSubtitle),
-                onTap: ref.watch(proFeatureProvider(ProFeature.driveSync))
-                    ? () => _connectGdrive(context, ref, l)
-                    : () => showProFeatureDialog(context, ProFeature.driveSync),
-              ),
-            // Same loud-persistent-warning idiom as the local backup (#22):
-            // non-null means the latest push attempt failed (offline skips
-            // are not recorded), cleared by the next successful push.
-            if (ref.watch(syncGdriveLastErrorAtProvider).value
-                case final syncErrorAt?)
-              ListTile(
-                leading: Icon(
-                  Icons.cloud_off,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                title: Text(
-                  l.syncGdriveLastFailed(
-                    formatDateTime(
-                      context,
-                      syncErrorAt.toLocal(),
-                      weekday: false,
+                      orElse: () => l.backupNeverRun,
                     ),
+                onTap: () => _backupNow(context, ref, l),
+              ),
+              // A failed backup attempt is worth a loud, persistent warning:
+              // the user believes they are protected while nothing is being
+              // written (#22). Cleared automatically by the next successful
+              // backup.
+              if (ref.watch(lastBackupErrorAtProvider).value
+                  case final errorAt?)
+                ReefSettingsRow(
+                  icon: Icons.error_outline,
+                  iconColor: Theme.of(context).colorScheme.error,
+                  title: l.backupLastFailed(
+                    formatDateTime(context, errorAt.toLocal(), weekday: false),
                   ),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  titleColor: Theme.of(context).colorScheme.error,
+                ),
+              ReefSettingsRow(
+                icon: Icons.upload_file_outlined,
+                title: l.backupExport,
+                description: l.backupExportSubtitle,
+                onTap: () => _export(context, db, l),
+              ),
+              ReefSettingsRow(
+                icon: Icons.table_chart_outlined,
+                title: l.csvExportTitle,
+                description: l.csvExportSubtitle,
+                onTap: () => _exportCsv(context, ref, l),
+              ),
+              ReefSettingsRow(
+                icon: Icons.settings_backup_restore,
+                title: l.backupImport,
+                description: l.backupImportSubtitle,
+                onTap: () => _import(context, db, l),
+              ),
+              ReefSettingsRow(
+                icon: Icons.backup_outlined,
+                title: l.autoBackupTitle,
+                description: l.autoBackupSubtitle,
+                trailing: Switch.adaptive(
+                  value: autoBackupEnabled,
+                  onChanged: (v) => settings.setAutoBackupEnabled(v),
+                ),
+                onTap: () => settings.setAutoBackupEnabled(!autoBackupEnabled),
+              ),
+              if (autoBackupEnabled) ...[
+                ReefSettingsRow(
+                  icon: Icons.schedule,
+                  title: l.autoBackupFrequency,
+                  trailing: ReefSettingsDropdown<AutoBackupInterval>(
+                    value:
+                        ref.watch(autoBackupIntervalProvider).value ??
+                        AutoBackupInterval.daily,
+                    onChanged: settings.setAutoBackupInterval,
+                    items: [
+                      (AutoBackupInterval.daily, l.autoBackupDaily),
+                      (AutoBackupInterval.weekly, l.autoBackupWeekly),
+                    ],
+                  ),
+                ),
+                ReefSettingsRow(
+                  icon: Icons.folder_outlined,
+                  title: l.manageBackups,
+                  description: l.manageBackupsSubtitle,
+                  trailing: const ReefSettingsValue(),
+                  onTap: () => context.push('/settings/backups'),
+                ),
+              ],
+              // Google Drive sync (U24) — **Android-only surface** (iOS gets
+              // its own cloud-backup solution later; the plugin is
+              // unconfigured there, so the row would only ever produce an
+              // error snackbar). This is the codebase's one deliberate
+              // platform branch; defaultTargetPlatform (not dart:io Platform)
+              // so widget tests can exercise both sides via
+              // debugDefaultTargetPlatformOverride.
+              if (defaultTargetPlatform == TargetPlatform.android) ...[
+                // Presence of the connected account IS the "on" state (no
+                // separate toggle); Pro-gated on the connect action only — a
+                // connected account keeps working (U19: limits gate creation,
+                // never access).
+                if (ref.watch(syncGdriveAccountProvider).value
+                    case final account?)
+                  ReefSettingsRow(
+                    icon: Icons.add_to_drive,
+                    title: l.syncGdriveTitle,
+                    description:
+                        '$account\n'
+                        '${switch (ref.watch(syncGdriveLastPushAtProvider).value) {
+                          final at? => l.syncGdriveLastPush(formatDateTime(context, at.toLocal(), weekday: false)),
+                          null => l.syncGdriveNeverPushed,
+                        }}',
+                    onTap: () => _gdriveOptions(context, ref, l, account),
+                  )
+                else
+                  ReefSettingsRow(
+                    icon: Icons.add_to_drive,
+                    title: l.syncGdriveTitle,
+                    description: l.syncGdriveSubtitle,
+                    onTap: ref.watch(proFeatureProvider(ProFeature.driveSync))
+                        ? () => _connectGdrive(context, ref, l)
+                        : () =>
+                              showProFeatureDialog(context, ProFeature.driveSync),
+                  ),
+                // Same loud-persistent-warning idiom as the local backup
+                // (#22): non-null means the latest push attempt failed
+                // (offline skips are not recorded), cleared by the next
+                // successful push.
+                if (ref.watch(syncGdriveLastErrorAtProvider).value
+                    case final syncErrorAt?)
+                  ReefSettingsRow(
+                    icon: Icons.cloud_off,
+                    iconColor: Theme.of(context).colorScheme.error,
+                    title: l.syncGdriveLastFailed(
+                      formatDateTime(
+                        context,
+                        syncErrorAt.toLocal(),
+                        weekday: false,
+                      ),
+                    ),
+                    titleColor: Theme.of(context).colorScheme.error,
+                  ),
+              ],
+            ],
+          ),
+          ReefSettingsSection(
+            label: l.aboutSection,
+            children: [
+              ReefSettingsRow(
+                icon: Icons.waves,
+                title: l.aquariums,
+                trailing: ReefSettingsValue(value: '${tanks.length}'),
+                onTap: () => context.push('/tanks'),
+              ),
+              ReefSettingsRow(
+                icon: Icons.help_outline,
+                title: l.replayTour,
+                description: l.replayTourSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: () async {
+                  await settings.setTourSeen(false);
+                  if (context.mounted) context.go('/');
+                },
+              ),
+              _EditionRow(
+                edition:
+                    ref.watch(editionProvider).value ?? AppEdition.standard,
+              ),
+              ReefSettingsRow(
+                icon: Icons.info_outline,
+                title: l.aboutAppName,
+                onTap: () => showAboutDialog(
+                  context: context,
+                  applicationName: l.appTitle,
+                  applicationVersion: appVersion,
+                  children: [Text(l.aboutDescription)],
                 ),
               ),
-          ],
-          const Divider(),
-          _SectionHeader(l.aboutSection),
-          ListTile(
-            leading: const Icon(Icons.waves),
-            title: Text(l.aquariums),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${tanks.length}'),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-            onTap: () => context.push('/tanks'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.help_outline),
-            title: Text(l.replayTour),
-            subtitle: Text(l.replayTourSubtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () async {
-              await settings.setTourSeen(false);
-              if (context.mounted) context.go('/');
-            },
-          ),
-          _EditionTile(
-            edition: ref.watch(editionProvider).value ?? AppEdition.standard,
-          ),
-          AboutListTile(
-            icon: const Icon(Icons.info_outline),
-            applicationName: l.appTitle,
-            applicationVersion: ref.watch(appVersionProvider).value ?? '',
-            aboutBoxChildren: [Text(l.aboutDescription)],
-            child: Text(l.aboutAppName),
+            ],
           ),
         ],
       ),
@@ -642,8 +640,8 @@ class SettingsScreen extends ConsumerWidget {
 /// an early adopter ("Founder's Edition") or the standard edition; tapping
 /// opens a short explanation. Until a Pro build exists every install is
 /// seeded as Founder, so the standard branch is dormant future-proofing.
-class _EditionTile extends StatelessWidget {
-  const _EditionTile({required this.edition});
+class _EditionRow extends StatelessWidget {
+  const _EditionRow({required this.edition});
   final AppEdition edition;
 
   @override
@@ -651,10 +649,10 @@ class _EditionTile extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final founder = edition == AppEdition.founder;
     final name = founder ? l.editionFounder : l.editionStandard;
-    return ListTile(
-      leading: const Icon(Icons.workspace_premium_outlined),
-      title: Text(l.editionLabel),
-      subtitle: Text(name),
+    return ReefSettingsRow(
+      icon: Icons.workspace_premium_outlined,
+      title: l.editionLabel,
+      description: name,
       onTap: () => showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -666,27 +664,6 @@ class _EditionTile extends StatelessWidget {
               child: Text(MaterialLocalizations.of(context).okButtonLabel),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-          letterSpacing: 0.5,
         ),
       ),
     );

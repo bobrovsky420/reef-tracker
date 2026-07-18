@@ -937,7 +937,17 @@ with `scrolledUnderElevation: 0` (the M3 default would flash
 `systemOverlayStyle` (a transparent app bar can't derive status-bar icon
 brightness). The chart PNG export can't sit on a transparent scaffold — it
 paints the solid `scaffoldBody` token as its opaque backdrop
-(`history_screen.dart`).
+(`history_screen.dart`). **Route transitions** need the same care
+(`pageTransitionsTheme` in `buildReefTheme`): the Android transition
+(predictive-back → FadeForwards for normal pushes) paints a
+`surface`-colored scrim behind the cross-fading routes, which flashed white
+over the transparent scaffolds on every push/pop — its `fallbackColor` is
+transparent so the static gradient shows through the whole transition. The
+Cupertino-dialect slide is the opposite case: it doesn't fade, so two
+transparent routes would show through each other mid-slide — a subclassed
+`CupertinoPageTransitionsBuilder` wraps every route in
+`ReefTokens.backgroundDecoration` (the gradient, shared with
+`ReefBackground`) so pages slide as opaque cards, iOS-style.
 
 **Home-shell chrome (REDESIGN phase 3).** The bottom tab bar is fully themed
 in `NavigationBarThemeData`: translucent `tabBarBg`, height 64, 21 px icons +
@@ -988,7 +998,26 @@ Actions log, the Dosing plan — REDESIGN #11/#13); rows inside bring their own
 transparent `Material` (ink must paint above the card fill) and a bottom
 `surfaceBorder` hairline as the divider. `widgets/section_header.dart`
 (`SectionHeader`) is the matching uppercase faint group label rendered between
-card groups (grouped dashboard, restyled Settings — later phases).
+card groups (grouped dashboard).
+
+**Platform dialects (REDESIGN #15).** `reefCupertinoDialect(TargetPlatform)`
+in `theme.dart` is the single predicate every dialect fork keys on (iOS/macOS
+→ Cupertino look, everything else → M3); only theme and shared-widget code may
+call it — feature code stays free of platform branches (CLAUDE.md rule). On
+top of the per-dialect radii/chrome above, the layer covers: **switches** —
+call sites use the `.adaptive` constructors app-wide; the M3 dialect adds a
+check-marked thumb via `switchTheme`, the Cupertino dialect renders the
+iOS-shaped switch with a `healthy` on-track through an
+`Adaptation<SwitchThemeData>` registered in `ThemeData.adaptations` (adaptive
+switches on iOS deliberately ignore the ambient `SwitchThemeData`);
+**segmented controls** — `widgets/reef_segmented.dart` (`ReefSegmented<T>`,
+`(value, label)` options) replaces `SegmentedButton` app-wide (Settings units,
+chart-range selectors, the schedule sheet's repeat toggle): a
+Cupertino-sliding-control look (options in a `track` well, active on a raised
+chip — opaque `surfaceContainerHighest` in dark, where the translucent
+`surface` would vanish) vs an M3 outlined pill (active = `healthySoft` fill +
+check icon); and the **Settings dialect** (`widgets/reef_settings.dart`, see
+Settings below).
 
 Deliberate `ColorScheme` slot meanings (documented in the file): `secondary` =
 violet (carbon-change chart marker), `tertiary` = ocean blue (water-change
@@ -1886,7 +1915,23 @@ the cap.
 
 ### Settings (`settings_screen.dart`)
 
-Unit selectors (temp/salinity/volume), language selector, a **Dashboard**
+The screen is a stack of labeled groups rendered by the dialect-aware
+`widgets/reef_settings.dart` building blocks (REDESIGN #14/#15):
+`ReefSettingsList` (composes the sections; M3 inserts hairline dividers
+between them) → `ReefSettingsSection` (optional uppercase label — faint and
+inset-margined on the Cupertino dialect, `primary`-colored on M3 — over rows
+that sit in an inset r14 `ReefCard` on Cupertino and full-width on M3) →
+`ReefSettingsRow` (19 px `textDim` icon + 15 px title + optional 12 px
+`textFaint` description + trailing control; `onTap` makes the whole row a
+target — switch rows pass the toggle there, preserving the old
+`SwitchListTile` behavior). `ReefSettingsDropdown` styles the trailing
+dropdowns per dialect (chevron + `textDim` value on Cupertino, caret + bold
+value on M3) and `ReefSettingsValue` is the "value + chevron" cluster for
+rows that push a subscreen. All dialect resolution lives in these widgets;
+the screen itself is branch-free.
+
+Groups, in order: **Language**; **Units** (temp/salinity/volume as
+`ReefSegmented` controls); a **Dashboard**
 section (the **dashboard-layout** dropdown — grouped vs classic,
 `dashboardLayoutProvider`, default grouped, see Dashboard above — plus the
 tank-health display dropdown + the **stability window** selector,
@@ -1895,16 +1940,17 @@ the stability score: a knob for a locked feature would just confuse), a
 **Trends** section
 (on/off switch + recent-readings window selector `kTrendMinWindow`..`kTrendMaxWindow`
 + alert-horizon selector within `kTrendMinHorizon`..`kTrendMaxHorizon`),
-a **Reminders** link (`/settings/reminders` — see Reminders & maintenance
+an unlabeled group with a **Reminders** link (`/settings/reminders` — see
+Reminders & maintenance
 schedule above), the **Reverse osmosis unit** feature switch (U16 — hides the
-Actions-tab row and silences RO reminders), the **Microelements** feature
+Actions-tab row and silences RO reminders), and the **Microelements** feature
 switch (U17 — hides the dashboard tile and silences micro test reminders;
-measurements are kept),
-and **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
+measurements are kept); **Tools** (link to the salinity calculator);
+**Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency, a link to the **Manage backups**
 screen (see Data → Automatic backup), and the **Google Drive sync** row +
 persistent upload-error row (U24 — see Data → Google Drive backup sync;
-connect is Pro-gated via `ProFeature.driveSync`). Link to the salinity calculator. An
+connect is Pro-gated via `ProFeature.driveSync`). An
 **Edition** row (see Editions above) sits in the About section. The About box shows the live app version via
 `appVersionProvider` (`package_info_plus`), never a hardcoded string.
 

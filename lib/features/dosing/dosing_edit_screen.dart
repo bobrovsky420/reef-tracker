@@ -562,7 +562,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
             ),
           ],
         ),
-        SwitchListTile(
+        SwitchListTile.adaptive(
           contentPadding: EdgeInsets.zero,
           value: _remindEnabled && _time != null,
           onChanged: _time == null

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -93,6 +94,19 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
 
   /// Base style for numeric values; `copyWith` size/weight/color at use sites.
   static const TextStyle monoTextStyle = TextStyle(fontFamily: monoFamily);
+
+  /// The scaffold background (REDESIGN §2.1): a vertical gradient fading
+  /// `scaffoldTop` → `scaffoldBody` within the top 14%, flat below. Painted
+  /// app-wide by `widgets/reef_background.dart` and behind each sliding route
+  /// by the Cupertino-dialect page transition (see [buildReefTheme]).
+  BoxDecoration get backgroundDecoration => BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      stops: const [0.0, 0.14],
+      colors: [scaffoldTop, scaffoldBody],
+    ),
+  );
 
   /// The active theme's tokens. Falls back to the brightness-matched default
   /// set when the theme wasn't built by [buildReefTheme] (bare-`MaterialApp`
@@ -323,23 +337,78 @@ const ColorScheme _darkScheme = ColorScheme(
   surfaceTint: Colors.transparent,
 );
 
+/// Whether [platform] renders the Cupertino dialect (REDESIGN #15). The one
+/// predicate every dialect fork keys on — iOS and macOS get the Cupertino
+/// look, everything else the M3 look. Only theme/shared-widget code may call
+/// this; feature code stays branch-free (CLAUDE.md rule).
+bool reefCupertinoDialect(TargetPlatform platform) =>
+    platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
+
 /// Card corner radius per platform dialect (§2.3: r20 iOS, r16 Android).
 /// Shared by [buildReefTheme]'s `CardThemeData` and the `ReefCard` widget so
 /// both card paths agree on the shape.
-double reefCardRadius(TargetPlatform platform) => switch (platform) {
-  TargetPlatform.iOS || TargetPlatform.macOS => 20,
-  _ => 16,
-};
+double reefCardRadius(TargetPlatform platform) =>
+    reefCupertinoDialect(platform) ? 20 : 16;
 
 /// App-bar mini-card icon-button shape per platform dialect (§2.3: r9
 /// squircle on iOS, circle on Android). Consumed by `ReefIconButton`.
 OutlinedBorder reefIconButtonShape(TargetPlatform platform) =>
-    switch (platform) {
-      TargetPlatform.iOS || TargetPlatform.macOS => RoundedSuperellipseBorder(
-        borderRadius: BorderRadius.circular(9),
+    reefCupertinoDialect(platform)
+    ? RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(9))
+    : const CircleBorder();
+
+/// The Cupertino-dialect route transition: the standard iOS slide with the
+/// app background gradient painted behind each route. Scaffolds are
+/// transparent over the shared `ReefBackground` (REDESIGN #2), but the
+/// Cupertino slide keeps both routes fully opaque and overlapping — without
+/// a backdrop the outgoing page's content would show through the incoming
+/// one. Painting the same gradient inside every route keeps the steady-state
+/// look identical while pages slide as opaque cards, iOS-style.
+class _ReefCupertinoTransitionsBuilder extends CupertinoPageTransitionsBuilder {
+  const _ReefCupertinoTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return super.buildTransitions(
+      route,
+      context,
+      animation,
+      secondaryAnimation,
+      DecoratedBox(
+        decoration: ReefTokens.of(context).backgroundDecoration,
+        child: child,
       ),
-      _ => const CircleBorder(),
-    };
+    );
+  }
+}
+
+/// Cupertino-dialect styling for `Switch.adaptive` (§A.7: on-track =
+/// `healthy`, like the mock's iOS switch). Registered in
+/// [ThemeData.adaptations]; the framework consults it only for `.adaptive`
+/// switches. Mirrors the default adaptation's platform split — on M3-dialect
+/// platforms the ambient [SwitchThemeData] passes through untouched.
+class _ReefSwitchAdaptation extends Adaptation<SwitchThemeData> {
+  const _ReefSwitchAdaptation(this.tokens);
+
+  final ReefTokens tokens;
+
+  @override
+  SwitchThemeData adapt(ThemeData theme, SwitchThemeData defaultValue) {
+    if (!reefCupertinoDialect(theme.platform)) return defaultValue;
+    return SwitchThemeData(
+      trackColor: WidgetStateProperty.resolveWith(
+        (states) =>
+            states.contains(WidgetState.selected) ? tokens.healthy : null,
+      ),
+    );
+  }
+}
 
 /// Builds the app [ThemeData] for a brightness × platform pair. Platform
 /// dialects (radii, chrome shapes — REDESIGN #15) resolve here and only here;
@@ -366,6 +435,23 @@ ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
     // Screens are transparent over the shared `ReefBackground` gradient
     // mounted in MaterialApp's `builder` (scaffoldTop→scaffoldBody, 14% stop).
     scaffoldBackgroundColor: Colors.transparent,
+    // Route transitions must not repaint that background: the M3 Android
+    // transition (predictive-back, falling back to FadeForwards for normal
+    // pushes) paints a `surface`-colored scrim behind the cross-fading
+    // routes, which flashed white over the transparent scaffolds on every
+    // push/pop. A transparent scrim lets the static gradient show through
+    // the whole transition. The Cupertino slide instead needs each route
+    // opaque (no cross-fade — overlapping transparent pages would show
+    // through each other), so its builder wraps every route in the gradient.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: PredictiveBackPageTransitionsBuilder(
+          fallbackColor: Colors.transparent,
+        ),
+        TargetPlatform.iOS: _ReefCupertinoTransitionsBuilder(),
+        TargetPlatform.macOS: _ReefCupertinoTransitionsBuilder(),
+      },
+    ),
     // The app bar is transparent too, so the gradient's top glow shows behind
     // the status-bar/app-bar area. Zero scrolled-under elevation: the M3
     // default would flash `surface`→`surfaceContainer` when content scrolls
@@ -425,6 +511,21 @@ ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
       ),
       extendedSizeConstraints: const BoxConstraints.tightFor(height: 48),
     ),
+    // Switches (REDESIGN #15): call sites use the `.adaptive` constructors.
+    // The M3 dialect keeps the default primary track and gains the mock's
+    // check-marked thumb; the Cupertino dialect renders the iOS-shaped switch
+    // with the `healthy` track via the adaptation below (adaptive switches on
+    // iOS deliberately ignore the ambient [SwitchThemeData]).
+    switchTheme: reefCupertinoDialect(platform)
+        ? null
+        : SwitchThemeData(
+            thumbIcon: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? const Icon(Icons.check)
+                  : null,
+            ),
+          ),
+    adaptations: [_ReefSwitchAdaptation(tokens)],
     extensions: [tokens],
   );
 }

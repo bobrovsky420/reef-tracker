@@ -130,7 +130,7 @@ class MicroScreen extends ConsumerWidget {
               views: views,
             ),
           ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             dense: true,
             visualDensity: VisualDensity.compact,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -140,7 +140,7 @@ class MicroScreen extends ConsumerWidget {
               ref.read(settingsProvider).setMicroHideUndetectable(v),
             ),
           ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             dense: true,
             visualDensity: VisualDensity.compact,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),

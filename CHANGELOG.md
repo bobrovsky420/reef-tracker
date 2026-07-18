@@ -15,6 +15,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   consistent. Future visual improvements land in the grouped layout.
 
 ### Changed
+- The Settings screen is restyled into the redesign's grouped layout: compact
+  rows (icon, title, description, trailing control) under uppercase section
+  labels — Language, Units, Dashboard, Trends, Tools, Backup, and About. All
+  settings are still there and work the same; the unit pickers become the new
+  segmented controls and rows with a switch now toggle when tapped anywhere on
+  the row. On Android the sections are full-width with teal labels and
+  hairline dividers; iOS gets its own inset grouped-card look.
+- Controls across the app are now platform-adaptive: on iOS, switches render
+  in the native iOS style (green when on) and segmented controls (settings
+  units, graph time ranges, the schedule sheet's "Repeats/One-off" choice)
+  take the iOS sliding style, while Android keeps the Material look — switches
+  gain a small check mark in the thumb when on, segmented controls become
+  outlined pills with a check on the active option. iOS rendering is not yet
+  visually verified on a device (pure-Dart change; pending the next
+  Codemagic/TestFlight build).
 - The Actions tab takes on the redesign's card look: the reverse-osmosis
   summary becomes a real card that turns into a soft-tinted alert (amber or
   red border and icon) when a filter stage needs attention, the maintenance
@@ -82,6 +97,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   teal — on Android with a soft green pill — and the add buttons become teal
   pill buttons. iOS rendering of the platform-specific shapes is unverified
   on this machine (needs a CI build).
+
+### Fixed
+- Opening or leaving a screen no longer flashes a white background before the
+  new background gradient appears: on Android the screens now cross-fade
+  directly over the gradient, and on iOS each screen carries the gradient
+  while it slides.
 
 ## [0.29.4] - 2026-07-17
 

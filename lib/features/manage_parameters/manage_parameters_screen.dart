@@ -179,7 +179,7 @@ class ManageParametersScreen extends ConsumerWidget {
       // anonymous switch (#48).
       leading: Semantics(
         label: l.paramName(param.paramKey),
-        child: Switch(
+        child: Switch.adaptive(
           value: param.enabled,
           onChanged: (v) => ref
               .read(dbProvider)
@@ -225,7 +225,7 @@ class ManageParametersScreen extends ConsumerWidget {
       subtitle: Text(_ratioBoundsSummary(l, kind, bounds)),
       leading: Semantics(
         label: l.ratioCardLabel(kind),
-        child: Switch(
+        child: Switch.adaptive(
           value: ratioRowVisible(item.settings),
           onChanged: (v) =>
               ref.read(dbProvider).setRatioVisible(tankId, kind.name, v),

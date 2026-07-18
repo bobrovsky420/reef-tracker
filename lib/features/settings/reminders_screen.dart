@@ -90,19 +90,19 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: Text(l.notifChannelTesting),
             subtitle: Text(l.remindersTestingSubtitle),
             value: testing,
             onChanged: (v) => _setCategory(settings.setRemindersTesting, v),
           ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: Text(l.notifChannelDosing),
             subtitle: Text(l.remindersDosingSubtitle),
             value: dosing,
             onChanged: (v) => _setCategory(settings.setRemindersDosing, v),
           ),
-          SwitchListTile(
+          SwitchListTile.adaptive(
             title: Text(l.notifChannelMaintenance),
             subtitle: Text(l.remindersMaintenanceSubtitle),
             value: maintenance,

@@ -10,6 +10,7 @@ import '../domain/zones.dart';
 import '../features/actions/action_markers.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
+import 'reef_segmented.dart';
 import 'zone_visuals.dart';
 
 /// The shared chart time range, stored as its [label] ('7d', '30d', '90d',
@@ -123,14 +124,12 @@ class ChartRangeSelector extends ConsumerWidget {
     final range = chartRangeFromLabel(ref.watch(chartRangeProvider).value);
     return Padding(
       padding: padding,
-      child: SegmentedButton<ChartRange>(
-        segments: [
-          for (final r in ChartRange.values)
-            ButtonSegment(value: r, label: Text(chartRangeLabel(l, r))),
+      child: ReefSegmented<ChartRange>(
+        options: [
+          for (final r in ChartRange.values) (r, chartRangeLabel(l, r)),
         ],
-        selected: {range},
-        onSelectionChanged: (s) =>
-            ref.read(settingsProvider).setChartRange(s.first.label),
+        selected: range,
+        onChanged: (r) => ref.read(settingsProvider).setChartRange(r.label),
       ),
     );
   }

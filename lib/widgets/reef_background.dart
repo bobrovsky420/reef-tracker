@@ -7,8 +7,10 @@ import '../app/theme.dart';
 /// stays flat below — a subtle glow behind the status-bar/app-bar area, not a
 /// full-screen gradient. Mounted once in [MaterialApp]'s `builder` (behind the
 /// Navigator), with every `Scaffold` transparent over it — never per-screen
-/// copies. The chart PNG export needs an opaque backdrop and uses the solid
-/// `scaffoldBody` token instead.
+/// copies (the one exception is the Cupertino-dialect page transition, which
+/// paints [ReefTokens.backgroundDecoration] behind each sliding route — see
+/// `theme.dart`). The chart PNG export needs an opaque backdrop and uses the
+/// solid `scaffoldBody` token instead.
 class ReefBackground extends StatelessWidget {
   const ReefBackground({super.key, required this.child});
 
@@ -16,16 +18,8 @@ class ReefBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = ReefTokens.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          stops: const [0.0, 0.14],
-          colors: [tokens.scaffoldTop, tokens.scaffoldBody],
-        ),
-      ),
+      decoration: ReefTokens.of(context).backgroundDecoration,
       child: child,
     );
   }

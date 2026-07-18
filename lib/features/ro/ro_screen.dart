@@ -103,7 +103,7 @@ class _RoScreenState extends ConsumerState<RoScreen> {
                         l.roStageName(s.stage.stageType, s.stage.title),
                       ),
                       subtitle: Text(roLifespanText(l, s.stage.lifespanDays)),
-                      trailing: Switch(
+                      trailing: Switch.adaptive(
                         value: false,
                         onChanged: (_) => ref
                             .read(dbProvider)
@@ -674,14 +674,14 @@ class _StageSheetState extends State<_StageSheet> {
                 ),
               ],
             ),
-            SwitchListTile(
+            SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               value: _enabled,
               onChanged: (v) => setState(() => _enabled = v),
               title: Text(l.roPartOfUnit),
               subtitle: Text(l.roPartOfUnitHint),
             ),
-            SwitchListTile(
+            SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               value: _remind,
               onChanged: (v) => setState(() => _remind = v),
