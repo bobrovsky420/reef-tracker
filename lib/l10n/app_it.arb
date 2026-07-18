@@ -576,6 +576,11 @@
   "aiSummaryMicroHeading": "Oligoelementi (ultimi valori misurati)",
 
   "dashboardSection": "Dashboard",
+  "dashboardLayoutTitle": "Layout dashboard",
+  "dashboardLayoutSubtitle": "Come sono disposte le schede nella scheda Misurazioni",
+  "dashboardLayoutGrouped": "Raggruppato",
+  "dashboardLayoutClassic": "Classico",
+
   "healthDisplayTitle": "Salute della vasca",
   "healthDisplaySubtitle": "Dove mostrare il riepilogo della salute",
   "healthDisplayBoth": "Badge e scheda",

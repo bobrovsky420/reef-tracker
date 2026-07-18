@@ -2002,6 +2002,18 @@ class AppLocalizationsCs extends AppLocalizations {
   String get dashboardSection => 'Přehled';
 
   @override
+  String get dashboardLayoutTitle => 'Rozvržení přehledu';
+
+  @override
+  String get dashboardLayoutSubtitle => 'Jak karty uspořádat na kartě Měření';
+
+  @override
+  String get dashboardLayoutGrouped => 'Skupiny';
+
+  @override
+  String get dashboardLayoutClassic => 'Klasické';
+
+  @override
   String get healthDisplayTitle => 'Zdraví nádrže';
 
   @override

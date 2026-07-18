@@ -85,6 +85,31 @@ enum HealthDisplay {
   bool get showCard => this == HealthDisplay.both;
 }
 
+/// How the main dashboard (Measurements tab) organizes its parameter/ratio
+/// cards. [grouped] is the redesign's categorized layout with fixed section
+/// headers (REDESIGN #6) and is where all future dashboard enhancements land;
+/// [classic] is the original single user-ordered grid mixing measurements and
+/// ratios. The choice also drives the ordering (and section captions) of the
+/// compare view and the Manage Parameters list, so the whole tab stays
+/// coherent.
+enum DashboardLayout {
+  /// The original flat, fully user-ordered grid (pre-#6 behavior).
+  classic,
+
+  /// The categorized layout with Core chemistry / Nutrients / Ratios /
+  /// Environment sections (the default, and the target of future work).
+  grouped;
+
+  /// Parses a stored setting value, defaulting to [grouped] when
+  /// missing/unknown.
+  static DashboardLayout fromName(String? name) {
+    for (final v in DashboardLayout.values) {
+      if (v.name == name) return v;
+    }
+    return DashboardLayout.grouped;
+  }
+}
+
 /// Which edition of the app this install is entitled to (U19 phase 0).
 /// Derived from [SettingKey.legacyFreeSince]; a `pro` value joins when the
 /// paid tier ships.
@@ -114,6 +139,9 @@ enum SettingKey {
   trendWindow(kTrendWindowKey, deviceLocal: true),
   trendHorizon(kTrendHorizonKey, deviceLocal: true),
   healthDisplay(kHealthDisplayKey, deviceLocal: true),
+  // The dashboard layout (grouped vs classic, REDESIGN #6) is a display
+  // preference like healthDisplay: device-local, default grouped.
+  dashboardLayout(kDashboardLayoutKey, deviceLocal: true),
   stabilityWindow(kStabilityWindowKey, deviceLocal: true),
   aiSummaryWeeks(kAiSummaryWeeksKey, deviceLocal: true),
   tourSeen(kTourSeenKey, deviceLocal: true),
@@ -317,6 +345,15 @@ class AppSettings {
       _watch(SettingKey.healthDisplay).map(decodeHealthDisplay);
   Future<void> setHealthDisplay(HealthDisplay display) =>
       _write(SettingKey.healthDisplay, display.name);
+
+  // --- dashboard layout (REDESIGN #6) ----------------------------------------
+
+  static DashboardLayout decodeDashboardLayout(String? raw) =>
+      DashboardLayout.fromName(raw);
+  Stream<DashboardLayout> watchDashboardLayout() =>
+      _watch(SettingKey.dashboardLayout).map(decodeDashboardLayout);
+  Future<void> setDashboardLayout(DashboardLayout layout) =>
+      _write(SettingKey.dashboardLayout, layout.name);
 
   // --- RO unit (U16) -----------------------------------------------------------
 

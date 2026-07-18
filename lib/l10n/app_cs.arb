@@ -576,6 +576,11 @@
   "aiSummaryMicroHeading": "Stopové prvky (poslední naměřené hodnoty)",
 
   "dashboardSection": "Přehled",
+  "dashboardLayoutTitle": "Rozvržení přehledu",
+  "dashboardLayoutSubtitle": "Jak karty uspořádat na kartě Měření",
+  "dashboardLayoutGrouped": "Skupiny",
+  "dashboardLayoutClassic": "Klasické",
+
   "healthDisplayTitle": "Zdraví nádrže",
   "healthDisplaySubtitle": "Kde zobrazit souhrn zdraví",
   "healthDisplayBoth": "Odznak a karta",

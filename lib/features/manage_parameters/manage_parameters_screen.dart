@@ -61,17 +61,28 @@ class ManageParametersScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tracked) {
-          // One reorderable list holding both measurements and ratio cards,
-          // mirror-sorted to the grouped dashboard's composite key (#6) so
-          // manage order always equals dashboard order. Core parameters only:
-          // microelement rows (U17) are managed from the Microelements
-          // screen, and listing ~30 of them here would bury the dashboard set.
-          final items = <_DashItem>[
-            for (final p in tracked)
-              if (isCoreParam(p.paramKey)) _ParamItem(p),
-            for (final kind in RatioKind.values)
-              _RatioItem(kind, ratioSettings[kind.name]),
-          ]..sort((a, b) => a.key.compareTo(b.key));
+          // One reorderable list holding both measurements and ratio cards.
+          // The dashboard-layout setting decides its order and captions so the
+          // list always mirrors the dashboard: grouped → the composite key
+          // (#6) with a per-row section caption; classic → the flat shared
+          // display order with no captions. Core parameters only: microelement
+          // rows (U17) are managed from the Microelements screen, and listing
+          // ~30 of them here would bury the dashboard set.
+          final grouped =
+              (ref.watch(dashboardLayoutProvider).value ??
+                  DashboardLayout.grouped) ==
+              DashboardLayout.grouped;
+          final items =
+              <_DashItem>[
+                for (final p in tracked)
+                  if (isCoreParam(p.paramKey)) _ParamItem(p),
+                for (final kind in RatioKind.values)
+                  _RatioItem(kind, ratioSettings[kind.name]),
+              ]..sort(
+                (a, b) => grouped
+                    ? a.key.compareTo(b.key)
+                    : a.flatOrder.compareTo(b.flatOrder),
+              );
 
           return ReorderableListView.builder(
             padding: const EdgeInsets.only(bottom: 88),
@@ -105,8 +116,22 @@ class ManageParametersScreen extends ConsumerWidget {
             itemBuilder: (context, i) {
               final item = items[i];
               return switch (item) {
-                _ParamItem() => _paramRow(context, ref, item.param, prefs, i),
-                _RatioItem() => _ratioRow(context, ref, tank.id, item, i),
+                _ParamItem() => _paramRow(
+                  context,
+                  ref,
+                  item.param,
+                  prefs,
+                  i,
+                  grouped: grouped,
+                ),
+                _RatioItem() => _ratioRow(
+                  context,
+                  ref,
+                  tank.id,
+                  item,
+                  i,
+                  grouped: grouped,
+                ),
               };
             },
           );
@@ -135,8 +160,9 @@ class ManageParametersScreen extends ConsumerWidget {
     WidgetRef ref,
     TrackedParameter param,
     UnitPrefs prefs,
-    int index,
-  ) {
+    int index, {
+    required bool grouped,
+  }) {
     final l = AppLocalizations.of(context);
     final pres = presentationOf(param, prefs);
     return ListTile(
@@ -144,7 +170,9 @@ class ManageParametersScreen extends ConsumerWidget {
       title: _titleWithGroup(
         context,
         l.paramName(param.paramKey),
-        l.dashSectionLabel(sectionOfParam(param.paramKey)),
+        // No section caption in the classic (flat) layout — there are no
+        // sections to belong to.
+        grouped ? l.dashSectionLabel(sectionOfParam(param.paramKey)) : null,
       ),
       subtitle: Text(_boundsSummary(l, boundsOf(param), pres)),
       // Name the switch after its row so screen readers don't announce an
@@ -181,8 +209,9 @@ class ManageParametersScreen extends ConsumerWidget {
     WidgetRef ref,
     int tankId,
     _RatioItem item,
-    int index,
-  ) {
+    int index, {
+    required bool grouped,
+  }) {
     final l = AppLocalizations.of(context);
     final kind = item.kind;
     final bounds = ratioBounds(kind, item.settings);
@@ -191,7 +220,7 @@ class ManageParametersScreen extends ConsumerWidget {
       title: _titleWithGroup(
         context,
         l.ratioCardLabel(kind),
-        l.dashSectionLabel(DashboardSection.ratios),
+        grouped ? l.dashSectionLabel(DashboardSection.ratios) : null,
       ),
       subtitle: Text(_ratioBoundsSummary(l, kind, bounds)),
       leading: Semantics(
@@ -317,13 +346,16 @@ Widget _titleWithGroup(BuildContext context, String name, String? group) {
 }
 
 /// An item in the unified manage list: either a tracked parameter or a ratio
-/// card. Both expose the dashboard's composite sort [key] (#6), so the list
-/// mirrors the grouped dashboard exactly. The flat-index reorder writeback
-/// (`applyDashboardOrder`) then converges saved orders to group-clustered
-/// values, and a drag past a section boundary clamps to the top/bottom of the
-/// item's own section.
+/// card. Both expose the dashboard's composite sort [key] (grouped layout, #6)
+/// and the [flatOrder] (classic layout) so the list can mirror whichever the
+/// dashboard-layout setting selects. In the grouped layout the flat-index
+/// reorder writeback (`applyDashboardOrder`) converges saved orders to
+/// group-clustered values, and a drag past a section boundary clamps to the
+/// item's own section; in the classic layout the list is one freely-ordered
+/// flat sequence.
 sealed class _DashItem {
   DashboardSortKey get key;
+  double get flatOrder;
 }
 
 class _ParamItem extends _DashItem {
@@ -331,6 +363,8 @@ class _ParamItem extends _DashItem {
   final TrackedParameter param;
   @override
   DashboardSortKey get key => paramSortKey(param.paramKey, param.displayOrder);
+  @override
+  double get flatOrder => param.displayOrder.toDouble();
 }
 
 class _RatioItem extends _DashItem {
@@ -339,6 +373,8 @@ class _RatioItem extends _DashItem {
   final RatioSettings? settings;
   @override
   DashboardSortKey get key => ratioSortKey(kind, settings);
+  @override
+  double get flatOrder => ratioRowOrder(kind, settings);
 }
 
 String _boundsSummary(

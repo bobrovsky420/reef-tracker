@@ -93,11 +93,11 @@ class ParameterDef {
 enum ParamCategory { core, major, trace, contaminant }
 
 /// The grouped dashboard's fixed sections for core parameters (REDESIGN #6):
-/// [coreChemistry] = the reef-building trio (alk, Ca, Mg), [nutrients] = the
+/// [core] = the reef-building chemistry trio (alk, Ca, Mg), [nutrients] = the
 /// nitrogen/phosphorus cycle (NO₃, PO₄, NH₃, NO₂), [environment] = physical
 /// water state (temperature, pH, salinity, ORP). Ratios and the micro summary
 /// tile have their own dashboard sections outside this enum.
-enum DashboardGroup { coreChemistry, nutrients, environment }
+enum DashboardGroup { core, nutrients, environment }
 
 /// True when [paramKey] belongs to a core (dashboard) parameter. Unknown keys
 /// count as core — the pre-catalog behavior, so hand-edited/legacy rows keep

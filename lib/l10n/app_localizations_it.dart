@@ -1996,6 +1996,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get dashboardSection => 'Dashboard';
 
   @override
+  String get dashboardLayoutTitle => 'Layout dashboard';
+
+  @override
+  String get dashboardLayoutSubtitle =>
+      'Come sono disposte le schede nella scheda Misurazioni';
+
+  @override
+  String get dashboardLayoutGrouped => 'Raggruppato';
+
+  @override
+  String get dashboardLayoutClassic => 'Classico';
+
+  @override
   String get healthDisplayTitle => 'Salute della vasca';
 
   @override

@@ -1995,6 +1995,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dashboardSection => 'Dashboard';
 
   @override
+  String get dashboardLayoutTitle => 'Dashboard-Layout';
+
+  @override
+  String get dashboardLayoutSubtitle =>
+      'Wie die Karten im Tab „Messungen“ angeordnet werden';
+
+  @override
+  String get dashboardLayoutGrouped => 'Gruppiert';
+
+  @override
+  String get dashboardLayoutClassic => 'Klassisch';
+
+  @override
   String get healthDisplayTitle => 'Beckenzustand';
 
   @override

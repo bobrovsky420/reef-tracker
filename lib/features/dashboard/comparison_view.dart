@@ -44,17 +44,24 @@ class ComparisonBody extends ConsumerWidget {
         );
         final range = chartRangeFromLabel(ref.watch(chartRangeProvider).value);
 
-        // Enabled core params in the dashboard's grouped order (#6, composite
-        // section-then-displayOrder key; microelements live on the
-        // Microelements screen, U17). The stack stays flat — no headers — so
-        // a vertical time-slice still reads across every chart.
+        // Enabled core params ordered to match the dashboard: the grouped
+        // composite key (#6, section-then-displayOrder) or the flat display
+        // order, per the dashboard-layout setting. The stack itself stays flat
+        // — no headers either way — so a vertical time-slice still reads across
+        // every chart. (Microelements live on the Microelements screen, U17.)
+        final grouped =
+            (ref.watch(dashboardLayoutProvider).value ??
+                DashboardLayout.grouped) ==
+            DashboardLayout.grouped;
         final params =
             tracked.where((t) => t.enabled && isCoreParam(t.paramKey)).toList()
               ..sort(
-                (a, b) => paramSortKey(
-                  a.paramKey,
-                  a.displayOrder,
-                ).compareTo(paramSortKey(b.paramKey, b.displayOrder)),
+                (a, b) => grouped
+                    ? paramSortKey(
+                        a.paramKey,
+                        a.displayOrder,
+                      ).compareTo(paramSortKey(b.paramKey, b.displayOrder))
+                    : a.displayOrder.compareTo(b.displayOrder),
               );
         if (params.isEmpty) return Center(child: Text(l.noParamsTracked));
 

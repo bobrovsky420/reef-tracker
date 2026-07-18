@@ -1134,6 +1134,19 @@ behind a confirmation dialog**:
   (the U26 split — presentation-only gate). Rides the same
   `healthDisplayProvider` card visibility as the health header, since both
   are derived summaries of the same readings.
+- **Two selectable layouts** (`dashboardLayoutProvider`, `DashboardLayout`,
+  device-local Settings → Dashboard, default `grouped`). The setting picks
+  which of the two dashboards below renders, and also drives the ordering of
+  the **compare view** and the **Manage Parameters** list so the whole
+  Measurements tab stays coherent. `DashboardBody` builds every tile once
+  carrying both ordering keys and then branches (`_appendGrouped` /
+  `_appendClassic`); **all future dashboard visual work targets the grouped
+  layout** — classic is a frozen fallback.
+  - **Classic**: the original single `SliverGrid` mixing `_ParameterTile`s and
+    `_RatioTile`s in one user-managed flat order (`displayOrder` /
+    `ratioRowOrder`), `MicroSummaryTile` pinned as the last cell. Manage
+    Parameters shows one freely-ordered flat list with no section captions.
+  - **Grouped**: the categorized layout described next.
 - **Grouped into fixed sections** (REDESIGN #6, `domain/dashboard_sections.dart`):
   Core chemistry (alkalinity, calcium, magnesium) → Nutrients (nitrate,
   phosphate, ammonia, nitrite) → Ratios → Environment (temperature, pH,
@@ -1144,13 +1157,20 @@ behind a confirmation dialog**:
   renders **nothing at all, header included** — e.g. disabling every Core
   chemistry parameter removes that whole section, and hiding all four ratio
   cards removes "Ratios". No enabled params and no visible ratios at all still
-  falls back to `_NoParamsView`. Each section is its own `SliverGrid`, same
-  cell geometry as before (max extent 219, text-scaled height); tile widgets
-  themselves — `_ParameterTile`, `_RatioTile` — are unchanged by this phase.
-  A `MicroSummaryTile` (U17) is pinned after every section whenever the grid
-  renders (see below); the mockups' single collapsed Ratios card is deferred
-  to a later phase (REDESIGN #8) — the Ratios section here is still one
-  `_RatioTile` per card.
+  falls back to `_NoParamsView`. Each section renders through the shared
+  `_tileGrid` helper (a `LayoutBuilder` + `Wrap` whose column count and tile
+  width mirror `SliverGridDelegateWithMaxCrossAxisExtent(219)`, text-scaled
+  height): full rows are flush-left with the header, but a **non-full last row
+  is centered** — an odd 3rd tile in a 2-column phone grid, a lone tile, or a
+  partly-filled last row on a tablet. Tile widgets themselves —
+  `_ParameterTile`, `_RatioTile` — are unchanged. A `MicroSummaryTile` (U17)
+  is pinned after every section whenever the grid renders (see below), under
+  its own **"Microelements" `SectionHeader`** (reusing `microTitle`) — the
+  header is redundant for a single card but gives it the same footing as the
+  other sections and separates it from Environment; being a solo tile it
+  centers too. The mockups' single collapsed Ratios card
+  is deferred to a later phase (REDESIGN #8) — the Ratios section here is still
+  one `_RatioTile` per card.
 - **Sort key** (`DashboardSortKey` = `(section, displayOrder, tiebreak)`):
   section placement is fixed and not user-controllable; the existing shared
   `displayOrder` space (`TrackedParameters.displayOrder` and
@@ -1178,33 +1198,38 @@ behind a confirmation dialog**:
   (`ratioSettingsProvider` → `Map<RatioKind.name, RatioVisibility>`, resolved
   with `ratioRowVisible` / `ratioRowOrder`).
 - A `MicroSummaryTile` (U17) is pinned after every section whenever at least
-  one section renders: same tile layout, headline = "N out of range" in the
+  one section renders (in the grouped layout under a "Microelements" header,
+  see above; in the classic layout as the flat grid's last cell): same tile
+  layout, headline = "N out of range" in the
   **dominant** deviation zone's color (red only when reds ≥ ambers — a lone
   red among mostly-amber ICP deviations reads amber, see `computeMicroStatus`)
   / "All within range" / "No readings", timestamp = newest micro sample. Tapping opens `/micro`. Gated by the Settings **microelements
   switch** (`microEnabledProvider`, default on) — gated at the top level,
-  not inside the tile, so switching off removes the grid cell; the switch
+  not inside the tile, so switching off removes the grid cell (and, in the
+  grouped layout, its header); the switch
   only hides (measurements stay stored).
 - Empty states: `NoTanksView` (first-run welcome: a language selector +
   add-aquarium prompt — lets the user pick their language before creating a tank
   without opening Settings) and `_NoParamsView`.
 - **Manage Parameters** (`ManageParametersScreen`) keeps its single
   reorderable list (measurements + ratio cards together — microelements are
-  managed from the Microelements screen), but is now **mirror-sorted to the
-  same `DashboardSortKey`** as the dashboard, so the manage order always
-  matches what's on screen, and each row shows a faint trailing caption
-  naming its dashboard section. The reorder writeback
-  (`applyDashboardOrder`, flat sequential indices) is unchanged: because the
-  displayed list is already grouped, the first drag after this change writes
-  group-clustered order values, and a drag dropped past a section boundary
-  settles at the top/bottom of the item's own section rather than crossing
-  into the next one — sections stay fixed, only within-section order is
-  user-controlled.
+  managed from the Microelements screen) and follows the **dashboard-layout
+  setting** so the manage order always matches what's on screen. In the
+  **grouped** layout it is mirror-sorted to the `DashboardSortKey` with a
+  faint trailing caption naming each row's dashboard section; a drag dropped
+  past a section boundary settles at the top/bottom of the item's own section
+  (sections stay fixed, only within-section order is user-controlled). In the
+  **classic** layout it is one freely-ordered flat list (by `displayOrder` /
+  `ratioRowOrder`) with no captions. Either way the reorder writeback
+  (`applyDashboardOrder`, flat sequential indices) is unchanged — in the
+  grouped layout the first drag simply converges saved orders to
+  group-clustered values.
 - **Compare graphs view** (`dashboard/comparison_view.dart`, `ComparisonBody`):
   an app-bar toggle on the Measurements tab (state `_compare` in `HomeShell`)
   swaps the tile grid for a vertical stack of trend charts — one per enabled
-  tracked **core** parameter, sorted by the same `DashboardSortKey` as the
-  grid (grouped, not a flat `displayOrder`) — but the chart stack itself
+  tracked **core** parameter, ordered to match the dashboard per the
+  **layout setting** (grouped `DashboardSortKey` or flat `displayOrder`) —
+  but the chart stack itself
   stays one flat list with **no section headers**, so a vertical time-slice
   still reads every parameter at once. Every chart is
   pinned to **one shared time window** (`minX`/`maxX` = range start → now; for
@@ -1830,7 +1855,9 @@ the cap.
 ### Settings (`settings_screen.dart`)
 
 Unit selectors (temp/salinity/volume), language selector, a **Dashboard**
-section (the tank-health display dropdown + the **stability window** selector,
+section (the **dashboard-layout** dropdown — grouped vs classic,
+`dashboardLayoutProvider`, default grouped, see Dashboard above — plus the
+tank-health display dropdown + the **stability window** selector,
 U26 — `kStabilityWindowChoices` 30/60/90 d, shown only to installs entitled to
 the stability score: a knob for a locked feature would just confuse), a
 **Trends** section

@@ -3365,6 +3365,30 @@ abstract class AppLocalizations {
   /// **'Dashboard'**
   String get dashboardSection;
 
+  /// Settings row title for choosing how the Measurements dashboard arranges its cards.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard layout'**
+  String get dashboardLayoutTitle;
+
+  /// No description provided for @dashboardLayoutSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How the Measurements tab arranges cards'**
+  String get dashboardLayoutSubtitle;
+
+  /// Dashboard layout option: cards organized into labelled categories (Core chemistry, Nutrients, Ratios, Environment).
+  ///
+  /// In en, this message translates to:
+  /// **'Grouped'**
+  String get dashboardLayoutGrouped;
+
+  /// Dashboard layout option: the original single list of cards in one custom order.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get dashboardLayoutClassic;
+
   /// No description provided for @healthDisplayTitle.
   ///
   /// In en, this message translates to:

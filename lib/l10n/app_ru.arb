@@ -576,6 +576,11 @@
   "aiSummaryMicroHeading": "Микроэлементы (последние измеренные значения)",
 
   "dashboardSection": "Панель",
+  "dashboardLayoutTitle": "Вид панели",
+  "dashboardLayoutSubtitle": "Как расположены карточки на вкладке «Измерения»",
+  "dashboardLayoutGrouped": "По группам",
+  "dashboardLayoutClassic": "Классический",
+
   "healthDisplayTitle": "Состояние аквариума",
   "healthDisplaySubtitle": "Где показывать сводку состояния",
   "healthDisplayBoth": "Значок и карточка",

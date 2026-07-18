@@ -23,6 +23,17 @@ import '../../widgets/trend_view.dart';
 import '../../widgets/zone_visuals.dart';
 import '../micro/micro_summary_tile.dart';
 
+/// One built dashboard card plus both ordering keys, so the classic and
+/// grouped layouts share a single tile-construction pass (see [DashboardBody]):
+/// [groupedKey] drives the sectioned layout (#6), [flatOrder] the original
+/// single user-ordered grid.
+typedef _DashEntry = ({
+  DashboardSection section,
+  DashboardSortKey groupedKey,
+  double flatOrder,
+  Widget tile,
+});
+
 /// Grid of parameter status tiles for the active tank. Hosted by `HomeShell`,
 /// which owns the surrounding `Scaffold`, app bar, bottom navigation and FAB.
 class DashboardBody extends ConsumerWidget {
@@ -57,19 +68,21 @@ class DashboardBody extends ConsumerWidget {
           (byParam[r.paramKey] ??= []).add(r); // already newest-first
         }
 
-        // Partition the dashboard cards into the fixed sections (#6):
-        // measurement tiles by their catalog group, ratio tiles into their own
-        // section — then sort each section by the shared display order (the
-        // composite key's section rank is the partition itself).
-        final sections =
-            <DashboardSection, List<({DashboardSortKey key, Widget tile})>>{};
+        // Build every dashboard card once — a measurement tile per enabled
+        // core param, a tile per visible ratio — carrying BOTH ordering keys:
+        // the grouped composite key (#6) and the flat shared display order
+        // (the pre-#6 model). The dashboard-layout setting then picks which to
+        // use, so the two layouts share one tile-construction pass.
         // Core parameters only: microelements (U17) live behind the summary
         // tile appended below, not as individual dashboard tiles.
+        final entries = <_DashEntry>[];
         for (final param in tracked.where(
           (t) => t.enabled && isCoreParam(t.paramKey),
         )) {
-          (sections[sectionOfParam(param.paramKey)] ??= []).add((
-            key: paramSortKey(param.paramKey, param.displayOrder),
+          entries.add((
+            section: sectionOfParam(param.paramKey),
+            groupedKey: paramSortKey(param.paramKey, param.displayOrder),
+            flatOrder: param.displayOrder.toDouble(),
             tile: _ParameterTile(
               param: param,
               history: byParam[param.paramKey] ?? const [],
@@ -100,8 +113,10 @@ class DashboardBody extends ConsumerWidget {
           // instead of confidently zone-colored (#32).
           final stale =
               series.isNotEmpty && latestRatio(numHist, denHist) == null;
-          (sections[DashboardSection.ratios] ??= []).add((
-            key: ratioSortKey(kind, row),
+          entries.add((
+            section: DashboardSection.ratios,
+            groupedKey: ratioSortKey(kind, row),
+            flatOrder: ratioRowOrder(kind, row),
             tile: _RatioTile(
               kind: kind,
               points: series,
@@ -110,12 +125,12 @@ class DashboardBody extends ConsumerWidget {
             ),
           ));
         }
-        for (final items in sections.values) {
-          items.sort((a, b) => a.key.compareTo(b.key));
-        }
 
-        if (sections.isEmpty) return const _NoParamsView();
+        if (entries.isEmpty) return const _NoParamsView();
 
+        final layout =
+            ref.watch(dashboardLayoutProvider).value ?? DashboardLayout.grouped;
+        final microEnabled = ref.watch(microEnabledProvider).value ?? true;
         final display =
             ref.watch(healthDisplayProvider).value ?? HealthDisplay.both;
 
@@ -128,42 +143,16 @@ class DashboardBody extends ConsumerWidget {
             const SliverToBoxAdapter(child: InsightsCard()),
           ],
         ];
-        // Sections render in the enum's fixed order; a section with nothing
-        // to show renders nothing at all, header included. The `other` bucket
-        // (unknown legacy keys) is headerless — `dashSectionLabel` is null.
-        for (final section in DashboardSection.values) {
-          final items = sections[section];
-          if (items == null) continue;
-          final label = l.dashSectionLabel(section);
-          if (label != null) {
-            slivers.add(
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                sliver: SliverToBoxAdapter(child: SectionHeader(label)),
-              ),
-            );
-          }
-          slivers.add(
-            SliverPadding(
-              // Headerless sections carry their own top gap (a header brings
-              // its 16 px margin).
-              padding: EdgeInsets.fromLTRB(12, label == null ? 12 : 0, 12, 0),
-              sliver: _tileGrid(context, [for (final it in items) it.tile]),
-            ),
-          );
-        }
 
-        // The Microelements front door (U17): one summary tile pinned after
-        // every section — it advertises the panel; before any measurement it
-        // reads "No readings". Gated here (not inside the tile) so the
-        // Settings switch removes the grid *cell*, not just its content;
-        // measurements stay stored while hidden.
-        if (ref.watch(microEnabledProvider).value ?? true) {
-          slivers.add(
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              sliver: _tileGrid(context, const [MicroSummaryTile()]),
-            ),
+        if (layout == DashboardLayout.classic) {
+          _appendClassic(context, slivers, entries, microEnabled: microEnabled);
+        } else {
+          _appendGrouped(
+            context,
+            l,
+            slivers,
+            entries,
+            microEnabled: microEnabled,
           );
         }
 
@@ -181,21 +170,142 @@ class DashboardBody extends ConsumerWidget {
     );
   }
 
-  /// One section's tile grid — the same cell geometry the pre-#6 single grid
-  /// used, so the tiles themselves render unchanged.
-  SliverGrid _tileGrid(BuildContext context, List<Widget> tiles) =>
-      SliverGrid.builder(
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 219,
-          // The tile is mostly stacked text, so its height must grow with the
-          // system font scale or it clips at 1.3–2.0× (#44).
-          mainAxisExtent: MediaQuery.textScalerOf(context).scale(143),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+  /// Classic layout: the original single grid mixing measurements and ratios
+  /// in one user-managed order, with the Microelements tile (U17) pinned as
+  /// the last cell. All future visual work targets the grouped layout instead.
+  void _appendClassic(
+    BuildContext context,
+    List<Widget> slivers,
+    List<_DashEntry> entries, {
+    required bool microEnabled,
+  }) {
+    final sorted = [...entries]
+      ..sort((a, b) => a.flatOrder.compareTo(b.flatOrder));
+    final tiles = [
+      for (final e in sorted) e.tile,
+      if (microEnabled) const MicroSummaryTile(),
+    ];
+    slivers.add(
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+        sliver: _tileGrid(context, tiles),
+      ),
+    );
+  }
+
+  /// Grouped layout (#6): one section per non-empty group, each under its
+  /// header, in the enum's fixed order; a section with nothing to show renders
+  /// nothing at all, header included. The `other` bucket (unknown legacy keys)
+  /// and the pinned Microelements tile are headerless.
+  void _appendGrouped(
+    BuildContext context,
+    AppLocalizations l,
+    List<Widget> slivers,
+    List<_DashEntry> entries, {
+    required bool microEnabled,
+  }) {
+    // Sorting by the composite key (section rank first) then partitioning keeps
+    // each section's tiles in their within-section display order.
+    final sorted = [...entries]
+      ..sort((a, b) => a.groupedKey.compareTo(b.groupedKey));
+    final bySection = <DashboardSection, List<Widget>>{};
+    for (final e in sorted) {
+      (bySection[e.section] ??= []).add(e.tile);
+    }
+    for (final section in DashboardSection.values) {
+      final tiles = bySection[section];
+      if (tiles == null) continue;
+      final label = l.dashSectionLabel(section);
+      if (label != null) {
+        slivers.add(
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            sliver: SliverToBoxAdapter(child: SectionHeader(label)),
+          ),
+        );
+      }
+      slivers.add(
+        SliverPadding(
+          // Headerless sections carry their own top gap (a header brings its
+          // 16 px margin).
+          padding: EdgeInsets.fromLTRB(12, label == null ? 12 : 0, 12, 0),
+          sliver: _tileGrid(context, tiles),
         ),
-        itemCount: tiles.length,
-        itemBuilder: (context, i) => tiles[i],
       );
+    }
+    // The Microelements front door (U17): one summary tile pinned after every
+    // section, under its own "Microelements" header. The header is visually
+    // redundant (the section is always a single card) but gives it the same
+    // footing as the other sections and separates it from Environment. Gated
+    // here (not inside the tile) so the Settings switch removes the whole
+    // section, not just its content; measurements stay stored.
+    if (microEnabled) {
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          sliver: SliverToBoxAdapter(child: SectionHeader(l.microTitle)),
+        ),
+      );
+      slivers.add(
+        SliverPadding(
+          // The header brings its own 16 px top margin.
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+          sliver: _tileGrid(context, const [MicroSummaryTile()]),
+        ),
+      );
+    }
+  }
+
+  /// One section's tile grid: fixed-size tiles laid out left-to-right, with the
+  /// last row **centered when it isn't full** — including a section that is a
+  /// single lone tile (e.g. the Microelements card, or an odd 3rd tile in a
+  /// 2-column phone grid, or a non-full last row on a wide tablet). Full rows
+  /// consume the width exactly, so `WrapAlignment.center` leaves them flush
+  /// left, aligned with the section header.
+  ///
+  /// Column count and tile width mirror the Material max-extent grid delegate
+  /// (`SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 219)`), so
+  /// full rows keep the exact geometry the pre-centering `SliverGrid` produced.
+  /// A `Wrap` (rather than a `SliverGrid`) is what makes per-row centering
+  /// possible; each section is small (≤ ~4 tiles), so building it eagerly costs
+  /// nothing. The tiles themselves are unchanged.
+  Widget _tileGrid(BuildContext context, List<Widget> tiles) {
+    const spacing = 12.0;
+    const maxExtent = 219.0;
+    // The tile is mostly stacked text, so its height must grow with the system
+    // font scale or it clips at 1.3–2.0× (#44).
+    final height = MediaQuery.textScalerOf(context).scale(143);
+    return SliverToBoxAdapter(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          // Same column formula as SliverGridDelegateWithMaxCrossAxisExtent:
+          // ceil so tiles never exceed maxExtent, floored at 1, then split the
+          // remaining width evenly. Full rows then total exactly `width`, so
+          // centering is a no-op for them and only a short last row shifts.
+          var columns = (width / (maxExtent + spacing)).ceil();
+          if (columns < 1) columns = 1;
+          final tileWidth = (width - spacing * (columns - 1)) / columns;
+          // Force the Wrap to the full width so `WrapAlignment.center` centers
+          // every partial run against the section, not against its own
+          // shrink-wrapped width — otherwise a lone tile (e.g. Microelements)
+          // would collapse to tile width and sit left-aligned.
+          return SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              alignment: WrapAlignment.center,
+              children: [
+                for (final tile in tiles)
+                  SizedBox(width: tileWidth, height: height, child: tile),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 /// Dashboard tile for a [RatioKind], laid out identically to [_ParameterTile]:

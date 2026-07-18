@@ -174,6 +174,31 @@ void main() {
       await settings.setStabilityWindow(90);
       expect(await settings.watchStabilityWindow().first, 90);
     });
+
+    test('dashboard layout defaults to grouped and round-trips (#6)', () async {
+      // Unset / unknown → grouped (the new categorized layout is the default
+      // and the target of future work).
+      expect(AppSettings.decodeDashboardLayout(null), DashboardLayout.grouped);
+      expect(
+        AppSettings.decodeDashboardLayout('nonsense'),
+        DashboardLayout.grouped,
+      );
+      expect(
+        AppSettings.decodeDashboardLayout('classic'),
+        DashboardLayout.classic,
+      );
+
+      expect(
+        await settings.watchDashboardLayout().first,
+        DashboardLayout.grouped,
+      );
+      await settings.setDashboardLayout(DashboardLayout.classic);
+      expect(
+        await settings.watchDashboardLayout().first,
+        DashboardLayout.classic,
+      );
+      expect(await db.getSetting(kDashboardLayoutKey), 'classic');
+    });
   });
 
   group('SettingKey registry', () {

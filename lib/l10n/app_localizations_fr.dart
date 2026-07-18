@@ -1997,6 +1997,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dashboardSection => 'Tableau de bord';
 
   @override
+  String get dashboardLayoutTitle => 'Disposition du tableau de bord';
+
+  @override
+  String get dashboardLayoutSubtitle =>
+      'Comment les cartes sont organisées dans l\'onglet Mesures';
+
+  @override
+  String get dashboardLayoutGrouped => 'Groupé';
+
+  @override
+  String get dashboardLayoutClassic => 'Classique';
+
+  @override
   String get healthDisplayTitle => 'Santé du bac';
 
   @override

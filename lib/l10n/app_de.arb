@@ -576,6 +576,11 @@
   "aiSummaryMicroHeading": "Spurenelemente (zuletzt gemessene Werte)",
 
   "dashboardSection": "Dashboard",
+  "dashboardLayoutTitle": "Dashboard-Layout",
+  "dashboardLayoutSubtitle": "Wie die Karten im Tab „Messungen“ angeordnet werden",
+  "dashboardLayoutGrouped": "Gruppiert",
+  "dashboardLayoutClassic": "Klassisch",
+
   "healthDisplayTitle": "Beckenzustand",
   "healthDisplaySubtitle": "Wo die Zustandsübersicht erscheint",
   "healthDisplayBoth": "Abzeichen & Karte",

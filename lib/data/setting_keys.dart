@@ -18,6 +18,7 @@ const kTrendEnabledKey = 'trend_enabled';
 const kTrendWindowKey = 'trend_window';
 const kTrendHorizonKey = 'trend_horizon';
 const kHealthDisplayKey = 'health_display';
+const kDashboardLayoutKey = 'dashboard_layout';
 const kStabilityWindowKey = 'stability_window';
 const kAiSummaryWeeksKey = 'ai_summary_weeks';
 const kTourSeenKey = 'tour_v1_seen';

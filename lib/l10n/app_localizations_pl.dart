@@ -2025,6 +2025,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get dashboardSection => 'Pulpit';
 
   @override
+  String get dashboardLayoutTitle => 'Układ pulpitu';
+
+  @override
+  String get dashboardLayoutSubtitle =>
+      'Jak karty są ułożone na karcie Pomiary';
+
+  @override
+  String get dashboardLayoutGrouped => 'Grupowany';
+
+  @override
+  String get dashboardLayoutClassic => 'Klasyczny';
+
+  @override
   String get healthDisplayTitle => 'Kondycja zbiornika';
 
   @override

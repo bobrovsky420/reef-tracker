@@ -859,6 +859,20 @@
   "aiSummaryMicroHeading": "Trace elements (latest measured values)",
 
   "dashboardSection": "Dashboard",
+  "dashboardLayoutTitle": "Dashboard layout",
+  "@dashboardLayoutTitle": {
+    "description": "Settings row title for choosing how the Measurements dashboard arranges its cards."
+  },
+  "dashboardLayoutSubtitle": "How the Measurements tab arranges cards",
+  "dashboardLayoutGrouped": "Grouped",
+  "@dashboardLayoutGrouped": {
+    "description": "Dashboard layout option: cards organized into labelled categories (Core chemistry, Nutrients, Ratios, Environment)."
+  },
+  "dashboardLayoutClassic": "Classic",
+  "@dashboardLayoutClassic": {
+    "description": "Dashboard layout option: the original single list of cards in one custom order."
+  },
+
   "healthDisplayTitle": "Tank health",
   "healthDisplaySubtitle": "Where to show the health summary",
   "healthDisplayBoth": "Badge & card",

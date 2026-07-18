@@ -110,6 +110,29 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(),
           _SectionHeader(l.dashboardSection),
           ListTile(
+            leading: const Icon(Icons.dashboard_customize),
+            title: Text(l.dashboardLayoutTitle),
+            subtitle: Text(l.dashboardLayoutSubtitle),
+            trailing: DropdownButton<DashboardLayout>(
+              value:
+                  ref.watch(dashboardLayoutProvider).value ??
+                  DashboardLayout.grouped,
+              underline: const SizedBox.shrink(),
+              onChanged: (v) =>
+                  v == null ? null : settings.setDashboardLayout(v),
+              items: [
+                DropdownMenuItem(
+                  value: DashboardLayout.grouped,
+                  child: Text(l.dashboardLayoutGrouped),
+                ),
+                DropdownMenuItem(
+                  value: DashboardLayout.classic,
+                  child: Text(l.dashboardLayoutClassic),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.speed),
             title: Text(l.healthDisplayTitle),
             subtitle: Text(l.healthDisplaySubtitle),

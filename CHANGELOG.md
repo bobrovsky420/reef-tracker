@@ -5,7 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.30.0] - 2026-07-17
+## [0.30.0] - 2026-07-18
+
+### Added
+- Settings → Dashboard now has a **Dashboard layout** choice: "Grouped" (the
+  new categorized sections, default) or "Classic" (the original single list of
+  cards in one custom order). The choice also switches the Compare graphs view
+  and the Manage Parameters list to match, so the whole Measurements tab stays
+  consistent. Future visual improvements land in the grouped layout.
 
 ### Changed
 - The dashboard is now grouped into fixed sections — Core chemistry
@@ -18,7 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Parameters now mirrors the dashboard exactly and shows each row's section;
   reordering within a section still works, and dragging a row past a section
   boundary settles it at the top or bottom of its own section rather than
-  crossing into the next one.
+  crossing into the next one. (The original flat layout stays available via the
+  new Dashboard layout setting above.)
+- Dashboard cards whose last row isn't full — an odd third card in a
+  two-column phone grid, a lone card like Microelements, or a partly-filled
+  last row on a tablet — are now centered instead of left-aligned, in both the
+  grouped and classic layouts.
+- In the grouped layout, the Microelements card now sits under its own
+  "Microelements" section header, so it's visually separated from the
+  Environment section like every other section.
 - The dashboard health card takes on the redesign's score-card look: larger
   health (72 px) and stability (60 px) rings drawn over a neutral track with
   the score in the new monospace numerals, the grade word colored by the

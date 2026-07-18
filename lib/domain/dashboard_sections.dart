@@ -21,7 +21,7 @@ enum DashboardSection { coreChemistry, nutrients, ratios, environment, other }
 /// reach the dashboard grid.
 DashboardSection sectionOfParam(String paramKey) =>
     switch (kParameterByKey[paramKey]?.dashboardGroup) {
-      DashboardGroup.coreChemistry => DashboardSection.coreChemistry,
+      DashboardGroup.core => DashboardSection.coreChemistry,
       DashboardGroup.nutrients => DashboardSection.nutrients,
       DashboardGroup.environment => DashboardSection.environment,
       null => DashboardSection.other,

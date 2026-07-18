@@ -16,9 +16,9 @@
 #  - `decimals` = display precision (0–4).
 #  - `category`: core (dashboard; the default when omitted), major, trace or
 #    contaminant (the latter three = the Microelements screen, U17).
-#  - `dashboardGroup` = the fixed dashboard section a core parameter renders
-#    in (REDESIGN #6): coreChemistry, nutrients or environment. REQUIRED for
-#    core parameters, forbidden for microelements.
+#  - `group` = the fixed dashboard section a core parameter renders in
+#    (REDESIGN #6): core, nutrients or environment. REQUIRED for core
+#    parameters, forbidden for microelements.
 #  - `symbol` = chemical element symbol ("Zn"), REQUIRED for microelements so
 #    rows match an ICP report; omit for core parameters.
 #  - `displayFactor` = canonical→display multiplier (default 1). Storage stays
@@ -34,7 +34,7 @@ parameters:
   - key: temperature
     unit: "°C"
     decimals: 1
-    dashboardGroup: environment
+    group: environment
     minValue: 0
     plausibleMin: 10
     plausibleMax: 40
@@ -42,7 +42,7 @@ parameters:
   - key: ph
     unit: pH
     decimals: 2
-    dashboardGroup: environment
+    group: environment
     minValue: 0
     plausibleMin: 5
     plausibleMax: 10
@@ -50,7 +50,7 @@ parameters:
   - key: salinity
     unit: SG
     decimals: 3
-    dashboardGroup: environment
+    group: environment
     minValue: 1.0
     plausibleMin: 1.0
     plausibleMax: 1.05
@@ -58,7 +58,7 @@ parameters:
   - key: alkalinity
     unit: dKH
     decimals: 1
-    dashboardGroup: coreChemistry
+    group: core
     minValue: 0
     plausibleMin: 0
     plausibleMax: 30
@@ -66,7 +66,7 @@ parameters:
   - key: calcium
     unit: ppm
     decimals: 0
-    dashboardGroup: coreChemistry
+    group: core
     minValue: 0
     plausibleMin: 100
     plausibleMax: 1000
@@ -74,7 +74,7 @@ parameters:
   - key: magnesium
     unit: ppm
     decimals: 0
-    dashboardGroup: coreChemistry
+    group: core
     minValue: 0
     plausibleMin: 800
     plausibleMax: 2000
@@ -82,7 +82,7 @@ parameters:
   - key: nitrate
     unit: ppm
     decimals: 1
-    dashboardGroup: nutrients
+    group: nutrients
     minValue: 0
     plausibleMin: 0
     plausibleMax: 250
@@ -90,7 +90,7 @@ parameters:
   - key: phosphate
     unit: ppm
     decimals: 2
-    dashboardGroup: nutrients
+    group: nutrients
     minValue: 0
     plausibleMin: 0
     plausibleMax: 5
@@ -98,7 +98,7 @@ parameters:
   - key: ammonia
     unit: ppm
     decimals: 2
-    dashboardGroup: nutrients
+    group: nutrients
     minValue: 0
     plausibleMin: 0
     plausibleMax: 10
@@ -106,7 +106,7 @@ parameters:
   - key: nitrite
     unit: ppm
     decimals: 2
-    dashboardGroup: nutrients
+    group: nutrients
     minValue: 0
     plausibleMin: 0
     plausibleMax: 10
@@ -115,7 +115,7 @@ parameters:
   - key: orp
     unit: mV
     decimals: 0
-    dashboardGroup: environment
+    group: environment
     plausibleMin: -300
     plausibleMax: 700
 

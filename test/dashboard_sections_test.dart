@@ -119,7 +119,7 @@ void main() {
         'core parameter', () {
       for (final p in kReefParameters.where((p) => !p.isMicro)) {
         final expected = switch (p.dashboardGroup!) {
-          DashboardGroup.coreChemistry => DashboardSection.coreChemistry,
+          DashboardGroup.core => DashboardSection.coreChemistry,
           DashboardGroup.nutrients => DashboardSection.nutrients,
           DashboardGroup.environment => DashboardSection.environment,
         };

@@ -576,6 +576,11 @@
   "aiSummaryMicroHeading": "Pierwiastki śladowe (ostatnie zmierzone wartości)",
 
   "dashboardSection": "Pulpit",
+  "dashboardLayoutTitle": "Układ pulpitu",
+  "dashboardLayoutSubtitle": "Jak karty są ułożone na karcie Pomiary",
+  "dashboardLayoutGrouped": "Grupowany",
+  "dashboardLayoutClassic": "Klasyczny",
+
   "healthDisplayTitle": "Kondycja zbiornika",
   "healthDisplaySubtitle": "Gdzie pokazać podsumowanie kondycji",
   "healthDisplayBoth": "Odznaka i karta",

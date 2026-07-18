@@ -29,6 +29,7 @@ import '../domain/zones.dart';
 export '../data/settings.dart'
     show
         HealthDisplay,
+        DashboardLayout,
         AppEdition,
         AppSettings,
         SettingKey,
@@ -669,6 +670,14 @@ final trendEnabledProvider = _setting(
 final healthDisplayProvider = _setting(
   SettingKey.healthDisplay,
   AppSettings.decodeHealthDisplay,
+);
+
+/// How the main dashboard organizes its cards — grouped sections (REDESIGN #6)
+/// vs the original flat grid. Also drives the compare view's ordering and the
+/// Manage Parameters list. Defaults to [DashboardLayout.grouped].
+final dashboardLayoutProvider = _setting(
+  SettingKey.dashboardLayout,
+  AppSettings.decodeDashboardLayout,
 );
 
 /// Number of most-recent readings that define a trend (also the minimum count

@@ -576,6 +576,11 @@
   "aiSummaryMicroHeading": "Oligo-éléments (dernières valeurs mesurées)",
 
   "dashboardSection": "Tableau de bord",
+  "dashboardLayoutTitle": "Disposition du tableau de bord",
+  "dashboardLayoutSubtitle": "Comment les cartes sont organisées dans l'onglet Mesures",
+  "dashboardLayoutGrouped": "Groupé",
+  "dashboardLayoutClassic": "Classique",
+
   "healthDisplayTitle": "Santé du bac",
   "healthDisplaySubtitle": "Où afficher le résumé de santé",
   "healthDisplayBoth": "Badge et carte",

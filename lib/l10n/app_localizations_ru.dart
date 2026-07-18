@@ -2019,6 +2019,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dashboardSection => 'Панель';
 
   @override
+  String get dashboardLayoutTitle => 'Вид панели';
+
+  @override
+  String get dashboardLayoutSubtitle =>
+      'Как расположены карточки на вкладке «Измерения»';
+
+  @override
+  String get dashboardLayoutGrouped => 'По группам';
+
+  @override
+  String get dashboardLayoutClassic => 'Классический';
+
+  @override
   String get healthDisplayTitle => 'Состояние аквариума';
 
   @override

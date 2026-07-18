@@ -1984,6 +1984,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardSection => 'Dashboard';
 
   @override
+  String get dashboardLayoutTitle => 'Dashboard layout';
+
+  @override
+  String get dashboardLayoutSubtitle =>
+      'How the Measurements tab arranges cards';
+
+  @override
+  String get dashboardLayoutGrouped => 'Grouped';
+
+  @override
+  String get dashboardLayoutClassic => 'Classic';
+
+  @override
   String get healthDisplayTitle => 'Tank health';
 
   @override
