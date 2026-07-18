@@ -10,6 +10,7 @@ import '../../domain/ro.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_sheet.dart';
 import '../../widgets/zone_visuals.dart';
 import '../actions/schedule_screen.dart' show dueText;
 
@@ -436,6 +437,7 @@ Future<void> _showStageSheet(
   final outcome = await showModalBottomSheet<_StageOutcome>(
     context: context,
     isScrollControlled: true,
+    showDragHandle: true,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
       child: _StageSheet(stage: stage),
@@ -572,12 +574,10 @@ class _StageSheetState extends State<_StageSheet> {
         key: _formKey,
         child: ListView(
           shrinkWrap: true,
-          padding: const EdgeInsets.all(16),
+          // No top inset — the sheet's drag handle already provides it.
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           children: [
-            Text(
-              editing ? l.roEditStage : l.roAddStage,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            ReefSheetHeader(editing ? l.roEditStage : l.roAddStage),
             const SizedBox(height: 16),
             DropdownButtonFormField<RoStageType>(
               initialValue: _type,

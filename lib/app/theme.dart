@@ -95,6 +95,16 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
   /// Base style for numeric values; `copyWith` size/weight/color at use sites.
   static const TextStyle monoTextStyle = TextStyle(fontFamily: monoFamily);
 
+  /// Entry style for numeric form fields (REDESIGN #18): the mono family at
+  /// the M3 default input size. Screens pass it as `TextField.style` on
+  /// numeric fields (bounds, doses, volumes, reading values, calculator I/O)
+  /// so typed numerals match the rendered ones app-wide.
+  static const TextStyle monoInputStyle = TextStyle(
+    fontFamily: monoFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+  );
+
   /// The scaffold background (REDESIGN §2.1): a vertical gradient fading
   /// `scaffoldTop` → `scaffoldBody` within the top 14%, flat below. Painted
   /// app-wide by `widgets/reef_background.dart` and behind each sliding route
@@ -357,6 +367,14 @@ OutlinedBorder reefIconButtonShape(TargetPlatform platform) =>
     ? RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(9))
     : const CircleBorder();
 
+/// Primary-action shape per platform dialect (§2.3's FAB row: stadium pill on
+/// iOS, r16 on Android). Shared by the FAB and `FilledButton` themes so every
+/// primary button and FAB agree on the silhouette (REDESIGN #18).
+OutlinedBorder reefPrimaryActionShape(TargetPlatform platform) =>
+    reefCupertinoDialect(platform)
+    ? const StadiumBorder()
+    : RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
+
 /// The Cupertino-dialect route transition: the standard iOS slide with the
 /// app background gradient painted behind each route. Scaffolds are
 /// transparent over the shared `ReefBackground` (REDESIGN #2), but the
@@ -416,8 +434,14 @@ class _ReefSwitchAdaptation extends Adaptation<SwitchThemeData> {
 ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
   final dark = brightness == Brightness.dark;
   final tokens = dark ? ReefTokens.dark : ReefTokens.light;
+  final scheme = dark ? _darkScheme : _lightScheme;
+  OutlineInputBorder inputBorder(Color color, double width) =>
+      OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide(color: color, width: width),
+      );
   return ThemeData(
-    colorScheme: dark ? _darkScheme : _lightScheme,
+    colorScheme: scheme,
     platform: platform,
     // Card language (REDESIGN #2): flat `surface` + 1 px `surfaceBorder` at
     // the platform radius. This restyles every plain `Card`; the exact
@@ -501,15 +525,54 @@ ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: tokens.primary,
       foregroundColor: tokens.onPrimary,
-      shape: switch (platform) {
-        TargetPlatform.iOS || TargetPlatform.macOS => const StadiumBorder(),
-        _ => RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      },
+      shape: reefPrimaryActionShape(platform),
       extendedTextStyle: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w700,
       ),
       extendedSizeConstraints: const BoxConstraints.tightFor(height: 48),
+    ),
+    // Forms (REDESIGN #18): the one input treatment for every text field and
+    // dropdown app-wide — M3 outlined, restyled from the tokens (r12,
+    // `surfaceBorder` at rest, 2 px `primary` focused, `surface` fill).
+    // Fields that never set a local `border:` (tank editor, ZoneBoundsEditor)
+    // pick this up too — the pre-redesign underline is retired. `error` stays
+    // the validation color per the #1 slot rules.
+    inputDecorationTheme: InputDecorationThemeData(
+      filled: true,
+      fillColor: tokens.surface,
+      border: inputBorder(tokens.surfaceBorder, 1),
+      enabledBorder: inputBorder(tokens.surfaceBorder, 1),
+      focusedBorder: inputBorder(tokens.primary, 2),
+      errorBorder: inputBorder(scheme.error, 1),
+      focusedErrorBorder: inputBorder(scheme.error, 2),
+      disabledBorder: inputBorder(tokens.track, 1),
+      labelStyle: TextStyle(color: tokens.textDim),
+      floatingLabelStyle: WidgetStateTextStyle.resolveWith(
+        (states) => TextStyle(
+          color: states.contains(WidgetState.error)
+              ? scheme.error
+              : states.contains(WidgetState.focused)
+              ? tokens.primary
+              : tokens.textDim,
+        ),
+      ),
+      hintStyle: TextStyle(color: tokens.textFaint),
+      helperStyle: TextStyle(color: tokens.textFaint),
+      prefixStyle: TextStyle(color: tokens.textFaint),
+      suffixStyle: TextStyle(color: tokens.textFaint),
+    ),
+    // Primary buttons (REDESIGN #18): every `FilledButton` — editor saves,
+    // dialog confirms — carries the FAB's w700 label and platform silhouette.
+    // Colors are deliberately not set here: they already come from the
+    // token-built ColorScheme, and overriding them in `styleFrom` would lose
+    // the M3 disabled states (the in-button `_saving` spinner convention
+    // relies on them).
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        shape: reefPrimaryActionShape(platform),
+      ),
     ),
     // Switches (REDESIGN #15): call sites use the `.adaptive` constructors.
     // The M3 dialect keeps the default primary track and gains the mock's

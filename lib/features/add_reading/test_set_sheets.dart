@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_sheet.dart';
 
 /// Bottom sheets for creating, editing and managing test sets (U9) — the named
 /// parameter subsets whose chips filter the Add Reading form.
@@ -151,9 +153,8 @@ class _TestSetEditSheetState extends State<_TestSetEditSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              ReefSheetHeader(
                 widget.template == null ? l.newTestSet : l.editTestSet,
-                style: theme.textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -169,11 +170,17 @@ class _TestSetEditSheetState extends State<_TestSetEditSheet> {
               ),
               const SizedBox(height: 8),
               for (final p in widget.params)
-                CheckboxListTile(
+                // Adaptive + explicit token accent (REDESIGN #18): the
+                // Cupertino-shaped checkbox ignores Material theming and
+                // would fall back to iOS system blue; passing the tokens is
+                // dialect-free (on M3 they equal the ColorScheme defaults).
+                CheckboxListTile.adaptive(
                   value: _checked.contains(p.paramKey),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   controlAffinity: ListTileControlAffinity.leading,
+                  activeColor: ReefTokens.of(context).primary,
+                  checkColor: ReefTokens.of(context).onPrimary,
                   title: Text(l.paramName(p.paramKey)),
                   onChanged: (v) => setState(() {
                     if (v ?? false) {
@@ -237,7 +244,7 @@ class _TestSetsManageSheet extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Text(l.manageTestSets, style: theme.textTheme.titleLarge),
+            child: ReefSheetHeader(l.manageTestSets),
           ),
           if (templates.isEmpty)
             Padding(

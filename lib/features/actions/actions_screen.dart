@@ -201,6 +201,7 @@ Future<void> showAddActionSheet(
   }
   final kind = await showModalBottomSheet<_Kind>(
     context: context,
+    showDragHandle: true,
     builder: (ctx) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,

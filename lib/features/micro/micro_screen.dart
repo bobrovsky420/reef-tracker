@@ -188,13 +188,15 @@ class MicroScreen extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final format = await showModalBottomSheet<IcpImportFormat>(
       context: context,
+      showDragHandle: true,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              // No top inset — the sheet's drag handle already provides it.
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
               child: Text(
                 l.icpImportTitle,
                 style: Theme.of(ctx).textTheme.titleMedium,

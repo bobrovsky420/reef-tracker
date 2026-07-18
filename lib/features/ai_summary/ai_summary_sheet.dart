@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/settings.dart';
 import '../../data/tank_summary_export.dart';
 import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/reef_sheet.dart';
 
 /// Opens the "Ask your AI" pre-share sheet (U27) for the active tank.
 Future<void> showAiSummarySheet(BuildContext context) {
@@ -113,12 +115,12 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.auto_awesome_outlined, color: theme.hintColor),
-                  const SizedBox(width: 12),
-                  Text(l.aiSummaryAction, style: theme.textTheme.titleLarge),
-                ],
+              ReefSheetHeader(
+                l.aiSummaryAction,
+                leading: Icon(
+                  Icons.auto_awesome_outlined,
+                  color: ReefTokens.of(context).textDim,
+                ),
               ),
               const SizedBox(height: 4),
               Text(

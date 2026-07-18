@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_sheet.dart';
 
 /// Bottom sheets for creating, editing and managing microelement views (U17)
 /// — the named element subsets whose chips filter the Microelements screen.
@@ -148,9 +150,8 @@ class _MicroViewEditSheetState extends State<_MicroViewEditSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              ReefSheetHeader(
                 widget.view == null ? l.microViewNew : l.microViewEdit,
-                style: theme.textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -172,11 +173,17 @@ class _MicroViewEditSheetState extends State<_MicroViewEditSheet> {
                 ),
                 for (final d in kMicroParameters)
                   if (d.category == category)
-                    CheckboxListTile(
+                    // Adaptive + explicit token accent (REDESIGN #18): the
+                    // Cupertino-shaped checkbox ignores Material theming and
+                    // would fall back to iOS system blue; passing the tokens
+                    // is dialect-free (on M3 they equal the scheme defaults).
+                    CheckboxListTile.adaptive(
                       value: _checked.contains(d.key),
                       dense: true,
                       contentPadding: EdgeInsets.zero,
                       controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: ReefTokens.of(context).primary,
+                      checkColor: ReefTokens.of(context).onPrimary,
                       title: Text(l.paramName(d.key)),
                       onChanged: (v) => setState(() {
                         if (v ?? false) {
@@ -233,7 +240,7 @@ class _MicroViewsManageSheet extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Text(l.microViewManage, style: theme.textTheme.titleLarge),
+            child: ReefSheetHeader(l.microViewManage),
           ),
           if (views.isEmpty)
             Padding(

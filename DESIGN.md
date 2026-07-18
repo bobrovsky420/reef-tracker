@@ -1023,6 +1023,32 @@ chip — opaque `surfaceContainerHighest` in dark, where the translucent
 check icon); and the **Settings dialect** (`widgets/reef_settings.dart`, see
 Settings below).
 
+**Forms & sheets foundation (REDESIGN #18).** One theme-level treatment for
+every form surface, so per-screen restyles are structural only. **Inputs:**
+`buildReefTheme` sets an `InputDecorationThemeData` — M3 outlined at r12,
+1 px `surfaceBorder` at rest, 2 px `primary` focused, `surface` fill,
+`textDim` labels (`primary` when floating focused), `textFaint`
+hints/helper/prefix/suffix. Every text field and dropdown rides it; fields
+must not set a local `border:` treatment (the pre-redesign underline
+stragglers — tank editor, `ZoneBoundsEditor` — now inherit the outline
+precisely because they never did). Validation borders/labels use the
+`ColorScheme.error` slot per the slot rules above. Numeric fields opt into
+`ReefTokens.monoInputStyle` (the mono family at input size) via
+`TextField.style` as their screens are restyled. **Primary buttons:** a
+`FilledButtonThemeData` gives every `FilledButton` (editor saves, dialog
+confirms) the w700 label and `reefPrimaryActionShape` — the FAB's silhouette
+(stadium iOS / r16 Android), shared by both themes; colors are deliberately
+left to the ColorScheme so M3 disabled states (the in-button `_saving`
+spinner convention) survive. **Sheets:** modal bottom sheets standardize on
+`showDragHandle: true` plus `widgets/reef_sheet.dart#ReefSheetHeader` (title
+17 w700 in `text`, optional leading icon / trailing action, `Semantics`
+header) instead of ad-hoc `titleLarge` headers. **Checkboxes:** call sites
+use `CheckboxListTile.adaptive` with an explicit widget-level token accent
+(`activeColor`/`checkColor`); unlike switches there is no
+`Adaptation<CheckboxThemeData>` hook — the Cupertino-shaped checkbox ignores
+Material theming entirely, so the accent must ride the widget (dialect-free:
+on M3 the tokens equal the scheme defaults).
+
 Deliberate `ColorScheme` slot meanings (documented in the file): `secondary` =
 violet (carbon-change chart marker), `tertiary` = ocean blue (water-change
 marker, noted-reading dots, informational hints), `error` = darkened coral

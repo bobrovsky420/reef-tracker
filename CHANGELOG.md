@@ -30,6 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   symbol ("Calcium (Ca)", "Nitrate (NO₃)") show just the symbol; names
   without either (Temperature, pH, Salinity, ORP) are unchanged. Lists,
   history and Add reading keep the full names.
+- All form fields across the app now share one restyled treatment: softly
+  rounded outlined fields with the app's surface fill and a teal focus ring,
+  in both light and dark themes. Screens that still used the old underline
+  style (tank editor, safe-range editors) pick up the same look.
+- Bottom sheets are more consistent: every sheet now opens with a drag
+  handle and a bold title (maintenance-task and RO-stage editors, test-set and
+  microelement-view sheets, the AI summary, and the action/import pickers).
+- Primary (filled) buttons — editor saves and dialog confirmations — carry a
+  bolder label and the same silhouette as the floating action buttons: a
+  pill on iOS, rounded corners on Android.
+- iOS: checkboxes in the test-set and microelement-view sheets render in the
+  native iOS style with the app's teal accent. (iOS rendering not yet
+  visually verified on-device; pending the next TestFlight build.)
 
 ## [0.31.1] - 2026-07-18
 

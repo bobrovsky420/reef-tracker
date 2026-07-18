@@ -10,6 +10,7 @@ import '../../domain/reminders.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_segmented.dart';
+import '../../widgets/reef_sheet.dart';
 import 'actions_screen.dart';
 
 /// The user-maintained maintenance schedule (U12), route `/schedule`: recurring
@@ -197,6 +198,7 @@ Future<void> showMaintenanceTaskSheet(
   final outcome = await showModalBottomSheet<_TaskOutcome>(
     context: context,
     isScrollControlled: true,
+    showDragHandle: true,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
       child: _TaskSheet(task: task),
@@ -429,11 +431,11 @@ class _TaskSheetState extends State<_TaskSheet> {
         key: _formKey,
         child: ListView(
           shrinkWrap: true,
-          padding: const EdgeInsets.all(16),
+          // No top inset — the sheet's drag handle already provides it.
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           children: [
-            Text(
+            ReefSheetHeader(
               editing ? l.editMaintenanceTask : l.addMaintenanceTask,
-              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<MaintenanceActionType?>(
