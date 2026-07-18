@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/reminders.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
 import '../ro/ro_summary_tile.dart';
 import 'schedule_screen.dart';
 
@@ -14,6 +16,11 @@ import 'schedule_screen.dart';
 /// for the active tank, newest first, with edit/delete. Hosted by `HomeShell`,
 /// which owns the surrounding `Scaffold`, app bar, bottom navigation and the
 /// add-action FAB (see `showAddActionSheet`).
+///
+/// Layout per REDESIGN #11: the RO summary card, the due chips, and the
+/// history collapsed into one `ReefSliverCard` of hairline-divided rows — all
+/// in a single scroll view (the mockup scrolls the whole tab, not just the
+/// log).
 class ActionsBody extends ConsumerWidget {
   const ActionsBody({super.key});
 
@@ -34,30 +41,53 @@ class ActionsBody extends ConsumerWidget {
     // The shared RO unit's summary (U16) and the maintenance due chips (U12)
     // sit above the log; logging the matching action (or Mark done) resets a
     // chip's timer.
-    return Column(
-      children: [
-        const RoSummaryTile(),
-        const MaintenanceDueChips(),
-        Expanded(
-          child: entries.isEmpty
-              ? Center(child: Text(l.noActions))
-              : ListView.builder(
-                  itemCount: entries.length,
-                  itemBuilder: (context, i) =>
-                      _tile(context, ref, l, entries[i], unit),
+    return CustomScrollView(
+      slivers: [
+        const SliverToBoxAdapter(child: RoSummaryTile()),
+        const SliverToBoxAdapter(child: MaintenanceDueChips()),
+        if (entries.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: Text(l.noActions)),
+          )
+        else
+          SliverPadding(
+            // The bottom inset keeps the last row scrollable past the
+            // translucent tab bar (`extendBody` — a CustomScrollView gets no
+            // automatic MediaQuery inset).
+            padding: EdgeInsets.fromLTRB(
+              12,
+              12,
+              12,
+              12 + MediaQuery.paddingOf(context).bottom,
+            ),
+            sliver: ReefSliverCard(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+              sliver: SliverList.builder(
+                itemCount: entries.length,
+                itemBuilder: (context, i) => _row(
+                  context,
+                  ref,
+                  l,
+                  entries[i],
+                  unit,
+                  isLast: i == entries.length - 1,
                 ),
-        ),
+              ),
+            ),
+          ),
       ],
     );
   }
 
-  Widget _tile(
+  Widget _row(
     BuildContext context,
     WidgetRef ref,
     AppLocalizations l,
     _Entry e,
-    VolumeUnit unit,
-  ) {
+    VolumeUnit unit, {
+    required bool isLast,
+  }) {
     final IconData icon;
     final String title;
     final String? value;
@@ -85,7 +115,8 @@ class ActionsBody extends ConsumerWidget {
     }
     final hasNote = note != null && note.isNotEmpty;
     final date = formatDateTime(context, e.time);
-    final subtitle = value == null ? date : '$value • $date';
+    final subtitle = value == null ? date : '$value · $date';
+    final tokens = ReefTokens.of(context);
 
     return Dismissible(
       key: ValueKey(e.key),
@@ -97,16 +128,52 @@ class ActionsBody extends ConsumerWidget {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: (_) => _deleteWithUndo(context, ref, l, e),
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: Text('$subtitle${hasNote ? '\n$note' : ''}'),
-        isThreeLine: hasNote,
-        trailing: Icon(
-          Icons.chevron_right,
-          color: Theme.of(context).colorScheme.outline,
+      // The rows sit inside the sliver card, whose fill paints over the
+      // scaffold Material — each row brings a transparent Material so its ink
+      // ripples above the card.
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () => _edit(context, ref, e),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+            decoration: isLast
+                ? null
+                : BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: tokens.surfaceBorder),
+                    ),
+                  ),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: tokens.textDim),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: tokens.text,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$subtitle${hasNote ? '\n$note' : ''}',
+                        style: TextStyle(fontSize: 12, color: tokens.textDim),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Icon(Icons.chevron_right, size: 15, color: tokens.textFaint),
+              ],
+            ),
+          ),
         ),
-        onTap: () => _edit(context, ref, e),
       ),
     );
   }

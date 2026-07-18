@@ -861,6 +861,13 @@ The graph:
 - `dosingHistoryProvider` — all dose segments (active + ended, newest first)
   for the history timeline. `ratioSettingsProvider` — per-tank
   `Map<RatioKind.name, RatioVisibility>` for ratio-card visibility/order/bounds.
+- `dosingElementZonesProvider` — `Map<paramKey, Zone>` for the elements
+  targeted by the active dosing entries (REDESIGN #13): latest fresh reading
+  (within `kHealthFreshnessDays`, health's staleness rule) classified against
+  the element's effective bounds (tracked row's, else the micro catalog
+  defaults). A key is absent when the zone can't be honestly stated (no/stale
+  reading, unusable bounds) — the Dosing tab's element tag then renders
+  neutral. Same memoized single-layer derivation as `tankHealthProvider`.
 - `autoBackupEnabledProvider` / `autoBackupIntervalProvider` /
   `lastBackupAtProvider` — see Data → Automatic backup.
 - RO unit (U16): `roStagesProvider` / `roReplacementsProvider` — plain
@@ -940,8 +947,9 @@ the per-dialect active-tab treatment — Android gets the `healthySoft` pill
 wraps the bar in `ClipRect`+`BackdropFilter` (blur σ10) with
 `extendBody: true`, so tab content scrolls behind the frosted bar; scroll
 views inside the tabs must keep their bottom `MediaQuery` inset (plain
-`ListView`s do automatically; the dashboard's `CustomScrollView`, the
-comparison list's explicit padding and the dosing `ReorderableListView` add
+`ListView`s do automatically; the dashboard/Actions/Dosing
+`CustomScrollView`s and the
+comparison list's explicit padding add
 `MediaQuery.paddingOf(context).bottom` themselves). If the blur ever regresses
 frame times on low-end devices, the fallback is an opaque `tabBarBg` (REDESIGN
 open question #5). The 1 px `surfaceBorder` hairline above the bar is a
@@ -968,11 +976,17 @@ sets a `CardThemeData` so every plain `Card` picks up the surface, border and
 radius; the shared `ReefCard` widget additionally paints the two-layer
 light-mode `cardShadow` (none in dark — the border carries the structure) and
 is what the primary cards use: the dashboard parameter/ratio tiles, the
-health header, the insights card and teaser, and the microelements summary
-tile (later redesign phases convert the remaining screens). `ReefCard` takes
+health header, the insights card and teaser, the microelements summary
+tile, the RO summary/alert card and the RO detail's stage card (later
+redesign phases convert the remaining screens). `ReefCard` takes
 optional `onTap` (whole-card ink target), `padding`, `margin`, and
 `color`/`borderColor` overrides for alert-card variants; it has no default
-margin — callers own their spacing. `widgets/section_header.dart`
+margin — callers own their spacing. `ReefSliverCard` is its sliver
+counterpart: a `DecoratedSliver` painting the same card behind a **lazy**
+sliver list, used where a whole scrolling list collapses into one card (the
+Actions log, the Dosing plan — REDESIGN #11/#13); rows inside bring their own
+transparent `Material` (ink must paint above the card fill) and a bottom
+`surfaceBorder` hairline as the divider. `widgets/section_header.dart`
 (`SectionHeader`) is the matching uppercase faint group label rendered between
 card groups (grouped dashboard, restyled Settings — later phases).
 
@@ -1386,6 +1400,11 @@ first. Rendered as the **Actions tab** of the home shell.
 - `actions_screen.dart` — `ActionsBody` merges `waterChangesProvider` +
   `carbonChangesProvider` + `equipmentCleaningsProvider` into one sorted list
   (`_Entry` sealed type: `_WaterEntry` / `_CarbonEntry` / `_EquipmentEntry`).
+  The tab is one `CustomScrollView` (REDESIGN #11): the RO summary card, the
+  maintenance due chips, then the whole log collapsed into a single
+  `ReefSliverCard` of hairline-divided rows (a lazy `SliverList` behind the
+  painted card — each row brings a transparent `Material` so ink/swipe render
+  above the card fill).
   Each row: type icon, type name, value (litres in the display volume unit, or
   grams; none for equipment cleaning), optional note, timestamp; swipe-to-delete
   (`_deleteWithUndo` removes the row immediately and shows an **"Undo" SnackBar**
@@ -1451,9 +1470,10 @@ pattern).
   advance automatically** when the matching action is logged anywhere in the
   app (anchor = newest action-log row); custom plans stamp their own
   `lastDoneAt`. The Actions tab shows a horizontally scrollable **due-chip
-  row** above the log (`maintenanceDueProvider`, most-urgent first, overdue in
-  error color): a typed chip opens the pre-selected add-action dialog, a
-  custom chip marks the task done.
+  row** above the log (`maintenanceDueProvider`, most-urgent first; chips are
+  small surface cards with a `primary` icon, an overdue chip's icon + label in
+  the `critical` token — REDESIGN #11): a typed chip opens the pre-selected
+  add-action dialog, a custom chip marks the task done.
 - Testing/maintenance notifications arrive at the configurable reminder time
   (default 09:00) on the due day; an overdue item is not re-notified — the
   chips carry the overdue state persistently. Dosing notifications use each
@@ -1467,7 +1487,10 @@ unit supplies every aquarium, so its data (`RoStages` +
 app-lifetime streams. Front door: `RoSummaryTile` at the top of **every**
 tank's Actions tab (title + worst-stage status — most urgent amber/red stage
 with its due text, "no replacement recorded yet" while an enabled stage lacks
-its anchor, "all parts OK", or the set-up prompt; red when overdue), tapping
+its anchor, "all parts OK", or the set-up prompt). Rendered per REDESIGN #11:
+an amber/red worst stage turns the card into the mockup's **equipment alert**
+(soft status fill, `cautionBorder`/`criticalBorder` border, status-colored
+icon chip + subtitle); anything else is a normal quiet card. Tapping goes
 through to `/ro`. A **feature switch in Settings** (`ro_unit_enabled`,
 default on) hides the row and silences RO reminders for users without an RO
 unit — a pure visibility preference, the stages and history stay stored.
@@ -1475,11 +1498,14 @@ unit — a pure visibility preference, the stages and history stay stored.
 - **Overview (`ro_screen.dart`).** First visit seeds the typical 4-stage set
   (sediment 3 mo, carbon block 6 mo, membrane 24 mo, DI resin 4 mo — see
   `domain/ro.dart`), guarded by the `ro_stages_seeded` flag so deleting every
-  stage sticks. Each enabled stage renders a card: localized name (custom
-  stages show their title), lifespan ("Every 6 months" — stored plain days,
-  decomposed to the largest whole unit), last-replaced date, a zone-colored
-  **remaining-life progress bar** (`roRemainingFraction` / `roStageZone` via
-  the shared `ZoneVisuals`), the due text, and a **Mark replaced** button —
+  stage sticks. The enabled stages render as **one `ReefCard` of
+  hairline-divided sections** (REDESIGN #12), each: an icon chip + localized
+  name (custom stages show their title), a "lifespan · last replaced" sub
+  line ("Every 6 months" — stored plain days, decomposed to the largest whole
+  unit), a zone-colored **remaining-life progress bar** over the `track`
+  token (`roRemainingFraction` / `roStageZone` via the shared `ZoneVisuals`;
+  overdue clamps to empty), and a footer with the due text (zone color) and
+  an inline **Mark replaced** text button (`primary`) —
   a dialog with a backdatable date (`pickPastDateTime`; the filters may have
   been changed before the phone came out) + optional note, inserting a log
   row with an Undo SnackBar that deletes it (U10 conventions). A stage with
@@ -1631,12 +1657,18 @@ retains the prior period as history (see `DosingEntries` / `DosingState`).
 Rendered as the **Dosing tab** of the home shell.
 
 - `dosing_screen.dart` — `DosingBody` lists the active tank's `dosingEntriesProvider`
-  rows (**active segments only**; `watchDosingEntries` filters on `state`). Each row:
-  a chemistry icon, the product name with a target-element chip, a `vendor · program`
-  line, and a localized dosage/schedule summary (`dosingDetailLine`) — or "No dosage
+  rows (**active segments only**; `watchDosingEntries` filters on `state`),
+  collapsed into one `ReefSliverCard` of hairline-divided rows (REDESIGN #13:
+  a `SliverReorderableList` behind the painted card). Each row:
+  a chemistry icon, the product name with a **target-element tag colored by
+  the element's live zone** (`dosingElementZonesProvider` → soft zone fill +
+  zone text; neutral `track`/`textDim` when the zone is unknowable), a
+  `vendor · program`
+  line, and a localized dosage/schedule summary (`dosingDetailLine`, mono) —
+  or "No dosage
   set" when neither is recorded. Tap a row to edit; **swipe-left to stop**
   (`_confirmStop` → `stopDosingEntry`, a soft-end that keeps the row as history, not
-  a hard delete); drag the handle to reorder (a `ReorderableListView` with explicit
+  a hard delete); drag the handle to reorder (explicit
   drag handles so swipe and drag don't clash, persisting the new order via
   `reorderDosingEntries`). New entries are appended with `max(displayOrder)+1`.
   Helpers here also parse/format the stored weekday list and `HH:mm` time using

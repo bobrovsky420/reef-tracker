@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/ro.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
 import '../../widgets/zone_visuals.dart';
 import '../actions/schedule_screen.dart' show dueText;
 
@@ -65,7 +67,24 @@ class _RoScreenState extends ConsumerState<RoScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
               children: [
-                for (final s in enabled) _StageCard(status: s),
+                // One card, stages as hairline-divided sections (REDESIGN
+                // #12). Sections place their own InkWells, rippling on the
+                // card's Material.
+                if (enabled.isNotEmpty)
+                  ReefCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < enabled.length; i++) ...[
+                          if (i > 0) const _SectionDivider(),
+                          _StageSection(status: enabled[i]),
+                        ],
+                      ],
+                    ),
+                  ),
                 if (hidden.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
@@ -120,107 +139,132 @@ String roLifespanText(AppLocalizations l, int days) {
   return l.dosingEveryDaysN(days);
 }
 
-/// One enabled stage: name, lifespan, last replacement, remaining-life bar
-/// (zone-colored), and the "Mark replaced" action. Tap opens the edit sheet.
-class _StageCard extends ConsumerWidget {
-  const _StageCard({required this.status});
+/// The hairline between stage sections (REDESIGN #12: 18 px breathing room on
+/// both sides of a 1 px `surfaceBorder` line).
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 1,
+    margin: const EdgeInsets.symmetric(vertical: 18),
+    color: ReefTokens.of(context).surfaceBorder,
+  );
+}
+
+/// One enabled stage as a card section (REDESIGN #12): icon chip + name;
+/// "Every N months · Replaced {date}" sub line; remaining-life bar; footer =
+/// due text (zone color) and the inline "Mark replaced" text button. Tap
+/// opens the edit sheet.
+class _StageSection extends ConsumerWidget {
+  const _StageSection({required this.status});
 
   final RoStageStatus status;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final tokens = ReefTokens.of(context);
     final stage = status.stage;
     final due = status.due;
+    final zone = due == null
+        ? null
+        : roStageZone(daysLeft: due.daysLeft, lifespanDays: stage.lifespanDays);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => _showStageSheet(context, ref, stage: stage),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final sub = status.lastReplacedAt == null
+        ? '${roLifespanText(l, stage.lifespanDays)} · ${l.roNoReplacementYet}'
+        : '${roLifespanText(l, stage.lifespanDays)} · '
+              '${l.roLastReplaced(formatDate(status.lastReplacedAt!))}';
+
+    return InkWell(
+      onTap: () => _showStageSheet(context, ref, stage: stage),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(roStageIcon(RoStageType.fromName(stage.stageType))),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l.roStageName(stage.stageType, stage.title),
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                ],
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: tokens.track,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  roStageIcon(RoStageType.fromName(stage.stageType)),
+                  size: 16,
+                  color: tokens.text,
+                ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                status.lastReplacedAt == null
-                    ? '${roLifespanText(l, stage.lifespanDays)} • '
-                          '${l.roNoReplacementYet}'
-                    : '${roLifespanText(l, stage.lifespanDays)} • '
-                          '${l.roLastReplaced(formatDate(status.lastReplacedAt!))}',
-                style: theme.textTheme.bodySmall,
-              ),
-              if (due != null) ...[
-                const SizedBox(height: 8),
-                _RemainingBar(due: due, lifespanDays: stage.lifespanDays),
-              ],
-              Row(
-                children: [
-                  if (due != null)
-                    Text(
-                      dueText(l, due),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: roStageZone(
-                          daysLeft: due.daysLeft,
-                          lifespanDays: stage.lifespanDays,
-                        ).colorOf(context),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  const Spacer(),
-                  TextButton.icon(
-                    icon: const Icon(Icons.check_circle_outline, size: 18),
-                    label: Text(l.roMarkReplaced),
-                    onPressed: () => _markReplaced(context, ref, stage),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l.roStageName(stage.stageType, stage.title),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.text,
                   ),
-                ],
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 2),
+          Padding(
+            // Indented under the title (32 px icon chip + 10 px gap).
+            padding: const EdgeInsets.only(left: 42),
+            child: Text(
+              sub,
+              style: TextStyle(fontSize: 12, color: tokens.textDim),
+            ),
+          ),
+          if (due != null && zone != null) ...[
+            const SizedBox(height: 12),
+            // The remaining-life bar: full right after a replacement,
+            // draining toward the due date; overdue clamps to empty (the
+            // existing fraction clamp — mock width 0).
+            LinearProgressIndicator(
+              value: roRemainingFraction(
+                daysLeft: due.daysLeft,
+                lifespanDays: stage.lifespanDays,
+              ),
+              minHeight: 6,
+              borderRadius: BorderRadius.circular(4),
+              color: zone.colorOf(context),
+              backgroundColor: tokens.track,
+            ),
+          ],
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              if (due != null && zone != null)
+                Text(
+                  dueText(l, due),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: zone.colorOf(context),
+                  ),
+                ),
+              const Spacer(),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: tokens.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 32),
+                  textStyle: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                icon: const Icon(Icons.check_circle_outline, size: 14),
+                label: Text(l.roMarkReplaced),
+                onPressed: () => _markReplaced(context, ref, stage),
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
-}
-
-/// The remaining-life bar: full and green right after a replacement, draining
-/// toward amber inside the warning window and red once overdue.
-class _RemainingBar extends StatelessWidget {
-  const _RemainingBar({required this.due, required this.lifespanDays});
-
-  final ({DateTime dueAt, int daysLeft}) due;
-  final int lifespanDays;
-
-  @override
-  Widget build(BuildContext context) {
-    final zone = roStageZone(
-      daysLeft: due.daysLeft,
-      lifespanDays: lifespanDays,
-    );
-    return LinearProgressIndicator(
-      value: roRemainingFraction(
-        daysLeft: due.daysLeft,
-        lifespanDays: lifespanDays,
-      ),
-      minHeight: 6,
-      borderRadius: BorderRadius.circular(3),
-      color: zone.colorOf(context),
-      backgroundColor: zone.softColorOf(context),
     );
   }
 }

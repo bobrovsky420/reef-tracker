@@ -15,6 +15,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   consistent. Future visual improvements land in the grouped layout.
 
 ### Changed
+- The Actions tab takes on the redesign's card look: the reverse-osmosis
+  summary becomes a real card that turns into a soft-tinted alert (amber or
+  red border and icon) when a filter stage needs attention, the maintenance
+  due chips become small surface cards with teal icons (overdue ones in red),
+  and the action history collapses into a single card with hairline dividers
+  between rows. The whole tab now scrolls as one, and everything still works
+  the same — tap to edit, swipe to delete with Undo, chips log or complete
+  their task.
+- The Reverse osmosis unit screen shows all stages inside one card, divided
+  into sections: icon chip, "Every N months · Replaced {date}" line, a
+  remaining-life bar on a neutral track (empty when overdue), and the due
+  text next to an inline "Mark replaced" button.
+- The Dosing tab collapses into a single card of divided rows — product name,
+  "vendor · program" line, and the dose amount in the new monospace numerals,
+  with reordering and swipe-to-stop unchanged. Each supplement's element tag
+  is now colored by that element's **current status** on the Measurements tab
+  (green/amber/red soft tag); the tag stays neutral gray when the element has
+  no recent reading (older than 30 days — e.g. ICP-cadence trace elements) or
+  no usable ranges.
 - The dashboard is now grouped into fixed sections — Core chemistry
   (alkalinity, calcium, magnesium), Nutrients (nitrate, phosphate, ammonia,
   nitrite), Ratios, and Environment (temperature, pH, salinity, ORP) — each

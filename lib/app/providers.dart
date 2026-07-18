@@ -10,6 +10,7 @@ import '../data/database.dart';
 import '../data/notifications.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/settings.dart';
+import '../domain/clock.dart';
 import '../domain/health_score.dart';
 import '../domain/insights.dart';
 import '../domain/micro.dart';
@@ -235,6 +236,52 @@ final dosingEntriesProvider = Provider<AsyncValue<List<DosingEntry>>>((ref) {
   final tank = ref.watch(activeTankProvider);
   if (tank == null) return const AsyncValue.data([]);
   return ref.watch(_dosingEntriesFamily(tank.id));
+});
+
+/// Live zone of each element targeted by an active dosing entry (REDESIGN
+/// #13), keyed by paramKey — the Dosing tab colors an entry's element tag with
+/// it. Single-layer derivation from the stream wrappers, like
+/// [tankHealthProvider].
+///
+/// A key is *absent* when its zone can't be honestly stated — no reading yet,
+/// no usable bounds, or a reading older than [kHealthFreshnessDays] (health's
+/// staleness rule; ICP-cadence microelements are naturally always stale) —
+/// and the tag renders neutral. Bounds resolve like the micro panel's: the
+/// tracked row's when present, else the catalog's micro defaults (core
+/// elements always have a row — the preset seeds one).
+final dosingElementZonesProvider = Provider<Map<String, Zone>>((ref) {
+  final entries = ref.watch(dosingEntriesProvider).value ?? const [];
+  final keys = {
+    for (final e in entries)
+      if (e.elementKey != null) e.elementKey!,
+  };
+  if (keys.isEmpty) return const {};
+  final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+  final readings = ref.watch(recentReadingsProvider).value ?? const [];
+
+  final rowByKey = {for (final t in tracked) t.paramKey: t};
+  // Latest reading per parameter (readings arrive newest-first).
+  final latest = <String, Reading>{};
+  for (final r in readings) {
+    latest.putIfAbsent(r.paramKey, () => r);
+  }
+
+  final now = DateTime.now();
+  final zones = <String, Zone>{};
+  for (final key in keys) {
+    final reading = latest[key];
+    if (reading == null ||
+        daysSince(reading.takenAt, now: now) > kHealthFreshnessDays) {
+      continue;
+    }
+    final bounds = switch (rowByKey[key]) {
+      final row? => boundsOf(row),
+      null => microDefaultBounds(key),
+    };
+    final zone = bounds.classify(reading.value);
+    if (zone != Zone.unknown) zones[key] = zone;
+  }
+  return zones;
 });
 
 final _dosingHistoryFamily = StreamProvider.autoDispose

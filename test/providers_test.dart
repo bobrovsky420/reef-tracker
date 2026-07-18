@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/health_score.dart';
+import 'package:reeftracker/domain/micro.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/trend.dart';
 import 'package:reeftracker/domain/units.dart';
+import 'package:reeftracker/domain/zones.dart';
 
 /// Pumps the event loop until [cond] holds (or fails the test after ~1 s).
 Future<void> pumpUntil(bool Function() cond) async {
@@ -311,5 +313,104 @@ void main() {
           (container.read(tankReadingsProvider).value ?? const []).isNotEmpty,
     );
     expect(container.read(tankReadingsProvider).value!.single.value, 8.1);
+  });
+
+  group('dosingElementZonesProvider (REDESIGN #13)', () {
+    Future<int> seedTank() async {
+      final tankId = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      await db.setActiveTank(tankId);
+      return tankId;
+    }
+
+    Future<void> addEntry(int tankId, String product, String? element) =>
+        db.insertDosingEntry(
+          DosingEntriesCompanion(
+            tankId: Value(tankId),
+            product: Value(product),
+            elementKey: Value(element),
+          ),
+        );
+
+    test('fresh in-range reading colors the element; entries without a '
+        'reading or element stay absent (neutral tag)', () async {
+      final tankId = await seedTank();
+      await addEntry(tankId, 'Alk Mix', 'alkalinity');
+      await addEntry(tankId, 'Mg Mix', 'magnesium'); // no reading
+      await addEntry(tankId, 'Nutrient reducer', null); // no element
+
+      final alk = (await db.getTrackedParameters(
+        tankId,
+      )).firstWhere((t) => t.paramKey == 'alkalinity');
+      final bounds = boundsOf(alk);
+      await db.insertReading(
+        tankId: tankId,
+        paramKey: 'alkalinity',
+        value: (bounds.greenLow! + bounds.greenHigh!) / 2,
+        takenAt: DateTime.now().subtract(const Duration(days: 1)),
+      );
+
+      final sub = container.listen(dosingElementZonesProvider, (_, _) {});
+      addTearDown(sub.close);
+      await pumpUntil(
+        () => container.read(dosingElementZonesProvider)['alkalinity'] != null,
+      );
+      final zones = container.read(dosingElementZonesProvider);
+      expect(zones['alkalinity'], Zone.green);
+      expect(zones.keys, ['alkalinity']);
+    });
+
+    test('a reading older than the health freshness window maps to no zone',
+        () async {
+      final tankId = await seedTank();
+      await addEntry(tankId, 'Alk Mix', 'alkalinity');
+      final alk = (await db.getTrackedParameters(
+        tankId,
+      )).firstWhere((t) => t.paramKey == 'alkalinity');
+      final bounds = boundsOf(alk);
+      await db.insertReading(
+        tankId: tankId,
+        paramKey: 'alkalinity',
+        value: (bounds.greenLow! + bounds.greenHigh!) / 2,
+        takenAt: DateTime.now().subtract(
+          const Duration(days: kHealthFreshnessDays + 2),
+        ),
+      );
+
+      final sub = container.listen(dosingElementZonesProvider, (_, _) {});
+      addTearDown(sub.close);
+      await pumpUntil(
+        () =>
+            (container.read(dosingEntriesProvider).value?.isNotEmpty ??
+                false) &&
+            (container.read(recentReadingsProvider).value?.isNotEmpty ??
+                false),
+      );
+      expect(container.read(dosingElementZonesProvider), isEmpty);
+    });
+
+    test('an untracked microelement falls back to the catalog default bounds',
+        () async {
+      final tankId = await seedTank();
+      await addEntry(tankId, 'Iodine supplement', 'iodine');
+      // No tracked row exists for iodine (micro rows are created lazily);
+      // beyond the default amber ceiling → red.
+      final bounds = microDefaultBounds('iodine');
+      await db.insertReading(
+        tankId: tankId,
+        paramKey: 'iodine',
+        value: bounds.amberHigh! * 2,
+        takenAt: DateTime.now().subtract(const Duration(days: 1)),
+      );
+
+      final sub = container.listen(dosingElementZonesProvider, (_, _) {});
+      addTearDown(sub.close);
+      await pumpUntil(
+        () => container.read(dosingElementZonesProvider)['iodine'] != null,
+      );
+      expect(container.read(dosingElementZonesProvider)['iodine'], Zone.red);
+    });
   });
 }

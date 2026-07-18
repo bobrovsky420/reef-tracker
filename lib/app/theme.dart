@@ -23,6 +23,7 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
     required this.healthySoft,
     required this.cautionSoft,
     required this.criticalSoft,
+    required this.cautionBorder,
     required this.criticalBorder,
     required this.band,
     required this.track,
@@ -57,7 +58,10 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
   final Color cautionSoft;
   final Color criticalSoft;
 
-  /// Border of the critical (equipment-alert) card.
+  /// Borders of the amber/critical equipment-alert card (REDESIGN #11). The
+  /// caution variant isn't in the §2.1 mock table (the mock only shows a
+  /// critical alert) — same alpha recipe over the caution color.
+  final Color cautionBorder;
   final Color criticalBorder;
 
   /// Ideal-range band on gauges/ratio tracks.
@@ -112,6 +116,7 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
     healthySoft: Color(0x292FA968), // 16%
     cautionSoft: Color(0x1FC97F1E), // 12%
     criticalSoft: Color(0x1AE2593A), // 10%
+    cautionBorder: Color(0x47C97F1E), // 28%
     criticalBorder: Color(0x47E2593A), // 28%
     band: Color(0x332FA968), // 20%
     track: Color(0x1710262A), // 9% ink
@@ -140,6 +145,7 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
     healthySoft: Color(0x297DE8A0), // 16%
     cautionSoft: Color(0x29F5B95B), // 16%
     criticalSoft: Color(0x24FF7A59), // 14%
+    cautionBorder: Color(0x59F5B95B), // 35%
     criticalBorder: Color(0x59FF7A59), // 35%
     band: Color(0x617DE8A0), // 38%
     track: Color(0x14EAF6F3), // 8%
@@ -166,6 +172,7 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
     Color? healthySoft,
     Color? cautionSoft,
     Color? criticalSoft,
+    Color? cautionBorder,
     Color? criticalBorder,
     Color? band,
     Color? track,
@@ -190,6 +197,7 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
       healthySoft: healthySoft ?? this.healthySoft,
       cautionSoft: cautionSoft ?? this.cautionSoft,
       criticalSoft: criticalSoft ?? this.criticalSoft,
+      cautionBorder: cautionBorder ?? this.cautionBorder,
       criticalBorder: criticalBorder ?? this.criticalBorder,
       band: band ?? this.band,
       track: track ?? this.track,
@@ -219,6 +227,7 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
       healthySoft: Color.lerp(healthySoft, other.healthySoft, t)!,
       cautionSoft: Color.lerp(cautionSoft, other.cautionSoft, t)!,
       criticalSoft: Color.lerp(criticalSoft, other.criticalSoft, t)!,
+      cautionBorder: Color.lerp(cautionBorder, other.cautionBorder, t)!,
       criticalBorder: Color.lerp(criticalBorder, other.criticalBorder, t)!,
       band: Color.lerp(band, other.band, t)!,
       track: Color.lerp(track, other.track, t)!,

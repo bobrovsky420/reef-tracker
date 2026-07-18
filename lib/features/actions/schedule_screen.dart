@@ -627,51 +627,93 @@ class _TaskSheetState extends State<_TaskSheet> {
 /// plan with a computable due date, ordered most-urgent first. Typed chips
 /// open the pre-selected add-action dialog (logging resets the timer); custom
 /// chips mark the task done.
+///
+/// Chip style per REDESIGN #11 (§A.6): a small surface card (r14, 1 px
+/// border) with a `primary`-colored icon; an overdue chip's icon and label
+/// switch to the `critical` token — a *status*, not a form error, so not
+/// colorScheme.error (REDESIGN #1 straggler audit).
 class MaintenanceDueChips extends ConsumerWidget {
   const MaintenanceDueChips({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context);
     final dues = [...ref.watch(maintenanceDueProvider)]
       ..sort((a, b) => a.due.daysLeft.compareTo(b.due.daysLeft));
     if (dues.isEmpty) return const SizedBox.shrink();
-    // Overdue is a *status*, not a form error — painted with the critical
-    // token, not colorScheme.error (REDESIGN #1 straggler audit).
-    final overdueColor = ReefTokens.of(context).critical;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: Row(
         children: [
           for (final d in dues)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ActionChip(
-                avatar: Icon(
-                  maintenanceIcon(d.schedule),
-                  size: 18,
-                  color: d.due.daysLeft < 0 ? overdueColor : null,
-                ),
-                label: Text(
-                  '${maintenanceName(l, d.schedule)} • ${dueText(l, d.due)}',
-                  style: d.due.daysLeft < 0
-                      ? TextStyle(color: overdueColor)
-                      : null,
-                ),
-                onPressed: () async {
-                  final type = MaintenanceActionType.fromName(
-                    d.schedule.actionType,
-                  );
-                  if (type != null) {
-                    await showAddActionSheet(context, ref, preset: type);
-                  } else {
-                    await markMaintenanceDoneWithUndo(context, ref, d.schedule);
-                  }
-                },
-              ),
+              padding: const EdgeInsets.only(right: 10),
+              child: _DueChip(due: d),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _DueChip extends ConsumerWidget {
+  const _DueChip({required this.due});
+
+  final MaintenanceDue due;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+    final overdue = due.due.daysLeft < 0;
+    final radius = BorderRadius.circular(14);
+    // Same layering as ReefCard: the multi-layer light shadow on an outer box,
+    // fill + border + ink on the Material.
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: tokens.cardShadow,
+      ),
+      child: Material(
+        color: tokens.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(color: tokens.surfaceBorder),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () async {
+            final type = MaintenanceActionType.fromName(due.schedule.actionType);
+            if (type != null) {
+              await showAddActionSheet(context, ref, preset: type);
+            } else {
+              await markMaintenanceDoneWithUndo(context, ref, due.schedule);
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  maintenanceIcon(due.schedule),
+                  size: 14,
+                  color: overdue ? tokens.critical : tokens.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${maintenanceName(l, due.schedule)}'
+                  ' · ${dueText(l, due.due)}',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: overdue ? tokens.critical : tokens.text,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

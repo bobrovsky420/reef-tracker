@@ -72,3 +72,47 @@ class ReefCard extends StatelessWidget {
     );
   }
 }
+
+/// [ReefCard]'s sliver counterpart: paints the same card (fill + 1 px border +
+/// light shadow, platform radius) *behind a lazy sliver*, for the list cards
+/// that collapse a whole scrolling list into one card (REDESIGN #11/#13). A
+/// box `ReefCard` around such a list would force it to build eagerly;
+/// [DecoratedSliver] keeps builder laziness and extends the painted card over
+/// the scrolled-away extent.
+///
+/// The decoration paints *behind* the rows, so rows that ripple or expose a
+/// swipe background must bring their own transparent [Material] (the scaffold
+/// Material sits below the card fill). With [padding] ≥ the card radius'
+/// sagitta (the defaults callers use, ≥ 4×8), row rectangles stay inside the
+/// rounded shape and need no corner clipping.
+class ReefSliverCard extends StatelessWidget {
+  const ReefSliverCard({super.key, this.padding, required this.sliver});
+
+  /// Inner padding between the card edge and the rows.
+  final EdgeInsetsGeometry? padding;
+
+  final Widget sliver;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ReefTokens.of(context);
+    final radius = BorderRadius.circular(
+      reefCardRadius(Theme.of(context).platform),
+    );
+    Widget content = sliver;
+    if (padding != null) {
+      content = SliverPadding(padding: padding!, sliver: content);
+    }
+    return DecoratedSliver(
+      decoration: ShapeDecoration(
+        color: tokens.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(color: tokens.surfaceBorder),
+        ),
+        shadows: tokens.cardShadow,
+      ),
+      sliver: content,
+    );
+  }
+}

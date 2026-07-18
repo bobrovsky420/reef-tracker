@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
-import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/dashboard/dashboard_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';

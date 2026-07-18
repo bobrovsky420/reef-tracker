@@ -222,6 +222,8 @@ void main() {
     // All three categories pre-enabled so a device smoke can check that the
     // scheduler registers OS alarms right after first launch.
     final settings = AppSettings(db);
+    // Skip the first-run tour so a device smoke can navigate immediately.
+    await settings.setTourSeen(true);
     await settings.setRemindersTesting(true);
     await settings.setRemindersDosing(true);
     await settings.setRemindersMaintenance(true);
@@ -260,6 +262,24 @@ void main() {
       scheduledAt: daysAgo(2),
       note: 'Cartridge is in the cabinet',
     );
+
+    // --- RO unit (U16) -------------------------------------------------------
+    // The default 4-stage set with realistic anchors: sediment green, carbon
+    // block inside the amber warning window, membrane long overdue (drives
+    // the red equipment-alert card on the Actions tab, REDESIGN #11), DI
+    // resin with no replacement recorded yet.
+    await db.seedDefaultRoStages();
+    final roStages = await db.watchRoStages().first;
+    final lastByType = <String, DateTime>{
+      'sediment': daysAgo(30), // 90 d lifespan → due in 60 d
+      'carbonBlock': daysAgo(170), // 180 d lifespan → due in 10 d (amber)
+      'membrane': daysAgo(800), // 730 d lifespan → 70 d overdue (red)
+    };
+    for (final stage in roStages) {
+      final replacedAt = lastByType[stage.stageType];
+      if (replacedAt == null) continue;
+      await db.insertRoReplacement(stageId: stage.id, replacedAt: replacedAt);
+    }
 
     await db.close();
 
