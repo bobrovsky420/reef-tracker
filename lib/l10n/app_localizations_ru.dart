@@ -350,6 +350,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get enterANumber => 'Введите число';
 
   @override
+  String get sectionSafeRanges => 'Безопасные диапазоны';
+
+  @override
+  String get sectionDose => 'Доза';
+
+  @override
   String get boundsOrderError =>
       'Границы должны возрастать: жёлтая нижняя ≤ зелёная нижняя ≤ зелёная верхняя ≤ жёлтая верхняя.';
 

@@ -349,6 +349,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get enterANumber => 'Zadejte číslo';
 
   @override
+  String get sectionSafeRanges => 'Bezpečná rozmezí';
+
+  @override
+  String get sectionDose => 'Dávka';
+
+  @override
   String get boundsOrderError =>
       'Hranice musí narůstat: oranžová dolní ≤ zelená dolní ≤ zelená horní ≤ oranžová horní.';
 

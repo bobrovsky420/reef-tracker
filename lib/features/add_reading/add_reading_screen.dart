@@ -5,15 +5,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/reef_value_row.dart';
 import '../../widgets/zone_chip.dart';
 import 'test_set_sheets.dart';
 
 /// Lets the user enter values for any subset of tracked parameters at one time.
+///
+/// Layout per REDESIGN #20: date/time as a `ReefCard` value row (#12 style),
+/// §A.6 test-set selector chips, and the parameter rows grouped into one
+/// `ReefCard` with hairline dividers — label, mono value field, live
+/// `ZoneChip`. This is the batch-entry row recipe #24 reuses.
 class AddReadingScreen extends ConsumerStatefulWidget {
   const AddReadingScreen({super.key});
 
@@ -271,31 +279,24 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.schedule),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          formatDateTime(context, _takenAt, weekday: false),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined),
-                        tooltip: l.change,
-                        onPressed: _pickDateTime,
-                      ),
-                    ],
+              ReefCard(
+                padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                child: ReefValueRow(
+                  leading: const ReefIconChip(Icons.schedule),
+                  value: formatDateTime(context, _takenAt, weekday: false),
+                  valueStyle: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: ReefTokens.of(context).text,
                   ),
+                  actions: [
+                    ReefInlineButton(l.change, onPressed: _pickDateTime),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               _testSetChips(l, templates, selected, params),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               if (selected != null && visibleParams.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -305,14 +306,26 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
                   ),
                 )
               else
-                for (final p in visibleParams) _paramRow(p, prefs),
-              const SizedBox(height: 8),
+                ReefCard(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 14,
+                  ),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < visibleParams.length; i++)
+                        _paramRow(
+                          visibleParams[i],
+                          prefs,
+                          isLast: i == visibleParams.length - 1,
+                        ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
               TextField(
                 controller: _noteCtrl,
-                decoration: InputDecoration(
-                  labelText: l.noteOptional,
-                  border: const OutlineInputBorder(),
-                ),
+                decoration: InputDecoration(labelText: l.noteOptional),
                 maxLines: 2,
               ),
               const SizedBox(height: 24),
@@ -392,8 +405,9 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
             ),
           Padding(
             padding: const EdgeInsets.only(left: 8),
+            // Icon size/color come from the theme's §A.6 chip treatment.
             child: ActionChip(
-              avatar: const Icon(Icons.add, size: 18),
+              avatar: const Icon(Icons.add),
               label: Text(l.newTestSet),
               onPressed: () => _createTestSet(params),
             ),
@@ -403,20 +417,30 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     );
   }
 
-  Widget _paramRow(TrackedParameter p, UnitPrefs prefs) {
+  Widget _paramRow(TrackedParameter p, UnitPrefs prefs, {required bool isLast}) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     final pres = presentationOf(p, prefs);
     final ctrl = _controllerFor(p.id);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: isLast
+          ? null
+          : BoxDecoration(
+              border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
+            ),
       child: Row(
         children: [
           Expanded(
             flex: 3,
             child: Text(
               l.paramName(p.paramKey),
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.text,
+              ),
             ),
           ),
           Expanded(
@@ -427,10 +451,12 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
                 decimal: true,
                 signed: true,
               ),
+              // Mono entry, `textFaint` unit suffix — both from the #18
+              // input treatment.
+              style: ReefTokens.monoInputStyle,
               decoration: InputDecoration(
                 isDense: true,
                 suffixText: pres.unitLabel,
-                border: const OutlineInputBorder(),
               ),
             ),
           ),

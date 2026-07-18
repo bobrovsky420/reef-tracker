@@ -696,6 +696,18 @@ abstract class AppLocalizations {
   /// **'Enter a number'**
   String get enterANumber;
 
+  /// Section header above the zone-bounds editor card in the parameter and ratio editors (rendered uppercase). Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe ranges'**
+  String get sectionSafeRanges;
+
+  /// Section header above the amount + date card in the manual-dose editor (rendered uppercase). Keep short.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose'**
+  String get sectionDose;
+
   /// No description provided for @boundsOrderError.
   ///
   /// In en, this message translates to:

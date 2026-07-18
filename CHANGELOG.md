@@ -25,6 +25,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   temperature reading is more than a week older than the ammonia reading.
 
 ### Changed
+- The management and entry screens now follow the app's redesigned card
+  language:
+  - **Aquariums** collapses into one card of divided rows with a green
+    "Active" tag; the aquarium editor's start date got inline set / change /
+    clear actions.
+  - **Manage parameters** is one card of divided rows (switch, name, compact
+    safe-range summary in the numeric font, edit + drag handle), matching the
+    Dosing tab's look; the add-parameter sheet gained a title.
+  - **Parameter, ratio and safe-range editors** group their fields into
+    titled cards (Unit / Safe ranges / Remind to test), with numeric fields
+    in the numeric font.
+  - **Add reading**: the date/time card, test-set chips and note field are
+    restyled, and the parameter rows sit in one divided card with mono value
+    fields.
+  - **Dosing editors** (supplement plan and manual dose) group into Product /
+    Dosage / Schedule cards; time and date rows use inline change actions.
+  - **Dosing history** collapses into one card of divided rows with neutral
+    "Current" / "Manual" and element tags and mono dose lines.
+  - **Dose calculator**: numeric inputs use the numeric font and the results
+    card matches the parameter-detail stats style; its status line now uses
+    the app's status palette (green "stable", coral "overdosing") in both
+    themes.
+  - Selection chips app-wide (test sets, reminder cadence, weekdays) share
+    one rounded style with a soft green selected state.
+- iOS note: these are shared-code changes; the iOS dialect (r20 cards,
+  stadium buttons) is applied by the same theme but was not visually
+  verified on this machine.
 - Gauge dials and environment pills now label parameters with a compact
   short name: alkalinity shows "KH", and parameters whose name carries a
   symbol ("Calcium (Ca)", "Nitrate (NO₃)") show just the symbol; names

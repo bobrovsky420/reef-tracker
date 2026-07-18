@@ -349,6 +349,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterANumber => 'Enter a number';
 
   @override
+  String get sectionSafeRanges => 'Safe ranges';
+
+  @override
+  String get sectionDose => 'Dose';
+
+  @override
   String get boundsOrderError =>
       'Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.';
 

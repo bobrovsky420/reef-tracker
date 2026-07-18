@@ -104,6 +104,8 @@
   "boundAmberHigh": "Czerwona powyżej (pomarańczowa górna)",
   "boundsUnitNote": "Wartości w {unit}. Puste pole oznacza „brak limitu po tej stronie”.",
   "enterANumber": "Wpisz liczbę",
+  "sectionSafeRanges": "Bezpieczne zakresy",
+  "sectionDose": "Dawka",
   "boundsOrderError": "Granice muszą rosnąć: pomarańczowa dolna ≤ zielona dolna ≤ zielona górna ≤ pomarańczowa górna.",
   "boundsPairError": "Każda pomarańczowa granica wymaga odpowiadającej zielonej granicy po tej samej stronie.",
 

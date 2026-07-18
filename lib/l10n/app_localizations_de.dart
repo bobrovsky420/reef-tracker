@@ -350,6 +350,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get enterANumber => 'Zahl eingeben';
 
   @override
+  String get sectionSafeRanges => 'Sichere Bereiche';
+
+  @override
+  String get sectionDose => 'Dosis';
+
+  @override
   String get boundsOrderError =>
       'Grenzen müssen ansteigen: orange unten ≤ grün unten ≤ grün oben ≤ orange oben.';
 

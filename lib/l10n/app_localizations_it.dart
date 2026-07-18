@@ -349,6 +349,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get enterANumber => 'Inserisci un numero';
 
   @override
+  String get sectionSafeRanges => 'Intervalli sicuri';
+
+  @override
+  String get sectionDose => 'Dose';
+
+  @override
   String get boundsOrderError =>
       'I limiti devono crescere: arancione basso ≤ verde basso ≤ verde alto ≤ arancione alto.';
 

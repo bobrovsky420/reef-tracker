@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/supplement_catalog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
 import 'dosing_screen.dart' show dosingDetailLine, formatDoseAmount;
 
 /// Timeline of every dosing event for the active tank — plan segments (current
@@ -14,6 +16,11 @@ import 'dosing_screen.dart' show dosingDetailLine, formatDoseAmount;
 /// doses are logged from the FAB, can be edited by tapping, and each record
 /// can be permanently deleted if it was entered by mistake (distinct from
 /// stopping a supplement, which soft-ends and is kept as history).
+///
+/// Layout per REDESIGN #21: the timeline collapses into one `ReefSliverCard`
+/// of hairline-divided rows (#11 pattern) — type icon, title +
+/// "Current"/"Manual" tag (neutral `track`/`textDim` fill: lifecycle markers,
+/// not zone status), mono dose line, trailing delete.
 class DosingHistoryScreen extends ConsumerWidget {
   const DosingHistoryScreen({super.key});
 
@@ -34,16 +41,35 @@ class DosingHistoryScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l.dosingHistoryTitle)),
       body: items.isEmpty
           ? _EmptyState(l: l)
-          : ListView.separated(
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, i) => switch (items[i]) {
-                _SegmentItem(entry: final e) => _HistoryTile(
-                  entry: e,
-                  all: entries,
+          : CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+                  sliver: ReefSliverCard(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 10,
+                    ),
+                    sliver: SliverList.builder(
+                      itemCount: items.length,
+                      itemBuilder: (context, i) {
+                        final isLast = i == items.length - 1;
+                        return switch (items[i]) {
+                          _SegmentItem(entry: final e) => _HistoryRow(
+                            entry: e,
+                            all: entries,
+                            isLast: isLast,
+                          ),
+                          _ManualItem(dose: final d) => _ManualDoseRow(
+                            dose: d,
+                            isLast: isLast,
+                          ),
+                        };
+                      },
+                    ),
+                  ),
                 ),
-                _ManualItem(dose: final d) => _ManualDoseTile(dose: d),
-              },
+              ],
             ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
@@ -103,8 +129,103 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _HistoryTile extends ConsumerWidget {
-  const _HistoryTile({required this.entry, required this.all});
+/// Shared row shell for both timeline row kinds (#11 pattern): top-aligned
+/// type icon, content column, trailing delete — with the hairline divider and
+/// the transparent [Material] the sliver card's rows need for ink.
+class _TimelineRow extends StatelessWidget {
+  const _TimelineRow({
+    required this.icon,
+    required this.title,
+    required this.tags,
+    required this.lines,
+    required this.onDelete,
+    this.onTap,
+    required this.isLast,
+  });
+
+  final IconData icon;
+  final String title;
+  final List<Widget> tags;
+  final List<Widget> lines;
+  final VoidCallback onDelete;
+  final VoidCallback? onTap;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: isLast
+              ? null
+              : BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: tokens.surfaceBorder),
+                  ),
+                ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Icon(icon, size: 18, color: tokens.textDim),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: tokens.text,
+                            ),
+                          ),
+                        ),
+                        for (final tag in tags) ...[
+                          const SizedBox(width: 8),
+                          tag,
+                        ],
+                      ],
+                    ),
+                    ...lines,
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: tokens.textDim,
+                ),
+                tooltip: l.delete,
+                onPressed: onDelete,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryRow extends ConsumerWidget {
+  const _HistoryRow({
+    required this.entry,
+    required this.all,
+    required this.isLast,
+  });
 
   final DosingEntry entry;
 
@@ -112,12 +233,14 @@ class _HistoryTile extends ConsumerWidget {
   /// segment for its element (drives the delete warning).
   final List<DosingEntry> all;
 
+  final bool isLast;
+
   bool get _active => DosingState.fromName(entry.state) == DosingState.active;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final tokens = ReefTokens.of(context);
     final names = resolveSupplementNames(
       productKey: entry.productKey,
       storedVendor: entry.vendor,
@@ -129,56 +252,42 @@ class _HistoryTile extends ConsumerWidget {
       names.program,
     ].where((s) => s != null && s.isNotEmpty).join(' · ');
 
-    return ListTile(
-      titleAlignment: ListTileTitleAlignment.center,
-      leading: Icon(_active ? Icons.play_circle_outline : Icons.history),
-      title: Text(names.product),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 2),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (entry.elementKey != null)
-                _Chip(label: l.paramName(entry.elementKey!)),
-              if (_active)
-                _Chip(label: l.dosingHistoryCurrent, highlight: true),
-            ],
-          ),
-          if (source.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                source,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: scheme.outline),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(dosingDetailLine(context, l, entry)),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              _period(context, l),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: _active ? scheme.primary : scheme.outline,
-              ),
-            ),
+    return _TimelineRow(
+      icon: _active ? Icons.play_circle_outline : Icons.history,
+      title: names.product,
+      tags: [
+        if (entry.elementKey != null)
+          _Tag(label: l.paramName(entry.elementKey!)),
+        if (_active) _Tag(label: l.dosingHistoryCurrent),
+      ],
+      lines: [
+        if (source.isNotEmpty) ...[
+          const SizedBox(height: 5),
+          Text(
+            source,
+            style: TextStyle(fontSize: 12.5, color: tokens.textDim),
           ),
         ],
-      ),
-      isThreeLine: true,
-      trailing: IconButton(
-        icon: const Icon(Icons.delete_outline),
-        tooltip: l.delete,
-        onPressed: () => _confirmDelete(context, ref, l),
-      ),
+        const SizedBox(height: 3),
+        Text(
+          dosingDetailLine(context, l, entry),
+          style: ReefTokens.monoTextStyle.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: tokens.text,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          _period(context, l),
+          style: TextStyle(
+            fontSize: 12,
+            color: _active ? tokens.primary : tokens.textDim,
+          ),
+        ),
+      ],
+      onDelete: () => _confirmDelete(context, ref, l),
+      isLast: isLast,
     );
   }
 
@@ -234,15 +343,16 @@ class _HistoryTile extends ConsumerWidget {
 
 /// Timeline row for a logged one-off manual dose. Tap to edit; the trailing
 /// icon permanently deletes (no soft-end — events don't chain like segments).
-class _ManualDoseTile extends ConsumerWidget {
-  const _ManualDoseTile({required this.dose});
+class _ManualDoseRow extends ConsumerWidget {
+  const _ManualDoseRow({required this.dose, required this.isLast});
 
   final ManualDose dose;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final tokens = ReefTokens.of(context);
     final loc = MaterialLocalizations.of(context);
     final names = resolveSupplementNames(
       productKey: dose.productKey,
@@ -259,59 +369,42 @@ class _ManualDoseTile extends ConsumerWidget {
         '${loc.formatMediumDate(dose.dosedAt)} '
         '${TimeOfDay.fromDateTime(dose.dosedAt).format(context)}';
 
-    return ListTile(
-      titleAlignment: ListTileTitleAlignment.center,
-      leading: const Icon(Icons.vaccines_outlined),
-      title: Text(names.product),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 2),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (dose.elementKey != null)
-                _Chip(label: l.paramName(dose.elementKey!)),
-              _Chip(label: l.dosingHistoryManual, highlight: true),
-            ],
+    return _TimelineRow(
+      icon: Icons.vaccines_outlined,
+      title: names.product,
+      tags: [
+        if (dose.elementKey != null)
+          _Tag(label: l.paramName(dose.elementKey!)),
+        _Tag(label: l.dosingHistoryManual),
+      ],
+      lines: [
+        if (source.isNotEmpty) ...[
+          const SizedBox(height: 5),
+          Text(
+            source,
+            style: TextStyle(fontSize: 12.5, color: tokens.textDim),
           ),
-          if (source.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                source,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: scheme.outline),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              '${formatDoseAmount(dose.amount)} ${unit.symbol} · $when',
-            ),
-          ),
-          if (dose.note != null && dose.note!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                dose.note!,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: scheme.outline),
-              ),
-            ),
         ],
-      ),
-      isThreeLine: true,
+        const SizedBox(height: 3),
+        Text(
+          '${formatDoseAmount(dose.amount)} ${unit.symbol} · $when',
+          style: ReefTokens.monoTextStyle.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: tokens.text,
+          ),
+        ),
+        if (dose.note != null && dose.note!.isNotEmpty) ...[
+          const SizedBox(height: 3),
+          Text(
+            dose.note!,
+            style: TextStyle(fontSize: 12, color: tokens.textDim),
+          ),
+        ],
+      ],
       onTap: () => context.push('/dosing/manual', extra: dose),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete_outline),
-        tooltip: l.delete,
-        onPressed: () => _confirmDelete(context, ref, l),
-      ),
+      onDelete: () => _confirmDelete(context, ref, l),
+      isLast: isLast,
     );
   }
 
@@ -341,27 +434,29 @@ class _ManualDoseTile extends ConsumerWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, this.highlight = false});
+/// Lifecycle/element tag on a timeline row (§A.6 tag geometry: 11 w600,
+/// padding 4·10, r10). Deliberately neutral — `track` fill, `textDim` text —
+/// these mark record kinds, not zone status (REDESIGN #21).
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label});
   final String label;
-  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final bg = highlight ? scheme.primaryContainer : scheme.secondaryContainer;
-    final fg = highlight
-        ? scheme.onPrimaryContainer
-        : scheme.onSecondaryContainer;
+    final tokens = ReefTokens.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
+        color: tokens.track,
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: tokens.textDim,
+        ),
       ),
     );
   }

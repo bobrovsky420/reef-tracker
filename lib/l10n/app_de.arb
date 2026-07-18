@@ -104,6 +104,8 @@
   "boundAmberHigh": "Rot über (orange oben)",
   "boundsUnitNote": "Werte sind in {unit}. Ein leeres Feld bedeutet „keine Grenze auf dieser Seite“.",
   "enterANumber": "Zahl eingeben",
+  "sectionSafeRanges": "Sichere Bereiche",
+  "sectionDose": "Dosis",
   "boundsOrderError": "Grenzen müssen ansteigen: orange unten ≤ grün unten ≤ grün oben ≤ orange oben.",
   "boundsPairError": "Jede orange Grenze benötigt ihre passende grüne Grenze auf derselben Seite.",
 

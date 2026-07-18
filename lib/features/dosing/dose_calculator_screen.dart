@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/dose_calculator.dart';
 import '../../domain/parameter_catalog.dart';
@@ -9,6 +10,7 @@ import '../../domain/supplement_catalog.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
 import '../../widgets/trend_chart.dart';
 import 'dosing_screen.dart' show formatDoseAmount;
 
@@ -315,7 +317,6 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l.doseCalcElement,
-        border: const OutlineInputBorder(),
       ),
       items: [
         for (final key in kDosingElementKeys)
@@ -346,7 +347,6 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
           isExpanded: true,
           decoration: InputDecoration(
             labelText: l.doseCalcWindow,
-            border: const OutlineInputBorder(),
           ),
           items: [
             for (final r in ChartRange.values)
@@ -369,10 +369,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     return TextField(
       controller: _volumeCtrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: ReefTokens.monoInputStyle,
       decoration: InputDecoration(
         labelText: l.doseCalcVolume,
         suffixText: volUnit.symbol,
-        border: const OutlineInputBorder(),
       ),
       onChanged: (_) => setState(() {}),
     );
@@ -387,10 +387,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
           child: TextField(
             controller: _doseCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: ReefTokens.monoInputStyle,
             decoration: InputDecoration(
               labelText: l.doseCalcCurrentDose,
               suffixText: '${_doseUnit.symbol} / ${l.doseCalcPerDay}',
-              border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -414,6 +414,7 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         TextField(
           controller: _manualDoseCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: ReefTokens.monoInputStyle,
           decoration: InputDecoration(
             labelText: l.doseCalcManualDose,
             helperText: l.doseCalcManualDoseHelp,
@@ -422,7 +423,6 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
             // is what the calculation uses until the user overrides it.
             hintText: loggedCount > 0 ? formatDoseAmount(loggedTotal) : null,
             suffixText: _doseUnit.symbol,
-            border: const OutlineInputBorder(),
           ),
           onChanged: (_) => setState(() {}),
         ),
@@ -503,10 +503,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  style: ReefTokens.monoInputStyle,
                   decoration: InputDecoration(
                     labelText: l.doseCalcRefAmount,
                     suffixText: _doseUnit.symbol,
-                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -518,10 +518,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  style: ReefTokens.monoInputStyle,
                   decoration: InputDecoration(
                     labelText: l.doseCalcRefVolume,
                     suffixText: volUnit.symbol,
-                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -533,10 +533,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  style: ReefTokens.monoInputStyle,
                   decoration: InputDecoration(
                     labelText: l.doseCalcRise,
                     suffixText: unitStr,
-                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -559,7 +559,7 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
   }
 
   Widget _resultCard(AppLocalizations l, String element, DoseCalcResult r) {
-    final scheme = Theme.of(context).colorScheme;
+    final tokens = ReefTokens.of(context);
     final unitStr = kParameterByKey[element]?.unit ?? '';
 
     String rate(double? v) =>
@@ -605,86 +605,103 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
       );
     }
 
-    return Card(
-      color: scheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l.doseCalcResultsTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            ...rows,
-            if (rows.isNotEmpty) const SizedBox(height: 12),
-            _statusBanner(l, r.status, scheme),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _resultRow(String label, String value, {bool emphasize = false}) {
-    final style = emphasize
-        ? Theme.of(
-            context,
-          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)
-        : Theme.of(context).textTheme.bodyMedium;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // The result as a `ReefCard` with §A.8-stats-style mono values
+    // (REDESIGN #21) — the old hardcoded `surfaceContainerHighest` fill is
+    // retired.
+    return ReefCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text(label, style: style)),
-          const SizedBox(width: 12),
-          Text(value, style: style),
+          Text(
+            l.doseCalcResultsTitle,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: tokens.text,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...rows,
+          if (rows.isNotEmpty) const SizedBox(height: 12),
+          _statusBanner(l, r.status),
         ],
       ),
     );
   }
 
-  Widget _statusBanner(
-    AppLocalizations l,
-    DoseCalcStatus status,
-    ColorScheme scheme,
-  ) {
+  Widget _resultRow(String label, String value, {bool emphasize = false}) {
+    final tokens = ReefTokens.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: emphasize ? FontWeight.w600 : FontWeight.w400,
+                color: tokens.textDim,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            value,
+            style: ReefTokens.monoTextStyle.copyWith(
+              fontSize: emphasize ? 17 : 15,
+              fontWeight: FontWeight.w700,
+              color: tokens.text,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Status colors ride the tokens (REDESIGN #1 rule: `error` is for
+  /// validation, the tokens carry status) — healthy for the good outcomes,
+  /// `critical` for overdosing.
+  Widget _statusBanner(AppLocalizations l, DoseCalcStatus status) {
+    final tokens = ReefTokens.of(context);
     final (text, icon, color) = switch (status) {
       DoseCalcStatus.insufficientData => (
         l.doseCalcInsufficient,
         Icons.info_outline,
-        scheme.outline,
+        tokens.textDim,
       ),
       DoseCalcStatus.needsPotency => (
         l.doseCalcNeedsPotency,
         Icons.science_outlined,
-        scheme.primary,
+        tokens.primary,
       ),
       DoseCalcStatus.stable => (
         l.doseCalcStable,
         Icons.check_circle_outline,
-        Colors.green,
+        tokens.healthy,
       ),
       DoseCalcStatus.increase => (
         l.doseCalcIncrease,
         Icons.arrow_upward,
-        scheme.primary,
+        tokens.primary,
       ),
       DoseCalcStatus.decrease => (
         l.doseCalcDecrease,
         Icons.arrow_downward,
-        scheme.primary,
+        tokens.primary,
       ),
       DoseCalcStatus.overdosing => (
         l.doseCalcOverdosing,
         Icons.warning_amber_outlined,
-        scheme.error,
+        tokens.critical,
       ),
       DoseCalcStatus.noDoseNeeded => (
         l.doseCalcNoDoseNeeded,
         Icons.check_circle_outline,
-        Colors.green,
+        tokens.healthy,
       ),
     };
     return Row(

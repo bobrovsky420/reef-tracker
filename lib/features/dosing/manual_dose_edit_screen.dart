@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/supplement_catalog.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/reef_value_row.dart';
+import '../../widgets/section_header.dart';
 import 'dosing_screen.dart' show formatDoseAmount;
 
 /// Sentinel for the "Other…" (custom free-text) choice, same convention as the
@@ -199,27 +203,42 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
       appBar: AppBar(
         title: Text(widget.dose == null ? l.manualDoseNew : l.manualDoseEdit),
       ),
+      // Form grouped into card sections (REDESIGN #21): Product / Dose.
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _vendorField(l),
+            SectionHeader(l.dosingProduct),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _vendorField(l),
+                  const SizedBox(height: 12),
+                  _productField(l),
+                  const SizedBox(height: 12),
+                  _elementField(l),
+                ],
+              ),
+            ),
+            SectionHeader(l.sectionDose),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _amountRow(l),
+                  const SizedBox(height: 12),
+                  _dosedAtRow(l),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
-            _productField(l),
-            const SizedBox(height: 16),
-            _elementField(l),
-            const Divider(height: 32),
-            _amountRow(l),
-            const SizedBox(height: 16),
-            _dosedAtRow(l),
-            const Divider(height: 32),
             TextField(
               controller: _noteCtrl,
-              decoration: InputDecoration(
-                labelText: l.noteOptional,
-                border: const OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(labelText: l.noteOptional),
               maxLines: 2,
             ),
             const SizedBox(height: 24),
@@ -242,7 +261,6 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
           isExpanded: true,
           decoration: InputDecoration(
             labelText: l.dosingVendor,
-            border: const OutlineInputBorder(),
           ),
           items: [
             for (final v in kSupplementVendors)
@@ -257,7 +275,6 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
             controller: _vendorCtrl,
             decoration: InputDecoration(
               labelText: l.dosingVendorName,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -277,7 +294,6 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
             isExpanded: true,
             decoration: InputDecoration(
               labelText: l.dosingProduct,
-              border: const OutlineInputBorder(),
             ),
             items: [
               for (final p in vendor.allProducts)
@@ -292,7 +308,6 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
             controller: _productCtrl,
             decoration: InputDecoration(
               labelText: l.dosingProductName,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -307,7 +322,6 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l.dosingElement,
-        border: const OutlineInputBorder(),
       ),
       items: [
         DropdownMenuItem(value: null, child: Text(l.dosingElementNone)),
@@ -326,10 +340,8 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
           child: TextFormField(
             controller: _amountCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: l.dosingAmount,
-              border: const OutlineInputBorder(),
-            ),
+            style: ReefTokens.monoInputStyle,
+            decoration: InputDecoration(labelText: l.dosingAmount),
             validator: (v) {
               // Unlike the plan's optional dosage, the given amount is the
               // point of the record — it must be a positive number.
@@ -346,7 +358,6 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
             initialValue: _unit,
             decoration: InputDecoration(
               labelText: l.dosingUnit,
-              border: const OutlineInputBorder(),
             ),
             items: [
               for (final u in DoseUnit.values)
@@ -359,23 +370,17 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
     );
   }
 
+  /// The dose date/time as the #12 footer pattern: value + inline change
+  /// action (the picker stays past-only).
   Widget _dosedAtRow(AppLocalizations l) {
-    return Row(
-      children: [
-        const Icon(Icons.schedule),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            formatDateTime(context, _dosedAt, weekday: false),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.edit_outlined),
-          tooltip: l.change,
-          onPressed: _pickDateTime,
-        ),
-      ],
+    return ReefValueRow(
+      leading: Icon(
+        Icons.schedule,
+        size: 18,
+        color: ReefTokens.of(context).textDim,
+      ),
+      value: formatDateTime(context, _dosedAt, weekday: false),
+      actions: [ReefInlineButton(l.change, onPressed: _pickDateTime)],
     );
   }
 }

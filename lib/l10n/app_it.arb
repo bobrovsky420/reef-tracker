@@ -104,6 +104,8 @@
   "boundAmberHigh": "Rosso sopra (arancione alto)",
   "boundsUnitNote": "Valori in {unit}. Lascia un campo vuoto per \"nessun limite su quel lato\".",
   "enterANumber": "Inserisci un numero",
+  "sectionSafeRanges": "Intervalli sicuri",
+  "sectionDose": "Dose",
   "boundsOrderError": "I limiti devono crescere: arancione basso ≤ verde basso ≤ verde alto ≤ arancione alto.",
   "boundsPairError": "Ogni limite arancione richiede il corrispondente limite verde sullo stesso lato.",
 

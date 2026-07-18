@@ -349,6 +349,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get enterANumber => 'Saisissez un nombre';
 
   @override
+  String get sectionSafeRanges => 'Plages sûres';
+
+  @override
+  String get sectionDose => 'Dose';
+
+  @override
   String get boundsOrderError =>
       'Les limites doivent être croissantes : orange bas ≤ vert bas ≤ vert haut ≤ orange haut.';
 

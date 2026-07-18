@@ -163,7 +163,6 @@ class _TestSetEditSheetState extends State<_TestSetEditSheet> {
                 decoration: InputDecoration(
                   labelText: l.name,
                   hintText: l.testSetNameHint,
-                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? l.enterAName : null,
@@ -265,18 +264,57 @@ class _TestSetsManageSheet extends ConsumerWidget {
                 },
                 itemBuilder: (context, i) {
                   final t = templates[i];
+                  final tokens = ReefTokens.of(context);
                   // Count what the chip will actually show: keys still
                   // tracked+enabled (a set may carry keys disabled meanwhile).
                   final count = t.keys.where(enabledKeys.contains).length;
-                  return ListTile(
+                  // #11 row pattern (REDESIGN #20): title + count sub,
+                  // inline edit/delete icons, 16 px drag handle, hairline
+                  // dividers between rows.
+                  return Container(
                     key: ValueKey(t.id),
-                    title: Text(t.name),
-                    subtitle: Text(l.testSetParamCount(count)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 16,
+                    ),
+                    decoration: i == templates.length - 1
+                        ? null
+                        : BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: tokens.surfaceBorder),
+                            ),
+                          ),
+                    child: Row(
                       children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                t.name,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.text,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l.testSetParamCount(count),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: tokens.textDim,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         IconButton(
-                          icon: const Icon(Icons.edit),
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: tokens.textDim,
+                          ),
                           tooltip: l.edit,
                           onPressed: tank == null
                               ? null
@@ -289,15 +327,26 @@ class _TestSetsManageSheet extends ConsumerWidget {
                                 ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: tokens.textDim,
+                          ),
                           tooltip: l.delete,
                           onPressed: () => _confirmDelete(context, ref, t),
                         ),
                         ReorderableDragStartListener(
                           index: i,
-                          child: Icon(
-                            Icons.drag_handle,
-                            semanticLabel: l.reorder,
+                          // The padding keeps the 16 px glyph draggable
+                          // with a finger.
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(
+                              Icons.drag_handle,
+                              size: 16,
+                              color: tokens.textFaint,
+                              semanticLabel: l.reorder,
+                            ),
                           ),
                         ),
                       ],

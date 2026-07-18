@@ -562,6 +562,36 @@ ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
       prefixStyle: TextStyle(color: tokens.textFaint),
       suffixStyle: TextStyle(color: tokens.textFaint),
     ),
+    // Selection chips (§A.6, applied by REDESIGN #19–#21): every ChoiceChip /
+    // FilterChip / ActionChip app-wide — r14, `surface` fill with the 1 px
+    // `surfaceBorder`, 12.5 w600 label. Selected mirrors the M3 segmented
+    // control (`ReefSegmented`): `healthySoft` fill, `text`-toned label and
+    // checkmark. Total horizontal inset 6 + the 8 px labelPadding = the
+    // mock's 14; leading icons (ActionChip avatars) are 14 px `primary`.
+    chipTheme: ChipThemeData(
+      color: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? tokens.healthySoft
+            : tokens.surface,
+      ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+      ),
+      side: BorderSide(color: tokens.surfaceBorder),
+      labelStyle: TextStyle(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w600,
+        color: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? tokens.text
+              : tokens.textDim,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+      iconTheme: IconThemeData(size: 14, color: tokens.primary),
+      checkmarkColor: tokens.text,
+    ),
     // Primary buttons (REDESIGN #18): every `FilledButton` — editor saves,
     // dialog confirms — carries the FAB's w700 label and platform silhouette.
     // Colors are deliberately not set here: they already come from the

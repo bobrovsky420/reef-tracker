@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/pro_features.dart';
 import '../../domain/setup_type.dart';
@@ -13,8 +14,14 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/reef_value_row.dart';
 
 /// Lists all aquariums with add / edit / delete / switch actions.
+///
+/// Layout per REDESIGN #19: the tanks collapse into one `ReefCard` of
+/// hairline-divided rows (#11 row pattern) — waves icon, name + active tag,
+/// "volume · type · date" sub with mono numerals, trailing overflow menu.
 class TanksScreen extends ConsumerWidget {
   const TanksScreen({super.key});
 
@@ -34,58 +41,30 @@ class TanksScreen extends ConsumerWidget {
           if (tanks.isEmpty) {
             return Center(child: Text(l.noAquariumsYet));
           }
-          return ListView.builder(
-            itemCount: tanks.length,
-            itemBuilder: (context, i) {
-              final t = tanks[i];
-              final type = SetupType.fromName(t.setupType);
-              final isActive = t.id == active?.id;
-              return ListTile(
-                leading: const Icon(Icons.waves),
-                title: Row(
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+            children: [
+              ReefCard(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 6,
+                  horizontal: 8,
+                ),
+                child: Column(
                   children: [
-                    Flexible(child: Text(t.name)),
-                    if (isActive) ...[
-                      const SizedBox(width: 8),
-                      _ActiveBadge(label: l.active),
-                    ],
-                  ],
-                ),
-                subtitle: Text(
-                  [
-                    l.setupLabel(type),
-                    if (t.volumeLiters != null)
-                      l.volumeWithUnit(t.volumeLiters!, volumeUnit),
-                    if (t.startDate != null)
-                      l.sinceDate(DateFormat.yMMMd().format(t.startDate!)),
-                  ].join(' • '),
-                ),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (v) async {
-                    switch (v) {
-                      case 'activate':
-                        await ref.read(dbProvider).setActiveTank(t.id);
-                      case 'edit':
-                        unawaited(
-                          context.push('/tanks/${t.id}/edit', extra: t),
-                        );
-                      case 'delete':
-                        await _confirmDelete(context, ref, t);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    if (!isActive)
-                      PopupMenuItem(
-                        value: 'activate',
-                        child: Text(l.makeActive),
+                    for (var i = 0; i < tanks.length; i++)
+                      _row(
+                        context,
+                        ref,
+                        l,
+                        tanks[i],
+                        volumeUnit,
+                        isActive: tanks[i].id == active?.id,
+                        isLast: i == tanks.length - 1,
                       ),
-                    PopupMenuItem(value: 'edit', child: Text(l.edit)),
-                    PopupMenuItem(value: 'delete', child: Text(l.delete)),
                   ],
                 ),
-                onTap: () => ref.read(dbProvider).setActiveTank(t.id),
-              );
-            },
+              ),
+            ],
           );
         },
       ),
@@ -110,6 +89,111 @@ class TanksScreen extends ConsumerWidget {
               ),
         icon: const Icon(Icons.add),
         label: Text(l.addAquarium),
+      ),
+    );
+  }
+
+  Widget _row(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+    Tank t,
+    VolumeUnit volumeUnit, {
+    required bool isActive,
+    required bool isLast,
+  }) {
+    final tokens = ReefTokens.of(context);
+    final type = SetupType.fromName(t.setupType);
+    // "volume · type · date" (§A.6 sub line): numeric spans in mono.
+    const sep = TextSpan(text: ' · ');
+    final mono = ReefTokens.monoTextStyle.copyWith(fontSize: 12);
+    final sub = TextSpan(
+      style: TextStyle(fontSize: 12, color: tokens.textDim),
+      children: [
+        if (t.volumeLiters != null) ...[
+          TextSpan(
+            text: l.volumeWithUnit(t.volumeLiters!, volumeUnit),
+            style: mono,
+          ),
+          sep,
+        ],
+        TextSpan(text: l.setupLabel(type)),
+        if (t.startDate != null) ...[
+          sep,
+          TextSpan(
+            text: l.sinceDate(DateFormat.yMMMd().format(t.startDate!)),
+            style: mono,
+          ),
+        ],
+      ],
+    );
+
+    // The rows ripple on the card's own Material (the InkWell ancestor).
+    return InkWell(
+      onTap: () => ref.read(dbProvider).setActiveTank(t.id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+        decoration: isLast
+            ? null
+            : BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: tokens.surfaceBorder),
+                ),
+              ),
+        child: Row(
+          children: [
+            Icon(Icons.waves, size: 18, color: tokens.textDim),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          t.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.text,
+                          ),
+                        ),
+                      ),
+                      if (isActive) ...[
+                        const SizedBox(width: 8),
+                        _ActiveTag(label: l.active),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text.rich(sub),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, size: 18, color: tokens.textDim),
+              onSelected: (v) async {
+                switch (v) {
+                  case 'activate':
+                    await ref.read(dbProvider).setActiveTank(t.id);
+                  case 'edit':
+                    unawaited(context.push('/tanks/${t.id}/edit', extra: t));
+                  case 'delete':
+                    await _confirmDelete(context, ref, t);
+                }
+              },
+              itemBuilder: (context) => [
+                if (!isActive)
+                  PopupMenuItem(value: 'activate', child: Text(l.makeActive)),
+                PopupMenuItem(value: 'edit', child: Text(l.edit)),
+                PopupMenuItem(value: 'delete', child: Text(l.delete)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -178,26 +262,28 @@ class TanksScreen extends ConsumerWidget {
   }
 }
 
-/// Small pill marking the currently active aquarium in the list.
-class _ActiveBadge extends StatelessWidget {
-  const _ActiveBadge({required this.label});
+/// Tag marking the currently active aquarium (§A.6 tag geometry:
+/// 11 w600, padding 4·10, r10 — `healthySoft` fill, `primary` text).
+class _ActiveTag extends StatelessWidget {
+  const _ActiveTag({required this.label});
 
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final tokens = ReefTokens.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: scheme.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
+        color: tokens.healthySoft,
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: scheme.onPrimaryContainer,
+        style: TextStyle(
+          fontSize: 11,
           fontWeight: FontWeight.w600,
+          color: tokens.primary,
         ),
       ),
     );
@@ -378,6 +464,7 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _volume,
+              style: ReefTokens.monoInputStyle,
               decoration: InputDecoration(
                 labelText: l.volumeOptional,
                 suffixText: _volumeUnit.symbol,
@@ -405,31 +492,30 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
               decoration: InputDecoration(labelText: l.modelOptional),
               textCapitalization: TextCapitalization.sentences,
             ),
-            const SizedBox(height: 8),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.event),
-              title: Text(l.startDate),
-              subtitle: Text(
-                _startDate == null
-                    ? l.notSet
-                    : DateFormat.yMMMd().format(_startDate!),
+            const SizedBox(height: 12),
+            // Start date as the #12 footer pattern: value + inline
+            // set / change / clear text actions.
+            ReefValueRow(
+              leading: Icon(
+                Icons.event,
+                size: 18,
+                color: ReefTokens.of(context).textDim,
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_startDate != null)
-                    IconButton(
-                      icon: const Icon(Icons.clear),
-                      tooltip: l.clear,
-                      onPressed: () => setState(() => _startDate = null),
-                    ),
-                  TextButton(
-                    onPressed: _pickStartDate,
-                    child: Text(_startDate == null ? l.setDate : l.change),
+              value: _startDate == null
+                  ? '${l.startDate}: ${l.notSet}'
+                  : '${l.startDate}: '
+                        '${DateFormat.yMMMd().format(_startDate!)}',
+              actions: [
+                if (_startDate != null)
+                  ReefInlineButton(
+                    l.clear,
+                    onPressed: () => setState(() => _startDate = null),
                   ),
-                ],
-              ),
+                ReefInlineButton(
+                  _startDate == null ? l.setDate : l.change,
+                  onPressed: _pickStartDate,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             TextFormField(

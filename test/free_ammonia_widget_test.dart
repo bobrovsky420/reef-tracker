@@ -191,7 +191,7 @@ void main() {
     // The row exists (the reported gap: it must be selectable here)...
     final row = find.ancestor(
       of: find.text('Free ammonia (NH₃)'),
-      matching: find.byType(ListTile),
+      matching: find.byKey(const ValueKey('free-ammonia')),
     );
     expect(row, findsOneWidget);
     // ...and it is not the ammonia parameter row itself.

@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/supplement_catalog.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/reef_value_row.dart';
+import '../../widgets/section_header.dart';
 import 'dosing_screen.dart';
 
 /// Sentinel value for the "Other…" (custom free-text) choice in the vendor and
@@ -269,27 +273,41 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
             ),
         ],
       ),
+      // Form grouped into card sections (REDESIGN #21): Product / Dosage /
+      // Schedule.
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _vendorField(l),
+            SectionHeader(l.dosingProduct),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _vendorField(l),
+                  const SizedBox(height: 12),
+                  _productField(l),
+                  const SizedBox(height: 12),
+                  _elementField(l),
+                ],
+              ),
+            ),
+            SectionHeader(l.dosingDosageOptional),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: _dosageSection(l),
+            ),
+            SectionHeader(l.dosingSchedule),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: _scheduleSection(l),
+            ),
             const SizedBox(height: 16),
-            _productField(l),
-            const SizedBox(height: 16),
-            _elementField(l),
-            const Divider(height: 32),
-            _dosageSection(l),
-            const Divider(height: 32),
-            _scheduleSection(l),
-            const Divider(height: 32),
             TextField(
               controller: _noteCtrl,
-              decoration: InputDecoration(
-                labelText: l.noteOptional,
-                border: const OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(labelText: l.noteOptional),
               maxLines: 2,
             ),
             const SizedBox(height: 24),
@@ -312,7 +330,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           isExpanded: true,
           decoration: InputDecoration(
             labelText: l.dosingVendor,
-            border: const OutlineInputBorder(),
           ),
           items: [
             for (final v in kSupplementVendors)
@@ -327,7 +344,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
             controller: _vendorCtrl,
             decoration: InputDecoration(
               labelText: l.dosingVendorName,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -347,7 +363,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
             isExpanded: true,
             decoration: InputDecoration(
               labelText: l.dosingProduct,
-              border: const OutlineInputBorder(),
             ),
             items: [
               for (final p in vendor.allProducts)
@@ -362,7 +377,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
             controller: _productCtrl,
             decoration: InputDecoration(
               labelText: l.dosingProductName,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -377,7 +391,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l.dosingElement,
-        border: const OutlineInputBorder(),
       ),
       items: [
         DropdownMenuItem(value: null, child: Text(l.dosingElementNone)),
@@ -392,11 +405,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l.dosingDosageOptional,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -406,10 +414,8 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: InputDecoration(
-                  labelText: l.dosingAmount,
-                  border: const OutlineInputBorder(),
-                ),
+                style: ReefTokens.monoInputStyle,
+                decoration: InputDecoration(labelText: l.dosingAmount),
                 validator: (v) {
                   // The dosage is optional, but a non-empty entry must be a
                   // positive number — garbage was silently dropped before (#8).
@@ -427,7 +433,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
                 initialValue: _unit,
                 decoration: InputDecoration(
                   labelText: l.dosingUnit,
-                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   for (final u in DoseUnit.values)
@@ -443,7 +448,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           initialValue: _basis,
           decoration: InputDecoration(
             labelText: l.dosingBasis,
-            border: const OutlineInputBorder(),
           ),
           items: [
             DropdownMenuItem(
@@ -465,14 +469,11 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l.dosingSchedule, style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 12),
         DropdownButtonFormField<DoseFrequency?>(
           initialValue: _frequency,
           isExpanded: true,
           decoration: InputDecoration(
             labelText: l.dosingFrequency,
-            border: const OutlineInputBorder(),
           ),
           items: [
             DropdownMenuItem(value: null, child: Text(l.dosingFreqNone)),
@@ -496,10 +497,8 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           TextFormField(
             controller: _intervalCtrl,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: l.dosingIntervalDays,
-              border: const OutlineInputBorder(),
-            ),
+            style: ReefTokens.monoInputStyle,
+            decoration: InputDecoration(labelText: l.dosingIntervalDays),
             validator: (v) {
               // "Every N days" needs a whole N ≥ 1 — 0/-3 used to be stored
               // and silently reinterpreted as daily by the calculator (#8).
@@ -531,27 +530,25 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           ),
         ],
         const SizedBox(height: 12),
-        Row(
-          children: [
-            const Icon(Icons.schedule),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                _time == null
-                    ? l.dosingTimeOptional
-                    : MaterialLocalizations.of(context).formatTimeOfDay(_time!),
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ),
+        // Dose time as the #12 footer pattern: value + inline set / change /
+        // clear text actions.
+        ReefValueRow(
+          leading: Icon(
+            Icons.schedule,
+            size: 18,
+            color: ReefTokens.of(context).textDim,
+          ),
+          value: _time == null
+              ? l.dosingTimeOptional
+              : MaterialLocalizations.of(context).formatTimeOfDay(_time!),
+          actions: [
             if (_time != null)
-              IconButton(
-                icon: const Icon(Icons.clear),
-                tooltip: l.cancel,
+              ReefInlineButton(
+                l.cancel,
                 onPressed: () => setState(() => _time = null),
               ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: l.change,
+            ReefInlineButton(
+              l.change,
               onPressed: () async {
                 final picked = await showTimePicker(
                   context: context,

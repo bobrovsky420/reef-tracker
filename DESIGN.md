@@ -1049,6 +1049,22 @@ use `CheckboxListTile.adaptive` with an explicit widget-level token accent
 Material theming entirely, so the accent must ride the widget (dialect-free:
 on M3 the tokens equal the scheme defaults).
 
+**Management & entry screens (REDESIGN #19–#21).** The satellite screens ride
+the same card language: the Tanks list and Add reading's parameter rows
+collapse into a `ReefCard` of hairline-divided rows; Manage parameters and
+Dosing history into a `ReefSliverCard` (`SliverReorderableList` /
+`SliverList`, the Dosing-tab pattern — reorder is **handle-only** there now);
+the parameter/ratio/dosing/manual-dose editors group their fields into
+`ReefCard` sections under `SectionHeader`s. Two shared pieces carry the
+recurring bits: a theme-level `ChipThemeData` (r14 `surface`+border chips,
+12.5 w600 label, selected = `healthySoft` + `text` — every
+Choice/Filter/Action chip app-wide), and
+`widgets/reef_value_row.dart` (`ReefValueRow`/`ReefInlineButton`/
+`ReefIconChip`) — the inline value + set/change/clear text-action row used by
+the date/time rows in the tank, dosing and manual-dose editors and Add
+reading's timestamp card. Numeric fields on these screens set
+`ReefTokens.monoInputStyle`; `ZoneBoundsEditor` does so centrally.
+
 Deliberate `ColorScheme` slot meanings (documented in the file): `secondary` =
 violet (carbon-change chart marker), `tertiary` = ocean blue (water-change
 marker, noted-reading dots, informational hints), `error` = darkened coral
@@ -1843,9 +1859,12 @@ Rendered as the **Dosing tab** of the home shell.
   (`watchDosingHistory` / `dosingHistoryProvider`, active + ended) **merged**
   with the logged manual doses (`manualDosesProvider`) into one date-sorted
   list (newest first; segments key on `startedAt ?? createdAt`, manual doses on
-  `dosedAt`; a `_TimelineItem` sealed type). Segment rows reuse
-  `dosingDetailLine` for the dosage and show the segment's period (`Since
-  {date}` for active, `{from} – {to}` for ended). A trailing delete
+  `dosedAt`; a `_TimelineItem` sealed type). The timeline is one
+  `ReefSliverCard` of divided rows (REDESIGN #21); element and
+  "Current"/"Manual" tags are deliberately **neutral** (`track`/`textDim` —
+  lifecycle markers, not zone status). Segment rows reuse
+  `dosingDetailLine` for the dosage (mono) and show the segment's period
+  (`Since {date}` for active, `{from} – {to}` for ended). A trailing delete
   **permanently** removes a record entered by mistake (`deleteDosingEntry`, a real
   hard delete — distinct from the reversible `stopDosingEntry`), behind an
   irreversible confirmation that warns when the record isn't the most recent for
@@ -1857,7 +1876,7 @@ Rendered as the **Dosing tab** of the home shell.
   element may be "none" and needn't be in any plan) plus a **required** amount
   (ml/g) and the date/time given (the shared `pickPastDateTime` row, default
   now). Timeline
-  rows show a distinct `vaccines` icon and a highlighted "Manual" chip; tapping
+  rows show a distinct `vaccines` icon and the neutral "Manual" tag; tapping
   a row edits it in place (plain `updateManualDose` — events don't chain like
   segments, so no supersede), and the trailing delete permanently removes it
   behind its own confirmation.
@@ -1928,9 +1947,14 @@ just inputs + a result card and stores nothing.
 One reorderable list (`_DashItem` sealed type: `_ParamItem` | `_RatioItem`)
 mixing tracked **core** parameters and ratio cards, ordered by their shared
 `displayOrder` (microelement rows are managed from the Microelements screen,
-U17; the add-sheet likewise offers only core catalog entries). Toggle which parameters are tracked / which ratio cards are
-shown, drag to reorder either, and edit a parameter's zone bounds
-(`ParameterEditScreen`). Reordering writes the new combined order back via
+U17; the add-sheet likewise offers only core catalog entries). Rendered as one
+`ReefSliverCard` + `SliverReorderableList` (REDESIGN #19, the Dosing-tab
+pattern): each row = adaptive switch, name + faint section caption, mono
+bounds summary, edit icon and a drag **handle** (handle-only drag — the old
+whole-tile long-press drag went with `ReorderableListView`; the pinned
+free-ammonia row simply has no handle). Toggle which parameters are tracked /
+which ratio cards are shown, drag to reorder either, and edit a parameter's
+zone bounds (`ParameterEditScreen`). Reordering writes the new combined order back via
 `applyDashboardOrder` (params → `TrackedParameters`, ratios →
 `RatioVisibilities`). Each row has an edit button: parameters open
 `ParameterEditScreen`, ratios open `RatioEditScreen` (per-tank zone bounds).
@@ -1982,9 +2006,11 @@ Create/edit/delete tanks (delete = confirm dialog + soft delete + Undo
 SnackBar; see the deletion & undo conventions above). Editor converts volume
 to/from the display unit and
 captures optional free-text `vendor` and `model` (single line) plus multi-line
-`notes`. The setup type drives which parameters are seeded. The list and the
-Settings → About row use the `Icons.waves` glyph for an aquarium (tinted with
-the primary colour for the active tank).
+`notes`. The setup type drives which parameters are seeded. The list is one
+`ReefCard` of divided rows (waves glyph, name + a `healthySoft`/`primary`
+"Active" tag, "volume · type · since date" sub with mono numerals, overflow
+menu); tapping a row activates that tank. The Settings → About row keeps the
+`Icons.waves` glyph.
 
 ### Editions & the early-adopter marker (U19 phase 0)
 

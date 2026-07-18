@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/ammonia_toxicity.dart';
 import '../../domain/dashboard_sections.dart';
@@ -15,6 +16,9 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/reef_sheet.dart';
+import '../../widgets/section_header.dart';
 import '../../widgets/zone_bounds_editor.dart';
 
 /// Per-tank parameter management: enable/disable, reorder, edit zones, add from
@@ -94,68 +98,99 @@ class ManageParametersScreen extends ConsumerWidget {
                     : a.flatOrder.compareTo(b.flatOrder),
               );
 
-          return ReorderableListView.builder(
-            padding: const EdgeInsets.only(bottom: 88),
-            itemCount: items.length,
-            // ignore: deprecated_member_use
-            onReorder: (oldIndex, newIndex) {
-              // The free-ammonia row is pinned (a derived value): ignore drags
-              // of it, and skip it when writing back the param/ratio orders.
-              if (items[oldIndex] is _FreeAmmoniaItem) return;
-              if (newIndex > oldIndex) newIndex -= 1;
-              final reordered = [...items];
-              reordered.insert(newIndex, reordered.removeAt(oldIndex));
-              final paramOrders = <({int id, int order})>[];
-              final ratioOrders = <({String key, int order})>[];
-              for (var i = 0; i < reordered.length; i++) {
-                final it = reordered[i];
-                switch (it) {
-                  case _ParamItem():
-                    paramOrders.add((id: it.param.id, order: i));
-                  case _RatioItem():
-                    ratioOrders.add((key: it.kind.name, order: i));
-                  case _FreeAmmoniaItem():
-                    break; // not user-orderable
-                }
-              }
-              unawaited(
-                ref
-                    .read(dbProvider)
-                    .applyDashboardOrder(
-                      tank.id,
-                      paramOrders: paramOrders,
-                      ratioOrders: ratioOrders,
+          // One `ReefSliverCard` of hairline-divided reorderable rows —
+          // exactly the #13 dosing-list pattern (REDESIGN #19).
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+                sliver: ReefSliverCard(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 10,
+                  ),
+                  sliver: SliverReorderableList(
+                    itemCount: items.length,
+                    onReorderItem: (oldIndex, newIndex) {
+                      // The free-ammonia row is pinned (a derived value): it
+                      // has no drag handle, and it is skipped when writing
+                      // back the param/ratio orders.
+                      if (items[oldIndex] is _FreeAmmoniaItem) return;
+                      final reordered = [...items];
+                      reordered.insert(
+                        newIndex,
+                        reordered.removeAt(oldIndex),
+                      );
+                      final paramOrders = <({int id, int order})>[];
+                      final ratioOrders = <({String key, int order})>[];
+                      for (var i = 0; i < reordered.length; i++) {
+                        final it = reordered[i];
+                        switch (it) {
+                          case _ParamItem():
+                            paramOrders.add((id: it.param.id, order: i));
+                          case _RatioItem():
+                            ratioOrders.add((key: it.kind.name, order: i));
+                          case _FreeAmmoniaItem():
+                            break; // not user-orderable
+                        }
+                      }
+                      unawaited(
+                        ref
+                            .read(dbProvider)
+                            .applyDashboardOrder(
+                              tank.id,
+                              paramOrders: paramOrders,
+                              ratioOrders: ratioOrders,
+                            ),
+                      );
+                    },
+                    // The dragged row leaves the card, so give it an opaque
+                    // lifted surface (the dark-theme card fill is translucent
+                    // — rows underneath would show through the bare row).
+                    proxyDecorator: (child, index, animation) => Material(
+                      elevation: 3,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(12),
+                      child: child,
                     ),
-              );
-            },
-            itemBuilder: (context, i) {
-              final item = items[i];
-              return switch (item) {
-                _ParamItem() => _paramRow(
-                  context,
-                  ref,
-                  item.param,
-                  prefs,
-                  i,
-                  grouped: grouped,
+                    itemBuilder: (context, i) {
+                      final item = items[i];
+                      final isLast = i == items.length - 1;
+                      return switch (item) {
+                        _ParamItem() => _paramRow(
+                          context,
+                          ref,
+                          item.param,
+                          prefs,
+                          i,
+                          grouped: grouped,
+                          isLast: isLast,
+                        ),
+                        _RatioItem() => _ratioRow(
+                          context,
+                          ref,
+                          tank.id,
+                          item,
+                          i,
+                          grouped: grouped,
+                          isLast: isLast,
+                        ),
+                        _FreeAmmoniaItem() => _freeAmmoniaRow(
+                          context,
+                          ref,
+                          tank.id,
+                          ammoniaEnabled: ammoniaEnabled,
+                          grouped: grouped,
+                          isLast: isLast,
+                        ),
+                      };
+                    },
+                  ),
                 ),
-                _RatioItem() => _ratioRow(
-                  context,
-                  ref,
-                  tank.id,
-                  item,
-                  i,
-                  grouped: grouped,
-                ),
-                _FreeAmmoniaItem() => _freeAmmoniaRow(
-                  context,
-                  ref,
-                  tank.id,
-                  ammoniaEnabled: ammoniaEnabled,
-                  grouped: grouped,
-                ),
-              };
-            },
+              ),
+            ],
           );
         },
       ),
@@ -177,6 +212,90 @@ class ManageParametersScreen extends ConsumerWidget {
     );
   }
 
+  /// Shared row shell (#13 row pattern): adaptive switch, title + sub column,
+  /// optional edit icon + drag handle, hairline divider between rows. The
+  /// rows sit inside the sliver card, whose fill paints over the scaffold
+  /// Material — each row brings a transparent Material so its ink ripples
+  /// above the card. [subMono] renders the sub line in the mono family
+  /// (bounds summaries are numerals-heavy).
+  Widget _manageRow(
+    BuildContext context, {
+    required Key key,
+    required Widget leading,
+    required Widget title,
+    required String sub,
+    bool subMono = true,
+    List<Widget> trailing = const [],
+    required bool isLast,
+  }) {
+    final tokens = ReefTokens.of(context);
+    return Material(
+      key: key,
+      type: MaterialType.transparency,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        decoration: isLast
+            ? null
+            : BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: tokens.surfaceBorder),
+                ),
+              ),
+        child: Row(
+          children: [
+            leading,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  title,
+                  const SizedBox(height: 2),
+                  Text(
+                    sub,
+                    style: subMono
+                        ? ReefTokens.monoTextStyle.copyWith(
+                            fontSize: 12,
+                            color: tokens.textDim,
+                          )
+                        : TextStyle(fontSize: 12, color: tokens.textDim),
+                  ),
+                ],
+              ),
+            ),
+            ...trailing,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _editIcon(BuildContext context, String tooltip, VoidCallback onTap) =>
+      IconButton(
+        icon: Icon(
+          Icons.edit_outlined,
+          size: 18,
+          color: ReefTokens.of(context).textDim,
+        ),
+        tooltip: tooltip,
+        onPressed: onTap,
+      );
+
+  Widget _dragHandle(BuildContext context, AppLocalizations l, int index) =>
+      ReorderableDragStartListener(
+        index: index,
+        // The padding keeps the 16 px glyph draggable with a finger.
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            Icons.drag_handle,
+            size: 16,
+            color: ReefTokens.of(context).textFaint,
+            semanticLabel: l.reorder,
+          ),
+        ),
+      );
+
   Widget _paramRow(
     BuildContext context,
     WidgetRef ref,
@@ -184,19 +303,13 @@ class ManageParametersScreen extends ConsumerWidget {
     UnitPrefs prefs,
     int index, {
     required bool grouped,
+    required bool isLast,
   }) {
     final l = AppLocalizations.of(context);
     final pres = presentationOf(param, prefs);
-    return ListTile(
+    return _manageRow(
+      context,
       key: ValueKey('p${param.id}'),
-      title: _titleWithGroup(
-        context,
-        l.paramName(param.paramKey),
-        // No section caption in the classic (flat) layout — there are no
-        // sections to belong to.
-        grouped ? l.dashSectionLabel(sectionOfParam(param.paramKey)) : null,
-      ),
-      subtitle: Text(_boundsSummary(l, boundsOf(param), pres)),
       // Name the switch after its row so screen readers don't announce an
       // anonymous switch (#48).
       leading: Semantics(
@@ -208,21 +321,23 @@ class ManageParametersScreen extends ConsumerWidget {
               .updateTrackedParameter(param.copyWith(enabled: v)),
         ),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: l.editZones,
-            onPressed: () =>
-                context.push('/parameters/${param.id}/edit', extra: param),
-          ),
-          ReorderableDragStartListener(
-            index: index,
-            child: Icon(Icons.drag_handle, semanticLabel: l.reorder),
-          ),
-        ],
+      title: _titleWithGroup(
+        context,
+        l.paramName(param.paramKey),
+        // No section caption in the classic (flat) layout — there are no
+        // sections to belong to.
+        grouped ? l.dashSectionLabel(sectionOfParam(param.paramKey)) : null,
       ),
+      sub: _boundsSummary(l, boundsOf(param), pres),
+      trailing: [
+        _editIcon(
+          context,
+          l.editZones,
+          () => context.push('/parameters/${param.id}/edit', extra: param),
+        ),
+        _dragHandle(context, l, index),
+      ],
+      isLast: isLast,
     );
   }
 
@@ -233,18 +348,14 @@ class ManageParametersScreen extends ConsumerWidget {
     _RatioItem item,
     int index, {
     required bool grouped,
+    required bool isLast,
   }) {
     final l = AppLocalizations.of(context);
     final kind = item.kind;
     final bounds = ratioBounds(kind, item.settings);
-    return ListTile(
+    return _manageRow(
+      context,
       key: ValueKey('r${kind.name}'),
-      title: _titleWithGroup(
-        context,
-        l.ratioCardLabel(kind),
-        grouped ? l.dashSectionLabel(DashboardSection.ratios) : null,
-      ),
-      subtitle: Text(_ratioBoundsSummary(l, kind, bounds)),
       leading: Semantics(
         label: l.ratioCardLabel(kind),
         child: Switch.adaptive(
@@ -253,20 +364,21 @@ class ManageParametersScreen extends ConsumerWidget {
               ref.read(dbProvider).setRatioVisible(tankId, kind.name, v),
         ),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: l.editZones,
-            onPressed: () => context.push('/ratio/${kind.name}/edit'),
-          ),
-          ReorderableDragStartListener(
-            index: index,
-            child: Icon(Icons.drag_handle, semanticLabel: l.reorder),
-          ),
-        ],
+      title: _titleWithGroup(
+        context,
+        l.ratioCardLabel(kind),
+        grouped ? l.dashSectionLabel(DashboardSection.ratios) : null,
       ),
+      sub: _ratioBoundsSummary(l, kind, bounds),
+      trailing: [
+        _editIcon(
+          context,
+          l.editZones,
+          () => context.push('/ratio/${kind.name}/edit'),
+        ),
+        _dragHandle(context, l, index),
+      ],
+      isLast: isLast,
     );
   }
 
@@ -280,19 +392,13 @@ class ManageParametersScreen extends ConsumerWidget {
     int tankId, {
     required bool ammoniaEnabled,
     required bool grouped,
+    required bool isLast,
   }) {
     final l = AppLocalizations.of(context);
     final visible = ref.watch(freeAmmoniaVisibleProvider);
-    return ListTile(
+    return _manageRow(
+      context,
       key: const ValueKey('free-ammonia'),
-      title: _titleWithGroup(
-        context,
-        l.freeAmmoniaLabel,
-        grouped ? l.dashSectionLabel(DashboardSection.ratios) : null,
-      ),
-      subtitle: Text(
-        ammoniaEnabled ? l.freeAmmoniaShowSubtitle : l.freeAmmoniaNeedsAmmonia,
-      ),
       leading: Semantics(
         label: l.freeAmmoniaLabel,
         child: Switch.adaptive(
@@ -303,6 +409,16 @@ class ManageParametersScreen extends ConsumerWidget {
               : null,
         ),
       ),
+      title: _titleWithGroup(
+        context,
+        l.freeAmmoniaLabel,
+        grouped ? l.dashSectionLabel(DashboardSection.ratios) : null,
+      ),
+      sub: ammoniaEnabled
+          ? l.freeAmmoniaShowSubtitle
+          : l.freeAmmoniaNeedsAmmonia,
+      subMono: false,
+      isLast: isLast,
     );
   }
 
@@ -330,13 +446,19 @@ class ManageParametersScreen extends ConsumerWidget {
       builder: (ctx) => SafeArea(
         child: ListView(
           shrinkWrap: true,
+          // No top inset — the sheet's drag handle already provides it.
+          padding: const EdgeInsets.only(top: 0, bottom: 8),
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: ReefSheetHeader(l.addParameter),
+            ),
             for (final p in available)
               ListTile(
                 title: Text(l.paramName(p.key)),
                 trailing: Text(
                   p.unit,
-                  style: TextStyle(color: Theme.of(ctx).hintColor),
+                  style: TextStyle(color: ReefTokens.of(ctx).textFaint),
                 ),
                 onTap: () => Navigator.pop(ctx, p.key),
               ),
@@ -390,15 +512,20 @@ class ManageParametersScreen extends ConsumerWidget {
 /// clamps to the row's own section, and this makes that legible. Null group
 /// (unknown legacy keys, the headerless `other` bucket) renders no caption.
 Widget _titleWithGroup(BuildContext context, String name, String? group) {
-  if (group == null) return Text(name);
+  final tokens = ReefTokens.of(context);
+  final titleStyle = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: tokens.text,
+  );
+  if (group == null) return Text(name, style: titleStyle);
   return Row(
     children: [
-      Flexible(child: Text(name, overflow: TextOverflow.ellipsis)),
-      const SizedBox(width: 8),
-      Text(
-        group,
-        style: TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
+      Flexible(
+        child: Text(name, overflow: TextOverflow.ellipsis, style: titleStyle),
       ),
+      const SizedBox(width: 8),
+      Text(group, style: TextStyle(fontSize: 11, color: tokens.textFaint)),
     ],
   );
 }
@@ -574,7 +701,10 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     final help = l.paramHelp(widget.param.paramKey);
+    // Form grouped into card sections (REDESIGN #19): Unit / Safe ranges /
+    // Testing reminder.
     return Scaffold(
       appBar: AppBar(title: Text(l.paramName(widget.param.paramKey))),
       body: Form(
@@ -582,88 +712,129 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (help != null) ...[
-              Text(help, style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 16),
-            ],
-            if (_pres.unitFollowsSettings || _pres.unitFixed)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.straighten),
-                title: Text(l.unitWithValue(_pres.unitLabel)),
-                // Microelements: the unit is fixed by the catalog (the
-                // stored unit field is ignored), not driven by app settings.
-                subtitle: Text(
-                  _pres.unitFollowsSettings
-                      ? l.unitFromSettingsNote
-                      : l.unitFixedNote,
-                ),
-              )
-            else
-              TextFormField(
-                controller: _unit,
-                decoration: InputDecoration(labelText: l.unit),
+            if (help != null)
+              Text(
+                help,
+                style: TextStyle(fontSize: 12.5, color: tokens.textDim),
               ),
-            const SizedBox(height: 24),
-            ZoneBoundsEditor(
-              key: _editorKey,
-              initial: _displayBounds,
-              format: (v) => formatLocaleNumber(v, _pres.decimals),
-              trailingNote: Text(
-                l.boundsUnitNote(_pres.unitLabel),
-                style: Theme.of(context).textTheme.bodySmall,
+            SectionHeader(l.unit),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: _pres.unitFollowsSettings || _pres.unitFixed
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.straighten,
+                          size: 18,
+                          color: tokens.textDim,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l.unitWithValue(_pres.unitLabel),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.text,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              // Microelements: the unit is fixed by the
+                              // catalog (the stored unit field is ignored),
+                              // not driven by app settings.
+                              Text(
+                                _pres.unitFollowsSettings
+                                    ? l.unitFromSettingsNote
+                                    : l.unitFixedNote,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: tokens.textDim,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : TextFormField(
+                      controller: _unit,
+                      decoration: InputDecoration(labelText: l.unit),
+                    ),
+            ),
+            SectionHeader(l.sectionSafeRanges),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: ZoneBoundsEditor(
+                key: _editorKey,
+                initial: _displayBounds,
+                format: (v) => formatLocaleNumber(v, _pres.decimals),
+                trailingNote: Text(
+                  l.boundsUnitNote(_pres.unitLabel),
+                  style: TextStyle(fontSize: 12, color: tokens.textDim),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
             // "Remind to test" cadence (U1). The reminder anchors on the
             // parameter's latest reading, so logging a test resets the timer.
-            Text(l.remindToTest, style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                ChoiceChip(
-                  label: Text(l.cadenceOff),
-                  selected: !_customCadence && _cadence == null,
-                  onSelected: (_) => setState(() {
-                    _cadence = null;
-                    _customCadence = false;
-                  }),
-                ),
-                for (final d in _cadencePresets)
-                  ChoiceChip(
-                    label: Text(l.daysShortN(d)),
-                    selected: !_customCadence && _cadence == d,
-                    onSelected: (_) => setState(() {
-                      _cadence = d;
-                      _customCadence = false;
-                    }),
+            SectionHeader(l.remindToTest),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      ChoiceChip(
+                        label: Text(l.cadenceOff),
+                        selected: !_customCadence && _cadence == null,
+                        onSelected: (_) => setState(() {
+                          _cadence = null;
+                          _customCadence = false;
+                        }),
+                      ),
+                      for (final d in _cadencePresets)
+                        ChoiceChip(
+                          label: Text(l.daysShortN(d)),
+                          selected: !_customCadence && _cadence == d,
+                          onSelected: (_) => setState(() {
+                            _cadence = d;
+                            _customCadence = false;
+                          }),
+                        ),
+                      ChoiceChip(
+                        label: Text(l.cadenceCustom),
+                        selected: _customCadence,
+                        onSelected: (_) =>
+                            setState(() => _customCadence = true),
+                      ),
+                    ],
                   ),
-                ChoiceChip(
-                  label: Text(l.cadenceCustom),
-                  selected: _customCadence,
-                  onSelected: (_) => setState(() => _customCadence = true),
-                ),
-              ],
-            ),
-            if (_customCadence) ...[
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _customDays,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: l.customDaysLabel,
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (v) {
-                  final parsed = int.tryParse((v ?? '').trim());
-                  return (parsed == null || parsed < 1)
-                      ? l.invalidIntervalDays
-                      : null;
-                },
+                  if (_customCadence) ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _customDays,
+                      keyboardType: TextInputType.number,
+                      style: ReefTokens.monoInputStyle,
+                      decoration: InputDecoration(
+                        labelText: l.customDaysLabel,
+                      ),
+                      validator: (v) {
+                        final parsed = int.tryParse((v ?? '').trim());
+                        return (parsed == null || parsed < 1)
+                            ? l.invalidIntervalDays
+                            : null;
+                      },
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _save,

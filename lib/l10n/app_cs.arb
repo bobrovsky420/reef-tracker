@@ -104,6 +104,8 @@
   "boundAmberHigh": "Červená nad (oranžová horní)",
   "boundsUnitNote": "Hodnoty jsou v {unit}. Prázdné pole znamená „bez limitu na této straně“.",
   "enterANumber": "Zadejte číslo",
+  "sectionSafeRanges": "Bezpečná rozmezí",
+  "sectionDose": "Dávka",
   "boundsOrderError": "Hranice musí narůstat: oranžová dolní ≤ zelená dolní ≤ zelená horní ≤ oranžová horní.",
   "boundsPairError": "Každá oranžová hranice vyžaduje odpovídající zelenou hranici na téže straně.",
 

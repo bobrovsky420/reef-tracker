@@ -144,6 +144,10 @@
   "boundsUnitNote": "Values are in {unit}. Leave a field blank to mean \"no limit on that side\".",
   "@boundsUnitNote": { "placeholders": { "unit": {} } },
   "enterANumber": "Enter a number",
+  "sectionSafeRanges": "Safe ranges",
+  "@sectionSafeRanges": { "description": "Section header above the zone-bounds editor card in the parameter and ratio editors (rendered uppercase). Keep short." },
+  "sectionDose": "Dose",
+  "@sectionDose": { "description": "Section header above the amount + date card in the manual-dose editor (rendered uppercase). Keep short." },
   "boundsOrderError": "Boundaries must increase: amber low ≤ green low ≤ green high ≤ amber high.",
   "boundsPairError": "Each amber boundary needs its matching green boundary on the same side.",
 

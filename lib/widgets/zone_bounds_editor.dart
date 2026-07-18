@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/theme.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
@@ -128,6 +129,8 @@ class ZoneBoundsEditorState extends State<ZoneBoundsEditor> {
           decimal: true,
           signed: true,
         ),
+        // Numeric entry in the mono family (REDESIGN #18/#19).
+        style: ReefTokens.monoInputStyle,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(Icons.circle, color: zone.colorOf(context), size: 14),

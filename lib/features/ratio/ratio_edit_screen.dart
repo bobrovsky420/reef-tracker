@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../domain/ratio.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/section_header.dart';
 import '../../widgets/zone_bounds_editor.dart';
 
 /// Editor for a ratio card's four zone boundaries, per tank. Values are in the
@@ -76,6 +79,8 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.ratioCardLabel(kind))),
+      // Form grouped into a card section (REDESIGN #19): Safe ranges only —
+      // ratios have no unit or testing reminder.
       body: Form(
         key: _formKey,
         child: ListView(
@@ -83,13 +88,19 @@ class _RatioEditScreenState extends ConsumerState<RatioEditScreen> {
           children: [
             Text(
               l.ratioBoundsNote(ratioMetricLabel(kind)),
-              style: Theme.of(context).textTheme.bodySmall,
+              style: TextStyle(
+                fontSize: 12.5,
+                color: ReefTokens.of(context).textDim,
+              ),
             ),
-            const SizedBox(height: 24),
-            ZoneBoundsEditor(
-              key: _editorKey,
-              initial: ratioBounds(kind, row),
-              format: _fmt,
+            SectionHeader(l.sectionSafeRanges),
+            ReefCard(
+              padding: const EdgeInsets.all(16),
+              child: ZoneBoundsEditor(
+                key: _editorKey,
+                initial: ratioBounds(kind, row),
+                format: _fmt,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
