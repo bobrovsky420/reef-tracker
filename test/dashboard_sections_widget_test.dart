@@ -134,10 +134,10 @@ void main() {
       ),
       findsOneWidget,
     );
-    // Gauge overlays render the uppercase (symbol-stripped) label + the
-    // ideal range as a bare trimmed-zero pair (mixed preset: alkalinity
-    // green 7.5–9).
-    expect(find.text('ALKALINITY'), findsOneWidget);
+    // Gauge overlays render the uppercase short name (alkalinity's dedicated
+    // "KH") + the ideal range as a bare trimmed-zero pair (mixed preset:
+    // alkalinity green 7.5–9).
+    expect(find.text('KH'), findsOneWidget);
     expect(find.text('7.5–9'), findsOneWidget);
 
     await unmountApp(tester);
@@ -160,7 +160,7 @@ void main() {
     await settle(tester);
 
     expect(find.byType(ParamGaugeCard), findsNWidgets(6));
-    expect(find.text('ALKALINITY'), findsNothing);
+    expect(find.text('KH'), findsNothing);
     expect(find.text('Alkalinity'), findsOneWidget); // flat tile title
 
     await unmountApp(tester);
@@ -199,14 +199,14 @@ void main() {
     tester,
   ) async {
     // A phone-width viewport → 2 columns, so Core chemistry's 3rd dial
-    // (Magnesium — uppercase short name inside the gauge, symbol stripped)
-    // is alone in the last row and must be centered rather than sitting in
-    // the bottom-left slot. Viewport width 480 → the tile grid's center is
-    // at x = 240.
+    // (Magnesium — uppercase short name inside the gauge, the "Mg" symbol
+    // extracted from the full name) is alone in the last row and must be
+    // centered rather than sitting in the bottom-left slot. Viewport width
+    // 480 → the tile grid's center is at x = 240.
     await pumpDashboard(tester, viewport: const Size(480, 3000));
 
     final magCard = find.ancestor(
-      of: find.text('MAGNESIUM'),
+      of: find.text('MG'),
       matching: find.byType(ReefCard),
     );
     expect(magCard, findsOneWidget);

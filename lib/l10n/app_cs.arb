@@ -400,6 +400,7 @@
   "paramPh": "pH",
   "paramSalinity": "Salinita",
   "paramAlkalinity": "Alkalita",
+  "paramAlkalinityShort": "KH",
   "paramCalcium": "Vápník (Ca)",
   "paramMagnesium": "Hořčík (Mg)",
   "paramNitrate": "Dusičnany (NO₃)",

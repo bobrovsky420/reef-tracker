@@ -1357,6 +1357,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get paramAlkalinity => 'Alkalita';
 
   @override
+  String get paramAlkalinityShort => 'KH';
+
+  @override
   String get paramCalcium => 'Vápník (Ca)';
 
   @override

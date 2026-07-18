@@ -551,6 +551,10 @@
   "paramPh": "pH",
   "paramSalinity": "Salinity",
   "paramAlkalinity": "Alkalinity",
+  "paramAlkalinityShort": "KH",
+  "@paramAlkalinityShort": {
+    "description": "Dedicated compact name for alkalinity, shown on the dashboard gauge dial instead of the full name (rendered uppercase; keep very short). Parameters without a dedicated *Short key derive their dial label from the \" (Symbol)\" parenthetical of the full name, or fall back to the full name."
+  },
   "paramCalcium": "Calcium (Ca)",
   "paramMagnesium": "Magnesium (Mg)",
   "paramNitrate": "Nitrate (NO₃)",

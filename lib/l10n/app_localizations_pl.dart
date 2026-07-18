@@ -1371,6 +1371,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get paramAlkalinity => 'Twardość węglanowa';
 
   @override
+  String get paramAlkalinityShort => 'KH';
+
+  @override
   String get paramCalcium => 'Wapń (Ca)';
 
   @override

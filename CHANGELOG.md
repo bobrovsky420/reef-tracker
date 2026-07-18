@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.2] - 2026-07-18
+
+### Changed
+- Gauge dials and environment pills now label parameters with a compact
+  short name: alkalinity shows "KH", and parameters whose name carries a
+  symbol ("Calcium (Ca)", "Nitrate (NO₃)") show just the symbol; names
+  without either (Temperature, pH, Salinity, ORP) are unchanged. Lists,
+  history and Add reading keep the full names.
+
 ## [0.31.1] - 2026-07-18
 
 ### Changed

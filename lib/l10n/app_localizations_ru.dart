@@ -1365,6 +1365,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paramAlkalinity => 'Карб. жёсткость';
 
   @override
+  String get paramAlkalinityShort => 'KH';
+
+  @override
   String get paramCalcium => 'Кальций (Ca)';
 
   @override

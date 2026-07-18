@@ -9,25 +9,37 @@ void main() {
   final initial = DateTime(2026, 6, 1, 10, 30);
 
   group('paramShortName (REDESIGN #7 dial labels)', () {
-    test('strips the trailing " (Symbol)" parenthetical in every locale', () {
+    test('a dedicated short name wins in every locale (alkalinity → KH)', () {
+      for (final locale in AppLocalizations.supportedLocales) {
+        final l = lookupAppLocalizations(locale);
+        expect(
+          l.paramShortName('alkalinity'),
+          'KH',
+          reason: 'alkalinity dial label must be the dedicated KH ($locale)',
+        );
+      }
+    });
+
+    test('otherwise the "(Symbol)" parenthetical is extracted in every '
+        'locale', () {
       for (final locale in AppLocalizations.supportedLocales) {
         final l = lookupAppLocalizations(locale);
         expect(
           l.paramShortName('calcium'),
-          isNot(contains('(')),
-          reason: 'calcium dial label must drop the symbol ($locale)',
+          'Ca',
+          reason: 'calcium dial label is the extracted symbol ($locale)',
         );
-        expect(l.paramShortName('calcium'), isNotEmpty);
-        // Ammonia's parenthetical carries subscripts/slashes — still one
-        // trailing group.
+        // Ammonia's parenthetical carries subscripts/slashes — extracted
+        // whole, braces dropped.
+        expect(l.paramShortName('ammonia'), isNotEmpty);
         expect(l.paramShortName('ammonia'), isNot(contains('(')));
       }
     });
 
-    test('names without a parenthetical pass through unchanged', () {
+    test('names with neither pass through unchanged', () {
       final l = lookupAppLocalizations(const Locale('en'));
-      expect(l.paramShortName('calcium'), 'Calcium');
-      expect(l.paramShortName('alkalinity'), l.paramName('alkalinity'));
+      expect(l.paramShortName('temperature'), 'Temperature');
+      expect(l.paramShortName('ph'), 'pH');
       // Unknown keys fall back to the key itself, like paramName.
       expect(l.paramShortName('custom_key'), 'custom_key');
     });

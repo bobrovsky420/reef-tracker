@@ -1219,8 +1219,11 @@ behind a confirmation dialog**:
     `ParamGaugeCard` — L ≈ 148 px dial for core chemistry, S ≈ 104 px for
     nutrients): a 270° arc with ticks, a `track` arc, a `band` arc over the
     ideal (green) range and a ringed marker dot in the zone color; center
-    overlay = uppercase **short name** (`L10nDomain.paramShortName` — the
-    localized name minus its trailing " (Symbol)" parenthetical), mono
+    overlay = uppercase **short name** (`L10nDomain.paramShortName` — a
+    dedicated localized short key when the ARB defines one
+    (`paramAlkalinityShort` → "KH"), else the symbol extracted from the full
+    name's " (Symbol)" parenthetical ("Calcium (Ca)" → "Ca"), else the full
+    name (Temperature, pH)), mono
     value+unit in the zone color and the ideal (green) range as a bare
     trimmed-zero "min–max" pair in display units (the localized
     `gaugeIdealRange` phrase is its `semanticsLabel` for screen readers),

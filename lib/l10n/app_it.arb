@@ -400,6 +400,7 @@
   "paramPh": "pH",
   "paramSalinity": "Salinità",
   "paramAlkalinity": "Alcalinità",
+  "paramAlkalinityShort": "KH",
   "paramCalcium": "Calcio (Ca)",
   "paramMagnesium": "Magnesio (Mg)",
   "paramNitrate": "Nitrato (NO₃)",

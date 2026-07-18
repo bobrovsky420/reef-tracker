@@ -400,6 +400,7 @@
   "paramPh": "pH",
   "paramSalinity": "Zasolenie",
   "paramAlkalinity": "Twardość węglanowa",
+  "paramAlkalinityShort": "KH",
   "paramCalcium": "Wapń (Ca)",
   "paramMagnesium": "Magnez (Mg)",
   "paramNitrate": "Azotan (NO₃)",

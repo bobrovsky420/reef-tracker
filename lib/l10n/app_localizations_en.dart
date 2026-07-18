@@ -1348,6 +1348,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paramAlkalinity => 'Alkalinity';
 
   @override
+  String get paramAlkalinityShort => 'KH';
+
+  @override
   String get paramCalcium => 'Calcium (Ca)';
 
   @override

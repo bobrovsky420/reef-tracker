@@ -400,6 +400,7 @@
   "paramPh": "pH",
   "paramSalinity": "Солёность",
   "paramAlkalinity": "Карб. жёсткость",
+  "paramAlkalinityShort": "KH",
   "paramCalcium": "Кальций (Ca)",
   "paramMagnesium": "Магний (Mg)",
   "paramNitrate": "Нитрат (NO₃)",

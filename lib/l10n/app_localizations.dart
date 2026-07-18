@@ -2351,6 +2351,12 @@ abstract class AppLocalizations {
   /// **'Alkalinity'**
   String get paramAlkalinity;
 
+  /// Dedicated compact name for alkalinity, shown on the dashboard gauge dial instead of the full name (rendered uppercase; keep very short). Parameters without a dedicated *Short key derive their dial label from the " (Symbol)" parenthetical of the full name, or fall back to the full name.
+  ///
+  /// In en, this message translates to:
+  /// **'KH'**
+  String get paramAlkalinityShort;
+
   /// No description provided for @paramCalcium.
   ///
   /// In en, this message translates to:
