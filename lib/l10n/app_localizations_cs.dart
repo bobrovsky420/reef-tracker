@@ -1319,6 +1319,73 @@ class AppLocalizationsCs extends AppLocalizations {
       'Pro výpočet přidejte alespoň dvě měření z různých dnů a objem nádrže.';
 
   @override
+  String get doseCalcModeMaintenance => 'Denní dávka';
+
+  @override
+  String get doseCalcModeCorrection => 'Korekce';
+
+  @override
+  String get doseCalcCorrIntro =>
+      'Spočítejte jednorázovou dávku, která zvedne prvek ze současné hodnoty na cílovou. Pokud by byl rychlý nárůst nebezpečný, dávka se rozloží do několika dnů.';
+
+  @override
+  String get doseCalcCurrentValue => 'Aktuální hodnota';
+
+  @override
+  String get doseCalcCurrentValueHelp => 'Prázdné = vaše poslední měření.';
+
+  @override
+  String get doseCalcTargetValue => 'Cílová hodnota';
+
+  @override
+  String get doseCalcTargetValueHelp =>
+      'Prázdné = korekční cíl parametru, nebo střed jeho bezpečného rozsahu.';
+
+  @override
+  String get doseCalcNeededRise => 'Potřebný nárůst';
+
+  @override
+  String get doseCalcOneTimeDose => 'Jednorázová dávka';
+
+  @override
+  String get doseCalcTotalDose => 'Celková dávka';
+
+  @override
+  String get doseCalcDosePerDay => 'Dávka na den';
+
+  @override
+  String get doseCalcSpreadDays => 'Rozložit do dnů';
+
+  @override
+  String get doseCalcCorrMissing =>
+      'Pro výpočet zadejte aktuální hodnotu, cíl a objem nádrže.';
+
+  @override
+  String get doseCalcCorrAtTarget =>
+      'Hodnota už je na cíli nebo nad ním – není co dávkovat.';
+
+  @override
+  String get doseCalcCorrSingle => 'Lze bezpečně podat jako jednu dávku.';
+
+  @override
+  String doseCalcCorrSplit(Object limit, int days) {
+    return 'Zvyšovat rychleji než o $limit za den je riskantní – podejte korekci raději jako $days denních dávek.';
+  }
+
+  @override
+  String get doseCalcLogDose => 'Zaznamenat dávku';
+
+  @override
+  String get correctionCta => 'Pod rozsahem – spočítat korekční dávku';
+
+  @override
+  String get targetValueLabel => 'Korekční cíl';
+
+  @override
+  String get targetValueHelp =>
+      'Předvyplní korekční režim kalkulačky dávkování. Prázdné = střed bezpečného rozsahu.';
+
+  @override
   String get trendSection => 'Trendy';
 
   @override

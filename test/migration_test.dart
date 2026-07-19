@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/presets.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/supplement_catalog.dart';
 
@@ -534,6 +535,46 @@ void main() {
     expect(restored.amount, 12.5);
     expect(restored.dosedAt, dosedAt);
     expect(await indexNames(db), contains('idx_manual_doses_tank_dosed'));
+  });
+
+  test('upgrading from v21 adds target_value and backfills the alkalinity '
+      'target from the tank setup type', () async {
+    // seedFullSchemaAt-style: build current schema with two tanks, then drop
+    // the column to reconstruct a genuine v21 file where the from<22 step
+    // must add it and run the preset backfill.
+    final file = File('${tempDir.path}/from21-notarget.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    final mixedId = await seed.createTankWithPreset(
+      name: 'Mixed',
+      type: SetupType.mixed,
+    );
+    final fishId = await seed.createTankWithPreset(
+      name: 'Fish',
+      type: SetupType.fishOnly,
+    );
+    await seed.customStatement(
+      'ALTER TABLE tracked_parameters DROP COLUMN target_value',
+    );
+    await seed.customStatement('PRAGMA user_version = 21');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+
+    final mixed = await db.getTrackedParameters(mixedId);
+    expect(
+      mixed.firstWhere((p) => p.paramKey == 'alkalinity').targetValue,
+      presetTarget(SetupType.mixed, 'alkalinity'),
+      reason: 'existing rows get the setup-type default target',
+    );
+    expect(
+      mixed.firstWhere((p) => p.paramKey == 'calcium').targetValue,
+      isNull,
+      reason: 'parameters without a preset target stay null',
+    );
+    // A setup type whose preset has no targets at all is untouched.
+    final fish = await db.getTrackedParameters(fishId);
+    expect(fish.every((p) => p.targetValue == null), isTrue);
   });
 
   test('upgrading from v18 backfills legacy reading group ids (#15)', () async {

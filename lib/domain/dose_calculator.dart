@@ -307,3 +307,106 @@ DoseCalcResult computeDoseCalc({
     adjustment: adjustment,
   );
 }
+
+// --- Correction (one-off) dose -----------------------------------------------
+
+/// Outcome category for a correction-dose calculation.
+enum CorrectionStatus {
+  /// Current value, target or tank volume is missing/invalid.
+  missingInputs,
+
+  /// The rise is known but a supplement potency is required for a dose.
+  needsPotency,
+
+  /// The current value already meets or exceeds the target — nothing to dose.
+  atOrAboveTarget,
+
+  /// The whole correction is safe to give as one dose.
+  singleDose,
+
+  /// The rise exceeds the element's safe daily limit — spread over [CorrectionResult.days].
+  splitDose,
+}
+
+/// The result of a correction-dose calculation. Nullable fields are absent
+/// when they cannot be computed for the status.
+class CorrectionResult {
+  const CorrectionResult({
+    required this.status,
+    this.rise,
+    this.totalDose,
+    this.days,
+    this.dailyDose,
+  });
+
+  final CorrectionStatus status;
+
+  /// `target - current`, in the element's canonical unit (> 0 when dosing).
+  final double? rise;
+
+  /// Total product amount (in the dose unit the potency is expressed in).
+  final double? totalDose;
+
+  /// Days to spread the correction over (1 for [CorrectionStatus.singleDose]).
+  final int? days;
+
+  /// Product amount per day when split ([totalDose] / [days]).
+  final double? dailyDose;
+}
+
+/// Computes the one-off dose that raises an element from [current] to
+/// [target] in [volumeLiters] litres using a supplement of [potency] (element
+/// rise per 1 unit of product per 1 litre — same definition as
+/// [computeDoseCalc]).
+///
+/// When [maxDailyRise] (element units per day, from `kMaxDailyRiseByElement`)
+/// is given and the needed rise exceeds it, the correction is split over
+/// `ceil(rise / maxDailyRise)` days with an even daily dose. All values are in
+/// the element's canonical unit.
+CorrectionResult computeCorrectionDose({
+  required double? current,
+  required double? target,
+  required double? potency,
+  required double? volumeLiters,
+  double? maxDailyRise,
+}) {
+  if (current == null ||
+      target == null ||
+      volumeLiters == null ||
+      volumeLiters <= 0) {
+    return const CorrectionResult(status: CorrectionStatus.missingInputs);
+  }
+  final rise = target - current;
+  if (rise <= 0) {
+    return CorrectionResult(
+      status: CorrectionStatus.atOrAboveTarget,
+      rise: rise,
+    );
+  }
+  if (potency == null || potency <= 0) {
+    return CorrectionResult(status: CorrectionStatus.needsPotency, rise: rise);
+  }
+  final totalDose = rise * volumeLiters / potency;
+  // The relative epsilon absorbs float noise (8.5 - 7.1 > 1.4 in doubles), so
+  // a rise at exactly the limit is a single dose and `days` never rounds a
+  // hair over an integer up to the next day.
+  if (maxDailyRise != null &&
+      maxDailyRise > 0 &&
+      rise > maxDailyRise * (1 + 1e-9)) {
+    final days = (rise / maxDailyRise - 1e-9).ceil();
+    return CorrectionResult(
+      status: CorrectionStatus.splitDose,
+      rise: rise,
+      totalDose: totalDose,
+      days: days,
+      dailyDose: totalDose / days,
+    );
+  }
+  return CorrectionResult(
+    status: CorrectionStatus.singleDose,
+    rise: rise,
+    totalDose: totalDose,
+    days: 1,
+    dailyDose: totalDose,
+  );
+}

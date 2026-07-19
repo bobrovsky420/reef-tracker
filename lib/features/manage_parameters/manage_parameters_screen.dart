@@ -117,10 +117,7 @@ class ManageParametersScreen extends ConsumerWidget {
                       // back the param/ratio orders.
                       if (items[oldIndex] is _FreeAmmoniaItem) return;
                       final reordered = [...items];
-                      reordered.insert(
-                        newIndex,
-                        reordered.removeAt(oldIndex),
-                      );
+                      reordered.insert(newIndex, reordered.removeAt(oldIndex));
                       final paramOrders = <({int id, int order})>[];
                       final ratioOrders = <({String key, int order})>[];
                       for (var i = 0; i < reordered.length; i++) {
@@ -149,9 +146,7 @@ class ManageParametersScreen extends ConsumerWidget {
                     // — rows underneath would show through the bare row).
                     proxyDecorator: (child, index, animation) => Material(
                       elevation: 3,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHigh,
+                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(12),
                       child: child,
                     ),
@@ -237,9 +232,7 @@ class ManageParametersScreen extends ConsumerWidget {
         decoration: isLast
             ? null
             : BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: tokens.surfaceBorder),
-                ),
+                border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
               ),
         child: Row(
           children: [
@@ -619,6 +612,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _editorKey = GlobalKey<ZoneBoundsEditorState>();
   late final TextEditingController _unit;
+  late final TextEditingController _target;
   late final ParamPresentation _pres;
 
   int? _cadence;
@@ -631,6 +625,12 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     // Edit boundaries in the user's display unit; values are stored canonically.
     _pres = presentationOf(widget.param, ref.read(unitPrefsProvider));
     _unit = TextEditingController(text: widget.param.unit);
+    final target = widget.param.targetValue;
+    _target = TextEditingController(
+      text: target == null
+          ? ''
+          : formatLocaleNumber(_pres.toDisplay(target), _pres.decimals),
+    );
     _cadence = widget.param.testCadenceDays;
     _customCadence = _cadence != null && !_cadencePresets.contains(_cadence);
     _customDays = TextEditingController(
@@ -641,6 +641,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
   @override
   void dispose() {
     _unit.dispose();
+    _target.dispose();
     _customDays.dispose();
     super.dispose();
   }
@@ -693,6 +694,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
             greenHigh: Value(canon(b.greenHigh)),
             amberHigh: Value(canon(b.amberHigh)),
             testCadenceDays: Value(cadence),
+            targetValue: Value(canon(parseUserDouble(_target.text))),
           ),
         );
     if (mounted) context.pop();
@@ -724,11 +726,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
                   ? Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.straighten,
-                          size: 18,
-                          color: tokens.textDim,
-                        ),
+                        Icon(Icons.straighten, size: 18, color: tokens.textDim),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -768,14 +766,43 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
             SectionHeader(l.sectionSafeRanges),
             ReefCard(
               padding: const EdgeInsets.all(16),
-              child: ZoneBoundsEditor(
-                key: _editorKey,
-                initial: _displayBounds,
-                format: (v) => formatLocaleNumber(v, _pres.decimals),
-                trailingNote: Text(
-                  l.boundsUnitNote(_pres.unitLabel),
-                  style: TextStyle(fontSize: 12, color: tokens.textDim),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ZoneBoundsEditor(
+                    key: _editorKey,
+                    initial: _displayBounds,
+                    format: (v) => formatLocaleNumber(v, _pres.decimals),
+                  ),
+                  const SizedBox(height: 12),
+                  // Correction target for the dose calculator (in the same
+                  // display space as the bounds above). Empty = the middle of
+                  // the green zone at use time.
+                  TextFormField(
+                    controller: _target,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
+                    style: ReefTokens.monoInputStyle,
+                    decoration: InputDecoration(
+                      labelText: l.targetValueLabel,
+                      helperText: l.targetValueHelp,
+                      helperMaxLines: 3,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return null;
+                      return parseUserDouble(v) == null ? l.enterANumber : null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  // The unit note now closes the card so it covers the target
+                  // field too (it used to ride the bounds editor).
+                  Text(
+                    l.boundsUnitNote(_pres.unitLabel),
+                    style: TextStyle(fontSize: 12, color: tokens.textDim),
+                  ),
+                ],
               ),
             ),
             // "Remind to test" cadence (U1). The reminder anchors on the
@@ -821,9 +848,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
                       controller: _customDays,
                       keyboardType: TextInputType.number,
                       style: ReefTokens.monoInputStyle,
-                      decoration: InputDecoration(
-                        labelText: l.customDaysLabel,
-                      ),
+                      decoration: InputDecoration(labelText: l.customDaysLabel),
                       validator: (v) {
                         final parsed = int.tryParse((v ?? '').trim());
                         return (parsed == null || parsed < 1)

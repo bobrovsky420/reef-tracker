@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.0] - 2026-07-19
+
+### Added
+- **Correction dose calculator.** The dose calculator now has two modes:
+  the existing consumption-based daily-dose adjustment, and a new
+  **Correction** mode that computes the one-off dose raising an element from
+  its current value (pre-filled from your latest measurement) to a target.
+  When the raise would exceed the element's safe daily limit (alkalinity
+  1.4 dKH/day, calcium 50 ppm/day, magnesium 100 ppm/day), the calculator
+  splits it into equal daily doses and tells you over how many days to spread
+  it. A "Log this dose" button records the computed (per-day) dose straight
+  into the manual dose log.
+- **Dose calculator from a parameter's history.** A parameter graph for a
+  dosable element (KH, Ca, Mg, K, Sr, I, Fe, NO₃, PO₄) now carries a
+  calculator icon in its top bar that opens the dose calculator pre-set to
+  that element — and when the latest measurement sits below the safe range, a
+  "Below range — calculate a correction dose" card appears under the trend
+  card, jumping straight into correction mode.
+- **Correction target per parameter.** Each tracked parameter can carry a
+  target value (Manage parameters → parameter → Safe ranges), used to
+  pre-fill the correction calculator. Empty means the middle of the safe
+  range; alkalinity gets a setup-type default (soft/LPS 8.5, SPS 8.0,
+  mixed 8.3 dKH). Targets ride along in backups and reset with "re-apply
+  preset".
+
 ## [0.32.0] - 2026-07-18
 
 ### Added

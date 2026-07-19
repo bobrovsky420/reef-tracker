@@ -230,3 +230,14 @@ const List<String> kDosingElementKeys = [
   'nitrate',
   'phosphate',
 ];
+
+/// Maximum safe *rise per day* for a correction dose, in the element's
+/// canonical unit (dKH or ppm per day). When a computed correction would raise
+/// the element faster, the calculator splits it over enough days to stay under
+/// the limit. Elements without an entry have no established limit and are
+/// corrected in one dose.
+const Map<String, double> kMaxDailyRiseByElement = {
+  'alkalinity': 1.4,
+  'calcium': 50,
+  'magnesium': 100,
+};

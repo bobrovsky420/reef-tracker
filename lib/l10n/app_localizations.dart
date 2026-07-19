@@ -2285,6 +2285,126 @@ abstract class AppLocalizations {
   /// **'Add at least two measurements on different days and a tank volume to calculate.'**
   String get doseCalcInsufficient;
 
+  /// Calculator mode toggle: the consumption-based daily-dose adjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily dose'**
+  String get doseCalcModeMaintenance;
+
+  /// Calculator mode toggle: the one-off correction dose toward a target value.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction'**
+  String get doseCalcModeCorrection;
+
+  /// No description provided for @doseCalcCorrIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate a one-time dose that raises an element from its current value to your target. When a fast rise would be unsafe, the dose is split over several days.'**
+  String get doseCalcCorrIntro;
+
+  /// No description provided for @doseCalcCurrentValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Current value'**
+  String get doseCalcCurrentValue;
+
+  /// No description provided for @doseCalcCurrentValueHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty = your latest measurement.'**
+  String get doseCalcCurrentValueHelp;
+
+  /// No description provided for @doseCalcTargetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Target value'**
+  String get doseCalcTargetValue;
+
+  /// No description provided for @doseCalcTargetValueHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty = this parameter\'s correction target, or the middle of its OK range.'**
+  String get doseCalcTargetValueHelp;
+
+  /// No description provided for @doseCalcNeededRise.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed rise'**
+  String get doseCalcNeededRise;
+
+  /// No description provided for @doseCalcOneTimeDose.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time dose'**
+  String get doseCalcOneTimeDose;
+
+  /// No description provided for @doseCalcTotalDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Total dose'**
+  String get doseCalcTotalDose;
+
+  /// No description provided for @doseCalcDosePerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose per day'**
+  String get doseCalcDosePerDay;
+
+  /// No description provided for @doseCalcSpreadDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days to spread over'**
+  String get doseCalcSpreadDays;
+
+  /// No description provided for @doseCalcCorrMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the current value, target and tank volume to calculate.'**
+  String get doseCalcCorrMissing;
+
+  /// No description provided for @doseCalcCorrAtTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Already at or above the target — nothing to dose.'**
+  String get doseCalcCorrAtTarget;
+
+  /// No description provided for @doseCalcCorrSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe to give as a single dose.'**
+  String get doseCalcCorrSingle;
+
+  /// Warning under the correction result when the rise exceeds the element's safe daily limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Raising faster than {limit} per day is risky — give the correction as {days} daily doses instead.'**
+  String doseCalcCorrSplit(Object limit, int days);
+
+  /// No description provided for @doseCalcLogDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Log this dose'**
+  String get doseCalcLogDose;
+
+  /// Tappable card on a parameter's history screen when its latest reading is below the green zone; opens the dose calculator in correction mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Below range — calculate a correction dose'**
+  String get correctionCta;
+
+  /// No description provided for @targetValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction target'**
+  String get targetValueLabel;
+
+  /// No description provided for @targetValueHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-fills the dose calculator\'s correction mode. Empty = the middle of the OK range.'**
+  String get targetValueHelp;
+
   /// No description provided for @trendSection.
   ///
   /// In en, this message translates to:

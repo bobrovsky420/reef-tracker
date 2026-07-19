@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/providers.dart';
@@ -11,10 +13,13 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/export_share.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/pro_features.dart';
+import '../../domain/supplement_catalog.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/trend_chart.dart';
 import '../../widgets/trend_view.dart';
@@ -82,10 +87,21 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         : all.where((r) => r.takenAt.isAfter(cutoff)).toList();
     final hasChart = inRange(readingsAsync.value ?? const []).isNotEmpty;
 
+    // Dose-calculator entry points (this parameter is a dosable element):
+    // always the app-bar shortcut; additionally an inline CTA when the latest
+    // reading sits below the green zone — a correction dose can only raise.
+    final dosable = kDosingElementKeys.contains(widget.paramKey);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l.paramName(widget.paramKey)),
         actions: [
+          if (dosable)
+            IconButton(
+              icon: const Icon(Icons.calculate_outlined),
+              tooltip: l.doseCalcTitle,
+              onPressed: () => _openCalculator(correction: false),
+            ),
           if (hasChart)
             IconButton(
               icon: const Icon(Icons.share_outlined),
@@ -198,6 +214,21 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                 child: TrendCard(trend: trend, pres: pres),
                               ),
                             ),
+                          if (dosable && _belowGreen(param, data))
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  0,
+                                  20,
+                                  12,
+                                ),
+                                child: _CorrectionCta(
+                                  onTap: () =>
+                                      _openCalculator(correction: true),
+                                ),
+                              ),
+                            ),
                           // Numeric summary of the plotted range (U31): the
                           // swing and center the user would otherwise eyeball
                           // off the line or scroll the list for.
@@ -221,6 +252,28 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         },
       ),
     );
+  }
+
+  /// True when the newest reading in range classifies below the green zone —
+  /// the case a correction dose can fix (values above range are water-change
+  /// territory, so no CTA there).
+  bool _belowGreen(TrackedParameter? param, List<Reading> data) {
+    if (param == null || data.isEmpty) return false;
+    final greenLow = boundsOf(param).greenLow;
+    return greenLow != null && data.last.value < greenLow;
+  }
+
+  /// Opens the dose calculator on this parameter — Pro-gated with the same
+  /// teaser dialog as the Dosing tab's calculator tile.
+  void _openCalculator({required bool correction}) {
+    if (ref.read(proFeatureProvider(ProFeature.doseCalculator))) {
+      final mode = correction ? '&mode=correction' : '';
+      unawaited(
+        context.push('/dosing/calculator?element=${widget.paramKey}$mode'),
+      );
+    } else {
+      unawaited(showProFeatureDialog(context, ProFeature.doseCalculator));
+    }
   }
 
   /// Captures the chart's [RepaintBoundary] as a PNG and hands it to the OS
@@ -603,9 +656,7 @@ class _RangeStats extends StatelessWidget {
         decoration: last
             ? null
             : BoxDecoration(
-                border: Border(
-                  right: BorderSide(color: tokens.surfaceBorder),
-                ),
+                border: Border(right: BorderSide(color: tokens.surfaceBorder)),
               ),
         child: Column(
           children: [
@@ -649,6 +700,55 @@ class _RangeStats extends StatelessWidget {
             cell(l.statTests, '${data.length}', last: true),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Inline "below range → calculate a correction dose" call-to-action shown
+/// under the trend card when the latest reading sits under the green zone.
+/// Mirrors the TrendCard's icon-chip row so the two read as one family.
+class _CorrectionCta extends StatelessWidget {
+  const _CorrectionCta({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+    return ReefCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: tokens.track,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.calculate_outlined,
+              size: 16,
+              color: tokens.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l.correctionCta,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: tokens.text,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right, size: 16, color: tokens.textFaint),
+        ],
       ),
     );
   }

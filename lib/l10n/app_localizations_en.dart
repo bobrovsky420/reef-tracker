@@ -1310,6 +1310,73 @@ class AppLocalizationsEn extends AppLocalizations {
       'Add at least two measurements on different days and a tank volume to calculate.';
 
   @override
+  String get doseCalcModeMaintenance => 'Daily dose';
+
+  @override
+  String get doseCalcModeCorrection => 'Correction';
+
+  @override
+  String get doseCalcCorrIntro =>
+      'Calculate a one-time dose that raises an element from its current value to your target. When a fast rise would be unsafe, the dose is split over several days.';
+
+  @override
+  String get doseCalcCurrentValue => 'Current value';
+
+  @override
+  String get doseCalcCurrentValueHelp => 'Empty = your latest measurement.';
+
+  @override
+  String get doseCalcTargetValue => 'Target value';
+
+  @override
+  String get doseCalcTargetValueHelp =>
+      'Empty = this parameter\'s correction target, or the middle of its OK range.';
+
+  @override
+  String get doseCalcNeededRise => 'Needed rise';
+
+  @override
+  String get doseCalcOneTimeDose => 'One-time dose';
+
+  @override
+  String get doseCalcTotalDose => 'Total dose';
+
+  @override
+  String get doseCalcDosePerDay => 'Dose per day';
+
+  @override
+  String get doseCalcSpreadDays => 'Days to spread over';
+
+  @override
+  String get doseCalcCorrMissing =>
+      'Enter the current value, target and tank volume to calculate.';
+
+  @override
+  String get doseCalcCorrAtTarget =>
+      'Already at or above the target — nothing to dose.';
+
+  @override
+  String get doseCalcCorrSingle => 'Safe to give as a single dose.';
+
+  @override
+  String doseCalcCorrSplit(Object limit, int days) {
+    return 'Raising faster than $limit per day is risky — give the correction as $days daily doses instead.';
+  }
+
+  @override
+  String get doseCalcLogDose => 'Log this dose';
+
+  @override
+  String get correctionCta => 'Below range — calculate a correction dose';
+
+  @override
+  String get targetValueLabel => 'Correction target';
+
+  @override
+  String get targetValueHelp =>
+      'Pre-fills the dose calculator\'s correction mode. Empty = the middle of the OK range.';
+
+  @override
   String get trendSection => 'Trends';
 
   @override

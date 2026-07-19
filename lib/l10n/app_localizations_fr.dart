@@ -1318,6 +1318,74 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ajoutez au moins deux mesures sur des jours différents et un volume de bac pour calculer.';
 
   @override
+  String get doseCalcModeMaintenance => 'Dose quotidienne';
+
+  @override
+  String get doseCalcModeCorrection => 'Correction';
+
+  @override
+  String get doseCalcCorrIntro =>
+      'Calculez une dose ponctuelle qui fait monter un élément de sa valeur actuelle à votre cible. Si une hausse rapide était risquée, la dose est répartie sur plusieurs jours.';
+
+  @override
+  String get doseCalcCurrentValue => 'Valeur actuelle';
+
+  @override
+  String get doseCalcCurrentValueHelp => 'Vide = votre dernière mesure.';
+
+  @override
+  String get doseCalcTargetValue => 'Valeur cible';
+
+  @override
+  String get doseCalcTargetValueHelp =>
+      'Vide = la cible de correction du paramètre, ou le milieu de sa plage sûre.';
+
+  @override
+  String get doseCalcNeededRise => 'Hausse nécessaire';
+
+  @override
+  String get doseCalcOneTimeDose => 'Dose unique';
+
+  @override
+  String get doseCalcTotalDose => 'Dose totale';
+
+  @override
+  String get doseCalcDosePerDay => 'Dose par jour';
+
+  @override
+  String get doseCalcSpreadDays => 'À répartir sur (jours)';
+
+  @override
+  String get doseCalcCorrMissing =>
+      'Saisissez la valeur actuelle, la cible et le volume du bac pour calculer.';
+
+  @override
+  String get doseCalcCorrAtTarget =>
+      'Déjà au niveau de la cible ou au-dessus — rien à doser.';
+
+  @override
+  String get doseCalcCorrSingle =>
+      'Peut être donnée en une seule dose sans risque.';
+
+  @override
+  String doseCalcCorrSplit(Object limit, int days) {
+    return 'Monter de plus de $limit par jour est risqué — donnez plutôt la correction en $days doses quotidiennes.';
+  }
+
+  @override
+  String get doseCalcLogDose => 'Enregistrer cette dose';
+
+  @override
+  String get correctionCta => 'Sous la plage — calculer une dose de correction';
+
+  @override
+  String get targetValueLabel => 'Cible de correction';
+
+  @override
+  String get targetValueHelp =>
+      'Pré-remplit le mode correction du calculateur de dosage. Vide = le milieu de la plage sûre.';
+
+  @override
   String get trendSection => 'Tendances';
 
   @override

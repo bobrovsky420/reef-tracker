@@ -1319,6 +1319,73 @@ class AppLocalizationsDe extends AppLocalizations {
       'Füge mindestens zwei Messungen an verschiedenen Tagen und ein Beckenvolumen hinzu, um zu rechnen.';
 
   @override
+  String get doseCalcModeMaintenance => 'Tagesdosis';
+
+  @override
+  String get doseCalcModeCorrection => 'Korrektur';
+
+  @override
+  String get doseCalcCorrIntro =>
+      'Berechne eine einmalige Dosis, die einen Wert vom aktuellen Stand auf dein Ziel anhebt. Wäre ein schneller Anstieg unsicher, wird die Dosis auf mehrere Tage verteilt.';
+
+  @override
+  String get doseCalcCurrentValue => 'Aktueller Wert';
+
+  @override
+  String get doseCalcCurrentValueHelp => 'Leer = deine letzte Messung.';
+
+  @override
+  String get doseCalcTargetValue => 'Zielwert';
+
+  @override
+  String get doseCalcTargetValueHelp =>
+      'Leer = das Korrekturziel des Parameters oder die Mitte seines OK-Bereichs.';
+
+  @override
+  String get doseCalcNeededRise => 'Nötiger Anstieg';
+
+  @override
+  String get doseCalcOneTimeDose => 'Einmalige Dosis';
+
+  @override
+  String get doseCalcTotalDose => 'Gesamtdosis';
+
+  @override
+  String get doseCalcDosePerDay => 'Dosis pro Tag';
+
+  @override
+  String get doseCalcSpreadDays => 'Auf Tage verteilen';
+
+  @override
+  String get doseCalcCorrMissing =>
+      'Gib aktuellen Wert, Ziel und Beckenvolumen ein, um zu rechnen.';
+
+  @override
+  String get doseCalcCorrAtTarget =>
+      'Bereits auf oder über dem Ziel — nichts zu dosieren.';
+
+  @override
+  String get doseCalcCorrSingle => 'Kann sicher als eine Dosis gegeben werden.';
+
+  @override
+  String doseCalcCorrSplit(Object limit, int days) {
+    return 'Ein Anstieg von mehr als $limit pro Tag ist riskant — gib die Korrektur stattdessen als $days Tagesdosen.';
+  }
+
+  @override
+  String get doseCalcLogDose => 'Dosis protokollieren';
+
+  @override
+  String get correctionCta => 'Unter dem Bereich — Korrekturdosis berechnen';
+
+  @override
+  String get targetValueLabel => 'Korrekturziel';
+
+  @override
+  String get targetValueHelp =>
+      'Füllt den Korrekturmodus des Dosierrechners vor. Leer = die Mitte des OK-Bereichs.';
+
+  @override
   String get trendSection => 'Trends';
 
   @override

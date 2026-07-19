@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../data/database.dart';
 import '../domain/icp_import.dart';
 import '../domain/ratio.dart';
+import '../domain/supplement_catalog.dart';
 import '../features/actions/schedule_screen.dart';
 import '../features/add_reading/add_reading_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
@@ -108,7 +109,16 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/dosing/calculator',
-      builder: (context, state) => const DoseCalculatorScreen(),
+      // `?element=<key>` opens on that element (history-screen entry point);
+      // `?mode=correction` starts in correction mode. Unknown element keys
+      // are dropped rather than crashing on a garbage deep link (T8).
+      builder: (context, state) {
+        final element = state.uri.queryParameters['element'];
+        return DoseCalculatorScreen(
+          initialElement: kDosingElementKeys.contains(element) ? element : null,
+          startInCorrection: state.uri.queryParameters['mode'] == 'correction',
+        );
+      },
     ),
     GoRoute(
       path: '/dosing/history',
@@ -116,8 +126,15 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/dosing/manual',
-      builder: (context, state) =>
-          ManualDoseEditScreen(dose: state.extra as ManualDose?),
+      // `extra` is either an existing row to edit or a prefill draft from the
+      // dose calculator's correction mode.
+      builder: (context, state) {
+        final extra = state.extra;
+        return ManualDoseEditScreen(
+          dose: extra is ManualDose ? extra : null,
+          draft: extra is ManualDoseDraft ? extra : null,
+        );
+      },
     ),
     GoRoute(
       path: '/settings',

@@ -1317,6 +1317,75 @@ class AppLocalizationsIt extends AppLocalizations {
       'Aggiungi almeno due misurazioni in giorni diversi e il volume della vasca per calcolare.';
 
   @override
+  String get doseCalcModeMaintenance => 'Dose giornaliera';
+
+  @override
+  String get doseCalcModeCorrection => 'Correzione';
+
+  @override
+  String get doseCalcCorrIntro =>
+      'Calcola una dose una tantum che porta un elemento dal valore attuale al tuo obiettivo. Se un aumento rapido fosse rischioso, la dose viene distribuita su più giorni.';
+
+  @override
+  String get doseCalcCurrentValue => 'Valore attuale';
+
+  @override
+  String get doseCalcCurrentValueHelp => 'Vuoto = la tua ultima misurazione.';
+
+  @override
+  String get doseCalcTargetValue => 'Valore obiettivo';
+
+  @override
+  String get doseCalcTargetValueHelp =>
+      'Vuoto = l\'obiettivo di correzione del parametro, o il centro del suo intervallo sicuro.';
+
+  @override
+  String get doseCalcNeededRise => 'Aumento necessario';
+
+  @override
+  String get doseCalcOneTimeDose => 'Dose una tantum';
+
+  @override
+  String get doseCalcTotalDose => 'Dose totale';
+
+  @override
+  String get doseCalcDosePerDay => 'Dose al giorno';
+
+  @override
+  String get doseCalcSpreadDays => 'Da distribuire su (giorni)';
+
+  @override
+  String get doseCalcCorrMissing =>
+      'Inserisci il valore attuale, l\'obiettivo e il volume della vasca per calcolare.';
+
+  @override
+  String get doseCalcCorrAtTarget =>
+      'Già al livello dell\'obiettivo o oltre — niente da dosare.';
+
+  @override
+  String get doseCalcCorrSingle =>
+      'Può essere somministrata in un\'unica dose in sicurezza.';
+
+  @override
+  String doseCalcCorrSplit(Object limit, int days) {
+    return 'Aumentare più di $limit al giorno è rischioso — somministra la correzione in $days dosi giornaliere.';
+  }
+
+  @override
+  String get doseCalcLogDose => 'Registra questa dose';
+
+  @override
+  String get correctionCta =>
+      'Sotto l\'intervallo — calcola una dose di correzione';
+
+  @override
+  String get targetValueLabel => 'Obiettivo di correzione';
+
+  @override
+  String get targetValueHelp =>
+      'Precompila la modalità correzione del calcolatore di dosaggio. Vuoto = il centro dell\'intervallo sicuro.';
+
+  @override
   String get trendSection => 'Tendenze';
 
   @override

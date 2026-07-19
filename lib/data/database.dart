@@ -75,6 +75,12 @@ class TrackedParameters extends Table {
   /// parameter. The reminder anchors elastically on the parameter's latest
   /// reading (see `domain/reminders.dart`).
   IntColumn get testCadenceDays => integer().nullable()();
+
+  /// Correction target for the dose calculator's correction mode, in the
+  /// parameter's canonical unit. Seeded from the setup-type preset
+  /// (`kPresetTargets`) where one exists; null falls back to the green-zone
+  /// midpoint at use time.
+  RealColumn get targetValue => real().nullable()();
 }
 
 /// A single logged measurement.
@@ -481,7 +487,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -693,6 +699,31 @@ class AppDatabase extends _$AppDatabase {
           'ON manual_doses (tank_id, dosed_at)',
         );
       }
+      if (from < 22) {
+        // Correction target (dose calculator correction mode). Existing rows
+        // get the setup-type default where the preset defines one; everything
+        // else stays null and falls back to the green-zone midpoint at use
+        // time. The IS NULL guard keeps the backfill idempotent.
+        if (!await _columnExists('tracked_parameters', 'target_value')) {
+          await m.addColumn(trackedParameters, trackedParameters.targetValue);
+        }
+        for (final MapEntry(key: type, value: targets)
+            in kPresetTargets.entries) {
+          for (final MapEntry(key: param, value: target) in targets.entries) {
+            await customUpdate(
+              'UPDATE tracked_parameters SET target_value = ? '
+              'WHERE target_value IS NULL AND param_key = ? AND tank_id IN '
+              '(SELECT id FROM tanks WHERE setup_type = ?)',
+              variables: [
+                Variable<double>(target),
+                Variable<String>(param),
+                Variable<String>(type.name),
+              ],
+              updates: {trackedParameters},
+            );
+          }
+        }
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -838,6 +869,7 @@ class AppDatabase extends _$AppDatabase {
             greenLow: Value(bounds.greenLow),
             greenHigh: Value(bounds.greenHigh),
             amberHigh: Value(bounds.amberHigh),
+            targetValue: Value(presetTarget(type, key)),
           ),
         );
       }
@@ -896,6 +928,7 @@ class AppDatabase extends _$AppDatabase {
           greenLow: Value(bounds.greenLow),
           greenHigh: Value(bounds.greenHigh),
           amberHigh: Value(bounds.amberHigh),
+          targetValue: Value(presetTarget(type, paramKey)),
         ),
       );
     });
@@ -947,6 +980,10 @@ class AppDatabase extends _$AppDatabase {
             greenLow: Value(bounds.greenLow),
             greenHigh: Value(bounds.greenHigh),
             amberHigh: Value(bounds.amberHigh),
+            // Re-applying the preset resets the correction target to the
+            // setup-type default too (null where none) — same semantics as
+            // the bounds it sits alongside.
+            targetValue: Value(presetTarget(type, param.paramKey)),
           ),
           where: (t) => t.id.equals(param.id),
         );

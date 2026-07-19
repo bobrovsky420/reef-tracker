@@ -17,15 +17,38 @@ import 'dosing_screen.dart' show formatDoseAmount;
 /// plan edit form.
 const String _kCustom = '__custom__';
 
+/// Prefill payload for logging a dose computed elsewhere (the dose
+/// calculator's correction mode): pre-selects product, element, amount and
+/// unit but the record stays a *new* dose — unlike
+/// [ManualDoseEditScreen.dose], which edits an existing row.
+class ManualDoseDraft {
+  const ManualDoseDraft({
+    required this.elementKey,
+    required this.amount,
+    required this.unit,
+    this.productKey,
+  });
+
+  final String elementKey;
+  final double amount;
+  final DoseUnit unit;
+
+  /// Catalog product key, when the dose was computed with a known product.
+  final String? productKey;
+}
+
 /// Add/edit form for a logged one-off manual dose (supplement, vitamin or
 /// medicine given by hand): Vendor → Product → Element cascade, a required
 /// amount, and the date/time it was given. Writes directly to the database and
 /// pops on save.
 class ManualDoseEditScreen extends ConsumerStatefulWidget {
-  const ManualDoseEditScreen({super.key, this.dose});
+  const ManualDoseEditScreen({super.key, this.dose, this.draft});
 
   /// The dose being edited, or null to log a new one.
   final ManualDose? dose;
+
+  /// Prefill for a new dose (ignored when [dose] is set).
+  final ManualDoseDraft? draft;
 
   @override
   ConsumerState<ManualDoseEditScreen> createState() =>
@@ -56,7 +79,22 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
   void initState() {
     super.initState();
     final d = widget.dose;
-    if (d != null) _initFromDose(d);
+    if (d != null) {
+      _initFromDose(d);
+    } else if (widget.draft != null) {
+      _initFromDraft(widget.draft!);
+    }
+  }
+
+  void _initFromDraft(ManualDoseDraft d) {
+    final key = d.productKey;
+    if (key != null && kSupplementProductByKey.containsKey(key)) {
+      _productSel = key;
+      _vendorSel = kVendorKeyByProductKey[key];
+    }
+    _elementKey = d.elementKey;
+    _amountCtrl.text = formatDoseAmount(d.amount);
+    _unit = d.unit;
   }
 
   void _initFromDose(ManualDose d) {
@@ -259,9 +297,7 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
         DropdownButtonFormField<String>(
           initialValue: _vendorSel,
           isExpanded: true,
-          decoration: InputDecoration(
-            labelText: l.dosingVendor,
-          ),
+          decoration: InputDecoration(labelText: l.dosingVendor),
           items: [
             for (final v in kSupplementVendors)
               DropdownMenuItem(value: v.key, child: Text(v.name)),
@@ -273,9 +309,7 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _vendorCtrl,
-            decoration: InputDecoration(
-              labelText: l.dosingVendorName,
-            ),
+            decoration: InputDecoration(labelText: l.dosingVendorName),
             onChanged: (_) => setState(() {}),
           ),
         ],
@@ -292,9 +326,7 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
           DropdownButtonFormField<String>(
             initialValue: _productSel,
             isExpanded: true,
-            decoration: InputDecoration(
-              labelText: l.dosingProduct,
-            ),
+            decoration: InputDecoration(labelText: l.dosingProduct),
             items: [
               for (final p in vendor.allProducts)
                 DropdownMenuItem(value: p.key, child: Text(p.name)),
@@ -306,9 +338,7 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
           if (vendor != null) const SizedBox(height: 12),
           TextField(
             controller: _productCtrl,
-            decoration: InputDecoration(
-              labelText: l.dosingProductName,
-            ),
+            decoration: InputDecoration(labelText: l.dosingProductName),
             onChanged: (_) => setState(() {}),
           ),
         ],
@@ -320,9 +350,7 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
     return DropdownButtonFormField<String?>(
       initialValue: _elementKey,
       isExpanded: true,
-      decoration: InputDecoration(
-        labelText: l.dosingElement,
-      ),
+      decoration: InputDecoration(labelText: l.dosingElement),
       items: [
         DropdownMenuItem(value: null, child: Text(l.dosingElementNone)),
         for (final key in kDosingElementKeys)
@@ -356,9 +384,7 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
         Expanded(
           child: DropdownButtonFormField<DoseUnit>(
             initialValue: _unit,
-            decoration: InputDecoration(
-              labelText: l.dosingUnit,
-            ),
+            decoration: InputDecoration(labelText: l.dosingUnit),
             items: [
               for (final u in DoseUnit.values)
                 DropdownMenuItem(value: u, child: Text(u.symbol)),

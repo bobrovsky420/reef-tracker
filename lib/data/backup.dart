@@ -986,6 +986,7 @@ Map<String, dynamic> _paramToJson(TrackedParameter t) => {
   'greenHigh': t.greenHigh,
   'amberHigh': t.amberHigh,
   'testCadenceDays': t.testCadenceDays,
+  'targetValue': t.targetValue,
 };
 
 TrackedParametersCompanion _paramFromJson(Map<String, dynamic> m) =>
@@ -1002,6 +1003,9 @@ TrackedParametersCompanion _paramFromJson(Map<String, dynamic> m) =>
       amberHigh: Value((m['amberHigh'] as num?)?.toDouble()),
       // Absent in pre-v16 backups → no test reminder (U1).
       testCadenceDays: Value(m['testCadenceDays'] as int?),
+      // Absent in pre-v22 backups → correction target falls back to the
+      // green-zone midpoint.
+      targetValue: Value((m['targetValue'] as num?)?.toDouble()),
     );
 
 Map<String, dynamic> _readingToJson(Reading r) => {

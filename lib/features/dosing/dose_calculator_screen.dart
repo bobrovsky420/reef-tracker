@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme.dart';
@@ -8,20 +11,42 @@ import '../../domain/dose_calculator.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/supplement_catalog.dart';
 import '../../domain/units.dart';
+import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_segmented.dart';
 import '../../widgets/trend_chart.dart';
 import 'dosing_screen.dart' show formatDoseAmount;
+import 'manual_dose_edit_screen.dart' show ManualDoseDraft;
 
-/// Consumption / dose-adjustment calculator (Dosing tab → calculator).
+/// The calculator's two modes: the consumption-based daily-dose adjustment,
+/// and the one-off correction ("emergency") dose toward a target value.
+enum _CalcMode { maintenance, correction }
+
+/// Dose calculator (Dosing tab → calculator; also reachable from a
+/// parameter's history screen).
 ///
-/// Pulls the active tank's stored readings, dosing plan and volume to estimate
-/// how fast an element is consumed and what daily dose holds it steady. All
-/// inputs are editable. Water changes are intentionally ignored. The math lives
-/// in `domain/dose_calculator.dart`.
+/// **Daily dose** mode pulls the active tank's stored readings, dosing plan
+/// and volume to estimate how fast an element is consumed and what daily dose
+/// holds it steady. **Correction** mode computes the one-off dose that raises
+/// the element from its current value to a target, splitting it over several
+/// days when the rise would exceed the element's safe daily limit
+/// (`kMaxDailyRiseByElement`). All inputs are editable. Water changes are
+/// intentionally ignored. The math lives in `domain/dose_calculator.dart`.
 class DoseCalculatorScreen extends ConsumerStatefulWidget {
-  const DoseCalculatorScreen({super.key});
+  const DoseCalculatorScreen({
+    super.key,
+    this.initialElement,
+    this.startInCorrection = false,
+  });
+
+  /// Element to open with (already validated against `kDosingElementKeys` by
+  /// the router); null derives the default from the dosing plan.
+  final String? initialElement;
+
+  /// Opens in correction mode (the history screen's below-range CTA).
+  final bool startInCorrection;
 
   @override
   ConsumerState<DoseCalculatorScreen> createState() =>
@@ -31,6 +56,9 @@ class DoseCalculatorScreen extends ConsumerStatefulWidget {
 class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
   String? _element;
   ChartRange _range = ChartRange.month;
+  late _CalcMode _mode = widget.startInCorrection
+      ? _CalcMode.correction
+      : _CalcMode.maintenance;
 
   final _volumeCtrl = TextEditingController();
   final _doseCtrl = TextEditingController();
@@ -38,6 +66,11 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
   // over the window's span it joins the input side of the consumption math.
   // Later this can be pre-filled from a manual dosing log.
   final _manualDoseCtrl = TextEditingController();
+  // Correction mode: empty fields fall back to live defaults (the latest
+  // reading / the stored target) shown as hints — no async prefill needed,
+  // and an element switch updates the defaults automatically.
+  final _currentCtrl = TextEditingController();
+  final _targetCtrl = TextEditingController();
   DoseUnit _doseUnit = DoseUnit.ml;
 
   // Potency: either pulled from the catalog or entered as a reference dose.
@@ -52,6 +85,9 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
   @override
   void initState() {
     super.initState();
+    // An element handed in by the entry point (history screen) wins over the
+    // plan-derived default the listener below would pick.
+    _element = widget.initialElement;
     // Prefill from a provider listener, not from build() (#18): a late stream
     // emission used to overwrite whatever the user had typed meanwhile. The
     // one-shot `_prefilled` guard plus `onlyIfEmpty` keeps user input intact.
@@ -81,6 +117,8 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     _volumeCtrl.dispose();
     _doseCtrl.dispose();
     _manualDoseCtrl.dispose();
+    _currentCtrl.dispose();
+    _targetCtrl.dispose();
     _refAmountCtrl.dispose();
     _refVolCtrl.dispose();
     _riseCtrl.dispose();
@@ -234,39 +272,95 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     // before it), warn that the slope mixes two dose regimes.
     final doseChangedAt = _doseChangedInWindow(entries, element, points);
 
+    // Correction mode: current value defaults to the latest stored reading,
+    // target to the tracked parameter's stored target (falling back to the
+    // middle of its green zone). Typing in a field overrides the default.
+    final latestReading = readings.isEmpty ? null : readings.last.value;
+    final trackedRow = (ref.watch(trackedParametersProvider).value ?? const [])
+        .where((t) => t.paramKey == element)
+        .cast<TrackedParameter?>()
+        .firstWhere((t) => true, orElse: () => null);
+    final defaultTarget = trackedRow == null
+        ? null
+        : trackedRow.targetValue ?? _greenMid(boundsOf(trackedRow));
+    final maxRise = kMaxDailyRiseByElement[element];
+    final correction = computeCorrectionDose(
+      current: _parse(_currentCtrl.text) ?? latestReading,
+      target: _parse(_targetCtrl.text) ?? defaultTarget,
+      potency: potency,
+      volumeLiters: volLiters,
+      maxDailyRise: maxRise,
+    );
+
     return Scaffold(
       appBar: AppBar(title: Text(l.doseCalcTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(l.doseCalcIntro, style: Theme.of(context).textTheme.bodyMedium),
+          Center(
+            child: ReefSegmented<_CalcMode>(
+              options: [
+                (_CalcMode.maintenance, l.doseCalcModeMaintenance),
+                (_CalcMode.correction, l.doseCalcModeCorrection),
+              ],
+              selected: _mode,
+              onChanged: (m) => setState(() => _mode = m),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _mode == _CalcMode.maintenance
+                ? l.doseCalcIntro
+                : l.doseCalcCorrIntro,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           const SizedBox(height: 20),
           _elementField(l, tank, entries, volUnit),
           const SizedBox(height: 16),
-          _windowField(l, points.length),
-          const Divider(height: 32),
-          _volumeField(l, volUnit),
-          const SizedBox(height: 16),
-          _doseField(l),
-          const SizedBox(height: 16),
-          _manualDoseField(
-            l,
-            loggedCount: logged.length,
-            loggedTotal: loggedTotal,
-            unitMismatch: unitMismatch,
-            productMismatch: productMismatch,
-          ),
-          const Divider(height: 32),
-          _potencySection(l, element, volUnit, volLiters, potency),
-          const Divider(height: 32),
-          if (doseChangedAt != null) ...[
-            _doseChangedWarning(l, doseChangedAt),
-            const SizedBox(height: 12),
+          if (_mode == _CalcMode.maintenance) ...[
+            _windowField(l, points.length),
+            const Divider(height: 32),
+            _volumeField(l, volUnit),
+            const SizedBox(height: 16),
+            _doseField(l),
+            const SizedBox(height: 16),
+            _manualDoseField(
+              l,
+              loggedCount: logged.length,
+              loggedTotal: loggedTotal,
+              unitMismatch: unitMismatch,
+              productMismatch: productMismatch,
+            ),
+            const Divider(height: 32),
+            _potencySection(l, element, volUnit, volLiters, potency),
+            const Divider(height: 32),
+            if (doseChangedAt != null) ...[
+              _doseChangedWarning(l, doseChangedAt),
+              const SizedBox(height: 12),
+            ],
+            _resultCard(l, element, result),
+          ] else ...[
+            _volumeField(l, volUnit),
+            const SizedBox(height: 16),
+            _correctionFields(l, element, latestReading, defaultTarget),
+            const Divider(height: 32),
+            _potencySection(l, element, volUnit, volLiters, potency),
+            const Divider(height: 32),
+            _correctionResultCard(l, element, correction, maxRise),
           ],
-          _resultCard(l, element, result),
         ],
       ),
     );
+  }
+
+  /// The midpoint of the green zone (or its only bound when one side is
+  /// unbounded) — the correction-target fallback when no explicit target is
+  /// stored.
+  double? _greenMid(ZoneBounds b) {
+    final lo = b.greenLow;
+    final hi = b.greenHigh;
+    if (lo != null && hi != null) return (lo + hi) / 2;
+    return lo ?? hi;
   }
 
   /// The most recent dose-segment start for [element] that falls inside the
@@ -315,9 +409,7 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     return DropdownButtonFormField<String>(
       initialValue: _element,
       isExpanded: true,
-      decoration: InputDecoration(
-        labelText: l.doseCalcElement,
-      ),
+      decoration: InputDecoration(labelText: l.doseCalcElement),
       items: [
         for (final key in kDosingElementKeys)
           DropdownMenuItem(value: key, child: Text(l.paramName(key))),
@@ -345,9 +437,7 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         DropdownButtonFormField<ChartRange>(
           initialValue: _range,
           isExpanded: true,
-          decoration: InputDecoration(
-            labelText: l.doseCalcWindow,
-          ),
+          decoration: InputDecoration(labelText: l.doseCalcWindow),
           items: [
             for (final r in ChartRange.values)
               DropdownMenuItem(value: r, child: Text(chartRangeLabel(l, r))),
@@ -662,6 +752,205 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     );
   }
 
+  /// Current / target value fields for correction mode. Both work in the
+  /// element's canonical unit (like the rest of the calculator) and show
+  /// their live default as the hint while empty.
+  Widget _correctionFields(
+    AppLocalizations l,
+    String element,
+    double? latestReading,
+    double? defaultTarget,
+  ) {
+    final def = kParameterByKey[element];
+    final unitStr = def?.unit ?? '';
+    String? fmt(double? v) =>
+        v == null ? null : formatLocaleNumber(v, def?.decimals ?? 2);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _currentCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: ReefTokens.monoInputStyle,
+          decoration: InputDecoration(
+            labelText: l.doseCalcCurrentValue,
+            helperText: l.doseCalcCurrentValueHelp,
+            helperMaxLines: 2,
+            hintText: fmt(latestReading),
+            suffixText: unitStr,
+            // Keep the label floated so the live default (the hint) stays
+            // visible while the field is empty and unfocused.
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _targetCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: ReefTokens.monoInputStyle,
+          decoration: InputDecoration(
+            labelText: l.doseCalcTargetValue,
+            helperText: l.doseCalcTargetValueHelp,
+            helperMaxLines: 3,
+            hintText: fmt(defaultTarget),
+            suffixText: unitStr,
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+      ],
+    );
+  }
+
+  /// Result card for correction mode: the needed rise, the one-time dose —
+  /// or, when the rise exceeds the element's safe daily limit, the plan to
+  /// spread it — plus a status banner and a "log this dose" handoff into the
+  /// manual dose log.
+  Widget _correctionResultCard(
+    AppLocalizations l,
+    String element,
+    CorrectionResult r,
+    double? maxRise,
+  ) {
+    final tokens = ReefTokens.of(context);
+    final unitStr = kParameterByKey[element]?.unit ?? '';
+
+    final rows = <Widget>[];
+    final rise = r.rise;
+    if (rise != null && rise > 0) {
+      rows.add(_resultRow(l.doseCalcNeededRise, '+${_trim(rise)} $unitStr'));
+    }
+    switch (r.status) {
+      case CorrectionStatus.singleDose:
+        rows.add(
+          _resultRow(
+            l.doseCalcOneTimeDose,
+            '${formatDoseAmount(r.totalDose!)} ${_doseUnit.symbol}',
+            emphasize: true,
+          ),
+        );
+      case CorrectionStatus.splitDose:
+        rows
+          ..add(
+            _resultRow(
+              l.doseCalcTotalDose,
+              '${formatDoseAmount(r.totalDose!)} ${_doseUnit.symbol}',
+            ),
+          )
+          ..add(
+            _resultRow(
+              l.doseCalcDosePerDay,
+              '${formatDoseAmount(r.dailyDose!)} ${_doseUnit.symbol} / '
+              '${l.doseCalcPerDay}',
+              emphasize: true,
+            ),
+          )
+          ..add(_resultRow(l.doseCalcSpreadDays, '${r.days}'));
+      case CorrectionStatus.missingInputs:
+      case CorrectionStatus.needsPotency:
+      case CorrectionStatus.atOrAboveTarget:
+        break;
+    }
+
+    final (text, icon, color) = switch (r.status) {
+      CorrectionStatus.missingInputs => (
+        l.doseCalcCorrMissing,
+        Icons.info_outline,
+        tokens.textDim,
+      ),
+      CorrectionStatus.needsPotency => (
+        l.doseCalcNeedsPotency,
+        Icons.science_outlined,
+        tokens.primary,
+      ),
+      CorrectionStatus.atOrAboveTarget => (
+        l.doseCalcCorrAtTarget,
+        Icons.check_circle_outline,
+        tokens.healthy,
+      ),
+      CorrectionStatus.singleDose => (
+        l.doseCalcCorrSingle,
+        Icons.check_circle_outline,
+        tokens.healthy,
+      ),
+      CorrectionStatus.splitDose => (
+        l.doseCalcCorrSplit('${_trim(maxRise ?? 0)} $unitStr', r.days!),
+        Icons.warning_amber_outlined,
+        tokens.critical,
+      ),
+    };
+
+    final canLog =
+        r.status == CorrectionStatus.singleDose ||
+        r.status == CorrectionStatus.splitDose;
+
+    return ReefCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l.doseCalcResultsTitle,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: tokens.text,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...rows,
+          if (rows.isNotEmpty) const SizedBox(height: 12),
+          _bannerRow(text, icon, color),
+          if (canLog) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(l.doseCalcLogDose),
+                onPressed: () => _logCorrectionDose(r),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Hands the computed dose to the manual dose log, prefilled. For a split
+  /// correction this logs the per-day portion — what was actually given today
+  /// — so the logged history stays truthful. The product rides along only
+  /// when the dose was computed with its catalog strength.
+  void _logCorrectionDose(CorrectionResult r) {
+    final daily = r.dailyDose;
+    if (daily == null) return;
+    final element = _element ?? kDosingElementKeys.first;
+    String? productKey;
+    if (_useCatalogPotency && _catalogPotency != null) {
+      final entries = ref.read(dosingEntriesProvider).value ?? const [];
+      for (final e in entries.where((e) => e.elementKey == element)) {
+        final key = e.productKey;
+        if (key != null &&
+            kSupplementProductByKey[key]?.strength?[element] != null) {
+          productKey = key;
+          break;
+        }
+      }
+    }
+    unawaited(
+      context.push(
+        '/dosing/manual',
+        extra: ManualDoseDraft(
+          elementKey: element,
+          amount: daily,
+          unit: _doseUnit,
+          productKey: productKey,
+        ),
+      ),
+    );
+  }
+
   /// Status colors ride the tokens (REDESIGN #1 rule: `error` is for
   /// validation, the tokens carry status) — healthy for the good outcomes,
   /// `critical` for overdosing.
@@ -704,6 +993,11 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
         tokens.healthy,
       ),
     };
+    return _bannerRow(text, icon, color);
+  }
+
+  /// Icon + colored text guidance row shared by both modes' result cards.
+  Widget _bannerRow(String text, IconData icon, Color color) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

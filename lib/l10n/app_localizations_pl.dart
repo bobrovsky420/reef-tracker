@@ -1333,6 +1333,73 @@ class AppLocalizationsPl extends AppLocalizations {
       'Aby obliczyć, dodaj co najmniej dwa pomiary z różnych dni i objętość zbiornika.';
 
   @override
+  String get doseCalcModeMaintenance => 'Dawka dzienna';
+
+  @override
+  String get doseCalcModeCorrection => 'Korekta';
+
+  @override
+  String get doseCalcCorrIntro =>
+      'Oblicz jednorazową dawkę, która podniesie pierwiastek z obecnej wartości do docelowej. Gdy szybki wzrost byłby niebezpieczny, dawka zostanie rozłożona na kilka dni.';
+
+  @override
+  String get doseCalcCurrentValue => 'Obecna wartość';
+
+  @override
+  String get doseCalcCurrentValueHelp => 'Puste = twój ostatni pomiar.';
+
+  @override
+  String get doseCalcTargetValue => 'Wartość docelowa';
+
+  @override
+  String get doseCalcTargetValueHelp =>
+      'Puste = cel korekty parametru lub środek jego bezpiecznego zakresu.';
+
+  @override
+  String get doseCalcNeededRise => 'Wymagany wzrost';
+
+  @override
+  String get doseCalcOneTimeDose => 'Dawka jednorazowa';
+
+  @override
+  String get doseCalcTotalDose => 'Dawka łączna';
+
+  @override
+  String get doseCalcDosePerDay => 'Dawka na dzień';
+
+  @override
+  String get doseCalcSpreadDays => 'Rozłożyć na dni';
+
+  @override
+  String get doseCalcCorrMissing =>
+      'Aby obliczyć, podaj obecną wartość, cel i objętość zbiornika.';
+
+  @override
+  String get doseCalcCorrAtTarget =>
+      'Wartość jest już na poziomie celu lub powyżej — nie ma czego dawkować.';
+
+  @override
+  String get doseCalcCorrSingle => 'Można bezpiecznie podać jako jedną dawkę.';
+
+  @override
+  String doseCalcCorrSplit(Object limit, int days) {
+    return 'Podnoszenie szybciej niż o $limit dziennie jest ryzykowne — podaj korektę jako $days dziennych dawek.';
+  }
+
+  @override
+  String get doseCalcLogDose => 'Zapisz dawkę';
+
+  @override
+  String get correctionCta => 'Poniżej zakresu — oblicz dawkę korygującą';
+
+  @override
+  String get targetValueLabel => 'Cel korekty';
+
+  @override
+  String get targetValueHelp =>
+      'Wstępnie wypełnia tryb korekty kalkulatora dawkowania. Puste = środek bezpiecznego zakresu.';
+
+  @override
   String get trendSection => 'Trendy';
 
   @override

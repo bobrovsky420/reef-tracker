@@ -453,4 +453,110 @@ void main() {
       });
     });
   });
+
+  group('computeCorrectionDose', () {
+    test('missing current, target or volume', () {
+      expect(
+        computeCorrectionDose(
+          current: null,
+          target: 8.5,
+          potency: 10,
+          volumeLiters: 200,
+        ).status,
+        CorrectionStatus.missingInputs,
+      );
+      expect(
+        computeCorrectionDose(
+          current: 7.5,
+          target: null,
+          potency: 10,
+          volumeLiters: 200,
+        ).status,
+        CorrectionStatus.missingInputs,
+      );
+      expect(
+        computeCorrectionDose(
+          current: 7.5,
+          target: 8.5,
+          potency: 10,
+          volumeLiters: 0,
+        ).status,
+        CorrectionStatus.missingInputs,
+      );
+    });
+
+    test('at or above the target — nothing to dose', () {
+      final r = computeCorrectionDose(
+        current: 8.7,
+        target: 8.5,
+        potency: 10,
+        volumeLiters: 200,
+      );
+      expect(r.status, CorrectionStatus.atOrAboveTarget);
+      expect(r.totalDose, isNull);
+    });
+
+    test('rise known but potency missing', () {
+      final r = computeCorrectionDose(
+        current: 7.5,
+        target: 8.5,
+        potency: null,
+        volumeLiters: 200,
+      );
+      expect(r.status, CorrectionStatus.needsPotency);
+      expect(r.rise, closeTo(1.0, 1e-9));
+    });
+
+    test('single dose: rise * volume / potency', () {
+      // Raise by 1 dKH in 200 L with p = 10 dKH·L per ml → 20 ml.
+      final r = computeCorrectionDose(
+        current: 7.5,
+        target: 8.5,
+        potency: 10,
+        volumeLiters: 200,
+        maxDailyRise: 1.4,
+      );
+      expect(r.status, CorrectionStatus.singleDose);
+      expect(r.totalDose, closeTo(20, 1e-9));
+      expect(r.days, 1);
+      expect(r.dailyDose, closeTo(20, 1e-9));
+    });
+
+    test('a rise at exactly the daily limit stays a single dose', () {
+      final r = computeCorrectionDose(
+        current: 7.1,
+        target: 8.5,
+        potency: 10,
+        volumeLiters: 200,
+        maxDailyRise: 1.4,
+      );
+      expect(r.status, CorrectionStatus.singleDose);
+    });
+
+    test('a rise above the daily limit splits over ceil(rise/limit) days', () {
+      // 3.0 dKH at 1.4/day → 3 days; total 60 ml → 20 ml/day.
+      final r = computeCorrectionDose(
+        current: 5.5,
+        target: 8.5,
+        potency: 10,
+        volumeLiters: 200,
+        maxDailyRise: 1.4,
+      );
+      expect(r.status, CorrectionStatus.splitDose);
+      expect(r.days, 3);
+      expect(r.totalDose, closeTo(60, 1e-9));
+      expect(r.dailyDose, closeTo(20, 1e-9));
+    });
+
+    test('no limit -> never split, however large the rise', () {
+      final r = computeCorrectionDose(
+        current: 0.02,
+        target: 0.06,
+        potency: 0.5,
+        volumeLiters: 200,
+      );
+      expect(r.status, CorrectionStatus.singleDose);
+      expect(r.totalDose, closeTo(16, 1e-9));
+    });
+  });
 }

@@ -84,6 +84,25 @@ final Map<SetupType, Map<String, ZoneBounds>> kPresets = {
 ZoneBounds presetBounds(SetupType type, String paramKey) =>
     kPresets[type]?[paramKey] ?? const ZoneBounds();
 
+/// Default correction *targets* per setup type, in the parameter's canonical
+/// unit — the value the dose calculator's correction mode aims for. Only
+/// defined where the sensible target is NOT simply the middle of the green
+/// zone (currently alkalinity, whose wide safe band sits above the commonly
+/// recommended set point); every other parameter falls back to the green-zone
+/// midpoint at use time. Seeded into `TrackedParameters.targetValue` (editable
+/// per tank, like the bounds).
+const Map<SetupType, Map<String, double>> kPresetTargets = {
+  SetupType.soft: {'alkalinity': 8.5},
+  SetupType.lps: {'alkalinity': 8.5},
+  SetupType.sps: {'alkalinity': 8.0},
+  SetupType.mixed: {'alkalinity': 8.3},
+};
+
+/// The default correction target for a setup type + parameter, or null when
+/// the preset defines none (callers fall back to the green-zone midpoint).
+double? presetTarget(SetupType type, String paramKey) =>
+    kPresetTargets[type]?[paramKey];
+
 /// The parameter keys tracked by default for a setup type, in catalog order.
 List<String> defaultTrackedKeys(SetupType type) =>
     (kPresets[type] ?? const {}).keys.toList();

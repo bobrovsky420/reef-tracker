@@ -74,6 +74,20 @@ void main() {
       );
       expect(await db.getActiveTankId(), id);
     });
+
+    test('seeds the correction target where the preset defines one', () async {
+      final id = await db.createTankWithPreset(
+        name: 'Reef',
+        type: SetupType.sps,
+      );
+      final params = await db.getTrackedParameters(id);
+      final alk = params.firstWhere((p) => p.paramKey == 'alkalinity');
+      expect(alk.targetValue, presetTarget(SetupType.sps, 'alkalinity'));
+      expect(alk.targetValue, isNotNull);
+      // No preset target -> null (correction falls back to the green mid).
+      final ca = params.firstWhere((p) => p.paramKey == 'calcium');
+      expect(ca.targetValue, isNull);
+    });
   });
 
   group('addTrackedParameter', () {
@@ -194,6 +208,36 @@ void main() {
       )).firstWhere((p) => p.paramKey == 'calcium');
       expect(after.greenLow, 400.0);
       expect(after.greenHigh, 450.0);
+    });
+
+    test('resets a customized correction target to the setup-type default '
+        '(null where the preset defines none)', () async {
+      final id = await db.createTankWithPreset(
+        name: 'R',
+        type: SetupType.mixed,
+      );
+      final params = await db.getTrackedParameters(id);
+      final alk = params.firstWhere((p) => p.paramKey == 'alkalinity');
+      final ca = params.firstWhere((p) => p.paramKey == 'calcium');
+      await db.updateTrackedParameter(
+        alk.copyWith(targetValue: const Value(9.9)),
+      );
+      await db.updateTrackedParameter(
+        ca.copyWith(targetValue: const Value(444.0)),
+      );
+
+      await db.applyPreset(id, SetupType.mixed);
+
+      final after = await db.getTrackedParameters(id);
+      expect(
+        after.firstWhere((p) => p.paramKey == 'alkalinity').targetValue,
+        presetTarget(SetupType.mixed, 'alkalinity'),
+      );
+      expect(
+        after.firstWhere((p) => p.paramKey == 'calcium').targetValue,
+        isNull,
+        reason: 'no preset target -> reset to null, like the bounds',
+      );
     });
   });
 

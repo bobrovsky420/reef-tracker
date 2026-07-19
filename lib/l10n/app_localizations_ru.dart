@@ -1327,6 +1327,73 @@ class AppLocalizationsRu extends AppLocalizations {
       'Для расчёта добавьте не менее двух измерений в разные дни и объём аквариума.';
 
   @override
+  String get doseCalcModeMaintenance => 'Дневная доза';
+
+  @override
+  String get doseCalcModeCorrection => 'Коррекция';
+
+  @override
+  String get doseCalcCorrIntro =>
+      'Рассчитайте разовую дозу, которая поднимет элемент с текущего значения до целевого. Если быстрый рост опасен, доза будет разбита на несколько дней.';
+
+  @override
+  String get doseCalcCurrentValue => 'Текущее значение';
+
+  @override
+  String get doseCalcCurrentValueHelp => 'Пусто = ваше последнее измерение.';
+
+  @override
+  String get doseCalcTargetValue => 'Целевое значение';
+
+  @override
+  String get doseCalcTargetValueHelp =>
+      'Пусто = целевое значение параметра или середина его безопасного диапазона.';
+
+  @override
+  String get doseCalcNeededRise => 'Требуемый рост';
+
+  @override
+  String get doseCalcOneTimeDose => 'Разовая доза';
+
+  @override
+  String get doseCalcTotalDose => 'Общая доза';
+
+  @override
+  String get doseCalcDosePerDay => 'Доза в день';
+
+  @override
+  String get doseCalcSpreadDays => 'Растянуть на (дней)';
+
+  @override
+  String get doseCalcCorrMissing =>
+      'Для расчёта укажите текущее значение, цель и объём аквариума.';
+
+  @override
+  String get doseCalcCorrAtTarget =>
+      'Значение уже на уровне цели или выше — дозировать нечего.';
+
+  @override
+  String get doseCalcCorrSingle => 'Можно безопасно внести одной дозой.';
+
+  @override
+  String doseCalcCorrSplit(Object limit, int days) {
+    return 'Поднимать быстрее чем на $limit в день рискованно — внесите коррекцию за $days дневных доз.';
+  }
+
+  @override
+  String get doseCalcLogDose => 'Записать дозу';
+
+  @override
+  String get correctionCta => 'Ниже диапазона — рассчитать корректирующую дозу';
+
+  @override
+  String get targetValueLabel => 'Целевое значение коррекции';
+
+  @override
+  String get targetValueHelp =>
+      'Подставляется в режим коррекции калькулятора дозирования. Пусто = середина безопасного диапазона.';
+
+  @override
   String get trendSection => 'Тренды';
 
   @override

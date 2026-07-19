@@ -753,6 +753,17 @@ class $TrackedParametersTable extends TrackedParameters
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _targetValueMeta = const VerificationMeta(
+    'targetValue',
+  );
+  @override
+  late final GeneratedColumn<double> targetValue = GeneratedColumn<double>(
+    'target_value',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -766,6 +777,7 @@ class $TrackedParametersTable extends TrackedParameters
     greenHigh,
     amberHigh,
     testCadenceDays,
+    targetValue,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -854,6 +866,15 @@ class $TrackedParametersTable extends TrackedParameters
         ),
       );
     }
+    if (data.containsKey('target_value')) {
+      context.handle(
+        _targetValueMeta,
+        targetValue.isAcceptableOrUnknown(
+          data['target_value']!,
+          _targetValueMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -907,6 +928,10 @@ class $TrackedParametersTable extends TrackedParameters
         DriftSqlType.int,
         data['${effectivePrefix}test_cadence_days'],
       ),
+      targetValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}target_value'],
+      ),
     );
   }
 
@@ -933,6 +958,12 @@ class TrackedParameter extends DataClass
   /// parameter. The reminder anchors elastically on the parameter's latest
   /// reading (see `domain/reminders.dart`).
   final int? testCadenceDays;
+
+  /// Correction target for the dose calculator's correction mode, in the
+  /// parameter's canonical unit. Seeded from the setup-type preset
+  /// (`kPresetTargets`) where one exists; null falls back to the green-zone
+  /// midpoint at use time.
+  final double? targetValue;
   const TrackedParameter({
     required this.id,
     required this.tankId,
@@ -945,6 +976,7 @@ class TrackedParameter extends DataClass
     this.greenHigh,
     this.amberHigh,
     this.testCadenceDays,
+    this.targetValue,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -969,6 +1001,9 @@ class TrackedParameter extends DataClass
     }
     if (!nullToAbsent || testCadenceDays != null) {
       map['test_cadence_days'] = Variable<int>(testCadenceDays);
+    }
+    if (!nullToAbsent || targetValue != null) {
+      map['target_value'] = Variable<double>(targetValue);
     }
     return map;
   }
@@ -996,6 +1031,9 @@ class TrackedParameter extends DataClass
       testCadenceDays: testCadenceDays == null && nullToAbsent
           ? const Value.absent()
           : Value(testCadenceDays),
+      targetValue: targetValue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetValue),
     );
   }
 
@@ -1016,6 +1054,7 @@ class TrackedParameter extends DataClass
       greenHigh: serializer.fromJson<double?>(json['greenHigh']),
       amberHigh: serializer.fromJson<double?>(json['amberHigh']),
       testCadenceDays: serializer.fromJson<int?>(json['testCadenceDays']),
+      targetValue: serializer.fromJson<double?>(json['targetValue']),
     );
   }
   @override
@@ -1033,6 +1072,7 @@ class TrackedParameter extends DataClass
       'greenHigh': serializer.toJson<double?>(greenHigh),
       'amberHigh': serializer.toJson<double?>(amberHigh),
       'testCadenceDays': serializer.toJson<int?>(testCadenceDays),
+      'targetValue': serializer.toJson<double?>(targetValue),
     };
   }
 
@@ -1048,6 +1088,7 @@ class TrackedParameter extends DataClass
     Value<double?> greenHigh = const Value.absent(),
     Value<double?> amberHigh = const Value.absent(),
     Value<int?> testCadenceDays = const Value.absent(),
+    Value<double?> targetValue = const Value.absent(),
   }) => TrackedParameter(
     id: id ?? this.id,
     tankId: tankId ?? this.tankId,
@@ -1062,6 +1103,7 @@ class TrackedParameter extends DataClass
     testCadenceDays: testCadenceDays.present
         ? testCadenceDays.value
         : this.testCadenceDays,
+    targetValue: targetValue.present ? targetValue.value : this.targetValue,
   );
   TrackedParameter copyWithCompanion(TrackedParametersCompanion data) {
     return TrackedParameter(
@@ -1080,6 +1122,9 @@ class TrackedParameter extends DataClass
       testCadenceDays: data.testCadenceDays.present
           ? data.testCadenceDays.value
           : this.testCadenceDays,
+      targetValue: data.targetValue.present
+          ? data.targetValue.value
+          : this.targetValue,
     );
   }
 
@@ -1096,7 +1141,8 @@ class TrackedParameter extends DataClass
           ..write('greenLow: $greenLow, ')
           ..write('greenHigh: $greenHigh, ')
           ..write('amberHigh: $amberHigh, ')
-          ..write('testCadenceDays: $testCadenceDays')
+          ..write('testCadenceDays: $testCadenceDays, ')
+          ..write('targetValue: $targetValue')
           ..write(')'))
         .toString();
   }
@@ -1114,6 +1160,7 @@ class TrackedParameter extends DataClass
     greenHigh,
     amberHigh,
     testCadenceDays,
+    targetValue,
   );
   @override
   bool operator ==(Object other) =>
@@ -1129,7 +1176,8 @@ class TrackedParameter extends DataClass
           other.greenLow == this.greenLow &&
           other.greenHigh == this.greenHigh &&
           other.amberHigh == this.amberHigh &&
-          other.testCadenceDays == this.testCadenceDays);
+          other.testCadenceDays == this.testCadenceDays &&
+          other.targetValue == this.targetValue);
 }
 
 class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
@@ -1144,6 +1192,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
   final Value<double?> greenHigh;
   final Value<double?> amberHigh;
   final Value<int?> testCadenceDays;
+  final Value<double?> targetValue;
   const TrackedParametersCompanion({
     this.id = const Value.absent(),
     this.tankId = const Value.absent(),
@@ -1156,6 +1205,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     this.greenHigh = const Value.absent(),
     this.amberHigh = const Value.absent(),
     this.testCadenceDays = const Value.absent(),
+    this.targetValue = const Value.absent(),
   });
   TrackedParametersCompanion.insert({
     this.id = const Value.absent(),
@@ -1169,6 +1219,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     this.greenHigh = const Value.absent(),
     this.amberHigh = const Value.absent(),
     this.testCadenceDays = const Value.absent(),
+    this.targetValue = const Value.absent(),
   }) : tankId = Value(tankId),
        paramKey = Value(paramKey),
        unit = Value(unit);
@@ -1184,6 +1235,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     Expression<double>? greenHigh,
     Expression<double>? amberHigh,
     Expression<int>? testCadenceDays,
+    Expression<double>? targetValue,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1197,6 +1249,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
       if (greenHigh != null) 'green_high': greenHigh,
       if (amberHigh != null) 'amber_high': amberHigh,
       if (testCadenceDays != null) 'test_cadence_days': testCadenceDays,
+      if (targetValue != null) 'target_value': targetValue,
     });
   }
 
@@ -1212,6 +1265,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     Value<double?>? greenHigh,
     Value<double?>? amberHigh,
     Value<int?>? testCadenceDays,
+    Value<double?>? targetValue,
   }) {
     return TrackedParametersCompanion(
       id: id ?? this.id,
@@ -1225,6 +1279,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
       greenHigh: greenHigh ?? this.greenHigh,
       amberHigh: amberHigh ?? this.amberHigh,
       testCadenceDays: testCadenceDays ?? this.testCadenceDays,
+      targetValue: targetValue ?? this.targetValue,
     );
   }
 
@@ -1264,6 +1319,9 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     if (testCadenceDays.present) {
       map['test_cadence_days'] = Variable<int>(testCadenceDays.value);
     }
+    if (targetValue.present) {
+      map['target_value'] = Variable<double>(targetValue.value);
+    }
     return map;
   }
 
@@ -1280,7 +1338,8 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
           ..write('greenLow: $greenLow, ')
           ..write('greenHigh: $greenHigh, ')
           ..write('amberHigh: $amberHigh, ')
-          ..write('testCadenceDays: $testCadenceDays')
+          ..write('testCadenceDays: $testCadenceDays, ')
+          ..write('targetValue: $targetValue')
           ..write(')'))
         .toString();
   }
@@ -9256,6 +9315,7 @@ typedef $$TrackedParametersTableCreateCompanionBuilder =
       Value<double?> greenHigh,
       Value<double?> amberHigh,
       Value<int?> testCadenceDays,
+      Value<double?> targetValue,
     });
 typedef $$TrackedParametersTableUpdateCompanionBuilder =
     TrackedParametersCompanion Function({
@@ -9270,6 +9330,7 @@ typedef $$TrackedParametersTableUpdateCompanionBuilder =
       Value<double?> greenHigh,
       Value<double?> amberHigh,
       Value<int?> testCadenceDays,
+      Value<double?> targetValue,
     });
 
 final class $$TrackedParametersTableReferences
@@ -9362,6 +9423,11 @@ class $$TrackedParametersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<double> get targetValue => $composableBuilder(
+    column: $table.targetValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$TanksTableFilterComposer get tankId {
     final $$TanksTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -9445,6 +9511,11 @@ class $$TrackedParametersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get targetValue => $composableBuilder(
+    column: $table.targetValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TanksTableOrderingComposer get tankId {
     final $$TanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -9509,6 +9580,11 @@ class $$TrackedParametersTableAnnotationComposer
 
   GeneratedColumn<int> get testCadenceDays => $composableBuilder(
     column: $table.testCadenceDays,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get targetValue => $composableBuilder(
+    column: $table.targetValue,
     builder: (column) => column,
   );
 
@@ -9580,6 +9656,7 @@ class $$TrackedParametersTableTableManager
                 Value<double?> greenHigh = const Value.absent(),
                 Value<double?> amberHigh = const Value.absent(),
                 Value<int?> testCadenceDays = const Value.absent(),
+                Value<double?> targetValue = const Value.absent(),
               }) => TrackedParametersCompanion(
                 id: id,
                 tankId: tankId,
@@ -9592,6 +9669,7 @@ class $$TrackedParametersTableTableManager
                 greenHigh: greenHigh,
                 amberHigh: amberHigh,
                 testCadenceDays: testCadenceDays,
+                targetValue: targetValue,
               ),
           createCompanionCallback:
               ({
@@ -9606,6 +9684,7 @@ class $$TrackedParametersTableTableManager
                 Value<double?> greenHigh = const Value.absent(),
                 Value<double?> amberHigh = const Value.absent(),
                 Value<int?> testCadenceDays = const Value.absent(),
+                Value<double?> targetValue = const Value.absent(),
               }) => TrackedParametersCompanion.insert(
                 id: id,
                 tankId: tankId,
@@ -9618,6 +9697,7 @@ class $$TrackedParametersTableTableManager
                 greenHigh: greenHigh,
                 amberHigh: amberHigh,
                 testCadenceDays: testCadenceDays,
+                targetValue: targetValue,
               ),
           withReferenceMapper: (p0) => p0
               .map(
