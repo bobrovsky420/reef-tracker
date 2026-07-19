@@ -871,6 +871,16 @@ class NoTanksView extends ConsumerWidget {
               icon: const Icon(Icons.add),
               label: Text(l.addAquarium),
             ),
+            const SizedBox(height: 8),
+            // Settings must stay reachable with zero tanks (Settings →
+            // Backups → restore is the reinstall path). The bottom bar's
+            // Settings tab (U33) is hidden here, so push the standalone
+            // route instead.
+            TextButton.icon(
+              onPressed: () => context.push('/settings'),
+              icon: const Icon(Icons.settings_outlined, size: 18),
+              label: Text(l.settings),
+            ),
           ],
         ),
       ),

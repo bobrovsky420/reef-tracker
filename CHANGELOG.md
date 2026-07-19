@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.0] - 2026-07-19
+
+### Changed
+- **Settings moved to the bottom bar.** Settings is now a fourth tab next to
+  Measurements, Actions and Dosing instead of a gear icon in the top bar — no
+  back button, just switch tabs. The Settings tab shows a plain title (no
+  aquarium selector), and the top bar gains room for screen actions. The
+  welcome screen shown before the first aquarium has its own Settings button,
+  so restoring a backup right after a reinstall works like before.
+
 ## [0.34.0] - 2026-07-19
 
 ### Added

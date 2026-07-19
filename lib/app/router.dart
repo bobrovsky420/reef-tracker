@@ -41,8 +41,8 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      // `?tab=actions|dosing` selects a bottom-nav tab — used by reminder
-      // notification taps, which can only carry a URL.
+      // `?tab=measurements|actions|dosing|settings` selects a bottom-nav
+      // tab — used by reminder notification taps, which can only carry a URL.
       builder: (context, state) =>
           HomeShell(tab: state.uri.queryParameters['tab']),
     ),
@@ -140,6 +140,9 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(
+      // Standalone pushed Settings, used only from the no-tanks welcome
+      // screen; with tanks present Settings is the home shell's fourth tab
+      // (U33, `/?tab=settings`).
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
     ),

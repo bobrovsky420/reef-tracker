@@ -26,12 +26,31 @@ import '../../widgets/reef_settings.dart';
 /// [kTrendMinHorizon]..[kTrendMaxHorizon].
 const _trendHorizonOptions = [3, 7, 14, 30, 60, 90];
 
+/// Standalone Settings route (`/settings`). With tanks present, Settings is
+/// the home shell's fourth bottom-nav tab (U33) and nothing pushes this
+/// route; it remains for the no-tanks welcome screen, whose settings button
+/// needs a pushed screen with a back affordance (Settings → Backups →
+/// restore is the reinstall path).
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l.settings)),
+      body: const SettingsBody(),
+    );
+  }
+}
+
 /// Settings: language, unit preferences, tools, and about — grouped sections
 /// rendered by the dialect-aware `ReefSettings*` widgets (REDESIGN #14/#15):
 /// inset-grouped cards on the Cupertino dialect, full-width rows with
-/// dividers on the M3 dialect.
-class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
+/// dividers on the M3 dialect. Scaffold-less so the same body serves both the
+/// home shell's Settings tab (U33) and the standalone [SettingsScreen].
+class SettingsBody extends ConsumerWidget {
+  const SettingsBody({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,440 +68,434 @@ class SettingsScreen extends ConsumerWidget {
         ref.watch(autoBackupEnabledProvider).value ?? kAutoBackupDefaultEnabled;
     final appVersion = ref.watch(appVersionProvider).value ?? '';
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l.settings)),
-      body: ReefSettingsList(
-        sections: [
-          ReefSettingsSection(
-            label: l.languageSection,
-            children: [
-              ReefSettingsRow(
-                icon: Icons.translate,
-                title: l.language,
-                trailing: ReefSettingsDropdown<String>(
-                  value: localeCode,
-                  onChanged: (v) => settings.setLocaleCode(v),
-                  items: [
-                    ('system', l.languageSystem),
-                    // Sorted alphabetically by native language name (Latin
-                    // scripts first), with the system default pinned on top.
-                    ('cs', l.languageCzech),
-                    ('de', l.languageGerman),
-                    ('en', l.languageEnglish),
-                    ('fr', l.languageFrench),
-                    ('it', l.languageItalian),
-                    ('pl', l.languagePolish),
-                    ('ru', l.languageRussian),
-                  ],
-                ),
+    return ReefSettingsList(
+      sections: [
+        ReefSettingsSection(
+          label: l.languageSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.translate,
+              title: l.language,
+              trailing: ReefSettingsDropdown<String>(
+                value: localeCode,
+                onChanged: (v) => settings.setLocaleCode(v),
+                items: [
+                  ('system', l.languageSystem),
+                  // Sorted alphabetically by native language name (Latin
+                  // scripts first), with the system default pinned on top.
+                  ('cs', l.languageCzech),
+                  ('de', l.languageGerman),
+                  ('en', l.languageEnglish),
+                  ('fr', l.languageFrench),
+                  ('it', l.languageItalian),
+                  ('pl', l.languagePolish),
+                  ('ru', l.languageRussian),
+                ],
               ),
-            ],
-          ),
-          // Theme mode (REDESIGN #16): the segmented System/Light/Dark choice
-          // replacing the mockups' navbar sun/moon toggle.
-          ReefSettingsSection(
-            label: l.appearanceSection,
-            children: [
-              ReefSettingsRow(
-                icon: Icons.dark_mode_outlined,
-                title: l.themeTitle,
-                trailing: ReefSegmented<AppThemeMode>(
-                  options: [
-                    (AppThemeMode.system, l.themeSystem),
-                    (AppThemeMode.light, l.themeLight),
-                    (AppThemeMode.dark, l.themeDark),
-                  ],
-                  selected:
-                      ref.watch(themeModeProvider).value ?? AppThemeMode.system,
-                  onChanged: settings.setThemeMode,
-                ),
+            ),
+          ],
+        ),
+        // Theme mode (REDESIGN #16): the segmented System/Light/Dark choice
+        // replacing the mockups' navbar sun/moon toggle.
+        ReefSettingsSection(
+          label: l.appearanceSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.dark_mode_outlined,
+              title: l.themeTitle,
+              trailing: ReefSegmented<AppThemeMode>(
+                options: [
+                  (AppThemeMode.system, l.themeSystem),
+                  (AppThemeMode.light, l.themeLight),
+                  (AppThemeMode.dark, l.themeDark),
+                ],
+                selected:
+                    ref.watch(themeModeProvider).value ?? AppThemeMode.system,
+                onChanged: settings.setThemeMode,
               ),
-            ],
-          ),
-          ReefSettingsSection(
-            label: l.unitsSection,
-            children: [
-              ReefSettingsRow(
-                icon: Icons.thermostat,
-                title: l.temperature,
-                description: l.unitUsedAcrossApp,
-                trailing: ReefSegmented<TempUnit>(
-                  options: const [
-                    (TempUnit.celsius, '°C'),
-                    (TempUnit.fahrenheit, '°F'),
-                  ],
-                  selected: prefs.temp,
-                  onChanged: settings.setTempUnit,
-                ),
+            ),
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.unitsSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.thermostat,
+              title: l.temperature,
+              description: l.unitUsedAcrossApp,
+              trailing: ReefSegmented<TempUnit>(
+                options: const [
+                  (TempUnit.celsius, '°C'),
+                  (TempUnit.fahrenheit, '°F'),
+                ],
+                selected: prefs.temp,
+                onChanged: settings.setTempUnit,
               ),
-              ReefSettingsRow(
-                icon: Icons.water_drop_outlined,
-                title: l.salinity,
-                description: l.unitUsedAcrossApp,
-                trailing: ReefSegmented<SalinityUnit>(
-                  options: const [
-                    (SalinityUnit.ppt, 'ppt'),
-                    (SalinityUnit.sg, 'SG'),
-                  ],
-                  selected: prefs.salinity,
-                  onChanged: settings.setSalinityUnit,
-                ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.water_drop_outlined,
+              title: l.salinity,
+              description: l.unitUsedAcrossApp,
+              trailing: ReefSegmented<SalinityUnit>(
+                options: const [
+                  (SalinityUnit.ppt, 'ppt'),
+                  (SalinityUnit.sg, 'SG'),
+                ],
+                selected: prefs.salinity,
+                onChanged: settings.setSalinityUnit,
               ),
-              ReefSettingsRow(
-                icon: Icons.local_drink_outlined,
-                title: l.volume,
-                description: l.unitUsedAcrossApp,
-                trailing: ReefSegmented<VolumeUnit>(
-                  options: const [
-                    (VolumeUnit.liters, 'L'),
-                    (VolumeUnit.gallons, 'gal'),
-                  ],
-                  selected: prefs.volume,
-                  onChanged: settings.setVolumeUnit,
-                ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.local_drink_outlined,
+              title: l.volume,
+              description: l.unitUsedAcrossApp,
+              trailing: ReefSegmented<VolumeUnit>(
+                options: const [
+                  (VolumeUnit.liters, 'L'),
+                  (VolumeUnit.gallons, 'gal'),
+                ],
+                selected: prefs.volume,
+                onChanged: settings.setVolumeUnit,
               ),
-            ],
-          ),
-          ReefSettingsSection(
-            label: l.dashboardSection,
-            children: [
+            ),
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.dashboardSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.dashboard_customize,
+              title: l.dashboardLayoutTitle,
+              description: l.dashboardLayoutSubtitle,
+              trailing: ReefSettingsDropdown<DashboardLayout>(
+                value:
+                    ref.watch(dashboardLayoutProvider).value ??
+                    DashboardLayout.grouped,
+                onChanged: settings.setDashboardLayout,
+                items: [
+                  (DashboardLayout.grouped, l.dashboardLayoutGrouped),
+                  (DashboardLayout.classic, l.dashboardLayoutClassic),
+                ],
+              ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.speed,
+              title: l.healthDisplayTitle,
+              description: l.healthDisplaySubtitle,
+              trailing: ReefSettingsDropdown<HealthDisplay>(
+                value:
+                    ref.watch(healthDisplayProvider).value ??
+                    HealthDisplay.both,
+                onChanged: settings.setHealthDisplay,
+                items: [
+                  (HealthDisplay.both, l.healthDisplayBoth),
+                  (HealthDisplay.badge, l.healthDisplayBadge),
+                  (HealthDisplay.off, l.healthDisplayOff),
+                ],
+              ),
+            ),
+            // Stability window (U26). Only shown to installs entitled to
+            // the stability score — a knob for a locked feature would just
+            // confuse.
+            if (ref.watch(proFeatureProvider(ProFeature.stabilityScore)))
               ReefSettingsRow(
-                icon: Icons.dashboard_customize,
-                title: l.dashboardLayoutTitle,
-                description: l.dashboardLayoutSubtitle,
-                trailing: ReefSettingsDropdown<DashboardLayout>(
+                icon: Icons.waves,
+                title: l.stabilityWindowTitle,
+                description: l.stabilityWindowSubtitle,
+                trailing: ReefSettingsDropdown<int>(
                   value:
-                      ref.watch(dashboardLayoutProvider).value ??
-                      DashboardLayout.grouped,
-                  onChanged: settings.setDashboardLayout,
+                      ref.watch(stabilityWindowProvider).value ??
+                      kStabilityWindowDays,
+                  onChanged: settings.setStabilityWindow,
                   items: [
-                    (DashboardLayout.grouped, l.dashboardLayoutGrouped),
-                    (DashboardLayout.classic, l.dashboardLayoutClassic),
+                    for (final n in kStabilityWindowChoices)
+                      (n, l.trendHorizonDays(n)),
                   ],
                 ),
               ),
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.trendSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.trending_up,
+              title: l.trendShowTitle,
+              description: l.trendShowSubtitle,
+              trailing: Switch.adaptive(
+                value: trendEnabled,
+                onChanged: (v) => settings.setTrendEnabled(v),
+              ),
+              onTap: () => settings.setTrendEnabled(!trendEnabled),
+            ),
+            if (trendEnabled) ...[
               ReefSettingsRow(
-                icon: Icons.speed,
-                title: l.healthDisplayTitle,
-                description: l.healthDisplaySubtitle,
-                trailing: ReefSettingsDropdown<HealthDisplay>(
+                icon: Icons.timeline,
+                title: l.trendWindow,
+                description: l.trendWindowSubtitle(kTrendMinSpanDays),
+                trailing: ReefSettingsDropdown<int>(
                   value:
-                      ref.watch(healthDisplayProvider).value ??
-                      HealthDisplay.both,
-                  onChanged: settings.setHealthDisplay,
+                      ref.watch(trendWindowProvider).value ??
+                      kTrendDefaultWindow,
+                  onChanged: settings.setTrendWindow,
                   items: [
-                    (HealthDisplay.both, l.healthDisplayBoth),
-                    (HealthDisplay.badge, l.healthDisplayBadge),
-                    (HealthDisplay.off, l.healthDisplayOff),
+                    for (var n = kTrendMinWindow; n <= kTrendMaxWindow; n++)
+                      (n, '$n'),
                   ],
                 ),
               ),
-              // Stability window (U26). Only shown to installs entitled to
-              // the stability score — a knob for a locked feature would just
-              // confuse.
-              if (ref.watch(proFeatureProvider(ProFeature.stabilityScore)))
-                ReefSettingsRow(
-                  icon: Icons.waves,
-                  title: l.stabilityWindowTitle,
-                  description: l.stabilityWindowSubtitle,
-                  trailing: ReefSettingsDropdown<int>(
-                    value:
-                        ref.watch(stabilityWindowProvider).value ??
-                        kStabilityWindowDays,
-                    onChanged: settings.setStabilityWindow,
-                    items: [
-                      for (final n in kStabilityWindowChoices)
-                        (n, l.trendHorizonDays(n)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          ReefSettingsSection(
-            label: l.trendSection,
-            children: [
               ReefSettingsRow(
-                icon: Icons.trending_up,
-                title: l.trendShowTitle,
-                description: l.trendShowSubtitle,
-                trailing: Switch.adaptive(
-                  value: trendEnabled,
-                  onChanged: (v) => settings.setTrendEnabled(v),
+                icon: Icons.notifications_active_outlined,
+                title: l.trendHorizon,
+                description: l.trendHorizonSubtitle,
+                trailing: ReefSettingsDropdown<int>(
+                  value:
+                      ref.watch(trendHorizonProvider).value ??
+                      kTrendDefaultHorizon,
+                  onChanged: settings.setTrendHorizon,
+                  items: [
+                    for (final n in _trendHorizonOptions)
+                      (n, l.trendHorizonDays(n)),
+                  ],
                 ),
-                onTap: () => settings.setTrendEnabled(!trendEnabled),
-              ),
-              if (trendEnabled) ...[
-                ReefSettingsRow(
-                  icon: Icons.timeline,
-                  title: l.trendWindow,
-                  description: l.trendWindowSubtitle(kTrendMinSpanDays),
-                  trailing: ReefSettingsDropdown<int>(
-                    value:
-                        ref.watch(trendWindowProvider).value ??
-                        kTrendDefaultWindow,
-                    onChanged: settings.setTrendWindow,
-                    items: [
-                      for (var n = kTrendMinWindow; n <= kTrendMaxWindow; n++)
-                        (n, '$n'),
-                    ],
-                  ),
-                ),
-                ReefSettingsRow(
-                  icon: Icons.notifications_active_outlined,
-                  title: l.trendHorizon,
-                  description: l.trendHorizonSubtitle,
-                  trailing: ReefSettingsDropdown<int>(
-                    value:
-                        ref.watch(trendHorizonProvider).value ??
-                        kTrendDefaultHorizon,
-                    onChanged: settings.setTrendHorizon,
-                    items: [
-                      for (final n in _trendHorizonOptions)
-                        (n, l.trendHorizonDays(n)),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-          ReefSettingsSection(
-            children: [
-              ReefSettingsRow(
-                icon: Icons.notifications_outlined,
-                title: l.remindersTitle,
-                description: l.remindersSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap: () => context.push('/settings/reminders'),
-              ),
-              ReefSettingsRow(
-                icon: Icons.water_drop_outlined,
-                title: l.roUnitTitle,
-                description: l.roUnitToggleSubtitle,
-                trailing: Switch.adaptive(
-                  value: roEnabled,
-                  onChanged: (v) => settings.setRoUnitEnabled(v),
-                ),
-                onTap: () => settings.setRoUnitEnabled(!roEnabled),
-              ),
-              // Microelements feature switch (U17): off hides the dashboard
-              // tile and silences micro test reminders — measurements stay
-              // stored.
-              ReefSettingsRow(
-                icon: Icons.science_outlined,
-                title: l.microTitle,
-                description: l.microToggleSubtitle,
-                trailing: Switch.adaptive(
-                  value: microEnabled,
-                  onChanged: (v) => settings.setMicroEnabled(v),
-                ),
-                onTap: () => settings.setMicroEnabled(!microEnabled),
               ),
             ],
-          ),
-          ReefSettingsSection(
-            label: l.toolsSection,
-            children: [
-              ReefSettingsRow(
-                icon: Icons.calculate_outlined,
-                title: l.salinityCalculator,
-                description: l.salinityCalculatorSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap: () => context.push('/calculator/salinity'),
+          ],
+        ),
+        ReefSettingsSection(
+          children: [
+            ReefSettingsRow(
+              icon: Icons.notifications_outlined,
+              title: l.remindersTitle,
+              description: l.remindersSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => context.push('/settings/reminders'),
+            ),
+            ReefSettingsRow(
+              icon: Icons.water_drop_outlined,
+              title: l.roUnitTitle,
+              description: l.roUnitToggleSubtitle,
+              trailing: Switch.adaptive(
+                value: roEnabled,
+                onChanged: (v) => settings.setRoUnitEnabled(v),
               ),
-            ],
-          ),
-          ReefSettingsSection(
-            label: l.backupSection,
-            children: [
-              ReefSettingsRow(
-                icon: Icons.backup,
-                title: l.backupNow,
-                description: ref
-                    .watch(lastBackupAtProvider)
-                    .maybeWhen(
-                      data: (t) => t == null
-                          ? l.backupNeverRun
-                          // Shared helper honors the device 12/24-hour
-                          // preference (#41).
-                          : l.backupLastRun(
-                              formatDateTime(
-                                context,
-                                t.toLocal(),
-                                weekday: false,
-                              ),
+              onTap: () => settings.setRoUnitEnabled(!roEnabled),
+            ),
+            // Microelements feature switch (U17): off hides the dashboard
+            // tile and silences micro test reminders — measurements stay
+            // stored.
+            ReefSettingsRow(
+              icon: Icons.science_outlined,
+              title: l.microTitle,
+              description: l.microToggleSubtitle,
+              trailing: Switch.adaptive(
+                value: microEnabled,
+                onChanged: (v) => settings.setMicroEnabled(v),
+              ),
+              onTap: () => settings.setMicroEnabled(!microEnabled),
+            ),
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.toolsSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.calculate_outlined,
+              title: l.salinityCalculator,
+              description: l.salinityCalculatorSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => context.push('/calculator/salinity'),
+            ),
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.backupSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.backup,
+              title: l.backupNow,
+              description: ref
+                  .watch(lastBackupAtProvider)
+                  .maybeWhen(
+                    data: (t) => t == null
+                        ? l.backupNeverRun
+                        // Shared helper honors the device 12/24-hour
+                        // preference (#41).
+                        : l.backupLastRun(
+                            formatDateTime(
+                              context,
+                              t.toLocal(),
+                              weekday: false,
                             ),
-                      orElse: () => l.backupNeverRun,
-                    ),
-                onTap: () => _backupNow(context, ref, l),
+                          ),
+                    orElse: () => l.backupNeverRun,
+                  ),
+              onTap: () => _backupNow(context, ref, l),
+            ),
+            // A failed backup attempt is worth a loud, persistent warning:
+            // the user believes they are protected while nothing is being
+            // written (#22). Cleared automatically by the next successful
+            // backup.
+            if (ref.watch(lastBackupErrorAtProvider).value case final errorAt?)
+              ReefSettingsRow(
+                icon: Icons.error_outline,
+                iconColor: Theme.of(context).colorScheme.error,
+                title: l.backupLastFailed(
+                  formatDateTime(context, errorAt.toLocal(), weekday: false),
+                ),
+                titleColor: Theme.of(context).colorScheme.error,
               ),
-              // A failed backup attempt is worth a loud, persistent warning:
-              // the user believes they are protected while nothing is being
-              // written (#22). Cleared automatically by the next successful
-              // backup.
-              if (ref.watch(lastBackupErrorAtProvider).value
-                  case final errorAt?)
+            ReefSettingsRow(
+              icon: Icons.upload_file_outlined,
+              title: l.backupExport,
+              description: l.backupExportSubtitle,
+              onTap: () => _export(context, db, l),
+            ),
+            ReefSettingsRow(
+              icon: Icons.table_chart_outlined,
+              title: l.csvExportTitle,
+              description: l.csvExportSubtitle,
+              onTap: () => _exportCsv(context, ref, l),
+            ),
+            ReefSettingsRow(
+              icon: Icons.settings_backup_restore,
+              title: l.backupImport,
+              description: l.backupImportSubtitle,
+              onTap: () => _import(context, db, l),
+            ),
+            ReefSettingsRow(
+              icon: Icons.backup_outlined,
+              title: l.autoBackupTitle,
+              description: l.autoBackupSubtitle,
+              trailing: Switch.adaptive(
+                value: autoBackupEnabled,
+                onChanged: (v) => settings.setAutoBackupEnabled(v),
+              ),
+              onTap: () => settings.setAutoBackupEnabled(!autoBackupEnabled),
+            ),
+            if (autoBackupEnabled) ...[
+              ReefSettingsRow(
+                icon: Icons.schedule,
+                title: l.autoBackupFrequency,
+                trailing: ReefSettingsDropdown<AutoBackupInterval>(
+                  value:
+                      ref.watch(autoBackupIntervalProvider).value ??
+                      AutoBackupInterval.daily,
+                  onChanged: settings.setAutoBackupInterval,
+                  items: [
+                    (AutoBackupInterval.daily, l.autoBackupDaily),
+                    (AutoBackupInterval.weekly, l.autoBackupWeekly),
+                  ],
+                ),
+              ),
+              ReefSettingsRow(
+                icon: Icons.folder_outlined,
+                title: l.manageBackups,
+                description: l.manageBackupsSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: () => context.push('/settings/backups'),
+              ),
+            ],
+            // Google Drive sync (U24) — **Android-only surface** (iOS gets
+            // its own cloud-backup solution later; the plugin is
+            // unconfigured there, so the row would only ever produce an
+            // error snackbar). This is the codebase's one deliberate
+            // platform branch; defaultTargetPlatform (not dart:io Platform)
+            // so widget tests can exercise both sides via
+            // debugDefaultTargetPlatformOverride.
+            if (defaultTargetPlatform == TargetPlatform.android) ...[
+              // Presence of the connected account IS the "on" state (no
+              // separate toggle); Pro-gated on the connect action only — a
+              // connected account keeps working (U19: limits gate creation,
+              // never access).
+              if (ref.watch(syncGdriveAccountProvider).value
+                  case final account?)
                 ReefSettingsRow(
-                  icon: Icons.error_outline,
+                  icon: Icons.add_to_drive,
+                  title: l.syncGdriveTitle,
+                  description:
+                      '$account\n'
+                      '${switch (ref.watch(syncGdriveLastPushAtProvider).value) {
+                        final at? => l.syncGdriveLastPush(formatDateTime(context, at.toLocal(), weekday: false)),
+                        null => l.syncGdriveNeverPushed,
+                      }}',
+                  onTap: () => _gdriveOptions(context, ref, l, account),
+                )
+              else
+                ReefSettingsRow(
+                  icon: Icons.add_to_drive,
+                  title: l.syncGdriveTitle,
+                  description: l.syncGdriveSubtitle,
+                  onTap: ref.watch(proFeatureProvider(ProFeature.driveSync))
+                      ? () => _connectGdrive(context, ref, l)
+                      : () =>
+                            showProFeatureDialog(context, ProFeature.driveSync),
+                ),
+              // Same loud-persistent-warning idiom as the local backup
+              // (#22): non-null means the latest push attempt failed
+              // (offline skips are not recorded), cleared by the next
+              // successful push.
+              if (ref.watch(syncGdriveLastErrorAtProvider).value
+                  case final syncErrorAt?)
+                ReefSettingsRow(
+                  icon: Icons.cloud_off,
                   iconColor: Theme.of(context).colorScheme.error,
-                  title: l.backupLastFailed(
-                    formatDateTime(context, errorAt.toLocal(), weekday: false),
+                  title: l.syncGdriveLastFailed(
+                    formatDateTime(
+                      context,
+                      syncErrorAt.toLocal(),
+                      weekday: false,
+                    ),
                   ),
                   titleColor: Theme.of(context).colorScheme.error,
                 ),
-              ReefSettingsRow(
-                icon: Icons.upload_file_outlined,
-                title: l.backupExport,
-                description: l.backupExportSubtitle,
-                onTap: () => _export(context, db, l),
-              ),
-              ReefSettingsRow(
-                icon: Icons.table_chart_outlined,
-                title: l.csvExportTitle,
-                description: l.csvExportSubtitle,
-                onTap: () => _exportCsv(context, ref, l),
-              ),
-              ReefSettingsRow(
-                icon: Icons.settings_backup_restore,
-                title: l.backupImport,
-                description: l.backupImportSubtitle,
-                onTap: () => _import(context, db, l),
-              ),
-              ReefSettingsRow(
-                icon: Icons.backup_outlined,
-                title: l.autoBackupTitle,
-                description: l.autoBackupSubtitle,
-                trailing: Switch.adaptive(
-                  value: autoBackupEnabled,
-                  onChanged: (v) => settings.setAutoBackupEnabled(v),
-                ),
-                onTap: () => settings.setAutoBackupEnabled(!autoBackupEnabled),
-              ),
-              if (autoBackupEnabled) ...[
-                ReefSettingsRow(
-                  icon: Icons.schedule,
-                  title: l.autoBackupFrequency,
-                  trailing: ReefSettingsDropdown<AutoBackupInterval>(
-                    value:
-                        ref.watch(autoBackupIntervalProvider).value ??
-                        AutoBackupInterval.daily,
-                    onChanged: settings.setAutoBackupInterval,
-                    items: [
-                      (AutoBackupInterval.daily, l.autoBackupDaily),
-                      (AutoBackupInterval.weekly, l.autoBackupWeekly),
-                    ],
-                  ),
-                ),
-                ReefSettingsRow(
-                  icon: Icons.folder_outlined,
-                  title: l.manageBackups,
-                  description: l.manageBackupsSubtitle,
-                  trailing: const ReefSettingsValue(),
-                  onTap: () => context.push('/settings/backups'),
-                ),
-              ],
-              // Google Drive sync (U24) — **Android-only surface** (iOS gets
-              // its own cloud-backup solution later; the plugin is
-              // unconfigured there, so the row would only ever produce an
-              // error snackbar). This is the codebase's one deliberate
-              // platform branch; defaultTargetPlatform (not dart:io Platform)
-              // so widget tests can exercise both sides via
-              // debugDefaultTargetPlatformOverride.
-              if (defaultTargetPlatform == TargetPlatform.android) ...[
-                // Presence of the connected account IS the "on" state (no
-                // separate toggle); Pro-gated on the connect action only — a
-                // connected account keeps working (U19: limits gate creation,
-                // never access).
-                if (ref.watch(syncGdriveAccountProvider).value
-                    case final account?)
-                  ReefSettingsRow(
-                    icon: Icons.add_to_drive,
-                    title: l.syncGdriveTitle,
-                    description:
-                        '$account\n'
-                        '${switch (ref.watch(syncGdriveLastPushAtProvider).value) {
-                          final at? => l.syncGdriveLastPush(formatDateTime(context, at.toLocal(), weekday: false)),
-                          null => l.syncGdriveNeverPushed,
-                        }}',
-                    onTap: () => _gdriveOptions(context, ref, l, account),
-                  )
-                else
-                  ReefSettingsRow(
-                    icon: Icons.add_to_drive,
-                    title: l.syncGdriveTitle,
-                    description: l.syncGdriveSubtitle,
-                    onTap: ref.watch(proFeatureProvider(ProFeature.driveSync))
-                        ? () => _connectGdrive(context, ref, l)
-                        : () =>
-                              showProFeatureDialog(context, ProFeature.driveSync),
-                  ),
-                // Same loud-persistent-warning idiom as the local backup
-                // (#22): non-null means the latest push attempt failed
-                // (offline skips are not recorded), cleared by the next
-                // successful push.
-                if (ref.watch(syncGdriveLastErrorAtProvider).value
-                    case final syncErrorAt?)
-                  ReefSettingsRow(
-                    icon: Icons.cloud_off,
-                    iconColor: Theme.of(context).colorScheme.error,
-                    title: l.syncGdriveLastFailed(
-                      formatDateTime(
-                        context,
-                        syncErrorAt.toLocal(),
-                        weekday: false,
-                      ),
-                    ),
-                    titleColor: Theme.of(context).colorScheme.error,
-                  ),
-              ],
-              // Measurement import status/rewind (U32) — only meaningful once
-              // something was imported, hidden until then.
-              if ((ref.watch(importSourcesProvider).value ?? const [])
-                  .isNotEmpty)
-                ReefSettingsRow(
-                  icon: Icons.move_to_inbox_outlined,
-                  title: l.measurementImportSettingsTitle,
-                  description: l.measurementImportSettingsSubtitle,
-                  onTap: () => context.push('/settings/import'),
-                ),
             ],
-          ),
-          ReefSettingsSection(
-            label: l.aboutSection,
-            children: [
+            // Measurement import status/rewind (U32) — only meaningful once
+            // something was imported, hidden until then.
+            if ((ref.watch(importSourcesProvider).value ?? const []).isNotEmpty)
               ReefSettingsRow(
-                icon: Icons.waves,
-                title: l.aquariums,
-                trailing: ReefSettingsValue(value: '${tanks.length}'),
-                onTap: () => context.push('/tanks'),
+                icon: Icons.move_to_inbox_outlined,
+                title: l.measurementImportSettingsTitle,
+                description: l.measurementImportSettingsSubtitle,
+                onTap: () => context.push('/settings/import'),
               ),
-              ReefSettingsRow(
-                icon: Icons.help_outline,
-                title: l.replayTour,
-                description: l.replayTourSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap: () async {
-                  await settings.setTourSeen(false);
-                  if (context.mounted) context.go('/');
-                },
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.aboutSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.waves,
+              title: l.aquariums,
+              trailing: ReefSettingsValue(value: '${tanks.length}'),
+              onTap: () => context.push('/tanks'),
+            ),
+            ReefSettingsRow(
+              icon: Icons.help_outline,
+              title: l.replayTour,
+              description: l.replayTourSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () async {
+                await settings.setTourSeen(false);
+                if (context.mounted) context.go('/');
+              },
+            ),
+            _EditionRow(
+              edition: ref.watch(editionProvider).value ?? AppEdition.standard,
+            ),
+            ReefSettingsRow(
+              icon: Icons.info_outline,
+              title: l.aboutAppName,
+              onTap: () => showAboutDialog(
+                context: context,
+                applicationName: l.appTitle,
+                applicationVersion: appVersion,
+                children: [Text(l.aboutDescription)],
               ),
-              _EditionRow(
-                edition:
-                    ref.watch(editionProvider).value ?? AppEdition.standard,
-              ),
-              ReefSettingsRow(
-                icon: Icons.info_outline,
-                title: l.aboutAppName,
-                onTap: () => showAboutDialog(
-                  context: context,
-                  applicationName: l.appTitle,
-                  applicationVersion: appVersion,
-                  children: [Text(l.aboutDescription)],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

@@ -18,16 +18,19 @@ import '../dashboard/comparison_view.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../dosing/dosing_screen.dart';
 import '../import/measurement_import.dart';
+import '../settings/settings_screen.dart';
 
-/// Home screen hosting the app's two primary peer destinations — Measurements
-/// and Actions — behind a bottom [NavigationBar]. Owns the shared app bar
-/// (tank selector + manage-parameters + settings, visible on both tabs) and a
-/// per-tab FAB. Tab bodies are kept alive via [IndexedStack] so each preserves
-/// its scroll position and state when switching.
+/// Home screen hosting the app's primary peer destinations — Measurements,
+/// Actions, Dosing, and Settings (U33) — behind a bottom [NavigationBar].
+/// Owns the shared app bar (tank selector + contextual actions, shown on the
+/// three content tabs; the Settings tab renders no app bar, only an inline
+/// title) and a per-tab FAB. Tab bodies are kept alive via [IndexedStack] so
+/// each preserves its scroll position and state when switching.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key, this.tab});
 
-  /// Optional tab request from a deep link (`/?tab=actions|dosing`), e.g. a
+  /// Optional tab request from a deep link (`/?tab=actions|dosing|settings`),
+  /// e.g. a
   /// reminder-notification tap. Null (or an unknown value) leaves the current
   /// tab alone.
   final String? tab;
@@ -52,6 +55,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     'measurements' => 0,
     'actions' => 1,
     'dosing' => 2,
+    'settings' => 3,
     _ => null,
   };
 
@@ -221,157 +225,178 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       child: child,
     );
 
+    // The Settings tab lives behind the bottom bar, which is hidden with no
+    // tanks — render Measurements then, so the welcome view keeps the shared
+    // app bar (NoTanksView carries its own settings button, U33).
+    final index = hasTanks ? _index : 0;
+
     return Scaffold(
-      appBar: AppBar(
-        // The tank selector stays on both tabs — the actions log is tank-scoped
-        // too, and the bottom-nav label already names the current screen.
-        title: tourStep(
-          _tankTourKey,
-          l.tourTankTitle,
-          l.tourTankDesc,
-          l.tourNext,
-          const TankSelector(),
-          targetPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        ),
-        actions: [
-          // Toggle the Measurements tab between the card grid and the stacked
-          // comparison graphs.
-          if (hasTanks && _index == 0)
-            tourStep(
-              _compareTourKey,
-              l.tourCompareTitle,
-              l.tourCompareDesc,
-              l.tourNext,
-              ReefIconButton(
-                tooltip: _compare ? l.gridView : l.compareView,
-                icon: _compare ? Icons.grid_view : Icons.stacked_line_chart,
-                onPressed: () => setState(() => _compare = !_compare),
+      // The Settings tab has no app bar — its body renders a plain inline
+      // title instead (U33); every shared app-bar element is contextual to
+      // the content tabs.
+      appBar: index == 3
+          ? null
+          : AppBar(
+              // The tank selector stays on all content tabs — every one of them is
+              // tank-scoped, and the bottom-nav label already names the current
+              // screen.
+              title: tourStep(
+                _tankTourKey,
+                l.tourTankTitle,
+                l.tourTankDesc,
+                l.tourNext,
+                const TankSelector(),
+                targetPadding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
               ),
-            ),
-          // Maintenance schedule (U12), contextual to the Actions tab.
-          if (hasTanks && _index == 1)
-            ReefIconButton(
-              tooltip: l.maintenanceSchedule,
-              icon: Icons.event_repeat,
-              onPressed: () => context.push('/schedule'),
-            ),
-          // Dosing history, contextual to the Dosing tab. First step of phase 2.
-          if (hasTanks && _index == 2)
-            tourStep(
-              _dosingHistoryTourKey,
-              l.tourDosingHistoryTitle,
-              l.tourDosingHistoryDesc,
-              l.tourNext,
-              ReefIconButton(
-                tooltip: l.dosingHistoryTitle,
-                icon: Icons.history,
-                onPressed: () => context.push('/dosing/history'),
-              ),
-            ),
-          // Dose calculator, contextual to the Dosing tab. The tour switches to
-          // this tab to spotlight it as its final step.
-          if (hasTanks && _index == 2)
-            tourStep(
-              _doseCalcTourKey,
-              l.tourDoseCalcTitle,
-              l.tourDoseCalcDesc,
-              l.tourDone,
-              ReefIconButton(
-                tooltip: l.doseCalcTitle,
-                icon: Icons.calculate_outlined,
-                // Pro-gated (U19): founders (and, later, Pro purchasers) open
-                // the calculator; anyone else gets the explanation dialog.
-                onPressed:
-                    ref.watch(proFeatureProvider(ProFeature.doseCalculator))
-                    ? () => context.push('/dosing/calculator')
-                    : () => showProFeatureDialog(
-                        context,
-                        ProFeature.doseCalculator,
-                      ),
-              ),
-            ),
-          tourStep(
-            _paramsTourKey,
-            l.tourParamsTitle,
-            l.tourParamsDesc,
-            l.tourNext,
-            ReefIconButton(
-              tooltip: l.manageParameters,
-              icon: Icons.tune,
-              onPressed: () => context.push('/parameters'),
-            ),
-          ),
-          ReefIconButton(
-            tooltip: l.settings,
-            icon: Icons.settings,
-            onPressed: () => context.push('/settings'),
-          ),
-          // Overflow menu, contextual to the Measurements tab (the bar is at
-          // icon capacity): the "Ask your AI" summary export (U27) and the
-          // measurement import (U32); future share-ish actions join here.
-          if (hasTanks && _index == 0)
-            PopupMenuButton<String>(
-              // Same mini-card look as the ReefIconButtons; the button style
-              // is forwarded to PopupMenuButton's internal icon button.
-              style: reefIconButtonStyle(context),
-              iconSize: 16,
-              onSelected: (v) {
-                if (v == 'ai-summary') unawaited(showAiSummarySheet(context));
-                if (v == 'import-measurements') {
-                  // Pro-gated (U19): founders (and, later, Pro purchasers)
-                  // import; anyone else gets the explanation dialog.
-                  if (ref.read(proFeatureProvider(ProFeature.hannaImport))) {
-                    unawaited(runMeasurementImportFlow(context));
-                  } else {
-                    unawaited(
-                      showProFeatureDialog(context, ProFeature.hannaImport),
-                    );
-                  }
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'ai-summary',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.auto_awesome_outlined, size: 18),
-                      const SizedBox(width: 8),
-                      Text(l.aiSummaryAction),
-                    ],
+              actions: [
+                // Toggle the Measurements tab between the card grid and the stacked
+                // comparison graphs.
+                if (hasTanks && _index == 0)
+                  tourStep(
+                    _compareTourKey,
+                    l.tourCompareTitle,
+                    l.tourCompareDesc,
+                    l.tourNext,
+                    ReefIconButton(
+                      tooltip: _compare ? l.gridView : l.compareView,
+                      icon: _compare
+                          ? Icons.grid_view
+                          : Icons.stacked_line_chart,
+                      onPressed: () => setState(() => _compare = !_compare),
+                    ),
+                  ),
+                // Maintenance schedule (U12), contextual to the Actions tab.
+                if (hasTanks && _index == 1)
+                  ReefIconButton(
+                    tooltip: l.maintenanceSchedule,
+                    icon: Icons.event_repeat,
+                    onPressed: () => context.push('/schedule'),
+                  ),
+                // Dosing history, contextual to the Dosing tab. First step of phase 2.
+                if (hasTanks && _index == 2)
+                  tourStep(
+                    _dosingHistoryTourKey,
+                    l.tourDosingHistoryTitle,
+                    l.tourDosingHistoryDesc,
+                    l.tourNext,
+                    ReefIconButton(
+                      tooltip: l.dosingHistoryTitle,
+                      icon: Icons.history,
+                      onPressed: () => context.push('/dosing/history'),
+                    ),
+                  ),
+                // Dose calculator, contextual to the Dosing tab. The tour switches to
+                // this tab to spotlight it as its final step.
+                if (hasTanks && _index == 2)
+                  tourStep(
+                    _doseCalcTourKey,
+                    l.tourDoseCalcTitle,
+                    l.tourDoseCalcDesc,
+                    l.tourDone,
+                    ReefIconButton(
+                      tooltip: l.doseCalcTitle,
+                      icon: Icons.calculate_outlined,
+                      // Pro-gated (U19): founders (and, later, Pro purchasers) open
+                      // the calculator; anyone else gets the explanation dialog.
+                      onPressed:
+                          ref.watch(
+                            proFeatureProvider(ProFeature.doseCalculator),
+                          )
+                          ? () => context.push('/dosing/calculator')
+                          : () => showProFeatureDialog(
+                              context,
+                              ProFeature.doseCalculator,
+                            ),
+                    ),
+                  ),
+                tourStep(
+                  _paramsTourKey,
+                  l.tourParamsTitle,
+                  l.tourParamsDesc,
+                  l.tourNext,
+                  ReefIconButton(
+                    tooltip: l.manageParameters,
+                    icon: Icons.tune,
+                    onPressed: () => context.push('/parameters'),
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'import-measurements',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.move_to_inbox_outlined, size: 18),
-                      const SizedBox(width: 8),
-                      // Flexible: the longer translations (de/ru) must
-                      // ellipsize in the fixed-width menu, not overflow.
-                      Flexible(
-                        child: Text(
-                          l.measurementImportTitle,
-                          overflow: TextOverflow.ellipsis,
+                // Overflow menu, contextual to the Measurements tab (the bar is at
+                // icon capacity): the "Ask your AI" summary export (U27) and the
+                // measurement import (U32); future share-ish actions join here.
+                if (hasTanks && _index == 0)
+                  PopupMenuButton<String>(
+                    // Same mini-card look as the ReefIconButtons; the button style
+                    // is forwarded to PopupMenuButton's internal icon button.
+                    style: reefIconButtonStyle(context),
+                    iconSize: 16,
+                    onSelected: (v) {
+                      if (v == 'ai-summary') {
+                        unawaited(showAiSummarySheet(context));
+                      }
+                      if (v == 'import-measurements') {
+                        // Pro-gated (U19): founders (and, later, Pro purchasers)
+                        // import; anyone else gets the explanation dialog.
+                        if (ref.read(
+                          proFeatureProvider(ProFeature.hannaImport),
+                        )) {
+                          unawaited(runMeasurementImportFlow(context));
+                        } else {
+                          unawaited(
+                            showProFeatureDialog(
+                              context,
+                              ProFeature.hannaImport,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'ai-summary',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.auto_awesome_outlined, size: 18),
+                            const SizedBox(width: 8),
+                            Text(l.aiSummaryAction),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'import-measurements',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.move_to_inbox_outlined, size: 18),
+                            const SizedBox(width: 8),
+                            // Flexible: the longer translations (de/ru) must
+                            // ellipsize in the fixed-width menu, not overflow.
+                            Flexible(
+                              child: Text(
+                                l.measurementImportTitle,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
               ],
             ),
-        ],
-      ),
       body: tanksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tanks) {
           if (tanks.isEmpty) return const NoTanksView();
           return IndexedStack(
-            index: _index,
+            index: index,
             children: [
               _compare ? const ComparisonBody() : const DashboardBody(),
               const ActionsBody(),
               const DosingBody(),
+              const _SettingsTab(),
             ],
           );
         },
@@ -405,7 +430,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               ),
             )
           : null,
-      floatingActionButton: hasTanks ? _buildFab(context, l) : null,
+      // No FAB on the Settings tab — there is nothing to add there.
+      floatingActionButton: hasTanks && index != 3
+          ? _buildFab(context, l)
+          : null,
     );
   }
 
@@ -434,6 +462,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           selectedIcon: const Icon(Icons.science_outlined),
           label: l.dosing,
         ),
+        NavigationDestination(
+          icon: const Icon(Icons.settings_outlined),
+          selectedIcon: const Icon(Icons.settings),
+          label: l.settings,
+        ),
       ],
     );
   }
@@ -457,6 +490,37 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       onPressed: () => context.push('/dosing/edit'),
       icon: const Icon(Icons.add),
       label: Text(l.addSupplement),
+    );
+  }
+}
+
+/// The Settings tab body (U33): no app bar, only an inline title above the
+/// shared [SettingsBody]. The [SafeArea] eats the status-bar inset the other
+/// tabs get from the shared app bar; `bottom: false` keeps the translucent
+/// tab bar's height in the ambient `MediaQuery` padding so the settings list
+/// scrolls behind the frosted bar like every other tab.
+class _SettingsTab extends StatelessWidget {
+  const _SettingsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            // Mirrors the app-bar title position/style on the content tabs.
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+            child: Text(
+              l.settings,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+          const Expanded(child: SettingsBody()),
+        ],
+      ),
     );
   }
 }

@@ -223,6 +223,53 @@ void main() {
     await unmountApp(tester);
   });
 
+  testWidgets('U33: the Settings tab opens from the bottom bar and the '
+      '?tab=settings deep link, with no app bar and no FAB', (tester) async {
+    final db = await pumpRouterApp(tester);
+    await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+    await settle(tester);
+
+    // Fourth destination present; tapping it shows the settings body inline
+    // (no route push — HomeShell stays mounted).
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await settle(tester);
+    expect(find.byType(HomeShell), findsOneWidget);
+    expect(find.byType(SettingsBody), findsOneWidget);
+    expect(find.byType(SettingsScreen), findsNothing);
+    // No app bar and no FAB on the Settings tab — only the inline title.
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(FloatingActionButton), findsNothing);
+
+    // Switching back restores the shared app bar and the per-tab FAB.
+    await tester.tap(find.byIcon(Icons.speed_outlined));
+    await settle(tester);
+    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+
+    // The notification-URL form selects the tab too.
+    appRouter.go('/?tab=settings');
+    await settle(tester);
+    expect(find.byType(SettingsBody), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    await unmountApp(tester);
+  });
+
+  testWidgets('U33: with no tanks the welcome screen links the standalone '
+      'settings route', (tester) async {
+    await pumpRouterApp(tester);
+
+    // No tanks: no bottom bar, so no Settings tab — the welcome view offers
+    // its own button that pushes `/settings` (backup restore must stay
+    // reachable on a fresh install).
+    expect(find.byType(NavigationBar), findsNothing);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await settle(tester);
+    expect(find.byType(SettingsScreen), findsOneWidget);
+    // The pushed route keeps a back affordance.
+    expect(find.byType(BackButton), findsOneWidget);
+    await unmountApp(tester);
+  });
+
   testWidgets('every route builds its screen (T13)', (tester) async {
     final db = await pumpRouterApp(tester);
     await db.createTankWithPreset(name: 'A', type: SetupType.mixed);

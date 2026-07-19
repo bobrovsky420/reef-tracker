@@ -1116,7 +1116,7 @@ Body text stays the platform default (SF/Roboto).
 
 | Route | Screen |
 |-------|--------|
-| `/` | Home shell — bottom-nav host for the Measurements (Dashboard), Actions, and Dosing tabs |
+| `/` | Home shell — bottom-nav host for the Measurements (Dashboard), Actions, Dosing, and Settings tabs (U33) |
 | `/tanks`, `/tanks/new`, `/tanks/:id/edit` | Manage / create / edit tanks |
 | `/parameters`, `/parameters/:id/edit` | Manage tracked parameters & zone bounds |
 | `/add-reading` | Log a batch of readings |
@@ -1127,7 +1127,7 @@ Body text stays the platform default (SF/Roboto).
 | `/dosing/calculator` | Dose calculator (`?element=<key>` preselects a dosable element, `?mode=correction` starts in correction mode; unknown element keys are dropped, T8) |
 | `/dosing/history` | Timeline of all dose segments (active + ended) merged with logged manual doses; permanent-delete, FAB to log a manual dose |
 | `/dosing/manual` | Add/edit a logged one-off manual dose (`extra`: `ManualDose?`) |
-| `/settings` | Units, language, reminders, backup/restore, automatic backup |
+| `/settings` | Standalone pushed Settings (same body as the Settings tab) — used only from the no-tanks welcome screen (U33) |
 | `/settings/backups` | Manage automatic backups (list / restore / share / delete) |
 | `/settings/reminders` | Reminder master switches + delivery time + permission warning |
 | `/schedule` | Maintenance schedule (U12): the user-maintained plan list |
@@ -1141,9 +1141,10 @@ Body text stays the platform default (SF/Roboto).
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
-home shell (see Features). `/` accepts a `?tab=measurements|actions|dosing`
-query selecting a bottom-nav tab — the only URL form a notification tap can
-carry; `HomeShell` applies it in `initState`/`didUpdateWidget`.
+home shell (see Features). `/` accepts a
+`?tab=measurements|actions|dosing|settings` query selecting a bottom-nav tab —
+the only URL form a notification tap can carry; `HomeShell` applies it in
+`initState`/`didUpdateWidget`.
 
 The two `:id` edit routes treat `state.extra` (the object passed by in-app
 `context.push`) as a fast path only: when it is absent — deep link, state
@@ -1160,17 +1161,23 @@ home instead of silently opening the PO₄/NO₃ ratio (T8).
 
 ### Home shell (`home/home_shell.dart`) — `/`
 
-`HomeShell` is the app's root scaffold. It hosts the three primary peer
-destinations — **Measurements** (the dashboard), **Actions**, and **Dosing** —
-behind a bottom `NavigationBar`, swapping only the body via an `IndexedStack` so
-each tab keeps its scroll/state. The **app bar is shared** across all tabs: the
-`TankSelector` (every tab is tank-scoped, and the bottom-nav label already names
-the current screen) plus the manage-parameters and settings buttons, so the
-active tank and settings are always reachable. The **FAB is per-tab**: "Add
-reading" on Measurements, "Add action" (`showAddActionSheet`) on Actions, and
-"Add supplement" (pushes `/dosing/edit`) on Dosing. With no tanks, the bottom bar
-and FAB are hidden and `NoTanksView` is shown. The tab screens expose their
-bodies (`DashboardBody`, `ActionsBody`, `DosingBody`) and the shell composes them.
+`HomeShell` is the app's root scaffold. It hosts four peer destinations —
+**Measurements** (the dashboard), **Actions**, **Dosing**, and **Settings**
+(U33) — behind a bottom `NavigationBar`, swapping only the body via an
+`IndexedStack` so each tab keeps its scroll/state. The **app bar is shared**
+across the three content tabs: the `TankSelector` (each of them is
+tank-scoped, and the bottom-nav label already names the current screen) plus
+the manage-parameters button and per-tab contextual actions. The **Settings
+tab renders no app bar** — just an inline `titleLarge` "Settings" heading
+(`_SettingsTab`, a `SafeArea` over the shared `SettingsBody`; see Settings).
+The **FAB is per-tab**: "Add reading" on Measurements, "Add action"
+(`showAddActionSheet`) on Actions, "Add supplement" (pushes `/dosing/edit`)
+on Dosing, and none on Settings. With no tanks, the bottom bar and FAB are
+hidden and `NoTanksView` is shown — it carries its own settings button
+pushing the standalone `/settings` route, so backup restore stays reachable
+on a fresh install (the shell renders the Measurements chrome then, whatever
+tab was last selected). The tab screens expose their bodies (`DashboardBody`,
+`ActionsBody`, `DosingBody`, `SettingsBody`) and the shell composes them.
 
 **First-run feature tour:** `HomeShell` registers a `showcaseview` `ShowcaseView`
 (in `initState`, unregistered in `dispose`) and spotlights the less-obvious
@@ -2192,7 +2199,12 @@ the cap.
 
 ### Settings (`settings_screen.dart`)
 
-The screen is a stack of labeled groups rendered by the dialect-aware
+Settings surfaces in two shells (U33): with tanks present it is the home
+shell's **fourth bottom-nav tab** (no app bar, inline title — see Home
+shell); the standalone pushed `/settings` route (`SettingsScreen`, a plain
+`Scaffold` + `AppBar` around the same `SettingsBody`) remains only for the
+no-tanks welcome screen, which needs a back-affordance path to backup
+restore. The screen is a stack of labeled groups rendered by the dialect-aware
 `widgets/reef_settings.dart` building blocks (REDESIGN #14/#15):
 `ReefSettingsList` (composes the sections; M3 inserts hairline dividers
 between them) → `ReefSettingsSection` (optional uppercase label — faint and
