@@ -130,7 +130,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 22**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 23**
 
 | Table | Key columns |
 |-------|-------------|
@@ -148,6 +148,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `MaintenanceSchedules` | id, tankId (FK cascade), actionType? (`MaintenanceActionType.name`, null = custom task), title? (required iff custom), cadenceDays? + cadenceUnit? (`MaintenanceCadenceUnit.name` days/weeks/months, null = days — repeat every N units; all repeat fields null = one-off), weekdays? (comma list 1=Mon…7=Sun — fixed-weekday repeat, same format as `DosingEntries.weekdays`), monthDay? (1–31, clamped to short months — fixed-date repeat), scheduledAt? (planned first due; floors the computed due while it lies after the last completion), lastDoneAt? (completion stamp for **custom** rows — typed rows derive last-done from their action log), remindEnabled, note?, displayOrder — the user-maintained maintenance plan list (U12); due math in `domain/reminders.dart` (`nextMaintenanceDue`, field priority weekdays > monthDay > cadence) |
 | `RoStages` | id, stageType (`RoStageType.name`; `custom` rows carry [title]), title?, lifespanDays (replace every N days), enabled (the "uncheck if a lower model is used" flag — hidden + silent but history kept), remindEnabled, note?, displayOrder — the shared RO unit's stages (U16). **No tankId by design**: like `Settings`, the RO unit is a property of the household, shared by every aquarium. Default 4-stage set seeded on first RO-screen visit (`seedDefaultRoStages`, guarded by the `ro_stages_seeded` settings flag — not the row count, so deleting every stage sticks) |
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
+| `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -319,7 +320,7 @@ non-int version = corrupted, and a genuinely newer document) and is
 **forward-tolerant** (older backups without the
 `waterChanges` / `carbonChanges` / `equipmentCleanings` / `ratioVisibilities` /
 `dosingEntries` / `readingTemplates` / `maintenanceSchedules` / `roStages` /
-`roStageReplacements` keys decode to
+`roStageReplacements` / `importSources` keys decode to
 empty lists, pre-v16 rows without `testCadenceDays`/`remindEnabled` decode
 to null/off, and pre-v17 maintenance rows without
 `cadenceUnit`/`weekdays`/`monthDay` decode to null = plain every-N-days).
@@ -1135,6 +1136,8 @@ Body text stays the platform default (SF/Roboto).
 | `/micro/add` | Batch entry of microelement measurements (Hobby kit / Full ICP) |
 | `/micro/configure` | Element settings: all catalog elements, each row opens the zone-bounds editor |
 | `/micro/import` | ICP report CSV import preview (`extra` = `IcpImportResult`; redirects to `/micro` without one) |
+| `/import/hanna` | Hanna Lab measurement import preview (U32; `extra` = `HannaImportResult`; redirects to `/` without one) |
+| `/settings/import` | Measurement-import status per tank: watermark rewind (*Change date…*) / *Reset* |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
@@ -1843,6 +1846,73 @@ Parameters list/add-sheet and the health-score inputs to core).
   (`micro_hide_undetectable` / `micro_attention_only`, both default off);
   a placeholder line appears when the filters hide every element.
 
+### Measurement import — Hanna Lab (U32, Pro) — `features/import/`, routes `/import/hanna` + `/settings/import`
+
+Imports the cumulative CSV history the **Hanna Lab** phone app shares per
+Hanna tank (HI97115 Marine Master and friends) as ordinary **macro** reading
+groups — KH/Ca/Mg/NO₃/PO₄/pH/NH₃ into `Readings`, not the micro/ICP area.
+Idempotent by design: users re-export the same ever-growing file and
+re-import; only what's new is added.
+
+- **Parser** (`domain/hanna_import.dart`, pure — no Flutter/DB, tokenized by
+  `icp_import.dart`'s now-public `parseDelimitedCsv`): metadata preamble
+  (`Meter`, `Sample Location` = the Hanna-app tank name) + one
+  `Reading,Unit,Method,Date,Status,Note` row per measurement. Mapping is on
+  the **`Method` keyword** (`Phosphate Marine ULR` → phosphate; phosphate
+  checked before pH), never on `Unit` — the unit strings carry Unicode
+  sub/superscripts whose encoding varies; the unit is only sanity-checked
+  (ppm/dKH/pH prefix; a checker configured to e.g. ppm CaCO₃ alkalinity is
+  skipped, never converted — the ZIMS no-guessing policy). Dates are
+  `dd/MM/yyyy HH:mm:ss` wall-clock (a month-first export self-disambiguates
+  via day > 12); values are already canonical. Exact in-file duplicates (the
+  app repeats log rows 3–7×) collapse on (paramKey, timestamp); meter-flagged
+  rows (`<200` + `Status`), unknown methods and unparsable values become
+  typed `HannaSkippedRow`s — surfaced on the preview, never silently dropped.
+  File order is not a contract; rows sort chronologically.
+- **Dedupe = per-(tank, source) watermark** (`ImportSources.importedUpTo`,
+  decided 2026-07-19 over per-row identity keys): an import takes rows
+  **strictly newer**; the target users measure only through the Hanna Lab
+  app, so the export is append-only (the meter-log late-sync loss scenario is
+  explicitly accepted). **First import asks a start-date question** (a date
+  row on the preview, default "Everything") — the answer to years of
+  pre-integration hand-typed history; older rows are ignored for good and the
+  watermark still advances over the whole file. After a settings
+  rewind/reset, the one-shot `rewound` flag makes the next import **diff**
+  candidates against existing readings (`planHannaImport` +
+  `hannaReadingKey`) so the re-covered range can't duplicate. All the
+  planning math is pure and unit-tested.
+- **Flow:** overflow-menu entry on the Measurements tab (`HomeShell`, next to
+  the U27 AI summary; Pro-gated via the standard U19 pattern) →
+  source-picker sheet (`measurement_import.dart` — explicit format choice,
+  never sniffed; Hanna Lab is the only source today, future apps/meters join
+  the sheet) → file picker (reuses `pickIcpCsvContent`) → **preview screen**
+  (`hanna_import_screen.dart`): meter + location header; tank selector
+  preselected from the remembered `Sample Location` → tank mapping (picking a
+  differently-mapped tank gets a wrong-file confirmation); "N new readings"
+  as lazily-built **session cards** (readings ≤ 90 min apart cluster via
+  `hannaSessions`); already-imported / before-cutoff counts; aggregated
+  skipped list ("Calcium Marine — outside the test range ×3"); the #31
+  plausibility gate at bulk scale (impossible → skipped, implausible →
+  inline warning badge + ONE batch confirm). Confirm inserts one reading
+  group per session (`insertImportedReadings` — per-row file timestamps,
+  unlike `insertReadingGroup`'s single batch stamp), advances the watermark
+  and saves the mapping; a **result sheet** (not an auto-dismissing SnackBar)
+  offers Undo, which deletes exactly the created groups and restores the
+  prior watermark row. An unchanged file short-circuits to "You're up to
+  date".
+- **Settings surface** (`import_sources_screen.dart`, row in Settings → data
+  section, hidden until something was imported; `importSourcesProvider`):
+  per tank+source the location + "Imported up to …", with **Change date…**
+  (picker capped at the current watermark — moving it *forward* would
+  silently swallow readings, so it can't) and **Reset** (clears the
+  watermark → the cutoff question is asked again; the mapping is kept).
+  Both set `rewound`.
+- **Tier:** `hannaImport`, `grandfathered: true` (explicit 2026-07-19
+  decision, same reasoning as driveSync/stabilityScore/smartInsights).
+- **Deferred:** share-target registration (Android `ACTION_SEND`/`VIEW` +
+  iOS document types) so Hanna Lab's share sheet lists ReefTracker directly;
+  more source formats.
+
 ### Dosing (`features/dosing/`) — Dosing tab
 
 An information-only, per-tank **supplement-dosing plan** (a standing regimen, not
@@ -2157,9 +2227,11 @@ switch (U17 — hides the dashboard tile and silences micro test reminders;
 measurements are kept); **Tools** (link to the salinity calculator);
 **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency, a link to the **Manage backups**
-screen (see Data → Automatic backup), and the **Google Drive sync** row +
+screen (see Data → Automatic backup), the **Google Drive sync** row +
 persistent upload-error row (U24 — see Data → Google Drive backup sync;
-connect is Pro-gated via `ProFeature.driveSync`). An
+connect is Pro-gated via `ProFeature.driveSync`), and the **Measurement
+import** row (U32 — pushes `/settings/import`; hidden until a tank has
+imported, i.e. `importSourcesProvider` is non-empty). An
 **Edition** row (see Editions above) sits in the About section. The About box shows the live app version via
 `appVersionProvider` (`package_info_plus`), never a hardcoded string.
 

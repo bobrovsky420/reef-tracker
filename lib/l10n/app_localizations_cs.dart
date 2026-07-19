@@ -1812,6 +1812,133 @@ class AppLocalizationsCs extends AppLocalizations {
   String get unitFixedNote => 'Tento parametr vždy používá tuto jednotku.';
 
   @override
+  String get measurementImportTitle => 'Import měření';
+
+  @override
+  String get measurementImportSourceHint =>
+      'Zvolte aplikaci nebo přístroj, ze kterého soubor pochází.';
+
+  @override
+  String get measurementImportHannaHint =>
+      'CSV historie sdílená z aplikace Hanna Lab';
+
+  @override
+  String get hannaImportTitle => 'Import z Hanna Lab';
+
+  @override
+  String get hannaImportIntoTank => 'Importovat do akvária';
+
+  @override
+  String get hannaImportFirstFrom => 'Importovat historii od';
+
+  @override
+  String get hannaImportEverything => 'Vše';
+
+  @override
+  String get hannaImportFirstFromHint =>
+      'První import do tohoto akvária: zvolte, odkud historii importovat. Starší měření budou trvale ignorována — hodí se, pokud jste je už zapsali ručně.';
+
+  @override
+  String hannaImportNewCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count nových měření',
+      few: '$count nová měření',
+      one: '1 nové měření',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hannaImportAlreadyCount(int count) {
+    return 'Už importováno: $count';
+  }
+
+  @override
+  String hannaImportBeforeCutoffCount(int count) {
+    return 'Před počátečním datem: $count';
+  }
+
+  @override
+  String get hannaImportSkippedTitle => 'Neimportováno';
+
+  @override
+  String get hannaImportSkipRange => 'mimo rozsah testu';
+
+  @override
+  String get hannaImportSkipUnknown => 'test, který aplikace nesleduje';
+
+  @override
+  String get hannaImportSkipValue => 'nečitelná hodnota';
+
+  @override
+  String get hannaImportUpToDate => 'Vše v tomto souboru už je importováno.';
+
+  @override
+  String hannaImportButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Importovat $count měření',
+      few: 'Importovat $count měření',
+      one: 'Importovat 1 měření',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hannaImportDoneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Importováno $count měření',
+      few: 'Importována $count měření',
+      one: 'Importováno 1 měření',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaImportUndone => 'Import vrácen zpět.';
+
+  @override
+  String get hannaImportWrongTankTitle => 'Jiné akvárium?';
+
+  @override
+  String hannaImportWrongTankBody(String location, String tank, String other) {
+    return '„$location“ bylo naposledy importováno do akvária $tank. Importovat místo toho do akvária $other?';
+  }
+
+  @override
+  String get measurementImportSettingsTitle => 'Import měření';
+
+  @override
+  String get measurementImportSettingsSubtitle =>
+      'Stav importu z Hanna Lab podle akvária';
+
+  @override
+  String hannaImportImportedUpTo(String date) {
+    return 'Importováno do $date';
+  }
+
+  @override
+  String get hannaImportNeverImported => 'Zatím neimportováno';
+
+  @override
+  String get hannaImportChangeDate => 'Změnit datum…';
+
+  @override
+  String get hannaImportReset => 'Resetovat';
+
+  @override
+  String get hannaImportResetTitle => 'Resetovat import z Hanna Lab?';
+
+  @override
+  String get hannaImportResetBody =>
+      'Příští import se znovu zeptá, od kterého data začít. Už importovaná měření zůstávají; přiřazení akvária se pamatuje.';
+
+  @override
   String get helpTemperature =>
       'Teplota vody. Stabilita je důležitější než přesná hodnota.';
 

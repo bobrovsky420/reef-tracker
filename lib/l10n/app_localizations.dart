@@ -3131,6 +3131,180 @@ abstract class AppLocalizations {
   /// **'This parameter always uses this unit.'**
   String get unitFixedNote;
 
+  /// Overflow-menu action on the Measurements tab and title of the source-picker sheet (U32).
+  ///
+  /// In en, this message translates to:
+  /// **'Import measurements'**
+  String get measurementImportTitle;
+
+  /// No description provided for @measurementImportSourceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the app or meter the file comes from.'**
+  String get measurementImportSourceHint;
+
+  /// Subtitle of the Hanna Lab entry in the source picker. 'Hanna Lab' is a product name, not localized.
+  ///
+  /// In en, this message translates to:
+  /// **'CSV history shared from the Hanna Lab app'**
+  String get measurementImportHannaHint;
+
+  /// Preview screen title and the Pro feature's display name.
+  ///
+  /// In en, this message translates to:
+  /// **'Hanna Lab import'**
+  String get hannaImportTitle;
+
+  /// No description provided for @hannaImportIntoTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Import into tank'**
+  String get hannaImportIntoTank;
+
+  /// Label of the first-import start-date row; its value is a date or hannaImportEverything.
+  ///
+  /// In en, this message translates to:
+  /// **'Import history from'**
+  String get hannaImportFirstFrom;
+
+  /// No description provided for @hannaImportEverything.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get hannaImportEverything;
+
+  /// No description provided for @hannaImportFirstFromHint.
+  ///
+  /// In en, this message translates to:
+  /// **'First import into this tank: choose how far back to import. Older readings are ignored for good — useful when you already typed them in by hand.'**
+  String get hannaImportFirstFromHint;
+
+  /// Section header over the to-be-imported sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 new reading} other{{count} new readings}}'**
+  String hannaImportNewCount(int count);
+
+  /// No description provided for @hannaImportAlreadyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already imported: {count}'**
+  String hannaImportAlreadyCount(int count);
+
+  /// No description provided for @hannaImportBeforeCutoffCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Before the start date: {count}'**
+  String hannaImportBeforeCutoffCount(int count);
+
+  /// No description provided for @hannaImportSkippedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not imported'**
+  String get hannaImportSkippedTitle;
+
+  /// Skip reason: the meter flagged the reading under/over range.
+  ///
+  /// In en, this message translates to:
+  /// **'outside the test range'**
+  String get hannaImportSkipRange;
+
+  /// No description provided for @hannaImportSkipUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'test not tracked by the app'**
+  String get hannaImportSkipUnknown;
+
+  /// No description provided for @hannaImportSkipValue.
+  ///
+  /// In en, this message translates to:
+  /// **'unreadable value'**
+  String get hannaImportSkipValue;
+
+  /// No description provided for @hannaImportUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in this file is already imported.'**
+  String get hannaImportUpToDate;
+
+  /// Confirm button of the import preview.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Import 1 reading} other{Import {count} readings}}'**
+  String hannaImportButton(int count);
+
+  /// Headline of the result sheet after a successful import.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Imported 1 reading} other{Imported {count} readings}}'**
+  String hannaImportDoneCount(int count);
+
+  /// No description provided for @hannaImportUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Import undone.'**
+  String get hannaImportUndone;
+
+  /// No description provided for @hannaImportWrongTankTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Different tank?'**
+  String get hannaImportWrongTankTitle;
+
+  /// Wrong-file guard: the file's sample location was previously mapped to another tank.
+  ///
+  /// In en, this message translates to:
+  /// **'“{location}” was last imported into {tank}. Import into {other} instead?'**
+  String hannaImportWrongTankBody(String location, String tank, String other);
+
+  /// No description provided for @measurementImportSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement import'**
+  String get measurementImportSettingsTitle;
+
+  /// No description provided for @measurementImportSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hanna Lab import status per tank'**
+  String get measurementImportSettingsSubtitle;
+
+  /// Watermark line in the import settings; {date} is a formatted date-time.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported up to {date}'**
+  String hannaImportImportedUpTo(String date);
+
+  /// No description provided for @hannaImportNeverImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Not imported yet'**
+  String get hannaImportNeverImported;
+
+  /// No description provided for @hannaImportChangeDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Change date…'**
+  String get hannaImportChangeDate;
+
+  /// No description provided for @hannaImportReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get hannaImportReset;
+
+  /// No description provided for @hannaImportResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Hanna Lab import?'**
+  String get hannaImportResetTitle;
+
+  /// No description provided for @hannaImportResetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The next import will ask again from which date to start. Already-imported readings stay; the tank assignment is remembered.'**
+  String get hannaImportResetBody;
+
   /// No description provided for @helpTemperature.
   ///
   /// In en, this message translates to:

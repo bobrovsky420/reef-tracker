@@ -45,6 +45,7 @@ void main() {
         ProFeature.stabilityScore,
         ProFeature.driveSync,
         ProFeature.smartInsights,
+        ProFeature.hannaImport,
       });
     });
   });

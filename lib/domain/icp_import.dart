@@ -412,7 +412,11 @@ double? _parseCsvNumber(String raw) {
 
 /// Minimal RFC-4180-style CSV parser with a configurable [delimiter]:
 /// double-quoted fields (with `""` escapes), CR/LF/CRLF row breaks, UTF-8 BOM
-/// stripped. Blank lines are dropped.
+/// stripped. Blank lines are dropped. Public because the Hanna Lab import
+/// (`hanna_import.dart`, U32) tokenizes its files with the same rules.
+List<List<String>> parseDelimitedCsv(String text, String delimiter) =>
+    _parseCsv(text, delimiter);
+
 List<List<String>> _parseCsv(String text, String delimiter) {
   final t = text.startsWith('﻿') ? text.substring(1) : text;
   final rows = <List<String>>[];

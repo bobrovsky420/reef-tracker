@@ -1520,6 +1520,16 @@ void main() {
         replacedAt: DateTime(2026, 1, 5),
         note: 'fresh resin',
       );
+      // Measurement-import watermark (U32) — must ride the backup so a
+      // restore keeps it consistent with the restored readings.
+      await db.upsertImportSource(
+        ImportSourcesCompanion.insert(
+          tankId: id,
+          source: 'hannaLab',
+          location: const Value('200G2'),
+          importedUpTo: Value(DateTime(2026, 1, 1, 8)),
+        ),
+      );
       return id;
     }
 
@@ -1579,6 +1589,13 @@ void main() {
           (await dst.getAllRoStageReplacements()).single;
       expect(restoredReplacement.stageId, restoredStage.id);
       expect(restoredReplacement.note, 'fresh resin');
+      // The measurement-import watermark (U32) rides along.
+      final restoredSource = (await dst.getAllImportSources()).single;
+      expect(restoredSource.tankId, id);
+      expect(restoredSource.source, 'hannaLab');
+      expect(restoredSource.location, '200G2');
+      expect(restoredSource.importedUpTo, DateTime(2026, 1, 1, 8));
+      expect(restoredSource.rewound, isFalse);
       // temp_unit is a device-local preference: the backup's value must NOT be
       // imported (#18). dst had none, so it stays unset after restore.
       expect(await dst.getSetting('temp_unit'), isNull);

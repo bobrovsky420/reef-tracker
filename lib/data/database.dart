@@ -455,6 +455,39 @@ class RoStageReplacements extends Table {
   TextColumn get note => text().nullable()();
 }
 
+/// Per-(tank, source) state of the measurement import (U32): the remembered
+/// external location → tank mapping and the dedupe watermark. Rides backups —
+/// a restored database must keep the watermark consistent with the restored
+/// readings, or the next import would duplicate them (unlike the U24
+/// sync-state settings, which are identity and stay device-local).
+@DataClassName('ImportSource')
+class ImportSources extends Table {
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+
+  /// Import format id (e.g. `kHannaImportSource`). Persisted — never rename.
+  TextColumn get source => text()();
+
+  /// The external location/tank label the file carries (Hanna's
+  /// `Sample Location`), remembered so the next import preselects this tank
+  /// and a different pick gets a wrong-file confirmation.
+  TextColumn get location => text().nullable()();
+
+  /// Dedupe watermark: the newest imported reading timestamp; an import takes
+  /// strictly newer rows. Null = ask the first-import cutoff question again
+  /// (fresh mapping, or after a settings Reset).
+  DateTimeColumn get importedUpTo => dateTime().nullable()();
+
+  /// One-shot flag set by the settings rewind/reset actions: the next import
+  /// must not trust the watermark alone (it would duplicate the re-covered
+  /// range) — it diffs candidates against existing readings first, then
+  /// clears this.
+  BoolColumn get rewound => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {tankId, source};
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -480,6 +513,7 @@ class Settings extends Table {
     MaintenanceSchedules,
     RoStages,
     RoStageReplacements,
+    ImportSources,
     Settings,
   ],
 )
@@ -487,7 +521,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -722,6 +756,12 @@ class AppDatabase extends _$AppDatabase {
               updates: {trackedParameters},
             );
           }
+        }
+      }
+      if (from < 23) {
+        // Measurement import watermark + location mapping (U32).
+        if (!await _tableExists('import_sources')) {
+          await m.createTable(importSources);
         }
       }
     },
@@ -1159,6 +1199,61 @@ class AppDatabase extends _$AppDatabase {
       (update(readings)..where((tbl) => _sameGroupAs(tbl, r))).write(
         ReadingsCompanion(takenAt: Value(to)),
       );
+
+  // --- Measurement import (U32) --------------------------------------------
+
+  /// Batch-inserts externally imported readings. Unlike [insertReadingGroup]
+  /// (one shared timestamp per batch), every row keeps its own file timestamp
+  /// — the watermark and rewind-diff key on them — while sharing its session's
+  /// [groupId] so a session edits/deletes like a manually entered batch.
+  Future<void> insertImportedReadings(
+    int tankId,
+    List<({String paramKey, double value, DateTime takenAt, String groupId})>
+    rows,
+  ) => batch(
+    (b) => b.insertAll(readings, [
+      for (final r in rows)
+        ReadingsCompanion.insert(
+          tankId: tankId,
+          paramKey: r.paramKey,
+          value: r.value,
+          takenAt: r.takenAt,
+          groupId: Value(r.groupId),
+        ),
+    ]),
+  );
+
+  /// Deletes the reading groups created by one import (the result sheet's
+  /// Undo). Returns the rows removed.
+  Future<int> deleteReadingsByGroupIds(int tankId, List<String> groupIds) =>
+      (delete(readings)..where(
+            (r) => r.tankId.equals(tankId) & r.groupId.isIn(groupIds),
+          ))
+          .go();
+
+  /// All import-source rows (few — one per tank+source that ever imported).
+  Stream<List<ImportSource>> watchImportSources() =>
+      select(importSources).watch();
+
+  Future<List<ImportSource>> getAllImportSources() =>
+      select(importSources).get();
+
+  Future<ImportSource?> getImportSource(int tankId, String source) =>
+      (select(importSources)..where(
+            (s) => s.tankId.equals(tankId) & s.source.equals(source),
+          ))
+          .getSingleOrNull();
+
+  /// Inserts or replaces the (tank, source) row — single statement on the
+  /// composite PK, same idiom as the ratio-visibility upserts (#10).
+  Future<void> upsertImportSource(ImportSourcesCompanion row) =>
+      into(importSources).insertOnConflictUpdate(row);
+
+  Future<void> deleteImportSource(int tankId, String source) =>
+      (delete(importSources)..where(
+            (s) => s.tankId.equals(tankId) & s.source.equals(source),
+          ))
+          .go();
 
   // --- Water changes -------------------------------------------------------
 
@@ -2106,6 +2201,7 @@ class AppDatabase extends _$AppDatabase {
     List<RoStageReplacementsCompanion> roStageReplacementRows = const [],
     List<MicroViewsCompanion> microViewRows = const [],
     List<ManualDosesCompanion> manualDoseRows = const [],
+    List<ImportSourcesCompanion> importSourceRows = const [],
     required List<SettingsCompanion> settingRows,
     Set<String> preserveSettingKeys = const {},
     Set<String> stickySettingKeys = const {},
@@ -2138,6 +2234,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(maintenanceSchedules).go();
       await delete(roStageReplacements).go();
       await delete(roStages).go();
+      await delete(importSources).go();
       await delete(trackedParameters).go();
       // Preserve device-local preferences: wipe only the settings the restore
       // is allowed to replace.
@@ -2165,6 +2262,7 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(maintenanceSchedules, maintenanceScheduleRows);
         b.insertAll(roStages, roStageRows);
         b.insertAll(roStageReplacements, roStageReplacementRows);
+        b.insertAll(importSources, importSourceRows);
         b.insertAll(settings, incomingSettings);
       });
       // Sticky keys: the pre-restore local value overrides the backup's.

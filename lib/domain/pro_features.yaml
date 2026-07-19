@@ -32,3 +32,8 @@ features:
     grandfathered: true
   - key: smartInsights
     grandfathered: true
+  # U32 Hanna Lab measurement import — grandfathered by explicit 2026-07-19
+  # decision (same reasoning as driveSync/stabilityScore/smartInsights:
+  # usable immediately, Founder installs keep it free forever).
+  - key: hannaImport
+    grandfathered: true

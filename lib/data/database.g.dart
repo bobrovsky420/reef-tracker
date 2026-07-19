@@ -7553,6 +7553,396 @@ class RoStageReplacementsCompanion extends UpdateCompanion<RoStageReplacement> {
   }
 }
 
+class $ImportSourcesTable extends ImportSources
+    with TableInfo<$ImportSourcesTable, ImportSource> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ImportSourcesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _locationMeta = const VerificationMeta(
+    'location',
+  );
+  @override
+  late final GeneratedColumn<String> location = GeneratedColumn<String>(
+    'location',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _importedUpToMeta = const VerificationMeta(
+    'importedUpTo',
+  );
+  @override
+  late final GeneratedColumn<DateTime> importedUpTo = GeneratedColumn<DateTime>(
+    'imported_up_to',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _rewoundMeta = const VerificationMeta(
+    'rewound',
+  );
+  @override
+  late final GeneratedColumn<bool> rewound = GeneratedColumn<bool>(
+    'rewound',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("rewound" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    tankId,
+    source,
+    location,
+    importedUpTo,
+    rewound,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'import_sources';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ImportSource> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('location')) {
+      context.handle(
+        _locationMeta,
+        location.isAcceptableOrUnknown(data['location']!, _locationMeta),
+      );
+    }
+    if (data.containsKey('imported_up_to')) {
+      context.handle(
+        _importedUpToMeta,
+        importedUpTo.isAcceptableOrUnknown(
+          data['imported_up_to']!,
+          _importedUpToMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rewound')) {
+      context.handle(
+        _rewoundMeta,
+        rewound.isAcceptableOrUnknown(data['rewound']!, _rewoundMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {tankId, source};
+  @override
+  ImportSource map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ImportSource(
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      location: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}location'],
+      ),
+      importedUpTo: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}imported_up_to'],
+      ),
+      rewound: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}rewound'],
+      )!,
+    );
+  }
+
+  @override
+  $ImportSourcesTable createAlias(String alias) {
+    return $ImportSourcesTable(attachedDatabase, alias);
+  }
+}
+
+class ImportSource extends DataClass implements Insertable<ImportSource> {
+  final int tankId;
+
+  /// Import format id (e.g. `kHannaImportSource`). Persisted — never rename.
+  final String source;
+
+  /// The external location/tank label the file carries (Hanna's
+  /// `Sample Location`), remembered so the next import preselects this tank
+  /// and a different pick gets a wrong-file confirmation.
+  final String? location;
+
+  /// Dedupe watermark: the newest imported reading timestamp; an import takes
+  /// strictly newer rows. Null = ask the first-import cutoff question again
+  /// (fresh mapping, or after a settings Reset).
+  final DateTime? importedUpTo;
+
+  /// One-shot flag set by the settings rewind/reset actions: the next import
+  /// must not trust the watermark alone (it would duplicate the re-covered
+  /// range) — it diffs candidates against existing readings first, then
+  /// clears this.
+  final bool rewound;
+  const ImportSource({
+    required this.tankId,
+    required this.source,
+    this.location,
+    this.importedUpTo,
+    required this.rewound,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['tank_id'] = Variable<int>(tankId);
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || location != null) {
+      map['location'] = Variable<String>(location);
+    }
+    if (!nullToAbsent || importedUpTo != null) {
+      map['imported_up_to'] = Variable<DateTime>(importedUpTo);
+    }
+    map['rewound'] = Variable<bool>(rewound);
+    return map;
+  }
+
+  ImportSourcesCompanion toCompanion(bool nullToAbsent) {
+    return ImportSourcesCompanion(
+      tankId: Value(tankId),
+      source: Value(source),
+      location: location == null && nullToAbsent
+          ? const Value.absent()
+          : Value(location),
+      importedUpTo: importedUpTo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(importedUpTo),
+      rewound: Value(rewound),
+    );
+  }
+
+  factory ImportSource.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ImportSource(
+      tankId: serializer.fromJson<int>(json['tankId']),
+      source: serializer.fromJson<String>(json['source']),
+      location: serializer.fromJson<String?>(json['location']),
+      importedUpTo: serializer.fromJson<DateTime?>(json['importedUpTo']),
+      rewound: serializer.fromJson<bool>(json['rewound']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'tankId': serializer.toJson<int>(tankId),
+      'source': serializer.toJson<String>(source),
+      'location': serializer.toJson<String?>(location),
+      'importedUpTo': serializer.toJson<DateTime?>(importedUpTo),
+      'rewound': serializer.toJson<bool>(rewound),
+    };
+  }
+
+  ImportSource copyWith({
+    int? tankId,
+    String? source,
+    Value<String?> location = const Value.absent(),
+    Value<DateTime?> importedUpTo = const Value.absent(),
+    bool? rewound,
+  }) => ImportSource(
+    tankId: tankId ?? this.tankId,
+    source: source ?? this.source,
+    location: location.present ? location.value : this.location,
+    importedUpTo: importedUpTo.present ? importedUpTo.value : this.importedUpTo,
+    rewound: rewound ?? this.rewound,
+  );
+  ImportSource copyWithCompanion(ImportSourcesCompanion data) {
+    return ImportSource(
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      source: data.source.present ? data.source.value : this.source,
+      location: data.location.present ? data.location.value : this.location,
+      importedUpTo: data.importedUpTo.present
+          ? data.importedUpTo.value
+          : this.importedUpTo,
+      rewound: data.rewound.present ? data.rewound.value : this.rewound,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ImportSource(')
+          ..write('tankId: $tankId, ')
+          ..write('source: $source, ')
+          ..write('location: $location, ')
+          ..write('importedUpTo: $importedUpTo, ')
+          ..write('rewound: $rewound')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(tankId, source, location, importedUpTo, rewound);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ImportSource &&
+          other.tankId == this.tankId &&
+          other.source == this.source &&
+          other.location == this.location &&
+          other.importedUpTo == this.importedUpTo &&
+          other.rewound == this.rewound);
+}
+
+class ImportSourcesCompanion extends UpdateCompanion<ImportSource> {
+  final Value<int> tankId;
+  final Value<String> source;
+  final Value<String?> location;
+  final Value<DateTime?> importedUpTo;
+  final Value<bool> rewound;
+  final Value<int> rowid;
+  const ImportSourcesCompanion({
+    this.tankId = const Value.absent(),
+    this.source = const Value.absent(),
+    this.location = const Value.absent(),
+    this.importedUpTo = const Value.absent(),
+    this.rewound = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ImportSourcesCompanion.insert({
+    required int tankId,
+    required String source,
+    this.location = const Value.absent(),
+    this.importedUpTo = const Value.absent(),
+    this.rewound = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : tankId = Value(tankId),
+       source = Value(source);
+  static Insertable<ImportSource> custom({
+    Expression<int>? tankId,
+    Expression<String>? source,
+    Expression<String>? location,
+    Expression<DateTime>? importedUpTo,
+    Expression<bool>? rewound,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (tankId != null) 'tank_id': tankId,
+      if (source != null) 'source': source,
+      if (location != null) 'location': location,
+      if (importedUpTo != null) 'imported_up_to': importedUpTo,
+      if (rewound != null) 'rewound': rewound,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ImportSourcesCompanion copyWith({
+    Value<int>? tankId,
+    Value<String>? source,
+    Value<String?>? location,
+    Value<DateTime?>? importedUpTo,
+    Value<bool>? rewound,
+    Value<int>? rowid,
+  }) {
+    return ImportSourcesCompanion(
+      tankId: tankId ?? this.tankId,
+      source: source ?? this.source,
+      location: location ?? this.location,
+      importedUpTo: importedUpTo ?? this.importedUpTo,
+      rewound: rewound ?? this.rewound,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (location.present) {
+      map['location'] = Variable<String>(location.value);
+    }
+    if (importedUpTo.present) {
+      map['imported_up_to'] = Variable<DateTime>(importedUpTo.value);
+    }
+    if (rewound.present) {
+      map['rewound'] = Variable<bool>(rewound.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ImportSourcesCompanion(')
+          ..write('tankId: $tankId, ')
+          ..write('source: $source, ')
+          ..write('location: $location, ')
+          ..write('importedUpTo: $importedUpTo, ')
+          ..write('rewound: $rewound, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -7791,6 +8181,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RoStagesTable roStages = $RoStagesTable(this);
   late final $RoStageReplacementsTable roStageReplacements =
       $RoStageReplacementsTable(this);
+  late final $ImportSourcesTable importSources = $ImportSourcesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index idxReadingsTankParamTaken = Index(
     'idx_readings_tank_param_taken',
@@ -7855,6 +8246,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     maintenanceSchedules,
     roStages,
     roStageReplacements,
+    importSources,
     settings,
     idxReadingsTankParamTaken,
     idxReadingsTankTaken,
@@ -7953,6 +8345,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('ro_stage_replacements', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('import_sources', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -8200,6 +8599,24 @@ final class $$TanksTableReferences
     final cache = $_typedResult.readTableOrNull(
       _maintenanceSchedulesRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ImportSourcesTable, List<ImportSource>>
+  _importSourcesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.importSources,
+    aliasName: 'tanks__id__import_sources__tank_id',
+  );
+
+  $$ImportSourcesTableProcessedTableManager get importSourcesRefs {
+    final manager = $$ImportSourcesTableTableManager(
+      $_db,
+      $_db.importSources,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_importSourcesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -8530,6 +8947,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$MaintenanceSchedulesTableFilterComposer(
             $db: $db,
             $table: $db.maintenanceSchedules,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> importSourcesRefs(
+    Expression<bool> Function($$ImportSourcesTableFilterComposer f) f,
+  ) {
+    final $$ImportSourcesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.importSources,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ImportSourcesTableFilterComposer(
+            $db: $db,
+            $table: $db.importSources,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8919,6 +9361,31 @@ class $$TanksTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> importSourcesRefs<T extends Object>(
+    Expression<T> Function($$ImportSourcesTableAnnotationComposer a) f,
+  ) {
+    final $$ImportSourcesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.importSources,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ImportSourcesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.importSources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -8946,6 +9413,7 @@ class $$TanksTableTableManager
             bool readingTemplatesRefs,
             bool microViewsRefs,
             bool maintenanceSchedulesRefs,
+            bool importSourcesRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -9026,6 +9494,7 @@ class $$TanksTableTableManager
                 readingTemplatesRefs = false,
                 microViewsRefs = false,
                 maintenanceSchedulesRefs = false,
+                importSourcesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9041,6 +9510,7 @@ class $$TanksTableTableManager
                     if (readingTemplatesRefs) db.readingTemplates,
                     if (microViewsRefs) db.microViews,
                     if (maintenanceSchedulesRefs) db.maintenanceSchedules,
+                    if (importSourcesRefs) db.importSources,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -9268,6 +9738,27 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (importSourcesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          ImportSource
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._importSourcesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).importSourcesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -9300,6 +9791,7 @@ typedef $$TanksTableProcessedTableManager =
         bool readingTemplatesRefs,
         bool microViewsRefs,
         bool maintenanceSchedulesRefs,
+        bool importSourcesRefs,
       })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
@@ -14317,6 +14809,329 @@ typedef $$RoStageReplacementsTableProcessedTableManager =
       RoStageReplacement,
       PrefetchHooks Function({bool stageId})
     >;
+typedef $$ImportSourcesTableCreateCompanionBuilder =
+    ImportSourcesCompanion Function({
+      required int tankId,
+      required String source,
+      Value<String?> location,
+      Value<DateTime?> importedUpTo,
+      Value<bool> rewound,
+      Value<int> rowid,
+    });
+typedef $$ImportSourcesTableUpdateCompanionBuilder =
+    ImportSourcesCompanion Function({
+      Value<int> tankId,
+      Value<String> source,
+      Value<String?> location,
+      Value<DateTime?> importedUpTo,
+      Value<bool> rewound,
+      Value<int> rowid,
+    });
+
+final class $$ImportSourcesTableReferences
+    extends BaseReferences<_$AppDatabase, $ImportSourcesTable, ImportSource> {
+  $$ImportSourcesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('import_sources__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ImportSourcesTableFilterComposer
+    extends Composer<_$AppDatabase, $ImportSourcesTable> {
+  $$ImportSourcesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get location => $composableBuilder(
+    column: $table.location,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get importedUpTo => $composableBuilder(
+    column: $table.importedUpTo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get rewound => $composableBuilder(
+    column: $table.rewound,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ImportSourcesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ImportSourcesTable> {
+  $$ImportSourcesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get location => $composableBuilder(
+    column: $table.location,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get importedUpTo => $composableBuilder(
+    column: $table.importedUpTo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get rewound => $composableBuilder(
+    column: $table.rewound,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ImportSourcesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ImportSourcesTable> {
+  $$ImportSourcesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get location =>
+      $composableBuilder(column: $table.location, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get importedUpTo => $composableBuilder(
+    column: $table.importedUpTo,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get rewound =>
+      $composableBuilder(column: $table.rewound, builder: (column) => column);
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ImportSourcesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ImportSourcesTable,
+          ImportSource,
+          $$ImportSourcesTableFilterComposer,
+          $$ImportSourcesTableOrderingComposer,
+          $$ImportSourcesTableAnnotationComposer,
+          $$ImportSourcesTableCreateCompanionBuilder,
+          $$ImportSourcesTableUpdateCompanionBuilder,
+          (ImportSource, $$ImportSourcesTableReferences),
+          ImportSource,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$ImportSourcesTableTableManager(_$AppDatabase db, $ImportSourcesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ImportSourcesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ImportSourcesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ImportSourcesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> tankId = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String?> location = const Value.absent(),
+                Value<DateTime?> importedUpTo = const Value.absent(),
+                Value<bool> rewound = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ImportSourcesCompanion(
+                tankId: tankId,
+                source: source,
+                location: location,
+                importedUpTo: importedUpTo,
+                rewound: rewound,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int tankId,
+                required String source,
+                Value<String?> location = const Value.absent(),
+                Value<DateTime?> importedUpTo = const Value.absent(),
+                Value<bool> rewound = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ImportSourcesCompanion.insert(
+                tankId: tankId,
+                source: source,
+                location: location,
+                importedUpTo: importedUpTo,
+                rewound: rewound,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ImportSourcesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable: $$ImportSourcesTableReferences
+                                    ._tankIdTable(db),
+                                referencedColumn: $$ImportSourcesTableReferences
+                                    ._tankIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ImportSourcesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ImportSourcesTable,
+      ImportSource,
+      $$ImportSourcesTableFilterComposer,
+      $$ImportSourcesTableOrderingComposer,
+      $$ImportSourcesTableAnnotationComposer,
+      $$ImportSourcesTableCreateCompanionBuilder,
+      $$ImportSourcesTableUpdateCompanionBuilder,
+      (ImportSource, $$ImportSourcesTableReferences),
+      ImportSource,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -14482,6 +15297,8 @@ class $AppDatabaseManager {
       $$RoStagesTableTableManager(_db, _db.roStages);
   $$RoStageReplacementsTableTableManager get roStageReplacements =>
       $$RoStageReplacementsTableTableManager(_db, _db.roStageReplacements);
+  $$ImportSourcesTableTableManager get importSources =>
+      $$ImportSourcesTableTableManager(_db, _db.importSources);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

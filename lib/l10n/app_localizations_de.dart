@@ -1809,6 +1809,130 @@ class AppLocalizationsDe extends AppLocalizations {
   String get unitFixedNote => 'Dieser Parameter verwendet immer diese Einheit.';
 
   @override
+  String get measurementImportTitle => 'Messungen importieren';
+
+  @override
+  String get measurementImportSourceHint =>
+      'Wähle die App oder das Messgerät, aus dem die Datei stammt.';
+
+  @override
+  String get measurementImportHannaHint => 'CSV-Verlauf aus der Hanna-Lab-App';
+
+  @override
+  String get hannaImportTitle => 'Hanna-Lab-Import';
+
+  @override
+  String get hannaImportIntoTank => 'In Aquarium importieren';
+
+  @override
+  String get hannaImportFirstFrom => 'Verlauf importieren ab';
+
+  @override
+  String get hannaImportEverything => 'Alles';
+
+  @override
+  String get hannaImportFirstFromHint =>
+      'Erster Import in dieses Aquarium: Wähle, wie weit zurück importiert wird. Ältere Messungen werden dauerhaft ignoriert — praktisch, wenn du sie bereits von Hand eingetragen hast.';
+
+  @override
+  String hannaImportNewCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count neue Messungen',
+      one: '1 neue Messung',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hannaImportAlreadyCount(int count) {
+    return 'Bereits importiert: $count';
+  }
+
+  @override
+  String hannaImportBeforeCutoffCount(int count) {
+    return 'Vor dem Startdatum: $count';
+  }
+
+  @override
+  String get hannaImportSkippedTitle => 'Nicht importiert';
+
+  @override
+  String get hannaImportSkipRange => 'außerhalb des Testbereichs';
+
+  @override
+  String get hannaImportSkipUnknown => 'Test wird von der App nicht erfasst';
+
+  @override
+  String get hannaImportSkipValue => 'unlesbarer Wert';
+
+  @override
+  String get hannaImportUpToDate =>
+      'Alles in dieser Datei ist bereits importiert.';
+
+  @override
+  String hannaImportButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Messungen importieren',
+      one: '1 Messung importieren',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hannaImportDoneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Messungen importiert',
+      one: '1 Messung importiert',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaImportUndone => 'Import rückgängig gemacht.';
+
+  @override
+  String get hannaImportWrongTankTitle => 'Anderes Aquarium?';
+
+  @override
+  String hannaImportWrongTankBody(String location, String tank, String other) {
+    return '„$location“ wurde zuletzt in $tank importiert. Stattdessen in $other importieren?';
+  }
+
+  @override
+  String get measurementImportSettingsTitle => 'Messungs-Import';
+
+  @override
+  String get measurementImportSettingsSubtitle =>
+      'Hanna-Lab-Importstatus je Aquarium';
+
+  @override
+  String hannaImportImportedUpTo(String date) {
+    return 'Importiert bis $date';
+  }
+
+  @override
+  String get hannaImportNeverImported => 'Noch nicht importiert';
+
+  @override
+  String get hannaImportChangeDate => 'Datum ändern…';
+
+  @override
+  String get hannaImportReset => 'Zurücksetzen';
+
+  @override
+  String get hannaImportResetTitle => 'Hanna-Lab-Import zurücksetzen?';
+
+  @override
+  String get hannaImportResetBody =>
+      'Der nächste Import fragt erneut, ab welchem Datum begonnen wird. Bereits importierte Messungen bleiben erhalten; die Aquarium-Zuordnung bleibt gespeichert.';
+
+  @override
   String get helpTemperature =>
       'Wassertemperatur. Stabilität ist wichtiger als der exakte Wert.';
 

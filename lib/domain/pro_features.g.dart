@@ -14,6 +14,7 @@ enum ProFeature {
   stabilityScore,
   driveSync,
   smartInsights,
+  hannaImport,
 }
 
 /// Features that existed at the monetization cutoff: free
@@ -26,4 +27,5 @@ const Set<ProFeature> kGrandfatheredFeatures = {
   ProFeature.stabilityScore,
   ProFeature.driveSync,
   ProFeature.smartInsights,
+  ProFeature.hannaImport,
 };

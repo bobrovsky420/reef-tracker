@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.0] - 2026-07-19
+
+### Added
+- **Hanna Lab measurement import.** Test with a Hanna HI97115 Marine Master?
+  Share the CSV history from the Hanna Lab app and import it straight into
+  ReefTracker: Measurements tab → ⋮ → Import measurements. Results (KH, Ca,
+  Mg, NO₃, PO₄, pH, ammonia) arrive with their original test timestamps,
+  grouped into test sessions like hand-entered batches. Re-importing a fresh
+  export only adds what's new — the app remembers how far each tank is
+  imported and which Hanna "sample location" belongs to it. The first import
+  asks from which date to start, so history you already typed in by hand
+  isn't duplicated. Out-of-range results the meter flagged, unrecognized
+  tests and suspicious values are listed instead of silently skipped, and a
+  finished import can be undone in one tap.
+- **Measurement import settings.** Settings → Measurement import (appears
+  once something was imported) shows each tank's import status and lets you
+  rewind the import date or reset it — re-importing a rewound range never
+  creates duplicates.
+
 ## [0.33.1] - 2026-07-19
 
 ### Changed

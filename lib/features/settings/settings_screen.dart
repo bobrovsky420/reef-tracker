@@ -434,6 +434,16 @@ class SettingsScreen extends ConsumerWidget {
                     titleColor: Theme.of(context).colorScheme.error,
                   ),
               ],
+              // Measurement import status/rewind (U32) — only meaningful once
+              // something was imported, hidden until then.
+              if ((ref.watch(importSourcesProvider).value ?? const [])
+                  .isNotEmpty)
+                ReefSettingsRow(
+                  icon: Icons.move_to_inbox_outlined,
+                  title: l.measurementImportSettingsTitle,
+                  description: l.measurementImportSettingsSubtitle,
+                  onTap: () => context.push('/settings/import'),
+                ),
             ],
           ),
           ReefSettingsSection(

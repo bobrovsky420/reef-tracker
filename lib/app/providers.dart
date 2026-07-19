@@ -101,6 +101,13 @@ final activeTankIdProvider = StreamProvider<int?>(
   (ref) => ref.watch(dbProvider).watchActiveTankId(),
 );
 
+/// Measurement-import state rows (U32): the location → tank mappings and
+/// dedupe watermarks, one per (tank, source) that ever imported. Drives the
+/// Settings "Measurement import" surface (hidden while empty).
+final importSourcesProvider = StreamProvider<List<ImportSource>>(
+  (ref) => ref.watch(dbProvider).watchImportSources(),
+);
+
 /// The currently selected tank, resolving the active id against the tank list.
 /// Falls back to the first tank when none is explicitly selected.
 final activeTankProvider = Provider<Tank?>((ref) {

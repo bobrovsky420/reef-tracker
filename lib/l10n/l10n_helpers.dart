@@ -121,6 +121,7 @@ extension L10nDomain on AppLocalizations {
     ProFeature.stabilityScore => stabilityScoreProName,
     ProFeature.driveSync => syncGdriveTitle,
     ProFeature.smartInsights => insightsProName,
+    ProFeature.hannaImport => hannaImportTitle,
   };
 
   /// Localized message for a rule-based insight (U28). The [Insight] carries

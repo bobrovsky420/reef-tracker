@@ -837,6 +837,63 @@
     "description": "Shown in the parameter editor instead of the unit field for microelements, whose display unit (mg/L or µg/L, as on an ICP report) is fixed by the catalog."
   },
 
+  "measurementImportTitle": "Import measurements",
+  "@measurementImportTitle": { "description": "Overflow-menu action on the Measurements tab and title of the source-picker sheet (U32)." },
+  "measurementImportSourceHint": "Choose the app or meter the file comes from.",
+  "measurementImportHannaHint": "CSV history shared from the Hanna Lab app",
+  "@measurementImportHannaHint": { "description": "Subtitle of the Hanna Lab entry in the source picker. 'Hanna Lab' is a product name, not localized." },
+  "hannaImportTitle": "Hanna Lab import",
+  "@hannaImportTitle": { "description": "Preview screen title and the Pro feature's display name." },
+  "hannaImportIntoTank": "Import into tank",
+  "hannaImportFirstFrom": "Import history from",
+  "@hannaImportFirstFrom": { "description": "Label of the first-import start-date row; its value is a date or hannaImportEverything." },
+  "hannaImportEverything": "Everything",
+  "hannaImportFirstFromHint": "First import into this tank: choose how far back to import. Older readings are ignored for good — useful when you already typed them in by hand.",
+  "hannaImportNewCount": "{count, plural, one{1 new reading} other{{count} new readings}}",
+  "@hannaImportNewCount": {
+    "description": "Section header over the to-be-imported sessions.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "hannaImportAlreadyCount": "Already imported: {count}",
+  "@hannaImportAlreadyCount": { "placeholders": { "count": { "type": "int" } } },
+  "hannaImportBeforeCutoffCount": "Before the start date: {count}",
+  "@hannaImportBeforeCutoffCount": { "placeholders": { "count": { "type": "int" } } },
+  "hannaImportSkippedTitle": "Not imported",
+  "hannaImportSkipRange": "outside the test range",
+  "@hannaImportSkipRange": { "description": "Skip reason: the meter flagged the reading under/over range." },
+  "hannaImportSkipUnknown": "test not tracked by the app",
+  "hannaImportSkipValue": "unreadable value",
+  "hannaImportUpToDate": "Everything in this file is already imported.",
+  "hannaImportButton": "{count, plural, one{Import 1 reading} other{Import {count} readings}}",
+  "@hannaImportButton": {
+    "description": "Confirm button of the import preview.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "hannaImportDoneCount": "{count, plural, one{Imported 1 reading} other{Imported {count} readings}}",
+  "@hannaImportDoneCount": {
+    "description": "Headline of the result sheet after a successful import.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "hannaImportUndone": "Import undone.",
+  "hannaImportWrongTankTitle": "Different tank?",
+  "hannaImportWrongTankBody": "“{location}” was last imported into {tank}. Import into {other} instead?",
+  "@hannaImportWrongTankBody": {
+    "description": "Wrong-file guard: the file's sample location was previously mapped to another tank.",
+    "placeholders": { "location": { "type": "String" }, "tank": { "type": "String" }, "other": { "type": "String" } }
+  },
+  "measurementImportSettingsTitle": "Measurement import",
+  "measurementImportSettingsSubtitle": "Hanna Lab import status per tank",
+  "hannaImportImportedUpTo": "Imported up to {date}",
+  "@hannaImportImportedUpTo": {
+    "description": "Watermark line in the import settings; {date} is a formatted date-time.",
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "hannaImportNeverImported": "Not imported yet",
+  "hannaImportChangeDate": "Change date…",
+  "hannaImportReset": "Reset",
+  "hannaImportResetTitle": "Reset Hanna Lab import?",
+  "hannaImportResetBody": "The next import will ask again from which date to start. Already-imported readings stay; the tank assignment is remembered.",
+
   "helpTemperature": "Water temperature. Stability matters more than the exact value.",
   "helpSalinity": "Specific gravity. ~1.026 SG ≈ 35 ppt.",
   "helpAlkalinity": "Carbonate hardness. Keep stable — avoid swings.",

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:go_router/go_router.dart';
 
 import '../data/database.dart';
+import '../domain/hanna_import.dart';
 import '../domain/icp_import.dart';
 import '../domain/ratio.dart';
 import '../domain/supplement_catalog.dart';
@@ -18,6 +19,8 @@ import '../features/dosing/dosing_history_screen.dart';
 import '../features/dosing/manual_dose_edit_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/home/home_shell.dart';
+import '../features/import/hanna_import_screen.dart';
+import '../features/import/import_sources_screen.dart';
 import '../features/manage_parameters/manage_parameters_screen.dart';
 import '../features/micro/icp_import_screen.dart';
 import '../features/micro/micro_add_screen.dart';
@@ -170,6 +173,19 @@ final appRouter = GoRouter(
           state.extra is IcpImportResult ? null : '/micro',
       builder: (context, state) =>
           IcpImportScreen(result: state.extra as IcpImportResult),
+    ),
+    GoRoute(
+      path: '/import/hanna',
+      // Only reachable with a parsed file in tow — a bare deep link has
+      // nothing to preview (same guard style as /micro/import, T8).
+      redirect: (context, state) =>
+          state.extra is HannaImportResult ? null : '/',
+      builder: (context, state) =>
+          HannaImportScreen(result: state.extra as HannaImportResult),
+    ),
+    GoRoute(
+      path: '/settings/import',
+      builder: (context, state) => const ImportSourcesScreen(),
     ),
     GoRoute(
       path: '/calculator/salinity',

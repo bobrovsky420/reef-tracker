@@ -17,6 +17,7 @@ import '../ai_summary/ai_summary_sheet.dart';
 import '../dashboard/comparison_view.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../dosing/dosing_screen.dart';
+import '../import/measurement_import.dart';
 
 /// Home screen hosting the app's two primary peer destinations — Measurements
 /// and Actions — behind a bottom [NavigationBar]. Owns the shared app bar
@@ -306,8 +307,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             onPressed: () => context.push('/settings'),
           ),
           // Overflow menu, contextual to the Measurements tab (the bar is at
-          // icon capacity). Currently one action: the "Ask your AI" summary
-          // export (U27); future share-ish actions join here.
+          // icon capacity): the "Ask your AI" summary export (U27) and the
+          // measurement import (U32); future share-ish actions join here.
           if (hasTanks && _index == 0)
             PopupMenuButton<String>(
               // Same mini-card look as the ReefIconButtons; the button style
@@ -316,6 +317,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               iconSize: 16,
               onSelected: (v) {
                 if (v == 'ai-summary') unawaited(showAiSummarySheet(context));
+                if (v == 'import-measurements') {
+                  // Pro-gated (U19): founders (and, later, Pro purchasers)
+                  // import; anyone else gets the explanation dialog.
+                  if (ref.read(proFeatureProvider(ProFeature.hannaImport))) {
+                    unawaited(runMeasurementImportFlow(context));
+                  } else {
+                    unawaited(
+                      showProFeatureDialog(context, ProFeature.hannaImport),
+                    );
+                  }
+                }
               },
               itemBuilder: (context) => [
                 PopupMenuItem(
@@ -325,6 +337,23 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                       const Icon(Icons.auto_awesome_outlined, size: 18),
                       const SizedBox(width: 8),
                       Text(l.aiSummaryAction),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'import-measurements',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.move_to_inbox_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      // Flexible: the longer translations (de/ru) must
+                      // ellipsize in the fixed-width menu, not overflow.
+                      Flexible(
+                        child: Text(
+                          l.measurementImportTitle,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ),

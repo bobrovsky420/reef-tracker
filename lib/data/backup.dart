@@ -75,6 +75,7 @@ class BackupData {
     this.maintenanceSchedules = const [],
     this.roStages = const [],
     this.roStageReplacements = const [],
+    this.importSources = const [],
     required this.settings,
   });
 
@@ -111,6 +112,10 @@ class BackupData {
   /// backups, same policy as [readingTemplates].
   final List<RoStagesCompanion> roStages;
   final List<RoStageReplacementsCompanion> roStageReplacements;
+
+  /// Measurement-import watermarks + location mappings (U32). Defaults to
+  /// empty for pre-U32 backups, same policy as [readingTemplates].
+  final List<ImportSourcesCompanion> importSources;
   final List<SettingsCompanion> settings;
 }
 
@@ -136,6 +141,7 @@ String encodeBackup({
   List<MaintenanceSchedule> maintenanceSchedules = const [],
   List<RoStage> roStages = const [],
   List<RoStageReplacement> roStageReplacements = const [],
+  List<ImportSource> importSources = const [],
   required List<Setting> settings,
 }) {
   final map = <String, dynamic>{
@@ -163,6 +169,7 @@ String encodeBackup({
     'roStageReplacements': roStageReplacements
         .map(_roStageReplacementToJson)
         .toList(),
+    'importSources': importSources.map(_importSourceToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
   final payload = jsonEncode(map);
@@ -369,6 +376,11 @@ BackupData decodeBackup(String jsonString) {
       _roStageReplacementFromJson,
       required: false,
     ),
+    importSources: section(
+      'importSources',
+      _importSourceFromJson,
+      required: false,
+    ),
     settings: section('settings', _settingFromJson),
   );
 }
@@ -473,6 +485,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     'maintenanceSchedules',
     data.maintenanceSchedules.map((r) => r.tankId.value),
   );
+  requireTank('importSources', data.importSources.map((r) => r.tankId.value));
 
   // RO stages are the FK target of the replacement log — same unique-id +
   // no-dangling-reference checks the tanks get (U16).
@@ -780,6 +793,7 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       maintenanceScheduleRows: data.maintenanceSchedules,
       roStageRows: data.roStages,
       roStageReplacementRows: data.roStageReplacements,
+      importSourceRows: data.importSources,
       settingRows: data.settings,
       // Never overwrite this device's own preferences with the backup's (#18).
       preserveSettingKeys: SettingKey.deviceLocalKeys,
@@ -811,6 +825,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   var readingTemplates = await db.getAllReadingTemplates();
   var microViews = await db.getAllMicroViews();
   var maintenanceSchedules = await db.getAllMaintenanceSchedules();
+  var importSources = await db.getAllImportSources();
   // Device-scoped (no tankId) — never subject to the soft-delete filtering.
   final roStages = await db.getAllRoStages();
   final roStageReplacements = await db.getAllRoStageReplacements();
@@ -854,6 +869,9 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
     maintenanceSchedules = maintenanceSchedules
         .where((r) => !hidden.contains(r.tankId))
         .toList();
+    importSources = importSources
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
   }
   // The closure must capture only sendable plain data — never [db]: an open
   // database (ports, native handles) cannot cross the isolate boundary.
@@ -874,6 +892,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       maintenanceSchedules: maintenanceSchedules,
       roStages: roStages,
       roStageReplacements: roStageReplacements,
+      importSources: importSources,
       settings: settings,
     ),
   );
@@ -1303,6 +1322,23 @@ RoStageReplacementsCompanion _roStageReplacementFromJson(
   replacedAt: Value(_date(m['replacedAt'])),
   note: Value(m['note'] as String?),
 );
+
+Map<String, dynamic> _importSourceToJson(ImportSource s) => {
+  'tankId': s.tankId,
+  'source': s.source,
+  'location': s.location,
+  'importedUpTo': s.importedUpTo?.millisecondsSinceEpoch,
+  'rewound': s.rewound,
+};
+
+ImportSourcesCompanion _importSourceFromJson(Map<String, dynamic> m) =>
+    ImportSourcesCompanion(
+      tankId: Value(m['tankId'] as int),
+      source: Value(m['source'] as String),
+      location: Value(m['location'] as String?),
+      importedUpTo: Value(_dateOrNull(m['importedUpTo'])),
+      rewound: Value(m['rewound'] as bool? ?? false),
+    );
 
 Map<String, dynamic> _settingToJson(Setting s) => {
   'key': s.key,
