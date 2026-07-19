@@ -844,6 +844,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get languageSection => 'Sprache';
 
   @override
+  String get appearanceSection => 'Darstellung';
+
+  @override
+  String get themeTitle => 'Design';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Hell';
+
+  @override
+  String get themeDark => 'Dunkel';
+
+  @override
   String get temperature => 'Temperatur';
 
   @override

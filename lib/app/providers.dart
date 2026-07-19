@@ -32,6 +32,7 @@ export '../data/settings.dart'
         HealthDisplay,
         DashboardLayout,
         AppEdition,
+        AppThemeMode,
         AppSettings,
         SettingKey,
         kTourSeenKey,
@@ -543,6 +544,14 @@ final unitPrefsProvider = Provider<UnitPrefs>((ref) {
 final tourSeenProvider = _setting(
   SettingKey.tourSeen,
   AppSettings.decodeTourSeen,
+);
+
+/// The stored light/dark theme choice (REDESIGN #16), defaulting to
+/// "follow the system". `main.dart` maps it onto `MaterialApp.themeMode`
+/// (the data layer stays Flutter-free, so the mapping can't live here).
+final themeModeProvider = _setting(
+  SettingKey.themeMode,
+  AppSettings.decodeThemeMode,
 );
 
 /// Stored language code ('system' / 'en' / 'cs'), defaulting to 'system'.

@@ -845,6 +845,21 @@ class AppLocalizationsCs extends AppLocalizations {
   String get languageSection => 'Jazyk';
 
   @override
+  String get appearanceSection => 'Vzhled';
+
+  @override
+  String get themeTitle => 'Motiv';
+
+  @override
+  String get themeSystem => 'Systém';
+
+  @override
+  String get themeLight => 'Světlý';
+
+  @override
+  String get themeDark => 'Tmavý';
+
+  @override
   String get temperature => 'Teplota';
 
   @override

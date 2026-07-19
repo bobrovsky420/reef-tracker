@@ -367,6 +367,26 @@
   "toolsSection": "Tools",
   "aboutSection": "About",
   "languageSection": "Language",
+  "appearanceSection": "Appearance",
+  "@appearanceSection": {
+    "description": "Settings section label for the theme-mode choice (REDESIGN #16)."
+  },
+  "themeTitle": "Theme",
+  "@themeTitle": {
+    "description": "Settings row title for the light/dark theme choice."
+  },
+  "themeSystem": "System",
+  "@themeSystem": {
+    "description": "Theme option: follow the device's light/dark setting."
+  },
+  "themeLight": "Light",
+  "@themeLight": {
+    "description": "Theme option: always use the light theme."
+  },
+  "themeDark": "Dark",
+  "@themeDark": {
+    "description": "Theme option: always use the dark theme."
+  },
   "temperature": "Temperature",
   "salinity": "Salinity",
   "volume": "Volume",

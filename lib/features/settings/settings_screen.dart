@@ -78,6 +78,27 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ],
           ),
+          // Theme mode (REDESIGN #16): the segmented System/Light/Dark choice
+          // replacing the mockups' navbar sun/moon toggle.
+          ReefSettingsSection(
+            label: l.appearanceSection,
+            children: [
+              ReefSettingsRow(
+                icon: Icons.dark_mode_outlined,
+                title: l.themeTitle,
+                trailing: ReefSegmented<AppThemeMode>(
+                  options: [
+                    (AppThemeMode.system, l.themeSystem),
+                    (AppThemeMode.light, l.themeLight),
+                    (AppThemeMode.dark, l.themeDark),
+                  ],
+                  selected:
+                      ref.watch(themeModeProvider).value ?? AppThemeMode.system,
+                  onChanged: settings.setThemeMode,
+                ),
+              ),
+            ],
+          ),
           ReefSettingsSection(
             label: l.unitsSection,
             children: [

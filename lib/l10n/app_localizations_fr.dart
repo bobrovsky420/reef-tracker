@@ -843,6 +843,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get languageSection => 'Langue';
 
   @override
+  String get appearanceSection => 'Apparence';
+
+  @override
+  String get themeTitle => 'Thème';
+
+  @override
+  String get themeSystem => 'Système';
+
+  @override
+  String get themeLight => 'Clair';
+
+  @override
+  String get themeDark => 'Sombre';
+
+  @override
   String get temperature => 'Température';
 
   @override

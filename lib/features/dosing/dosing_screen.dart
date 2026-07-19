@@ -147,7 +147,10 @@ class DosingBody extends ConsumerWidget {
         color: Theme.of(context).colorScheme.error,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        child: const Icon(Icons.stop_circle_outlined, color: Colors.white),
+        child: Icon(
+          Icons.stop_circle_outlined,
+          color: Theme.of(context).colorScheme.onError,
+        ),
       ),
       confirmDismiss: (_) => stopDosingWithUndo(context, ref, e),
       // The rows sit inside the sliver card, whose fill paints over the

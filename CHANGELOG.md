@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hides it automatically.
 - The free-ammonia value warns that it may be inaccurate when the pH or
   temperature reading is more than a week older than the ammonia reading.
+- **Theme choice.** Settings → Appearance now offers System / Light / Dark:
+  the app can follow the device's light/dark setting (the default, matching
+  previous behavior) or stay in one theme regardless of the device. The
+  choice is a device preference — it is not carried along by backups.
 
 ### Changed
 - The Microelements card on the grouped dashboard no longer repeats the
@@ -90,6 +94,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - iOS: checkboxes in the test-set and microelement-view sheets render in the
   native iOS style with the app's teal accent. (iOS rendering not yet
   visually verified on-device; pending the next TestFlight build.)
+
+### Fixed
+- Dark theme: the trash/stop icon shown while swiping a history entry,
+  maintenance event or dosing plan away is now dark-on-coral instead of
+  white-on-coral, restoring its contrast.
 
 ## [0.31.1] - 2026-07-18
 

@@ -1505,6 +1505,36 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get languageSection;
 
+  /// Settings section label for the theme-mode choice (REDESIGN #16).
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearanceSection;
+
+  /// Settings row title for the light/dark theme choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeTitle;
+
+  /// Theme option: follow the device's light/dark setting.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// Theme option: always use the light theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// Theme option: always use the dark theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
   /// No description provided for @temperature.
   ///
   /// In en, this message translates to:

@@ -9,6 +9,7 @@
 library;
 
 const kActiveTankKey = 'active_tank_id';
+const kThemeModeKey = 'theme_mode';
 const kTempUnitKey = 'temp_unit';
 const kSalinityUnitKey = 'salinity_unit';
 const kVolumeUnitKey = 'volume_unit';

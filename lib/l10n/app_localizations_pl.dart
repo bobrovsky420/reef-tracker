@@ -849,6 +849,21 @@ class AppLocalizationsPl extends AppLocalizations {
   String get languageSection => 'Język';
 
   @override
+  String get appearanceSection => 'Wygląd';
+
+  @override
+  String get themeTitle => 'Motyw';
+
+  @override
+  String get themeSystem => 'Systemowy';
+
+  @override
+  String get themeLight => 'Jasny';
+
+  @override
+  String get themeDark => 'Ciemny';
+
+  @override
   String get temperature => 'Temperatura';
 
   @override

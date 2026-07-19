@@ -110,6 +110,25 @@ enum DashboardLayout {
   }
 }
 
+/// How the app resolves its light/dark theme (REDESIGN #16). Mirrors
+/// Flutter's `ThemeMode` values but lives here so the data layer stays
+/// Flutter-free; the provider layer maps it onto `MaterialApp.themeMode`.
+enum AppThemeMode {
+  /// Follow the device's light/dark setting (the default).
+  system,
+  light,
+  dark;
+
+  /// Parses a stored setting value, defaulting to [system] when
+  /// missing/unknown.
+  static AppThemeMode fromName(String? name) {
+    for (final v in AppThemeMode.values) {
+      if (v.name == name) return v;
+    }
+    return AppThemeMode.system;
+  }
+}
+
 /// Which edition of the app this install is entitled to (U19 phase 0).
 /// Derived from [SettingKey.legacyFreeSince]; a `pro` value joins when the
 /// paid tier ships.
@@ -130,6 +149,9 @@ enum AppEdition {
 /// they are preserved — never overwritten — when a backup is restored (#18).
 enum SettingKey {
   activeTank(kActiveTankKey, deviceLocal: true),
+  // The light/dark theme choice (REDESIGN #16) is a display preference like
+  // locale: device-local, default "follow the system".
+  themeMode(kThemeModeKey, deviceLocal: true),
   tempUnit(kTempUnitKey, deviceLocal: true),
   salinityUnit(kSalinityUnitKey, deviceLocal: true),
   volumeUnit(kVolumeUnitKey, deviceLocal: true),
@@ -263,6 +285,14 @@ class AppSettings {
       _watch(SettingKey.volumeUnit).map(decodeVolumeUnit);
   Future<void> setVolumeUnit(VolumeUnit unit) =>
       _write(SettingKey.volumeUnit, unit.name);
+
+  // --- theme mode (REDESIGN #16) ---------------------------------------------
+
+  static AppThemeMode decodeThemeMode(String? raw) => AppThemeMode.fromName(raw);
+  Stream<AppThemeMode> watchThemeMode() =>
+      _watch(SettingKey.themeMode).map(decodeThemeMode);
+  Future<void> setThemeMode(AppThemeMode mode) =>
+      _write(SettingKey.themeMode, mode.name);
 
   // --- language --------------------------------------------------------------
 

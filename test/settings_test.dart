@@ -175,6 +175,19 @@ void main() {
       expect(await settings.watchStabilityWindow().first, 90);
     });
 
+    test('theme mode defaults to system and round-trips (#16)', () async {
+      // Unset / unknown → follow the system, never a hard light/dark flip.
+      expect(AppSettings.decodeThemeMode(null), AppThemeMode.system);
+      expect(AppSettings.decodeThemeMode('nonsense'), AppThemeMode.system);
+      expect(AppSettings.decodeThemeMode('light'), AppThemeMode.light);
+      expect(AppSettings.decodeThemeMode('dark'), AppThemeMode.dark);
+
+      expect(await settings.watchThemeMode().first, AppThemeMode.system);
+      await settings.setThemeMode(AppThemeMode.dark);
+      expect(await settings.watchThemeMode().first, AppThemeMode.dark);
+      expect(await db.getSetting(kThemeModeKey), 'dark');
+    });
+
     test('dashboard layout defaults to grouped and round-trips (#6)', () async {
       // Unset / unknown → grouped (the new categorized layout is the default
       // and the target of future work).

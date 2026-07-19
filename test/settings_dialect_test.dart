@@ -100,6 +100,20 @@ void main() {
     });
   }
 
+  testWidgets('theme segmented row writes the theme-mode setting (#16)', (
+    tester,
+  ) async {
+    try {
+      final db = await pumpSettings(tester, platform: TargetPlatform.android);
+      expect(find.byType(ReefSegmented<AppThemeMode>), findsOneWidget);
+      await tester.tap(find.text('Dark'));
+      await settle(tester);
+      expect(await db.getSetting('theme_mode'), 'dark');
+    } finally {
+      await unmountApp(tester);
+    }
+  });
+
   testWidgets('tapping a switch row toggles it (full-row tap parity)', (
     tester,
   ) async {

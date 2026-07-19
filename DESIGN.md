@@ -162,7 +162,10 @@ and orders by a timestamp: `Readings(tankId, paramKey, takenAt)` and
 `MaintenanceSchedules(tankId)`, and `RoStageReplacements(stageId)`
 (v18 for existing DBs).
 
-`Settings` keys in use: `active_tank_id`, `temp_unit`, `salinity_unit`,
+`Settings` keys in use: `active_tank_id`, `theme_mode` (the light/dark theme
+choice, REDESIGN #16: `system`/`light`/`dark`, default `system` — decoded to
+the Flutter-free `AppThemeMode` enum and mapped onto `MaterialApp.themeMode`
+in `main.dart`), `temp_unit`, `salinity_unit`,
 `volume_unit`, `locale`, `chart_range`, `auto_backup_enabled`,
 `auto_backup_interval`, `auto_backup_keep`, `last_auto_backup_at`,
 `trend_enabled`, `trend_window`, `trend_horizon`, `health_display` (tank-health
@@ -928,6 +931,12 @@ band/track/tick, text/textDim/textFaint, marker ring, tab-bar background).
 `buildReefTheme(Brightness, TargetPlatform)` builds the `ThemeData` — the
 `ColorScheme` is hand-set from the palette (the old reef-blue `fromSeed` is
 retired) — and `main.dart` passes it to `theme:`/`darkTheme:`.
+
+**Theme mode (REDESIGN #16).** Which of the two themes is active follows the
+device-local `theme_mode` setting (Settings → Appearance, a segmented
+System/Light/Dark row; default System). The setting decodes to `AppThemeMode`
+(`data/settings.dart` — deliberately not Flutter's `ThemeMode`, keeping the
+data layer Flutter-free); `main.dart` maps it onto `MaterialApp.themeMode`.
 
 **Background gradient (`widgets/reef_background.dart`).** The app background
 is a vertical gradient fading `scaffoldTop`→`scaffoldBody` within the top 14%

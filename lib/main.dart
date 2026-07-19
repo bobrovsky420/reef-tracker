@@ -256,6 +256,14 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
+    // The stored theme choice (REDESIGN #16) maps onto Flutter's ThemeMode
+    // here — the setting enum is Flutter-free by design.
+    final themeMode = switch (ref.watch(themeModeProvider).value ??
+        AppThemeMode.system) {
+      AppThemeMode.system => ThemeMode.system,
+      AppThemeMode.light => ThemeMode.light,
+      AppThemeMode.dark => ThemeMode.dark,
+    };
     return MaterialApp.router(
       scaffoldMessengerKey: _messengerKey,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
@@ -273,6 +281,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
       },
       theme: buildReefTheme(Brightness.light, defaultTargetPlatform),
       darkTheme: buildReefTheme(Brightness.dark, defaultTargetPlatform),
+      themeMode: themeMode,
       routerConfig: appRouter,
     );
   }
