@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/icp_import.dart';
 import '../../domain/parameter_catalog.dart';
@@ -11,6 +12,9 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/reef_value_row.dart';
+import '../../widgets/section_header.dart';
 import '../../widgets/zone_chip.dart';
 
 /// Preview + confirm step of the ICP report import (U17 phase 2). Shows the
@@ -229,29 +233,25 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.icpImportTitle)),
+      // Layout per REDESIGN #24: the #20 entry recipe — date `ReefCard` value
+      // row, then the parsed values grouped into one hairline-divided card per
+      // report section under `SectionHeader`s.
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.schedule),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      formatDateTime(context, _takenAt, weekday: false),
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    tooltip: l.change,
-                    onPressed: _pickDateTime,
-                  ),
-                ],
+          ReefCard(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+            child: ReefValueRow(
+              leading: const ReefIconChip(Icons.schedule),
+              value: formatDateTime(context, _takenAt, weekday: false),
+              valueStyle: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: ReefTokens.of(context).text,
               ),
+              actions: [
+                ReefInlineButton(l.change, onPressed: _pickDateTime),
+              ],
             ),
           ),
           Padding(
@@ -265,16 +265,8 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
             if (result.values.keys.any(
               (k) => kParameterByKey[k]?.category == category,
             )) ...[
-              _sectionHeader(title),
-              for (final e in result.values.entries)
-                if (kParameterByKey[e.key]?.category == category)
-                  _valueRow(
-                    e.key,
-                    e.value,
-                    prefs,
-                    rowByKey[e.key],
-                    microBounds[e.key],
-                  ),
+              SectionHeader(title),
+              _sectionCard(category, prefs, rowByKey, microBounds),
             ],
           if (result.skipped.isNotEmpty)
             Padding(
@@ -287,10 +279,7 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _noteCtrl,
-            decoration: InputDecoration(
-              labelText: l.noteOptional,
-              border: const OutlineInputBorder(),
-            ),
+            decoration: InputDecoration(labelText: l.noteOptional),
             maxLines: 2,
           ),
           const SizedBox(height: 24),
@@ -310,19 +299,45 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
     );
   }
 
-  Widget _sectionHeader(String title) => Padding(
-    padding: const EdgeInsets.fromLTRB(0, 16, 0, 4),
-    child: Text(title, style: Theme.of(context).textTheme.titleSmall),
-  );
+  /// One `ReefCard` of hairline-divided value rows for [category].
+  Widget _sectionCard(
+    ParamCategory category,
+    UnitPrefs prefs,
+    Map<String, TrackedParameter> rowByKey,
+    Map<String, ZoneBounds> microBounds,
+  ) {
+    final entries = [
+      for (final e in widget.result.values.entries)
+        if (kParameterByKey[e.key]?.category == category) e,
+    ];
+    return ReefCard(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 14),
+      child: Column(
+        children: [
+          for (var i = 0; i < entries.length; i++)
+            _valueRow(
+              entries[i].key,
+              entries[i].value,
+              prefs,
+              rowByKey[entries[i].key],
+              microBounds[entries[i].key],
+              isLast: i == entries.length - 1,
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _valueRow(
     String key,
     double canonical,
     UnitPrefs prefs,
     TrackedParameter? row,
-    ZoneBounds? microBoundsFor,
-  ) {
+    ZoneBounds? microBoundsFor, {
+    required bool isLast,
+  }) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     final def = kParameterByKey[key];
     final pres = presentationForKey(key, row?.unit ?? def?.unit ?? '', prefs);
     // Effective bounds: the micro panel's (row's or catalog default) for
@@ -331,19 +346,32 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
     final bounds = microBoundsFor ?? (row != null ? boundsOf(row) : null);
     final zone = bounds?.classify(canonical) ?? Zone.unknown;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: isLast
+          ? null
+          : BoxDecoration(
+              border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
+            ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               l.paramName(key),
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.text,
+              ),
             ),
           ),
           Text(
             '${pres.format(canonical)} ${pres.unitLabel}',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: ReefTokens.monoTextStyle.copyWith(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: tokens.text,
+            ),
           ),
           const SizedBox(width: 8),
           SizedBox(

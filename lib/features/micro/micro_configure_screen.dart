@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/section_header.dart';
 
 /// Configuration list for the microelement panel (U17): every catalog element
 /// in report order (major ions / trace elements / contaminants), each row
@@ -39,48 +42,106 @@ class MicroConfigureScreen extends ConsumerWidget {
       (l.microSectionContaminants, ParamCategory.contaminant),
     ];
 
+    // Layout per REDESIGN #24: one `ReefCard` of hairline-divided rows per
+    // report section (#11 pattern) — name, mono bounds summary, chevron; the
+    // whole row taps into the bounds editor (replacing the old trailing edit
+    // icon).
     return Scaffold(
       appBar: AppBar(title: Text(l.microConfigureTitle)),
       body: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           for (final (title, category) in sections) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+            SectionHeader(title),
+            _sectionCard(
+              [
+                for (final e in elements)
+                  if (e.def.category == category) e,
+              ],
+              prefs,
             ),
-            for (final e in elements)
-              if (e.def.category == category)
-                _ConfigureRow(element: e, prefs: prefs),
           ],
         ],
       ),
     );
   }
+
+  Widget _sectionCard(List<MicroElementStatus> items, UnitPrefs prefs) =>
+      ReefCard(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        child: Column(
+          children: [
+            for (var i = 0; i < items.length; i++)
+              _ConfigureRow(
+                element: items[i],
+                prefs: prefs,
+                isLast: i == items.length - 1,
+              ),
+          ],
+        ),
+      );
 }
 
 class _ConfigureRow extends ConsumerWidget {
-  const _ConfigureRow({required this.element, required this.prefs});
+  const _ConfigureRow({
+    required this.element,
+    required this.prefs,
+    required this.isLast,
+  });
 
   final MicroElementStatus element;
   final UnitPrefs prefs;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     final def = element.def;
     final pres = presentationForKey(
       def.key,
       element.row?.unit ?? def.unit,
       prefs,
     );
-    return ListTile(
-      title: Text(l.paramName(def.key)),
-      subtitle: Text(_boundsSummary(l, element.bounds, pres)),
-      trailing: IconButton(
-        icon: const Icon(Icons.edit),
-        tooltip: l.editZones,
-        onPressed: () => _editBounds(context, ref),
+    // The rows ripple on the card's own Material (the InkWell ancestor).
+    return InkWell(
+      onTap: () => _editBounds(context, ref),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: isLast
+            ? null
+            : BoxDecoration(
+                border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
+              ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l.paramName(def.key),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _boundsSummary(l, element.bounds, pres),
+                    style: ReefTokens.monoTextStyle.copyWith(
+                      fontSize: 12,
+                      color: tokens.textDim,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(Icons.chevron_right, size: 16, color: tokens.textFaint),
+          ],
+        ),
       ),
     );
   }

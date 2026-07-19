@@ -160,7 +160,6 @@ class _MicroViewEditSheetState extends State<_MicroViewEditSheet> {
                 decoration: InputDecoration(
                   labelText: l.name,
                   hintText: l.microViewNameHint,
-                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? l.enterAName : null,
@@ -254,18 +253,57 @@ class _MicroViewsManageSheet extends ConsumerWidget {
                 itemCount: views.length,
                 itemBuilder: (context, i) {
                   final v = views[i];
+                  final tokens = ReefTokens.of(context);
                   // Count what the view will actually show: keys the running
                   // catalog knows (a view may carry keys from a newer app).
                   final count = v.keys.where(catalogKeys.contains).length;
-                  return ListTile(
+                  // #11 row pattern (REDESIGN #24, mirroring the test-set
+                  // manage sheet): title + count sub, inline edit/delete
+                  // icons, hairline dividers between rows.
+                  return Container(
                     key: ValueKey(v.id),
-                    title: Text(v.name),
-                    subtitle: Text(l.microViewElementCount(count)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 16,
+                    ),
+                    decoration: i == views.length - 1
+                        ? null
+                        : BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: tokens.surfaceBorder),
+                            ),
+                          ),
+                    child: Row(
                       children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                v.name,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.text,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l.microViewElementCount(count),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: tokens.textDim,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         IconButton(
-                          icon: const Icon(Icons.edit),
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: tokens.textDim,
+                          ),
                           tooltip: l.edit,
                           onPressed: tank == null
                               ? null
@@ -277,7 +315,11 @@ class _MicroViewsManageSheet extends ConsumerWidget {
                                 ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: tokens.textDim,
+                          ),
                           tooltip: l.delete,
                           onPressed: () => _confirmDelete(context, ref, v),
                         ),

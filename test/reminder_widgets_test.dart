@@ -165,9 +165,11 @@ void main() {
     appRouter.go('/settings/reminders');
     await settle(tester);
 
-    final switches = find.byType(SwitchListTile);
+    // REDESIGN #23: the category rows are ReefSettingsRows carrying bare
+    // adaptive switches (full-row tap preserved via the row's onTap).
+    final switches = find.byType(Switch);
     expect(switches, findsNWidgets(3));
-    for (final s in tester.widgetList<SwitchListTile>(switches)) {
+    for (final s in tester.widgetList<Switch>(switches)) {
       expect(s.value, isFalse);
     }
 

@@ -119,6 +119,7 @@ class ReefSettingsRow extends StatelessWidget {
     required this.title,
     this.titleColor,
     this.description,
+    this.descriptionStyle,
     this.trailing,
     this.onTap,
   });
@@ -132,6 +133,11 @@ class ReefSettingsRow extends StatelessWidget {
   final String title;
   final Color? titleColor;
   final String? description;
+
+  /// Override for the description line (the backup rows render their size
+  /// sub-line in mono, REDESIGN #23); default 12 px `textFaint`.
+  final TextStyle? descriptionStyle;
+
   final Widget? trailing;
   final VoidCallback? onTap;
 
@@ -167,7 +173,9 @@ class ReefSettingsRow extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       description!,
-                      style: TextStyle(fontSize: 12, color: tokens.textFaint),
+                      style:
+                          descriptionStyle ??
+                          TextStyle(fontSize: 12, color: tokens.textFaint),
                     ),
                   ),
               ],
@@ -186,27 +194,34 @@ class ReefSettingsRow extends StatelessWidget {
 /// Trailing "current value + chevron" cluster for rows that push a subscreen
 /// (§A.7: value 15 `textDim` on Cupertino / 15 w700 `text` on M3).
 class ReefSettingsValue extends StatelessWidget {
-  const ReefSettingsValue({super.key, this.value});
+  const ReefSettingsValue({super.key, this.value, this.mono = false});
 
   final String? value;
+
+  /// Renders the value in the bundled mono family (numeric values like the
+  /// reminder delivery time, REDESIGN #23).
+  final bool mono;
 
   @override
   Widget build(BuildContext context) {
     final tokens = ReefTokens.of(context);
     final cupertino = reefCupertinoDialect(Theme.of(context).platform);
+    final style = cupertino
+        ? TextStyle(fontSize: 15, color: tokens.textDim)
+        : TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: tokens.text,
+          );
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (value != null) ...[
           Text(
             value!,
-            style: cupertino
-                ? TextStyle(fontSize: 15, color: tokens.textDim)
-                : TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: tokens.text,
-                  ),
+            style: mono
+                ? style.copyWith(fontFamily: ReefTokens.monoFamily)
+                : style,
           ),
           const SizedBox(width: 8),
         ],

@@ -1065,6 +1065,24 @@ the date/time rows in the tank, dosing and manual-dose editors and Add
 reading's timestamp card. Numeric fields on these screens set
 `ReefTokens.monoInputStyle`; `ZoneBoundsEditor` does so centrally.
 
+**Coverage-audit close-out (REDESIGN #22–#25).** The remaining screens speak
+the same language, ending the coverage audit — no screen is left on the
+pre-redesign look. The Maintenance schedule collapses into a `ReefSliverCard`
++ `SliverReorderableList` (handle-only drag); its task sheet's due-date row is
+a `ReefValueRow`. The Settings satellites (Reminders, Backups) rebuild on the
+`reef_settings.dart` primitives so they follow the Settings dialect on both
+platforms — the Reminders permission warning renders in `caution` (status, not
+`error`), the backup rows carry mono size sub-lines and trailing overflow
+menus (the Backups screen hoists its Drive listing future into the screen
+state so both storage sections compose into one `ReefSettingsList`). The
+Microelements suite adopts the entry recipe: per-section `ReefCard`s of
+hairline rows on the panel/configure/import screens, the #10 icon-chip
+geometry on the panel summary card, `ReefSegmented` for the Hobby-kit /
+Full-ICP filter, `ReefIconButton` app-bar actions. The compare view's stacked
+charts become `ReefCard`s with mono zone-colored header values; the salinity
+calculator, AI-summary preview (bundled mono family, token border), Pro
+dialog (token-accented icon) and route-not-found screen close out the sweep.
+
 Deliberate `ColorScheme` slot meanings (documented in the file): `secondary` =
 violet (carbon-change chart marker), `tertiary` = ocean blue (water-change
 marker, noted-reading dots, informational hints), `error` = darkened coral

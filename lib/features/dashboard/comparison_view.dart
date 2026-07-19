@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/dashboard_sections.dart';
 import '../../domain/parameter_catalog.dart';
@@ -10,6 +11,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
 import '../../widgets/trend_chart.dart';
 import '../../widgets/zone_visuals.dart';
 import '../actions/action_markers.dart';
@@ -106,7 +108,7 @@ class ComparisonBody extends ConsumerWidget {
                 // Explicit padding drops the automatic MediaQuery inset, so
                 // add back the tab bar's height (`extendBody`) ourselves.
                 padding: EdgeInsets.fromLTRB(
-                  4,
+                  12,
                   0,
                   12,
                   16 + MediaQuery.paddingOf(context).bottom,
@@ -145,6 +147,11 @@ class ComparisonBody extends ConsumerWidget {
 
 /// A single parameter's header (name + zone-colored latest in-range value) above
 /// its aligned trend chart, or a muted placeholder when it has no data in range.
+///
+/// An actual `ReefCard` per REDESIGN #25, with the #17 chart-card padding
+/// (14 top · 8 sides · 12 bottom); the value renders mono w700 in zone color,
+/// the unit `textFaint`. Every card shares the same horizontal insets, so the
+/// stacked X axes stay aligned.
 class _ParamChartCard extends StatelessWidget {
   const _ParamChartCard({
     required this.param,
@@ -169,6 +176,7 @@ class _ParamChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     final pres = presentationOf(param, prefs);
     final bounds = boundsOf(param);
     // Header value tracks the chart: the newest reading *in range* (inRange is
@@ -176,17 +184,17 @@ class _ParamChartCard extends StatelessWidget {
     // sit above a "No readings in range" chart and imply in-range data (#22).
     final latest = inRange.isNotEmpty ? inRange.last : null;
     final zone = latest != null ? bounds.classify(latest.value) : Zone.unknown;
-    final hint = Theme.of(context).hintColor;
 
-    return InkWell(
-      onTap: () => context.push('/history/${param.paramKey}'),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8),
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: ReefCard(
+        onTap: () => context.push('/history/${param.paramKey}'),
+        padding: const EdgeInsets.fromLTRB(8, 14, 8, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Row(
                 children: [
                   Expanded(
@@ -194,25 +202,26 @@ class _ParamChartCard extends StatelessWidget {
                       l.paramName(param.paramKey),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
+                        color: tokens.text,
                       ),
                     ),
                   ),
                   if (latest != null) ...[
                     Text(
                       pres.format(latest.value),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                      style: ReefTokens.monoTextStyle.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
                         color: zone.colorOf(context),
                       ),
                     ),
                     const SizedBox(width: 3),
                     Text(
                       pres.unitLabel,
-                      style: TextStyle(fontSize: 12, color: hint),
+                      style: TextStyle(fontSize: 12, color: tokens.textFaint),
                     ),
                   ],
                 ],
@@ -224,14 +233,14 @@ class _ParamChartCard extends StatelessWidget {
                   ? Center(
                       child: Text(
                         l.noReadingsInRange,
-                        style: TextStyle(fontSize: 12, color: hint),
+                        style: TextStyle(fontSize: 12, color: tokens.textFaint),
                       ),
                     )
                   : Padding(
                       padding: EdgeInsets.fromLTRB(
                         0,
                         8,
-                        12,
+                        6,
                         showBottomTitles ? 4 : 8,
                       ),
                       child: TrendChart(

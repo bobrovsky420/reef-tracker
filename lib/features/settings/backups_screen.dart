@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
 import '../../data/cloud_backup_store.dart';
@@ -18,10 +19,16 @@ import '../../data/cloud_sync.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_settings.dart';
 
 /// Lists the rotating automatic backups stored on the device — plus, when
 /// Drive sync is connected (U24), the backups in the app's Google Drive
 /// folder — and lets the user restore, share (local only), or delete each.
+///
+/// Layout per REDESIGN #23: rebuilt on the `reef_settings.dart` primitives (a
+/// Settings push screen speaks the Settings dialect on both platforms) — one
+/// labeled section per storage, rows with date title, mono size sub and a
+/// trailing overflow menu.
 class BackupsScreen extends ConsumerStatefulWidget {
   const BackupsScreen({super.key});
 
@@ -41,6 +48,11 @@ Future<List<_BackupEntry>> _loadBackups() async {
 class _BackupsScreenState extends ConsumerState<BackupsScreen> {
   late Future<List<_BackupEntry>> _backups;
 
+  /// The Drive folder listing — created lazily on the first connected build
+  /// (mirrors the pre-redesign mount-on-connect section), reloaded in place
+  /// after mutations. A network call, not a watchable stream.
+  Future<List<CloudBackupFile>>? _drive;
+
   @override
   void initState() {
     super.initState();
@@ -49,94 +61,9 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
 
   void _reload() => setState(() => _backups = _loadBackups());
 
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    // Drive section only on Android (the U24 surface is Android-only — same
-    // deliberate platform branch as the Settings row) and only when
-    // connected: otherwise the screen keeps its original local-only layout.
-    final driveConnected =
-        defaultTargetPlatform == TargetPlatform.android &&
-        ref.watch(syncGdriveAccountProvider).value != null;
-    return Scaffold(
-      appBar: AppBar(title: Text(l.backupsScreenTitle)),
-      body: FutureBuilder<List<_BackupEntry>>(
-        future: _backups,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final entries = snapshot.data ?? const <_BackupEntry>[];
-          if (entries.isEmpty && !driveConnected) {
-            return _EmptyState(l: l);
-          }
-          return ListView(
-            children: [
-              if (driveConnected) _SectionLabel(l.backupsLocalSection),
-              if (entries.isEmpty)
-                // Only reachable with the Drive section below (the full-screen
-                // empty state handles the local-only case): a quiet hint keeps
-                // the section structure intact.
-                ListTile(subtitle: Text(l.noAutoBackups))
-              else
-                for (final (i, e) in entries.indexed) ...[
-                  if (i > 0) const Divider(height: 1),
-                  _BackupTile(file: e.file, stat: e.stat, onChanged: _reload),
-                ],
-              if (driveConnected) ...[
-                const Divider(),
-                _SectionLabel(l.backupsDriveSection),
-                const _DriveSection(),
-              ],
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
+  void _reloadDrive() => setState(() => _drive = _loadDrive());
 
-/// Small section header matching the Settings screen's, for the local/Drive
-/// split — only shown when both sections are present.
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-/// The backups in the app's Drive folder. Loaded once per screen visit (a
-/// network call, not a watchable stream); mutations reload in place.
-class _DriveSection extends ConsumerStatefulWidget {
-  const _DriveSection();
-
-  @override
-  ConsumerState<_DriveSection> createState() => _DriveSectionState();
-}
-
-class _DriveSectionState extends ConsumerState<_DriveSection> {
-  late Future<List<CloudBackupFile>> _files;
-
-  @override
-  void initState() {
-    super.initState();
-    _files = _load();
-  }
-
-  void _reload() => setState(() => _files = _load());
-
-  Future<List<CloudBackupFile>> _load() async {
+  Future<List<CloudBackupFile>> _loadDrive() async {
     final store = ref.read(cloudBackupStoreProvider);
     final settings = ref.read(settingsProvider);
     var folderId = await settings.readSyncGdriveFolderId();
@@ -165,42 +92,110 @@ class _DriveSectionState extends ConsumerState<_DriveSection> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return FutureBuilder<List<CloudBackupFile>>(
-      future: _files,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Padding(
-            padding: EdgeInsets.all(24),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (snapshot.hasError) {
-          // Offline or the provider said no — either way the local list above
-          // stays fully usable; this section just reports itself unavailable.
-          return ListTile(
-            leading: const Icon(Icons.cloud_off),
-            subtitle: Text(l.backupsDriveLoadFailed),
-          );
-        }
-        final files = snapshot.data ?? const <CloudBackupFile>[];
-        if (files.isEmpty) {
-          return ListTile(subtitle: Text(l.backupsDriveEmpty));
-        }
-        return Column(
-          children: [
-            for (final (i, f) in files.indexed) ...[
-              if (i > 0) const Divider(height: 1),
-              _DriveBackupTile(file: f, onChanged: _reload),
+    // Drive section only on Android (the U24 surface is Android-only — same
+    // deliberate platform branch as the Settings row) and only when
+    // connected: otherwise the screen keeps its original local-only layout.
+    final driveConnected =
+        defaultTargetPlatform == TargetPlatform.android &&
+        ref.watch(syncGdriveAccountProvider).value != null;
+    if (driveConnected) _drive ??= _loadDrive();
+    return Scaffold(
+      appBar: AppBar(title: Text(l.backupsScreenTitle)),
+      body: FutureBuilder<List<_BackupEntry>>(
+        future: _backups,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final entries = snapshot.data ?? const <_BackupEntry>[];
+          if (entries.isEmpty && !driveConnected) {
+            return _EmptyState(l: l);
+          }
+          final localSection = ReefSettingsSection(
+            // The section label only earns its place when both storages show.
+            label: driveConnected ? l.backupsLocalSection : null,
+            children: [
+              if (entries.isEmpty)
+                // Only reachable with the Drive section below (the full-screen
+                // empty state handles the local-only case): a quiet hint keeps
+                // the section structure intact.
+                _QuietRow(text: l.noAutoBackups)
+              else
+                for (final e in entries)
+                  _BackupRow(file: e.file, stat: e.stat, onChanged: _reload),
             ],
-          ],
-        );
-      },
+          );
+          if (!driveConnected) {
+            return ReefSettingsList(sections: [localSection]);
+          }
+          return FutureBuilder<List<CloudBackupFile>>(
+            future: _drive,
+            builder: (context, driveSnapshot) => ReefSettingsList(
+              sections: [
+                localSection,
+                ReefSettingsSection(
+                  label: l.backupsDriveSection,
+                  children: _driveRows(l, driveSnapshot),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
+  }
+
+  List<Widget> _driveRows(
+    AppLocalizations l,
+    AsyncSnapshot<List<CloudBackupFile>> snapshot,
+  ) {
+    if (snapshot.connectionState != ConnectionState.done) {
+      return const [
+        Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ];
+    }
+    if (snapshot.hasError) {
+      // Offline or the provider said no — either way the local list above
+      // stays fully usable; this section just reports itself unavailable.
+      return [_QuietRow(icon: Icons.cloud_off, text: l.backupsDriveLoadFailed)];
+    }
+    final files = snapshot.data ?? const <CloudBackupFile>[];
+    if (files.isEmpty) {
+      return [_QuietRow(text: l.backupsDriveEmpty)];
+    }
+    return [
+      for (final f in files) _DriveBackupRow(file: f, onChanged: _reloadDrive),
+    ];
   }
 }
 
-class _DriveBackupTile extends ConsumerWidget {
-  const _DriveBackupTile({required this.file, required this.onChanged});
+/// Muted single-line row for the loading-adjacent sub-states (empty section,
+/// Drive unavailable).
+class _QuietRow extends StatelessWidget {
+  const _QuietRow({this.icon, required this.text});
+
+  final IconData? icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ReefTokens.of(context);
+    return ReefSettingsRow(icon: icon, title: text, titleColor: tokens.textDim);
+  }
+}
+
+/// The size sub-line style shared by both row kinds: 12 px mono `textDim`
+/// (§A.6 — numerals render in the bundled mono family).
+TextStyle _sizeStyle(BuildContext context) => ReefTokens.monoTextStyle.copyWith(
+  fontSize: 12,
+  color: ReefTokens.of(context).textDim,
+);
+
+class _DriveBackupRow extends ConsumerWidget {
+  const _DriveBackupRow({required this.file, required this.onChanged});
 
   final CloudBackupFile file;
   final VoidCallback onChanged;
@@ -208,20 +203,21 @@ class _DriveBackupTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     final modified = file.modifiedAt?.toLocal();
-    return ListTile(
-      leading: const Icon(Icons.cloud_outlined),
+    return ReefSettingsRow(
+      icon: Icons.cloud_outlined,
       // Drive always reports modifiedTime; the name is the (unlocalized)
       // fallback for a hand-uploaded file that somehow lacks it.
-      title: Text(
-        modified != null
-            ? formatDateTime(context, modified, weekday: false)
-            : file.name,
-      ),
-      subtitle: file.sizeBytes != null
-          ? Text(_formatSize(l, file.sizeBytes!))
+      title: modified != null
+          ? formatDateTime(context, modified, weekday: false)
+          : file.name,
+      description: file.sizeBytes != null
+          ? _formatSize(l, file.sizeBytes!)
           : null,
+      descriptionStyle: _sizeStyle(context),
       trailing: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert, size: 18, color: tokens.textDim),
         onSelected: (action) {
           switch (action) {
             case 'restore':
@@ -356,8 +352,8 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _BackupTile extends ConsumerWidget {
-  const _BackupTile({
+class _BackupRow extends ConsumerWidget {
+  const _BackupRow({
     required this.file,
     required this.stat,
     required this.onChanged,
@@ -370,15 +366,18 @@ class _BackupTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     // Shared helper honors the device 12/24-hour preference (#41).
     final when = formatDateTime(context, stat.modified, weekday: false);
     final size = _formatSize(l, stat.size);
 
-    return ListTile(
-      leading: const Icon(Icons.history),
-      title: Text(when),
-      subtitle: Text(size),
+    return ReefSettingsRow(
+      icon: Icons.history,
+      title: when,
+      description: size,
+      descriptionStyle: _sizeStyle(context),
       trailing: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert, size: 18, color: tokens.textDim),
         onSelected: (action) {
           switch (action) {
             case 'restore':
@@ -483,7 +482,7 @@ class _BackupTile extends ConsumerWidget {
 }
 
 /// Localized file size: translated unit symbols and the locale's decimal
-/// separator (#42). Shared by the local and Drive backup tiles.
+/// separator (#42). Shared by the local and Drive backup rows.
 String _formatSize(AppLocalizations l, int bytes) {
   if (bytes < 1024) return l.sizeBytes('$bytes');
   final kb = bytes / 1024;

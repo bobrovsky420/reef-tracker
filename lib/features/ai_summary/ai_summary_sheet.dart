@@ -95,6 +95,7 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final tokens = ReefTokens.of(context);
     final weeks =
         _weeks ??
         (ref.watch(aiSummaryWeeksProvider).value ?? kAiSummaryDefaultWeeks);
@@ -126,7 +127,7 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
               Text(
                 l.aiSummaryPrivacyNote,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.hintColor,
+                  color: tokens.textDim,
                 ),
               ),
               const SizedBox(height: 10),
@@ -152,7 +153,7 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(
                     l.aiSummaryEmpty,
-                    style: TextStyle(color: theme.hintColor),
+                    style: TextStyle(color: tokens.textDim),
                   ),
                 )
               else
@@ -172,7 +173,7 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Text(
                             l.aiSummaryEmpty,
-                            style: TextStyle(color: theme.hintColor),
+                            style: TextStyle(color: tokens.textDim),
                           ),
                         );
                       }
@@ -183,26 +184,31 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
                           Text(
                             l.aiSummaryPromptPreview.toUpperCase(),
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.hintColor,
+                              color: tokens.textFaint,
                               letterSpacing: 0.6,
                             ),
                           ),
                           const SizedBox(height: 4),
+                          // The preview is load-bearing content — the exact
+                          // markdown that will leave the app — so it stays
+                          // fully legible (`textDim`, bundled mono family)
+                          // and scrollable (REDESIGN #25).
                           Flexible(
                             child: Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                border: Border.all(color: theme.dividerColor),
-                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: tokens.surfaceBorder,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               padding: const EdgeInsets.all(10),
                               child: SingleChildScrollView(
                                 child: Text(
                                   text,
-                                  style: TextStyle(
-                                    fontFamily: 'monospace',
+                                  style: ReefTokens.monoTextStyle.copyWith(
                                     fontSize: 11,
-                                    color: theme.hintColor,
+                                    color: tokens.textDim,
                                   ),
                                 ),
                               ),

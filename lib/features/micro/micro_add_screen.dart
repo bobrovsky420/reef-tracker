@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../domain/micro.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/reef_segmented.dart';
+import '../../widgets/reef_value_row.dart';
+import '../../widgets/section_header.dart';
 import '../../widgets/zone_chip.dart';
 
 /// Batch entry form for microelement measurements (U17) — the Add Reading
@@ -206,68 +211,56 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.microAddTitle)),
+      // Layout per REDESIGN #24: the #20 batch-entry recipe — date/time as a
+      // `ReefCard` value row, a 2-option `ReefSegmented` filter, and the
+      // element rows grouped into hairline-divided cards.
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.schedule),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      formatDateTime(context, _takenAt, weekday: false),
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    tooltip: l.change,
-                    onPressed: _pickDateTime,
-                  ),
-                ],
+          ReefCard(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+            child: ReefValueRow(
+              leading: const ReefIconChip(Icons.schedule),
+              value: formatDateTime(context, _takenAt, weekday: false),
+              valueStyle: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: ReefTokens.of(context).text,
               ),
+              actions: [
+                ReefInlineButton(l.change, onPressed: _pickDateTime),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              ChoiceChip(
-                label: Text(l.microChipHobby),
-                selected: !_fullPanel,
-                onSelected: (_) => setState(() => _fullPanel = false),
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: Text(l.microChipFullIcp),
-                selected: _fullPanel,
-                onSelected: (_) => setState(() => _fullPanel = true),
-              ),
+          const SizedBox(height: 12),
+          ReefSegmented<bool>(
+            options: [
+              (false, l.microChipHobby),
+              (true, l.microChipFullIcp),
             ],
+            selected: _fullPanel,
+            onChanged: (v) => setState(() => _fullPanel = v),
           ),
-          const SizedBox(height: 8),
-          if (!_fullPanel)
-            for (final e in hobby) _elementRow(e, prefs)
-          else
+          if (!_fullPanel) ...[
+            const SizedBox(height: 12),
+            _elementCard(hobby, prefs),
+          ] else
             for (final (title, category) in [
               (l.microSectionMajor, ParamCategory.major),
               (l.microSectionTrace, ParamCategory.trace),
               (l.microSectionContaminants, ParamCategory.contaminant),
             ])
               if (inView.any((e) => e.def.category == category)) ...[
-                _sectionHeader(title),
-                for (final e in inView)
-                  if (e.def.category == category) _elementRow(e, prefs),
+                SectionHeader(title),
+                _elementCard([
+                  for (final e in inView)
+                    if (e.def.category == category) e,
+                ], prefs),
               ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           TextField(
             controller: _noteCtrl,
-            decoration: InputDecoration(
-              labelText: l.noteOptional,
-              border: const OutlineInputBorder(),
-            ),
+            decoration: InputDecoration(labelText: l.noteOptional),
             maxLines: 2,
           ),
           const SizedBox(height: 24),
@@ -287,25 +280,46 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
     );
   }
 
-  Widget _sectionHeader(String title) => Padding(
-    padding: const EdgeInsets.fromLTRB(0, 16, 0, 4),
-    child: Text(title, style: Theme.of(context).textTheme.titleSmall),
-  );
+  /// One `ReefCard` of hairline-divided entry rows (#20 recipe).
+  Widget _elementCard(List<MicroElementStatus> items, UnitPrefs prefs) =>
+      ReefCard(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 14),
+        child: Column(
+          children: [
+            for (var i = 0; i < items.length; i++)
+              _elementRow(items[i], prefs, isLast: i == items.length - 1),
+          ],
+        ),
+      );
 
-  Widget _elementRow(MicroElementStatus e, UnitPrefs prefs) {
+  Widget _elementRow(
+    MicroElementStatus e,
+    UnitPrefs prefs, {
+    required bool isLast,
+  }) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     final pres = _presFor(e, prefs);
     final ctrl = _controllerFor(e.def.key);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: isLast
+          ? null
+          : BoxDecoration(
+              border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
+            ),
       child: Row(
         children: [
           Expanded(
             flex: 3,
             child: Text(
               l.paramName(e.def.key),
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.text,
+              ),
             ),
           ),
           Expanded(
@@ -315,10 +329,12 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
+              // Mono entry, `textFaint` unit suffix — both from the #18
+              // input treatment.
+              style: ReefTokens.monoInputStyle,
               decoration: InputDecoration(
                 isDense: true,
                 suffixText: pres.unitLabel,
-                border: const OutlineInputBorder(),
               ),
             ),
           ),

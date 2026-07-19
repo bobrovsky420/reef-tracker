@@ -52,9 +52,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     themes.
   - Selection chips app-wide (test sets, reminder cadence, weekdays) share
     one rounded style with a soft green selected state.
+- **Redesign, final sweep — every remaining screen now wears the new look:**
+  - Maintenance schedule: the task list becomes one card of divided rows
+    (drag handle, mark-done and tap-to-edit unchanged; overdue due dates read
+    in the status red), and the task sheet's due-date row gains inline
+    Set/Change/Clear actions.
+  - Settings → Reminders and Settings → Backups now match the restyled
+    Settings screen on both platforms (grouped rows/cards per platform
+    dialect); backup sizes and the reminder delivery time render in the
+    numeric font.
+  - Microelements: the panel, entry form, ICP-import preview and element
+    settings group their rows into cards with section headers; the summary
+    header matches the dashboard card; the Hobby kit / Full ICP filter is a
+    segmented control; app-bar actions use the mini-card icon buttons.
+  - Compare view: each parameter's chart sits in its own card with the latest
+    value in the numeric font, colored by its zone.
+  - Salinity calculator, the AI-summary preview box, the Pro-feature dialog
+    and the page-not-found screen restyled to match.
 - iOS note: these are shared-code changes; the iOS dialect (r20 cards,
-  stadium buttons) is applied by the same theme but was not visually
-  verified on this machine.
+  stadium buttons, grouped settings cards) is applied by the same theme but
+  was not visually verified on this machine.
 - Gauge dials and environment pills now label parameters with a compact
   short name: alkalinity shows "KH", and parameters whose name carries a
   symbol ("Calcium (Ca)", "Nitrate (NO₃)") show just the symbol; names

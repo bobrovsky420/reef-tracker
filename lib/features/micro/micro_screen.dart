@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/icp_import_file.dart';
 import '../../domain/icp_import.dart';
@@ -16,6 +17,10 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
+import '../../widgets/reef_card.dart';
+import '../../widgets/reef_icon_button.dart';
+import '../../widgets/reef_sheet.dart';
+import '../../widgets/section_header.dart';
 import '../../widgets/zone_visuals.dart';
 import 'micro_view_sheets.dart';
 
@@ -88,9 +93,10 @@ class MicroScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l.microTitle),
+        // Mini-card icon buttons (REDESIGN #3 chrome, applied here by #24).
         actions: [
-          IconButton(
-            icon: const Icon(Icons.upload_file_outlined),
+          ReefIconButton(
+            icon: Icons.upload_file_outlined,
             tooltip: l.icpImportTitle,
             // Pro-gated (U19): founders (and, later, Pro purchasers) import;
             // anyone else gets the explanation dialog instead of the picker.
@@ -98,18 +104,18 @@ class MicroScreen extends ConsumerWidget {
                 ? () => _importReport(context)
                 : () => showProFeatureDialog(context, ProFeature.icpImport),
           ),
-          IconButton(
-            icon: const Icon(Icons.checklist),
+          ReefIconButton(
+            icon: Icons.checklist,
             tooltip: l.microViewManage,
             onPressed: () => showMicroViewsManageSheet(context),
           ),
-          IconButton(
-            icon: const Icon(Icons.tune),
+          ReefIconButton(
+            icon: Icons.tune,
             tooltip: l.microConfigureTitle,
             onPressed: () => context.push('/micro/configure'),
           ),
-          IconButton(
-            icon: const Icon(Icons.alarm_add),
+          ReefIconButton(
+            icon: Icons.alarm_add,
             tooltip: l.microReminderTooltip,
             onPressed: () => _createReminder(context, ref, tank.id),
           ),
@@ -156,21 +162,39 @@ class MicroScreen extends ConsumerWidget {
                 l.microFilterAllHidden,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).hintColor,
+                  color: ReefTokens.of(context).textDim,
                 ),
               ),
             ),
+          // Element rows grouped into one `ReefCard` per report section under
+          // a `SectionHeader` (REDESIGN #24, #11 row pattern).
           for (final (title, items) in sections)
-            if (items.isNotEmpty) ...[
+            if (items.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SectionHeader(title),
+                    ReefCard(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 4,
+                        horizontal: 8,
+                      ),
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < items.length; i++)
+                            _ElementRow(
+                              element: items[i],
+                              prefs: prefs,
+                              isLast: i == items.length - 1,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              for (final e in items) _ElementRow(element: e, prefs: prefs),
-            ],
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -197,10 +221,7 @@ class MicroScreen extends ConsumerWidget {
             Padding(
               // No top inset — the sheet's drag handle already provides it.
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-              child: Text(
-                l.icpImportTitle,
-                style: Theme.of(ctx).textTheme.titleMedium,
-              ),
+              child: ReefSheetHeader(l.icpImportTitle),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -285,10 +306,8 @@ class MicroScreen extends ConsumerWidget {
                 controller: ctrl,
                 keyboardType: TextInputType.number,
                 autofocus: true,
-                decoration: InputDecoration(
-                  labelText: l.customDaysLabel,
-                  border: const OutlineInputBorder(),
-                ),
+                style: ReefTokens.monoInputStyle,
+                decoration: InputDecoration(labelText: l.customDaysLabel),
                 validator: (v) {
                   final parsed = int.tryParse((v ?? '').trim());
                   return (parsed == null || parsed < 1)
@@ -406,8 +425,9 @@ class _ViewChips extends ConsumerWidget {
             ),
           Padding(
             padding: const EdgeInsets.only(left: 8, right: 16),
+            // Icon size/color come from the theme's §A.6 chip treatment.
             child: ActionChip(
-              avatar: const Icon(Icons.add, size: 18),
+              avatar: const Icon(Icons.add),
               label: Text(l.microViewNew),
               onPressed: () => _create(context, ref),
             ),
@@ -421,6 +441,11 @@ class _ViewChips extends ConsumerWidget {
 /// Panel status header: dominant-zone icon, out-of-range headline, newest sample
 /// date — the micro panel's own freshness framing (deliberately outside the
 /// 30-day core health model; see `domain/micro.dart`).
+///
+/// Styled after the dashboard `MicroSummaryTile` (REDESIGN #10 geometry): a
+/// 34 px r10 icon chip in the dominant zone's soft color, headline in the
+/// dominant color, faint date line. Unknown zone (no readings) renders
+/// neutrally via the zone visuals' track/textFaint mapping.
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.status});
 
@@ -429,58 +454,77 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final hint = Theme.of(context).hintColor;
+    final tokens = ReefTokens.of(context);
     final measured = status.measured > 0;
-    final color = measured ? status.statusZone.colorOf(context) : hint;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(Icons.science_outlined, size: 32, color: color),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    !measured
-                        ? l.microEmptyHint
-                        : status.outOfRange > 0
-                        ? l.microOutOfRangeN(status.outOfRange)
-                        : l.microAllOk,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: measured ? color : null,
-                      fontWeight: measured ? FontWeight.w600 : null,
-                    ),
-                  ),
-                  if (status.lastMeasuredAt != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      l.microLastMeasured(formatDate(status.lastMeasuredAt!)),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ],
-              ),
+    final zone = status.statusZone;
+    return ReefCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: zone.softColorOf(context),
+              borderRadius: BorderRadius.circular(10),
             ),
-          ],
-        ),
+            child: Icon(
+              Icons.science_outlined,
+              size: 16,
+              color: zone.colorOf(context),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  !measured
+                      ? l.microEmptyHint
+                      : status.outOfRange > 0
+                      ? l.microOutOfRangeN(status.outOfRange)
+                      : l.microAllOk,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: measured ? zone.colorOf(context) : tokens.textDim,
+                  ),
+                ),
+                if (status.lastMeasuredAt != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    l.microLastMeasured(formatDate(status.lastMeasuredAt!)),
+                    style: TextStyle(fontSize: 11, color: tokens.textFaint),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+/// One element row (#11 pattern) inside its section card: name, relative-time
+/// sub, trailing latest value in mono w700 zone color. Tap → the standard
+/// parameter history.
 class _ElementRow extends StatelessWidget {
-  const _ElementRow({required this.element, required this.prefs});
+  const _ElementRow({
+    required this.element,
+    required this.prefs,
+    required this.isLast,
+  });
 
   final MicroElementStatus element;
   final UnitPrefs prefs;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final hint = Theme.of(context).hintColor;
+    final tokens = ReefTokens.of(context);
     final def = element.def;
     final latest = element.latest;
     final pres = presentationForKey(
@@ -492,29 +536,62 @@ class _ElementRow extends StatelessWidget {
         ? element.bounds.classify(latest.value)
         : Zone.unknown;
 
-    return ListTile(
-      // Localized names carry the element symbol ("Zinc (Zn)") so rows match
-      // the symbols on an ICP report.
-      title: Text(l.paramName(def.key)),
-      subtitle: Text(
-        latest == null
-            ? l.microNotMeasured
-            : relativeTimeLabel(l, latest.takenAt),
-        style: TextStyle(color: hint),
-      ),
-      trailing: latest == null
-          ? null
-          : Text(
-              '${pres.format(latest.value)} ${pres.unitLabel}',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                // An unclassifiable value (empty/invalid bounds) renders in
-                // the default color, not painted as any zone.
-                color: zone == Zone.unknown ? null : zone.colorOf(context),
+    // The rows ripple on the card's own Material (the InkWell ancestor).
+    return InkWell(
+      onTap: () => context.push('/history/${def.key}'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: isLast
+            ? null
+            : BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: tokens.surfaceBorder),
+                ),
+              ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Localized names carry the element symbol ("Zinc (Zn)") so
+                  // rows match the symbols on an ICP report.
+                  Text(
+                    l.paramName(def.key),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    latest == null
+                        ? l.microNotMeasured
+                        : relativeTimeLabel(l, latest.takenAt),
+                    style: TextStyle(fontSize: 12, color: tokens.textFaint),
+                  ),
+                ],
               ),
             ),
-      onTap: () => context.push('/history/${def.key}'),
+            if (latest != null) ...[
+              const SizedBox(width: 12),
+              Text(
+                '${pres.format(latest.value)} ${pres.unitLabel}',
+                style: ReefTokens.monoTextStyle.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  // An unclassifiable value (empty/invalid bounds) renders in
+                  // the default color, not painted as any zone.
+                  color: zone == Zone.unknown
+                      ? tokens.text
+                      : zone.colorOf(context),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

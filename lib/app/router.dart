@@ -30,6 +30,7 @@ import '../features/settings/reminders_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/reef_card.dart';
 import 'providers.dart';
 
 final appRouter = GoRouter(
@@ -184,21 +185,26 @@ class _RouteNotFoundScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Content in a `ReefCard`, button on the #18 FilledButton theme
+    // (REDESIGN #25 rider).
     return Scaffold(
       appBar: AppBar(title: Text(l10n.routeNotFoundTitle)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(l10n.routeNotFoundBody, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () => context.go('/'),
-                child: Text(l10n.routeNotFoundGoHome),
-              ),
-            ],
+          child: ReefCard(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.routeNotFoundBody, textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go('/'),
+                  child: Text(l10n.routeNotFoundGoHome),
+                ),
+              ],
+            ),
           ),
         ),
       ),

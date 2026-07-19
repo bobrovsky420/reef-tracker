@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/theme.dart';
 import '../domain/pro_features.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
@@ -20,7 +21,13 @@ Future<void> showProFeatureDialog(
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      icon: const Icon(Icons.workspace_premium_outlined),
+      // Minimal REDESIGN #25 pass: token-accented icon only — the dialog
+      // surface itself inherits the #1 theme; a designed paywall is out of
+      // redesign scope.
+      icon: Icon(
+        Icons.workspace_premium_outlined,
+        color: ReefTokens.of(context).primary,
+      ),
       title: Text(l.proFeatureTitle),
       content: Text(body ?? l.proFeatureBody(l.proFeatureName(feature))),
       actions: [

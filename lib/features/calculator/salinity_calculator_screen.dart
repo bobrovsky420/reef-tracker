@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
+import '../../widgets/reef_card.dart';
 
 /// Two-way salinity converter: ppt <-> specific gravity (SG).
 /// Editing either field updates the other live.
+///
+/// Restyled per REDESIGN #25: mono entry in both live fields (#18 input
+/// treatment) and the reference card as a `ReefCard` with token text styles.
 class SalinityCalculatorScreen extends StatefulWidget {
   const SalinityCalculatorScreen({super.key});
 
@@ -58,6 +63,7 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l.salinityCalculator)),
       body: ListView(
@@ -70,53 +76,63 @@ class _SalinityCalculatorScreenState extends State<SalinityCalculatorScreen> {
           const SizedBox(height: 24),
           TextField(
             controller: _pptCtrl,
+            style: ReefTokens.monoInputStyle,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               labelText: l.salinity,
               suffixText: 'ppt',
-              border: const OutlineInputBorder(),
             ),
             onChanged: _onPptChanged,
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(child: Icon(Icons.swap_vert, size: 28)),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: Icon(Icons.swap_vert, size: 28, color: tokens.textDim),
+            ),
           ),
           TextField(
             controller: _sgCtrl,
+            style: ReefTokens.monoInputStyle,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               labelText: l.specificGravity,
               suffixText: 'SG',
-              border: const OutlineInputBorder(),
             ),
             onChanged: _onSgChanged,
           ),
           const SizedBox(height: 24),
-          Card(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l.referencePoints,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+          ReefCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.referencePoints,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.text,
                   ),
-                  const SizedBox(height: 8),
-                  Text(l.refSeawater),
-                  Text(l.refReefTarget),
-                  const SizedBox(height: 8),
-                  Text(
-                    l.refFormulaNote,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l.refSeawater,
+                  style: TextStyle(fontSize: 13, color: tokens.textDim),
+                ),
+                Text(
+                  l.refReefTarget,
+                  style: TextStyle(fontSize: 13, color: tokens.textDim),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l.refFormulaNote,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: tokens.textFaint,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],

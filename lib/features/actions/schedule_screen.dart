@@ -9,14 +9,21 @@ import '../../data/database.dart';
 import '../../domain/reminders.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_card.dart';
 import '../../widgets/reef_segmented.dart';
 import '../../widgets/reef_sheet.dart';
+import '../../widgets/reef_value_row.dart';
 import 'actions_screen.dart';
 
 /// The user-maintained maintenance schedule (U12), route `/schedule`: recurring
 /// or one-off plans for the three logged action types plus custom-titled
 /// tasks. Rows reorder by drag; tap edits; delete and "Mark done" act
 /// immediately with an Undo SnackBar (the U10 cheap-to-restore convention).
+///
+/// Layout per REDESIGN #22: the tasks collapse into one `ReefSliverCard` of
+/// hairline-divided reorderable rows (the #13 dosing-list pattern) — type icon,
+/// title, repeat/due sub with the due part in mono, mark-done icon + drag
+/// handle.
 class MaintenanceScheduleScreen extends ConsumerWidget {
   const MaintenanceScheduleScreen({super.key});
 
@@ -44,59 +51,152 @@ class MaintenanceScheduleScreen extends ConsumerWidget {
                 child: Text(l.scheduleEmptyBody, textAlign: TextAlign.center),
               ),
             )
-          : ReorderableListView.builder(
-              buildDefaultDragHandles: false,
-              itemCount: schedules.length,
-              onReorderItem: (oldIndex, newIndex) {
-                final ids = schedules.map((s) => s.id).toList();
-                ids.insert(newIndex, ids.removeAt(oldIndex));
-                unawaited(
-                  ref.read(dbProvider).reorderMaintenanceSchedules(ids),
-                );
-              },
-              itemBuilder: (context, i) {
-                final s = schedules[i];
-                return ListTile(
-                  key: ValueKey(s.id),
-                  leading: Icon(maintenanceIcon(s)),
-                  title: Text(maintenanceName(l, s)),
-                  subtitle: Text(_subtitle(context, l, s, dues[s.id])),
-                  onTap: () => showMaintenanceTaskSheet(context, ref, task: s),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (dues[s.id] != null &&
-                          MaintenanceActionType.fromName(s.actionType) == null)
-                        IconButton(
-                          tooltip: l.markDone,
-                          icon: const Icon(Icons.check_circle_outline),
-                          onPressed: () =>
-                              markMaintenanceDoneWithUndo(context, ref, s),
-                        ),
-                      ReorderableDragStartListener(
-                        index: i,
-                        child: Icon(
-                          Icons.drag_handle,
-                          semanticLabel: l.reorder,
-                        ),
+          : CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+                  sliver: ReefSliverCard(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 10,
+                    ),
+                    sliver: SliverReorderableList(
+                      itemCount: schedules.length,
+                      onReorderItem: (oldIndex, newIndex) {
+                        final ids = schedules.map((s) => s.id).toList();
+                        ids.insert(newIndex, ids.removeAt(oldIndex));
+                        unawaited(
+                          ref.read(dbProvider).reorderMaintenanceSchedules(ids),
+                        );
+                      },
+                      // The dragged row leaves the card, so give it an opaque
+                      // lifted surface (the dark-theme card fill is translucent
+                      // — rows underneath would show through the bare row).
+                      proxyDecorator: (child, index, animation) => Material(
+                        elevation: 3,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(12),
+                        child: child,
                       ),
-                    ],
+                      itemBuilder: (context, i) => _taskRow(
+                        context,
+                        ref,
+                        l,
+                        schedules[i],
+                        dues[schedules[i].id],
+                        i,
+                        isLast: i == schedules.length - 1,
+                      ),
+                    ),
                   ),
-                );
-              },
+                ),
+              ],
             ),
     );
   }
 
-  String _subtitle(
+  /// One task row (#11 pattern): transparent [Material] for ink above the
+  /// sliver card's fill, hairline divider, custom drag handle (the pre-redesign
+  /// `buildDefaultDragHandles: false` convention — `SliverReorderableList`
+  /// never builds default handles).
+  Widget _taskRow(
     BuildContext context,
+    WidgetRef ref,
     AppLocalizations l,
     MaintenanceSchedule s,
     DueStatus? due,
-  ) {
-    final repeat = maintenanceRepeatText(context, l, s);
-    if (due == null) return repeat;
-    return '$repeat • ${dueText(l, due)}';
+    int index, {
+    required bool isLast,
+  }) {
+    final tokens = ReefTokens.of(context);
+    final overdue = due != null && due.daysLeft < 0;
+    // "repeat · due" (§A.6 sub line): the due part — the numeric half — in
+    // mono; an overdue due reads in `critical` (status, matching the due
+    // chips), the rest in `textDim`.
+    final sub = TextSpan(
+      style: TextStyle(fontSize: 12, color: tokens.textDim),
+      children: [
+        TextSpan(text: maintenanceRepeatText(context, l, s)),
+        if (due != null) ...[
+          const TextSpan(text: ' · '),
+          TextSpan(
+            text: dueText(l, due),
+            style: ReefTokens.monoTextStyle.copyWith(
+              fontSize: 12,
+              color: overdue ? tokens.critical : tokens.textDim,
+            ),
+          ),
+        ],
+      ],
+    );
+
+    return Material(
+      key: ValueKey(s.id),
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () => showMaintenanceTaskSheet(context, ref, task: s),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+          decoration: isLast
+              ? null
+              : BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: tokens.surfaceBorder),
+                  ),
+                ),
+          child: Row(
+            children: [
+              Icon(maintenanceIcon(s), size: 18, color: tokens.textDim),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      maintenanceName(l, s),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.text,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text.rich(sub),
+                  ],
+                ),
+              ),
+              if (due != null &&
+                  MaintenanceActionType.fromName(s.actionType) == null)
+                IconButton(
+                  tooltip: l.markDone,
+                  icon: Icon(
+                    Icons.check_circle_outline,
+                    size: 18,
+                    color: tokens.textDim,
+                  ),
+                  onPressed: () =>
+                      markMaintenanceDoneWithUndo(context, ref, s),
+                ),
+              ReorderableDragStartListener(
+                index: index,
+                // The padding keeps the 16 px glyph draggable with a finger.
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.drag_handle,
+                    size: 16,
+                    color: tokens.textFaint,
+                    semanticLabel: l.reorder,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -442,7 +542,6 @@ class _TaskSheetState extends State<_TaskSheet> {
               initialValue: _type,
               decoration: InputDecoration(
                 labelText: l.taskTypeLabel,
-                border: const OutlineInputBorder(),
               ),
               items: [
                 for (final t in MaintenanceActionType.values)
@@ -465,7 +564,6 @@ class _TaskSheetState extends State<_TaskSheet> {
                 controller: _title,
                 decoration: InputDecoration(
                   labelText: l.taskTitleLabel,
-                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) =>
                     (v ?? '').trim().isEmpty ? l.taskTitleRequired : null,
@@ -483,7 +581,6 @@ class _TaskSheetState extends State<_TaskSheet> {
                 initialValue: _mode,
                 decoration: InputDecoration(
                   labelText: l.repeatModeLabel,
-                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   for (final m in _RepeatMode.values)
@@ -516,6 +613,7 @@ class _TaskSheetState extends State<_TaskSheet> {
                 _RepeatMode.everyWeeks ||
                 _RepeatMode.everyMonths => TextFormField(
                   controller: _days,
+                  style: ReefTokens.monoInputStyle,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: switch (_mode) {
@@ -523,7 +621,6 @@ class _TaskSheetState extends State<_TaskSheet> {
                       _RepeatMode.everyMonths => l.monthsLabel,
                       _ => l.customDaysLabel,
                     },
-                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) {
                     final parsed = int.tryParse((v ?? '').trim());
@@ -548,10 +645,10 @@ class _TaskSheetState extends State<_TaskSheet> {
                 ),
                 _RepeatMode.monthDay => TextFormField(
                   controller: _monthDayCtrl,
+                  style: ReefTokens.monoInputStyle,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: l.monthDayLabel,
-                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) {
                     final parsed = int.tryParse((v ?? '').trim());
@@ -562,24 +659,30 @@ class _TaskSheetState extends State<_TaskSheet> {
                 ),
               },
             ],
-            const SizedBox(height: 12),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.event),
-              title: Text(l.dueDateLabel),
-              subtitle: Text(
-                _scheduledAt == null
-                    ? l.dueDateRequired
-                    : formatDate(_scheduledAt!),
+            const SizedBox(height: 16),
+            // Due date as the #12 footer pattern (REDESIGN #22): value +
+            // inline set / change / clear text actions. _save still enforces
+            // the date for one-offs.
+            ReefValueRow(
+              leading: Icon(
+                Icons.event,
+                size: 18,
+                color: ReefTokens.of(context).textDim,
               ),
-              onTap: _pickDueDate,
-              trailing: _scheduledAt == null
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.clear),
-                      tooltip: l.cancel,
-                      onPressed: () => setState(() => _scheduledAt = null),
-                    ),
+              value: _scheduledAt == null
+                  ? '${l.dueDateLabel}: ${l.notSet}'
+                  : '${l.dueDateLabel}: ${formatDate(_scheduledAt!)}',
+              actions: [
+                if (_scheduledAt != null)
+                  ReefInlineButton(
+                    l.cancel,
+                    onPressed: () => setState(() => _scheduledAt = null),
+                  ),
+                ReefInlineButton(
+                  _scheduledAt == null ? l.setDate : l.change,
+                  onPressed: _pickDueDate,
+                ),
+              ],
             ),
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
@@ -591,7 +694,6 @@ class _TaskSheetState extends State<_TaskSheet> {
               controller: _note,
               decoration: InputDecoration(
                 labelText: l.noteOptional,
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
