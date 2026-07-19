@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   temperature reading is more than a week older than the ammonia reading.
 
 ### Changed
+- The Microelements card on the grouped dashboard no longer repeats the
+  "Microelements" title inside the card — the section header above it
+  already names it.
 - The management and entry screens now follow the app's redesigned card
   language:
   - **Aquariums** collapses into one card of divided rows with a green

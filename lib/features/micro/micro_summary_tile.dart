@@ -16,9 +16,10 @@ import '../../widgets/zone_visuals.dart';
 /// before the first measurement. Tapping opens `/micro`.
 ///
 /// Default form (REDESIGN #10): the mockup list-card — leading icon in a
-/// dominant-zone soft rounded square, title / headline / date column,
-/// trailing chevron — rendered full-width by the grouped dashboard. The
-/// classic flat grid passes [grid] for the frozen pre-redesign vertical tile.
+/// dominant-zone soft rounded square, headline / date column (no in-card
+/// title; the section header names it), trailing chevron — rendered
+/// full-width by the grouped dashboard. The classic flat grid passes [grid]
+/// for the frozen pre-redesign vertical tile.
 class MicroSummaryTile extends ConsumerWidget {
   const MicroSummaryTile({super.key, this.grid = false});
 
@@ -43,9 +44,10 @@ class MicroSummaryTile extends ConsumerWidget {
         : l.microAllOk;
 
     // §A.6 micro card: 34 px r10 icon chip in the dominant zone's soft color,
-    // title 13 w700, headline 14 w700 in the dominant color, date 11 faint,
-    // 16 px chevron. Unknown zone (no readings) renders neutrally via the
-    // zone visuals' track/textFaint mapping.
+    // headline 14 w700 in the dominant color, date 11 faint, 16 px chevron.
+    // No in-card title — the grouped dashboard's "Microelements" section
+    // header already names the card. Unknown zone (no readings) renders
+    // neutrally via the zone visuals' track/textFaint mapping.
     return ReefCard(
       onTap: () => context.push('/micro'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -69,17 +71,6 @@ class MicroSummaryTile extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l.microTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: tokens.text,
-                  ),
-                ),
-                const SizedBox(height: 1),
                 Text(
                   headline,
                   maxLines: 1,
