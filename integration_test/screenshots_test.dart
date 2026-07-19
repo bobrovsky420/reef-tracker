@@ -1,11 +1,13 @@
-// TEMPORARY screenshot harness for Play Store listing assets.
-// Seeds the DB from store_assets/sample-data.json, then drives the app to each
-// screen and captures a screenshot. Not a real test; safe to delete after use.
+// Screenshot harness for store listing assets.
+// Seeds the on-device DB with the showcase dataset (test/tool/showcase_data.dart),
+// then drives the app to each screen and captures a screenshot.
 //
 // Run via:
 //   flutter drive --driver=test_driver/screenshot_driver.dart \
 //     --target=integration_test/screenshots_test.dart \
 //     -d <device> --dart-define=SHOTS=phone   (or tablet)
+// with SHOT_DIR=<phone|tablet7|tablet10|iphone> in the host env selecting the
+// output folder under store_assets/screenshots/.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -14,28 +16,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import 'package:reeftracker/app/router.dart';
-import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/main.dart';
 
-import 'sample_data.g.dart';
+import '../test/tool/showcase_data.dart';
 
 Future<void> _seedDatabase() async {
-  final data = decodeBackup(sampleBackupJson);
   final db = AppDatabase();
-  await db.restoreFromBackup(
-    tankRows: data.tanks,
-    paramRows: data.params,
-    readingRows: data.readings,
-    waterChangeRows: data.waterChanges,
-    carbonChangeRows: data.carbonChanges,
-    equipmentCleaningRows: data.equipmentCleanings,
-    ratioVisibilityRows: data.ratioVisibilities,
-    dosingEntryRows: data.dosingEntries,
-    readingTemplateRows: data.readingTemplates,
-    maintenanceScheduleRows: data.maintenanceSchedules,
-    settingRows: data.settings,
-  );
+  await seedShowcaseData(db);
   await db.close();
 }
 
