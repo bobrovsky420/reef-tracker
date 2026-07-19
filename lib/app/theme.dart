@@ -443,6 +443,10 @@ ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
   return ThemeData(
     colorScheme: scheme,
     platform: platform,
+    // Backstop for any stray `Theme.of(context).hintColor` read (the frozen
+    // classic-layout tiles still use it): land on `textDim` instead of the
+    // Material default black54/white60.
+    hintColor: tokens.textDim,
     // Card language (REDESIGN #2): flat `surface` + 1 px `surfaceBorder` at
     // the platform radius. This restyles every plain `Card`; the exact
     // two-layer light shadow needs a multi-shadow decoration `Card` can't

@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.1] - 2026-07-19
+
+### Changed
+- **Redesign residue sweep.** The last pre-redesign surfaces now speak the new
+  design language: the Actions tab's add-action picker sheet got the standard
+  sheet header; the water/carbon/equipment record dialog, the RO "Mark
+  replaced" dialog and the reading edit dialog got the redesigned date row and
+  monospaced numeric entry; the insights and health/stability breakdown
+  sheets got the standard header treatment and token-consistent muted text
+  (also fixes their slightly-off gray tones in dark mode).
+
 ## [0.33.0] - 2026-07-19
 
 ### Added

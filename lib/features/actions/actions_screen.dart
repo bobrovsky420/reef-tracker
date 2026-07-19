@@ -9,6 +9,8 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_sheet.dart';
+import '../../widgets/reef_value_row.dart';
 import '../ro/ro_summary_tile.dart';
 import 'schedule_screen.dart';
 
@@ -208,7 +210,13 @@ Future<void> showAddActionSheet(
     builder: (ctx) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            // No top inset — the sheet's drag handle already provides it.
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: ReefSheetHeader(l.addAction),
+          ),
           ListTile(
             leading: const Icon(Icons.format_color_fill),
             title: Text(l.recordWaterChange),
@@ -565,35 +573,28 @@ class _ActionDialogState extends State<_ActionDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.schedule),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    formatDateTime(context, _time, weekday: false),
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: l.change,
-                  onPressed: _pickDateTime,
-                ),
-              ],
+            ReefValueRow(
+              leading: const ReefIconChip(Icons.schedule),
+              value: formatDateTime(context, _time, weekday: false),
+              valueStyle: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: ReefTokens.of(context).text,
+              ),
+              actions: [ReefInlineButton(l.change, onPressed: _pickDateTime)],
             ),
             if (widget.valueLabel != null) ...[
               const SizedBox(height: 8),
               TextFormField(
                 controller: _valueCtrl,
                 autofocus: true,
+                style: ReefTokens.monoInputStyle,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 decoration: InputDecoration(
                   labelText: widget.valueLabel,
                   suffixText: widget.valueSuffix,
-                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) {
                   // Optional field: blank means "amount not recorded", but a
@@ -610,10 +611,7 @@ class _ActionDialogState extends State<_ActionDialog> {
             TextFormField(
               controller: _noteCtrl,
               autofocus: widget.valueLabel == null,
-              decoration: InputDecoration(
-                labelText: l.noteOptional,
-                border: const OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(labelText: l.noteOptional),
               maxLines: 2,
             ),
           ],

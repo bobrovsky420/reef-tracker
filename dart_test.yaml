@@ -1,0 +1,5 @@
+# Test tags. `golden`: pixel-comparison tests (test/redesign_golden_test.dart)
+# whose PNGs are generated on this Windows machine — exclude on CI running a
+# different OS/renderer with `flutter test --exclude-tags golden`.
+tags:
+  golden:

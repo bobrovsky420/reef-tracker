@@ -11,6 +11,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_sheet.dart';
+import '../../widgets/reef_value_row.dart';
 import '../../widgets/zone_visuals.dart';
 import '../actions/schedule_screen.dart' show dueText;
 
@@ -334,19 +335,17 @@ class _ReplaceDialogState extends State<_ReplaceDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.schedule),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  formatDateTime(context, _time, weekday: false),
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                tooltip: l.change,
+          ReefValueRow(
+            leading: const ReefIconChip(Icons.schedule),
+            value: formatDateTime(context, _time, weekday: false),
+            valueStyle: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: ReefTokens.of(context).text,
+            ),
+            actions: [
+              ReefInlineButton(
+                l.change,
                 onPressed: () async {
                   final picked = await pickPastDateTime(context, _time);
                   if (picked == null || !mounted) return;
@@ -358,10 +357,7 @@ class _ReplaceDialogState extends State<_ReplaceDialog> {
           const SizedBox(height: 12),
           TextField(
             controller: _noteCtrl,
-            decoration: InputDecoration(
-              labelText: l.noteOptional,
-              border: const OutlineInputBorder(),
-            ),
+            decoration: InputDecoration(labelText: l.noteOptional),
             maxLines: 2,
           ),
         ],
@@ -581,10 +577,7 @@ class _StageSheetState extends State<_StageSheet> {
             const SizedBox(height: 16),
             DropdownButtonFormField<RoStageType>(
               initialValue: _type,
-              decoration: InputDecoration(
-                labelText: l.taskTypeLabel,
-                border: const OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(labelText: l.taskTypeLabel),
               items: [
                 for (final t in RoStageType.values)
                   DropdownMenuItem(
@@ -623,10 +616,7 @@ class _StageSheetState extends State<_StageSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _title,
-                decoration: InputDecoration(
-                  labelText: l.taskTitleLabel,
-                  border: const OutlineInputBorder(),
-                ),
+                decoration: InputDecoration(labelText: l.taskTitleLabel),
                 validator: (v) =>
                     (v ?? '').trim().isEmpty ? l.taskTitleRequired : null,
               ),
@@ -638,11 +628,9 @@ class _StageSheetState extends State<_StageSheet> {
                 Expanded(
                   child: TextFormField(
                     controller: _value,
+                    style: ReefTokens.monoInputStyle,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: l.roLifespanLabel,
-                      border: const OutlineInputBorder(),
-                    ),
+                    decoration: InputDecoration(labelText: l.roLifespanLabel),
                     validator: (v) {
                       final parsed = int.tryParse((v ?? '').trim());
                       return (parsed == null || parsed < 1)
@@ -655,9 +643,6 @@ class _StageSheetState extends State<_StageSheet> {
                 Expanded(
                   child: DropdownButtonFormField<_LifespanUnit>(
                     initialValue: _unit,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                    ),
                     items: [
                       for (final u in _LifespanUnit.values)
                         DropdownMenuItem(
@@ -689,10 +674,7 @@ class _StageSheetState extends State<_StageSheet> {
             ),
             TextFormField(
               controller: _note,
-              decoration: InputDecoration(
-                labelText: l.noteOptional,
-                border: const OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(labelText: l.noteOptional),
             ),
             const SizedBox(height: 16),
             Row(

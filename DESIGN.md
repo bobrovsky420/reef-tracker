@@ -2137,7 +2137,9 @@ value on M3) and `ReefSettingsValue` is the "value + chevron" cluster for
 rows that push a subscreen. All dialect resolution lives in these widgets;
 the screen itself is branch-free.
 
-Groups, in order: **Language**; **Units** (temp/salinity/volume as
+Groups, in order: **Language**; **Appearance** (the theme-mode
+System/Light/Dark `ReefSegmented` row — device-local `theme_mode`, REDESIGN
+#16, see Theming); **Units** (temp/salinity/volume as
 `ReefSegmented` controls); a **Dashboard**
 section (the **dashboard-layout** dropdown — grouped vs classic,
 `dashboardLayoutProvider`, default grouped, see Dashboard above — plus the

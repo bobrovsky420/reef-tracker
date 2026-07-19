@@ -14,6 +14,7 @@ import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import 'pro_feature_dialog.dart';
 import 'reef_card.dart';
+import 'reef_sheet.dart';
 import 'zone_visuals.dart';
 
 /// How many insights the dashboard card previews; the rest live in the sheet.
@@ -209,18 +210,19 @@ class _InsightsSheet extends ConsumerWidget {
           shrinkWrap: true,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           children: [
-            Row(
-              children: [
-                Icon(Icons.lightbulb_outline, color: theme.hintColor),
-                const SizedBox(width: 12),
-                Text(l.insightsTitle, style: theme.textTheme.titleLarge),
-              ],
+            ReefSheetHeader(
+              l.insightsTitle,
+              leading: Icon(
+                Icons.lightbulb_outline,
+                size: 20,
+                color: ReefTokens.of(context).text,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               l.insightsIntro,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.hintColor,
+                color: ReefTokens.of(context).textDim,
               ),
             ),
             const SizedBox(height: 8),
@@ -278,7 +280,11 @@ class _InsightRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: theme.hintColor),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: ReefTokens.of(context).textFaint,
+            ),
           ],
         ),
       ),

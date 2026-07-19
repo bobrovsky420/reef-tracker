@@ -21,6 +21,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_value_row.dart';
 import '../../widgets/trend_chart.dart';
 import '../../widgets/trend_view.dart';
 import '../../widgets/zone_chip.dart';
@@ -833,35 +834,26 @@ class _ReadingDialogState extends State<_ReadingDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.schedule),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    formatDateTime(context, _time, weekday: false),
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: l.change,
-                  onPressed: _pickDateTime,
-                ),
-              ],
+            ReefValueRow(
+              leading: const ReefIconChip(Icons.schedule),
+              value: formatDateTime(context, _time, weekday: false),
+              valueStyle: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: ReefTokens.of(context).text,
+              ),
+              actions: [ReefInlineButton(l.change, onPressed: _pickDateTime)],
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _valueCtrl,
               autofocus: true,
+              style: ReefTokens.monoInputStyle,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
                 signed: true,
               ),
-              decoration: InputDecoration(
-                suffixText: widget.pres.unitLabel,
-                border: const OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(suffixText: widget.pres.unitLabel),
               // Reject a blank, unparseable, or physically impossible value
               // instead of silently reverting to the original on save (#31).
               validator: (_) {

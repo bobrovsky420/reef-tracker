@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../app/providers.dart';
+import '../app/theme.dart';
 import '../data/database.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
@@ -216,7 +217,7 @@ class _TrendChartState extends State<TrendChart> {
       return Center(
         child: Text(
           AppLocalizations.of(context).noReadingsInRange,
-          style: TextStyle(color: Theme.of(context).hintColor),
+          style: TextStyle(color: ReefTokens.of(context).textDim),
         ),
       );
     }

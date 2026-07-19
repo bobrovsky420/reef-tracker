@@ -370,11 +370,17 @@ class _TankHealthSheet extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(l.healthTitle, style: theme.textTheme.labelMedium),
-                    Text(
-                      l.healthGradeLabel(health.grade),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
+                    // The #18 sheet-header scale, in the grade color (a plain
+                    // ReefSheetHeader can't carry the colored grade word).
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        l.healthGradeLabel(health.grade),
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
                       ),
                     ),
                   ],
@@ -464,11 +470,15 @@ class _TankStabilitySheet extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(l.stabilityTitle, style: theme.textTheme.labelMedium),
-                    Text(
-                      l.stabilityGradeLabel(stability.grade),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        l.stabilityGradeLabel(stability.grade),
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
                       ),
                     ),
                   ],
@@ -479,7 +489,7 @@ class _TankStabilitySheet extends ConsumerWidget {
             Text(
               l.stabilityIntro(windowDays),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.hintColor,
+                color: ReefTokens.of(context).textDim,
               ),
             ),
 
@@ -554,7 +564,9 @@ class _StabilityParamRow extends StatelessWidget {
         : sub >= 40
         ? Zone.amber
         : Zone.red;
-    final color = muted ? theme.hintColor : zone.colorOf(context);
+    final color = muted
+        ? ReefTokens.of(context).textFaint
+        : zone.colorOf(context);
 
     // "±σ" in display units. The σ is a *delta*, so it converts by scale only —
     // subtracting toDisplay(0) cancels an affine offset (°F) that would
@@ -600,7 +612,7 @@ class _StabilityParamRow extends StatelessWidget {
                     Text(
                       note,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.hintColor,
+                        color: ReefTokens.of(context).textDim,
                       ),
                     ),
                 ],
@@ -615,7 +627,11 @@ class _StabilityParamRow extends StatelessWidget {
                 ),
               ),
             const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: theme.hintColor),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: ReefTokens.of(context).textFaint,
+            ),
           ],
         ),
       ),
@@ -634,7 +650,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).hintColor,
+          color: ReefTokens.of(context).textFaint,
           letterSpacing: 0.6,
         ),
       ),
@@ -661,7 +677,9 @@ class _ParamRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final zoneColor = muted ? theme.hintColor : health.zone.colorOf(context);
+    final zoneColor = muted
+        ? ReefTokens.of(context).textFaint
+        : health.zone.colorOf(context);
 
     final String trailing;
     if (health.value != null && param != null) {
@@ -709,7 +727,7 @@ class _ParamRow extends StatelessWidget {
                     Text(
                       note,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.hintColor,
+                        color: ReefTokens.of(context).textDim,
                       ),
                     ),
                 ],
@@ -720,11 +738,15 @@ class _ParamRow extends StatelessWidget {
                 trailing,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: muted ? theme.hintColor : zoneColor,
+                  color: zoneColor,
                 ),
               ),
             const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: theme.hintColor),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: ReefTokens.of(context).textFaint,
+            ),
           ],
         ),
       ),
