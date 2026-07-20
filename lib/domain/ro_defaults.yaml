@@ -1,0 +1,28 @@
+# RO/RODI unit defaults — SOURCE OF TRUTH for the default stage set seeded
+# the first time the RO screen is opened. The RO unit is DEVICE-scoped, not
+# tank-scoped (one unit serves every aquarium), which is why this data lives
+# apart from tank_presets.yaml.
+#
+# After editing this file, regenerate the Dart data with:
+#     dart run tool/gen_ro_defaults.dart
+# (the generator validates this file and writes ro.g.dart).
+#
+# Notes:
+#  - `type` must be a non-custom `RoStageType` enum name, and every one of
+#    them (sediment, carbonBlock, membrane, diResin) must appear exactly
+#    once. `custom` has no default: custom stages are user-created.
+#  - The listing ORDER is the seed order — the water path through the unit.
+#  - `lifespanDays` = typical replacement lifespan in plain days (30/month —
+#    a month-based default should decompose back to whole months in the edit
+#    sheet). Deliberately conservative, mainstream values — the user edits
+#    them to match their water and unit.
+
+stages:
+  - type: sediment
+    lifespanDays: 90
+  - type: carbonBlock
+    lifespanDays: 180
+  - type: membrane
+    lifespanDays: 720 # 24 months
+  - type: diResin
+    lifespanDays: 120

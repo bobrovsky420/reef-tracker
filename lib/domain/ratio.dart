@@ -7,6 +7,8 @@ library;
 import 'units.dart';
 import 'zones.dart';
 
+part 'ratio.g.dart';
+
 /// A timestamped parameter value used by the ratio math. A plain record so the
 /// domain stays decoupled from the DB's `Reading` row (callers map via
 /// `Reading.ratioReading`).
@@ -61,45 +63,11 @@ extension RatioKindZones on RatioKind {
   /// (a ~100:1 NO₃:PO₄ "Redfield-style" target is widely recommended; lopsided
   /// ratios feed cyano/dinos), for Mg : Ca that is Mg/Ca (≈3:1, natural
   /// seawater ≈3.1). Used to color the cards and draw the graph zone bands.
-  ZoneBounds get defaultBounds {
-    switch (this) {
-      case RatioKind.po4no3:
-        return const ZoneBounds(
-          amberLow: 25,
-          greenLow: 50,
-          greenHigh: 150,
-          amberHigh: 250,
-        );
-      case RatioKind.mgca:
-        return const ZoneBounds(
-          amberLow: 2.6,
-          greenLow: 2.9,
-          greenHigh: 3.3,
-          amberHigh: 3.6,
-        );
-      case RatioKind.caalk:
-        // Ca (ppm) ÷ Alk (dKH). Ca and carbonate alkalinity are consumed
-        // together when corals build CaCO₃, so this flags dosing imbalance.
-        // NSW ≈ 412 / 7.0 ≈ 59; balanced reef setups (Ca 420–450, Alk 8–9)
-        // land ≈ 48–56. Extremes hint that one is being dosed out of step.
-        return const ZoneBounds(
-          amberLow: 40,
-          greenLow: 46,
-          greenHigh: 62,
-          amberHigh: 70,
-        );
-      case RatioKind.mgalk:
-        // Mg (ppm) ÷ Alk (dKH). Magnesium keeps Ca and alkalinity in solution;
-        // a low value hints at why both are hard to hold. NSW ≈ 1280 / 7.0 ≈
-        // 183; reef setups (Mg 1300–1400, Alk 8–9) land ≈ 155–185.
-        return const ZoneBounds(
-          amberLow: 135,
-          greenLow: 150,
-          greenHigh: 190,
-          amberHigh: 210,
-        );
-    }
-  }
+  ///
+  /// The data ([kRatioDefaultBounds]) is generated from the `ratios` section
+  /// of `tank_presets.yaml`, which also documents the chemistry behind each
+  /// range — edit it there, then run `dart run tool/gen_tank_presets.dart`.
+  ZoneBounds get defaultBounds => kRatioDefaultBounds[this]!;
 
   /// Default display order, placing ratio cards after measurements until the
   /// user reorders them.

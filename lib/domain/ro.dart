@@ -14,6 +14,8 @@ library;
 import 'reminders.dart';
 import 'zones.dart';
 
+part 'ro.g.dart';
+
 /// The stage types of a typical 4-stage RO/RODI unit, plus [custom] for
 /// non-standard parts (a second sediment stage, an extra DI cartridge, …).
 /// Stored as [name] in `RoStages.stageType`.
@@ -34,26 +36,9 @@ enum RoStageType {
   }
 }
 
-/// Typical replacement lifespans (days) used to seed the default stage set
-/// the first time the RO screen is opened. Deliberately conservative,
-/// mainstream values — the user edits them to match their water and unit.
-/// [RoStageType.custom] has no default: custom stages are user-created.
-const Map<RoStageType, int> kRoDefaultLifespanDays = {
-  RoStageType.sediment: 90,
-  RoStageType.carbonBlock: 180,
-  // 24 "months" — lifespans are stored in plain days (30/month), so the
-  // default decomposes back to whole months in the edit sheet.
-  RoStageType.membrane: 720,
-  RoStageType.diResin: 120,
-};
-
-/// Seed order of the default stages — the water path through the unit.
-const List<RoStageType> kRoDefaultStageOrder = [
-  RoStageType.sediment,
-  RoStageType.carbonBlock,
-  RoStageType.membrane,
-  RoStageType.diResin,
-];
+// The default stage set (`kRoDefaultLifespanDays`, `kRoDefaultStageOrder`)
+// is GENERATED from `ro_defaults.yaml` into `ro.g.dart` — edit the YAML,
+// then run `dart run tool/gen_ro_defaults.dart`.
 
 /// Remaining-life warning window: a stage turns amber within the last
 /// [kRoAmberFraction] of its lifespan, floored at [kRoAmberMinDays] (a pure

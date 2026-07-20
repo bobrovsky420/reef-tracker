@@ -39,15 +39,16 @@ jobs:
 
       # Generated sources (database.g.dart, app_localizations*.dart,
       # parameter_catalog.g.dart, supplement_catalog.g.dart,
-      # micro_views.g.dart, pro_features.g.dart) are committed; regenerate
-      # them all and fail on any diff so an ARB/schema/YAML edit can't merge
-      # with stale generated code. Order matters: build_runner deletes the
-      # catalog .g.dart files (no builder claims them) as conflicting
-      # outputs, so the catalog generators must run after it — and
-      # gen_parameters before gen_supplements, which imports the parameter
-      # catalog to validate element keys (gen_micro_views and
-      # gen_pro_features read the YAML sources directly, so their position
-      # is free).
+      # micro_views.g.dart, pro_features.g.dart, presets.g.dart,
+      # ratio.g.dart, ro.g.dart) are committed; regenerate them all and fail
+      # on any diff so an ARB/schema/YAML edit can't merge with stale
+      # generated code. Order matters: build_runner deletes the catalog
+      # .g.dart files (no builder claims them) as conflicting outputs, so
+      # the catalog generators must run after it — and gen_parameters before
+      # gen_supplements, which imports the parameter catalog to validate
+      # element keys (gen_micro_views, gen_pro_features, gen_tank_presets
+      # and gen_ro_defaults read the YAML sources directly, so their
+      # position is free).
       - name: Check generated code is up to date
         run: |
           flutter gen-l10n
@@ -56,6 +57,8 @@ jobs:
           dart run tool/gen_supplements.dart
           dart run tool/gen_micro_views.dart
           dart run tool/gen_pro_features.dart
+          dart run tool/gen_tank_presets.dart
+          dart run tool/gen_ro_defaults.dart
           git diff --exit-code
           test -z "$(git ls-files --others --exclude-standard)"
 

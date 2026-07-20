@@ -1,0 +1,107 @@
+# Tank presets — SOURCE OF TRUTH for the default zone bounds (and correction
+# targets) each tank setup type starts with, plus the recommended zone bounds
+# of the dashboard ratio cards.
+#
+# After editing this file, regenerate the Dart data with:
+#     dart run tool/gen_tank_presets.dart
+# (the generator validates this file against parameters.yaml and writes
+# presets.g.dart + ratio.g.dart).
+#
+# Notes:
+#  - Every `SetupType` enum value (fishOnly, soft, lps, sps, mixed) must have
+#    a section; the generator mirrors the enum names and rejects unknowns.
+#  - The parameters LISTED under a setup type are the ones tracked by default
+#    for that type (everything else can be added manually later); the listing
+#    ORDER is the seeding order (`defaultTrackedKeys`).
+#  - Every key must be a CORE parameter from parameters.yaml — microelement
+#    defaults live there (per-element `defaultBounds`), not here.
+#  - Bounds are in the CANONICAL unit (°C, SG, dKH, ppm) and are sensible
+#    starting points — every bound is editable per tank. `greenLow`/
+#    `greenHigh` are required; the amber pair is optional ("never red on
+#    that side" when omitted, e.g. there is no "too little ammonia").
+#    Present bounds must be ascending and inside the parameter's plausible
+#    range.
+#  - `target` = the default correction target the dose calculator's
+#    correction mode aims for, in the canonical unit. Define it only where
+#    the sensible target is NOT simply the middle of the green zone
+#    (currently alkalinity, whose wide safe band sits above the commonly
+#    recommended set point); every other parameter falls back to the
+#    green-zone midpoint at use time. Must lie inside the green range.
+#    Seeded into `TrackedParameters.targetValue` (editable per tank).
+
+presets:
+  fishOnly:
+    temperature: { amberLow: 22, greenLow: 24, greenHigh: 27, amberHigh: 29 }
+    ph: { amberLow: 7.6, greenLow: 7.8, greenHigh: 8.4, amberHigh: 8.6 }
+    salinity: { amberLow: 1.018, greenLow: 1.020, greenHigh: 1.025, amberHigh: 1.027 }
+    ammonia: { greenLow: 0, greenHigh: 0.02, amberHigh: 0.1 }
+    nitrite: { greenLow: 0, greenHigh: 0.1, amberHigh: 0.4 }
+    nitrate: { greenLow: 0, greenHigh: 40, amberHigh: 80 }
+
+  soft:
+    temperature: { amberLow: 23, greenLow: 24, greenHigh: 26, amberHigh: 28 }
+    ph: { amberLow: 7.7, greenLow: 7.8, greenHigh: 8.4, amberHigh: 8.6 }
+    salinity: { amberLow: 1.022, greenLow: 1.024, greenHigh: 1.026, amberHigh: 1.028 }
+    alkalinity: { amberLow: 6.5, greenLow: 7, greenHigh: 10, amberHigh: 12, target: 8.5 }
+    calcium: { amberLow: 360, greenLow: 400, greenHigh: 450, amberHigh: 500 }
+    magnesium: { amberLow: 1150, greenLow: 1250, greenHigh: 1400, amberHigh: 1500 }
+    nitrate: { amberLow: 0.5, greenLow: 2, greenHigh: 15, amberHigh: 40 }
+    phosphate: { amberLow: 0.0, greenLow: 0.02, greenHigh: 0.10, amberHigh: 0.25 }
+    ammonia: { greenLow: 0, greenHigh: 0.02, amberHigh: 0.1 }
+    nitrite: { greenLow: 0, greenHigh: 0.05, amberHigh: 0.2 }
+
+  lps:
+    temperature: { amberLow: 23, greenLow: 24, greenHigh: 26, amberHigh: 28 }
+    ph: { amberLow: 7.8, greenLow: 7.9, greenHigh: 8.4, amberHigh: 8.6 }
+    salinity: { amberLow: 1.023, greenLow: 1.025, greenHigh: 1.026, amberHigh: 1.027 }
+    alkalinity: { amberLow: 7, greenLow: 7.5, greenHigh: 9.5, amberHigh: 11, target: 8.5 }
+    calcium: { amberLow: 380, greenLow: 400, greenHigh: 450, amberHigh: 480 }
+    magnesium: { amberLow: 1200, greenLow: 1300, greenHigh: 1400, amberHigh: 1500 }
+    nitrate: { amberLow: 0.5, greenLow: 1, greenHigh: 10, amberHigh: 25 }
+    phosphate: { amberLow: 0.0, greenLow: 0.02, greenHigh: 0.08, amberHigh: 0.2 }
+    ammonia: { greenLow: 0, greenHigh: 0.02, amberHigh: 0.1 }
+    nitrite: { greenLow: 0, greenHigh: 0.05, amberHigh: 0.2 }
+
+  sps:
+    temperature: { amberLow: 24, greenLow: 25, greenHigh: 26.5, amberHigh: 28 }
+    ph: { amberLow: 7.9, greenLow: 8.0, greenHigh: 8.4, amberHigh: 8.6 }
+    salinity: { amberLow: 1.024, greenLow: 1.025, greenHigh: 1.026, amberHigh: 1.027 }
+    alkalinity: { amberLow: 7, greenLow: 7.5, greenHigh: 8.5, amberHigh: 9.5, target: 8.0 }
+    calcium: { amberLow: 400, greenLow: 420, greenHigh: 440, amberHigh: 470 }
+    magnesium: { amberLow: 1250, greenLow: 1300, greenHigh: 1400, amberHigh: 1500 }
+    nitrate: { amberLow: 0.2, greenLow: 1, greenHigh: 5, amberHigh: 15 }
+    phosphate: { amberLow: 0.0, greenLow: 0.01, greenHigh: 0.05, amberHigh: 0.12 }
+    ammonia: { greenLow: 0, greenHigh: 0.02, amberHigh: 0.1 }
+    nitrite: { greenLow: 0, greenHigh: 0.05, amberHigh: 0.2 }
+
+  mixed:
+    temperature: { amberLow: 23, greenLow: 24, greenHigh: 26, amberHigh: 28 }
+    ph: { amberLow: 7.8, greenLow: 7.9, greenHigh: 8.4, amberHigh: 8.6 }
+    salinity: { amberLow: 1.023, greenLow: 1.025, greenHigh: 1.026, amberHigh: 1.027 }
+    alkalinity: { amberLow: 7, greenLow: 7.5, greenHigh: 9, amberHigh: 11, target: 8.3 }
+    calcium: { amberLow: 390, greenLow: 410, greenHigh: 450, amberHigh: 480 }
+    magnesium: { amberLow: 1250, greenLow: 1300, greenHigh: 1400, amberHigh: 1500 }
+    nitrate: { amberLow: 0.5, greenLow: 2, greenHigh: 10, amberHigh: 25 }
+    phosphate: { amberLow: 0.0, greenLow: 0.02, greenHigh: 0.08, amberHigh: 0.2 }
+    ammonia: { greenLow: 0, greenHigh: 0.02, amberHigh: 0.1 }
+    nitrite: { greenLow: 0, greenHigh: 0.05, amberHigh: 0.2 }
+
+# Recommended zone bounds of the dashboard ratio cards, keyed by `RatioKind`
+# enum name, in the *displayed* metric space (the value the chart plots):
+#  - po4no3: N of `1 : N` = NO₃ ÷ PO₄. A ~100:1 NO₃:PO₄ "Redfield-style"
+#    target is widely recommended; lopsided ratios feed cyano/dinos.
+#  - mgca: Mg ÷ Ca — ≈3:1, natural seawater ≈3.1.
+#  - caalk: Ca (ppm) ÷ Alk (dKH). Ca and carbonate alkalinity are consumed
+#    together when corals build CaCO₃, so this flags dosing imbalance.
+#    NSW ≈ 412 / 7.0 ≈ 59; balanced reef setups (Ca 420–450, Alk 8–9) land
+#    ≈ 48–56. Extremes hint that one is being dosed out of step.
+#  - mgalk: Mg (ppm) ÷ Alk (dKH). Magnesium keeps Ca and alkalinity in
+#    solution; a low value hints at why both are hard to hold. NSW ≈
+#    1280 / 7.0 ≈ 183; reef setups (Mg 1300–1400, Alk 8–9) land ≈ 155–185.
+# All four bounds are required and strictly ascending; used to color the
+# cards and draw the graph zone bands. Editable per tank like all bounds.
+ratios:
+  po4no3: { amberLow: 25, greenLow: 50, greenHigh: 150, amberHigh: 250 }
+  mgca: { amberLow: 2.6, greenLow: 2.9, greenHigh: 3.3, amberHigh: 3.6 }
+  caalk: { amberLow: 40, greenLow: 46, greenHigh: 62, amberHigh: 70 }
+  mgalk: { amberLow: 135, greenLow: 150, greenHigh: 190, amberHigh: 210 }

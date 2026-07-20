@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and Dosing tabs.
 - The Hobby kit filter of the microelement entry form now lists its elements
   in panel order (strontium, iodine, iron), matching the Full ICP list.
+- The built-in reef-keeping reference data — setup-type presets and
+  correction targets, ratio-card recommended zones, and RO stage default
+  lifespans — is now maintained in editable data files (`tank_presets.yaml`,
+  `ro_defaults.yaml`) instead of source code. The values are unchanged; this
+  makes future range/preset updates easier to review and contribute.
 
 ## [0.35.1] - 2026-07-20
 
