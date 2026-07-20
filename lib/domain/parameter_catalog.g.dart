@@ -16,6 +16,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 10,
     plausibleMax: 40,
+    importance: 3,
   ),
   ParameterDef(
     key: 'ph',
@@ -25,6 +26,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 5,
     plausibleMax: 10,
+    importance: 2.5,
   ),
   ParameterDef(
     key: 'salinity',
@@ -34,6 +36,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 1.0,
     plausibleMin: 1.0,
     plausibleMax: 1.05,
+    importance: 3,
   ),
   ParameterDef(
     key: 'alkalinity',
@@ -43,6 +46,8 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 30,
+    maxDailyRise: 1.4,
+    importance: 3,
   ),
   ParameterDef(
     key: 'calcium',
@@ -52,6 +57,8 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 100,
     plausibleMax: 1000,
+    maxDailyRise: 50,
+    importance: 2,
   ),
   ParameterDef(
     key: 'magnesium',
@@ -61,6 +68,8 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 800,
     plausibleMax: 2000,
+    maxDailyRise: 100,
+    importance: 2,
   ),
   ParameterDef(
     key: 'nitrate',
@@ -70,6 +79,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 250,
+    importance: 2,
   ),
   ParameterDef(
     key: 'phosphate',
@@ -79,6 +89,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 5,
+    importance: 2,
   ),
   ParameterDef(
     key: 'ammonia',
@@ -88,6 +99,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 10,
+    importance: 3,
   ),
   ParameterDef(
     key: 'nitrite',
@@ -97,6 +109,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 10,
+    importance: 3,
   ),
   ParameterDef(
     key: 'orp',
@@ -115,6 +128,13 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 50,
+    defaultBounds: ZoneBounds(
+      amberLow: 5.5,
+      greenLow: 7.0,
+      greenHigh: 9.5,
+      amberHigh: 12.0,
+    ),
+    hobbyKit: true,
   ),
   ParameterDef(
     key: 'iodine',
@@ -125,6 +145,13 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 2,
+    defaultBounds: ZoneBounds(
+      amberLow: 0.03,
+      greenLow: 0.05,
+      greenHigh: 0.08,
+      amberHigh: 0.12,
+    ),
+    hobbyKit: true,
   ),
   ParameterDef(
     key: 'iron',
@@ -136,6 +163,8 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 2,
+    defaultBounds: ZoneBounds(greenHigh: 0.005, amberHigh: 0.015),
+    hobbyKit: true,
   ),
   ParameterDef(
     key: 'sodium',
@@ -146,6 +175,12 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 3000,
     plausibleMax: 20000,
+    defaultBounds: ZoneBounds(
+      amberLow: 9500,
+      greenLow: 10000,
+      greenHigh: 11200,
+      amberHigh: 12000,
+    ),
   ),
   ParameterDef(
     key: 'potassium',
@@ -156,6 +191,12 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 100,
     plausibleMax: 800,
+    defaultBounds: ZoneBounds(
+      amberLow: 340,
+      greenLow: 380,
+      greenHigh: 420,
+      amberHigh: 460,
+    ),
   ),
   ParameterDef(
     key: 'sulfur',
@@ -166,6 +207,12 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 200,
     plausibleMax: 2000,
+    defaultBounds: ZoneBounds(
+      amberLow: 780,
+      greenLow: 850,
+      greenHigh: 980,
+      amberHigh: 1100,
+    ),
   ),
   ParameterDef(
     key: 'boron',
@@ -176,6 +223,12 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 20,
+    defaultBounds: ZoneBounds(
+      amberLow: 3.0,
+      greenLow: 3.8,
+      greenHigh: 5.5,
+      amberHigh: 7.0,
+    ),
   ),
   ParameterDef(
     key: 'bromine',
@@ -186,6 +239,12 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 300,
+    defaultBounds: ZoneBounds(
+      amberLow: 45,
+      greenLow: 55,
+      greenHigh: 75,
+      amberHigh: 95,
+    ),
   ),
   ParameterDef(
     key: 'silicon',
@@ -196,6 +255,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 10,
+    defaultBounds: ZoneBounds(greenHigh: 0.15, amberHigh: 0.5),
   ),
   ParameterDef(
     key: 'zinc',
@@ -207,6 +267,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.01, amberHigh: 0.03),
   ),
   ParameterDef(
     key: 'vanadium',
@@ -218,6 +279,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.003, amberHigh: 0.008),
   ),
   ParameterDef(
     key: 'copper',
@@ -229,6 +291,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.002, amberHigh: 0.01),
   ),
   ParameterDef(
     key: 'nickel',
@@ -240,6 +303,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.002, amberHigh: 0.008),
   ),
   ParameterDef(
     key: 'manganese',
@@ -251,6 +315,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.005, amberHigh: 0.02),
   ),
   ParameterDef(
     key: 'molybdenum',
@@ -262,6 +327,12 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(
+      amberLow: 0.001,
+      greenLow: 0.005,
+      greenHigh: 0.015,
+      amberHigh: 0.03,
+    ),
   ),
   ParameterDef(
     key: 'chromium',
@@ -273,6 +344,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.001, amberHigh: 0.005),
   ),
   ParameterDef(
     key: 'cobalt',
@@ -284,6 +356,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.001, amberHigh: 0.004),
   ),
   ParameterDef(
     key: 'lithium',
@@ -295,6 +368,12 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 5,
+    defaultBounds: ZoneBounds(
+      amberLow: 0.05,
+      greenLow: 0.12,
+      greenHigh: 0.25,
+      amberHigh: 0.4,
+    ),
   ),
   ParameterDef(
     key: 'barium',
@@ -306,6 +385,12 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(
+      amberLow: 0.001,
+      greenLow: 0.004,
+      greenHigh: 0.02,
+      amberHigh: 0.05,
+    ),
   ),
   ParameterDef(
     key: 'selenium',
@@ -317,6 +402,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.005, amberHigh: 0.015),
   ),
   ParameterDef(
     key: 'aluminium',
@@ -328,6 +414,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 2,
+    defaultBounds: ZoneBounds(greenHigh: 0.01, amberHigh: 0.05),
   ),
   ParameterDef(
     key: 'antimony',
@@ -339,6 +426,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.002, amberHigh: 0.01),
   ),
   ParameterDef(
     key: 'tin',
@@ -350,6 +438,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.003, amberHigh: 0.01),
   ),
   ParameterDef(
     key: 'beryllium',
@@ -361,6 +450,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.0005, amberHigh: 0.002),
   ),
   ParameterDef(
     key: 'silver',
@@ -372,6 +462,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.0005, amberHigh: 0.002),
   ),
   ParameterDef(
     key: 'tungsten',
@@ -383,6 +474,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.001, amberHigh: 0.005),
   ),
   ParameterDef(
     key: 'lanthanum',
@@ -394,6 +486,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.001, amberHigh: 0.005),
   ),
   ParameterDef(
     key: 'titanium',
@@ -405,6 +498,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.002, amberHigh: 0.01),
   ),
   ParameterDef(
     key: 'zirconium',
@@ -416,6 +510,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.001, amberHigh: 0.005),
   ),
   ParameterDef(
     key: 'arsenic',
@@ -427,6 +522,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.004, amberHigh: 0.012),
   ),
   ParameterDef(
     key: 'cadmium',
@@ -438,6 +534,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.0005, amberHigh: 0.002),
   ),
   ParameterDef(
     key: 'mercury',
@@ -449,6 +546,7 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.0003, amberHigh: 0.001),
   ),
   ParameterDef(
     key: 'lead',
@@ -460,5 +558,6 @@ const List<ParameterDef> kReefParameters = [
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 1,
+    defaultBounds: ZoneBounds(greenHigh: 0.002, amberHigh: 0.008),
   ),
 ];

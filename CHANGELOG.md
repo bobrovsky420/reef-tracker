@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.2] - 2026-07-20
+
+### Changed
+- The Microelements top bar now shows only the ICP import button plus a ⋮
+  overflow menu holding Manage views, Element settings and the test reminder,
+  leaving more room for the screen title.
+- The Settings tab icon stays outlined when selected, matching the Actions
+  and Dosing tabs.
+- The Hobby kit filter of the microelement entry form now lists its elements
+  in panel order (strontium, iodine, iron), matching the Full ICP list.
+
 ## [0.35.1] - 2026-07-20
 
 ### Changed

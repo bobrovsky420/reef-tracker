@@ -8,6 +8,8 @@
 /// `parameter_catalog.g.dart`. This file owns the model + lookups.
 library;
 
+import 'zones.dart';
+
 part 'parameter_catalog.g.dart';
 
 /// A reef water parameter that can be tracked. The catalog data lives in
@@ -29,6 +31,10 @@ class ParameterDef {
     this.minValue,
     this.plausibleMin,
     this.plausibleMax,
+    this.defaultBounds,
+    this.hobbyKit = false,
+    this.maxDailyRise,
+    this.importance = 1,
   });
 
   /// Stable identifier persisted in the database (e.g. `alkalinity`).
@@ -82,6 +88,27 @@ class ParameterDef {
   /// unusual tanks, so genuinely extreme readings stay recordable.
   final double? plausibleMin;
   final double? plausibleMax;
+
+  /// Default zone bounds in the canonical unit — set for every microelement
+  /// (U17; the fallback/seed bounds of the micro panel, see
+  /// `kMicroDefaultBounds` in micro.dart), null for core parameters, whose
+  /// defaults are the per-setup-type presets in presets.dart.
+  final ZoneBounds? defaultBounds;
+
+  /// True for the microelements hobbyists test at home between ICPs
+  /// (Salifert/Red Sea kits exist for these) — the compact filter of the
+  /// micro entry form (`kMicroHobbyKitKeys`).
+  final bool hobbyKit;
+
+  /// Maximum safe correction *rise per day* in the canonical unit (dKH or
+  /// ppm per day); the dose calculator splits a correction that would rise
+  /// faster (`kMaxDailyRiseByElement`). Null = no established limit.
+  final double? maxDailyRise;
+
+  /// Relative weight in the health/stability aggregates
+  /// (`importanceWeightFor` in health_score.dart). Parameters whose swings
+  /// harm livestock fastest weigh most; the default 1 is "everything else".
+  final double importance;
 }
 
 /// Coarse grouping of the catalog, mirroring how ICP labs (and hobbyists)

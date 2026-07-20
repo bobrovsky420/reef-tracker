@@ -28,6 +28,20 @@
 #    minValue = hard physical floor (reject below), the plausible pair = the
 #    generous range outside which a value needs explicit confirmation (#31).
 #    Define both plausible bounds or neither.
+#  - `importance` = relative weight in the health/stability aggregates
+#    (default 1; parameters whose swings harm livestock fastest weigh most).
+#    Core-only — microelements are excluded from both scores.
+#  - `maxDailyRise` = maximum safe correction rise per day in the CANONICAL
+#    unit; the dose calculator splits a correction that would rise faster.
+#    Omit = no established limit, the correction applies in one dose.
+#  - `defaultBounds` = default zone bounds (amberLow/greenLow/greenHigh/
+#    amberHigh) in the CANONICAL unit — REQUIRED for microelements (the
+#    fallback when a tank has no TrackedParameters row for the element, and
+#    the seed when one is created), FORBIDDEN for core parameters (their
+#    defaults are per-setup-type presets in presets.dart). One-sided "keep
+#    low" elements omit the low pair (no "too little lead"); an amber bound
+#    requires its green partner, present bounds must be ascending and inside
+#    the plausible range.
 
 parameters:
   # --- Core dashboard parameters -------------------------------------------
@@ -35,6 +49,7 @@ parameters:
     unit: "°C"
     decimals: 1
     group: environment
+    importance: 3
     minValue: 0
     plausibleMin: 10
     plausibleMax: 40
@@ -43,6 +58,7 @@ parameters:
     unit: pH
     decimals: 2
     group: environment
+    importance: 2.5
     minValue: 0
     plausibleMin: 5
     plausibleMax: 10
@@ -51,6 +67,7 @@ parameters:
     unit: SG
     decimals: 3
     group: environment
+    importance: 3
     minValue: 1.0
     plausibleMin: 1.0
     plausibleMax: 1.05
@@ -59,6 +76,8 @@ parameters:
     unit: dKH
     decimals: 1
     group: core
+    importance: 3
+    maxDailyRise: 1.4
     minValue: 0
     plausibleMin: 0
     plausibleMax: 30
@@ -67,6 +86,8 @@ parameters:
     unit: ppm
     decimals: 0
     group: core
+    importance: 2
+    maxDailyRise: 50
     minValue: 0
     plausibleMin: 100
     plausibleMax: 1000
@@ -75,6 +96,8 @@ parameters:
     unit: ppm
     decimals: 0
     group: core
+    importance: 2
+    maxDailyRise: 100
     minValue: 0
     plausibleMin: 800
     plausibleMax: 2000
@@ -83,6 +106,7 @@ parameters:
     unit: ppm
     decimals: 1
     group: nutrients
+    importance: 2
     minValue: 0
     plausibleMin: 0
     plausibleMax: 250
@@ -91,6 +115,7 @@ parameters:
     unit: ppm
     decimals: 2
     group: nutrients
+    importance: 2
     minValue: 0
     plausibleMin: 0
     plausibleMax: 5
@@ -99,6 +124,7 @@ parameters:
     unit: ppm
     decimals: 2
     group: nutrients
+    importance: 3
     minValue: 0
     plausibleMin: 0
     plausibleMax: 10
@@ -107,6 +133,7 @@ parameters:
     unit: ppm
     decimals: 2
     group: nutrients
+    importance: 3
     minValue: 0
     plausibleMin: 0
     plausibleMax: 10
@@ -129,14 +156,24 @@ parameters:
   # the panel: their keys and stored ppm values are unchanged, they only
   # moved category (iron additionally gained the µg/L display, which is
   # presentation-only).
+  #
+  # `defaultBounds` are sensible starting points anchored on natural seawater
+  # (NSW at 35 ppt: Na ~10 760, K ~400, S ~905, B ~4.4, Br ~65, Sr ~8.1 ppm;
+  # I ~60 µg/L, Mo ~10 µg/L, Li ~180 µg/L, Ba ~10–15 µg/L) and the target
+  # ranges ICP labs publish — deliberately generous, and editable per tank
+  # exactly like core-parameter bounds. `hobbyKit` marks the elements
+  # hobbyists test at home between ICPs (Salifert/Red Sea kits exist for
+  # these) — the compact filter of the micro entry form.
   - key: strontium
     unit: mg/L
     decimals: 1
     category: trace
     symbol: Sr
+    hobbyKit: true
     minValue: 0
     plausibleMin: 0
     plausibleMax: 50
+    defaultBounds: { amberLow: 5.5, greenLow: 7.0, greenHigh: 9.5, amberHigh: 12.0 }
 
   # Iodine sits with the halogens on the report, in mg/L (e.g. 0.102) —
   # three decimals cover the reference-range resolution (0.055–0.080).
@@ -145,9 +182,11 @@ parameters:
     decimals: 3
     category: trace
     symbol: I
+    hobbyKit: true
     minValue: 0
     plausibleMin: 0
     plausibleMax: 2
+    defaultBounds: { amberLow: 0.03, greenLow: 0.05, greenHigh: 0.08, amberHigh: 0.12 }
 
   - key: iron
     unit: "µg/L"
@@ -155,9 +194,11 @@ parameters:
     category: trace
     symbol: Fe
     displayFactor: 1000
+    hobbyKit: true
     minValue: 0
     plausibleMin: 0
     plausibleMax: 2
+    defaultBounds: { greenHigh: 0.005, amberHigh: 0.015 }
 
   # Major ions (mg/L on ICP reports; wide tolerances).
   - key: sodium
@@ -168,6 +209,7 @@ parameters:
     minValue: 0
     plausibleMin: 3000
     plausibleMax: 20000
+    defaultBounds: { amberLow: 9500, greenLow: 10000, greenHigh: 11200, amberHigh: 12000 }
 
   # Potassium predates the panel as a core dashboard parameter — key and
   # stored ppm values unchanged, it only moved category (and its label from
@@ -180,6 +222,7 @@ parameters:
     minValue: 0
     plausibleMin: 100
     plausibleMax: 800
+    defaultBounds: { amberLow: 340, greenLow: 380, greenHigh: 420, amberHigh: 460 }
 
   - key: sulfur
     unit: mg/L
@@ -189,6 +232,7 @@ parameters:
     minValue: 0
     plausibleMin: 200
     plausibleMax: 2000
+    defaultBounds: { amberLow: 780, greenLow: 850, greenHigh: 980, amberHigh: 1100 }
 
   - key: boron
     unit: mg/L
@@ -198,6 +242,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 20
+    defaultBounds: { amberLow: 3.0, greenLow: 3.8, greenHigh: 5.5, amberHigh: 7.0 }
 
   - key: bromine
     unit: mg/L
@@ -207,6 +252,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 300
+    defaultBounds: { amberLow: 45, greenLow: 55, greenHigh: 75, amberHigh: 95 }
 
   # Silicon sits with the majors on ICP reports — in mg/L like them (e.g.
   # 0.2) — but is wanted *low* (diatoms), so its default bounds are
@@ -219,6 +265,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 10
+    defaultBounds: { greenHigh: 0.15, amberHigh: 0.5 }
 
   # Desirable trace elements (µg/L range).
   - key: zinc
@@ -230,6 +277,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.01, amberHigh: 0.03 }
 
   - key: vanadium
     unit: "µg/L"
@@ -240,6 +288,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.003, amberHigh: 0.008 }
 
   - key: copper
     unit: "µg/L"
@@ -250,6 +299,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.002, amberHigh: 0.01 }
 
   - key: nickel
     unit: "µg/L"
@@ -260,6 +310,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.002, amberHigh: 0.008 }
 
   - key: manganese
     unit: "µg/L"
@@ -270,6 +321,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.005, amberHigh: 0.02 }
 
   - key: molybdenum
     unit: "µg/L"
@@ -280,6 +332,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { amberLow: 0.001, greenLow: 0.005, greenHigh: 0.015, amberHigh: 0.03 }
 
   - key: chromium
     unit: "µg/L"
@@ -290,6 +343,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.005 }
 
   - key: cobalt
     unit: "µg/L"
@@ -300,6 +354,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.004 }
 
   - key: lithium
     unit: "µg/L"
@@ -310,6 +365,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 5
+    defaultBounds: { amberLow: 0.05, greenLow: 0.12, greenHigh: 0.25, amberHigh: 0.4 }
 
   - key: barium
     unit: "µg/L"
@@ -320,6 +376,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { amberLow: 0.001, greenLow: 0.004, greenHigh: 0.02, amberHigh: 0.05 }
 
   - key: selenium
     unit: "µg/L"
@@ -330,8 +387,10 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.005, amberHigh: 0.015 }
 
-  # Contaminants: wanted near zero, one-sided default bounds.
+  # Contaminants: wanted near zero, one-sided default bounds (ceilings
+  # roughly at "reports start flagging this").
   - key: aluminium
     unit: "µg/L"
     decimals: 1
@@ -341,6 +400,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 2
+    defaultBounds: { greenHigh: 0.01, amberHigh: 0.05 }
 
   - key: antimony
     unit: "µg/L"
@@ -351,6 +411,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.002, amberHigh: 0.01 }
 
   - key: tin
     unit: "µg/L"
@@ -361,6 +422,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.003, amberHigh: 0.01 }
 
   - key: beryllium
     unit: "µg/L"
@@ -371,6 +433,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.0005, amberHigh: 0.002 }
 
   - key: silver
     unit: "µg/L"
@@ -381,6 +444,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.0005, amberHigh: 0.002 }
 
   - key: tungsten
     unit: "µg/L"
@@ -391,6 +455,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.005 }
 
   - key: lanthanum
     unit: "µg/L"
@@ -401,6 +466,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.005 }
 
   - key: titanium
     unit: "µg/L"
@@ -411,6 +477,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.002, amberHigh: 0.01 }
 
   - key: zirconium
     unit: "µg/L"
@@ -421,6 +488,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.005 }
 
   - key: arsenic
     unit: "µg/L"
@@ -431,6 +499,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.004, amberHigh: 0.012 }
 
   - key: cadmium
     unit: "µg/L"
@@ -441,6 +510,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.0005, amberHigh: 0.002 }
 
   - key: mercury
     unit: "µg/L"
@@ -451,6 +521,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.0003, amberHigh: 0.001 }
 
   - key: lead
     unit: "µg/L"
@@ -461,3 +532,4 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
+    defaultBounds: { greenHigh: 0.002, amberHigh: 0.008 }

@@ -5,9 +5,11 @@
 //     dart run tool/gen_parameters.dart
 //
 // Validates the YAML before writing: keys/symbols must be unique, category
-// must be a real `ParamCategory` name, microelements must carry a symbol,
-// bounds must be ordered, and both plausible bounds must be defined or
-// neither. On any error it prints the problems and writes nothing.
+// must be a real `ParamCategory` name, microelements must carry a symbol and
+// defaultBounds (core parameters must not — their defaults are the setup-type
+// presets), bounds must be ordered, both plausible bounds must be defined or
+// neither, and defaultBounds must be ascending, green-paired and inside the
+// plausible range. On any error it prints the problems and writes nothing.
 //
 // Deliberately does NOT import package:reeftracker — this generator's output
 // is a part of `parameter_catalog.dart`, so the package doesn't compile while
@@ -101,6 +103,30 @@ void main() {
       errors.add('"$key": displayFactor is a microelement mechanism');
     }
 
+    final importance = p['importance'] as num?;
+    if (importance != null && importance <= 0) {
+      errors.add('"$key": importance must be positive');
+    }
+    if (importance != null && category != 'core') {
+      errors.add(
+        '"$key": importance is a core mechanism '
+        '(microelements are excluded from the health/stability scores)',
+      );
+    }
+
+    final maxDailyRise = p['maxDailyRise'] as num?;
+    if (maxDailyRise != null && maxDailyRise <= 0) {
+      errors.add('"$key": maxDailyRise must be positive');
+    }
+
+    final hobbyKit = p['hobbyKit'];
+    if (hobbyKit != null && hobbyKit is! bool) {
+      errors.add('"$key": hobbyKit must be true or false');
+    }
+    if (hobbyKit == true && category == 'core') {
+      errors.add('"$key": hobbyKit is a microelement mechanism');
+    }
+
     final minValue = p['minValue'] as num?;
     final plausibleMin = p['plausibleMin'] as num?;
     final plausibleMax = p['plausibleMax'] as num?;
@@ -114,6 +140,62 @@ void main() {
     }
     if (minValue != null && plausibleMin != null && plausibleMin < minValue) {
       errors.add('"$key": plausibleMin sits below the hard floor');
+    }
+
+    final boundsMap = p['defaultBounds'] as YamlMap?;
+    if (category == 'core') {
+      if (boundsMap != null) {
+        errors.add(
+          '"$key": defaultBounds is a microelement mechanism '
+          '(core defaults are the setup-type presets in presets.dart)',
+        );
+      }
+    } else if (boundsMap == null) {
+      errors.add('"$key": microelements must carry defaultBounds');
+    }
+    num? amberLow, greenLow, greenHigh, amberHigh;
+    if (boundsMap != null) {
+      const boundFields = {'amberLow', 'greenLow', 'greenHigh', 'amberHigh'};
+      for (final f in boundsMap.keys) {
+        if (!boundFields.contains(f)) {
+          errors.add('"$key": unknown defaultBounds field "$f"');
+        }
+      }
+      amberLow = boundsMap['amberLow'] as num?;
+      greenLow = boundsMap['greenLow'] as num?;
+      greenHigh = boundsMap['greenHigh'] as num?;
+      amberHigh = boundsMap['amberHigh'] as num?;
+      final present = [
+        amberLow,
+        greenLow,
+        greenHigh,
+        amberHigh,
+      ].whereType<num>().toList();
+      if (present.isEmpty) errors.add('"$key": defaultBounds is empty');
+      // An amber bound requires its matching green bound — the bound
+      // editors' pairing rule (see zones.dart).
+      if (amberLow != null && greenLow == null) {
+        errors.add('"$key": defaultBounds.amberLow requires greenLow');
+      }
+      if (amberHigh != null && greenHigh == null) {
+        errors.add('"$key": defaultBounds.amberHigh requires greenHigh');
+      }
+      for (var i = 1; i < present.length; i++) {
+        if (present[i - 1] >= present[i]) {
+          errors.add('"$key": defaultBounds must be strictly ascending');
+          break;
+        }
+      }
+      for (final v in present) {
+        if (minValue != null && v < minValue) {
+          errors.add('"$key": defaultBounds value $v below the hard floor');
+        }
+        if (plausibleMax != null && v > plausibleMax) {
+          errors.add(
+            '"$key": defaultBounds value $v above the plausible range',
+          );
+        }
+      }
     }
 
     buf
@@ -134,6 +216,17 @@ void main() {
     if (minValue != null) buf.writeln('    minValue: $minValue,');
     if (plausibleMin != null) buf.writeln('    plausibleMin: $plausibleMin,');
     if (plausibleMax != null) buf.writeln('    plausibleMax: $plausibleMax,');
+    if (boundsMap != null) {
+      buf.writeln('    defaultBounds: ZoneBounds(');
+      if (amberLow != null) buf.writeln('      amberLow: $amberLow,');
+      if (greenLow != null) buf.writeln('      greenLow: $greenLow,');
+      if (greenHigh != null) buf.writeln('      greenHigh: $greenHigh,');
+      if (amberHigh != null) buf.writeln('      amberHigh: $amberHigh,');
+      buf.writeln('    ),');
+    }
+    if (hobbyKit == true) buf.writeln('    hobbyKit: true,');
+    if (maxDailyRise != null) buf.writeln('    maxDailyRise: $maxDailyRise,');
+    if (importance != null) buf.writeln('    importance: $importance,');
     buf.writeln('  ),');
   }
   buf.writeln('];');

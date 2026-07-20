@@ -446,8 +446,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           label: l.dosing,
         ),
         NavigationDestination(
+          // Keep the outlined glyph even when selected.
           icon: const Icon(Icons.settings_outlined),
-          selectedIcon: const Icon(Icons.settings),
+          selectedIcon: const Icon(Icons.settings_outlined),
           label: l.settings,
         ),
       ],

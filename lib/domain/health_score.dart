@@ -11,6 +11,7 @@
 library;
 
 import 'clock.dart';
+import 'parameter_catalog.dart';
 import 'zones.dart';
 
 /// Parameters tested longer ago than this are considered stale: their last
@@ -18,27 +19,19 @@ import 'zones.dart';
 /// the aggregate score and surfaced separately ("not tested recently").
 const int kHealthFreshnessDays = 30;
 
-/// Relative importance of each parameter in the aggregate. Parameters whose
-/// swings harm livestock fastest weigh most; trace elements weigh least.
-/// Anything not listed defaults to [_kDefaultWeight].
+/// Weight for parameters (and unknown keys) carrying no explicit
+/// `importance` in the catalog.
 const double _kDefaultWeight = 1;
-const Map<String, double> _kImportance = {
-  'temperature': 3,
-  'salinity': 3,
-  'alkalinity': 3,
-  'ammonia': 3,
-  'nitrite': 3,
-  'ph': 2.5,
-  'calcium': 2,
-  'magnesium': 2,
-  'nitrate': 2,
-  'phosphate': 2,
-};
 
+/// Relative importance of a parameter in the aggregate — the catalog's
+/// per-parameter `importance` (edited in `parameters.yaml`). Parameters whose
+/// swings harm livestock fastest weigh most; anything without an entry
+/// weighs [_kDefaultWeight].
+///
 /// Public so the stability score (`stability_score.dart`) weighs parameters
 /// identically — one importance table for both aggregates.
 double importanceWeightFor(String paramKey) =>
-    _kImportance[paramKey] ?? _kDefaultWeight;
+    kParameterByKey[paramKey]?.importance ?? _kDefaultWeight;
 
 /// Per-parameter input for scoring: its bounds and latest reading (if any).
 typedef HealthInput = ({

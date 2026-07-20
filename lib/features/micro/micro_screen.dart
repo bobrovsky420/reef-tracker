@@ -19,6 +19,7 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_icon_button.dart';
+import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_sheet.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/zone_visuals.dart';
@@ -104,20 +105,35 @@ class MicroScreen extends ConsumerWidget {
                 ? () => _importReport(context)
                 : () => showProFeatureDialog(context, ProFeature.icpImport),
           ),
-          ReefIconButton(
-            icon: Icons.checklist,
-            tooltip: l.microViewManage,
-            onPressed: () => showMicroViewsManageSheet(context),
-          ),
-          ReefIconButton(
-            icon: Icons.tune,
-            tooltip: l.microConfigureTitle,
-            onPressed: () => context.push('/micro/configure'),
-          ),
-          ReefIconButton(
-            icon: Icons.alarm_add,
-            tooltip: l.microReminderTooltip,
-            onPressed: () => _createReminder(context, ref, tank.id),
+          // Setup-ish actions collapsed into the overflow so the (long, in
+          // some languages) title keeps its room; import stays a visible
+          // button as the screen's recurring primary action besides the FAB.
+          ReefMenuButton<String>(
+            icon: Icons.more_vert,
+            iconStyle: reefIconButtonStyle(context),
+            tooltip: l.moreOptions,
+            onSelected: (v) => switch (v) {
+              'views' => unawaited(showMicroViewsManageSheet(context)),
+              'configure' => unawaited(context.push('/micro/configure')),
+              _ => unawaited(_createReminder(context, ref, tank.id)),
+            },
+            entries: [
+              ReefMenuItem(
+                value: 'views',
+                icon: Icons.checklist,
+                label: l.microViewManage,
+              ),
+              ReefMenuItem(
+                value: 'configure',
+                icon: Icons.tune,
+                label: l.microConfigureTitle,
+              ),
+              ReefMenuItem(
+                value: 'reminder',
+                icon: Icons.alarm_add,
+                label: l.microReminderTooltip,
+              ),
+            ],
           ),
         ],
       ),

@@ -13,6 +13,8 @@
 /// stable [SupplementProduct.key]) and read its [SupplementProduct.strength].
 library;
 
+import 'parameter_catalog.dart';
+
 part 'supplement_catalog.g.dart';
 
 /// The unit a supplement is measured in. Restricted to **ml** (liquids) and
@@ -232,12 +234,12 @@ const List<String> kDosingElementKeys = [
 ];
 
 /// Maximum safe *rise per day* for a correction dose, in the element's
-/// canonical unit (dKH or ppm per day). When a computed correction would raise
-/// the element faster, the calculator splits it over enough days to stay under
-/// the limit. Elements without an entry have no established limit and are
-/// corrected in one dose.
-const Map<String, double> kMaxDailyRiseByElement = {
-  'alkalinity': 1.4,
-  'calcium': 50,
-  'magnesium': 100,
+/// canonical unit (dKH or ppm per day) — the catalog's per-parameter
+/// `maxDailyRise` (edited in `parameters.yaml`). When a computed correction
+/// would raise the element faster, the calculator splits it over enough days
+/// to stay under the limit. Elements without an entry have no established
+/// limit and are corrected in one dose.
+final Map<String, double> kMaxDailyRiseByElement = {
+  for (final p in kReefParameters)
+    if (p.maxDailyRise != null) p.key: p.maxDailyRise!,
 };

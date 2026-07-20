@@ -1,3 +1,4 @@
+import 'parameter_catalog.dart';
 import 'zones.dart';
 
 part 'micro_views.g.dart';
@@ -6,67 +7,20 @@ part 'micro_views.g.dart';
 /// bounds per element and the status summary the dashboard tile / screen
 /// header show. No Flutter, no DB.
 
-/// Shorthand mirroring `presets.dart`.
-ZoneBounds _b(
-  double? amberLow,
-  double? greenLow,
-  double? greenHigh,
-  double? amberHigh,
-) => ZoneBounds(
-  amberLow: amberLow,
-  greenLow: greenLow,
-  greenHigh: greenHigh,
-  amberHigh: amberHigh,
-);
-
 /// Default zone bounds per microelement, in **canonical ppm** (mg/L) like all
-/// stored bounds. Sensible starting points anchored on natural seawater and
-/// the target ranges ICP labs publish — deliberately generous, and editable
-/// per tank exactly like core-parameter bounds. Contaminants (and silicon)
-/// are one-sided: anything up to the green bound is fine, there is no "too
-/// little lead".
+/// stored bounds — the catalog's per-element `defaultBounds` (edited in
+/// `parameters.yaml`, in catalog order). Sensible starting points anchored on
+/// natural seawater and the target ranges ICP labs publish — deliberately
+/// generous, and editable per tank exactly like core-parameter bounds.
+/// Contaminants (and silicon) are one-sided: anything up to the green bound
+/// is fine, there is no "too little lead".
 ///
 /// Used as the fallback whenever a tank has no `TrackedParameters` row for an
 /// element yet (rows are created lazily on first save/edit), and as the seed
 /// when such a row is created.
 final Map<String, ZoneBounds> kMicroDefaultBounds = {
-  // Major ions (NSW at 35 ppt: Na ~10 760, K ~400, S ~905, B ~4.4, Br ~65).
-  'sodium': _b(9500, 10000, 11200, 12000),
-  'potassium': _b(340, 380, 420, 460),
-  'sulfur': _b(780, 850, 980, 1100),
-  'boron': _b(3.0, 3.8, 5.5, 7.0),
-  'bromine': _b(45, 55, 75, 95),
-  'silicon': _b(null, null, 0.15, 0.5),
-  // Trace elements (NSW: Sr ~8.1 ppm, I ~60 µg/L, Mo ~10 µg/L, Li ~180 µg/L,
-  // Ba ~10–15 µg/L; the rest are "keep low" ceilings).
-  'strontium': _b(5.5, 7.0, 9.5, 12.0),
-  'iodine': _b(0.03, 0.05, 0.08, 0.12),
-  'iron': _b(null, null, 0.005, 0.015),
-  'zinc': _b(null, null, 0.01, 0.03),
-  'vanadium': _b(null, null, 0.003, 0.008),
-  'copper': _b(null, null, 0.002, 0.01),
-  'nickel': _b(null, null, 0.002, 0.008),
-  'manganese': _b(null, null, 0.005, 0.02),
-  'molybdenum': _b(0.001, 0.005, 0.015, 0.03),
-  'chromium': _b(null, null, 0.001, 0.005),
-  'cobalt': _b(null, null, 0.001, 0.004),
-  'lithium': _b(0.05, 0.12, 0.25, 0.4),
-  'barium': _b(0.001, 0.004, 0.02, 0.05),
-  'selenium': _b(null, null, 0.005, 0.015),
-  // Contaminants (ceilings roughly at "reports start flagging this").
-  'aluminium': _b(null, null, 0.01, 0.05),
-  'antimony': _b(null, null, 0.002, 0.01),
-  'tin': _b(null, null, 0.003, 0.01),
-  'beryllium': _b(null, null, 0.0005, 0.002),
-  'silver': _b(null, null, 0.0005, 0.002),
-  'tungsten': _b(null, null, 0.001, 0.005),
-  'lanthanum': _b(null, null, 0.001, 0.005),
-  'titanium': _b(null, null, 0.002, 0.01),
-  'zirconium': _b(null, null, 0.001, 0.005),
-  'arsenic': _b(null, null, 0.004, 0.012),
-  'cadmium': _b(null, null, 0.0005, 0.002),
-  'mercury': _b(null, null, 0.0003, 0.001),
-  'lead': _b(null, null, 0.002, 0.008),
+  for (final p in kMicroParameters)
+    if (p.defaultBounds != null) p.key: p.defaultBounds!,
 };
 
 /// Default bounds for [paramKey], or empty bounds for a non-micro/unknown key.
@@ -74,8 +28,12 @@ ZoneBounds microDefaultBounds(String paramKey) =>
     kMicroDefaultBounds[paramKey] ?? const ZoneBounds();
 
 /// The elements hobbyists test at home between ICPs (Salifert/Red Sea kits
-/// exist for these) — the compact filter of the micro entry form.
-const List<String> kMicroHobbyKitKeys = ['iodine', 'iron', 'strontium'];
+/// exist for these — `hobbyKit` in `parameters.yaml`) — the compact filter of
+/// the micro entry form, in catalog order.
+final List<String> kMicroHobbyKitKeys = [
+  for (final p in kMicroParameters)
+    if (p.hobbyKit) p.key,
+];
 
 // --- Element views ------------------------------------------------------------
 //
