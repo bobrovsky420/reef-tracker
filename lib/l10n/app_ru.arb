@@ -651,7 +651,7 @@
   "dashboardLayoutTitle": "Вид панели",
   "dashboardLayoutSubtitle": "Как расположены карточки на вкладке «Измерения»",
   "dashboardLayoutGrouped": "По группам",
-  "dashboardLayoutClassic": "Классический",
+  "dashboardLayoutFlat": "Плоский",
 
   "healthDisplayTitle": "Состояние аквариума",
   "healthDisplaySubtitle": "Где показывать сводку состояния",

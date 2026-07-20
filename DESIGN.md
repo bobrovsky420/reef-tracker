@@ -1268,7 +1268,8 @@ behind a confirmation dialog**:
   carrying both ordering keys and then branches (`_appendGrouped` /
   `_appendClassic`); **all future dashboard visual work targets the grouped
   layout** — classic is a frozen fallback.
-  - **Classic**: the original single `SliverGrid` mixing `_ParameterTile`s and
+  - **Flat** (internally `classic` — the stored setting value and code names
+    keep the old id): the original single `SliverGrid` mixing `_ParameterTile`s and
     `_RatioTile`s in one user-managed flat order (`displayOrder` /
     `ratioRowOrder`), `MicroSummaryTile` pinned as the last cell. Manage
     Parameters shows one freely-ordered flat list with no section captions.
@@ -2223,7 +2224,7 @@ Groups, in order: **Language**; **Appearance** (the theme-mode
 System/Light/Dark `ReefSegmented` row — device-local `theme_mode`, REDESIGN
 #16, see Theming); **Units** (temp/salinity/volume as
 `ReefSegmented` controls); a **Dashboard**
-section (the **dashboard-layout** dropdown — grouped vs classic,
+section (the **dashboard-layout** dropdown — "Flat" (internally `classic`, listed first) vs "Grouped",
 `dashboardLayoutProvider`, default grouped, see Dashboard above — plus the
 tank-health display dropdown + the **stability window** selector,
 U26 — `kStabilityWindowChoices` 30/60/90 d, shown only to installs entitled to

@@ -2279,7 +2279,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dashboardLayoutGrouped => 'Gruppiert';
 
   @override
-  String get dashboardLayoutClassic => 'Klassisch';
+  String get dashboardLayoutFlat => 'Flach';
 
   @override
   String get healthDisplayTitle => 'Beckenzustand';

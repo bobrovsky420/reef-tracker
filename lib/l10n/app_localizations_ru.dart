@@ -2309,7 +2309,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dashboardLayoutGrouped => 'По группам';
 
   @override
-  String get dashboardLayoutClassic => 'Классический';
+  String get dashboardLayoutFlat => 'Плоский';
 
   @override
   String get healthDisplayTitle => 'Состояние аквариума';

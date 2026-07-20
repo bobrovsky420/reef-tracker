@@ -651,7 +651,7 @@
   "dashboardLayoutTitle": "Disposition du tableau de bord",
   "dashboardLayoutSubtitle": "Comment les cartes sont organisées dans l'onglet Mesures",
   "dashboardLayoutGrouped": "Groupé",
-  "dashboardLayoutClassic": "Classique",
+  "dashboardLayoutFlat": "Plat",
 
   "healthDisplayTitle": "Santé du bac",
   "healthDisplaySubtitle": "Où afficher le résumé de santé",

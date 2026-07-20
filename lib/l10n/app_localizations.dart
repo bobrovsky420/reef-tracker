@@ -3809,11 +3809,11 @@ abstract class AppLocalizations {
   /// **'Grouped'**
   String get dashboardLayoutGrouped;
 
-  /// Dashboard layout option: the original single list of cards in one custom order.
+  /// Dashboard layout option: the original single flat list of cards in one custom order.
   ///
   /// In en, this message translates to:
-  /// **'Classic'**
-  String get dashboardLayoutClassic;
+  /// **'Flat'**
+  String get dashboardLayoutFlat;
 
   /// No description provided for @healthDisplayTitle.
   ///

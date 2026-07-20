@@ -651,7 +651,7 @@
   "dashboardLayoutTitle": "Układ pulpitu",
   "dashboardLayoutSubtitle": "Jak karty są ułożone na karcie Pomiary",
   "dashboardLayoutGrouped": "Grupowany",
-  "dashboardLayoutClassic": "Klasyczny",
+  "dashboardLayoutFlat": "Płaski",
 
   "healthDisplayTitle": "Kondycja zbiornika",
   "healthDisplaySubtitle": "Gdzie pokazać podsumowanie kondycji",

@@ -2283,7 +2283,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dashboardLayoutGrouped => 'Groupé';
 
   @override
-  String get dashboardLayoutClassic => 'Classique';
+  String get dashboardLayoutFlat => 'Plat';
 
   @override
   String get healthDisplayTitle => 'Santé du bac';

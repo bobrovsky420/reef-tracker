@@ -651,7 +651,7 @@
   "dashboardLayoutTitle": "Rozvržení přehledu",
   "dashboardLayoutSubtitle": "Jak karty uspořádat na kartě Měření",
   "dashboardLayoutGrouped": "Skupiny",
-  "dashboardLayoutClassic": "Klasické",
+  "dashboardLayoutFlat": "Ploché",
 
   "healthDisplayTitle": "Zdraví nádrže",
   "healthDisplaySubtitle": "Kde zobrazit souhrn zdraví",

@@ -651,7 +651,7 @@
   "dashboardLayoutTitle": "Layout dashboard",
   "dashboardLayoutSubtitle": "Come sono disposte le schede nella scheda Misurazioni",
   "dashboardLayoutGrouped": "Raggruppato",
-  "dashboardLayoutClassic": "Classico",
+  "dashboardLayoutFlat": "Piatto",
 
   "healthDisplayTitle": "Salute della vasca",
   "healthDisplaySubtitle": "Dove mostrare il riepilogo della salute",

@@ -2316,7 +2316,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get dashboardLayoutGrouped => 'Grupowany';
 
   @override
-  String get dashboardLayoutClassic => 'Klasyczny';
+  String get dashboardLayoutFlat => 'Płaski';
 
   @override
   String get healthDisplayTitle => 'Kondycja zbiornika';

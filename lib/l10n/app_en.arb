@@ -1041,9 +1041,9 @@
   "@dashboardLayoutGrouped": {
     "description": "Dashboard layout option: cards organized into labelled categories (Core chemistry, Nutrients, Ratios, Environment)."
   },
-  "dashboardLayoutClassic": "Classic",
-  "@dashboardLayoutClassic": {
-    "description": "Dashboard layout option: the original single list of cards in one custom order."
+  "dashboardLayoutFlat": "Flat",
+  "@dashboardLayoutFlat": {
+    "description": "Dashboard layout option: the original single flat list of cards in one custom order."
   },
 
   "healthDisplayTitle": "Tank health",
