@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.35.2] - 2026-07-20
 
 ### Changed
+- Section titles on the Settings screen (and the Reminders and Backups
+  subscreens) now stay pinned at the top while their section scrolls, so it
+  is always visible which group the rows belong to; the next section's title
+  pushes the previous one out.
 - The Microelements top bar now shows only the ICP import button plus a ⋮
   overflow menu holding Manage views, Element settings and the test reminder,
   leaving more room for the screen title.

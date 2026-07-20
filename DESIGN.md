@@ -2236,10 +2236,16 @@ shell); the standalone pushed `/settings` route (`SettingsScreen`, a plain
 no-tanks welcome screen, which needs a back-affordance path to backup
 restore. The screen is a stack of labeled groups rendered by the dialect-aware
 `widgets/reef_settings.dart` building blocks (REDESIGN #14/#15):
-`ReefSettingsList` (composes the sections; M3 inserts hairline dividers
-between them) → `ReefSettingsSection` (optional uppercase label — faint and
+`ReefSettingsList` (composes the sections as a `CustomScrollView` of
+`SliverMainAxisGroup`s — each section's label is a **pinned sliver** that
+sticks below the app bar while any of its section is on screen and is then
+pushed out by the next label, filling `scaffoldBody` behind itself only while
+rows scroll beneath; M3 inserts hairline dividers between sections) →
+`ReefSettingsSection` (optional uppercase label — faint and
 inset-margined on the Cupertino dialect, `primary`-colored on M3 — over rows
-that sit in an inset r14 `ReefCard` on Cupertino and full-width on M3) →
+that sit in an inset r14 `ReefCard` on Cupertino and full-width on M3; used
+as a plain box widget outside `ReefSettingsList` it renders the label
+in-flow, e.g. on the Import-sources screen) →
 `ReefSettingsRow` (19 px `textDim` icon + 15 px title + optional 12 px
 `textFaint` description + trailing control; `onTap` makes the whole row a
 target — switch rows pass the toggle there, preserving the old
