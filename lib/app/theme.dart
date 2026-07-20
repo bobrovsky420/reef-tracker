@@ -367,6 +367,16 @@ OutlinedBorder reefIconButtonShape(TargetPlatform platform) =>
     ? RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(9))
     : const CircleBorder();
 
+/// Anchored-menu panel shape per platform dialect: r16 squircle on iOS, r14
+/// rounded rect on Android — one step tighter than the cards, since menus are
+/// smaller surfaces. Shared by `ReefMenu` (the app's own anchored menu) and
+/// the `popupMenuTheme` backstop in [buildReefTheme] so any stray Material
+/// menu still lands on the same silhouette.
+OutlinedBorder reefMenuShape(TargetPlatform platform) =>
+    reefCupertinoDialect(platform)
+    ? RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16))
+    : RoundedRectangleBorder(borderRadius: BorderRadius.circular(14));
+
 /// Primary-action shape per platform dialect (§2.3's FAB row: stadium pill on
 /// iOS, r16 on Android). Shared by the FAB and `FilledButton` themes so every
 /// primary button and FAB agree on the silhouette (REDESIGN #18).
@@ -595,6 +605,23 @@ ThemeData buildReefTheme(Brightness brightness, TargetPlatform platform) {
       labelPadding: const EdgeInsets.symmetric(horizontal: 8),
       iconTheme: IconThemeData(size: 14, color: tokens.primary),
       checkmarkColor: tokens.text,
+    ),
+    // Backstop for Material-built menus (menu redesign): anything that still
+    // opens a stock popup menu (framework internals, future call sites that
+    // forget `ReefMenu`) gets the card language — platform menu shape, 1 px
+    // `surfaceBorder`, 15 px `text` labels. The app's own menus are the
+    // frosted `ReefMenu`; this only keeps strays on-brand. The fill must be
+    // opaque (no blur behind a plain Material menu), so dark uses the opaque
+    // container color rather than the translucent `surface` token.
+    popupMenuTheme: PopupMenuThemeData(
+      color: dark ? scheme.surfaceContainerHigh : tokens.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: dark ? 0 : 6,
+      shadowColor: dark ? null : const Color(0x5910262A),
+      shape: reefMenuShape(
+        platform,
+      ).copyWith(side: BorderSide(color: tokens.surfaceBorder)),
+      textStyle: TextStyle(fontSize: 15, color: tokens.text),
     ),
     // Primary buttons (REDESIGN #18): every `FilledButton` — editor saves,
     // dialog confirms — carries the FAB's w700 label and platform silhouette.

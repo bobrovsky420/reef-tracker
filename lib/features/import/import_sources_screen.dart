@@ -6,6 +6,7 @@ import '../../data/database.dart';
 import '../../domain/hanna_import.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_settings.dart';
 
 /// Settings surface of the measurement import (U32): per tank+source, the
@@ -50,20 +51,23 @@ class ImportSourcesScreen extends ConsumerWidget {
                     else
                       l.hannaImportNeverImported,
                   ].join(' · '),
-                  trailing: PopupMenuButton<String>(
+                  trailing: ReefMenuButton<String>(
+                    icon: Icons.more_vert,
                     onSelected: (v) => switch (v) {
                       'change' => _changeDate(context, ref, l, s),
                       _ => _reset(context, ref, l, s),
                     },
-                    itemBuilder: (ctx) => [
+                    entries: [
                       if (s.importedUpTo != null)
-                        PopupMenuItem(
+                        ReefMenuItem(
                           value: 'change',
-                          child: Text(l.hannaImportChangeDate),
+                          icon: Icons.edit_calendar_outlined,
+                          label: l.hannaImportChangeDate,
                         ),
-                      PopupMenuItem(
+                      ReefMenuItem(
                         value: 'reset',
-                        child: Text(l.hannaImportReset),
+                        icon: Icons.restart_alt,
+                        label: l.hannaImportReset,
                       ),
                     ],
                   ),

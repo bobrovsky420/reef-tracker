@@ -983,7 +983,7 @@ r16 on Android. App-bar action icons on the home shell are "mini-card" icon
 buttons (`widgets/reef_icon_button.dart`, `ReefIconButton`): a 32 px `surface`
 card with `surfaceBorder`, r9 squircle iOS / circle Android
 (`reefIconButtonShape` in the theme), 16 px `textDim` icon, 48 px hit target;
-the overflow `PopupMenuButton` shares the look via `reefIconButtonStyle`. The
+the overflow `ReefMenuButton` shares the look via `reefIconButtonStyle`. The
 tank switcher title renders at 19 px w700 in the `text` token with a compact
 chevron. Widgets read
 tokens via `ReefTokens.of(context)` (falls back to the brightness-matched
@@ -1013,6 +1013,31 @@ transparent `Material` (ink must paint above the card fill) and a bottom
 `surfaceBorder` hairline as the divider. `widgets/section_header.dart`
 (`SectionHeader`) is the matching uppercase faint group label rendered between
 card groups (grouped dashboard).
+
+**Menus (`widgets/reef_menu.dart`).** `ReefMenuButton<T>` is the app's
+anchored menu, replacing the stock Material `PopupMenuButton` look everywhere
+(app-bar overflow + tank switcher, list-row `more_vert` menus on
+Tanks/Backups/Import sources, and — via `ReefSettingsDropdown` — every
+settings selector). The panel is a frosted floating card: `tabBarBg` tint
+over a backdrop blur (the tab bar's translucency language), 1 px
+`surfaceBorder`, `reefMenuShape` (r16 squircle iOS / r14 rect Android, one
+step tighter than the cards), token `cardShadow`, and a ~150 ms fade +
+scale-from-anchor open animation. Items are inset pill rows — 15 px `text`
+labels, 18 px `textDim` leading icons, the current choice on a `healthySoft`
+pill with trailing checkmark (the chip/segmented selection language),
+destructive actions in the `ColorScheme.error` slot; `ReefMenuDivider` is the
+hairline group separator. Built on `RawMenuAnchor` (custom overlay, auto
+left/right alignment from the anchor's screen half, flips above when out of
+room below); since the overlay is not a route, a `PopScope` around the anchor
+makes Android back close the menu instead of popping the screen. Anchors:
+`icon:` renders an icon button (pass `reefIconButtonStyle` for the app-bar
+mini-card; default is the plain 18 px `textDim` glyph used on list rows) and
+`child:` wraps any widget (tank switcher title). A `popupMenuTheme` backstop
+in `buildReefTheme` keeps any stray Material-built menu on the same
+silhouette (opaque fill — no blur is possible behind a plain Material menu).
+Form-field dropdowns (`DropdownButtonFormField` in the editors) still open
+the stock Material menu — migrating them onto `ReefMenu` is an open
+follow-up.
 
 **Platform dialects (REDESIGN #15).** `reefCupertinoDialect(TargetPlatform)`
 in `theme.dart` is the single predicate every dialect fork keys on (iOS/macOS
@@ -2216,7 +2241,8 @@ that sit in an inset r14 `ReefCard` on Cupertino and full-width on M3) →
 target — switch rows pass the toggle there, preserving the old
 `SwitchListTile` behavior). `ReefSettingsDropdown` styles the trailing
 dropdowns per dialect (chevron + `textDim` value on Cupertino, caret + bold
-value on M3) and `ReefSettingsValue` is the "value + chevron" cluster for
+value on M3; opens the frosted `ReefMenu` panel with the current choice
+checkmarked — see Menus above) and `ReefSettingsValue` is the "value + chevron" cluster for
 rows that push a subscreen. All dialect resolution lives in these widgets;
 the screen itself is branch-free.
 

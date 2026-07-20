@@ -19,6 +19,7 @@ import '../../data/cloud_sync.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_settings.dart';
 
 /// Lists the rotating automatic backups stored on the device — plus, when
@@ -203,7 +204,6 @@ class _DriveBackupRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final tokens = ReefTokens.of(context);
     final modified = file.modifiedAt?.toLocal();
     return ReefSettingsRow(
       icon: Icons.cloud_outlined,
@@ -216,8 +216,8 @@ class _DriveBackupRow extends ConsumerWidget {
           ? _formatSize(l, file.sizeBytes!)
           : null,
       descriptionStyle: _sizeStyle(context),
-      trailing: PopupMenuButton<String>(
-        icon: Icon(Icons.more_vert, size: 18, color: tokens.textDim),
+      trailing: ReefMenuButton<String>(
+        icon: Icons.more_vert,
         onSelected: (action) {
           switch (action) {
             case 'restore':
@@ -226,9 +226,18 @@ class _DriveBackupRow extends ConsumerWidget {
               unawaited(_delete(context, ref, l));
           }
         },
-        itemBuilder: (context) => [
-          PopupMenuItem(value: 'restore', child: Text(l.restore)),
-          PopupMenuItem(value: 'delete', child: Text(l.delete)),
+        entries: [
+          ReefMenuItem(
+            value: 'restore',
+            icon: Icons.settings_backup_restore,
+            label: l.restore,
+          ),
+          ReefMenuItem(
+            value: 'delete',
+            icon: Icons.delete_outline,
+            label: l.delete,
+            destructive: true,
+          ),
         ],
       ),
     );
@@ -366,7 +375,6 @@ class _BackupRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final tokens = ReefTokens.of(context);
     // Shared helper honors the device 12/24-hour preference (#41).
     final when = formatDateTime(context, stat.modified, weekday: false);
     final size = _formatSize(l, stat.size);
@@ -376,8 +384,8 @@ class _BackupRow extends ConsumerWidget {
       title: when,
       description: size,
       descriptionStyle: _sizeStyle(context),
-      trailing: PopupMenuButton<String>(
-        icon: Icon(Icons.more_vert, size: 18, color: tokens.textDim),
+      trailing: ReefMenuButton<String>(
+        icon: Icons.more_vert,
         onSelected: (action) {
           switch (action) {
             case 'restore':
@@ -388,10 +396,23 @@ class _BackupRow extends ConsumerWidget {
               unawaited(_delete(context, l));
           }
         },
-        itemBuilder: (context) => [
-          PopupMenuItem(value: 'restore', child: Text(l.restore)),
-          PopupMenuItem(value: 'share', child: Text(l.share)),
-          PopupMenuItem(value: 'delete', child: Text(l.delete)),
+        entries: [
+          ReefMenuItem(
+            value: 'restore',
+            icon: Icons.settings_backup_restore,
+            label: l.restore,
+          ),
+          ReefMenuItem(
+            value: 'share',
+            icon: Icons.share_outlined,
+            label: l.share,
+          ),
+          ReefMenuItem(
+            value: 'delete',
+            icon: Icons.delete_outline,
+            label: l.delete,
+            destructive: true,
+          ),
         ],
       ),
     );

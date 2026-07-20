@@ -12,6 +12,7 @@ import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_icon_button.dart';
+import '../../widgets/reef_menu.dart';
 import '../actions/actions_screen.dart';
 import '../ai_summary/ai_summary_sheet.dart';
 import '../dashboard/comparison_view.dart';
@@ -327,11 +328,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 // icon capacity): the "Ask your AI" summary export (U27) and the
                 // measurement import (U32); future share-ish actions join here.
                 if (hasTanks && _index == 0)
-                  PopupMenuButton<String>(
-                    // Same mini-card look as the ReefIconButtons; the button style
-                    // is forwarded to PopupMenuButton's internal icon button.
-                    style: reefIconButtonStyle(context),
-                    iconSize: 16,
+                  ReefMenuButton<String>(
+                    // Same mini-card look as the ReefIconButtons.
+                    icon: Icons.more_vert,
+                    iconStyle: reefIconButtonStyle(context),
                     onSelected: (v) {
                       if (v == 'ai-summary') {
                         unawaited(showAiSummarySheet(context));
@@ -353,33 +353,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         }
                       }
                     },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
+                    entries: [
+                      ReefMenuItem(
                         value: 'ai-summary',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.auto_awesome_outlined, size: 18),
-                            const SizedBox(width: 8),
-                            Text(l.aiSummaryAction),
-                          ],
-                        ),
+                        icon: Icons.auto_awesome_outlined,
+                        label: l.aiSummaryAction,
                       ),
-                      PopupMenuItem(
+                      ReefMenuItem(
                         value: 'import-measurements',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.move_to_inbox_outlined, size: 18),
-                            const SizedBox(width: 8),
-                            // Flexible: the longer translations (de/ru) must
-                            // ellipsize in the fixed-width menu, not overflow.
-                            Flexible(
-                              child: Text(
-                                l.measurementImportTitle,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
+                        icon: Icons.move_to_inbox_outlined,
+                        label: l.measurementImportTitle,
                       ),
                     ],
                   ),

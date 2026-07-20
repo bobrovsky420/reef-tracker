@@ -22,6 +22,8 @@ import '../../widgets/insights_card.dart';
 import '../../widgets/param_gauge.dart';
 import '../../widgets/ratio_row.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_menu.dart';
+import '../../widgets/reef_settings.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/tank_health_badge.dart';
 import '../../widgets/trend_view.dart';
@@ -730,7 +732,7 @@ class TankSelector extends ConsumerWidget {
     );
     if (tanks.isEmpty) return Text(l.appTitle, style: titleStyle);
 
-    final selector = PopupMenuButton<int>(
+    final selector = ReefMenuButton<int>(
       onSelected: (id) {
         if (id == -1) {
           unawaited(context.push('/tanks'));
@@ -738,32 +740,15 @@ class TankSelector extends ConsumerWidget {
           unawaited(ref.read(dbProvider).setActiveTank(id));
         }
       },
-      itemBuilder: (context) => [
+      entries: [
         for (final t in tanks)
-          PopupMenuItem(
+          ReefMenuItem(
             value: t.id,
-            child: Row(
-              children: [
-                if (t.id == active?.id)
-                  const Icon(Icons.check, size: 18)
-                else
-                  const SizedBox(width: 18),
-                const SizedBox(width: 8),
-                Text(t.name),
-              ],
-            ),
+            label: t.name,
+            selected: t.id == active?.id,
           ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          value: -1,
-          child: Row(
-            children: [
-              const Icon(Icons.edit, size: 18),
-              const SizedBox(width: 8),
-              Text(l.manageTanks),
-            ],
-          ),
-        ),
+        const ReefMenuDivider(),
+        ReefMenuItem(value: -1, icon: Icons.edit, label: l.manageTanks),
       ],
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -820,41 +805,20 @@ class NoTanksView extends ConsumerWidget {
               children: [
                 const Icon(Icons.translate, size: 20),
                 const SizedBox(width: 8),
-                DropdownButton<String>(
+                ReefSettingsDropdown<String>(
                   value: localeCode,
                   onChanged: (v) => settings.setLocaleCode(v),
                   items: [
-                    DropdownMenuItem(
-                      value: 'system',
-                      child: Text(l.languageSystem),
-                    ),
+                    ('system', l.languageSystem),
                     // Sorted alphabetically by native language name (Latin
                     // scripts first), with the system default pinned on top.
-                    DropdownMenuItem(value: 'cs', child: Text(l.languageCzech)),
-                    DropdownMenuItem(
-                      value: 'de',
-                      child: Text(l.languageGerman),
-                    ),
-                    DropdownMenuItem(
-                      value: 'en',
-                      child: Text(l.languageEnglish),
-                    ),
-                    DropdownMenuItem(
-                      value: 'fr',
-                      child: Text(l.languageFrench),
-                    ),
-                    DropdownMenuItem(
-                      value: 'it',
-                      child: Text(l.languageItalian),
-                    ),
-                    DropdownMenuItem(
-                      value: 'pl',
-                      child: Text(l.languagePolish),
-                    ),
-                    DropdownMenuItem(
-                      value: 'ru',
-                      child: Text(l.languageRussian),
-                    ),
+                    ('cs', l.languageCzech),
+                    ('de', l.languageGerman),
+                    ('en', l.languageEnglish),
+                    ('fr', l.languageFrench),
+                    ('it', l.languageItalian),
+                    ('pl', l.languagePolish),
+                    ('ru', l.languageRussian),
                   ],
                 ),
               ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 import 'reef_card.dart';
+import 'reef_menu.dart';
 
 /// Dialect-aware building blocks for the Settings screen (REDESIGN #14/#15,
 /// §A.7). The Cupertino dialect renders inset-grouped `surface` cards under
@@ -233,13 +234,15 @@ class ReefSettingsValue extends StatelessWidget {
 
 /// Trailing dropdown for the settings rows, styled per dialect: the closed
 /// value renders like [ReefSettingsValue] (with a chevron on Cupertino, a
-/// caret on M3); the open menu is the standard Material one on both.
+/// caret on M3); the open menu is the frosted [ReefMenuButton] panel with the
+/// current choice checkmarked.
 class ReefSettingsDropdown<T> extends StatelessWidget {
   const ReefSettingsDropdown({
     super.key,
     required this.value,
     required this.items,
     required this.onChanged,
+    this.enabled = true,
   });
 
   final T value;
@@ -249,46 +252,53 @@ class ReefSettingsDropdown<T> extends StatelessWidget {
 
   final ValueChanged<T> onChanged;
 
+  /// When false the control is inert and the value renders dimmed.
+  final bool enabled;
+
   @override
   Widget build(BuildContext context) {
     final tokens = ReefTokens.of(context);
     final cupertino = reefCupertinoDialect(Theme.of(context).platform);
-    return DropdownButton<T>(
-      value: value,
-      underline: const SizedBox.shrink(),
-      icon: Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Icon(
-          cupertino ? Icons.chevron_right : Icons.expand_more,
-          size: 16,
-          color: cupertino ? tokens.textFaint : tokens.textDim,
+    var current = '';
+    for (final (v, l) in items) {
+      if (v == value) current = l;
+    }
+    final valueStyle = !enabled
+        ? TextStyle(fontSize: 15, color: tokens.textFaint)
+        : cupertino
+        ? TextStyle(fontSize: 15, color: tokens.textDim)
+        : TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: tokens.text,
+          );
+    return ReefMenuButton<T>(
+      enabled: enabled,
+      entries: [
+        for (final (v, label) in items)
+          ReefMenuItem(value: v, label: label, selected: v == value),
+      ],
+      onSelected: onChanged,
+      // Matches the old DropdownButton's 48 px closed height so settings-row
+      // layouts don't shift.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Row(
+          // No Flexible here: the trailing slot of a settings row hands the
+          // dropdown unbounded width, where flex children are illegal — the
+          // closed value sizes intrinsically like the old DropdownButton did.
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(current, style: valueStyle),
+            const SizedBox(width: 4),
+            Icon(
+              cupertino ? Icons.chevron_right : Icons.expand_more,
+              size: 16,
+              color: cupertino ? tokens.textFaint : tokens.textDim,
+            ),
+          ],
         ),
       ),
-      // Menu items: default 15 px `text`. The closed value is restyled below.
-      style: TextStyle(fontSize: 15, color: tokens.text),
-      selectedItemBuilder: (context) => [
-        for (final (_, label) in items)
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: Text(
-              label,
-              style: cupertino
-                  ? TextStyle(fontSize: 15, color: tokens.textDim)
-                  : TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: tokens.text,
-                    ),
-            ),
-          ),
-      ],
-      items: [
-        for (final (v, label) in items)
-          DropdownMenuItem(value: v, child: Text(label)),
-      ],
-      onChanged: (v) {
-        if (v != null) onChanged(v);
-      },
     );
   }
 }

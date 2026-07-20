@@ -15,6 +15,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_value_row.dart';
 
 /// Lists all aquariums with add / edit / delete / switch actions.
@@ -173,8 +174,8 @@ class TanksScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 12),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, size: 18, color: tokens.textDim),
+            ReefMenuButton<String>(
+              icon: Icons.more_vert,
               onSelected: (v) async {
                 switch (v) {
                   case 'activate':
@@ -185,11 +186,24 @@ class TanksScreen extends ConsumerWidget {
                     await _confirmDelete(context, ref, t);
                 }
               },
-              itemBuilder: (context) => [
+              entries: [
                 if (!isActive)
-                  PopupMenuItem(value: 'activate', child: Text(l.makeActive)),
-                PopupMenuItem(value: 'edit', child: Text(l.edit)),
-                PopupMenuItem(value: 'delete', child: Text(l.delete)),
+                  ReefMenuItem(
+                    value: 'activate',
+                    icon: Icons.check_circle_outline,
+                    label: l.makeActive,
+                  ),
+                ReefMenuItem(
+                  value: 'edit',
+                  icon: Icons.edit_outlined,
+                  label: l.edit,
+                ),
+                ReefMenuItem(
+                  value: 'delete',
+                  icon: Icons.delete_outline,
+                  label: l.delete,
+                  destructive: true,
+                ),
               ],
             ),
           ],

@@ -17,6 +17,8 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_icon_button.dart';
+import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_sheet.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/zone_bounds_editor.dart';
@@ -46,17 +48,20 @@ class ManageParametersScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l.parameters),
         actions: [
-          PopupMenuButton<String>(
+          ReefMenuButton<String>(
+            icon: Icons.more_vert,
+            iconStyle: reefIconButtonStyle(context),
             tooltip: l.moreOptions,
             onSelected: (v) async {
               if (v == 'preset') {
                 await _confirmApplyPreset(context, ref, tank.id, type);
               }
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
+            entries: [
+              ReefMenuItem(
                 value: 'preset',
-                child: Text(l.reapplyPreset(l.setupLabel(type))),
+                icon: Icons.playlist_add_check,
+                label: l.reapplyPreset(l.setupLabel(type)),
               ),
             ],
           ),

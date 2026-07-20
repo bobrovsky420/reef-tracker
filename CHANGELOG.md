@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The dashboard-layout option formerly called "Classic" is now called "Flat"
   and listed first in the Settings dropdown. Grouped stays the default;
   existing selections are unaffected.
+- **Redesigned menus.** All popup menus — the aquarium switcher, the ⋮
+  overflow and row menus, and the selectors in Settings — now open as frosted,
+  softly rounded panels matching the app's card look (squircle on iOS), with
+  a subtle unfold animation, icons on actions, a checkmark on the current
+  choice and destructive actions in red. The Android back button/gesture now
+  closes an open menu instead of leaving the screen.
 
 ## [0.35.0] - 2026-07-19
 

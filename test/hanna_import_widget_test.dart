@@ -16,6 +16,7 @@ import 'package:reeftracker/domain/hanna_import.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/import/hanna_import_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
+import 'package:reeftracker/widgets/reef_menu.dart';
 
 /// Widget tests for the Hanna Lab import (U32): the preview screen's
 /// first-import/up-to-date states, the import + undo round-trip against a
@@ -209,7 +210,7 @@ void main() {
         ),
       );
       await settle(tester);
-      await tester.tap(find.byType(PopupMenuButton<String>));
+      await tester.tap(find.byType(ReefMenuButton<String>));
       await settle(tester);
       await tester.tap(find.text('Import measurements'));
       await settle(tester);

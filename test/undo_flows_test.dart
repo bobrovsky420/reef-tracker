@@ -7,6 +7,7 @@ import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
+import 'package:reeftracker/widgets/reef_menu.dart';
 
 /// Widget tests for the tank-delete undo flow (U10): the confirm dialog is
 /// followed by a soft delete + undo SnackBar; Undo restores the tank (and the
@@ -65,7 +66,7 @@ void main() {
   /// Opens the tank's overflow menu and confirms the delete dialog, landing
   /// in the undo window.
   Future<void> deleteViaMenu(WidgetTester tester) async {
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byType(ReefMenuButton<String>));
     await settle(tester);
     await tester.tap(find.text('Delete'));
     await settle(tester);

@@ -30,8 +30,8 @@ class ReefIconButton extends StatelessWidget {
 }
 
 /// The mini-card [ButtonStyle], exposed for app-bar buttons that can't be a
-/// plain [IconButton] — e.g. [PopupMenuButton], which forwards `style` to its
-/// internal icon button.
+/// plain [IconButton] — e.g. `ReefMenuButton`, which forwards it to its
+/// icon-button anchor.
 ButtonStyle reefIconButtonStyle(BuildContext context) {
   final tokens = ReefTokens.of(context);
   return IconButton.styleFrom(

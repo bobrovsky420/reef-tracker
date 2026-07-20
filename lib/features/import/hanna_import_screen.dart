@@ -14,6 +14,7 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_settings.dart';
 import '../../widgets/reef_sheet.dart';
 import '../../widgets/reef_value_row.dart';
 import '../../widgets/section_header.dart';
@@ -233,21 +234,16 @@ class _HannaImportScreenState extends ConsumerState<HannaImportScreen> {
                 ),
               ),
             ),
-            DropdownButton<int>(
+            ReefSettingsDropdown<int>(
               value: tank.id,
-              underline: const SizedBox.shrink(),
-              items: [
-                for (final t in tanks)
-                  DropdownMenuItem(value: t.id, child: Text(t.name)),
-              ],
-              onChanged: _saving
-                  ? null
-                  : (id) => setState(() {
-                      _tankIdOverride = id;
-                      // Tank-scoped caches restart with the new target.
-                      _cutoff = null;
-                      _existingFuture = null;
-                    }),
+              enabled: !_saving,
+              items: [for (final t in tanks) (t.id, t.name)],
+              onChanged: (id) => setState(() {
+                _tankIdOverride = id;
+                // Tank-scoped caches restart with the new target.
+                _cutoff = null;
+                _existingFuture = null;
+              }),
             ),
           ],
         ),
