@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.2] - 2026-07-21
+
+### Fixed
+- The last row of the Settings tab ("About ReefTracker", with the app
+  version) could not be scrolled out from behind the bottom navigation bar;
+  settings-style lists now leave room for the bar and the system gesture
+  area.
+
 ## [0.36.1] - 2026-07-21
 
 ### Added

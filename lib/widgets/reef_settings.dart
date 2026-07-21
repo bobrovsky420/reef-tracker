@@ -43,7 +43,14 @@ class ReefSettingsList extends StatelessWidget {
             ],
           ),
         ],
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        // CustomScrollView applies no ambient MediaQuery padding (unlike
+        // ListView), so the tail spacer must absorb the bottom inset itself —
+        // the home shell's translucent tab bar (extendBody) on the Settings
+        // tab, the system gesture inset elsewhere. Without it the last row
+        // sits unreachably behind the frosted bar.
+        SliverToBoxAdapter(
+          child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom),
+        ),
       ],
     );
   }
