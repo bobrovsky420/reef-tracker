@@ -1954,6 +1954,47 @@ class AppLocalizationsCs extends AppLocalizations {
   String get hannaMeasureAction => 'Měřit fotometrem Hanna';
 
   @override
+  String get hannaScanTitle => 'Skenovat displej checkeru';
+
+  @override
+  String get hannaScanSubtitle =>
+      'Přečtení displeje kapesního checkeru fotoaparátem';
+
+  @override
+  String get hannaScanPickHint =>
+      'Přečte hodnotu přímo z displeje checkeru. Nejprve vyberte model — číslo HI je vytištěno na přední straně checkeru.';
+
+  @override
+  String get hannaScanPickTitle => 'Model checkeru';
+
+  @override
+  String get hannaScanGuide => 'Umístěte displej do rámečku';
+
+  @override
+  String get hannaScanGlareHint => 'mírným nakloněním se vyhnete odleskům';
+
+  @override
+  String get hannaScanRescan => 'Skenovat znovu';
+
+  @override
+  String get hannaScanNoCamera => 'Toto zařízení nemá fotoaparát.';
+
+  @override
+  String get hannaScanCameraDenied =>
+      'Přístup k fotoaparátu byl odepřen. Pro skenování displeje povolte fotoaparát v nastavení systému.';
+
+  @override
+  String get hannaScanCameraFailed => 'Fotoaparát se nepodařilo spustit.';
+
+  @override
+  String get hannaScanImpossibleNote =>
+      'Tato hodnota je pro tento parametr nemožná a nelze ji uložit. Skenujte znovu, nebo zkontrolujte, zda je vybrán správný model.';
+
+  @override
+  String get hannaScanImplausibleNote =>
+      'Tato hodnota je mimo věrohodný rozsah — před uložením ji zkontrolujte.';
+
+  @override
   String get experimentalBadge => 'Experimentální';
 
   @override

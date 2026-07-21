@@ -368,6 +368,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           );
                         }
                       }
+                      if (v == 'hanna-scan') {
+                        // Checker camera scan (U34, experimental), same
+                        // gate idiom.
+                        if (ref.read(
+                          proFeatureProvider(ProFeature.hannaScan),
+                        )) {
+                          unawaited(context.push('/hanna/scan'));
+                        } else {
+                          unawaited(
+                            showProFeatureDialog(
+                              context,
+                              ProFeature.hannaScan,
+                            ),
+                          );
+                        }
+                      }
                     },
                     entries: [
                       ReefMenuItem(
@@ -389,6 +405,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           icon: Icons.bluetooth,
                           label: l.hannaMeasureAction,
                         ),
+                      ReefMenuItem(
+                        value: 'hanna-scan',
+                        icon: Icons.photo_camera_outlined,
+                        label: l.hannaScanTitle,
+                      ),
                     ],
                   ),
               ],

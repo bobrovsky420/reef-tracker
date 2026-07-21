@@ -1940,6 +1940,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hannaMeasureAction => 'Measure with Hanna checker';
 
   @override
+  String get hannaScanTitle => 'Scan checker display';
+
+  @override
+  String get hannaScanSubtitle =>
+      'Read a pocket checker\'s display with the camera';
+
+  @override
+  String get hannaScanPickHint =>
+      'Reads the value straight from the checker\'s display. First pick your model — the HI number is printed on the front of the checker.';
+
+  @override
+  String get hannaScanPickTitle => 'Checker model';
+
+  @override
+  String get hannaScanGuide => 'Fit the display into the frame';
+
+  @override
+  String get hannaScanGlareHint => 'tilt slightly to avoid glare';
+
+  @override
+  String get hannaScanRescan => 'Rescan';
+
+  @override
+  String get hannaScanNoCamera => 'This device has no camera.';
+
+  @override
+  String get hannaScanCameraDenied =>
+      'Camera access was denied. Allow camera access in the system settings to scan the display.';
+
+  @override
+  String get hannaScanCameraFailed => 'The camera couldn\'t be started.';
+
+  @override
+  String get hannaScanImpossibleNote =>
+      'This value is impossible for this parameter and can\'t be saved. Rescan, or check that the right model is selected.';
+
+  @override
+  String get hannaScanImplausibleNote =>
+      'This value is outside the plausible range — double-check it before saving.';
+
+  @override
   String get experimentalBadge => 'Experimental';
 
   @override

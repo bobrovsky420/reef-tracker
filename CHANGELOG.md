@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.0] - 2026-07-21
+
+### Added
+- **Scan checker display** (experimental): read the number shown on a Hanna
+  pocket checker's LCD with the phone camera and save it as a measurement —
+  no typing. Pick the checker model (14 supported: alkalinity dKH/ppm,
+  calcium, magnesium, pH, ammonia, both nitrate ranges, three nitrite
+  checkers, phosphate ULR/LR and phosphorus ULR), fit the display in the
+  on-screen frame, confirm the detected value and save. Recognition runs
+  fully on the device (no photos are stored or uploaded); ppb/ppm-CaCO₃
+  readings are converted to the app's units automatically. Found in the
+  Measurements-tab menu and under Settings → Tools.
+- iOS: camera usage description for the checker scan (App Store
+  requirement). iOS behavior not yet validated locally — needs a CI build.
+
 ## [0.36.2] - 2026-07-21
 
 ### Fixed

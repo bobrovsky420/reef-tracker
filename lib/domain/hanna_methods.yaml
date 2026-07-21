@@ -97,3 +97,131 @@ csv:
   - prefix: ph
     param: ph
     unit: ph
+
+# The pocket-checker registry (U34 — checker camera scan) — which Checker HC
+# models the camera scan supports. Generated into `kHannaCheckers`
+# (`hanna_checker.g.dart`) by the same `tool/gen_hanna_methods.dart` run.
+# Specs verified against hannainst.com product pages + manuals 2026-07-21.
+#
+# Each entry:
+#   model:    the Hanna model number (HIxxx) — the stable identifier.
+#   param:    the catalog parameter key the reading lands on.
+#   tag:      optional range/variant label shown after the parameter name
+#             (ULR/LR/HR, or the unit for the two alkalinity flavors).
+#             Required when a parameter has several models.
+#   unit:     the unit printed on the checker face — what the LCD number
+#             means (ppm/ppb/dKH/pH), shown verbatim in the confirm UI.
+#   decimals: digits after the decimal point on the LCD (display
+#             resolution). Doubles as decode validation: a scan whose
+#             decimal position differs is a misread and is rejected.
+#   min/max:  the display range in display units — same validation role.
+#   factor:   multiplier from the displayed value to the catalog's
+#             canonical unit. Defaults to 1. Non-trivial conversions:
+#             HI755 ppm CaCO3 → dKH (×0.056, = 2.8/50), HI736 ppb P →
+#             ppm PO4 (×0.003066, Hanna's ×3.066 P→PO4 over ppb→ppm),
+#             nitrite checkers ppb NO2-N → canonical ppm (×0.001, same
+#             convention as the HI97115C's nitrite LR method above).
+#
+# Entry order = display order in the model picker (catalog parameter order,
+# range variants from lowest to highest range).
+
+checkers:
+  - model: HI780
+    param: ph
+    unit: pH
+    decimals: 1
+    min: 6.3
+    max: 8.6
+  - model: HI772
+    param: alkalinity
+    tag: dKH
+    unit: dKH
+    decimals: 1
+    min: 0
+    max: 20
+  - model: HI755
+    param: alkalinity
+    tag: ppm
+    unit: ppm
+    decimals: 0
+    min: 0
+    max: 300
+    factor: 0.056
+  - model: HI784
+    param: ammonia
+    unit: ppm
+    decimals: 2
+    min: 0
+    max: 2.5
+  - model: HI758
+    param: calcium
+    unit: ppm
+    decimals: 0
+    min: 200
+    max: 600
+  - model: HI783
+    param: magnesium
+    unit: ppm
+    decimals: 0
+    min: 1000
+    max: 1800
+  - model: HI781
+    param: nitrate
+    tag: LR
+    unit: ppm
+    decimals: 2
+    min: 0
+    max: 5
+  - model: HI782
+    param: nitrate
+    tag: HR
+    unit: ppm
+    decimals: 1
+    min: 0
+    max: 75
+  - model: HI764
+    param: nitrite
+    tag: ULR
+    unit: ppb
+    decimals: 0
+    min: 0
+    max: 200
+    factor: 0.001
+  - model: HI767
+    param: nitrite
+    tag: LR
+    unit: ppb
+    decimals: 0
+    min: 0
+    max: 999
+    factor: 0.001
+  - model: HI707
+    param: nitrite
+    tag: LR fresh
+    unit: ppb
+    decimals: 0
+    min: 0
+    max: 600
+    factor: 0.001
+  - model: HI774
+    param: phosphate
+    tag: ULR
+    unit: ppm
+    decimals: 2
+    min: 0
+    max: 0.9
+  - model: HI713
+    param: phosphate
+    tag: LR
+    unit: ppm
+    decimals: 2
+    min: 0
+    max: 2.5
+  - model: HI736
+    param: phosphate
+    tag: P ULR
+    unit: ppb
+    decimals: 0
+    min: 0
+    max: 200
+    factor: 0.003066

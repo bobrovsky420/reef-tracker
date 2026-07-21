@@ -1173,6 +1173,8 @@ Body text stays the platform default (SF/Roboto).
 | `/micro/import` | ICP report CSV import preview (`extra` = `IcpImportResult`; redirects to `/micro` without one) |
 | `/import/hanna` | Hanna Lab measurement import preview (U32; `extra` = `HannaImportResult`; redirects to `/` without one) |
 | `/settings/import` | Measurement-import status per tank: watermark rewind (*Change date…*) / *Reset* |
+| `/hanna/measure` | Hanna checker live BLE measurement (U33, experimental): connect → select → run → save in one route |
+| `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
@@ -2047,6 +2049,59 @@ note).
   on-device); reconnect-to-last-device shortcut; protocol-version gate
   beyond logging.
 
+### Checker camera scan (U34, Pro, **experimental**) — `features/scan/`, route `/hanna/scan`
+
+Reads the seven-segment LCD of a Hanna **pocket checker** (Checker HC —
+HI774 phosphate ULR, HI772/HI755 alkalinity, …) with the camera and saves
+the value as an ordinary reading. These checkers have no connectivity at
+all, so this is the only automation path for them — it complements U32/U33,
+which only cover the HI97115 photometer. Never auto-saves: the accepted
+readout is always confirmed by the user first.
+
+- **Decoder** (`domain/seven_segment.dart`, pure Dart — deliberately no
+  OCR/ML dependency): Otsu-binarize a grayscale crop → row range → column
+  projection with small-gap merging (a digit's bars don't touch at the
+  corners) → per-slice classification (aspect-ratio special case for `1`,
+  bottom-corner blob = decimal point, sub-height blobs = annunciator icons,
+  ignored) → 7-zone segment sampling → pattern table. **Unknown patterns
+  reject the whole frame** — every frame either yields a confident readout
+  or null, never a plausible-looking guess. `SevenSegmentVote` accepts a
+  readout only after 3 consecutive identical decodes.
+- **Model registry** (`domain/hanna_checker.dart` + the `checkers:` section
+  of `hanna_methods.yaml` → generated `kHannaCheckers`, 14 models,
+  specs verified against Hanna spec sheets): per model the LCD format
+  (decimals + display range — used as *decode validation*: a readout in the
+  wrong format for the selected model never wins the vote), the displayed
+  unit, and a `factor` to the catalog's canonical unit (HI755 ppm CaCO₃ →
+  dKH ×0.056; HI736 ppb P → ppm PO₄ ×0.003066; ppb NO₂-N nitrite checkers →
+  ×0.001, the U32/U33 convention). The user picks the model first — the
+  model, not the parameter, is what pins down unit/range/format.
+- **Flow** (`features/scan/checker_scan_screen.dart`, one route hosts all
+  phases): model picker (rows show model · localized parameter · range) →
+  live viewfinder (`camera` plugin, back camera, `medium` preset, ~6 fps
+  luma-only decoding of the stream inside a guide box; the box's fractional
+  rect and the buffer crop share constants, mapped through the sensor
+  rotation by `scan_frame.dart` — pure functions, unit-tested) → confirm
+  (raw readout + converted value in the user's display unit, tank selector
+  defaulting to the active tank, the #31 gate: impossible blocks save,
+  implausible needs a confirm) → `addTrackedParameter` +
+  `insertReadingGroup` (a manual reading taken now — **no** import
+  watermark: a camera scan has no meter-log identity, unlike U32/U33).
+- **Platform:** `camera ^0.11` (camerax on Android) passed the #50 release
+  gate 2026-07-21. The plugin merges the `CAMERA` permission into the
+  manifest, so the app declares `android.hardware.camera` (+`.autofocus`)
+  `required="false"` — the Bluetooth lesson; camera-less devices get a
+  runtime "no camera" state instead of Play filtering. iOS has
+  `NSCameraUsageDescription` (replacing the stale file-picker wording) but
+  is **not locally testable** (validate via CI before claiming support).
+  App-lifecycle observer releases/reacquires the camera on
+  background/foreground.
+- **Tier:** `hannaScan`, `grandfathered: true` (2026-07-21 decision,
+  consistent with `hannaConnect`/`hannaImport`).
+- **Deferred:** auto-detecting the model from the case color (hue →
+  family shortlist; specs and case colors already collected in the
+  registry research); remembering the last-used model; torch/zoom controls.
+
 ### Dosing (`features/dosing/`) — Dosing tab
 
 An information-only, per-tank **supplement-dosing plan** (a standing regimen, not
@@ -2419,10 +2474,11 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 - Regenerate the Pro feature registry after editing `lib/domain/pro_features.yaml`:
   `dart run tool/gen_pro_features.dart` (validates + writes
   `pro_features.g.dart`).
-- Regenerate the Hanna method registry + CSV mapping after editing
-  `lib/domain/hanna_methods.yaml`: `dart run tool/gen_hanna_methods.dart`
-  (validates against `parameters.yaml` + writes `hanna_meter.g.dart` and
-  `hanna_import.g.dart`).
+- Regenerate the Hanna method registry + CSV mapping + pocket-checker
+  registry after editing `lib/domain/hanna_methods.yaml`:
+  `dart run tool/gen_hanna_methods.dart` (validates against
+  `parameters.yaml` + writes `hanna_meter.g.dart`, `hanna_import.g.dart`
+  and `hanna_checker.g.dart`).
 - Localization codegen: `flutter gen-l10n`.
 - Tests (`flutter test`): domain — `test/zones_test.dart`,
   `test/presets_test.dart`, `test/units_test.dart`, `test/ratio_test.dart`,

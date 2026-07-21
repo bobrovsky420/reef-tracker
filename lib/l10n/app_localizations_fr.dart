@@ -1950,6 +1950,49 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hannaMeasureAction => 'Mesurer avec le photomètre Hanna';
 
   @override
+  String get hannaScanTitle => 'Scanner l\'écran du checker';
+
+  @override
+  String get hannaScanSubtitle =>
+      'Lire l\'écran d\'un checker de poche avec l\'appareil photo';
+
+  @override
+  String get hannaScanPickHint =>
+      'Lit la valeur directement sur l\'écran du checker. Choisissez d\'abord votre modèle — le numéro HI est imprimé sur l\'avant du checker.';
+
+  @override
+  String get hannaScanPickTitle => 'Modèle de checker';
+
+  @override
+  String get hannaScanGuide => 'Placez l\'écran dans le cadre';
+
+  @override
+  String get hannaScanGlareHint =>
+      'inclinez légèrement pour éviter les reflets';
+
+  @override
+  String get hannaScanRescan => 'Scanner à nouveau';
+
+  @override
+  String get hannaScanNoCamera => 'Cet appareil n\'a pas d\'appareil photo.';
+
+  @override
+  String get hannaScanCameraDenied =>
+      'L\'accès à l\'appareil photo a été refusé. Autorisez l\'accès à l\'appareil photo dans les réglages du système pour scanner l\'écran.';
+
+  @override
+  String get hannaScanCameraFailed =>
+      'Impossible de démarrer l\'appareil photo.';
+
+  @override
+  String get hannaScanImpossibleNote =>
+      'Cette valeur est impossible pour ce paramètre et ne peut pas être enregistrée. Scannez à nouveau ou vérifiez que le bon modèle est sélectionné.';
+
+  @override
+  String get hannaScanImplausibleNote =>
+      'Cette valeur est hors de la plage plausible — vérifiez-la avant de l\'enregistrer.';
+
+  @override
   String get experimentalBadge => 'Expérimental';
 
   @override

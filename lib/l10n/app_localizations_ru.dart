@@ -1966,6 +1966,47 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hannaMeasureAction => 'Измерить фотометром Hanna';
 
   @override
+  String get hannaScanTitle => 'Сканировать дисплей чекера';
+
+  @override
+  String get hannaScanSubtitle =>
+      'Считывание дисплея карманного чекера камерой';
+
+  @override
+  String get hannaScanPickHint =>
+      'Считывает значение прямо с дисплея чекера. Сначала выберите модель — номер HI напечатан на передней стороне чекера.';
+
+  @override
+  String get hannaScanPickTitle => 'Модель чекера';
+
+  @override
+  String get hannaScanGuide => 'Поместите дисплей в рамку';
+
+  @override
+  String get hannaScanGlareHint => 'слегка наклоните, чтобы избежать бликов';
+
+  @override
+  String get hannaScanRescan => 'Сканировать снова';
+
+  @override
+  String get hannaScanNoCamera => 'На этом устройстве нет камеры.';
+
+  @override
+  String get hannaScanCameraDenied =>
+      'Доступ к камере запрещён. Разрешите доступ к камере в настройках системы, чтобы сканировать дисплей.';
+
+  @override
+  String get hannaScanCameraFailed => 'Не удалось запустить камеру.';
+
+  @override
+  String get hannaScanImpossibleNote =>
+      'Это значение невозможно для данного параметра, его нельзя сохранить. Отсканируйте снова или проверьте, выбрана ли правильная модель.';
+
+  @override
+  String get hannaScanImplausibleNote =>
+      'Это значение вне правдоподобного диапазона — проверьте его перед сохранением.';
+
+  @override
   String get experimentalBadge => 'Экспериментально';
 
   @override

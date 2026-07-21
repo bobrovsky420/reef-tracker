@@ -30,6 +30,12 @@
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false"/>
     <uses-feature android:name="android.hardware.location" android:required="false"/>
     <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
+    <!-- Checker camera scan (U34): the camera plugin merges in the CAMERA
+         permission, which would make Play infer required camera hardware and
+         filter the app off camera-less devices. The camera is OPTIONAL — the
+         scan screen shows a "no camera" message at runtime instead. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
     <application
         android:label="ReefTracker"
         android:name="${applicationName}"

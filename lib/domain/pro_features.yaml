@@ -42,3 +42,8 @@ features:
   # meter's file-based sibling path).
   - key: hannaConnect
     grandfathered: true
+  # U34 checker camera scan (experimental) — grandfathered per the
+  # 2026-07-21 decision, consistent with hannaConnect/hannaImport (the
+  # third acquisition path for the same Hanna readings).
+  - key: hannaScan
+    grandfathered: true

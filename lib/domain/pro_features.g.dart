@@ -16,6 +16,7 @@ enum ProFeature {
   smartInsights,
   hannaImport,
   hannaConnect,
+  hannaScan,
 }
 
 /// Features that existed at the monetization cutoff: free
@@ -30,4 +31,5 @@ const Set<ProFeature> kGrandfatheredFeatures = {
   ProFeature.smartInsights,
   ProFeature.hannaImport,
   ProFeature.hannaConnect,
+  ProFeature.hannaScan,
 };

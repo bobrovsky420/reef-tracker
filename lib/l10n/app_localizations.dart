@@ -3329,6 +3329,78 @@ abstract class AppLocalizations {
   /// **'Measure with Hanna checker'**
   String get hannaMeasureAction;
 
+  /// Checker camera scan feature (U34): menu action, settings row, screen title, Pro-dialog feature name.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan checker display'**
+  String get hannaScanTitle;
+
+  /// No description provided for @hannaScanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Read a pocket checker\'s display with the camera'**
+  String get hannaScanSubtitle;
+
+  /// No description provided for @hannaScanPickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads the value straight from the checker\'s display. First pick your model — the HI number is printed on the front of the checker.'**
+  String get hannaScanPickHint;
+
+  /// No description provided for @hannaScanPickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checker model'**
+  String get hannaScanPickTitle;
+
+  /// No description provided for @hannaScanGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit the display into the frame'**
+  String get hannaScanGuide;
+
+  /// Second half of the viewfinder hint line, appended after hannaScanGuide with a separator — starts lowercase.
+  ///
+  /// In en, this message translates to:
+  /// **'tilt slightly to avoid glare'**
+  String get hannaScanGlareHint;
+
+  /// No description provided for @hannaScanRescan.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescan'**
+  String get hannaScanRescan;
+
+  /// No description provided for @hannaScanNoCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no camera.'**
+  String get hannaScanNoCamera;
+
+  /// No description provided for @hannaScanCameraDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access was denied. Allow camera access in the system settings to scan the display.'**
+  String get hannaScanCameraDenied;
+
+  /// No description provided for @hannaScanCameraFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera couldn\'t be started.'**
+  String get hannaScanCameraFailed;
+
+  /// No description provided for @hannaScanImpossibleNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This value is impossible for this parameter and can\'t be saved. Rescan, or check that the right model is selected.'**
+  String get hannaScanImpossibleNote;
+
+  /// No description provided for @hannaScanImplausibleNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This value is outside the plausible range — double-check it before saving.'**
+  String get hannaScanImplausibleNote;
+
   /// No description provided for @experimentalBadge.
   ///
   /// In en, this message translates to:

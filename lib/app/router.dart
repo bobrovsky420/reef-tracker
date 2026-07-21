@@ -30,6 +30,7 @@ import '../features/micro/micro_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
 import '../features/ro/ro_screen.dart';
+import '../features/scan/checker_scan_screen.dart';
 import '../features/settings/backups_screen.dart';
 import '../features/settings/reminders_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -197,6 +198,13 @@ final appRouter = GoRouter(
       // survives every step.
       path: '/hanna/measure',
       builder: (context, state) => const HannaMeterScreen(),
+    ),
+    GoRoute(
+      // Checker camera scan (U34, experimental): model picker → viewfinder
+      // → confirm, all inside one screen so the camera session survives
+      // every step.
+      path: '/hanna/scan',
+      builder: (context, state) => const CheckerScanScreen(),
     ),
     GoRoute(
       path: '/calculator/salinity',

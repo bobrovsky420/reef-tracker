@@ -1950,6 +1950,47 @@ class AppLocalizationsIt extends AppLocalizations {
   String get hannaMeasureAction => 'Misura con il fotometro Hanna';
 
   @override
+  String get hannaScanTitle => 'Scansiona il display del checker';
+
+  @override
+  String get hannaScanSubtitle =>
+      'Leggi il display di un checker tascabile con la fotocamera';
+
+  @override
+  String get hannaScanPickHint =>
+      'Legge il valore direttamente dal display del checker. Scegli prima il modello — il numero HI è stampato sul davanti del checker.';
+
+  @override
+  String get hannaScanPickTitle => 'Modello di checker';
+
+  @override
+  String get hannaScanGuide => 'Inquadra il display nella cornice';
+
+  @override
+  String get hannaScanGlareHint => 'inclina leggermente per evitare i riflessi';
+
+  @override
+  String get hannaScanRescan => 'Scansiona di nuovo';
+
+  @override
+  String get hannaScanNoCamera => 'Questo dispositivo non ha una fotocamera.';
+
+  @override
+  String get hannaScanCameraDenied =>
+      'L\'accesso alla fotocamera è stato negato. Consenti l\'accesso alla fotocamera nelle impostazioni di sistema per scansionare il display.';
+
+  @override
+  String get hannaScanCameraFailed => 'Impossibile avviare la fotocamera.';
+
+  @override
+  String get hannaScanImpossibleNote =>
+      'Questo valore è impossibile per questo parametro e non può essere salvato. Scansiona di nuovo o verifica che sia selezionato il modello giusto.';
+
+  @override
+  String get hannaScanImplausibleNote =>
+      'Questo valore è fuori dall\'intervallo plausibile — verificalo prima di salvarlo.';
+
+  @override
   String get experimentalBadge => 'Sperimentale';
 
   @override

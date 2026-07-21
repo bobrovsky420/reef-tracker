@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 # NOTE: build 55 (0.25.0) is deployed on Play — versionCode 55 is burned and
 # the next upload must be 56+; the 0.25.0 version name is also taken.
-version: 0.36.2+84
+version: 0.37.0+85
 
 environment:
   sdk: ^3.12.2
@@ -83,6 +83,12 @@ dependencies:
   # license that requires a PAID commercial license for for-profit use
   # (`connect(license: ...)`); 1.x is plain BSD-3.
   flutter_blue_plus: '>=1.35.0 <2.0.0'
+  # Checker camera scan (U34, experimental): live viewfinder for reading a
+  # Hanna pocket-checker LCD with the on-device seven-segment decoder
+  # (lib/domain/seven_segment.dart) — no ML Kit / OCR dependency. Native
+  # plugin (#50 pin-risk class) — must pass the scripts/build-release.ps1
+  # gate.
+  camera: ^0.11.0
 
 dev_dependencies:
   flutter_test:

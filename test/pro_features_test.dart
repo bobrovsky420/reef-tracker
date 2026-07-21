@@ -47,6 +47,7 @@ void main() {
         ProFeature.smartInsights,
         ProFeature.hannaImport,
         ProFeature.hannaConnect,
+        ProFeature.hannaScan,
       });
     });
   });

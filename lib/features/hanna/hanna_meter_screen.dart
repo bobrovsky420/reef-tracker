@@ -14,6 +14,7 @@ import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/experimental_chip.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_settings.dart';
 import '../../widgets/reef_value_row.dart';
@@ -125,7 +126,7 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              const _ExperimentalChip(),
+              const ExperimentalChip(),
             ],
           ),
         ),
@@ -1000,34 +1001,5 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
       prefs,
     );
     return '${pres.format(run.value ?? 0)} ${pres.unitLabel}';
-  }
-}
-
-/// The small amber "Experimental" badge shown beside the screen title —
-/// U33 ships behind it until the protocol has proven stable across meter
-/// firmware updates.
-class _ExperimentalChip extends StatelessWidget {
-  const _ExperimentalChip();
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = ReefTokens.of(context);
-    final l = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        border: Border.all(color: tokens.caution),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        l.experimentalBadge,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.4,
-          color: tokens.caution,
-        ),
-      ),
-    );
   }
 }

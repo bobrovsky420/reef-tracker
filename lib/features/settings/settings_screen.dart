@@ -324,6 +324,17 @@ class SettingsBody extends ConsumerWidget {
                         ProFeature.hannaConnect,
                       ),
               ),
+            // Checker camera scan (U34, experimental) — read a pocket
+            // checker's LCD with the camera. Same Pro-gate idiom.
+            ReefSettingsRow(
+              icon: Icons.photo_camera_outlined,
+              title: l.hannaScanTitle,
+              description: '${l.hannaScanSubtitle} · ${l.experimentalBadge}',
+              trailing: const ReefSettingsValue(),
+              onTap: ref.watch(proFeatureProvider(ProFeature.hannaScan))
+                  ? () => context.push('/hanna/scan')
+                  : () => showProFeatureDialog(context, ProFeature.hannaScan),
+            ),
           ],
         ),
         ReefSettingsSection(

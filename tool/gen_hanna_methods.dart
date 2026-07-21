@@ -31,6 +31,7 @@ const _srcPath = 'lib/domain/hanna_methods.yaml';
 const _paramsPath = 'lib/domain/parameters.yaml';
 const _meterOutPath = 'lib/domain/hanna_meter.g.dart';
 const _importOutPath = 'lib/domain/hanna_import.g.dart';
+const _checkerOutPath = 'lib/domain/hanna_checker.g.dart';
 
 final _keyword = RegExp(r'^[a-z][a-z0-9]*$');
 
@@ -56,6 +57,7 @@ void main() {
 
   final meterBuf = _genMeterMethods(doc, paramKeys, errors);
   final importBuf = _genCsvMethods(doc, paramKeys, errors);
+  final checkerBuf = _genCheckers(doc, paramKeys, errors);
 
   if (errors.isNotEmpty) {
     stderr.writeln('hanna_methods.yaml is invalid — nothing written:');
@@ -67,9 +69,11 @@ void main() {
 
   _write(_meterOutPath, meterBuf);
   _write(_importOutPath, importBuf);
+  _write(_checkerOutPath, checkerBuf);
   stdout.writeln(
-    'Wrote $_meterOutPath (${(doc['methods'] as YamlList).length} methods) '
-    'and $_importOutPath (${(doc['csv'] as YamlList).length} CSV mappings).',
+    'Wrote $_meterOutPath (${(doc['methods'] as YamlList).length} methods), '
+    '$_importOutPath (${(doc['csv'] as YamlList).length} CSV mappings) '
+    'and $_checkerOutPath (${(doc['checkers'] as YamlList).length} checkers).',
   );
 }
 
@@ -230,6 +234,112 @@ StringBuffer _genCsvMethods(
       "'${_esc(unit)}'${factor != 1 ? ', factor: $factor' : ''}),",
     );
   }
+  buf.writeln('];');
+  return buf;
+}
+
+StringBuffer _genCheckers(
+  dynamic doc,
+  Set<String> paramKeys,
+  List<String> errors,
+) {
+  final seenModels = <String>{};
+  final paramModels = <String, int>{};
+  final taglessParams = <String>{};
+
+  final checkers = doc['checkers'];
+  if (checkers is! YamlList || checkers.isEmpty) {
+    stderr.writeln(
+      'hanna_methods.yaml must contain a non-empty `checkers` list.',
+    );
+    exit(1);
+  }
+
+  final buf = StringBuffer()
+    ..writeln('// GENERATED CODE — DO NOT EDIT BY HAND.')
+    ..writeln('//')
+    ..writeln('// Source: hanna_methods.yaml')
+    ..writeln('// Regenerate: dart run tool/gen_hanna_methods.dart')
+    ..writeln('')
+    ..writeln("part of 'hanna_checker.dart';")
+    ..writeln('')
+    ..writeln('/// Every pocket-checker model the camera scan supports, in')
+    ..writeln('/// display order, generated from `hanna_methods.yaml`.')
+    ..writeln('const List<HannaChecker> kHannaCheckers = [');
+
+  for (final c in checkers) {
+    final model = c['model'];
+    if (model is! String || !RegExp(r'^HI\d+$').hasMatch(model)) {
+      errors.add('checkers: bad or missing model: "$model"');
+      continue;
+    }
+    if (!seenModels.add(model)) {
+      errors.add('checkers: duplicate model $model');
+    }
+
+    final param = c['param'];
+    if (param is! String || !paramKeys.contains(param)) {
+      errors.add(
+        'checkers: $model: "$param" is not a parameter key in parameters.yaml',
+      );
+      continue;
+    }
+    paramModels[param] = (paramModels[param] ?? 0) + 1;
+
+    final tag = c['tag'];
+    if (tag != null &&
+        (tag is! String || !RegExp(r'^[A-Za-z0-9 ]{1,12}$').hasMatch(tag))) {
+      errors.add('checkers: $model: bad tag "$tag"');
+      continue;
+    }
+    if (tag == null) taglessParams.add(param);
+
+    final decimals = c['decimals'];
+    if (decimals is! int || decimals < 0 || decimals > 3) {
+      errors.add('checkers: $model: decimals must be 0–3, got "$decimals"');
+      continue;
+    }
+
+    final min = c['min'], max = c['max'];
+    if (min is! num || max is! num || min >= max) {
+      errors.add('checkers: $model: need min < max, got "$min".."$max"');
+      continue;
+    }
+
+    final unit = c['unit'];
+    if (unit is! String || unit.isEmpty) {
+      errors.add('checkers: $model: bad or missing unit: "$unit"');
+      continue;
+    }
+
+    final factor = c['factor'] ?? 1;
+    if (factor is! num || factor <= 0) {
+      errors.add('checkers: $model: factor must be positive, got "$factor"');
+      continue;
+    }
+
+    final args = [
+      "'${_esc(model)}', '${_esc(param)}'",
+      if (tag != null) "tag: '${_esc(tag as String)}'",
+      "unit: '${_esc(unit)}'",
+      'decimals: $decimals',
+      'min: $min',
+      'max: $max',
+      if (factor != 1) 'factor: $factor',
+    ];
+    buf.writeln('  HannaChecker(${args.join(', ')}),');
+  }
+
+  // A tag is what disambiguates same-parameter models in the picker — a
+  // parameter with several models must not have an untagged entry.
+  for (final param in taglessParams) {
+    if ((paramModels[param] ?? 0) > 1) {
+      errors.add(
+        'checkers: param "$param" has several models — every one needs a tag',
+      );
+    }
+  }
+
   buf.writeln('];');
   return buf;
 }

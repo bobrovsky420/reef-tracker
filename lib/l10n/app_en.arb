@@ -902,6 +902,24 @@
   },
   "hannaConnectSubtitle": "Measure parameters over Bluetooth (HI97115)",
   "hannaMeasureAction": "Measure with Hanna checker",
+  "hannaScanTitle": "Scan checker display",
+  "@hannaScanTitle": {
+    "description": "Checker camera scan feature (U34): menu action, settings row, screen title, Pro-dialog feature name."
+  },
+  "hannaScanSubtitle": "Read a pocket checker's display with the camera",
+  "hannaScanPickHint": "Reads the value straight from the checker's display. First pick your model — the HI number is printed on the front of the checker.",
+  "hannaScanPickTitle": "Checker model",
+  "hannaScanGuide": "Fit the display into the frame",
+  "hannaScanGlareHint": "tilt slightly to avoid glare",
+  "@hannaScanGlareHint": {
+    "description": "Second half of the viewfinder hint line, appended after hannaScanGuide with a separator — starts lowercase."
+  },
+  "hannaScanRescan": "Rescan",
+  "hannaScanNoCamera": "This device has no camera.",
+  "hannaScanCameraDenied": "Camera access was denied. Allow camera access in the system settings to scan the display.",
+  "hannaScanCameraFailed": "The camera couldn't be started.",
+  "hannaScanImpossibleNote": "This value is impossible for this parameter and can't be saved. Rescan, or check that the right model is selected.",
+  "hannaScanImplausibleNote": "This value is outside the plausible range — double-check it before saving.",
   "experimentalBadge": "Experimental",
   "hannaExperimentalNote": "Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.",
   "hannaScanning": "Looking for the meter…",
