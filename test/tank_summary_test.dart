@@ -209,6 +209,66 @@ void main() {
       expect(doc, contains('| 2026-06-13 |'));
     });
 
+    test('escapes markdown in tank and product names', () async {
+      final db = await memDb();
+      final tank = await db.createTankWithPreset(
+        name: 'My `Reef`\n# Tank',
+        type: SetupType.mixed,
+        volumeLiters: 300,
+        startDate: DateTime(2025, 6, 1),
+      );
+      await db.insertReading(
+        tankId: tank,
+        paramKey: 'alkalinity',
+        value: 8.0,
+        takenAt: now.subtract(const Duration(days: 1)),
+      );
+      await db.insertDosingEntry(
+        DosingEntriesCompanion(
+          tankId: Value(tank),
+          product: const Value('- All-For\nReef'),
+          amount: const Value(7),
+          amountUnit: Value(DoseUnit.ml.name),
+          basis: Value(DoseBasis.perDay.name),
+          frequency: Value(DoseFrequency.daily.name),
+        ),
+      );
+      await db.insertManualDose(
+        ManualDosesCompanion(
+          tankId: Value(tank),
+          dosedAt: Value(now.subtract(const Duration(days: 2))),
+          product: const Value('One-Shot\nBoost'),
+          amount: const Value(5),
+          amountUnit: Value(DoseUnit.ml.name),
+        ),
+      );
+
+      final data = (await collectTankSummary(
+        db,
+        tankId: tank,
+        weeks: 8,
+        now: now,
+      ))!;
+      final doc = encodeTankSummary(
+        data,
+        l: l,
+        prefs: prefs,
+        includeStability: true,
+        includeInsights: true,
+      );
+
+      // Title: newline flattened, backticks escaped — the H1 stays one line.
+      expect(
+        doc,
+        contains('# My \\`Reef\\` # Tank — saltwater aquarium summary\n'),
+      );
+      // Dosing plan: newline flattened, leading list marker escaped so the
+      // product can't open its own list item.
+      expect(doc, contains('- \\- All-For Reef:'));
+      // Manual dose: newline flattened into the one-off line.
+      expect(doc, contains('one-off dose — One-Shot Boost, 5 ml'));
+    });
+
     test('caps the per-parameter table and announces the cap', () async {
       final db = await memDb();
       final tank = await seedTank(db);

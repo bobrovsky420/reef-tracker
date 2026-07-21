@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.35.3] - 2026-07-21
 
 ### Fixed
+- The "Ask your AI" summary export now escapes markdown in the tank name and
+  supplement product names (line breaks, backticks, leading `#`/`-`/`*`), the
+  same way reading and maintenance notes were already escaped — a product or
+  tank name containing such characters no longer breaks the document layout.
 - Android: a connection drop right after a successful Google Drive upload no
   longer discards the sync record — previously the next launch re-uploaded the
   identical backup as a duplicate file, or showed a false "sync failed" state,

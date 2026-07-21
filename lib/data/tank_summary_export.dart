@@ -268,9 +268,17 @@ String _date(DateTime t) {
   return '${t.year.toString().padLeft(4, '0')}-${two(t.month)}-${two(t.day)}';
 }
 
-/// A markdown-table-safe cell: pipes escaped, line breaks flattened.
-String _cell(String s) =>
-    s.replaceAll('|', r'\|').replaceAll(RegExp(r'[\r\n]+'), ' ');
+/// Markdown-inline-safe free text (tank name, product names): line breaks
+/// flattened, backticks escaped, and a leading block marker (`#`, `-`, `*`,
+/// `>`) backslash-escaped so user text can't open a heading/list/quote or a
+/// code span in the rendered document.
+String _inline(String s) {
+  final flat = s.replaceAll(RegExp(r'[\r\n]+'), ' ').replaceAll('`', r'\`');
+  return flat.startsWith(RegExp(r'[#\-*>]')) ? '\\$flat' : flat;
+}
+
+/// A markdown-table-safe cell: [_inline] plus pipes escaped.
+String _cell(String s) => _inline(s).replaceAll('|', r'\|');
 
 /// Rounds a positive day estimate like the trend chips: whole days, >= 1.
 int _days(double v) {
@@ -309,7 +317,7 @@ String encodeTankSummary(
   buf
     ..writeln(l.aiSummaryPreamble(data.weeks))
     ..writeln()
-    ..writeln('# ${l.aiSummaryDocTitle(tank.name)}');
+    ..writeln('# ${l.aiSummaryDocTitle(_inline(tank.name))}');
 
   final profile = <String>[
     l.setupLabel(SetupType.fromName(tank.setupType)),
@@ -430,12 +438,12 @@ String encodeTankSummary(
       final element = e.elementKey != null
           ? ' — ${l.paramName(e.elementKey!)}'
           : '';
-      buf.writeln('- ${e.product}$element: ${parts.join(', ')}');
+      buf.writeln('- ${_inline(e.product)}$element: ${parts.join(', ')}');
     }
     for (final d in data.manualDoses) {
       final unit = DoseUnit.fromName(d.amountUnit);
       buf.writeln(
-        '- ${_date(d.dosedAt)}: ${l.aiSummaryOneOff} — ${d.product}, '
+        '- ${_date(d.dosedAt)}: ${l.aiSummaryOneOff} — ${_inline(d.product)}, '
         '${formatLocaleNumberTrim(d.amount)} ${unit.symbol}',
       );
     }
