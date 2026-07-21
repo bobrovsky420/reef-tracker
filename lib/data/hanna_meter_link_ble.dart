@@ -34,6 +34,18 @@ class BleHannaMeterLink implements HannaMeterLink {
   final List<StreamSubscription<Object?>> _subs = [];
   bool _disposed = false;
 
+  /// Whether the device has a BLE stack at all. The manifest declares every
+  /// Bluetooth/location hardware feature optional so Play doesn't filter the
+  /// app off non-Bluetooth devices — in exchange the feature's entry points
+  /// hide when the hardware truly isn't there (`hannaBleSupportedProvider`).
+  static Future<bool> isSupported() async {
+    try {
+      return await FlutterBluePlus.isSupported;
+    } catch (_) {
+      return false; // includes environments without the plugin (tests)
+    }
+  }
+
   @override
   Stream<String> get lines => _lines.stream;
 

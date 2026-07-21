@@ -732,6 +732,17 @@ final hannaMeterLinkFactoryProvider = Provider<HannaMeterLink Function()>(
   (ref) => BleHannaMeterLink.new,
 );
 
+/// Whether this device has Bluetooth LE at all (U33). The manifest marks the
+/// Bluetooth/location hardware features `required="false"` so Play doesn't
+/// filter the app off devices without them; this is the runtime counterpart
+/// that hides the Hanna checker entry points there. While resolving it
+/// defaults to *shown* (no flash for the overwhelmingly common BLE-capable
+/// case); the connect screen's "unsupported" state remains the backstop for
+/// a deep link racing the check.
+final hannaBleSupportedProvider = FutureProvider<bool>(
+  (ref) => BleHannaMeterLink.isSupported(),
+);
+
 /// Last-used test set per tank id (device-local UI state, U9). A missing or
 /// dangling entry means "All parameters".
 final lastReadingTemplatesProvider = _setting(

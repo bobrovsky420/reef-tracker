@@ -19,6 +19,17 @@
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30"/>
+    <!-- Bluetooth is OPTIONAL: without these, Play infers required hardware
+         from the permissions above (the Bluetooth ones imply
+         android.hardware.bluetooth; ACCESS_FINE_LOCATION implies location AND
+         location.gps) and silently filters the app off devices lacking it.
+         Declaring the features non-required restores availability there; the
+         Hanna checker entry points hide at runtime when BLE is absent
+         (hannaBleSupportedProvider). -->
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false"/>
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false"/>
+    <uses-feature android:name="android.hardware.location" android:required="false"/>
+    <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
     <application
         android:label="ReefTracker"
         android:name="${applicationName}"

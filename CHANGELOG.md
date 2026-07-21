@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.1] - 2026-07-21
+
+### Fixed
+- Android: the app is again available on devices without Bluetooth (and
+  without GPS). The Bluetooth permissions added for the Hanna checker made
+  Google Play infer required hardware and silently filter such devices out;
+  the Bluetooth and location hardware features are now declared optional, and
+  the Hanna checker entry points simply hide on devices that lack Bluetooth LE.
+
 ## [0.36.0] - 2026-07-21
 
 ### Added

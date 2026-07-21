@@ -2012,8 +2012,15 @@ note).
 - **Platform:** `flutter_blue_plus` pinned `<2.0.0` (the 2.x line requires a
   paid commercial license; 1.x is BSD-3). Android manifest carries
   `BLUETOOTH_SCAN`/`BLUETOOTH_CONNECT` (+ legacy trio ≤ API 30,
-  `neverForLocation`); iOS has `NSBluetoothAlwaysUsageDescription` but is
-  **not locally testable** (validate via CI before claiming support).
+  `neverForLocation`) **and declares the Bluetooth/location hardware
+  features `required="false"`** — otherwise Play infers them from the
+  permissions and filters the app off Bluetooth-less (and GPS-less) devices.
+  The runtime counterpart is `hannaBleSupportedProvider`
+  (`BleHannaMeterLink.isSupported()`): on devices without a BLE stack the
+  settings row and menu entry hide; the connect screen's "unsupported"
+  state backstops deep links. iOS has `NSBluetoothAlwaysUsageDescription`
+  but is **not locally testable** (validate via CI before claiming
+  support).
 - **Tier:** `hannaConnect`, `grandfathered: true` (2026-07-21 decision,
   consistent with `hannaImport`).
 - **Deferred:** `get log` bulk history pull (the meter logs readings

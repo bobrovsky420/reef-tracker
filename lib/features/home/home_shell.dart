@@ -380,11 +380,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         icon: Icons.move_to_inbox_outlined,
                         label: l.measurementImportTitle,
                       ),
-                      ReefMenuItem(
-                        value: 'hanna-measure',
-                        icon: Icons.bluetooth,
-                        label: l.hannaMeasureAction,
-                      ),
+                      // Hidden on devices without a BLE stack — the manifest
+                      // keeps Bluetooth optional so Play doesn't filter the
+                      // app there.
+                      if (ref.watch(hannaBleSupportedProvider).value ?? true)
+                        ReefMenuItem(
+                          value: 'hanna-measure',
+                          icon: Icons.bluetooth,
+                          label: l.hannaMeasureAction,
+                        ),
                     ],
                   ),
               ],
