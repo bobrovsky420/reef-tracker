@@ -87,7 +87,7 @@ jobs:
 
       # AGP 9 / Kotlin 2.3 (see the pinned-plugin note in pubspec.yaml); match
       # the JDK 21 used for local release builds instead of the runner default.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
