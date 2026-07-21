@@ -1958,6 +1958,68 @@ re-import; only what's new is added.
   iOS document types) so Hanna Lab's share sheet lists ReefTracker directly;
   more source formats.
 
+### Hanna checker direct connection (U33, Pro, **experimental**) — `features/hanna/`, route `/hanna/measure`
+
+Live measurements over **BLE** from the Hanna HI97115C photometer — the
+reverse-engineered ASCII line protocol documented in **HANNA.md** (plain
+unencrypted `PREFIX,fields…` lines over a Nordic-UART-style write/notify
+GATT pair). Unofficial and firmware-coupled, hence the **Experimental**
+badge everywhere the feature surfaces (settings row, screen title, in-screen
+note).
+
+- **Layering:** `domain/hanna_meter.dart` (pure protocol: commands, the
+  method-code registry, `HannaLineBuffer` MTU reassembly, end-anchored frame
+  parsing — a comma-decimal meter splits the value field, so result fields
+  are located from the frame's tail, and only frames whose **last field is
+  `R`** carry a value/timestamp) → `data/hanna_meter_link.dart` (transport
+  interface + typed errors; the test seam, like `CloudAuth`) →
+  `data/hanna_meter_link_ble.dart` (the only `flutter_blue_plus` touchpoint:
+  adapter check with best-effort `turnOn`, scan filtered by the `HI97115`
+  **name prefix** — the meter uses a random static address, never match MAC —
+  GATT discovery preferring the Nordic UART UUIDs with a
+  write+notify-pair fallback, bare unterminated ASCII writes as captured) →
+  `features/hanna/hanna_meter_session.dart` (a `ChangeNotifier` state
+  machine: `connecting → ready → measuring → finished`/`failed`) →
+  `hanna_meter_screen.dart` (one route hosts every phase so the connection
+  survives navigation).
+- **Method registry:** the meter's numeric method codes (`2002` alkalinity …
+  `2099` ammonia, all nine user-confirmed) map to catalog parameters;
+  low-range variants are **distinct codes but the same parameter** (2095 +
+  2096 → nitrate) — the value stores under the base parameter, the code is
+  provenance only (the U32 rule, keyed on method not value/unit).
+- **Session flow:** connect handshake = `info` → `set time` (RTC sync so
+  result timestamps match the phone) → `get battery` → `get setup` →
+  `get setup tank,all` (15-name pages; a short page ends the list, a
+  multiple-of-15 list ends on a quiet window). The ready screen shows the
+  meter card (name/battery/firmware), the **meter-side aquarium selector**
+  (first entry preselected), user-defined **test sets** ("Daily test" — one
+  JSON settings value `hanna_method_sets`, rides backups, tap-to-apply,
+  save/update-from-selection/delete) and an **All methods** checkbox list.
+  "Start measurements" sends `set meas on` + `set setup start` once, then
+  per method `set setup method,<code>` and waits — **unbounded** — for the
+  `…,R` frame while the user does the wet chemistry on the meter (progress
+  ticks surface the meter's STATUS step). Skip / Finish-now supported; a
+  mid-run disconnect keeps the captured values and flags the run.
+- **Saving** reuses the U32 machinery: results confirm screen with a
+  ReefTracker-tank selector (defaulting through the remembered location →
+  tank mapping, then the active tank), the wrong-tank guard, the #31
+  plausibility gate (impossible values never save, implausible behind one
+  batch confirm), then `insertImportedReadings` (one group, per-reading
+  meter timestamps) and an advance of the **shared `hannaLab` watermark** —
+  so a reading captured live doesn't re-import from a later CSV export; a
+  pending settings `rewound` flag is preserved, and the watermark never
+  moves backwards.
+- **Platform:** `flutter_blue_plus` pinned `<2.0.0` (the 2.x line requires a
+  paid commercial license; 1.x is BSD-3). Android manifest carries
+  `BLUETOOTH_SCAN`/`BLUETOOTH_CONNECT` (+ legacy trio ≤ API 30,
+  `neverForLocation`); iOS has `NSBluetoothAlwaysUsageDescription` but is
+  **not locally testable** (validate via CI before claiming support).
+- **Tier:** `hannaConnect`, `grandfathered: true` (2026-07-21 decision,
+  consistent with `hannaImport`).
+- **Deferred:** `get log` bulk history pull (the meter logs readings
+  on-device); reconnect-to-last-device shortcut; protocol-version gate
+  beyond logging.
+
 ### Dosing (`features/dosing/`) — Dosing tab
 
 An information-only, per-tank **supplement-dosing plan** (a standing regimen, not

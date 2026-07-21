@@ -17,6 +17,7 @@ import '../features/dosing/dose_calculator_screen.dart';
 import '../features/dosing/dosing_edit_screen.dart';
 import '../features/dosing/dosing_history_screen.dart';
 import '../features/dosing/manual_dose_edit_screen.dart';
+import '../features/hanna/hanna_meter_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/home/home_shell.dart';
 import '../features/import/hanna_import_screen.dart';
@@ -189,6 +190,13 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings/import',
       builder: (context, state) => const ImportSourcesScreen(),
+    ),
+    GoRoute(
+      // Hanna checker live measurement (U33, experimental): connect →
+      // select → run → save, all inside one screen so the BLE session
+      // survives every step.
+      path: '/hanna/measure',
+      builder: (context, state) => const HannaMeterScreen(),
     ),
     GoRoute(
       path: '/calculator/salinity',

@@ -7,6 +7,8 @@ import '../data/cloud_auth.dart';
 import '../data/cloud_auth_google.dart';
 import '../data/cloud_backup_store.dart';
 import '../data/database.dart';
+import '../data/hanna_meter_link.dart';
+import '../data/hanna_meter_link_ble.dart';
 import '../data/notifications.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/settings.dart';
@@ -713,6 +715,21 @@ final syncGdriveLastPushAtProvider = _setting(
 final syncGdriveLastErrorAtProvider = _setting(
   SettingKey.syncGdriveLastErrorAt,
   AppSettings.decodeSyncGdriveLastErrorAt,
+);
+
+/// The user's named Hanna-checker method pre-selections (U33), e.g.
+/// "Daily test". Rides backups (not device-local).
+final hannaMethodSetsProvider = _setting(
+  SettingKey.hannaMethodSets,
+  AppSettings.decodeHannaMethodSets,
+);
+
+/// Factory for the Hanna checker transport (U33). A provider — same override
+/// story as [cloudAuthProvider] — so tests drive the session with a scripted
+/// fake instead of real BLE hardware; each measurement session constructs a
+/// fresh link per connection attempt.
+final hannaMeterLinkFactoryProvider = Provider<HannaMeterLink Function()>(
+  (ref) => BleHannaMeterLink.new,
 );
 
 /// Last-used test set per tank id (device-local UI state, U9). A missing or

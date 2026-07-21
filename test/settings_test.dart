@@ -218,17 +218,21 @@ void main() {
     test('deviceLocalKeys covers every preference key', () {
       // Every registered key is device-local (#18) except the RO seed flag
       // (U16), which describes domain data and must travel with the RO rows
-      // it guards on a backup restore, and the early-adopter marker (U19),
-      // which must ride backups to carry the status to a new device. This
+      // it guards on a backup restore, the early-adopter marker (U19),
+      // which must ride backups to carry the status to a new device, and
+      // the Hanna method sets (U33) — user data like the RO stages. This
       // pins the split so a new setting can't be added without deciding its
       // restore behaviour.
       expect(SettingKey.deviceLocalKeys, {
         for (final k in SettingKey.values)
-          if (k != SettingKey.roSeeded && k != SettingKey.legacyFreeSince)
+          if (k != SettingKey.roSeeded &&
+              k != SettingKey.legacyFreeSince &&
+              k != SettingKey.hannaMethodSets)
             k.storageKey,
       });
       expect(SettingKey.roSeeded.deviceLocal, isFalse);
       expect(SettingKey.legacyFreeSince.deviceLocal, isFalse);
+      expect(SettingKey.hannaMethodSets.deviceLocal, isFalse);
     });
 
     test('storage keys are unique', () {

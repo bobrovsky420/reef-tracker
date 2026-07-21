@@ -306,6 +306,19 @@ class SettingsBody extends ConsumerWidget {
               trailing: const ReefSettingsValue(),
               onTap: () => context.push('/calculator/salinity'),
             ),
+            // Hanna checker live measurement (U33, experimental). Pro-gated
+            // on entry, same idiom as the Drive-sync connect row.
+            ReefSettingsRow(
+              icon: Icons.bluetooth,
+              title: l.hannaConnectTitle,
+              description:
+                  '${l.hannaConnectSubtitle} · ${l.experimentalBadge}',
+              trailing: const ReefSettingsValue(),
+              onTap: ref.watch(proFeatureProvider(ProFeature.hannaConnect))
+                  ? () => context.push('/hanna/measure')
+                  : () =>
+                        showProFeatureDialog(context, ProFeature.hannaConnect),
+            ),
           ],
         ),
         ReefSettingsSection(

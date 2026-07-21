@@ -352,6 +352,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           );
                         }
                       }
+                      if (v == 'hanna-measure') {
+                        // Hanna checker live measurement (U33, experimental),
+                        // same gate idiom.
+                        if (ref.read(
+                          proFeatureProvider(ProFeature.hannaConnect),
+                        )) {
+                          unawaited(context.push('/hanna/measure'));
+                        } else {
+                          unawaited(
+                            showProFeatureDialog(
+                              context,
+                              ProFeature.hannaConnect,
+                            ),
+                          );
+                        }
+                      }
                     },
                     entries: [
                       ReefMenuItem(
@@ -363,6 +379,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         value: 'import-measurements',
                         icon: Icons.move_to_inbox_outlined,
                         label: l.measurementImportTitle,
+                      ),
+                      ReefMenuItem(
+                        value: 'hanna-measure',
+                        icon: Icons.bluetooth,
+                        label: l.hannaMeasureAction,
                       ),
                     ],
                   ),

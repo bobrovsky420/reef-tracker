@@ -38,6 +38,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>ReefTracker connects to your Hanna water-testing photometer over Bluetooth to read measurement results directly from the device.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>ReefTracker does not take photos. Camera access is referenced by the system file picker component but is never requested during normal use.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

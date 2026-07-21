@@ -1964,6 +1964,163 @@ class AppLocalizationsPl extends AppLocalizations {
       'Następny import ponownie zapyta, od której daty zacząć. Zaimportowane pomiary pozostają; przypisanie akwarium jest zapamiętane.';
 
   @override
+  String get hannaConnectTitle => 'Fotometr Hanna';
+
+  @override
+  String get hannaConnectSubtitle =>
+      'Pomiar parametrów przez Bluetooth (HI97115)';
+
+  @override
+  String get hannaMeasureAction => 'Zmierz fotometrem Hanna';
+
+  @override
+  String get experimentalBadge => 'Eksperymentalna';
+
+  @override
+  String get hannaExperimentalNote =>
+      'Funkcja eksperymentalna: korzysta z nieoficjalnego protokołu Bluetooth i może przestać działać po aktualizacji oprogramowania miernika.';
+
+  @override
+  String get hannaScanning => 'Szukanie miernika…';
+
+  @override
+  String get hannaScanHint => 'Włącz miernik i trzymaj go blisko telefonu.';
+
+  @override
+  String get hannaReadingSetup => 'Połączono — odczytywanie ustawień miernika…';
+
+  @override
+  String get hannaErrUnsupported =>
+      'Bluetooth LE nie jest dostępny na tym urządzeniu.';
+
+  @override
+  String get hannaErrBluetoothOff =>
+      'Bluetooth jest wyłączony. Włącz go i spróbuj ponownie.';
+
+  @override
+  String get hannaErrNotFound =>
+      'Nie znaleziono miernika. Upewnij się, że jest włączony i w zasięgu.';
+
+  @override
+  String get hannaErrConnectionFailed => 'Nie udało się połączyć z miernikiem.';
+
+  @override
+  String get hannaErrConnectionLost => 'Utracono połączenie z miernikiem.';
+
+  @override
+  String get hannaTryAgain => 'Spróbuj ponownie';
+
+  @override
+  String hannaMeterStatus(int percent, String firmware) {
+    return 'Bateria $percent % · oprogramowanie $firmware';
+  }
+
+  @override
+  String get hannaAquarium => 'Akwarium';
+
+  @override
+  String get hannaSetsTitle => 'Zestawy testów';
+
+  @override
+  String hannaSetCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count metody',
+      many: '$count metod',
+      few: '$count metody',
+      one: '1 metoda',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaSaveSet => 'Zapisz wybór jako zestaw';
+
+  @override
+  String get hannaSetName => 'Nazwa zestawu';
+
+  @override
+  String get hannaSetUpdate => 'Zaktualizuj według bieżącego wyboru';
+
+  @override
+  String get hannaAllMethods => 'Wszystkie metody';
+
+  @override
+  String hannaMethodLowRange(String name) {
+    return '$name (niski zakres)';
+  }
+
+  @override
+  String get hannaStartMeasurements => 'Rozpocznij pomiary';
+
+  @override
+  String get hannaFollowMeter => 'Postępuj zgodnie z instrukcjami na mierniku.';
+
+  @override
+  String hannaStepN(int step) {
+    return 'krok $step';
+  }
+
+  @override
+  String get hannaStatusSkipped => 'Pominięto';
+
+  @override
+  String get hannaSkip => 'Pomiń';
+
+  @override
+  String get hannaFinishNow => 'Zakończ';
+
+  @override
+  String get hannaResultsTitle => 'Wyniki pomiarów';
+
+  @override
+  String get hannaResultsDisconnected =>
+      'Połączenie zostało utracone — dotychczasowe wyniki pozostają.';
+
+  @override
+  String get hannaNoResults => 'Nie zarejestrowano żadnych pomiarów.';
+
+  @override
+  String get hannaSaveTo => 'Zapisz do akwarium';
+
+  @override
+  String hannaSaveButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Zapisz $count odczytu',
+      many: 'Zapisz $count odczytów',
+      few: 'Zapisz $count odczyty',
+      one: 'Zapisz 1 odczyt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hannaSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Zapisano $count odczytu',
+      many: 'Zapisano $count odczytów',
+      few: 'Zapisano $count odczyty',
+      one: 'Zapisano 1 odczyt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaDiscardTitle => 'Odrzucić pomiary?';
+
+  @override
+  String get hannaDiscardBody =>
+      'Zarejestrowane wartości nie zostały zapisane i zostaną utracone.';
+
+  @override
+  String get hannaDiscard => 'Odrzuć';
+
+  @override
   String get helpTemperature =>
       'Temperatura wody. Stabilność jest ważniejsza niż dokładna wartość.';
 

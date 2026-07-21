@@ -15,6 +15,7 @@ enum ProFeature {
   driveSync,
   smartInsights,
   hannaImport,
+  hannaConnect,
 }
 
 /// Features that existed at the monetization cutoff: free
@@ -28,4 +29,5 @@ const Set<ProFeature> kGrandfatheredFeatures = {
   ProFeature.driveSync,
   ProFeature.smartInsights,
   ProFeature.hannaImport,
+  ProFeature.hannaConnect,
 };

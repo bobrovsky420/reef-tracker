@@ -46,6 +46,7 @@ void main() {
         ProFeature.driveSync,
         ProFeature.smartInsights,
         ProFeature.hannaImport,
+        ProFeature.hannaConnect,
       });
     });
   });

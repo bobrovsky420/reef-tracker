@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.0] - 2026-07-21
+
+### Added
+- **Hanna checker direct connection (experimental):** measure water parameters
+  live over Bluetooth from a Hanna HI97115C photometer. Connect from Settings →
+  Tools (or the Measurements-tab menu), pick the aquarium from the meter's tank
+  list, tick the methods to run — individually or via your own saved test sets
+  ("Daily test", "Weekly test", …) — and the app drives the meter through them
+  one by one, capturing each result as it completes on the device. A final
+  summary asks to confirm before the readings are saved (with per-reading meter
+  timestamps), and the readings share the Hanna Lab import watermark, so a
+  later CSV import of the meter's history won't duplicate them. Marked
+  experimental: it relies on an unofficial Bluetooth protocol and may stop
+  working after a meter firmware update. The feature is part of ReefTracker Pro
+  and free forever for Founder's Edition installs.
+- iOS: Bluetooth usage description for the new Hanna checker connection. The
+  feature is untested on iOS in this release (no local iOS build environment) —
+  it ships enabled but should be validated via CI before being relied on.
+
 ## [0.35.3] - 2026-07-21
 
 ### Fixed

@@ -34,7 +34,7 @@ void main() {
     String? legacyFreeSince,
   }) async {
     // Tall surface so the About section (bottom of the list) is on screen.
-    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.physicalSize = const Size(800, 2800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
     final db = AppDatabase(NativeDatabase.memory());

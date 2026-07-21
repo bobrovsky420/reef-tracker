@@ -1944,6 +1944,160 @@ class AppLocalizationsCs extends AppLocalizations {
       'Příští import se znovu zeptá, od kterého data začít. Už importovaná měření zůstávají; přiřazení akvária se pamatuje.';
 
   @override
+  String get hannaConnectTitle => 'Fotometr Hanna';
+
+  @override
+  String get hannaConnectSubtitle =>
+      'Měření parametrů přes Bluetooth (HI97115)';
+
+  @override
+  String get hannaMeasureAction => 'Měřit fotometrem Hanna';
+
+  @override
+  String get experimentalBadge => 'Experimentální';
+
+  @override
+  String get hannaExperimentalNote =>
+      'Experimentální funkce: používá neoficiální Bluetooth protokol a po aktualizaci firmwaru přístroje může přestat fungovat.';
+
+  @override
+  String get hannaScanning => 'Hledám přístroj…';
+
+  @override
+  String get hannaScanHint => 'Zapněte přístroj a mějte ho blízko telefonu.';
+
+  @override
+  String get hannaReadingSetup => 'Připojeno — načítám nastavení přístroje…';
+
+  @override
+  String get hannaErrUnsupported =>
+      'Bluetooth LE není na tomto zařízení k dispozici.';
+
+  @override
+  String get hannaErrBluetoothOff =>
+      'Bluetooth je vypnuté. Zapněte ho a zkuste to znovu.';
+
+  @override
+  String get hannaErrNotFound =>
+      'Přístroj nenalezen. Zkontrolujte, že je zapnutý a v dosahu.';
+
+  @override
+  String get hannaErrConnectionFailed => 'Připojení k přístroji se nezdařilo.';
+
+  @override
+  String get hannaErrConnectionLost => 'Spojení s přístrojem bylo přerušeno.';
+
+  @override
+  String get hannaTryAgain => 'Zkusit znovu';
+
+  @override
+  String hannaMeterStatus(int percent, String firmware) {
+    return 'Baterie $percent % · firmware $firmware';
+  }
+
+  @override
+  String get hannaAquarium => 'Akvárium';
+
+  @override
+  String get hannaSetsTitle => 'Sady testů';
+
+  @override
+  String hannaSetCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count metod',
+      few: '$count metody',
+      one: '1 metoda',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaSaveSet => 'Uložit výběr jako sadu';
+
+  @override
+  String get hannaSetName => 'Název sady';
+
+  @override
+  String get hannaSetUpdate => 'Aktualizovat podle aktuálního výběru';
+
+  @override
+  String get hannaAllMethods => 'Všechny metody';
+
+  @override
+  String hannaMethodLowRange(String name) {
+    return '$name (nízký rozsah)';
+  }
+
+  @override
+  String get hannaStartMeasurements => 'Spustit měření';
+
+  @override
+  String get hannaFollowMeter => 'Postupujte podle pokynů na přístroji.';
+
+  @override
+  String hannaStepN(int step) {
+    return 'krok $step';
+  }
+
+  @override
+  String get hannaStatusSkipped => 'Přeskočeno';
+
+  @override
+  String get hannaSkip => 'Přeskočit';
+
+  @override
+  String get hannaFinishNow => 'Ukončit';
+
+  @override
+  String get hannaResultsTitle => 'Výsledky měření';
+
+  @override
+  String get hannaResultsDisconnected =>
+      'Spojení bylo přerušeno — dosud zachycené výsledky zůstávají.';
+
+  @override
+  String get hannaNoResults => 'Žádná měření nebyla zachycena.';
+
+  @override
+  String get hannaSaveTo => 'Uložit do akvária';
+
+  @override
+  String hannaSaveButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uložit $count hodnot',
+      few: 'Uložit $count hodnoty',
+      one: 'Uložit 1 hodnotu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hannaSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hodnot uloženo',
+      few: '$count hodnoty uloženy',
+      one: '1 hodnota uložena',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaDiscardTitle => 'Zahodit měření?';
+
+  @override
+  String get hannaDiscardBody =>
+      'Zachycené hodnoty nejsou uložené a budou ztraceny.';
+
+  @override
+  String get hannaDiscard => 'Zahodit';
+
+  @override
   String get helpTemperature =>
       'Teplota vody. Stabilita je důležitější než přesná hodnota.';
 

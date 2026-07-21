@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 # NOTE: build 55 (0.25.0) is deployed on Play — versionCode 55 is burned and
 # the next upload must be 56+; the 0.25.0 version name is also taken.
-version: 0.35.3+81
+version: 0.36.0+82
 
 environment:
   sdk: ^3.12.2
@@ -76,6 +76,13 @@ dependencies:
   # any feature code was committed. Not configured on iOS (feature is
   # Android-only by decision; iOS gets a separate solution later).
   google_sign_in: ^7.1.0
+  # Hanna checker direct BLE (U33, experimental): scan/connect/notify GATT
+  # client for the HI97115 ASCII line protocol (see HANNA.md). Native plugin
+  # (#50 pin-risk class) — must pass the scripts/build-release.ps1 gate.
+  # Deliberately held below 2.0: the 2.x line switched to a source-available
+  # license that requires a PAID commercial license for for-profit use
+  # (`connect(license: ...)`); 1.x is plain BSD-3.
+  flutter_blue_plus: '>=1.35.0 <2.0.0'
 
 dev_dependencies:
   flutter_test:

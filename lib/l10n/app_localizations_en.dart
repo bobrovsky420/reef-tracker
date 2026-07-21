@@ -1930,6 +1930,158 @@ class AppLocalizationsEn extends AppLocalizations {
       'The next import will ask again from which date to start. Already-imported readings stay; the tank assignment is remembered.';
 
   @override
+  String get hannaConnectTitle => 'Hanna checker';
+
+  @override
+  String get hannaConnectSubtitle =>
+      'Measure parameters over Bluetooth (HI97115)';
+
+  @override
+  String get hannaMeasureAction => 'Measure with Hanna checker';
+
+  @override
+  String get experimentalBadge => 'Experimental';
+
+  @override
+  String get hannaExperimentalNote =>
+      'Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.';
+
+  @override
+  String get hannaScanning => 'Looking for the meter…';
+
+  @override
+  String get hannaScanHint =>
+      'Turn the meter on and keep it close to your phone.';
+
+  @override
+  String get hannaReadingSetup => 'Connected — reading meter setup…';
+
+  @override
+  String get hannaErrUnsupported =>
+      'Bluetooth LE is not available on this device.';
+
+  @override
+  String get hannaErrBluetoothOff =>
+      'Bluetooth is off. Turn it on and try again.';
+
+  @override
+  String get hannaErrNotFound =>
+      'No meter found. Make sure it is turned on and within range.';
+
+  @override
+  String get hannaErrConnectionFailed => 'Couldn\'t connect to the meter.';
+
+  @override
+  String get hannaErrConnectionLost => 'The connection to the meter was lost.';
+
+  @override
+  String get hannaTryAgain => 'Try again';
+
+  @override
+  String hannaMeterStatus(int percent, String firmware) {
+    return 'Battery $percent % · firmware $firmware';
+  }
+
+  @override
+  String get hannaAquarium => 'Aquarium';
+
+  @override
+  String get hannaSetsTitle => 'Test sets';
+
+  @override
+  String hannaSetCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count methods',
+      one: '1 method',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaSaveSet => 'Save selection as set';
+
+  @override
+  String get hannaSetName => 'Set name';
+
+  @override
+  String get hannaSetUpdate => 'Update from current selection';
+
+  @override
+  String get hannaAllMethods => 'All methods';
+
+  @override
+  String hannaMethodLowRange(String name) {
+    return '$name (low range)';
+  }
+
+  @override
+  String get hannaStartMeasurements => 'Start measurements';
+
+  @override
+  String get hannaFollowMeter => 'Follow the instructions on the meter.';
+
+  @override
+  String hannaStepN(int step) {
+    return 'step $step';
+  }
+
+  @override
+  String get hannaStatusSkipped => 'Skipped';
+
+  @override
+  String get hannaSkip => 'Skip';
+
+  @override
+  String get hannaFinishNow => 'Finish now';
+
+  @override
+  String get hannaResultsTitle => 'Measurement results';
+
+  @override
+  String get hannaResultsDisconnected =>
+      'The connection was lost — the results captured so far are kept.';
+
+  @override
+  String get hannaNoResults => 'No measurements were captured.';
+
+  @override
+  String get hannaSaveTo => 'Save to aquarium';
+
+  @override
+  String hannaSaveButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Save $count readings',
+      one: 'Save 1 reading',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hannaSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count readings saved',
+      one: '1 reading saved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaDiscardTitle => 'Discard measurements?';
+
+  @override
+  String get hannaDiscardBody =>
+      'The captured values haven\'t been saved and will be lost.';
+
+  @override
+  String get hannaDiscard => 'Discard';
+
+  @override
   String get helpTemperature =>
       'Water temperature. Stability matters more than the exact value.';
 

@@ -46,6 +46,9 @@ const kLegacyFreeSinceKey = 'legacy_free_since';
 // under those keys, and reusing them could resurrect stale values. The
 // `sync_<provider>_` shape leaves room for `sync_onedrive_*` etc. later.
 const kSyncGdriveAccountKey = 'sync_gdrive_account';
+// Hanna checker direct BLE (U33): the user's named method pre-selections
+// ("Daily test", …), one JSON value.
+const kHannaMethodSetsKey = 'hanna_method_sets';
 const kSyncGdriveFolderIdKey = 'sync_gdrive_folder_id';
 const kSyncGdriveLastPushedHashKey = 'sync_gdrive_last_pushed_hash';
 const kSyncGdriveLastPushAtKey = 'sync_gdrive_last_push_at';

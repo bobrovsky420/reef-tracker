@@ -3311,6 +3311,234 @@ abstract class AppLocalizations {
   /// **'The next import will ask again from which date to start. Already-imported readings stay; the tank assignment is remembered.'**
   String get hannaImportResetBody;
 
+  /// Direct BLE connection feature (U33): settings row, screen title, Pro-dialog feature name.
+  ///
+  /// In en, this message translates to:
+  /// **'Hanna checker'**
+  String get hannaConnectTitle;
+
+  /// No description provided for @hannaConnectSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Measure parameters over Bluetooth (HI97115)'**
+  String get hannaConnectSubtitle;
+
+  /// No description provided for @hannaMeasureAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Measure with Hanna checker'**
+  String get hannaMeasureAction;
+
+  /// No description provided for @experimentalBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Experimental'**
+  String get experimentalBadge;
+
+  /// No description provided for @hannaExperimentalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.'**
+  String get hannaExperimentalNote;
+
+  /// No description provided for @hannaScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for the meter…'**
+  String get hannaScanning;
+
+  /// No description provided for @hannaScanHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the meter on and keep it close to your phone.'**
+  String get hannaScanHint;
+
+  /// No description provided for @hannaReadingSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected — reading meter setup…'**
+  String get hannaReadingSetup;
+
+  /// No description provided for @hannaErrUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth LE is not available on this device.'**
+  String get hannaErrUnsupported;
+
+  /// No description provided for @hannaErrBluetoothOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth is off. Turn it on and try again.'**
+  String get hannaErrBluetoothOff;
+
+  /// No description provided for @hannaErrNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No meter found. Make sure it is turned on and within range.'**
+  String get hannaErrNotFound;
+
+  /// No description provided for @hannaErrConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t connect to the meter.'**
+  String get hannaErrConnectionFailed;
+
+  /// No description provided for @hannaErrConnectionLost.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to the meter was lost.'**
+  String get hannaErrConnectionLost;
+
+  /// No description provided for @hannaTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get hannaTryAgain;
+
+  /// Status line of the connected-meter card.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery {percent} % · firmware {firmware}'**
+  String hannaMeterStatus(int percent, String firmware);
+
+  /// Section header for the meter-side tank/location selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Aquarium'**
+  String get hannaAquarium;
+
+  /// No description provided for @hannaSetsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test sets'**
+  String get hannaSetsTitle;
+
+  /// No description provided for @hannaSetCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 method} other{{count} methods}}'**
+  String hannaSetCount(int count);
+
+  /// No description provided for @hannaSaveSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Save selection as set'**
+  String get hannaSaveSet;
+
+  /// No description provided for @hannaSetName.
+  ///
+  /// In en, this message translates to:
+  /// **'Set name'**
+  String get hannaSetName;
+
+  /// No description provided for @hannaSetUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update from current selection'**
+  String get hannaSetUpdate;
+
+  /// No description provided for @hannaAllMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'All methods'**
+  String get hannaAllMethods;
+
+  /// Display label of a low-range method variant; {name} is the parameter name.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (low range)'**
+  String hannaMethodLowRange(String name);
+
+  /// No description provided for @hannaStartMeasurements.
+  ///
+  /// In en, this message translates to:
+  /// **'Start measurements'**
+  String get hannaStartMeasurements;
+
+  /// No description provided for @hannaFollowMeter.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the instructions on the meter.'**
+  String get hannaFollowMeter;
+
+  /// Progress suffix while a measurement runs; the meter reports numbered STATUS steps.
+  ///
+  /// In en, this message translates to:
+  /// **'step {step}'**
+  String hannaStepN(int step);
+
+  /// No description provided for @hannaStatusSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get hannaStatusSkipped;
+
+  /// No description provided for @hannaSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get hannaSkip;
+
+  /// No description provided for @hannaFinishNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish now'**
+  String get hannaFinishNow;
+
+  /// No description provided for @hannaResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement results'**
+  String get hannaResultsTitle;
+
+  /// No description provided for @hannaResultsDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection was lost — the results captured so far are kept.'**
+  String get hannaResultsDisconnected;
+
+  /// No description provided for @hannaNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No measurements were captured.'**
+  String get hannaNoResults;
+
+  /// No description provided for @hannaSaveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to aquarium'**
+  String get hannaSaveTo;
+
+  /// No description provided for @hannaSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Save 1 reading} other{Save {count} readings}}'**
+  String hannaSaveButton(int count);
+
+  /// No description provided for @hannaSavedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 reading saved} other{{count} readings saved}}'**
+  String hannaSavedSnack(int count);
+
+  /// No description provided for @hannaDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard measurements?'**
+  String get hannaDiscardTitle;
+
+  /// No description provided for @hannaDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The captured values haven\'t been saved and will be lost.'**
+  String get hannaDiscardBody;
+
+  /// No description provided for @hannaDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get hannaDiscard;
+
   /// No description provided for @helpTemperature.
   ///
   /// In en, this message translates to:

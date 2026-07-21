@@ -8,6 +8,17 @@
          explicitly or every Drive call fails with SocketException. Not a
          runtime (user-facing) permission. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Hanna checker direct BLE (U33): scan for and talk to the HI97115
+         photometer. neverForLocation because the app derives no location from
+         scan results; the legacy trio covers API < 31 where BLE scanning
+         rides the location permission. flutter_blue_plus requests the runtime
+         grants itself when a scan/connect starts. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30"/>
     <application
         android:label="ReefTracker"
         android:name="${applicationName}"

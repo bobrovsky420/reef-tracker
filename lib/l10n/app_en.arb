@@ -896,6 +896,66 @@
   "hannaImportResetTitle": "Reset Hanna Lab import?",
   "hannaImportResetBody": "The next import will ask again from which date to start. Already-imported readings stay; the tank assignment is remembered.",
 
+  "hannaConnectTitle": "Hanna checker",
+  "@hannaConnectTitle": {
+    "description": "Direct BLE connection feature (U33): settings row, screen title, Pro-dialog feature name."
+  },
+  "hannaConnectSubtitle": "Measure parameters over Bluetooth (HI97115)",
+  "hannaMeasureAction": "Measure with Hanna checker",
+  "experimentalBadge": "Experimental",
+  "hannaExperimentalNote": "Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.",
+  "hannaScanning": "Looking for the meter…",
+  "hannaScanHint": "Turn the meter on and keep it close to your phone.",
+  "hannaReadingSetup": "Connected — reading meter setup…",
+  "hannaErrUnsupported": "Bluetooth LE is not available on this device.",
+  "hannaErrBluetoothOff": "Bluetooth is off. Turn it on and try again.",
+  "hannaErrNotFound": "No meter found. Make sure it is turned on and within range.",
+  "hannaErrConnectionFailed": "Couldn't connect to the meter.",
+  "hannaErrConnectionLost": "The connection to the meter was lost.",
+  "hannaTryAgain": "Try again",
+  "hannaMeterStatus": "Battery {percent} % · firmware {firmware}",
+  "@hannaMeterStatus": {
+    "description": "Status line of the connected-meter card.",
+    "placeholders": { "percent": { "type": "int" }, "firmware": { "type": "String" } }
+  },
+  "hannaAquarium": "Aquarium",
+  "@hannaAquarium": {
+    "description": "Section header for the meter-side tank/location selector."
+  },
+  "hannaSetsTitle": "Test sets",
+  "hannaSetCount": "{count, plural, one{1 method} other{{count} methods}}",
+  "@hannaSetCount": { "placeholders": { "count": { "type": "int" } } },
+  "hannaSaveSet": "Save selection as set",
+  "hannaSetName": "Set name",
+  "hannaSetUpdate": "Update from current selection",
+  "hannaAllMethods": "All methods",
+  "hannaMethodLowRange": "{name} (low range)",
+  "@hannaMethodLowRange": {
+    "description": "Display label of a low-range method variant; {name} is the parameter name.",
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "hannaStartMeasurements": "Start measurements",
+  "hannaFollowMeter": "Follow the instructions on the meter.",
+  "hannaStepN": "step {step}",
+  "@hannaStepN": {
+    "description": "Progress suffix while a measurement runs; the meter reports numbered STATUS steps.",
+    "placeholders": { "step": { "type": "int" } }
+  },
+  "hannaStatusSkipped": "Skipped",
+  "hannaSkip": "Skip",
+  "hannaFinishNow": "Finish now",
+  "hannaResultsTitle": "Measurement results",
+  "hannaResultsDisconnected": "The connection was lost — the results captured so far are kept.",
+  "hannaNoResults": "No measurements were captured.",
+  "hannaSaveTo": "Save to aquarium",
+  "hannaSaveButton": "{count, plural, one{Save 1 reading} other{Save {count} readings}}",
+  "@hannaSaveButton": { "placeholders": { "count": { "type": "int" } } },
+  "hannaSavedSnack": "{count, plural, one{1 reading saved} other{{count} readings saved}}",
+  "@hannaSavedSnack": { "placeholders": { "count": { "type": "int" } } },
+  "hannaDiscardTitle": "Discard measurements?",
+  "hannaDiscardBody": "The captured values haven't been saved and will be lost.",
+  "hannaDiscard": "Discard",
+
   "helpTemperature": "Water temperature. Stability matters more than the exact value.",
   "helpSalinity": "Specific gravity. ~1.026 SG ≈ 35 ppt.",
   "helpAlkalinity": "Carbonate hardness. Keep stable — avoid swings.",

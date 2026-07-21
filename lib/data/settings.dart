@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../domain/hanna_meter.dart';
 import '../domain/reminders.dart';
 import '../domain/stability_score.dart';
 import '../domain/trend.dart';
@@ -221,7 +222,10 @@ enum SettingKey {
   syncGdriveFolderId(kSyncGdriveFolderIdKey, deviceLocal: true),
   syncGdriveLastPushedHash(kSyncGdriveLastPushedHashKey, deviceLocal: true),
   syncGdriveLastPushAt(kSyncGdriveLastPushAtKey, deviceLocal: true),
-  syncGdriveLastErrorAt(kSyncGdriveLastErrorAtKey, deviceLocal: true);
+  syncGdriveLastErrorAt(kSyncGdriveLastErrorAtKey, deviceLocal: true),
+  // Hanna checker method sets (U33): user data like the RO stages, not a
+  // device preference — they ride backups to a new phone.
+  hannaMethodSets(kHannaMethodSetsKey, deviceLocal: false);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -723,6 +727,49 @@ class AppSettings {
       jsonEncode({for (final e in map.entries) '${e.key}': e.value}),
     );
   }
+
+  // --- Hanna checker method sets (U33) ---------------------------------------
+
+  /// The user's named method pre-selections for the Hanna checker, stored as
+  /// one JSON list (`[{"name":"Daily test","codes":[2097,2002]}]`). Codes the
+  /// current method table doesn't know are dropped on decode, so a set
+  /// survives table changes; a set left with no valid codes still decodes
+  /// (the UI shows it empty rather than silently losing the name).
+  static List<HannaMethodSet> decodeHannaMethodSets(String? raw) {
+    if (raw == null) return const [];
+    try {
+      final v = jsonDecode(raw);
+      if (v is List) {
+        return [
+          for (final e in v)
+            if (e is Map<String, dynamic> && e['name'] is String)
+              HannaMethodSet(
+                name: e['name'] as String,
+                codes: [
+                  if (e['codes'] is List)
+                    for (final c in e['codes'] as List)
+                      if (c is int && hannaMethodByCode(c) != null) c,
+                ],
+              ),
+        ];
+      }
+    } on FormatException {
+      // Malformed stored value — treat as "no sets".
+    }
+    return const [];
+  }
+
+  Stream<List<HannaMethodSet>> watchHannaMethodSets() =>
+      _watch(SettingKey.hannaMethodSets).map(decodeHannaMethodSets);
+
+  Future<void> setHannaMethodSets(List<HannaMethodSet> sets) => _write(
+    SettingKey.hannaMethodSets,
+    sets.isEmpty
+        ? null
+        : jsonEncode([
+            for (final s in sets) {'name': s.name, 'codes': s.codes},
+          ]),
+  );
 
   /// Records [templateId] as the last-used test set for [tankId]; null selects
   /// "All" (removes the entry).

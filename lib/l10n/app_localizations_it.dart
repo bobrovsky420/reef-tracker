@@ -1940,6 +1940,160 @@ class AppLocalizationsIt extends AppLocalizations {
       'Il prossimo import chiederà di nuovo da quale data iniziare. Le misurazioni già importate restano; l\'abbinamento dell\'acquario viene ricordato.';
 
   @override
+  String get hannaConnectTitle => 'Fotometro Hanna';
+
+  @override
+  String get hannaConnectSubtitle =>
+      'Misura i parametri via Bluetooth (HI97115)';
+
+  @override
+  String get hannaMeasureAction => 'Misura con il fotometro Hanna';
+
+  @override
+  String get experimentalBadge => 'Sperimentale';
+
+  @override
+  String get hannaExperimentalNote =>
+      'Funzione sperimentale: usa un protocollo Bluetooth non ufficiale e potrebbe smettere di funzionare dopo un aggiornamento del firmware dello strumento.';
+
+  @override
+  String get hannaScanning => 'Ricerca dello strumento…';
+
+  @override
+  String get hannaScanHint =>
+      'Accendi lo strumento e tienilo vicino al telefono.';
+
+  @override
+  String get hannaReadingSetup => 'Connesso — lettura delle impostazioni…';
+
+  @override
+  String get hannaErrUnsupported =>
+      'Il Bluetooth LE non è disponibile su questo dispositivo.';
+
+  @override
+  String get hannaErrBluetoothOff =>
+      'Il Bluetooth è spento. Attivalo e riprova.';
+
+  @override
+  String get hannaErrNotFound =>
+      'Nessuno strumento trovato. Verifica che sia acceso e a portata.';
+
+  @override
+  String get hannaErrConnectionFailed =>
+      'Impossibile connettersi allo strumento.';
+
+  @override
+  String get hannaErrConnectionLost =>
+      'La connessione con lo strumento è stata persa.';
+
+  @override
+  String get hannaTryAgain => 'Riprova';
+
+  @override
+  String hannaMeterStatus(int percent, String firmware) {
+    return 'Batteria $percent % · firmware $firmware';
+  }
+
+  @override
+  String get hannaAquarium => 'Acquario';
+
+  @override
+  String get hannaSetsTitle => 'Set di test';
+
+  @override
+  String hannaSetCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count metodi',
+      one: '1 metodo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaSaveSet => 'Salva la selezione come set';
+
+  @override
+  String get hannaSetName => 'Nome del set';
+
+  @override
+  String get hannaSetUpdate => 'Aggiorna dalla selezione attuale';
+
+  @override
+  String get hannaAllMethods => 'Tutti i metodi';
+
+  @override
+  String hannaMethodLowRange(String name) {
+    return '$name (gamma bassa)';
+  }
+
+  @override
+  String get hannaStartMeasurements => 'Avvia misurazioni';
+
+  @override
+  String get hannaFollowMeter => 'Segui le istruzioni sullo strumento.';
+
+  @override
+  String hannaStepN(int step) {
+    return 'passo $step';
+  }
+
+  @override
+  String get hannaStatusSkipped => 'Saltato';
+
+  @override
+  String get hannaSkip => 'Salta';
+
+  @override
+  String get hannaFinishNow => 'Termina';
+
+  @override
+  String get hannaResultsTitle => 'Risultati delle misurazioni';
+
+  @override
+  String get hannaResultsDisconnected =>
+      'La connessione è stata persa — i risultati acquisiti finora restano.';
+
+  @override
+  String get hannaNoResults => 'Nessuna misurazione acquisita.';
+
+  @override
+  String get hannaSaveTo => 'Salva nell\'acquario';
+
+  @override
+  String hannaSaveButton(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Salva $count letture',
+      one: 'Salva 1 lettura',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hannaSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count letture salvate',
+      one: '1 lettura salvata',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaDiscardTitle => 'Scartare le misurazioni?';
+
+  @override
+  String get hannaDiscardBody =>
+      'I valori acquisiti non sono salvati e andranno persi.';
+
+  @override
+  String get hannaDiscard => 'Scarta';
+
+  @override
   String get helpTemperature =>
       'Temperatura dell\'acqua. La stabilità conta più del valore esatto.';
 
