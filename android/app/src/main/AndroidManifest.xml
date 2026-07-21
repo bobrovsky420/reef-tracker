@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Reminders (U1/U2/U12): POST_NOTIFICATIONS is merged in by
          flutter_local_notifications itself; RECEIVE_BOOT_COMPLETED lets the
          plugin's boot receiver re-schedule pending reminders after a reboot. -->
@@ -31,11 +32,23 @@
     <uses-feature android:name="android.hardware.location" android:required="false"/>
     <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
     <!-- Checker camera scan (U34): the camera plugin merges in the CAMERA
-         permission, which would make Play infer required camera hardware and
-         filter the app off camera-less devices. The camera is OPTIONAL — the
-         scan screen shows a "no camera" message at runtime instead. -->
+         permission (Play then infers camera + autofocus hardware) AND its own
+         `<uses-feature android.hardware.camera.any/>` with no `required`
+         attribute — which DEFAULTS TO REQUIRED and dropped 133 camera-less
+         devices from the supported list on the 0.37.0 upload. The camera is
+         OPTIONAL — all three features are declared non-required (the app
+         node wins the merge) and the scan screen shows a "no camera"
+         message at runtime instead. -->
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- tools:replace is load-bearing: `required` OR-merges (true wins), so
+         without it the plugin's required="true" survives the merge. -->
+    <uses-feature android:name="android.hardware.camera.any" android:required="false"
+        tools:replace="android:required"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+    <!-- The camera plugin also merges in RECORD_AUDIO for video capture,
+         which the app never uses (enableAudio: false) — and which makes
+         Play infer a required microphone. Strip it. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
     <application
         android:label="ReefTracker"
         android:name="${applicationName}"

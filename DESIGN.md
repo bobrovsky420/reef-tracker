@@ -2089,9 +2089,14 @@ readout is always confirmed by the user first.
   watermark: a camera scan has no meter-log identity, unlike U32/U33).
 - **Platform:** `camera ^0.11` (camerax on Android) passed the #50 release
   gate 2026-07-21. The plugin merges the `CAMERA` permission into the
-  manifest, so the app declares `android.hardware.camera` (+`.autofocus`)
-  `required="false"` — the Bluetooth lesson; camera-less devices get a
-  runtime "no camera" state instead of Play filtering. iOS has
+  manifest **and its own `uses-feature android.hardware.camera.any` with no
+  `required` attribute (= required!) plus `RECORD_AUDIO`** — Play dropped
+  133 devices on the first 0.37.0 upload. The app declares
+  `android.hardware.camera` + `.any` + `.autofocus` `required="false"` and
+  strips `RECORD_AUDIO` with `tools:node="remove"` (video is never
+  recorded) — the Bluetooth lesson, extended: after adding any plugin,
+  inspect the *packaged* manifest, not just the app one; camera-less
+  devices get a runtime "no camera" state instead of Play filtering. iOS has
   `NSCameraUsageDescription` (replacing the stale file-picker wording) but
   is **not locally testable** (validate via CI before claiming support).
   App-lifecycle observer releases/reacquires the camera on

@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.1] - 2026-07-21
+
+### Fixed
+- Android: the app stays available on devices without a camera or without a
+  microphone. The camera plugin added for the checker scan declares the
+  camera as required hardware and requests the microphone (for video
+  recording, which the app never does) — Google Play would have dropped 133
+  supported devices. The camera is now declared optional and the microphone
+  permission is removed entirely.
+
 ## [0.37.0] - 2026-07-21
 
 ### Added
