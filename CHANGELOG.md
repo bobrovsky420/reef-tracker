@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.36.1] - 2026-07-21
 
+### Added
+- Hanna Lab file import now also recognizes nitrite measurements (previously
+  they were listed as an unrecognized test and skipped). The checker's ppb
+  values are converted to the app's ppm.
+
+### Changed
+- Hanna checker: the nitrite method is labeled as low range, matching the
+  meter's own method name (Nitrite Marine LR), and its live readings are
+  converted from the meter's ppb to the app's ppm.
+
 ### Fixed
 - Android: the app is again available on devices without Bluetooth (and
   without GPS). The Bluetooth permissions added for the Hanna checker made

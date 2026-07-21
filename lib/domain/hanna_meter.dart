@@ -15,6 +15,8 @@ library;
 
 import 'package:meta/meta.dart';
 
+part 'hanna_meter.g.dart';
+
 /// Advertised-name prefix used to pick the meter out of a scan. The meter's
 /// BLE address is a *random static* address that can differ per unit and
 /// rotate — never match on MAC.
@@ -51,9 +53,18 @@ String hannaCmdSetTime(DateTime now) {
 /// every measurement frame). Range variants are distinct codes but the SAME
 /// analyte: the reading is stored under [paramKey]; the code is provenance
 /// only. Same principle as the U32 CSV mapping on `Method`, never on value.
+///
+/// The method table itself ([kHannaMeterMethods]) is generated from
+/// `hanna_methods.yaml` — edit the YAML, then run
+/// `dart run tool/gen_hanna_methods.dart`.
 @immutable
 class HannaMeterMethod {
-  const HannaMeterMethod(this.code, this.paramKey, {this.lowRange = false});
+  const HannaMeterMethod(
+    this.code,
+    this.paramKey, {
+    this.lowRange = false,
+    this.factor = 1,
+  });
 
   /// The meter's numeric method code (e.g. `2002`).
   final int code;
@@ -61,25 +72,16 @@ class HannaMeterMethod {
   /// The catalog parameter the reading lands on.
   final String paramKey;
 
-  /// Whether this is a low-range variant of a parameter that also has a
-  /// standard-range code — display-only disambiguation.
+  /// Whether this is a low-range chemistry — display-only (the picker adds a
+  /// low-range tag). A parameter may have both a standard and a low-range
+  /// code (nitrate) or only a low-range one (nitrite).
   final bool lowRange;
-}
 
-/// Every method the HI97115C registers, in display order. All nine codes
-/// user-confirmed 2026-07-21 (HANNA.md §3); further firmware chemistry
-/// variants would appear as new 20xx codes pointing at existing parameters.
-const List<HannaMeterMethod> kHannaMeterMethods = [
-  HannaMeterMethod(2097, 'ph'),
-  HannaMeterMethod(2002, 'alkalinity'),
-  HannaMeterMethod(2011, 'calcium'),
-  HannaMeterMethod(2098, 'magnesium'),
-  HannaMeterMethod(2095, 'nitrate'),
-  HannaMeterMethod(2096, 'nitrate', lowRange: true),
-  HannaMeterMethod(2057, 'nitrite'),
-  HannaMeterMethod(2069, 'phosphate'),
-  HannaMeterMethod(2099, 'ammonia'),
-];
+  /// Multiplier from the meter's reported value to the catalog's canonical
+  /// unit — 1 for most methods (they already report ppm/dKH/pH); nitrite LR
+  /// reports ppb, so 0.001 to ppm.
+  final double factor;
+}
 
 /// Lookup by numeric code; null for a code this build doesn't know.
 HannaMeterMethod? hannaMethodByCode(int code) {

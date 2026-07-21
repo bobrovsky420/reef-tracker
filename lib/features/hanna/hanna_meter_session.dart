@@ -123,7 +123,8 @@ class HannaMeterSession extends ChangeNotifier {
         HannaLinkError.unsupported => HannaSessionErrorKind.unsupported,
         HannaLinkError.bluetoothOff => HannaSessionErrorKind.bluetoothOff,
         HannaLinkError.notFound => HannaSessionErrorKind.notFound,
-        HannaLinkError.connectionFailed => HannaSessionErrorKind.connectionFailed,
+        HannaLinkError.connectionFailed =>
+          HannaSessionErrorKind.connectionFailed,
       });
     } catch (_) {
       _fail(HannaSessionErrorKind.connectionFailed);
@@ -209,7 +210,8 @@ class HannaMeterSession extends ChangeNotifier {
     if (run == null) return;
     final parsed = parseHannaMeasurementFrame(line);
     if (parsed is HannaProgress) {
-      if (parsed.methodCode == run.method.code && run.status == HannaRunStatus.running) {
+      if (parsed.methodCode == run.method.code &&
+          run.status == HannaRunStatus.running) {
         run.progressStep = parsed.step;
         _notify();
       }
@@ -219,7 +221,9 @@ class HannaMeterSession extends ChangeNotifier {
       // parameter.
       if (parsed.methodCode != run.method.code) return;
       if (parsed.tankName.isNotEmpty) resultTankName = parsed.tankName;
-      run.value = parsed.value;
+      // The frame's value is in the meter's unit for this chemistry; scale
+      // to the catalog's canonical unit (nitrite LR: ppb → ppm).
+      run.value = parsed.value * run.method.factor;
       run.takenAt = parsed.takenAt ?? _clock();
       run.status = HannaRunStatus.done;
       unawaited(_advance());

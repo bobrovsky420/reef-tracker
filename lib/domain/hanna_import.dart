@@ -12,25 +12,46 @@
 /// app duplicates some log entries 3–7×) and range failures appear as
 /// non-numeric readings (`<200`) with a `Status` message.
 ///
-/// Values are already canonical (ppm / dKH / pH); mapping is on the `Method`
+/// Values are canonical (ppm / dKH / pH) except nitrite LR, which exports ppb
+/// and is scaled to ppm via its mapping's factor; mapping is on the `Method`
 /// column, never on `Unit` — the unit strings carry Unicode sub/superscripts
 /// (`ppm PO₄³⁻`) whose encoding varies with how the file was produced.
 library;
 
 import 'icp_import.dart' show parseDelimitedCsv;
 
-/// Rows are matched to catalog parameters by the method's leading keyword so
-/// range variants (`Nitrate Marine HR`/`LR`, `Phosphate Marine ULR`/`HR`)
-/// all map. Order matters: `phosphate` must match before `ph`.
-const List<(String, String)> _kMethodPrefixToKey = [
-  ('alkalinity', 'alkalinity'),
-  ('calcium', 'calcium'),
-  ('magnesium', 'magnesium'),
-  ('nitrate', 'nitrate'),
-  ('phosphate', 'phosphate'),
-  ('ammonia', 'ammonia'),
-  ('ph', 'ph'),
-];
+part 'hanna_import.g.dart';
+
+/// One CSV method mapping: rows are matched to catalog parameters by the
+/// method's leading keyword so range variants (`Nitrate Marine HR`/`LR`,
+/// `Phosphate Marine ULR`/`HR`) all map. Entries match in order —
+/// `phosphate` before `ph`.
+///
+/// The mapping table ([kHannaCsvMethods]) is generated from
+/// `hanna_methods.yaml` (shared with the U33 BLE method registry) — edit the
+/// YAML, then run `dart run tool/gen_hanna_methods.dart`.
+class HannaCsvMethod {
+  const HannaCsvMethod(
+    this.methodPrefix,
+    this.paramKey,
+    this.unitPrefix, {
+    this.factor = 1,
+  });
+
+  /// Lowercase leading keyword of the CSV `Method` label.
+  final String methodPrefix;
+
+  /// The catalog parameter the reading lands on.
+  final String paramKey;
+
+  /// Required lowercase leading keyword of the row's `Unit` column.
+  final String unitPrefix;
+
+  /// Multiplier from the file's value to the catalog's canonical unit — 1
+  /// for most rows (already ppm/dKH/pH); nitrite LR exports ppb, so 0.001
+  /// to ppm.
+  final double factor;
+}
 
 /// The `ImportSources.source` value for this format. Persisted (unlike
 /// ProFeature keys) — never rename without a migration.
@@ -167,12 +188,15 @@ HannaImportResult parseHannaCsv(String content) {
       continue;
     }
 
-    final key = hannaMethodKey(method);
-    final unit = unitIdx >= 0 && row.length > unitIdx ? row[unitIdx].trim() : '';
-    if (key == null || !_unitMatches(key, unit)) {
+    final mapping = _csvMethodFor(method);
+    final unit = unitIdx >= 0 && row.length > unitIdx
+        ? row[unitIdx].trim()
+        : '';
+    if (mapping == null || !_unitMatches(mapping, unit)) {
       skipped.add(HannaSkippedRow(method, HannaSkipReason.unknownTest));
       continue;
     }
+    final key = mapping.paramKey;
 
     final value = _parseNumber(row[readingIdx]);
     final takenAt = _parseHannaDate(row[dateIdx]);
@@ -185,7 +209,12 @@ HannaImportResult parseHannaCsv(String content) {
     // silently; parameter + timestamp identifies a measurement.
     if (seen.add('$key|${takenAt.millisecondsSinceEpoch}')) {
       imported.add(
-        HannaReading(paramKey: key, value: value, takenAt: takenAt),
+        HannaReading(
+          paramKey: key,
+          // Scale to the catalog's canonical unit (nitrite LR: ppb → ppm).
+          value: value * mapping.factor,
+          takenAt: takenAt,
+        ),
       );
     }
   }
@@ -203,27 +232,24 @@ HannaImportResult parseHannaCsv(String content) {
 
 /// Resolves a Hanna `Method` label to a catalog key, or null when the app
 /// tracks nothing it could map to.
-String? hannaMethodKey(String method) {
+String? hannaMethodKey(String method) => _csvMethodFor(method)?.paramKey;
+
+/// Resolves a Hanna `Method` label to its mapping, or null.
+HannaCsvMethod? _csvMethodFor(String method) {
   final m = method.trim().toLowerCase();
-  for (final (prefix, key) in _kMethodPrefixToKey) {
-    if (m.startsWith(prefix)) return key;
+  for (final e in kHannaCsvMethods) {
+    if (m.startsWith(e.methodPrefix)) return e;
   }
   return null;
 }
 
-/// Whether the row's unit is the one the app's canonical unit expects for
-/// [key]. Prefix-matched (`ppm PO₄³⁻` → `ppm`) so the Unicode tail — whose
-/// encoding depends on how the file traveled — never matters. A mismatch
-/// (e.g. a checker configured to ppm CaCO₃ alkalinity) is skipped rather
-/// than converted: no guessing, same policy as the ZIMS unit handling.
-bool _unitMatches(String key, String unit) {
-  final u = unit.toLowerCase();
-  return switch (key) {
-    'ph' => u == 'ph',
-    'alkalinity' => u == 'dkh',
-    _ => u.startsWith('ppm'),
-  };
-}
+/// Whether the row's unit is the one [mapping] expects. Prefix-matched
+/// (`ppm PO₄³⁻` → `ppm`) so the Unicode tail — whose encoding depends on how
+/// the file traveled — never matters. A mismatch (e.g. a checker configured
+/// to ppm CaCO₃ alkalinity) is skipped rather than converted: no guessing,
+/// same policy as the ZIMS unit handling.
+bool _unitMatches(HannaCsvMethod mapping, String unit) =>
+    unit.toLowerCase().startsWith(mapping.unitPrefix);
 
 /// Parses `dd/MM/yyyy HH:mm:ss` as local wall-clock time. Day-first per the
 /// format; a US-locale export (month-first) self-disambiguates when the
@@ -329,7 +355,8 @@ HannaImportPlan planHannaImport({
       beforeCutoff++;
       continue;
     }
-    if (rewound && existingKeys.contains(hannaReadingKey(r.paramKey, r.takenAt))) {
+    if (rewound &&
+        existingKeys.contains(hannaReadingKey(r.paramKey, r.takenAt))) {
       alreadyImported++;
       continue;
     }

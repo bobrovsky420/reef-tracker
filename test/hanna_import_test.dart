@@ -68,7 +68,28 @@ void main() {
       expect(hannaMethodKey('Phosphate Marine HR'), 'phosphate');
       expect(hannaMethodKey('pH Marine'), 'ph');
       expect(hannaMethodKey('Nitrate Marine LR'), 'nitrate');
+      expect(hannaMethodKey('Nitrite Marine LR'), 'nitrite');
       expect(hannaMethodKey('Silica Marine'), isNull);
+    });
+
+    test('converts a ppb nitrite LR row to canonical ppm', () {
+      const csv =
+          'Meter,HI97115\n'
+          'Reading,Unit,Method,Date,Status,Note\n'
+          '15,ppb NO₂⁻,Nitrite Marine LR,19/07/2026 13:08:57,,\n';
+      final r = parseHannaCsv(csv);
+      expect(r.rows.single.paramKey, 'nitrite');
+      expect(r.rows.single.value, closeTo(0.015, 1e-9));
+    });
+
+    test('rejects a ppm-unit nitrite row (the checker exports ppb)', () {
+      const csv =
+          'Meter,HI97115\n'
+          'Reading,Unit,Method,Date,Status,Note\n'
+          '0.015,ppm NO₂⁻,Nitrite Marine LR,19/07/2026 13:08:57,,\n';
+      final r = parseHannaCsv(csv);
+      expect(r.rows, isEmpty);
+      expect(r.skipped.single.reason, HannaSkipReason.unknownTest);
     });
 
     test('rejects a wrong-unit row instead of guessing a conversion', () {
@@ -142,11 +163,18 @@ void main() {
     });
 
     test('chains readings: each gap counts from the previous reading', () {
-      HannaReading at(String key, int hour, int minute) =>
-          HannaReading(paramKey: key, value: 8, takenAt: DateTime(2026, 1, 1, hour, minute));
+      HannaReading at(String key, int hour, int minute) => HannaReading(
+        paramKey: key,
+        value: 8,
+        takenAt: DateTime(2026, 1, 1, hour, minute),
+      );
       // 10:00 → 11:20 → 12:40 — each hop 80 min ≤ the 90-min window, so one
       // session even though the total span (160 min) exceeds it.
-      final rows = [at('alkalinity', 10, 0), at('ph', 11, 20), at('calcium', 12, 40)];
+      final rows = [
+        at('alkalinity', 10, 0),
+        at('ph', 11, 20),
+        at('calcium', 12, 40),
+      ];
       expect(hannaSessions(rows), hasLength(1));
       // 10:00 → 13:00 breaks the chain.
       final split = [at('alkalinity', 10, 0), at('ph', 13, 0)];
@@ -203,9 +231,7 @@ void main() {
       final plan = planHannaImport(
         rows: rows,
         importedUpTo: DateTime(2026, 7, 1),
-        existingKeys: {
-          hannaReadingKey('ph', DateTime(2026, 7, 19, 13, 7, 38)),
-        },
+        existingKeys: {hannaReadingKey('ph', DateTime(2026, 7, 19, 13, 7, 38))},
       );
       expect(plan.newRows, hasLength(6));
     });

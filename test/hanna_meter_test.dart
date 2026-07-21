@@ -113,6 +113,8 @@ void main() {
       expect(hannaMethodByCode(2096)!.paramKey, 'nitrate');
       expect(hannaMethodByCode(2096)!.lowRange, isTrue);
       expect(hannaMethodByCode(2057)!.paramKey, 'nitrite');
+      // Nitrite's only chemistry is low-range — no standard-range sibling.
+      expect(hannaMethodByCode(2057)!.lowRange, isTrue);
       expect(hannaMethodByCode(1234), isNull);
     });
   });

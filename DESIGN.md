@@ -1895,7 +1895,7 @@ Parameters list/add-sheet and the health-score inputs to core).
 
 Imports the cumulative CSV history the **Hanna Lab** phone app shares per
 Hanna tank (HI97115 Marine Master and friends) as ordinary **macro** reading
-groups — KH/Ca/Mg/NO₃/PO₄/pH/NH₃ into `Readings`, not the micro/ICP area.
+groups — KH/Ca/Mg/NO₃/NO₂/PO₄/pH/NH₃ into `Readings`, not the micro/ICP area.
 Idempotent by design: users re-export the same ever-growing file and
 re-import; only what's new is added.
 
@@ -1907,7 +1907,13 @@ re-import; only what's new is added.
   checked before pH), never on `Unit` — the unit strings carry Unicode
   sub/superscripts whose encoding varies; the unit is only sanity-checked
   (ppm/dKH/pH prefix; a checker configured to e.g. ppm CaCO₃ alkalinity is
-  skipped, never converted — the ZIMS no-guessing policy). Dates are
+  skipped, never converted — the ZIMS no-guessing policy). Values are
+  canonical (ppm/dKH/pH) except nitrite LR, which exports **ppb** and is
+  scaled to ppm by its mapping's `factor` (0.001). The mapping table
+  is **generated code**: the `csv:` section of `domain/hanna_methods.yaml`
+  (shared with the U33 BLE method registry) → `kHannaCsvMethods`
+  (`hanna_import.g.dart`) via `tool/gen_hanna_methods.dart`, which validates
+  the prefix match order (no shadowing) and params against `parameters.yaml`. Dates are
   `dd/MM/yyyy HH:mm:ss` wall-clock (a month-first export self-disambiguates
   via day > 12); values are already canonical. Exact in-file duplicates (the
   app repeats log rows 3–7×) collapse on (paramKey, timestamp); meter-flagged
@@ -1985,8 +1991,18 @@ note).
 - **Method registry:** the meter's numeric method codes (`2002` alkalinity …
   `2099` ammonia, all nine user-confirmed) map to catalog parameters;
   low-range variants are **distinct codes but the same parameter** (2095 +
-  2096 → nitrate) — the value stores under the base parameter, the code is
-  provenance only (the U32 rule, keyed on method not value/unit).
+  2096 → nitrate; nitrite's only chemistry is low-range, 2057) — the value
+  stores under the base parameter, the code is
+  provenance only (the U32 rule, keyed on method not value/unit). Each method
+  carries a `factor` to the catalog's canonical unit (1 for all but nitrite
+  LR, whose meter unit is ppb → 0.001 to ppm), applied by the session when a
+  result frame lands. The table
+  is **generated code**: `domain/hanna_methods.yaml` is the source of truth,
+  generated into `kHannaMeterMethods` (`hanna_meter.g.dart`) by
+  `tool/gen_hanna_methods.dart`, which validates params against
+  `parameters.yaml` — the parameters/micro-views YAML pattern. The same YAML's
+  `csv:` section drives the U32 CSV import mapping (`hanna_import.g.dart`) —
+  ONE yaml, TWO part files, like `tank_presets.yaml`.
 - **Session flow:** connect handshake = `info` → `set time` (RTC sync so
   result timestamps match the phone) → `get battery` → `get setup` →
   `get setup tank,all` (15-name pages; a short page ends the list, a
@@ -2399,6 +2415,10 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 - Regenerate the Pro feature registry after editing `lib/domain/pro_features.yaml`:
   `dart run tool/gen_pro_features.dart` (validates + writes
   `pro_features.g.dart`).
+- Regenerate the Hanna method registry + CSV mapping after editing
+  `lib/domain/hanna_methods.yaml`: `dart run tool/gen_hanna_methods.dart`
+  (validates against `parameters.yaml` + writes `hanna_meter.g.dart` and
+  `hanna_import.g.dart`).
 - Localization codegen: `flutter gen-l10n`.
 - Tests (`flutter test`): domain — `test/zones_test.dart`,
   `test/presets_test.dart`, `test/units_test.dart`, `test/ratio_test.dart`,
@@ -2434,11 +2454,13 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   regenerate-and-diff guard for all committed generated sources
   (`flutter gen-l10n`, `dart run build_runner build`, then
   `dart run tool/gen_parameters.dart`, `dart run tool/gen_supplements.dart`,
-  `dart run tool/gen_micro_views.dart` and `dart run tool/gen_pro_features.dart`
+  `dart run tool/gen_micro_views.dart`, `dart run tool/gen_pro_features.dart`
+  and `dart run tool/gen_hanna_methods.dart`
   — build_runner deletes the catalog `.g.dart` files as unclaimed outputs, so
   the catalog generators must run after it, and gen_parameters before
-  gen_supplements, which imports the parameter catalog; gen_micro_views and
-  gen_pro_features read only the YAML sources, so their position is free),
+  gen_supplements, which imports the parameter catalog; gen_micro_views,
+  gen_pro_features and gen_hanna_methods read only the YAML sources, so
+  their position is free),
   `flutter analyze`, and
   `flutter test --coverage` with the lcov file uploaded as an artifact. A
   second job builds a **debug** APK on JDK 21 (Temurin) to exercise the

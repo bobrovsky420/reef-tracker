@@ -140,6 +140,15 @@ void main() {
     expect(link.sent.last, hannaCmdExit);
   });
 
+  test('a nitrite LR result scales from the meter\'s ppb to ppm', () async {
+    await session.connect();
+    await session.startMeasurements([hannaMethodByCode(2057)!]);
+    link.emit(_result(2057, '15', '20260721102041'));
+    await _pump();
+    expect(session.runs[0].status, HannaRunStatus.done);
+    expect(session.runs[0].value, closeTo(0.015, 1e-9));
+  });
+
   test('a result frame for the wrong method is ignored', () async {
     await session.connect();
     await session.startMeasurements([hannaMethodByCode(2002)!]);

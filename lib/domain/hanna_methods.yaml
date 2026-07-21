@@ -1,0 +1,99 @@
+# The Hanna checker method registry (U33) — source of truth for the numeric
+# measurement-method codes the HI97115C "Marine Master" photometer offers and
+# which catalog parameter each reading lands on.
+#
+# Edit this file, then regenerate:
+#     dart run tool/gen_hanna_methods.dart
+#
+# Each entry:
+#   code:     the meter's numeric method code — the stable identifier the
+#             protocol uses (`set setup method,<code>`, field 2 of every
+#             measurement frame). Persisted inside `hanna_method_sets`
+#             settings values — never reuse a code for a different analyte.
+#   param:    the catalog parameter key (parameters.yaml) the reading is
+#             stored under. Range variants are distinct codes but the SAME
+#             analyte — the code is provenance only (the U32 rule: map on
+#             method, never on value/unit).
+#   lowRange: true marks a low-range chemistry, shown with a low-range tag in
+#             the method picker. A parameter may have both a standard and a
+#             low-range code (nitrate) or only a low-range one (nitrite —
+#             `Nitrite Marine LR` is the meter's only nitrite method).
+#             Defaults to false.
+#   factor:   multiplier from the meter's reported value to the catalog's
+#             canonical unit. Defaults to 1 (most methods already report
+#             canonical ppm/dKH/pH); nitrite LR reports ppb → 0.001 to ppm.
+#
+# Entry order = display order in the method picker. All nine codes
+# user-confirmed 2026-07-21 (HANNA.md §3); further firmware chemistry
+# variants would appear as new 20xx codes pointing at existing parameters.
+
+methods:
+  - code: 2097
+    param: ph
+  - code: 2002
+    param: alkalinity
+  - code: 2099
+    param: ammonia
+  - code: 2011
+    param: calcium
+  - code: 2098
+    param: magnesium
+  - code: 2095
+    param: nitrate
+  - code: 2096
+    param: nitrate
+    lowRange: true
+  - code: 2057
+    param: nitrite
+    lowRange: true
+    factor: 0.001
+  - code: 2069
+    param: phosphate
+
+# The Hanna Lab CSV import mapping (U32) — how the `Method` column of a Hanna
+# Lab export resolves to a catalog parameter, and which unit each row must
+# carry (a mismatch is skipped, never converted — no guessing, same policy as
+# the ZIMS unit handling). Generated into `kHannaCsvMethods`
+# (`hanna_import.g.dart`) by the same `tool/gen_hanna_methods.dart` run.
+#
+# Each entry:
+#   prefix: lowercase leading keyword of the `Method` label — prefix-matched
+#           so range variants (`Nitrate Marine HR`/`LR`, `Phosphate Marine
+#           ULR`/`HR`) all map. Entry order = match order; an earlier prefix
+#           must not shadow a later one (`phosphate` before `ph` — validated).
+#   param:  the catalog parameter key the reading lands on. Values are
+#           already canonical (ppm / dKH / pH); mapping is on `Method`, never
+#           on `Unit`.
+#   unit:   required lowercase leading keyword of the row's `Unit` column,
+#           prefix-matched (`ppm PO₄³⁻` → `ppm`) so the Unicode ion tail —
+#           whose encoding depends on how the file traveled — never matters.
+#   factor: multiplier from the file's value to the catalog's canonical unit.
+#           Defaults to 1 (most rows are already canonical ppm/dKH/pH);
+#           nitrite LR exports ppb → 0.001 to ppm.
+
+csv:
+  - prefix: alkalinity
+    param: alkalinity
+    unit: dkh
+  - prefix: calcium
+    param: calcium
+    unit: ppm
+  - prefix: magnesium
+    param: magnesium
+    unit: ppm
+  - prefix: nitrate
+    param: nitrate
+    unit: ppm
+  - prefix: nitrite
+    param: nitrite
+    unit: ppb
+    factor: 0.001
+  - prefix: phosphate
+    param: phosphate
+    unit: ppm
+  - prefix: ammonia
+    param: ammonia
+    unit: ppm
+  - prefix: ph
+    param: ph
+    unit: ph
