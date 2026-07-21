@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/backup.dart';
+import 'package:reeftracker/data/cloud_backup_store.dart';
 import 'package:reeftracker/data/cloud_sync.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/settings.dart';
@@ -254,6 +256,55 @@ void main() {
       expect(
         backups,
         isNot(contains('reeftracker-auto-20200101-000000-000.json')),
+      );
+    });
+
+    test('a prune-only failure after a confirmed upload still records the '
+        'push (#63)', () async {
+      await connectAndSeed();
+      // The connection dies between the successful write and the prune's
+      // list() round-trip. The backup is durable on Drive, so the run must
+      // still count as pushed and settle the dirty gate.
+      store.listError = const SocketException('dropped after upload');
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      expect(store.files, hasLength(1));
+      expect(await settings.readSyncGdriveLastPushedHash(), isNotNull);
+      expect(
+        AppSettings.decodeSyncGdriveLastErrorAt(
+          await db.getSetting(kSyncGdriveLastErrorAtKey),
+        ),
+        isNull,
+      );
+
+      // Gate settled: the next run must not re-upload the identical DB.
+      store.listError = null;
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.skippedClean,
+      );
+      expect(store.writeCalls, 1);
+
+      // A non-IO prune failure (5xx) must not stamp a false "sync failed"
+      // either — the upload it follows succeeded.
+      await db.insertReadingGroup(
+        tankId: 1,
+        takenAt: DateTime(2026, 7, 21, 8),
+        note: null,
+        values: const [(paramKey: 'ph', value: 8.0)],
+      );
+      store.listError = const CloudApiException(500, 'server error');
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      expect(
+        AppSettings.decodeSyncGdriveLastErrorAt(
+          await db.getSetting(kSyncGdriveLastErrorAtKey),
+        ),
+        isNull,
       );
     });
 

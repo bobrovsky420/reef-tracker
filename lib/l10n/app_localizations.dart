@@ -1913,6 +1913,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load backups from Google Drive'**
   String get backupsDriveLoadFailed;
 
+  /// Error sub-line on a Google Drive backup row whose file exceeds the download size cap; restore is disabled for it.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} — too large to restore'**
+  String backupsDriveTooLarge(Object size);
+
   /// No description provided for @aboutAppName.
   ///
   /// In en, this message translates to:

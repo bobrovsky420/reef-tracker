@@ -320,6 +320,7 @@
   "backupsDriveSection": "Google Disk",
   "backupsDriveEmpty": "Na Google Disku zatím nejsou žádné zálohy",
   "backupsDriveLoadFailed": "Zálohy z Google Disku se nepodařilo načíst",
+  "backupsDriveTooLarge": "{size} — příliš velký soubor, obnovení není možné",
 
   "aboutAppName": "O aplikaci ReefTracker",
   "aboutDescription": "Offline sledování parametrů mořského akvária s historií, časovými grafy a zónami zdraví zelená/oranžová/červená.",

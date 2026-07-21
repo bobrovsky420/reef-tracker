@@ -320,6 +320,7 @@
   "backupsDriveSection": "Google Drive",
   "backupsDriveEmpty": "Noch keine Backups in Google Drive",
   "backupsDriveLoadFailed": "Backups konnten nicht aus Google Drive geladen werden",
+  "backupsDriveTooLarge": "{size} — zu groß zum Wiederherstellen",
 
   "aboutAppName": "Über ReefTracker",
   "aboutDescription": "Offline-Tracker für Meerwasseraquarium-Parameter mit Verlauf, Zeitdiagrammen und grün/orange/rot-Gesundheitszonen.",

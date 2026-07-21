@@ -16,6 +16,10 @@ class FakeCloudBackupStore implements CloudBackupStore {
   bool offline = false;
   bool failWrites = false;
 
+  /// Thrown from [list] when set — the prune-only failure of #63, where the
+  /// upload succeeded but the connection died before the prune's listing.
+  Object? listError;
+
   int ensureFolderCalls = 0;
   int writeCalls = 0;
 
@@ -49,6 +53,8 @@ class FakeCloudBackupStore implements CloudBackupStore {
   @override
   Future<List<CloudBackupFile>> list(String folderId) async {
     _checkOnline();
+    final e = listError;
+    if (e != null) throw e;
     _checkFolder(folderId);
     return [
       for (final e in files.entries)

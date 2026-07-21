@@ -40,7 +40,8 @@ enum CloudSyncOutcome {
   /// The content hash matched the last pushed one — nothing to upload.
   skippedClean,
 
-  /// A backup document was uploaded (and the cloud folder pruned).
+  /// A backup document was uploaded (and the cloud folder pruned,
+  /// best-effort).
   pushed,
 
   /// No network — not an error; the next launch/resume retries.
@@ -110,10 +111,20 @@ Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
       await settings.setSyncGdriveFolderId(folderId);
       await store.write(folderId, name, utf8.encode(json));
     }
-    await _pruneCloud(store, folderId, await settings.readAutoBackupKeep());
+    // The upload is durable on Drive at this point — record it before the
+    // prune (#63), matching the local contract (`writeAutoBackup` first,
+    // best-effort prune after). Stamping late would let a prune-only network
+    // hiccup discard the push record: the dirty gate re-uploads the identical
+    // DB next launch, or a non-IO throw stamps a false "sync failed".
     await settings.setSyncGdriveLastPushedHash(hash);
     await settings.setSyncGdriveLastPushAt(DateTime.now());
     await settings.setSyncGdriveLastErrorAt(null);
+    try {
+      await _pruneCloud(store, folderId, await settings.readAutoBackupKeep());
+    } catch (_) {
+      // Best-effort, like the local prune: at most one extra stale file is
+      // left for the next run to trim.
+    }
     return CloudSyncOutcome.pushed;
   } on IOException {
     // Offline (DNS failure, no route, timeout): silently retry next time —

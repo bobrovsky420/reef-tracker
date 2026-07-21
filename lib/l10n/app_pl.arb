@@ -320,6 +320,7 @@
   "backupsDriveSection": "Dysk Google",
   "backupsDriveEmpty": "Na Dysku Google nie ma jeszcze kopii zapasowych",
   "backupsDriveLoadFailed": "Nie udało się wczytać kopii zapasowych z Dysku Google",
+  "backupsDriveTooLarge": "{size} — plik zbyt duży, nie można przywrócić",
 
   "aboutAppName": "O aplikacji ReefTracker",
   "aboutDescription": "Offline'owy tracker parametrów akwarium morskiego z historią, wykresami czasowymi i strefami zdrowia zielona/pomarańczowa/czerwona.",

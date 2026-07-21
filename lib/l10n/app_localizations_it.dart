@@ -1081,6 +1081,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Impossibile caricare i backup da Google Drive';
 
   @override
+  String backupsDriveTooLarge(Object size) {
+    return '$size — troppo grande per essere ripristinato';
+  }
+
+  @override
   String get aboutAppName => 'Informazioni su ReefTracker';
 
   @override

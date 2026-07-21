@@ -508,6 +508,8 @@
   "@backupsDriveEmpty": { "description": "Shown in the Google Drive section while the app's Drive folder holds no backups." },
   "backupsDriveLoadFailed": "Couldn't load backups from Google Drive",
   "@backupsDriveLoadFailed": { "description": "Shown in the Google Drive section when listing the Drive folder fails (offline, revoked access)." },
+  "backupsDriveTooLarge": "{size} — too large to restore",
+  "@backupsDriveTooLarge": { "description": "Error sub-line on a Google Drive backup row whose file exceeds the download size cap; restore is disabled for it.", "placeholders": { "size": {} } },
 
   "aboutAppName": "About ReefTracker",
   "aboutDescription": "Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.",

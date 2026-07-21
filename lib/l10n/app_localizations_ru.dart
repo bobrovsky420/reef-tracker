@@ -1087,6 +1087,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось загрузить список резервных копий с Google Диска';
 
   @override
+  String backupsDriveTooLarge(Object size) {
+    return '$size — слишком большой файл, восстановление невозможно';
+  }
+
+  @override
   String get aboutAppName => 'О приложении ReefTracker';
 
   @override

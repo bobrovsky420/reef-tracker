@@ -1090,6 +1090,11 @@ class AppLocalizationsPl extends AppLocalizations {
       'Nie udało się wczytać kopii zapasowych z Dysku Google';
 
   @override
+  String backupsDriveTooLarge(Object size) {
+    return '$size — plik zbyt duży, nie można przywrócić';
+  }
+
+  @override
   String get aboutAppName => 'O aplikacji ReefTracker';
 
   @override

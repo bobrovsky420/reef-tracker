@@ -584,7 +584,12 @@ Layers, all injected and plugin-free below the adapter:
   returns null. Every call is time-bounded (15 s connect, 60 s
   send-to-drain, #58) and a stall surfaces as `SocketException`, so a
   half-open socket rides the offline path instead of pinning the engine's
-  single-flight slot for the rest of the session.
+  single-flight slot for the rest of the session. Responses are size-capped
+  at `kCloudBackupMaxBytes` (64 MB, #64 — the folder is user-writable, so a
+  huge foreign file must not be buffered whole): over-size throws a
+  synthetic `CloudApiException(413)`, and the Manage-backups Drive list
+  renders an over-cap entry as an error tile (restore removed, delete kept)
+  instead of attempting the download.
 - **`CloudAuth`** (seam) + **`GoogleDriveAuth`** (`google_sign_in` v7,
   Credential Manager): interactive `connect()` = system account picker +
   consent (cancel ⇒ null, never an error); silent `accessToken()` serves a
@@ -609,7 +614,10 @@ Layers, all injected and plugin-free below the adapter:
   `sync_gdrive_last_pushed_hash` ⇒ skip** (the dirty gate: an unchanged
   read-mostly device never re-uploads, so it can't bury the writer device's
   newer file) → upload (stale cached folder id 404s once → folder recreated,
-  retried) → prune → stamp hash/time, clear error. **Offline is silent**
+  retried) → stamp hash/time, clear error → best-effort prune (#63: the
+  upload is already durable, so the stamps come first and a prune-only
+  failure is swallowed — never a re-upload or a false error). **Offline is
+  silent**
   (retry next launch, no nagging); real failures stamp
   `sync_gdrive_last_error_at` (cleared by the next success — the #22 idiom,
   surfaced as a persistent error row in Settings). Outcomes are reported as

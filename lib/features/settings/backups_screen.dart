@@ -205,17 +205,28 @@ class _DriveBackupRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final modified = file.modifiedAt?.toLocal();
+    // The store refuses downloads past kCloudBackupMaxBytes (#64), so a file
+    // the listing already shows as over-size becomes an error tile — no
+    // restore action that could only fail; delete stays available.
+    final tooLarge = (file.sizeBytes ?? 0) > kCloudBackupMaxBytes;
     return ReefSettingsRow(
-      icon: Icons.cloud_outlined,
+      icon: tooLarge ? Icons.cloud_off : Icons.cloud_outlined,
+      iconColor: tooLarge ? Theme.of(context).colorScheme.error : null,
       // Drive always reports modifiedTime; the name is the (unlocalized)
       // fallback for a hand-uploaded file that somehow lacks it.
       title: modified != null
           ? formatDateTime(context, modified, weekday: false)
           : file.name,
-      description: file.sizeBytes != null
+      description: tooLarge
+          ? l.backupsDriveTooLarge(_formatSize(l, file.sizeBytes!))
+          : file.sizeBytes != null
           ? _formatSize(l, file.sizeBytes!)
           : null,
-      descriptionStyle: _sizeStyle(context),
+      descriptionStyle: tooLarge
+          ? _sizeStyle(
+              context,
+            ).copyWith(color: Theme.of(context).colorScheme.error)
+          : _sizeStyle(context),
       trailing: ReefMenuButton<String>(
         icon: Icons.more_vert,
         onSelected: (action) {
@@ -227,11 +238,12 @@ class _DriveBackupRow extends ConsumerWidget {
           }
         },
         entries: [
-          ReefMenuItem(
-            value: 'restore',
-            icon: Icons.settings_backup_restore,
-            label: l.restore,
-          ),
+          if (!tooLarge)
+            ReefMenuItem(
+              value: 'restore',
+              icon: Icons.settings_backup_restore,
+              label: l.restore,
+            ),
           ReefMenuItem(
             value: 'delete',
             icon: Icons.delete_outline,

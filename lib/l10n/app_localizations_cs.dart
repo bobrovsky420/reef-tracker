@@ -1081,6 +1081,11 @@ class AppLocalizationsCs extends AppLocalizations {
       'Zálohy z Google Disku se nepodařilo načíst';
 
   @override
+  String backupsDriveTooLarge(Object size) {
+    return '$size — příliš velký soubor, obnovení není možné';
+  }
+
+  @override
   String get aboutAppName => 'O aplikaci ReefTracker';
 
   @override

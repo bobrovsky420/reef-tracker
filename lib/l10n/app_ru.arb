@@ -320,6 +320,7 @@
   "backupsDriveSection": "Google Диск",
   "backupsDriveEmpty": "На Google Диске пока нет резервных копий",
   "backupsDriveLoadFailed": "Не удалось загрузить список резервных копий с Google Диска",
+  "backupsDriveTooLarge": "{size} — слишком большой файл, восстановление невозможно",
 
   "aboutAppName": "О приложении ReefTracker",
   "aboutDescription": "Офлайн-трекер параметров морского аквариума с историей, графиками по времени и зонами здоровья зелёная/жёлтая/красная.",

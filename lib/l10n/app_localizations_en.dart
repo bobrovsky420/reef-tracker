@@ -1076,6 +1076,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t load backups from Google Drive';
 
   @override
+  String backupsDriveTooLarge(Object size) {
+    return '$size — too large to restore';
+  }
+
+  @override
   String get aboutAppName => 'About ReefTracker';
 
   @override

@@ -23,7 +23,9 @@ abstract interface class CloudBackupStore {
   /// filenames are UTC-timestamped, so lexical order is chronological).
   Future<List<CloudBackupFile>> list(String folderId);
 
-  /// Downloads the raw bytes of [fileId].
+  /// Downloads the raw bytes of [fileId]. Implementations must refuse files
+  /// larger than [kCloudBackupMaxBytes] (throwing [CloudApiException]) rather
+  /// than buffering them whole in memory.
   Future<List<int>> read(String fileId);
 
   /// Uploads [bytes] as a new file [name] inside [folderId].
@@ -32,6 +34,15 @@ abstract interface class CloudBackupStore {
   /// Permanently deletes [fileId].
   Future<void> delete(String fileId);
 }
+
+/// Ceiling on a single downloaded response (#64). Backup documents are small
+/// JSON (a decade of readings is single-digit MB), but the app folder is a
+/// normal, user-visible My Drive folder anyone with access can drop files
+/// into — without a cap, `read` would pull an arbitrarily large file whole
+/// into memory on the UI isolate and OOM a low-memory device. The restore
+/// list also uses this to show an over-size entry as an error tile instead of
+/// attempting the download.
+const kCloudBackupMaxBytes = 64 * 1024 * 1024;
 
 /// One remote backup file, as much metadata as the list call returns.
 class CloudBackupFile {
@@ -83,6 +94,7 @@ class DriveBackupStore implements CloudBackupStore {
     HttpClient Function()? clientFactory,
     this.connectionTimeout = const Duration(seconds: 15),
     this.requestTimeout = const Duration(seconds: 60),
+    this.maxResponseBytes = kCloudBackupMaxBytes,
   }) : _clientFactory = clientFactory ?? HttpClient.new;
 
   /// Returns a currently valid OAuth access token, or null when silent
@@ -100,6 +112,10 @@ class DriveBackupStore implements CloudBackupStore {
   /// (silent retry next launch), never a recorded failure.
   final Duration connectionTimeout;
   final Duration requestTimeout;
+
+  /// Response-size ceiling (#64), [kCloudBackupMaxBytes] in production;
+  /// injectable so tests exercise the cap without streaming 64 MB.
+  final int maxResponseBytes;
 
   /// Human-visible folder created in the user's My Drive. Deliberately the
   /// plain app name: the user can browse drive.google.com and download a
@@ -238,9 +254,28 @@ class DriveBackupStore implements CloudBackupStore {
           request.add(body);
         }
         final response = await request.close();
+        // Size cap (#64): refuse over-size responses up front when the server
+        // declares a length, and abort the drain past the ceiling either way
+        // (chunked responses declare -1). CloudApiException rides the
+        // engine's/UI's existing provider-error handling — this is a broken
+        // or hostile file, not an offline condition to silently retry.
+        if (response.contentLength > maxResponseBytes) {
+          throw CloudApiException(
+            413,
+            '$method ${uri.path}: response of ${response.contentLength} bytes '
+            'exceeds the $maxResponseBytes-byte cap',
+          );
+        }
         final payload = <int>[];
         await for (final chunk in response) {
           payload.addAll(chunk);
+          if (payload.length > maxResponseBytes) {
+            throw CloudApiException(
+              413,
+              '$method ${uri.path}: response exceeds the '
+              '$maxResponseBytes-byte cap',
+            );
+          }
         }
         if (response.statusCode < 200 || response.statusCode >= 300) {
           throw CloudApiException(
