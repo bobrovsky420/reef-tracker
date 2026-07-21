@@ -255,9 +255,7 @@ class _TestSetsManageSheet extends ConsumerWidget {
               child: ReorderableListView.builder(
                 shrinkWrap: true,
                 itemCount: templates.length,
-                // ignore: deprecated_member_use
-                onReorder: (oldIndex, newIndex) {
-                  if (newIndex > oldIndex) newIndex -= 1;
+                onReorderItem: (oldIndex, newIndex) {
                   final ids = [for (final t in templates) t.id];
                   ids.insert(newIndex, ids.removeAt(oldIndex));
                   unawaited(ref.read(dbProvider).reorderReadingTemplates(ids));
