@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.3] - 2026-07-21
+
+### Fixed
+- Android: a connection drop right after a successful Google Drive upload no
+  longer discards the sync record — previously the next launch re-uploaded the
+  identical backup as a duplicate file, or showed a false "sync failed" state,
+  depending on how the folder cleanup step failed.
+- Android: Google Drive backup downloads are now capped at 64 MB. A larger
+  file in the Drive folder (which is user-writable) shows as an error entry in
+  Manage backups instead of being loaded whole into memory on restore, which
+  could crash low-memory devices.
+
 ## [0.35.2] - 2026-07-20
 
 ### Changed
