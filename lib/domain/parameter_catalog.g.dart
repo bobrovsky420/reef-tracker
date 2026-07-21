@@ -103,9 +103,10 @@ const List<ParameterDef> kReefParameters = [
   ),
   ParameterDef(
     key: 'nitrite',
-    unit: 'ppm',
-    decimals: 2,
+    unit: 'ppb',
+    decimals: 0,
     dashboardGroup: DashboardGroup.nutrients,
+    displayFactor: 1000,
     minValue: 0,
     plausibleMin: 0,
     plausibleMax: 10,

@@ -95,12 +95,11 @@ void main() {
       errors.add('"$key": duplicate symbol "$symbol"');
     }
 
+    // Allowed on core parameters too since nitrite's ppb display (storage
+    // stays canonical ppm; a factor != 1 fixes the unit label).
     final displayFactor = p['displayFactor'] as num?;
     if (displayFactor != null && displayFactor <= 0) {
       errors.add('"$key": displayFactor must be positive');
-    }
-    if (displayFactor != null && category == 'core') {
-      errors.add('"$key": displayFactor is a microelement mechanism');
     }
 
     final importance = p['importance'] as num?;

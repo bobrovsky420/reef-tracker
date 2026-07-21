@@ -253,31 +253,75 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
           SectionHeader(l.hannaSetsTitle),
           ReefCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(
-              children: [
-                for (final s in sets)
-                  ReefSettingsRow(
-                    icon: Icons.playlist_add_check,
-                    title: s.name,
-                    description: l.hannaSetCount(s.codes.length),
-                    trailing: PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert, size: 18, color: tokens.textDim),
-                      onSelected: (v) => unawaited(_onSetAction(s, v)),
-                      itemBuilder: (_) => [
-                        PopupMenuItem(
-                          value: 'update',
-                          child: Text(l.hannaSetUpdate),
+            child: ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: sets.length,
+              onReorderItem: (oldIndex, newIndex) {
+                final reordered = List<HannaMethodSet>.of(sets);
+                reordered.insert(newIndex, reordered.removeAt(oldIndex));
+                unawaited(
+                  ref.read(settingsProvider).setHannaMethodSets(reordered),
+                );
+              },
+              // The dragged row leaves the card, so give it an opaque
+              // lifted surface (the dark-theme card fill is translucent
+              // — rows underneath would show through the bare row).
+              proxyDecorator: (child, index, animation) => Material(
+                elevation: 3,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+                child: child,
+              ),
+              itemBuilder: (context, i) {
+                final s = sets[i];
+                return ReefSettingsRow(
+                  key: ValueKey(s.name),
+                  icon: Icons.playlist_add_check,
+                  title: s.name,
+                  description: l.hannaSetCount(s.codes.length),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: tokens.textDim,
                         ),
-                        PopupMenuItem(value: 'delete', child: Text(l.delete)),
-                      ],
-                    ),
-                    onTap: () => setState(() {
-                      _selected
-                        ..clear()
-                        ..addAll(s.codes);
-                    }),
+                        onSelected: (v) => unawaited(_onSetAction(s, v)),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'update',
+                            child: Text(l.hannaSetUpdate),
+                          ),
+                          PopupMenuItem(value: 'delete', child: Text(l.delete)),
+                        ],
+                      ),
+                      ReorderableDragStartListener(
+                        index: i,
+                        // The padding keeps the 16 px glyph draggable
+                        // with a finger.
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.drag_handle,
+                            size: 16,
+                            color: tokens.textFaint,
+                            semanticLabel: l.reorder,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-              ],
+                  onTap: () => setState(() {
+                    _selected
+                      ..clear()
+                      ..addAll(s.codes);
+                  }),
+                );
+              },
             ),
           ),
         ],

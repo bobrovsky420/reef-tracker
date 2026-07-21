@@ -12,7 +12,8 @@
 #    the fallback order elsewhere.
 #  - `unit` is the display unit label. Editable per tank for core parameters;
 #    FIXED for microelements (category other than core), where it must be the
-#    unit printed on an ICP report: mg/L or µg/L.
+#    unit printed on an ICP report: mg/L or µg/L — and for any parameter with
+#    a `displayFactor` other than 1 (nitrite's ppb).
 #  - `decimals` = display precision (0–4).
 #  - `category`: core (dashboard; the default when omitted), major, trace or
 #    contaminant (the latter three = the Microelements screen, U17).
@@ -22,8 +23,9 @@
 #  - `symbol` = chemical element symbol ("Zn"), REQUIRED for microelements so
 #    rows match an ICP report; omit for core parameters.
 #  - `displayFactor` = canonical→display multiplier (default 1). Storage stays
-#    canonical ppm (mg/L) for every concentration; µg/L elements display
-#    through factor 1000.
+#    canonical ppm (mg/L) for every concentration; µg/L elements — and ppb
+#    nitrite — display through factor 1000. A factor other than 1 fixes the
+#    unit (the label must match the converted value, so it can't be edited).
 #  - `minValue` / `plausibleMin` / `plausibleMax` are in the CANONICAL unit:
 #    minValue = hard physical floor (reject below), the plausible pair = the
 #    generous range outside which a value needs explicit confirmation (#31).
@@ -129,11 +131,16 @@ parameters:
     plausibleMin: 0
     plausibleMax: 10
 
+  # Stored canonical ppm like every concentration but DISPLAYED in ppb
+  # (displayFactor 1000): matches the Hanna nitrite LR checker's unit and
+  # keeps sub-0.01 ppm readings legible. The unit is fixed (not per-tank
+  # editable), like the µg/L microelements.
   - key: nitrite
-    unit: ppm
-    decimals: 2
+    unit: ppb
+    decimals: 0
     group: nutrients
     importance: 3
+    displayFactor: 1000
     minValue: 0
     plausibleMin: 0
     plausibleMax: 10

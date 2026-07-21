@@ -42,7 +42,9 @@ class ParameterDef {
 
   /// Default unit of measure (e.g. `dKH`). Editable per tank — except for
   /// microelements ([isMicro]), whose unit is fixed to this label so the
-  /// panel always mirrors the units printed on an ICP report.
+  /// panel always mirrors the units printed on an ICP report, and for any
+  /// parameter with a [displayFactor] other than 1 (ppb nitrite), whose
+  /// label must match the converted value.
   final String unit;
 
   /// How many decimal places to show when formatting values.
@@ -66,9 +68,10 @@ class ParameterDef {
   final String? symbol;
 
   /// Canonical→display multiplier. Storage stays canonical ppm (mg/L) for all
-  /// concentrations; trace elements are *displayed* in µg/L via factor 1000
-  /// (the same stored-canonical/display-converted pattern as °C→°F). Fixed
-  /// per parameter — no user preference — so [unit] is the display label.
+  /// concentrations; trace elements are *displayed* in µg/L and nitrite in
+  /// ppb via factor 1000 (the same stored-canonical/display-converted pattern
+  /// as °C→°F). Fixed per parameter — no user preference — so [unit] is the
+  /// display label.
   final double displayFactor;
 
   /// True for parameters shown on the Microelements screen instead of the

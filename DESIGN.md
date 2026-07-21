@@ -1842,6 +1842,9 @@ Parameters list/add-sheet and the health-score inputs to core).
   (fixed by the catalog, not per-tank editable): **µg/L** for trace/contaminant
   elements (fixed `displayFactor` 1000; storage stays canonical ppm) and
   **mg/L** for the majors/halogens/nutrients (Na, K, S, B, Br, Sr, I, Si).
+  The same fixed-display mechanism serves one core parameter: **nitrite**
+  displays in **ppb** (`displayFactor` 1000, storage canonical ppm) so
+  Hanna LR readings stay legible everywhere (dashboard, charts, entry).
   Localized element names carry the symbol ("Zinc (Zn)") so rows match an ICP
   report across languages.
 - Deliberately **not** in the tank health score (see `domain/micro.dart`);
@@ -2010,7 +2013,8 @@ note).
   meter card (name/battery/firmware), the **meter-side aquarium selector**
   (first entry preselected), user-defined **test sets** ("Daily test" — one
   JSON settings value `hanna_method_sets`, rides backups, tap-to-apply,
-  save/update-from-selection/delete) and an **All methods** checkbox list.
+  save/update-from-selection/delete, drag-to-reorder) and an **All methods**
+  checkbox list.
   "Start measurements" sends `set meas on` + `set setup start` once, then
   per method `set setup method,<code>` and waits — **unbounded** — for the
   `…,R` frame while the user does the wet chemistry on the meter (progress
