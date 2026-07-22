@@ -192,7 +192,10 @@ measurements are untouched and reappear when re-enabled), and `micro_view`
 `view:<MicroViews id>`; missing/dangling entries mean the full list; the
 `lastReadingTemplate` pattern), and `free_ammonia_hidden` (the per-tank on/off
 for the free-ammonia visualization, device-local — a JSON list of tank ids
-where it is **hidden**; an absent tank is shown, so the default is on). The
+where it is **hidden**; an absent tank is shown, so the default is on), and
+`dose_calc_salinity_adjust` (the dose calculator's per-tank
+salinity-adjusted-target switch — the same JSON-list-of-tank-ids shape, but
+listing the tanks where it is **on**; the default is off). The
 reminder keys are device-local: notification preferences must not ride a
 backup onto another device. `ro_stages_seeded` is the one **non**-device-local
 key: it describes domain data and travels with the RO rows it guards, so a
@@ -2060,36 +2063,50 @@ readout is always confirmed by the user first.
 
 - **Decoder** (`domain/seven_segment.dart`, pure Dart — deliberately no
   OCR/ML dependency), tuned against real photos (see the fixture tests
-  below): an **Otsu threshold ladder** (up to 4 levels, each re-splitting
-  the previous bright class — on real scenes the first split separates dark
-  case vs LCD and the mid-gray digits vanish into the bright class; the
-  full-image level keeps a contrast guard, deeper levels don't) → per level:
-  binarize → **component cleanup** (drop dark components touching the crop
-  border, wider than 0.35× the crop — window-outline frames and shadow
-  lines, nothing glyph-shaped is that wide — and hairline slivers; digits
-  are compact interior islands) → digit row band **expanded from a
-  window-smoothed peak-ink anchor row** (a thin shadow line can out-ink any
-  single digit row; small gaps bridged for `1`'s joint gap) → column
-  projection with small-gap merging **capped at one glyph's width** (the
-  decimal point sits flush between digits and would otherwise fuse them) →
-  **dot-appendage splitting** (bottom-band column tails, min width =
-  segment thickness so a digit's corner column isn't mistaken for a dot) →
-  per-slice classification (aspect-ratio special case for `1`, sub-height
-  blobs = annunciator icons, ignored) → 7-zone segment sampling → pattern
-  table. **Refusal beats guessing, everywhere**: unknown patterns reject
-  the frame; skipped blobs carrying ink comparable to the kept digits
-  reject the frame (half-captured digits would read as a confident lone
-  `1`); a single-digit readout with any skipped blob rejects the frame. An
-  erosion fallback was tried and removed — it fabricated wrong readouts
-  (see the NOTE in the source). `SevenSegmentVote` accepts a readout only
-  after 3 consecutive identical decodes.
+  below): **scale normalization** (box-downscale any crop taller than
+  160 px to ~120 — every ratio heuristic below is tuned for that range,
+  and averaging smooths sensor noise/reflections) → an **Otsu threshold
+  ladder** (up to 4 levels, each re-splitting the previous bright class —
+  on real scenes the first split separates dark case vs LCD and the
+  mid-gray digits vanish into the bright class; the full-image level keeps
+  a contrast guard, deeper levels don't) → per level: binarize →
+  **component cleanup** (drop dark components touching the crop border,
+  wider than 0.35× the crop — window-outline frames and shadow lines,
+  nothing glyph-shaped is that wide — hairline slivers, and elongated flat
+  dashes; interior residue drops are tallied as *stray ink* for the guards
+  below) → digit row band **expanded from a window-smoothed peak-ink
+  anchor row** (a thin shadow line can out-ink any single digit row; small
+  gaps bridged for `1`'s joint gap) → **decimal-point extraction as
+  components** (small squarish blobs seated deep in the bottom band are
+  lifted out of the mask *before* slicing and re-inserted by x-position
+  into the digit sequence afterwards — position-validated: a dot
+  overlapping a digit's columns or outside the digit sequence rejects the
+  frame; a column-based dot-splitting scheme was tried first and was
+  brittle whenever residue or blur touched the dot's columns) → column
+  projection with small-gap merging **capped at one glyph's width**,
+  hairline runs never merging → per-slice classification (weak boundary
+  rows trimmed; aspect-ratio special case for `1`; wide-flat blobs and
+  sub-height blobs skipped as non-digits) → 7-zone segment sampling →
+  pattern table. **Refusal beats guessing, everywhere**: unknown patterns
+  reject the frame; skipped blobs + stray ink comparable to the kept
+  digits reject the frame (half-captured digits would read as a confident
+  wrong value); single-digit readouts use a 4× stricter ratio; **a lone
+  `1` is never accepted at all** (two bare bars are the easiest glyph to
+  fabricate — every misread during development was a lone `1`). An erosion
+  fallback was tried and removed — it fabricated wrong readouts (see the
+  NOTE in the source). `SevenSegmentVote` accepts a readout only after 3
+  consecutive identical decodes.
 - **Photo regression tests** (`test/checker_photo_test.dart` + fixtures in
   `test/fixtures/hanna_photos/`, decoded via the pure-Dart `image` dev
   dependency): Hanna's 14 catalog product shots (`catalog/`, shared
   display-region crop, 12 decode exactly; `hard_`-prefixed fixtures flip
   the requirement to *never misread* — refusing is fine) plus a `user/`
   directory where phone photos named `<MODEL>_<expected>.jpg`, framed like
-  the guide box, become test cases automatically.
+  the guide box (display filling the frame, real photos of the user's own
+  checkers), become test cases automatically — each is tried at all four
+  rotations, the upright one must decode the expected value and no
+  sideways orientation may misread. Note the `image` package does NOT
+  apply EXIF orientation on decode.
 - **Model registry** (`domain/hanna_checker.dart` + the `checkers:` section
   of `hanna_methods.yaml` → generated `kHannaCheckers`, 14 models,
   specs verified against Hanna spec sheets): per model the LCD format
@@ -2102,10 +2119,15 @@ readout is always confirmed by the user first.
 - **Flow** (`features/scan/checker_scan_screen.dart`, one route hosts all
   phases): model picker (rows show model · localized parameter · range) →
   live viewfinder (`camera` plugin, back camera, `medium` preset, ~6 fps
-  luma-only decoding of the stream inside a guide box; the box's fractional
-  rect and the buffer crop share constants, corrected for a
+  luma-only decoding of the stream inside a 2:1 LCD-shaped guide box;
+  pinch-to-zoom, defaulting to 2× — framing from focusable distance — with
+  focus/exposure metering pinned to the box center; the box's fractional
+  rect and the buffer crop share one computation, corrected for a
   preview-vs-analysis aspect-ratio mismatch and mapped through the sensor
-  rotation by `scan_frame.dart` — pure functions, unit-tested) → confirm
+  rotation by `scan_frame.dart`, **and the cropped pixels themselves are
+  rotated upright** (`rotateGrayCw` — the buffer is sideways relative to
+  the preview; forgetting this fed the decoder vertical digits on every
+  phone) — pure functions, unit-tested) → confirm
   (raw readout + converted value in the user's display unit, tank selector
   defaulting to the active tank, the #31 gate: impossible blocks save,
   implausible needs a confirm) → `addTrackedParameter` +
@@ -2278,7 +2300,21 @@ just inputs + a result card and stores nothing.
   fields default while empty — shown as `hintText`, no async prefill needed:
   current = the element's latest stored reading, target = the tracked
   parameter's `targetValue` (falling back to the green-zone midpoint, or the
-  single green bound of a one-sided range). The result card shows the needed
+  single green bound of a one-sided range). An **"Adjust target to tank
+  salinity"** switch below the target field (per-tank, persisted in the
+  `dose_calc_salinity_adjust` settings key, default off) scales the effective
+  target — typed or default, both are 35 ppt "book" values — by
+  `measuredPpt / 35` (`adjustTargetForSalinity`; ionic content scales
+  linearly with salinity, and the measured salinity is clamped to 20–45 ppt
+  against typo'd readings). The salinity comes from `resolveTankSalinity`:
+  the average of the tank's salinity readings over the last 14 days
+  (`kSalinityAdjustWindow`), else the latest reading ever — the tile's
+  subtitle then flags its age; with no salinity readings at all the switch is
+  disabled and says so. The target *field* (hint included) always holds
+  35 ppt values so a typed value and the empty-field default run through the
+  same scaling; the tile subtitle shows the live base → adjusted mapping, and
+  the result card gets an "Adjusted target" row naming the value the dose
+  actually aims at. The result card shows the needed
   rise and the one-time dose (`computeCorrectionDose`); when the rise exceeds
   `kMaxDailyRiseByElement` the card switches to a split plan (total, dose/day
   emphasized, day count) with a `critical`-token warning naming the limit.

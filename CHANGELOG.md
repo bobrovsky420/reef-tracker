@@ -5,9 +5,44 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.37.2] - 2026-07-21
+## [0.38.0] - 2026-07-22
+
+### Added
+- Dose calculator: correction mode can now adjust the target value to the
+  tank's measured salinity. Catalog targets and "book" values are stated for
+  35 ppt seawater; tanks kept at a lower (or higher) salinity can turn on
+  "Adjust target to tank salinity" to scale the target — typed or default —
+  proportionally (e.g. calcium 420 ppm at 33 ppt becomes 396 ppm). The
+  switch is remembered per tank, uses the average of the last 14 days of
+  salinity measurements (falling back to the latest one, with a note when
+  it is old), and shows exactly what target the dose aims at.
+
+## [0.37.3] - 2026-07-22
+
+### Fixed
+- Checker scan: scanning could not recognize anything on a phone (or
+  occasionally showed a stray "1") because the camera frames reach the
+  decoder sideways — they are now rotated upright before decoding. This
+  was the main reason scanning didn't work on real devices.
+- Checker scan: recognition reworked against a real phone photo of a
+  checker (thanks to the reported 0.12 ppm reading): high-resolution
+  frames are scaled to the decoder's working size, decimal points are
+  detected as standalone shapes so they can no longer be silently lost or
+  glue digits together (a lost decimal would change the value ten-fold —
+  such frames are now refused instead), and a reading of exactly "1" alone
+  is never trusted (it is the pattern every stray shadow produces).
+
+### Added
+- Checker scan: pinch-to-zoom in the viewfinder (starts at 2×) — fill the
+  frame from a distance the camera can actually focus at, instead of
+  holding the phone right against the checker. Focus and exposure now
+  target the display area rather than the checker body.
 
 ### Changed
+- Checker scan: the viewfinder frame is now 2:1, matching the display
+  window's true shape.
+
+## [0.37.2] - 2026-07-21
 - Checker scan: the viewfinder frame now has the shape of the checker's
   display window (it was much wider than the display). Framing is easier
   and less of the checker body ends up in the scanned area, which improves

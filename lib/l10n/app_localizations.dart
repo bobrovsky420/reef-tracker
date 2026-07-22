@@ -2393,6 +2393,46 @@ abstract class AppLocalizations {
   /// **'Log this dose'**
   String get doseCalcLogDose;
 
+  /// Correction-mode switch: scale the target value (which is referenced to 35 ppt seawater) to the tank's measured salinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust target to tank salinity'**
+  String get doseCalcSalinityAdjust;
+
+  /// No description provided for @doseCalcSalinityAdjustHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Target values assume 35 ppt (1.026) seawater. Turn on to scale the target to your tank\'s measured salinity.'**
+  String get doseCalcSalinityAdjustHelp;
+
+  /// Switch subtitle while active: the measured salinity and the scaled vs. 35 ppt target, all pre-formatted with their units.
+  ///
+  /// In en, this message translates to:
+  /// **'At {salinity}: target {adjusted} instead of {original}.'**
+  String doseCalcSalinityAdjustActive(
+    Object salinity,
+    Object adjusted,
+    Object original,
+  );
+
+  /// Switch subtitle while disabled because the tank has no stored salinity reading.
+  ///
+  /// In en, this message translates to:
+  /// **'No salinity measurement for this tank yet.'**
+  String get doseCalcSalinityNone;
+
+  /// Appended to the switch subtitle when the newest salinity reading is older than the 14-day averaging window.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, one{Salinity measured {days} day ago.} other{Salinity measured {days} days ago.}}'**
+  String doseCalcSalinityStale(int days);
+
+  /// Correction result row: the salinity-scaled target value the dose aims at.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjusted target'**
+  String get doseCalcAdjustedTarget;
+
   /// Tappable card on a parameter's history screen when its latest reading is below the green zone; opens the dose calculator in correction mode.
   ///
   /// In en, this message translates to:
@@ -3364,6 +3404,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'tilt slightly to avoid glare'**
   String get hannaScanGlareHint;
+
+  /// Third part of the viewfinder hint line, appended with a separator — starts lowercase.
+  ///
+  /// In en, this message translates to:
+  /// **'pinch to zoom'**
+  String get hannaScanZoomHint;
 
   /// No description provided for @hannaScanRescan.
   ///

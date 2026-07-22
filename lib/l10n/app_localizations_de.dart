@@ -1381,6 +1381,40 @@ class AppLocalizationsDe extends AppLocalizations {
   String get doseCalcLogDose => 'Dosis protokollieren';
 
   @override
+  String get doseCalcSalinityAdjust => 'Ziel an die Beckensalinität anpassen';
+
+  @override
+  String get doseCalcSalinityAdjustHelp =>
+      'Zielwerte gelten für Meerwasser mit 35 ppt (1,026). Einschalten rechnet das Ziel auf die gemessene Salinität deines Beckens um.';
+
+  @override
+  String doseCalcSalinityAdjustActive(
+    Object salinity,
+    Object adjusted,
+    Object original,
+  ) {
+    return 'Bei $salinity: Ziel $adjusted statt $original.';
+  }
+
+  @override
+  String get doseCalcSalinityNone =>
+      'Für dieses Becken wurde noch keine Salinität gemessen.';
+
+  @override
+  String doseCalcSalinityStale(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Salinität vor $days Tagen gemessen.',
+      one: 'Salinität vor $days Tag gemessen.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcAdjustedTarget => 'Angepasstes Ziel';
+
+  @override
   String get correctionCta => 'Unter dem Bereich — Korrekturdosis berechnen';
 
   @override
@@ -1965,6 +1999,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hannaScanGlareHint => 'leicht neigen, um Reflexionen zu vermeiden';
+
+  @override
+  String get hannaScanZoomHint => 'zoomen mit zwei Fingern';
 
   @override
   String get hannaScanRescan => 'Erneut scannen';

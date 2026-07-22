@@ -40,13 +40,14 @@ enum _ScanPhase { pick, scanning, confirm }
 enum _CameraError { denied, unavailable, failed }
 
 /// The viewfinder guide box: centered horizontally, sized to the shape of a
-/// pocket checker's LCD window (~2.3:1) so "fit the display into the frame"
-/// works in both dimensions — a wider box invites the case/bezel into the
-/// decoded crop. The box height depends on the preview's aspect ratio, so
-/// the rect is computed per frame; the overlay and [_decodeFrame] use the
-/// same [_guideRect], which is what keeps them aligned.
+/// pocket checker's LCD window (2:1, matched against the real device) so
+/// "fit the display into the frame" works in both dimensions — a wider box
+/// invites the case/bezel into the decoded crop. The box height depends on
+/// the preview's aspect ratio, so the rect is computed per frame; the
+/// overlay and [_decodeFrame] use the same [_guideRect], which is what
+/// keeps them aligned.
 const _guideWidthFrac = 0.62;
-const _guideLcdAspect = 2.3;
+const _guideLcdAspect = 2.0;
 const _guideCenterY = 0.44;
 
 /// [previewAspect] is the upright (as-displayed) preview aspect, w/h.
@@ -70,6 +71,15 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
   final _vote = SevenSegmentVote();
   bool _decoding = false;
   DateTime _lastDecode = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// Pinch-to-zoom state. Zooming lets the user fill the guide box from a
+  /// distance the lens can actually focus at — close-up framing is blurry
+  /// on most phones. CameraX applies the zoom to the analysis stream too,
+  /// so the decoder sees the magnified display.
+  double _minZoom = 1;
+  double _maxZoom = 1;
+  double _zoom = 1;
+  double _zoomAtScaleStart = 1;
 
   /// Raw decode of the most recent readable frame — live feedback under the
   /// guide box so the user sees the decoder locking on.
@@ -136,6 +146,23 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
         return;
       }
       _controller = controller;
+      // Default to 2× so the display can be framed from a distance the lens
+      // focuses at; pinch adjusts from there.
+      try {
+        _minZoom = await controller.getMinZoomLevel();
+        _maxZoom = await controller.getMaxZoomLevel();
+        _zoom = 2.0.clamp(_minZoom, _maxZoom);
+        await controller.setZoomLevel(_zoom);
+      } catch (_) {
+        _minZoom = _maxZoom = _zoom = 1;
+      }
+      // Focus and meter on the guide box, not the (often much darker or
+      // brighter) checker body around it.
+      try {
+        final center = Offset(0.5, _guideCenterY);
+        await controller.setFocusPoint(center);
+        await controller.setExposurePoint(center);
+      } catch (_) {}
       await controller.startImageStream(_onFrame);
       if (mounted) setState(() {});
     } on CameraException catch (e) {
@@ -149,6 +176,18 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     } catch (_) {
       if (mounted) setState(() => _cameraError = _CameraError.failed);
     }
+  }
+
+  Future<void> _setZoom(double zoom) async {
+    final controller = _controller;
+    if (controller == null || _maxZoom <= _minZoom) return;
+    final z = zoom.clamp(_minZoom, _maxZoom);
+    if ((z - _zoom).abs() < 0.01) return;
+    _zoom = z;
+    if (mounted) setState(() {});
+    try {
+      await controller.setZoomLevel(z);
+    } catch (_) {}
   }
 
   Future<void> _stopCamera() async {
@@ -232,7 +271,11 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
       ),
       _ => null,
     };
-    return gray == null ? null : decodeSevenSegment(gray);
+    if (gray == null) return null;
+    // The buffer content is rotated relative to the upright preview — the
+    // cropped pixels must be rotated upright too (the decoder reads
+    // horizontal digits; sideways bars misread or refuse).
+    return decodeSevenSegment(rotateGrayCw(gray, turns));
   }
 
   // --- build -----------------------------------------------------------------
@@ -388,28 +431,59 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
                         final guide = _guideRect(
                           1 / controller.value.aspectRatio,
                         );
-                        return Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CameraPreview(controller),
-                            Positioned(
-                              left: box.maxWidth * guide.left,
-                              top: box.maxHeight * guide.top,
-                              width:
-                                  box.maxWidth * (guide.right - guide.left),
-                              height:
-                                  box.maxHeight * (guide.bottom - guide.top),
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: tokens.caution,
-                                    width: 2,
+                        return GestureDetector(
+                          onScaleStart: (_) => _zoomAtScaleStart = _zoom,
+                          onScaleUpdate: (d) => unawaited(
+                            _setZoom(_zoomAtScaleStart * d.scale),
+                          ),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CameraPreview(controller),
+                              Positioned(
+                                left: box.maxWidth * guide.left,
+                                top: box.maxHeight * guide.top,
+                                width:
+                                    box.maxWidth * (guide.right - guide.left),
+                                height:
+                                    box.maxHeight *
+                                    (guide.bottom - guide.top),
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: tokens.caution,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                            ),
-                          ],
+                              if (_maxZoom > _minZoom)
+                                Positioned(
+                                  right: 12,
+                                  bottom: 12,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black45,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${_zoom.toStringAsFixed(1)}×',
+                                      style: ReefTokens.monoTextStyle
+                                          .copyWith(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -430,7 +504,7 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                '${l.hannaScanGuide} · ${l.hannaScanGlareHint}',
+                '${l.hannaScanGuide} · ${l.hannaScanGlareHint} · ${l.hannaScanZoomHint}',
                 textAlign: TextAlign.center,
                 style: Theme.of(
                   context,

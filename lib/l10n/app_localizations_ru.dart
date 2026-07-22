@@ -1389,6 +1389,43 @@ class AppLocalizationsRu extends AppLocalizations {
   String get doseCalcLogDose => 'Записать дозу';
 
   @override
+  String get doseCalcSalinityAdjust =>
+      'Подстроить цель под солёность аквариума';
+
+  @override
+  String get doseCalcSalinityAdjustHelp =>
+      'Целевые значения рассчитаны на морскую воду 35 ppt (1,026). Включите, чтобы пересчитать цель под измеренную солёность вашего аквариума.';
+
+  @override
+  String doseCalcSalinityAdjustActive(
+    Object salinity,
+    Object adjusted,
+    Object original,
+  ) {
+    return 'При $salinity: цель $adjusted вместо $original.';
+  }
+
+  @override
+  String get doseCalcSalinityNone =>
+      'Для этого аквариума солёность ещё не измерена.';
+
+  @override
+  String doseCalcSalinityStale(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Солёность измерена $days дня назад.',
+      many: 'Солёность измерена $days дней назад.',
+      few: 'Солёность измерена $days дня назад.',
+      one: 'Солёность измерена $days день назад.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcAdjustedTarget => 'Пересчитанная цель';
+
+  @override
   String get correctionCta => 'Ниже диапазона — рассчитать корректирующую дозу';
 
   @override
@@ -1984,6 +2021,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hannaScanGlareHint => 'слегка наклоните, чтобы избежать бликов';
+
+  @override
+  String get hannaScanZoomHint => 'масштаб — щипком двумя пальцами';
 
   @override
   String get hannaScanRescan => 'Сканировать снова';

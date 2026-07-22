@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/domain/dose_calculator.dart';
+import 'package:reeftracker/domain/units.dart';
 
 /// Builds a [DoseSchedule] record for the daily-equivalent tests.
 DoseSchedule entry({
@@ -557,6 +558,61 @@ void main() {
       );
       expect(r.status, CorrectionStatus.singleDose);
       expect(r.totalDose, closeTo(16, 1e-9));
+    });
+  });
+
+  group('resolveTankSalinity', () {
+    final now = DateTime(2026, 7, 22, 12);
+    // Salinity readings are stored in SG; build them from ppt for legibility.
+    DosePoint sal(int daysAgo, double ppt) =>
+        (t: now.subtract(Duration(days: daysAgo)), value: pptToSg(ppt));
+
+    test('null with no readings', () {
+      expect(resolveTankSalinity([], now: now), isNull);
+    });
+
+    test('averages the readings inside the 14-day window', () {
+      final s = resolveTankSalinity([
+        sal(10, 32),
+        sal(5, 33),
+        sal(1, 34),
+      ], now: now)!;
+      expect(s.ppt, closeTo(33, 1e-9));
+      expect(s.isAverage, isTrue);
+      expect(s.measuredAt, now.subtract(const Duration(days: 1)));
+    });
+
+    test('older readings are excluded when recent ones exist', () {
+      final s = resolveTankSalinity([sal(60, 20), sal(2, 33)], now: now)!;
+      expect(s.ppt, closeTo(33, 1e-9));
+      expect(s.isAverage, isFalse); // a single in-window reading, no average
+    });
+
+    test('falls back to the latest reading when none are recent', () {
+      final s = resolveTankSalinity([sal(90, 31), sal(40, 32)], now: now)!;
+      expect(s.ppt, closeTo(32, 1e-9));
+      expect(s.isAverage, isFalse);
+      expect(s.measuredAt, now.subtract(const Duration(days: 40)));
+    });
+  });
+
+  group('adjustTargetForSalinity', () {
+    test('scales linearly with salinity: Ca 420 at 33 ppt -> 396', () {
+      expect(adjustTargetForSalinity(420, 33), closeTo(396, 1e-9));
+    });
+
+    test('35 ppt is the identity', () {
+      expect(adjustTargetForSalinity(8.5, 35), closeTo(8.5, 1e-9));
+    });
+
+    test('salinity above 35 ppt raises the target', () {
+      expect(adjustTargetForSalinity(1300, 36), closeTo(1337.142857, 1e-4));
+    });
+
+    test('implausible salinities are clamped to 20-45 ppt', () {
+      // A typo'd 3.5 ppt clamps to 20, not a 10x-too-low target.
+      expect(adjustTargetForSalinity(420, 3.5), closeTo(420 * 20 / 35, 1e-9));
+      expect(adjustTargetForSalinity(420, 80), closeTo(420 * 45 / 35, 1e-9));
     });
   });
 }

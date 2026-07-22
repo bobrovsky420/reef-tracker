@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../domain/ammonia_toxicity.dart' show kSalinityKey;
 import '../../domain/dose_calculator.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/supplement_catalog.dart';
@@ -283,10 +284,27 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     final defaultTarget = trackedRow == null
         ? null
         : trackedRow.targetValue ?? _greenMid(boundsOf(trackedRow));
+    // Salinity-adjusted target: when the per-tank switch is on, the
+    // 35 ppt-referenced target — typed or default, both are "book" values —
+    // is scaled to the tank's measured salinity. The target *field* keeps
+    // showing 35 ppt values (hint included) so a typed value and the
+    // empty-field default run through the same scaling; the switch tile
+    // displays the base → adjusted mapping.
+    final salReadings =
+        ref.watch(paramReadingsProvider(kSalinityKey)).value ?? const [];
+    final tankSal = resolveTankSalinity([
+      for (final r in salReadings) (t: r.takenAt, value: r.value),
+    ], now: DateTime.now());
+    final adjustStored = ref.watch(doseCalcSalinityAdjustProvider);
+    final baseTarget = _parse(_targetCtrl.text) ?? defaultTarget;
+    final target = adjustStored && tankSal != null && baseTarget != null
+        ? adjustTargetForSalinity(baseTarget, tankSal.ppt)
+        : baseTarget;
+    final adjustActive = adjustStored && tankSal != null;
     final maxRise = kMaxDailyRiseByElement[element];
     final correction = computeCorrectionDose(
       current: _parse(_currentCtrl.text) ?? latestReading,
-      target: _parse(_targetCtrl.text) ?? defaultTarget,
+      target: target,
       potency: potency,
       volumeLiters: volLiters,
       maxDailyRise: maxRise,
@@ -343,10 +361,27 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
             _volumeField(l, volUnit),
             const SizedBox(height: 16),
             _correctionFields(l, element, latestReading, defaultTarget),
+            const SizedBox(height: 4),
+            _salinityAdjustTile(
+              l,
+              prefs,
+              element,
+              tank,
+              tankSal,
+              stored: adjustStored,
+              baseTarget: baseTarget,
+              adjustedTarget: adjustActive ? target : null,
+            ),
             const Divider(height: 32),
             _potencySection(l, element, volUnit, volLiters, potency),
             const Divider(height: 32),
-            _correctionResultCard(l, element, correction, maxRise),
+            _correctionResultCard(
+              l,
+              element,
+              correction,
+              maxRise,
+              adjustedTarget: adjustActive ? target : null,
+            ),
           ],
         ],
       ),
@@ -803,20 +838,80 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     );
   }
 
+  /// Correction-mode switch that scales the 35 ppt-referenced target (typed
+  /// or default) to the tank's measured salinity. Disabled, with the subtitle
+  /// saying why, while the tank has no salinity reading at all; a lone
+  /// reading older than [kSalinityAdjustWindow] still works but the subtitle
+  /// flags its age.
+  Widget _salinityAdjustTile(
+    AppLocalizations l,
+    UnitPrefs prefs,
+    String element,
+    Tank? tank,
+    TankSalinity? tankSal, {
+    required bool stored,
+    required double? baseTarget,
+    required double? adjustedTarget,
+  }) {
+    final def = kParameterByKey[element];
+    String fmtT(double v) =>
+        '${formatLocaleNumber(v, def?.decimals ?? 2)} ${def?.unit ?? ''}';
+
+    String subtitle;
+    if (tankSal == null) {
+      subtitle = l.doseCalcSalinityNone;
+    } else if (adjustedTarget == null || baseTarget == null) {
+      subtitle = l.doseCalcSalinityAdjustHelp;
+    } else {
+      // The measured salinity rides the user's display unit (ppt or SG),
+      // like everywhere else salinity is shown.
+      final salPres = presentationFor(kSalinityKey, 'SG', 3, prefs);
+      subtitle = l.doseCalcSalinityAdjustActive(
+        '${salPres.format(pptToSg(tankSal.ppt))} ${salPres.unitLabel}',
+        fmtT(adjustedTarget),
+        fmtT(baseTarget),
+      );
+      final age = DateTime.now().difference(tankSal.measuredAt).inDays;
+      if (age > kSalinityAdjustWindow.inDays) {
+        subtitle = '$subtitle ${l.doseCalcSalinityStale(age)}';
+      }
+    }
+
+    return SwitchListTile(
+      value: stored && tankSal != null,
+      onChanged: tankSal == null || tank == null
+          ? null
+          : (v) => unawaited(
+              ref.read(settingsProvider).setDoseCalcSalinityAdjust(tank.id, v),
+            ),
+      title: Text(l.doseCalcSalinityAdjust),
+      subtitle: Text(subtitle),
+      contentPadding: EdgeInsets.zero,
+    );
+  }
+
   /// Result card for correction mode: the needed rise, the one-time dose —
   /// or, when the rise exceeds the element's safe daily limit, the plan to
   /// spread it — plus a status banner and a "log this dose" handoff into the
-  /// manual dose log.
+  /// manual dose log. [adjustedTarget] (the salinity-scaled target actually
+  /// used, when that switch is active) gets its own row so the dose is
+  /// traceable to the number it aims at.
   Widget _correctionResultCard(
     AppLocalizations l,
     String element,
     CorrectionResult r,
-    double? maxRise,
-  ) {
+    double? maxRise, {
+    double? adjustedTarget,
+  }) {
     final tokens = ReefTokens.of(context);
     final unitStr = kParameterByKey[element]?.unit ?? '';
 
     final rows = <Widget>[];
+    if (adjustedTarget != null) {
+      rows.add(
+        _resultRow(l.doseCalcAdjustedTarget, '${_trim(adjustedTarget)} $unitStr'),
+      );
+    }
     final rise = r.rise;
     if (rise != null && rise > 0) {
       rows.add(_resultRow(l.doseCalcNeededRise, '+${_trim(rise)} $unitStr'));

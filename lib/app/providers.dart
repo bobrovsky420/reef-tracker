@@ -1164,3 +1164,18 @@ final freeAmmoniaVisibleProvider = Provider<bool>((ref) {
   );
   return !AppSettings.decodeFreeAmmoniaHidden(raw).contains(tank.id);
 });
+
+/// Whether the dose calculator's correction target is scaled to the active
+/// tank's measured salinity (default off). A per-tank preference like
+/// [freeAmmoniaVisibleProvider], with the same raw-string `select` so it only
+/// re-notifies on its own settings key.
+final doseCalcSalinityAdjustProvider = Provider<bool>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return false;
+  final raw = ref.watch(
+    settingsMapProvider.select(
+      (async) => async.value?[SettingKey.doseCalcSalinityAdjust.storageKey],
+    ),
+  );
+  return AppSettings.decodeDoseCalcSalinityAdjust(raw).contains(tank.id);
+});

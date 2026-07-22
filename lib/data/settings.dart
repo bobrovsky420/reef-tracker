@@ -203,6 +203,10 @@ enum SettingKey {
   // preference like microView — device-local, default visible. Stored as the
   // set of tank ids where it is *hidden* (absent tank = shown).
   freeAmmoniaHidden(kFreeAmmoniaHiddenKey, deviceLocal: true),
+  // Per-tank dose-calculator preference: scale the correction target to the
+  // tank's measured salinity. Stored as the set of tank ids where the switch
+  // is ON (absent tank = off, the default) — the [freeAmmoniaHidden] shape.
+  doseCalcSalinityAdjust(kDoseCalcSalinityAdjustKey, deviceLocal: true),
   // The early-adopter ("Founder's Edition") marker for the future paid tier
   // (U19 phase 0): presence ⇒ this user installed while everything was free
   // and keeps today's features free forever. NOT device-local — the status
@@ -425,11 +429,11 @@ class AppSettings {
 
   // --- free ammonia visualization ---------------------------------------------
 
-  /// The tank ids for which the free (toxic) ammonia visualization is hidden.
-  /// Stored as a JSON list of ids; an absent tank is shown (default on). Same
-  /// one-JSON-value storage idea as [decodeMicroViewSelections], keeping the
-  /// [SettingKey] registry a closed list.
-  static Set<int> decodeFreeAmmoniaHidden(String? raw) {
+  /// Decodes a JSON list of tank ids into a set — the shared storage shape of
+  /// the per-tank boolean preferences ([decodeFreeAmmoniaHidden],
+  /// [decodeDoseCalcSalinityAdjust]). Malformed values decode to the empty
+  /// set (each preference's default).
+  static Set<int> _decodeTankIdSet(String? raw) {
     if (raw == null) return const {};
     try {
       final v = jsonDecode(raw);
@@ -440,10 +444,16 @@ class AppSettings {
         };
       }
     } on FormatException {
-      // Malformed stored value — treat as "none hidden".
+      // Malformed stored value — treat as the empty set.
     }
     return const {};
   }
+
+  /// The tank ids for which the free (toxic) ammonia visualization is hidden.
+  /// Stored as a JSON list of ids; an absent tank is shown (default on). Same
+  /// one-JSON-value storage idea as [decodeMicroViewSelections], keeping the
+  /// [SettingKey] registry a closed list.
+  static Set<int> decodeFreeAmmoniaHidden(String? raw) => _decodeTankIdSet(raw);
 
   Stream<Set<int>> watchFreeAmmoniaHidden() =>
       _watch(SettingKey.freeAmmoniaHidden).map(decodeFreeAmmoniaHidden);
@@ -461,6 +471,36 @@ class AppSettings {
     await _write(
       SettingKey.freeAmmoniaHidden,
       hidden.isEmpty ? null : jsonEncode(hidden.toList()),
+    );
+  }
+
+  // --- dose calculator: salinity-adjusted target -------------------------------
+
+  /// The tank ids whose dose-calculator correction target is scaled to the
+  /// tank's measured salinity (default off — an absent tank id keeps the
+  /// plain 35 ppt targets). Same storage shape as [decodeFreeAmmoniaHidden].
+  static Set<int> decodeDoseCalcSalinityAdjust(String? raw) =>
+      _decodeTankIdSet(raw);
+
+  Stream<Set<int>> watchDoseCalcSalinityAdjust() => _watch(
+    SettingKey.doseCalcSalinityAdjust,
+  ).map(decodeDoseCalcSalinityAdjust);
+
+  /// Turns the salinity-adjusted correction target on or off for [tankId].
+  Future<void> setDoseCalcSalinityAdjust(int tankId, bool enabled) async {
+    final on = Set<int>.of(
+      decodeDoseCalcSalinityAdjust(
+        await _read(SettingKey.doseCalcSalinityAdjust),
+      ),
+    );
+    if (enabled) {
+      on.add(tankId);
+    } else {
+      on.remove(tankId);
+    }
+    await _write(
+      SettingKey.doseCalcSalinityAdjust,
+      on.isEmpty ? null : jsonEncode(on.toList()),
     );
   }
 

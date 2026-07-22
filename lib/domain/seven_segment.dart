@@ -75,7 +75,15 @@ const Map<int, String> _kSegmentPatterns = {
 /// Decodes the seven-segment digits in [image]. Returns null when the frame
 /// does not contain a confidently readable digit string — callers treat
 /// that as "skip this frame", so rejecting is always safer than guessing.
-SevenSegmentReading? decodeSevenSegment(GrayImage image) {
+SevenSegmentReading? decodeSevenSegment(GrayImage rawImage) {
+  // Normalize scale: the noise floors, merge gaps and glyph proportions
+  // below are tuned for crops ~80–150 px tall. A high-resolution crop (a
+  // zoomed camera frame, a photo) behaves differently at native scale —
+  // box-average it down, which also smooths sensor noise and reflections.
+  var image = rawImage;
+  if (image.height > 160) {
+    image = _downscale(image, (image.height / 120).ceil());
+  }
   if (image.width < 16 || image.height < 8) return null;
 
   // Threshold ladder: real crops contain regions much darker than the LCD
@@ -99,6 +107,24 @@ SevenSegmentReading? decodeSevenSegment(GrayImage image) {
 // wrong readouts by eroding real digits away and by detaching border blobs
 // into digit-shaped bars. Prefer refusing a frame over guessing.
 
+GrayImage _downscale(GrayImage src, int f) {
+  final w = src.width ~/ f, h = src.height ~/ f;
+  final out = Uint8List(w * h);
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      var sum = 0;
+      for (var yy = 0; yy < f; yy++) {
+        final row = (y * f + yy) * src.width + x * f;
+        for (var xx = 0; xx < f; xx++) {
+          sum += src.pixels[row + xx];
+        }
+      }
+      out[y * w + x] = sum ~/ (f * f);
+    }
+  }
+  return GrayImage(out, w, h);
+}
+
 SevenSegmentReading? _decodeAtThreshold(GrayImage image, int threshold) {
   // Binarize: true = dark pixel (an LCD segment). Otsu's split point is the
   // highest luma of the dark class — inclusive.
@@ -112,8 +138,10 @@ SevenSegmentReading? _decodeAtThreshold(GrayImage image, int threshold) {
   // from the crop border, and the display window's dark outline forms a
   // frame *around* the digits when the crop is wider than the window.
   // Digits are interior islands that span only a fraction of the crop —
-  // drop everything else, or segmentation collapses.
-  _cleanMask(dark, w, h);
+  // drop everything else, or segmentation collapses. Interior drops (flat
+  // dashes, slivers) may be fragments of half-captured digits, so their
+  // ink stays visible to the acceptance guards below.
+  final strayInk = _cleanMask(dark, w, h);
 
   // A readable display is mostly background: an almost-black or almost-empty
   // crop is a bad frame (lens covered, no display in the box).
@@ -182,8 +210,16 @@ SevenSegmentReading? _decodeAtThreshold(GrayImage image, int threshold) {
   if (bottom - top < 8) return null;
   final digitH = bottom - top + 1;
 
+  // Decimal points are lifted out of the mask before any slicing: a dot is
+  // a small squarish component seated deep in the bottom band of the line.
+  // Isolating dots first keeps them from fusing digit slices together or
+  // silently vanishing into a digit — a lost dot changes the value
+  // ten-fold. At most one dot is ever shown.
+  final dotXs = _extractDots(dark, w, top, bottom);
+  if (dotXs.length > 1) return null;
+
   // Column projection inside the content rows: runs of inked columns are
-  // digit slices (or the decimal point), gaps separate them.
+  // digit slices, gaps separate them.
   final colCounts = List<int>.filled(w, 0);
   for (var x = 0; x < w; x++) {
     for (var y = top; y <= bottom; y++) {
@@ -212,32 +248,29 @@ SevenSegmentReading? _decodeAtThreshold(GrayImage image, int threshold) {
   // would otherwise fuse through it.
   final mergeGap = (digitH * 0.10).round();
   final maxGlyphW = (digitH * 0.8).round();
+  // A hairline run (window-edge residue) never merges — glued onto a digit
+  // it would shift the digit's sampling zones. It stays a slice of its own
+  // and is skipped by classification.
+  final minRun = (digitH * 0.04).round().clamp(2, 1 << 30);
   final slices = <({int x0, int x1})>[];
+  var lastMergeable = false;
   for (final run in runs) {
-    if (slices.isNotEmpty &&
+    final mergeable = run.x1 - run.x0 + 1 >= minRun;
+    if (mergeable &&
+        lastMergeable &&
         run.x0 - slices.last.x1 - 1 <= mergeGap &&
         run.x1 - slices.last.x0 + 1 <= maxGlyphW) {
       slices.last = (x0: slices.last.x0, x1: run.x1);
     } else {
       slices.add(run);
+      lastMergeable = mergeable;
     }
   }
   if (slices.isEmpty || slices.length > 8) return null;
 
-  // On the real LCD the decimal point sits only a pixel or two from its
-  // neighboring digit, so the gap-merge above glues them together — split
-  // dot appendages back off before classifying glyphs.
-  final glyphSlices = <({int x0, int x1, bool isDot})>[];
-  for (final slice in slices) {
-    glyphSlices.addAll(_splitDots(dark, w, slice.x0, slice.x1, top, bottom));
-  }
-  if (glyphSlices.isEmpty || glyphSlices.length > 8) return null;
-
-  final buffer = StringBuffer();
-  var digitCount = 0;
-  var dotCount = 0;
+  final glyphs = <({int x0, int x1, String ch})>[];
   var digitInk = 0;
-  var skippedInk = 0;
+  var skippedInk = strayInk;
   int sliceInk(int x0, int x1) {
     var ink = 0;
     for (var x = x0; x <= x1; x++) {
@@ -246,10 +279,8 @@ SevenSegmentReading? _decodeAtThreshold(GrayImage image, int threshold) {
     return ink;
   }
 
-  for (final slice in glyphSlices) {
-    final glyph = slice.isDot
-        ? '.'
-        : _decodeSlice(dark, w, slice.x0, slice.x1, top, bottom);
+  for (final slice in slices) {
+    final glyph = _decodeSlice(dark, w, slice.x0, slice.x1, top, bottom);
     switch (glyph) {
       case null:
         return null; // unreadable digit-sized slice → reject the whole frame
@@ -258,92 +289,117 @@ SevenSegmentReading? _decodeAtThreshold(GrayImage image, int threshold) {
         // the guard below.
         skippedInk += sliceInk(slice.x0, slice.x1);
         continue;
-      case '.':
-        // A leading or double dot is never a valid readout.
-        if (digitCount == 0 || buffer.toString().endsWith('.')) return null;
-        dotCount++;
-        buffer.write('.');
       default:
-        digitCount++;
         digitInk += sliceInk(slice.x0, slice.x1);
-        buffer.write(glyph);
+        glyphs.add((x0: slice.x0, x1: slice.x1, ch: glyph));
     }
   }
-  if (digitCount == 0 || digitCount > 4 || dotCount > 1) return null;
-  // When the "icons" we skipped carry ink comparable to the digits we kept,
-  // they were almost certainly half-captured digits (a threshold level that
-  // only caught part of the display) — the surviving fragment would read as
-  // a confident wrong value, e.g. a lone "1". A single-digit readout with
-  // ANY skipped blob is rejected outright: legit lone-digit displays (a ppb
-  // checker showing "5") have nothing else inside the guide box.
+  final digitCount = glyphs.length;
+  if (digitCount == 0 || digitCount > 4) return null;
+  // When the skipped blobs and dropped residue carry ink comparable to the
+  // digits we kept, they were almost certainly half-captured digits (a
+  // threshold level that only caught part of the display) — the surviving
+  // fragment would read as a confident wrong value, e.g. a lone "1".
+  // Single-digit readouts get a much stricter ratio: a legit lone-digit
+  // display (a ppb checker showing "5") has only faint window residue
+  // around it, while a lone surviving "1" sits among digit-sized leftovers.
   if (skippedInk * 2 > digitInk) return null;
-  if (digitCount == 1 && skippedInk > 0) return null;
+  if (digitCount == 1 && skippedInk * 4 > digitInk) return null;
+
+  // Re-insert the dot by position. It must sit in the gap between two
+  // digits: a "dot" overlapping a digit's own columns is a stray fragment
+  // (accepting it would invent a decimal), and a dot before the first or
+  // after the last digit is never a valid readout.
+  final buffer = StringBuffer();
+  if (dotXs.isEmpty) {
+    for (final g in glyphs) {
+      buffer.write(g.ch);
+    }
+  } else {
+    final dotX = dotXs.first;
+    for (final g in glyphs) {
+      if (dotX >= g.x0 && dotX <= g.x1) return null;
+    }
+    final idx = glyphs.indexWhere((g) => g.x0 > dotX);
+    if (idx <= 0) return null;
+    for (var i = 0; i < glyphs.length; i++) {
+      if (i == idx) buffer.write('.');
+      buffer.write(glyphs[i].ch);
+    }
+  }
   final text = buffer.toString();
-  if (text.endsWith('.')) return null;
+  // A lone "1" is never accepted: two bare bars are the easiest glyph to
+  // fabricate (a window edge, a leftover digit fragment — every misread
+  // this decoder has ever produced was a lone "1"), and the guards above
+  // can't see fragments swallowed by the border-connected frame. The cost
+  // is refusing a genuine reading of exactly 1, which the user can type.
+  if (text == '1') return null;
   return SevenSegmentReading(text);
 }
 
-/// Splits decimal-point appendages off a merged slice. A dot column has ink
-/// only in the bottom band of the line; a digit's edge columns always carry
-/// a b/c/e/f bar reaching higher. Handles a dot glued to the preceding
-/// digit, to the following digit, and a standalone dot slice.
-List<({int x0, int x1, bool isDot})> _splitDots(
-  List<bool> dark,
-  int imageW,
-  int x0,
-  int x1,
-  int contentTop,
-  int contentBottom,
-) {
-  final contentH = contentBottom - contentTop + 1;
-  final dotBand = contentTop + (0.68 * contentH).round();
+/// Finds decimal-point components inside the digit band — small, squarish,
+/// seated deep in the bottom of the line — removes them from the mask and
+/// returns their x-centers. Everything else (digit bars, icons, residue)
+/// stays untouched.
+List<int> _extractDots(List<bool> dark, int w, int top, int bottom) {
+  final bandH = bottom - top + 1;
+  // Lower bound in ink: a dot is roughly segment-thickness squared
+  // (~0.05·bandH per side — the band may be inflated by residue above the
+  // digits, so this must not assume digits fill it).
+  final minSize = (0.0025 * bandH * bandH).round().clamp(4, 1 << 30);
+  // A dot is segment-thickness sized — well under a digit's b/c bar height
+  // (~0.3 of the line), which must never qualify.
+  final maxDim = (0.22 * bandH).round();
+  final dots = <int>[];
+  final visited = <int, bool>{};
+  final stack = <int>[];
+  final member = <int>[];
+  for (var yy = top; yy <= bottom; yy++) {
+    for (var xx = 0; xx < w; xx++) {
+      final start = yy * w + xx;
+      if (!dark[start] || (visited[start] ?? false)) continue;
+      visited[start] = true;
+      stack.add(start);
+      member.clear();
+      var minX = w, maxX = 0, minY = bottom, maxY = top;
+      while (stack.isNotEmpty) {
+        final i = stack.removeLast();
+        member.add(i);
+        final x = i % w, y = i ~/ w;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        void push(int j) {
+          final jy = j ~/ w;
+          if (jy >= top && jy <= bottom && dark[j] && !(visited[j] ?? false)) {
+            visited[j] = true;
+            stack.add(j);
+          }
+        }
 
-  bool dotCol(int x) {
-    for (var y = contentTop; y < dotBand; y++) {
-      if (dark[y * imageW + x]) return false;
+        if (x > 0) push(i - 1);
+        if (x < w - 1) push(i + 1);
+        if (y > 0) push(i - w);
+        if (i + w < dark.length) push(i + w);
+      }
+      final bw = maxX - minX + 1, bh = maxY - minY + 1;
+      final squarish = bw <= 2 * bh + 2 && bh <= 2 * bw + 2;
+      final isDot =
+          member.length >= minSize &&
+          bw <= maxDim &&
+          bh <= maxDim &&
+          squarish &&
+          minY >= top + (0.55 * bandH).round();
+      if (isDot) {
+        for (final i in member) {
+          dark[i] = false;
+        }
+        dots.add((minX + maxX) ~/ 2);
+      }
     }
-    for (var y = dotBand; y <= contentBottom; y++) {
-      if (dark[y * imageW + x]) return true;
-    }
-    return false;
   }
-
-  // A real decimal point is a segment-thickness square: a tail narrower
-  // than that is just a digit's corner whose edge column carries only low
-  // ink — splitting it off would fabricate a dot (and a "leading dot"
-  // rejects the readout).
-  final maxDotW = (contentH * 0.30).round();
-  final minDotW = (contentH * 0.06).round().clamp(2, 1 << 30);
-  var left = x0, right = x1;
-  final pieces = <({int x0, int x1, bool isDot})>[];
-
-  var lt = 0;
-  while (left + lt <= right && dotCol(left + lt)) {
-    lt++;
-  }
-  if (lt == right - left + 1) {
-    // The whole slice is bottom-band ink: a standalone decimal point.
-    return [(x0: x0, x1: x1, isDot: lt >= minDotW && lt <= maxDotW)];
-  }
-  if (lt >= minDotW && lt <= maxDotW) {
-    pieces.add((x0: left, x1: left + lt - 1, isDot: true));
-    left += lt;
-  } else {
-    left = x0;
-  }
-
-  var rt = 0;
-  while (right - rt >= left && dotCol(right - rt)) {
-    rt++;
-  }
-  final dotRight = rt >= minDotW && rt <= maxDotW;
-  if (dotRight) right -= rt;
-
-  pieces.add((x0: left, x1: right, isDot: false));
-  if (dotRight) {
-    pieces.add((x0: right + 1, x1: right + rt, isDot: true));
-  }
-  return pieces;
+  return dots;
 }
 
 /// Decodes one column slice: a digit, a decimal point ('.'), or null when
@@ -360,35 +416,63 @@ String? _decodeSlice(
   // not a lone speckle — otherwise one noise pixel above the decimal point
   // stretches its bounding box to digit height.
   final w = x1 - x0 + 1;
-  final rowThresh = w >= 16 ? w ~/ 8 : 1;
+  // For hairline slices any ink counts — requiring >1 px per row would make
+  // a 1-px column unclassifiable (null) and veto the whole frame.
+  final rowThresh = w >= 16 ? w ~/ 8 : (w >= 3 ? 1 : 0);
+  final rowInk = List<int>.filled(contentBottom - contentTop + 1, 0);
   var top = -1, bottom = -1;
+  var maxRowInk = 0;
   for (var y = contentTop; y <= contentBottom; y++) {
     var ink = 0;
     for (var x = x0; x <= x1; x++) {
       if (dark[y * imageW + x]) ink++;
     }
+    rowInk[y - contentTop] = ink;
+    if (ink > maxRowInk) maxRowInk = ink;
     if (ink > rowThresh) {
       if (top < 0) top = y;
       bottom = y;
     }
   }
   if (top < 0) return null;
+  // Trim weak boundary rows: anti-aliasing remnants of the window's shadow
+  // lines carry a fraction of the ink of real segment rows, and a junk row
+  // at the slice's bottom edge reads as a fake `d` segment. Bounded, so a
+  // digit's own thinner rows (a lone stem) can't be eaten.
+  final trimLimit = ((bottom - top + 1) * 0.15).round();
+  final weak = maxRowInk * 0.25;
+  var trimmed = 0;
+  while (trimmed < trimLimit &&
+      top < bottom &&
+      rowInk[top - contentTop] < weak) {
+    top++;
+    trimmed++;
+  }
+  trimmed = 0;
+  while (trimmed < trimLimit &&
+      bottom > top &&
+      rowInk[bottom - contentTop] < weak) {
+    bottom--;
+    trimmed++;
+  }
   final h = bottom - top + 1;
   final contentH = contentBottom - contentTop + 1;
 
-  // Decimal point: a short blob sitting in the bottom quarter of the line.
-  if (h <= contentH * 0.3 && top >= contentTop + contentH * 0.55) {
-    return '.';
-  }
-  // Anything else that doesn't span most of the line height is not a digit
-  // (annunciator icons such as the battery symbol) — skip it rather than
-  // reject the frame.
+  // Anything that doesn't span most of the line height is not a digit
+  // (annunciator icons, leftover dot-like blobs — real decimal points were
+  // already extracted before slicing) — skip it rather than reject the
+  // frame.
   if (h < contentH * 0.6) return '';
 
   // Digit 1 renders as just the two right-hand bars: a narrow slice that
   // spans the full height. Segment sampling can't tell b+c from e+f on a
   // bare bar, so classify by aspect ratio instead.
   if (w < h * 0.36) return '1';
+
+  // A digit is taller than wide. A wide, flat-ish blob (a chunk of shadow
+  // line that survived cleanup) would light every sampled zone and read as
+  // a fake "8" — skip it instead.
+  if (w > h * 0.9) return '';
 
   double inkFrac(double fx0, double fy0, double fx1, double fy1) {
     final ax0 = x0 + (fx0 * w).round();
@@ -408,7 +492,7 @@ String? _decodeSlice(
   // Sample the seven segment zones. Horizontal segments are probed around
   // the digit's center column; vertical segments in the outer thirds of
   // the upper/lower halves, away from the horizontals' rows.
-  const on = 0.32;
+  const on = 0.28;
   var mask = 0;
   if (inkFrac(0.30, 0.00, 0.70, 0.15) > on) mask |= 0x01; // a
   if (inkFrac(0.72, 0.16, 1.00, 0.44) > on) mask |= 0x02; // b
@@ -422,15 +506,21 @@ String? _decodeSlice(
 }
 
 /// Clears dark components that cannot be digits: those touching the crop
-/// border (bezel bands, case edges, shadows entering from outside) and
-/// those whose bounding box spans nearly the whole crop (the display
-/// window's dark outline — a frame around the digits, dragging every
-/// column together). Digits and the decimal point are compact interior
-/// islands and survive.
-void _cleanMask(List<bool> dark, int w, int h) {
+/// border (bezel bands, case edges, shadows entering from outside), those
+/// whose bounding box spans nearly the whole crop (the display window's
+/// dark outline — a frame around the digits, dragging every column
+/// together), and flat/hairline residue. Digits and the decimal point are
+/// compact interior islands and survive.
+///
+/// Returns the total ink of the dropped *interior* residue (flat dashes,
+/// slivers): those may equally be fragments of a half-captured digit, so
+/// the caller counts them as skipped ink — a lone surviving digit next to
+/// dropped fragments must not read as a confident value.
+int _cleanMask(List<bool> dark, int w, int h) {
   final visited = List<bool>.filled(w * h, false);
   final stack = <int>[];
   final member = <int>[];
+  var strayInk = 0;
   for (var start = 0; start < w * h; start++) {
     if (!dark[start] || visited[start]) continue;
     visited[start] = true;
@@ -466,13 +556,22 @@ void _cleanMask(List<bool> dark, int w, int h) {
     final isWide = bw > 0.35 * w;
     // A hairline vertical sliver (the window's side-edge shadow) is far
     // thinner than any real segment bar (~8% of the crop height).
-    final isSliver = bw < 0.04 * h && bh > 0.2 * h;
-    if (touchesBorder || isWide || isSliver) {
+    final isSliver = bw < 0.06 * h && bh > 0.2 * h;
+    // A flat dash (the window's top/bottom shadow broken into pieces) is
+    // shorter than any segment bar's thickness AND elongated — a decimal
+    // point is equally short but squarish, and must survive.
+    final isFlat = bh < 0.065 * h && bw > 2 * bh;
+    if (touchesBorder || isWide || isSliver || isFlat) {
+      // Interior residue counts as stray ink (see doc comment); structural
+      // drops (border-connected, crop-wide) don't — they are the window and
+      // its surroundings, present in every well-framed crop.
+      if (!touchesBorder && !isWide) strayInk += member.length;
       for (final i in member) {
         dark[i] = false;
       }
     }
   }
+  return strayInk;
 }
 
 /// Otsu's method over the luma histogram; null when the image has no
@@ -552,6 +651,3 @@ class SevenSegmentVote {
     _winner = null;
   }
 }
-
-
-

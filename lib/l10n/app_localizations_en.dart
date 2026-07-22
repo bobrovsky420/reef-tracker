@@ -1372,6 +1372,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get doseCalcLogDose => 'Log this dose';
 
   @override
+  String get doseCalcSalinityAdjust => 'Adjust target to tank salinity';
+
+  @override
+  String get doseCalcSalinityAdjustHelp =>
+      'Target values assume 35 ppt (1.026) seawater. Turn on to scale the target to your tank\'s measured salinity.';
+
+  @override
+  String doseCalcSalinityAdjustActive(
+    Object salinity,
+    Object adjusted,
+    Object original,
+  ) {
+    return 'At $salinity: target $adjusted instead of $original.';
+  }
+
+  @override
+  String get doseCalcSalinityNone =>
+      'No salinity measurement for this tank yet.';
+
+  @override
+  String doseCalcSalinityStale(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Salinity measured $days days ago.',
+      one: 'Salinity measured $days day ago.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcAdjustedTarget => 'Adjusted target';
+
+  @override
   String get correctionCta => 'Below range — calculate a correction dose';
 
   @override
@@ -1958,6 +1992,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hannaScanGlareHint => 'tilt slightly to avoid glare';
+
+  @override
+  String get hannaScanZoomHint => 'pinch to zoom';
 
   @override
   String get hannaScanRescan => 'Rescan';

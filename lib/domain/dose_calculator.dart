@@ -27,6 +27,7 @@ library;
 import 'dart:math';
 
 import 'supplement_catalog.dart';
+import 'units.dart';
 
 /// A timestamped measurement used to derive the consumption trend.
 typedef DosePoint = ({DateTime t, double value});
@@ -410,3 +411,76 @@ CorrectionResult computeCorrectionDose({
     dailyDose: totalDose,
   );
 }
+
+// --- Salinity-adjusted correction target -------------------------------------
+
+/// The reference salinity that catalog presets and hobby "book" targets are
+/// stated at: natural seawater, 35 ppt.
+const double kReferenceSalinityPpt = 35.0;
+
+/// Plausible band a measured tank salinity is clamped into before scaling a
+/// target ([adjustTargetForSalinity]) — a typo'd or corrupt salinity reading
+/// must not silently produce an absurd correction dose.
+const double kSalinityAdjustMinPpt = 20.0;
+const double kSalinityAdjustMaxPpt = 45.0;
+
+/// How far back salinity readings are averaged by [resolveTankSalinity];
+/// beyond it a lone latest reading counts as stale (the UI says so).
+const Duration kSalinityAdjustWindow = Duration(days: 14);
+
+/// The tank salinity a correction target is scaled by: the value in ppt, when
+/// the newest contributing reading was taken (staleness display), and whether
+/// it averages several readings inside [kSalinityAdjustWindow] or is a single
+/// reading.
+class TankSalinity {
+  const TankSalinity({
+    required this.ppt,
+    required this.measuredAt,
+    required this.isAverage,
+  });
+
+  final double ppt;
+  final DateTime measuredAt;
+  final bool isAverage;
+}
+
+/// Resolves the salinity to scale correction targets by from the tank's
+/// stored salinity [readings] (canonical SG, oldest first): the average of
+/// the readings inside [kSalinityAdjustWindow] before [now], else the latest
+/// reading ever (possibly stale — [TankSalinity.measuredAt] tells), or null
+/// when the tank has no salinity readings at all.
+TankSalinity? resolveTankSalinity(
+  List<DosePoint> readings, {
+  required DateTime now,
+}) {
+  if (readings.isEmpty) return null;
+  final cutoff = now.subtract(kSalinityAdjustWindow);
+  final recent = [
+    for (final r in readings)
+      if (!r.t.isBefore(cutoff)) r,
+  ];
+  if (recent.isEmpty) {
+    final last = readings.last;
+    return TankSalinity(
+      ppt: sgToPpt(last.value),
+      measuredAt: last.t,
+      isAverage: false,
+    );
+  }
+  final avg = recent.fold(0.0, (s, r) => s + r.value) / recent.length;
+  return TankSalinity(
+    ppt: sgToPpt(avg),
+    measuredAt: recent.last.t,
+    isAverage: recent.length > 1,
+  );
+}
+
+/// Scales a 35 ppt-referenced [target] to the tank's [salinityPpt]. The ionic
+/// content of seawater scales linearly with salinity, so the equivalent
+/// target is `target × salinity / 35` — e.g. Ca 420 ppm at 33 ppt becomes
+/// 396 ppm. [salinityPpt] is clamped to [kSalinityAdjustMinPpt]..
+/// [kSalinityAdjustMaxPpt] first (see there).
+double adjustTargetForSalinity(double target, double salinityPpt) =>
+    target *
+    salinityPpt.clamp(kSalinityAdjustMinPpt, kSalinityAdjustMaxPpt) /
+    kReferenceSalinityPpt;

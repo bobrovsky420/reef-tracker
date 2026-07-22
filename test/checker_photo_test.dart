@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:reeftracker/domain/hanna_checker.dart';
 import 'package:reeftracker/domain/seven_segment.dart';
+import 'package:reeftracker/features/scan/scan_frame.dart';
 
 /// Photo regression tests for the seven-segment decoder: real checker
 /// photos, decoded exactly like a camera frame. Fixtures live in
@@ -118,7 +119,37 @@ void main() {
   });
 
   group('user photos', () {
-    // Framed like the viewfinder: display fills most of the frame.
-    run('user', (g) => _cropFrac(g, 0.02, 0.02, 0.98, 0.98));
+    // Framed like the viewfinder: display fills most of the frame. Phone
+    // photos arrive in any orientation, so every rotation is tried — the
+    // upright one must decode the expected value, and (just as important)
+    // no sideways orientation may *misread*: rotated digit bars must
+    // refuse, exactly like a badly held viewfinder.
+    final dir = Directory('test/fixtures/hanna_photos/user');
+    final files =
+        dir
+            .listSync()
+            .whereType<File>()
+            .where((f) => _parseName(f.path) != null)
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
+    for (final file in files) {
+      final spec = _parseName(file.path)!;
+      test('user/${file.uri.pathSegments.last}', () {
+        final gray = _grayFromFile(file);
+        final decoded = <String>[];
+        for (var turns = 0; turns < 4; turns++) {
+          final reading = decodeSevenSegment(rotateGrayCw(gray, turns));
+          if (reading != null) decoded.add(reading.text);
+        }
+        expect(
+          decoded,
+          isNotEmpty,
+          reason: 'no orientation decoded (expected ${spec.expected})',
+        );
+        for (final text in decoded) {
+          expect(text, spec.expected, reason: 'misread as "$text"');
+        }
+      });
+    }
   });
 }

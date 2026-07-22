@@ -1381,6 +1381,40 @@ class AppLocalizationsCs extends AppLocalizations {
   String get doseCalcLogDose => 'Zaznamenat dávku';
 
   @override
+  String get doseCalcSalinityAdjust => 'Přizpůsobit cíl salinitě nádrže';
+
+  @override
+  String get doseCalcSalinityAdjustHelp =>
+      'Cílové hodnoty předpokládají mořskou vodu 35 ppt (1,026). Po zapnutí se cíl přepočítá na naměřenou salinitu vaší nádrže.';
+
+  @override
+  String doseCalcSalinityAdjustActive(
+    Object salinity,
+    Object adjusted,
+    Object original,
+  ) {
+    return 'Při $salinity: cíl $adjusted místo $original.';
+  }
+
+  @override
+  String get doseCalcSalinityNone =>
+      'Pro tuto nádrž zatím není změřena salinita.';
+
+  @override
+  String doseCalcSalinityStale(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Salinita změřena před $days dny.',
+      one: 'Salinita změřena před $days dnem.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doseCalcAdjustedTarget => 'Přepočtený cíl';
+
+  @override
   String get correctionCta => 'Pod rozsahem – spočítat korekční dávku';
 
   @override
@@ -1972,6 +2006,9 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get hannaScanGlareHint => 'mírným nakloněním se vyhnete odleskům';
+
+  @override
+  String get hannaScanZoomHint => 'přiblížení dvěma prsty';
 
   @override
   String get hannaScanRescan => 'Skenovat znovu';

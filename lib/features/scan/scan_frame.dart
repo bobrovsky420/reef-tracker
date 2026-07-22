@@ -84,6 +84,30 @@ CropRect mapUprightRectToImage(
   );
 }
 
+/// Rotates a gray image clockwise by `quarterTurns * 90°`. The camera
+/// buffer is rotated relative to the upright preview (sensorOrientation);
+/// the cropped pixels must be rotated the same way before decoding — the
+/// decoder reads horizontal digits.
+GrayImage rotateGrayCw(GrayImage src, int quarterTurns) {
+  final turns = quarterTurns & 3;
+  if (turns == 0) return src;
+  final sw = src.width, sh = src.height;
+  final w = turns.isOdd ? sh : sw;
+  final h = turns.isOdd ? sw : sh;
+  final out = Uint8List(w * h);
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      final (sx, sy) = switch (turns) {
+        1 => (y, sh - 1 - x),
+        2 => (sw - 1 - x, sh - 1 - y),
+        _ => (sw - 1 - y, x),
+      };
+      out[y * w + x] = src.pixels[sy * sw + sx];
+    }
+  }
+  return GrayImage(out, w, h);
+}
+
 /// Extracts a cropped luma image from a YUV420 Y plane (Android frames).
 GrayImage grayFromLumaPlane(
   Uint8List yPlane,

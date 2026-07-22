@@ -612,6 +612,17 @@
   "doseCalcCorrSplit": "Raising faster than {limit} per day is risky — give the correction as {days} daily doses instead.",
   "@doseCalcCorrSplit": { "description": "Warning under the correction result when the rise exceeds the element's safe daily limit.", "placeholders": { "limit": {}, "days": { "type": "int" } } },
   "doseCalcLogDose": "Log this dose",
+  "doseCalcSalinityAdjust": "Adjust target to tank salinity",
+  "@doseCalcSalinityAdjust": { "description": "Correction-mode switch: scale the target value (which is referenced to 35 ppt seawater) to the tank's measured salinity." },
+  "doseCalcSalinityAdjustHelp": "Target values assume 35 ppt (1.026) seawater. Turn on to scale the target to your tank's measured salinity.",
+  "doseCalcSalinityAdjustActive": "At {salinity}: target {adjusted} instead of {original}.",
+  "@doseCalcSalinityAdjustActive": { "description": "Switch subtitle while active: the measured salinity and the scaled vs. 35 ppt target, all pre-formatted with their units.", "placeholders": { "salinity": {}, "adjusted": {}, "original": {} } },
+  "doseCalcSalinityNone": "No salinity measurement for this tank yet.",
+  "@doseCalcSalinityNone": { "description": "Switch subtitle while disabled because the tank has no stored salinity reading." },
+  "doseCalcSalinityStale": "{days, plural, one{Salinity measured {days} day ago.} other{Salinity measured {days} days ago.}}",
+  "@doseCalcSalinityStale": { "description": "Appended to the switch subtitle when the newest salinity reading is older than the 14-day averaging window.", "placeholders": { "days": { "type": "int" } } },
+  "doseCalcAdjustedTarget": "Adjusted target",
+  "@doseCalcAdjustedTarget": { "description": "Correction result row: the salinity-scaled target value the dose aims at." },
   "correctionCta": "Below range — calculate a correction dose",
   "@correctionCta": { "description": "Tappable card on a parameter's history screen when its latest reading is below the green zone; opens the dose calculator in correction mode." },
   "targetValueLabel": "Correction target",
@@ -913,6 +924,10 @@
   "hannaScanGlareHint": "tilt slightly to avoid glare",
   "@hannaScanGlareHint": {
     "description": "Second half of the viewfinder hint line, appended after hannaScanGuide with a separator — starts lowercase."
+  },
+  "hannaScanZoomHint": "pinch to zoom",
+  "@hannaScanZoomHint": {
+    "description": "Third part of the viewfinder hint line, appended with a separator — starts lowercase."
   },
   "hannaScanRescan": "Rescan",
   "hannaScanNoCamera": "This device has no camera.",

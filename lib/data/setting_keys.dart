@@ -40,6 +40,7 @@ const kMicroViewKey = 'micro_view';
 const kMicroHideUndetectableKey = 'micro_hide_undetectable';
 const kMicroAttentionOnlyKey = 'micro_attention_only';
 const kFreeAmmoniaHiddenKey = 'free_ammonia_hidden';
+const kDoseCalcSalinityAdjustKey = 'dose_calc_salinity_adjust';
 const kLegacyFreeSinceKey = 'legacy_free_since';
 // Google Drive sync (U24). Deliberately NOT the removed U20 feature's
 // `cloud_sync_*` names: 0.25.0 devices in the wild carry inert orphan rows
