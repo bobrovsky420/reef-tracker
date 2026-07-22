@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../domain/hanna_meter.dart';
@@ -63,10 +65,21 @@ class BleHannaMeterLink implements HannaMeterLink {
     _device = device;
     try {
       await device.connect(timeout: _connectTimeout);
+      // The meter protects its characteristics behind LE bonding with
+      // passkey entry — on first use the system dialog asks for the code
+      // shown on the meter's display (confirmed against the real device;
+      // the Hanna Lab app does the same). Bond explicitly and generously
+      // here so typing the code can't time an operation out; an
+      // already-bonded phone passes through instantly. createBond is an
+      // Android-only API — on iOS the setNotifyValue below triggers the
+      // system pairing prompt implicitly, hence its own long timeout.
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        await device.createBond(timeout: 120);
+      }
       final (write, notify) = await _pickCharacteristics(device);
       _write = write;
 
-      await notify.setNotifyValue(true);
+      await notify.setNotifyValue(true, timeout: 60);
       _subs.add(
         notify.onValueReceived.listen((chunk) {
           for (final line in _buffer.feed(utf8.decode(chunk, allowMalformed: true))) {

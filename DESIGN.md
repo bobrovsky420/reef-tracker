@@ -2043,9 +2043,14 @@ note).
   The runtime counterpart is `hannaBleSupportedProvider`
   (`BleHannaMeterLink.isSupported()`): on devices without a BLE stack the
   settings row and menu entry hide; the connect screen's "unsupported"
-  state backstops deep links. iOS has `NSBluetoothAlwaysUsageDescription`
-  but is **not locally testable** (validate via CI before claiming
-  support).
+  state backstops deep links. **First-time pairing:** the meter requires LE
+  bonding with passkey entry (a code shown on its display — confirmed on
+  the real device); the link bonds explicitly on Android
+  (`device.createBond(timeout: 120)` right after connect, instant when
+  already bonded) so typing the code can't time the handshake out, and the
+  notify subscribe carries a 60 s timeout for iOS's implicit pairing
+  prompt. iOS has `NSBluetoothAlwaysUsageDescription` but is **not locally
+  testable** (validate via CI before claiming support).
 - **Tier:** `hannaConnect`, `grandfathered: true` (2026-07-21 decision,
   consistent with `hannaImport`).
 - **Deferred:** `get log` bulk history pull (the meter logs readings

@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.2] - 2026-07-22
+
+### Fixed
+- Hanna checker: first-time pairing is now handled properly. The meter asks
+  for a code shown on its display when a phone connects for the first time;
+  the app now starts that pairing step explicitly (Android) and allows up to
+  two minutes for entering the code, instead of timing out mid-connection.
+  Phones already paired — e.g. through the Hanna Lab app — connect as before.
+
 ## [0.38.1] - 2026-07-22
 
 ### Changed
