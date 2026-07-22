@@ -1,9 +1,10 @@
 # Build scripts
 
-This repo lives inside OneDrive, which locks Flutter's churning build files. To
-avoid that, the volatile build directories are **NTFS directory junctions** that
-point OUT of OneDrive to `C:\Android\reefbuild\ReefTracker\` (override with the
-`REEFBUILD_ROOT` env var):
+This repo used to live inside OneDrive, which locks Flutter's churning build
+files. It has since moved to `C:\Dev\ReefTracker` (out of OneDrive), but the
+volatile build directories remain **NTFS directory junctions** pointing to
+`C:\Android\reefbuild\ReefTracker\` (override with the `REEFBUILD_ROOT` env
+var), so the `flutter clean` pitfall below still applies:
 
 | Link (in repo)    | Target                                          |
 |-------------------|-------------------------------------------------|
