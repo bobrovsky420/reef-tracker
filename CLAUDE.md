@@ -4,6 +4,10 @@
 
 [DESIGN.md](DESIGN.md) is the high-level map of the app's architecture and most important features. **Keep it up to date: after any change that alters the design, update the relevant section of `DESIGN.md` in the same change.** This includes new or changed database tables/migrations, new screens or routes, new domain rules, new features, or changes to the layering/state model. Skip updates for purely cosmetic or trivial edits that don't affect the design (wording tweaks, styling, refactors with no behavioral or structural effect).
 
+## Feature overview
+
+[docs/features.md](docs/features.md) is the **user-facing** feature overview (marketing/store-adjacent wording, one row per feature, each marked Standard or **Pro**). **Update it in the same change whenever a feature is added, meaningfully changed, removed, or re-tiered** — including when a feature's edition assignment in `lib/domain/pro_features.yaml` changes. Write it for reef keepers, not developers: what the feature does for them, no implementation detail. Skip it for internal changes with no user-visible feature impact (bug fixes, refactors, UI polish that doesn't add capability).
+
 ## Platform parity (Android + iOS)
 
 The app ships on **both Android and iOS** from this single Flutter codebase. Pure Dart changes (`lib/`, l10n, tests) apply to both platforms automatically — nothing extra to do. But **whenever a change touches anything platform-sensitive, apply it to both platforms in the same change**, or state explicitly why one side is deferred:

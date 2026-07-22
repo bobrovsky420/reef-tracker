@@ -85,6 +85,8 @@ Each feature below is marked **Standard** (included for everyone) or **Pro**
 | Import status per aquarium, with rewind/reset controls that never create duplicates | **Pro** |
 | Hanna checker direct connection *(experimental)* — run measurements live over Bluetooth on a Hanna HI97115C photometer, method by method or via saved test sets, and save the confirmed results with the meter's timestamps | **Pro** |
 | Checker display scan *(experimental)* — point the camera at a Hanna pocket checker's LCD and save the shown value without typing; 14 checker models supported, recognition runs fully on-device (no photos stored or uploaded) | **Pro** |
+| Automatic checker recognition — the scanned checker's model is identified from its case color and the reading's display format, so scanning is truly one-tap; the app only asks when models would interpret the value differently, and never guesses silently | **Pro** |
+| Scan viewfinder with pinch-to-zoom (starts at 2×) — read the display from a comfortable distance instead of holding the phone against the checker | **Pro** |
 
 ## Dosing & supplements
 
@@ -98,6 +100,7 @@ Each feature below is marked **Standard** (included for everyone) or **Pro**
 | Element status tags — each supplement is tagged with the current dashboard status of the element it targets | Standard |
 | Dose calculator (consumption mode) — computes your tank's actual daily consumption from recent readings and doses, and recommends whether to raise, lower or keep the current dose | **Pro** |
 | Correction dose calculator — computes the one-off dose to lift an element to its target, and automatically splits it over several days when the rise would exceed the element's safe daily limit | **Pro** |
+| Salinity-adjusted targets — correction targets stated for 35 ppt seawater can be scaled to your tank's actual measured salinity, per tank, using your recent salinity readings | **Pro** |
 | Per-parameter correction targets, pre-seeded from your tank's setup type | Standard |
 | Calculator shortcuts from a parameter's graph, including a "below range" prompt that jumps straight into correction mode | **Pro** |
 

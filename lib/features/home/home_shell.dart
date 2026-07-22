@@ -369,8 +369,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         }
                       }
                       if (v == 'hanna-scan') {
-                        // Checker camera scan (U34, experimental), same
-                        // gate idiom.
+                        // Checker camera scan (U34): this menu entry is the
+                        // *teaser* surface — it only shows for non-entitled
+                        // installs (entitled ones get the scan FAB instead),
+                        // so the normal outcome is the Pro dialog.
                         if (ref.read(
                           proFeatureProvider(ProFeature.hannaScan),
                         )) {
@@ -405,11 +407,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           icon: Icons.bluetooth,
                           label: l.hannaMeasureAction,
                         ),
-                      ReefMenuItem(
-                        value: 'hanna-scan',
-                        icon: Icons.photo_camera_outlined,
-                        label: l.hannaScanTitle,
-                      ),
+                      if (!ref.watch(proFeatureProvider(ProFeature.hannaScan)))
+                        ReefMenuItem(
+                          value: 'hanna-scan',
+                          icon: Icons.photo_camera_outlined,
+                          label: l.hannaScanTitle,
+                        ),
                     ],
                   ),
               ],
@@ -503,10 +506,33 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   Widget _buildFab(BuildContext context, AppLocalizations l) {
     if (_index == 0) {
-      return FloatingActionButton.extended(
-        onPressed: () => context.push('/add-reading'),
-        icon: const Icon(Icons.add),
-        label: Text(l.addReading),
+      // Manual entry stays the primary FAB; the checker camera scan (U34)
+      // rides above it as a small sibling — it is the same action done
+      // faster, and it must be thumb-reachable while the other hand holds
+      // the checker (which rules out the already-full top bar). Shown only
+      // to entitled installs; non-entitled ones keep the teaser entry in
+      // the overflow menu instead (a locked FAB would be prime-real-estate
+      // frustration).
+      final scanEntitled = ref.watch(proFeatureProvider(ProFeature.hannaScan));
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (scanEntitled) ...[
+            FloatingActionButton.small(
+              heroTag: 'hanna-scan-fab',
+              tooltip: l.hannaScanTitle,
+              onPressed: () => unawaited(context.push('/hanna/scan')),
+              child: const Icon(Icons.photo_camera_outlined),
+            ),
+            const SizedBox(height: 12),
+          ],
+          FloatingActionButton.extended(
+            onPressed: () => context.push('/add-reading'),
+            icon: const Icon(Icons.add),
+            label: Text(l.addReading),
+          ),
+        ],
       );
     }
     if (_index == 1) {

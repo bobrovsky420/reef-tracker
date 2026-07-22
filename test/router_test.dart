@@ -241,6 +241,9 @@ void main() {
     expect(find.byType(FloatingActionButton), findsNothing);
 
     // Switching back restores the shared app bar and the per-tab FAB.
+    // Exactly ONE here: the checker-scan mini-FAB (U34) shows only for
+    // entitled installs, and this bare test install carries no Founder
+    // marker — the hidden-when-locked rule is part of what this pins.
     await tester.tap(find.byIcon(Icons.speed_outlined));
     await settle(tester);
     expect(find.byType(AppBar), findsOneWidget);

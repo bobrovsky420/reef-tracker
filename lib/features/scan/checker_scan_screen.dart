@@ -24,10 +24,12 @@ import 'scan_frame.dart';
 
 /// Checker camera scan (U34, experimental): read a Hanna pocket checker's
 /// seven-segment LCD with the camera and save the value as a measurement.
-/// One route hosts the whole flow: model picker → live viewfinder (the
-/// on-device [decodeSevenSegment] + a consecutive-frames agreement vote) →
-/// confirm & save. Never auto-saves: the accepted readout is always shown
-/// for confirmation first.
+/// The camera opens straight away — the checker model is resolved
+/// automatically from the **case color** (Hanna color-codes the bodies)
+/// combined with the readout's display format; a manual model picker
+/// remains as a bottom-sheet fallback and the confirm step shows the
+/// resolved model in a candidates dropdown, so the resolution is never a
+/// silent decision. Never auto-saves.
 class CheckerScanScreen extends ConsumerStatefulWidget {
   const CheckerScanScreen({super.key});
 
@@ -35,7 +37,7 @@ class CheckerScanScreen extends ConsumerStatefulWidget {
   ConsumerState<CheckerScanScreen> createState() => _CheckerScanScreenState();
 }
 
-enum _ScanPhase { pick, scanning, confirm }
+enum _ScanPhase { scanning, confirm }
 
 enum _CameraError { denied, unavailable, failed }
 
@@ -63,8 +65,20 @@ FracRect _guideRect(double previewAspect) {
 
 class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     with WidgetsBindingObserver {
-  _ScanPhase _phase = _ScanPhase.pick;
-  HannaChecker? _checker;
+  _ScanPhase _phase = _ScanPhase.scanning;
+
+  /// Manually chosen model (bottom-sheet fallback) — when set, color
+  /// detection is bypassed and only this model's format wins the vote.
+  HannaChecker? _lockedModel;
+
+  /// Format-matching models for the accepted readout, case-color family
+  /// first; `first` is the preselected model on the confirm step.
+  List<HannaChecker> _candidates = const [];
+  HannaChecker? _selectedModel;
+
+  /// Exponential moving average of the case color sampled around the guide
+  /// box — classified into a [CheckerColor] family at acceptance.
+  double? _emaR, _emaG, _emaB;
 
   CameraController? _controller;
   _CameraError? _cameraError;
@@ -93,6 +107,11 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Camera-first: no model picker gate — the model is resolved from the
+    // case color + readout format while scanning.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_startCamera());
+    });
   }
 
   @override
@@ -123,6 +142,9 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
       _cameraError = null;
       _candidate = null;
       _reading = null;
+      _candidates = const [];
+      _selectedModel = null;
+      _emaR = _emaG = _emaB = null;
       _vote.reset();
     });
     try {
@@ -197,8 +219,12 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     await controller?.dispose();
   }
 
+  CheckerColor? get _emaColor => _emaR == null
+      ? null
+      : classifyCaseColor(_emaR!, _emaG!, _emaB!);
+
   void _onFrame(CameraImage image) {
-    if (_decoding || _phase != _ScanPhase.scanning || _checker == null) return;
+    if (_decoding || _phase != _ScanPhase.scanning) return;
     // ~6 fps is plenty for a static readout and keeps the UI thread light.
     final now = DateTime.now();
     if (now.difference(_lastDecode) < const Duration(milliseconds: 160)) {
@@ -207,16 +233,33 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     _lastDecode = now;
     _decoding = true;
     try {
-      final reading = _decodeFrame(image);
-      // Only readouts in the selected model's exact display format (decimal
-      // position + range) count toward acceptance — a glare misread or the
-      // wrong checker can't win the vote.
-      if (reading != null && _checker!.matches(reading)) {
-        _vote.add(reading);
+      // Case color accumulates independently of decoding — a smoothed
+      // average so single off-white-balance frames don't flip the family.
+      final rgb = _sampleCaseColor(image);
+      if (rgb != null) {
+        _emaR = _emaR == null ? rgb.r : _emaR! * 0.7 + rgb.r * 0.3;
+        _emaG = _emaG == null ? rgb.g : _emaG! * 0.7 + rgb.g * 0.3;
+        _emaB = _emaB == null ? rgb.b : _emaB! * 0.7 + rgb.b * 0.3;
       }
+
+      final reading = _decodeFrame(image);
+      // Only readouts matching a known model's exact display format
+      // (decimal position + range) count toward acceptance — with a manual
+      // model locked, only that model's format qualifies.
+      final locked = _lockedModel;
+      final qualifies =
+          reading != null &&
+          (locked != null
+              ? locked.matches(reading)
+              : candidateCheckersFor(reading).isNotEmpty);
+      if (qualifies) _vote.add(reading);
       final winner = _vote.winner;
       if (winner != null) {
         _reading = winner;
+        _candidates = locked != null
+            ? [locked]
+            : candidateCheckersFor(winner, color: _emaColor);
+        _selectedModel = _candidates.first;
         _phase = _ScanPhase.confirm;
         // Deferred: disposing the controller from inside its own image
         // stream callback is unsafe on some devices.
@@ -228,6 +271,69 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
       }
     } finally {
       _decoding = false;
+    }
+  }
+
+  /// Averages the case color from two bands above and below the guide box
+  /// (the checker body around the display window). Buffer-orientation
+  /// agnostic — averaging needs no rotation.
+  RgbSample? _sampleCaseColor(CameraImage image) {
+    final controller = _controller;
+    if (controller == null) return null;
+    final turns = (controller.description.sensorOrientation ~/ 90) & 3;
+    final analysisAspect = turns.isOdd
+        ? image.height / image.width
+        : image.width / image.height;
+    final previewAspect = 1 / controller.value.aspectRatio;
+    final guide = _guideRect(previewAspect);
+    final boxH = guide.bottom - guide.top;
+    CropRect? band(double topFrac, double bottomFrac) {
+      final t = topFrac.clamp(0.0, 1.0);
+      final b = bottomFrac.clamp(0.0, 1.0);
+      if (b - t < 0.01) return null;
+      final rect = adjustForAnalysisAspect(
+        (left: guide.left, top: t, right: guide.right, bottom: b),
+        previewAspect,
+        analysisAspect,
+      );
+      return mapUprightRectToImage(
+        rect.left,
+        rect.top,
+        rect.right,
+        rect.bottom,
+        image.width,
+        image.height,
+        turns,
+      );
+    }
+
+    final above = band(guide.top - 0.55 * boxH, guide.top - 0.15 * boxH);
+    final below = band(guide.bottom + 0.15 * boxH, guide.bottom + 0.55 * boxH);
+    final points = <({int x, int y})>[
+      if (above != null) ...gridPoints(above),
+      if (below != null) ...gridPoints(below),
+    ];
+    if (points.isEmpty) return null;
+
+    switch (image.format.group) {
+      case ImageFormatGroup.yuv420 when image.planes.length >= 3:
+        return avgRgbYuv(
+          yPlane: image.planes[0].bytes,
+          yRowStride: image.planes[0].bytesPerRow,
+          uPlane: image.planes[1].bytes,
+          vPlane: image.planes[2].bytes,
+          uvRowStride: image.planes[1].bytesPerRow,
+          uvPixelStride: image.planes[1].bytesPerPixel ?? 2,
+          points: points,
+        );
+      case ImageFormatGroup.bgra8888:
+        return avgRgbBgra(
+          image.planes.first.bytes,
+          image.planes.first.bytesPerRow,
+          points,
+        );
+      default:
+        return null; // no color hint — format-only candidates still work
     }
   }
 
@@ -284,13 +390,12 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return PopScope(
-      // Back from the viewfinder or the confirm step returns to the model
-      // picker instead of leaving the flow.
-      canPop: _phase == _ScanPhase.pick,
+      // Back from the confirm step returns to the viewfinder; back from the
+      // viewfinder leaves the flow.
+      canPop: _phase == _ScanPhase.scanning,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        unawaited(_stopCamera());
-        setState(() => _phase = _ScanPhase.pick);
+        unawaited(_startCamera());
       },
       child: Scaffold(
         appBar: AppBar(
@@ -306,7 +411,6 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
           ),
         ),
         body: switch (_phase) {
-          _ScanPhase.pick => _pickView(l),
           _ScanPhase.scanning => _scanView(l),
           _ScanPhase.confirm => _confirmView(l),
         },
@@ -314,7 +418,7 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     );
   }
 
-  // --- model picker ----------------------------------------------------------
+  // --- model labels & manual picker ------------------------------------------
 
   String _checkerLabel(AppLocalizations l, HannaChecker c) {
     final name = l.paramName(c.paramKey);
@@ -323,58 +427,81 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
         : '${c.model} · $name ${c.tag}';
   }
 
+  /// Label for a candidate within [pool]: when several models of the pool
+  /// produce the same measurement (same parameter + factor), the label
+  /// names the parameter instead of claiming one model number — which one
+  /// it "really" was doesn't change what gets saved.
+  String _candidateLabel(
+    AppLocalizations l,
+    HannaChecker c,
+    List<HannaChecker> pool,
+  ) => outcomeIsShared(c, pool) ? l.paramName(c.paramKey) : _checkerLabel(l, c);
+
   String _checkerRange(HannaChecker c) =>
       '${c.min.toStringAsFixed(c.decimals)}–'
       '${c.max.toStringAsFixed(c.decimals)} ${c.unit}';
 
-  Widget _pickView(AppLocalizations l) {
+  /// Manual model selection — the fallback when auto-detection has to be
+  /// overridden (locks the vote to that model's format).
+  Future<void> _pickModelManually(AppLocalizations l) async {
     final tokens = ReefTokens.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-          child: Text(
-            l.hannaScanPickHint,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: tokens.textDim),
-          ),
+    final picked = await showModalBottomSheet<HannaChecker>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        builder: (ctx, scroll) => ListView(
+          controller: scroll,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+              child: Text(
+                l.hannaScanPickHint,
+                style: Theme.of(
+                  ctx,
+                ).textTheme.bodySmall?.copyWith(color: tokens.textDim),
+              ),
+            ),
+            SectionHeader(l.hannaScanPickTitle),
+            ReefCard(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Column(
+                children: [
+                  for (final c in kHannaCheckers)
+                    ListTile(
+                      dense: true,
+                      title: Text(
+                        _checkerLabel(l, c),
+                        style: TextStyle(fontSize: 15, color: tokens.text),
+                      ),
+                      subtitle: Text(
+                        _checkerRange(c),
+                        style: Theme.of(
+                          ctx,
+                        ).textTheme.bodySmall?.copyWith(color: tokens.textDim),
+                      ),
+                      trailing: c.model == _lockedModel?.model
+                          ? Icon(Icons.check, size: 20, color: tokens.healthy)
+                          : null,
+                      onTap: () => Navigator.pop(ctx, c),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
-        SectionHeader(l.hannaScanPickTitle),
-        ReefCard(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            children: [
-              for (final c in kHannaCheckers)
-                ListTile(
-                  dense: true,
-                  title: Text(
-                    _checkerLabel(l, c),
-                    style: TextStyle(fontSize: 15, color: tokens.text),
-                  ),
-                  subtitle: Text(
-                    _checkerRange(c),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: tokens.textDim),
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    size: 20,
-                    color: tokens.textFaint,
-                  ),
-                  onTap: () {
-                    _checker = c;
-                    unawaited(_startCamera());
-                  },
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
+      ),
     );
+    if (picked != null && mounted) {
+      setState(() {
+        _lockedModel = picked;
+        _vote.reset();
+        _candidate = null;
+      });
+    }
   }
 
   // --- viewfinder ------------------------------------------------------------
@@ -415,7 +542,6 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     }
 
     final controller = _controller;
-    final checker = _checker!;
     return Column(
       children: [
         Expanded(
@@ -494,15 +620,41 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Text(
-                _checkerLabel(l, checker),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: tokens.text,
-                ),
+              // The model line: the manual lock, or the current best guess
+              // from case color + readout format, or the manual-pick button
+              // while nothing is resolved yet.
+              Builder(
+                builder: (_) {
+                  final locked = _lockedModel;
+                  final cand = _candidate;
+                  final guesses = locked != null
+                      ? [locked]
+                      : cand == null
+                      ? const <HannaChecker>[]
+                      : candidateCheckersFor(cand, color: _emaColor);
+                  // Models producing the identical measurement count as one
+                  // guess — "?" only when the choice would actually matter.
+                  final outcomes = distinctOutcomeCheckers(guesses);
+                  final label = locked != null
+                      ? _checkerLabel(l, locked)
+                      : outcomes.isEmpty
+                      ? null
+                      : '${_candidateLabel(l, outcomes.first, guesses)}'
+                            '${outcomes.length > 1 ? '?' : ''}';
+                  return TextButton.icon(
+                    onPressed: () => unawaited(_pickModelManually(l)),
+                    icon: const Icon(Icons.tune, size: 16),
+                    label: Text(
+                      label ?? l.hannaScanPickTitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.text,
+                      ),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 4),
               Text(
                 '${l.hannaScanGuide} · ${l.hannaScanGlareHint} · ${l.hannaScanZoomHint}',
                 textAlign: TextAlign.center,
@@ -512,25 +664,33 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
               ),
               const SizedBox(height: 8),
               // Live decode feedback: what the last readable frame said.
-              // The unit only appears once the readout matches the selected
-              // model's display format — a stray misread (wrong decimal
-              // position, out of range) shows dimmed, digits only.
+              // The unit only appears once the readout resolves to a single
+              // candidate model — an unmatched readout shows dimmed, digits
+              // only.
               Builder(
                 builder: (_) {
                   final cand = _candidate;
-                  final matches = cand != null && checker.matches(cand);
+                  final locked = _lockedModel;
+                  final matches = cand == null
+                      ? const <HannaChecker>[]
+                      : locked != null
+                      ? [if (locked.matches(cand)) locked]
+                      : candidateCheckersFor(cand);
+                  final outcomes = distinctOutcomeCheckers(matches);
                   return SizedBox(
                     height: 28,
                     child: Text(
                       cand == null
                           ? '· · ·'
-                          : matches
-                          ? '${cand.text} ${checker.unit}'
+                          : outcomes.length == 1
+                          ? '${cand.text} ${outcomes.first.unit}'
                           : cand.text,
                       style: ReefTokens.monoTextStyle.copyWith(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: matches ? tokens.text : tokens.textFaint,
+                        color: matches.isNotEmpty
+                            ? tokens.text
+                            : tokens.textFaint,
                       ),
                     ),
                   );
@@ -545,11 +705,11 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
 
   // --- confirm ---------------------------------------------------------------
 
-  double get _canonicalValue => _reading!.value * _checker!.factor;
+  double get _canonicalValue => _reading!.value * _selectedModel!.factor;
 
   Widget _confirmView(AppLocalizations l) {
     final tokens = ReefTokens.of(context);
-    final checker = _checker!;
+    final checker = _selectedModel!;
     final reading = _reading!;
     final prefs = ref.watch(unitPrefsProvider);
     final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
@@ -570,13 +730,36 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _checkerLabel(l, checker),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: tokens.text,
-                ),
+              // The resolved model — a dropdown only when the choice would
+              // change the saved measurement (different parameter or
+              // conversion): models that store the same value collapse into
+              // one entry labeled by parameter, and only format-matching
+              // models are ever listed. The resolution is never silent.
+              Builder(
+                builder: (_) {
+                  final outcomes = distinctOutcomeCheckers(_candidates);
+                  if (outcomes.length > 1) {
+                    return ReefSettingsDropdown<String>(
+                      value: checker.model,
+                      enabled: !_saving,
+                      items: [
+                        for (final c in outcomes)
+                          (c.model, _candidateLabel(l, c, _candidates)),
+                      ],
+                      onChanged: (model) => setState(
+                        () => _selectedModel = hannaCheckerByModel(model),
+                      ),
+                    );
+                  }
+                  return Text(
+                    _candidateLabel(l, checker, _candidates),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 12),
               Row(
@@ -687,7 +870,7 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
 
   Future<void> _save(Tank tank) async {
     final l = AppLocalizations.of(context);
-    final checker = _checker!;
+    final checker = _selectedModel!;
     final canonical = _canonicalValue;
 
     // Same #31 sanity gate as the BLE flow: implausible needs an explicit

@@ -122,6 +122,70 @@ GrayImage grayFromLumaPlane(
   return GrayImage(out, crop.w, crop.h);
 }
 
+/// An averaged color sample, RGB 0–255.
+typedef RgbSample = ({double r, double g, double b});
+
+/// Sparse sample points covering [rect] on a coarse grid — enough for an
+/// average case-color reading, cheap enough for every frame.
+List<({int x, int y})> gridPoints(CropRect rect, {int steps = 5}) {
+  final points = <({int x, int y})>[];
+  for (var i = 0; i < steps; i++) {
+    for (var j = 0; j < steps; j++) {
+      points.add((
+        x: rect.x + rect.w * (2 * i + 1) ~/ (2 * steps),
+        y: rect.y + rect.h * (2 * j + 1) ~/ (2 * steps),
+      ));
+    }
+  }
+  return points;
+}
+
+/// Averages the RGB color at [points] of a YUV420 frame (BT.601 full-range
+/// conversion — plenty for classifying a case color).
+RgbSample avgRgbYuv({
+  required Uint8List yPlane,
+  required int yRowStride,
+  required Uint8List uPlane,
+  required Uint8List vPlane,
+  required int uvRowStride,
+  required int uvPixelStride,
+  required List<({int x, int y})> points,
+}) {
+  var r = 0.0, g = 0.0, b = 0.0;
+  for (final p in points) {
+    final y = yPlane[p.y * yRowStride + p.x].toDouble();
+    final uv = (p.y >> 1) * uvRowStride + (p.x >> 1) * uvPixelStride;
+    final u = uPlane[uv] - 128.0;
+    final v = vPlane[uv] - 128.0;
+    r += y + 1.402 * v;
+    g += y - 0.344136 * u - 0.714136 * v;
+    b += y + 1.772 * u;
+  }
+  final n = points.length.toDouble();
+  return (
+    r: (r / n).clamp(0.0, 255.0),
+    g: (g / n).clamp(0.0, 255.0),
+    b: (b / n).clamp(0.0, 255.0),
+  );
+}
+
+/// Averages the RGB color at [points] of a BGRA8888 frame (iOS).
+RgbSample avgRgbBgra(
+  Uint8List plane,
+  int bytesPerRow,
+  List<({int x, int y})> points,
+) {
+  var r = 0.0, g = 0.0, b = 0.0;
+  for (final p in points) {
+    final i = p.y * bytesPerRow + p.x * 4;
+    b += plane[i];
+    g += plane[i + 1];
+    r += plane[i + 2];
+  }
+  final n = points.length.toDouble();
+  return (r: r / n, g: g / n, b: b / n);
+}
+
 /// Extracts a cropped luma image from a BGRA8888 plane (iOS frames).
 GrayImage grayFromBgraPlane(
   Uint8List plane,

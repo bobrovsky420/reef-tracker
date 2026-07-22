@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.1] - 2026-07-22
+
+### Changed
+- Checker scan moved out of the Measurements-tab overflow menu onto a
+  small camera button right above "Add reading" — one tap, reachable with
+  a thumb while the other hand holds the checker. On installs without
+  access to the feature the button stays hidden and the overflow-menu
+  entry remains as before.
+
 ## [0.38.0] - 2026-07-22
 
 ### Added
@@ -16,6 +25,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   switch is remembered per tank, uses the average of the last 14 days of
   salinity measurements (falling back to the latest one, with a note when
   it is old), and shows exactly what target the dose aims at.
+- Checker scan: the checker model is now recognized automatically — no more
+  picking it first. Scanning starts straight into the camera; the checker's
+  case color (Hanna color-codes the bodies) combined with the reading's
+  display format identifies the model, and the confirmation step shows
+  which model was detected. A choice is only asked for when it would
+  actually change the saved measurement — models that store the same value
+  (like the Phosphate ULR and LR checkers, or the three ppb nitrite
+  checkers) count as one. The app never silently guesses between genuinely
+  different interpretations, and a manual model picker remains available
+  from the viewfinder.
 
 ## [0.37.3] - 2026-07-22
 

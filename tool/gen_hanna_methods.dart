@@ -318,6 +318,24 @@ StringBuffer _genCheckers(
       continue;
     }
 
+    const colors = {
+      'red',
+      'orange',
+      'yellow',
+      'green',
+      'blue',
+      'lavender',
+      'graphite',
+      'white',
+    };
+    final color = c['color'];
+    if (color is! String || !colors.contains(color)) {
+      errors.add(
+        'checkers: $model: color must be one of $colors, got "$color"',
+      );
+      continue;
+    }
+
     final args = [
       "'${_esc(model)}', '${_esc(param)}'",
       if (tag != null) "tag: '${_esc(tag as String)}'",
@@ -326,6 +344,7 @@ StringBuffer _genCheckers(
       'min: $min',
       'max: $max',
       if (factor != 1) 'factor: $factor',
+      'color: CheckerColor.$color',
     ];
     buf.writeln('  HannaChecker(${args.join(', ')}),');
   }

@@ -8,7 +8,15 @@ part of 'hanna_checker.dart';
 /// Every pocket-checker model the camera scan supports, in
 /// display order, generated from `hanna_methods.yaml`.
 const List<HannaChecker> kHannaCheckers = [
-  HannaChecker('HI780', 'ph', unit: 'pH', decimals: 1, min: 6.3, max: 8.6),
+  HannaChecker(
+    'HI780',
+    'ph',
+    unit: 'pH',
+    decimals: 1,
+    min: 6.3,
+    max: 8.6,
+    color: CheckerColor.white,
+  ),
   HannaChecker(
     'HI772',
     'alkalinity',
@@ -17,6 +25,7 @@ const List<HannaChecker> kHannaCheckers = [
     decimals: 1,
     min: 0,
     max: 20,
+    color: CheckerColor.blue,
   ),
   HannaChecker(
     'HI755',
@@ -27,8 +36,17 @@ const List<HannaChecker> kHannaCheckers = [
     min: 0,
     max: 300,
     factor: 0.056,
+    color: CheckerColor.blue,
   ),
-  HannaChecker('HI784', 'ammonia', unit: 'ppm', decimals: 2, min: 0, max: 2.5),
+  HannaChecker(
+    'HI784',
+    'ammonia',
+    unit: 'ppm',
+    decimals: 2,
+    min: 0,
+    max: 2.5,
+    color: CheckerColor.yellow,
+  ),
   HannaChecker(
     'HI758',
     'calcium',
@@ -36,6 +54,7 @@ const List<HannaChecker> kHannaCheckers = [
     decimals: 0,
     min: 200,
     max: 600,
+    color: CheckerColor.red,
   ),
   HannaChecker(
     'HI783',
@@ -44,6 +63,7 @@ const List<HannaChecker> kHannaCheckers = [
     decimals: 0,
     min: 1000,
     max: 1800,
+    color: CheckerColor.graphite,
   ),
   HannaChecker(
     'HI781',
@@ -53,6 +73,7 @@ const List<HannaChecker> kHannaCheckers = [
     decimals: 2,
     min: 0,
     max: 5,
+    color: CheckerColor.lavender,
   ),
   HannaChecker(
     'HI782',
@@ -62,6 +83,7 @@ const List<HannaChecker> kHannaCheckers = [
     decimals: 1,
     min: 0,
     max: 75,
+    color: CheckerColor.lavender,
   ),
   HannaChecker(
     'HI764',
@@ -72,6 +94,7 @@ const List<HannaChecker> kHannaCheckers = [
     min: 0,
     max: 200,
     factor: 0.001,
+    color: CheckerColor.green,
   ),
   HannaChecker(
     'HI767',
@@ -82,6 +105,7 @@ const List<HannaChecker> kHannaCheckers = [
     min: 0,
     max: 999,
     factor: 0.001,
+    color: CheckerColor.orange,
   ),
   HannaChecker(
     'HI707',
@@ -92,6 +116,7 @@ const List<HannaChecker> kHannaCheckers = [
     min: 0,
     max: 600,
     factor: 0.001,
+    color: CheckerColor.red,
   ),
   HannaChecker(
     'HI774',
@@ -101,6 +126,7 @@ const List<HannaChecker> kHannaCheckers = [
     decimals: 2,
     min: 0,
     max: 0.9,
+    color: CheckerColor.green,
   ),
   HannaChecker(
     'HI713',
@@ -110,6 +136,7 @@ const List<HannaChecker> kHannaCheckers = [
     decimals: 2,
     min: 0,
     max: 2.5,
+    color: CheckerColor.green,
   ),
   HannaChecker(
     'HI736',
@@ -120,5 +147,6 @@ const List<HannaChecker> kHannaCheckers = [
     min: 0,
     max: 200,
     factor: 0.003066,
+    color: CheckerColor.green,
   ),
 ];

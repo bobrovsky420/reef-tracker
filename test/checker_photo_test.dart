@@ -118,6 +118,69 @@ void main() {
     run('catalog', (g) => _cropFrac(g, 0.24, 0.44, 0.76, 0.65));
   });
 
+  group('case color classification', () {
+    // The classifier must recognize every model's case family from the
+    // actual product photos — this is the calibration pin for the hue
+    // thresholds in classifyCaseColor. Samples avoid the display window,
+    // the printed text and the studio background.
+    ({double r, double g, double b}) avgRegion(
+      img.Image im,
+      double l,
+      double t,
+      double r,
+      double b,
+    ) {
+      final x0 = (im.width * l).round(), x1 = (im.width * r).round();
+      final y0 = (im.height * t).round(), y1 = (im.height * b).round();
+      var rr = 0.0, gg = 0.0, bb = 0.0;
+      var n = 0;
+      for (var y = y0; y < y1; y += 2) {
+        for (var x = x0; x < x1; x += 2) {
+          final p = im.getPixel(x, y);
+          rr += p.r.toDouble();
+          gg += p.g.toDouble();
+          bb += p.b.toDouble();
+          n++;
+        }
+      }
+      return (r: rr / n, g: gg / n, b: bb / n);
+    }
+
+    final files =
+        Directory('test/fixtures/hanna_photos/catalog')
+            .listSync()
+            .whereType<File>()
+            .where((f) => _parseName(f.path) != null)
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
+    for (final file in files) {
+      final spec = _parseName(file.path)!;
+      test('color/${spec.model}', () {
+        final im = img.decodeImage(file.readAsBytesSync())!;
+        // Three case patches: the dome above the logo and the two flanks
+        // beside the display window.
+        final samples = [
+          avgRegion(im, 0.38, 0.10, 0.62, 0.16),
+          avgRegion(im, 0.17, 0.47, 0.25, 0.60),
+          avgRegion(im, 0.75, 0.47, 0.83, 0.60),
+        ];
+        final avg = (
+          r: samples.map((s) => s.r).reduce((a, b) => a + b) / 3,
+          g: samples.map((s) => s.g).reduce((a, b) => a + b) / 3,
+          b: samples.map((s) => s.b).reduce((a, b) => a + b) / 3,
+        );
+        final family = classifyCaseColor(avg.r, avg.g, avg.b);
+        expect(
+          family,
+          hannaCheckerByModel(spec.model)!.color,
+          reason:
+              'rgb=(${avg.r.toStringAsFixed(0)}, '
+              '${avg.g.toStringAsFixed(0)}, ${avg.b.toStringAsFixed(0)})',
+        );
+      });
+    }
+  });
+
   group('user photos', () {
     // Framed like the viewfinder: display fills most of the frame. Phone
     // photos arrive in any orientation, so every rotation is tried — the

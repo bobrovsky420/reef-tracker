@@ -2116,8 +2116,33 @@ readout is always confirmed by the user first.
   dKH ×0.056; HI736 ppb P → ppm PO₄ ×0.003066; ppb NO₂-N nitrite checkers →
   ×0.001, the U32/U33 convention). The user picks the model first — the
   model, not the parameter, is what pins down unit/range/format.
+- **Model auto-detection (case color + readout format):** Hanna
+  color-codes the checker bodies, and every model's case-color family is
+  in the registry (`color:` — verified from the product photos; the photo
+  fixtures pin `classifyCaseColor`'s calibrated hue/sat thresholds against
+  all 14 of them). While scanning, the case color is sampled from two
+  bands above/below the guide box (YUV chroma planes / BGRA, EMA-smoothed
+  across frames) and, at vote acceptance, `candidateCheckersFor` = the
+  models whose display format (decimals + range) matches the readout,
+  color-family members first, then collapsed to **distinct outcomes**
+  (`distinctOutcomeCheckers`: same parameter + factor = identical saved
+  measurement, so phosphate ULR vs LR or the three ppb nitrite checkers
+  are never a question — shared-outcome entries are labeled by parameter,
+  not by a claimed model number). One outcome → preselected; several
+  (genuinely different interpretations, e.g. green `93` = ppb P vs ppb
+  NO₂-N) → the confirm step shows a dropdown of exactly those — **never a
+  silent guess**. A manual model picker (bottom sheet from the viewfinder)
+  locks the vote to one model's format and bypasses color.
+- **Entry points** (complementary by entitlement): entitled installs get a
+  small FAB (camera glyph) stacked above the Measurements tab's "Add
+  reading" FAB — scanning is the same action done faster, and it stays
+  thumb-reachable while the other hand holds the checker (the top bar is
+  at icon capacity). Non-entitled installs instead see a teaser entry in
+  the tab's overflow menu (Pro dialog on tap — a locked FAB would be
+  prime-real-estate frustration, so the FAB never shows locked). The
+  Settings → Tools row exists for both, gate on tap.
 - **Flow** (`features/scan/checker_scan_screen.dart`, one route hosts all
-  phases): model picker (rows show model · localized parameter · range) →
+  phases): camera-first (no picker gate) →
   live viewfinder (`camera` plugin, back camera, `medium` preset, ~6 fps
   luma-only decoding of the stream inside a 2:1 LCD-shaped guide box;
   pinch-to-zoom, defaulting to 2× — framing from focusable distance — with
@@ -2149,9 +2174,7 @@ readout is always confirmed by the user first.
   background/foreground.
 - **Tier:** `hannaScan`, `grandfathered: true` (2026-07-21 decision,
   consistent with `hannaConnect`/`hannaImport`).
-- **Deferred:** auto-detecting the model from the case color (hue →
-  family shortlist; specs and case colors already collected in the
-  registry research); remembering the last-used model; torch/zoom controls.
+- **Deferred:** remembering the last-used model; torch control.
 
 ### Dosing (`features/dosing/`) — Dosing tab
 

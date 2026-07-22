@@ -67,6 +67,46 @@ void main() {
     });
   });
 
+  group('color sampling', () {
+    test('yuv conversion recovers known colors', () {
+      // One 2×2 luma block with a single chroma sample.
+      final y = Uint8List.fromList([100, 100, 100, 100]);
+      final u = Uint8List.fromList([180]);
+      final v = Uint8List.fromList([128]);
+      final rgb = avgRgbYuv(
+        yPlane: y,
+        yRowStride: 2,
+        uPlane: u,
+        vPlane: v,
+        uvRowStride: 1,
+        uvPixelStride: 1,
+        points: [(x: 0, y: 0), (x: 1, y: 1)],
+      );
+      expect(rgb.r, closeTo(100, 0.5));
+      expect(rgb.g, closeTo(100 - 0.344136 * 52, 0.5));
+      expect(rgb.b, closeTo(100 + 1.772 * 52, 0.5));
+    });
+
+    test('bgra averaging', () {
+      final plane = Uint8List.fromList([
+        10, 20, 30, 255, 50, 60, 70, 255, //
+      ]);
+      final rgb = avgRgbBgra(plane, 8, [(x: 0, y: 0), (x: 1, y: 0)]);
+      expect(rgb.b, 30);
+      expect(rgb.g, 40);
+      expect(rgb.r, 50);
+    });
+
+    test('grid points stay inside the rect', () {
+      final points = gridPoints((x: 10, y: 20, w: 30, h: 40));
+      expect(points.length, 25);
+      for (final p in points) {
+        expect(p.x, inInclusiveRange(10, 39));
+        expect(p.y, inInclusiveRange(20, 59));
+      }
+    });
+  });
+
   group('gray extraction', () {
     test('luma plane crop honors row stride', () {
       // 4 rows, 6 px wide, stride 8 (2 bytes padding per row).

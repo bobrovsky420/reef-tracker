@@ -105,6 +105,10 @@ csv:
 #
 # Each entry:
 #   model:    the Hanna model number (HIxxx) — the stable identifier.
+#   color:    the case-color family (red/orange/yellow/green/blue/lavender/
+#             graphite/white, from the CheckerColor enum) — drives the
+#             scan's model auto-detection; verified from product photos
+#             (the photo fixtures pin the classifier against them).
 #   param:    the catalog parameter key the reading lands on.
 #   tag:      optional range/variant label shown after the parameter name
 #             (ULR/LR/HR, or the unit for the two alkalinity flavors).
@@ -127,12 +131,14 @@ csv:
 
 checkers:
   - model: HI780
+    color: white
     param: ph
     unit: pH
     decimals: 1
     min: 6.3
     max: 8.6
   - model: HI772
+    color: blue
     param: alkalinity
     tag: dKH
     unit: dKH
@@ -140,6 +146,7 @@ checkers:
     min: 0
     max: 20
   - model: HI755
+    color: blue
     param: alkalinity
     tag: ppm
     unit: ppm
@@ -148,24 +155,28 @@ checkers:
     max: 300
     factor: 0.056
   - model: HI784
+    color: yellow
     param: ammonia
     unit: ppm
     decimals: 2
     min: 0
     max: 2.5
   - model: HI758
+    color: red
     param: calcium
     unit: ppm
     decimals: 0
     min: 200
     max: 600
   - model: HI783
+    color: graphite
     param: magnesium
     unit: ppm
     decimals: 0
     min: 1000
     max: 1800
   - model: HI781
+    color: lavender
     param: nitrate
     tag: LR
     unit: ppm
@@ -173,6 +184,7 @@ checkers:
     min: 0
     max: 5
   - model: HI782
+    color: lavender
     param: nitrate
     tag: HR
     unit: ppm
@@ -180,6 +192,7 @@ checkers:
     min: 0
     max: 75
   - model: HI764
+    color: green
     param: nitrite
     tag: ULR
     unit: ppb
@@ -188,6 +201,7 @@ checkers:
     max: 200
     factor: 0.001
   - model: HI767
+    color: orange
     param: nitrite
     tag: LR
     unit: ppb
@@ -196,6 +210,7 @@ checkers:
     max: 999
     factor: 0.001
   - model: HI707
+    color: red
     param: nitrite
     tag: LR fresh
     unit: ppb
@@ -204,6 +219,7 @@ checkers:
     max: 600
     factor: 0.001
   - model: HI774
+    color: green
     param: phosphate
     tag: ULR
     unit: ppm
@@ -211,6 +227,7 @@ checkers:
     min: 0
     max: 0.9
   - model: HI713
+    color: green
     param: phosphate
     tag: LR
     unit: ppm
@@ -218,6 +235,7 @@ checkers:
     min: 0
     max: 2.5
   - model: HI736
+    color: green
     param: phosphate
     tag: P ULR
     unit: ppb
