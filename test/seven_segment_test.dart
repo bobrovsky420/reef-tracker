@@ -145,6 +145,34 @@ void main() {
       expect(r?.text, '0.30');
     });
 
+    test('strips a bezel band entering from the border', () {
+      // A dark band along the crop edge (display bezel, case, shadow) used
+      // to decode as a lone "1" on real scenes. Border-connected dark
+      // regions must be ignored.
+      final img = renderLcd('0.30');
+      for (var y = 0; y < img.height; y++) {
+        for (var x = 0; x < 13; x++) {
+          img.pixels[y * img.width + x] = 50;
+        }
+      }
+      expect(decodeSevenSegment(img)?.text, '0.30');
+    });
+
+    test('finds digits when something darker is in frame (two-level)', () {
+      // Green case in the crop is darker than the LCD: the first Otsu split
+      // separates case vs LCD and the mid-gray digits vanish into the
+      // bright class — the second-level split must recover them.
+      final img = renderLcd('0.30', inkLuma: 110, bgLuma: 170);
+      for (var y = 0; y < img.height; y++) {
+        for (var x = 0; x < img.width; x++) {
+          if (x < 20 || x >= img.width - 20) {
+            img.pixels[y * img.width + x] = 25;
+          }
+        }
+      }
+      expect(decodeSevenSegment(img)?.text, '0.30');
+    });
+
     test('rejects a blank frame', () {
       final pixels = Uint8List(200 * 100)..fillRange(0, 200 * 100, 180);
       expect(decodeSevenSegment(GrayImage(pixels, 200, 100)), isNull);

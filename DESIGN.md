@@ -2059,14 +2059,37 @@ which only cover the HI97115 photometer. Never auto-saves: the accepted
 readout is always confirmed by the user first.
 
 - **Decoder** (`domain/seven_segment.dart`, pure Dart — deliberately no
-  OCR/ML dependency): Otsu-binarize a grayscale crop → row range → column
-  projection with small-gap merging (a digit's bars don't touch at the
-  corners) → per-slice classification (aspect-ratio special case for `1`,
-  bottom-corner blob = decimal point, sub-height blobs = annunciator icons,
-  ignored) → 7-zone segment sampling → pattern table. **Unknown patterns
-  reject the whole frame** — every frame either yields a confident readout
-  or null, never a plausible-looking guess. `SevenSegmentVote` accepts a
-  readout only after 3 consecutive identical decodes.
+  OCR/ML dependency), tuned against real photos (see the fixture tests
+  below): an **Otsu threshold ladder** (up to 4 levels, each re-splitting
+  the previous bright class — on real scenes the first split separates dark
+  case vs LCD and the mid-gray digits vanish into the bright class; the
+  full-image level keeps a contrast guard, deeper levels don't) → per level:
+  binarize → **component cleanup** (drop dark components touching the crop
+  border, wider than 0.35× the crop — window-outline frames and shadow
+  lines, nothing glyph-shaped is that wide — and hairline slivers; digits
+  are compact interior islands) → digit row band **expanded from a
+  window-smoothed peak-ink anchor row** (a thin shadow line can out-ink any
+  single digit row; small gaps bridged for `1`'s joint gap) → column
+  projection with small-gap merging **capped at one glyph's width** (the
+  decimal point sits flush between digits and would otherwise fuse them) →
+  **dot-appendage splitting** (bottom-band column tails, min width =
+  segment thickness so a digit's corner column isn't mistaken for a dot) →
+  per-slice classification (aspect-ratio special case for `1`, sub-height
+  blobs = annunciator icons, ignored) → 7-zone segment sampling → pattern
+  table. **Refusal beats guessing, everywhere**: unknown patterns reject
+  the frame; skipped blobs carrying ink comparable to the kept digits
+  reject the frame (half-captured digits would read as a confident lone
+  `1`); a single-digit readout with any skipped blob rejects the frame. An
+  erosion fallback was tried and removed — it fabricated wrong readouts
+  (see the NOTE in the source). `SevenSegmentVote` accepts a readout only
+  after 3 consecutive identical decodes.
+- **Photo regression tests** (`test/checker_photo_test.dart` + fixtures in
+  `test/fixtures/hanna_photos/`, decoded via the pure-Dart `image` dev
+  dependency): Hanna's 14 catalog product shots (`catalog/`, shared
+  display-region crop, 12 decode exactly; `hard_`-prefixed fixtures flip
+  the requirement to *never misread* — refusing is fine) plus a `user/`
+  directory where phone photos named `<MODEL>_<expected>.jpg`, framed like
+  the guide box, become test cases automatically.
 - **Model registry** (`domain/hanna_checker.dart` + the `checkers:` section
   of `hanna_methods.yaml` → generated `kHannaCheckers`, 14 models,
   specs verified against Hanna spec sheets): per model the LCD format
@@ -2080,7 +2103,8 @@ readout is always confirmed by the user first.
   phases): model picker (rows show model · localized parameter · range) →
   live viewfinder (`camera` plugin, back camera, `medium` preset, ~6 fps
   luma-only decoding of the stream inside a guide box; the box's fractional
-  rect and the buffer crop share constants, mapped through the sensor
+  rect and the buffer crop share constants, corrected for a
+  preview-vs-analysis aspect-ratio mismatch and mapped through the sensor
   rotation by `scan_frame.dart` — pure functions, unit-tested) → confirm
   (raw readout + converted value in the user's display unit, tank selector
   defaulting to the active tank, the #31 gate: impossible blocks save,

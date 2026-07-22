@@ -39,13 +39,26 @@ enum _ScanPhase { pick, scanning, confirm }
 
 enum _CameraError { denied, unavailable, failed }
 
-/// The viewfinder guide box, as fractions of the upright preview. Matches
-/// what [_decodeFrame] crops out of the camera buffer — the two must agree,
-/// which is why they share these constants.
-const _guideLeft = 0.08;
-const _guideRight = 0.92;
-const _guideTop = 0.36;
-const _guideBottom = 0.52;
+/// The viewfinder guide box: centered horizontally, sized to the shape of a
+/// pocket checker's LCD window (~2.3:1) so "fit the display into the frame"
+/// works in both dimensions — a wider box invites the case/bezel into the
+/// decoded crop. The box height depends on the preview's aspect ratio, so
+/// the rect is computed per frame; the overlay and [_decodeFrame] use the
+/// same [_guideRect], which is what keeps them aligned.
+const _guideWidthFrac = 0.62;
+const _guideLcdAspect = 2.3;
+const _guideCenterY = 0.44;
+
+/// [previewAspect] is the upright (as-displayed) preview aspect, w/h.
+FracRect _guideRect(double previewAspect) {
+  final heightFrac = _guideWidthFrac * previewAspect / _guideLcdAspect;
+  return (
+    left: (1 - _guideWidthFrac) / 2,
+    top: _guideCenterY - heightFrac / 2,
+    right: (1 + _guideWidthFrac) / 2,
+    bottom: _guideCenterY + heightFrac / 2,
+  );
+}
 
 class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     with WidgetsBindingObserver {
@@ -60,7 +73,7 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
 
   /// Raw decode of the most recent readable frame — live feedback under the
   /// guide box so the user sees the decoder locking on.
-  String? _candidate;
+  SevenSegmentReading? _candidate;
 
   SevenSegmentReading? _reading;
   int? _saveTankOverride;
@@ -171,8 +184,8 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
         unawaited(Future(_stopCamera));
         return;
       }
-      if (reading?.text != _candidate && mounted) {
-        setState(() => _candidate = reading?.text);
+      if (reading?.text != _candidate?.text && mounted) {
+        setState(() => _candidate = reading);
       }
     } finally {
       _decoding = false;
@@ -183,11 +196,22 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     final controller = _controller;
     if (controller == null) return null;
     final turns = (controller.description.sensorOrientation ~/ 90) & 3;
+    // The guide box is drawn over the preview; the analysis stream may have
+    // a different aspect ratio — correct the fractions so both look at the
+    // same part of the scene.
+    final analysisAspect = turns.isOdd
+        ? image.height / image.width
+        : image.width / image.height;
+    final rect = adjustForAnalysisAspect(
+      _guideRect(1 / controller.value.aspectRatio),
+      1 / controller.value.aspectRatio,
+      analysisAspect,
+    );
     final crop = mapUprightRectToImage(
-      _guideLeft,
-      _guideTop,
-      _guideRight,
-      _guideBottom,
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
       image.width,
       image.height,
       turns,
@@ -358,29 +382,36 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
                   child: AspectRatio(
                     aspectRatio: 1 / controller.value.aspectRatio,
                     child: LayoutBuilder(
-                      builder: (context, box) => Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          CameraPreview(controller),
-                          // The guide box — the exact region the decoder
-                          // crops (shared fractional constants).
-                          Positioned(
-                            left: box.maxWidth * _guideLeft,
-                            top: box.maxHeight * _guideTop,
-                            width: box.maxWidth * (_guideRight - _guideLeft),
-                            height: box.maxHeight * (_guideBottom - _guideTop),
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: tokens.caution,
-                                  width: 2,
+                      builder: (context, box) {
+                        // The guide box — the exact region the decoder
+                        // crops (same _guideRect).
+                        final guide = _guideRect(
+                          1 / controller.value.aspectRatio,
+                        );
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            CameraPreview(controller),
+                            Positioned(
+                              left: box.maxWidth * guide.left,
+                              top: box.maxHeight * guide.top,
+                              width:
+                                  box.maxWidth * (guide.right - guide.left),
+                              height:
+                                  box.maxHeight * (guide.bottom - guide.top),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: tokens.caution,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -407,16 +438,29 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
               ),
               const SizedBox(height: 8),
               // Live decode feedback: what the last readable frame said.
-              SizedBox(
-                height: 28,
-                child: Text(
-                  _candidate == null ? '· · ·' : '$_candidate ${checker.unit}',
-                  style: ReefTokens.monoTextStyle.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: _candidate == null ? tokens.textFaint : tokens.text,
-                  ),
-                ),
+              // The unit only appears once the readout matches the selected
+              // model's display format — a stray misread (wrong decimal
+              // position, out of range) shows dimmed, digits only.
+              Builder(
+                builder: (_) {
+                  final cand = _candidate;
+                  final matches = cand != null && checker.matches(cand);
+                  return SizedBox(
+                    height: 28,
+                    child: Text(
+                      cand == null
+                          ? '· · ·'
+                          : matches
+                          ? '${cand.text} ${checker.unit}'
+                          : cand.text,
+                      style: ReefTokens.monoTextStyle.copyWith(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: matches ? tokens.text : tokens.textFaint,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),

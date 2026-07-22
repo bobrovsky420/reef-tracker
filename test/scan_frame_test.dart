@@ -41,6 +41,32 @@ void main() {
     });
   });
 
+  group('adjustForAnalysisAspect', () {
+    const rect = (left: 0.08, top: 0.36, right: 0.92, bottom: 0.52);
+
+    test('identity when aspects match', () {
+      expect(adjustForAnalysisAspect(rect, 0.75, 0.75), rect);
+    });
+
+    test('wider analysis field compresses x toward the center', () {
+      // Preview 9:16, analysis 3:4 — the preview is a centered horizontal
+      // band of the analysis field.
+      final r = adjustForAnalysisAspect(rect, 9 / 16, 3 / 4);
+      expect(r.left, closeTo(0.5 - 0.42 * 0.75, 1e-9));
+      expect(r.right, closeTo(0.5 + 0.42 * 0.75, 1e-9));
+      expect(r.top, rect.top);
+      expect(r.bottom, rect.bottom);
+    });
+
+    test('taller analysis field compresses y toward the center', () {
+      final r = adjustForAnalysisAspect(rect, 3 / 4, 9 / 16);
+      expect(r.left, rect.left);
+      expect(r.right, rect.right);
+      expect(r.top, closeTo(0.5 - 0.14 * 0.75, 1e-9));
+      expect(r.bottom, closeTo(0.5 + 0.02 * 0.75, 1e-9));
+    });
+  });
+
   group('gray extraction', () {
     test('luma plane crop honors row stride', () {
       // 4 rows, 6 px wide, stride 8 (2 bytes padding per row).

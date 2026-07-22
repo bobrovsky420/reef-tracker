@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 # NOTE: build 55 (0.25.0) is deployed on Play — versionCode 55 is burned and
 # the next upload must be 56+; the 0.25.0 version name is also taken.
-version: 0.37.1+86
+version: 0.37.2+89
 
 environment:
   sdk: ^3.12.2
@@ -97,6 +97,9 @@ dev_dependencies:
     sdk: flutter
   flutter_driver:
     sdk: flutter
+  # Decodes the real checker photos in test/fixtures/hanna_photos/ for the
+  # seven-segment decoder's photo regression tests (pure Dart, test-only).
+  image: ^4.3.0
   # Used by the backup/auto-backup tests to fake path_provider under
   # `flutter test`. Declared explicitly so `flutter analyze` stays clean.
   path_provider_platform_interface: ^2.1.3

@@ -10,6 +10,38 @@ import '../../domain/seven_segment.dart';
 /// An axis-aligned crop in image-buffer coordinates.
 typedef CropRect = ({int x, int y, int w, int h});
 
+/// A fractional rectangle (0..1 coordinates).
+typedef FracRect = ({double left, double top, double right, double bottom});
+
+/// Corrects a fractional rect drawn over the *preview* for the analysis
+/// stream's differing aspect ratio. CameraX may serve the preview and the
+/// image-analysis stream at different aspects; both look at the same
+/// center, with the narrower field being a centered crop of the wider one.
+/// Without this, the guide box the user aligns and the region the decoder
+/// reads are different parts of the scene. Aspects are upright
+/// (width / height as displayed); identical aspects return the rect
+/// unchanged.
+FracRect adjustForAnalysisAspect(
+  FracRect rect,
+  double previewAspect,
+  double analysisAspect,
+) {
+  var (left: l, top: t, right: r, bottom: b) = rect;
+  if (analysisAspect > previewAspect) {
+    // Analysis field is wider: the preview is a centered horizontal band
+    // of it — compress x toward the center.
+    final s = previewAspect / analysisAspect;
+    l = 0.5 + (l - 0.5) * s;
+    r = 0.5 + (r - 0.5) * s;
+  } else if (analysisAspect < previewAspect) {
+    // Analysis field is taller: compress y toward the center.
+    final s = analysisAspect / previewAspect;
+    t = 0.5 + (t - 0.5) * s;
+    b = 0.5 + (b - 0.5) * s;
+  }
+  return (left: l, top: t, right: r, bottom: b);
+}
+
 /// Maps a rectangle given in *upright* (portrait, as-displayed) fractional
 /// coordinates onto the camera buffer, whose content is rotated by
 /// `quarterTurnsCw * 90°` clockwise relative to upright (the plugin's

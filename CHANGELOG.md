@@ -5,9 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.2] - 2026-07-21
+
+### Changed
+- Checker scan: the viewfinder frame now has the shape of the checker's
+  display window (it was much wider than the display). Framing is easier
+  and less of the checker body ends up in the scanned area, which improves
+  recognition.
+- Checker scan: display recognition reworked against a library of real
+  checker photos (12 of 14 Hanna models now read correctly from product
+  photos; the decoder now handles the display window's shadow outline,
+  decimal points sitting flush against a digit, weak digit contrast, and
+  several cases that previously produced a false "1" reading). When a frame
+  can't be read confidently the scanner now always keeps looking instead of
+  ever showing a wrong number.
+
 ## [0.37.1] - 2026-07-21
 
 ### Fixed
+- Checker scan: on real scenes the decoder frequently misread the display
+  as a constant "1" — dark case/bezel edges or shadows inside the frame
+  were mistaken for a digit, and could also swallow the actual digits
+  entirely. Dark regions entering from the frame border are now ignored,
+  and a second thresholding pass finds the digits even when the frame
+  includes parts of the checker body darker than the LCD.
+- Checker scan: the on-screen guide frame and the region the decoder reads
+  could be different parts of the scene when the camera's preview and
+  analysis streams use different aspect ratios; they are now aligned.
+- Checker scan: the live readout under the frame no longer shows the unit
+  next to a value that doesn't match the selected checker's display format
+  (such misreads now show dimmed, and are never accepted).
 - Android: the app stays available on devices without a camera or without a
   microphone. The camera plugin added for the checker scan declares the
   camera as required hardware and requests the microphone (for video
