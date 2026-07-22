@@ -12,6 +12,7 @@ import 'app/router.dart';
 import 'app/theme.dart';
 import 'data/auto_backup.dart';
 import 'data/cloud_sync.dart';
+import 'data/install_id.dart';
 import 'data/reminder_scheduler.dart';
 import 'l10n/app_localizations.dart';
 import 'widgets/reef_background.dart';
@@ -211,10 +212,28 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   /// initial connect — chain their own push in `settings_screen.dart`.) Push
   /// failures are persisted by the engine (`sync_gdrive_last_error_at`), so
   /// they too are only logged here.
+  ///
+  /// Before anything cloud-related, the install fingerprint is reconciled
+  /// (#62): if the database arrived via Android OS restore/device transfer,
+  /// the previous device's Drive sync identity is cleared so Settings can't
+  /// claim a connected state no live sign-in backs. Once per process
+  /// (memoized inside); on failure the sync still runs — a broken filesystem
+  /// must not disconnect a working sync (fail open).
   void _maybeBackUp() {
     final db = ref.read(dbProvider);
     unawaited(
-      runAutoBackupIfDue(db)
+      reconcileInstallFingerprint(db)
+          .catchError((Object e, StackTrace s) {
+            FlutterError.reportError(
+              FlutterErrorDetails(
+                exception: e,
+                stack: s,
+                library: 'install_id',
+                context: ErrorSummary('reconciling the install fingerprint'),
+              ),
+            );
+          })
+          .then((_) => runAutoBackupIfDue(db))
           .then(
             (wrote) async {
               if (!wrote) return;

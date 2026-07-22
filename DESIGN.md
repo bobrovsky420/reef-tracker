@@ -637,6 +637,22 @@ Settings keys — **fresh names, deliberately not U20's orphaned
 `syncGdriveAccountProvider`, `syncGdriveLastPushAtProvider`,
 `syncGdriveLastErrorAtProvider`.
 
+- **Install fingerprint** (`install_id.dart`, #62): device-local only guards
+  the app's *own* JSON restore — Android OS Auto Backup / device transfer
+  copies the raw SQLite file verbatim, which would carry the old device's
+  sync identity (plaintext email, folder id, matching pushed-hash) onto a new
+  device and fake a "connected" state there. A random id is written to both
+  the Settings table (`install_fingerprint`, device-local) and a sibling
+  `.install_id` file that `backup_rules.xml` / `data_extraction_rules.xml`
+  exclude from every OS channel. `main.dart` reconciles once per process
+  before the first sync: database fingerprint present but file
+  missing/different ⇒ the database arrived via OS restore ⇒ the
+  `sync_gdrive_*` keys are cleared locally (no revoke — the grant belongs to
+  the old device) and a fresh id is seeded, forcing a deliberate re-connect.
+  A fingerprint-less database only seeds, never clears (indistinguishable
+  from a pre-fingerprint upgrade); I/O failures fail open (log + sync as
+  before) so a broken filesystem can't disconnect a working sync.
+
 UI: a Settings → Backup row (connect when absent — **Pro-gated**,
 `ProFeature.driveSync`, **`grandfathered: true`** (explicit 2026-07-15
 decision, like the stability score): Founder installs — today, every install —

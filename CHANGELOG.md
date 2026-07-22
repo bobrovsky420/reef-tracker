@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.3] - 2026-07-22
+
+### Fixed
+- Android: after moving to a new phone via Google's device backup or
+  device-to-device transfer, the app no longer shows Google Drive backup sync
+  as connected to the old phone's account. The copied state could display the
+  account email and a "last backed up" time even though the new phone had no
+  Google sign-in and was not actually protected; sync now detects the
+  transfer and asks to be reconnected on the new phone.
+
 ## [0.38.2] - 2026-07-22
 
 ### Fixed

@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Android Auto Backup rules for Android 11 (API 30) and below.
-  All eligible app data is backed up to the user's Google Drive *except* the
-  rotating JSON auto-backups under the app documents directory
-  (data root/app_flutter/backups): they duplicate the SQLite database byte for
-  byte, double the cleartext copies in Google Drive, and count against the
-  ~25 MB Auto Backup quota — hitting it silently stops the whole backup (#36).
-  The database alone restores everything on reinstall / new device.
+  All eligible app data is backed up to the user's Google Drive *except*:
+  - the rotating JSON auto-backups under the app documents directory
+    (data root/app_flutter/backups): they duplicate the SQLite database byte
+    for byte, double the cleartext copies in Google Drive, and count against
+    the ~25 MB Auto Backup quota — hitting it silently stops the whole backup
+    (#36). The database alone restores everything on reinstall / new device.
+  - app_flutter/.install_id (#62): the install fingerprint file must NOT
+    follow the database to another device — the mismatch between the copied
+    database's fingerprint and the missing/different file is how the app
+    detects an OS-level restore and drops the old device's Google Drive sync
+    identity (see lib/data/install_id.dart).
 -->
 <full-backup-content>
     <exclude domain="root" path="app_flutter/backups"/>
+    <exclude domain="root" path="app_flutter/.install_id"/>
 </full-backup-content>

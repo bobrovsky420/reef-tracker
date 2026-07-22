@@ -227,6 +227,12 @@ enum SettingKey {
   syncGdriveLastPushedHash(kSyncGdriveLastPushedHashKey, deviceLocal: true),
   syncGdriveLastPushAt(kSyncGdriveLastPushAtKey, deviceLocal: true),
   syncGdriveLastErrorAt(kSyncGdriveLastErrorAtKey, deviceLocal: true),
+  // Random id of the install that wrote this database (#62). Device-local:
+  // the app's own JSON restore must keep *this* device's fingerprint, exactly
+  // like the sync identity it protects. The OS-level restore channel copies
+  // the DB verbatim regardless — that's the mismatch `install_id.dart`
+  // detects against the backup-excluded `.install_id` file.
+  installFingerprint(kInstallFingerprintKey, deviceLocal: true),
   // Hanna checker method sets (U33): user data like the RO stages, not a
   // device preference — they ride backups to a new phone.
   hannaMethodSets(kHannaMethodSetsKey, deviceLocal: false);
@@ -652,6 +658,20 @@ class AppSettings {
     SettingKey.syncGdriveLastErrorAt,
     when?.millisecondsSinceEpoch.toString(),
   );
+
+  // --- install fingerprint (#62) -----------------------------------------------
+
+  /// Random id of the install that wrote this database, or null before the
+  /// first `reconcileInstallFingerprint` run (fresh install, or a database
+  /// written by a pre-fingerprint version). Compared against the
+  /// backup-excluded `.install_id` file to detect an OS-level restore.
+  Future<String?> readInstallFingerprint() async {
+    final raw = await _read(SettingKey.installFingerprint);
+    return (raw == null || raw.isEmpty) ? null : raw;
+  }
+
+  Future<void> setInstallFingerprint(String id) =>
+      _write(SettingKey.installFingerprint, id);
 
   // --- test sets (U9) ----------------------------------------------------------
 

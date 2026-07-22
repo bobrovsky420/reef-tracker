@@ -54,3 +54,6 @@ const kSyncGdriveFolderIdKey = 'sync_gdrive_folder_id';
 const kSyncGdriveLastPushedHashKey = 'sync_gdrive_last_pushed_hash';
 const kSyncGdriveLastPushAtKey = 'sync_gdrive_last_push_at';
 const kSyncGdriveLastErrorAtKey = 'sync_gdrive_last_error_at';
+// Random id identifying the install that wrote this database (#62); paired
+// with the backup-excluded `.install_id` file — see `install_id.dart`.
+const kInstallFingerprintKey = 'install_fingerprint';
