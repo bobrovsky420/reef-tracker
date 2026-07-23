@@ -2167,6 +2167,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hannaFinishNow => 'Завершить';
 
   @override
+  String get hannaTimerHint => 'Таймер реакции реагента';
+
+  @override
+  String get hannaTimerStop => 'Остановить таймер';
+
+  @override
+  String hannaTimerSec(int n) {
+    return '$n с';
+  }
+
+  @override
+  String hannaTimerMin(int n) {
+    return '$n мин';
+  }
+
+  @override
   String get hannaResultsTitle => 'Результаты измерений';
 
   @override

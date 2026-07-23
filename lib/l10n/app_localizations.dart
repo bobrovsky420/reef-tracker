@@ -3639,6 +3639,30 @@ abstract class AppLocalizations {
   /// **'Finish now'**
   String get hannaFinishNow;
 
+  /// No description provided for @hannaTimerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reagent reaction timer'**
+  String get hannaTimerHint;
+
+  /// No description provided for @hannaTimerStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop timer'**
+  String get hannaTimerStop;
+
+  /// Mini button starting an n-second reaction timer; keep as short as possible.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} s'**
+  String hannaTimerSec(int n);
+
+  /// Mini button starting an n-minute reaction timer; keep as short as possible.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} min'**
+  String hannaTimerMin(int n);
+
   /// No description provided for @hannaResultsTitle.
   ///
   /// In en, this message translates to:

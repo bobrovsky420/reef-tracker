@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.6] - 2026-07-23
+
+### Added
+- Hanna checker connection: a reagent reaction timer on the measurement
+  screen — mini buttons for 15 s, 30 s and 2 min with a countdown, ending
+  in a short beep-beep (plus vibration). The meter itself doesn't count
+  these waits.
+- Hanna checker connection: the screen now stays awake while measurements
+  are running, so the display no longer locks mid-test.
+
 ## [0.38.5] - 2026-07-23
 
 ### Fixed

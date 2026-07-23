@@ -2150,6 +2150,22 @@ class AppLocalizationsCs extends AppLocalizations {
   String get hannaFinishNow => 'Ukončit';
 
   @override
+  String get hannaTimerHint => 'Časovač reakce činidla';
+
+  @override
+  String get hannaTimerStop => 'Zastavit časovač';
+
+  @override
+  String hannaTimerSec(int n) {
+    return '$n s';
+  }
+
+  @override
+  String hannaTimerMin(int n) {
+    return '$n min';
+  }
+
+  @override
   String get hannaResultsTitle => 'Výsledky měření';
 
   @override

@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme.dart';
@@ -56,6 +59,22 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
   bool _saving = false;
   bool _saved = false;
 
+  /// The reagent reaction timer on the runner step. The meter itself doesn't
+  /// count the reaction/deproteinization waits its method leaflets prescribe,
+  /// so the screen offers the common ones as one-tap presets.
+  static const _timerPresets = [
+    Duration(seconds: 15),
+    Duration(seconds: 30),
+    Duration(minutes: 2),
+  ];
+  Timer? _timerTicker;
+  DateTime? _timerEndsAt;
+  Duration? _timerPreset;
+  final _beepPlayer = AudioPlayer();
+
+  /// Whether this state currently holds the wakelock (measuring phase only).
+  bool _wakelockOn = false;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +90,9 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
 
   @override
   void dispose() {
+    _timerTicker?.cancel();
+    _setWakelock(false);
+    unawaited(_beepPlayer.dispose());
     _session.removeListener(_onSession);
     _session.dispose();
     super.dispose();
@@ -78,9 +100,21 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
 
   void _onSession() {
     if (!mounted) return;
+    final measuring = _session.phase == HannaSessionPhase.measuring;
+    _setWakelock(measuring);
     setState(() {
       if (_meterTank >= _session.meterTanks.length) _meterTank = 0;
+      // The timer belongs to the runner step; don't let one tick on into
+      // the results view.
+      if (!measuring) _cancelTimer();
     });
+  }
+
+  /// Best-effort: a missing platform implementation (tests) must not surface.
+  void _setWakelock(bool on) {
+    if (on == _wakelockOn) return;
+    _wakelockOn = on;
+    unawaited(WakelockPlus.toggle(enable: on).catchError((_) {}));
   }
 
   String? get _selectedMeterTank =>
@@ -500,6 +534,125 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
 
   // --- runner ----------------------------------------------------------------
 
+  void _startTimer(Duration preset) {
+    _timerTicker?.cancel();
+    setState(() {
+      _timerPreset = preset;
+      _timerEndsAt = DateTime.now().add(preset);
+    });
+    // Sub-second ticks so the displayed count never visibly skips a second.
+    _timerTicker = Timer.periodic(const Duration(milliseconds: 200), (_) {
+      final ends = _timerEndsAt;
+      if (ends == null) return;
+      if (DateTime.now().isBefore(ends)) {
+        setState(() {}); // repaint the countdown
+      } else {
+        setState(_cancelTimer);
+        unawaited(HapticFeedback.vibrate());
+        unawaited(_playBeep());
+      }
+    });
+  }
+
+  /// Clears the ticker and countdown state; callers wrap in setState as
+  /// needed (dispose must not).
+  void _cancelTimer() {
+    _timerTicker?.cancel();
+    _timerTicker = null;
+    _timerEndsAt = null;
+    _timerPreset = null;
+  }
+
+  /// Best-effort: if audio playback is unavailable the haptic and the
+  /// countdown reaching 0:00 still signal the expiry.
+  Future<void> _playBeep() async {
+    try {
+      await _beepPlayer.play(AssetSource('sounds/timer_beep.wav'));
+    } catch (_) {}
+  }
+
+  Duration get _timerRemaining {
+    final ends = _timerEndsAt;
+    if (ends == null) return Duration.zero;
+    final ms = ends.difference(DateTime.now()).inMilliseconds;
+    return Duration(seconds: ms <= 0 ? 0 : (ms / 1000).ceil());
+  }
+
+  String _timerLabel(AppLocalizations l, Duration d) => d.inSeconds < 60
+      ? l.hannaTimerSec(d.inSeconds)
+      : l.hannaTimerMin(d.inMinutes);
+
+  Widget _timerCard(AppLocalizations l) {
+    final tokens = ReefTokens.of(context);
+    final running = _timerEndsAt != null;
+    final remaining = _timerRemaining;
+    final chipStyle = OutlinedButton.styleFrom(
+      minimumSize: const Size(0, 34),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      visualDensity: VisualDensity.compact,
+      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+    );
+    return ReefCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          const SizedBox(width: 4),
+          Icon(
+            Icons.timer_outlined,
+            size: 20,
+            color: running ? tokens.primary : tokens.textDim,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: running
+                ? Row(
+                    children: [
+                      Text(
+                        '${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}',
+                        style: ReefTokens.monoTextStyle.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: tokens.text,
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        iconSize: 18,
+                        tooltip: l.hannaTimerStop,
+                        onPressed: () => setState(_cancelTimer),
+                        icon: Icon(Icons.close, color: tokens.textDim),
+                      ),
+                    ],
+                  )
+                : Text(
+                    l.hannaTimerHint,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: tokens.textDim),
+                  ),
+          ),
+          for (final preset in _timerPresets) ...[
+            const SizedBox(width: 6),
+            if (running && _timerPreset == preset)
+              // Tapping the active preset restarts it — the common case when
+              // timing the same reagent step for the next method.
+              FilledButton.tonal(
+                style: chipStyle,
+                onPressed: () => _startTimer(preset),
+                child: Text(_timerLabel(l, preset)),
+              )
+            else
+              OutlinedButton(
+                style: chipStyle,
+                onPressed: () => _startTimer(preset),
+                child: Text(_timerLabel(l, preset)),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _runnerView(AppLocalizations l) {
     final tokens = ReefTokens.of(context);
     final prefs = ref.watch(unitPrefsProvider);
@@ -571,6 +724,8 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        _timerCard(l),
         const SizedBox(height: 24),
         Row(
           children: [

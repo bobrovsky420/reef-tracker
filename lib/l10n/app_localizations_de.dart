@@ -2148,6 +2148,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hannaFinishNow => 'Jetzt beenden';
 
   @override
+  String get hannaTimerHint => 'Timer für die Reagenz-Reaktionszeit';
+
+  @override
+  String get hannaTimerStop => 'Timer anhalten';
+
+  @override
+  String hannaTimerSec(int n) {
+    return '$n s';
+  }
+
+  @override
+  String hannaTimerMin(int n) {
+    return '$n Min.';
+  }
+
+  @override
   String get hannaResultsTitle => 'Messergebnisse';
 
   @override

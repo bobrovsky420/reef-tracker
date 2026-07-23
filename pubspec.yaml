@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 # NOTE: build 55 (0.25.0) is deployed on Play — versionCode 55 is burned and
 # the next upload must be 56+; the 0.25.0 version name is also taken.
-version: 0.38.5+101
+version: 0.38.6+102
 
 environment:
   sdk: ^3.12.2
@@ -89,6 +89,17 @@ dependencies:
   # plugin (#50 pin-risk class) — must pass the scripts/build-release.ps1
   # gate.
   camera: ^0.11.0
+  # Hanna measurement timers: plays the bundled double-beep when a reagent
+  # reaction timer runs out (assets/sounds/timer_beep.wav) — Flutter has no
+  # cross-platform beep API of its own. Native plugin (#50 pin-risk class) —
+  # must pass the scripts/build-release.ps1 gate.
+  audioplayers: ^6.8.1
+  # Keeps the screen awake during a live Hanna measurement run (window
+  # FLAG_KEEP_SCREEN_ON / iOS idleTimerDisabled — no permissions involved).
+  # Held at 1.5.x by the pinned win32 5.x trio above (1.7 wants win32 6).
+  # Native plugin (#50 pin-risk class) — must pass the
+  # scripts/build-release.ps1 gate.
+  wakelock_plus: ^1.5.2
 
 dev_dependencies:
   flutter_test:
@@ -149,10 +160,10 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  # Double-beep played when a Hanna measurement timer runs out (generated
+  # tone, see tool/gen_beep.dart).
+  assets:
+    - assets/sounds/timer_beep.wav
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

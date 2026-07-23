@@ -2054,6 +2054,18 @@ overflow entry) only exist once the experimental-features master switch
   `…,R` frame while the user does the wet chemistry on the meter (progress
   ticks surface the meter's STATUS step). Skip / Finish-now supported; a
   mid-run disconnect keeps the captured values and flags the run.
+- **Runner conveniences:** the meter itself doesn't count the reaction /
+  deproteinization waits its method leaflets prescribe, so the runner step
+  carries a **reagent reaction timer** card — three one-tap presets
+  (15 s / 30 s / 2 min), a mono countdown with a stop button, tapping the
+  active preset restarts it, and expiry plays a **double beep + haptic**
+  (generated asset `assets/sounds/timer_beep.wav`, source
+  `tool/gen_beep.dart`, played via `audioplayers`). While the measuring
+  phase is active the screen holds a **wakelock** (`wakelock_plus`,
+  `FLAG_KEEP_SCREEN_ON`/`idleTimerDisabled` — no permissions) so the
+  display can't sleep mid-chemistry; it releases on every other phase and
+  on dispose. Both are native plugins (#50 pin-risk class) gated through
+  `scripts/build-release.ps1` on 2026-07-23.
 - **Saving** reuses the U32 machinery: results confirm screen with a
   ReefTracker-tank selector (defaulting through the remembered location →
   tank mapping, then the active tank), the wrong-tank guard, the #31

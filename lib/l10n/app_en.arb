@@ -995,6 +995,18 @@
   "hannaStatusSkipped": "Skipped",
   "hannaSkip": "Skip",
   "hannaFinishNow": "Finish now",
+  "hannaTimerHint": "Reagent reaction timer",
+  "hannaTimerStop": "Stop timer",
+  "hannaTimerSec": "{n} s",
+  "@hannaTimerSec": {
+    "description": "Mini button starting an n-second reaction timer; keep as short as possible.",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "hannaTimerMin": "{n} min",
+  "@hannaTimerMin": {
+    "description": "Mini button starting an n-minute reaction timer; keep as short as possible.",
+    "placeholders": { "n": { "type": "int" } }
+  },
   "hannaResultsTitle": "Measurement results",
   "hannaResultsDisconnected": "The connection was lost — the results captured so far are kept.",
   "hannaNoResults": "No measurements were captured.",

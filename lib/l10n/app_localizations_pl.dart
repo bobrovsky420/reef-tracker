@@ -2173,6 +2173,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaFinishNow => 'Zakończ';
 
   @override
+  String get hannaTimerHint => 'Minutnik reakcji odczynnika';
+
+  @override
+  String get hannaTimerStop => 'Zatrzymaj minutnik';
+
+  @override
+  String hannaTimerSec(int n) {
+    return '$n s';
+  }
+
+  @override
+  String hannaTimerMin(int n) {
+    return '$n min';
+  }
+
+  @override
   String get hannaResultsTitle => 'Wyniki pomiarów';
 
   @override
