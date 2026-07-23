@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReefTracker – the offline reef aquarium companion</title>
+  <meta name="description" content="ReefTracker keeps your reef tank's water tests, dosing, maintenance and equipment in one place – offline, private, no account, no ads. For Android and iOS.">
+  <meta property="og:title" content="ReefTracker – the offline reef aquarium companion">
+  <meta property="og:description" content="Log water tests in seconds, see tank health at a glance, get dosing guidance and maintenance reminders – all stored on your device.">
+  <meta property="og:url" content="https://reeftracker.org/">
+  <meta property="og:image" content="https://reeftracker.org/img/dashboard.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪸</text></svg>">
+  <style>
+    :root {
+      --text: #1a1a1a; --muted: #666;
+      --border: #ddd; --bg: #fff; --card: #f7f7f7;
+      --accent: #0b7285; --accent-ink: #fff;
+      --hero-bg: linear-gradient(180deg, #e7f8f6 0%, #ffffff 100%);
+      --pro-bg: #e7f5ff; --pro-text: #1971c2;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #e6e6e6; --muted: #9a9a9a;
+        --border: #3a3a3a; --bg: #121212; --card: #1e1e1e;
+        --accent: #4cc3ce; --accent-ink: #06282c;
+        --hero-bg: linear-gradient(180deg, #0e2321 0%, #121212 100%);
+        --pro-bg: #123; --pro-text: #74c0fc;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+           margin: 0; line-height: 1.6; color: var(--text); background: var(--bg); }
+    a { color: var(--accent); }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+    /* Hero */
+    .hero { background: var(--hero-bg); padding: 56px 0 40px; }
+    .hero .wrap { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
+    .hero-copy { flex: 1 1 420px; }
+    .hero h1 { font-size: 2.5rem; margin: 0 0 4px; letter-spacing: -0.02em; }
+    .hero h1 .coral { color: var(--accent); }
+    .tagline { font-size: 1.25rem; margin: 0 0 14px; color: var(--muted); }
+    .hero p.pitch { font-size: 1.05rem; margin: 0 0 24px; }
+    .cta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 11px 22px; border-radius: 10px;
+           text-decoration: none; font-weight: 600; }
+    .btn-primary { background: var(--accent); color: var(--accent-ink); }
+    .btn-ghost { border: 1.5px solid var(--accent); color: var(--accent); }
+    .play-badge img { height: 56px; display: block; }
+    .ios-note { font-size: 0.85rem; color: var(--muted); }
+    .hero-shot { flex: 0 1 280px; margin: 0 auto; }
+    .hero-shot img { width: 100%; max-width: 280px; border-radius: 22px;
+                     border: 1px solid var(--border);
+                     box-shadow: 0 12px 40px rgba(0,0,0,0.18); }
+
+    /* Sections */
+    section { padding: 44px 0; }
+    section h2 { font-size: 1.6rem; margin: 0 0 6px; text-align: center; }
+    section p.sub { text-align: center; color: var(--muted); margin: 0 auto 28px; max-width: 640px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+    .card { background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px 20px; }
+    .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .card h3 .emoji { margin-right: 8px; }
+    .card p { margin: 0; font-size: 0.95rem; color: var(--muted); }
+
+    .shots { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+    .shots a { display: block; width: 200px; }
+    .shots img { width: 100%; border-radius: 14px; border: 1px solid var(--border);
+                 box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+
+    .privacy { background: var(--card); border-top: 1px solid var(--border);
+               border-bottom: 1px solid var(--border); text-align: center; }
+    .privacy p { max-width: 680px; margin: 0 auto; font-size: 1.05rem; }
+
+    .pro-pill { display: inline-block; background: var(--pro-bg); color: var(--pro-text);
+                font-size: 0.75rem; font-weight: 600; padding: 1px 8px;
+                border-radius: 99px; vertical-align: 2px; }
+
+    footer { border-top: 1px solid var(--border); padding: 28px 0 40px;
+             color: var(--muted); font-size: 0.92rem; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    footer nav a { margin-right: 18px; }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <h1>Reef<span class="coral">Tracker</span></h1>
+      <p class="tagline">The offline reef aquarium companion</p>
+      <p class="pitch">Log your water tests in seconds and see at a glance whether
+      every value is healthy – color-coded safe ranges, history graphs, trends and
+      early warnings, dosing tools, maintenance reminders and safe backups.
+      Everything stays on your device: no account, no cloud requirement, no ads.</p>
+      <div class="cta-row">
+        <a class="play-badge" href="https://play.google.com/store/apps/details?id=cz.reeftracker.reeftracker">
+          <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">
+        </a>
+        <a class="btn btn-ghost" href="guide/">Read the user guide</a>
+      </div>
+      <p class="ios-note">iOS version coming soon to the App Store.</p>
+    </div>
+    <div class="hero-shot">
+      <img src="img/dashboard.png" alt="ReefTracker dashboard with tank health score and parameter gauges">
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>Everything your reef needs, in one app</h2>
+    <p class="sub">Built by a reef keeper, for reef keepers – from the daily
+    alkalinity test to the yearly membrane change.</p>
+    <div class="grid">
+      <div class="card">
+        <h3><span class="emoji">🧪</span>Water parameter tracking</h3>
+        <p>All core reef parameters with color-coded safe ranges you can tune per
+        tank. Batch entry, test sets for your routines, and typo protection so a
+        slipped decimal never wrecks your data.</p>
+      </div>
+      <div class="card">
+        <h3><span class="emoji">💚</span>Tank health at a glance</h3>
+        <p>A weighted 0–100 health score with a per-parameter breakdown, plus a
+        stability score and prioritized plain-language insights
+        <span class="pro-pill">PRO</span> – computed entirely on your device.</p>
+      </div>
+      <div class="card">
+        <h3><span class="emoji">📈</span>Graphs, trends &amp; early warnings</h3>
+        <p>Zoomable history graphs with your safe range shaded behind the data,
+        trend detection, and forecasts that warn you <em>before</em> a drifting
+        value leaves its range.</p>
+      </div>
+      <div class="card">
+        <h3><span class="emoji">💧</span>Dosing tools</h3>
+        <p>A supplement plan built on a catalog of reef brands, full dosing
+        history, and calculators <span class="pro-pill">PRO</span> that turn your
+        readings into a recommended daily dose or a safe correction plan.</p>
+      </div>
+      <div class="card">
+        <h3><span class="emoji">🔔</span>Maintenance &amp; reminders</h3>
+        <p>Water changes, media changes and cleanings in one log, an elastic
+        maintenance schedule that never stacks phantom overdue warnings, RO/DI
+        filter life tracking, and opt-in notifications.</p>
+      </div>
+      <div class="card">
+        <h3><span class="emoji">🔬</span>Microelements &amp; ICP</h3>
+        <p>The full 33-element trace panel with seawater-anchored ranges, custom
+        element views, and one-step import of Fauna Marin and ATI ICP reports
+        <span class="pro-pill">PRO</span>.</p>
+      </div>
+      <div class="card">
+        <h3><span class="emoji">📷</span>Hanna checker integration</h3>
+        <p>Import your Hanna Lab test history, run measurements live over
+        Bluetooth, or scan a pocket checker's display with your camera – no
+        typing <span class="pro-pill">PRO</span>.</p>
+      </div>
+      <div class="card">
+        <h3><span class="emoji">🛟</span>Safe backups</h3>
+        <p>One-file backups shared anywhere, automatic local backups, optional
+        Google Drive sync <span class="pro-pill">PRO</span>, CSV export, and an
+        "Ask your AI" summary you can paste into any AI chat.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>See it in action</h2>
+    <p class="sub">A few screens from the app – the <a href="guide/">user guide</a>
+    walks through all of them.</p>
+    <div class="shots">
+      <a href="guide/#graphs"><img src="img/history.png" alt="History graph with safe-range bands and trend forecast" loading="lazy"></a>
+      <a href="guide/#dosing"><img src="img/dosing.png" alt="Dosing plan with element status tags" loading="lazy"></a>
+      <a href="guide/#actions"><img src="img/actions.png" alt="Actions tab with maintenance log and due tasks" loading="lazy"></a>
+      <a href="guide/#micro"><img src="img/micro.png" alt="Microelements ICP panel" loading="lazy"></a>
+    </div>
+  </div>
+</section>
+
+<section class="privacy">
+  <div class="wrap">
+    <h2>Your data stays yours</h2>
+    <p>ReefTracker is 100&nbsp;% offline. No account, no sign-up, no tracking, no
+    ads. Your readings live on your device and leave it only when <em>you</em>
+    export or back them up. Read the
+    <a href="privacy-policy.html">privacy policy</a> – it's short.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Get started</h2>
+    <p class="sub">Free to use with up to two aquariums – Pro adds unlimited tanks
+    and the power features marked above.</p>
+    <div class="cta-row" style="justify-content:center">
+      <a class="play-badge" href="https://play.google.com/store/apps/details?id=cz.reeftracker.reeftracker">
+        <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">
+      </a>
+      <a class="btn btn-primary" href="guide/">User guide</a>
+      <a class="btn btn-ghost" href="support.html">Support &amp; FAQ</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>© 2026 ReefTracker · <a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a></div>
+    <nav>
+      <a href="guide/">User guide</a>
+      <a href="support.html">Support</a>
+      <a href="privacy-policy.html">Privacy policy</a>
+    </nav>
+  </div>
+  <div class="wrap" style="margin-top:10px; font-size:0.8rem;">
+    Google Play and the Google Play logo are trademarks of Google LLC.
+  </div>
+</footer>
+
+</body>
+</html>
