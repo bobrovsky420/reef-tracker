@@ -10,7 +10,27 @@
   <meta property="og:url" content="https://reeftracker.org/">
   <meta property="og:image" content="https://reeftracker.org/img/dashboard.png">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪸</text></svg>">
+  <link rel="preload" href="fonts/BricolageGrotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
   <style>
+    /* Bricolage Grotesque – SIL Open Font License, see fonts/OFL.txt */
+    @font-face {
+      font-family: 'Bricolage Grotesque';
+      font-style: normal;
+      font-weight: 200 800;
+      font-stretch: 100%;
+      font-display: swap;
+      src: url(fonts/BricolageGrotesque-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Bricolage Grotesque';
+      font-style: normal;
+      font-weight: 200 800;
+      font-stretch: 100%;
+      font-display: swap;
+      src: url(fonts/BricolageGrotesque-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
     :root {
       --text: #1a1a1a; --muted: #666;
       --border: #ddd; --bg: #fff; --card: #f7f7f7;
@@ -30,6 +50,9 @@
     * { box-sizing: border-box; }
     body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
            margin: 0; line-height: 1.6; color: var(--text); background: var(--bg); }
+    h1, h2, h3, .tagline, .btn {
+      font-family: 'Bricolage Grotesque', -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
     a { color: var(--accent); }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
 
@@ -37,7 +60,7 @@
     .hero { background: var(--hero-bg); padding: 56px 0 40px; }
     .hero .wrap { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
     .hero-copy { flex: 1 1 420px; }
-    .hero h1 { font-size: 2.5rem; margin: 0 0 4px; letter-spacing: -0.02em; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin: 0 0 4px; letter-spacing: -0.02em; }
     .hero h1 .coral { color: var(--accent); }
     .tagline { font-size: 1.25rem; margin: 0 0 14px; color: var(--muted); }
     .hero p.pitch { font-size: 1.05rem; margin: 0 0 24px; }
@@ -195,7 +218,8 @@
   <div class="wrap">
     <h2>Get started</h2>
     <p class="sub">Free to use with up to two aquariums – Pro adds unlimited tanks
-    and the power features marked above.</p>
+    and the power features marked above. See the
+    <a href="features.html">full feature list</a> for everything the app can do.</p>
     <div class="cta-row" style="justify-content:center">
       <a class="play-badge" href="https://play.google.com/store/apps/details?id=cz.reeftracker.reeftracker">
         <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">
@@ -211,6 +235,7 @@
     <div>© 2026 ReefTracker · <a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a></div>
     <nav>
       <a href="guide/">User guide</a>
+      <a href="features.html">Features</a>
       <a href="support.html">Support</a>
       <a href="privacy-policy.html">Privacy policy</a>
     </nav>

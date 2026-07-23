@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReefTracker – Feature Overview</title>
+  <meta name="description" content="Every ReefTracker feature on one page – water testing, tank health, graphs, dosing, maintenance, ICP and Hanna imports, backups – each marked Standard or Pro.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪸</text></svg>">
+  <link rel="preload" href="fonts/BricolageGrotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <style>
+    /* Bricolage Grotesque – SIL Open Font License, see fonts/OFL.txt */
+    @font-face {
+      font-family: 'Bricolage Grotesque';
+      font-style: normal;
+      font-weight: 200 800;
+      font-stretch: 100%;
+      font-display: swap;
+      src: url(fonts/BricolageGrotesque-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Bricolage Grotesque';
+      font-style: normal;
+      font-weight: 200 800;
+      font-stretch: 100%;
+      font-display: swap;
+      src: url(fonts/BricolageGrotesque-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    :root {
+      --text: #1a1a1a; --muted: #666;
+      --border: #ddd; --bg: #fff; --card: #f7f7f7;
+      --accent: #0b7285;
+      --pro-bg: #e7f5ff; --pro-text: #1971c2;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #e6e6e6; --muted: #9a9a9a;
+        --border: #3a3a3a; --bg: #121212; --card: #1e1e1e;
+        --accent: #66d9e8;
+        --pro-bg: #123; --pro-text: #74c0fc;
+      }
+    }
+    body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+           max-width: 880px; margin: 40px auto; padding: 0 20px; line-height: 1.6;
+           color: var(--text); background: var(--bg); }
+    h1, h2 {
+      font-family: 'Bricolage Grotesque', -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.2rem; }
+    h2 { font-size: 1.3rem; margin-top: 2.6rem; padding-top: 1rem;
+         border-top: 1px solid var(--border); }
+    a { color: var(--accent); }
+    .updated { color: var(--muted); font-size: 0.9rem; }
+    .crumb { font-size: 0.9rem; margin-bottom: 2rem; }
+    .lead { font-size: 1.05rem; }
+    code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+    .toc { background: var(--card); border: 1px solid var(--border);
+           border-radius: 10px; padding: 16px 24px; margin: 24px 0; }
+    .toc ul { columns: 2; margin: 0; padding-left: 20px; }
+    .toc li { margin: 3px 0; break-inside: avoid; }
+    @media (max-width: 560px) { .toc ul { columns: 1; } }
+    .pro { display: inline-block; background: var(--pro-bg); color: var(--pro-text);
+           font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+           padding: 1px 8px; border-radius: 99px; }
+    .exp { display: inline-block; background: var(--card); color: var(--muted);
+           border: 1px solid var(--border); font-size: 0.72rem; font-weight: 600;
+           padding: 1px 8px; border-radius: 99px; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left;
+             font-size: 0.95rem; vertical-align: top; }
+    th { background: var(--card); }
+    td.ed { white-space: nowrap; text-align: center; color: var(--muted); }
+    footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border);
+             color: var(--muted); font-size: 0.9rem; }
+    footer nav a { margin-right: 18px; }
+  </style>
+</head>
+<body>
+
+<p class="crumb"><a href="./">← ReefTracker home</a></p>
+
+<h1>ReefTracker Feature Overview</h1>
+<p class="updated">Last updated: 23 July 2026</p>
+
+<p class="lead">ReefTracker is an offline-first reef-aquarium companion for
+Android and iOS. Log your water tests in seconds and see at a glance whether
+every value is healthy – with color-coded safe ranges, history graphs, trends
+and early warnings, dosing tools, maintenance reminders, and safe backups.
+Everything is stored on your device: no account, no cloud requirement, no
+ads.</p>
+
+<p>Each feature below is either included for everyone (<strong>Standard</strong>)
+or part of the ReefTracker Pro tier (<span class="pro">PRO</span>). Features
+marked <span class="exp">EXPERIMENTAL</span> stay hidden until you switch them
+on in <strong>Settings → Experimental</strong>.</p>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ul>
+    <li><a href="#water">Water parameter tracking</a></li>
+    <li><a href="#tanks">Multiple aquariums</a></li>
+    <li><a href="#dashboard">Dashboard &amp; tank health</a></li>
+    <li><a href="#graphs">Graphs, history &amp; trends</a></li>
+    <li><a href="#micro">Microelements &amp; ICP</a></li>
+    <li><a href="#import">Measurement import &amp; meters</a></li>
+    <li><a href="#dosing">Dosing &amp; supplements</a></li>
+    <li><a href="#actions">Maintenance, actions &amp; reminders</a></li>
+    <li><a href="#ro">Reverse-osmosis unit</a></li>
+    <li><a href="#backup">Backup, export &amp; sync</a></li>
+    <li><a href="#tools">Tools &amp; calculators</a></li>
+    <li><a href="#platform">Experience &amp; platform</a></li>
+  </ul>
+</nav>
+
+<h2 id="water">Water parameter tracking</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Core reef parameters: temperature, pH, salinity, alkalinity, calcium, magnesium, nitrate, phosphate, ammonia, nitrite, ORP</td><td class="ed">Standard</td></tr>
+  <tr><td>Color-coded health zones – every value classified green / amber / red against its safe range</td><td class="ed">Standard</td></tr>
+  <tr><td>Setup-type presets: fish-only, soft coral, LPS, SPS and mixed tanks each come with recommended parameters and safe ranges</td><td class="ed">Standard</td></tr>
+  <tr><td>Fully editable safe ranges per parameter, per aquarium – tune the app to <em>your</em> tank's targets</td><td class="ed">Standard</td></tr>
+  <tr><td>Choose which parameters to track, and in what order they appear</td><td class="ed">Standard</td></tr>
+  <tr><td>Batch reading entry – log a whole test session at once, kept together as one session</td><td class="ed">Standard</td></tr>
+  <tr><td>Test sets – named parameter groups (e.g. "Daily test", "Weekly test") to speed up routine entry</td><td class="ed">Standard</td></tr>
+  <tr><td>Typo protection – physically impossible values are rejected, implausible ones ask for confirmation before saving</td><td class="ed">Standard</td></tr>
+  <tr><td>Notes on every reading, water change and maintenance event</td><td class="ed">Standard</td></tr>
+  <tr><td>Sensible display precision and units per parameter (e.g. nitrite in ppb)</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="tanks">Multiple aquariums</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Up to 2 aquariums (e.g. a display tank and a quarantine tank), each with its own parameters, ranges, history and dosing</td><td class="ed">Standard</td></tr>
+  <tr><td>Unlimited aquariums</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>One-tap aquarium switcher from the top bar</td><td class="ed">Standard</td></tr>
+  <tr><td>Per-tank profile: name, setup type, volume, start date, vendor/model, notes</td><td class="ed">Standard</td></tr>
+  <tr><td>Deleted aquariums can be restored with Undo before the deletion becomes final</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="dashboard">Dashboard &amp; tank health</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Grouped dashboard with gauge dials for chemistry and nutrients, compact environment pills, and a combined ratios card</td><td class="ed">Standard</td></tr>
+  <tr><td>Alternative "Flat" dashboard layout – one custom-ordered grid of cards</td><td class="ed">Standard</td></tr>
+  <tr><td>Tank health score – a 0–100 score with a grade (excellent / good / caution / critical), weighted by parameter importance and never letting one red value hide behind greens</td><td class="ed">Standard</td></tr>
+  <tr><td>Per-parameter health breakdown – see exactly which values drag the score down</td><td class="ed">Standard</td></tr>
+  <tr><td>Tank stability score – the second axis of tank health: how much values have been <em>swinging</em> over the last 30/60/90 days, independent of where they sit now</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Smart insights – a short, prioritized list of plain-language observations: out-of-range values, predicted problems, recovering parameters and overdue tests. Computed entirely on-device by deterministic rules – no AI service, no network</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Freshness awareness – readings older than 30 days are surfaced as stale instead of silently coloring the dashboard</td><td class="ed">Standard</td></tr>
+  <tr><td>Parameter ratios with recommended zones: PO₄ : NO₃, Mg : Ca, Ca : Alk, Mg : Alk</td><td class="ed">Standard</td></tr>
+  <tr><td>Free (toxic) ammonia estimate – derives un-ionized NH₃ from your ammonia, pH, temperature and salinity using published scientific models (Emerson 1975, US EPA 1989), shown against EPA-anchored toxicity limits</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="graphs">Graphs, history &amp; trends</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>History graph for every parameter with the safe range shaded behind the data</td><td class="ed">Standard</td></tr>
+  <tr><td>Pinch-zoom and pan on all graphs, double-tap to reset</td><td class="ed">Standard</td></tr>
+  <tr><td>Min / Avg / Max / test-count statistics per parameter and time range</td><td class="ed">Standard</td></tr>
+  <tr><td>Compare view – all parameter graphs on one screen</td><td class="ed">Standard</td></tr>
+  <tr><td>Ratio graphs with the same zoom, pan and value popups as parameter graphs</td><td class="ed">Standard</td></tr>
+  <tr><td>Trend detection – a regression over your recent readings shows the direction and per-day rate of change</td><td class="ed">Standard</td></tr>
+  <tr><td>Early-warning forecast – projects when a drifting value will leave its safe range ("amber in ~5 d"), before it happens</td><td class="ed">Standard</td></tr>
+  <tr><td>Recovery detection – a value moving back toward its safe range is recognized as improving, not flagged as a problem</td><td class="ed">Standard</td></tr>
+  <tr><td>Share any graph as an image</td><td class="ed">Standard</td></tr>
+  <tr><td>Edit or delete past readings, including whole test sessions, with Undo</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="micro">Microelements &amp; ICP</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Full 33-element trace panel – majors, trace elements and contaminants, matching professional ICP reports</td><td class="ed">Standard</td></tr>
+  <tr><td>Default safe ranges per element anchored on natural seawater and ICP-lab targets; contaminants use one-sided "up to a ceiling" ranges</td><td class="ed">Standard</td></tr>
+  <tr><td>ICP-style units: mg/L for majors, µg/L for traces and contaminants</td><td class="ed">Standard</td></tr>
+  <tr><td>Hobby-kit filter – quick entry for the elements home test kits exist for (strontium, iodine, iron)</td><td class="ed">Standard</td></tr>
+  <tr><td>Custom element views – save the exact element set your lab reports, plus built-in presets (Full list, Fauna Marin ICP)</td><td class="ed">Standard</td></tr>
+  <tr><td>Microelement summary card on the dashboard: how many measured, how many out of range, worst status, last test date</td><td class="ed">Standard</td></tr>
+  <tr><td>ICP report import – load a Fauna Marin or ATI/ZIMS ICP report file and store the whole analysis in one step</td><td class="ed"><span class="pro">PRO</span></td></tr>
+</table>
+
+<h2 id="import">Measurement import &amp; meters</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Hanna Lab file import – import the test history CSV shared from the Hanna Lab app (HI97115 Marine Master): original timestamps, grouped test sessions, smart de-duplication so re-imports only add what's new, and a one-tap undo</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Import status per aquarium, with rewind/reset controls that never create duplicates</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Hanna checker direct connection <span class="exp">EXPERIMENTAL</span> – run measurements live over Bluetooth on a Hanna HI97115C photometer, method by method or via saved test sets, and save the confirmed results with the meter's timestamps. Built-in reagent reaction timers (15 s / 30 s / 2 min) beep when the wait is over, and the screen stays awake while a test is running. Measurements only: meter settings and firmware updates stay in Hanna's own Hanna Lab app</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Checker display scan <span class="exp">EXPERIMENTAL</span> – point the camera at a Hanna pocket checker's LCD and save the shown value without typing; 14 checker models supported, recognition runs fully on-device (no photos stored or uploaded)</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Automatic checker recognition – the scanned checker's model is identified from its case color and the reading's display format, so scanning is truly one-tap; the app only asks when models would interpret the value differently, and never guesses silently</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Scan viewfinder with pinch-to-zoom (starts at 2×) – read the display from a comfortable distance instead of holding the phone against the checker</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Experimental features are opt-in – the checker connection and display scan stay completely hidden until switched on in Settings → Experimental</td><td class="ed">Standard</td></tr>
+  <tr><td>Optional quick-scan camera button next to "Add reading" – one-tap scanning for checker owners, no lost screen space for everyone else (off by default)</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="dosing">Dosing &amp; supplements</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Dosing plan per aquarium – record what you dose, how much and on which schedule (daily, every N days, or fixed weekdays)</td><td class="ed">Standard</td></tr>
+  <tr><td>Built-in supplement catalog of reef brands and dosing programs, with verified product potencies</td><td class="ed">Standard</td></tr>
+  <tr><td>Custom products for anything not in the catalog</td><td class="ed">Standard</td></tr>
+  <tr><td>Manual dose log – one-off doses, vitamins and medications, logged outside the regular plan</td><td class="ed">Standard</td></tr>
+  <tr><td>Dosing history – every past plan and change is kept as dated history, not overwritten</td><td class="ed">Standard</td></tr>
+  <tr><td>Element status tags – each supplement is tagged with the current dashboard status of the element it targets</td><td class="ed">Standard</td></tr>
+  <tr><td>Dose calculator (consumption mode) – computes your tank's actual daily consumption from recent readings and doses, and recommends whether to raise, lower or keep the current dose</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Correction dose calculator – computes the one-off dose to lift an element to its target, and automatically splits it over several days when the rise would exceed the element's safe daily limit</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Salinity-adjusted targets – correction targets stated for 35 ppt seawater can be scaled to your tank's actual measured salinity, per tank, using your recent salinity readings</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Per-parameter correction targets, pre-seeded from your tank's setup type</td><td class="ed">Standard</td></tr>
+  <tr><td>Calculator shortcuts from a parameter's graph, including a "below range" prompt that jumps straight into correction mode</td><td class="ed"><span class="pro">PRO</span></td></tr>
+</table>
+
+<h2 id="actions">Maintenance, actions &amp; reminders</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Action log: water changes (with volume), carbon/media changes (with weight), equipment cleanings – all with notes and full history</td><td class="ed">Standard</td></tr>
+  <tr><td>Maintenance schedule – recurring or one-off tasks: every N days/weeks/months, fixed weekdays ("every Monday"), or a fixed day of month ("every 1st")</td><td class="ed">Standard</td></tr>
+  <tr><td>Elastic scheduling – completing a task resets its timer, so a late water change doesn't stack phantom overdue warnings</td><td class="ed">Standard</td></tr>
+  <tr><td>Due and overdue tasks surfaced on the Actions tab, one tap to mark done</td><td class="ed">Standard</td></tr>
+  <tr><td>Testing reminders – "remind me to test every N days" per parameter, including microelements</td><td class="ed">Standard</td></tr>
+  <tr><td>Dosing reminders at the scheduled dose time</td><td class="ed">Standard</td></tr>
+  <tr><td>Local notifications, grouped per aquarium and kind, with a configurable delivery time – all opt-in</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="ro">Reverse-osmosis unit</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>RO/DI unit tracking, shared across all aquariums – sediment, carbon block, membrane and DI resin stages plus custom stages</td><td class="ed">Standard</td></tr>
+  <tr><td>Per-stage lifespan with a remaining-life bar and green/amber/red due status</td><td class="ed">Standard</td></tr>
+  <tr><td>Replacement log with full history and Undo</td><td class="ed">Standard</td></tr>
+  <tr><td>Replacement reminders</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="backup">Backup, export &amp; sync</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Full backup to a single file, shared anywhere via the system share sheet</td><td class="ed">Standard</td></tr>
+  <tr><td>Safe restore – every backup is integrity-checked, validated and rehearsed on a scratch database before it touches your data; a bad file can never wipe the app</td><td class="ed">Standard</td></tr>
+  <tr><td>Automatic local backups on a schedule, with a configurable number kept</td><td class="ed">Standard</td></tr>
+  <tr><td>Google Drive backup sync (Android) – backups upload to your own Drive automatically and restore on a new device; the app can only see its own folder</td><td class="ed"><span class="pro">PRO</span></td></tr>
+  <tr><td>Measurement export as CSV for spreadsheets, using stable column names that compare across app languages</td><td class="ed">Standard</td></tr>
+  <tr><td>"Ask your AI" export – a ready-to-paste summary of your tank (values, ranges, trends, dosing, maintenance) for ChatGPT, Claude or any AI chat; prepared entirely on your device, nothing is sent anywhere</td><td class="ed">Standard</td></tr>
+  <tr><td>Backups carry everything: aquariums, readings, ranges, dosing, maintenance, RO unit, import state – while device preferences (language, units, theme) stay per-device</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="tools">Tools &amp; calculators</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>Salinity calculator – convert between ppt and specific gravity</td><td class="ed">Standard</td></tr>
+  <tr><td>Free ammonia explanation view – see the toxic-fraction math and the inputs behind the estimate</td><td class="ed">Standard</td></tr>
+</table>
+
+<h2 id="platform">Experience &amp; platform</h2>
+<table>
+  <tr><th>Feature</th><th>Edition</th></tr>
+  <tr><td>100&nbsp;% offline – all data lives on your device; no account, no sign-up, no tracking, no ads</td><td class="ed">Standard</td></tr>
+  <tr><td>Android and iOS from one codebase, with platform-native controls and styling on each</td><td class="ed">Standard</td></tr>
+  <tr><td>Light and dark themes: follow the system or pick one</td><td class="ed">Standard</td></tr>
+  <tr><td>Unit preferences: °C/°F, ppt/SG, liters/gallons – switching units never changes health colors, because values are stored canonically</td><td class="ed">Standard</td></tr>
+  <tr><td>7 languages: English, Czech, German, French, Italian, Polish, Russian – including locale-aware number entry</td><td class="ed">Standard</td></tr>
+  <tr><td>First-run feature tour</td><td class="ed">Standard</td></tr>
+  <tr><td>Built-in help links – the illustrated user guide, support page and privacy policy on reeftracker.org, one tap from Settings</td><td class="ed">Standard</td></tr>
+  <tr><td>Undo everywhere – deleting readings, tanks, plans, tasks or stopping a dosing plan can always be taken back</td><td class="ed">Standard</td></tr>
+</table>
+
+<p><em>This page describes what each feature does, not how to use it – the
+illustrated <a href="guide/">user guide</a> walks through every screen.
+Experimental features are marked as such in the app and stay hidden until
+enabled in Settings → Experimental.</em></p>
+
+<!-- Maintainer note: feature/edition assignment must reflect the Pro registry
+     (lib/domain/pro_features.yaml). Update this page in the same change
+     whenever a feature is added, meaningfully changed, removed, or re-tiered
+     (see CLAUDE.md). -->
+
+<footer>
+  <div>© 2026 ReefTracker · <a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a></div>
+  <nav>
+    <a href="./">Home</a>
+    <a href="guide/">User guide</a>
+    <a href="support.html">Support</a>
+    <a href="privacy-policy.html">Privacy policy</a>
+  </nav>
+</footer>
+
+</body>
+</html>

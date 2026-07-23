@@ -6,7 +6,7 @@
 
 ## Feature overview
 
-[docs/features.md](docs/features.md) is the **user-facing** feature overview (marketing/store-adjacent wording, one row per feature, each marked Standard or **Pro**). **Update it in the same change whenever a feature is added, meaningfully changed, removed, or re-tiered** — including when a feature's edition assignment in `lib/domain/pro_features.yaml` changes. Write it for reef keepers, not developers: what the feature does for them, no implementation detail. Skip it for internal changes with no user-visible feature impact (bug fixes, refactors, UI polish that doesn't add capability).
+[docs/features.html](docs/features.html) is the **user-facing** feature overview, published on the website (marketing/store-adjacent wording, one table row per feature, each marked Standard or **PRO**). **Update it in the same change whenever a feature is added, meaningfully changed, removed, or re-tiered** — including when a feature's edition assignment in `lib/domain/pro_features.yaml` changes. Write it for reef keepers, not developers: what the feature does for them, no implementation detail. It is a hand-maintained HTML page in the site's shared style (en dashes, PRO/EXPERIMENTAL pills, dark-mode CSS variables) — keep new rows consistent with that. Skip it for internal changes with no user-visible feature impact (bug fixes, refactors, UI polish that doesn't add capability).
 
 ## Platform parity (Android + iOS)
 

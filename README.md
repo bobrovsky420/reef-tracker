@@ -12,7 +12,8 @@ registry lives in [lib/domain/pro_features.yaml](lib/domain/pro_features.yaml).
 ## Features
 
 The full user-facing overview (one row per feature, marked Standard or Pro) is
-[docs/features.md](docs/features.md). Highlights:
+[docs/features.html](docs/features.html), published at
+[reeftracker.org/features.html](https://reeftracker.org/features.html). Highlights:
 
 - **Parameter tracking** — core reef parameters plus a 33-element ICP micro
   panel; green / amber / red zones per value; setup-type presets (fish only,
@@ -69,7 +70,7 @@ integration_test/, test_driver/   store-screenshot harness
 ```
 
 Companion docs: [DESIGN.md](DESIGN.md) (architecture, kept current),
-[docs/features.md](docs/features.md) (user-facing features),
+[docs/features.html](docs/features.html) (user-facing features),
 [CHANGELOG.md](CHANGELOG.md), [HANNA.md](HANNA.md) (Hanna meter protocol),
 [CLAUDE.md](CLAUDE.md) (contribution rules: versioning, localization,
 platform parity).

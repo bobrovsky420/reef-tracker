@@ -3,71 +3,147 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ReefTracker — Support</title>
+  <title>ReefTracker – Support</title>
+  <meta name="description" content="Get help with ReefTracker: the illustrated user guide, contact for bug reports and questions, and answers to frequently asked questions.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪸</text></svg>">
+  <link rel="preload" href="fonts/BricolageGrotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
   <style>
+    /* Bricolage Grotesque – SIL Open Font License, see fonts/OFL.txt */
+    @font-face {
+      font-family: 'Bricolage Grotesque';
+      font-style: normal;
+      font-weight: 200 800;
+      font-stretch: 100%;
+      font-display: swap;
+      src: url(fonts/BricolageGrotesque-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Bricolage Grotesque';
+      font-style: normal;
+      font-weight: 200 800;
+      font-stretch: 100%;
+      font-display: swap;
+      src: url(fonts/BricolageGrotesque-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    :root {
+      --text: #1a1a1a; --muted: #666;
+      --border: #ddd; --bg: #fff; --card: #f7f7f7;
+      --accent: #0b7285;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #e6e6e6; --muted: #9a9a9a;
+        --border: #3a3a3a; --bg: #121212; --card: #1e1e1e;
+        --accent: #66d9e8;
+      }
+    }
     body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-           max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #1a1a1a; }
-    h1 { font-size: 1.8rem; } h2 { font-size: 1.2rem; margin-top: 1.8rem; }
-    .updated { color: #666; font-size: 0.9rem; }
-    code { background: #f2f2f2; padding: 1px 5px; border-radius: 4px; }
-    a.button { display: inline-block; margin-top: 6px; }
+           max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.6;
+           color: var(--text); background: var(--bg); }
+    h1, h2, h3 {
+      font-family: 'Bricolage Grotesque', -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.2rem; }
+    h2 { font-size: 1.2rem; margin-top: 2.4rem; padding-top: 1rem;
+         border-top: 1px solid var(--border); }
+    h3 { font-size: 1.02rem; margin-top: 1.6rem; margin-bottom: 0.4rem; }
+    h3 + p { margin-top: 0; }
+    a { color: var(--accent); }
+    .updated { color: var(--muted); font-size: 0.9rem; }
+    .crumb { font-size: 0.9rem; margin-bottom: 2rem; }
+    code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+    footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border);
+             color: var(--muted); font-size: 0.9rem; }
+    footer nav a { margin-right: 18px; }
   </style>
 </head>
 <body>
-  <h1>ReefTracker Support</h1>
-  <p class="updated">Last updated: 19 July 2026</p>
 
-  <p>ReefTracker is an offline reef-aquarium tracking app for Android and iOS.
-  This page covers how to get help, report a problem, or ask a question.</p>
+<p class="crumb"><a href="./">← ReefTracker home</a></p>
 
-  <h2>User guide</h2>
-  <p>New to the app, or wondering what a feature does? The illustrated
-  <a href="guide/">ReefTracker User Guide</a> walks through every screen —
-  from your first aquarium to dosing calculators, ICP imports and backups.</p>
+<h1>ReefTracker Support</h1>
+<p class="updated">Last updated: 23 July 2026</p>
 
-  <h2>Contact</h2>
-  <p>For questions, bug reports, or feature requests, email
-  <a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a>. Please include
-  your device model, OS version, and app version (found in
-  <strong>Settings → About</strong>), and steps to reproduce if you're
-  reporting a bug.</p>
+<p>ReefTracker is an offline reef-aquarium tracking app for Android and iOS.
+This page covers how to get help, report a problem, or ask a question.</p>
 
-  <h2>Frequently asked questions</h2>
+<h2>User guide</h2>
+<p>New to the app, or wondering what a feature does? The illustrated
+<a href="guide/">ReefTracker User Guide</a> walks through every screen –
+from your first aquarium to dosing calculators, ICP imports and backups.</p>
 
-  <h3>Where is my data stored? Do I need an account?</h3>
-  <p>No account or sign-up is required. All your tanks, readings, and settings
-  are stored locally on your device only.</p>
+<h2>Contact</h2>
+<p>For questions, bug reports, or feature requests, email
+<a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a>. Please include
+your device model, OS version, and app version (found in
+<strong>Settings → About</strong>), and steps to reproduce if you're
+reporting a bug.</p>
 
-  <h3>How do I back up or move my data to a new device?</h3>
-  <p>Use <strong>Settings → Backup</strong> to export a backup file (via the
-  share sheet) and import it again on the same or a new device. On Android,
-  the same section also offers optional Google Drive backup.</p>
+<h2>Frequently asked questions</h2>
 
-  <h3>Is Google Drive backup available on iOS?</h3>
-  <p>Not yet — Google Drive backup is currently Android-only. On iOS, use the
-  manual export/import backup described above to move data between devices.</p>
+<h3>Where is my data stored? Do I need an account?</h3>
+<p>No account or sign-up is required. All your tanks, readings, and settings
+are stored locally on your device only. See the
+<a href="privacy-policy.html">privacy policy</a> for details.</p>
 
-  <h3>I imported an ICP report and the values look wrong. What formats are supported?</h3>
-  <p>The microelements import supports common ICP lab report formats (including
-  Fauna Marin and Triton exports). If a report imports incorrectly, email a
-  copy of the report file along with which lab produced it, and we'll look into
-  adding or fixing support for that format.</p>
+<h3>What's free and what's Pro?</h3>
+<p>The core of the app is free to use with up to two aquariums. ReefTracker
+Pro adds unlimited tanks and the power features marked
+<strong>PRO</strong> in the <a href="features.html">feature overview</a> –
+dosing calculators, smart insights, ICP and Hanna imports, Google Drive
+backup and more. If you installed the app before the Pro tier existed, every
+feature that existed at that point stays free for you forever.</p>
 
-  <h3>I'm not receiving reminder notifications.</h3>
-  <p>Check that notifications are allowed for ReefTracker in your device's
-  system settings, and that the specific reminder (testing, dosing, or
-  maintenance) is enabled for the relevant tank. Some manufacturers'
-  battery-optimization settings can also delay or suppress scheduled
-  notifications — allowing ReefTracker to run unrestricted in the background
-  usually fixes this.</p>
+<h3>How do I back up or move my data to a new device?</h3>
+<p>Use <strong>Settings → Backup</strong> to export a backup file (via the
+share sheet) and import it again on the same or a new device. On Android,
+the same section also offers optional Google Drive backup.</p>
 
-  <h3>How do I delete my data?</h3>
-  <p>You can delete individual tanks, readings, or other entries directly in
-  the app. Uninstalling the app removes all of its local data from your
-  device. See the <a href="privacy-policy.html">Privacy Policy</a> for details.</p>
+<h3>Is Google Drive backup available on iOS?</h3>
+<p>Not yet – Google Drive backup is currently Android-only. On iOS, use the
+manual export/import backup described above to move data between devices.</p>
 
-  <h2>Privacy</h2>
-  <p>See the <a href="privacy-policy.html">Privacy Policy</a> for details on
-  how ReefTracker handles your data.</p>
+<h3>I imported an ICP report and the values look wrong. What formats are supported?</h3>
+<p>The microelements import supports Fauna Marin and ATI (ZIMS) ICP report
+files. If a report imports incorrectly, email a copy of the report file along
+with which lab produced it, and we'll look into adding or fixing support for
+that format.</p>
+
+<h3>I can't find the Hanna checker features.</h3>
+<p>The Hanna checker connection and the checker display scan are experimental
+features: switch them on in <strong>Settings → Experimental</strong> first.
+They are described in the
+<a href="guide/#import">user guide's importing section</a>.</p>
+
+<h3>I'm not receiving reminder notifications.</h3>
+<p>Check that notifications are allowed for ReefTracker in your device's
+system settings, and that the specific reminder (testing, dosing, or
+maintenance) is enabled for the relevant tank. Some manufacturers'
+battery-optimization settings can also delay or suppress scheduled
+notifications – allowing ReefTracker to run unrestricted in the background
+usually fixes this.</p>
+
+<h3>How do I delete my data?</h3>
+<p>You can delete individual tanks, readings, or other entries directly in
+the app. Uninstalling the app removes all of its local data from your
+device. See the <a href="privacy-policy.html">privacy policy</a> for details.</p>
+
+<h2>Privacy</h2>
+<p>See the <a href="privacy-policy.html">privacy policy</a> for details on
+how ReefTracker handles your data – in short, the app is fully offline and
+your data never leaves your device unless you export or back it up yourself.</p>
+
+<footer>
+  <div>© 2026 ReefTracker · <a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a></div>
+  <nav>
+    <a href="./">Home</a>
+    <a href="guide/">User guide</a>
+    <a href="features.html">Features</a>
+    <a href="privacy-policy.html">Privacy policy</a>
+  </nav>
+</footer>
+
 </body>
 </html>
