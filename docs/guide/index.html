@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReefTracker — User Guide</title>
+  <style>
+    :root {
+      --text: #1a1a1a; --muted: #666; --faint: #8a8a8a;
+      --border: #ddd; --bg: #fff; --card: #f7f7f7; --accent: #0b7285;
+      --pro-bg: #e7f5ff; --pro-text: #1971c2;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #e6e6e6; --muted: #9a9a9a; --faint: #7a7a7a;
+        --border: #3a3a3a; --bg: #121212; --card: #1e1e1e; --accent: #66d9e8;
+        --pro-bg: #123; --pro-text: #74c0fc;
+      }
+    }
+    body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+           max-width: 880px; margin: 40px auto; padding: 0 20px; line-height: 1.6;
+           color: var(--text); background: var(--bg); }
+    h1 { font-size: 2rem; margin-bottom: 0.2rem; }
+    h2 { font-size: 1.45rem; margin-top: 3rem; padding-top: 1.2rem;
+         border-top: 1px solid var(--border); }
+    h3 { font-size: 1.1rem; margin-top: 1.6rem; }
+    a { color: var(--accent); }
+    .updated { color: var(--muted); font-size: 0.9rem; }
+    .lead { font-size: 1.05rem; }
+    code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
+    .toc { background: var(--card); border: 1px solid var(--border);
+           border-radius: 10px; padding: 16px 24px; margin: 24px 0; }
+    .toc ul { columns: 2; margin: 0; padding-left: 20px; }
+    .toc li { margin: 3px 0; break-inside: avoid; }
+    @media (max-width: 560px) { .toc ul { columns: 1; } }
+    .pro { display: inline-block; background: var(--pro-bg); color: var(--pro-text);
+           font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+           padding: 1px 8px; border-radius: 99px; vertical-align: 2px; }
+    .exp { display: inline-block; background: var(--card); color: var(--muted);
+           border: 1px solid var(--border); font-size: 0.72rem; font-weight: 600;
+           padding: 1px 8px; border-radius: 99px; vertical-align: 2px; }
+    .shots { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center;
+             margin: 20px 0; }
+    figure.shot { margin: 0; width: 228px; text-align: center; }
+    figure.shot img { width: 100%; height: auto; border: 1px solid var(--border);
+                      border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    figure.shot figcaption { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+    .tip { border-left: 3px solid var(--accent); background: var(--card);
+           padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+    .tip strong:first-child { color: var(--accent); }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left;
+             font-size: 0.95rem; }
+    th { background: var(--card); }
+    footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border);
+             color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<h1>ReefTracker User Guide</h1>
+<p class="updated">Last updated: 23 July 2026</p>
+
+<p class="lead">ReefTracker is an offline reef-aquarium companion for Android and
+iOS. It keeps your water tests, dosing, maintenance and equipment in one place
+— stored entirely on your device, with no account, no cloud requirement and no
+ads. This guide walks through every part of the app.</p>
+
+<p>Features marked <span class="pro">PRO</span> belong to the ReefTracker Pro
+tier. If you installed the app before the Pro tier existed, you have the
+<em>Founder's Edition</em>: every feature that existed at that point stays free
+for you forever (see <a href="#pro">Editions</a>). Features marked
+<span class="exp">EXPERIMENTAL</span> are hidden until you switch them on in
+<strong>Settings → Experimental</strong>.</p>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ul>
+    <li><a href="#getting-started">Getting started</a></li>
+    <li><a href="#dashboard">The dashboard</a></li>
+    <li><a href="#readings">Recording readings</a></li>
+    <li><a href="#graphs">Graphs, history &amp; trends</a></li>
+    <li><a href="#ratios">Ratios &amp; free ammonia</a></li>
+    <li><a href="#micro">Microelements &amp; ICP</a></li>
+    <li><a href="#dosing">Dosing &amp; supplements</a></li>
+    <li><a href="#calculator">The dose calculator</a></li>
+    <li><a href="#actions">Actions &amp; maintenance</a></li>
+    <li><a href="#ro">Reverse-osmosis unit</a></li>
+    <li><a href="#reminders">Reminders &amp; notifications</a></li>
+    <li><a href="#import">Importing measurements &amp; Hanna checkers</a></li>
+    <li><a href="#backup">Backup, export &amp; sync</a></li>
+    <li><a href="#settings">Settings &amp; personalization</a></li>
+    <li><a href="#pro">Editions: Standard, Pro &amp; Founder</a></li>
+    <li><a href="#help">Getting help</a></li>
+  </ul>
+</nav>
+
+<h2 id="getting-started">Getting started</h2>
+
+<p>On first launch, pick your language and create your first aquarium. Choose a
+<strong>setup type</strong> — fish-only, soft coral, LPS, SPS or mixed reef —
+and ReefTracker seeds the recommended parameters <em>and</em> safe ranges for
+that kind of tank. You can change every range later, so the preset is a
+starting point, not a commitment. Add the tank volume (used by the dose
+calculator), and optionally the vendor/model and a start date.</p>
+
+<p>A short <strong>feature tour</strong> then highlights the less obvious
+controls in the top bar. You can replay it any time from
+<strong>Settings → Replay tour</strong>.</p>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/tanks.png" alt="Aquarium list" loading="lazy">
+    <figcaption>The aquarium list — tap a tank to make it active</figcaption></figure>
+</div>
+
+<h3>The four tabs</h3>
+<p>The app has four bottom tabs. Everything except Settings applies to the
+currently active aquarium, shown in the top bar:</p>
+<ul>
+  <li><strong>Measurements</strong> — the dashboard: your latest values, tank
+      health, and the entry point to every graph.</li>
+  <li><strong>Actions</strong> — the maintenance log: water changes, carbon/media
+      changes, equipment cleaning, plus your maintenance schedule and RO unit.</li>
+  <li><strong>Dosing</strong> — your supplement plan, dosing history and the
+      dose calculator.</li>
+  <li><strong>Settings</strong> — language, units, themes, reminders, backup and
+      everything else.</li>
+</ul>
+
+<h3>Multiple aquariums</h3>
+<p>Tap the aquarium name in the top bar to switch tanks or open the aquarium
+list. Each aquarium keeps its own parameters, safe ranges, history, dosing plan
+and maintenance schedule. The Standard edition includes up to
+<strong>2 aquariums</strong> (say, a display tank and a quarantine tank);
+unlimited aquariums are a <span class="pro">PRO</span> feature. Deleting an
+aquarium asks for confirmation and still offers a short <em>Undo</em> window
+afterwards.</p>
+
+<h2 id="dashboard">The dashboard</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/dashboard.png" alt="Dashboard with gauges and health score" loading="lazy">
+    <figcaption>The Measurements tab: health card, gauges, ratios and pills</figcaption></figure>
+</div>
+
+<p>The Measurements tab shows everything at a glance, grouped into sections:
+<strong>Core chemistry</strong> (alkalinity, calcium, magnesium) as large gauge
+dials, <strong>Nutrients</strong> (nitrate, phosphate, ammonia, nitrite) as
+smaller gauges, <strong>Ratios</strong> as one combined card,
+<strong>Environment</strong> (temperature, pH, salinity, ORP) as compact pills,
+and a <strong>Microelements</strong> summary card. Every value is colored by
+its health zone — green (ideal), amber (attention) or red (act now) — against
+your own safe ranges.</p>
+
+<p>Tap any card to open that parameter's history graph. If you prefer a single
+flat grid of cards in your own order, switch the layout to <em>Flat</em> in
+<strong>Settings → Dashboard</strong>.</p>
+
+<h3>Tank health score</h3>
+<p>The card at the top condenses the whole dashboard into a
+<strong>0–100 health score</strong> with a grade (Excellent / Good / Caution /
+Critical). The score is weighted by how much each parameter matters for a reef,
+and one red value can never hide behind a crowd of greens. Tap the health ring
+for a full breakdown — every parameter grouped by zone, each row linking to its
+history. Readings older than 30 days count as <em>stale</em> and are surfaced
+rather than silently coloring the dashboard.</p>
+
+<p>The second ring is the <strong>stability score</strong>
+<span class="pro">PRO</span> — how much your values have been <em>swinging</em>
+over the last 30/60/90 days (window configurable in Settings → Dashboard),
+independent of where they sit right now. A tank can be in range yet unstable —
+corals feel that. Tap it to see which parameters vary the most.</p>
+
+<h3>Smart insights</h3>
+<p>Under the health card, the <strong>Insights</strong>
+<span class="pro">PRO</span> card lists the top observations about your tank in
+plain language: out-of-range values, values predicted to leave their range,
+recovering parameters and overdue tests. Everything is computed on your device
+by deterministic rules — no AI service, no network. When your tank is fresh,
+green and steady, the card simply disappears.</p>
+
+<h2 id="readings">Recording readings</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/add-reading.png" alt="Add reading screen" loading="lazy">
+    <figcaption>Log a whole test session at once</figcaption></figure>
+</div>
+
+<p>Tap the <strong>+ Add reading</strong> button on the Measurements tab. Enter
+as many parameters as you tested — they are saved together as one
+<em>session</em> with a single timestamp, which you can backdate (but never
+future-date). Each value can carry a note, e.g. which test kit you used or what
+you observed.</p>
+
+<h3>Test sets</h3>
+<p>The chip row at the top (<em>All</em>, your sets, <em>+</em>) filters the
+form to a named group of parameters — create a "Daily test" set with just
+alkalinity and nitrate, a "Weekly test" with the full panel, and so on. The app
+remembers your last choice per aquarium. Values you typed stay saved even if a
+chip currently hides them.</p>
+
+<h3>Typo protection</h3>
+<p>Physically impossible values (a pH of 80, a negative salinity) are rejected
+outright. Implausible-but-possible values ask for confirmation before saving,
+so a slipped decimal point doesn't wreck your graphs or trigger false
+warnings.</p>
+
+<div class="tip"><strong>Tip:</strong> from any parameter's history screen, the
+<strong>+</strong> button records a reading for just that parameter — handy
+when you re-test a single value after dosing.</div>
+
+<h2 id="graphs">Graphs, history &amp; trends</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/history.png" alt="Parameter history graph" loading="lazy">
+    <figcaption>History with zone bands, trend card and readings list</figcaption></figure>
+  <figure class="shot"><img src="../img/compare.png" alt="Compare view" loading="lazy">
+    <figcaption>Compare view: all graphs on one screen</figcaption></figure>
+</div>
+
+<p>Tap any dashboard card to open its <strong>history</strong>. The graph draws
+your safe range as shaded bands behind the data, so you see at a glance when a
+value drifted out. Vertical dashed lines mark your water changes, carbon
+changes and equipment cleanings — each type with its own color and dash
+pattern — so maintenance lines up visually with parameter movements.</p>
+
+<ul>
+  <li><strong>Pinch to zoom</strong> and pan any graph; double-tap to reset.</li>
+  <li>The <strong>Min / Avg / Max / tests</strong> row summarizes the selected
+      time range.</li>
+  <li>The <strong>share</strong> button exports the chart as an image to any
+      app.</li>
+  <li>Below the chart, tap a reading to <strong>edit</strong> its value or
+      timestamp; swipe left to <strong>delete</strong> (with Undo). Readings
+      entered together as a session can be re-timed or deleted together or
+      individually — the app asks.</li>
+</ul>
+
+<h3>Trends, forecasts and recovery</h3>
+<p>ReefTracker fits a trend through your recent readings and shows the per-day
+rate of change. If a value is drifting toward the edge of its range, the
+dashboard shows an <strong>early warning</strong> ("amber in ~5 d") <em>before</em>
+anything is wrong. A value that is out of range but heading <em>back</em> is
+recognized as <strong>recovering</strong> and shown positively instead of being
+flagged. The trend window and alert horizon are configurable in
+<strong>Settings → Trends</strong>.</p>
+
+<p>The <strong>compare view</strong> (chart icon in the top bar of the
+Measurements tab) stacks all parameter graphs on one screen with a shared time
+range — ideal for spotting relationships, like alkalinity falling while
+calcium holds.</p>
+
+<h2 id="ratios">Ratios &amp; free ammonia</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/ratio.png" alt="Ratio screen" loading="lazy">
+    <figcaption>A ratio graph with its recommended zone</figcaption></figure>
+</div>
+
+<p>Some things matter as a <em>relationship</em>, not a number. The dashboard's
+Ratios card tracks <strong>PO₄ : NO₃</strong> (the Redfield-style nutrient
+balance), <strong>Mg : Ca</strong>, <strong>Ca : Alk</strong> and
+<strong>Mg : Alk</strong>, each with a recommended zone you can edit per tank.
+Tap a row for the full ratio graph with the same zoom, pan and value popups as
+parameter graphs. Ratios only combine readings taken reasonably close together
+— today's phosphate is never divided by a months-old nitrate.</p>
+
+<p>The <strong>free (toxic) ammonia</strong> row estimates the un-ionized NH₃
+fraction of your total ammonia reading from your pH, temperature and salinity,
+using published scientific models, and compares it against EPA-anchored
+toxicity limits. Tap it to see the math and the exact inputs used. This matters
+because the same total ammonia is far more toxic at reef pH than in a low-pH
+tank.</p>
+
+<h2 id="micro">Microelements &amp; ICP</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/micro.png" alt="Microelements screen" loading="lazy">
+    <figcaption>The 33-element trace panel</figcaption></figure>
+  <figure class="shot"><img src="../img/micro-add.png" alt="Microelement entry" loading="lazy">
+    <figcaption>Manual entry with element views</figcaption></figure>
+</div>
+
+<p>The <strong>Microelements</strong> screen (tap the dashboard's
+Microelements card) tracks the full 33-element panel that professional ICP
+analyses report: major ions, desirable trace elements and contaminants.
+Defaults are anchored on natural seawater and ICP-lab targets; contaminants
+use one-sided "up to a ceiling" ranges. Units follow ICP convention — mg/L for
+majors, µg/L for traces and contaminants.</p>
+
+<ul>
+  <li><strong>Element views</strong> let you see only what you actually
+      measure: built-in presets (Full list, Fauna Marin ICP, a hobby-kit filter
+      for elements home test kits exist for — strontium, iodine, iron) plus
+      custom views matching your lab's report.</li>
+  <li>Every element has the same history graph, zone bands and edit/delete
+      behavior as core parameters.</li>
+  <li><strong>ICP report import</strong> <span class="pro">PRO</span> — open a
+      Fauna Marin or ATI/ZIMS report file with ReefTracker and the whole
+      analysis is stored as one dated test, after a preview.</li>
+</ul>
+
+<p>If you don't track trace elements, switch the whole feature off in
+Settings — the dashboard card disappears, your stored values remain.</p>
+
+<h2 id="dosing">Dosing &amp; supplements</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/dosing.png" alt="Dosing tab" loading="lazy">
+    <figcaption>The dosing plan with element status tags</figcaption></figure>
+  <figure class="shot"><img src="../img/dosing-history.png" alt="Dosing history" loading="lazy">
+    <figcaption>Dosing history: every change and manual dose</figcaption></figure>
+</div>
+
+<p>The <strong>Dosing</strong> tab records your standing supplement regimen:
+what you dose, how much, and on which schedule (daily, every N days, or fixed
+weekdays at a set time). Pick products from the built-in catalog of reef brands
+and dosing programs — with verified potencies — or add custom products for
+anything else. Each entry is tagged with the current dashboard status of the
+element it targets, so you can see at a glance whether the thing you're dosing
+for is actually in range.</p>
+
+<ul>
+  <li><strong>Adjusting a dose keeps history.</strong> When you change an
+      amount or schedule, the old period is retained as a dated segment — the
+      plan's past is never overwritten.</li>
+  <li><strong>Swipe left to stop</strong> a supplement (undoable). Stopped
+      entries stay in the history timeline.</li>
+  <li>The <strong>history icon</strong> in the top bar opens the full timeline:
+      every plan segment and every manual dose, newest first.</li>
+  <li><strong>Manual doses</strong> — one-off corrections, vitamins,
+      medication — are logged from the history screen's + button, outside the
+      regular plan. They also feed the dose calculator.</li>
+</ul>
+
+<h2 id="calculator">The dose calculator <span class="pro">PRO</span></h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/dose-calculator.png" alt="Dose calculator, daily mode" loading="lazy">
+    <figcaption>Daily dose mode: measured consumption → suggested dose</figcaption></figure>
+  <figure class="shot"><img src="../img/dose-correction.png" alt="Dose calculator, correction mode" loading="lazy">
+    <figcaption>Correction mode: one-off dose to reach a target</figcaption></figure>
+</div>
+
+<p>Open the calculator from the Dosing tab's top bar, or from a dosable
+parameter's history screen. It has two modes:</p>
+
+<h3>Daily dose</h3>
+<p>Computes your tank's <em>actual</em> daily consumption of an element from
+your recent readings, your current dosing and any logged manual doses — then
+recommends whether to raise, lower or keep the current dose. Inputs (element,
+time window, tank volume, current dose, supplement strength) are pre-filled
+from your data and all editable. The result card explains itself: measured
+change per day, consumption per day, dosing input per day, and a clear
+guidance line — including an over-dosing warning when you're dosing more than
+the tank consumes.</p>
+
+<h3>Correction</h3>
+<p>Computes the one-off dose to lift an element from its current value to a
+target. Current value and target are pre-filled (latest reading and your
+tank's target). When the needed rise exceeds the element's safe daily limit,
+the plan is automatically <strong>split over several days</strong>, with the
+per-day dose highlighted. The optional <em>"Adjust target to tank salinity"</em>
+switch scales book targets (stated for 35 ppt) to your tank's actual measured
+salinity. A <strong>Log this dose</strong> button records what you just added
+as a manual dose — which then feeds back into the daily-dose math.</p>
+
+<div class="tip"><strong>Tip:</strong> when a parameter's latest reading sits
+below its green zone, its history screen shows a shortcut straight into
+correction mode for that element.</div>
+
+<h2 id="actions">Actions &amp; maintenance</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/actions.png" alt="Actions tab" loading="lazy">
+    <figcaption>The Actions tab: RO summary, due tasks, action log</figcaption></figure>
+  <figure class="shot"><img src="../img/schedule.png" alt="Maintenance schedule" loading="lazy">
+    <figcaption>The maintenance schedule</figcaption></figure>
+</div>
+
+<p>The <strong>Actions</strong> tab is your maintenance logbook. The
+<strong>+</strong> button logs a <strong>water change</strong> (with volume), a
+<strong>carbon/media change</strong> (with weight) or an <strong>equipment
+cleaning</strong> — each with an optional note and a backdatable timestamp.
+Every entry can be edited or swiped away (with Undo), and all three types
+appear as dashed markers on your parameter graphs.</p>
+
+<h3>Maintenance schedule</h3>
+<p>The calendar icon opens your <strong>maintenance schedule</strong>:
+recurring or one-off tasks, either typed (water change, carbon change,
+cleaning) or custom-titled ("clean skimmer cup"). Repeats can be
+<em>every N days/weeks/months</em>, <em>fixed weekdays</em> ("every Monday"),
+or a <em>fixed day of the month</em> ("every 1st").</p>
+
+<p>Scheduling is <strong>elastic</strong>: completing a task resets its timer
+from the day you actually did it, so doing a water change three days late
+doesn't stack phantom overdue warnings. Typed tasks advance automatically
+whenever you log the matching action anywhere in the app. Due and overdue
+tasks appear as chips above the action log — tap a chip to log the action or
+mark the task done.</p>
+
+<h2 id="ro">Reverse-osmosis unit</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/ro.png" alt="RO unit screen" loading="lazy">
+    <figcaption>RO stages with remaining-life bars</figcaption></figure>
+</div>
+
+<p>ReefTracker tracks your RO/DI unit as a household appliance shared by all
+your aquariums — one unit, one place, reachable from the card at the top of
+every tank's Actions tab. The typical four stages are pre-configured with
+sensible lifespans (sediment 3 months, carbon block 6 months, membrane
+24 months, DI resin 4 months); add custom stages or disable ones your unit
+doesn't have.</p>
+
+<p>Each stage shows a <strong>remaining-life bar</strong> with green/amber/red
+due status. Tap <strong>Mark replaced</strong> when you change a filter — the
+date can be backdated and every replacement is kept as history (with Undo).
+Optional reminders notify you when a stage is due. No RO unit? Switch the
+feature off in Settings.</p>
+
+<h2 id="reminders">Reminders &amp; notifications</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/reminders.png" alt="Reminders settings" loading="lazy">
+    <figcaption>Settings → Reminders: three opt-in switches</figcaption></figure>
+</div>
+
+<p>All notifications are <strong>opt-in</strong> — the app stays silent until
+you enable them in <strong>Settings → Reminders</strong>. Three kinds:</p>
+
+<ul>
+  <li><strong>Testing reminders</strong> — per parameter: open a parameter's
+      settings (Manage parameters → tap the parameter) and set a cadence
+      (every 3/7/14/30 days or custom). The timer anchors on your <em>latest
+      reading</em>, so logging a test resets it. Parameters due the same day
+      arrive as one combined notification that opens the Add-reading form.</li>
+  <li><strong>Dosing reminders</strong> — per supplement, at the entry's own
+      dose time, following its schedule.</li>
+  <li><strong>Maintenance reminders</strong> — for scheduled tasks and RO
+      stage replacements.</li>
+</ul>
+
+<p>Testing and maintenance reminders arrive at a configurable time of day
+(default 09:00). Overdue items don't re-notify — the due chips on the Actions
+tab carry the overdue state instead.</p>
+
+<div class="tip"><strong>Not receiving notifications?</strong> Check that
+notifications are allowed for ReefTracker in your device's system settings.
+On some phones, aggressive battery optimization delays scheduled
+notifications — allow ReefTracker unrestricted background activity.</div>
+
+<h2 id="import">Importing measurements &amp; Hanna checkers</h2>
+
+<h3>Hanna Lab file import <span class="pro">PRO</span></h3>
+<p>If you test with a Hanna HI97115 Marine Master photometer, export the test
+history CSV from Hanna's <em>Hanna Lab</em> app and import it via the
+Measurements tab's <strong>⋮ menu → Import measurements</strong>. Readings
+keep their original timestamps, tests taken together stay grouped as sessions,
+and re-importing the same file only adds what's new — no duplicates, ever.
+Every import can be undone with one tap, and
+<strong>Settings → Measurement import</strong> shows the import status per
+aquarium with rewind/reset controls.</p>
+
+<h3>Hanna checker direct connection <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
+<p>With experimental features enabled (Settings → Experimental), the ⋮ menu
+gains <strong>Hanna checker</strong>: connect to a HI97115C over Bluetooth and
+run measurements live — method by method or via your saved test sets — then
+save the confirmed results with the meter's own timestamps. Built-in reagent
+reaction timers (15 s / 30 s / 2 min) beep when the wait is over, and the
+screen stays awake while a test runs. Measurements only: meter settings and
+firmware updates stay in Hanna's own app.</p>
+
+<h3>Checker display scan <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
+<p>For Hanna <em>pocket checkers</em> (the small single-parameter colorimeters
+with an LCD), point your camera at the display and ReefTracker reads the value
+for you — no typing. 14 checker models are supported; the model is recognized
+automatically from the case color and the reading's format, and the app only
+asks when models would interpret the value differently. Recognition runs fully
+on your device — no photos are stored or uploaded. The viewfinder starts at 2×
+zoom so you can scan from a comfortable distance. An optional quick-scan camera
+button next to <em>Add reading</em> can be enabled in Settings →
+Experimental.</p>
+
+<h2 id="backup">Backup, export &amp; sync</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/backups.png" alt="Manage backups" loading="lazy">
+    <figcaption>Automatic local backups</figcaption></figure>
+</div>
+
+<p>Everything lives on your device, so backups matter. In
+<strong>Settings → Backup &amp; Restore</strong>:</p>
+
+<ul>
+  <li><strong>Export backup</strong> writes your complete data — aquariums,
+      readings, ranges, dosing, maintenance, RO unit, import state — to a
+      single file you can share anywhere (email it to yourself, save it to a
+      cloud drive, AirDrop it).</li>
+  <li><strong>Restore from backup</strong> replaces the app's data with a
+      backup file. Every backup is integrity-checked, validated and rehearsed
+      on a scratch database first — a damaged file can never wipe your data.</li>
+  <li><strong>Automatic backups</strong> are written locally on a schedule you
+      choose, with a configurable number kept; manage them on the
+      <em>Manage backups</em> screen.</li>
+  <li><strong>Google Drive sync</strong> <span class="pro">PRO</span>
+      (Android) — backups upload automatically to your own Google Drive and
+      restore on a new device. The app can only see its own backup folder,
+      nothing else in your Drive.</li>
+  <li><strong>Export measurements (CSV)</strong> — a spreadsheet-friendly file
+      with stable column names that compare across app languages.</li>
+</ul>
+
+<h3>Ask your AI</h3>
+<p>The Measurements tab's <strong>⋮ menu → Ask your AI</strong> builds a
+ready-to-paste summary of your tank — current values against their ranges,
+trends, dosing plan and recent maintenance — that you can paste into ChatGPT,
+Claude, Gemini or any AI chat to ask for advice. The summary is prepared
+entirely on your device; ReefTracker itself sends nothing anywhere.</p>
+
+<div class="tip"><strong>Moving to a new phone?</strong> Export a backup on the
+old device, get the file to the new one (share sheet, cloud drive, cable),
+install ReefTracker and restore. Device preferences (language, units, theme)
+are per-device and start fresh.</div>
+
+<h2 id="settings">Settings &amp; personalization</h2>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/settings.png" alt="Settings" loading="lazy">
+    <figcaption>The Settings tab</figcaption></figure>
+  <figure class="shot"><img src="../img/parameters.png" alt="Manage parameters" loading="lazy">
+    <figcaption>Manage parameters: choose, reorder, edit ranges</figcaption></figure>
+</div>
+
+<ul>
+  <li><strong>Language</strong> — English, Czech, German, French, Italian,
+      Polish or Russian, switchable in-app. Number entry follows your locale
+      (comma or dot decimals both work).</li>
+  <li><strong>Appearance</strong> — light, dark, or follow the system.</li>
+  <li><strong>Units</strong> — °C/°F, ppt/SG for salinity, liters/gallons.
+      Switching units never changes health colors: values are stored
+      canonically and only displayed in your unit.</li>
+  <li><strong>Dashboard</strong> — grouped vs. flat layout, health-card
+      display, stability window.</li>
+  <li><strong>Trends</strong> — on/off, trend window, alert horizon.</li>
+</ul>
+
+<h3>Managing parameters &amp; safe ranges</h3>
+<p>The sliders icon in the top bar opens <strong>Manage parameters</strong>:
+choose which parameters you track, drag to reorder them, and tap one to edit
+its <strong>safe ranges</strong> — the green/amber/red bounds every color in
+the app derives from — plus its target value and testing reminder. Ranges are
+per aquarium, so your SPS display and your quarantine tank can have different
+targets. Ratio cards and the free-ammonia row are managed here too.</p>
+
+<h3>Tools</h3>
+<div class="shots">
+  <figure class="shot"><img src="../img/salinity.png" alt="Salinity calculator" loading="lazy">
+    <figcaption>The salinity converter</figcaption></figure>
+</div>
+<p>The <strong>salinity calculator</strong> (Settings → Tools) converts between
+ppt and specific gravity — useful when your refractometer and your target
+speak different units.</p>
+
+<h2 id="pro">Editions: Standard, Pro &amp; Founder</h2>
+
+<p>ReefTracker's core is free for everyone: unlimited readings, graphs,
+trends, dosing plans, maintenance, reminders, backups and 2 aquariums. The
+<strong>Pro</strong> tier adds the power features marked throughout this
+guide:</p>
+
+<table>
+  <tr><th>Pro feature</th><th>What it adds</th></tr>
+  <tr><td>Unlimited aquariums</td><td>Beyond the 2 included tanks</td></tr>
+  <tr><td>Tank stability score</td><td>The second axis of tank health</td></tr>
+  <tr><td>Smart insights</td><td>Prioritized plain-language observations</td></tr>
+  <tr><td>Dose calculator</td><td>Consumption analysis &amp; correction doses</td></tr>
+  <tr><td>ICP report import</td><td>One-step Fauna Marin / ATI import</td></tr>
+  <tr><td>Hanna Lab import</td><td>CSV import from the Hanna Lab app</td></tr>
+  <tr><td>Hanna checker connection &amp; scan</td><td>Live Bluetooth measurements and camera reading <em>(experimental)</em></td></tr>
+  <tr><td>Google Drive sync</td><td>Automatic cloud backups (Android)</td></tr>
+</table>
+
+<p><strong>Founder's Edition:</strong> if you installed ReefTracker before the
+Pro tier launched, the features that existed then remain free for you forever.
+Your Founder status travels inside your backups, so restoring on a new device
+keeps it. You can check your edition in <strong>Settings → About</strong>.</p>
+
+<p>Whatever your edition, <strong>your data is never locked away</strong> —
+anything you created stays viewable, editable and exportable.</p>
+
+<h2 id="help">Getting help</h2>
+
+<p>Questions, bug reports and feature requests are welcome at
+<a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a> — please include
+your device model, OS version and app version (Settings → About). See also the
+<a href="../support.html">support page</a> for frequently asked questions and
+the <a href="../privacy-policy.html">privacy policy</a>.</p>
+
+<footer>
+  <p>ReefTracker — an offline reef-aquarium companion for Android and iOS.<br>
+  Screenshots show the app with sample data; the exact layout can differ
+  slightly between versions and platforms.</p>
+</footer>
+
+</body>
+</html>

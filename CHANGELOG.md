@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.7] - 2026-07-23
+
+### Fixed
+- Returning from the Settings tab, the add buttons on the Measurements
+  tab now appear with exactly the same timing and effect as on the
+  Actions and Dosing tabs — each button grows in place instead of the
+  whole button stack sliding in a beat behind.
+
 ## [0.38.6] - 2026-07-23
 
 ### Added

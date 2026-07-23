@@ -65,11 +65,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   bool _compare = false;
 
   /// Whether the previous build supplied a FAB to the Scaffold. Null until the
-  /// first build. The Scaffold plays its FAB *entrance* animation only on a
-  /// null→non-null flip (returning from the FAB-less Settings tab, or the
-  /// first tank appearing) — this lets [_buildFab] know when that entrance is
-  /// about to run so the Measurements FAB can suppress its turn-in (see
-  /// [_NoEntranceTurn]).
+  /// first build. A false→true flip (returning from the FAB-less Settings tab,
+  /// or the first tank appearing) is the moment the FAB *appears* — the one
+  /// transition that plays the appear animation (see [_FabEntrance]); content
+  /// tab switches swap FABs in place with no animation, and the very first
+  /// build shows the FAB full-size.
   bool? _hadFab;
 
   // First-run feature tour (showcaseview). Each key tags a top-bar element the
@@ -239,9 +239,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     // app bar (NoTanksView carries its own settings button, U33).
     final index = hasTanks ? _index : 0;
 
-    // The Scaffold animates the FAB in (scale + turn) only when it appears
-    // after a build that had none; `_hadFab == null` is the very first build,
-    // where the Scaffold shows the FAB without any animation.
+    // The FAB appear animation plays only when the FAB shows up after a build
+    // that had none; `_hadFab == null` is the very first build, where the FAB
+    // is shown full-size without any animation.
     final showFab = hasTanks && index != 3;
     final fabEntering = showFab && _hadFab == false;
     _hadFab = showFab;
@@ -493,6 +493,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           : null,
       // No FAB on the Settings tab — there is nothing to add there.
       floatingActionButton: showFab ? _buildFab(context, l, fabEntering) : null,
+      // The stock entrance (scale + ~45° turn, pivoting on the whole child)
+      // is replaced by [_FabEntrance] so every tab animates identically.
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
     );
   }
 
@@ -532,96 +535,113 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   }
 
   Widget _buildFab(BuildContext context, AppLocalizations l, bool entering) {
-    if (_index == 0) {
-      // Manual entry stays the primary FAB; the checker camera scan (U34)
-      // rides above it as a small sibling — it is the same action done
-      // faster, and it must be thumb-reachable while the other hand holds
-      // the checker (which rules out the already-full top bar). Triple
-      // opt-in: experimental features on, the quick-button preference on
-      // (both Settings → Experimental — most users don't own a pocket
-      // checker, so the space is off by default), and the install entitled
-      // (a locked FAB would be prime-real-estate frustration). Everyone
-      // else keeps the overflow-menu entry instead.
-      final showScanFab =
-          (ref.watch(experimentalEnabledProvider).value ?? false) &&
-          (ref.watch(hannaScanFabProvider).value ?? false) &&
-          ref.watch(proFeatureProvider(ProFeature.hannaScan));
-      return _NoEntranceTurn(
-        entering: entering,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (showScanFab) ...[
-              FloatingActionButton.small(
-                heroTag: 'hanna-scan-fab',
-                tooltip: l.hannaScanTitle,
-                onPressed: () => unawaited(context.push('/hanna/scan')),
-                child: const Icon(Icons.photo_camera_outlined),
+    return _FabEntrance(
+      entering: entering,
+      builder: (scale) {
+        if (_index == 0) {
+          // Manual entry stays the primary FAB; the checker camera scan (U34)
+          // rides above it as a small sibling — it is the same action done
+          // faster, and it must be thumb-reachable while the other hand holds
+          // the checker (which rules out the already-full top bar). Triple
+          // opt-in: experimental features on, the quick-button preference on
+          // (both Settings → Experimental — most users don't own a pocket
+          // checker, so the space is off by default), and the install entitled
+          // (a locked FAB would be prime-real-estate frustration). Everyone
+          // else keeps the overflow-menu entry instead.
+          final showScanFab =
+              (ref.watch(experimentalEnabledProvider).value ?? false) &&
+              (ref.watch(hannaScanFabProvider).value ?? false) &&
+              ref.watch(proFeatureProvider(ProFeature.hannaScan));
+          // Each button scales about itself (the Column keeps its layout box)
+          // so the appear animation matches the single-FAB tabs exactly.
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (showScanFab) ...[
+                ScaleTransition(
+                  scale: scale,
+                  child: FloatingActionButton.small(
+                    heroTag: 'hanna-scan-fab',
+                    tooltip: l.hannaScanTitle,
+                    onPressed: () => unawaited(context.push('/hanna/scan')),
+                    child: const Icon(Icons.photo_camera_outlined),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              ScaleTransition(
+                scale: scale,
+                child: FloatingActionButton.extended(
+                  onPressed: () => context.push('/add-reading'),
+                  icon: const Icon(Icons.add),
+                  label: Text(l.addReading),
+                ),
               ),
-              const SizedBox(height: 12),
             ],
-            FloatingActionButton.extended(
-              onPressed: () => context.push('/add-reading'),
+          );
+        }
+        if (_index == 1) {
+          return ScaleTransition(
+            scale: scale,
+            child: FloatingActionButton.extended(
+              onPressed: () => showAddActionSheet(context, ref),
               icon: const Icon(Icons.add),
-              label: Text(l.addReading),
+              label: Text(l.addAction),
             ),
-          ],
-        ),
-      );
-    }
-    if (_index == 1) {
-      return FloatingActionButton.extended(
-        onPressed: () => showAddActionSheet(context, ref),
-        icon: const Icon(Icons.add),
-        label: Text(l.addAction),
-      );
-    }
-    return FloatingActionButton.extended(
-      onPressed: () => context.push('/dosing/edit'),
-      icon: const Icon(Icons.add),
-      label: Text(l.addSupplement),
+          );
+        }
+        return ScaleTransition(
+          scale: scale,
+          child: FloatingActionButton.extended(
+            onPressed: () => context.push('/dosing/edit'),
+            icon: const Icon(Icons.add),
+            label: Text(l.addSupplement),
+          ),
+        );
+      },
     );
   }
 }
 
-/// Cancels the [Scaffold]'s built-in FAB entrance *rotation* while keeping its
-/// scale-in. When `floatingActionButton` flips from null to non-null (leaving
-/// the FAB-less Settings tab), the framework plays a hardcoded ~45° turn-in
-/// alongside the scale. On the single-pill tabs that turn is invisible (the
-/// pill spins around its own center while still tiny), but the Measurements
-/// FAB can be a two-button column, and the stock turn swings the whole stack
-/// around the column's center — a conspicuous wobble. This plays the exact
-/// inverse turn, mirroring the framework's timing (same
-/// [kFloatingActionButtonSegue] duration, [kFloatingActionButtonTurnInterval]
-/// angle, and ease-in curve as `Scaffold`'s `_entranceTurnTween`), so the two
-/// rotations cancel frame-for-frame and only the scale-in remains.
-class _NoEntranceTurn extends StatefulWidget {
-  const _NoEntranceTurn({required this.entering, required this.child});
+/// Plays the FAB appear animation, identically on every tab.
+///
+/// The [Scaffold]'s stock entrance (a scale-in plus a ~45° turn, both pivoting
+/// on the center of the whole `floatingActionButton` child) is disabled via
+/// [FloatingActionButtonAnimator.noAnimation]: on the Measurements tab the FAB
+/// can be a two-button column, and pivoting on the *column's* center makes the
+/// buttons swing and slide into place — visibly different from the single-pill
+/// tabs. Instead, this wrapper drives one shared scale animation (the stock
+/// [kFloatingActionButtonSegue] timing and ease-in curve, no turn) that
+/// [builder] applies per button, each pivoting on itself.
+///
+/// [entering] is read once at mount: true plays the scale-in (the FAB slot was
+/// empty — coming from the FAB-less Settings tab), false shows the child
+/// full-size immediately (content-tab switches swap FABs in place, which the
+/// framework does not animate either).
+class _FabEntrance extends StatefulWidget {
+  const _FabEntrance({required this.entering, required this.builder});
 
-  /// Whether the Scaffold is about to play its FAB entrance animation for
-  /// this child. Read once at mount; when false the wrapper is inert.
   final bool entering;
 
-  final Widget child;
+  final Widget Function(Animation<double> scale) builder;
 
   @override
-  State<_NoEntranceTurn> createState() => _NoEntranceTurnState();
+  State<_FabEntrance> createState() => _FabEntranceState();
 }
 
-class _NoEntranceTurnState extends State<_NoEntranceTurn>
+class _FabEntranceState extends State<_FabEntrance>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: kFloatingActionButtonSegue,
-    // At 1.0 the tween is at 0 turns — permanently inert when not entering.
     value: widget.entering ? 0.0 : 1.0,
   );
 
-  static final Animatable<double> _inverseTurn = Tween<double>(
-    begin: kFloatingActionButtonTurnInterval,
-    end: 0.0,
-  ).chain(CurveTween(curve: Curves.easeIn));
+  late final CurvedAnimation _scale = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeIn,
+  );
 
   @override
   void initState() {
@@ -631,17 +651,13 @@ class _NoEntranceTurnState extends State<_NoEntranceTurn>
 
   @override
   void dispose() {
+    _scale.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return RotationTransition(
-      turns: _controller.drive(_inverseTurn),
-      child: widget.child,
-    );
-  }
+  Widget build(BuildContext context) => widget.builder(_scale);
 }
 
 /// The Settings tab body (U33): no app bar, only an inline title above the
