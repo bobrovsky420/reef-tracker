@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
@@ -547,6 +548,28 @@ class SettingsBody extends ConsumerWidget {
                 if (context.mounted) context.go('/');
               },
             ),
+            // Website links (reeftracker.org), opened in the external
+            // browser. The URLs are English-only pages, so no locale suffix.
+            ReefSettingsRow(
+              icon: Icons.menu_book_outlined,
+              title: l.aboutUserGuide,
+              description: l.aboutUserGuideSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => _openWebsite(context, l, 'guide/'),
+            ),
+            ReefSettingsRow(
+              icon: Icons.contact_support_outlined,
+              title: l.aboutSupport,
+              description: l.aboutSupportSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => _openWebsite(context, l, 'support.html'),
+            ),
+            ReefSettingsRow(
+              icon: Icons.privacy_tip_outlined,
+              title: l.aboutPrivacyPolicy,
+              trailing: const ReefSettingsValue(),
+              onTap: () => _openWebsite(context, l, 'privacy-policy.html'),
+            ),
             _EditionRow(
               edition: ref.watch(editionProvider).value ?? AppEdition.standard,
             ),
@@ -564,6 +587,28 @@ class SettingsBody extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Opens a page of the app's website in the external browser.
+  /// `launchUrl` only (no `canLaunchUrl` — that needs extra package-visibility
+  /// / Info.plist entries and can false-negative); a `false` return or a
+  /// platform exception both land in the same "could not open" SnackBar.
+  Future<void> _openWebsite(
+    BuildContext context,
+    AppLocalizations l,
+    String page,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    var ok = false;
+    try {
+      ok = await launchUrl(
+        Uri.parse('https://reeftracker.org/$page'),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {}
+    if (!ok) {
+      messenger.showSnackBar(SnackBar(content: Text(l.linkOpenFailed)));
+    }
   }
 
   Future<void> _backupNow(

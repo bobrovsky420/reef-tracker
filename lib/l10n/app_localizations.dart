@@ -1931,6 +1931,42 @@ abstract class AppLocalizations {
   /// **'Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.'**
   String get aboutDescription;
 
+  /// Settings → About row opening the illustrated user guide on reeftracker.org in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'User guide'**
+  String get aboutUserGuide;
+
+  /// Subtitle of the user-guide link row.
+  ///
+  /// In en, this message translates to:
+  /// **'How to use every feature, with screenshots'**
+  String get aboutUserGuideSubtitle;
+
+  /// Settings → About row opening the support page on reeftracker.org in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Support & FAQ'**
+  String get aboutSupport;
+
+  /// Subtitle of the support link row.
+  ///
+  /// In en, this message translates to:
+  /// **'Get help or report a problem'**
+  String get aboutSupportSubtitle;
+
+  /// Settings → About row opening the privacy policy on reeftracker.org in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get aboutPrivacyPolicy;
+
+  /// SnackBar shown when launching an external website link fails (no browser available).
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the link'**
+  String get linkOpenFailed;
+
   /// Settings row label showing which edition of the app this install is entitled to.
   ///
   /// In en, this message translates to:

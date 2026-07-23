@@ -156,6 +156,7 @@ Each feature below is marked **Standard** (included for everyone) or **Pro**
 | Unit preferences: °C/°F, ppt/SG, liters/gallons — switching units never changes health colors, because values are stored canonically | Standard |
 | 7 languages: English, Czech, German, French, Italian, Polish, Russian — including locale-aware number entry | Standard |
 | First-run feature tour | Standard |
+| Built-in help links – the illustrated user guide, support page and privacy policy on reeftracker.org, one tap from Settings | Standard |
 | Undo everywhere — deleting readings, tanks, plans, tasks or stopping a dosing plan can always be taken back | Standard |
 
 ---

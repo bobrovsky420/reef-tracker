@@ -324,6 +324,12 @@
 
   "aboutAppName": "Informazioni su ReefTracker",
   "aboutDescription": "Tracker offline dei parametri dell'acquario di barriera con cronologia, grafici temporali e zone di salute verde/arancione/rossa.",
+  "aboutUserGuide": "Guida utente",
+  "aboutUserGuideSubtitle": "Come usare ogni funzione, con schermate",
+  "aboutSupport": "Assistenza e FAQ",
+  "aboutSupportSubtitle": "Ricevi aiuto o segnala un problema",
+  "aboutPrivacyPolicy": "Informativa sulla privacy",
+  "linkOpenFailed": "Impossibile aprire il link",
 
   "editionLabel": "Edizione",
   "editionFounder": "Edizione Fondatore",

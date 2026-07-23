@@ -1093,6 +1093,25 @@ class AppLocalizationsIt extends AppLocalizations {
       'Tracker offline dei parametri dell\'acquario di barriera con cronologia, grafici temporali e zone di salute verde/arancione/rossa.';
 
   @override
+  String get aboutUserGuide => 'Guida utente';
+
+  @override
+  String get aboutUserGuideSubtitle =>
+      'Come usare ogni funzione, con schermate';
+
+  @override
+  String get aboutSupport => 'Assistenza e FAQ';
+
+  @override
+  String get aboutSupportSubtitle => 'Ricevi aiuto o segnala un problema';
+
+  @override
+  String get aboutPrivacyPolicy => 'Informativa sulla privacy';
+
+  @override
+  String get linkOpenFailed => 'Impossibile aprire il link';
+
+  @override
   String get editionLabel => 'Edizione';
 
   @override

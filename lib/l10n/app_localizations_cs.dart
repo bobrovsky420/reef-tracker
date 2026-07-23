@@ -1093,6 +1093,25 @@ class AppLocalizationsCs extends AppLocalizations {
       'Offline sledování parametrů mořského akvária s historií, časovými grafy a zónami zdraví zelená/oranžová/červená.';
 
   @override
+  String get aboutUserGuide => 'Uživatelská příručka';
+
+  @override
+  String get aboutUserGuideSubtitle =>
+      'Jak používat všechny funkce, se snímky obrazovky';
+
+  @override
+  String get aboutSupport => 'Podpora a časté dotazy';
+
+  @override
+  String get aboutSupportSubtitle => 'Získejte pomoc nebo nahlaste problém';
+
+  @override
+  String get aboutPrivacyPolicy => 'Zásady ochrany soukromí';
+
+  @override
+  String get linkOpenFailed => 'Odkaz se nepodařilo otevřít';
+
+  @override
   String get editionLabel => 'Edice';
 
   @override

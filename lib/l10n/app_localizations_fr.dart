@@ -1094,6 +1094,26 @@ class AppLocalizationsFr extends AppLocalizations {
       'Suivi hors ligne des paramètres d\'aquarium récifal avec historique, graphiques temporels et zones de santé verte/orange/rouge.';
 
   @override
+  String get aboutUserGuide => 'Guide d\'utilisation';
+
+  @override
+  String get aboutUserGuideSubtitle =>
+      'Comment utiliser chaque fonction, avec captures d\'écran';
+
+  @override
+  String get aboutSupport => 'Assistance et FAQ';
+
+  @override
+  String get aboutSupportSubtitle =>
+      'Obtenir de l\'aide ou signaler un problème';
+
+  @override
+  String get aboutPrivacyPolicy => 'Politique de confidentialité';
+
+  @override
+  String get linkOpenFailed => 'Impossible d\'ouvrir le lien';
+
+  @override
   String get editionLabel => 'Édition';
 
   @override

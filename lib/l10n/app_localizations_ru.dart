@@ -1099,6 +1099,25 @@ class AppLocalizationsRu extends AppLocalizations {
       'Офлайн-трекер параметров морского аквариума с историей, графиками по времени и зонами здоровья зелёная/жёлтая/красная.';
 
   @override
+  String get aboutUserGuide => 'Руководство пользователя';
+
+  @override
+  String get aboutUserGuideSubtitle =>
+      'Как пользоваться всеми функциями, со скриншотами';
+
+  @override
+  String get aboutSupport => 'Поддержка и FAQ';
+
+  @override
+  String get aboutSupportSubtitle => 'Получить помощь или сообщить о проблеме';
+
+  @override
+  String get aboutPrivacyPolicy => 'Политика конфиденциальности';
+
+  @override
+  String get linkOpenFailed => 'Не удалось открыть ссылку';
+
+  @override
   String get editionLabel => 'Издание';
 
   @override

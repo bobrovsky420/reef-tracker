@@ -1088,6 +1088,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.';
 
   @override
+  String get aboutUserGuide => 'User guide';
+
+  @override
+  String get aboutUserGuideSubtitle =>
+      'How to use every feature, with screenshots';
+
+  @override
+  String get aboutSupport => 'Support & FAQ';
+
+  @override
+  String get aboutSupportSubtitle => 'Get help or report a problem';
+
+  @override
+  String get aboutPrivacyPolicy => 'Privacy policy';
+
+  @override
+  String get linkOpenFailed => 'Could not open the link';
+
+  @override
   String get editionLabel => 'Edition';
 
   @override

@@ -324,6 +324,12 @@
 
   "aboutAppName": "À propos de ReefTracker",
   "aboutDescription": "Suivi hors ligne des paramètres d'aquarium récifal avec historique, graphiques temporels et zones de santé verte/orange/rouge.",
+  "aboutUserGuide": "Guide d'utilisation",
+  "aboutUserGuideSubtitle": "Comment utiliser chaque fonction, avec captures d'écran",
+  "aboutSupport": "Assistance et FAQ",
+  "aboutSupportSubtitle": "Obtenir de l'aide ou signaler un problème",
+  "aboutPrivacyPolicy": "Politique de confidentialité",
+  "linkOpenFailed": "Impossible d'ouvrir le lien",
 
   "editionLabel": "Édition",
   "editionFounder": "Édition Fondateur",

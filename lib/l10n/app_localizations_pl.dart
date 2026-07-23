@@ -1102,6 +1102,25 @@ class AppLocalizationsPl extends AppLocalizations {
       'Offline\'owy tracker parametrów akwarium morskiego z historią, wykresami czasowymi i strefami zdrowia zielona/pomarańczowa/czerwona.';
 
   @override
+  String get aboutUserGuide => 'Podręcznik użytkownika';
+
+  @override
+  String get aboutUserGuideSubtitle =>
+      'Jak korzystać z każdej funkcji, ze zrzutami ekranu';
+
+  @override
+  String get aboutSupport => 'Pomoc i FAQ';
+
+  @override
+  String get aboutSupportSubtitle => 'Uzyskaj pomoc lub zgłoś problem';
+
+  @override
+  String get aboutPrivacyPolicy => 'Polityka prywatności';
+
+  @override
+  String get linkOpenFailed => 'Nie udało się otworzyć linku';
+
+  @override
   String get editionLabel => 'Edycja';
 
   @override

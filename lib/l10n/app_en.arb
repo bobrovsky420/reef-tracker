@@ -513,6 +513,18 @@
 
   "aboutAppName": "About ReefTracker",
   "aboutDescription": "Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.",
+  "aboutUserGuide": "User guide",
+  "@aboutUserGuide": { "description": "Settings → About row opening the illustrated user guide on reeftracker.org in the browser." },
+  "aboutUserGuideSubtitle": "How to use every feature, with screenshots",
+  "@aboutUserGuideSubtitle": { "description": "Subtitle of the user-guide link row." },
+  "aboutSupport": "Support & FAQ",
+  "@aboutSupport": { "description": "Settings → About row opening the support page on reeftracker.org in the browser." },
+  "aboutSupportSubtitle": "Get help or report a problem",
+  "@aboutSupportSubtitle": { "description": "Subtitle of the support link row." },
+  "aboutPrivacyPolicy": "Privacy policy",
+  "@aboutPrivacyPolicy": { "description": "Settings → About row opening the privacy policy on reeftracker.org in the browser." },
+  "linkOpenFailed": "Could not open the link",
+  "@linkOpenFailed": { "description": "SnackBar shown when launching an external website link fails (no browser available)." },
 
   "editionLabel": "Edition",
   "@editionLabel": { "description": "Settings row label showing which edition of the app this install is entitled to." },

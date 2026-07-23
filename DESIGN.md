@@ -2570,9 +2570,14 @@ screen (see Data → Automatic backup), the **Google Drive sync** row +
 persistent upload-error row (U24 — see Data → Google Drive backup sync;
 connect is Pro-gated via `ProFeature.driveSync`), and the **Measurement
 import** row (U32 — pushes `/settings/import`; hidden until a tank has
-imported, i.e. `importSourcesProvider` is non-empty). An
-**Edition** row (see Editions above) sits in the About section. The About box shows the live app version via
-`appVersionProvider` (`package_info_plus`), never a hardcoded string.
+imported, i.e. `importSourcesProvider` is non-empty). The **About** section holds the
+aquarium count, Replay tour, three **website link rows** (user guide, support
+& FAQ, privacy policy on reeftracker.org — `url_launcher`,
+`LaunchMode.externalApplication`, no `canLaunchUrl` (extra package-visibility
+setup and false negatives); a failed launch shows a `linkOpenFailed`
+SnackBar), an **Edition** row (see Editions above), and the About box, which
+shows the live app version via `appVersionProvider` (`package_info_plus`),
+never a hardcoded string.
 
 ### Salinity calculator (`calculator/salinity_calculator_screen.dart`)
 

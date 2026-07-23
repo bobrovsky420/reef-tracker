@@ -1095,6 +1095,25 @@ class AppLocalizationsDe extends AppLocalizations {
       'Offline-Tracker für Meerwasseraquarium-Parameter mit Verlauf, Zeitdiagrammen und grün/orange/rot-Gesundheitszonen.';
 
   @override
+  String get aboutUserGuide => 'Benutzerhandbuch';
+
+  @override
+  String get aboutUserGuideSubtitle =>
+      'So nutzen Sie jede Funktion, mit Screenshots';
+
+  @override
+  String get aboutSupport => 'Support & FAQ';
+
+  @override
+  String get aboutSupportSubtitle => 'Hilfe erhalten oder ein Problem melden';
+
+  @override
+  String get aboutPrivacyPolicy => 'Datenschutzerklärung';
+
+  @override
+  String get linkOpenFailed => 'Link konnte nicht geöffnet werden';
+
+  @override
   String get editionLabel => 'Edition';
 
   @override

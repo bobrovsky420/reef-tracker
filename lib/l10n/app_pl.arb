@@ -324,6 +324,12 @@
 
   "aboutAppName": "O aplikacji ReefTracker",
   "aboutDescription": "Offline'owy tracker parametrów akwarium morskiego z historią, wykresami czasowymi i strefami zdrowia zielona/pomarańczowa/czerwona.",
+  "aboutUserGuide": "Podręcznik użytkownika",
+  "aboutUserGuideSubtitle": "Jak korzystać z każdej funkcji, ze zrzutami ekranu",
+  "aboutSupport": "Pomoc i FAQ",
+  "aboutSupportSubtitle": "Uzyskaj pomoc lub zgłoś problem",
+  "aboutPrivacyPolicy": "Polityka prywatności",
+  "linkOpenFailed": "Nie udało się otworzyć linku",
 
   "editionLabel": "Edycja",
   "editionFounder": "Edycja założycielska",

@@ -324,6 +324,12 @@
 
   "aboutAppName": "Über ReefTracker",
   "aboutDescription": "Offline-Tracker für Meerwasseraquarium-Parameter mit Verlauf, Zeitdiagrammen und grün/orange/rot-Gesundheitszonen.",
+  "aboutUserGuide": "Benutzerhandbuch",
+  "aboutUserGuideSubtitle": "So nutzen Sie jede Funktion, mit Screenshots",
+  "aboutSupport": "Support & FAQ",
+  "aboutSupportSubtitle": "Hilfe erhalten oder ein Problem melden",
+  "aboutPrivacyPolicy": "Datenschutzerklärung",
+  "linkOpenFailed": "Link konnte nicht geöffnet werden",
 
   "editionLabel": "Edition",
   "editionFounder": "Gründer-Edition",
