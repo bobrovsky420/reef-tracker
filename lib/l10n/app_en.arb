@@ -936,6 +936,20 @@
   "hannaScanImpossibleNote": "This value is impossible for this parameter and can't be saved. Rescan, or check that the right model is selected.",
   "hannaScanImplausibleNote": "This value is outside the plausible range — double-check it before saving.",
   "experimentalBadge": "Experimental",
+  "experimentalSection": "Experimental",
+  "@experimentalSection": {
+    "description": "Settings section header grouping the experimental-features master switch and the experimental feature rows."
+  },
+  "experimentalToggleTitle": "Experimental features",
+  "@experimentalToggleTitle": {
+    "description": "Settings master switch (default off) that shows/hides all experimental features."
+  },
+  "experimentalToggleSubtitle": "Try features still in testing: Hanna checker Bluetooth connection and display scanning",
+  "hannaScanFabTitle": "Camera scan button",
+  "@hannaScanFabTitle": {
+    "description": "Settings switch (default off) for the quick checker-scan camera button on the Measurements tab."
+  },
+  "hannaScanFabSubtitle": "Show a quick scan button above \"Add reading\"",
   "hannaExperimentalNote": "Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.",
   "hannaScanning": "Looking for the meter…",
   "hannaScanHint": "Turn the meter on and keep it close to your phone.",

@@ -2021,6 +2021,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get experimentalBadge => 'Experimental';
 
   @override
+  String get experimentalSection => 'Experimental';
+
+  @override
+  String get experimentalToggleTitle => 'Experimental features';
+
+  @override
+  String get experimentalToggleSubtitle =>
+      'Try features still in testing: Hanna checker Bluetooth connection and display scanning';
+
+  @override
+  String get hannaScanFabTitle => 'Camera scan button';
+
+  @override
+  String get hannaScanFabSubtitle =>
+      'Show a quick scan button above \"Add reading\"';
+
+  @override
   String get hannaExperimentalNote =>
       'Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.';
 

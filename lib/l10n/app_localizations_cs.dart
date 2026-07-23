@@ -2035,6 +2035,23 @@ class AppLocalizationsCs extends AppLocalizations {
   String get experimentalBadge => 'Experimentální';
 
   @override
+  String get experimentalSection => 'Experimentální';
+
+  @override
+  String get experimentalToggleTitle => 'Experimentální funkce';
+
+  @override
+  String get experimentalToggleSubtitle =>
+      'Vyzkoušejte funkce ve fázi testování: připojení Hanna checkeru přes Bluetooth a skenování displeje';
+
+  @override
+  String get hannaScanFabTitle => 'Tlačítko skenování kamerou';
+
+  @override
+  String get hannaScanFabSubtitle =>
+      'Zobrazit tlačítko rychlého skenování nad „Přidat měření“';
+
+  @override
   String get hannaExperimentalNote =>
       'Experimentální funkce: používá neoficiální Bluetooth protokol a po aktualizaci firmwaru přístroje může přestat fungovat.';
 

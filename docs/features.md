@@ -87,6 +87,8 @@ Each feature below is marked **Standard** (included for everyone) or **Pro**
 | Checker display scan *(experimental)* — point the camera at a Hanna pocket checker's LCD and save the shown value without typing; 14 checker models supported, recognition runs fully on-device (no photos stored or uploaded) | **Pro** |
 | Automatic checker recognition — the scanned checker's model is identified from its case color and the reading's display format, so scanning is truly one-tap; the app only asks when models would interpret the value differently, and never guesses silently | **Pro** |
 | Scan viewfinder with pinch-to-zoom (starts at 2×) — read the display from a comfortable distance instead of holding the phone against the checker | **Pro** |
+| Experimental features are opt-in — the checker connection and display scan stay completely hidden until switched on in Settings → Experimental | Standard |
+| Optional quick-scan camera button next to "Add reading" — one-tap scanning for checker owners, no lost screen space for everyone else (off by default) | Standard |
 
 ## Dosing & supplements
 
@@ -161,4 +163,4 @@ Each feature below is marked **Standard** (included for everyone) or **Pro**
 *This document describes what each feature does, not how to use it — see the
 in-app screens for usage. Feature/edition assignment reflects the Pro registry
 (`lib/domain/pro_features.yaml`); experimental features are marked as such in
-the app.*
+the app and stay hidden until enabled in Settings → Experimental.*

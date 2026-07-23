@@ -66,6 +66,9 @@ class SettingsBody extends ConsumerWidget {
     final microEnabled = ref.watch(microEnabledProvider).value ?? true;
     final autoBackupEnabled =
         ref.watch(autoBackupEnabledProvider).value ?? kAutoBackupDefaultEnabled;
+    final experimentalEnabled =
+        ref.watch(experimentalEnabledProvider).value ?? false;
+    final scanFabEnabled = ref.watch(hannaScanFabProvider).value ?? false;
     final appVersion = ref.watch(appVersionProvider).value ?? '';
 
     return ReefSettingsList(
@@ -306,35 +309,70 @@ class SettingsBody extends ConsumerWidget {
               trailing: const ReefSettingsValue(),
               onTap: () => context.push('/calculator/salinity'),
             ),
-            // Hanna checker live measurement (U33, experimental). Pro-gated
-            // on entry, same idiom as the Drive-sync connect row; hidden
-            // entirely on devices without a BLE stack (the manifest keeps
-            // Bluetooth optional so Play doesn't filter the app there).
-            if (ref.watch(hannaBleSupportedProvider).value ?? true)
-              ReefSettingsRow(
-                icon: Icons.bluetooth,
-                title: l.hannaConnectTitle,
-                description:
-                    '${l.hannaConnectSubtitle} · ${l.experimentalBadge}',
-                trailing: const ReefSettingsValue(),
-                onTap: ref.watch(proFeatureProvider(ProFeature.hannaConnect))
-                    ? () => context.push('/hanna/measure')
-                    : () => showProFeatureDialog(
-                        context,
-                        ProFeature.hannaConnect,
-                      ),
-              ),
-            // Checker camera scan (U34, experimental) — read a pocket
-            // checker's LCD with the camera. Same Pro-gate idiom.
+          ],
+        ),
+        // Experimental features (U33/U34): the master switch (default off)
+        // hides both features everywhere — here, the Measurements-tab
+        // overflow menu and the scan FAB. Off only hides; nothing stored is
+        // touched.
+        ReefSettingsSection(
+          label: l.experimentalSection,
+          children: [
             ReefSettingsRow(
-              icon: Icons.photo_camera_outlined,
-              title: l.hannaScanTitle,
-              description: '${l.hannaScanSubtitle} · ${l.experimentalBadge}',
-              trailing: const ReefSettingsValue(),
-              onTap: ref.watch(proFeatureProvider(ProFeature.hannaScan))
-                  ? () => context.push('/hanna/scan')
-                  : () => showProFeatureDialog(context, ProFeature.hannaScan),
+              icon: Icons.biotech_outlined,
+              title: l.experimentalToggleTitle,
+              description: l.experimentalToggleSubtitle,
+              trailing: Switch.adaptive(
+                value: experimentalEnabled,
+                onChanged: (v) => settings.setExperimentalEnabled(v),
+              ),
+              onTap: () =>
+                  settings.setExperimentalEnabled(!experimentalEnabled),
             ),
+            if (experimentalEnabled) ...[
+              // Hanna checker live measurement (U33). Pro-gated on entry,
+              // same idiom as the Drive-sync connect row; hidden entirely on
+              // devices without a BLE stack (the manifest keeps Bluetooth
+              // optional so Play doesn't filter the app there).
+              if (ref.watch(hannaBleSupportedProvider).value ?? true)
+                ReefSettingsRow(
+                  icon: Icons.bluetooth,
+                  title: l.hannaConnectTitle,
+                  description: l.hannaConnectSubtitle,
+                  trailing: const ReefSettingsValue(),
+                  onTap: ref.watch(proFeatureProvider(ProFeature.hannaConnect))
+                      ? () => context.push('/hanna/measure')
+                      : () => showProFeatureDialog(
+                          context,
+                          ProFeature.hannaConnect,
+                        ),
+                ),
+              // Checker camera scan (U34) — read a pocket checker's LCD with
+              // the camera. Same Pro-gate idiom.
+              ReefSettingsRow(
+                icon: Icons.photo_camera_outlined,
+                title: l.hannaScanTitle,
+                description: l.hannaScanSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: ref.watch(proFeatureProvider(ProFeature.hannaScan))
+                    ? () => context.push('/hanna/scan')
+                    : () => showProFeatureDialog(context, ProFeature.hannaScan),
+              ),
+              // Opt-in quick-access camera button above "Add reading": most
+              // users don't own a pocket checker, so the FAB space is off by
+              // default. Without it the scan stays reachable from the
+              // Measurements-tab overflow menu and the row above.
+              ReefSettingsRow(
+                icon: Icons.smart_button,
+                title: l.hannaScanFabTitle,
+                description: l.hannaScanFabSubtitle,
+                trailing: Switch.adaptive(
+                  value: scanFabEnabled,
+                  onChanged: (v) => settings.setHannaScanFab(v),
+                ),
+                onTap: () => settings.setHannaScanFab(!scanFabEnabled),
+              ),
+            ],
           ],
         ),
         ReefSettingsSection(

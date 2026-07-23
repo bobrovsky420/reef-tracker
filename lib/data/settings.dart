@@ -235,7 +235,12 @@ enum SettingKey {
   installFingerprint(kInstallFingerprintKey, deviceLocal: true),
   // Hanna checker method sets (U33): user data like the RO stages, not a
   // device preference — they ride backups to a new phone.
-  hannaMethodSets(kHannaMethodSetsKey, deviceLocal: false);
+  hannaMethodSets(kHannaMethodSetsKey, deviceLocal: false),
+  // The experimental-features master switch and the camera-scan quick-button
+  // preference: display preferences like roUnitEnabled — device-local,
+  // both default off.
+  experimentalEnabled(kExperimentalEnabledKey, deviceLocal: true),
+  hannaScanFab(kHannaScanFabKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -432,6 +437,27 @@ class AppSettings {
       _watch(SettingKey.microAttentionOnly).map(decodeMicroAttentionOnly);
   Future<void> setMicroAttentionOnly(bool enabled) =>
       _write(SettingKey.microAttentionOnly, enabled.toString());
+
+  // --- experimental features (U33/U34) -----------------------------------------
+
+  /// Whether experimental features (Hanna checker Bluetooth connection and
+  /// checker camera scan) are surfaced at all (default off): off hides every
+  /// entry point — settings rows, overflow-menu items and the scan FAB.
+  /// Purely a visibility preference — nothing already stored is touched.
+  static bool decodeExperimentalEnabled(String? raw) => raw == 'true';
+  Stream<bool> watchExperimentalEnabled() =>
+      _watch(SettingKey.experimentalEnabled).map(decodeExperimentalEnabled);
+  Future<void> setExperimentalEnabled(bool enabled) =>
+      _write(SettingKey.experimentalEnabled, enabled.toString());
+
+  /// Whether the checker camera scan (U34) gets its quick button above
+  /// "Add reading" on the Measurements tab (default off — most users don't
+  /// own a pocket checker, so the FAB space is opt-in).
+  static bool decodeHannaScanFab(String? raw) => raw == 'true';
+  Stream<bool> watchHannaScanFab() =>
+      _watch(SettingKey.hannaScanFab).map(decodeHannaScanFab);
+  Future<void> setHannaScanFab(bool enabled) =>
+      _write(SettingKey.hannaScanFab, enabled.toString());
 
   // --- free ammonia visualization ---------------------------------------------
 

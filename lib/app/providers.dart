@@ -630,6 +630,24 @@ final microEnabledProvider = _setting(
   AppSettings.decodeMicroEnabled,
 );
 
+/// Whether experimental features (Hanna checker Bluetooth connection U33 and
+/// checker camera scan U34) are surfaced at all (default off): gates every
+/// entry point — the Settings rows, the Measurements-tab overflow items and
+/// the scan FAB.
+final experimentalEnabledProvider = _setting(
+  SettingKey.experimentalEnabled,
+  AppSettings.decodeExperimentalEnabled,
+);
+
+/// Whether the checker camera scan shows its quick button above "Add
+/// reading" on the Measurements tab (default off). Only effective while
+/// [experimentalEnabledProvider] is on and the install is entitled to
+/// [ProFeature.hannaScan].
+final hannaScanFabProvider = _setting(
+  SettingKey.hannaScanFab,
+  AppSettings.decodeHannaScanFab,
+);
+
 /// The Microelements-screen quick filters (U17, both default off): hide
 /// undetectable (zero) readings — except where zero is abnormal — and show
 /// only elements needing attention. Display-only: neither affects

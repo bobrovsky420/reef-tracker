@@ -195,7 +195,15 @@ for the free-ammonia visualization, device-local — a JSON list of tank ids
 where it is **hidden**; an absent tank is shown, so the default is on), and
 `dose_calc_salinity_adjust` (the dose calculator's per-tank
 salinity-adjusted-target switch — the same JSON-list-of-tank-ids shape, but
-listing the tanks where it is **on**; the default is off). The
+listing the tanks where it is **on**; the default is off), and
+`experimental_enabled` (the experimental-features master switch, default
+**off** — off completely hides every surface of the experimental features,
+currently Hanna checker BLE U33 and checker camera scan U34: their
+Settings → Experimental rows, the Measurements-tab overflow entries and the
+scan FAB; purely visibility, nothing stored is touched), and
+`hanna_scan_fab` (the opt-in camera-scan quick button above "Add reading",
+default off — most users don't own a pocket checker, so the FAB space is
+opt-in; without it the scan stays reachable via the overflow menu). The
 reminder keys are device-local: notification preferences must not ride a
 backup onto another device. `ro_stages_seeded` is the one **non**-device-local
 key: it describes domain data and travels with the RO rows it guards, so a
@@ -1995,7 +2003,10 @@ reverse-engineered ASCII line protocol documented in **HANNA.md** (plain
 unencrypted `PREFIX,fields…` lines over a Nordic-UART-style write/notify
 GATT pair). Unofficial and firmware-coupled, hence the **Experimental**
 badge everywhere the feature surfaces (settings row, screen title, in-screen
-note).
+note). Like every experimental feature it is **hidden entirely by default**:
+all its entry points (the Settings → Experimental row, the Measurements-tab
+overflow entry) only exist once the experimental-features master switch
+(`experimental_enabled`, Settings → Experimental) is turned on.
 
 - **Layering:** `domain/hanna_meter.dart` (pure protocol: commands, the
   method-code registry, `HannaLineBuffer` MTU reassembly, end-anchored frame
@@ -2154,14 +2165,18 @@ readout is always confirmed by the user first.
   NO₂-N) → the confirm step shows a dropdown of exactly those — **never a
   silent guess**. A manual model picker (bottom sheet from the viewfinder)
   locks the vote to one model's format and bypasses color.
-- **Entry points** (complementary by entitlement): entitled installs get a
-  small FAB (camera glyph) stacked above the Measurements tab's "Add
+- **Entry points** (all behind the experimental-features master switch,
+  `experimental_enabled`, default off — off hides every one of them):
+  entitled installs can opt into a small FAB (camera glyph,
+  `hanna_scan_fab`, default off — most users don't own a pocket checker,
+  so the FAB space is opt-in) stacked above the Measurements tab's "Add
   reading" FAB — scanning is the same action done faster, and it stays
   thumb-reachable while the other hand holds the checker (the top bar is
-  at icon capacity). Non-entitled installs instead see a teaser entry in
-  the tab's overflow menu (Pro dialog on tap — a locked FAB would be
+  at icon capacity). Whenever the FAB isn't shown (preference off, or not
+  entitled) the tab's overflow menu carries the entry instead (Pro dialog
+  on tap for non-entitled installs — a locked FAB would be
   prime-real-estate frustration, so the FAB never shows locked). The
-  Settings → Tools row exists for both, gate on tap.
+  Settings → Experimental row exists for both, gate on tap.
 - **Flow** (`features/scan/checker_scan_screen.dart`, one route hosts all
   phases): camera-first (no picker gate) →
   live viewfinder (`camera` plugin, back camera, `medium` preset, ~6 fps

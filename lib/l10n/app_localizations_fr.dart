@@ -2033,6 +2033,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get experimentalBadge => 'Expérimental';
 
   @override
+  String get experimentalSection => 'Expérimental';
+
+  @override
+  String get experimentalToggleTitle => 'Fonctions expérimentales';
+
+  @override
+  String get experimentalToggleSubtitle =>
+      'Essayez des fonctions encore en test : connexion Bluetooth du checker Hanna et scan de l\'écran';
+
+  @override
+  String get hannaScanFabTitle => 'Bouton de scan caméra';
+
+  @override
+  String get hannaScanFabSubtitle =>
+      'Afficher un bouton de scan rapide au-dessus de « Ajouter une mesure »';
+
+  @override
   String get hannaExperimentalNote =>
       'Fonction expérimentale : elle repose sur un protocole Bluetooth non officiel et peut cesser de fonctionner après une mise à jour du firmware de l\'appareil.';
 

@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.4] - 2026-07-23
+
+### Added
+- New "Experimental" section in Settings with a master switch for
+  experimental features (the Hanna checker Bluetooth connection and the
+  checker display scan). Off by default: the features are now completely
+  hidden — settings rows, menu entries and the scan button — until
+  switched on.
+- Separate switch for the quick camera-scan button above "Add reading"
+  (off by default) — checker owners get one-tap scanning, everyone else
+  keeps the screen space.
+
+### Changed
+- With the quick camera-scan button switched off, the checker scan is
+  reachable from the Measurements-tab overflow menu instead — the menu
+  entry now also appears for installs that have access to the feature,
+  not only as a Pro teaser.
+
 ## [0.38.3] - 2026-07-22
 
 ### Fixed

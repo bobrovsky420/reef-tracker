@@ -398,16 +398,30 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         icon: Icons.move_to_inbox_outlined,
                         label: l.measurementImportTitle,
                       ),
-                      // Hidden on devices without a BLE stack — the manifest
-                      // keeps Bluetooth optional so Play doesn't filter the
-                      // app there.
-                      if (ref.watch(hannaBleSupportedProvider).value ?? true)
+                      // The Hanna entries only exist while experimental
+                      // features are opted into (Settings → Experimental);
+                      // the BLE one is additionally hidden on devices without
+                      // a BLE stack — the manifest keeps Bluetooth optional
+                      // so Play doesn't filter the app there.
+                      if ((ref.watch(experimentalEnabledProvider).value ??
+                              false) &&
+                          (ref.watch(hannaBleSupportedProvider).value ?? true))
                         ReefMenuItem(
                           value: 'hanna-measure',
                           icon: Icons.bluetooth,
                           label: l.hannaMeasureAction,
                         ),
-                      if (!ref.watch(proFeatureProvider(ProFeature.hannaScan)))
+                      // Shown whenever the scan FAB isn't: the teaser for
+                      // non-entitled installs, and the regular entry point
+                      // for entitled ones who keep the opt-in quick button
+                      // (Settings → Experimental) off.
+                      if ((ref.watch(experimentalEnabledProvider).value ??
+                              false) &&
+                          !(ref.watch(
+                                proFeatureProvider(ProFeature.hannaScan),
+                              ) &&
+                              (ref.watch(hannaScanFabProvider).value ??
+                                  false)))
                         ReefMenuItem(
                           value: 'hanna-scan',
                           icon: Icons.photo_camera_outlined,
@@ -509,16 +523,21 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       // Manual entry stays the primary FAB; the checker camera scan (U34)
       // rides above it as a small sibling — it is the same action done
       // faster, and it must be thumb-reachable while the other hand holds
-      // the checker (which rules out the already-full top bar). Shown only
-      // to entitled installs; non-entitled ones keep the teaser entry in
-      // the overflow menu instead (a locked FAB would be prime-real-estate
-      // frustration).
-      final scanEntitled = ref.watch(proFeatureProvider(ProFeature.hannaScan));
+      // the checker (which rules out the already-full top bar). Triple
+      // opt-in: experimental features on, the quick-button preference on
+      // (both Settings → Experimental — most users don't own a pocket
+      // checker, so the space is off by default), and the install entitled
+      // (a locked FAB would be prime-real-estate frustration). Everyone
+      // else keeps the overflow-menu entry instead.
+      final showScanFab =
+          (ref.watch(experimentalEnabledProvider).value ?? false) &&
+          (ref.watch(hannaScanFabProvider).value ?? false) &&
+          ref.watch(proFeatureProvider(ProFeature.hannaScan));
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (scanEntitled) ...[
+          if (showScanFab) ...[
             FloatingActionButton.small(
               heroTag: 'hanna-scan-fab',
               tooltip: l.hannaScanTitle,

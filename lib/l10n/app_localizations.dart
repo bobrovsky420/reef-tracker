@@ -3453,6 +3453,36 @@ abstract class AppLocalizations {
   /// **'Experimental'**
   String get experimentalBadge;
 
+  /// Settings section header grouping the experimental-features master switch and the experimental feature rows.
+  ///
+  /// In en, this message translates to:
+  /// **'Experimental'**
+  String get experimentalSection;
+
+  /// Settings master switch (default off) that shows/hides all experimental features.
+  ///
+  /// In en, this message translates to:
+  /// **'Experimental features'**
+  String get experimentalToggleTitle;
+
+  /// No description provided for @experimentalToggleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try features still in testing: Hanna checker Bluetooth connection and display scanning'**
+  String get experimentalToggleSubtitle;
+
+  /// Settings switch (default off) for the quick checker-scan camera button on the Measurements tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera scan button'**
+  String get hannaScanFabTitle;
+
+  /// No description provided for @hannaScanFabSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a quick scan button above \"Add reading\"'**
+  String get hannaScanFabSubtitle;
+
   /// No description provided for @hannaExperimentalNote.
   ///
   /// In en, this message translates to:

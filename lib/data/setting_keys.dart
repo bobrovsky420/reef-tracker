@@ -57,3 +57,9 @@ const kSyncGdriveLastErrorAtKey = 'sync_gdrive_last_error_at';
 // Random id identifying the install that wrote this database (#62); paired
 // with the backup-excluded `.install_id` file — see `install_id.dart`.
 const kInstallFingerprintKey = 'install_fingerprint';
+// Experimental-features master switch (U33/U34): off (the default) hides
+// every experimental surface — settings rows, overflow-menu entries, FAB.
+const kExperimentalEnabledKey = 'experimental_enabled';
+// Opt-in quick camera-scan button above "Add reading" (U34): most users
+// don't own a pocket checker, so the FAB space is off by default.
+const kHannaScanFabKey = 'hanna_scan_fab';

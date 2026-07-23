@@ -2057,6 +2057,23 @@ class AppLocalizationsPl extends AppLocalizations {
   String get experimentalBadge => 'Eksperymentalna';
 
   @override
+  String get experimentalSection => 'Eksperymentalne';
+
+  @override
+  String get experimentalToggleTitle => 'Funkcje eksperymentalne';
+
+  @override
+  String get experimentalToggleSubtitle =>
+      'Wypróbuj funkcje w fazie testów: połączenie z checkerem Hanna przez Bluetooth i skanowanie wyświetlacza';
+
+  @override
+  String get hannaScanFabTitle => 'Przycisk skanowania aparatem';
+
+  @override
+  String get hannaScanFabSubtitle =>
+      'Pokaż przycisk szybkiego skanowania nad „Dodaj pomiar”';
+
+  @override
   String get hannaExperimentalNote =>
       'Funkcja eksperymentalna: korzysta z nieoficjalnego protokołu Bluetooth i może przestać działać po aktualizacji oprogramowania miernika.';
 
