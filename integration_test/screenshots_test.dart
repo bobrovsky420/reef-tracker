@@ -67,14 +67,12 @@ void main() {
       await tapIcon(Icons.science_outlined);
       await shot('04-dosing');
 
+      // 5. Settings (fourth bottom-nav tab since the U33 redesign)
+      await tapIcon(Icons.settings_outlined);
+      await shot('05-settings');
+
       // back to Measurements so the home state is clean
       await tapIcon(Icons.speed_outlined);
-
-      // 5. Settings (tap the gear; a real tap settles reliably)
-      await tapIcon(Icons.settings);
-      await shot('05-settings');
-      appRouter.pop();
-      await tester.pumpAndSettle();
 
       // 6. Salinity converter
       unawaited(appRouter.push('/calculator/salinity'));
