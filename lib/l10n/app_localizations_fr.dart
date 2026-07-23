@@ -2054,6 +2054,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Fonction expérimentale : elle repose sur un protocole Bluetooth non officiel et peut cesser de fonctionner après une mise à jour du firmware de l\'appareil.';
 
   @override
+  String get hannaMeasureOnlyNote =>
+      'Seules les mesures sont prises en charge. Pour modifier les réglages de l\'appareil ou mettre à jour son firmware, utilisez l\'application Hanna Lab du fabricant.';
+
+  @override
   String get hannaScanning => 'Recherche de l\'appareil…';
 
   @override

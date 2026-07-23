@@ -2050,6 +2050,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Experimentelle Funktion: Sie nutzt ein inoffizielles Bluetooth-Protokoll und kann nach einem Firmware-Update des Messgeräts ausfallen.';
 
   @override
+  String get hannaMeasureOnlyNote =>
+      'Es werden nur Messungen unterstützt. Zum Ändern der Geräteeinstellungen oder für Firmware-Updates verwenden Sie die Hersteller-App Hanna Lab.';
+
+  @override
   String get hannaScanning => 'Suche nach dem Messgerät…';
 
   @override

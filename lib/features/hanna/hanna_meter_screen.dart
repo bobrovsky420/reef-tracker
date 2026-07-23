@@ -229,6 +229,15 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
             ).textTheme.bodySmall?.copyWith(color: tokens.textDim),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+          child: Text(
+            l.hannaMeasureOnlyNote,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: tokens.textDim),
+          ),
+        ),
         if (tanks.isNotEmpty) ...[
           SectionHeader(l.hannaAquarium),
           ReefCard(

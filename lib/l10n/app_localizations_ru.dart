@@ -2071,6 +2071,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Экспериментальная функция: используется неофициальный Bluetooth-протокол, после обновления прошивки прибора она может перестать работать.';
 
   @override
+  String get hannaMeasureOnlyNote =>
+      'Поддерживаются только измерения. Для изменения настроек прибора или обновления его прошивки используйте фирменное приложение Hanna Lab.';
+
+  @override
   String get hannaScanning => 'Поиск прибора…';
 
   @override

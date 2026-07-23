@@ -592,6 +592,7 @@
   "hannaScanFabTitle": "Kamera-Scan-Taste",
   "hannaScanFabSubtitle": "Schnelle Scan-Taste über „Messung hinzufügen“ anzeigen",
   "hannaExperimentalNote": "Experimentelle Funktion: Sie nutzt ein inoffizielles Bluetooth-Protokoll und kann nach einem Firmware-Update des Messgeräts ausfallen.",
+  "hannaMeasureOnlyNote": "Es werden nur Messungen unterstützt. Zum Ändern der Geräteeinstellungen oder für Firmware-Updates verwenden Sie die Hersteller-App Hanna Lab.",
   "hannaScanning": "Suche nach dem Messgerät…",
   "hannaScanHint": "Schalten Sie das Gerät ein und halten Sie es in der Nähe des Telefons.",
   "hannaReadingSetup": "Verbunden — Geräteeinstellungen werden gelesen…",

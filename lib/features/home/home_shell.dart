@@ -64,6 +64,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   /// instead of the card grid. Kept here so it survives tab switches.
   bool _compare = false;
 
+  /// Whether the previous build supplied a FAB to the Scaffold. Null until the
+  /// first build. The Scaffold plays its FAB *entrance* animation only on a
+  /// null→non-null flip (returning from the FAB-less Settings tab, or the
+  /// first tank appearing) — this lets [_buildFab] know when that entrance is
+  /// about to run so the Measurements FAB can suppress its turn-in (see
+  /// [_NoEntranceTurn]).
+  bool? _hadFab;
+
   // First-run feature tour (showcaseview). Each key tags a top-bar element the
   // tour spotlights. The dosing-history and dose-calculator icons only exist on
   // the Dosing tab, so the tour runs in two phases: phase 1 (tank → compare →
@@ -230,6 +238,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     // tanks — render Measurements then, so the welcome view keeps the shared
     // app bar (NoTanksView carries its own settings button, U33).
     final index = hasTanks ? _index : 0;
+
+    // The Scaffold animates the FAB in (scale + turn) only when it appears
+    // after a build that had none; `_hadFab == null` is the very first build,
+    // where the Scaffold shows the FAB without any animation.
+    final showFab = hasTanks && index != 3;
+    final fabEntering = showFab && _hadFab == false;
+    _hadFab = showFab;
 
     return Scaffold(
       // The Settings tab has no app bar — its body renders a plain inline
@@ -477,9 +492,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             )
           : null,
       // No FAB on the Settings tab — there is nothing to add there.
-      floatingActionButton: hasTanks && index != 3
-          ? _buildFab(context, l)
-          : null,
+      floatingActionButton: showFab ? _buildFab(context, l, fabEntering) : null,
     );
   }
 
@@ -518,7 +531,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     );
   }
 
-  Widget _buildFab(BuildContext context, AppLocalizations l) {
+  Widget _buildFab(BuildContext context, AppLocalizations l, bool entering) {
     if (_index == 0) {
       // Manual entry stays the primary FAB; the checker camera scan (U34)
       // rides above it as a small sibling — it is the same action done
@@ -533,25 +546,28 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           (ref.watch(experimentalEnabledProvider).value ?? false) &&
           (ref.watch(hannaScanFabProvider).value ?? false) &&
           ref.watch(proFeatureProvider(ProFeature.hannaScan));
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (showScanFab) ...[
-            FloatingActionButton.small(
-              heroTag: 'hanna-scan-fab',
-              tooltip: l.hannaScanTitle,
-              onPressed: () => unawaited(context.push('/hanna/scan')),
-              child: const Icon(Icons.photo_camera_outlined),
+      return _NoEntranceTurn(
+        entering: entering,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (showScanFab) ...[
+              FloatingActionButton.small(
+                heroTag: 'hanna-scan-fab',
+                tooltip: l.hannaScanTitle,
+                onPressed: () => unawaited(context.push('/hanna/scan')),
+                child: const Icon(Icons.photo_camera_outlined),
+              ),
+              const SizedBox(height: 12),
+            ],
+            FloatingActionButton.extended(
+              onPressed: () => context.push('/add-reading'),
+              icon: const Icon(Icons.add),
+              label: Text(l.addReading),
             ),
-            const SizedBox(height: 12),
           ],
-          FloatingActionButton.extended(
-            onPressed: () => context.push('/add-reading'),
-            icon: const Icon(Icons.add),
-            label: Text(l.addReading),
-          ),
-        ],
+        ),
       );
     }
     if (_index == 1) {
@@ -565,6 +581,65 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       onPressed: () => context.push('/dosing/edit'),
       icon: const Icon(Icons.add),
       label: Text(l.addSupplement),
+    );
+  }
+}
+
+/// Cancels the [Scaffold]'s built-in FAB entrance *rotation* while keeping its
+/// scale-in. When `floatingActionButton` flips from null to non-null (leaving
+/// the FAB-less Settings tab), the framework plays a hardcoded ~45° turn-in
+/// alongside the scale. On the single-pill tabs that turn is invisible (the
+/// pill spins around its own center while still tiny), but the Measurements
+/// FAB can be a two-button column, and the stock turn swings the whole stack
+/// around the column's center — a conspicuous wobble. This plays the exact
+/// inverse turn, mirroring the framework's timing (same
+/// [kFloatingActionButtonSegue] duration, [kFloatingActionButtonTurnInterval]
+/// angle, and ease-in curve as `Scaffold`'s `_entranceTurnTween`), so the two
+/// rotations cancel frame-for-frame and only the scale-in remains.
+class _NoEntranceTurn extends StatefulWidget {
+  const _NoEntranceTurn({required this.entering, required this.child});
+
+  /// Whether the Scaffold is about to play its FAB entrance animation for
+  /// this child. Read once at mount; when false the wrapper is inert.
+  final bool entering;
+
+  final Widget child;
+
+  @override
+  State<_NoEntranceTurn> createState() => _NoEntranceTurnState();
+}
+
+class _NoEntranceTurnState extends State<_NoEntranceTurn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: kFloatingActionButtonSegue,
+    // At 1.0 the tween is at 0 turns — permanently inert when not entering.
+    value: widget.entering ? 0.0 : 1.0,
+  );
+
+  static final Animatable<double> _inverseTurn = Tween<double>(
+    begin: kFloatingActionButtonTurnInterval,
+    end: 0.0,
+  ).chain(CurveTween(curve: Curves.easeIn));
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.entering) unawaited(_controller.forward());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: _controller.drive(_inverseTurn),
+      child: widget.child,
     );
   }
 }

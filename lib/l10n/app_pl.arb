@@ -592,6 +592,7 @@
   "hannaScanFabTitle": "Przycisk skanowania aparatem",
   "hannaScanFabSubtitle": "Pokaż przycisk szybkiego skanowania nad „Dodaj pomiar”",
   "hannaExperimentalNote": "Funkcja eksperymentalna: korzysta z nieoficjalnego protokołu Bluetooth i może przestać działać po aktualizacji oprogramowania miernika.",
+  "hannaMeasureOnlyNote": "Obsługiwane są wyłącznie pomiary. Aby zmienić ustawienia miernika lub zaktualizować jego oprogramowanie, użyj aplikacji producenta Hanna Lab.",
   "hannaScanning": "Szukanie miernika…",
   "hannaScanHint": "Włącz miernik i trzymaj go blisko telefonu.",
   "hannaReadingSetup": "Połączono — odczytywanie ustawień miernika…",

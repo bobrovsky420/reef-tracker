@@ -592,6 +592,7 @@
   "hannaScanFabTitle": "Bouton de scan caméra",
   "hannaScanFabSubtitle": "Afficher un bouton de scan rapide au-dessus de « Ajouter une mesure »",
   "hannaExperimentalNote": "Fonction expérimentale : elle repose sur un protocole Bluetooth non officiel et peut cesser de fonctionner après une mise à jour du firmware de l'appareil.",
+  "hannaMeasureOnlyNote": "Seules les mesures sont prises en charge. Pour modifier les réglages de l'appareil ou mettre à jour son firmware, utilisez l'application Hanna Lab du fabricant.",
   "hannaScanning": "Recherche de l'appareil…",
   "hannaScanHint": "Allumez l'appareil et gardez-le près du téléphone.",
   "hannaReadingSetup": "Connecté — lecture de la configuration…",

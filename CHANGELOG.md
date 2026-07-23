@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.5] - 2026-07-23
+
+### Fixed
+- Switching from the Settings tab to Measurements no longer swings the
+  "Add reading" button (and the quick-scan button above it) in with a
+  rotating wobble — it now fades in the same way as on the Actions and
+  Dosing tabs.
+
+### Changed
+- Hanna checker connection: the meter screen now notes that only taking
+  measurements is supported — changing the meter's settings or updating
+  its firmware is done in Hanna's own Hanna Lab app.
+
 ## [0.38.4] - 2026-07-23
 
 ### Added

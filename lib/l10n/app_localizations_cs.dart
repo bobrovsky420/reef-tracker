@@ -2056,6 +2056,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Experimentální funkce: používá neoficiální Bluetooth protokol a po aktualizaci firmwaru přístroje může přestat fungovat.';
 
   @override
+  String get hannaMeasureOnlyNote =>
+      'Podporováno je pouze měření. Ke změně nastavení přístroje nebo aktualizaci jeho firmwaru použijte aplikaci Hanna Lab od výrobce.';
+
+  @override
   String get hannaScanning => 'Hledám přístroj…';
 
   @override

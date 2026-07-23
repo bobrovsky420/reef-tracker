@@ -592,6 +592,7 @@
   "hannaScanFabTitle": "Tlačítko skenování kamerou",
   "hannaScanFabSubtitle": "Zobrazit tlačítko rychlého skenování nad „Přidat měření“",
   "hannaExperimentalNote": "Experimentální funkce: používá neoficiální Bluetooth protokol a po aktualizaci firmwaru přístroje může přestat fungovat.",
+  "hannaMeasureOnlyNote": "Podporováno je pouze měření. Ke změně nastavení přístroje nebo aktualizaci jeho firmwaru použijte aplikaci Hanna Lab od výrobce.",
   "hannaScanning": "Hledám přístroj…",
   "hannaScanHint": "Zapněte přístroj a mějte ho blízko telefonu.",
   "hannaReadingSetup": "Připojeno — načítám nastavení přístroje…",

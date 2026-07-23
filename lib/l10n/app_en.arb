@@ -951,6 +951,10 @@
   },
   "hannaScanFabSubtitle": "Show a quick scan button above \"Add reading\"",
   "hannaExperimentalNote": "Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.",
+  "hannaMeasureOnlyNote": "Only measurements are supported. To change the meter's settings or update its firmware, use Hanna's own Hanna Lab app.",
+  "@hannaMeasureOnlyNote": {
+    "description": "Scope note on the meter screen: ReefTracker only takes measurements; meter settings and firmware updates are done in the vendor's Hanna Lab app."
+  },
   "hannaScanning": "Looking for the meter…",
   "hannaScanHint": "Turn the meter on and keep it close to your phone.",
   "hannaReadingSetup": "Connected — reading meter setup…",

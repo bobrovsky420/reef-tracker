@@ -592,6 +592,7 @@
   "hannaScanFabTitle": "Pulsante di scansione con fotocamera",
   "hannaScanFabSubtitle": "Mostra un pulsante di scansione rapida sopra \"Aggiungi misurazione\"",
   "hannaExperimentalNote": "Funzione sperimentale: usa un protocollo Bluetooth non ufficiale e potrebbe smettere di funzionare dopo un aggiornamento del firmware dello strumento.",
+  "hannaMeasureOnlyNote": "Sono supportate solo le misurazioni. Per modificare le impostazioni dello strumento o aggiornarne il firmware, usa l'app Hanna Lab del produttore.",
   "hannaScanning": "Ricerca dello strumento…",
   "hannaScanHint": "Accendi lo strumento e tienilo vicino al telefono.",
   "hannaReadingSetup": "Connesso — lettura delle impostazioni…",

@@ -2078,6 +2078,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Funkcja eksperymentalna: korzysta z nieoficjalnego protokołu Bluetooth i może przestać działać po aktualizacji oprogramowania miernika.';
 
   @override
+  String get hannaMeasureOnlyNote =>
+      'Obsługiwane są wyłącznie pomiary. Aby zmienić ustawienia miernika lub zaktualizować jego oprogramowanie, użyj aplikacji producenta Hanna Lab.';
+
+  @override
   String get hannaScanning => 'Szukanie miernika…';
 
   @override

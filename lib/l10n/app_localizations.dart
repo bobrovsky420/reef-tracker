@@ -3489,6 +3489,12 @@ abstract class AppLocalizations {
   /// **'Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.'**
   String get hannaExperimentalNote;
 
+  /// Scope note on the meter screen: ReefTracker only takes measurements; meter settings and firmware updates are done in the vendor's Hanna Lab app.
+  ///
+  /// In en, this message translates to:
+  /// **'Only measurements are supported. To change the meter\'s settings or update its firmware, use Hanna\'s own Hanna Lab app.'**
+  String get hannaMeasureOnlyNote;
+
   /// No description provided for @hannaScanning.
   ///
   /// In en, this message translates to:

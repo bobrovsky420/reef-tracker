@@ -2042,6 +2042,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Experimental feature: it uses an unofficial Bluetooth protocol and may stop working after a meter firmware update.';
 
   @override
+  String get hannaMeasureOnlyNote =>
+      'Only measurements are supported. To change the meter\'s settings or update its firmware, use Hanna\'s own Hanna Lab app.';
+
+  @override
   String get hannaScanning => 'Looking for the meter…';
 
   @override

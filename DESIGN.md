@@ -2003,7 +2003,9 @@ reverse-engineered ASCII line protocol documented in **HANNA.md** (plain
 unencrypted `PREFIX,fields…` lines over a Nordic-UART-style write/notify
 GATT pair). Unofficial and firmware-coupled, hence the **Experimental**
 badge everywhere the feature surfaces (settings row, screen title, in-screen
-note). Like every experimental feature it is **hidden entirely by default**:
+note). Scope is **measurements only** — a second in-screen note
+(`hannaMeasureOnlyNote`) points users to the vendor's Hanna Lab app for
+meter settings and firmware updates. Like every experimental feature it is **hidden entirely by default**:
 all its entry points (the Settings → Experimental row, the Measurements-tab
 overflow entry) only exist once the experimental-features master switch
 (`experimental_enabled`, Settings → Experimental) is turned on.
