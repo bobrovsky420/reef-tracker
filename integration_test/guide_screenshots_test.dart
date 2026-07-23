@@ -16,8 +16,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/main.dart';
 
 import '../test/tool/showcase_data.dart';
@@ -91,6 +93,18 @@ void main() {
 
     // --- Measurements tab ---------------------------------------------------
     await shot('dashboard');
+
+    // Dark-theme variant of the dashboard, shown in the guide's Settings &
+    // personalization section. Flipped through the app's own provider so the
+    // watching settings stream rebuilds MaterialApp, then reverted.
+    final settings = ProviderScope.containerOf(
+      tester.element(find.byType(ReefTrackerApp)),
+      listen: false,
+    ).read(settingsProvider);
+    await settings.setThemeMode(AppThemeMode.dark);
+    await shot('dashboard-dark');
+    await settings.setThemeMode(AppThemeMode.system);
+    await settle();
 
     await tapIcon(Icons.stacked_line_chart); // compare view
     await shot('compare');
