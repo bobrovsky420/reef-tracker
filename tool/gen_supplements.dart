@@ -27,6 +27,7 @@ void main() {
   final validParams = kParameterByKey.keys.toSet();
   final errors = <String>[];
   final seenKeys = <String>{};
+  final seenAltNames = <String>{};
 
   final buf = StringBuffer()
     ..writeln('// GENERATED CODE — DO NOT EDIT BY HAND.')
@@ -55,7 +56,9 @@ void main() {
     if (products != null) {
       buf.writeln('    products: [');
       for (final p in products) {
-        buf.write(_emitProduct(p, '      ', validParams, seenKeys, errors));
+        buf.write(
+          _emitProduct(p, '      ', validParams, seenKeys, seenAltNames, errors),
+        );
       }
       buf.writeln('    ],');
     }
@@ -71,7 +74,14 @@ void main() {
           ..writeln('        products: [');
         for (final p in prog['products'] as YamlList) {
           buf.write(
-            _emitProduct(p, '          ', validParams, seenKeys, errors),
+            _emitProduct(
+              p,
+              '          ',
+              validParams,
+              seenKeys,
+              seenAltNames,
+              errors,
+            ),
           );
         }
         buf
@@ -112,6 +122,7 @@ String _emitProduct(
   String indent,
   Set<String> validParams,
   Set<String> seen,
+  Set<String> seenAltNames,
   List<String> errors,
 ) {
   final key = p['key'] as String;
@@ -141,6 +152,28 @@ String _emitProduct(
     strengthLiteral = '{${entries.join(', ')}}';
   }
 
+  // Alternative names (device labels / vendor shorthand): non-blank, and
+  // unique case-insensitively across the WHOLE catalog — a duplicate would
+  // make name-matching ambiguous (kSupplementProductByAltName keeps one
+  // arbitrary winner).
+  final altNames = p['altNames'] as YamlList?;
+  String? altNamesLiteral;
+  if (altNames != null) {
+    final entries = <String>[];
+    for (final a in altNames) {
+      final alt = a as String;
+      if (alt.trim().isEmpty) {
+        errors.add('product "$key": blank altName');
+        continue;
+      }
+      if (!seenAltNames.add(alt.trim().toLowerCase())) {
+        errors.add('product "$key": duplicate altName "$alt"');
+      }
+      entries.add("'${_esc(alt)}'");
+    }
+    altNamesLiteral = '[${entries.join(', ')}]';
+  }
+
   final sb = StringBuffer()
     ..writeln('${indent}SupplementProduct(')
     ..writeln("$indent  key: '${_esc(key)}',")
@@ -149,6 +182,9 @@ String _emitProduct(
   if (unit == 'g') sb.writeln('$indent  defaultUnit: DoseUnit.g,');
   if (strengthLiteral != null) {
     sb.writeln('$indent  strength: $strengthLiteral,');
+  }
+  if (altNamesLiteral != null) {
+    sb.writeln('$indent  altNames: $altNamesLiteral,');
   }
   sb.writeln('$indent),');
   return sb.toString();

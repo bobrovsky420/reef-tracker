@@ -2517,6 +2517,13 @@ The first slice of that phase exists: the `ManualDoses` log feeds the dose
 calculator's manual-input default (per-dose potency is phase 2 — TODO U18).
 The Fauna Marin Balling Light products now carry verified `strength` values
 (from the vendor's dosing chart); the dose calculator (below) consumes them.
+Catalog products may also carry **`altNames`** — alternative names the product
+is known by in the wild (vendor shorthand, device labels such as what a
+ReefDose head reports as its supplement), never shown in the UI. They are
+generator-validated to be non-blank and case-insensitively unique across the
+whole catalog, and resolve through `kSupplementProductByAltName` (keyed on the
+lowercased name) — groundwork for matching a dosing pump's head labels to
+catalog products (ReefBeat phase 2).
 
 ### Dose calculator (`features/dosing/dose_calculator_screen.dart`) — `/dosing/calculator`
 

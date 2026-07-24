@@ -18,6 +18,11 @@
 #    LEAVE IT OUT until verified against the vendor's own dosing chart — a wrong
 #    value silently corrupts later consumption estimates. Cite the source in a
 #    comment when you add one.
+#  - `altNames` is an optional list of alternative names the product is known
+#    by in the wild — vendor shorthand, device labels (e.g. what a ReefDose
+#    head reports as its supplement) — used for name-matching, never shown in
+#    the UI. Matching is case-insensitive; each alt name must be unique across
+#    the whole catalog so a match is unambiguous.
 
 vendors:
   - key: redsea
@@ -25,6 +30,9 @@ vendors:
     products:
       - key: redsea.no3po4x
         name: "NO₃:PO₄-X (nutrient reducer)"
+        # The ASCII spelling Red Sea's own devices use (a ReefDose head labels
+        # the supplement this way).
+        altNames: ["NO3PO4-X"]
     programs:
       - key: foundation_abc
         name: Foundation ABC
@@ -221,19 +229,24 @@ vendors:
         # strength = element rise per 1 ml of stock per 1 L of tank, derived from
         # the Fauna Marin Balling Light dosing chart (10 ml / 100 L raises:
         # Ca +11 mg/L, KH +0.5 dKH, Mg +5 mg/L) → rise * 100 / 10.
+        # altNames: the common "Balling light <element>" shorthand hobbyists
+        # (and their dosing-pump head labels) use for the three mixes.
         products:
           - key: faunamarin.bl_calcium
             name: Calcium Mix
             element: calcium
             strength: { calcium: 110.0 }
+            altNames: ["Balling light Ca"]
           - key: faunamarin.bl_carbonate
             name: Carbonate Mix
             element: alkalinity
             strength: { alkalinity: 5.0 }
+            altNames: ["Balling light KH"]
           - key: faunamarin.bl_magnesium
             name: Magnesium Mix
             element: magnesium
             strength: { magnesium: 50.0 }
+            altNames: ["Balling light Mg"]
 
   - key: aquaforest
     name: Aquaforest

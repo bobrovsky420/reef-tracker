@@ -17,6 +17,7 @@ const List<SupplementVendor> kSupplementVendors = [
       SupplementProduct(
         key: 'redsea.no3po4x',
         name: 'NO₃:PO₄-X (nutrient reducer)',
+        altNames: ['NO3PO4-X'],
       ),
     ],
     programs: [
@@ -249,18 +250,21 @@ const List<SupplementVendor> kSupplementVendors = [
             name: 'Calcium Mix',
             elementKey: 'calcium',
             strength: {'calcium': 110.0},
+            altNames: ['Balling light Ca'],
           ),
           SupplementProduct(
             key: 'faunamarin.bl_carbonate',
             name: 'Carbonate Mix',
             elementKey: 'alkalinity',
             strength: {'alkalinity': 5.0},
+            altNames: ['Balling light KH'],
           ),
           SupplementProduct(
             key: 'faunamarin.bl_magnesium',
             name: 'Magnesium Mix',
             elementKey: 'magnesium',
             strength: {'magnesium': 50.0},
+            altNames: ['Balling light Mg'],
           ),
         ],
       ),

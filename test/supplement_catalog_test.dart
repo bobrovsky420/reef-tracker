@@ -65,6 +65,42 @@ void main() {
     }
   });
 
+  test('alt names are non-blank and unique case-insensitively', () {
+    final seen = <String>{};
+    final dupes = <String>[];
+    var total = 0;
+    for (final p in allProducts()) {
+      for (final alt in p.altNames) {
+        expect(alt.trim(), isNotEmpty, reason: 'blank altName on "${p.key}"');
+        if (!seen.add(alt.trim().toLowerCase())) dupes.add(alt);
+        total++;
+      }
+    }
+    expect(dupes, isEmpty, reason: 'duplicate altNames: $dupes');
+    // The lookup map must cover every alt name (would silently drop dupes).
+    expect(kSupplementProductByAltName.length, total);
+  });
+
+  test('device-reported supplement labels resolve via the alt-name map', () {
+    ({String label, String key}) c(String label, String key) =>
+        (label: label, key: key);
+    // The labels a Red Sea ReefDose pump reports for its heads.
+    final cases = [
+      c('Balling light KH', 'faunamarin.bl_carbonate'),
+      c('Balling light Ca', 'faunamarin.bl_calcium'),
+      c('Balling light Mg', 'faunamarin.bl_magnesium'),
+      c('NO3PO4-X', 'redsea.no3po4x'),
+    ];
+    for (final t in cases) {
+      // Case-insensitive: the map is keyed on the lowercased alt name.
+      expect(
+        kSupplementProductByAltName[t.label.toLowerCase()]?.key,
+        t.key,
+        reason: 'label "${t.label}" should resolve to ${t.key}',
+      );
+    }
+  });
+
   group('resolveSupplementNames', () {
     test('uses live catalog names, ignoring a stale stored snapshot', () {
       final r = resolveSupplementNames(

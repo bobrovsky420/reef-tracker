@@ -86,6 +86,7 @@ class SupplementProduct {
     this.elementKey,
     this.defaultUnit = DoseUnit.ml,
     this.strength,
+    this.altNames = const [],
   });
 
   /// Stable identifier persisted on dosing entries (e.g. `redsea.foundation_b`).
@@ -117,6 +118,13 @@ class SupplementProduct {
   /// — a sparse-but-correct map beats a full-but-wrong one, because wrong
   /// potency would silently corrupt later consumption estimates.
   final Map<String, double>? strength;
+
+  /// Alternative names this product is known by in the wild — vendor
+  /// shorthand, device labels (e.g. what a ReefDose head reports as its
+  /// supplement). Used for name-matching via [kSupplementProductByAltName],
+  /// never shown in the UI. Unique across the catalog (generator-validated,
+  /// case-insensitively) so a match is unambiguous.
+  final List<String> altNames;
 }
 
 /// A named dosing program / product line grouping several products
@@ -170,6 +178,17 @@ final Map<String, SupplementProduct> kSupplementProductByKey = {
 final Map<String, String> kVendorKeyByProductKey = {
   for (final v in kSupplementVendors)
     for (final p in v.allProducts) p.key: v.key,
+};
+
+/// Product lookup by **lowercased** alternative name
+/// ([SupplementProduct.altNames]) — match device-reported supplement labels
+/// with `kSupplementProductByAltName[label.trim().toLowerCase()]`. Alt names
+/// are generator-validated to be unique case-insensitively, so this map never
+/// silently drops a colliding entry.
+final Map<String, SupplementProduct> kSupplementProductByAltName = {
+  for (final v in kSupplementVendors)
+    for (final p in v.allProducts)
+      for (final alt in p.altNames) alt.toLowerCase(): p,
 };
 
 /// The owning program name for each product key that belongs to a program
