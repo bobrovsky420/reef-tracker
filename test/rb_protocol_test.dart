@@ -171,6 +171,21 @@ void main() {
       expect(RbDoseStatus.fromJson(const {}).heads, isEmpty);
       expect(RbDoseStatus.fromJson(const {'heads': 7}).heads, isEmpty);
     });
+
+    test('daily_doses: 0 marks a head switched off even with state "on"', () {
+      final status = RbDoseStatus.fromJson({
+        'heads': {
+          '1': {'state': 'on', 'daily_doses': 0},
+          '2': {'state': 'on', 'daily_doses': 3},
+          '3': {'state': 'off', 'daily_doses': 3},
+          '4': {'state': 'on'}, // daily_doses absent → tolerant, NOT off
+        },
+      });
+      expect(
+        [for (final h in status.heads) h.switchedOff],
+        [true, false, true, false],
+      );
+    });
   });
 
   group('rbStockSeverity', () {

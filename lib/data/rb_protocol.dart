@@ -157,6 +157,12 @@ class RbDoseHead {
   /// Everything delivered today (ml) — the gauge's filled portion.
   double get dosedToday => autoDosedToday + manualDosedToday;
 
+  /// Whether the head is effectively switched off. The firmware reports an
+  /// off head either as `state != "on"` or as a zero scheduled dose count
+  /// (`daily_doses: 0`) with `state` still "on" — treat both the same. An
+  /// *absent* `daily_doses` stays tolerant and does not count as off.
+  bool get switchedOff => !enabled || dailyDoses == 0;
+
   static RbDoseHead fromJson(int number, Map<String, Object?> json) {
     final missed = json['missed_dose'];
     return RbDoseHead(

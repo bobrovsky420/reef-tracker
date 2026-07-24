@@ -472,6 +472,7 @@ class _HeadRow extends StatelessWidget {
     final daily = head.dailyDose;
     final dosed = head.dosedToday;
     final days = head.remainingDays;
+    final off = head.switchedOff;
     final daysColor = days == null
         ? tokens.textDim
         : switch (rbStockSeverity(days)) {
@@ -493,13 +494,13 @@ class _HeadRow extends StatelessWidget {
                     ? head.supplement!
                     : l.reefBeatHead(head.number),
                 style: t.titleSmall?.copyWith(
-                  color: head.enabled ? null : tokens.textDim,
+                  color: off ? tokens.textDim : null,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 8),
-            if (!head.enabled)
+            if (off)
               Text(
                 l.reefBeatHeadOff,
                 style: t.labelMedium?.copyWith(color: tokens.textDim),
@@ -525,7 +526,7 @@ class _HeadRow extends StatelessWidget {
                 fraction: (daily == null || daily <= 0)
                     ? 0
                     : (dosed / daily).clamp(0.0, 1.0),
-                enabled: head.enabled,
+                enabled: !off,
               ),
             ),
             const SizedBox(width: 10),
@@ -536,7 +537,7 @@ class _HeadRow extends StatelessWidget {
               style: ReefTokens.monoTextStyle.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: head.enabled ? tokens.text : tokens.textDim,
+                color: off ? tokens.textDim : tokens.text,
               ),
             ),
           ],

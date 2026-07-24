@@ -2415,7 +2415,9 @@ calibrates — a persistent disclaimer points to the ReefBeat app for that.
   `kRbStockCautionDays` (14), `caution` below it, `critical` below
   `kRbStockCriticalDays` (7) — plus warning chips (recalibration needed,
   missed dose, device clock error, backup battery low) in caution/critical
-  soft-token style. Disabled heads render dimmed with an "Off" tag.
+  soft-token style. Switched-off heads (`RbDoseHead.switchedOff`: `state !=
+  "on"` **or** `daily_doses: 0` — the firmware reports off heads both ways)
+  render dimmed with an "Off" tag.
 - Entry points mirror ReefFactory: experimental-gated + Pro-gated
   (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow
   menu and a Settings row. Devices are read once automatically on open;

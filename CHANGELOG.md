@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.41.2] - 2026-07-24
+
+### Fixed
+- A ReefDose head with a zero scheduled dose count is now shown as switched
+  off (dimmed, with an "Off" tag) — the pump reports disabled heads this way
+  even when their state still reads "on".
+
 ## [0.41.1] - 2026-07-24
 
 ### Changed
