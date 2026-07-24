@@ -1390,6 +1390,7 @@
   "reefFactoryNoTank": "Assign a tank first to save readings.",
   "reefFactoryTankLabel": "Tank",
   "reefFactorySelectTank": "Select a tank",
+  "reefFactoryMoveToTank": "Move to another tank",
   "reefFactoryDeviceNameLabel": "Name",
   "reefFactoryRemove": "Remove device",
   "reefFactoryRemoveConfirm": "Remove {name} from this list? Its saved readings are kept.",

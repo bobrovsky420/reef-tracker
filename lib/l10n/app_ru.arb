@@ -851,6 +851,7 @@
   "reefFactoryNoTank": "Сначала назначьте аквариум, чтобы сохранять показания.",
   "reefFactoryTankLabel": "Аквариум",
   "reefFactorySelectTank": "Выберите аквариум",
+  "reefFactoryMoveToTank": "Переместить в другой аквариум",
   "reefFactoryDeviceNameLabel": "Название",
   "reefFactoryRemove": "Удалить устройство",
   "reefFactoryRemoveConfirm": "Удалить {name} из списка? Сохранённые показания останутся.",

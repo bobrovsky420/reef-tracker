@@ -851,6 +851,7 @@
   "reefFactoryNoTank": "Assegna prima una vasca per salvare le letture.",
   "reefFactoryTankLabel": "Vasca",
   "reefFactorySelectTank": "Seleziona una vasca",
+  "reefFactoryMoveToTank": "Sposta in un'altra vasca",
   "reefFactoryDeviceNameLabel": "Nome",
   "reefFactoryRemove": "Rimuovi dispositivo",
   "reefFactoryRemoveConfirm": "Rimuovere {name} da questo elenco? Le letture salvate vengono mantenute.",

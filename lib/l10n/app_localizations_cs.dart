@@ -2992,6 +2992,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefFactorySelectTank => 'Vyberte nádrž';
 
   @override
+  String get reefFactoryMoveToTank => 'Přesunout do jiné nádrže';
+
+  @override
   String get reefFactoryDeviceNameLabel => 'Název';
 
   @override

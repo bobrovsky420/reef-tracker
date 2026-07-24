@@ -312,6 +312,30 @@ void main() {
         note: null,
       ),
     ];
+    final deviceRecords = [
+      DeviceRecord(
+        id: 100,
+        kind: 'reeffactory',
+        identifier: 'RFPM011234',
+        name: 'Sump pH meter',
+        model: 'RFPM01',
+        address: '192.168.1.50',
+        tankId: 1,
+        firstSeenAt: DateTime.fromMillisecondsSinceEpoch(1700012000000),
+        lastSeenAt: DateTime.fromMillisecondsSinceEpoch(1700013000000),
+      ),
+      DeviceRecord(
+        id: 101,
+        kind: 'hanna',
+        identifier: 'HI98108-BLE-9',
+        name: null,
+        model: null,
+        address: null,
+        tankId: null,
+        firstSeenAt: DateTime.fromMillisecondsSinceEpoch(1700014000000),
+        lastSeenAt: null,
+      ),
+    ];
 
     test('round-trips every table preserving ids and values', () {
       final json = encodeBackup(
@@ -330,6 +354,7 @@ void main() {
         maintenanceSchedules: maintenanceSchedules,
         roStages: roStages,
         roStageReplacements: roStageReplacements,
+        devices: deviceRecords,
         settings: settings,
       );
       final data = decodeBackup(json);
@@ -511,6 +536,27 @@ void main() {
       expect(rr0.note.value, 'new Filmtec');
       expect(data.roStageReplacements[1].note.value, isNull);
 
+      // Connected devices (U36) — the local autoincrement id never rides the
+      // backup (merge-restore assigns fresh ids), everything else round-trips.
+      final dv0 = data.devices[0];
+      expect(dv0.id.present, isFalse);
+      expect(dv0.kind.value, 'reeffactory');
+      expect(dv0.identifier.value, 'RFPM011234');
+      expect(dv0.name.value, 'Sump pH meter');
+      expect(dv0.model.value, 'RFPM01');
+      expect(dv0.address.value, '192.168.1.50');
+      expect(dv0.tankId.value, 1);
+      expect(dv0.firstSeenAt.value, deviceRecords[0].firstSeenAt);
+      expect(dv0.lastSeenAt.value, deviceRecords[0].lastSeenAt);
+      final dv1 = data.devices[1];
+      expect(dv1.kind.value, 'hanna');
+      expect(dv1.identifier.value, 'HI98108-BLE-9');
+      expect(dv1.name.value, isNull);
+      expect(dv1.model.value, isNull);
+      expect(dv1.address.value, isNull);
+      expect(dv1.tankId.value, isNull);
+      expect(dv1.lastSeenAt.value, isNull);
+
       expect(data.settings.length, 3);
       expect(data.settings[0].key.value, 'temp_unit');
       expect(data.settings[0].value.value, 'fahrenheit');
@@ -602,6 +648,7 @@ void main() {
                 RegExp(r',\s*"roStageReplacements":\s*\[.*?\]', dotAll: true),
                 '',
               )
+              .replaceFirst(RegExp(r',\s*"devices":\s*\[.*?\]', dotAll: true), '')
               // Older backups predate the checksum too (T7); with it left in,
               // the stripped document would (correctly) fail verification.
               .replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
@@ -615,6 +662,7 @@ void main() {
       expect(data.maintenanceSchedules, isEmpty);
       expect(data.roStages, isEmpty);
       expect(data.roStageReplacements, isEmpty);
+      expect(data.devices, isEmpty);
       expect(data.readings.length, 2);
     });
 
@@ -919,6 +967,7 @@ void main() {
       List<MaintenanceSchedulesCompanion> maintenanceSchedules = const [],
       List<RoStagesCompanion> roStages = const [],
       List<RoStageReplacementsCompanion> roStageReplacements = const [],
+      List<DevicesCompanion> devices = const [],
       int schemaVersion = 1,
     }) => BackupData(
       schemaVersion: schemaVersion,
@@ -936,6 +985,7 @@ void main() {
       maintenanceSchedules: maintenanceSchedules,
       roStages: roStages,
       roStageReplacements: roStageReplacements,
+      devices: devices,
       settings: const [],
     );
 
@@ -1352,6 +1402,62 @@ void main() {
       );
     });
 
+    DevicesCompanion device(
+      String identifier, {
+      String kind = 'reeffactory',
+      String? name,
+      int? tankId,
+    }) => DevicesCompanion(
+      kind: Value(kind),
+      identifier: Value(identifier),
+      name: Value(name),
+      tankId: Value(tankId),
+      firstSeenAt: Value(DateTime.fromMillisecondsSinceEpoch(0)),
+    );
+
+    test('accepts consistent devices, assigned and unassigned (U36)', () {
+      final d = dataWith(
+        tanks: [tank(1)],
+        devices: [
+          device('RF-AAA', name: 'pH meter', tankId: 1),
+          device('HI-BLE-9', kind: 'hanna'),
+        ],
+      );
+      expect(() => validateBackup(d, appSchemaVersion: 23), returnsNormally);
+    });
+
+    test('rejects a device referencing a missing aquarium (U36)', () {
+      final d = dataWith(tanks: [tank(1)], devices: [device('RF-AAA', tankId: 99)]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 23),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a device with a blank identifier (U36)', () {
+      final d = dataWith(devices: [device('  ')]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 23),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects duplicate device identifiers (U36)', () {
+      final d = dataWith(devices: [device('RF-AAA'), device('RF-AAA')]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 23),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
+    test('rejects a device with an unknown kind (U36, #34)', () {
+      final d = dataWith(devices: [device('X1', kind: 'neptune')]);
+      expect(
+        () => validateBackup(d, appSchemaVersion: 23),
+        rejectedWith(BackupRejection.inconsistent),
+      );
+    });
+
     TrackedParametersCompanion param(
       int id,
       int tankId, {
@@ -1530,6 +1636,14 @@ void main() {
           importedUpTo: Value(DateTime(2026, 1, 1, 8)),
         ),
       );
+      // A connected ReefFactory meter (U36) — rides the backup, merge-restored.
+      await db.upsertReefFactoryDevice(
+        identifier: 'RFPM011234',
+        model: 'RFPM01',
+        address: '192.168.1.50',
+        name: 'Sump pH meter',
+        tankId: id,
+      );
       return id;
     }
 
@@ -1596,6 +1710,15 @@ void main() {
       expect(restoredSource.location, '200G2');
       expect(restoredSource.importedUpTo, DateTime(2026, 1, 1, 8));
       expect(restoredSource.rewound, isFalse);
+      // The connected meter (U36) arrives on the fresh device, tank link and
+      // network address included — only the local row id is minted anew.
+      final restoredDevice = (await dst.getAllDevices()).single;
+      expect(restoredDevice.kind, 'reeffactory');
+      expect(restoredDevice.identifier, 'RFPM011234');
+      expect(restoredDevice.name, 'Sump pH meter');
+      expect(restoredDevice.model, 'RFPM01');
+      expect(restoredDevice.address, '192.168.1.50');
+      expect(restoredDevice.tankId, id);
       // temp_unit is a device-local preference: the backup's value must NOT be
       // imported (#18). dst had none, so it stays unset after restore.
       expect(await dst.getSetting('temp_unit'), isNull);
@@ -1787,6 +1910,81 @@ void main() {
       expect(tanks.length, 1);
       expect(tanks.single.name, 'Reef');
     });
+
+    test(
+      'devices merge on restore: same serial or same name skips, local rows '
+      'always win (U36)',
+      () async {
+        final src = newDb();
+        addTearDown(src.close);
+        final srcTank = await src.createTankWithPreset(
+          name: 'Reef',
+          type: SetupType.mixed,
+        );
+        await src.upsertReefFactoryDevice(
+          identifier: 'RF-AAA',
+          model: 'RFPM01',
+          address: '10.0.0.5',
+          name: 'Display pH',
+          tankId: srcTank,
+        );
+        await src.upsertReefFactoryDevice(
+          identifier: 'RF-BBB',
+          model: 'RFSG01',
+          address: '10.0.0.6',
+          name: 'Salinity',
+        );
+        await src.upsertReefFactoryDevice(
+          identifier: 'RF-CCC',
+          model: 'RFPM01',
+          address: '10.0.0.7',
+          name: 'Frag pH',
+        );
+        final data = decodeBackup(await encodeBackupFromDb(src));
+
+        final dst = newDb();
+        addTearDown(dst.close);
+        final dstTank = await dst.createTankWithPreset(
+          name: 'Old',
+          type: SetupType.sps,
+        );
+        // Same serial as the backup's RF-AAA, configured for *this* network
+        // and assigned to a local tank — must survive untouched (bar the tank
+        // link, whose target is wiped by the restore).
+        await dst.upsertReefFactoryDevice(
+          identifier: 'RF-AAA',
+          model: 'RFPM01',
+          address: '192.168.1.20',
+          name: 'Sump pH',
+          tankId: dstTank,
+        );
+        // Different serial but the same display name as the backup's RF-BBB —
+        // that backup row must be skipped.
+        await dst.upsertReefFactoryDevice(
+          identifier: 'RF-ZZZ',
+          model: 'RFSG01',
+          address: '192.168.1.21',
+          name: 'Salinity',
+        );
+
+        await importBackup(dst, data);
+
+        final restored = await dst.getAllDevices();
+        final byId = {for (final d in restored) d.identifier: d};
+        expect(byId.keys, unorderedEquals(['RF-AAA', 'RF-ZZZ', 'RF-CCC']));
+        // Local RF-AAA won: the backup's address/name did not clobber it.
+        expect(byId['RF-AAA']!.address, '192.168.1.20');
+        expect(byId['RF-AAA']!.name, 'Sump pH');
+        // Its tank assignment was cleared by the tank wipe (FK set-null) —
+        // never left pointing into the restored tanks.
+        expect(byId['RF-AAA']!.tankId, isNull);
+        // The name-collision row kept its local serial and address.
+        expect(byId['RF-ZZZ']!.address, '192.168.1.21');
+        // RF-CCC was new on this phone — inserted from the backup.
+        expect(byId['RF-CCC']!.address, '10.0.0.7');
+        expect(byId['RF-CCC']!.name, 'Frag pH');
+      },
+    );
 
     test('imports an older backup missing later sections', () async {
       final src = newDb();

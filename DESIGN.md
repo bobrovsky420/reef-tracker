@@ -334,7 +334,7 @@ non-int version = corrupted, and a genuinely newer document) and is
 **forward-tolerant** (older backups without the
 `waterChanges` / `carbonChanges` / `equipmentCleanings` / `ratioVisibilities` /
 `dosingEntries` / `readingTemplates` / `maintenanceSchedules` / `roStages` /
-`roStageReplacements` / `importSources` keys decode to
+`roStageReplacements` / `importSources` / `devices` keys decode to
 empty lists, pre-v16 rows without `testCadenceDays`/`remindEnabled` decode
 to null/off, and pre-v17 maintenance rows without
 `cadenceUnit`/`weekdays`/`monthDay` decode to null = plain every-N-days).
@@ -396,6 +396,17 @@ wins over whatever the backup carries, including its absence, so restoring a
 marker-less backup can't wipe the early-adopter status that nothing could
 re-seed (see Editions below).
 
+The `devices` section (U36) is the one exception to wipe-and-replace: the
+connected-device inventory is **merged**. Local rows always survive — their
+address/name/tank assignment describe *this* phone's network (the tank wipe
+clears surviving rows' tank links via the FK's set-null, so they never point
+into the restored tanks) — and a backup row is inserted only when no local
+device claims its identity: same `identifier` (serial / BLE id) or same
+kind + display name. The local autoincrement id never enters the format
+(identity is the unique `identifier`), so merged rows get fresh ids. Net
+effect: restoring on a new phone brings the meters along; restoring on a phone
+that already has them configured changes nothing.
+
 **Importing is a three-stage safety pipeline** (`importBackup`), so a bad file
 never wipes live data:
 1. `validateBackup` — in-memory pre-flight: rejects a backup whose
@@ -416,7 +427,10 @@ never wipes live data:
    restore a permanently silent plan). RO sections (U16) get the same
    treatment: unique stage ids, no replacement referencing a missing stage,
    `stageType` whitelisted against `RoStageType`, a custom stage must carry a
-   non-blank title, and `lifespanDays` must be ≥ 1. All four recurring
+   non-blank title, and `lifespanDays` must be ≥ 1. Devices (U36): `kind`
+   whitelisted (`reeffactory`/`hanna`), `identifier` non-blank and unique (it
+   is the merge identity), and a present `tankId` must reference an aquarium
+   in the backup. All four recurring
    day-count fields (`cadenceDays`, `lifespanDays`, `testCadenceDays`, dosing
    `intervalDays`) are also capped at ~100 years (#59): a huge day count
    would overflow `DateTime`'s year ceiling and crash the due-date providers
@@ -2311,20 +2325,29 @@ the ReefFactory app for settings/calibration/firmware.
   tolerates several clients). Typed `RfLinkError` drives specific messages. The
   returned `RfSnapshot` carries `modelDisplayName` (the vendor product name),
   used as the default device name on add.
-- **Dashboard** (`reeffactory_screen.dart`): one card per device with per-device
-  **Refresh** (pull live into the card) and **Save** (persist to the device's
-  assigned tank via `insertReadingGroup` + `addTrackedParameter`, impossible
-  values dropped), plus common **Refresh all** / **Save all** actions. Save-all
-  merges each tank's readings from all devices into one group, deduped by
-  parameter. **Temperature source rule** (`_valuesToSave`): a Salinity Guardian's
-  temperature is only saved when no `RFTC01` Temperature Controller device is
-  present — the controller is authoritative. Add-by-address auto-identifies via
-  the config handshake and dedupes by serial (re-adding a moved device updates
-  its address). Household-scoped (`reefFactoryDevicesProvider`, a shared
-  `StreamProvider`).
+- **Dashboard** (`reeffactory_screen.dart`): shows the **active tank's** devices
+  (plus unassigned ones, so they stay reachable on any tank), sorted by display
+  name (name → model → serial fallback, case-insensitive), one card per
+  device with per-device **Refresh** (pull live into the card) and **Save**
+  (persist to the device's assigned tank via `insertReadingGroup` +
+  `addTrackedParameter`, impossible values dropped), plus common **Refresh
+  all** / **Save all** actions over the visible devices. Save-all merges each
+  tank's readings from all devices into one group, deduped by parameter.
+  Tank assignment is set on add and changed via the card menu's "Move to
+  another tank" picker (hidden when there is no other tank). **Temperature
+  source rule** (`_valuesToSave`): a Salinity Guardian's temperature is only
+  saved when no `RFTC01` Temperature Controller is assigned to the *same
+  tank* — the controller is authoritative for its tank. Add-by-address
+  auto-identifies via the config handshake and dedupes by serial (re-adding a
+  moved device updates its address); the probe's snapshot seeds the new card,
+  so it shows live values immediately without a second read. The device list itself stays
+  household-scoped (`reefFactoryDevicesProvider`, a shared `StreamProvider`);
+  the screen filters it by the active tank.
 - Entry points are experimental-gated (Settings → Experimental) and Pro-gated
   (`ProFeature.reefFactory`, grandfathered): the Measurements-tab overflow menu
-  and a Settings row. Auto-refresh is deferred (manual only for now).
+  and a Settings row. The visible devices are read once automatically when the
+  screen opens (one-shot, sequential); after that reads are manual — periodic
+  auto-refresh is deferred.
 
 Connected-device inventory (Settings → Connected devices, route
 `/settings/devices`, `connected_devices_screen.dart`): a read-only union of the

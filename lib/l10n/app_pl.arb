@@ -851,6 +851,7 @@
   "reefFactoryNoTank": "Najpierw przypisz zbiornik, aby zapisać odczyty.",
   "reefFactoryTankLabel": "Zbiornik",
   "reefFactorySelectTank": "Wybierz zbiornik",
+  "reefFactoryMoveToTank": "Przenieś do innego zbiornika",
   "reefFactoryDeviceNameLabel": "Nazwa",
   "reefFactoryRemove": "Usuń urządzenie",
   "reefFactoryRemoveConfirm": "Usunąć {name} z tej listy? Zapisane odczyty zostaną zachowane.",

@@ -851,6 +851,7 @@
   "reefFactoryNoTank": "Attribuez d'abord un bac pour enregistrer les relevés.",
   "reefFactoryTankLabel": "Bac",
   "reefFactorySelectTank": "Sélectionner un bac",
+  "reefFactoryMoveToTank": "Déplacer vers un autre bac",
   "reefFactoryDeviceNameLabel": "Nom",
   "reefFactoryRemove": "Supprimer l'appareil",
   "reefFactoryRemoveConfirm": "Supprimer {name} de cette liste ? Les relevés enregistrés sont conservés.",

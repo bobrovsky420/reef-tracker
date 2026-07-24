@@ -4965,6 +4965,12 @@ abstract class AppLocalizations {
   /// **'Select a tank'**
   String get reefFactorySelectTank;
 
+  /// No description provided for @reefFactoryMoveToTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to another tank'**
+  String get reefFactoryMoveToTank;
+
   /// No description provided for @reefFactoryDeviceNameLabel.
   ///
   /// In en, this message translates to:

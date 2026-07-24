@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,6 +35,10 @@ List<({String paramKey, double value})> rfReadingsToSave({
   ];
 }
 
+/// What the UI calls a device: explicit name, else vendor model, else serial.
+/// Also the card sort key.
+String _displayName(DeviceRecord d) => d.name ?? d.model ?? d.identifier;
+
 /// Transient per-device live state held by the screen (not persisted): the last
 /// refresh result. Saving is a separate, explicit action.
 class _Live {
@@ -56,6 +62,10 @@ class ReefFactoryScreen extends ConsumerStatefulWidget {
 class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
   /// Live snapshots keyed by device identifier (serial).
   final Map<String, _Live> _live = {};
+
+  /// Whether the on-open auto-read has already run (it must fire only once,
+  /// not on every device-list stream emission).
+  bool _autoRefreshed = false;
 
   Tank? _tankFor(int? id, List<Tank> tanks) {
     if (id == null) return null;
@@ -89,7 +99,9 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
   }
 
   /// The values from [snap] to persist for [device], given the full device list
-  /// (needed for the temperature-source rule). See [rfReadingsToSave].
+  /// (needed for the temperature-source rule). Only a controller assigned to
+  /// the *same tank* suppresses the Guardian's temperature — one tank's
+  /// controller says nothing about another tank's water. See [rfReadingsToSave].
   List<({String paramKey, double value})> _valuesToSave(
     DeviceRecord device,
     RfSnapshot snap,
@@ -98,8 +110,10 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
       rfReadingsToSave(
         deviceModel: device.model,
         readings: snap.readings,
-        hasTempController:
-            devices.any((d) => d.model == kRfTempControllerModel),
+        hasTempController: devices.any(
+          (d) =>
+              d.model == kRfTempControllerModel && d.tankId == device.tankId,
+        ),
       );
 
   /// Persists one reading group for [tank]. Ensures each parameter is tracked
@@ -204,6 +218,7 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
     final l = AppLocalizations.of(context);
     final devicesAsync = ref.watch(reefFactoryDevicesProvider);
     final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
+    final activeTank = ref.watch(activeTankProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l.reefFactoryTitle)),
@@ -215,7 +230,27 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
       body: devicesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
-        data: (devices) {
+        data: (allDevices) {
+          // Tank-scoped view: only the active tank's devices. Unassigned
+          // devices stay visible on every tank — assignment now lives in the
+          // card menu, so hiding them would make them unreachable.
+          final devices = [
+            for (final d in allDevices)
+              if (d.tankId == null || d.tankId == activeTank?.id) d,
+          ]..sort(
+              (a, b) => _displayName(a).toLowerCase().compareTo(
+                    _displayName(b).toLowerCase(),
+                  ),
+            );
+          // One-shot read of the visible devices when the screen opens;
+          // everything after that is manual. (Periodic auto-refresh stays
+          // deferred.)
+          if (!_autoRefreshed && devices.isNotEmpty) {
+            _autoRefreshed = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) unawaited(_refreshAll(devices));
+            });
+          }
           final anyLoading =
               devices.any((d) => _live[d.identifier]?.loading ?? false);
           final anySnapshot =
@@ -252,15 +287,15 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
               for (final d in devices)
                 _DeviceCard(
                   device: d,
-                  tanks: tanks,
                   tank: _tankFor(d.tankId, tanks),
                   live: _live[d.identifier] ?? const _Live(),
                   errorTextOf: (e) => _errorText(l, e),
                   onRefresh: () => _refresh(d),
                   onSave: (snap) => _save(d, snap),
-                  onTankChanged: (tankId) => ref
-                      .read(dbProvider)
-                      .updateDeviceNameTank(d.id, name: d.name, tankId: tankId),
+                  // No other tank to move to → no menu item.
+                  onMove: tanks.any((t) => t.id != d.tankId)
+                      ? () => _moveDevice(d)
+                      : null,
                   onRemove: () => _confirmRemove(d),
                 ),
             ],
@@ -271,13 +306,40 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
     );
   }
 
+  /// Reassigns [d] to a tank picked from a dialog (all tanks except its
+  /// current one). Also serves as the initial assignment for an unassigned
+  /// device.
+  Future<void> _moveDevice(DeviceRecord d) async {
+    final l = AppLocalizations.of(context);
+    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
+    final tankId = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l.reefFactorySelectTank),
+        children: [
+          for (final t in tanks)
+            if (t.id != d.tankId)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, t.id),
+                child: Text(t.name),
+              ),
+        ],
+      ),
+    );
+    if (tankId != null) {
+      await ref
+          .read(dbProvider)
+          .updateDeviceNameTank(d.id, name: d.name, tankId: tankId);
+    }
+  }
+
   Future<void> _confirmRemove(DeviceRecord d) async {
     final l = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l.reefFactoryRemove),
-        content: Text(l.reefFactoryRemoveConfirm(d.name ?? d.model ?? d.identifier)),
+        content: Text(l.reefFactoryRemoveConfirm(_displayName(d))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.reefFactoryRemove)),
@@ -302,7 +364,7 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
           tanks: ref.read(tanksProvider).value ?? const <Tank>[],
           activeTankId: ref.read(activeTankProvider)?.id,
           errorTextOf: (e) => _errorText(AppLocalizations.of(ctx), e),
-          onAdd: ({required serial, required model, required host, required name, required tankId}) async {
+          onAdd: ({required serial, required model, required host, required name, required tankId, required snapshot}) async {
             await ref.read(dbProvider).upsertReefFactoryDevice(
               identifier: serial,
               model: model,
@@ -310,6 +372,12 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
               name: name,
               tankId: tankId,
             );
+            // The probe already read the device, so seed the new card with
+            // that snapshot — it shows live values right away without a
+            // second connect.
+            if (mounted) {
+              setState(() => _live[serial] = _Live(snapshot: snapshot));
+            }
           },
         ),
       ),
@@ -377,24 +445,24 @@ class _EmptyState extends StatelessWidget {
 class _DeviceCard extends ConsumerWidget {
   const _DeviceCard({
     required this.device,
-    required this.tanks,
     required this.tank,
     required this.live,
     required this.errorTextOf,
     required this.onRefresh,
     required this.onSave,
-    required this.onTankChanged,
+    required this.onMove,
     required this.onRemove,
   });
 
   final DeviceRecord device;
-  final List<Tank> tanks;
   final Tank? tank;
   final _Live live;
   final String Function(RfLinkError) errorTextOf;
   final VoidCallback onRefresh;
   final void Function(RfSnapshot) onSave;
-  final void Function(int? tankId) onTankChanged;
+
+  /// Null when there is no other tank to move to (the item is hidden).
+  final VoidCallback? onMove;
   final VoidCallback onRemove;
 
   @override
@@ -417,7 +485,7 @@ class _DeviceCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(device.name ?? device.model ?? device.identifier, style: t.titleMedium),
+                      Text(_displayName(device), style: t.titleMedium),
                       Text(
                         '${device.model ?? ''}  ·  ${device.address ?? ''}',
                         style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -426,8 +494,13 @@ class _DeviceCard extends ConsumerWidget {
                   ),
                 ),
                 PopupMenuButton<String>(
-                  onSelected: (v) => v == 'remove' ? onRemove() : null,
+                  onSelected: (v) {
+                    if (v == 'move') onMove?.call();
+                    if (v == 'remove') onRemove();
+                  },
                   itemBuilder: (_) => [
+                    if (onMove != null)
+                      PopupMenuItem(value: 'move', child: Text(l.reefFactoryMoveToTank)),
                     PopupMenuItem(value: 'remove', child: Text(l.reefFactoryRemove)),
                   ],
                 ),
@@ -458,25 +531,15 @@ class _DeviceCard extends ConsumerWidget {
             else
               Text(l.reefFactoryNotReadYet, style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
             const SizedBox(height: 12),
-            // Tank assignment (needed before Save can persist).
-            Row(
-              children: [
-                Text('${l.reefFactoryTankLabel}: ', style: t.bodyMedium),
-                Expanded(
-                  child: DropdownButton<int?>(
-                    isExpanded: true,
-                    value: tank?.id,
-                    hint: Text(l.reefFactorySelectTank),
-                    items: [
-                      for (final tk in tanks)
-                        DropdownMenuItem(value: tk.id, child: Text(tk.name)),
-                    ],
-                    onChanged: onTankChanged,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+            // A tank assignment is needed before Save can persist; assignment
+            // happens via the card menu ("Move to another tank").
+            if (tank == null) ...[
+              Text(
+                l.reefFactoryNoTank,
+                style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 8),
+            ],
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -546,6 +609,7 @@ class _AddDeviceSheet extends StatefulWidget {
     required String host,
     required String? name,
     required int? tankId,
+    required RfSnapshot snapshot,
   }) onAdd;
 
   @override
@@ -679,6 +743,7 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
                       host: _host.text.trim(),
                       name: _name.text.trim().isEmpty ? null : _name.text.trim(),
                       tankId: _tankId,
+                      snapshot: found,
                     );
                     if (context.mounted) Navigator.pop(context);
                   },

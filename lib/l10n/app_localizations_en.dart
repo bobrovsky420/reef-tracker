@@ -2969,6 +2969,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reefFactorySelectTank => 'Select a tank';
 
   @override
+  String get reefFactoryMoveToTank => 'Move to another tank';
+
+  @override
   String get reefFactoryDeviceNameLabel => 'Name';
 
   @override

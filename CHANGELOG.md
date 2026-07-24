@@ -24,6 +24,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings → Connected devices: a read-only list of every connected device —
   ReefFactory meters and your Hanna checker once it has connected for a
   measurement.
+- Connected devices (ReefFactory meters and the Hanna checker) are now included
+  in backups. Restoring merges them into the device list instead of replacing
+  it: a device whose serial number or display name already exists on this phone
+  is skipped, so restoring a backup on a new phone brings your meters along
+  while a phone that already has them configured keeps its own setup.
+
+### Changed
+- The ReefFactory dashboard now shows only the devices assigned to the
+  currently selected aquarium (devices without an aquarium remain visible
+  everywhere). The tank selector on each device card was replaced by a
+  **Move to another tank** entry in the card menu, and **Refresh all** /
+  **Save all** act on the shown devices only. The temperature-source rule is
+  now per aquarium: a Temperature Controller only overrides a Salinity
+  Guardian's temperature on its own aquarium.
+- ReefFactory device cards are sorted by name, and the dashboard now reads
+  the current values automatically when opened (refreshing after that stays
+  manual). A newly added device shows the values from its identification
+  probe right away instead of waiting for a first manual refresh.
 
 ### Fixed
 - The welcome screen no longer shows the parameter-management button in its

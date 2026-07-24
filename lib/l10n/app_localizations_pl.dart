@@ -3033,6 +3033,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefFactorySelectTank => 'Wybierz zbiornik';
 
   @override
+  String get reefFactoryMoveToTank => 'Przenieś do innego zbiornika';
+
+  @override
   String get reefFactoryDeviceNameLabel => 'Nazwa';
 
   @override

@@ -2297,6 +2297,9 @@ class AppDatabase extends _$AppDatabase {
   Future<List<RoStageReplacement>> getAllRoStageReplacements() =>
       select(roStageReplacements).get();
 
+  /// Every connected-device row (U36; device-scoped, optional tank link).
+  Future<List<DeviceRecord>> getAllDevices() => select(devices).get();
+
   /// Every settings key/value pair.
   Future<List<Setting>> getAllSettings() => select(settings).get();
 
@@ -2317,6 +2320,14 @@ class AppDatabase extends _$AppDatabase {
   /// applies. Used for the early-adopter marker (U19): restoring a marker-less
   /// backup — a pre-marker file, or one made by a fresh post-Pro install —
   /// must not wipe a status nothing could ever re-seed.
+  ///
+  /// [deviceRows] (U36) are the one exception to wipe-and-replace: the
+  /// connected-device inventory is *merged*. Local rows always survive (their
+  /// address/name/tank assignment describe *this* phone's network), and a
+  /// backup row is only inserted when no local device claims its identity —
+  /// same identifier (serial / BLE id), or same kind + display name. That way
+  /// restoring on a fresh phone brings the meters along, while restoring on a
+  /// phone that already has them configured changes nothing.
   Future<void> restoreFromBackup({
     required List<TanksCompanion> tankRows,
     required List<TrackedParametersCompanion> paramRows,
@@ -2336,6 +2347,7 @@ class AppDatabase extends _$AppDatabase {
     List<MicroViewsCompanion> microViewRows = const [],
     List<ManualDosesCompanion> manualDoseRows = const [],
     List<ImportSourcesCompanion> importSourceRows = const [],
+    List<DevicesCompanion> deviceRows = const [],
     required List<SettingsCompanion> settingRows,
     Set<String> preserveSettingKeys = const {},
     Set<String> stickySettingKeys = const {},
@@ -2399,6 +2411,28 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(importSources, importSourceRows);
         b.insertAll(settings, incomingSettings);
       });
+      // Merge the connected-device inventory (U36). Note the tank wipe above
+      // already cleared surviving local rows' tank assignments via the FK's
+      // set-null — the restored tanks are different data, so a stale link must
+      // not silently point into them.
+      if (deviceRows.isNotEmpty) {
+        final localDevices = await select(devices).get();
+        final localIdentifiers = {for (final d in localDevices) d.identifier};
+        final localNames = {
+          for (final d in localDevices)
+            if (d.name != null) (d.kind, d.name!),
+        };
+        for (final row in deviceRows) {
+          if (localIdentifiers.contains(row.identifier.value)) continue;
+          final name = row.name.present ? row.name.value : null;
+          if (name != null && localNames.contains((row.kind.value, name))) {
+            continue;
+          }
+          await into(devices).insert(row);
+          localIdentifiers.add(row.identifier.value);
+          if (name != null) localNames.add((row.kind.value, name));
+        }
+      }
       // Sticky keys: the pre-restore local value overrides the backup's.
       for (final e in stickyLocal.entries) {
         await into(settings).insertOnConflictUpdate(

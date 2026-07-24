@@ -76,6 +76,7 @@ class BackupData {
     this.roStages = const [],
     this.roStageReplacements = const [],
     this.importSources = const [],
+    this.devices = const [],
     required this.settings,
   });
 
@@ -116,8 +117,18 @@ class BackupData {
   /// Measurement-import watermarks + location mappings (U32). Defaults to
   /// empty for pre-U32 backups, same policy as [readingTemplates].
   final List<ImportSourcesCompanion> importSources;
+
+  /// Connected hardware devices (U36): ReefFactory meters and the Hanna
+  /// checker. Defaults to empty for pre-U36 backups, same policy as
+  /// [readingTemplates]. Restored by *merging* (see
+  /// [AppDatabase.restoreFromBackup]), never by wipe-and-replace.
+  final List<DevicesCompanion> devices;
   final List<SettingsCompanion> settings;
 }
+
+/// The [Devices.kind] values this app understands (#34 gate). Mirrors the
+/// writers in database.dart (`upsertReefFactoryDevice`, `ensureHannaDevice`).
+const Set<String> _knownDeviceKinds = {'reeffactory', 'hanna'};
 
 /// Serializes the whole database to a compact JSON string.
 ///
@@ -142,6 +153,7 @@ String encodeBackup({
   List<RoStage> roStages = const [],
   List<RoStageReplacement> roStageReplacements = const [],
   List<ImportSource> importSources = const [],
+  List<DeviceRecord> devices = const [],
   required List<Setting> settings,
   String? deviceName,
 }) {
@@ -177,6 +189,7 @@ String encodeBackup({
         .map(_roStageReplacementToJson)
         .toList(),
     'importSources': importSources.map(_importSourceToJson).toList(),
+    'devices': devices.map(_deviceToJson).toList(),
     'settings': settings.map(_settingToJson).toList(),
   };
   final payload = jsonEncode(map);
@@ -410,6 +423,7 @@ BackupData decodeBackup(String jsonString) {
       _importSourceFromJson,
       required: false,
     ),
+    devices: section('devices', _deviceFromJson, required: false),
     settings: section('settings', _settingFromJson),
   );
 }
@@ -515,6 +529,35 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     data.maintenanceSchedules.map((r) => r.tankId.value),
   );
   requireTank('importSources', data.importSources.map((r) => r.tankId.value));
+  // Devices are device-scoped, but a row may carry a tank assignment — it must
+  // point at an aquarium present in the backup (null = unassigned, fine).
+  requireTank(
+    'devices',
+    data.devices
+        .map((d) => d.tankId.present ? d.tankId.value : null)
+        .whereType<int>(),
+  );
+
+  // A device's identifier (serial / BLE id) is its merge identity on restore:
+  // a blank one could never match an existing row and would re-import as a new
+  // device on every restore, and a duplicate would trip the UNIQUE constraint
+  // mid-restore instead of failing cleanly here.
+  final deviceIdentifiers = <String>{};
+  for (final d in data.devices) {
+    final identifier = d.identifier.present ? d.identifier.value : null;
+    if (identifier == null || identifier.trim().isEmpty) {
+      throw const InvalidBackupException(
+        BackupRejection.inconsistent,
+        'devices: blank identifier',
+      );
+    }
+    if (!deviceIdentifiers.add(identifier)) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'devices: duplicate identifier "$identifier"',
+      );
+    }
+  }
 
   // RO stages are the FK target of the replacement log — same unique-id +
   // no-dangling-reference checks the tanks get (U16).
@@ -647,6 +690,14 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
     'roStages.stageType',
     data.roStages.map((s) => s.stageType.present ? s.stageType.value : null),
     names(RoStageType.values),
+  );
+
+  // Device kinds are enum-ish text too (#34): an unknown kind would restore a
+  // row no dashboard manages and no flow can refresh or remove.
+  requireKnown(
+    'devices.kind',
+    data.devices.map((d) => d.kind.present ? d.kind.value : null),
+    _knownDeviceKinds,
   );
 
   // Recurring-interval day counts feed unguarded DateTime day-addition
@@ -823,6 +874,7 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       roStageRows: data.roStages,
       roStageReplacementRows: data.roStageReplacements,
       importSourceRows: data.importSources,
+      deviceRows: data.devices,
       settingRows: data.settings,
       // Never overwrite this device's own preferences with the backup's (#18).
       preserveSettingKeys: SettingKey.deviceLocalKeys,
@@ -858,6 +910,9 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   // Device-scoped (no tankId) — never subject to the soft-delete filtering.
   final roStages = await db.getAllRoStages();
   final roStageReplacements = await db.getAllRoStageReplacements();
+  // Device-scoped with an *optional* tank assignment (U36) — the row always
+  // rides the backup; only a soft-deleted assignment is cleared below.
+  var deviceRecords = await db.getAllDevices();
   final settings = await db.getAllSettings();
   // The user-chosen device name (U35) — stamped as top-level provenance so the
   // restore prompt can say which device wrote the file without digging through
@@ -905,6 +960,12 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
     importSources = importSources
         .where((r) => !hidden.contains(r.tankId))
         .toList();
+    // Mirrors the FK's set-null: the device survives its tank's deletion,
+    // only the assignment is dropped.
+    deviceRecords = [
+      for (final d in deviceRecords)
+        hidden.contains(d.tankId) ? d.copyWith(tankId: const Value(null)) : d,
+    ];
   }
   // The closure must capture only sendable plain data — never [db]: an open
   // database (ports, native handles) cannot cross the isolate boundary.
@@ -926,6 +987,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       roStages: roStages,
       roStageReplacements: roStageReplacements,
       importSources: importSources,
+      devices: deviceRecords,
       settings: settings,
       deviceName: deviceName,
     ),
@@ -1373,6 +1435,31 @@ ImportSourcesCompanion _importSourceFromJson(Map<String, dynamic> m) =>
       importedUpTo: Value(_dateOrNull(m['importedUpTo'])),
       rewound: Value(m['rewound'] as bool? ?? false),
     );
+
+// The autoincrement id is deliberately absent (U36): device rows are restored
+// by *merging* into an inventory that may already have rows, so preserved ids
+// could collide. Identity is the unique `identifier` (serial / BLE id).
+Map<String, dynamic> _deviceToJson(DeviceRecord d) => {
+  'kind': d.kind,
+  'identifier': d.identifier,
+  'name': d.name,
+  'model': d.model,
+  'address': d.address,
+  'tankId': d.tankId,
+  'firstSeenAt': d.firstSeenAt.millisecondsSinceEpoch,
+  'lastSeenAt': d.lastSeenAt?.millisecondsSinceEpoch,
+};
+
+DevicesCompanion _deviceFromJson(Map<String, dynamic> m) => DevicesCompanion(
+  kind: Value(m['kind'] as String),
+  identifier: Value(m['identifier'] as String),
+  name: Value(m['name'] as String?),
+  model: Value(m['model'] as String?),
+  address: Value(m['address'] as String?),
+  tankId: Value(m['tankId'] as int?),
+  firstSeenAt: Value(_date(m['firstSeenAt'])),
+  lastSeenAt: Value(_dateOrNull(m['lastSeenAt'])),
+);
 
 Map<String, dynamic> _settingToJson(Setting s) => {
   'key': s.key,

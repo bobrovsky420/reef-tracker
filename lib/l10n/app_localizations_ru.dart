@@ -3027,6 +3027,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefFactorySelectTank => 'Выберите аквариум';
 
   @override
+  String get reefFactoryMoveToTank => 'Переместить в другой аквариум';
+
+  @override
   String get reefFactoryDeviceNameLabel => 'Название';
 
   @override

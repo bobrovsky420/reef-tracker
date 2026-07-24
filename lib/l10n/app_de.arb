@@ -851,6 +851,7 @@
   "reefFactoryNoTank": "Weise zuerst ein Becken zu, um Messwerte zu speichern.",
   "reefFactoryTankLabel": "Becken",
   "reefFactorySelectTank": "Becken auswählen",
+  "reefFactoryMoveToTank": "In ein anderes Becken verschieben",
   "reefFactoryDeviceNameLabel": "Name",
   "reefFactoryRemove": "Gerät entfernen",
   "reefFactoryRemoveConfirm": "{name} aus dieser Liste entfernen? Gespeicherte Messwerte bleiben erhalten.",

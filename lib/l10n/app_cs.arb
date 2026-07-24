@@ -851,6 +851,7 @@
   "reefFactoryNoTank": "Nejprve přiřaďte nádrž, abyste mohli uložit hodnoty.",
   "reefFactoryTankLabel": "Nádrž",
   "reefFactorySelectTank": "Vyberte nádrž",
+  "reefFactoryMoveToTank": "Přesunout do jiné nádrže",
   "reefFactoryDeviceNameLabel": "Název",
   "reefFactoryRemove": "Odebrat zařízení",
   "reefFactoryRemoveConfirm": "Odebrat {name} z tohoto seznamu? Uložené hodnoty zůstanou zachovány.",
