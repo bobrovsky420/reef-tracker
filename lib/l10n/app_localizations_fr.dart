@@ -2259,6 +2259,46 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String hannaSaveButtonEnv(int count, int envCount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Enregistrer $count mesures',
+      one: 'Enregistrer 1 mesure',
+    );
+    return '$_temp0 + $envCount environnement';
+  }
+
+  @override
+  String get environmentTitle => 'Environnement';
+
+  @override
+  String get environmentInclude =>
+      'Inclure les valeurs d\'environnement des appareils connectés';
+
+  @override
+  String get environmentJustNow => 'lu à l\'instant';
+
+  @override
+  String environmentMinutesAgo(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'lu il y a $minutes minutes',
+      one: 'lu il y a 1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get environmentUnreachable =>
+      'Appareils injoignables — les mesures seront enregistrées sans les valeurs d\'environnement.';
+
+  @override
+  String get environmentAllMeasured =>
+      'Toutes les valeurs d\'environnement ont déjà été mesurées dans cette session.';
+
+  @override
   String get hannaDiscardTitle => 'Abandonner les mesures ?';
 
   @override

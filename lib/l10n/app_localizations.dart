@@ -3801,6 +3801,48 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{1 reading saved} other{{count} readings saved}}'**
   String hannaSavedSnack(int count);
 
+  /// Save button when environment readings from connected devices are saved along with the session results
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Save 1 reading} other{Save {count} readings}} + {envCount} environment'**
+  String hannaSaveButtonEnv(int count, int envCount);
+
+  /// No description provided for @environmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Environment'**
+  String get environmentTitle;
+
+  /// No description provided for @environmentInclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Include environment readings from connected devices'**
+  String get environmentInclude;
+
+  /// No description provided for @environmentJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'read just now'**
+  String get environmentJustNow;
+
+  /// No description provided for @environmentMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, one{read 1 minute ago} other{read {minutes} minutes ago}}'**
+  String environmentMinutesAgo(int minutes);
+
+  /// No description provided for @environmentUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices unreachable — the measurements will be saved without environment readings.'**
+  String get environmentUnreachable;
+
+  /// No description provided for @environmentAllMeasured.
+  ///
+  /// In en, this message translates to:
+  /// **'All environment values were already measured in this session.'**
+  String get environmentAllMeasured;
+
   /// No description provided for @hannaDiscardTitle.
   ///
   /// In en, this message translates to:

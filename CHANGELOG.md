@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.40.1] - 2026-07-24
 
+### Added
+- Hanna checker live measurements can now save the tank's current environment
+  alongside the session's results: on the results screen, an Environment card
+  reads salinity, temperature and pH from the connected devices assigned to
+  the target tank (currently ReefFactory meters) and saves them together with
+  the measured values as one session. Opt-in via the toggle on the card (the
+  choice is remembered); individual values can be excluded per save by tapping
+  them. Values the checker itself measured (e.g. pH) are never duplicated, and
+  when several devices report the same parameter the app picks one
+  automatically — a dedicated meter wins over an incidental reading. If the
+  devices are unreachable, the measurements simply save without environment
+  readings.
+
 ### Fixed
 - Saving a Salinity Guardian reading recorded an absurd salinity value (e.g.
   44545.5 ppt): the meter's ppt reading was stored without converting to the

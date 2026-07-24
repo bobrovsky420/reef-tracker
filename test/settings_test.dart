@@ -220,19 +220,23 @@ void main() {
       // (U16), which describes domain data and must travel with the RO rows
       // it guards on a backup restore, the early-adopter marker (U19),
       // which must ride backups to carry the status to a new device, and
-      // the Hanna method sets (U33) — user data like the RO stages. This
+      // the Hanna method sets (U33) — user data like the RO stages — and the
+      // Hanna environment-capture toggle (U37), which describes the
+      // household's measuring workflow (its devices also ride backups). This
       // pins the split so a new setting can't be added without deciding its
       // restore behaviour.
       expect(SettingKey.deviceLocalKeys, {
         for (final k in SettingKey.values)
           if (k != SettingKey.roSeeded &&
               k != SettingKey.legacyFreeSince &&
-              k != SettingKey.hannaMethodSets)
+              k != SettingKey.hannaMethodSets &&
+              k != SettingKey.hannaAttachEnvironment)
             k.storageKey,
       });
       expect(SettingKey.roSeeded.deviceLocal, isFalse);
       expect(SettingKey.legacyFreeSince.deviceLocal, isFalse);
       expect(SettingKey.hannaMethodSets.deviceLocal, isFalse);
+      expect(SettingKey.hannaAttachEnvironment.deviceLocal, isFalse);
     });
 
     test('storage keys are unique', () {

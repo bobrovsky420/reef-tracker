@@ -2149,6 +2149,28 @@ overflow entry) only exist once the experimental-features master switch
   so a reading captured live doesn't re-import from a later CSV export; a
   pending settings `rewound` flag is preserved, and the watermark never
   moves backwards.
+- **Environment capture (U37):** the results step can also save the tank's
+  *current environment* (salinity, temperature, pH) read from its connected
+  devices, via the device-agnostic `data/environment_sources.dart`:
+  `EnvironmentSource` (identifier, display name, *primary* parameters, one
+  `read()`) is resolved per save-tank by `environmentSourcesProvider`
+  (today: ReefFactory meters wrapped in `RfEnvironmentSource`, gated on
+  `ProFeature.reefFactory`; a future device kind is one new implementation —
+  the Hanna screen never names a vendor). `selectEnvironmentValues` picks
+  exactly **one value per parameter**, never asking the user: dedicated
+  device beats incidental reading (generalizing the U36 temperature-source
+  rule), then fresher read, then identifier order (stable). An
+  **Environment card** on the results step hosts the persistent toggle (the
+  `hanna_attach_environment` setting, default off, rides backups like
+  `hanna_method_sets`; the card shows — collapsed — even while off, for
+  discoverability, and only when the save tank has sources) plus one
+  tappable chip per value to exclude it from a single save. Parameters the
+  session itself measured are dropped entirely (Hanna wins, e.g. pH).
+  Reads are background + sequential (the U36 one-socket rule), refetch on
+  save-tank change, silently re-read at save time when older than 5 min,
+  and degrade without ever blocking or failing the save. Saved values join
+  the session's reading group at their own read time as ordinary readings;
+  the `hannaLab` watermark stays meter-only.
 - **Platform:** `flutter_blue_plus` pinned `<2.0.0` (the 2.x line requires a
   paid commercial license; 1.x is BSD-3). Android manifest carries
   `BLUETOOTH_SCAN`/`BLUETOOTH_CONNECT` (+ legacy trio ≤ API 30,
@@ -2348,6 +2370,10 @@ the ReefFactory app for settings/calibration/firmware.
   and a Settings row. The visible devices are read once automatically when the
   screen opens (one-shot, sequential); after that reads are manual — periodic
   auto-refresh is deferred.
+- The meters double as **environment sources** for the Hanna BLE results step
+  (U37, see the Hanna checker section): `RfEnvironmentSource` wraps a device
+  row + `RfDeviceLink` behind the device-agnostic `EnvironmentSource`
+  interface in `data/environment_sources.dart`.
 
 Connected-device inventory (Settings → Connected devices, route
 `/settings/devices`, `connected_devices_screen.dart`): a read-only union of the

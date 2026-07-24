@@ -7,6 +7,7 @@ import '../data/cloud_auth.dart';
 import '../data/cloud_auth_google.dart';
 import '../data/cloud_backup_store.dart';
 import '../data/database.dart';
+import '../data/environment_sources.dart';
 import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
 import '../data/notifications.dart';
@@ -743,6 +744,15 @@ final hannaMethodSetsProvider = _setting(
   AppSettings.decodeHannaMethodSets,
 );
 
+/// Whether the Hanna results step also captures + saves current environment
+/// readings from the tank's connected devices (U37, default off). The toggle
+/// lives on the results-step Environment card; rides backups like
+/// [hannaMethodSetsProvider].
+final hannaAttachEnvironmentProvider = _setting(
+  SettingKey.hannaAttachEnvironment,
+  AppSettings.decodeHannaAttachEnvironment,
+);
+
 /// Factory for the Hanna checker transport (U33). A provider — same override
 /// story as [cloudAuthProvider] — so tests drive the session with a scripted
 /// fake instead of real BLE hardware; each measurement session constructs a
@@ -771,6 +781,23 @@ final reefFactoryDevicesProvider = StreamProvider<List<DeviceRecord>>(
 /// the read-only Settings "Connected devices" inventory.
 final allDevicesProvider = StreamProvider<List<DeviceRecord>>(
   (ref) => _dedup(ref.watch(dbProvider).watchDevices()),
+);
+
+/// Environment sources (U37) for a tank: the registered devices assigned to it
+/// that can report current environment readings (salinity, temperature, pH) —
+/// what the Hanna results step's Environment card reads. Device-kind gates
+/// apply per kind: ReefFactory rows only count while the install may use
+/// [ProFeature.reefFactory]. A future device kind adds its own wrapped list
+/// here without touching the Hanna flow.
+final environmentSourcesProvider = Provider.family<List<EnvironmentSource>, int>(
+  (ref, tankId) {
+    if (!ref.watch(proFeatureProvider(ProFeature.reefFactory))) return const [];
+    return environmentSourcesForTank(
+      tankId: tankId,
+      rfDevices: ref.watch(reefFactoryDevicesProvider).value ?? const [],
+      rfLink: ref.watch(rfDeviceLinkProvider),
+    );
+  },
 );
 
 /// Whether this device has Bluetooth LE at all (U33). The manifest marks the

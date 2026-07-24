@@ -2279,6 +2279,50 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String hannaSaveButtonEnv(int count, int envCount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Сохранить $count значения',
+      many: 'Сохранить $count значений',
+      few: 'Сохранить $count значения',
+      one: 'Сохранить $count значение',
+    );
+    return '$_temp0 + $envCount (среда)';
+  }
+
+  @override
+  String get environmentTitle => 'Параметры среды';
+
+  @override
+  String get environmentInclude =>
+      'Сохранять также показания среды с подключённых устройств';
+
+  @override
+  String get environmentJustNow => 'считано только что';
+
+  @override
+  String environmentMinutesAgo(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'считано $minutes минуты назад',
+      many: 'считано $minutes минут назад',
+      few: 'считано $minutes минуты назад',
+      one: 'считано $minutes минуту назад',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get environmentUnreachable =>
+      'Устройства недоступны — измерения будут сохранены без показаний среды.';
+
+  @override
+  String get environmentAllMeasured =>
+      'Все показания среды уже измерены в этой сессии.';
+
+  @override
   String get hannaDiscardTitle => 'Не сохранять результаты?';
 
   @override

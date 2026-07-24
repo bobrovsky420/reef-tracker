@@ -10,6 +10,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../data/environment_sources.dart';
 import '../../domain/hanna_import.dart';
 import '../../domain/hanna_meter.dart';
 import '../../domain/parameter_catalog.dart';
@@ -74,6 +75,42 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
 
   /// Whether this state currently holds the wakelock (measuring phase only).
   bool _wakelockOn = false;
+
+  // --- environment capture (U37) ---------------------------------------------
+
+  /// A shown environment value older than this is silently re-read when the
+  /// save button is tapped (the user may have sat on the results step), the
+  /// shown values remaining the fallback if the re-read fails.
+  static const _envStaleAfter = Duration(minutes: 5);
+
+  /// The selected environment values by paramKey (one winner per parameter,
+  /// [selectEnvironmentValues]); null until a fetch has delivered anything.
+  Map<String, EnvValue>? _envValues;
+
+  /// Tank [_envValues] belongs to — display and the failure fallback both
+  /// check it, so another tank's values are never shown or saved as this
+  /// tank's environment.
+  int? _envValuesTank;
+
+  /// When [_envValues] was read — drives the age line and the staleness rule.
+  DateTime? _envFetchedAt;
+
+  bool _envFetching = false;
+
+  /// Whether the last fetch ended with every source failing (drives the
+  /// "unreachable" line; a partial failure just shows fewer chips).
+  bool _envAllFailed = false;
+
+  /// Parameters the user tapped off on the card — excluded from this save
+  /// only; the persistent choice is the settings toggle.
+  final Set<String> _envExcluded = {};
+
+  /// Tank the current fetch/values belong to; a differing save target
+  /// (initial entry, dropdown change) triggers a fresh fetch from the build.
+  int? _envTankId;
+
+  /// Monotonic fetch token: a slow stale fetch must not clobber a newer one.
+  int _envFetchSeq = 0;
 
   @override
   void initState() {
@@ -827,6 +864,24 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     }
 
     final target = tanks.isEmpty ? null : _resolveSaveTank(tanks);
+    final attachEnv = ref.watch(hannaAttachEnvironmentProvider).value ?? false;
+    final envSources = target == null
+        ? const <EnvironmentSource>[]
+        : ref.watch(environmentSourcesProvider(target.id));
+    if (target != null &&
+        attachEnv &&
+        envSources.isNotEmpty &&
+        _envTankId != target.id &&
+        !_envFetching) {
+      // First entry to this step, or the save target changed: the shown
+      // values (if any) belong to another tank. Fetch after this frame —
+      // never during build. `_envTankId` is set synchronously so one build
+      // schedules at most one fetch.
+      _envTankId = target.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_fetchEnvironment(target.id));
+      });
+    }
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -906,6 +961,10 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
             ],
           ),
         ),
+        if (target != null && envSources.isNotEmpty) ...[
+          SectionHeader(l.environmentTitle),
+          _environmentCard(l, attachEnv, target, results),
+        ],
         if (target != null) ...[
           SectionHeader(l.hannaSaveTo),
           ReefCard(
@@ -935,7 +994,13 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.download_done),
-            label: Text(l.hannaSaveButton(_saveableOf(results).length)),
+            label: Text(switch (_envToSave(results, target.id, attachEnv).length) {
+              0 => l.hannaSaveButton(_saveableOf(results).length),
+              final envCount => l.hannaSaveButtonEnv(
+                _saveableOf(results).length,
+                envCount,
+              ),
+            }),
           ),
           const SizedBox(height: 8),
           TextButton(
@@ -976,6 +1041,226 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
       }
     }
     return ref.read(activeTankProvider) ?? tanks.first;
+  }
+
+  // --- environment capture (U37) ---------------------------------------------
+
+  /// Reads every environment source of [tankId] (sequentially — one socket at
+  /// a time is gentle on the meters, the U36 rule) and keeps the per-parameter
+  /// winners. A total failure falls back to the values already shown, if any:
+  /// best-effort context beats none, and the save must never block on the LAN.
+  Future<void> _fetchEnvironment(int tankId) async {
+    final sources = ref.read(environmentSourcesProvider(tankId));
+    final seq = ++_envFetchSeq;
+    final previous = _envValuesTank == tankId ? _envValues : null;
+    final previousAt = _envValuesTank == tankId ? _envFetchedAt : null;
+    if (!mounted) return;
+    setState(() {
+      _envTankId = tankId;
+      _envFetching = true;
+      _envValues = null;
+      _envFetchedAt = null;
+      _envAllFailed = false;
+    });
+    final results = <EnvSourceReadings>[];
+    for (final s in sources) {
+      try {
+        results.add(await s.read());
+      } catch (_) {
+        // A dead device degrades the card, never the save.
+      }
+    }
+    if (!mounted || seq != _envFetchSeq) return;
+    setState(() {
+      _envFetching = false;
+      if (results.isNotEmpty) {
+        _envValues = selectEnvironmentValues(results);
+        _envValuesTank = tankId;
+        _envFetchedAt = DateTime.now();
+      } else {
+        _envValues = previous;
+        _envValuesTank = previous == null ? null : tankId;
+        _envFetchedAt = previousAt;
+        _envAllFailed = true;
+      }
+    });
+  }
+
+  /// The environment winners for [tankId] minus parameters this session
+  /// itself measured — Hanna wins (the "pH only if not measured with Hanna"
+  /// rule). User-tapped exclusions are *not* applied here, so an excluded
+  /// chip stays visible (deselected) on the card; [_envToSave] applies them.
+  Map<String, EnvValue> _envDisplay(List<HannaMethodRun> results, int tankId) {
+    if (_envValuesTank != tankId) return const {};
+    final measured = {for (final r in _saveableOf(results)) r.method.paramKey};
+    return {
+      for (final e in (_envValues ?? const <String, EnvValue>{}).entries)
+        if (!measured.contains(e.key)) e.key: e.value,
+    };
+  }
+
+  /// What actually saves alongside the session: the displayed values minus
+  /// the tapped-off chips; empty when the toggle is off.
+  List<EnvValue> _envToSave(
+    List<HannaMethodRun> results,
+    int tankId,
+    bool attach,
+  ) {
+    if (!attach) return const [];
+    return [
+      for (final e in _envDisplay(results, tankId).values)
+        if (!_envExcluded.contains(e.paramKey)) e,
+    ];
+  }
+
+  IconData _envIcon(String paramKey) => switch (paramKey) {
+    'temperature' => Icons.device_thermostat,
+    'salinity' => Icons.water_drop_outlined,
+    _ => Icons.science_outlined,
+  };
+
+  String _formatEnvValue(EnvValue e, UnitPrefs prefs) {
+    final def = kParameterByKey[e.paramKey];
+    final pres = presentationForKey(e.paramKey, def?.unit ?? '', prefs);
+    final v = pres.format(e.value);
+    return pres.unitLabel.isEmpty ? v : '$v ${pres.unitLabel}';
+  }
+
+  /// The distinct device names behind the shown values, in chip order.
+  String _envDeviceNames(List<EnvValue> display) {
+    final names = <String>[];
+    for (final e in display) {
+      if (!names.contains(e.deviceName)) names.add(e.deviceName);
+    }
+    return names.join(' · ');
+  }
+
+  String _envAgeLabel(AppLocalizations l) {
+    final at = _envFetchedAt;
+    if (at == null) return '';
+    final mins = DateTime.now().difference(at).inMinutes;
+    return mins < 1 ? l.environmentJustNow : l.environmentMinutesAgo(mins);
+  }
+
+  Widget _environmentCard(
+    AppLocalizations l,
+    bool attach,
+    Tank target,
+    List<HannaMethodRun> results,
+  ) {
+    final tokens = ReefTokens.of(context);
+    final prefs = ref.watch(unitPrefsProvider);
+    final display = _envDisplay(results, target.id).values.toList()
+      ..sort(
+        (a, b) => (kParameterIndexByKey[a.paramKey] ?? 0).compareTo(
+          kParameterIndexByKey[b.paramKey] ?? 0,
+        ),
+      );
+    return ReefCard(
+      padding: const EdgeInsets.fromLTRB(16, 6, 8, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.environmentInclude,
+                  style: TextStyle(fontSize: 15, color: tokens.text),
+                ),
+              ),
+              if (attach)
+                _envFetching
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : IconButton(
+                        visualDensity: VisualDensity.compact,
+                        iconSize: 20,
+                        tooltip: l.reefFactoryRefresh,
+                        onPressed: _saving
+                            ? null
+                            : () => unawaited(_fetchEnvironment(target.id)),
+                        icon: Icon(Icons.refresh, color: tokens.textDim),
+                      ),
+              Switch(
+                value: attach,
+                onChanged: _saving
+                    ? null
+                    : (v) {
+                        unawaited(
+                          ref
+                              .read(settingsProvider)
+                              .setHannaAttachEnvironment(v),
+                        );
+                        if (v) unawaited(_fetchEnvironment(target.id));
+                      },
+              ),
+            ],
+          ),
+          if (attach && display.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 4, right: 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final e in display)
+                    FilterChip(
+                      avatar: Icon(_envIcon(e.paramKey), size: 16),
+                      tooltip: l.paramName(e.paramKey),
+                      label: Text(_formatEnvValue(e, prefs)),
+                      selected: !_envExcluded.contains(e.paramKey),
+                      onSelected: _saving
+                          ? null
+                          : (on) => setState(() {
+                              if (on) {
+                                _envExcluded.remove(e.paramKey);
+                              } else {
+                                _envExcluded.add(e.paramKey);
+                              }
+                            }),
+                    ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 6, right: 8),
+              child: Text(
+                '${_envDeviceNames(display)} · ${_envAgeLabel(l)}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: tokens.textFaint),
+              ),
+            ),
+          ] else if (attach && !_envFetching && _envAllFailed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6, right: 8),
+              child: Text(
+                l.environmentUnreachable,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: tokens.caution),
+              ),
+            )
+          else if (attach && !_envFetching && _envValuesTank == target.id)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6, right: 8),
+              child: Text(
+                l.environmentAllMeasured,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: tokens.textFaint),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Future<void> _save(Tank tank) async {
@@ -1031,8 +1316,23 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
+      // Environment capture (U37): re-read silently when the shown values
+      // have gone stale (the user may have sat on the results step); the
+      // shown values are the fallback — the save never blocks on the LAN.
+      final attachEnv = ref.read(hannaAttachEnvironmentProvider).value ?? false;
+      var envToSave = _envToSave(results, tank.id, attachEnv);
+      if (envToSave.isNotEmpty &&
+          (_envFetchedAt == null ||
+              DateTime.now().difference(_envFetchedAt!) > _envStaleAfter)) {
+        await _fetchEnvironment(tank.id);
+        envToSave = _envToSave(results, tank.id, attachEnv);
+      }
+
       final type = SetupType.fromName(tank.setupType);
-      for (final key in {for (final r in results) r.method.paramKey}) {
+      for (final key in {
+        for (final r in results) r.method.paramKey,
+        for (final e in envToSave) e.paramKey,
+      }) {
         await db.addTrackedParameter(tank.id, key, type);
       }
       // One session = one reading group, each reading on its own meter
@@ -1044,6 +1344,16 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
             paramKey: r.method.paramKey,
             value: r.value!,
             takenAt: r.takenAt!,
+            groupId: groupId,
+          ),
+        // Environment readings join the session's group at their own read
+        // time — ordinary readings thereafter. The hannaLab watermark below
+        // stays meter-only: these values never came from the meter's log.
+        for (final e in envToSave)
+          (
+            paramKey: e.paramKey,
+            value: e.value,
+            takenAt: e.takenAt,
             groupId: groupId,
           ),
       ]);
@@ -1074,7 +1384,9 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
 
       _saved = true;
       messenger.showSnackBar(
-        SnackBar(content: Text(l.hannaSavedSnack(results.length))),
+        SnackBar(
+          content: Text(l.hannaSavedSnack(results.length + envToSave.length)),
+        ),
       );
       if (mounted) context.pop();
     } catch (e) {

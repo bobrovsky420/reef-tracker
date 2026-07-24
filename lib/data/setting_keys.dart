@@ -71,3 +71,7 @@ const kExperimentalEnabledKey = 'experimental_enabled';
 // Opt-in quick camera-scan button above "Add reading" (U34): most users
 // don't own a pocket checker, so the FAB space is off by default.
 const kHannaScanFabKey = 'hanna_scan_fab';
+// Environment capture on the Hanna BLE results step (U37): whether saving a
+// session also saves current environment readings from the tank's connected
+// devices. Off by default.
+const kHannaAttachEnvironmentKey = 'hanna_attach_environment';

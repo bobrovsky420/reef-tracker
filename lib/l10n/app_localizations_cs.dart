@@ -2260,6 +2260,48 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String hannaSaveButtonEnv(int count, int envCount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uložit $count hodnot',
+      few: 'Uložit $count hodnoty',
+      one: 'Uložit 1 hodnotu',
+    );
+    return '$_temp0 + $envCount z prostředí';
+  }
+
+  @override
+  String get environmentTitle => 'Prostředí';
+
+  @override
+  String get environmentInclude =>
+      'Uložit také hodnoty prostředí z připojených zařízení';
+
+  @override
+  String get environmentJustNow => 'načteno právě teď';
+
+  @override
+  String environmentMinutesAgo(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: 'načteno před $minutes minutami',
+      few: 'načteno před $minutes minutami',
+      one: 'načteno před 1 minutou',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get environmentUnreachable =>
+      'Zařízení jsou nedostupná — měření se uloží bez hodnot prostředí.';
+
+  @override
+  String get environmentAllMeasured =>
+      'Všechny hodnoty prostředí už byly v této relaci změřeny.';
+
+  @override
   String get hannaDiscardTitle => 'Zahodit měření?';
 
   @override

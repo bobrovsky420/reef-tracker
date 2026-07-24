@@ -249,7 +249,11 @@ enum SettingKey {
   // preference: display preferences like roUnitEnabled — device-local,
   // both default off.
   experimentalEnabled(kExperimentalEnabledKey, deviceLocal: true),
-  hannaScanFab(kHannaScanFabKey, deviceLocal: true);
+  hannaScanFab(kHannaScanFabKey, deviceLocal: true),
+  // Environment capture on Hanna save (U37): describes the household's
+  // measuring workflow (its devices also ride backups), not this phone —
+  // so it travels to a new phone like hannaMethodSets.
+  hannaAttachEnvironment(kHannaAttachEnvironmentKey, deviceLocal: false);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -467,6 +471,17 @@ class AppSettings {
       _watch(SettingKey.hannaScanFab).map(decodeHannaScanFab);
   Future<void> setHannaScanFab(bool enabled) =>
       _write(SettingKey.hannaScanFab, enabled.toString());
+
+  /// Whether saving a Hanna BLE session also saves current environment
+  /// readings (salinity / temperature / pH) from the target tank's connected
+  /// devices (U37, default off). The toggle lives on the results-step
+  /// Environment card itself.
+  static bool decodeHannaAttachEnvironment(String? raw) => raw == 'true';
+  Stream<bool> watchHannaAttachEnvironment() => _watch(
+    SettingKey.hannaAttachEnvironment,
+  ).map(decodeHannaAttachEnvironment);
+  Future<void> setHannaAttachEnvironment(bool enabled) =>
+      _write(SettingKey.hannaAttachEnvironment, enabled.toString());
 
   // --- free ammonia visualization ---------------------------------------------
 
