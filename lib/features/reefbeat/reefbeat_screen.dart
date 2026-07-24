@@ -24,11 +24,11 @@ class _Live {
 }
 
 /// The Red Sea ReefBeat devices dashboard (U38): a persistent list of local
-/// ReefBeat devices — only ReefDose dosing pumps (2- or 4-head) so far — each
-/// with a manual **Refresh** that pulls the pump's live dosing status into the
-/// card. Unlike the ReefFactory dashboard this is purely informational: a
-/// dosing pump measures no water parameter, so there is nothing to save as a
-/// reading. Read-only — the app never writes to the devices.
+/// ReefBeat devices — ReefDose dosing pumps (2- or 4-head) and ReefATO
+/// auto-top-off units so far — each with a manual **Refresh** that pulls the
+/// device's live status into the card. Unlike the ReefFactory dashboard this
+/// is purely informational: the cards show operational status, not values to
+/// save as readings. Read-only — the app never writes to the devices.
 class ReefBeatScreen extends ConsumerStatefulWidget {
   const ReefBeatScreen({super.key});
 
@@ -384,8 +384,10 @@ class _DeviceCard extends StatelessWidget {
                 errorTextOf(live.error!),
                 style: t.bodyMedium?.copyWith(color: cs.error),
               )
-            else if (snap != null)
-              _PumpStatus(status: snap.status)
+            else if (snap?.dose != null)
+              _PumpStatus(status: snap!.dose!)
+            else if (snap?.ato != null)
+              _AtoStatus(status: snap!.ato!)
             else
               Text(
                 l.reefBeatNotReadYet,
@@ -447,6 +449,157 @@ class _PumpStatus extends StatelessWidget {
           _HeadRow(head: head),
         ],
       ],
+    );
+  }
+}
+
+/// The status of a ReefATO unit: warning chips (leak, sensor trouble, pump
+/// running) above label–value rows — water level, probe temperature, today's
+/// top-off activity, average evaporation, and the reservoir estimate with
+/// days-left colored by the shared stock severity.
+class _AtoStatus extends StatelessWidget {
+  const _AtoStatus({required this.status});
+  final RbAtoStatus status;
+
+  /// The ATO reports millilitres but moves litres — show litres with one
+  /// decimal from 1 L up, bare millilitres below.
+  static String _fmtVol(double ml) => ml >= 1000
+      ? '${(ml / 1000).toStringAsFixed(1)} L'
+      : '${ml.round()} ml';
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+
+    final levelText = switch (status.waterLevel) {
+      RbAtoWaterLevel.ok => l.reefBeatAtoLevelOk,
+      RbAtoWaterLevel.low => l.reefBeatAtoLevelLow,
+      RbAtoWaterLevel.high => l.reefBeatAtoLevelHigh,
+      RbAtoWaterLevel.unknown => status.waterLevelRaw ?? '—',
+    };
+    final levelColor = switch (status.waterLevel) {
+      RbAtoWaterLevel.ok => tokens.healthy,
+      RbAtoWaterLevel.low || RbAtoWaterLevel.high => tokens.caution,
+      RbAtoWaterLevel.unknown => tokens.text,
+    };
+
+    final fills = status.todayFills;
+    final todayVol = status.todayVolumeMl;
+    final todayText = [
+      if (fills != null) l.reefBeatAtoFills(fills),
+      if (todayVol != null) _fmtVol(todayVol),
+    ].join(' · ');
+
+    final days = status.daysTillEmpty;
+    final left = status.volumeLeftMl;
+    final reservoirText = [
+      if (left != null) _fmtVol(left),
+      if (days != null) l.reefBeatDaysLeft(days),
+    ].join(' · ');
+    final reservoirColor = days == null
+        ? tokens.text
+        : switch (rbStockSeverity(days)) {
+            RbStockSeverity.healthy => tokens.healthy,
+            RbStockSeverity.caution => tokens.caution,
+            RbStockSeverity.critical => tokens.critical,
+          };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (status.leakAlarm || status.sensorWarning || status.isPumpOn) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              if (status.leakAlarm)
+                _WarnChip(
+                  label: l.reefBeatAtoLeak,
+                  color: tokens.critical,
+                  softColor: tokens.criticalSoft,
+                ),
+              if (status.sensorWarning)
+                _WarnChip(
+                  label: l.reefBeatAtoSensorError,
+                  color: tokens.caution,
+                  softColor: tokens.cautionSoft,
+                ),
+              if (status.isPumpOn)
+                _WarnChip(
+                  label: l.reefBeatAtoFilling,
+                  color: tokens.healthy,
+                  softColor: tokens.healthySoft,
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        _AtoRow(
+          label: l.reefBeatAtoWaterLevel,
+          value: levelText,
+          valueColor: levelColor,
+        ),
+        if (status.temperatureC != null)
+          _AtoRow(
+            label: l.reefBeatAtoTemperature,
+            value: '${status.temperatureC!.toStringAsFixed(1)} °C',
+          ),
+        if (todayText.isNotEmpty)
+          _AtoRow(label: l.reefBeatAtoToday, value: todayText),
+        if (status.dailyVolumeAvgMl != null)
+          _AtoRow(
+            label: l.reefBeatAtoEvaporation,
+            value: l.reefBeatAtoPerDay(_fmtVol(status.dailyVolumeAvgMl!)),
+          ),
+        if (reservoirText.isNotEmpty)
+          _AtoRow(
+            label: l.reefBeatAtoReservoir,
+            value: reservoirText,
+            valueColor: reservoirColor,
+          ),
+      ],
+    );
+  }
+}
+
+/// One label–value line of the ATO card: dim label left, mono value right.
+class _AtoRow extends StatelessWidget {
+  const _AtoRow({required this.label, required this.value, this.valueColor});
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: t.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: ReefTokens.monoTextStyle.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: valueColor ?? tokens.text,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -748,14 +901,16 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
                 color: Theme.of(context).colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              [
-                for (final h in found.status.heads)
-                  if (h.supplement?.trim().isNotEmpty == true) h.supplement!,
-              ].join('   ·   '),
-              style: t.bodyMedium,
-            ),
+            if (found.dose != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                [
+                  for (final h in found.dose!.heads)
+                    if (h.supplement?.trim().isNotEmpty == true) h.supplement!,
+                ].join('   ·   '),
+                style: t.bodyMedium,
+              ),
+            ],
             const SizedBox(height: 12),
             TextField(
               controller: _name,

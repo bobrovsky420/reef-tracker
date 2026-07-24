@@ -3062,7 +3062,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Dosing status from Red Sea ReefBeat devices';
+      'Live status from Red Sea ReefBeat devices';
 
   @override
   String get reefBeatDisclaimer =>
@@ -3076,7 +3076,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Add a Red Sea ReefBeat device (e.g. a ReefDose pump) by its IP address or hostname to see its dosing status.';
+      'Add a Red Sea ReefBeat device (e.g. a ReefDose pump or a ReefATO) by its IP address or hostname to see its status.';
 
   @override
   String get reefBeatRefresh => 'Refresh';
@@ -3134,7 +3134,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'That ReefBeat device type isn\'t supported yet — only ReefDose pumps for now.';
+      'That ReefBeat device type isn\'t supported yet — only ReefDose pumps and ReefATO units for now.';
 
   @override
   String get reefBeatErrProtocol => 'Couldn\'t read the device.';
@@ -3181,6 +3181,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatBatteryLow => 'Backup battery low';
+
+  @override
+  String get reefBeatAtoLeak => 'Leak detected!';
+
+  @override
+  String get reefBeatAtoSensorError => 'Level sensor problem';
+
+  @override
+  String get reefBeatAtoFilling => 'Filling now';
+
+  @override
+  String get reefBeatAtoWaterLevel => 'Water level';
+
+  @override
+  String get reefBeatAtoLevelOk => 'OK';
+
+  @override
+  String get reefBeatAtoLevelLow => 'Low';
+
+  @override
+  String get reefBeatAtoLevelHigh => 'High';
+
+  @override
+  String get reefBeatAtoTemperature => 'Temperature';
+
+  @override
+  String get reefBeatAtoToday => 'Today';
+
+  @override
+  String reefBeatAtoFills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fills',
+      one: '1 fill',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatAtoEvaporation => 'Evaporation';
+
+  @override
+  String reefBeatAtoPerDay(Object volume) {
+    return '≈$volume/day';
+  }
+
+  @override
+  String get reefBeatAtoReservoir => 'Reservoir';
 
   @override
   String get reefDevicesTitle => 'Connected devices';

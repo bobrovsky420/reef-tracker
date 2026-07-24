@@ -3124,7 +3124,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Статус дозирования с устройств Red Sea ReefBeat';
+      'Текущий статус устройств Red Sea ReefBeat';
 
   @override
   String get reefBeatDisclaimer =>
@@ -3138,7 +3138,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Добавьте устройство Red Sea ReefBeat (например, дозатор ReefDose) по IP-адресу или имени хоста, чтобы видеть статус дозирования.';
+      'Добавьте устройство Red Sea ReefBeat (например, дозатор ReefDose или ReefATO) по IP-адресу или имени хоста, чтобы видеть его статус.';
 
   @override
   String get reefBeatRefresh => 'Обновить';
@@ -3197,7 +3197,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Этот тип устройства ReefBeat пока не поддерживается — пока только дозаторы ReefDose.';
+      'Этот тип устройства ReefBeat пока не поддерживается — пока только дозаторы ReefDose и устройства ReefATO.';
 
   @override
   String get reefBeatErrProtocol => 'Не удалось считать устройство.';
@@ -3246,6 +3246,57 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatBatteryLow => 'Резервная батарея разряжена';
+
+  @override
+  String get reefBeatAtoLeak => 'Обнаружена протечка!';
+
+  @override
+  String get reefBeatAtoSensorError => 'Проблема с датчиком уровня';
+
+  @override
+  String get reefBeatAtoFilling => 'Идёт долив';
+
+  @override
+  String get reefBeatAtoWaterLevel => 'Уровень воды';
+
+  @override
+  String get reefBeatAtoLevelOk => 'В норме';
+
+  @override
+  String get reefBeatAtoLevelLow => 'Низкий';
+
+  @override
+  String get reefBeatAtoLevelHigh => 'Высокий';
+
+  @override
+  String get reefBeatAtoTemperature => 'Температура';
+
+  @override
+  String get reefBeatAtoToday => 'Сегодня';
+
+  @override
+  String reefBeatAtoFills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count долива',
+      many: '$count доливов',
+      few: '$count долива',
+      one: '$count долив',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatAtoEvaporation => 'Испарение';
+
+  @override
+  String reefBeatAtoPerDay(Object volume) {
+    return '≈$volume/день';
+  }
+
+  @override
+  String get reefBeatAtoReservoir => 'Резервуар';
 
   @override
   String get reefDevicesTitle => 'Подключённые устройства';

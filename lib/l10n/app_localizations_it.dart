@@ -3085,7 +3085,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Stato del dosaggio dai dispositivi Red Sea ReefBeat';
+      'Stato in tempo reale dei dispositivi Red Sea ReefBeat';
 
   @override
   String get reefBeatDisclaimer =>
@@ -3099,7 +3099,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Aggiungi un dispositivo Red Sea ReefBeat (es. una pompa ReefDose) tramite il suo indirizzo IP o nome host per vedere lo stato del dosaggio.';
+      'Aggiungi un dispositivo Red Sea ReefBeat (es. una pompa ReefDose o un ReefATO) tramite il suo indirizzo IP o nome host per vederne lo stato.';
 
   @override
   String get reefBeatRefresh => 'Aggiorna';
@@ -3159,7 +3159,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Questo tipo di dispositivo ReefBeat non è ancora supportato: per ora solo le pompe ReefDose.';
+      'Questo tipo di dispositivo ReefBeat non è ancora supportato: per ora solo le pompe ReefDose e i ReefATO.';
 
   @override
   String get reefBeatErrProtocol => 'Impossibile leggere il dispositivo.';
@@ -3206,6 +3206,55 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatBatteryLow => 'Batteria di riserva scarica';
+
+  @override
+  String get reefBeatAtoLeak => 'Perdita rilevata!';
+
+  @override
+  String get reefBeatAtoSensorError => 'Problema al sensore di livello';
+
+  @override
+  String get reefBeatAtoFilling => 'Rabbocco in corso';
+
+  @override
+  String get reefBeatAtoWaterLevel => 'Livello dell\'acqua';
+
+  @override
+  String get reefBeatAtoLevelOk => 'OK';
+
+  @override
+  String get reefBeatAtoLevelLow => 'Basso';
+
+  @override
+  String get reefBeatAtoLevelHigh => 'Alto';
+
+  @override
+  String get reefBeatAtoTemperature => 'Temperatura';
+
+  @override
+  String get reefBeatAtoToday => 'Oggi';
+
+  @override
+  String reefBeatAtoFills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rabbocchi',
+      one: '1 rabbocco',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatAtoEvaporation => 'Evaporazione';
+
+  @override
+  String reefBeatAtoPerDay(Object volume) {
+    return '≈$volume/giorno';
+  }
+
+  @override
+  String get reefBeatAtoReservoir => 'Serbatoio';
 
   @override
   String get reefDevicesTitle => 'Dispositivi connessi';

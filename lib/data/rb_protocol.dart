@@ -6,21 +6,28 @@
 // expose an unauthenticated JSON REST API on the LAN. The two endpoints used
 // here:
 //
-//   GET /device-info   → identity: `hw_type` ("reef-dosing"), `hw_model`
-//                        ("RSDOSE4"/"RSDOSE2"), `name`, `hwid` (MAC-derived —
-//                        stable across DHCP changes, our device identifier).
+//   GET /device-info   → identity: `hw_type` ("reef-dosing"/"reef-ato"),
+//                        `hw_model` ("RSDOSE4"/"RSDOSE2"/"RSATO+"), `name`,
+//                        `hwid` (MAC-derived — stable across DHCP changes,
+//                        our device identifier).
 //   GET /dashboard     → live status; for a dosing pump: device-level flags
 //                        plus a `heads` map ("1".."4") of per-head dosing
-//                        state.
+//                        state; for an ATO: water level, pump state, fill and
+//                        volume counters, reservoir estimate, leak-sensor and
+//                        level-sensor blocks.
 //
-// The layouts were captured from a live RSDOSE4 (see rb_protocol_test.dart for
-// the golden vectors). Parsing is deliberately tolerant — firmware drift should
-// degrade a card, not crash a refresh — so every field is nullable or
-// defaulted, and only structurally unusable payloads are rejected.
+// The layouts were captured from a live RSDOSE4 and a live RSATO+ (see
+// rb_protocol_test.dart for the golden vectors). Parsing is deliberately
+// tolerant — firmware drift should degrade a card, not crash a refresh — so
+// every field is nullable or defaulted, and only structurally unusable
+// payloads are rejected.
 
-/// `hw_type` of the ReefDose family — the only ReefBeat device type supported
-/// so far. Other types (ATO, wave pumps, …) are reported as unsupported.
+/// `hw_type` of the ReefDose family.
 const String kRbDosingHwType = 'reef-dosing';
+
+/// `hw_type` of the ReefATO family. Other ReefBeat types (wave pumps, LEDs,
+/// ReefMat, …) are reported as unsupported.
+const String kRbAtoHwType = 'reef-ato';
 
 /// Supplement-stock warning thresholds for [RbStockSeverity], in days of
 /// remaining supplement. Below [kRbStockCriticalDays] the stock indicator is
@@ -45,6 +52,7 @@ RbStockSeverity rbStockSeverity(int remainingDays) {
 const Map<String, String> kRbModelDisplayNames = {
   'RSDOSE2': 'ReefDose 2',
   'RSDOSE4': 'ReefDose 4',
+  'RSATO+': 'ReefATO+',
 };
 
 String rbModelDisplayName(String hwModel) =>
@@ -222,6 +230,108 @@ class RbDoseStatus {
       batteryLevel: json['battery_level'] as String?,
       timeError: json['time_error'] == true,
       heads: heads,
+    );
+  }
+}
+
+/// Coarse water-level reading of the ATO's sump sensor, derived from the raw
+/// firmware string (`"desired_level_2"`, …). [unknown] keeps unrecognized
+/// firmware values displayable via [RbAtoStatus.waterLevelRaw].
+enum RbAtoWaterLevel { ok, low, high, unknown }
+
+/// The decoded `/dashboard` of a ReefATO. All volumes are millilitres (the
+/// unit the firmware reports).
+class RbAtoStatus {
+  const RbAtoStatus({
+    this.waterLevelRaw,
+    this.isPumpOn = false,
+    this.todayFills,
+    this.todayVolumeMl,
+    this.dailyVolumeAvgMl,
+    this.volumeLeftMl,
+    this.daysTillEmpty,
+    this.leakAlarm = false,
+    this.sensorWarning = false,
+    this.temperatureC,
+  });
+
+  /// The firmware's water-level string, verbatim (fallback display for
+  /// [RbAtoWaterLevel.unknown]).
+  final String? waterLevelRaw;
+
+  /// The fill pump is running right now.
+  final bool isPumpOn;
+
+  /// Auto-top-off activity today: number of fills and volume delivered (ml).
+  final int? todayFills;
+  final double? todayVolumeMl;
+
+  /// Rolling average daily consumption (ml/day) — effectively the tank's
+  /// evaporation rate.
+  final double? dailyVolumeAvgMl;
+
+  /// The device's reservoir estimate: volume remaining (ml) and days until
+  /// empty at the average rate.
+  final double? volumeLeftMl;
+  final int? daysTillEmpty;
+
+  /// The leak sensor reports water where it shouldn't be.
+  final bool leakAlarm;
+
+  /// The level sensor is in error or not connected — top-off is unreliable.
+  final bool sensorWarning;
+
+  /// The level sensor's built-in temperature probe (°C), when enabled.
+  final double? temperatureC;
+
+  RbAtoWaterLevel get waterLevel {
+    final raw = waterLevelRaw?.toLowerCase();
+    if (raw == null || raw.isEmpty) return RbAtoWaterLevel.unknown;
+    if (raw.contains('desired')) return RbAtoWaterLevel.ok;
+    if (raw.contains('low')) return RbAtoWaterLevel.low;
+    if (raw.contains('high')) return RbAtoWaterLevel.high;
+    return RbAtoWaterLevel.unknown;
+  }
+
+  static RbAtoStatus fromJson(Map<String, Object?> json) {
+    final leak = json['leak_sensor'];
+    var leakAlarm = false;
+    if (leak is Map<String, Object?>) {
+      // Only an active, connected sensor reporting other than "dry" alarms —
+      // a disabled or absent sensor stays quiet.
+      final status = leak['status'];
+      leakAlarm = leak['connected'] == true &&
+          leak['enabled'] != false &&
+          status is String &&
+          status != 'dry';
+    }
+
+    final sensor = json['ato_sensor'];
+    var sensorWarning = false;
+    double? temperatureC;
+    if (sensor is Map<String, Object?>) {
+      sensorWarning =
+          sensor['is_sensor_error'] == true || sensor['connected'] == false;
+      // `current_read` is the probe temperature; suppress it when the probe
+      // is disabled or reported disconnected.
+      final probeStatus = sensor['temperature_probe_status'];
+      if (sensor['is_temp_enabled'] != false &&
+          (probeStatus is! String || probeStatus == 'connected')) {
+        temperatureC = _asDouble(sensor['current_read']);
+      }
+    }
+
+    return RbAtoStatus(
+      waterLevelRaw: json['water_level'] as String?,
+      isPumpOn: json['is_pump_on'] == true,
+      todayFills: _asInt(json['today_fills']),
+      todayVolumeMl: _asDouble(json['today_volume_usage']),
+      dailyVolumeAvgMl: _asDouble(json['daily_volume_average']),
+      volumeLeftMl: _asDouble(json['volume_left']),
+      daysTillEmpty: _asInt(json['days_till_empty']),
+      leakAlarm: leakAlarm,
+      sensorWarning: sensorWarning,
+      temperatureC: temperatureC,
     );
   }
 }

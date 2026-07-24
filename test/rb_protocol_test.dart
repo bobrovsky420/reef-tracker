@@ -64,6 +64,58 @@ const _dashboardJson = '''
 }
 ''';
 
+/// Golden vector: a live RSATO+'s `GET /device-info` (2026-07-24).
+const _atoDeviceInfoJson = '''
+{
+  "name": "RSATO+3625739455",
+  "hw_type": "reef-ato",
+  "hw_model": "RSATO+",
+  "hw_revision": "V1.2A_24C",
+  "hwid": "8813bf641cd8",
+  "success": true,
+  "message": "get device info successfully"
+}
+''';
+
+/// Golden vector: the same unit's `GET /dashboard` (2026-07-24, abridged to
+/// the fields the parser reads plus a few it must ignore).
+const _atoDashboardJson = '''
+{
+  "mode": "auto",
+  "is_internet_connected": true,
+  "water_level": "desired_level_2",
+  "pump_state": "off",
+  "is_pump_on": false,
+  "pump_speed": 58,
+  "flow_rate": 1650,
+  "today_fills": 4,
+  "today_volume_usage": 1630,
+  "total_volume_usage": 18533,
+  "total_fills": 1734,
+  "daily_fills_average": 4.5,
+  "daily_volume_average": 2969,
+  "volume_left": 3467,
+  "days_till_empty": 1,
+  "leak_sensor": {
+    "connected": true,
+    "enabled": true,
+    "buzzer_enabled": true,
+    "buzzer_on": false,
+    "current_read": 0,
+    "status": "dry"
+  },
+  "ato_sensor": {
+    "is_sensor_error": false,
+    "is_temp_enabled": true,
+    "connected": true,
+    "current_level": "desired",
+    "is_calibrated": true,
+    "current_read": 24.964999675750732,
+    "temperature_probe_status": "connected"
+  }
+}
+''';
+
 Map<String, Object?> _decode(String s) =>
     jsonDecode(s) as Map<String, Object?>;
 
@@ -188,6 +240,106 @@ void main() {
     });
   });
 
+  group('RbAtoStatus.fromJson', () {
+    test('parses the RSATO+ golden vector', () {
+      final info = RbDeviceInfo.fromJson(_decode(_atoDeviceInfoJson))!;
+      expect(info.hwType, kRbAtoHwType);
+      expect(info.hwModel, 'RSATO+');
+      expect(info.hwid, '8813bf641cd8');
+
+      final status = RbAtoStatus.fromJson(_decode(_atoDashboardJson));
+      expect(status.waterLevelRaw, 'desired_level_2');
+      expect(status.waterLevel, RbAtoWaterLevel.ok);
+      expect(status.isPumpOn, isFalse);
+      expect(status.todayFills, 4);
+      expect(status.todayVolumeMl, 1630);
+      expect(status.dailyVolumeAvgMl, 2969);
+      expect(status.volumeLeftMl, 3467);
+      expect(status.daysTillEmpty, 1);
+      expect(status.leakAlarm, isFalse);
+      expect(status.sensorWarning, isFalse);
+      expect(status.temperatureC, closeTo(24.965, 0.001));
+    });
+
+    test('water-level strings map to coarse levels', () {
+      RbAtoWaterLevel of(String? raw) =>
+          RbAtoStatus(waterLevelRaw: raw).waterLevel;
+      expect(of('desired_level_2'), RbAtoWaterLevel.ok);
+      expect(of('desired'), RbAtoWaterLevel.ok);
+      expect(of('low_level'), RbAtoWaterLevel.low);
+      expect(of('too_high'), RbAtoWaterLevel.high);
+      expect(of('something_else'), RbAtoWaterLevel.unknown);
+      expect(of(null), RbAtoWaterLevel.unknown);
+    });
+
+    test('leak alarms only from an active connected sensor', () {
+      bool alarm(Map<String, Object?> leak) =>
+          RbAtoStatus.fromJson({'leak_sensor': leak}).leakAlarm;
+      expect(
+        alarm({'connected': true, 'enabled': true, 'status': 'wet'}),
+        isTrue,
+      );
+      expect(
+        alarm({'connected': true, 'enabled': true, 'status': 'dry'}),
+        isFalse,
+      );
+      expect(
+        alarm({'connected': true, 'enabled': false, 'status': 'wet'}),
+        isFalse,
+      );
+      expect(
+        alarm({'connected': false, 'enabled': true, 'status': 'wet'}),
+        isFalse,
+      );
+      // Enabled flag absent stays tolerant — a connected wet sensor alarms.
+      expect(alarm({'connected': true, 'status': 'wet'}), isTrue);
+    });
+
+    test('sensor warning on error or disconnect; temperature suppressed when '
+        'disabled or unplugged', () {
+      final err = RbAtoStatus.fromJson({
+        'ato_sensor': {'is_sensor_error': true, 'current_read': 25.0},
+      });
+      expect(err.sensorWarning, isTrue);
+      expect(err.temperatureC, 25.0);
+
+      final gone = RbAtoStatus.fromJson({
+        'ato_sensor': {'connected': false},
+      });
+      expect(gone.sensorWarning, isTrue);
+
+      final tempOff = RbAtoStatus.fromJson({
+        'ato_sensor': {'is_temp_enabled': false, 'current_read': 25.0},
+      });
+      expect(tempOff.temperatureC, isNull);
+
+      final probeGone = RbAtoStatus.fromJson({
+        'ato_sensor': {
+          'temperature_probe_status': 'disconnected',
+          'current_read': 25.0,
+        },
+      });
+      expect(probeGone.temperatureC, isNull);
+    });
+
+    test('tolerates an empty or malformed payload (firmware drift)', () {
+      final status = RbAtoStatus.fromJson(const {
+        'leak_sensor': 'nope',
+        'ato_sensor': 7,
+        'today_fills': 'four',
+      });
+      expect(status.waterLevel, RbAtoWaterLevel.unknown);
+      expect(status.isPumpOn, isFalse);
+      expect(status.todayFills, isNull);
+      expect(status.todayVolumeMl, isNull);
+      expect(status.volumeLeftMl, isNull);
+      expect(status.daysTillEmpty, isNull);
+      expect(status.leakAlarm, isFalse);
+      expect(status.sensorWarning, isFalse);
+      expect(status.temperatureC, isNull);
+    });
+  });
+
   group('rbStockSeverity', () {
     test('thresholds: red below $kRbStockCriticalDays days, amber below '
         '$kRbStockCautionDays', () {
@@ -204,6 +356,7 @@ void main() {
     test('maps known models and falls back to the raw code', () {
       expect(rbModelDisplayName('RSDOSE4'), 'ReefDose 4');
       expect(rbModelDisplayName('RSDOSE2'), 'ReefDose 2');
+      expect(rbModelDisplayName('RSATO+'), 'ReefATO+');
       expect(rbModelDisplayName('RSWAVE'), 'RSWAVE');
     });
   });

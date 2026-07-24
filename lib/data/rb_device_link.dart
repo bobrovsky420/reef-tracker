@@ -24,7 +24,7 @@ enum RbLinkError {
   timeout,
 
   /// It answered, but it isn't a ReefBeat device type we support (only
-  /// ReefDose pumps so far).
+  /// ReefDose pumps and ReefATO units so far).
   unsupportedModel,
 
   /// The responses arrived but didn't decode to the expected shape.
@@ -40,11 +40,13 @@ class RbLinkException implements Exception {
       'RbLinkException($error${detail == null ? '' : ': $detail'})';
 }
 
-/// The decoded result of one manual refresh: identity + live dosing status.
+/// The decoded result of one manual refresh: identity + the live status
+/// matching the device family — exactly one of [dose]/[ato] is set.
 class RbSnapshot {
-  const RbSnapshot({required this.info, required this.status});
+  const RbSnapshot({required this.info, this.dose, this.ato});
   final RbDeviceInfo info;
-  final RbDoseStatus status;
+  final RbDoseStatus? dose;
+  final RbAtoStatus? ato;
 }
 
 abstract class RbDeviceLink {
@@ -77,11 +79,15 @@ class RbHttpLink implements RbDeviceLink {
     if (info == null) {
       throw const RbLinkException(RbLinkError.protocol, 'no device identity');
     }
-    if (info.hwType != kRbDosingHwType) {
-      throw RbLinkException(RbLinkError.unsupportedModel, info.hwType);
-    }
-    final status = RbDoseStatus.fromJson(await _getJson(h, '/dashboard'));
-    return RbSnapshot(info: info, status: status);
+    final dashboard = switch (info.hwType) {
+      kRbDosingHwType || kRbAtoHwType => await _getJson(h, '/dashboard'),
+      _ => throw RbLinkException(RbLinkError.unsupportedModel, info.hwType),
+    };
+    return switch (info.hwType) {
+      kRbDosingHwType =>
+        RbSnapshot(info: info, dose: RbDoseStatus.fromJson(dashboard)),
+      _ => RbSnapshot(info: info, ato: RbAtoStatus.fromJson(dashboard)),
+    };
   }
 
   Future<Map<String, Object?>> _getJson(String host, String path) async {

@@ -2381,29 +2381,41 @@ the ReefFactory app for settings/calibration/firmware.
 ### ReefBeat devices (U38, Pro, **experimental**) — `features/reefbeat/`, route `/reefbeat`
 
 A separate dashboard for **Red Sea ReefBeat** LAN devices — deliberately not
-merged into the ReefFactory screen, because these devices measure no water
-parameter: the cards display supplementary status (dosing amounts) instead of
-values to save, so there is **no Save path** into `Readings`. Only the
-**ReefDose** dosing pumps (`RSDOSE2`/`RSDOSE4`, `hw_type = reef-dosing`) are
-supported so far. Read-only: the app never doses, edits schedules or
-calibrates — a persistent disclaimer points to the ReefBeat app for that.
+merged into the ReefFactory screen, because the cards display operational
+status instead of values to save, so there is **no Save path** into
+`Readings`. Two device families are supported: the **ReefDose** dosing pumps
+(`RSDOSE2`/`RSDOSE4`, `hw_type = reef-dosing`) and the **ReefATO+**
+auto-top-off unit (`RSATO+`, `hw_type = reef-ato`). (The ATO's temperature
+probe is the one ReefBeat value that *could* feed `Readings` — a deliberate
+future decision, not part of this phase.) Read-only: the app never doses,
+edits schedules or calibrates — a persistent disclaimer points to the
+ReefBeat app for that.
 
 - **Protocol** (`data/rb_protocol.dart`, pure Dart, golden-vector tested
-  against a live RSDOSE4): the devices expose an unauthenticated JSON REST API
-  on the LAN. `GET /device-info` yields identity (`hw_type` discriminates the
-  family, `hw_model` the product, `hwid` — MAC-derived — is the stable unique
-  `Devices.identifier`); `GET /dashboard` yields device flags
+  against a live RSDOSE4 and a live RSATO+): the devices expose an
+  unauthenticated JSON REST API on the LAN. `GET /device-info` yields identity
+  (`hw_type` discriminates the family, `hw_model` the product, `hwid` —
+  MAC-derived — is the stable unique `Devices.identifier`); `GET /dashboard`
+  yields the family-specific status. For a dosing pump: device flags
   (`battery_level`, `time_error`) plus a `heads` map ("1".."4") parsed into
   `RbDoseHead`s (supplement, state, auto/manual dosed today, daily dose,
-  remaining days, recalibration/missed-dose flags). Parsing is tolerant —
-  absent/malformed fields degrade the card, never crash a refresh.
-  `rbModelDisplayName` maps `hw_model` → friendly name ("ReefDose 4"), the
-  default device name on add.
+  remaining days, recalibration/missed-dose flags). For an ATO
+  (`RbAtoStatus`): water level (raw firmware string coarsened to
+  `RbAtoWaterLevel` ok/low/high/unknown), pump-on flag, today's fills and
+  volume, average daily volume (evaporation), reservoir estimate
+  (`volume_left`, `days_till_empty`), a leak-sensor block (alarms only when
+  connected + enabled + not "dry") and the level-sensor block (error/
+  disconnect warning, temperature probe in °C, suppressed when disabled or
+  unplugged). Parsing is tolerant — absent/malformed fields degrade the card,
+  never crash a refresh. `rbModelDisplayName` maps `hw_model` → friendly name
+  ("ReefDose 4", "ReefATO+"), the default device name on add.
 - **Transport** (`data/rb_device_link.dart`): abstract `RbDeviceLink`
   (fake-able) + `RbHttpLink` over `dart:io` `HttpClient` (the
   `cloud_backup_store.dart` pattern, no new dependency). One `readOnce(host)`
-  per manual refresh = the two GETs; typed `RbLinkError`
-  (unreachable/timeout/unsupportedModel/protocol) drives specific messages.
+  per manual refresh = the two GETs; the returned `RbSnapshot` carries the
+  identity plus exactly one of `dose`/`ato` per the device's `hw_type`; typed
+  `RbLinkError` (unreachable/timeout/unsupportedModel/protocol) drives
+  specific messages.
 - **Dashboard** (`reefbeat_screen.dart`): mirrors the ReefFactory screen's
   structure (active tank's devices + unassigned, per-card Refresh +
   Refresh-all, add-by-address probe sheet, move-to-tank / remove menu,
@@ -2417,7 +2429,13 @@ calibrates — a persistent disclaimer points to the ReefBeat app for that.
   missed dose, device clock error, backup battery low) in caution/critical
   soft-token style. Switched-off heads (`RbDoseHead.switchedOff`: `state !=
   "on"` **or** `daily_doses: 0` — the firmware reports off heads both ways)
-  render dimmed with an "Off" tag.
+  render dimmed with an "Off" tag. An ATO card renders `_AtoStatus` instead:
+  warning chips (leak = critical, sensor trouble = caution, "filling now" =
+  healthy) above label–value rows — water level (healthy/caution-colored),
+  probe temperature, today's fills · volume, evaporation (≈/day), and the
+  reservoir (volume left · days left, colored by the same `rbStockSeverity`
+  thresholds as supplement stock). Volumes render as millilitres below 1 L
+  and litres with one decimal above.
 - Entry points mirror ReefFactory: experimental-gated + Pro-gated
   (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow
   menu and a Settings row. Devices are read once automatically on open;

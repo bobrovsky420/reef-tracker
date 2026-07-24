@@ -5100,7 +5100,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatSettingsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Dosing status from Red Sea ReefBeat devices'**
+  /// **'Live status from Red Sea ReefBeat devices'**
   String get reefBeatSettingsSubtitle;
 
   /// No description provided for @reefBeatDisclaimer.
@@ -5124,7 +5124,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Add a Red Sea ReefBeat device (e.g. a ReefDose pump) by its IP address or hostname to see its dosing status.'**
+  /// **'Add a Red Sea ReefBeat device (e.g. a ReefDose pump or a ReefATO) by its IP address or hostname to see its status.'**
   String get reefBeatEmptyBody;
 
   /// No description provided for @reefBeatRefresh.
@@ -5226,7 +5226,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatErrUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'That ReefBeat device type isn\'t supported yet — only ReefDose pumps for now.'**
+  /// **'That ReefBeat device type isn\'t supported yet — only ReefDose pumps and ReefATO units for now.'**
   String get reefBeatErrUnsupported;
 
   /// No description provided for @reefBeatErrProtocol.
@@ -5288,6 +5288,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup battery low'**
   String get reefBeatBatteryLow;
+
+  /// No description provided for @reefBeatAtoLeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Leak detected!'**
+  String get reefBeatAtoLeak;
+
+  /// No description provided for @reefBeatAtoSensorError.
+  ///
+  /// In en, this message translates to:
+  /// **'Level sensor problem'**
+  String get reefBeatAtoSensorError;
+
+  /// No description provided for @reefBeatAtoFilling.
+  ///
+  /// In en, this message translates to:
+  /// **'Filling now'**
+  String get reefBeatAtoFilling;
+
+  /// No description provided for @reefBeatAtoWaterLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Water level'**
+  String get reefBeatAtoWaterLevel;
+
+  /// No description provided for @reefBeatAtoLevelOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get reefBeatAtoLevelOk;
+
+  /// No description provided for @reefBeatAtoLevelLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get reefBeatAtoLevelLow;
+
+  /// No description provided for @reefBeatAtoLevelHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get reefBeatAtoLevelHigh;
+
+  /// No description provided for @reefBeatAtoTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get reefBeatAtoTemperature;
+
+  /// No description provided for @reefBeatAtoToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get reefBeatAtoToday;
+
+  /// Number of auto-top-off fills the ATO ran today
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 fill} other{{count} fills}}'**
+  String reefBeatAtoFills(int count);
+
+  /// No description provided for @reefBeatAtoEvaporation.
+  ///
+  /// In en, this message translates to:
+  /// **'Evaporation'**
+  String get reefBeatAtoEvaporation;
+
+  /// Average daily top-off volume; {volume} is pre-formatted with its unit (e.g. "3.0 L")
+  ///
+  /// In en, this message translates to:
+  /// **'≈{volume}/day'**
+  String reefBeatAtoPerDay(Object volume);
+
+  /// No description provided for @reefBeatAtoReservoir.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservoir'**
+  String get reefBeatAtoReservoir;
 
   /// No description provided for @reefDevicesTitle.
   ///

@@ -3131,7 +3131,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Status dozowania z urządzeń Red Sea ReefBeat';
+      'Bieżący status urządzeń Red Sea ReefBeat';
 
   @override
   String get reefBeatDisclaimer =>
@@ -3145,7 +3145,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Dodaj urządzenie Red Sea ReefBeat (np. dozownik ReefDose) według adresu IP lub nazwy hosta, aby widzieć status dozowania.';
+      'Dodaj urządzenie Red Sea ReefBeat (np. dozownik ReefDose lub ReefATO) według adresu IP lub nazwy hosta, aby widzieć jego status.';
 
   @override
   String get reefBeatRefresh => 'Odśwież';
@@ -3205,7 +3205,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Ten typ urządzenia ReefBeat nie jest jeszcze obsługiwany — na razie tylko dozowniki ReefDose.';
+      'Ten typ urządzenia ReefBeat nie jest jeszcze obsługiwany — na razie tylko dozowniki ReefDose i urządzenia ReefATO.';
 
   @override
   String get reefBeatErrProtocol => 'Nie udało się odczytać urządzenia.';
@@ -3254,6 +3254,57 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatBatteryLow => 'Słaba bateria podtrzymująca';
+
+  @override
+  String get reefBeatAtoLeak => 'Wykryto wyciek!';
+
+  @override
+  String get reefBeatAtoSensorError => 'Problem z czujnikiem poziomu';
+
+  @override
+  String get reefBeatAtoFilling => 'Trwa dolewanie';
+
+  @override
+  String get reefBeatAtoWaterLevel => 'Poziom wody';
+
+  @override
+  String get reefBeatAtoLevelOk => 'W normie';
+
+  @override
+  String get reefBeatAtoLevelLow => 'Niski';
+
+  @override
+  String get reefBeatAtoLevelHigh => 'Wysoki';
+
+  @override
+  String get reefBeatAtoTemperature => 'Temperatura';
+
+  @override
+  String get reefBeatAtoToday => 'Dzisiaj';
+
+  @override
+  String reefBeatAtoFills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dolewki',
+      many: '$count dolewek',
+      few: '$count dolewki',
+      one: '1 dolewka',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatAtoEvaporation => 'Parowanie';
+
+  @override
+  String reefBeatAtoPerDay(Object volume) {
+    return '≈$volume/dzień';
+  }
+
+  @override
+  String get reefBeatAtoReservoir => 'Zbiornik zapasu';
 
   @override
   String get reefDevicesTitle => 'Podłączone urządzenia';

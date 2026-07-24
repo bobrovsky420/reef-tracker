@@ -3088,7 +3088,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Stav dávkování ze zařízení Red Sea ReefBeat';
+      'Aktuální stav zařízení Red Sea ReefBeat';
 
   @override
   String get reefBeatDisclaimer =>
@@ -3102,7 +3102,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Přidejte zařízení Red Sea ReefBeat (např. dávkovač ReefDose) podle jeho IP adresy nebo názvu hostitele a sledujte stav dávkování.';
+      'Přidejte zařízení Red Sea ReefBeat (např. dávkovač ReefDose nebo ReefATO) podle jeho IP adresy nebo názvu hostitele a sledujte jeho stav.';
 
   @override
   String get reefBeatRefresh => 'Obnovit';
@@ -3161,7 +3161,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Tento typ zařízení ReefBeat zatím není podporován – prozatím jen dávkovače ReefDose.';
+      'Tento typ zařízení ReefBeat zatím není podporován – prozatím jen dávkovače ReefDose a jednotky ReefATO.';
 
   @override
   String get reefBeatErrProtocol => 'Zařízení se nepodařilo přečíst.';
@@ -3209,6 +3209,56 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatBatteryLow => 'Slabá záložní baterie';
+
+  @override
+  String get reefBeatAtoLeak => 'Zjištěn únik vody!';
+
+  @override
+  String get reefBeatAtoSensorError => 'Problém se senzorem hladiny';
+
+  @override
+  String get reefBeatAtoFilling => 'Právě dopouští';
+
+  @override
+  String get reefBeatAtoWaterLevel => 'Hladina vody';
+
+  @override
+  String get reefBeatAtoLevelOk => 'V pořádku';
+
+  @override
+  String get reefBeatAtoLevelLow => 'Nízká';
+
+  @override
+  String get reefBeatAtoLevelHigh => 'Vysoká';
+
+  @override
+  String get reefBeatAtoTemperature => 'Teplota';
+
+  @override
+  String get reefBeatAtoToday => 'Dnes';
+
+  @override
+  String reefBeatAtoFills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dopuštění',
+      few: '$count dopuštění',
+      one: '1 dopuštění',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatAtoEvaporation => 'Odpar';
+
+  @override
+  String reefBeatAtoPerDay(Object volume) {
+    return '≈$volume/den';
+  }
+
+  @override
+  String get reefBeatAtoReservoir => 'Zásobník';
 
   @override
   String get reefDevicesTitle => 'Připojená zařízení';

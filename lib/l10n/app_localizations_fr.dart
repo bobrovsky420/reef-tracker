@@ -3090,7 +3090,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'État du dosage des appareils Red Sea ReefBeat';
+      'État en direct des appareils Red Sea ReefBeat';
 
   @override
   String get reefBeatDisclaimer =>
@@ -3104,7 +3104,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Ajoutez un appareil Red Sea ReefBeat (par ex. une pompe ReefDose) par son adresse IP ou son nom d\'hôte pour voir l\'état du dosage.';
+      'Ajoutez un appareil Red Sea ReefBeat (par ex. une pompe ReefDose ou un ReefATO) par son adresse IP ou son nom d\'hôte pour voir son état.';
 
   @override
   String get reefBeatRefresh => 'Actualiser';
@@ -3164,7 +3164,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Ce type d\'appareil ReefBeat n\'est pas encore pris en charge — seulement les pompes ReefDose pour l\'instant.';
+      'Ce type d\'appareil ReefBeat n\'est pas encore pris en charge — seulement les pompes ReefDose et les ReefATO pour l\'instant.';
 
   @override
   String get reefBeatErrProtocol => 'Impossible de lire l\'appareil.';
@@ -3211,6 +3211,55 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatBatteryLow => 'Batterie de secours faible';
+
+  @override
+  String get reefBeatAtoLeak => 'Fuite détectée !';
+
+  @override
+  String get reefBeatAtoSensorError => 'Problème de capteur de niveau';
+
+  @override
+  String get reefBeatAtoFilling => 'Remplissage en cours';
+
+  @override
+  String get reefBeatAtoWaterLevel => 'Niveau d\'eau';
+
+  @override
+  String get reefBeatAtoLevelOk => 'OK';
+
+  @override
+  String get reefBeatAtoLevelLow => 'Bas';
+
+  @override
+  String get reefBeatAtoLevelHigh => 'Haut';
+
+  @override
+  String get reefBeatAtoTemperature => 'Température';
+
+  @override
+  String get reefBeatAtoToday => 'Aujourd\'hui';
+
+  @override
+  String reefBeatAtoFills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count remplissages',
+      one: '1 remplissage',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatAtoEvaporation => 'Évaporation';
+
+  @override
+  String reefBeatAtoPerDay(Object volume) {
+    return '≈$volume/jour';
+  }
+
+  @override
+  String get reefBeatAtoReservoir => 'Réservoir';
 
   @override
   String get reefDevicesTitle => 'Appareils connectés';
