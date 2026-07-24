@@ -1,0 +1,817 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../app/providers.dart';
+import '../../app/theme.dart';
+import '../../data/database.dart';
+import '../../data/rb_device_link.dart';
+import '../../data/rb_protocol.dart';
+import '../../l10n/app_localizations.dart';
+
+/// What the UI calls a device: explicit name, else vendor model, else hwid.
+/// Also the card sort key. (Same convention as the ReefFactory dashboard.)
+String _displayName(DeviceRecord d) => d.name ?? d.model ?? d.identifier;
+
+/// Transient per-device live state held by the screen (not persisted): the
+/// last refresh result.
+class _Live {
+  const _Live({this.loading = false, this.snapshot, this.error});
+  final bool loading;
+  final RbSnapshot? snapshot;
+  final RbLinkError? error;
+}
+
+/// The Red Sea ReefBeat devices dashboard (U38): a persistent list of local
+/// ReefBeat devices — only ReefDose dosing pumps (2- or 4-head) so far — each
+/// with a manual **Refresh** that pulls the pump's live dosing status into the
+/// card. Unlike the ReefFactory dashboard this is purely informational: a
+/// dosing pump measures no water parameter, so there is nothing to save as a
+/// reading. Read-only — the app never writes to the devices.
+class ReefBeatScreen extends ConsumerStatefulWidget {
+  const ReefBeatScreen({super.key});
+
+  @override
+  ConsumerState<ReefBeatScreen> createState() => _ReefBeatScreenState();
+}
+
+class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
+  /// Live snapshots keyed by device identifier (hwid).
+  final Map<String, _Live> _live = {};
+
+  /// Whether the on-open auto-read has already run (it must fire only once,
+  /// not on every device-list stream emission).
+  bool _autoRefreshed = false;
+
+  Future<void> _refresh(DeviceRecord device) async {
+    final address = device.address;
+    if (address == null || address.isEmpty) return;
+    setState(() => _live[device.identifier] = const _Live(loading: true));
+    try {
+      final snap = await ref.read(rbDeviceLinkProvider).readOnce(address);
+      await ref.read(dbProvider).touchDeviceSeen(device.identifier);
+      if (!mounted) return;
+      setState(() => _live[device.identifier] = _Live(snapshot: snap));
+    } on RbLinkException catch (e) {
+      if (!mounted) return;
+      setState(() => _live[device.identifier] = _Live(error: e.error));
+    }
+  }
+
+  /// Refreshes every device in turn (sequential — gentle on the devices, which
+  /// each also serve the vendor app).
+  Future<void> _refreshAll(List<DeviceRecord> devices) async {
+    for (final d in devices) {
+      await _refresh(d);
+    }
+  }
+
+  String _errorText(AppLocalizations l, RbLinkError e) => switch (e) {
+    RbLinkError.unreachable => l.reefBeatErrUnreachable,
+    RbLinkError.timeout => l.reefBeatErrTimeout,
+    RbLinkError.unsupportedModel => l.reefBeatErrUnsupported,
+    RbLinkError.protocol => l.reefBeatErrProtocol,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final devicesAsync = ref.watch(reefBeatDevicesProvider);
+    // Watched (not just read in _moveDevice) so the move-to-tank menu item's
+    // visibility reacts to tanks being added/removed.
+    final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
+    final activeTank = ref.watch(activeTankProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: Text(l.reefBeatTitle)),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddSheet,
+        icon: const Icon(Icons.add),
+        label: Text(l.reefBeatAddDevice),
+      ),
+      body: devicesAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
+        data: (allDevices) {
+          // Tank-scoped view: the active tank's devices plus unassigned ones
+          // (assignment lives in the card menu, so hiding them would make
+          // them unreachable) — the ReefFactory dashboard's rule.
+          final devices = [
+            for (final d in allDevices)
+              if (d.tankId == null || d.tankId == activeTank?.id) d,
+          ]..sort(
+              (a, b) => _displayName(a).toLowerCase().compareTo(
+                    _displayName(b).toLowerCase(),
+                  ),
+            );
+          // One-shot read of the visible devices when the screen opens;
+          // everything after that is manual.
+          if (!_autoRefreshed && devices.isNotEmpty) {
+            _autoRefreshed = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) unawaited(_refreshAll(devices));
+            });
+          }
+          final anyLoading =
+              devices.any((d) => _live[d.identifier]?.loading ?? false);
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+            children: [
+              _DisclaimerBanner(text: l.reefBeatDisclaimer),
+              const SizedBox(height: 12),
+              if (devices.isEmpty)
+                _EmptyState(
+                  title: l.reefBeatEmptyTitle,
+                  body: l.reefBeatEmptyBody,
+                )
+              else ...[
+                OutlinedButton.icon(
+                  onPressed: anyLoading ? null : () => _refreshAll(devices),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: Text(l.reefBeatRefreshAll),
+                ),
+                const SizedBox(height: 12),
+                for (final d in devices)
+                  _DeviceCard(
+                    device: d,
+                    live: _live[d.identifier] ?? const _Live(),
+                    errorTextOf: (e) => _errorText(l, e),
+                    onRefresh: () => _refresh(d),
+                    // No other tank to move to → no menu item.
+                    onMove: tanks.any((t) => t.id != d.tankId)
+                        ? () => _moveDevice(d)
+                        : null,
+                    onRemove: () => _confirmRemove(d),
+                  ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Reassigns [d] to a tank picked from a dialog (all tanks except its
+  /// current one). Also serves as the initial assignment for an unassigned
+  /// device.
+  Future<void> _moveDevice(DeviceRecord d) async {
+    final l = AppLocalizations.of(context);
+    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
+    final tankId = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l.reefBeatSelectTank),
+        children: [
+          for (final t in tanks)
+            if (t.id != d.tankId)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, t.id),
+                child: Text(t.name),
+              ),
+        ],
+      ),
+    );
+    if (tankId != null) {
+      await ref
+          .read(dbProvider)
+          .updateDeviceNameTank(d.id, name: d.name, tankId: tankId);
+    }
+  }
+
+  Future<void> _confirmRemove(DeviceRecord d) async {
+    final l = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.reefBeatRemove),
+        content: Text(l.reefBeatRemoveConfirm(_displayName(d))),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.reefBeatRemove),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      _live.remove(d.identifier);
+      await ref.read(dbProvider).deleteDevice(d.id);
+    }
+  }
+
+  Future<void> _showAddSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: _AddDeviceSheet(
+          link: ref.read(rbDeviceLinkProvider),
+          tanks: ref.read(tanksProvider).value ?? const <Tank>[],
+          activeTankId: ref.read(activeTankProvider)?.id,
+          errorTextOf: (e) => _errorText(AppLocalizations.of(ctx), e),
+          onAdd:
+              ({
+                required hwid,
+                required model,
+                required host,
+                required name,
+                required tankId,
+                required snapshot,
+              }) async {
+                await ref.read(dbProvider).upsertReefBeatDevice(
+                  identifier: hwid,
+                  model: model,
+                  address: host,
+                  name: name,
+                  tankId: tankId,
+                );
+                // The probe already read the device, so seed the new card with
+                // that snapshot — it shows live status right away without a
+                // second connect.
+                if (mounted) {
+                  setState(() => _live[hwid] = _Live(snapshot: snapshot));
+                }
+              },
+        ),
+      ),
+    );
+  }
+}
+
+/// The persistent read-only notice. Uses the theme's tertiary container so it
+/// reads as informational, not an error.
+class _DisclaimerBanner extends StatelessWidget {
+  const _DisclaimerBanner({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.tertiaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 20, color: cs.onTertiaryContainer),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: cs.onTertiaryContainer),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.title, required this.body});
+  final String title, body;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      child: Column(
+        children: [
+          Icon(
+            Icons.water_drop_outlined,
+            size: 48,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 12),
+          Text(title, style: t.titleMedium, textAlign: TextAlign.center),
+          const SizedBox(height: 6),
+          Text(body, style: t.bodyMedium, textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeviceCard extends StatelessWidget {
+  const _DeviceCard({
+    required this.device,
+    required this.live,
+    required this.errorTextOf,
+    required this.onRefresh,
+    required this.onMove,
+    required this.onRemove,
+  });
+
+  final DeviceRecord device;
+  final _Live live;
+  final String Function(RbLinkError) errorTextOf;
+  final VoidCallback onRefresh;
+
+  /// Null when there is no other tank to move to (the item is hidden).
+  final VoidCallback? onMove;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final snap = live.snapshot;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_displayName(device), style: t.titleMedium),
+                      Text(
+                        '${device.model ?? ''}  ·  ${device.address ?? ''}',
+                        style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (v) {
+                    if (v == 'move') onMove?.call();
+                    if (v == 'remove') onRemove();
+                  },
+                  itemBuilder: (_) => [
+                    if (onMove != null)
+                      PopupMenuItem(
+                        value: 'move',
+                        child: Text(l.reefBeatMoveToTank),
+                      ),
+                    PopupMenuItem(
+                      value: 'remove',
+                      child: Text(l.reefBeatRemove),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Live status area.
+            if (live.loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: LinearProgressIndicator(),
+              )
+            else if (live.error != null)
+              Text(
+                errorTextOf(live.error!),
+                style: t.bodyMedium?.copyWith(color: cs.error),
+              )
+            else if (snap != null)
+              _PumpStatus(status: snap.status)
+            else
+              Text(
+                l.reefBeatNotReadYet,
+                style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: live.loading ? null : onRefresh,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: Text(l.reefBeatRefresh),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The dosing status of one pump: device-level warnings + one row per head.
+class _PumpStatus extends StatelessWidget {
+  const _PumpStatus({required this.status});
+  final RbDoseStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (status.timeError || status.batteryWarning) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              if (status.timeError)
+                _WarnChip(
+                  label: l.reefBeatTimeError,
+                  color: tokens.critical,
+                  softColor: tokens.criticalSoft,
+                ),
+              if (status.batteryWarning)
+                _WarnChip(
+                  label: l.reefBeatBatteryLow,
+                  color: tokens.caution,
+                  softColor: tokens.cautionSoft,
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        for (final (i, head) in status.heads.indexed) ...[
+          if (i > 0) const SizedBox(height: 12),
+          _HeadRow(head: head),
+        ],
+      ],
+    );
+  }
+}
+
+/// One dosing head: supplement name + remaining-days tag, a horizontal
+/// dosed-today gauge, and any per-head warnings.
+class _HeadRow extends StatelessWidget {
+  const _HeadRow({required this.head});
+  final RbDoseHead head;
+
+  /// Trims trailing ".0" so whole millilitres render bare ("40"), fractional
+  /// ones with one decimal ("26.7") — matching the pump's own display.
+  static String _fmtMl(double v) => v == v.roundToDouble()
+      ? v.round().toString()
+      : v.toStringAsFixed(1);
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+
+    final daily = head.dailyDose;
+    final dosed = head.dosedToday;
+    final days = head.remainingDays;
+    final daysColor = days == null
+        ? tokens.textDim
+        : switch (rbStockSeverity(days)) {
+            RbStockSeverity.healthy => tokens.healthy,
+            RbStockSeverity.caution => tokens.caution,
+            RbStockSeverity.critical => tokens.critical,
+          };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(
+              child: Text(
+                head.supplement?.trim().isNotEmpty == true
+                    ? head.supplement!
+                    : l.reefBeatHead(head.number),
+                style: t.titleSmall?.copyWith(
+                  color: head.enabled ? null : tokens.textDim,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (!head.enabled)
+              Text(
+                l.reefBeatHeadOff,
+                style: t.labelMedium?.copyWith(color: tokens.textDim),
+              )
+            else if (days != null)
+              Text(
+                l.reefBeatDaysLeft(days),
+                style: t.labelMedium?.copyWith(
+                  color: daysColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        // Today's progress: dosed so far vs the scheduled daily total. With no
+        // schedule (daily dose absent/zero) the track stays empty — the mono
+        // text still reports what was dosed.
+        Row(
+          children: [
+            Expanded(
+              child: _DoseGauge(
+                fraction: (daily == null || daily <= 0)
+                    ? 0
+                    : (dosed / daily).clamp(0.0, 1.0),
+                enabled: head.enabled,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              daily == null
+                  ? l.reefBeatDosedNoDaily(_fmtMl(dosed))
+                  : l.reefBeatDosedOfDaily(_fmtMl(dosed), _fmtMl(daily)),
+              style: ReefTokens.monoTextStyle.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: head.enabled ? tokens.text : tokens.textDim,
+              ),
+            ),
+          ],
+        ),
+        if (head.recalibrationRequired || head.missedVolume > 0) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              if (head.recalibrationRequired)
+                _WarnChip(
+                  label: l.reefBeatRecalibration,
+                  color: tokens.caution,
+                  softColor: tokens.cautionSoft,
+                ),
+              if (head.missedVolume > 0)
+                _WarnChip(
+                  label: l.reefBeatMissedDose(_fmtMl(head.missedVolume)),
+                  color: tokens.critical,
+                  softColor: tokens.criticalSoft,
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// The horizontal dosed-today gauge: a rounded track with a fractional fill.
+class _DoseGauge extends StatelessWidget {
+  const _DoseGauge({required this.fraction, required this.enabled});
+
+  /// 0..1 — the portion of today's scheduled volume already delivered.
+  final double fraction;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ReefTokens.of(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: SizedBox(
+        height: 8,
+        child: Stack(
+          children: [
+            Positioned.fill(child: ColoredBox(color: tokens.track)),
+            FractionallySizedBox(
+              widthFactor: fraction,
+              heightFactor: 1,
+              child: ColoredBox(
+                color: enabled ? tokens.primary : tokens.textFaint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WarnChip extends StatelessWidget {
+  const _WarnChip({
+    required this.label,
+    required this.color,
+    required this.softColor,
+  });
+
+  final String label;
+  final Color color;
+  final Color softColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: softColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.copyWith(color: color, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+/// Bottom sheet: enter an IP/hostname, we probe and auto-identify the device,
+/// then let the user name it and pick a tank before adding.
+class _AddDeviceSheet extends StatefulWidget {
+  const _AddDeviceSheet({
+    required this.link,
+    required this.tanks,
+    required this.activeTankId,
+    required this.errorTextOf,
+    required this.onAdd,
+  });
+
+  final RbDeviceLink link;
+  final List<Tank> tanks;
+  final int? activeTankId;
+  final String Function(RbLinkError) errorTextOf;
+  final Future<void> Function({
+    required String hwid,
+    required String model,
+    required String host,
+    required String? name,
+    required int? tankId,
+    required RbSnapshot snapshot,
+  }) onAdd;
+
+  @override
+  State<_AddDeviceSheet> createState() => _AddDeviceSheetState();
+}
+
+class _AddDeviceSheetState extends State<_AddDeviceSheet> {
+  final _host = TextEditingController();
+  final _name = TextEditingController();
+  bool _probing = false;
+  String? _error;
+  RbSnapshot? _found;
+  int? _tankId;
+
+  @override
+  void initState() {
+    super.initState();
+    _tankId = widget.activeTankId;
+  }
+
+  @override
+  void dispose() {
+    _host.dispose();
+    _name.dispose();
+    super.dispose();
+  }
+
+  Future<void> _probe() async {
+    final host = _host.text.trim();
+    if (host.isEmpty) return;
+    setState(() {
+      _probing = true;
+      _error = null;
+      _found = null;
+    });
+    try {
+      final snap = await widget.link.readOnce(host);
+      if (!mounted) return;
+      setState(() {
+        _found = snap;
+        // Default the name to the friendly product name ("ReefDose 4") — the
+        // device's own default name is a serial-suffixed code.
+        if (_name.text.isEmpty) {
+          _name.text = rbModelDisplayName(snap.info.hwModel);
+        }
+      });
+    } on RbLinkException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = widget.errorTextOf(e.error));
+    } finally {
+      if (mounted) setState(() => _probing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final found = _found;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.reefBeatAddDevice, style: t.titleLarge),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _host,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              labelText: l.reefBeatHostLabel,
+              hintText: l.reefBeatHostHint,
+              helperText: l.reefBeatHostHelp,
+              helperMaxLines: 2,
+            ),
+            onSubmitted: (_) => _probe(),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _error!,
+              style: t.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ],
+          if (found != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              l.reefBeatFound(rbModelDisplayName(found.info.hwModel)),
+              style: t.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              [
+                for (final h in found.status.heads)
+                  if (h.supplement?.trim().isNotEmpty == true) h.supplement!,
+              ].join('   ·   '),
+              style: t.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _name,
+              decoration: InputDecoration(labelText: l.reefBeatDeviceNameLabel),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int?>(
+              initialValue: _tankId,
+              decoration: InputDecoration(labelText: l.reefBeatTankLabel),
+              items: [
+                for (final tk in widget.tanks)
+                  DropdownMenuItem(value: tk.id, child: Text(tk.name)),
+              ],
+              onChanged: (v) => setState(() => _tankId = v),
+            ),
+          ],
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l.cancel),
+              ),
+              const SizedBox(width: 8),
+              if (found == null)
+                FilledButton(
+                  onPressed: _probing ? null : _probe,
+                  child: _probing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l.reefBeatCheck),
+                )
+              else
+                FilledButton(
+                  onPressed: () async {
+                    await widget.onAdd(
+                      hwid: found.info.hwid,
+                      model: found.info.hwModel,
+                      host: _host.text.trim(),
+                      name: _name.text.trim().isEmpty
+                          ? null
+                          : _name.text.trim(),
+                      tankId: _tankId,
+                      snapshot: found,
+                    );
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  child: Text(l.reefBeatAddDevice),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -29,6 +29,7 @@ import '../features/micro/micro_configure_screen.dart';
 import '../features/micro/micro_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
+import '../features/reefbeat/reefbeat_screen.dart';
 import '../features/reeffactory/reeffactory_screen.dart';
 import '../features/ro/ro_screen.dart';
 import '../features/scan/checker_scan_screen.dart';
@@ -176,6 +177,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/reeffactory',
       builder: (context, state) => const ReefFactoryScreen(),
+    ),
+    GoRoute(
+      path: '/reefbeat',
+      builder: (context, state) => const ReefBeatScreen(),
     ),
     GoRoute(path: '/micro', builder: (context, state) => const MicroScreen()),
     GoRoute(

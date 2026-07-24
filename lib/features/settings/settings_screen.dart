@@ -385,8 +385,19 @@ class SettingsBody extends ConsumerWidget {
                     : () =>
                           showProFeatureDialog(context, ProFeature.reefFactory),
               ),
+              // Red Sea ReefBeat dosing-pump status (U38). Same Pro-gate idiom
+              // as the ReefFactory row.
+              ReefSettingsRow(
+                icon: Icons.water_drop_outlined,
+                title: l.reefBeatTitle,
+                description: l.reefBeatSettingsSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: ref.watch(proFeatureProvider(ProFeature.reefBeat))
+                    ? () => context.push('/reefbeat')
+                    : () => showProFeatureDialog(context, ProFeature.reefBeat),
+              ),
               // Read-only inventory of every connected device (ReefFactory
-              // meters + the Hanna checker once used).
+              // meters, ReefBeat devices + the Hanna checker once used).
               ReefSettingsRow(
                 icon: Icons.devices_other_outlined,
                 title: l.reefDevicesTitle,

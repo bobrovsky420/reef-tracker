@@ -488,32 +488,34 @@ class ImportSources extends Table {
   Set<Column> get primaryKey => {tankId, source};
 }
 
-/// Inventory of connected hardware devices (U36): ReefFactory local meters and
-/// the Hanna checker once it has been used. Keyed by [identifier] (the device
-/// serial / BLE id) so a meter that changes DHCP address stays the same row.
-/// The ReefFactory dashboard manages `kind = 'reeffactory'` rows (add / refresh
-/// / remove); the Hanna flow records its checker on first connect. The Settings
-/// "Connected devices" page is a read-only union of both kinds.
+/// Inventory of connected hardware devices (U36): ReefFactory local meters,
+/// Red Sea ReefBeat devices (U38) and the Hanna checker once it has been used.
+/// Keyed by [identifier] (the device serial / BLE id / hwid) so a meter that
+/// changes DHCP address stays the same row. The ReefFactory dashboard manages
+/// `kind = 'reeffactory'` rows and the ReefBeat dashboard `kind = 'reefbeat'`
+/// rows (add / refresh / remove); the Hanna flow records its checker on first
+/// connect. The Settings "Connected devices" page is a read-only union of all
+/// kinds.
 @DataClassName('DeviceRecord')
 class Devices extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  /// `'reeffactory'` | `'hanna'`. Persisted — never rename.
+  /// `'reeffactory'` | `'hanna'` | `'reefbeat'`. Persisted — never rename.
   TextColumn get kind => text()();
 
-  /// Stable device identity: a ReefFactory serial (e.g. `RFPM01…`) or the Hanna
-  /// meter's BLE id/serial. Unique — the same physical device is one row even
-  /// if its network address changes.
+  /// Stable device identity: a ReefFactory serial (e.g. `RFPM01…`), a ReefBeat
+  /// `hwid` (MAC-derived), or the Hanna meter's BLE id/serial. Unique — the
+  /// same physical device is one row even if its network address changes.
   TextColumn get identifier => text().unique()();
 
   /// User-facing label; defaults to the model/parameter name at add time.
   TextColumn get name => text().nullable()();
 
-  /// Model code (`RFSG01`, `RFPM01`, a Hanna model), for display.
+  /// Model code (`RFSG01`, `RFPM01`, `RSDOSE4`, a Hanna model), for display.
   TextColumn get model => text().nullable()();
 
-  /// Current network address (host or IP) for ReefFactory meters. Null for
-  /// Hanna (BLE, no address).
+  /// Current network address (host or IP) for ReefFactory/ReefBeat devices.
+  /// Null for Hanna (BLE, no address).
   TextColumn get address => text().nullable()();
 
   /// Tank the device's saved readings belong to. Null until assigned; cleared
@@ -1303,6 +1305,36 @@ class AppDatabase extends _$AppDatabase {
   Future<DeviceRecord?> deviceByIdentifier(String identifier) =>
       (select(devices)..where((d) => d.identifier.equals(identifier)))
           .getSingleOrNull();
+
+  /// Adds or updates a ReefBeat device by its `hwid` (the add/edit flow) —
+  /// same semantics as [upsertReefFactoryDevice].
+  Future<void> upsertReefBeatDevice({
+    required String identifier,
+    required String model,
+    required String address,
+    String? name,
+    int? tankId,
+  }) => into(devices).insert(
+    DevicesCompanion.insert(
+      kind: 'reefbeat',
+      identifier: identifier,
+      name: Value(name),
+      model: Value(model),
+      address: Value(address),
+      tankId: Value(tankId),
+      lastSeenAt: Value(DateTime.now()),
+    ),
+    onConflict: DoUpdate(
+      (_) => DevicesCompanion(
+        model: Value(model),
+        address: Value(address),
+        name: Value(name),
+        tankId: Value(tankId),
+        lastSeenAt: Value(DateTime.now()),
+      ),
+      target: [devices.identifier],
+    ),
+  );
 
   /// Adds or updates a ReefFactory device by serial (the add/edit flow). Re-adding
   /// an address whose serial already exists updates that row (the "device moved"

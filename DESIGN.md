@@ -151,7 +151,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RoStages` | id, stageType (`RoStageType.name`; `custom` rows carry [title]), title?, lifespanDays (replace every N days), enabled (the "uncheck if a lower model is used" flag — hidden + silent but history kept), remindEnabled, note?, displayOrder — the shared RO unit's stages (U16). **No tankId by design**: like `Settings`, the RO unit is a property of the household, shared by every aquarium. Default 4-stage set seeded on first RO-screen visit (`seedDefaultRoStages`, guarded by the `ro_stages_seeded` settings flag — not the row count, so deleting every stage sticks) |
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
 | `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
-| `Devices` | id, kind (`reeffactory`\|`hanna`), identifier (**unique** — serial / BLE id, so a meter that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt? — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows (add / refresh / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of both |
+| `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt? — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows and the ReefBeat dashboard `reefbeat` rows (add / refresh / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -428,7 +428,7 @@ never wipes live data:
    treatment: unique stage ids, no replacement referencing a missing stage,
    `stageType` whitelisted against `RoStageType`, a custom stage must carry a
    non-blank title, and `lifespanDays` must be ≥ 1. Devices (U36): `kind`
-   whitelisted (`reeffactory`/`hanna`), `identifier` non-blank and unique (it
+   whitelisted (`reeffactory`/`hanna`/`reefbeat`), `identifier` non-blank and unique (it
    is the merge identity), and a present `tankId` must reference an aquarium
    in the backup. All four recurring
    day-count fields (`cadenceDays`, `lifespanDays`, `testCadenceDays`, dosing
@@ -1271,6 +1271,9 @@ Body text stays the platform default (SF/Roboto).
 | `/hanna/measure` | Hanna checker live BLE measurement (U33, experimental): connect → select → run → save in one route |
 | `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
+| `/reeffactory` | ReefFactory devices dashboard (U36, experimental): live values from LAN meters |
+| `/reefbeat` | ReefBeat devices dashboard (U38, experimental): dosing status from Red Sea ReefDose pumps |
+| `/settings/devices` | Connected devices — read-only inventory of every ReefFactory / ReefBeat / Hanna device |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
 home shell (see Features). `/` accepts a
@@ -2375,10 +2378,57 @@ the ReefFactory app for settings/calibration/firmware.
   row + `RfDeviceLink` behind the device-agnostic `EnvironmentSource`
   interface in `data/environment_sources.dart`.
 
+### ReefBeat devices (U38, Pro, **experimental**) — `features/reefbeat/`, route `/reefbeat`
+
+A separate dashboard for **Red Sea ReefBeat** LAN devices — deliberately not
+merged into the ReefFactory screen, because these devices measure no water
+parameter: the cards display supplementary status (dosing amounts) instead of
+values to save, so there is **no Save path** into `Readings`. Only the
+**ReefDose** dosing pumps (`RSDOSE2`/`RSDOSE4`, `hw_type = reef-dosing`) are
+supported so far. Read-only: the app never doses, edits schedules or
+calibrates — a persistent disclaimer points to the ReefBeat app for that.
+
+- **Protocol** (`data/rb_protocol.dart`, pure Dart, golden-vector tested
+  against a live RSDOSE4): the devices expose an unauthenticated JSON REST API
+  on the LAN. `GET /device-info` yields identity (`hw_type` discriminates the
+  family, `hw_model` the product, `hwid` — MAC-derived — is the stable unique
+  `Devices.identifier`); `GET /dashboard` yields device flags
+  (`battery_level`, `time_error`) plus a `heads` map ("1".."4") parsed into
+  `RbDoseHead`s (supplement, state, auto/manual dosed today, daily dose,
+  remaining days, recalibration/missed-dose flags). Parsing is tolerant —
+  absent/malformed fields degrade the card, never crash a refresh.
+  `rbModelDisplayName` maps `hw_model` → friendly name ("ReefDose 4"), the
+  default device name on add.
+- **Transport** (`data/rb_device_link.dart`): abstract `RbDeviceLink`
+  (fake-able) + `RbHttpLink` over `dart:io` `HttpClient` (the
+  `cloud_backup_store.dart` pattern, no new dependency). One `readOnce(host)`
+  per manual refresh = the two GETs; typed `RbLinkError`
+  (unreachable/timeout/unsupportedModel/protocol) drives specific messages.
+- **Dashboard** (`reefbeat_screen.dart`): mirrors the ReefFactory screen's
+  structure (active tank's devices + unassigned, per-card Refresh +
+  Refresh-all, add-by-address probe sheet, move-to-tank / remove menu,
+  household-scoped `reefBeatDevicesProvider`) minus everything save-related.
+  Each card renders one `_HeadRow` per head: the supplement name, a
+  **horizontal dosed-today gauge** (dosed today ÷ daily dose, `track` token
+  under a `primary` fill, mono `26.7 / 40 ml` beside it) and a
+  **remaining-days tag** colored by `rbStockSeverity` — `healthy` ≥
+  `kRbStockCautionDays` (14), `caution` below it, `critical` below
+  `kRbStockCriticalDays` (7) — plus warning chips (recalibration needed,
+  missed dose, device clock error, backup battery low) in caution/critical
+  soft-token style. Disabled heads render dimmed with an "Off" tag.
+- Entry points mirror ReefFactory: experimental-gated + Pro-gated
+  (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow
+  menu and a Settings row. Devices are read once automatically on open;
+  after that reads are manual.
+- **Future phases (deferred):** comparing/syncing head schedules against the
+  tank's dosing plan (`DosingEntries`), and logging actually-delivered volumes
+  for the dose calculator's consumption math.
+
 Connected-device inventory (Settings → Connected devices, route
 `/settings/devices`, `connected_devices_screen.dart`): a read-only union of the
-`Devices` table — ReefFactory meters plus the Hanna checker, which
-`hanna_meter_screen.dart` records via `ensureHannaDevice` on first connect.
+`Devices` table — ReefFactory meters and ReefBeat devices plus the Hanna
+checker, which `hanna_meter_screen.dart` records via `ensureHannaDevice` on
+first connect.
 
 ### Dosing (`features/dosing/`) — Dosing tab
 

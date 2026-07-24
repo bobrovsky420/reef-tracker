@@ -1421,6 +1421,7 @@ void main() {
         devices: [
           device('RF-AAA', name: 'pH meter', tankId: 1),
           device('HI-BLE-9', kind: 'hanna'),
+          device('cc7b5c267a68', kind: 'reefbeat'),
         ],
       );
       expect(() => validateBackup(d, appSchemaVersion: 23), returnsNormally);

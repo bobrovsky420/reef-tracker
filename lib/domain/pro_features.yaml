@@ -52,3 +52,8 @@ features:
   # usable immediately, Founder installs keep it free forever.
   - key: reefFactory
     grandfathered: true
+  # U38 Red Sea ReefBeat dosing-pump dashboard (experimental) — grandfathered
+  # per the 2026-07-24 decision, consistent with reefFactory (the same
+  # local-device integration pattern for another vendor).
+  - key: reefBeat
+    grandfathered: true

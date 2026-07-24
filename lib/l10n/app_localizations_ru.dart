@@ -3121,16 +3121,151 @@ class AppLocalizationsRu extends AppLocalizations {
       'Считывайте текущие значения с измерителей ReefFactory';
 
   @override
+  String get reefBeatTitle => 'Устройства ReefBeat';
+
+  @override
+  String get reefBeatMenu => 'Устройства ReefBeat';
+
+  @override
+  String get reefBeatSettingsSubtitle =>
+      'Статус дозирования с устройств Red Sea ReefBeat';
+
+  @override
+  String get reefBeatDisclaimer =>
+      'Это приложение только считывает статус ваших устройств Red Sea ReefBeat. Оно не может дозировать, менять расписания или калибровать — для этого используйте приложение ReefBeat.';
+
+  @override
+  String get reefBeatAddDevice => 'Добавить устройство';
+
+  @override
+  String get reefBeatEmptyTitle => 'Пока нет устройств';
+
+  @override
+  String get reefBeatEmptyBody =>
+      'Добавьте устройство Red Sea ReefBeat (например, дозатор ReefDose) по IP-адресу или имени хоста, чтобы видеть статус дозирования.';
+
+  @override
+  String get reefBeatRefresh => 'Обновить';
+
+  @override
+  String get reefBeatRefreshAll => 'Обновить все';
+
+  @override
+  String get reefBeatNotReadYet =>
+      'Нажмите «Обновить», чтобы считать текущий статус.';
+
+  @override
+  String get reefBeatTankLabel => 'Аквариум';
+
+  @override
+  String get reefBeatSelectTank => 'Выберите аквариум';
+
+  @override
+  String get reefBeatMoveToTank => 'Переместить в другой аквариум';
+
+  @override
+  String get reefBeatDeviceNameLabel => 'Название';
+
+  @override
+  String get reefBeatRemove => 'Удалить устройство';
+
+  @override
+  String reefBeatRemoveConfirm(Object name) {
+    return 'Удалить $name из списка?';
+  }
+
+  @override
+  String get reefBeatHostLabel => 'IP-адрес или имя хоста';
+
+  @override
+  String get reefBeatHostHint => 'напр. 192.168.1.3';
+
+  @override
+  String get reefBeatHostHelp =>
+      'Найдите его в списке клиентов роутера. Резервирование DHCP не даст ему меняться.';
+
+  @override
+  String get reefBeatCheck => 'Проверить';
+
+  @override
+  String reefBeatFound(Object model) {
+    return 'Найдено: $model';
+  }
+
+  @override
+  String get reefBeatErrUnreachable =>
+      'Не удалось подключиться по этому адресу. Убедитесь, что устройство включено и в той же сети.';
+
+  @override
+  String get reefBeatErrTimeout => 'Подключено, но ответ не пришёл.';
+
+  @override
+  String get reefBeatErrUnsupported =>
+      'Этот тип устройства ReefBeat пока не поддерживается — пока только дозаторы ReefDose.';
+
+  @override
+  String get reefBeatErrProtocol => 'Не удалось считать устройство.';
+
+  @override
+  String reefBeatHead(int number) {
+    return 'Головка $number';
+  }
+
+  @override
+  String get reefBeatHeadOff => 'Выкл.';
+
+  @override
+  String reefBeatDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'осталось $count дня',
+      many: 'осталось $count дней',
+      few: 'осталось $count дня',
+      one: 'остался $count день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reefBeatDosedOfDaily(Object dosed, Object daily) {
+    return '$dosed / $daily мл';
+  }
+
+  @override
+  String reefBeatDosedNoDaily(Object dosed) {
+    return '$dosed мл';
+  }
+
+  @override
+  String get reefBeatRecalibration => 'Требуется рекалибровка';
+
+  @override
+  String reefBeatMissedDose(Object volume) {
+    return 'Пропущенная доза: $volume мл';
+  }
+
+  @override
+  String get reefBeatTimeError => 'Ошибка часов устройства';
+
+  @override
+  String get reefBeatBatteryLow => 'Резервная батарея разряжена';
+
+  @override
   String get reefDevicesTitle => 'Подключённые устройства';
 
   @override
-  String get reefDevicesSubtitle => 'Измерители ReefFactory и Hanna checker';
+  String get reefDevicesSubtitle =>
+      'Измерители ReefFactory, устройства ReefBeat и Hanna checker';
 
   @override
   String get reefDevicesEmpty => 'Пока нет подключённых устройств.';
 
   @override
   String get reefDevicesKindReefFactory => 'ReefFactory';
+
+  @override
+  String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
 
   @override
   String get reefDevicesKindHanna => 'Hanna checker';

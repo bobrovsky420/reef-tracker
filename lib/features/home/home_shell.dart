@@ -422,6 +422,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           );
                         }
                       }
+                      if (v == 'reefbeat') {
+                        // ReefBeat dosing-pump dashboard (U38, experimental),
+                        // same gate idiom.
+                        if (ref.read(proFeatureProvider(ProFeature.reefBeat))) {
+                          unawaited(context.push('/reefbeat'));
+                        } else {
+                          unawaited(
+                            showProFeatureDialog(
+                              context,
+                              ProFeature.reefBeat,
+                            ),
+                          );
+                        }
+                      }
                     },
                     entries: [
                       ReefMenuItem(
@@ -470,6 +484,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           value: 'reeffactory',
                           icon: Icons.sensors,
                           label: l.reefFactoryMenu,
+                        ),
+                      // ReefBeat devices (U38) — experimental opt-in.
+                      if (ref.watch(experimentalEnabledProvider).value ?? false)
+                        ReefMenuItem(
+                          value: 'reefbeat',
+                          icon: Icons.water_drop_outlined,
+                          label: l.reefBeatMenu,
                         ),
                     ],
                   ),

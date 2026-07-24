@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.41.0] - 2026-07-24
+
+### Added
+- ReefBeat devices (experimental, Pro): a dashboard for Red Sea ReefBeat
+  devices on your local network, starting with the ReefDose dosing pumps
+  (2- and 4-head). Add a pump by its IP address or hostname and see each
+  head's supplement, a progress gauge of today's dose (already dosed vs the
+  scheduled daily amount) and how many days of supplement are left — colored
+  green, amber (under 14 days) or red (under 7 days) — plus warnings for
+  missed doses, needed recalibration, a low backup battery and a wrong device
+  clock. Read-only: the app never doses or changes pump settings. Found under
+  Settings → Experimental and in the Measurements-tab menu.
+
 ## [0.40.1] - 2026-07-24
 
 ### Added

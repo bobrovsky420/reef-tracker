@@ -3059,16 +3059,148 @@ class AppLocalizationsEn extends AppLocalizations {
       'Read live values from ReefFactory meters';
 
   @override
+  String get reefBeatTitle => 'ReefBeat devices';
+
+  @override
+  String get reefBeatMenu => 'ReefBeat devices';
+
+  @override
+  String get reefBeatSettingsSubtitle =>
+      'Dosing status from Red Sea ReefBeat devices';
+
+  @override
+  String get reefBeatDisclaimer =>
+      'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that.';
+
+  @override
+  String get reefBeatAddDevice => 'Add device';
+
+  @override
+  String get reefBeatEmptyTitle => 'No devices yet';
+
+  @override
+  String get reefBeatEmptyBody =>
+      'Add a Red Sea ReefBeat device (e.g. a ReefDose pump) by its IP address or hostname to see its dosing status.';
+
+  @override
+  String get reefBeatRefresh => 'Refresh';
+
+  @override
+  String get reefBeatRefreshAll => 'Refresh all';
+
+  @override
+  String get reefBeatNotReadYet => 'Tap Refresh to read the current status.';
+
+  @override
+  String get reefBeatTankLabel => 'Tank';
+
+  @override
+  String get reefBeatSelectTank => 'Select a tank';
+
+  @override
+  String get reefBeatMoveToTank => 'Move to another tank';
+
+  @override
+  String get reefBeatDeviceNameLabel => 'Name';
+
+  @override
+  String get reefBeatRemove => 'Remove device';
+
+  @override
+  String reefBeatRemoveConfirm(Object name) {
+    return 'Remove $name from this list?';
+  }
+
+  @override
+  String get reefBeatHostLabel => 'IP address or hostname';
+
+  @override
+  String get reefBeatHostHint => 'e.g. 192.168.1.3';
+
+  @override
+  String get reefBeatHostHelp =>
+      'Find it in your router\'s client list. A DHCP reservation keeps it from changing.';
+
+  @override
+  String get reefBeatCheck => 'Check';
+
+  @override
+  String reefBeatFound(Object model) {
+    return 'Found: $model';
+  }
+
+  @override
+  String get reefBeatErrUnreachable =>
+      'Couldn\'t reach that address. Check the device is on and on this network.';
+
+  @override
+  String get reefBeatErrTimeout => 'Connected, but no answer arrived.';
+
+  @override
+  String get reefBeatErrUnsupported =>
+      'That ReefBeat device type isn\'t supported yet — only ReefDose pumps for now.';
+
+  @override
+  String get reefBeatErrProtocol => 'Couldn\'t read the device.';
+
+  @override
+  String reefBeatHead(int number) {
+    return 'Head $number';
+  }
+
+  @override
+  String get reefBeatHeadOff => 'Off';
+
+  @override
+  String reefBeatDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days left',
+      one: '1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reefBeatDosedOfDaily(Object dosed, Object daily) {
+    return '$dosed / $daily ml';
+  }
+
+  @override
+  String reefBeatDosedNoDaily(Object dosed) {
+    return '$dosed ml';
+  }
+
+  @override
+  String get reefBeatRecalibration => 'Needs recalibration';
+
+  @override
+  String reefBeatMissedDose(Object volume) {
+    return 'Missed dose: $volume ml';
+  }
+
+  @override
+  String get reefBeatTimeError => 'Device clock error';
+
+  @override
+  String get reefBeatBatteryLow => 'Backup battery low';
+
+  @override
   String get reefDevicesTitle => 'Connected devices';
 
   @override
-  String get reefDevicesSubtitle => 'ReefFactory meters and the Hanna checker';
+  String get reefDevicesSubtitle =>
+      'ReefFactory meters, ReefBeat devices and the Hanna checker';
 
   @override
   String get reefDevicesEmpty => 'No devices connected yet.';
 
   @override
   String get reefDevicesKindReefFactory => 'ReefFactory';
+
+  @override
+  String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
 
   @override
   String get reefDevicesKindHanna => 'Hanna checker';

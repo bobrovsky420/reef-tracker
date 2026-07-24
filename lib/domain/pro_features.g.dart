@@ -18,6 +18,7 @@ enum ProFeature {
   hannaConnect,
   hannaScan,
   reefFactory,
+  reefBeat,
 }
 
 /// Features that existed at the monetization cutoff: free
@@ -34,4 +35,5 @@ const Set<ProFeature> kGrandfatheredFeatures = {
   ProFeature.hannaConnect,
   ProFeature.hannaScan,
   ProFeature.reefFactory,
+  ProFeature.reefBeat,
 };

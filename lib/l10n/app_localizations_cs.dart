@@ -3085,17 +3085,150 @@ class AppLocalizationsCs extends AppLocalizations {
       'Čtěte živé hodnoty z měřicích zařízení ReefFactory';
 
   @override
+  String get reefBeatTitle => 'Zařízení ReefBeat';
+
+  @override
+  String get reefBeatMenu => 'Zařízení ReefBeat';
+
+  @override
+  String get reefBeatSettingsSubtitle =>
+      'Stav dávkování ze zařízení Red Sea ReefBeat';
+
+  @override
+  String get reefBeatDisclaimer =>
+      'Tato aplikace pouze čte stav z vašich zařízení Red Sea ReefBeat. Nemůže dávkovat, měnit plány ani kalibrovat – k tomu použijte aplikaci ReefBeat.';
+
+  @override
+  String get reefBeatAddDevice => 'Přidat zařízení';
+
+  @override
+  String get reefBeatEmptyTitle => 'Zatím žádná zařízení';
+
+  @override
+  String get reefBeatEmptyBody =>
+      'Přidejte zařízení Red Sea ReefBeat (např. dávkovač ReefDose) podle jeho IP adresy nebo názvu hostitele a sledujte stav dávkování.';
+
+  @override
+  String get reefBeatRefresh => 'Obnovit';
+
+  @override
+  String get reefBeatRefreshAll => 'Obnovit vše';
+
+  @override
+  String get reefBeatNotReadYet =>
+      'Klepnutím na Obnovit načtete aktuální stav.';
+
+  @override
+  String get reefBeatTankLabel => 'Nádrž';
+
+  @override
+  String get reefBeatSelectTank => 'Vyberte nádrž';
+
+  @override
+  String get reefBeatMoveToTank => 'Přesunout do jiné nádrže';
+
+  @override
+  String get reefBeatDeviceNameLabel => 'Název';
+
+  @override
+  String get reefBeatRemove => 'Odebrat zařízení';
+
+  @override
+  String reefBeatRemoveConfirm(Object name) {
+    return 'Odebrat $name z tohoto seznamu?';
+  }
+
+  @override
+  String get reefBeatHostLabel => 'IP adresa nebo název hostitele';
+
+  @override
+  String get reefBeatHostHint => 'např. 192.168.1.3';
+
+  @override
+  String get reefBeatHostHelp =>
+      'Najdete ji v seznamu klientů vašeho routeru. Rezervace DHCP zajistí, že se nezmění.';
+
+  @override
+  String get reefBeatCheck => 'Ověřit';
+
+  @override
+  String reefBeatFound(Object model) {
+    return 'Nalezeno: $model';
+  }
+
+  @override
+  String get reefBeatErrUnreachable =>
+      'Na tuto adresu se nepodařilo připojit. Zkontrolujte, zda je zařízení zapnuté a ve stejné síti.';
+
+  @override
+  String get reefBeatErrTimeout => 'Připojeno, ale nedorazila žádná odpověď.';
+
+  @override
+  String get reefBeatErrUnsupported =>
+      'Tento typ zařízení ReefBeat zatím není podporován – prozatím jen dávkovače ReefDose.';
+
+  @override
+  String get reefBeatErrProtocol => 'Zařízení se nepodařilo přečíst.';
+
+  @override
+  String reefBeatHead(int number) {
+    return 'Hlava $number';
+  }
+
+  @override
+  String get reefBeatHeadOff => 'Vypnuto';
+
+  @override
+  String reefBeatDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'zbývá $count dní',
+      few: 'zbývají $count dny',
+      one: 'zbývá 1 den',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reefBeatDosedOfDaily(Object dosed, Object daily) {
+    return '$dosed / $daily ml';
+  }
+
+  @override
+  String reefBeatDosedNoDaily(Object dosed) {
+    return '$dosed ml';
+  }
+
+  @override
+  String get reefBeatRecalibration => 'Vyžaduje rekalibraci';
+
+  @override
+  String reefBeatMissedDose(Object volume) {
+    return 'Vynechaná dávka: $volume ml';
+  }
+
+  @override
+  String get reefBeatTimeError => 'Chyba hodin zařízení';
+
+  @override
+  String get reefBeatBatteryLow => 'Slabá záložní baterie';
+
+  @override
   String get reefDevicesTitle => 'Připojená zařízení';
 
   @override
   String get reefDevicesSubtitle =>
-      'Měřicí zařízení ReefFactory a Hanna checker';
+      'Měřicí zařízení ReefFactory, zařízení ReefBeat a Hanna checker';
 
   @override
   String get reefDevicesEmpty => 'Zatím nejsou připojena žádná zařízení.';
 
   @override
   String get reefDevicesKindReefFactory => 'ReefFactory';
+
+  @override
+  String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
 
   @override
   String get reefDevicesKindHanna => 'Hanna checker';

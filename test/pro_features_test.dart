@@ -49,6 +49,7 @@ void main() {
         ProFeature.hannaConnect,
         ProFeature.hannaScan,
         ProFeature.reefFactory,
+        ProFeature.reefBeat,
       });
     });
   });

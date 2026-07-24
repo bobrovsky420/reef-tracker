@@ -31,6 +31,27 @@ void main() {
     expect(all.single.kind, 'reeffactory');
   });
 
+  test('upsertReefBeatDevice inserts then updates by hwid (no dupe)', () async {
+    await db.upsertReefBeatDevice(
+      identifier: 'cc7b5c267a68',
+      model: 'RSDOSE4',
+      address: '192.168.1.3',
+      name: 'ReefDose 4',
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'cc7b5c267a68',
+      model: 'RSDOSE4',
+      address: '192.168.1.9',
+      name: 'Dosing pump',
+    );
+
+    final all = await db.watchDevicesOfKind('reefbeat').first;
+    expect(all, hasLength(1));
+    expect(all.single.address, '192.168.1.9');
+    expect(all.single.name, 'Dosing pump');
+    expect(all.single.model, 'RSDOSE4');
+  });
+
   test('ensureHannaDevice creates once, never clobbers a user tank/name', () async {
     await db.ensureHannaDevice(
       identifier: 'HANNA-AB12',

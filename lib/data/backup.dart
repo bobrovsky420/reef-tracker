@@ -127,8 +127,9 @@ class BackupData {
 }
 
 /// The [Devices.kind] values this app understands (#34 gate). Mirrors the
-/// writers in database.dart (`upsertReefFactoryDevice`, `ensureHannaDevice`).
-const Set<String> _knownDeviceKinds = {'reeffactory', 'hanna'};
+/// writers in database.dart (`upsertReefFactoryDevice`, `ensureHannaDevice`,
+/// `upsertReefBeatDevice`).
+const Set<String> _knownDeviceKinds = {'reeffactory', 'hanna', 'reefbeat'};
 
 /// Serializes the whole database to a compact JSON string.
 ///

@@ -11,6 +11,7 @@ import '../data/environment_sources.dart';
 import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
 import '../data/notifications.dart';
+import '../data/rb_device_link.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/rf_device_link.dart';
 import '../data/settings.dart';
@@ -775,6 +776,16 @@ final rfDeviceLinkProvider = Provider<RfDeviceLink>(
 /// tank-family one.
 final reefFactoryDevicesProvider = StreamProvider<List<DeviceRecord>>(
   (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reeffactory')),
+);
+
+/// Transport used by the ReefBeat dashboard (U38) to read a device's REST
+/// status. Overridden with a fake in widget tests.
+final rbDeviceLinkProvider = Provider<RbDeviceLink>((ref) => RbHttpLink());
+
+/// The registered Red Sea ReefBeat devices (U38 dashboard cards). Same scoping
+/// rationale as [reefFactoryDevicesProvider].
+final reefBeatDevicesProvider = StreamProvider<List<DeviceRecord>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reefbeat')),
 );
 
 /// Every connected device (ReefFactory meters + the Hanna checker once used) —

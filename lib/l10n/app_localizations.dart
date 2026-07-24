@@ -5091,6 +5091,210 @@ abstract class AppLocalizations {
   /// **'Read live values from ReefFactory meters'**
   String get reefFactorySettingsSubtitle;
 
+  /// No description provided for @reefBeatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefBeat devices'**
+  String get reefBeatTitle;
+
+  /// No description provided for @reefBeatMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefBeat devices'**
+  String get reefBeatMenu;
+
+  /// No description provided for @reefBeatSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosing status from Red Sea ReefBeat devices'**
+  String get reefBeatSettingsSubtitle;
+
+  /// No description provided for @reefBeatDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that.'**
+  String get reefBeatDisclaimer;
+
+  /// No description provided for @reefBeatAddDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Add device'**
+  String get reefBeatAddDevice;
+
+  /// No description provided for @reefBeatEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices yet'**
+  String get reefBeatEmptyTitle;
+
+  /// No description provided for @reefBeatEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a Red Sea ReefBeat device (e.g. a ReefDose pump) by its IP address or hostname to see its dosing status.'**
+  String get reefBeatEmptyBody;
+
+  /// No description provided for @reefBeatRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get reefBeatRefresh;
+
+  /// No description provided for @reefBeatRefreshAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh all'**
+  String get reefBeatRefreshAll;
+
+  /// No description provided for @reefBeatNotReadYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Refresh to read the current status.'**
+  String get reefBeatNotReadYet;
+
+  /// No description provided for @reefBeatTankLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tank'**
+  String get reefBeatTankLabel;
+
+  /// No description provided for @reefBeatSelectTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a tank'**
+  String get reefBeatSelectTank;
+
+  /// No description provided for @reefBeatMoveToTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to another tank'**
+  String get reefBeatMoveToTank;
+
+  /// No description provided for @reefBeatDeviceNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get reefBeatDeviceNameLabel;
+
+  /// No description provided for @reefBeatRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove device'**
+  String get reefBeatRemove;
+
+  /// No description provided for @reefBeatRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from this list?'**
+  String reefBeatRemoveConfirm(Object name);
+
+  /// No description provided for @reefBeatHostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IP address or hostname'**
+  String get reefBeatHostLabel;
+
+  /// No description provided for @reefBeatHostHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 192.168.1.3'**
+  String get reefBeatHostHint;
+
+  /// No description provided for @reefBeatHostHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Find it in your router\'s client list. A DHCP reservation keeps it from changing.'**
+  String get reefBeatHostHelp;
+
+  /// No description provided for @reefBeatCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get reefBeatCheck;
+
+  /// No description provided for @reefBeatFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Found: {model}'**
+  String reefBeatFound(Object model);
+
+  /// No description provided for @reefBeatErrUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach that address. Check the device is on and on this network.'**
+  String get reefBeatErrUnreachable;
+
+  /// No description provided for @reefBeatErrTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected, but no answer arrived.'**
+  String get reefBeatErrTimeout;
+
+  /// No description provided for @reefBeatErrUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'That ReefBeat device type isn\'t supported yet — only ReefDose pumps for now.'**
+  String get reefBeatErrUnsupported;
+
+  /// No description provided for @reefBeatErrProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the device.'**
+  String get reefBeatErrProtocol;
+
+  /// Fallback label for a dosing head with no supplement name
+  ///
+  /// In en, this message translates to:
+  /// **'Head {number}'**
+  String reefBeatHead(int number);
+
+  /// No description provided for @reefBeatHeadOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get reefBeatHeadOff;
+
+  /// Days of supplement remaining in a dosing head's container
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 day left} other{{count} days left}}'**
+  String reefBeatDaysLeft(int count);
+
+  /// Volume dosed today out of the scheduled daily total, both pre-formatted numbers
+  ///
+  /// In en, this message translates to:
+  /// **'{dosed} / {daily} ml'**
+  String reefBeatDosedOfDaily(Object dosed, Object daily);
+
+  /// Volume dosed today when the pump reports no scheduled daily total
+  ///
+  /// In en, this message translates to:
+  /// **'{dosed} ml'**
+  String reefBeatDosedNoDaily(Object dosed);
+
+  /// No description provided for @reefBeatRecalibration.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs recalibration'**
+  String get reefBeatRecalibration;
+
+  /// No description provided for @reefBeatMissedDose.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed dose: {volume} ml'**
+  String reefBeatMissedDose(Object volume);
+
+  /// No description provided for @reefBeatTimeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Device clock error'**
+  String get reefBeatTimeError;
+
+  /// No description provided for @reefBeatBatteryLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup battery low'**
+  String get reefBeatBatteryLow;
+
   /// No description provided for @reefDevicesTitle.
   ///
   /// In en, this message translates to:
@@ -5100,7 +5304,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefDevicesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'ReefFactory meters and the Hanna checker'**
+  /// **'ReefFactory meters, ReefBeat devices and the Hanna checker'**
   String get reefDevicesSubtitle;
 
   /// No description provided for @reefDevicesEmpty.
@@ -5114,6 +5318,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ReefFactory'**
   String get reefDevicesKindReefFactory;
+
+  /// No description provided for @reefDevicesKindReefBeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Red Sea ReefBeat'**
+  String get reefDevicesKindReefBeat;
 
   /// No description provided for @reefDevicesKindHanna.
   ///

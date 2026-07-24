@@ -6,9 +6,10 @@ import '../../data/database.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Read-only inventory of every connected device (U36): the ReefFactory meters
-/// the user added plus the Hanna checker once it has connected for a
-/// measurement. Purely informational — managing/removing ReefFactory devices
-/// happens on their dashboard; the Hanna row can't be edited here.
+/// and ReefBeat devices the user added plus the Hanna checker once it has
+/// connected for a measurement. Purely informational — managing/removing
+/// ReefFactory/ReefBeat devices happens on their dashboards; the Hanna row
+/// can't be edited here.
 class ConnectedDevicesScreen extends ConsumerWidget {
   const ConnectedDevicesScreen({super.key});
 
@@ -53,9 +54,12 @@ class _DeviceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final isHanna = device.kind == 'hanna';
-    final kindLabel =
-        isHanna ? l.reefDevicesKindHanna : l.reefDevicesKindReefFactory;
-    // ReefFactory shows its LAN address; Hanna is Bluetooth (no address).
+    final kindLabel = switch (device.kind) {
+      'hanna' => l.reefDevicesKindHanna,
+      'reefbeat' => l.reefDevicesKindReefBeat,
+      _ => l.reefDevicesKindReefFactory,
+    };
+    // LAN devices show their address; Hanna is Bluetooth (no address).
     final connection = isHanna ? l.reefDevicesBluetooth : (device.address ?? '');
     final parts = [
       kindLabel,
@@ -65,7 +69,11 @@ class _DeviceTile extends StatelessWidget {
     final seen = device.lastSeenAt;
 
     return ListTile(
-      leading: Icon(isHanna ? Icons.bluetooth : Icons.sensors),
+      leading: Icon(switch (device.kind) {
+        'hanna' => Icons.bluetooth,
+        'reefbeat' => Icons.water_drop_outlined,
+        _ => Icons.sensors,
+      }),
       title: Text(device.name ?? device.model ?? device.identifier),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
