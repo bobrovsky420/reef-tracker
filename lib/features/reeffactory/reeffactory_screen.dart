@@ -9,13 +9,16 @@ import '../../data/rf_device_link.dart';
 import '../../data/rf_protocol.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/setup_type.dart';
+import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
 /// Filters a device's live [readings] down to what should be persisted, applying
-/// two rules (pure, so it is unit-tested directly):
-///  1. physically impossible values are dropped (a save shouldn't store noise);
-///  2. **temperature source** — a non-Temperature-Controller device's
+/// three rules (pure, so it is unit-tested directly):
+///  1. values are converted to the catalog's canonical unit — the Salinity
+///     Guardian reports ppt, but salinity is stored as specific gravity;
+///  2. physically impossible values are dropped (a save shouldn't store noise);
+///  3. **temperature source** — a non-Temperature-Controller device's
 ///     temperature (i.e. the Salinity Guardian's) is dropped when a dedicated
 ///     Temperature Controller (`RFTC01`) is present, so the controller is the
 ///     single authoritative temperature source. With no controller, the
@@ -26,12 +29,17 @@ List<({String paramKey, double value})> rfReadingsToSave({
   required bool hasTempController,
 }) {
   return [
-    for (final r in readings)
+    for (final r in readings.map(
+      (r) => (
+        paramKey: r.paramKey,
+        value: r.paramKey == 'salinity' ? pptToSg(r.value) : r.value,
+      ),
+    ))
       if (checkParamValue(r.paramKey, r.value) != ParamValueCheck.impossible &&
           !(r.paramKey == 'temperature' &&
               deviceModel != kRfTempControllerModel &&
               hasTempController))
-        (paramKey: r.paramKey, value: r.value),
+        r,
   ];
 }
 

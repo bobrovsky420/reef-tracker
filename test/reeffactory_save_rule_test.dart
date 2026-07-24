@@ -1,9 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/rf_protocol.dart';
+import 'package:reeftracker/domain/units.dart';
 import 'package:reeftracker/features/reeffactory/reeffactory_screen.dart';
 
-/// The Save / Save-all filter (`rfReadingsToSave`) — the temperature-source rule
-/// and the impossible-value drop. Pure, so exercised without the widget.
+/// The Save / Save-all filter (`rfReadingsToSave`) — canonical-unit conversion,
+/// the temperature-source rule and the impossible-value drop. Pure, so
+/// exercised without the widget.
 void main() {
   final sgReadings = [
     const RfReading('salinity', 34.6, 'ppt'),
@@ -47,6 +49,27 @@ void main() {
         hasTempController: true,
       );
       expect(out.single.paramKey, 'ph');
+    });
+  });
+
+  group('canonical-unit conversion', () {
+    test('salinity ppt is stored as specific gravity', () {
+      final out = rfReadingsToSave(
+        deviceModel: 'RFSG01',
+        readings: sgReadings,
+        hasTempController: true,
+      );
+      expect(out.single.paramKey, 'salinity');
+      expect(out.single.value, closeTo(pptToSg(34.6), 1e-9)); // ≈ 1.026
+    });
+
+    test('temperature and pH are stored as reported', () {
+      final out = rfReadingsToSave(
+        deviceModel: 'RFSG01',
+        readings: sgReadings,
+        hasTempController: false,
+      );
+      expect(out.last.value, 25.3);
     });
   });
 

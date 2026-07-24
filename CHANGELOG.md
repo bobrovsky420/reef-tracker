@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.40.1] - 2026-07-24
+
+### Fixed
+- Saving a Salinity Guardian reading recorded an absurd salinity value (e.g.
+  44545.5 ppt): the meter's ppt reading was stored without converting to the
+  app's internal specific-gravity scale. Readings saved before this fix should
+  be deleted or edited by hand.
+
 ## [0.40.0] - 2026-07-24
 
 ### Added
