@@ -871,8 +871,6 @@
   "reefFactoryErrTimeout": "Připojeno, ale nedorazila žádná hodnota.",
   "reefFactoryErrUnsupported": "Tento model zařízení zatím není podporován.",
   "reefFactoryErrProtocol": "Zařízení se nepodařilo přečíst.",
-  "reefFactorySettingsSubtitle": "Čtěte živé hodnoty z měřicích zařízení ReefFactory",
-
   "reefBeatTitle": "Zařízení ReefBeat",
   "reefBeatMenu": "Zařízení ReefBeat",
   "reefBeatSettingsSubtitle": "Stav dávkování ze zařízení Red Sea ReefBeat",

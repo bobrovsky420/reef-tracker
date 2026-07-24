@@ -3117,10 +3117,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefFactoryErrProtocol => 'Не удалось считать устройство.';
 
   @override
-  String get reefFactorySettingsSubtitle =>
-      'Считывайте текущие значения с измерителей ReefFactory';
-
-  @override
   String get reefBeatTitle => 'Устройства ReefBeat';
 
   @override

@@ -871,8 +871,6 @@
   "reefFactoryErrTimeout": "Подключено, но значение не пришло.",
   "reefFactoryErrUnsupported": "Эта модель устройства пока не поддерживается.",
   "reefFactoryErrProtocol": "Не удалось считать устройство.",
-  "reefFactorySettingsSubtitle": "Считывайте текущие значения с измерителей ReefFactory",
-
   "reefBeatTitle": "Устройства ReefBeat",
   "reefBeatMenu": "Устройства ReefBeat",
   "reefBeatSettingsSubtitle": "Статус дозирования с устройств Red Sea ReefBeat",

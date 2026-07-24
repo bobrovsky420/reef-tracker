@@ -3071,10 +3071,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reefFactoryErrProtocol => 'Gerät konnte nicht gelesen werden.';
 
   @override
-  String get reefFactorySettingsSubtitle =>
-      'Live-Werte von ReefFactory-Messgeräten lesen';
-
-  @override
   String get reefBeatTitle => 'ReefBeat-Geräte';
 
   @override

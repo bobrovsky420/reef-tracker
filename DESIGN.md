@@ -2368,9 +2368,9 @@ the ReefFactory app for settings/calibration/firmware.
   so it shows live values immediately without a second read. The device list itself stays
   household-scoped (`reefFactoryDevicesProvider`, a shared `StreamProvider`);
   the screen filters it by the active tank.
-- Entry points are experimental-gated (Settings → Experimental) and Pro-gated
-  (`ProFeature.reefFactory`, grandfathered): the Measurements-tab overflow menu
-  and a Settings row. The visible devices are read once automatically when the
+- Entry point is experimental-gated and Pro-gated (`ProFeature.reefFactory`,
+  grandfathered): the Measurements-tab overflow menu (the former Settings row
+  was removed). The visible devices are read once automatically when the
   screen opens (one-shot, sequential); after that reads are manual — periodic
   auto-refresh is deferred.
 - The meters double as **environment sources** for the Hanna BLE results step
@@ -2428,7 +2428,8 @@ Connected-device inventory (Settings → Connected devices, route
 `/settings/devices`, `connected_devices_screen.dart`): a read-only union of the
 `Devices` table — ReefFactory meters and ReefBeat devices plus the Hanna
 checker, which `hanna_meter_screen.dart` records via `ensureHannaDevice` on
-first connect.
+first connect. Sorted by display name (name → model → identifier fallback,
+case-insensitive).
 
 ### Dosing (`features/dosing/`) — Dosing tab
 

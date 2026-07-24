@@ -871,8 +871,6 @@
   "reefFactoryErrTimeout": "Połączono, ale nie nadszedł żaden odczyt.",
   "reefFactoryErrUnsupported": "Ten model urządzenia nie jest jeszcze obsługiwany.",
   "reefFactoryErrProtocol": "Nie udało się odczytać urządzenia.",
-  "reefFactorySettingsSubtitle": "Odczytuj bieżące wartości z mierników ReefFactory",
-
   "reefBeatTitle": "Urządzenia ReefBeat",
   "reefBeatMenu": "Urządzenia ReefBeat",
   "reefBeatSettingsSubtitle": "Status dozowania z urządzeń Red Sea ReefBeat",

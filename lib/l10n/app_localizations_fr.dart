@@ -3083,10 +3083,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get reefFactoryErrProtocol => 'Impossible de lire l\'appareil.';
 
   @override
-  String get reefFactorySettingsSubtitle =>
-      'Lire les valeurs en direct des appareils ReefFactory';
-
-  @override
   String get reefBeatTitle => 'Appareils ReefBeat';
 
   @override

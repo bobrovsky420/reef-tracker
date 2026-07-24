@@ -1414,7 +1414,6 @@
   "reefFactoryErrTimeout": "Connected, but no reading arrived.",
   "reefFactoryErrUnsupported": "That device model isn't supported yet.",
   "reefFactoryErrProtocol": "Couldn't read the device.",
-  "reefFactorySettingsSubtitle": "Read live values from ReefFactory meters",
 
   "reefBeatTitle": "ReefBeat devices",
   "reefBeatMenu": "ReefBeat devices",

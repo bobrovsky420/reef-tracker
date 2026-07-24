@@ -3081,10 +3081,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefFactoryErrProtocol => 'Zařízení se nepodařilo přečíst.';
 
   @override
-  String get reefFactorySettingsSubtitle =>
-      'Čtěte živé hodnoty z měřicích zařízení ReefFactory';
-
-  @override
   String get reefBeatTitle => 'Zařízení ReefBeat';
 
   @override

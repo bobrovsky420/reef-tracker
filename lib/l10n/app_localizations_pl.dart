@@ -3124,10 +3124,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefFactoryErrProtocol => 'Nie udało się odczytać urządzenia.';
 
   @override
-  String get reefFactorySettingsSubtitle =>
-      'Odczytuj bieżące wartości z mierników ReefFactory';
-
-  @override
   String get reefBeatTitle => 'Urządzenia ReefBeat';
 
   @override

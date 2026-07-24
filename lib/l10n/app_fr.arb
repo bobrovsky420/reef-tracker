@@ -871,8 +871,6 @@
   "reefFactoryErrTimeout": "Connecté, mais aucun relevé n'est arrivé.",
   "reefFactoryErrUnsupported": "Ce modèle d'appareil n'est pas encore pris en charge.",
   "reefFactoryErrProtocol": "Impossible de lire l'appareil.",
-  "reefFactorySettingsSubtitle": "Lire les valeurs en direct des appareils ReefFactory",
-
   "reefBeatTitle": "Appareils ReefBeat",
   "reefBeatMenu": "Appareils ReefBeat",
   "reefBeatSettingsSubtitle": "État du dosage des appareils Red Sea ReefBeat",

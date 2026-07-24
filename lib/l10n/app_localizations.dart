@@ -5085,12 +5085,6 @@ abstract class AppLocalizations {
   /// **'Couldn\'t read the device.'**
   String get reefFactoryErrProtocol;
 
-  /// No description provided for @reefFactorySettingsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Read live values from ReefFactory meters'**
-  String get reefFactorySettingsSubtitle;
-
   /// No description provided for @reefBeatTitle.
   ///
   /// In en, this message translates to:

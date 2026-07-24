@@ -373,20 +373,8 @@ class SettingsBody extends ConsumerWidget {
                 ),
                 onTap: () => settings.setHannaScanFab(!scanFabEnabled),
               ),
-              // ReefFactory local-device live values (U36). Same Pro-gate idiom
-              // as the Hanna rows.
-              ReefSettingsRow(
-                icon: Icons.sensors,
-                title: l.reefFactoryTitle,
-                description: l.reefFactorySettingsSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap: ref.watch(proFeatureProvider(ProFeature.reefFactory))
-                    ? () => context.push('/reeffactory')
-                    : () =>
-                          showProFeatureDialog(context, ProFeature.reefFactory),
-              ),
               // Red Sea ReefBeat dosing-pump status (U38). Same Pro-gate idiom
-              // as the ReefFactory row.
+              // as the Hanna rows.
               ReefSettingsRow(
                 icon: Icons.water_drop_outlined,
                 title: l.reefBeatTitle,

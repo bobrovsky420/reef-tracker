@@ -871,8 +871,6 @@
   "reefFactoryErrTimeout": "Verbunden, aber es kam kein Messwert an.",
   "reefFactoryErrUnsupported": "Dieses Gerätemodell wird noch nicht unterstützt.",
   "reefFactoryErrProtocol": "Gerät konnte nicht gelesen werden.",
-  "reefFactorySettingsSubtitle": "Live-Werte von ReefFactory-Messgeräten lesen",
-
   "reefBeatTitle": "ReefBeat-Geräte",
   "reefBeatMenu": "ReefBeat-Geräte",
   "reefBeatSettingsSubtitle": "Dosierstatus von Red-Sea-ReefBeat-Geräten",

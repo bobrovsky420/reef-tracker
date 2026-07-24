@@ -3055,10 +3055,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reefFactoryErrProtocol => 'Couldn\'t read the device.';
 
   @override
-  String get reefFactorySettingsSubtitle =>
-      'Read live values from ReefFactory meters';
-
-  @override
   String get reefBeatTitle => 'ReefBeat devices';
 
   @override

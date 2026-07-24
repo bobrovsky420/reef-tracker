@@ -871,8 +871,6 @@
   "reefFactoryErrTimeout": "Connesso, ma non è arrivata alcuna lettura.",
   "reefFactoryErrUnsupported": "Questo modello di dispositivo non è ancora supportato.",
   "reefFactoryErrProtocol": "Impossibile leggere il dispositivo.",
-  "reefFactorySettingsSubtitle": "Leggi i valori in tempo reale dagli strumenti ReefFactory",
-
   "reefBeatTitle": "Dispositivi ReefBeat",
   "reefBeatMenu": "Dispositivi ReefBeat",
   "reefBeatSettingsSubtitle": "Stato del dosaggio dai dispositivi Red Sea ReefBeat",

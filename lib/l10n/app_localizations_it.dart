@@ -3078,10 +3078,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reefFactoryErrProtocol => 'Impossibile leggere il dispositivo.';
 
   @override
-  String get reefFactorySettingsSubtitle =>
-      'Leggi i valori in tempo reale dagli strumenti ReefFactory';
-
-  @override
   String get reefBeatTitle => 'Dispositivi ReefBeat';
 
   @override

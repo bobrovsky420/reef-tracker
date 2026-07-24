@@ -36,15 +36,25 @@ class ConnectedDevicesScreen extends ConsumerWidget {
               ),
             );
           }
+          // Sort by the displayed name so the list order matches what the
+          // user reads on the tiles.
+          final sorted = [...devices]
+            ..sort(
+              (a, b) => _displayName(
+                a,
+              ).toLowerCase().compareTo(_displayName(b).toLowerCase()),
+            );
           return ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            children: [for (final d in devices) _DeviceTile(device: d)],
+            children: [for (final d in sorted) _DeviceTile(device: d)],
           );
         },
       ),
     );
   }
 }
+
+String _displayName(DeviceRecord d) => d.name ?? d.model ?? d.identifier;
 
 class _DeviceTile extends StatelessWidget {
   const _DeviceTile({required this.device});
@@ -74,7 +84,7 @@ class _DeviceTile extends StatelessWidget {
         'reefbeat' => Icons.water_drop_outlined,
         _ => Icons.sensors,
       }),
-      title: Text(device.name ?? device.model ?? device.identifier),
+      title: Text(_displayName(device)),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
