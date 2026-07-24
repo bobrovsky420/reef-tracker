@@ -652,6 +652,89 @@ void main() {
       expect(await listAutoBackups(), isEmpty);
     });
   });
+
+  group('welcome restore (U35)', () {
+    late AppDatabase writer;
+    late AppDatabase reader;
+    late FakeCloudBackupStore store;
+
+    setUp(() {
+      writer = AppDatabase(NativeDatabase.memory());
+      reader = AppDatabase(NativeDatabase.memory());
+      store = FakeCloudBackupStore();
+    });
+    tearDown(() async {
+      await writer.close();
+      await reader.close();
+    });
+
+    Future<void> seedAndPush() async {
+      await AppSettings(writer).setSyncGdriveAccount('reef@test.dev');
+      await writer.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      expect(
+        await runGDriveSyncIfDirty(writer, store: store),
+        CloudSyncOutcome.pushed,
+      );
+    }
+
+    test('fetchNewestCloudBackup: null on an empty folder', () async {
+      expect(await fetchNewestCloudBackup(store), isNull);
+    });
+
+    test('fetchNewestCloudBackup: newest backup, foreign files ignored', () async {
+      store.files['reeftracker-auto-20260101-000000-000.json'] = [1];
+      store.files['reeftracker-auto-20260201-000000-000.json'] = [2];
+      store.files['holiday-photo.jpg'] = [3];
+
+      final newest = await fetchNewestCloudBackup(store);
+      expect(newest?.name, 'reeftracker-auto-20260201-000000-000.json');
+    });
+
+    test('founder backup: data restored AND push sync connected (the founder '
+        'marker rides the backup)', () async {
+      await writer.setSetting(kLegacyFreeSinceKey, '0.28.0');
+      await seedAndPush();
+
+      final newest = await fetchNewestCloudBackup(store);
+      final synced = await completeWelcomeRestore(
+        reader,
+        store: store,
+        file: newest!,
+        accountEmail: 'reef@test.dev',
+      );
+
+      expect(synced, isTrue);
+      expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
+      expect(
+        await AppSettings(reader).readSyncGdriveAccount(),
+        'reef@test.dev',
+      );
+      // Echo suppression carried over: the adopted state neither re-uploads
+      // nor re-prompts.
+      expect(
+        await runGDriveSyncIfDirty(reader, store: store),
+        CloudSyncOutcome.skippedClean,
+      );
+      expect(await checkCloudNewerBackup(reader, store: store), isNull);
+    });
+
+    test('marker-less (Standard) backup: data restored but sync NOT '
+        'connected — the ungated action is the one-shot pull only', () async {
+      await seedAndPush();
+
+      final newest = await fetchNewestCloudBackup(store);
+      final synced = await completeWelcomeRestore(
+        reader,
+        store: store,
+        file: newest!,
+        accountEmail: 'reef@test.dev',
+      );
+
+      expect(synced, isFalse);
+      expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
+      expect(await AppSettings(reader).readSyncGdriveAccount(), isNull);
+    });
+  });
 }
 
 class _ThrowingDisconnectAuth extends FakeCloudAuth {

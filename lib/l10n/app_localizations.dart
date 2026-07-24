@@ -1949,6 +1949,12 @@ abstract class AppLocalizations {
   /// **'Keep this device\'s data'**
   String get syncRestoreKeepMine;
 
+  /// Welcome-screen (no aquariums yet) action that signs into Google and restores the newest cloud backup — the second-device / reinstall path (U35). Deliberately not Pro-gated.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from Google Drive'**
+  String get welcomeRestoreDrive;
+
   /// Section header for the local backups list in Manage backups; only shown when the Google Drive section is present too.
   ///
   /// In en, this message translates to:

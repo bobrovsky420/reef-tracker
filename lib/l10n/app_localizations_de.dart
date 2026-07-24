@@ -1105,6 +1105,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get syncRestoreKeepMine => 'Daten dieses Geräts behalten';
 
   @override
+  String get welcomeRestoreDrive => 'Aus Google Drive wiederherstellen';
+
+  @override
   String get backupsLocalSection => 'Auf diesem Gerät';
 
   @override

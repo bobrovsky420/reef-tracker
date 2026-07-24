@@ -326,6 +326,7 @@
   "syncRestoreUnknownDevice": "ein anderes Gerät",
   "syncRestoreNotNow": "Nicht jetzt",
   "syncRestoreKeepMine": "Daten dieses Geräts behalten",
+  "welcomeRestoreDrive": "Aus Google Drive wiederherstellen",
   "backupsLocalSection": "Auf diesem Gerät",
   "backupsDriveSection": "Google Drive",
   "backupsDriveEmpty": "Noch keine Backups in Google Drive",

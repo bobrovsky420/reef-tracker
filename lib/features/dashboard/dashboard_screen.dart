@@ -1,11 +1,16 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme.dart';
+import '../../data/backup.dart' show InvalidBackupException;
+import '../../data/cloud_backup_store.dart';
+import '../../data/cloud_sync.dart';
 import '../../data/database.dart';
 import '../../domain/ammonia_toxicity.dart';
 import '../../domain/dashboard_sections.dart';
@@ -836,6 +841,18 @@ class NoTanksView extends ConsumerWidget {
               label: Text(l.addAquarium),
             ),
             const SizedBox(height: 8),
+            // One-shot cloud restore for a new/second device (U35) — the
+            // Android-only Drive surface, and **deliberately ungated** unlike
+            // the Settings connect row (U19: limits gate creation, never
+            // access — pulling your own data back is access; whether ongoing
+            // push sync turns on afterwards depends on what the restored
+            // data entitles).
+            if (defaultTargetPlatform == TargetPlatform.android)
+              TextButton.icon(
+                onPressed: () => unawaited(_restoreFromDrive(context, ref, l)),
+                icon: const Icon(Icons.cloud_download_outlined, size: 18),
+                label: Text(l.welcomeRestoreDrive),
+              ),
             // Settings must stay reachable with zero tanks (Settings →
             // Backups → restore is the reinstall path). The bottom bar's
             // Settings tab (U33) is hidden here, so push the standalone
@@ -849,6 +866,84 @@ class NoTanksView extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// The welcome-screen cloud restore (U35): Google account picker → newest
+  /// backup in the app's Drive folder → confirm → the shared
+  /// [restoreCloudBackup] path. Afterwards the account is kept connected
+  /// (push sync on) only when the restored data entitles this install to
+  /// [ProFeature.driveSync] — the founder marker rides the backup, so a
+  /// founder's second device comes out fully synced; a Standard install gets
+  /// its data and nothing else. No device-name dialog here: a successful
+  /// restore unmounts this view (tanks arrived), so the name is set later
+  /// from the Settings sync dialog.
+  Future<void> _restoreFromDrive(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final db = ref.read(dbProvider);
+    try {
+      final account = await ref.read(cloudAuthProvider).connect();
+      if (account == null) return; // Cancelled the picker/consent — no noise.
+      final store = ref.read(cloudBackupStoreProvider);
+      final newest = await fetchNewestCloudBackup(store);
+      if (newest == null) {
+        messenger.showSnackBar(SnackBar(content: Text(l.backupsDriveEmpty)));
+        return;
+      }
+      if (!context.mounted) return;
+      final device =
+          newest.metadata[kCloudMetaDevice] ?? l.syncRestoreUnknownDevice;
+      final when = switch (newest.modifiedAt) {
+        final at? => formatDateTime(context, at.toLocal(), weekday: false),
+        null => newest.name,
+      };
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: const Icon(Icons.cloud_download_outlined),
+          title: Text(l.syncRestoreTitle),
+          content: Text(l.syncRestoreBody(device, when)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.restore),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+
+      final synced = await completeWelcomeRestore(
+        db,
+        store: store,
+        file: newest,
+        accountEmail: account.email,
+      );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            synced
+                ? l.syncGdriveConnectedSnack(account.email)
+                : l.backupRestored,
+          ),
+        ),
+      );
+    } on InvalidBackupException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(l.backupRejection(e.reason))));
+    } catch (_) {
+      // Offline, revoked consent mid-flow, or the provider said no — one
+      // quiet message either way; the button is still there to retry.
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.backupsDriveLoadFailed)),
+      );
+    }
   }
 }
 

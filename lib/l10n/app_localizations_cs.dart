@@ -1103,6 +1103,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get syncRestoreKeepMine => 'Ponechat data tohoto zařízení';
 
   @override
+  String get welcomeRestoreDrive => 'Obnovit z Google Disku';
+
+  @override
   String get backupsLocalSection => 'V tomto zařízení';
 
   @override

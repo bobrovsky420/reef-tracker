@@ -326,6 +326,7 @@
   "syncRestoreUnknownDevice": "другое устройство",
   "syncRestoreNotNow": "Не сейчас",
   "syncRestoreKeepMine": "Оставить данные этого устройства",
+  "welcomeRestoreDrive": "Восстановить из Google Диска",
   "backupsLocalSection": "На этом устройстве",
   "backupsDriveSection": "Google Диск",
   "backupsDriveEmpty": "На Google Диске пока нет резервных копий",

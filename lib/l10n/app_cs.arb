@@ -326,6 +326,7 @@
   "syncRestoreUnknownDevice": "jiné zařízení",
   "syncRestoreNotNow": "Teď ne",
   "syncRestoreKeepMine": "Ponechat data tohoto zařízení",
+  "welcomeRestoreDrive": "Obnovit z Google Disku",
   "backupsLocalSection": "V tomto zařízení",
   "backupsDriveSection": "Google Disk",
   "backupsDriveEmpty": "Na Google Disku zatím nejsou žádné zálohy",

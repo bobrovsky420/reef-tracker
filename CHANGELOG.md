@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.39.1] - 2026-07-24
+
+### Added
+- Android: "Restore from Google Drive" on the welcome screen — a brand-new
+  install (second device, reinstall) can sign into Google and pull the
+  newest cloud backup before creating anything. Restoring your data does
+  not require Pro; ongoing sync then turns on automatically when the
+  restored data is entitled to it (e.g. it carries the Founder's Edition
+  marker).
+
 ## [0.39.0] - 2026-07-24
 
 ### Added

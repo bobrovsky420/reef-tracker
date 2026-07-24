@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
+import '../domain/pro_features.dart';
 import 'auto_backup.dart' show backupNow, kAutoBackupPrefix;
 import 'backup.dart';
 import 'cloud_auth.dart';
@@ -350,6 +351,57 @@ Future<CloudRestoreProposal?> checkCloudNewerBackup(
     // a read path: it must never stamp `sync_gdrive_last_error_at`.
     return null;
   }
+}
+
+/// The newest restorable backup in the cloud folder, or null when it holds
+/// none — the welcome-screen "Restore from Google Drive" path (U35): a fresh,
+/// unconnected device adopting the cloud state, so unlike
+/// [checkCloudNewerBackup] there is no lineage to compare against and no
+/// cached folder id. **Deliberately ungated** (U19: limits gate creation,
+/// never access — pulling your own data is access; only ongoing push sync is
+/// the Pro feature). Files over the download cap (#64) are skipped — offering
+/// one could only fail. Network/provider errors propagate; the caller owns
+/// the messaging.
+Future<CloudBackupFile?> fetchNewestCloudBackup(CloudBackupStore store) async {
+  final folderId = await store.ensureFolder();
+  final backups =
+      (await store.list(folderId))
+          .where(
+            (f) =>
+                f.name.startsWith(kAutoBackupPrefix) &&
+                f.name.endsWith('.json') &&
+                (f.sizeBytes ?? 0) <= kCloudBackupMaxBytes,
+          )
+          .toList()
+        ..sort((a, b) => b.name.compareTo(a.name));
+  return backups.isEmpty ? null : backups.first;
+}
+
+/// Completes the welcome-screen restore (U35) once the user confirmed: the
+/// shared [restoreCloudBackup] path, then push sync is connected — the
+/// account persisted — **only when the restored data entitles this install**
+/// to [ProFeature.driveSync] (the founder marker rides the backup, so a
+/// founder's second device comes out fully synced; a Standard install gets
+/// its data and nothing else — the ungated action is the one-shot pull,
+/// ongoing sync stays the gated feature). Returns whether sync was connected,
+/// so the UI can word its confirmation.
+Future<bool> completeWelcomeRestore(
+  AppDatabase db, {
+  required CloudBackupStore store,
+  required CloudBackupFile file,
+  required String accountEmail,
+}) async {
+  await restoreCloudBackup(db, store: store, file: file);
+  final edition = AppSettings.decodeEdition(
+    await db.getSetting(kLegacyFreeSinceKey),
+  );
+  final entitled = hasProFeature(
+    ProFeature.driveSync,
+    purchased: false,
+    legacyFree: edition == AppEdition.founder,
+  );
+  if (entitled) await AppSettings(db).setSyncGdriveAccount(accountEmail);
+  return entitled;
 }
 
 /// Records that the user declined to restore [fileName] (U35): the launch

@@ -678,6 +678,11 @@ Layers, all injected and plugin-free below the adapter:
   by the Manage-backups Drive tiles): local safety backup via `backupNow`
   first when any data exists (a failed safety write aborts the restore),
   then the three-stage `importBackup` pipeline, then echo suppression.
+  The welcome screen adds an **ungated** one-shot entry on top
+  (`fetchNewestCloudBackup` + `completeWelcomeRestore` — see Dashboard →
+  Empty states): pulling your own data is access, not creation (U19), so a
+  Standard install can always recover its data; the account is persisted —
+  push sync on — only when the restored data entitles the install.
 
 Settings keys — **fresh names, deliberately not U20's orphaned
 `cloud_sync_*`** — all device-local (sync identity must not ride backups):
@@ -1496,7 +1501,13 @@ behind a confirmation dialog**:
   only hides (measurements stay stored).
 - Empty states: `NoTanksView` (first-run welcome: a language selector +
   add-aquarium prompt — lets the user pick their language before creating a tank
-  without opening Settings) and `_NoParamsView`.
+  without opening Settings — plus, on Android, the **ungated "Restore from
+  Google Drive"** entry (U35): account picker → `fetchNewestCloudBackup` →
+  confirm dialog naming the writing device → `completeWelcomeRestore`, which
+  connects push sync only when the restored data entitles the install to
+  `ProFeature.driveSync` — the founder marker rides the backup, solving the
+  post-founder second-device chicken-and-egg where the gated Settings connect
+  row would otherwise be the only way in) and `_NoParamsView`.
 - **Manage Parameters** (`ManageParametersScreen`) keeps its single
   reorderable list (measurements + ratio cards together — microelements are
   managed from the Microelements screen) and follows the **dashboard-layout

@@ -1109,6 +1109,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncRestoreKeepMine => 'Оставить данные этого устройства';
 
   @override
+  String get welcomeRestoreDrive => 'Восстановить из Google Диска';
+
+  @override
   String get backupsLocalSection => 'На этом устройстве';
 
   @override

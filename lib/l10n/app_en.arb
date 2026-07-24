@@ -532,6 +532,8 @@
   "@syncRestoreNotNow": { "description": "Restore-proposal action that declines; the dialog stays quiet until an even newer cloud backup appears." },
   "syncRestoreKeepMine": "Keep this device's data",
   "@syncRestoreKeepMine": { "description": "Restore-proposal action (diverged case only) that keeps the local data and uploads it as the newest cloud backup instead." },
+  "welcomeRestoreDrive": "Restore from Google Drive",
+  "@welcomeRestoreDrive": { "description": "Welcome-screen (no aquariums yet) action that signs into Google and restores the newest cloud backup — the second-device / reinstall path (U35). Deliberately not Pro-gated." },
   "backupsLocalSection": "On this device",
   "@backupsLocalSection": { "description": "Section header for the local backups list in Manage backups; only shown when the Google Drive section is present too." },
   "backupsDriveSection": "Google Drive",
