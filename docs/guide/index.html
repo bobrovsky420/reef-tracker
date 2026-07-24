@@ -115,6 +115,7 @@ for you forever (see <a href="#pro">Editions</a>). Features marked
     <li><a href="#ro">Reverse-osmosis unit</a></li>
     <li><a href="#reminders">Reminders &amp; notifications</a></li>
     <li><a href="#import">Importing measurements &amp; Hanna checkers</a></li>
+    <li><a href="#devices">Smart devices: ReefFactory &amp; Red Sea</a></li>
     <li><a href="#backup">Backup, export &amp; sync</a></li>
     <li><a href="#settings">Settings &amp; personalization</a></li>
     <li><a href="#pro">Editions: Standard, Pro &amp; Founder</a></li>
@@ -519,6 +520,85 @@ zoom so you can scan from a comfortable distance. An optional quick-scan camera
 button next to <em>Add reading</em> can be enabled in Settings →
 Experimental.</p>
 
+<h2 id="devices">Smart devices: ReefFactory &amp; Red Sea</h2>
+
+<p>If ReefFactory smart meters or Red Sea ReefBeat equipment run on your
+aquarium, ReefTracker can talk to them directly over your home Wi-Fi – no
+cloud account in between. Both dashboards live in the Measurements tab's
+<strong>⋮ menu</strong> once experimental features are enabled
+(Settings → Experimental). Everything is strictly <strong>read-only</strong>:
+ReefTracker never doses, never changes a schedule and never calibrates –
+settings and firmware stay in the vendor's own app.</p>
+
+<h3>ReefFactory meters <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/reeffactory.png" alt="ReefFactory devices dashboard" loading="lazy">
+    <figcaption>ReefFactory meters with live values, ready to save</figcaption></figure>
+</div>
+
+<p>Supported meters: the <strong>Salinity Guardian</strong>, the
+<strong>pH Monitor</strong> and the <strong>Temperature Controller</strong>.
+Add a meter by its IP address or hostname – the app connects, identifies the
+model and names the card after the product. Each card shows the meter's
+current values with a per-device <strong>Refresh</strong>, and – unlike the
+Red Sea dashboard – a <strong>Save</strong> button: the values are stored as
+ordinary readings for the tank the meter is assigned to, feeding your graphs,
+trends and health score like any hand-entered test.
+<strong>Refresh all</strong> / <strong>Save all</strong> handle every meter at
+once; Save all merges each tank's values into a single test session. If both a
+Salinity Guardian and a Temperature Controller serve the same tank, the
+controller's temperature wins – you never get two competing temperature
+readings from one save.</p>
+
+<h3>Red Sea ReefBeat devices <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/reefbeat.png" alt="Red Sea ReefBeat dashboard" loading="lazy">
+    <figcaption>ReefDose heads and ReefATO+ status at a glance</figcaption></figure>
+</div>
+
+<p>The ReefBeat dashboard shows <em>operational status</em> rather than values
+to save. Two device families are supported:</p>
+
+<ul>
+  <li><strong>ReefDose 2 / ReefDose 4</strong> dosing pumps – one row per
+      head: the supplement's name, a gauge of today's dosing progress against
+      the scheduled daily amount, and the days of supplement left in the
+      container, colored green, amber or red as it runs low. Warning chips
+      call out missed doses, a head needing recalibration, a low backup
+      battery or a wrong pump clock; switched-off heads appear dimmed with an
+      <em>Off</em> tag.</li>
+  <li><strong>ReefATO+</strong> auto-top-off – water level, the level sensor's
+      temperature probe, today's top-offs (fills and volume), your tank's
+      average daily evaporation, and the reservoir estimate (volume left and
+      days until empty, with the same green/amber/red coloring). A detected
+      leak, sensor trouble or the fill pump running right now surface as
+      status chips.</li>
+</ul>
+
+<p>Devices are added by IP address or hostname, identified automatically, and
+assigned to a tank (movable later from the card menu). The dashboard reads
+every device once when opened; after that, refresh is manual.</p>
+
+<div class="tip"><strong>Tip:</strong> your phone must be on the same network
+as the devices. Addresses can change when your router reassigns them –
+reserving a fixed IP for each device in your router keeps the cards reachable;
+if an address does change, just re-add the device and the existing card is
+updated in place.</div>
+
+<h3>Connected devices list</h3>
+
+<div class="shots">
+  <figure class="shot"><img src="../img/devices.png" alt="Connected devices inventory" loading="lazy">
+    <figcaption>Settings → Connected devices: every device in one list</figcaption></figure>
+</div>
+
+<p><strong>Settings → Connected devices</strong> keeps a read-only inventory of
+every device you've ever connected – ReefFactory meters, Red Sea ReefBeat
+devices and your Hanna checker – with model, address and when it was last
+seen.</p>
+
 <h2 id="backup">Backup, export &amp; sync</h2>
 
 <div class="shots">
@@ -612,6 +692,8 @@ guide:</p>
   <tr><td>ICP report import</td><td>One-step Fauna Marin / ATI import</td></tr>
   <tr><td>Hanna Lab import</td><td>CSV import from the Hanna Lab app</td></tr>
   <tr><td>Hanna checker connection &amp; scan</td><td>Live Bluetooth measurements and camera reading <em>(experimental)</em></td></tr>
+  <tr><td>ReefFactory meters</td><td>Live salinity, pH and temperature saved as readings <em>(experimental)</em></td></tr>
+  <tr><td>Red Sea ReefBeat dashboard</td><td>ReefDose &amp; ReefATO+ status over Wi-Fi <em>(experimental)</em></td></tr>
   <tr><td>Google Drive sync</td><td>Automatic cloud backups (Android)</td></tr>
 </table>
 

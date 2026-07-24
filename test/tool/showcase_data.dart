@@ -35,6 +35,7 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
     await db.delete(db.roStageReplacements).go();
     await db.delete(db.roStages).go();
     await db.delete(db.trackedParameters).go();
+    await db.delete(db.devices).go();
     await db.delete(db.settings).go();
     await db.delete(db.tanks).go();
   });
@@ -331,6 +332,39 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
     if (daysAgo == null) continue;
     await db.insertRoReplacement(stageId: stage.id, replacedAt: at(daysAgo));
   }
+
+  // --- Connected smart devices (U36/U38) -----------------------------------
+  // Rendered by the ReefFactory / ReefBeat dashboards; the guide-screenshot
+  // harness pairs these rows with fake device links that answer at these
+  // addresses, so the cards fill with live-looking values.
+  await db.upsertReefFactoryDevice(
+    identifier: 'RFSG012351184',
+    model: 'RFSG01',
+    address: '192.168.1.21',
+    name: 'Salinity Guardian',
+    tankId: tank,
+  );
+  await db.upsertReefFactoryDevice(
+    identifier: 'RFPM012348027',
+    model: 'RFPM01',
+    address: '192.168.1.22',
+    name: 'pH Monitor',
+    tankId: tank,
+  );
+  await db.upsertReefBeatDevice(
+    identifier: 'ec62609ab3f0',
+    model: 'RSDOSE4',
+    address: '192.168.1.31',
+    name: 'ReefDose 4',
+    tankId: tank,
+  );
+  await db.upsertReefBeatDevice(
+    identifier: 'ec626089c144',
+    model: 'RSATO+',
+    address: '192.168.1.32',
+    name: 'ReefATO+',
+    tankId: tank,
+  );
 
   // --- Maintenance schedule & reminders ------------------------------------
   final settings = AppSettings(db);

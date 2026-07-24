@@ -19,7 +19,10 @@ import 'package:integration_test/integration_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
-import 'package:reeftracker/data/settings.dart';
+import 'package:reeftracker/data/rb_device_link.dart';
+import 'package:reeftracker/data/rb_protocol.dart';
+import 'package:reeftracker/data/rf_device_link.dart';
+import 'package:reeftracker/data/rf_protocol.dart';
 import 'package:reeftracker/main.dart';
 
 import '../test/tool/showcase_data.dart';
@@ -28,6 +31,102 @@ Future<void> _seedDatabase() async {
   final db = AppDatabase();
   await seedShowcaseData(db);
   await db.close();
+}
+
+/// Scripted ReefFactory meters answering at the showcase-seeded addresses, so
+/// the `/reeffactory` cards fill with live-looking values without hardware.
+class _FakeRfLink implements RfDeviceLink {
+  @override
+  Future<RfSnapshot> readOnce(String host) async => switch (host) {
+    '192.168.1.21' => const RfSnapshot(
+      serial: 'RFSG012351184',
+      modelPrefix: 'RFSG01',
+      modelName: 'salinity',
+      modelDisplayName: 'Salinity Guardian',
+      readings: [
+        RfReading('salinity', 35.1, 'ppt'),
+        RfReading('temperature', 25.8, '°C'),
+      ],
+    ),
+    '192.168.1.22' => const RfSnapshot(
+      serial: 'RFPM012348027',
+      modelPrefix: 'RFPM01',
+      modelName: 'pH',
+      modelDisplayName: 'pH Monitor',
+      readings: [RfReading('ph', 8.24, '')],
+    ),
+    _ => throw const RfLinkException(RfLinkError.unreachable),
+  };
+}
+
+/// Scripted ReefBeat devices (a ReefDose 4 mid-afternoon through its schedule
+/// and a healthy ReefATO+) for the `/reefbeat` cards.
+class _FakeRbLink implements RbDeviceLink {
+  @override
+  Future<RbSnapshot> readOnce(String host) async => switch (host) {
+    '192.168.1.31' => const RbSnapshot(
+      info: RbDeviceInfo(
+        hwType: 'reef-dosing',
+        hwModel: 'RSDOSE4',
+        hwid: 'ec62609ab3f0',
+      ),
+      dose: RbDoseStatus(
+        batteryLevel: 'high',
+        heads: [
+          RbDoseHead(
+            number: 1,
+            supplement: 'Foundation A (Ca)',
+            autoDosedToday: 10.4,
+            dosesToday: 16,
+            dailyDoses: 24,
+            dailyDose: 15,
+            remainingDays: 21,
+          ),
+          RbDoseHead(
+            number: 2,
+            supplement: 'Foundation B (KH)',
+            autoDosedToday: 17.1,
+            dosesToday: 16,
+            dailyDoses: 24,
+            dailyDose: 25,
+            remainingDays: 12,
+          ),
+          RbDoseHead(
+            number: 3,
+            supplement: 'Foundation C (Mg)',
+            autoDosedToday: 3.4,
+            dosesToday: 8,
+            dailyDoses: 12,
+            dailyDose: 5,
+            remainingDays: 48,
+          ),
+          RbDoseHead(
+            number: 4,
+            supplement: 'NO3:PO4-X',
+            enabled: false,
+            dailyDoses: 0,
+          ),
+        ],
+      ),
+    ),
+    '192.168.1.32' => const RbSnapshot(
+      info: RbDeviceInfo(
+        hwType: 'reef-ato',
+        hwModel: 'RSATO+',
+        hwid: 'ec626089c144',
+      ),
+      ato: RbAtoStatus(
+        waterLevelRaw: 'desired_level_2',
+        todayFills: 4,
+        todayVolumeMl: 620,
+        dailyVolumeAvgMl: 1450,
+        volumeLeftMl: 16000,
+        daysTillEmpty: 11,
+        temperatureC: 25.6,
+      ),
+    ),
+    _ => throw const RbLinkException(RbLinkError.unreachable),
+  };
 }
 
 void main() {
@@ -43,7 +142,15 @@ void main() {
     await _seedDatabase();
     debugPrint('guide: seeded, starting app');
 
-    await tester.pumpWidget(const ProviderScope(child: ReefTrackerApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          rfDeviceLinkProvider.overrideWithValue(_FakeRfLink()),
+          rbDeviceLinkProvider.overrideWithValue(_FakeRbLink()),
+        ],
+        child: const ReefTrackerApp(),
+      ),
+    );
     await tester.pumpAndSettle(const Duration(seconds: 2));
     debugPrint('guide: app settled, converting surface');
     await binding.convertFlutterSurfaceToImage();
@@ -115,6 +222,8 @@ void main() {
     await routeShot('/ratio/po4no3', 'ratio');
     await routeShot('/micro', 'micro');
     await routeShot('/micro/add', 'micro-add');
+    await routeShot('/reeffactory', 'reeffactory');
+    await routeShot('/reefbeat', 'reefbeat');
     await routeShot('/tanks', 'tanks');
     await routeShot('/parameters', 'parameters');
 
@@ -136,6 +245,7 @@ void main() {
     await tapIcon(Icons.settings_outlined);
     await shot('settings');
     await routeShot('/settings/backups', 'backups');
+    await routeShot('/settings/devices', 'devices');
     await routeShot('/settings/reminders', 'reminders');
     await routeShot('/settings/import', 'import-sources');
 
