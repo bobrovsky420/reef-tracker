@@ -101,6 +101,12 @@
                 font-size: 0.75rem; font-weight: 600; padding: 1px 8px;
                 border-radius: 99px; vertical-align: 2px; }
 
+    .founder { max-width: 640px; margin: 26px auto 0; padding: 16px 22px;
+               background: var(--pro-bg); border: 1px solid var(--pro-text);
+               border-radius: 14px; text-align: center; font-size: 1rem; }
+    .founder strong { color: var(--pro-text); }
+    .founder-note { font-size: 0.9rem; color: var(--muted); margin: 6px 0 0; }
+
     footer { border-top: 1px solid var(--border); padding: 28px 0 40px;
              color: var(--muted); font-size: 0.92rem; }
     footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
@@ -124,7 +130,9 @@
         </a>
         <a class="btn btn-ghost" href="guide/">Read the user guide</a>
       </div>
-      <p class="ios-note">iOS version coming soon to the App Store.</p>
+      <p class="ios-note">Install now and keep today's Pro features free forever
+      – see the <a href="#founder">Founder's Edition</a>.<br>
+      iOS version coming soon to the App Store.</p>
     </div>
     <div class="hero-shot">
       <img src="img/dashboard.png" alt="ReefTracker dashboard with tank health score and parameter gauges">
@@ -175,7 +183,7 @@
         <span class="pro-pill">PRO</span>.</p>
       </div>
       <div class="card">
-        <h3><span class="emoji">📷</span>Hanna checker integration</h3>
+        <h3><span class="emoji">📲</span>Hanna checker integration</h3>
         <p>Import your Hanna Lab test history, run measurements live over
         Bluetooth, or scan a pocket checker's display with your camera – no
         typing <span class="pro-pill">PRO</span>.</p>
@@ -220,7 +228,15 @@
     <p class="sub">Free to use with up to two aquariums – Pro adds unlimited tanks
     and the power features marked above. See the
     <a href="features.html">full feature list</a> for everything the app can do.</p>
-    <div class="cta-row" style="justify-content:center">
+    <div class="founder" id="founder">
+      <strong>🪸 Founder's Edition</strong> – ReefTracker Pro hasn't launched
+      yet. Everyone who installs the app <em>now</em> keeps every Pro feature
+      that exists today free forever – no strings attached, and it moves with
+      you to a new device.
+      <p class="founder-note">Your edition is shown in the app under
+      Settings&nbsp;→&nbsp;About.</p>
+    </div>
+    <div class="cta-row" style="justify-content:center; margin-top:24px">
       <a class="play-badge" href="https://play.google.com/store/apps/details?id=cz.reeftracker.reeftracker">
         <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">
       </a>
