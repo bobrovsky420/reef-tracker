@@ -2928,4 +2928,138 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get notifRoTitle => 'Vyměňte filtry reverzní osmózy';
+
+  @override
+  String get reefFactoryTitle => 'Zařízení ReefFactory';
+
+  @override
+  String get reefFactoryMenu => 'Zařízení ReefFactory';
+
+  @override
+  String get reefFactoryDisclaimer =>
+      'Tato aplikace pouze čte živé hodnoty z vašich zařízení ReefFactory. Nemůže měnit nastavení, kalibrovat ani aktualizovat firmware – k tomu použijte aplikaci ReefFactory.';
+
+  @override
+  String get reefFactoryAddDevice => 'Přidat zařízení';
+
+  @override
+  String get reefFactoryEmptyTitle => 'Zatím žádná zařízení';
+
+  @override
+  String get reefFactoryEmptyBody =>
+      'Přidejte měřicí zařízení ReefFactory podle jeho IP adresy nebo názvu hostitele a čtěte jeho živé hodnoty.';
+
+  @override
+  String get reefFactoryRefresh => 'Obnovit';
+
+  @override
+  String get reefFactorySave => 'Uložit';
+
+  @override
+  String get reefFactoryRefreshAll => 'Obnovit vše';
+
+  @override
+  String get reefFactorySaveAll => 'Uložit vše';
+
+  @override
+  String get reefFactoryNothingToSave =>
+      'Zatím není co uložit – nejprve klepněte na Obnovit.';
+
+  @override
+  String reefFactorySavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uloženo $count hodnot',
+      few: 'Uloženy $count hodnoty',
+      one: 'Uložena 1 hodnota',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefFactoryNotReadYet =>
+      'Klepnutím na Obnovit načtete aktuální hodnotu.';
+
+  @override
+  String get reefFactoryNoTank =>
+      'Nejprve přiřaďte nádrž, abyste mohli uložit hodnoty.';
+
+  @override
+  String get reefFactoryTankLabel => 'Nádrž';
+
+  @override
+  String get reefFactorySelectTank => 'Vyberte nádrž';
+
+  @override
+  String get reefFactoryDeviceNameLabel => 'Název';
+
+  @override
+  String get reefFactoryRemove => 'Odebrat zařízení';
+
+  @override
+  String reefFactoryRemoveConfirm(Object name) {
+    return 'Odebrat $name z tohoto seznamu? Uložené hodnoty zůstanou zachovány.';
+  }
+
+  @override
+  String get reefFactoryHostLabel => 'IP adresa nebo název hostitele';
+
+  @override
+  String get reefFactoryHostHint => 'např. 192.168.1.50';
+
+  @override
+  String get reefFactoryHostHelp =>
+      'Najdete ji v aplikaci ReefFactory nebo v routeru. Rezervace DHCP zajistí, že se nezmění.';
+
+  @override
+  String get reefFactoryCheck => 'Ověřit';
+
+  @override
+  String reefFactoryFound(Object model) {
+    return 'Nalezeno: $model';
+  }
+
+  @override
+  String get reefFactoryErrUnreachable =>
+      'Na tuto adresu se nepodařilo připojit. Zkontrolujte, zda je zařízení zapnuté a ve stejné síti.';
+
+  @override
+  String get reefFactoryErrTimeout =>
+      'Připojeno, ale nedorazila žádná hodnota.';
+
+  @override
+  String get reefFactoryErrUnsupported =>
+      'Tento model zařízení zatím není podporován.';
+
+  @override
+  String get reefFactoryErrProtocol => 'Zařízení se nepodařilo přečíst.';
+
+  @override
+  String get reefFactorySettingsSubtitle =>
+      'Čtěte živé hodnoty z měřicích zařízení ReefFactory';
+
+  @override
+  String get reefDevicesTitle => 'Připojená zařízení';
+
+  @override
+  String get reefDevicesSubtitle =>
+      'Měřicí zařízení ReefFactory a Hanna checker';
+
+  @override
+  String get reefDevicesEmpty => 'Zatím nejsou připojena žádná zařízení.';
+
+  @override
+  String get reefDevicesKindReefFactory => 'ReefFactory';
+
+  @override
+  String get reefDevicesKindHanna => 'Hanna checker';
+
+  @override
+  String get reefDevicesBluetooth => 'Bluetooth';
+
+  @override
+  String reefDevicesLastSeen(Object date) {
+    return 'Naposledy $date';
+  }
 }

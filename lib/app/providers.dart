@@ -11,6 +11,7 @@ import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
 import '../data/notifications.dart';
 import '../data/reminder_scheduler.dart';
+import '../data/rf_device_link.dart';
 import '../data/settings.dart';
 import '../domain/clock.dart';
 import '../domain/health_score.dart';
@@ -748,6 +749,28 @@ final hannaMethodSetsProvider = _setting(
 /// fresh link per connection attempt.
 final hannaMeterLinkFactoryProvider = Provider<HannaMeterLink Function()>(
   (ref) => BleHannaMeterLink.new,
+);
+
+// --- ReefFactory local devices (U36) — household-scoped, shared across tanks -
+
+/// The transport for reading ReefFactory meters over the LAN. A provider — same
+/// override story as [hannaMeterLinkFactoryProvider] — so widget tests drive the
+/// dashboard with a scripted fake instead of a real WebSocket.
+final rfDeviceLinkProvider = Provider<RfDeviceLink>(
+  (ref) => const RfWebSocketLink(),
+);
+
+/// The registered ReefFactory devices (dashboard cards). Household-scoped, so a
+/// plain app-lifetime [StreamProvider] like [roStagesProvider], not a
+/// tank-family one.
+final reefFactoryDevicesProvider = StreamProvider<List<DeviceRecord>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reeffactory')),
+);
+
+/// Every connected device (ReefFactory meters + the Hanna checker once used) —
+/// the read-only Settings "Connected devices" inventory.
+final allDevicesProvider = StreamProvider<List<DeviceRecord>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchDevices()),
 );
 
 /// Whether this device has Bluetooth LE at all (U33). The manifest marks the

@@ -328,17 +328,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                             ),
                     ),
                   ),
-                tourStep(
-                  _paramsTourKey,
-                  l.tourParamsTitle,
-                  l.tourParamsDesc,
-                  l.tourNext,
-                  ReefIconButton(
-                    tooltip: l.manageParameters,
-                    icon: Icons.tune,
-                    onPressed: () => context.push('/parameters'),
+                // Parameter management is tank-scoped like everything else in
+                // this bar — with no tanks it would dead-end on the "no active
+                // aquarium" placeholder, so hide it on the welcome view. (The
+                // tour targeting this button only starts once a tank exists.)
+                if (hasTanks)
+                  tourStep(
+                    _paramsTourKey,
+                    l.tourParamsTitle,
+                    l.tourParamsDesc,
+                    l.tourNext,
+                    ReefIconButton(
+                      tooltip: l.manageParameters,
+                      icon: Icons.tune,
+                      onPressed: () => context.push('/parameters'),
+                    ),
                   ),
-                ),
                 // Overflow menu, contextual to the Measurements tab (the bar is at
                 // icon capacity): the "Ask your AI" summary export (U27) and the
                 // measurement import (U32); future share-ish actions join here.
@@ -401,6 +406,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           );
                         }
                       }
+                      if (v == 'reeffactory') {
+                        // ReefFactory local-device dashboard (U36, experimental),
+                        // same gate idiom as the Hanna entries.
+                        if (ref.read(
+                          proFeatureProvider(ProFeature.reefFactory),
+                        )) {
+                          unawaited(context.push('/reeffactory'));
+                        } else {
+                          unawaited(
+                            showProFeatureDialog(
+                              context,
+                              ProFeature.reefFactory,
+                            ),
+                          );
+                        }
+                      }
                     },
                     entries: [
                       ReefMenuItem(
@@ -441,6 +462,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           value: 'hanna-scan',
                           icon: Icons.photo_camera_outlined,
                           label: l.hannaScanTitle,
+                        ),
+                      // ReefFactory local devices (U36) — experimental opt-in,
+                      // like the Hanna entries.
+                      if (ref.watch(experimentalEnabledProvider).value ?? false)
+                        ReefMenuItem(
+                          value: 'reeffactory',
+                          icon: Icons.sensors,
+                          label: l.reefFactoryMenu,
                         ),
                     ],
                   ),

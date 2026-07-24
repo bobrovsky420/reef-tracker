@@ -488,6 +488,44 @@ class ImportSources extends Table {
   Set<Column> get primaryKey => {tankId, source};
 }
 
+/// Inventory of connected hardware devices (U36): ReefFactory local meters and
+/// the Hanna checker once it has been used. Keyed by [identifier] (the device
+/// serial / BLE id) so a meter that changes DHCP address stays the same row.
+/// The ReefFactory dashboard manages `kind = 'reeffactory'` rows (add / refresh
+/// / remove); the Hanna flow records its checker on first connect. The Settings
+/// "Connected devices" page is a read-only union of both kinds.
+@DataClassName('DeviceRecord')
+class Devices extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// `'reeffactory'` | `'hanna'`. Persisted — never rename.
+  TextColumn get kind => text()();
+
+  /// Stable device identity: a ReefFactory serial (e.g. `RFPM01…`) or the Hanna
+  /// meter's BLE id/serial. Unique — the same physical device is one row even
+  /// if its network address changes.
+  TextColumn get identifier => text().unique()();
+
+  /// User-facing label; defaults to the model/parameter name at add time.
+  TextColumn get name => text().nullable()();
+
+  /// Model code (`RFSG01`, `RFPM01`, a Hanna model), for display.
+  TextColumn get model => text().nullable()();
+
+  /// Current network address (host or IP) for ReefFactory meters. Null for
+  /// Hanna (BLE, no address).
+  TextColumn get address => text().nullable()();
+
+  /// Tank the device's saved readings belong to. Null until assigned; cleared
+  /// (not cascaded) if the tank is deleted so the device row survives.
+  IntColumn get tankId =>
+      integer().nullable().references(Tanks, #id, onDelete: KeyAction.setNull)();
+
+  DateTimeColumn get firstSeenAt =>
+      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get lastSeenAt => dateTime().nullable()();
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -514,6 +552,7 @@ class Settings extends Table {
     RoStages,
     RoStageReplacements,
     ImportSources,
+    Devices,
     Settings,
   ],
 )
@@ -521,7 +560,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -762,6 +801,12 @@ class AppDatabase extends _$AppDatabase {
         // Measurement import watermark + location mapping (U32).
         if (!await _tableExists('import_sources')) {
           await m.createTable(importSources);
+        }
+      }
+      if (from < 24) {
+        // Connected-device inventory: ReefFactory meters + Hanna checker (U36).
+        if (!await _tableExists('devices')) {
+          await m.createTable(devices);
         }
       }
     },
@@ -1237,6 +1282,95 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<ImportSource>> getAllImportSources() =>
       select(importSources).get();
+
+  // --- Connected devices (U36) ---------------------------------------------
+
+  /// All device rows, kind then oldest-first — the read-only Settings inventory.
+  Stream<List<DeviceRecord>> watchDevices() =>
+      (select(devices)..orderBy([
+            (d) => OrderingTerm(expression: d.kind),
+            (d) => OrderingTerm(expression: d.firstSeenAt),
+          ]))
+          .watch();
+
+  /// Devices of one [kind] (e.g. `'reeffactory'` for the dashboard).
+  Stream<List<DeviceRecord>> watchDevicesOfKind(String kind) =>
+      (select(devices)
+            ..where((d) => d.kind.equals(kind))
+            ..orderBy([(d) => OrderingTerm(expression: d.firstSeenAt)]))
+          .watch();
+
+  Future<DeviceRecord?> deviceByIdentifier(String identifier) =>
+      (select(devices)..where((d) => d.identifier.equals(identifier)))
+          .getSingleOrNull();
+
+  /// Adds or updates a ReefFactory device by serial (the add/edit flow). Re-adding
+  /// an address whose serial already exists updates that row (the "device moved"
+  /// / rename path) rather than duplicating it.
+  Future<void> upsertReefFactoryDevice({
+    required String identifier,
+    required String model,
+    required String address,
+    String? name,
+    int? tankId,
+  }) => into(devices).insert(
+    DevicesCompanion.insert(
+      kind: 'reeffactory',
+      identifier: identifier,
+      name: Value(name),
+      model: Value(model),
+      address: Value(address),
+      tankId: Value(tankId),
+      lastSeenAt: Value(DateTime.now()),
+    ),
+    onConflict: DoUpdate(
+      (_) => DevicesCompanion(
+        model: Value(model),
+        address: Value(address),
+        name: Value(name),
+        tankId: Value(tankId),
+        lastSeenAt: Value(DateTime.now()),
+      ),
+      target: [devices.identifier],
+    ),
+  );
+
+  /// Records the Hanna checker on first connect: inserts if absent (never
+  /// clobbering a user-set name/tank on later measurements), always bumping
+  /// last-seen.
+  Future<void> ensureHannaDevice({
+    required String identifier,
+    String? name,
+    String? model,
+    int? tankId,
+  }) async {
+    await into(devices).insert(
+      DevicesCompanion.insert(
+        kind: 'hanna',
+        identifier: identifier,
+        name: Value(name),
+        model: Value(model),
+        tankId: Value(tankId),
+        lastSeenAt: Value(DateTime.now()),
+      ),
+      mode: InsertMode.insertOrIgnore,
+    );
+    await touchDeviceSeen(identifier);
+  }
+
+  /// Bumps a device's last-seen timestamp (after a successful refresh/connect).
+  Future<void> touchDeviceSeen(String identifier) =>
+      (update(devices)..where((d) => d.identifier.equals(identifier))).write(
+        DevicesCompanion(lastSeenAt: Value(DateTime.now())),
+      );
+
+  Future<void> updateDeviceNameTank(int id, {String? name, int? tankId}) =>
+      (update(devices)..where((d) => d.id.equals(id))).write(
+        DevicesCompanion(name: Value(name), tankId: Value(tankId)),
+      );
+
+  Future<void> deleteDevice(int id) =>
+      (delete(devices)..where((d) => d.id.equals(id))).go();
 
   Future<ImportSource?> getImportSource(int tankId, String source) =>
       (select(importSources)..where(

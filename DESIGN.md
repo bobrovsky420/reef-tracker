@@ -132,7 +132,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 23**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 24**
 
 | Table | Key columns |
 |-------|-------------|
@@ -151,6 +151,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RoStages` | id, stageType (`RoStageType.name`; `custom` rows carry [title]), title?, lifespanDays (replace every N days), enabled (the "uncheck if a lower model is used" flag — hidden + silent but history kept), remindEnabled, note?, displayOrder — the shared RO unit's stages (U16). **No tankId by design**: like `Settings`, the RO unit is a property of the household, shared by every aquarium. Default 4-stage set seeded on first RO-screen visit (`seedDefaultRoStages`, guarded by the `ro_stages_seeded` settings flag — not the row count, so deleting every stage sticks) |
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
 | `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
+| `Devices` | id, kind (`reeffactory`\|`hanna`), identifier (**unique** — serial / BLE id, so a meter that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt? — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows (add / refresh / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of both |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -2284,6 +2285,51 @@ readout is always confirmed by the user first.
 - **Tier:** `hannaScan`, `grandfathered: true` (2026-07-21 decision,
   consistent with `hannaConnect`/`hannaImport`).
 - **Deferred:** remembering the last-used model; torch control.
+
+### ReefFactory local devices (U36, Pro, **experimental**) — `features/reeffactory/`, route `/reeffactory`
+
+Reads live values from ReefFactory LAN meters (Salinity Guardian `RFSG01`, pH
+Monitor `RFPM01`, Temperature Controller `RFTC01`) over their undocumented binary
+WebSocket and saves them as ordinary readings. **Read-only**: the app never
+writes to the devices — a persistent on-screen disclaimer says so and points to
+the ReefFactory app for settings/calibration/firmware.
+
+- **Protocol** (`data/rf_protocol.dart`, pure Dart, golden-vector tested against
+  live hardware): frames are `serial\0 command\0 subcommand\0 msgId\0 payload`. A
+  refresh sends `get/config` → device replies `refresh/config` (its serial; the
+  6-char prefix is the model) → client sends `<prefix>Connect/join` → device
+  streams `<prefix>Refresh/settings` whose payload holds big-endian int32 values.
+  Salinity/pH scale by ÷10000 (salinity computed from raw conductivity +
+  temperature with the meter's own PSS-78 formula; pH a direct value); the
+  Temperature Controller scales by ÷1000 with a unit byte (°C/°F, normalised to
+  °C) and an all-`0xFF` "probe unavailable" sentinel. `kRfModels` maps prefix →
+  `RfModelSpec` {telemetry `name`, vendor `displayName`, connect/refresh commands,
+  parser}; a new meter is one entry + parser.
+- **Transport** (`data/rf_device_link.dart`): abstract `RfDeviceLink` (fake-able,
+  like `HannaMeterLink`) + a `dart:io` WebSocket impl. One `readOnce(host)` per
+  manual refresh = transient connect→read→close (no persistent socket; the device
+  tolerates several clients). Typed `RfLinkError` drives specific messages. The
+  returned `RfSnapshot` carries `modelDisplayName` (the vendor product name),
+  used as the default device name on add.
+- **Dashboard** (`reeffactory_screen.dart`): one card per device with per-device
+  **Refresh** (pull live into the card) and **Save** (persist to the device's
+  assigned tank via `insertReadingGroup` + `addTrackedParameter`, impossible
+  values dropped), plus common **Refresh all** / **Save all** actions. Save-all
+  merges each tank's readings from all devices into one group, deduped by
+  parameter. **Temperature source rule** (`_valuesToSave`): a Salinity Guardian's
+  temperature is only saved when no `RFTC01` Temperature Controller device is
+  present — the controller is authoritative. Add-by-address auto-identifies via
+  the config handshake and dedupes by serial (re-adding a moved device updates
+  its address). Household-scoped (`reefFactoryDevicesProvider`, a shared
+  `StreamProvider`).
+- Entry points are experimental-gated (Settings → Experimental) and Pro-gated
+  (`ProFeature.reefFactory`, grandfathered): the Measurements-tab overflow menu
+  and a Settings row. Auto-refresh is deferred (manual only for now).
+
+Connected-device inventory (Settings → Connected devices, route
+`/settings/devices`, `connected_devices_screen.dart`): a read-only union of the
+`Devices` table — ReefFactory meters plus the Hanna checker, which
+`hanna_meter_screen.dart` records via `ensureHannaDevice` on first connect.
 
 ### Dosing (`features/dosing/`) — Dosing tab
 

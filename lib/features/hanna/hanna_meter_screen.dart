@@ -98,8 +98,26 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     super.dispose();
   }
 
+  /// Set once we've recorded this checker in the connected-devices inventory,
+  /// so a reconnect/retry doesn't re-touch it every listener tick.
+  bool _deviceCaptured = false;
+
   void _onSession() {
     if (!mounted) return;
+    // Record the checker in the connected-devices inventory (U36) the first
+    // time it advertises its name — informational only; the read-only Settings
+    // page lists it. The name (e.g. "HI97115 06150128") is the stable identity,
+    // its leading token the model.
+    final deviceName = _session.deviceName;
+    if (!_deviceCaptured && deviceName != null && deviceName.isNotEmpty) {
+      _deviceCaptured = true;
+      unawaited(
+        ref.read(dbProvider).ensureHannaDevice(
+          identifier: deviceName,
+          model: deviceName.split(' ').first,
+        ),
+      );
+    }
     final measuring = _session.phase == HannaSessionPhase.measuring;
     _setWakelock(measuring);
     setState(() {

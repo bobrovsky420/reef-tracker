@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.40.0] - 2026-07-24
+
+### Added
+- ReefFactory devices (experimental, Pro): a live-values dashboard for
+  ReefFactory local meters — Salinity Guardian, pH Monitor and Temperature
+  Controller. Add a meter by its IP address or hostname, tap Refresh to read its
+  current value(s) over your Wi-Fi, and Save to record them as measurements on
+  the assigned tank. Newly added meters are named after their ReefFactory
+  product by default. The dashboard also has **Refresh all** and **Save all**
+  buttons that act on every device at once (readings for the same tank are saved
+  together). If you have both a Salinity Guardian and a Temperature Controller,
+  temperature is taken from the controller; the Guardian's temperature is only
+  saved when no controller is present. The app only *reads* values — it can't
+  change settings, calibrate, or update firmware (use the ReefFactory app for
+  that). Turn it on under Settings → Experimental, then open it from the
+  Measurements-tab overflow menu.
+- Settings → Connected devices: a read-only list of every connected device —
+  ReefFactory meters and your Hanna checker once it has connected for a
+  measurement.
+
+### Fixed
+- The welcome screen no longer shows the parameter-management button in its
+  top bar — with no aquarium yet it only led to an empty placeholder screen.
+
 ## [0.39.1] - 2026-07-24
 
 ### Added

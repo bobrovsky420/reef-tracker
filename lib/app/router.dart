@@ -29,9 +29,11 @@ import '../features/micro/micro_configure_screen.dart';
 import '../features/micro/micro_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
+import '../features/reeffactory/reeffactory_screen.dart';
 import '../features/ro/ro_screen.dart';
 import '../features/scan/checker_scan_screen.dart';
 import '../features/settings/backups_screen.dart';
+import '../features/settings/connected_devices_screen.dart';
 import '../features/settings/reminders_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
@@ -163,10 +165,18 @@ final appRouter = GoRouter(
       builder: (context, state) => const RemindersScreen(),
     ),
     GoRoute(
+      path: '/settings/devices',
+      builder: (context, state) => const ConnectedDevicesScreen(),
+    ),
+    GoRoute(
       path: '/schedule',
       builder: (context, state) => const MaintenanceScheduleScreen(),
     ),
     GoRoute(path: '/ro', builder: (context, state) => const RoScreen()),
+    GoRoute(
+      path: '/reeffactory',
+      builder: (context, state) => const ReefFactoryScreen(),
+    ),
     GoRoute(path: '/micro', builder: (context, state) => const MicroScreen()),
     GoRoute(
       path: '/micro/add',

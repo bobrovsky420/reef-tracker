@@ -47,3 +47,8 @@ features:
   # third acquisition path for the same Hanna readings).
   - key: hannaScan
     grandfathered: true
+  # U36 ReefFactory local-device live values (experimental) — grandfathered,
+  # consistent with the other device-integration paths (hannaConnect/Scan):
+  # usable immediately, Founder installs keep it free forever.
+  - key: reefFactory
+    grandfathered: true

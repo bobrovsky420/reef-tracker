@@ -2962,4 +2962,137 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notifRoTitle => 'Замените фильтры обратного осмоса';
+
+  @override
+  String get reefFactoryTitle => 'Устройства ReefFactory';
+
+  @override
+  String get reefFactoryMenu => 'Устройства ReefFactory';
+
+  @override
+  String get reefFactoryDisclaimer =>
+      'Это приложение только считывает текущие значения с ваших устройств ReefFactory. Оно не может менять настройки, калибровать или обновлять прошивку — для этого используйте приложение ReefFactory.';
+
+  @override
+  String get reefFactoryAddDevice => 'Добавить устройство';
+
+  @override
+  String get reefFactoryEmptyTitle => 'Пока нет устройств';
+
+  @override
+  String get reefFactoryEmptyBody =>
+      'Добавьте измеритель ReefFactory по IP-адресу или имени хоста, чтобы считывать его текущие значения.';
+
+  @override
+  String get reefFactoryRefresh => 'Обновить';
+
+  @override
+  String get reefFactorySave => 'Сохранить';
+
+  @override
+  String get reefFactoryRefreshAll => 'Обновить все';
+
+  @override
+  String get reefFactorySaveAll => 'Сохранить все';
+
+  @override
+  String get reefFactoryNothingToSave =>
+      'Пока нечего сохранять — сначала нажмите «Обновить».';
+
+  @override
+  String reefFactorySavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Сохранено $count показания',
+      many: 'Сохранено $count показаний',
+      few: 'Сохранено $count показания',
+      one: 'Сохранено 1 показание',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefFactoryNotReadYet =>
+      'Нажмите «Обновить», чтобы считать текущее значение.';
+
+  @override
+  String get reefFactoryNoTank =>
+      'Сначала назначьте аквариум, чтобы сохранять показания.';
+
+  @override
+  String get reefFactoryTankLabel => 'Аквариум';
+
+  @override
+  String get reefFactorySelectTank => 'Выберите аквариум';
+
+  @override
+  String get reefFactoryDeviceNameLabel => 'Название';
+
+  @override
+  String get reefFactoryRemove => 'Удалить устройство';
+
+  @override
+  String reefFactoryRemoveConfirm(Object name) {
+    return 'Удалить $name из списка? Сохранённые показания останутся.';
+  }
+
+  @override
+  String get reefFactoryHostLabel => 'IP-адрес или имя хоста';
+
+  @override
+  String get reefFactoryHostHint => 'напр. 192.168.1.50';
+
+  @override
+  String get reefFactoryHostHelp =>
+      'Найдите его в приложении ReefFactory или в роутере. Резервирование DHCP не даст ему меняться.';
+
+  @override
+  String get reefFactoryCheck => 'Проверить';
+
+  @override
+  String reefFactoryFound(Object model) {
+    return 'Найдено: $model';
+  }
+
+  @override
+  String get reefFactoryErrUnreachable =>
+      'Не удалось подключиться по этому адресу. Убедитесь, что устройство включено и в той же сети.';
+
+  @override
+  String get reefFactoryErrTimeout => 'Подключено, но значение не пришло.';
+
+  @override
+  String get reefFactoryErrUnsupported =>
+      'Эта модель устройства пока не поддерживается.';
+
+  @override
+  String get reefFactoryErrProtocol => 'Не удалось считать устройство.';
+
+  @override
+  String get reefFactorySettingsSubtitle =>
+      'Считывайте текущие значения с измерителей ReefFactory';
+
+  @override
+  String get reefDevicesTitle => 'Подключённые устройства';
+
+  @override
+  String get reefDevicesSubtitle => 'Измерители ReefFactory и Hanna checker';
+
+  @override
+  String get reefDevicesEmpty => 'Пока нет подключённых устройств.';
+
+  @override
+  String get reefDevicesKindReefFactory => 'ReefFactory';
+
+  @override
+  String get reefDevicesKindHanna => 'Hanna checker';
+
+  @override
+  String get reefDevicesBluetooth => 'Bluetooth';
+
+  @override
+  String reefDevicesLastSeen(Object date) {
+    return 'Был(а) в сети $date';
+  }
 }

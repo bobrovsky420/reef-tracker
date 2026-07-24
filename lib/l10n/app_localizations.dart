@@ -4868,6 +4868,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Replace RO filters'**
   String get notifRoTitle;
+
+  /// No description provided for @reefFactoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefFactory devices'**
+  String get reefFactoryTitle;
+
+  /// No description provided for @reefFactoryMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefFactory devices'**
+  String get reefFactoryMenu;
+
+  /// No description provided for @reefFactoryDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'This app only reads live values from your ReefFactory devices. It can\'t change settings, calibrate, or update firmware — use the ReefFactory app for that.'**
+  String get reefFactoryDisclaimer;
+
+  /// No description provided for @reefFactoryAddDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Add device'**
+  String get reefFactoryAddDevice;
+
+  /// No description provided for @reefFactoryEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices yet'**
+  String get reefFactoryEmptyTitle;
+
+  /// No description provided for @reefFactoryEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a ReefFactory meter by its IP address or hostname to read its live values.'**
+  String get reefFactoryEmptyBody;
+
+  /// No description provided for @reefFactoryRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get reefFactoryRefresh;
+
+  /// No description provided for @reefFactorySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get reefFactorySave;
+
+  /// No description provided for @reefFactoryRefreshAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh all'**
+  String get reefFactoryRefreshAll;
+
+  /// No description provided for @reefFactorySaveAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Save all'**
+  String get reefFactorySaveAll;
+
+  /// No description provided for @reefFactoryNothingToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to save yet — tap Refresh first.'**
+  String get reefFactoryNothingToSave;
+
+  /// No description provided for @reefFactorySavedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Saved 1 reading} other{Saved {count} readings}}'**
+  String reefFactorySavedSnack(int count);
+
+  /// No description provided for @reefFactoryNotReadYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Refresh to read the current value.'**
+  String get reefFactoryNotReadYet;
+
+  /// No description provided for @reefFactoryNoTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a tank first to save readings.'**
+  String get reefFactoryNoTank;
+
+  /// No description provided for @reefFactoryTankLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tank'**
+  String get reefFactoryTankLabel;
+
+  /// No description provided for @reefFactorySelectTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a tank'**
+  String get reefFactorySelectTank;
+
+  /// No description provided for @reefFactoryDeviceNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get reefFactoryDeviceNameLabel;
+
+  /// No description provided for @reefFactoryRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove device'**
+  String get reefFactoryRemove;
+
+  /// No description provided for @reefFactoryRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from this list? Its saved readings are kept.'**
+  String reefFactoryRemoveConfirm(Object name);
+
+  /// No description provided for @reefFactoryHostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IP address or hostname'**
+  String get reefFactoryHostLabel;
+
+  /// No description provided for @reefFactoryHostHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 192.168.1.50'**
+  String get reefFactoryHostHint;
+
+  /// No description provided for @reefFactoryHostHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Find it in your ReefFactory app or router. A DHCP reservation keeps it from changing.'**
+  String get reefFactoryHostHelp;
+
+  /// No description provided for @reefFactoryCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get reefFactoryCheck;
+
+  /// No description provided for @reefFactoryFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Found: {model}'**
+  String reefFactoryFound(Object model);
+
+  /// No description provided for @reefFactoryErrUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach that address. Check the device is on and on this network.'**
+  String get reefFactoryErrUnreachable;
+
+  /// No description provided for @reefFactoryErrTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected, but no reading arrived.'**
+  String get reefFactoryErrTimeout;
+
+  /// No description provided for @reefFactoryErrUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'That device model isn\'t supported yet.'**
+  String get reefFactoryErrUnsupported;
+
+  /// No description provided for @reefFactoryErrProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the device.'**
+  String get reefFactoryErrProtocol;
+
+  /// No description provided for @reefFactorySettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Read live values from ReefFactory meters'**
+  String get reefFactorySettingsSubtitle;
+
+  /// No description provided for @reefDevicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected devices'**
+  String get reefDevicesTitle;
+
+  /// No description provided for @reefDevicesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefFactory meters and the Hanna checker'**
+  String get reefDevicesSubtitle;
+
+  /// No description provided for @reefDevicesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices connected yet.'**
+  String get reefDevicesEmpty;
+
+  /// No description provided for @reefDevicesKindReefFactory.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefFactory'**
+  String get reefDevicesKindReefFactory;
+
+  /// No description provided for @reefDevicesKindHanna.
+  ///
+  /// In en, this message translates to:
+  /// **'Hanna checker'**
+  String get reefDevicesKindHanna;
+
+  /// No description provided for @reefDevicesBluetooth.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth'**
+  String get reefDevicesBluetooth;
+
+  /// No description provided for @reefDevicesLastSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {date}'**
+  String reefDevicesLastSeen(Object date);
 }
 
 class _AppLocalizationsDelegate

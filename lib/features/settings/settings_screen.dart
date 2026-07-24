@@ -373,6 +373,27 @@ class SettingsBody extends ConsumerWidget {
                 ),
                 onTap: () => settings.setHannaScanFab(!scanFabEnabled),
               ),
+              // ReefFactory local-device live values (U36). Same Pro-gate idiom
+              // as the Hanna rows.
+              ReefSettingsRow(
+                icon: Icons.sensors,
+                title: l.reefFactoryTitle,
+                description: l.reefFactorySettingsSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: ref.watch(proFeatureProvider(ProFeature.reefFactory))
+                    ? () => context.push('/reeffactory')
+                    : () =>
+                          showProFeatureDialog(context, ProFeature.reefFactory),
+              ),
+              // Read-only inventory of every connected device (ReefFactory
+              // meters + the Hanna checker once used).
+              ReefSettingsRow(
+                icon: Icons.devices_other_outlined,
+                title: l.reefDevicesTitle,
+                description: l.reefDevicesSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: () => context.push('/settings/devices'),
+              ),
             ],
           ],
         ),

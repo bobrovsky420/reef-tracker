@@ -124,6 +124,7 @@ extension L10nDomain on AppLocalizations {
     ProFeature.hannaImport => hannaImportTitle,
     ProFeature.hannaConnect => hannaConnectTitle,
     ProFeature.hannaScan => hannaScanTitle,
+    ProFeature.reefFactory => reefFactoryTitle,
   };
 
   /// Localized message for a rule-based insight (U28). The [Insight] carries

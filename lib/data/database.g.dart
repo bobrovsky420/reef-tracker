@@ -7943,6 +7943,581 @@ class ImportSourcesCompanion extends UpdateCompanion<ImportSource> {
   }
 }
 
+class $DevicesTable extends Devices
+    with TableInfo<$DevicesTable, DeviceRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DevicesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _identifierMeta = const VerificationMeta(
+    'identifier',
+  );
+  @override
+  late final GeneratedColumn<String> identifier = GeneratedColumn<String>(
+    'identifier',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modelMeta = const VerificationMeta('model');
+  @override
+  late final GeneratedColumn<String> model = GeneratedColumn<String>(
+    'model',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _addressMeta = const VerificationMeta(
+    'address',
+  );
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+    'address',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _firstSeenAtMeta = const VerificationMeta(
+    'firstSeenAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> firstSeenAt = GeneratedColumn<DateTime>(
+    'first_seen_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _lastSeenAtMeta = const VerificationMeta(
+    'lastSeenAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSeenAt = GeneratedColumn<DateTime>(
+    'last_seen_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    kind,
+    identifier,
+    name,
+    model,
+    address,
+    tankId,
+    firstSeenAt,
+    lastSeenAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'devices';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DeviceRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('identifier')) {
+      context.handle(
+        _identifierMeta,
+        identifier.isAcceptableOrUnknown(data['identifier']!, _identifierMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_identifierMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('model')) {
+      context.handle(
+        _modelMeta,
+        model.isAcceptableOrUnknown(data['model']!, _modelMeta),
+      );
+    }
+    if (data.containsKey('address')) {
+      context.handle(
+        _addressMeta,
+        address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    }
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    }
+    if (data.containsKey('first_seen_at')) {
+      context.handle(
+        _firstSeenAtMeta,
+        firstSeenAt.isAcceptableOrUnknown(
+          data['first_seen_at']!,
+          _firstSeenAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_seen_at')) {
+      context.handle(
+        _lastSeenAtMeta,
+        lastSeenAt.isAcceptableOrUnknown(
+          data['last_seen_at']!,
+          _lastSeenAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DeviceRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DeviceRecord(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      identifier: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identifier'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      model: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model'],
+      ),
+      address: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}address'],
+      ),
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      ),
+      firstSeenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}first_seen_at'],
+      )!,
+      lastSeenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_seen_at'],
+      ),
+    );
+  }
+
+  @override
+  $DevicesTable createAlias(String alias) {
+    return $DevicesTable(attachedDatabase, alias);
+  }
+}
+
+class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
+  final int id;
+
+  /// `'reeffactory'` | `'hanna'`. Persisted — never rename.
+  final String kind;
+
+  /// Stable device identity: a ReefFactory serial (e.g. `RFPM01…`) or the Hanna
+  /// meter's BLE id/serial. Unique — the same physical device is one row even
+  /// if its network address changes.
+  final String identifier;
+
+  /// User-facing label; defaults to the model/parameter name at add time.
+  final String? name;
+
+  /// Model code (`RFSG01`, `RFPM01`, a Hanna model), for display.
+  final String? model;
+
+  /// Current network address (host or IP) for ReefFactory meters. Null for
+  /// Hanna (BLE, no address).
+  final String? address;
+
+  /// Tank the device's saved readings belong to. Null until assigned; cleared
+  /// (not cascaded) if the tank is deleted so the device row survives.
+  final int? tankId;
+  final DateTime firstSeenAt;
+  final DateTime? lastSeenAt;
+  const DeviceRecord({
+    required this.id,
+    required this.kind,
+    required this.identifier,
+    this.name,
+    this.model,
+    this.address,
+    this.tankId,
+    required this.firstSeenAt,
+    this.lastSeenAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['kind'] = Variable<String>(kind);
+    map['identifier'] = Variable<String>(identifier);
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    if (!nullToAbsent || model != null) {
+      map['model'] = Variable<String>(model);
+    }
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    if (!nullToAbsent || tankId != null) {
+      map['tank_id'] = Variable<int>(tankId);
+    }
+    map['first_seen_at'] = Variable<DateTime>(firstSeenAt);
+    if (!nullToAbsent || lastSeenAt != null) {
+      map['last_seen_at'] = Variable<DateTime>(lastSeenAt);
+    }
+    return map;
+  }
+
+  DevicesCompanion toCompanion(bool nullToAbsent) {
+    return DevicesCompanion(
+      id: Value(id),
+      kind: Value(kind),
+      identifier: Value(identifier),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      model: model == null && nullToAbsent
+          ? const Value.absent()
+          : Value(model),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      tankId: tankId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tankId),
+      firstSeenAt: Value(firstSeenAt),
+      lastSeenAt: lastSeenAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSeenAt),
+    );
+  }
+
+  factory DeviceRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DeviceRecord(
+      id: serializer.fromJson<int>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      identifier: serializer.fromJson<String>(json['identifier']),
+      name: serializer.fromJson<String?>(json['name']),
+      model: serializer.fromJson<String?>(json['model']),
+      address: serializer.fromJson<String?>(json['address']),
+      tankId: serializer.fromJson<int?>(json['tankId']),
+      firstSeenAt: serializer.fromJson<DateTime>(json['firstSeenAt']),
+      lastSeenAt: serializer.fromJson<DateTime?>(json['lastSeenAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'kind': serializer.toJson<String>(kind),
+      'identifier': serializer.toJson<String>(identifier),
+      'name': serializer.toJson<String?>(name),
+      'model': serializer.toJson<String?>(model),
+      'address': serializer.toJson<String?>(address),
+      'tankId': serializer.toJson<int?>(tankId),
+      'firstSeenAt': serializer.toJson<DateTime>(firstSeenAt),
+      'lastSeenAt': serializer.toJson<DateTime?>(lastSeenAt),
+    };
+  }
+
+  DeviceRecord copyWith({
+    int? id,
+    String? kind,
+    String? identifier,
+    Value<String?> name = const Value.absent(),
+    Value<String?> model = const Value.absent(),
+    Value<String?> address = const Value.absent(),
+    Value<int?> tankId = const Value.absent(),
+    DateTime? firstSeenAt,
+    Value<DateTime?> lastSeenAt = const Value.absent(),
+  }) => DeviceRecord(
+    id: id ?? this.id,
+    kind: kind ?? this.kind,
+    identifier: identifier ?? this.identifier,
+    name: name.present ? name.value : this.name,
+    model: model.present ? model.value : this.model,
+    address: address.present ? address.value : this.address,
+    tankId: tankId.present ? tankId.value : this.tankId,
+    firstSeenAt: firstSeenAt ?? this.firstSeenAt,
+    lastSeenAt: lastSeenAt.present ? lastSeenAt.value : this.lastSeenAt,
+  );
+  DeviceRecord copyWithCompanion(DevicesCompanion data) {
+    return DeviceRecord(
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      identifier: data.identifier.present
+          ? data.identifier.value
+          : this.identifier,
+      name: data.name.present ? data.name.value : this.name,
+      model: data.model.present ? data.model.value : this.model,
+      address: data.address.present ? data.address.value : this.address,
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      firstSeenAt: data.firstSeenAt.present
+          ? data.firstSeenAt.value
+          : this.firstSeenAt,
+      lastSeenAt: data.lastSeenAt.present
+          ? data.lastSeenAt.value
+          : this.lastSeenAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeviceRecord(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('identifier: $identifier, ')
+          ..write('name: $name, ')
+          ..write('model: $model, ')
+          ..write('address: $address, ')
+          ..write('tankId: $tankId, ')
+          ..write('firstSeenAt: $firstSeenAt, ')
+          ..write('lastSeenAt: $lastSeenAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    kind,
+    identifier,
+    name,
+    model,
+    address,
+    tankId,
+    firstSeenAt,
+    lastSeenAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DeviceRecord &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.identifier == this.identifier &&
+          other.name == this.name &&
+          other.model == this.model &&
+          other.address == this.address &&
+          other.tankId == this.tankId &&
+          other.firstSeenAt == this.firstSeenAt &&
+          other.lastSeenAt == this.lastSeenAt);
+}
+
+class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
+  final Value<int> id;
+  final Value<String> kind;
+  final Value<String> identifier;
+  final Value<String?> name;
+  final Value<String?> model;
+  final Value<String?> address;
+  final Value<int?> tankId;
+  final Value<DateTime> firstSeenAt;
+  final Value<DateTime?> lastSeenAt;
+  const DevicesCompanion({
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.identifier = const Value.absent(),
+    this.name = const Value.absent(),
+    this.model = const Value.absent(),
+    this.address = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.firstSeenAt = const Value.absent(),
+    this.lastSeenAt = const Value.absent(),
+  });
+  DevicesCompanion.insert({
+    this.id = const Value.absent(),
+    required String kind,
+    required String identifier,
+    this.name = const Value.absent(),
+    this.model = const Value.absent(),
+    this.address = const Value.absent(),
+    this.tankId = const Value.absent(),
+    this.firstSeenAt = const Value.absent(),
+    this.lastSeenAt = const Value.absent(),
+  }) : kind = Value(kind),
+       identifier = Value(identifier);
+  static Insertable<DeviceRecord> custom({
+    Expression<int>? id,
+    Expression<String>? kind,
+    Expression<String>? identifier,
+    Expression<String>? name,
+    Expression<String>? model,
+    Expression<String>? address,
+    Expression<int>? tankId,
+    Expression<DateTime>? firstSeenAt,
+    Expression<DateTime>? lastSeenAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (identifier != null) 'identifier': identifier,
+      if (name != null) 'name': name,
+      if (model != null) 'model': model,
+      if (address != null) 'address': address,
+      if (tankId != null) 'tank_id': tankId,
+      if (firstSeenAt != null) 'first_seen_at': firstSeenAt,
+      if (lastSeenAt != null) 'last_seen_at': lastSeenAt,
+    });
+  }
+
+  DevicesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? kind,
+    Value<String>? identifier,
+    Value<String?>? name,
+    Value<String?>? model,
+    Value<String?>? address,
+    Value<int?>? tankId,
+    Value<DateTime>? firstSeenAt,
+    Value<DateTime?>? lastSeenAt,
+  }) {
+    return DevicesCompanion(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      identifier: identifier ?? this.identifier,
+      name: name ?? this.name,
+      model: model ?? this.model,
+      address: address ?? this.address,
+      tankId: tankId ?? this.tankId,
+      firstSeenAt: firstSeenAt ?? this.firstSeenAt,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (identifier.present) {
+      map['identifier'] = Variable<String>(identifier.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (model.present) {
+      map['model'] = Variable<String>(model.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (firstSeenAt.present) {
+      map['first_seen_at'] = Variable<DateTime>(firstSeenAt.value);
+    }
+    if (lastSeenAt.present) {
+      map['last_seen_at'] = Variable<DateTime>(lastSeenAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DevicesCompanion(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('identifier: $identifier, ')
+          ..write('name: $name, ')
+          ..write('model: $model, ')
+          ..write('address: $address, ')
+          ..write('tankId: $tankId, ')
+          ..write('firstSeenAt: $firstSeenAt, ')
+          ..write('lastSeenAt: $lastSeenAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -8182,6 +8757,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RoStageReplacementsTable roStageReplacements =
       $RoStageReplacementsTable(this);
   late final $ImportSourcesTable importSources = $ImportSourcesTable(this);
+  late final $DevicesTable devices = $DevicesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index idxReadingsTankParamTaken = Index(
     'idx_readings_tank_param_taken',
@@ -8247,6 +8823,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     roStages,
     roStageReplacements,
     importSources,
+    devices,
     settings,
     idxReadingsTankParamTaken,
     idxReadingsTankTaken,
@@ -8352,6 +8929,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('import_sources', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('devices', kind: UpdateKind.update)],
     ),
   ]);
 }
@@ -8617,6 +9201,24 @@ final class $$TanksTableReferences
     ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_importSourcesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$DevicesTable, List<DeviceRecord>>
+  _devicesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.devices,
+    aliasName: 'tanks__id__devices__tank_id',
+  );
+
+  $$DevicesTableProcessedTableManager get devicesRefs {
+    final manager = $$DevicesTableTableManager(
+      $_db,
+      $_db.devices,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_devicesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -8972,6 +9574,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$ImportSourcesTableFilterComposer(
             $db: $db,
             $table: $db.importSources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> devicesRefs(
+    Expression<bool> Function($$DevicesTableFilterComposer f) f,
+  ) {
+    final $$DevicesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.devices,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DevicesTableFilterComposer(
+            $db: $db,
+            $table: $db.devices,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9386,6 +10013,31 @@ class $$TanksTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> devicesRefs<T extends Object>(
+    Expression<T> Function($$DevicesTableAnnotationComposer a) f,
+  ) {
+    final $$DevicesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.devices,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DevicesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.devices,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TanksTableTableManager
@@ -9414,6 +10066,7 @@ class $$TanksTableTableManager
             bool microViewsRefs,
             bool maintenanceSchedulesRefs,
             bool importSourcesRefs,
+            bool devicesRefs,
           })
         > {
   $$TanksTableTableManager(_$AppDatabase db, $TanksTable table)
@@ -9495,6 +10148,7 @@ class $$TanksTableTableManager
                 microViewsRefs = false,
                 maintenanceSchedulesRefs = false,
                 importSourcesRefs = false,
+                devicesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9511,6 +10165,7 @@ class $$TanksTableTableManager
                     if (microViewsRefs) db.microViews,
                     if (maintenanceSchedulesRefs) db.maintenanceSchedules,
                     if (importSourcesRefs) db.importSources,
+                    if (devicesRefs) db.devices,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -9759,6 +10414,23 @@ class $$TanksTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (devicesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          DeviceRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._devicesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(db, table, p0).devicesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -9792,6 +10464,7 @@ typedef $$TanksTableProcessedTableManager =
         bool microViewsRefs,
         bool maintenanceSchedulesRefs,
         bool importSourcesRefs,
+        bool devicesRefs,
       })
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
@@ -15132,6 +15805,399 @@ typedef $$ImportSourcesTableProcessedTableManager =
       ImportSource,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$DevicesTableCreateCompanionBuilder =
+    DevicesCompanion Function({
+      Value<int> id,
+      required String kind,
+      required String identifier,
+      Value<String?> name,
+      Value<String?> model,
+      Value<String?> address,
+      Value<int?> tankId,
+      Value<DateTime> firstSeenAt,
+      Value<DateTime?> lastSeenAt,
+    });
+typedef $$DevicesTableUpdateCompanionBuilder =
+    DevicesCompanion Function({
+      Value<int> id,
+      Value<String> kind,
+      Value<String> identifier,
+      Value<String?> name,
+      Value<String?> model,
+      Value<String?> address,
+      Value<int?> tankId,
+      Value<DateTime> firstSeenAt,
+      Value<DateTime?> lastSeenAt,
+    });
+
+final class $$DevicesTableReferences
+    extends BaseReferences<_$AppDatabase, $DevicesTable, DeviceRecord> {
+  $$DevicesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('devices__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager? get tankId {
+    final $_column = $_itemColumn<int>('tank_id');
+    if ($_column == null) return null;
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DevicesTableFilterComposer
+    extends Composer<_$AppDatabase, $DevicesTable> {
+  $$DevicesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get identifier => $composableBuilder(
+    column: $table.identifier,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get firstSeenAt => $composableBuilder(
+    column: $table.firstSeenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSeenAt => $composableBuilder(
+    column: $table.lastSeenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DevicesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DevicesTable> {
+  $$DevicesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get identifier => $composableBuilder(
+    column: $table.identifier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get model => $composableBuilder(
+    column: $table.model,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get firstSeenAt => $composableBuilder(
+    column: $table.firstSeenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSeenAt => $composableBuilder(
+    column: $table.lastSeenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DevicesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DevicesTable> {
+  $$DevicesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get identifier => $composableBuilder(
+    column: $table.identifier,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get model =>
+      $composableBuilder(column: $table.model, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get firstSeenAt => $composableBuilder(
+    column: $table.firstSeenAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastSeenAt => $composableBuilder(
+    column: $table.lastSeenAt,
+    builder: (column) => column,
+  );
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DevicesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DevicesTable,
+          DeviceRecord,
+          $$DevicesTableFilterComposer,
+          $$DevicesTableOrderingComposer,
+          $$DevicesTableAnnotationComposer,
+          $$DevicesTableCreateCompanionBuilder,
+          $$DevicesTableUpdateCompanionBuilder,
+          (DeviceRecord, $$DevicesTableReferences),
+          DeviceRecord,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$DevicesTableTableManager(_$AppDatabase db, $DevicesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DevicesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DevicesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DevicesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> identifier = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<String?> model = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<int?> tankId = const Value.absent(),
+                Value<DateTime> firstSeenAt = const Value.absent(),
+                Value<DateTime?> lastSeenAt = const Value.absent(),
+              }) => DevicesCompanion(
+                id: id,
+                kind: kind,
+                identifier: identifier,
+                name: name,
+                model: model,
+                address: address,
+                tankId: tankId,
+                firstSeenAt: firstSeenAt,
+                lastSeenAt: lastSeenAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String kind,
+                required String identifier,
+                Value<String?> name = const Value.absent(),
+                Value<String?> model = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<int?> tankId = const Value.absent(),
+                Value<DateTime> firstSeenAt = const Value.absent(),
+                Value<DateTime?> lastSeenAt = const Value.absent(),
+              }) => DevicesCompanion.insert(
+                id: id,
+                kind: kind,
+                identifier: identifier,
+                name: name,
+                model: model,
+                address: address,
+                tankId: tankId,
+                firstSeenAt: firstSeenAt,
+                lastSeenAt: lastSeenAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$DevicesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable: $$DevicesTableReferences
+                                    ._tankIdTable(db),
+                                referencedColumn: $$DevicesTableReferences
+                                    ._tankIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DevicesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DevicesTable,
+      DeviceRecord,
+      $$DevicesTableFilterComposer,
+      $$DevicesTableOrderingComposer,
+      $$DevicesTableAnnotationComposer,
+      $$DevicesTableCreateCompanionBuilder,
+      $$DevicesTableUpdateCompanionBuilder,
+      (DeviceRecord, $$DevicesTableReferences),
+      DeviceRecord,
+      PrefetchHooks Function({bool tankId})
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -15299,6 +16365,8 @@ class $AppDatabaseManager {
       $$RoStageReplacementsTableTableManager(_db, _db.roStageReplacements);
   $$ImportSourcesTableTableManager get importSources =>
       $$ImportSourcesTableTableManager(_db, _db.importSources);
+  $$DevicesTableTableManager get devices =>
+      $$DevicesTableTableManager(_db, _db.devices);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

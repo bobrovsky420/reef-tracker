@@ -2928,4 +2928,136 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get notifRoTitle => 'Sostituisci i filtri dell\'osmosi';
+
+  @override
+  String get reefFactoryTitle => 'Dispositivi ReefFactory';
+
+  @override
+  String get reefFactoryMenu => 'Dispositivi ReefFactory';
+
+  @override
+  String get reefFactoryDisclaimer =>
+      'Questa app legge solo i valori in tempo reale dai tuoi dispositivi ReefFactory. Non può modificare impostazioni, calibrare o aggiornare il firmware: usa l\'app ReefFactory per questo.';
+
+  @override
+  String get reefFactoryAddDevice => 'Aggiungi dispositivo';
+
+  @override
+  String get reefFactoryEmptyTitle => 'Nessun dispositivo';
+
+  @override
+  String get reefFactoryEmptyBody =>
+      'Aggiungi uno strumento ReefFactory tramite il suo indirizzo IP o nome host per leggerne i valori in tempo reale.';
+
+  @override
+  String get reefFactoryRefresh => 'Aggiorna';
+
+  @override
+  String get reefFactorySave => 'Salva';
+
+  @override
+  String get reefFactoryRefreshAll => 'Aggiorna tutto';
+
+  @override
+  String get reefFactorySaveAll => 'Salva tutto';
+
+  @override
+  String get reefFactoryNothingToSave =>
+      'Ancora niente da salvare: tocca prima Aggiorna.';
+
+  @override
+  String reefFactorySavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count letture salvate',
+      one: '1 lettura salvata',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefFactoryNotReadYet =>
+      'Tocca Aggiorna per leggere il valore attuale.';
+
+  @override
+  String get reefFactoryNoTank =>
+      'Assegna prima una vasca per salvare le letture.';
+
+  @override
+  String get reefFactoryTankLabel => 'Vasca';
+
+  @override
+  String get reefFactorySelectTank => 'Seleziona una vasca';
+
+  @override
+  String get reefFactoryDeviceNameLabel => 'Nome';
+
+  @override
+  String get reefFactoryRemove => 'Rimuovi dispositivo';
+
+  @override
+  String reefFactoryRemoveConfirm(Object name) {
+    return 'Rimuovere $name da questo elenco? Le letture salvate vengono mantenute.';
+  }
+
+  @override
+  String get reefFactoryHostLabel => 'Indirizzo IP o nome host';
+
+  @override
+  String get reefFactoryHostHint => 'es. 192.168.1.50';
+
+  @override
+  String get reefFactoryHostHelp =>
+      'Lo trovi nell\'app ReefFactory o nel router. Una prenotazione DHCP evita che cambi.';
+
+  @override
+  String get reefFactoryCheck => 'Verifica';
+
+  @override
+  String reefFactoryFound(Object model) {
+    return 'Trovato: $model';
+  }
+
+  @override
+  String get reefFactoryErrUnreachable =>
+      'Impossibile raggiungere quell\'indirizzo. Verifica che il dispositivo sia acceso e sulla stessa rete.';
+
+  @override
+  String get reefFactoryErrTimeout =>
+      'Connesso, ma non è arrivata alcuna lettura.';
+
+  @override
+  String get reefFactoryErrUnsupported =>
+      'Questo modello di dispositivo non è ancora supportato.';
+
+  @override
+  String get reefFactoryErrProtocol => 'Impossibile leggere il dispositivo.';
+
+  @override
+  String get reefFactorySettingsSubtitle =>
+      'Leggi i valori in tempo reale dagli strumenti ReefFactory';
+
+  @override
+  String get reefDevicesTitle => 'Dispositivi connessi';
+
+  @override
+  String get reefDevicesSubtitle => 'Strumenti ReefFactory e checker Hanna';
+
+  @override
+  String get reefDevicesEmpty => 'Nessun dispositivo connesso.';
+
+  @override
+  String get reefDevicesKindReefFactory => 'ReefFactory';
+
+  @override
+  String get reefDevicesKindHanna => 'Checker Hanna';
+
+  @override
+  String get reefDevicesBluetooth => 'Bluetooth';
+
+  @override
+  String reefDevicesLastSeen(Object date) {
+    return 'Visto $date';
+  }
 }
