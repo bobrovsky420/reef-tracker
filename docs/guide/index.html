@@ -49,6 +49,7 @@
     h3 { font-size: 1.1rem; margin-top: 1.6rem; }
     a { color: var(--accent); }
     .updated { color: var(--muted); font-size: 0.9rem; }
+    .crumb { font-size: 0.9rem; margin-bottom: 2rem; }
     .lead { font-size: 1.05rem; }
     code { background: var(--card); padding: 1px 5px; border-radius: 4px; }
     .toc { background: var(--card); border: 1px solid var(--border);
@@ -77,9 +78,12 @@
     th { background: var(--card); }
     footer { margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border);
              color: var(--muted); font-size: 0.9rem; }
+    footer nav a { margin-right: 18px; }
   </style>
 </head>
 <body>
+
+<p class="crumb"><a href="../">← ReefTracker home</a></p>
 
 <h1>ReefTracker User Guide</h1>
 <p class="updated">Last updated: 23 July 2026</p>
@@ -625,6 +629,12 @@ your device model, OS version and app version (Settings → About). See also the
 the <a href="../privacy-policy.html">privacy policy</a>.</p>
 
 <footer>
+  <nav>
+    <a href="../">Home</a>
+    <a href="../features.html">Features</a>
+    <a href="../support.html">Support</a>
+    <a href="../privacy-policy.html">Privacy policy</a>
+  </nav>
   <p>ReefTracker – an offline reef-aquarium companion for Android and iOS.<br>
   Screenshots show the app with sample data; the exact layout can differ
   slightly between versions and platforms.</p>
