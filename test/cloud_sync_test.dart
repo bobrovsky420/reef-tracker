@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:reeftracker/data/auto_backup.dart';
 import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/cloud_backup_store.dart';
 import 'package:reeftracker/data/cloud_sync.dart';
@@ -12,7 +15,31 @@ import 'package:reeftracker/domain/setup_type.dart';
 
 import 'fakes/fake_cloud_backup_store.dart';
 
+/// Routes path_provider to a throwaway temp folder — the U35 restore path
+/// writes a local safety backup and `importBackup` rehearses into a temp
+/// database, both of which need a real filesystem under `flutter test`.
+class _FakePathProvider extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
+  _FakePathProvider(this.root);
+  final String root;
+  @override
+  Future<String?> getApplicationDocumentsPath() async => root;
+  @override
+  Future<String?> getTemporaryPath() async => root;
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late Directory docsDir;
+  setUp(() async {
+    docsDir = await Directory.systemTemp.createTemp('reeftracker-cloudsync-');
+    PathProviderPlatform.instance = _FakePathProvider(docsDir.path);
+  });
+  tearDown(() async {
+    if (await docsDir.exists()) await docsDir.delete(recursive: true);
+  });
+
   group('backupContentHash', () {
     Map<String, dynamic> doc() => {
       'format': 'reeftracker-backup',
@@ -27,10 +54,14 @@ void main() {
       ],
     };
 
-    test('ignores exportedAt, checksum, and the whole settings section', () {
+    test('ignores exportedAt, device, checksum, and the whole settings '
+        'section', () {
       final a = doc();
       final b = doc()
         ..['exportedAt'] = '2026-07-16T09:30:00.000'
+        // The writing device's name (U35) is provenance, not data: restoring
+        // device A's backup on device B must still hash clean on B.
+        ..['device'] = 'Aquarium phone'
         ..['checksum'] = 'deadbeef'
         ..['settings'] = [
           {'key': 'sync_gdrive_last_push_at', 'value': '999'},
@@ -151,6 +182,27 @@ void main() {
       await runGDriveSyncIfDirty(db, store: store);
       final data = decodeBackup(utf8.decode(store.files.values.single));
       expect(data.tanks, hasLength(1));
+    });
+
+    test('push records the uploaded filename and attaches device/hash '
+        'metadata (U35)', () async {
+      await connectAndSeed();
+      await settings.setSyncDeviceName('Aquarium phone');
+      await runGDriveSyncIfDirty(db, store: store);
+
+      final name = store.files.keys.single;
+      expect(await settings.readSyncGdriveLastPushedName(), name);
+      expect(store.fileMetadata[name]?[kCloudMetaDevice], 'Aquarium phone');
+      expect(
+        store.fileMetadata[name]?[kCloudMetaContentHash],
+        await settings.readSyncGdriveLastPushedHash(),
+      );
+      // The document itself carries the name too (provenance that survives
+      // even providers without metadata support).
+      expect(
+        backupDeviceName(utf8.decode(store.files.values.single)),
+        'Aquarium phone',
+      );
     });
 
     test('offline is silent: no error stamp, retried next run', () async {
@@ -347,13 +399,17 @@ void main() {
       expect(await AppSettings(db2).readSyncGdriveAccount(), isNull);
     });
 
-    test('disconnect clears every sync_gdrive_* key', () async {
+    test('disconnect clears every sync_gdrive_* key but keeps the device '
+        'name', () async {
       final auth = FakeCloudAuth();
       await connectGDrive(db, auth);
       await settings.setSyncGdriveFolderId('folder-1');
       await settings.setSyncGdriveLastPushedHash('abc');
+      await settings.setSyncGdriveLastPushedName('reeftracker-auto-x.json');
+      await settings.setSyncGdriveDismissedName('reeftracker-auto-y.json');
       await settings.setSyncGdriveLastPushAt(DateTime(2026, 7, 15));
       await settings.setSyncGdriveLastErrorAt(DateTime(2026, 7, 15));
+      await settings.setSyncDeviceName('Aquarium phone');
 
       await disconnectGDrive(db, auth);
 
@@ -361,8 +417,13 @@ void main() {
       expect(await settings.readSyncGdriveAccount(), isNull);
       expect(await settings.readSyncGdriveFolderId(), isNull);
       expect(await settings.readSyncGdriveLastPushedHash(), isNull);
+      expect(await settings.readSyncGdriveLastPushedName(), isNull);
+      expect(await settings.readSyncGdriveDismissedName(), isNull);
       expect(await db.getSetting(kSyncGdriveLastPushAtKey), isNull);
       expect(await db.getSetting(kSyncGdriveLastErrorAtKey), isNull);
+      // The device's own label survives a disconnect: it names the device,
+      // not the account relationship.
+      expect(await settings.readSyncDeviceName(), 'Aquarium phone');
     });
 
     test(
@@ -375,6 +436,221 @@ void main() {
         expect(await settings.readSyncGdriveAccount(), isNull);
       },
     );
+  });
+
+  group('checkCloudNewerBackup (U35)', () {
+    late AppDatabase writer; // device A — pushes backups
+    late AppDatabase reader; // device B — runs the launch pull-check
+    late FakeCloudBackupStore store;
+
+    setUp(() async {
+      writer = AppDatabase(NativeDatabase.memory());
+      reader = AppDatabase(NativeDatabase.memory());
+      store = FakeCloudBackupStore();
+      await AppSettings(writer).setSyncGdriveAccount('reef@test.dev');
+      await AppSettings(writer).setSyncDeviceName('Aquarium phone');
+      await AppSettings(reader).setSyncGdriveAccount('reef@test.dev');
+    });
+    tearDown(() async {
+      await writer.close();
+      await reader.close();
+    });
+
+    Future<void> seedAndPush() async {
+      await writer.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      expect(
+        await runGDriveSyncIfDirty(writer, store: store),
+        CloudSyncOutcome.pushed,
+      );
+    }
+
+    /// A second, newer push from the writer (a real data change; the small
+    /// delay keeps the millisecond filename stamps strictly ordered).
+    Future<void> pushNewer() async {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await writer.insertReadingGroup(
+        tankId: 1,
+        takenAt: DateTime(2026, 7, 23, 8),
+        note: null,
+        values: const [(paramKey: 'ph', value: 8.1)],
+      );
+      expect(
+        await runGDriveSyncIfDirty(writer, store: store),
+        CloudSyncOutcome.pushed,
+      );
+    }
+
+    test('null when not connected', () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      expect(await checkCloudNewerBackup(db, store: store), isNull);
+    });
+
+    test('null when the cloud folder is empty', () async {
+      expect(await checkCloudNewerBackup(reader, store: store), isNull);
+    });
+
+    test('null when the newest file is this device\'s own push', () async {
+      await seedAndPush();
+      expect(await checkCloudNewerBackup(writer, store: store), isNull);
+    });
+
+    test('offline is quiet (retried next launch)', () async {
+      await seedAndPush();
+      store.offline = true;
+      expect(await checkCloudNewerBackup(reader, store: store), isNull);
+    });
+
+    test('fresh device: proposes the foreign backup as a fast-forward, '
+        'device name straight from the listing metadata', () async {
+      await seedAndPush();
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      expect(proposal, isNotNull);
+      expect(proposal!.diverged, isFalse);
+      expect(proposal.deviceName, 'Aquarium phone');
+      expect(proposal.file.name, store.files.keys.single);
+      // Metadata made the download unnecessary.
+      expect(proposal.contents, isNull);
+    });
+
+    test('diverged when this device also holds data that never synced', () async {
+      await reader.createTankWithPreset(name: 'Nano', type: SetupType.mixed);
+      await seedAndPush();
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      expect(proposal, isNotNull);
+      expect(proposal!.diverged, isTrue);
+    });
+
+    test('a dismissed file stays quiet until an even newer one appears', () async {
+      await seedAndPush();
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      await dismissCloudRestore(reader, proposal!.file.name);
+      expect(await checkCloudNewerBackup(reader, store: store), isNull);
+
+      await pushNewer();
+      final again = await checkCloudNewerBackup(reader, store: store);
+      expect(again, isNotNull);
+      expect(again!.file.name, isNot(proposal.file.name));
+    });
+
+    test('content identical to local data is adopted silently (no proposal, '
+        'lineage backfilled)', () async {
+      await seedAndPush();
+      // The reader independently holds the exact same aquarium data (e.g. it
+      // imported the same backup file by hand).
+      final doc = utf8.decode(store.files.values.single);
+      await importBackup(reader, decodeBackup(doc));
+
+      expect(await checkCloudNewerBackup(reader, store: store), isNull);
+      final readerSettings = AppSettings(reader);
+      expect(
+        await readerSettings.readSyncGdriveLastPushedName(),
+        store.files.keys.single,
+      );
+      // Dirty gate settled too: the adopted state is not re-uploaded.
+      expect(
+        await runGDriveSyncIfDirty(reader, store: store),
+        CloudSyncOutcome.skippedClean,
+      );
+    });
+
+    test('pre-metadata upload: identified by downloading once, device name '
+        'read from the document body', () async {
+      await writer.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      final json = await encodeBackupFromDb(writer);
+      // Seeded directly — no appProperties, like an upload from an older app.
+      store.files['reeftracker-auto-20260723-000000-000.json'] = utf8.encode(
+        json,
+      );
+
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      expect(proposal, isNotNull);
+      expect(proposal!.contents, isNotNull);
+      expect(proposal.deviceName, 'Aquarium phone');
+    });
+
+    test('an own pre-name upload is recognized by hash and the filename '
+        'backfilled', () async {
+      await seedAndPush();
+      final writerSettings = AppSettings(writer);
+      // Simulate a device that pushed before filenames were recorded.
+      await writerSettings.setSyncGdriveLastPushedName(null);
+
+      expect(await checkCloudNewerBackup(writer, store: store), isNull);
+      expect(
+        await writerSettings.readSyncGdriveLastPushedName(),
+        store.files.keys.single,
+      );
+    });
+  });
+
+  group('restoreCloudBackup (U35)', () {
+    late AppDatabase writer;
+    late AppDatabase reader;
+    late FakeCloudBackupStore store;
+
+    setUp(() async {
+      writer = AppDatabase(NativeDatabase.memory());
+      reader = AppDatabase(NativeDatabase.memory());
+      store = FakeCloudBackupStore();
+      await AppSettings(writer).setSyncGdriveAccount('reef@test.dev');
+      await AppSettings(reader).setSyncGdriveAccount('reef@test.dev');
+      await writer.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      expect(
+        await runGDriveSyncIfDirty(writer, store: store),
+        CloudSyncOutcome.pushed,
+      );
+    });
+    tearDown(() async {
+      await writer.close();
+      await reader.close();
+    });
+
+    test('diverged device: safety backup first, data replaced, echo '
+        'suppressed, dismissal cleared', () async {
+      await reader.createTankWithPreset(name: 'Nano', type: SetupType.mixed);
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      expect(proposal!.diverged, isTrue);
+      // A prior "not now" must not survive an actual restore.
+      await dismissCloudRestore(reader, proposal.file.name);
+
+      await restoreCloudBackup(
+        reader,
+        store: store,
+        file: proposal.file,
+        contents: proposal.contents,
+      );
+
+      // The cloud data replaced the local set…
+      expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
+      // …but a local safety copy of the pre-restore data was written first.
+      final safety = await listAutoBackups();
+      expect(safety, hasLength(1));
+      final saved = decodeBackup(await safety.single.readAsString());
+      expect(saved.tanks.single.name.value, 'Nano');
+      // Echo suppression: the restored state is neither re-uploaded nor
+      // re-proposed, and the dismissal marker is gone.
+      expect(
+        await runGDriveSyncIfDirty(reader, store: store),
+        CloudSyncOutcome.skippedClean,
+      );
+      expect(await checkCloudNewerBackup(reader, store: store), isNull);
+      expect(
+        await AppSettings(reader).readSyncGdriveDismissedName(),
+        isNull,
+      );
+    });
+
+    test('empty device (onboarding): restores without writing a pointless '
+        'safety backup', () async {
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      expect(proposal!.diverged, isFalse);
+
+      await restoreCloudBackup(reader, store: store, file: proposal.file);
+
+      expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
+      expect(await listAutoBackups(), isEmpty);
+    });
   });
 }
 

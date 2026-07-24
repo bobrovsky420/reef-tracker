@@ -1076,6 +1076,41 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get syncDeviceNameTitle => 'Nazwa urządzenia';
+
+  @override
+  String get syncDeviceNameBody =>
+      'Wyświetlana przy kopiach zapasowych przesyłanych z tego urządzenia, aby można było odróżnić swoje urządzenia.';
+
+  @override
+  String get syncDeviceNameHint => 'np. Mój telefon';
+
+  @override
+  String get syncDeviceNameAction => 'Nazwa urządzenia…';
+
+  @override
+  String get syncRestoreTitle => 'Znaleziono nowszą kopię zapasową';
+
+  @override
+  String syncRestoreBody(String device, String when) {
+    return 'Na Twoim Dysku Google jest nowsza kopia zapasowa z urządzenia „$device” ($when). Przywrócić ją na tym urządzeniu? Ustawienia tego urządzenia zostaną zachowane.';
+  }
+
+  @override
+  String syncRestoreDivergedBody(String device, String when) {
+    return 'Na Twoim Dysku Google jest nowsza kopia zapasowa z urządzenia „$device” ($when), ale to urządzenie ma też zmiany, które nie zostały przesłane. Przywrócenie zastąpi dane tego urządzenia kopią zapasową — najpierw zostanie zapisana lokalna kopia bezpieczeństwa.';
+  }
+
+  @override
+  String get syncRestoreUnknownDevice => 'inne urządzenie';
+
+  @override
+  String get syncRestoreNotNow => 'Nie teraz';
+
+  @override
+  String get syncRestoreKeepMine => 'Zachowaj dane tego urządzenia';
+
+  @override
   String get backupsLocalSection => 'Na tym urządzeniu';
 
   @override

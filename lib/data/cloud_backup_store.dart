@@ -28,8 +28,17 @@ abstract interface class CloudBackupStore {
   /// than buffering them whole in memory.
   Future<List<int>> read(String fileId);
 
-  /// Uploads [bytes] as a new file [name] inside [folderId].
-  Future<void> write(String folderId, String name, List<int> bytes);
+  /// Uploads [bytes] as a new file [name] inside [folderId]. [metadata] is a
+  /// small string map attached to the file where the provider supports it
+  /// (Drive `appProperties`) and surfaced back by [list] — callers must treat
+  /// it as advisory (a provider without metadata support simply drops it, and
+  /// files written by older app versions or by hand never have any).
+  Future<void> write(
+    String folderId,
+    String name,
+    List<int> bytes, {
+    Map<String, String> metadata = const {},
+  });
 
   /// Permanently deletes [fileId].
   Future<void> delete(String fileId);
@@ -44,6 +53,13 @@ abstract interface class CloudBackupStore {
 /// attempting the download.
 const kCloudBackupMaxBytes = 64 * 1024 * 1024;
 
+/// Metadata keys the sync engine attaches to uploads (U35): the name of the
+/// writing device and the document's [backupContentHash] — enough for the
+/// launch restore check and the Manage-backups list to reason about a cloud
+/// file without downloading it.
+const kCloudMetaDevice = 'device';
+const kCloudMetaContentHash = 'contentHash';
+
 /// One remote backup file, as much metadata as the list call returns.
 class CloudBackupFile {
   const CloudBackupFile({
@@ -51,12 +67,18 @@ class CloudBackupFile {
     required this.name,
     this.modifiedAt,
     this.sizeBytes,
+    this.metadata = const {},
   });
 
   final String id;
   final String name;
   final DateTime? modifiedAt;
   final int? sizeBytes;
+
+  /// The advisory string map attached at [CloudBackupStore.write] time (see
+  /// [kCloudMetaDevice]/[kCloudMetaContentHash]); empty for files written by
+  /// older app versions, by hand, or by a provider without metadata support.
+  final Map<String, String> metadata;
 }
 
 /// A cloud provider rejected an API call. Distinguished from network-level
@@ -168,7 +190,7 @@ class DriveBackupStore implements CloudBackupStore {
               'GET',
               Uri.parse(
                 '$_api/files?q=${Uri.encodeQueryComponent(q)}'
-                '&fields=files(id,name,modifiedTime,size)'
+                '&fields=files(id,name,modifiedTime,size,appProperties)'
                 '&orderBy=name desc&pageSize=100',
               ),
             )
@@ -182,6 +204,15 @@ class DriveBackupStore implements CloudBackupStore {
           name: f['name'] as String? ?? '',
           modifiedAt: DateTime.tryParse(f['modifiedTime'] as String? ?? ''),
           sizeBytes: int.tryParse(f['size'] as String? ?? ''),
+          metadata: switch (f['appProperties']) {
+            // Defensive cast: the folder is user-writable, so a foreign file
+            // could carry non-string property values.
+            final Map<String, dynamic> props => {
+              for (final e in props.entries)
+                if (e.value is String) e.key: e.value as String,
+            },
+            _ => const {},
+          },
         ),
     ];
   }
@@ -191,20 +222,27 @@ class DriveBackupStore implements CloudBackupStore {
       _request('GET', Uri.parse('$_api/files/$fileId?alt=media'));
 
   @override
-  Future<void> write(String folderId, String name, List<int> bytes) async {
-    // Multipart upload: part 1 = file metadata (name + parent folder),
-    // part 2 = content. Backup JSON is well under the 5 MB multipart limit's
-    // practical concerns; no resumable-upload machinery needed.
+  Future<void> write(
+    String folderId,
+    String name,
+    List<int> bytes, {
+    Map<String, String> metadata = const {},
+  }) async {
+    // Multipart upload: part 1 = file metadata (name + parent folder +
+    // optional appProperties), part 2 = content. Backup JSON is well under
+    // the 5 MB multipart limit's practical concerns; no resumable-upload
+    // machinery needed.
     const boundary = 'reeftracker_backup_boundary';
-    final metadata = jsonEncode({
+    final fileMeta = jsonEncode({
       'name': name,
       'parents': [folderId],
+      if (metadata.isNotEmpty) 'appProperties': metadata,
     });
     final body = <int>[
       ...utf8.encode(
         '--$boundary\r\n'
         'Content-Type: application/json; charset=utf-8\r\n\r\n'
-        '$metadata\r\n'
+        '$fileMeta\r\n'
         '--$boundary\r\n'
         'Content-Type: application/json; charset=utf-8\r\n\r\n',
       ),

@@ -54,6 +54,14 @@ const kSyncGdriveFolderIdKey = 'sync_gdrive_folder_id';
 const kSyncGdriveLastPushedHashKey = 'sync_gdrive_last_pushed_hash';
 const kSyncGdriveLastPushAtKey = 'sync_gdrive_last_push_at';
 const kSyncGdriveLastErrorAtKey = 'sync_gdrive_last_error_at';
+// Multi-device via cloud backups (U35): the filename of the last document
+// this device pushed to — or restored from — the cloud (the cheap "is the
+// newest cloud file ours?" lineage check), the newest foreign filename the
+// user declined to restore (so the launch prompt doesn't nag every start),
+// and the user-chosen name identifying this device on its uploads.
+const kSyncGdriveLastPushedNameKey = 'sync_gdrive_last_pushed_name';
+const kSyncGdriveDismissedNameKey = 'sync_gdrive_dismissed_name';
+const kSyncDeviceNameKey = 'sync_device_name';
 // Random id identifying the install that wrote this database (#62); paired
 // with the backup-excluded `.install_id` file — see `install_id.dart`.
 const kInstallFingerprintKey = 'install_fingerprint';

@@ -356,11 +356,19 @@ unverified, and `kBackupVersion` stays 1 so older apps can import new files
 (they ignore the extra key).
 
 Distinct from the checksum, `backupContentHash` (U24) is the cloud-sync
-**dirty gate**: sha256 of the document with `exportedAt`, `checksum`, and the
-**entire `settings` section** stripped (decode–strip–re-encode), so two
-backups of the same aquarium data hash identically even though every encode
-stamps a fresh `exportedAt` and settings carry per-device stamps. Equal hash ⇒
-nothing to upload (see Google Drive sync below).
+**dirty gate**: sha256 of the document with `exportedAt`, `device`,
+`checksum`, and the **entire `settings` section** stripped
+(decode–strip–re-encode), so two backups of the same aquarium data hash
+identically even though every encode stamps a fresh `exportedAt` and settings
+carry per-device stamps. Equal hash ⇒ nothing to upload (see Google Drive
+sync below).
+
+The optional top-level `device` field (U35) records which device wrote the
+document — `encodeBackupFromDb` stamps the user-chosen `sync_device_name`;
+`backupDeviceName` reads it tolerantly for display. It is provenance only:
+excluded from the content hash (or restoring device A's backup on device B
+would make B's next encode look dirty), ignored by older apps
+(`kBackupVersion` stays 1), and never gates a restore.
 
 `exportBackup` writes a timestamped file to a temp dir and hands it to the OS
 share sheet via the shared `shareExportFile` helper (`export_share.dart`),
@@ -565,7 +573,7 @@ Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 `autoBackupIntervalProvider`, `lastBackupAtProvider`,
 `lastBackupErrorAtProvider`.
 
-### Google Drive backup sync (U24) — `cloud_sync.dart`, `cloud_backup_store.dart`, `cloud_auth.dart`/`cloud_auth_google.dart`
+### Google Drive backup sync (U24) + multi-device restore (U35) — `cloud_sync.dart`, `cloud_backup_store.dart`, `cloud_auth.dart`/`cloud_auth_google.dart`
 
 **Android-only by decision** (iOS will get a separate proprietary solution;
 the plugin compiles into the iOS app but is never invoked or configured
@@ -587,7 +595,12 @@ Layers, all injected and plugin-free below the adapter:
   over opaque provider ids, provider-neutral so OneDrive can slot in later;
   in-memory `FakeCloudBackupStore` in `test/fakes/`. Errors are typed:
   `CloudApiException` (HTTP 4xx/5xx, `isAuthError` for 401/403) vs.
-  `dart:io` `IOException` = offline.
+  `dart:io` `IOException` = offline. `write` takes an **advisory metadata
+  map** (U35: `kCloudMetaDevice` + `kCloudMetaContentHash`) that `list`
+  surfaces back on `CloudBackupFile.metadata` — Drive stores it as
+  `appProperties`, so the pull-check and the Manage-backups tiles can
+  identify a file without downloading it; a provider (or an old upload)
+  without it degrades to the download path.
 - **`DriveBackupStore`**: plain REST over `dart:io` `HttpClient` — four
   endpoints (`files.list` with a `q` filter, multipart `files.create`,
   `files.get?alt=media`, `files.delete`); no `googleapis` package. Takes a
@@ -634,14 +647,47 @@ Layers, all injected and plugin-free below the adapter:
   surfaced as a persistent error row in Settings). Outcomes are reported as
   `CloudSyncOutcome` for tests/UI.
 - **Echo suppression**: restoring *from* Drive records the downloaded
-  document's content hash as already-pushed (`recordRestoredCloudBackup`), so
-  the next launch doesn't re-upload what was just downloaded.
+  document's content hash — and filename — as already-pushed
+  (`recordRestoredCloudBackup`), so the next launch neither re-uploads what
+  was just downloaded nor re-proposes it as foreign; it also clears the
+  dismissed-file marker. The push path symmetrically stamps
+  `sync_gdrive_last_pushed_name` alongside the hash and attaches the
+  device/hash metadata to the upload.
+- **Multi-device restore (U35), `checkCloudNewerBackup`**: the launch
+  pull-check. Freshness is decided by **lineage, never clocks**: newest
+  cloud file's name == `sync_gdrive_last_pushed_name` ⇒ ours, done (the
+  common case — one `files.list`, no download, no local encode). A foreign
+  newest file is identified via its `contentHash` metadata (or one download
+  + hash for pre-metadata uploads, after which the name/hash stamps settle
+  later launches); content equal to the last-pushed hash or to the current
+  local hash is adopted silently (stamps backfilled). Otherwise a
+  `CloudRestoreProposal` is returned — `diverged` = this device also holds
+  changes that never synced (current hash ≠ last pushed, or data with no
+  lineage at all), which decides between the **fast-forward** prompt
+  ("Restore?") and the **diverged** prompt (adds an explicit "Keep this
+  device's data" that pushes local data as the newest cloud file). Declining
+  records `sync_gdrive_dismissed_name` — quiet until an even newer foreign
+  file appears; prompt suppression only, pushes keep their normal rules.
+  Never throws (offline/dead grant/garbage file ⇒ null, retry next launch;
+  this read path never stamps the error key). `main.dart` runs it **before**
+  the launch push (a stale-but-dirty device pushing first would bury the
+  newer file), launch-only (not on resume), and parks the push for the
+  session's first cycle while a proposal is on screen. On a fresh install
+  the same flow doubles as new-device onboarding (empty local data ⇒ plain
+  fast-forward). `restoreCloudBackup` is the shared accept path (also used
+  by the Manage-backups Drive tiles): local safety backup via `backupNow`
+  first when any data exists (a failed safety write aborts the restore),
+  then the three-stage `importBackup` pipeline, then echo suppression.
 
 Settings keys — **fresh names, deliberately not U20's orphaned
 `cloud_sync_*`** — all device-local (sync identity must not ride backups):
 `sync_gdrive_account` (presence = enabled; there is no separate toggle),
 `sync_gdrive_folder_id`, `sync_gdrive_last_pushed_hash`,
-`sync_gdrive_last_push_at`, `sync_gdrive_last_error_at`. Providers:
+`sync_gdrive_last_push_at`, `sync_gdrive_last_error_at`; plus U35's
+`sync_gdrive_last_pushed_name`, `sync_gdrive_dismissed_name`, and
+`sync_device_name` (the user-chosen device label; survives disconnect, and
+travels only *inside* backup documents as the top-level `device` field —
+restoring another device's backup never renames this one). Providers:
 `syncGdriveAccountProvider`, `syncGdriveLastPushAtProvider`,
 `syncGdriveLastErrorAtProvider`.
 
@@ -669,10 +715,12 @@ action only per U19's "limits gate creation, never access"; when connected:
 account + last-upload status, tap → dialog with Disconnect, which keeps the
 cloud files)
 plus the persistent upload-error row; the **Manage backups** screen gains an
-"On this device" / "Google Drive" split when connected — Drive tiles offer
-restore (download → the same 3-stage `importBackup` pipeline → echo
-suppression) and delete, and a section-level unavailable row when listing
-fails (local backups stay usable).
+"On this device" / "Google Drive" split when connected — Drive tiles show
+the writing device's name from the listing metadata (U35) and offer restore
+(the shared `restoreCloudBackup` path: local safety backup → download → the
+same 3-stage `importBackup` pipeline → echo suppression) and delete, and a
+section-level unavailable row when listing fails (local backups stay
+usable).
 
 Platform config: `INTERNET` permission in the main Android manifest (the
 app's only network use; debug/profile carry it implicitly for hot reload).
@@ -2568,7 +2616,9 @@ measurements are kept); **Tools** (link to the salinity calculator);
 **Automatic backup** toggle + frequency, a link to the **Manage backups**
 screen (see Data → Automatic backup), the **Google Drive sync** row +
 persistent upload-error row (U24 — see Data → Google Drive backup sync;
-connect is Pro-gated via `ProFeature.driveSync`), and the **Measurement
+connect is Pro-gated via `ProFeature.driveSync`; the connect flow ends in
+the **device name** dialog (U35), also reachable from the connected row's
+options dialog), and the **Measurement
 import** row (U32 — pushes `/settings/import`; hidden until a tank has
 imported, i.e. `importSourcesProvider` is non-empty). The **About** section holds the
 aquarium count, Replay tour, three **website link rows** (user guide, support

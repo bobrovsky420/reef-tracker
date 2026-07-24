@@ -1068,6 +1068,41 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get syncDeviceNameTitle => 'Název zařízení';
+
+  @override
+  String get syncDeviceNameBody =>
+      'Zobrazuje se u záloh nahraných z tohoto zařízení, abyste svá zařízení od sebe rozlišili.';
+
+  @override
+  String get syncDeviceNameHint => 'např. Můj telefon';
+
+  @override
+  String get syncDeviceNameAction => 'Název zařízení…';
+
+  @override
+  String get syncRestoreTitle => 'Nalezena novější záloha';
+
+  @override
+  String syncRestoreBody(String device, String when) {
+    return 'Na vašem Google Disku je novější záloha ze zařízení „$device“ ($when). Obnovit ji do tohoto zařízení? Nastavení tohoto zařízení zůstanou zachována.';
+  }
+
+  @override
+  String syncRestoreDivergedBody(String device, String when) {
+    return 'Na vašem Google Disku je novější záloha ze zařízení „$device“ ($when), toto zařízení ale obsahuje i změny, které nebyly nahrány. Obnovením se data tohoto zařízení nahradí zálohou — nejdříve se uloží místní záložní kopie.';
+  }
+
+  @override
+  String get syncRestoreUnknownDevice => 'jiné zařízení';
+
+  @override
+  String get syncRestoreNotNow => 'Teď ne';
+
+  @override
+  String get syncRestoreKeepMine => 'Ponechat data tohoto zařízení';
+
+  @override
   String get backupsLocalSection => 'V tomto zařízení';
 
   @override

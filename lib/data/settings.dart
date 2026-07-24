@@ -227,6 +227,15 @@ enum SettingKey {
   syncGdriveLastPushedHash(kSyncGdriveLastPushedHashKey, deviceLocal: true),
   syncGdriveLastPushAt(kSyncGdriveLastPushAtKey, deviceLocal: true),
   syncGdriveLastErrorAt(kSyncGdriveLastErrorAtKey, deviceLocal: true),
+  // Multi-device restore bookkeeping (U35) — device-local like the rest of
+  // the sync identity: the pushed/dismissed filenames describe *this*
+  // device's relationship to the cloud folder, and the device name is by
+  // definition this device's own label (restoring another device's backup
+  // must not rename this one — the originating name travels inside the
+  // backup document's top-level `device` field instead).
+  syncGdriveLastPushedName(kSyncGdriveLastPushedNameKey, deviceLocal: true),
+  syncGdriveDismissedName(kSyncGdriveDismissedNameKey, deviceLocal: true),
+  syncDeviceName(kSyncDeviceNameKey, deviceLocal: true),
   // Random id of the install that wrote this database (#62). Device-local:
   // the app's own JSON restore must keep *this* device's fingerprint, exactly
   // like the sync identity it protects. The OS-level restore channel copies
@@ -671,6 +680,35 @@ class AppSettings {
     SettingKey.syncGdriveLastPushAt,
     when?.millisecondsSinceEpoch.toString(),
   );
+
+  /// Filename of the last document this device pushed to — or restored
+  /// from — the cloud (U35). The launch restore check compares it against the
+  /// newest cloud filename: equal means the cloud state is this device's own
+  /// and there is nothing to propose.
+  Future<String?> readSyncGdriveLastPushedName() =>
+      _read(SettingKey.syncGdriveLastPushedName);
+  Future<void> setSyncGdriveLastPushedName(String? name) =>
+      _write(SettingKey.syncGdriveLastPushedName, name);
+
+  /// The newest foreign cloud filename the user declined to restore (U35) —
+  /// the launch prompt stays quiet until an even newer foreign file appears.
+  /// Cleared by a completed cloud restore.
+  Future<String?> readSyncGdriveDismissedName() =>
+      _read(SettingKey.syncGdriveDismissedName);
+  Future<void> setSyncGdriveDismissedName(String? name) =>
+      _write(SettingKey.syncGdriveDismissedName, name);
+
+  /// The user-chosen name identifying this device on its backup uploads
+  /// (U35), or null when none was set. Asked for during the Drive connect
+  /// flow; stamped into every backup document this device encodes.
+  static String? decodeSyncDeviceName(String? raw) =>
+      (raw == null || raw.trim().isEmpty) ? null : raw.trim();
+  Stream<String?> watchSyncDeviceName() =>
+      _watch(SettingKey.syncDeviceName).map(decodeSyncDeviceName);
+  Future<String?> readSyncDeviceName() async =>
+      decodeSyncDeviceName(await _read(SettingKey.syncDeviceName));
+  Future<void> setSyncDeviceName(String? name) =>
+      _write(SettingKey.syncDeviceName, name);
 
   /// When the most recent push attempt failed (provider rejection or dead
   /// grant — being offline is not recorded), or null if the latest attempt

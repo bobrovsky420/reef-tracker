@@ -1068,6 +1068,41 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get syncDeviceNameTitle => 'Nom de l\'appareil';
+
+  @override
+  String get syncDeviceNameBody =>
+      'Affiché avec les sauvegardes envoyées depuis cet appareil, pour distinguer vos appareils.';
+
+  @override
+  String get syncDeviceNameHint => 'p. ex. Mon téléphone';
+
+  @override
+  String get syncDeviceNameAction => 'Nom de l\'appareil…';
+
+  @override
+  String get syncRestoreTitle => 'Sauvegarde plus récente trouvée';
+
+  @override
+  String syncRestoreBody(String device, String when) {
+    return 'Une sauvegarde plus récente de « $device » ($when) se trouve dans votre Google Drive. La restaurer sur cet appareil ? Les réglages de cet appareil sont conservés.';
+  }
+
+  @override
+  String syncRestoreDivergedBody(String device, String when) {
+    return 'Une sauvegarde plus récente de « $device » ($when) se trouve dans votre Google Drive, mais cet appareil contient aussi des modifications qui n\'ont jamais été envoyées. La restauration remplace les données de cet appareil par la sauvegarde — une copie de sécurité locale est d\'abord enregistrée.';
+  }
+
+  @override
+  String get syncRestoreUnknownDevice => 'un autre appareil';
+
+  @override
+  String get syncRestoreNotNow => 'Plus tard';
+
+  @override
+  String get syncRestoreKeepMine => 'Garder les données de cet appareil';
+
+  @override
   String get backupsLocalSection => 'Sur cet appareil';
 
   @override

@@ -637,8 +637,10 @@ class SettingsBody extends ConsumerWidget {
   }
 
   /// Interactive Drive connect (U24): system account picker + consent sheet,
-  /// then an immediate first push — the user just asked for cloud backups,
-  /// so don't make them wait for the next launch.
+  /// then the device-name prompt (U35 — the name rides every backup this
+  /// device uploads, so ask while the user is already in sync-setup mode) and
+  /// an immediate first push — the user just asked for cloud backups, so
+  /// don't make them wait for the next launch.
   Future<void> _connectGdrive(
     BuildContext context,
     WidgetRef ref,
@@ -649,6 +651,7 @@ class SettingsBody extends ConsumerWidget {
     try {
       final account = await connectGDrive(db, ref.read(cloudAuthProvider));
       if (account == null) return; // Cancelled the picker/consent — no noise.
+      if (context.mounted) await _editDeviceName(context, ref, l);
       messenger.showSnackBar(
         SnackBar(content: Text(l.syncGdriveConnectedSnack(account.email))),
       );
@@ -662,6 +665,56 @@ class SettingsBody extends ConsumerWidget {
     }
   }
 
+  /// Edits the device name stamped onto this device's uploads (U35).
+  /// Cancelling keeps the current name; saving an empty field clears it.
+  Future<void> _editDeviceName(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final settings = ref.read(settingsProvider);
+    final current = await settings.readSyncDeviceName();
+    if (!context.mounted) return;
+    // Deliberately never disposed: the dialog's exit animation still paints
+    // the TextField after showDialog returns, so an eager dispose here blows
+    // assertions mid-transition; an unreferenced controller is simply GC'd.
+    final controller = TextEditingController(text: current ?? '');
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.smartphone_outlined),
+        title: Text(l.syncDeviceNameTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.syncDeviceNameBody),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              maxLength: 40,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(hintText: l.syncDeviceNameHint),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(l.save),
+          ),
+        ],
+      ),
+    );
+    if (name == null) return;
+    await settings.setSyncDeviceName(name.trim().isEmpty ? null : name.trim());
+  }
+
   Future<void> _gdriveOptions(
     BuildContext context,
     WidgetRef ref,
@@ -670,7 +723,7 @@ class SettingsBody extends ConsumerWidget {
   ) async {
     final messenger = ScaffoldMessenger.of(context);
     final db = ref.read(dbProvider);
-    final disconnect = await showDialog<bool>(
+    final action = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.add_to_drive),
@@ -678,21 +731,29 @@ class SettingsBody extends ConsumerWidget {
         content: Text(l.syncGdriveDialogBody(account)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => Navigator.pop(ctx, 'rename'),
+            child: Text(l.syncDeviceNameAction),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'disconnect'),
             child: Text(l.syncGdriveDisconnect),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => Navigator.pop(ctx),
             child: Text(MaterialLocalizations.of(ctx).okButtonLabel),
           ),
         ],
       ),
     );
-    if (disconnect != true) return;
-    await disconnectGDrive(db, ref.read(cloudAuthProvider));
-    messenger.showSnackBar(
-      SnackBar(content: Text(l.syncGdriveDisconnectedSnack)),
-    );
+    switch (action) {
+      case 'rename':
+        if (context.mounted) await _editDeviceName(context, ref, l);
+      case 'disconnect':
+        await disconnectGDrive(db, ref.read(cloudAuthProvider));
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.syncGdriveDisconnectedSnack)),
+        );
+    }
   }
 
   Future<void> _export(

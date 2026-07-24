@@ -1074,6 +1074,41 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get syncDeviceNameTitle => 'Название устройства';
+
+  @override
+  String get syncDeviceNameBody =>
+      'Отображается у резервных копий, загруженных с этого устройства, чтобы различать ваши устройства.';
+
+  @override
+  String get syncDeviceNameHint => 'например, Мой телефон';
+
+  @override
+  String get syncDeviceNameAction => 'Название устройства…';
+
+  @override
+  String get syncRestoreTitle => 'Найдена более новая резервная копия';
+
+  @override
+  String syncRestoreBody(String device, String when) {
+    return 'На вашем Google Диске есть более новая резервная копия с устройства «$device» ($when). Восстановить её на этом устройстве? Настройки этого устройства сохранятся.';
+  }
+
+  @override
+  String syncRestoreDivergedBody(String device, String when) {
+    return 'На вашем Google Диске есть более новая резервная копия с устройства «$device» ($when), но на этом устройстве тоже есть изменения, которые не были загружены. Восстановление заменит данные этого устройства резервной копией — сначала будет сохранена локальная резервная копия.';
+  }
+
+  @override
+  String get syncRestoreUnknownDevice => 'другое устройство';
+
+  @override
+  String get syncRestoreNotNow => 'Не сейчас';
+
+  @override
+  String get syncRestoreKeepMine => 'Оставить данные этого устройства';
+
+  @override
   String get backupsLocalSection => 'На этом устройстве';
 
   @override

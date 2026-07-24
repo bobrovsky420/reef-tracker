@@ -99,16 +99,27 @@ void main() {
     }
   });
 
-  testWidgets('founder install: the tap connects (grandfathered) and the row '
-      'shows the account', (tester) async {
+  testWidgets('founder install: the tap connects (grandfathered), asks for a '
+      'device name (U35), and the row shows the account', (tester) async {
     try {
       final db = await pumpSettings(tester);
       await tester.tap(find.text('Google Drive sync'));
       await settle(tester);
 
       expect(await AppSettings(db).readSyncGdriveAccount(), 'reef@test.dev');
-      expect(find.textContaining('reef@test.dev'), findsWidgets);
       expect(find.text('Pro feature'), findsNothing);
+
+      // The device-name dialog follows the successful connect.
+      expect(find.text('Device name'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Living room tablet');
+      await tester.tap(find.text('Save'));
+      await settle(tester);
+
+      expect(
+        await AppSettings(db).readSyncDeviceName(),
+        'Living room tablet',
+      );
+      expect(find.textContaining('reef@test.dev'), findsWidgets);
     } finally {
       await unmountApp(tester);
     }

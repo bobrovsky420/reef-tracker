@@ -500,6 +500,38 @@
     "description": "Warning row in Settings while the most recent Drive upload attempt failed (being offline doesn't count); cleared by the next successful upload.",
     "placeholders": { "when": { "type": "String", "example": "Jul 15, 2026, 8:30 AM" } }
   },
+  "syncDeviceNameTitle": "Device name",
+  "@syncDeviceNameTitle": { "description": "Title of the dialog naming this device for cloud backups (U35); shown right after connecting Google Drive and from the sync options dialog." },
+  "syncDeviceNameBody": "Shown with the backups this device uploads, so you can tell your devices apart.",
+  "@syncDeviceNameBody": { "description": "Explanatory text in the device-name dialog." },
+  "syncDeviceNameHint": "e.g. My phone",
+  "@syncDeviceNameHint": { "description": "Hint inside the device-name text field." },
+  "syncDeviceNameAction": "Device name…",
+  "@syncDeviceNameAction": { "description": "Action in the connected Google Drive dialog that opens the device-name editor." },
+  "syncRestoreTitle": "Newer backup found",
+  "@syncRestoreTitle": { "description": "Title of the launch dialog proposing to restore a newer cloud backup another device uploaded (U35)." },
+  "syncRestoreBody": "A newer backup from “{device}” ({when}) is in your Google Drive. Restore it to this device? Your settings on this device are kept.",
+  "@syncRestoreBody": {
+    "description": "Body of the restore proposal when this device has no unsynced changes (safe fast-forward).",
+    "placeholders": {
+      "device": { "type": "String", "example": "Sasha's phone" },
+      "when": { "type": "String", "example": "Jul 23, 2026, 9:14 PM" }
+    }
+  },
+  "syncRestoreDivergedBody": "A newer backup from “{device}” ({when}) is in your Google Drive, but this device also has changes that were never uploaded. Restoring replaces this device's data with the backup — a local safety copy is saved first.",
+  "@syncRestoreDivergedBody": {
+    "description": "Body of the restore proposal when this device ALSO holds changes that never reached the cloud — restoring would discard them, so the dialog offers an explicit keep-mine choice too.",
+    "placeholders": {
+      "device": { "type": "String", "example": "Sasha's phone" },
+      "when": { "type": "String", "example": "Jul 23, 2026, 9:14 PM" }
+    }
+  },
+  "syncRestoreUnknownDevice": "another device",
+  "@syncRestoreUnknownDevice": { "description": "Placeholder device name in the restore proposal when the backup doesn't say which device wrote it." },
+  "syncRestoreNotNow": "Not now",
+  "@syncRestoreNotNow": { "description": "Restore-proposal action that declines; the dialog stays quiet until an even newer cloud backup appears." },
+  "syncRestoreKeepMine": "Keep this device's data",
+  "@syncRestoreKeepMine": { "description": "Restore-proposal action (diverged case only) that keeps the local data and uploads it as the newest cloud backup instead." },
   "backupsLocalSection": "On this device",
   "@backupsLocalSection": { "description": "Section header for the local backups list in Manage backups; only shown when the Google Drive section is present too." },
   "backupsDriveSection": "Google Drive",

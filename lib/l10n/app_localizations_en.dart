@@ -1063,6 +1063,41 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get syncDeviceNameTitle => 'Device name';
+
+  @override
+  String get syncDeviceNameBody =>
+      'Shown with the backups this device uploads, so you can tell your devices apart.';
+
+  @override
+  String get syncDeviceNameHint => 'e.g. My phone';
+
+  @override
+  String get syncDeviceNameAction => 'Device name…';
+
+  @override
+  String get syncRestoreTitle => 'Newer backup found';
+
+  @override
+  String syncRestoreBody(String device, String when) {
+    return 'A newer backup from “$device” ($when) is in your Google Drive. Restore it to this device? Your settings on this device are kept.';
+  }
+
+  @override
+  String syncRestoreDivergedBody(String device, String when) {
+    return 'A newer backup from “$device” ($when) is in your Google Drive, but this device also has changes that were never uploaded. Restoring replaces this device\'s data with the backup — a local safety copy is saved first.';
+  }
+
+  @override
+  String get syncRestoreUnknownDevice => 'another device';
+
+  @override
+  String get syncRestoreNotNow => 'Not now';
+
+  @override
+  String get syncRestoreKeepMine => 'Keep this device\'s data';
+
+  @override
   String get backupsLocalSection => 'On this device';
 
   @override

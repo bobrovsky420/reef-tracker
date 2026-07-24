@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -209,6 +208,13 @@ class _DriveBackupRow extends ConsumerWidget {
     // the listing already shows as over-size becomes an error tile — no
     // restore action that could only fail; delete stays available.
     final tooLarge = (file.sizeBytes ?? 0) > kCloudBackupMaxBytes;
+    // Which device uploaded the file (U35) — advisory metadata, absent on
+    // files from app versions predating device names.
+    final device = file.metadata[kCloudMetaDevice];
+    final subParts = [
+      if (file.sizeBytes != null) _formatSize(l, file.sizeBytes!),
+      ?device,
+    ];
     return ReefSettingsRow(
       icon: tooLarge ? Icons.cloud_off : Icons.cloud_outlined,
       iconColor: tooLarge ? Theme.of(context).colorScheme.error : null,
@@ -219,9 +225,9 @@ class _DriveBackupRow extends ConsumerWidget {
           : file.name,
       description: tooLarge
           ? l.backupsDriveTooLarge(_formatSize(l, file.sizeBytes!))
-          : file.sizeBytes != null
-          ? _formatSize(l, file.sizeBytes!)
-          : null,
+          : subParts.isEmpty
+          ? null
+          : subParts.join(' · '),
       descriptionStyle: tooLarge
           ? _sizeStyle(
               context,
@@ -269,15 +275,14 @@ class _DriveBackupRow extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      final bytes = await ref.read(cloudBackupStoreProvider).read(file.id);
-      final contents = utf8.decode(bytes);
-      // Decode in a worker isolate (T5), same as the local restore path.
-      final data = await Isolate.run(() => decodeBackup(contents));
-      final db = ref.read(dbProvider);
-      await importBackup(db, data);
-      // Echo suppression: the restored data must not be re-uploaded as
-      // "dirty" on the next launch — it came FROM the cloud.
-      await recordRestoredCloudBackup(db, contents);
+      // Shared U35 restore path: local safety backup first, the three-stage
+      // import pipeline, then echo suppression (the restored data must not be
+      // re-uploaded as "dirty" — it came FROM the cloud).
+      await restoreCloudBackup(
+        ref.read(dbProvider),
+        store: ref.read(cloudBackupStoreProvider),
+        file: file,
+      );
       if (context.mounted) _snack(context, l.backupRestored);
     } on InvalidBackupException catch (e) {
       if (context.mounted) _snack(context, l.backupRejection(e.reason));

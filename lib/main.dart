@@ -11,10 +11,13 @@ import 'app/providers.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
 import 'data/auto_backup.dart';
+import 'data/backup.dart' show InvalidBackupException;
 import 'data/cloud_sync.dart';
+import 'data/database.dart';
 import 'data/install_id.dart';
 import 'data/reminder_scheduler.dart';
 import 'l10n/app_localizations.dart';
+import 'l10n/l10n_helpers.dart';
 import 'widgets/reef_background.dart';
 
 Future<void> main() async {
@@ -72,6 +75,9 @@ void _warnDataLoadFailed() {
     WidgetsBinding.instance.addPostFrameCallback((_) => show());
   }
 }
+
+/// The user's decision on a launch cloud-restore proposal (U35).
+enum _CloudRestoreChoice { notNow, keepMine, restore }
 
 class ReefTrackerApp extends ConsumerStatefulWidget {
   const ReefTrackerApp({super.key});
@@ -219,56 +225,189 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   /// claim a connected state no live sign-in backs. Once per process
   /// (memoized inside); on failure the sync still runs — a broken filesystem
   /// must not disconnect a working sync (fail open).
+  ///
+  /// Between the reconcile and the push sits the U35 pull-check (launch only,
+  /// not on resume): if another device left a newer backup in the cloud, the
+  /// user is offered a restore *before* this device pushes anything — a
+  /// stale-but-dirty device that pushed first would bury the newer file.
   void _maybeBackUp() {
-    final db = ref.read(dbProvider);
     unawaited(
-      reconcileInstallFingerprint(db)
-          .catchError((Object e, StackTrace s) {
-            FlutterError.reportError(
-              FlutterErrorDetails(
-                exception: e,
-                stack: s,
-                library: 'install_id',
-                context: ErrorSummary('reconciling the install fingerprint'),
+      _backupAndSync().catchError((Object e, StackTrace s) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'cloud_sync',
+            context: ErrorSummary('running the Drive backup sync'),
+          ),
+        );
+      }),
+    );
+  }
+
+  Future<void> _backupAndSync() async {
+    final db = ref.read(dbProvider);
+    try {
+      await reconcileInstallFingerprint(db);
+    } catch (e, s) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: s,
+          library: 'install_id',
+          context: ErrorSummary('reconciling the install fingerprint'),
+        ),
+      );
+    }
+    var proposalShown = false;
+    try {
+      proposalShown = await _maybeProposeCloudRestore(db);
+    } catch (e, s) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: s,
+          library: 'cloud_sync',
+          context: ErrorSummary('checking the cloud for a newer backup'),
+        ),
+      );
+    }
+    var wrote = false;
+    try {
+      wrote = await runAutoBackupIfDue(db);
+    } catch (e, s) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: s,
+          library: 'auto_backup',
+          context: ErrorSummary('running the automatic backup'),
+        ),
+      );
+      // A failed local backup must not suppress the cloud push — the Drive
+      // copy matters most exactly when local storage misbehaves.
+      wrote = true;
+    }
+    // While a restore proposal is on screen the push stays parked: uploading
+    // would race the user's decision (and bury the newer file the dialog is
+    // about). Declining just delays the push to the next launch/resume.
+    if (wrote && !proposalShown) {
+      await runGDriveSyncIfDirty(db, store: ref.read(cloudBackupStoreProvider));
+    }
+  }
+
+  /// Set once the launch pull-check ran: resumes must not re-list the cloud
+  /// folder or pop a dialog mid-use — U35 is deliberately a launch-only check.
+  bool _cloudRestoreChecked = false;
+
+  /// Runs the U35 pull-check once per process. Returns whether a restore
+  /// proposal was surfaced (the dialog itself is fire-and-forget).
+  Future<bool> _maybeProposeCloudRestore(AppDatabase db) async {
+    if (_cloudRestoreChecked) return false;
+    _cloudRestoreChecked = true;
+    final proposal = await checkCloudNewerBackup(
+      db,
+      store: ref.read(cloudBackupStoreProvider),
+    );
+    if (proposal == null) return false;
+    unawaited(
+      _showCloudRestoreDialog(db, proposal).catchError((Object e, StackTrace s) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'cloud_sync',
+            context: ErrorSummary('proposing a cloud backup restore'),
+          ),
+        );
+      }),
+    );
+    return true;
+  }
+
+  Future<void> _showCloudRestoreDialog(
+    AppDatabase db,
+    CloudRestoreProposal proposal,
+  ) async {
+    final context = rootNavigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    final choice = await showDialog<_CloudRestoreChoice>(
+      context: context,
+      builder: (ctx) {
+        final l = AppLocalizations.of(ctx);
+        final device = proposal.deviceName ?? l.syncRestoreUnknownDevice;
+        final when = switch (proposal.file.modifiedAt) {
+          final at? => formatDateTime(ctx, at.toLocal(), weekday: false),
+          // Drive always reports modifiedTime; the raw name is the fallback
+          // for a store that somehow didn't.
+          null => proposal.file.name,
+        };
+        return AlertDialog(
+          icon: const Icon(Icons.cloud_download_outlined),
+          title: Text(l.syncRestoreTitle),
+          content: Text(
+            proposal.diverged
+                ? l.syncRestoreDivergedBody(device, when)
+                : l.syncRestoreBody(device, when),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, _CloudRestoreChoice.notNow),
+              child: Text(l.syncRestoreNotNow),
+            ),
+            if (proposal.diverged)
+              TextButton(
+                onPressed: () =>
+                    Navigator.pop(ctx, _CloudRestoreChoice.keepMine),
+                child: Text(l.syncRestoreKeepMine),
               ),
-            );
-          })
-          .then((_) => runAutoBackupIfDue(db))
-          .then(
-            (wrote) async {
-              if (!wrote) return;
-              await runGDriveSyncIfDirty(
-                db,
-                store: ref.read(cloudBackupStoreProvider),
-              );
-            },
-            // A failed local backup must not suppress the cloud push — the
-            // Drive copy matters most exactly when local storage misbehaves.
-            onError: (Object e, StackTrace s) async {
-              FlutterError.reportError(
-                FlutterErrorDetails(
-                  exception: e,
-                  stack: s,
-                  library: 'auto_backup',
-                  context: ErrorSummary('running the automatic backup'),
-                ),
-              );
-              await runGDriveSyncIfDirty(
-                db,
-                store: ref.read(cloudBackupStoreProvider),
-              );
-            },
-          )
-          .catchError((Object e, StackTrace s) {
-            FlutterError.reportError(
-              FlutterErrorDetails(
-                exception: e,
-                stack: s,
-                library: 'cloud_sync',
-                context: ErrorSummary('running the Drive backup sync'),
-              ),
-            );
-          }),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, _CloudRestoreChoice.restore),
+              child: Text(AppLocalizations.of(ctx).restore),
+            ),
+          ],
+        );
+      },
+    );
+    switch (choice) {
+      // Barrier dismiss counts as "not now": quiet until a newer file shows.
+      case null || _CloudRestoreChoice.notNow:
+        await dismissCloudRestore(db, proposal.file.name);
+      case _CloudRestoreChoice.keepMine:
+        // The user chose this device's data: push it now so it becomes the
+        // newest cloud state (the other device gets the mirror proposal).
+        // Never destructive — the declined file stays in the cloud rotation.
+        await dismissCloudRestore(db, proposal.file.name);
+        await runGDriveSyncIfDirty(
+          db,
+          store: ref.read(cloudBackupStoreProvider),
+        );
+      case _CloudRestoreChoice.restore:
+        try {
+          await restoreCloudBackup(
+            db,
+            store: ref.read(cloudBackupStoreProvider),
+            file: proposal.file,
+            contents: proposal.contents,
+          );
+          _restoreSnack((l) => l.backupRestored);
+        } on InvalidBackupException catch (e) {
+          _restoreSnack((l) => l.backupRejection(e.reason));
+        } catch (_) {
+          // Download failed (offline, revoked grant) or the import itself.
+          _restoreSnack((l) => l.backupImportFailed);
+        }
+    }
+  }
+
+  /// Localized SnackBar for the launch-restore outcome, tolerant of the app
+  /// shutting down while the restore ran.
+  void _restoreSnack(String Function(AppLocalizations l) message) {
+    final messenger = _messengerKey.currentState;
+    final context = _messengerKey.currentContext;
+    if (messenger == null || context == null) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text(message(AppLocalizations.of(context)))),
     );
   }
 

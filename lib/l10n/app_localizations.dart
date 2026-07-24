@@ -1889,6 +1889,66 @@ abstract class AppLocalizations {
   /// **'Google Drive upload failed on {when}'**
   String syncGdriveLastFailed(String when);
 
+  /// Title of the dialog naming this device for cloud backups (U35); shown right after connecting Google Drive and from the sync options dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Device name'**
+  String get syncDeviceNameTitle;
+
+  /// Explanatory text in the device-name dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown with the backups this device uploads, so you can tell your devices apart.'**
+  String get syncDeviceNameBody;
+
+  /// Hint inside the device-name text field.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. My phone'**
+  String get syncDeviceNameHint;
+
+  /// Action in the connected Google Drive dialog that opens the device-name editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Device name…'**
+  String get syncDeviceNameAction;
+
+  /// Title of the launch dialog proposing to restore a newer cloud backup another device uploaded (U35).
+  ///
+  /// In en, this message translates to:
+  /// **'Newer backup found'**
+  String get syncRestoreTitle;
+
+  /// Body of the restore proposal when this device has no unsynced changes (safe fast-forward).
+  ///
+  /// In en, this message translates to:
+  /// **'A newer backup from “{device}” ({when}) is in your Google Drive. Restore it to this device? Your settings on this device are kept.'**
+  String syncRestoreBody(String device, String when);
+
+  /// Body of the restore proposal when this device ALSO holds changes that never reached the cloud — restoring would discard them, so the dialog offers an explicit keep-mine choice too.
+  ///
+  /// In en, this message translates to:
+  /// **'A newer backup from “{device}” ({when}) is in your Google Drive, but this device also has changes that were never uploaded. Restoring replaces this device\'s data with the backup — a local safety copy is saved first.'**
+  String syncRestoreDivergedBody(String device, String when);
+
+  /// Placeholder device name in the restore proposal when the backup doesn't say which device wrote it.
+  ///
+  /// In en, this message translates to:
+  /// **'another device'**
+  String get syncRestoreUnknownDevice;
+
+  /// Restore-proposal action that declines; the dialog stays quiet until an even newer cloud backup appears.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get syncRestoreNotNow;
+
+  /// Restore-proposal action (diverged case only) that keeps the local data and uploads it as the newest cloud backup instead.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this device\'s data'**
+  String get syncRestoreKeepMine;
+
   /// Section header for the local backups list in Manage backups; only shown when the Google Drive section is present too.
   ///
   /// In en, this message translates to:

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'auto_backup.dart' show kAutoBackupPrefix;
+import 'auto_backup.dart' show backupNow, kAutoBackupPrefix;
 import 'backup.dart';
 import 'cloud_auth.dart';
 import 'cloud_backup_store.dart';
@@ -100,8 +100,15 @@ Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
     folderId ??= await store.ensureFolder();
     await settings.setSyncGdriveFolderId(folderId);
     final name = cloudBackupFileName(DateTime.now());
+    // Advisory metadata (U35): the launch restore check on *other* devices
+    // reads the device name and content hash straight off the listing,
+    // without downloading the file.
+    final metadata = {
+      kCloudMetaDevice: ?await settings.readSyncDeviceName(),
+      kCloudMetaContentHash: hash,
+    };
     try {
-      await store.write(folderId, name, utf8.encode(json));
+      await store.write(folderId, name, utf8.encode(json), metadata: metadata);
     } on CloudApiException catch (e) {
       // A cached folder id can go stale (the user deleted the folder on
       // drive.google.com); recreate once and retry — any other failure
@@ -109,7 +116,7 @@ Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
       if (e.statusCode != 404) rethrow;
       folderId = await store.ensureFolder();
       await settings.setSyncGdriveFolderId(folderId);
-      await store.write(folderId, name, utf8.encode(json));
+      await store.write(folderId, name, utf8.encode(json), metadata: metadata);
     }
     // The upload is durable on Drive at this point — record it before the
     // prune (#63), matching the local contract (`writeAutoBackup` first,
@@ -117,6 +124,7 @@ Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
     // hiccup discard the push record: the dirty gate re-uploads the identical
     // DB next launch, or a non-IO throw stamps a false "sync failed".
     await settings.setSyncGdriveLastPushedHash(hash);
+    await settings.setSyncGdriveLastPushedName(name);
     await settings.setSyncGdriveLastPushAt(DateTime.now());
     await settings.setSyncGdriveLastErrorAt(null);
     try {
@@ -181,13 +189,200 @@ Future<void> _pruneCloud(
   }
 }
 
-/// Records the content hash of a backup document just restored *from* the
-/// cloud as "already pushed" (echo suppression): without this, the next
-/// launch would hash the freshly restored data as dirty and re-upload the
-/// very file the user just downloaded.
-Future<void> recordRestoredCloudBackup(AppDatabase db, String json) async {
+/// Records the content hash — and, when known, the cloud filename — of a
+/// backup document just restored *from* the cloud as "already pushed" (echo
+/// suppression): without this, the next launch would hash the freshly
+/// restored data as dirty and re-upload the very file the user just
+/// downloaded (and the launch restore check would re-propose it as foreign).
+/// Also clears the dismissed-file marker: the declined proposal is moot once
+/// a cloud restore actually happened.
+Future<void> recordRestoredCloudBackup(
+  AppDatabase db,
+  String json, {
+  String? fileName,
+}) async {
   final hash = await Isolate.run(() => backupContentHash(json));
-  await AppSettings(db).setSyncGdriveLastPushedHash(hash);
+  final settings = AppSettings(db);
+  await settings.setSyncGdriveLastPushedHash(hash);
+  if (fileName != null) await settings.setSyncGdriveLastPushedName(fileName);
+  await settings.setSyncGdriveDismissedName(null);
+}
+
+/// A newer cloud backup another device wrote, found by [checkCloudNewerBackup]
+/// and proposed to the user at launch (U35).
+class CloudRestoreProposal {
+  const CloudRestoreProposal({
+    required this.file,
+    required this.deviceName,
+    required this.diverged,
+    this.contents,
+  });
+
+  /// The newest foreign backup file in the cloud folder.
+  final CloudBackupFile file;
+
+  /// The name of the device that wrote it, or null when unknown (uploaded by
+  /// an app version predating device names, or no name was configured there).
+  final String? deviceName;
+
+  /// Whether this device's data ALSO changed since its last push/restore
+  /// (or has never synced at all while holding data): restoring would discard
+  /// local changes, so the prompt must offer an explicit keep-mine choice
+  /// instead of a plain fast-forward.
+  final bool diverged;
+
+  /// The downloaded document, when the check had to fetch it to identify the
+  /// file (no content-hash metadata). Passed along so an accepted restore
+  /// doesn't download twice.
+  final String? contents;
+}
+
+/// Looks for a cloud backup newer than this device's data (U35): the launch
+/// pull-check. Returns null when there is nothing to propose — not connected,
+/// offline, folder empty, the newest file is this device's own last push or
+/// restore, its content is identical to the local data, or the user already
+/// dismissed exactly this file.
+///
+/// Freshness is decided by **lineage, not clocks**: the newest cloud file is
+/// foreign iff its name differs from `sync_gdrive_last_pushed_name` (and its
+/// content hash from the last pushed hash — covering uploads from before
+/// filenames were recorded). Device clocks never order anything; timestamps
+/// are display-only. Never throws: any failure (offline, dead grant, garbage
+/// file) reads as "nothing to propose" and the next launch retries.
+///
+/// Must run **before** the launch Drive push: a stale-but-dirty device that
+/// pushed first would bury the newer file this check is trying to surface.
+Future<CloudRestoreProposal?> checkCloudNewerBackup(
+  AppDatabase db, {
+  required CloudBackupStore store,
+}) async {
+  try {
+    final settings = AppSettings(db);
+    if (await settings.readSyncGdriveAccount() == null) return null;
+
+    var folderId = await settings.readSyncGdriveFolderId();
+    List<CloudBackupFile> files;
+    try {
+      folderId ??= await store.ensureFolder();
+      files = await store.list(folderId);
+    } on CloudApiException catch (e) {
+      // Stale cached folder id — re-resolve once, like the push path.
+      if (e.statusCode != 404) rethrow;
+      folderId = await store.ensureFolder();
+      files = await store.list(folderId);
+    }
+    await settings.setSyncGdriveFolderId(folderId);
+
+    final backups =
+        files
+            .where(
+              (f) =>
+                  f.name.startsWith(kAutoBackupPrefix) &&
+                  f.name.endsWith('.json'),
+            )
+            .toList()
+          // UTC-stamped names: lexical desc == newest first.
+          ..sort((a, b) => b.name.compareTo(a.name));
+    if (backups.isEmpty) return null;
+    final newest = backups.first;
+    // Over the download cap (#64): the restore action could only fail, so
+    // there is nothing to propose (the Manage-backups list shows the error).
+    if ((newest.sizeBytes ?? 0) > kCloudBackupMaxBytes) return null;
+
+    // Ours by name — the overwhelmingly common case, settled by the listing
+    // alone (one REST call, no download, no local encode).
+    if (newest.name == await settings.readSyncGdriveLastPushedName()) {
+      return null;
+    }
+
+    final lastPushedHash = await settings.readSyncGdriveLastPushedHash();
+    var remoteHash = newest.metadata[kCloudMetaContentHash];
+    var deviceName = newest.metadata[kCloudMetaDevice];
+    String? contents;
+    if (remoteHash == null) {
+      // Pre-metadata upload: identify it the expensive way, once — the
+      // name/hash stamps below settle every later launch.
+      contents = utf8.decode(await store.read(newest.id));
+      final doc = contents;
+      remoteHash = await Isolate.run(() => backupContentHash(doc));
+      deviceName ??= backupDeviceName(doc);
+    }
+    if (remoteHash == lastPushedHash) {
+      // Content-identical to this device's own last push/restore (an upload
+      // from before filenames were recorded): backfill the name so the next
+      // launch takes the cheap path, and stay quiet.
+      await settings.setSyncGdriveLastPushedName(newest.name);
+      return null;
+    }
+
+    if (newest.name == await settings.readSyncGdriveDismissedName()) {
+      return null;
+    }
+
+    final tanksExist = (await db.getTanks()).isNotEmpty;
+    var diverged = false;
+    if (tanksExist) {
+      final json = await encodeBackupFromDb(db);
+      final currentHash = await Isolate.run(() => backupContentHash(json));
+      if (currentHash == remoteHash) {
+        // Another device pushed data identical to what this one holds —
+        // nothing to restore. Adopt the file as this device's synced state so
+        // neither the dirty gate nor this check ever reconsiders it.
+        await settings.setSyncGdriveLastPushedHash(currentHash);
+        await settings.setSyncGdriveLastPushedName(newest.name);
+        return null;
+      }
+      // Diverged = this device holds changes that never reached the cloud:
+      // either it drifted since its last push/restore, or it has data but no
+      // sync lineage at all (fresh connect on a device with existing data).
+      diverged = lastPushedHash == null || currentHash != lastPushedHash;
+    }
+
+    return CloudRestoreProposal(
+      file: newest,
+      deviceName: deviceName,
+      diverged: diverged,
+      contents: contents,
+    );
+  } catch (_) {
+    // Offline, dead grant, a garbage file where a backup should be — all
+    // read as "nothing to propose"; the next launch simply retries. This is
+    // a read path: it must never stamp `sync_gdrive_last_error_at`.
+    return null;
+  }
+}
+
+/// Records that the user declined to restore [fileName] (U35): the launch
+/// prompt stays quiet until an even newer foreign file appears. Deliberately
+/// only prompt suppression — pushes keep following the normal dirty-gate
+/// rules.
+Future<void> dismissCloudRestore(AppDatabase db, String fileName) =>
+    AppSettings(db).setSyncGdriveDismissedName(fileName);
+
+/// Downloads and restores cloud backup [file] into the live database (U35):
+/// the accept path of the launch proposal and of the Manage-backups Drive
+/// tiles. [contents] skips the download when the caller already holds the
+/// document (a proposal that had to fetch it).
+///
+/// Safety first: when this device holds any data, a local rotating backup is
+/// written *before* the replace — so "use cloud backup" on a diverged device
+/// is undoable from Manage backups. A failed safety write aborts the restore
+/// (rethrows): silently proceeding would make the divergent local data
+/// unrecoverable. Then the standard three-stage [importBackup] pipeline runs,
+/// and echo suppression records the file as this device's synced state.
+Future<void> restoreCloudBackup(
+  AppDatabase db, {
+  required CloudBackupStore store,
+  required CloudBackupFile file,
+  String? contents,
+}) async {
+  final doc = contents ?? utf8.decode(await store.read(file.id));
+  final data = await Isolate.run(() => decodeBackup(doc));
+  if ((await db.getTanks()).isNotEmpty) {
+    await backupNow(db);
+  }
+  await importBackup(db, data);
+  await recordRestoredCloudBackup(db, doc, fileName: file.name);
 }
 
 /// Interactive connect flow driven from Settings: account picker + consent
@@ -216,6 +411,10 @@ Future<void> disconnectGDrive(AppDatabase db, CloudAuth auth) async {
   await settings.setSyncGdriveAccount(null);
   await settings.setSyncGdriveFolderId(null);
   await settings.setSyncGdriveLastPushedHash(null);
+  await settings.setSyncGdriveLastPushedName(null);
+  await settings.setSyncGdriveDismissedName(null);
   await settings.setSyncGdriveLastPushAt(null);
   await settings.setSyncGdriveLastErrorAt(null);
+  // `sync_device_name` deliberately survives: it names this device, not the
+  // account relationship, and should greet a later reconnect prefilled.
 }

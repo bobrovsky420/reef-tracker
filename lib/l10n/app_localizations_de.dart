@@ -1070,6 +1070,41 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get syncDeviceNameTitle => 'Gerätename';
+
+  @override
+  String get syncDeviceNameBody =>
+      'Wird bei den Backups angezeigt, die dieses Gerät hochlädt — so kannst du deine Geräte auseinanderhalten.';
+
+  @override
+  String get syncDeviceNameHint => 'z. B. Mein Handy';
+
+  @override
+  String get syncDeviceNameAction => 'Gerätename…';
+
+  @override
+  String get syncRestoreTitle => 'Neueres Backup gefunden';
+
+  @override
+  String syncRestoreBody(String device, String when) {
+    return 'In deinem Google Drive liegt ein neueres Backup von „$device“ ($when). Auf diesem Gerät wiederherstellen? Deine Einstellungen auf diesem Gerät bleiben erhalten.';
+  }
+
+  @override
+  String syncRestoreDivergedBody(String device, String when) {
+    return 'In deinem Google Drive liegt ein neueres Backup von „$device“ ($when), aber dieses Gerät enthält auch Änderungen, die nie hochgeladen wurden. Beim Wiederherstellen werden die Daten dieses Geräts durch das Backup ersetzt — zuvor wird eine lokale Sicherheitskopie gespeichert.';
+  }
+
+  @override
+  String get syncRestoreUnknownDevice => 'ein anderes Gerät';
+
+  @override
+  String get syncRestoreNotNow => 'Nicht jetzt';
+
+  @override
+  String get syncRestoreKeepMine => 'Daten dieses Geräts behalten';
+
+  @override
   String get backupsLocalSection => 'Auf diesem Gerät';
 
   @override

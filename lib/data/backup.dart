@@ -143,12 +143,19 @@ String encodeBackup({
   List<RoStageReplacement> roStageReplacements = const [],
   List<ImportSource> importSources = const [],
   required List<Setting> settings,
+  String? deviceName,
 }) {
   final map = <String, dynamic>{
     'format': kBackupFormat,
     'version': kBackupVersion,
     'schemaVersion': schemaVersion,
     'exportedAt': DateTime.now().toIso8601String(),
+    // Which device wrote this backup (U35, the user-chosen sync device name) —
+    // provenance for the multi-device restore prompt. Optional and ignored by
+    // older apps (unknown keys pass decodeBackup); excluded from
+    // [backupContentHash] like exportedAt, so restoring another device's
+    // backup and re-encoding it here doesn't read as a data change.
+    'device': ?deviceName,
     'tanks': tanks.map(_tankToJson).toList(),
     'trackedParameters': params.map(_paramToJson).toList(),
     'readings': readings.map(_readingToJson).toList(),
@@ -184,8 +191,8 @@ String encodeBackup({
 }
 
 /// Content hash for the cloud-sync dirty gate (U24): sha256 hex of the backup
-/// document with `exportedAt`, `checksum`, and the **entire `settings`
-/// section** removed.
+/// document with `exportedAt`, `device`, `checksum`, and the **entire
+/// `settings` section** removed.
 ///
 /// Two backups of the same aquarium data must hash identically even though
 /// every encode stamps a fresh `exportedAt` and settings carry per-device
@@ -219,9 +226,31 @@ String backupContentHash(String jsonString) {
   }
   decoded
     ..remove('exportedAt')
+    // The writing device's name (U35) is provenance, not aquarium data: right
+    // after restoring device A's backup onto device B, B's next encode must
+    // still hash clean — differing only by `device` — or the dirty gate would
+    // re-upload the data that just came down.
+    ..remove('device')
     ..remove('checksum')
     ..remove('settings');
   return sha256.convert(utf8.encode(jsonEncode(decoded))).toString();
+}
+
+/// The `device` name stamped into a backup document (U35), or null when the
+/// document has none (older app versions, no name configured) or isn't a JSON
+/// object at all. Tolerant on purpose — this is display-only provenance for
+/// the restore prompt and never gates a restore.
+String? backupDeviceName(String jsonString) {
+  try {
+    final decoded = jsonDecode(jsonString);
+    if (decoded is Map<String, dynamic>) {
+      final device = decoded['device'];
+      if (device is String && device.isNotEmpty) return device;
+    }
+  } on FormatException {
+    // Not JSON — no name to report.
+  }
+  return null;
 }
 
 /// Parses a backup JSON string into companion rows. Throws
@@ -830,6 +859,10 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   final roStages = await db.getAllRoStages();
   final roStageReplacements = await db.getAllRoStageReplacements();
   final settings = await db.getAllSettings();
+  // The user-chosen device name (U35) — stamped as top-level provenance so the
+  // restore prompt can say which device wrote the file without digging through
+  // the settings section.
+  final deviceName = await AppSettings(db).readSyncDeviceName();
   // Soft-deleted tanks (U10) are conceptually deleted — their rows only
   // persist through the brief undo window. Exclude them and their child rows
   // so a backup racing that window never resurrects the tank. `deletedAt`
@@ -894,6 +927,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       roStageReplacements: roStageReplacements,
       importSources: importSources,
       settings: settings,
+      deviceName: deviceName,
     ),
   );
 }

@@ -13,6 +13,10 @@ class FakeCloudBackupStore implements CloudBackupStore {
   /// name → bytes, within the single simulated folder.
   final Map<String, List<int>> files = {};
 
+  /// name → the advisory metadata attached at write time (U35); absent for
+  /// files seeded directly into [files] — exactly like pre-metadata uploads.
+  final Map<String, Map<String, String>> fileMetadata = {};
+
   bool offline = false;
   bool failWrites = false;
 
@@ -63,6 +67,7 @@ class FakeCloudBackupStore implements CloudBackupStore {
           name: e.key,
           modifiedAt: DateTime(2026, 1, 1),
           sizeBytes: e.value.length,
+          metadata: fileMetadata[e.key] ?? const {},
         ),
     ];
   }
@@ -76,12 +81,18 @@ class FakeCloudBackupStore implements CloudBackupStore {
   }
 
   @override
-  Future<void> write(String folderId, String name, List<int> bytes) async {
+  Future<void> write(
+    String folderId,
+    String name,
+    List<int> bytes, {
+    Map<String, String> metadata = const {},
+  }) async {
     _checkOnline();
     _checkFolder(folderId);
     if (failWrites) throw const CloudApiException(500, 'write failed');
     writeCalls++;
     files[name] = bytes;
+    if (metadata.isNotEmpty) fileMetadata[name] = Map.of(metadata);
   }
 
   @override
@@ -90,6 +101,7 @@ class FakeCloudBackupStore implements CloudBackupStore {
     if (files.remove(fileId) == null) {
       throw CloudApiException(404, 'file $fileId not found');
     }
+    fileMetadata.remove(fileId);
   }
 }
 

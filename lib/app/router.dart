@@ -39,7 +39,13 @@ import '../l10n/app_localizations.dart';
 import '../widgets/reef_card.dart';
 import 'providers.dart';
 
+/// Root navigator key: gives launch-time flows without a widget context (the
+/// U35 cloud-restore proposal in `main.dart`) a context to show dialogs over
+/// whatever screen is current.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   routes: [
     GoRoute(
       path: '/',

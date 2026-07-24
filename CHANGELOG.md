@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.39.0] - 2026-07-24
+
+### Added
+- Android: Multi-device support via Google Drive sync. When another of your
+  devices has uploaded a newer backup, the app offers to restore it on
+  start — a safe fast-forward when this device has no changes of its own,
+  or an explicit choice ("Use cloud backup" / "Keep this device's data")
+  when both devices changed. Before any cloud restore a local safety copy
+  is saved, and declining stays quiet until an even newer backup appears.
+- Android: Backups now carry a device name. You pick it when connecting
+  Google Drive (changeable later from the sync dialog), it is shown on the
+  Google Drive rows in Manage backups and in the restore offer, so you can
+  tell which device wrote which backup.
+
 ## [0.38.8] - 2026-07-23
 
 ### Added

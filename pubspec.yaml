@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 # NOTE: build 55 (0.25.0) is deployed on Play — versionCode 55 is burned and
 # the next upload must be 56+; the 0.25.0 version name is also taken.
-version: 0.38.8+104
+version: 0.39.0+105
 
 environment:
   sdk: ^3.12.2
