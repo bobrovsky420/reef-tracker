@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The release build shrinks resources (minifyReleaseWithR8). The notification
+     small icon is only ever referenced by *name* from Dart — the plugin resolves
+     it with getIdentifier(name, "drawable", package) — so the shrinker cannot see
+     the reference and strips the drawable from the bundle, leaving reminders with
+     no icon. Anything resolved by name at runtime must be listed here. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_gauge" />
