@@ -5565,41 +5565,23 @@ abstract class AppLocalizations {
   /// **'{name}, day {day}'**
   String reefBeatLightMoonDay(Object name, int day);
 
-  /// No description provided for @reefBeatWaveNetwork.
+  /// No description provided for @reefBeatWaveGroup.
   ///
   /// In en, this message translates to:
-  /// **'Network'**
-  String get reefBeatWaveNetwork;
+  /// **'Wave pumps'**
+  String get reefBeatWaveGroup;
 
-  /// No description provided for @reefBeatWaveSignal.
+  /// No description provided for @reefBeatWaveScheduled.
   ///
   /// In en, this message translates to:
-  /// **'Signal'**
-  String get reefBeatWaveSignal;
+  /// **'Forward flow scheduled for this time of day. ReefWave pumps don\'t report their live speed over the local network.'**
+  String get reefBeatWaveScheduled;
 
-  /// No description provided for @reefBeatWaveSignalGood.
+  /// No description provided for @reefBeatWaveManual.
   ///
   /// In en, this message translates to:
-  /// **'Good'**
-  String get reefBeatWaveSignalGood;
-
-  /// No description provided for @reefBeatWaveSignalFair.
-  ///
-  /// In en, this message translates to:
-  /// **'Fair'**
-  String get reefBeatWaveSignalFair;
-
-  /// No description provided for @reefBeatWaveSignalWeak.
-  ///
-  /// In en, this message translates to:
-  /// **'Weak'**
-  String get reefBeatWaveSignalWeak;
-
-  /// No description provided for @reefBeatWaveLimited.
-  ///
-  /// In en, this message translates to:
-  /// **'ReefWave pumps only report their mode and Wi-Fi signal over the local network. Pump speed and wave patterns aren\'t available outside the ReefBeat app.'**
-  String get reefBeatWaveLimited;
+  /// **'Forward flow from the pump\'s schedule. The pump isn\'t in auto mode, so it may be running something else.'**
+  String get reefBeatWaveManual;
 
   /// No description provided for @discoveryTitle.
   ///

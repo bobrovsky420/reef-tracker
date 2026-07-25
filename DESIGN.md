@@ -2454,13 +2454,24 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   plus the tilt switch. No temperature threshold is invented — an LED heatsink
   at 60 °C is normal and must not be judged against tank limits.
   **The ReefWave is the exception**: its ESP8266 firmware serves *no*
-  `/dashboard` (404), and no endpoint exposes pump speed, wave pattern or
-  schedule — that lives on a second wave-controller chip with no HTTP surface.
-  All that exists locally is `GET /mode` and `GET /wifi`, so `RbWaveStatus`
-  carries the mode plus the Wi-Fi link (SSID, RSSI bucketed by
-  `RbWifiQuality`: good ≥ −60 dBm, fair ≥ −75, weak below — a sump pump behind
-  glass and water is the classic weak-signal case) and the card says so
-  explicitly rather than looking broken. Parsing is tolerant throughout —
+  `/dashboard` (404), and nothing reports its *live* speed — that runs on a
+  second wave-controller chip with no HTTP surface. It does serve
+  `GET /auto`, the day's **wave schedule**: a list of intervals, each with a
+  start time in minutes since midnight (`st`), forward/reverse output percents
+  (`fti`/`rti`) and alternation durations (`frt`/`rrt`). `RbWaveStatus` sorts
+  them by start and `forwardPercentAt(minuteOfDay)` resolves the one in force —
+  the last whose start has passed, **wrapping to the final interval** before the
+  first one begins, since at 02:00 a schedule starting at 06:00 is still running
+  yesterday's last interval rather than nothing. Only `fti` reaches the card:
+  reverse output and the alternation durations are parsed but four numbers
+  would say less than one. `scheduleApplies` (mode is `auto`, or absent) gates
+  whether the figure is presented as what the pump is doing or merely what it is
+  scheduled to do — a manually driven pump ignores the schedule, and showing a
+  scheduled 80% for a pump set to 20% would be a lie. `/auto` is wave-only
+  (404 on dose, lights and run). `RbWaveStatus` carries only the mode and the
+  schedule: `/wifi` is **not** fetched, since nothing displays the link state
+  and the call would cost a request per refresh for nothing. Parsing is
+  tolerant throughout —
   absent/malformed fields degrade the card, never crash a refresh.
   `rbModelDisplayName` maps `hw_model` → friendly name ("ReefDose 4",
   "ReefATO+", "ReefMat 250", "ReefRun", "ReefLED 90", "ReefWave 25"), the
@@ -2513,17 +2524,43 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   so the gauge is dropped and the remaining length stands alone. Lengths
   render as whole centimetres below 1 m and metres with one decimal above.
   A ReefRun card renders `_RunStatus`: device chips (clock, battery, level
-  sensor offline) above one `_RunPumpRow` per socket — name, a speed gauge with
-  the percentage beside it, motor temperature, and per-pump chips (pump/sensor
-  not detected, non-operational state). Empty sockets
-  (`RbRunPump.isEmptySocket`) are dropped. A ReefLED card renders
+  sensor offline) above one `_RunPumpRow` per socket — a **`_CircularGauge`** of
+  the pump's speed on the left, with name, motor temperature and per-pump chips
+  (pump/sensor not detected, non-operational state) beside it. Empty sockets
+  (`RbRunPump.isEmptySocket`) are dropped. `_CircularGauge` (a `CustomPainter`
+  ring with the percentage centred, dimmed when disabled, a dash when the value
+  is unknown rather than a misleading zero) is used wherever the number is a
+  **standalone output setting** — pump speed on ReefRun and ReefWave — as
+  opposed to progress through a total, which stays with the horizontal
+  `_DoseGauge` (dosed-today, roll remaining, light channels). A ReefLED card renders
   `_LightStatus`: chips (clock, battery, fixture tilted, acclimation with days
-  left) above the program name, a `_ChannelBar` per channel (white, blue, and
-  moon only when non-zero — label, gauge, percentage), then moon phase, fan
-  duty and heatsink temperature. A ReefWave card renders `_WaveStatus`: mode,
-  network and signal (colored by `RbWifiQuality`), followed by a dim note
-  explaining that the pump exposes nothing else locally — without it an
-  almost-empty card reads as a bug rather than a vendor limit.
+  left) above the program name, a `_ChannelBar` per channel (label, gauge,
+  percentage), then moon phase, fan duty and heatsink temperature. **All three
+  channels are listed whenever the fixture reports them, including one at 0%** —
+  hiding a zero row would read as "this light has no moon channel" rather than
+  "the moon channel is off". The fills come from the `ledWhite`/`ledBlue`/
+  `ledMoon` tokens (§ tokens): the white channel is drawn **light blue**, not
+  white — a white bar is invisible on a white card, and a cool-white fixture
+  reads blue in the tank anyway — blue is a **true blue**, deliberately not the
+  actinic teal `primary` (which sat too close to the white channel to tell
+  apart), and moon is the palette's violet. They are their own token family
+  rather than borrowed status or chart-marker slots, because a channel level
+  carries no health meaning.
+  **ReefWaves do not get a card each**: `_entriesOf` collapses them into a
+  single `_WaveGroup` entry, positioned where the first of them sat, holding one
+  compact `_WaveTile` per pump — a tank commonly runs two or more, each with
+  exactly one number worth showing, and a full-width card apiece pushed
+  everything else off the screen. Grouping is decided from the **stored model**
+  (`rbIsWaveModel`, prefix-matched on `RSWAVE`) rather than a snapshot's
+  `hw_type`, because the list is built before any read lands and the layout must
+  not reshuffle as refreshes arrive. A `LayoutBuilder` + `Wrap` gives as many
+  columns as a 108 px minimum allows, then **rebalances so rows are even** (4
+  pumps read 2 + 2, not 3 + 1); one pump fills the width. Each tile carries the
+  device name, a `_CircularGauge` of the forward output scheduled for **the
+  current time of day** (resolved from `/auto` against `DateTime.now()`), the
+  mode, and its own compact overflow menu; the group carries one drag handle,
+  one Refresh and one note — switching to the off-`auto` wording if *any* pump
+  has been taken off auto, since that caveat wins.
   (`_StatusRow`, the label–value line, is shared by all the status cards.)
 - Entry points mirror ReefFactory: experimental-gated + Pro-gated
   (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow

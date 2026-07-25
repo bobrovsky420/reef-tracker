@@ -3374,23 +3374,15 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get reefBeatWaveNetwork => 'Netzwerk';
+  String get reefBeatWaveGroup => 'Strömungspumpen';
 
   @override
-  String get reefBeatWaveSignal => 'Signal';
+  String get reefBeatWaveScheduled =>
+      'Für diese Tageszeit geplante Vorwärtsströmung. ReefWave-Pumpen melden ihre aktuelle Drehzahl nicht über das lokale Netzwerk.';
 
   @override
-  String get reefBeatWaveSignalGood => 'Gut';
-
-  @override
-  String get reefBeatWaveSignalFair => 'Mittel';
-
-  @override
-  String get reefBeatWaveSignalWeak => 'Schwach';
-
-  @override
-  String get reefBeatWaveLimited =>
-      'ReefWave-Pumpen melden über das lokale Netzwerk nur ihren Modus und die WLAN-Signalstärke. Pumpendrehzahl und Strömungsprogramme sind außerhalb der ReefBeat-App nicht verfügbar.';
+  String get reefBeatWaveManual =>
+      'Vorwärtsströmung laut Zeitplan der Pumpe. Die Pumpe ist nicht im Automatikmodus und läuft möglicherweise anders.';
 
   @override
   String get discoveryTitle => 'Netzwerk durchsuchen';

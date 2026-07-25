@@ -3388,23 +3388,15 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get reefBeatWaveNetwork => 'Síť';
+  String get reefBeatWaveGroup => 'Proudová čerpadla';
 
   @override
-  String get reefBeatWaveSignal => 'Signál';
+  String get reefBeatWaveScheduled =>
+      'Průtok vpřed naplánovaný na tuto denní dobu. Čerpadla ReefWave přes místní síť nehlásí své aktuální otáčky.';
 
   @override
-  String get reefBeatWaveSignalGood => 'Dobrý';
-
-  @override
-  String get reefBeatWaveSignalFair => 'Slabší';
-
-  @override
-  String get reefBeatWaveSignalWeak => 'Slabý';
-
-  @override
-  String get reefBeatWaveLimited =>
-      'Čerpadla ReefWave přes místní síť hlásí jen svůj režim a sílu Wi-Fi signálu. Otáčky čerpadla ani vlnové režimy mimo aplikaci ReefBeat dostupné nejsou.';
+  String get reefBeatWaveManual =>
+      'Průtok vpřed podle plánu čerpadla. Čerpadlo není v automatickém režimu, takže může běžet jinak.';
 
   @override
   String get discoveryTitle => 'Prohledat síť';

@@ -3436,23 +3436,15 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get reefBeatWaveNetwork => 'Sieć';
+  String get reefBeatWaveGroup => 'Pompy falowe';
 
   @override
-  String get reefBeatWaveSignal => 'Sygnał';
+  String get reefBeatWaveScheduled =>
+      'Przepływ w przód zaplanowany na tę porę dnia. Pompy ReefWave nie podają bieżącej prędkości przez sieć lokalną.';
 
   @override
-  String get reefBeatWaveSignalGood => 'Dobry';
-
-  @override
-  String get reefBeatWaveSignalFair => 'Średni';
-
-  @override
-  String get reefBeatWaveSignalWeak => 'Słaby';
-
-  @override
-  String get reefBeatWaveLimited =>
-      'Pompy ReefWave przez sieć lokalną podają tylko swój tryb i siłę sygnału Wi-Fi. Prędkość pompy ani programy falowania nie są dostępne poza aplikacją ReefBeat.';
+  String get reefBeatWaveManual =>
+      'Przepływ w przód według harmonogramu pompy. Pompa nie jest w trybie automatycznym, więc może pracować inaczej.';
 
   @override
   String get discoveryTitle => 'Skanuj sieć';

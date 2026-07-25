@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,39 @@ import '../../data/rb_protocol.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../devices/discovery_sheet.dart';
+
+/// One row of the dashboard list: either a single device, or every ReefWave
+/// collapsed into a group (see [_entriesOf]).
+class _ListEntry {
+  const _ListEntry(this.devices, {this.isWaveGroup = false});
+  final List<DeviceRecord> devices;
+  final bool isWaveGroup;
+}
+
+/// Collapses the ReefWaves into one entry, positioned where the first of them
+/// sat, and leaves every other device an entry of its own.
+///
+/// Grouping is decided from the stored model ([rbIsWaveModel]) rather than a
+/// snapshot's `hw_type`, because the list is built before any device has been
+/// read — the layout must not reshuffle as refreshes land.
+List<_ListEntry> _entriesOf(List<DeviceRecord> devices) {
+  final waves = [
+    for (final d in devices)
+      if (rbIsWaveModel(d.model)) d,
+  ];
+  final entries = <_ListEntry>[];
+  var groupPlaced = false;
+  for (final d in devices) {
+    if (rbIsWaveModel(d.model)) {
+      if (groupPlaced) continue;
+      groupPlaced = true;
+      entries.add(_ListEntry(waves, isWaveGroup: true));
+    } else {
+      entries.add(_ListEntry([d]));
+    }
+  }
+  return entries;
+}
 
 /// Transient per-device live state held by the screen (not persisted): the
 /// last refresh result.
@@ -157,32 +191,64 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
                 ),
               ),
               // Drag-orderable cards (the #13 list pattern, cards instead of
-              // rows): the handle sits in each card's header.
+              // rows): the handle sits in each card's header. Wave pumps are
+              // collapsed into a single entry (see [_entriesOf]) — a tank often
+              // runs several and a full-width card each, for one number, wasted
+              // the screen.
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 96),
-                sliver: SliverReorderableList(
-                  itemCount: devices.length,
-                  onReorderItem: (oldIndex, newIndex) {
-                    final ids = [for (final d in devices) d.id];
-                    ids.insert(newIndex, ids.removeAt(oldIndex));
-                    unawaited(ref.read(dbProvider).reorderDevices(ids));
-                  },
-                  itemBuilder: (context, i) {
-                    final d = devices[i];
-                    return _DeviceCard(
-                      key: ValueKey(d.id),
-                      device: d,
-                      index: i,
-                      // A single card has nothing to reorder against.
-                      canReorder: devices.length > 1,
-                      live: _live[d.identifier] ?? const _Live(),
-                      errorTextOf: (e) => _errorText(l, e),
-                      onRefresh: () => _refresh(d),
-                      // No other tank to move to → no menu item.
-                      onMove: tanks.any((t) => t.id != d.tankId)
-                          ? () => _moveDevice(d)
-                          : null,
-                      onRemove: () => _confirmRemove(d),
+                sliver: Builder(
+                  builder: (context) {
+                    final entries = _entriesOf(devices);
+                    return SliverReorderableList(
+                      itemCount: entries.length,
+                      onReorderItem: (oldIndex, newIndex) {
+                        final moved = [...entries];
+                        moved.insert(newIndex, moved.removeAt(oldIndex));
+                        // A group carries its members, so the wave pumps stay
+                        // contiguous however the list is rearranged.
+                        unawaited(
+                          ref.read(dbProvider).reorderDevices([
+                            for (final e in moved)
+                              for (final d in e.devices) d.id,
+                          ]),
+                        );
+                      },
+                      itemBuilder: (context, i) {
+                        final entry = entries[i];
+                        final canReorder = entries.length > 1;
+                        if (entry.isWaveGroup) {
+                          return _WaveGroup(
+                            key: ValueKey('waves-${entry.devices.first.id}'),
+                            devices: entry.devices,
+                            index: i,
+                            canReorder: canReorder,
+                            liveOf: (d) =>
+                                _live[d.identifier] ?? const _Live(),
+                            errorTextOf: (e) => _errorText(l, e),
+                            onRefresh: () => _refreshAll(entry.devices),
+                            onMove: (d) => tanks.any((t) => t.id != d.tankId)
+                                ? () => _moveDevice(d)
+                                : null,
+                            onRemove: _confirmRemove,
+                          );
+                        }
+                        final d = entry.devices.single;
+                        return _DeviceCard(
+                          key: ValueKey(d.id),
+                          device: d,
+                          index: i,
+                          canReorder: canReorder,
+                          live: _live[d.identifier] ?? const _Live(),
+                          errorTextOf: (e) => _errorText(l, e),
+                          onRefresh: () => _refresh(d),
+                          // No other tank to move to → no menu item.
+                          onMove: tanks.any((t) => t.id != d.tankId)
+                              ? () => _moveDevice(d)
+                              : null,
+                          onRemove: () => _confirmRemove(d),
+                        );
+                      },
                     );
                   },
                 ),
@@ -495,8 +561,6 @@ class _DeviceCard extends StatelessWidget {
               _RunStatus(status: snap!.run!)
             else if (snap?.light != null)
               _LightStatus(status: snap!.light!)
-            else if (snap?.wave != null)
-              _WaveStatus(status: snap!.wave!)
             else
               Text(
                 l.reefBeatNotReadYet,
@@ -925,61 +989,50 @@ class _RunPumpRow extends StatelessWidget {
         ),
     ];
 
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Expanded(
-              child: Text(
-                pump.name?.trim().isNotEmpty == true
-                    ? pump.name!
-                    : l.reefBeatRunPump(pump.number),
-                style: t.titleSmall?.copyWith(
-                  color: faulted ? tokens.textDim : null,
+        _CircularGauge(percent: intensity, enabled: !faulted),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Expanded(
+                    child: Text(
+                      pump.name?.trim().isNotEmpty == true
+                          ? pump.name!
+                          : l.reefBeatRunPump(pump.number),
+                      style: t.titleSmall?.copyWith(
+                        color: faulted ? tokens.textDim : null,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (!pump.scheduleEnabled)
+                    Text(
+                      l.reefBeatRunScheduleOff,
+                      style: t.labelMedium?.copyWith(color: tokens.textDim),
+                    ),
+                ],
+              ),
+              if (pump.temperatureC != null)
+                _StatusRow(
+                  label: l.reefBeatRunTemperature,
+                  value: '${pump.temperatureC!.toStringAsFixed(1)} °C',
                 ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            if (!pump.scheduleEnabled)
-              Text(
-                l.reefBeatRunScheduleOff,
-                style: t.labelMedium?.copyWith(color: tokens.textDim),
-              ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: _DoseGauge(
-                fraction: intensity == null ? 0 : (intensity / 100).clamp(0, 1),
-                enabled: !faulted,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              intensity == null ? '—' : l.reefBeatPercent(intensity),
-              style: ReefTokens.monoTextStyle.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: faulted ? tokens.textDim : tokens.text,
-              ),
-            ),
-          ],
-        ),
-        if (pump.temperatureC != null)
-          _StatusRow(
-            label: l.reefBeatRunTemperature,
-            value: '${pump.temperatureC!.toStringAsFixed(1)} °C',
+              if (chips.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Wrap(spacing: 8, runSpacing: 6, children: chips),
+              ],
+            ],
           ),
-        if (chips.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Wrap(spacing: 8, runSpacing: 6, children: chips),
-        ],
+        ),
       ],
     );
   }
@@ -1034,12 +1087,15 @@ class _LightStatus extends StatelessWidget {
         ],
         if (status.programName != null)
           _StatusRow(label: l.reefBeatLightProgram, value: status.programName!),
+        // All three channels are listed whenever the fixture reports them,
+        // including one sitting at 0 — an absent row would read as "the light
+        // has no moon channel" rather than "the moon channel is off".
         if (status.whitePercent != null) ...[
           const SizedBox(height: 6),
           _ChannelBar(
             label: l.reefBeatLightWhite,
             percent: status.whitePercent!,
-            fill: tokens.text,
+            fill: tokens.ledWhite,
           ),
         ],
         if (status.bluePercent != null) ...[
@@ -1047,15 +1103,15 @@ class _LightStatus extends StatelessWidget {
           _ChannelBar(
             label: l.reefBeatLightBlue,
             percent: status.bluePercent!,
-            fill: tokens.primary,
+            fill: tokens.ledBlue,
           ),
         ],
-        if (status.moonPercent != null && status.moonPercent! > 0) ...[
+        if (status.moonPercent != null) ...[
           const SizedBox(height: 6),
           _ChannelBar(
             label: l.reefBeatLightMoon,
             percent: status.moonPercent!,
-            fill: tokens.textDim,
+            fill: tokens.ledMoon,
           ),
         ],
         const SizedBox(height: 8),
@@ -1134,13 +1190,39 @@ class _ChannelBar extends StatelessWidget {
   }
 }
 
-/// The status of a ReefWave pump — deliberately just its mode and Wi-Fi link,
-/// with a note saying why. Its firmware exposes nothing else on the LAN (see
-/// rb_protocol.dart); showing an empty card with no explanation would read as
-/// a bug rather than a vendor limit.
-class _WaveStatus extends StatelessWidget {
-  const _WaveStatus({required this.status});
-  final RbWaveStatus status;
+/// Every ReefWave on the dashboard, as one entry: a row of compact tiles
+/// instead of a full-width card each.
+///
+/// A tank commonly runs two or more wave pumps, and each has exactly one number
+/// worth showing — a full card apiece pushed everything else off the screen.
+/// The tiles size themselves to fit on one row where they can and wrap into
+/// balanced rows when they can't (4 pumps read 2 + 2, not 3 + 1).
+class _WaveGroup extends StatelessWidget {
+  const _WaveGroup({
+    super.key,
+    required this.devices,
+    required this.index,
+    required this.canReorder,
+    required this.liveOf,
+    required this.errorTextOf,
+    required this.onRefresh,
+    required this.onMove,
+    required this.onRemove,
+  });
+
+  final List<DeviceRecord> devices;
+  final int index;
+  final bool canReorder;
+  final _Live Function(DeviceRecord) liveOf;
+  final String Function(RbLinkError) errorTextOf;
+  final VoidCallback onRefresh;
+  final VoidCallback? Function(DeviceRecord) onMove;
+  final void Function(DeviceRecord) onRemove;
+
+  /// Narrowest a tile may get before the row splits — a gauge plus an
+  /// ellipsized name still reads at this width.
+  static const double _minTile = 108;
+  static const double _gap = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -1148,46 +1230,206 @@ class _WaveStatus extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     final tokens = ReefTokens.of(context);
 
-    final quality = status.wifiQuality;
-    final qualityText = switch (quality) {
-      RbWifiQuality.good => l.reefBeatWaveSignalGood,
-      RbWifiQuality.fair => l.reefBeatWaveSignalFair,
-      RbWifiQuality.weak => l.reefBeatWaveSignalWeak,
-      RbWifiQuality.unknown => null,
-    };
-    final qualityColor = switch (quality) {
-      RbWifiQuality.good => tokens.healthy,
-      RbWifiQuality.fair => tokens.caution,
-      RbWifiQuality.weak => tokens.critical,
-      RbWifiQuality.unknown => tokens.text,
-    };
-    final wifiText = [
-      ?qualityText,
-      if (status.signalDbm != null) '${status.signalDbm} dBm',
-    ].join(' · ');
+    final snapshots = [
+      for (final d in devices)
+        if (liveOf(d).snapshot?.wave != null) liveOf(d).snapshot!.wave!,
+    ];
+    final anyLoading = devices.any((d) => liveOf(d).loading);
+    // One note for the group. If any pump has been taken off `auto` the
+    // schedule may not describe it, and that caveat wins.
+    final allScheduled = snapshots.every((s) => s.scheduleApplies);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (status.mode != null)
-          _StatusRow(
-            label: l.reefBeatMode,
-            value: _modeText(l, status.mode!),
+    return Padding(
+      key: key,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.reefBeatWaveGroup,
+                  style: t.labelLarge?.copyWith(color: tokens.textDim),
+                ),
+              ),
+              if (canReorder)
+                ReorderableDragStartListener(
+                  index: index,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.drag_handle,
+                      size: 18,
+                      color: tokens.textFaint,
+                      semanticLabel: l.reorder,
+                    ),
+                  ),
+                ),
+              IconButton(
+                onPressed: anyLoading ? null : onRefresh,
+                icon: const Icon(Icons.refresh, size: 18),
+                tooltip: l.reefBeatRefresh,
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
           ),
-        if (status.ssid != null)
-          _StatusRow(label: l.reefBeatWaveNetwork, value: status.ssid!),
-        if (wifiText.isNotEmpty)
-          _StatusRow(
-            label: l.reefBeatWaveSignal,
-            value: wifiText,
-            valueColor: qualityColor,
+          const SizedBox(height: 2),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final count = devices.length;
+              // Fit as many as the width allows, then rebalance so the rows are
+              // even rather than leaving a lone tile on the last row.
+              final maxColumns = ((constraints.maxWidth + _gap) /
+                      (_minTile + _gap))
+                  .floor()
+                  .clamp(1, count);
+              final rows = (count / maxColumns).ceil();
+              final columns = (count / rows).ceil();
+              final width =
+                  (constraints.maxWidth - _gap * (columns - 1)) / columns;
+              return Wrap(
+                spacing: _gap,
+                runSpacing: _gap,
+                children: [
+                  for (final d in devices)
+                    SizedBox(
+                      width: width,
+                      child: _WaveTile(
+                        device: d,
+                        live: liveOf(d),
+                        errorTextOf: errorTextOf,
+                        onMove: onMove(d),
+                        onRemove: () => onRemove(d),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
-        const SizedBox(height: 10),
-        Text(
-          l.reefBeatWaveLimited,
-          style: t.bodySmall?.copyWith(color: tokens.textDim),
+          if (snapshots.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              allScheduled ? l.reefBeatWaveScheduled : l.reefBeatWaveManual,
+              style: t.bodySmall?.copyWith(color: tokens.textDim),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One wave pump: its name, the forward output scheduled for right now, and
+/// its mode.
+///
+/// The pump never reports its *live* speed (see rb_protocol.dart), so the
+/// figure comes from the `/auto` schedule resolved against the current time of
+/// day. Only the forward percentage is shown — reverse output and the
+/// alternation durations are parsed but would crowd a tile this size without
+/// telling a keeper anything they act on.
+class _WaveTile extends StatelessWidget {
+  const _WaveTile({
+    required this.device,
+    required this.live,
+    required this.errorTextOf,
+    required this.onMove,
+    required this.onRemove,
+  });
+
+  final DeviceRecord device;
+  final _Live live;
+  final String Function(RbLinkError) errorTextOf;
+  final VoidCallback? onMove;
+  final VoidCallback onRemove;
+
+  /// Minutes since local midnight — what the schedule is indexed by.
+  static int _minuteOfDay(DateTime now) => now.hour * 60 + now.minute;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+    final status = live.snapshot?.wave;
+    final scheduled = status?.scheduleApplies ?? true;
+    final forward = status?.forwardPercentAt(_minuteOfDay(DateTime.now()));
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 4, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    deviceDisplayName(device),
+                    style: t.titleSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (v) {
+                    if (v == 'move') onMove?.call();
+                    if (v == 'remove') onRemove();
+                  },
+                  icon: Icon(
+                    Icons.more_vert,
+                    size: 16,
+                    color: tokens.textFaint,
+                  ),
+                  padding: EdgeInsets.zero,
+                  itemBuilder: (_) => [
+                    if (onMove != null)
+                      PopupMenuItem(
+                        value: 'move',
+                        child: Text(l.reefBeatMoveToTank),
+                      ),
+                    PopupMenuItem(
+                      value: 'remove',
+                      child: Text(l.reefBeatRemove),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            if (live.loading)
+              const SizedBox(
+                height: _CircularGauge.size,
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              )
+            else
+              _CircularGauge(percent: forward, enabled: scheduled),
+            const SizedBox(height: 6),
+            if (live.error != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Text(
+                  errorTextOf(live.error!),
+                  style: t.bodySmall?.copyWith(color: tokens.critical),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+            else if (status?.mode != null)
+              Text(
+                _modeText(l, status!.mode!),
+                style: t.bodySmall?.copyWith(color: tokens.textDim),
+              ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -1356,6 +1598,102 @@ class _HeadRow extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A circular percentage gauge: a ring track with a fractional arc and the
+/// percentage in the middle. Used for pump output — a ReefRun socket's speed
+/// and a ReefWave's scheduled forward output — where the value is a standalone
+/// setting rather than progress through a total, which is what the horizontal
+/// [_DoseGauge] expresses.
+class _CircularGauge extends StatelessWidget {
+  const _CircularGauge({required this.percent, this.enabled = true});
+
+  /// 0..100, or null when the device reported nothing (renders an empty ring
+  /// with a dash rather than a misleading zero).
+  final int? percent;
+  final bool enabled;
+
+  /// Sized to sit beside two or three label–value rows without dominating the
+  /// card; the ring and label scale off it.
+  static const double size = 64;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ReefTokens.of(context);
+    final value = percent;
+    final color = enabled ? tokens.primary : tokens.textFaint;
+    final label = value == null
+        ? '—'
+        : AppLocalizations.of(context).reefBeatPercent(value);
+
+    return Semantics(
+      label: label,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: _RingPainter(
+            fraction: value == null ? 0 : (value / 100).clamp(0.0, 1.0),
+            track: tokens.track,
+            fill: color,
+            strokeWidth: size / 9,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: ReefTokens.monoTextStyle.copyWith(
+                fontSize: size / 4.6,
+                fontWeight: FontWeight.w600,
+                color: enabled ? tokens.text : tokens.textDim,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  const _RingPainter({
+    required this.fraction,
+    required this.track,
+    required this.fill,
+    required this.strokeWidth,
+  });
+
+  final double fraction;
+  final Color track;
+  final Color fill;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final center = rect.center;
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final base = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..color = track;
+    canvas.drawCircle(center, radius, base);
+    if (fraction <= 0) return;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2, // 12 o'clock
+      fraction * 2 * math.pi,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round
+        ..color = fill,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) =>
+      old.fraction != fraction || old.fill != fill || old.track != track;
 }
 
 /// A horizontal gauge: a rounded track with a fractional fill. Used for a

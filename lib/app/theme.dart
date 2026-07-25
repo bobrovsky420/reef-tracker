@@ -24,6 +24,9 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
     required this.healthySoft,
     required this.cautionSoft,
     required this.criticalSoft,
+    required this.ledWhite,
+    required this.ledBlue,
+    required this.ledMoon,
     required this.cautionBorder,
     required this.criticalBorder,
     required this.band,
@@ -58,6 +61,17 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
   final Color healthySoft;
   final Color cautionSoft;
   final Color criticalSoft;
+
+  /// ReefLED output-channel fills. Non-semantic (they carry no health meaning),
+  /// so they are their own family rather than borrowing the status or
+  /// chart-marker slots. The white channel is drawn a pale sky blue rather than
+  /// an actual white — a white bar is invisible on a white card, and the tank
+  /// reads cool-white anyway; blue is a true blue (deliberately *not* the
+  /// actinic teal `primary`, which sat too close to the white channel to tell
+  /// apart); moon is violet.
+  final Color ledWhite;
+  final Color ledBlue;
+  final Color ledMoon;
 
   /// Borders of the amber/critical equipment-alert card (REDESIGN #11). The
   /// caution variant isn't in the §2.1 mock table (the mock only shows a
@@ -140,6 +154,9 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
     healthySoft: Color(0x292FA968), // 16%
     cautionSoft: Color(0x1FC97F1E), // 12%
     criticalSoft: Color(0x1AE2593A), // 10%
+    ledWhite: Color(0xFF7EC4E8), // pale sky blue
+    ledBlue: Color(0xFF2C6BD9), // a true blue, not the actinic teal
+    ledMoon: Color(0xFF7A5BC4), // the palette's violet
     cautionBorder: Color(0x47C97F1E), // 28%
     criticalBorder: Color(0x47E2593A), // 28%
     band: Color(0x332FA968), // 20%
@@ -169,6 +186,9 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
     healthySoft: Color(0x297DE8A0), // 16%
     cautionSoft: Color(0x29F5B95B), // 16%
     criticalSoft: Color(0x24FF7A59), // 14%
+    ledWhite: Color(0xFFA5DBF3), // pale sky blue, lifted for the dark surface
+    ledBlue: Color(0xFF6FA8FF), // a true blue, not the actinic teal
+    ledMoon: Color(0xFFB9A3F0), // the palette's violet
     cautionBorder: Color(0x59F5B95B), // 35%
     criticalBorder: Color(0x59FF7A59), // 35%
     band: Color(0x617DE8A0), // 38%
@@ -196,6 +216,9 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
     Color? healthySoft,
     Color? cautionSoft,
     Color? criticalSoft,
+    Color? ledWhite,
+    Color? ledBlue,
+    Color? ledMoon,
     Color? cautionBorder,
     Color? criticalBorder,
     Color? band,
@@ -221,6 +244,9 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
       healthySoft: healthySoft ?? this.healthySoft,
       cautionSoft: cautionSoft ?? this.cautionSoft,
       criticalSoft: criticalSoft ?? this.criticalSoft,
+      ledWhite: ledWhite ?? this.ledWhite,
+      ledBlue: ledBlue ?? this.ledBlue,
+      ledMoon: ledMoon ?? this.ledMoon,
       cautionBorder: cautionBorder ?? this.cautionBorder,
       criticalBorder: criticalBorder ?? this.criticalBorder,
       band: band ?? this.band,
@@ -251,6 +277,9 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
       healthySoft: Color.lerp(healthySoft, other.healthySoft, t)!,
       cautionSoft: Color.lerp(cautionSoft, other.cautionSoft, t)!,
       criticalSoft: Color.lerp(criticalSoft, other.criticalSoft, t)!,
+      ledWhite: Color.lerp(ledWhite, other.ledWhite, t)!,
+      ledBlue: Color.lerp(ledBlue, other.ledBlue, t)!,
+      ledMoon: Color.lerp(ledMoon, other.ledMoon, t)!,
       cautionBorder: Color.lerp(cautionBorder, other.cautionBorder, t)!,
       criticalBorder: Color.lerp(criticalBorder, other.criticalBorder, t)!,
       band: Color.lerp(band, other.band, t)!,

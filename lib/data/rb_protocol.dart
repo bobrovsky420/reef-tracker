@@ -23,13 +23,16 @@
 //   GET /configuration → mat only, and only to refine the model code: the mat
 //                        reports a bare "RSMAT" in `/device-info` while its
 //                        width (RSMAT250/500/1200) lives here.
-//   GET /mode, /wifi   → the ReefWave's *only* live endpoints (see below).
+//   GET /mode, /wifi,  → the ReefWave's endpoints (it serves no /dashboard);
+//       /auto             `/auto` is the day's wave schedule.
 //
-// **The ReefWave is deliberately thin.** Its ESP8266 firmware serves no
-// `/dashboard` at all (404), and no endpoint exposes pump speed, wave mode or
-// schedule — that lives on a separate wave-controller chip with no HTTP
-// surface. All the local API offers is the operating mode and the Wi-Fi link,
-// so the wave card reports exactly that rather than pretending to more.
+// **The ReefWave is the odd one out.** Its ESP8266 firmware serves no
+// `/dashboard` at all (404), and nothing reports its *live* pump speed — that
+// runs on a separate wave-controller chip with no HTTP surface. What `/auto`
+// does give is the **schedule**: a day-long list of intervals, each with a
+// start time and a forward/reverse output. So the card shows the output the
+// pump is scheduled to run right now, qualified by whether the pump is
+// actually in `auto` mode ([RbWaveStatus.scheduleApplies]).
 //
 // The layouts were captured from live hardware — an RSDOSE4, an RSATO+, an
 // RSMAT250, an RSRUN, an RSLED90 and two RSWAVE25s (see rb_protocol_test.dart
@@ -110,6 +113,14 @@ const Map<String, String> kRbModelDisplayNames = {
 
 String rbModelDisplayName(String hwModel) =>
     kRbModelDisplayNames[hwModel] ?? hwModel;
+
+/// Whether [hwModel] is a ReefWave.
+///
+/// The dashboard groups wave pumps into one compact row and must decide that
+/// from the *stored* model alone — before any read has reported a `hw_type`.
+/// Prefix-matched so a future RSWAVE variant groups without a code change.
+bool rbIsWaveModel(String? hwModel) =>
+    hwModel != null && hwModel.toUpperCase().startsWith('RSWAVE');
 
 double? _asDouble(Object? v) => switch (v) {
   final num n => n.toDouble(),
@@ -772,51 +783,118 @@ class RbLightStatus {
   }
 }
 
-/// Coarse Wi-Fi link quality derived from RSSI, for the wave card's signal row.
-enum RbWifiQuality { good, fair, weak, unknown }
-
-/// The ReefWave's live state — everything its firmware exposes, which is the
-/// operating mode (`GET /mode`) and the Wi-Fi link (`GET /wifi`).
+/// One scheduled wave interval from the ReefWave's `GET /auto`.
 ///
-/// There is deliberately no pump speed, wave pattern or schedule here: the
-/// ReefWave serves no `/dashboard`, and its wave controller is a second chip
-/// with no HTTP surface. See the note at the top of this file.
-class RbWaveStatus {
-  const RbWaveStatus({
-    this.mode,
-    this.wifiConnected,
-    this.ssid,
-    this.signalDbm,
+/// The schedule is a day-long sequence: each interval takes over at
+/// [startMinute] and runs until the next one starts, wrapping past midnight.
+class RbWaveInterval {
+  const RbWaveInterval({
+    required this.startMinute,
+    required this.forwardPercent,
+    this.reversePercent,
+    this.forwardMinutes,
+    this.reverseMinutes,
+    this.name,
+    this.type,
+    this.direction,
   });
+
+  /// Minutes since local midnight at which this interval starts (`st`).
+  final int startMinute;
+
+  /// Pump output in the forward direction, in percent (`fti`) — the one figure
+  /// the card shows.
+  final int forwardPercent;
+
+  /// Reverse-direction output (`rti`) and the alternation durations in minutes
+  /// (`frt`/`rrt`). Parsed for completeness; deliberately not displayed — a
+  /// wave card that listed four numbers would say less, not more.
+  final int? reversePercent;
+  final int? forwardMinutes;
+  final int? reverseMinutes;
+
+  /// The interval's name as set in the ReefBeat app ("Random Day"), its wave
+  /// type (`re` regular / `ra` random) and direction (`alt` = alternating).
+  final String? name;
+  final String? type;
+  final String? direction;
+
+  /// Null when the entry lacks the two fields that make it usable.
+  static RbWaveInterval? fromJson(Map<String, Object?> json) {
+    final start = _asInt(json['st']);
+    final forward = _asInt(json['fti']);
+    if (start == null || forward == null) return null;
+    return RbWaveInterval(
+      startMinute: start,
+      forwardPercent: forward,
+      reversePercent: _asInt(json['rti']),
+      forwardMinutes: _asInt(json['frt']),
+      reverseMinutes: _asInt(json['rrt']),
+      name: json['name'] as String?,
+      type: json['type'] as String?,
+      direction: json['direction'] as String?,
+    );
+  }
+}
+
+/// The ReefWave's live state: operating mode (`GET /mode`) and the wave
+/// schedule (`GET /auto`).
+///
+/// The ReefWave serves no `/dashboard` and never reports its *live* speed —
+/// that lives on a second wave-controller chip with no HTTP surface. What
+/// `/auto` gives is the **schedule**, so the card shows the forward output the
+/// pump is scheduled to run at the current time of day. In `auto` mode that is
+/// what the pump is doing; see [scheduleApplies].
+class RbWaveStatus {
+  const RbWaveStatus({this.mode, this.intervals = const []});
 
   /// Operating mode ("auto"/"manual"/…).
   final String? mode;
 
-  /// Wi-Fi association state and network, when `/wifi` was readable.
-  final bool? wifiConnected;
-  final String? ssid;
+  /// The day's wave schedule, sorted by [RbWaveInterval.startMinute].
+  final List<RbWaveInterval> intervals;
 
-  /// RSSI in dBm (negative; closer to zero is stronger).
-  final int? signalDbm;
+  /// Whether the schedule describes what the pump is actually doing. A pump
+  /// driven manually ignores it, so the card qualifies the figure rather than
+  /// presenting a scheduled number as the live one.
+  bool get scheduleApplies => mode == null || mode == 'auto';
 
-  /// Buckets chosen for reef use: a pump in a sump behind glass and water is
-  /// the classic weak-signal case, so anything past −75 dBm reads as weak.
-  RbWifiQuality get wifiQuality {
-    final dbm = signalDbm;
-    if (dbm == null) return RbWifiQuality.unknown;
-    if (dbm >= -60) return RbWifiQuality.good;
-    if (dbm >= -75) return RbWifiQuality.fair;
-    return RbWifiQuality.weak;
+  /// The interval running at [minuteOfDay] (minutes since local midnight).
+  ///
+  /// Before the first interval's start the schedule is still running the
+  /// previous day's last interval — the day wraps, it does not begin unset.
+  RbWaveInterval? intervalAt(int minuteOfDay) {
+    if (intervals.isEmpty) return null;
+    RbWaveInterval? active;
+    for (final interval in intervals) {
+      if (interval.startMinute <= minuteOfDay) active = interval;
+    }
+    return active ?? intervals.last;
   }
 
-  /// [wifi] is the optional `/wifi` payload; [mode] the `/mode` one.
+  /// Forward-direction output scheduled for [minuteOfDay], in percent.
+  int? forwardPercentAt(int minuteOfDay) =>
+      intervalAt(minuteOfDay)?.forwardPercent;
+
+  /// [mode] is the `/mode` payload; [auto] the optional `/auto` one.
+  ///
+  /// `/wifi` is deliberately not read: the card shows only what a keeper acts
+  /// on, and the link state was dropped from it, so fetching the endpoint would
+  /// be a request per refresh for something nothing displays.
   static RbWaveStatus fromJson(
     Map<String, Object?> mode, {
-    Map<String, Object?>? wifi,
-  }) => RbWaveStatus(
-    mode: mode['mode'] as String?,
-    wifiConnected: wifi == null ? null : wifi['connected'] == true,
-    ssid: wifi?['ssid'] as String?,
-    signalDbm: wifi == null ? null : _asInt(wifi['signal_dBm']),
-  );
+    Map<String, Object?>? auto,
+  }) {
+    final rawIntervals = auto?['intervals'];
+    final intervals = <RbWaveInterval>[];
+    if (rawIntervals is List) {
+      for (final entry in rawIntervals) {
+        if (entry is! Map<String, Object?>) continue;
+        final interval = RbWaveInterval.fromJson(entry);
+        if (interval != null) intervals.add(interval);
+      }
+      intervals.sort((a, b) => a.startMinute.compareTo(b.startMinute));
+    }
+    return RbWaveStatus(mode: mode['mode'] as String?, intervals: intervals);
+  }
 }

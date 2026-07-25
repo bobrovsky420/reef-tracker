@@ -154,12 +154,13 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
         );
       case kRbWaveHwType:
         // The wave serves no /dashboard — see rb_protocol.dart. `/mode` is
-        // required (it is the only live value); `/wifi` only enriches it.
+        // required; `/auto` (the day's wave schedule, the only way to know what
+        // output the pump is running) enriches it.
         final mode = await _getJson(h, '/mode');
-        final wifi = await _tryGetJson(h, '/wifi');
+        final auto = await _tryGetJson(h, '/auto');
         return RbSnapshot(
           info: info,
-          wave: RbWaveStatus.fromJson(mode, wifi: wifi),
+          wave: RbWaveStatus.fromJson(mode, auto: auto),
         );
       default:
         throw RbLinkException(RbLinkError.unsupportedModel, info.hwType);

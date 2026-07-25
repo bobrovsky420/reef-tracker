@@ -3428,23 +3428,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get reefBeatWaveNetwork => 'Сеть';
+  String get reefBeatWaveGroup => 'Помпы течения';
 
   @override
-  String get reefBeatWaveSignal => 'Сигнал';
+  String get reefBeatWaveScheduled =>
+      'Поток вперёд, запланированный на это время суток. Помпы ReefWave не сообщают текущую скорость по локальной сети.';
 
   @override
-  String get reefBeatWaveSignalGood => 'Хороший';
-
-  @override
-  String get reefBeatWaveSignalFair => 'Средний';
-
-  @override
-  String get reefBeatWaveSignalWeak => 'Слабый';
-
-  @override
-  String get reefBeatWaveLimited =>
-      'Помпы ReefWave сообщают по локальной сети только свой режим и уровень сигнала Wi-Fi. Скорость помпы и режимы течения вне приложения ReefBeat недоступны.';
+  String get reefBeatWaveManual =>
+      'Поток вперёд по расписанию помпы. Помпа не в автоматическом режиме, поэтому может работать иначе.';
 
   @override
   String get discoveryTitle => 'Поиск в сети';

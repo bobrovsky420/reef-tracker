@@ -521,6 +521,26 @@ void main() {
     });
   });
 
+  group('rbIsWaveModel', () {
+    test('recognises a wave from the stored model alone', () {
+      // The dashboard groups wave pumps before any device has been read, so
+      // this must work off `Devices.model` with no `hw_type` available.
+      expect(rbIsWaveModel('RSWAVE25'), isTrue);
+      expect(rbIsWaveModel('RSWAVE45'), isTrue);
+      // Prefix-matched, so an unreleased variant still groups.
+      expect(rbIsWaveModel('RSWAVE99X'), isTrue);
+      expect(rbIsWaveModel('rswave25'), isTrue);
+
+      expect(rbIsWaveModel('RSDOSE4'), isFalse);
+      expect(rbIsWaveModel('RSATO+'), isFalse);
+      expect(rbIsWaveModel('RSMAT250'), isFalse);
+      expect(rbIsWaveModel('RSRUN'), isFalse);
+      expect(rbIsWaveModel('RSLED90'), isFalse);
+      expect(rbIsWaveModel(null), isFalse);
+      expect(rbIsWaveModel(''), isFalse);
+    });
+  });
+
   group('RbMatStatus model code', () {
     test('takes the sized model from /configuration', () {
       // `/device-info` reports a bare "RSMAT"; only the configuration knows the
@@ -711,45 +731,113 @@ void main() {
     /// Golden vectors: a live RSWAVE25's `GET /mode` and `GET /wifi`
     /// (2026-07-25). It serves no `/dashboard` at all.
     const waveModeJson = '{"mode": "auto"}';
-    const waveWifiJson = '''
+
+    test('decodes the mode on its own', () {
+      final status = RbWaveStatus.fromJson(
+        jsonDecode(waveModeJson) as Map<String, Object?>,
+      );
+      expect(status.mode, 'auto');
+      expect(status.intervals, isEmpty);
+    });
+
+    /// Golden vector: a live RSWAVE25's `GET /auto` (2026-07-25) — the day's
+    /// wave schedule, the only place the pump's output appears.
+    const waveAutoJson = '''
 {
-  "connected": true,
-  "ssid": "FibreBox_X6-21BC17",
-  "channel": 1,
-  "signal_dBm": -69,
-  "ip": "192.168.1.4"
+  "uid": "587543e6-1c55-499d-8839-6f0084154aaa",
+  "intervals": [
+    {
+      "wave_uid": "0f0bdf17-92d2-4e38-bbb0-4eb7f640a57d",
+      "type": "re", "name": "Regular Night",
+      "frt": 10, "rrt": 2, "fti": 30, "rti": 60,
+      "st": 0, "direction": "alt"
+    },
+    {
+      "wave_uid": "01bff951-dc93-4655-8349-405b82e20025",
+      "type": "ra", "name": "Random Day",
+      "frt": 10, "rrt": 2, "fti": 80, "rti": 60,
+      "st": 360, "direction": "alt"
+    },
+    {
+      "wave_uid": "0f0bdf17-92d2-4e38-bbb0-4eb7f640a57d",
+      "type": "re", "name": "Regular Night",
+      "frt": 10, "rrt": 2, "fti": 30, "rti": 60,
+      "st": 1320, "direction": "alt"
+    }
+  ]
 }
 ''';
 
-    test('decodes mode and the Wi-Fi link', () {
-      final status = RbWaveStatus.fromJson(
-        jsonDecode(waveModeJson) as Map<String, Object?>,
-        wifi: jsonDecode(waveWifiJson) as Map<String, Object?>,
-      );
-      expect(status.mode, 'auto');
-      expect(status.wifiConnected, isTrue);
-      expect(status.ssid, 'FibreBox_X6-21BC17');
-      expect(status.signalDbm, -69);
-      expect(status.wifiQuality, RbWifiQuality.fair);
+    RbWaveStatus withSchedule({String mode = 'auto', String? auto}) =>
+        RbWaveStatus.fromJson(
+          {'mode': mode},
+          auto: jsonDecode(auto ?? waveAutoJson) as Map<String, Object?>,
+        );
+
+    test('decodes the wave schedule', () {
+      final status = withSchedule();
+      expect(status.intervals, hasLength(3));
+      final day = status.intervals[1];
+      expect(day.startMinute, 360);
+      expect(day.forwardPercent, 80);
+      expect(day.reversePercent, 60);
+      expect(day.forwardMinutes, 10);
+      expect(day.reverseMinutes, 2);
+      expect(day.name, 'Random Day');
+      expect(day.type, 'ra');
+      expect(day.direction, 'alt');
     });
 
-    test('works with no /wifi payload at all', () {
-      final status = RbWaveStatus.fromJson(
-        jsonDecode(waveModeJson) as Map<String, Object?>,
-      );
-      expect(status.mode, 'auto');
-      expect(status.ssid, isNull);
-      expect(status.wifiQuality, RbWifiQuality.unknown);
+    test('resolves the forward output for the time of day', () {
+      final status = withSchedule();
+      int? at(int h, int m) => status.forwardPercentAt(h * 60 + m);
+      expect(at(0, 0), 30); // exactly on the first boundary
+      expect(at(3, 0), 30); // night
+      expect(at(5, 59), 30); // one minute before the day interval
+      expect(at(6, 0), 80); // exactly on the boundary → the new interval
+      expect(at(16, 50), 80); // the live check that matched the pump
+      expect(at(21, 59), 80);
+      expect(at(22, 0), 30); // back to night
+      expect(at(23, 59), 30);
     });
 
-    test('signal buckets', () {
-      RbWifiQuality quality(int dbm) =>
-          RbWaveStatus(signalDbm: dbm).wifiQuality;
-      expect(quality(-40), RbWifiQuality.good);
-      expect(quality(-60), RbWifiQuality.good);
-      expect(quality(-61), RbWifiQuality.fair);
-      expect(quality(-75), RbWifiQuality.fair);
-      expect(quality(-76), RbWifiQuality.weak);
+    test('before the first interval the previous day is still running', () {
+      // A schedule that starts at 06:00 has nothing "current" at 02:00 unless
+      // the day is treated as wrapping — the pump is running the last interval.
+      final status = withSchedule(
+        auto: '{"intervals":['
+            '{"st":360,"fti":80},'
+            '{"st":1320,"fti":25}]}',
+      );
+      expect(status.forwardPercentAt(2 * 60), 25);
+      expect(status.intervalAt(2 * 60)?.startMinute, 1320);
+    });
+
+    test('an out-of-order or partial schedule still resolves', () {
+      final status = withSchedule(
+        auto: '{"intervals":['
+            '{"st":1320,"fti":30},'
+            '{"st":0,"fti":10},'
+            '{"name":"broken, no st or fti"},'
+            '{"st":360,"fti":80}]}',
+      );
+      expect(status.intervals, hasLength(3)); // the broken entry is dropped
+      expect(status.intervals.first.startMinute, 0); // sorted
+      expect(status.forwardPercentAt(12 * 60), 80);
+    });
+
+    test('no schedule at all yields no percentage', () {
+      final status = RbWaveStatus.fromJson(const {'mode': 'auto'});
+      expect(status.intervals, isEmpty);
+      expect(status.forwardPercentAt(600), isNull);
+      expect(status.intervalAt(600), isNull);
+    });
+
+    test('the schedule only describes the pump while it is in auto', () {
+      expect(withSchedule().scheduleApplies, isTrue);
+      expect(withSchedule(mode: 'manual').scheduleApplies, isFalse);
+      // An absent mode stays optimistic rather than caveating out of nowhere.
+      expect(const RbWaveStatus().scheduleApplies, isTrue);
     });
   });
 

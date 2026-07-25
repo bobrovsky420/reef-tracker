@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.43.1] - 2026-07-25
+
+### Added
+- ReefWave cards now show the pump's flow. The pump doesn't report its live
+  speed over the local network, but it does share its wave schedule, so the
+  card shows the forward output scheduled for the current time of day and
+  follows the schedule as the day moves on. If the pump isn't in auto mode the
+  card says the schedule may not be what it's actually running.
+
+### Changed
+- Pump output is now shown as a circular gauge — on ReefWave cards, and on both
+  the return pump and the skimmer of a ReefRun.
+- ReefWave pumps now share a single compact row instead of one full-width card
+  each, so a tank with several of them doesn't push everything else off the
+  screen. They fit on one row where there's space and wrap into even rows when
+  there isn't.
+- ReefWave cards no longer show the Wi-Fi network and signal strength.
+- ReefLED channel colours are clearer: white is a pale sky blue, blue is a true
+  blue rather than the app's teal, and moon is violet.
+
 ## [0.43.0] - 2026-07-25
 
 ### Added
