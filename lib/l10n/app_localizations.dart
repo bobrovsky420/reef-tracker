@@ -4926,7 +4926,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefFactoryDisclaimer.
   ///
   /// In en, this message translates to:
-  /// **'This app only reads live values from your ReefFactory devices. It can\'t change settings, calibrate, or update firmware — use the ReefFactory app for that.'**
+  /// **'This app only reads live values from your ReefFactory devices. It can\'t change settings, calibrate, or update firmware — use the ReefFactory app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.'**
   String get reefFactoryDisclaimer;
 
   /// No description provided for @reefFactoryAddDevice.
@@ -5046,7 +5046,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefFactoryHostHelp.
   ///
   /// In en, this message translates to:
-  /// **'Find it in your ReefFactory app or router. A DHCP reservation keeps it from changing.'**
+  /// **'Find it in your ReefFactory app or router. A DHCP reservation keeps it from changing. Your phone must be on the same Wi-Fi network as the device.'**
   String get reefFactoryHostHelp;
 
   /// No description provided for @reefFactoryCheck.
@@ -5106,7 +5106,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatDisclaimer.
   ///
   /// In en, this message translates to:
-  /// **'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that.'**
+  /// **'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.'**
   String get reefBeatDisclaimer;
 
   /// No description provided for @reefBeatAddDevice.
@@ -5196,7 +5196,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatHostHelp.
   ///
   /// In en, this message translates to:
-  /// **'Find it in your router\'s client list. A DHCP reservation keeps it from changing.'**
+  /// **'Find it in your router\'s client list. A DHCP reservation keeps it from changing. Your phone must be on the same Wi-Fi network as the device.'**
   String get reefBeatHostHelp;
 
   /// No description provided for @reefBeatCheck.

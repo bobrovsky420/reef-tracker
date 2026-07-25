@@ -2957,7 +2957,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefFactoryDisclaimer =>
-      'This app only reads live values from your ReefFactory devices. It can\'t change settings, calibrate, or update firmware — use the ReefFactory app for that.';
+      'This app only reads live values from your ReefFactory devices. It can\'t change settings, calibrate, or update firmware — use the ReefFactory app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.';
 
   @override
   String get reefFactoryAddDevice => 'Add device';
@@ -3030,7 +3030,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefFactoryHostHelp =>
-      'Find it in your ReefFactory app or router. A DHCP reservation keeps it from changing.';
+      'Find it in your ReefFactory app or router. A DHCP reservation keeps it from changing. Your phone must be on the same Wi-Fi network as the device.';
 
   @override
   String get reefFactoryCheck => 'Check';
@@ -3066,7 +3066,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatDisclaimer =>
-      'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that.';
+      'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.';
 
   @override
   String get reefBeatAddDevice => 'Add device';
@@ -3115,7 +3115,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatHostHelp =>
-      'Find it in your router\'s client list. A DHCP reservation keeps it from changing.';
+      'Find it in your router\'s client list. A DHCP reservation keeps it from changing. Your phone must be on the same Wi-Fi network as the device.';
 
   @override
   String get reefBeatCheck => 'Check';

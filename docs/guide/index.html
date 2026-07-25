@@ -530,6 +530,13 @@ cloud account in between. Both dashboards live in the Measurements tab's
 ReefTracker never doses, never changes a schedule and never calibrates –
 settings and firmware stay in the vendor's own app.</p>
 
+<div class="tip"><strong>Same network required:</strong> ReefTracker reaches
+these devices directly on your local network, so your phone must be connected
+to the <strong>same Wi-Fi network</strong> as them. Away from home – on mobile
+data, on a guest network, or on a separate IoT/VPN network – the devices simply
+can't be reached, and the cards report the address as unreachable. There is no
+cloud relay: reading works only while you are on the same network.</div>
+
 <h3>ReefFactory meters <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
 
 <div class="shots">
@@ -581,11 +588,11 @@ to save. Two device families are supported:</p>
 assigned to a tank (movable later from the card menu). The dashboard reads
 every device once when opened; after that, refresh is manual.</p>
 
-<div class="tip"><strong>Tip:</strong> your phone must be on the same network
-as the devices. Addresses can change when your router reassigns them –
-reserving a fixed IP for each device in your router keeps the cards reachable;
-if an address does change, just re-add the device and the existing card is
-updated in place.</div>
+<div class="tip"><strong>Tip:</strong> addresses can change when your router
+reassigns them – reserving a fixed IP for each device in your router keeps the
+cards reachable; if an address does change, just re-add the device and the
+existing card is updated in place. And remember that your phone has to be on
+the same Wi-Fi network as the devices for any of this to work.</div>
 
 <h3>Connected devices list</h3>
 

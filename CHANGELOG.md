@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.41.5] - 2026-07-25
+
+### Changed
+- ReefFactory and ReefBeat dashboards now state that they only work while the
+  phone is on the same Wi-Fi network as the devices — spelled out in the
+  read-only disclaimer on each dashboard and in the help text of the
+  add-device sheet. The user guide and the feature overview say the same
+  (local network only, no cloud relay).
+
 ## [0.41.4] - 2026-07-25
 
 ### Changed

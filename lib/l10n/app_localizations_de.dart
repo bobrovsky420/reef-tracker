@@ -2970,7 +2970,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefFactoryDisclaimer =>
-      'Diese App liest nur die Live-Werte deiner ReefFactory-Geräte. Sie kann keine Einstellungen ändern, kalibrieren oder Firmware aktualisieren – nutze dafür die ReefFactory-App.';
+      'Diese App liest nur die Live-Werte deiner ReefFactory-Geräte. Sie kann keine Einstellungen ändern, kalibrieren oder Firmware aktualisieren – nutze dafür die ReefFactory-App. Das Auslesen funktioniert nur, solange dein Telefon im selben WLAN wie die Geräte ist.';
 
   @override
   String get reefFactoryAddDevice => 'Gerät hinzufügen';
@@ -3045,7 +3045,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefFactoryHostHelp =>
-      'Zu finden in der ReefFactory-App oder im Router. Eine DHCP-Reservierung verhindert, dass sie sich ändert.';
+      'Zu finden in der ReefFactory-App oder im Router. Eine DHCP-Reservierung verhindert, dass sie sich ändert. Dein Telefon muss im selben WLAN wie das Gerät sein.';
 
   @override
   String get reefFactoryCheck => 'Prüfen';
@@ -3082,7 +3082,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatDisclaimer =>
-      'Diese App liest nur den Status deiner Red-Sea-ReefBeat-Geräte. Sie kann nicht dosieren, Pläne ändern oder kalibrieren – nutze dafür die ReefBeat-App.';
+      'Diese App liest nur den Status deiner Red-Sea-ReefBeat-Geräte. Sie kann nicht dosieren, Pläne ändern oder kalibrieren – nutze dafür die ReefBeat-App. Das Auslesen funktioniert nur, solange dein Telefon im selben WLAN wie die Geräte ist.';
 
   @override
   String get reefBeatAddDevice => 'Gerät hinzufügen';
@@ -3132,7 +3132,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatHostHelp =>
-      'Zu finden in der Geräteliste deines Routers. Eine DHCP-Reservierung verhindert, dass sie sich ändert.';
+      'Zu finden in der Geräteliste deines Routers. Eine DHCP-Reservierung verhindert, dass sie sich ändert. Dein Telefon muss im selben WLAN wie das Gerät sein.';
 
   @override
   String get reefBeatCheck => 'Prüfen';

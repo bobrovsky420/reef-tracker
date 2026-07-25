@@ -3015,7 +3015,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryDisclaimer =>
-      'Это приложение только считывает текущие значения с ваших устройств ReefFactory. Оно не может менять настройки, калибровать или обновлять прошивку — для этого используйте приложение ReefFactory.';
+      'Это приложение только считывает текущие значения с ваших устройств ReefFactory. Оно не может менять настройки, калибровать или обновлять прошивку — для этого используйте приложение ReefFactory. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
 
   @override
   String get reefFactoryAddDevice => 'Добавить устройство';
@@ -3092,7 +3092,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryHostHelp =>
-      'Найдите его в приложении ReefFactory или в роутере. Резервирование DHCP не даст ему меняться.';
+      'Найдите его в приложении ReefFactory или в роутере. Резервирование DHCP не даст ему меняться. Телефон должен быть в той же сети Wi-Fi, что и устройство.';
 
   @override
   String get reefFactoryCheck => 'Проверить';
@@ -3128,7 +3128,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatDisclaimer =>
-      'Это приложение только считывает статус ваших устройств Red Sea ReefBeat. Оно не может дозировать, менять расписания или калибровать — для этого используйте приложение ReefBeat.';
+      'Это приложение только считывает статус ваших устройств Red Sea ReefBeat. Оно не может дозировать, менять расписания или калибровать — для этого используйте приложение ReefBeat. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
 
   @override
   String get reefBeatAddDevice => 'Добавить устройство';
@@ -3178,7 +3178,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatHostHelp =>
-      'Найдите его в списке клиентов роутера. Резервирование DHCP не даст ему меняться.';
+      'Найдите его в списке клиентов роутера. Резервирование DHCP не даст ему меняться. Телефон должен быть в той же сети Wi-Fi, что и устройство.';
 
   @override
   String get reefBeatCheck => 'Проверить';

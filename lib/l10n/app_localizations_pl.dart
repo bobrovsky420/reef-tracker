@@ -3021,7 +3021,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefFactoryDisclaimer =>
-      'Ta aplikacja tylko odczytuje bieżące wartości z urządzeń ReefFactory. Nie może zmieniać ustawień, kalibrować ani aktualizować oprogramowania — użyj do tego aplikacji ReefFactory.';
+      'Ta aplikacja tylko odczytuje bieżące wartości z urządzeń ReefFactory. Nie może zmieniać ustawień, kalibrować ani aktualizować oprogramowania — użyj do tego aplikacji ReefFactory. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
 
   @override
   String get reefFactoryAddDevice => 'Dodaj urządzenie';
@@ -3098,7 +3098,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefFactoryHostHelp =>
-      'Znajdziesz go w aplikacji ReefFactory lub w routerze. Rezerwacja DHCP zapobiega jego zmianie.';
+      'Znajdziesz go w aplikacji ReefFactory lub w routerze. Rezerwacja DHCP zapobiega jego zmianie. Telefon musi być w tej samej sieci Wi-Fi co urządzenie.';
 
   @override
   String get reefFactoryCheck => 'Sprawdź';
@@ -3135,7 +3135,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatDisclaimer =>
-      'Ta aplikacja tylko odczytuje status urządzeń Red Sea ReefBeat. Nie może dozować, zmieniać harmonogramów ani kalibrować — użyj do tego aplikacji ReefBeat.';
+      'Ta aplikacja tylko odczytuje status urządzeń Red Sea ReefBeat. Nie może dozować, zmieniać harmonogramów ani kalibrować — użyj do tego aplikacji ReefBeat. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
 
   @override
   String get reefBeatAddDevice => 'Dodaj urządzenie';
@@ -3185,7 +3185,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatHostHelp =>
-      'Znajdziesz go na liście klientów routera. Rezerwacja DHCP zapobiega jego zmianie.';
+      'Znajdziesz go na liście klientów routera. Rezerwacja DHCP zapobiega jego zmianie. Telefon musi być w tej samej sieci Wi-Fi co urządzenie.';
 
   @override
   String get reefBeatCheck => 'Sprawdź';

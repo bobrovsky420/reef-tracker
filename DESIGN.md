@@ -2331,7 +2331,10 @@ Reads live values from ReefFactory LAN meters (Salinity Guardian `RFSG01`, pH
 Monitor `RFPM01`, Temperature Controller `RFTC01`) over their undocumented binary
 WebSocket and saves them as ordinary readings. **Read-only**: the app never
 writes to the devices — a persistent on-screen disclaimer says so and points to
-the ReefFactory app for settings/calibration/firmware.
+the ReefFactory app for settings/calibration/firmware. The same disclaimer (and
+the add-device sheet's host help) states the **same-network requirement**: these
+are direct LAN reads with no cloud relay, so nothing works unless the phone sits
+on the device's Wi-Fi network.
 
 - **Protocol** (`data/rf_protocol.dart`, pure Dart, golden-vector tested against
   live hardware): frames are `serial\0 command\0 subcommand\0 msgId\0 payload`. A
@@ -2389,7 +2392,8 @@ auto-top-off unit (`RSATO+`, `hw_type = reef-ato`). (The ATO's temperature
 probe is the one ReefBeat value that *could* feed `Readings` — a deliberate
 future decision, not part of this phase.) Read-only: the app never doses,
 edits schedules or calibrates — a persistent disclaimer points to the
-ReefBeat app for that.
+ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
+**same-network requirement** (LAN-only, no cloud relay).
 
 - **Protocol** (`data/rb_protocol.dart`, pure Dart, golden-vector tested
   against a live RSDOSE4 and a live RSATO+): the devices expose an

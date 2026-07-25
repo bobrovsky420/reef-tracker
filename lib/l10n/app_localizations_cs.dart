@@ -2979,7 +2979,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryDisclaimer =>
-      'Tato aplikace pouze čte živé hodnoty z vašich zařízení ReefFactory. Nemůže měnit nastavení, kalibrovat ani aktualizovat firmware – k tomu použijte aplikaci ReefFactory.';
+      'Tato aplikace pouze čte živé hodnoty z vašich zařízení ReefFactory. Nemůže měnit nastavení, kalibrovat ani aktualizovat firmware – k tomu použijte aplikaci ReefFactory. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefFactoryAddDevice => 'Přidat zařízení';
@@ -3055,7 +3055,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryHostHelp =>
-      'Najdete ji v aplikaci ReefFactory nebo v routeru. Rezervace DHCP zajistí, že se nezmění.';
+      'Najdete ji v aplikaci ReefFactory nebo v routeru. Rezervace DHCP zajistí, že se nezmění. Telefon musí být ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefFactoryCheck => 'Ověřit';
@@ -3092,7 +3092,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatDisclaimer =>
-      'Tato aplikace pouze čte stav z vašich zařízení Red Sea ReefBeat. Nemůže dávkovat, měnit plány ani kalibrovat – k tomu použijte aplikaci ReefBeat.';
+      'Tato aplikace pouze čte stav z vašich zařízení Red Sea ReefBeat. Nemůže dávkovat, měnit plány ani kalibrovat – k tomu použijte aplikaci ReefBeat. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefBeatAddDevice => 'Přidat zařízení';
@@ -3142,7 +3142,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatHostHelp =>
-      'Najdete ji v seznamu klientů vašeho routeru. Rezervace DHCP zajistí, že se nezmění.';
+      'Najdete ji v seznamu klientů vašeho routeru. Rezervace DHCP zajistí, že se nezmění. Telefon musí být ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefBeatCheck => 'Ověřit';

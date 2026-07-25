@@ -2982,7 +2982,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefFactoryDisclaimer =>
-      'Cette application lit uniquement les valeurs en direct de vos appareils ReefFactory. Elle ne peut pas modifier les réglages, étalonner ni mettre à jour le firmware — utilisez l\'application ReefFactory pour cela.';
+      'Cette application lit uniquement les valeurs en direct de vos appareils ReefFactory. Elle ne peut pas modifier les réglages, étalonner ni mettre à jour le firmware — utilisez l\'application ReefFactory pour cela. La lecture ne fonctionne que si votre téléphone est sur le même réseau Wi-Fi que les appareils.';
 
   @override
   String get reefFactoryAddDevice => 'Ajouter un appareil';
@@ -3057,7 +3057,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefFactoryHostHelp =>
-      'Trouvez-la dans l\'application ReefFactory ou votre routeur. Une réservation DHCP l\'empêche de changer.';
+      'Trouvez-la dans l\'application ReefFactory ou votre routeur. Une réservation DHCP l\'empêche de changer. Votre téléphone doit être sur le même réseau Wi-Fi que l\'appareil.';
 
   @override
   String get reefFactoryCheck => 'Vérifier';
@@ -3094,7 +3094,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatDisclaimer =>
-      'Cette application lit uniquement l\'état de vos appareils Red Sea ReefBeat. Elle ne peut pas doser, modifier les programmes ni étalonner — utilisez l\'application ReefBeat pour cela.';
+      'Cette application lit uniquement l\'état de vos appareils Red Sea ReefBeat. Elle ne peut pas doser, modifier les programmes ni étalonner — utilisez l\'application ReefBeat pour cela. La lecture ne fonctionne que si votre téléphone est sur le même réseau Wi-Fi que les appareils.';
 
   @override
   String get reefBeatAddDevice => 'Ajouter un appareil';
@@ -3144,7 +3144,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatHostHelp =>
-      'Trouvez-la dans la liste des clients de votre routeur. Une réservation DHCP l\'empêche de changer.';
+      'Trouvez-la dans la liste des clients de votre routeur. Une réservation DHCP l\'empêche de changer. Votre téléphone doit être sur le même réseau Wi-Fi que l\'appareil.';
 
   @override
   String get reefBeatCheck => 'Vérifier';
