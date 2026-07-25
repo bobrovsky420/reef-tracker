@@ -116,6 +116,53 @@ const _atoDashboardJson = '''
 }
 ''';
 
+/// Golden vector: a live RSMAT250's `GET /device-info` (2026-07-25). Mats
+/// report only "RSMAT" as the model — the width lives in `/configuration`,
+/// which the app doesn't read.
+const _matDeviceInfoJson = '''
+{
+  "name": "RSMAT-4099969749",
+  "hw_type": "reef-mat",
+  "hw_model": "RSMAT",
+  "hw_revision": "v1.0_24A",
+  "hwid": "c4d8d59260f4",
+  "success": true,
+  "message": "get device info successfully"
+}
+''';
+
+/// Golden vector: the same mat's `GET /dashboard` (2026-07-25) — a roll that
+/// has just run out.
+const _matDashboardJson = '''
+{
+  "mode": "auto",
+  "is_internet_connected": true,
+  "is_ec_sensor_connected": true,
+  "unclean_sensor": false,
+  "auto_advance": true,
+  "is_advancing": false,
+  "last_advance_cause": "ec_sensor",
+  "roll_level": "running_low",
+  "days_till_end_of_roll": 0,
+  "internal_ec_average": 0,
+  "external_ec_average": 0,
+  "setup_date": "2026-06-06T11:40:55Z",
+  "cumulative_steps": 12630,
+  "device_setup_date": 1766490401,
+  "lifetime_steps": 71843,
+  "today_usage": 41,
+  "daily_average_usage": 84.1,
+  "total_usage": 3250.2,
+  "remaining_length": 0,
+  "material": {
+    "name": "32 Meter",
+    "external_diameter": 10.6,
+    "thickness": 0.023,
+    "is_partial": false
+  }
+}
+''';
+
 Map<String, Object?> _decode(String s) =>
     jsonDecode(s) as Map<String, Object?>;
 
@@ -340,6 +387,114 @@ void main() {
     });
   });
 
+  group('RbMatStatus.fromJson', () {
+    test('parses the RSMAT identity golden vector', () {
+      final info = RbDeviceInfo.fromJson(_decode(_matDeviceInfoJson))!;
+      expect(info.hwType, kRbMatHwType);
+      expect(info.hwModel, 'RSMAT');
+      expect(info.hwid, 'c4d8d59260f4');
+    });
+
+    test('parses the RSMAT250 golden vector', () {
+      final status = RbMatStatus.fromJson(_decode(_matDashboardJson));
+      expect(status.rollLevelRaw, 'running_low');
+      expect(status.rollLevel, RbRollLevel.low);
+      expect(status.daysTillEndOfRoll, 0);
+      expect(status.remainingLengthCm, 0);
+      expect(status.materialName, '32 Meter');
+      expect(status.rollLengthCm, 3200);
+      expect(status.usedTodayCm, 41);
+      expect(status.dailyAverageCm, 84.1);
+      expect(status.autoAdvance, isTrue);
+      expect(status.isAdvancing, isFalse);
+      expect(status.uncleanSensor, isFalse);
+      expect(
+        status.rollInstalledAt,
+        DateTime.utc(2026, 6, 6, 11, 40, 55).toLocal(),
+      );
+      // Nothing left on the roll — spent, whatever the coarse level says.
+      expect(status.rollSpent, isTrue);
+      expect(status.rollSeverity, RbStockSeverity.critical);
+    });
+
+    test('roll level coarsens the firmware strings', () {
+      RbRollLevel level(String? raw) =>
+          RbMatStatus(rollLevelRaw: raw).rollLevel;
+      expect(level('high'), RbRollLevel.ok);
+      expect(level('normal'), RbRollLevel.ok);
+      expect(level('running_low'), RbRollLevel.low);
+      expect(level('low'), RbRollLevel.low);
+      expect(level('empty'), RbRollLevel.empty);
+      // "end of roll" wins over the "low" it may be reported alongside.
+      expect(level('end_of_roll'), RbRollLevel.empty);
+      expect(level('something_new'), RbRollLevel.unknown);
+      expect(level(''), RbRollLevel.unknown);
+      expect(level(null), RbRollLevel.unknown);
+    });
+
+    test('severity prefers the reported days, then the coarse level', () {
+      RbStockSeverity? sev({int? days, String? level, double? remaining}) =>
+          RbMatStatus(
+            daysTillEndOfRoll: days,
+            rollLevelRaw: level,
+            remainingLengthCm: remaining,
+          ).rollSeverity;
+      expect(sev(days: 30, level: 'high'), RbStockSeverity.healthy);
+      expect(sev(days: 10, level: 'high'), RbStockSeverity.caution);
+      expect(sev(days: 3, level: 'high'), RbStockSeverity.critical);
+      // A generous day count can't outrank an empty roll.
+      expect(sev(days: 30, remaining: 0), RbStockSeverity.critical);
+      // No days reported → fall back to the level.
+      expect(sev(level: 'high'), RbStockSeverity.healthy);
+      expect(sev(level: 'running_low'), RbStockSeverity.caution);
+      expect(sev(level: 'empty'), RbStockSeverity.critical);
+      // Nothing to go on → nothing to color.
+      expect(sev(), isNull);
+    });
+
+    test('roll length comes from the material name', () {
+      expect(RbMatStatus.parseRollLengthCm('32 Meter'), 3200);
+      expect(RbMatStatus.parseRollLengthCm('12 Meter'), 1200);
+      expect(RbMatStatus.parseRollLengthCm('7.5 Meter'), 750);
+      expect(RbMatStatus.parseRollLengthCm('7,5 Meter'), 750);
+      expect(RbMatStatus.parseRollLengthCm('Custom roll'), isNull);
+      expect(RbMatStatus.parseRollLengthCm('0 Meter'), isNull);
+      expect(RbMatStatus.parseRollLengthCm(null), isNull);
+    });
+
+    test('tolerates an empty or malformed payload (firmware drift)', () {
+      final status = RbMatStatus.fromJson(const {
+        'material': 'nope',
+        'today_usage': 'lots',
+        'setup_date': 42,
+      });
+      expect(status.rollLevel, RbRollLevel.unknown);
+      expect(status.daysTillEndOfRoll, isNull);
+      expect(status.remainingLengthCm, isNull);
+      expect(status.rollLengthCm, isNull);
+      expect(status.usedTodayCm, isNull);
+      expect(status.dailyAverageCm, isNull);
+      expect(status.rollInstalledAt, isNull);
+      expect(status.rollSpent, isFalse);
+      expect(status.rollSeverity, isNull);
+      // Absent flags must not raise warning chips out of nowhere.
+      expect(status.autoAdvance, isTrue);
+      expect(status.isAdvancing, isFalse);
+      expect(status.uncleanSensor, isFalse);
+    });
+
+    test('flags the states the card warns about', () {
+      final status = RbMatStatus.fromJson(const {
+        'auto_advance': false,
+        'is_advancing': true,
+        'unclean_sensor': true,
+      });
+      expect(status.autoAdvance, isFalse);
+      expect(status.isAdvancing, isTrue);
+      expect(status.uncleanSensor, isTrue);
+    });
+  });
+
   group('rbStockSeverity', () {
     test('thresholds: red below $kRbStockCriticalDays days, amber below '
         '$kRbStockCautionDays', () {
@@ -357,6 +512,7 @@ void main() {
       expect(rbModelDisplayName('RSDOSE4'), 'ReefDose 4');
       expect(rbModelDisplayName('RSDOSE2'), 'ReefDose 2');
       expect(rbModelDisplayName('RSATO+'), 'ReefATO+');
+      expect(rbModelDisplayName('RSMAT'), 'ReefMat');
       expect(rbModelDisplayName('RSWAVE'), 'RSWAVE');
     });
   });

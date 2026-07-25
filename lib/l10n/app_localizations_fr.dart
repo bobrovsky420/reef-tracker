@@ -3104,7 +3104,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Ajoutez un appareil Red Sea ReefBeat (par ex. une pompe ReefDose ou un ReefATO) par son adresse IP ou son nom d\'hôte pour voir son état.';
+      'Ajoutez un appareil Red Sea ReefBeat (par ex. une pompe ReefDose, un ReefATO ou un ReefMat) par son adresse IP ou son nom d\'hôte pour voir son état.';
 
   @override
   String get reefBeatRefresh => 'Actualiser';
@@ -3164,7 +3164,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Ce type d\'appareil ReefBeat n\'est pas encore pris en charge — seulement les pompes ReefDose et les ReefATO pour l\'instant.';
+      'Ce type d\'appareil ReefBeat n\'est pas encore pris en charge — seulement les pompes ReefDose, les ReefATO et les filtres ReefMat pour l\'instant.';
 
   @override
   String get reefBeatErrProtocol => 'Impossible de lire l\'appareil.';
@@ -3260,6 +3260,49 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatAtoReservoir => 'Réservoir';
+
+  @override
+  String get reefBeatMatRoll => 'Rouleau';
+
+  @override
+  String get reefBeatMatRollEmpty => 'Rouleau épuisé';
+
+  @override
+  String get reefBeatMatRollLow => 'Rouleau bientôt épuisé';
+
+  @override
+  String get reefBeatMatCleanSensor => 'Nettoyez le capteur';
+
+  @override
+  String get reefBeatMatAutoAdvanceOff => 'Avance auto désactivée';
+
+  @override
+  String get reefBeatMatAdvancing => 'Avance en cours';
+
+  @override
+  String get reefBeatMatUsedToday => 'Utilisé aujourd\'hui';
+
+  @override
+  String get reefBeatMatAverage => 'Moyenne';
+
+  @override
+  String reefBeatMatPerDay(Object length) {
+    return '≈$length/jour';
+  }
+
+  @override
+  String get reefBeatMatInstalled => 'Rouleau installé';
+
+  @override
+  String reefBeatMatRollAge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours',
+      one: '1 jour',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get reefDevicesTitle => 'Appareils connectés';

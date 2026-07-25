@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.42.0] - 2026-07-25
+
+### Added
+- ReefBeat devices: the dashboard now also supports the Red Sea ReefMat roller
+  filter. Its card shows how much fleece is left on the roll (a draining gauge
+  against the roll's nominal length, colored green/amber/red as it runs out)
+  with the days left at the current rate, how much was advanced today, the
+  average daily usage, and when the roll was fitted — plus warnings for a
+  spent or nearly spent roll, a sensor that needs cleaning, automatic
+  advancing being switched off, and the mat advancing right now. Read-only,
+  like the rest of the ReefBeat dashboard.
+
 ## [0.41.5] - 2026-07-25
 
 ### Changed

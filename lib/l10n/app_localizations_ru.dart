@@ -3138,7 +3138,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Добавьте устройство Red Sea ReefBeat (например, дозатор ReefDose или ReefATO) по IP-адресу или имени хоста, чтобы видеть его статус.';
+      'Добавьте устройство Red Sea ReefBeat (например, дозатор ReefDose, ReefATO или ReefMat) по IP-адресу или имени хоста, чтобы видеть его статус.';
 
   @override
   String get reefBeatRefresh => 'Обновить';
@@ -3197,7 +3197,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Этот тип устройства ReefBeat пока не поддерживается — пока только дозаторы ReefDose и устройства ReefATO.';
+      'Этот тип устройства ReefBeat пока не поддерживается — пока только дозаторы ReefDose, устройства ReefATO и фильтры ReefMat.';
 
   @override
   String get reefBeatErrProtocol => 'Не удалось считать устройство.';
@@ -3297,6 +3297,51 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatAtoReservoir => 'Резервуар';
+
+  @override
+  String get reefBeatMatRoll => 'Рулон';
+
+  @override
+  String get reefBeatMatRollEmpty => 'Рулон закончился';
+
+  @override
+  String get reefBeatMatRollLow => 'Рулон заканчивается';
+
+  @override
+  String get reefBeatMatCleanSensor => 'Очистите датчик';
+
+  @override
+  String get reefBeatMatAutoAdvanceOff => 'Автоподача выключена';
+
+  @override
+  String get reefBeatMatAdvancing => 'Идёт подача';
+
+  @override
+  String get reefBeatMatUsedToday => 'Израсходовано сегодня';
+
+  @override
+  String get reefBeatMatAverage => 'В среднем';
+
+  @override
+  String reefBeatMatPerDay(Object length) {
+    return '≈$length/день';
+  }
+
+  @override
+  String get reefBeatMatInstalled => 'Рулон установлен';
+
+  @override
+  String reefBeatMatRollAge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дня',
+      many: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get reefDevicesTitle => 'Подключённые устройства';

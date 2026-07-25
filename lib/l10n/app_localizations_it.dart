@@ -3099,7 +3099,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Aggiungi un dispositivo Red Sea ReefBeat (es. una pompa ReefDose o un ReefATO) tramite il suo indirizzo IP o nome host per vederne lo stato.';
+      'Aggiungi un dispositivo Red Sea ReefBeat (es. una pompa ReefDose, un ReefATO o un ReefMat) tramite il suo indirizzo IP o nome host per vederne lo stato.';
 
   @override
   String get reefBeatRefresh => 'Aggiorna';
@@ -3159,7 +3159,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Questo tipo di dispositivo ReefBeat non è ancora supportato: per ora solo le pompe ReefDose e i ReefATO.';
+      'Questo tipo di dispositivo ReefBeat non è ancora supportato: per ora solo le pompe ReefDose, i ReefATO e i filtri ReefMat.';
 
   @override
   String get reefBeatErrProtocol => 'Impossibile leggere il dispositivo.';
@@ -3255,6 +3255,49 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatAtoReservoir => 'Serbatoio';
+
+  @override
+  String get reefBeatMatRoll => 'Rotolo';
+
+  @override
+  String get reefBeatMatRollEmpty => 'Rotolo esaurito';
+
+  @override
+  String get reefBeatMatRollLow => 'Rotolo in esaurimento';
+
+  @override
+  String get reefBeatMatCleanSensor => 'Pulisci il sensore';
+
+  @override
+  String get reefBeatMatAutoAdvanceOff => 'Avanzamento auto disattivato';
+
+  @override
+  String get reefBeatMatAdvancing => 'Avanzamento in corso';
+
+  @override
+  String get reefBeatMatUsedToday => 'Usato oggi';
+
+  @override
+  String get reefBeatMatAverage => 'Media';
+
+  @override
+  String reefBeatMatPerDay(Object length) {
+    return '≈$length/giorno';
+  }
+
+  @override
+  String get reefBeatMatInstalled => 'Rotolo installato';
+
+  @override
+  String reefBeatMatRollAge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count giorni',
+      one: '1 giorno',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get reefDevicesTitle => 'Dispositivi connessi';

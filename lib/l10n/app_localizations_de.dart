@@ -3092,7 +3092,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Füge ein Red-Sea-ReefBeat-Gerät (z. B. eine ReefDose-Pumpe oder einen ReefATO) über seine IP-Adresse oder seinen Hostnamen hinzu, um seinen Status zu sehen.';
+      'Füge ein Red-Sea-ReefBeat-Gerät (z. B. eine ReefDose-Pumpe, einen ReefATO oder einen ReefMat) über seine IP-Adresse oder seinen Hostnamen hinzu, um seinen Status zu sehen.';
 
   @override
   String get reefBeatRefresh => 'Aktualisieren';
@@ -3151,7 +3151,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Dieser ReefBeat-Gerätetyp wird noch nicht unterstützt – vorerst nur ReefDose-Pumpen und ReefATO-Geräte.';
+      'Dieser ReefBeat-Gerätetyp wird noch nicht unterstützt – vorerst nur ReefDose-Pumpen, ReefATO-Geräte und ReefMat-Filter.';
 
   @override
   String get reefBeatErrProtocol => 'Gerät konnte nicht gelesen werden.';
@@ -3247,6 +3247,49 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatAtoReservoir => 'Vorratsbehälter';
+
+  @override
+  String get reefBeatMatRoll => 'Rolle';
+
+  @override
+  String get reefBeatMatRollEmpty => 'Rolle verbraucht';
+
+  @override
+  String get reefBeatMatRollLow => 'Rolle geht zu Ende';
+
+  @override
+  String get reefBeatMatCleanSensor => 'Sensor reinigen';
+
+  @override
+  String get reefBeatMatAutoAdvanceOff => 'Autovorschub aus';
+
+  @override
+  String get reefBeatMatAdvancing => 'Spult vor';
+
+  @override
+  String get reefBeatMatUsedToday => 'Heute verbraucht';
+
+  @override
+  String get reefBeatMatAverage => 'Durchschnitt';
+
+  @override
+  String reefBeatMatPerDay(Object length) {
+    return '≈$length/Tag';
+  }
+
+  @override
+  String get reefBeatMatInstalled => 'Rolle eingelegt';
+
+  @override
+  String reefBeatMatRollAge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Tage',
+      one: '1 Tag',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get reefDevicesTitle => 'Verbundene Geräte';

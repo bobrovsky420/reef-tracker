@@ -5124,7 +5124,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Add a Red Sea ReefBeat device (e.g. a ReefDose pump or a ReefATO) by its IP address or hostname to see its status.'**
+  /// **'Add a Red Sea ReefBeat device (e.g. a ReefDose pump, a ReefATO or a ReefMat) by its IP address or hostname to see its status.'**
   String get reefBeatEmptyBody;
 
   /// No description provided for @reefBeatRefresh.
@@ -5226,7 +5226,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatErrUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'That ReefBeat device type isn\'t supported yet — only ReefDose pumps and ReefATO units for now.'**
+  /// **'That ReefBeat device type isn\'t supported yet — only ReefDose pumps, ReefATO units and ReefMat filters for now.'**
   String get reefBeatErrUnsupported;
 
   /// No description provided for @reefBeatErrProtocol.
@@ -5366,6 +5366,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reservoir'**
   String get reefBeatAtoReservoir;
+
+  /// No description provided for @reefBeatMatRoll.
+  ///
+  /// In en, this message translates to:
+  /// **'Roll'**
+  String get reefBeatMatRoll;
+
+  /// No description provided for @reefBeatMatRollEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Roll empty'**
+  String get reefBeatMatRollEmpty;
+
+  /// No description provided for @reefBeatMatRollLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Roll running low'**
+  String get reefBeatMatRollLow;
+
+  /// No description provided for @reefBeatMatCleanSensor.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean the sensor'**
+  String get reefBeatMatCleanSensor;
+
+  /// No description provided for @reefBeatMatAutoAdvanceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-advance off'**
+  String get reefBeatMatAutoAdvanceOff;
+
+  /// No description provided for @reefBeatMatAdvancing.
+  ///
+  /// In en, this message translates to:
+  /// **'Advancing now'**
+  String get reefBeatMatAdvancing;
+
+  /// No description provided for @reefBeatMatUsedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Used today'**
+  String get reefBeatMatUsedToday;
+
+  /// No description provided for @reefBeatMatAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get reefBeatMatAverage;
+
+  /// Average daily fleece usage of a ReefMat; {length} is pre-formatted with its unit (e.g. "84 cm")
+  ///
+  /// In en, this message translates to:
+  /// **'≈{length}/day'**
+  String reefBeatMatPerDay(Object length);
+
+  /// No description provided for @reefBeatMatInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Roll installed'**
+  String get reefBeatMatInstalled;
+
+  /// How long the mat's current fleece roll has been running, shown after its install date
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 day} other{{count} days}}'**
+  String reefBeatMatRollAge(int count);
 
   /// No description provided for @reefDevicesTitle.
   ///

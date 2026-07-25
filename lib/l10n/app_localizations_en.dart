@@ -3076,7 +3076,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Add a Red Sea ReefBeat device (e.g. a ReefDose pump or a ReefATO) by its IP address or hostname to see its status.';
+      'Add a Red Sea ReefBeat device (e.g. a ReefDose pump, a ReefATO or a ReefMat) by its IP address or hostname to see its status.';
 
   @override
   String get reefBeatRefresh => 'Refresh';
@@ -3134,7 +3134,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'That ReefBeat device type isn\'t supported yet — only ReefDose pumps and ReefATO units for now.';
+      'That ReefBeat device type isn\'t supported yet — only ReefDose pumps, ReefATO units and ReefMat filters for now.';
 
   @override
   String get reefBeatErrProtocol => 'Couldn\'t read the device.';
@@ -3230,6 +3230,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatAtoReservoir => 'Reservoir';
+
+  @override
+  String get reefBeatMatRoll => 'Roll';
+
+  @override
+  String get reefBeatMatRollEmpty => 'Roll empty';
+
+  @override
+  String get reefBeatMatRollLow => 'Roll running low';
+
+  @override
+  String get reefBeatMatCleanSensor => 'Clean the sensor';
+
+  @override
+  String get reefBeatMatAutoAdvanceOff => 'Auto-advance off';
+
+  @override
+  String get reefBeatMatAdvancing => 'Advancing now';
+
+  @override
+  String get reefBeatMatUsedToday => 'Used today';
+
+  @override
+  String get reefBeatMatAverage => 'Average';
+
+  @override
+  String reefBeatMatPerDay(Object length) {
+    return '≈$length/day';
+  }
+
+  @override
+  String get reefBeatMatInstalled => 'Roll installed';
+
+  @override
+  String reefBeatMatRollAge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get reefDevicesTitle => 'Connected devices';

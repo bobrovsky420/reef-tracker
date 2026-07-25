@@ -3102,7 +3102,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Přidejte zařízení Red Sea ReefBeat (např. dávkovač ReefDose nebo ReefATO) podle jeho IP adresy nebo názvu hostitele a sledujte jeho stav.';
+      'Přidejte zařízení Red Sea ReefBeat (např. dávkovač ReefDose, ReefATO nebo ReefMat) podle jeho IP adresy nebo názvu hostitele a sledujte jeho stav.';
 
   @override
   String get reefBeatRefresh => 'Obnovit';
@@ -3161,7 +3161,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Tento typ zařízení ReefBeat zatím není podporován – prozatím jen dávkovače ReefDose a jednotky ReefATO.';
+      'Tento typ zařízení ReefBeat zatím není podporován – prozatím jen dávkovače ReefDose, jednotky ReefATO a filtry ReefMat.';
 
   @override
   String get reefBeatErrProtocol => 'Zařízení se nepodařilo přečíst.';
@@ -3259,6 +3259,50 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatAtoReservoir => 'Zásobník';
+
+  @override
+  String get reefBeatMatRoll => 'Role';
+
+  @override
+  String get reefBeatMatRollEmpty => 'Role je spotřebovaná';
+
+  @override
+  String get reefBeatMatRollLow => 'Role se blíží ke konci';
+
+  @override
+  String get reefBeatMatCleanSensor => 'Vyčistěte senzor';
+
+  @override
+  String get reefBeatMatAutoAdvanceOff => 'Automatické posouvání vypnuto';
+
+  @override
+  String get reefBeatMatAdvancing => 'Posouvá se';
+
+  @override
+  String get reefBeatMatUsedToday => 'Dnes použito';
+
+  @override
+  String get reefBeatMatAverage => 'Průměr';
+
+  @override
+  String reefBeatMatPerDay(Object length) {
+    return '≈$length/den';
+  }
+
+  @override
+  String get reefBeatMatInstalled => 'Role vložena';
+
+  @override
+  String reefBeatMatRollAge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dní',
+      few: '$count dny',
+      one: '1 den',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get reefDevicesTitle => 'Připojená zařízení';

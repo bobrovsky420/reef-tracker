@@ -1272,7 +1272,7 @@ Body text stays the platform default (SF/Roboto).
 | `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 | `/reeffactory` | ReefFactory devices dashboard (U36, experimental): live values from LAN meters |
-| `/reefbeat` | ReefBeat devices dashboard (U38, experimental): dosing status from Red Sea ReefDose pumps |
+| `/reefbeat` | ReefBeat devices dashboard (U38, experimental): status from Red Sea ReefDose pumps, ReefATO+ units and ReefMat filters |
 | `/settings/devices` | Connected devices — read-only inventory of every ReefFactory / ReefBeat / Hanna device |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
@@ -2386,9 +2386,10 @@ on the device's Wi-Fi network.
 A separate dashboard for **Red Sea ReefBeat** LAN devices — deliberately not
 merged into the ReefFactory screen, because the cards display operational
 status instead of values to save, so there is **no Save path** into
-`Readings`. Two device families are supported: the **ReefDose** dosing pumps
-(`RSDOSE2`/`RSDOSE4`, `hw_type = reef-dosing`) and the **ReefATO+**
-auto-top-off unit (`RSATO+`, `hw_type = reef-ato`). (The ATO's temperature
+`Readings`. Three device families are supported: the **ReefDose** dosing pumps
+(`RSDOSE2`/`RSDOSE4`, `hw_type = reef-dosing`), the **ReefATO+** auto-top-off
+unit (`RSATO+`, `hw_type = reef-ato`) and the **ReefMat** roller filter
+(`RSMAT`, `hw_type = reef-mat`). (The ATO's temperature
 probe is the one ReefBeat value that *could* feed `Readings` — a deliberate
 future decision, not part of this phase.) Read-only: the app never doses,
 edits schedules or calibrates — a persistent disclaimer points to the
@@ -2410,14 +2411,28 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   (`volume_left`, `days_till_empty`), a leak-sensor block (alarms only when
   connected + enabled + not "dry") and the level-sensor block (error/
   disconnect warning, temperature probe in °C, suppressed when disabled or
-  unplugged). Parsing is tolerant — absent/malformed fields degrade the card,
+  unplugged). For a mat (`RbMatStatus`): the roll (coarse `roll_level` string
+  coarsened to `RbRollLevel` ok/low/empty/unknown, `days_till_end_of_roll`,
+  `remaining_length` in cm, and the nominal roll length parsed out of the
+  material's display name — "32 Meter" → 3200 cm — since the firmware reports
+  no numeric total), fleece usage (`today_usage`, `daily_average_usage`), the
+  `setup_date` the roll was fitted, and the three actionable flags
+  (`auto_advance`, `is_advancing`, `unclean_sensor`; absent flags stay
+  optimistic so firmware drift can't invent a warning). `rollSpent` (level
+  empty **or** nothing remaining) and `rollSeverity` (reported days through
+  `rbStockSeverity`, else the coarse level, and always critical when spent)
+  drive the card's colors. The mat's mode/schedule settings, EC-sensor
+  connection, last-advance cause and motor-step counters are deliberately not
+  modelled. Parsing is tolerant — absent/malformed fields degrade the card,
   never crash a refresh. `rbModelDisplayName` maps `hw_model` → friendly name
-  ("ReefDose 4", "ReefATO+"), the default device name on add.
+  ("ReefDose 4", "ReefATO+", "ReefMat" — mats report only `RSMAT`, the width
+  lives in `/configuration`, which the app doesn't read), the default device
+  name on add.
 - **Transport** (`data/rb_device_link.dart`): abstract `RbDeviceLink`
   (fake-able) + `RbHttpLink` over `dart:io` `HttpClient` (the
   `cloud_backup_store.dart` pattern, no new dependency). One `readOnce(host)`
   per manual refresh = the two GETs; the returned `RbSnapshot` carries the
-  identity plus exactly one of `dose`/`ato` per the device's `hw_type`; typed
+  identity plus exactly one of `dose`/`ato`/`mat` per the device's `hw_type`; typed
   `RbLinkError` (unreachable/timeout/unsupportedModel/protocol) drives
   specific messages.
 - **Dashboard** (`reefbeat_screen.dart`): mirrors the ReefFactory screen's
@@ -2439,7 +2454,17 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   probe temperature, today's fills · volume, evaporation (≈/day), and the
   reservoir (volume left · days left, colored by the same `rbStockSeverity`
   thresholds as supplement stock). Volumes render as millilitres below 1 L
-  and litres with one decimal above.
+  and litres with one decimal above. A ReefMat card renders `_MatStatus`:
+  warning chips (roll spent = critical, roll running low = its severity color,
+  fouled sensor and auto-advance off = caution, "advancing now" = healthy)
+  above a **roll gauge** — the same `_DoseGauge` widget, but *draining*
+  (remaining ÷ nominal roll length) and filled in the roll's severity color,
+  with `26.4 m / 32 m` beside it and a days-left tag above — then label–value
+  rows for today's usage, the daily average and the roll's install date with
+  its age in days. With an unparseable material name there is no denominator,
+  so the gauge is dropped and the remaining length stands alone. Lengths
+  render as whole centimetres below 1 m and metres with one decimal above.
+  (`_StatusRow`, the label–value line, is shared by the ATO and mat cards.)
 - Entry points mirror ReefFactory: experimental-gated + Pro-gated
   (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow
   menu and a Settings row. Devices are read once automatically on open;

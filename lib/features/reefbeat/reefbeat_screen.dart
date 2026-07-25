@@ -9,6 +9,7 @@ import '../../data/database.dart';
 import '../../data/rb_device_link.dart';
 import '../../data/rb_protocol.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
 
 /// What the UI calls a device: explicit name, else vendor model, else hwid.
 /// Also the card sort key. (Same convention as the ReefFactory dashboard.)
@@ -24,11 +25,12 @@ class _Live {
 }
 
 /// The Red Sea ReefBeat devices dashboard (U38): a persistent list of local
-/// ReefBeat devices — ReefDose dosing pumps (2- or 4-head) and ReefATO
-/// auto-top-off units so far — each with a manual **Refresh** that pulls the
-/// device's live status into the card. Unlike the ReefFactory dashboard this
-/// is purely informational: the cards show operational status, not values to
-/// save as readings. Read-only — the app never writes to the devices.
+/// ReefBeat devices — ReefDose dosing pumps (2- or 4-head), ReefATO
+/// auto-top-off units and ReefMat roller filters so far — each with a manual
+/// **Refresh** that pulls the device's live status into the card. Unlike the
+/// ReefFactory dashboard this is purely informational: the cards show
+/// operational status, not values to save as readings. Read-only — the app
+/// never writes to the devices.
 class ReefBeatScreen extends ConsumerStatefulWidget {
   const ReefBeatScreen({super.key});
 
@@ -388,6 +390,8 @@ class _DeviceCard extends StatelessWidget {
               _PumpStatus(status: snap!.dose!)
             else if (snap?.ato != null)
               _AtoStatus(status: snap!.ato!)
+            else if (snap?.mat != null)
+              _MatStatus(status: snap!.mat!)
             else
               Text(
                 l.reefBeatNotReadYet,
@@ -535,25 +539,25 @@ class _AtoStatus extends StatelessWidget {
           ),
           const SizedBox(height: 10),
         ],
-        _AtoRow(
+        _StatusRow(
           label: l.reefBeatAtoWaterLevel,
           value: levelText,
           valueColor: levelColor,
         ),
         if (status.temperatureC != null)
-          _AtoRow(
+          _StatusRow(
             label: l.reefBeatAtoTemperature,
             value: '${status.temperatureC!.toStringAsFixed(1)} °C',
           ),
         if (todayText.isNotEmpty)
-          _AtoRow(label: l.reefBeatAtoToday, value: todayText),
+          _StatusRow(label: l.reefBeatAtoToday, value: todayText),
         if (status.dailyVolumeAvgMl != null)
-          _AtoRow(
+          _StatusRow(
             label: l.reefBeatAtoEvaporation,
             value: l.reefBeatAtoPerDay(_fmtVol(status.dailyVolumeAvgMl!)),
           ),
         if (reservoirText.isNotEmpty)
-          _AtoRow(
+          _StatusRow(
             label: l.reefBeatAtoReservoir,
             value: reservoirText,
             valueColor: reservoirColor,
@@ -563,9 +567,170 @@ class _AtoStatus extends StatelessWidget {
   }
 }
 
-/// One label–value line of the ATO card: dim label left, mono value right.
-class _AtoRow extends StatelessWidget {
-  const _AtoRow({required this.label, required this.value, this.valueColor});
+/// The status of a ReefMat roller filter: warning chips (roll spent or running
+/// low, a fouled sensor, auto-advance switched off, advancing right now) above
+/// the roll gauge — fleece left of the roll's nominal length, draining and
+/// colored by the shared stock severity — and the usage rows.
+class _MatStatus extends StatelessWidget {
+  const _MatStatus({required this.status});
+  final RbMatStatus status;
+
+  /// The mat reports centimetres but a roll is metres long — show metres with
+  /// one decimal from 1 m up, whole centimetres below.
+  static String _fmtLen(double cm) =>
+      cm >= 100 ? '${(cm / 100).toStringAsFixed(1)} m' : '${cm.round()} cm';
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+
+    final severity = status.rollSeverity;
+    final rollColor = switch (severity) {
+      RbStockSeverity.healthy => tokens.healthy,
+      RbStockSeverity.caution => tokens.caution,
+      RbStockSeverity.critical => tokens.critical,
+      null => tokens.text,
+    };
+    final rollSoftColor = switch (severity) {
+      RbStockSeverity.critical => tokens.criticalSoft,
+      _ => tokens.cautionSoft,
+    };
+
+    final remaining = status.remainingLengthCm;
+    final total = status.rollLengthCm;
+    final days = status.daysTillEndOfRoll;
+    final installed = status.rollInstalledAt;
+
+    // With no nominal roll length (an unparseable material name) there is no
+    // denominator, so the gauge is dropped and the remaining length stands on
+    // its own.
+    final hasGauge = remaining != null && total != null && total > 0;
+    final lengthText = switch ((remaining, total)) {
+      (final double r, final double tot) when tot > 0 =>
+        '${_fmtLen(r)} / ${_fmtLen(tot)}',
+      (final double r, _) => _fmtLen(r),
+      _ => '—',
+    };
+
+    // The roll is only called "running low" when it still has fleece on it —
+    // once spent it gets the stronger chip instead.
+    final lowChip = !status.rollSpent &&
+        (severity == RbStockSeverity.caution ||
+            severity == RbStockSeverity.critical);
+    final chips = [
+      if (status.rollSpent)
+        _WarnChip(
+          label: l.reefBeatMatRollEmpty,
+          color: tokens.critical,
+          softColor: tokens.criticalSoft,
+        )
+      else if (lowChip)
+        _WarnChip(
+          label: l.reefBeatMatRollLow,
+          color: rollColor,
+          softColor: rollSoftColor,
+        ),
+      if (status.uncleanSensor)
+        _WarnChip(
+          label: l.reefBeatMatCleanSensor,
+          color: tokens.caution,
+          softColor: tokens.cautionSoft,
+        ),
+      if (!status.autoAdvance)
+        _WarnChip(
+          label: l.reefBeatMatAutoAdvanceOff,
+          color: tokens.caution,
+          softColor: tokens.cautionSoft,
+        ),
+      if (status.isAdvancing)
+        _WarnChip(
+          label: l.reefBeatMatAdvancing,
+          color: tokens.healthy,
+          softColor: tokens.healthySoft,
+        ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (chips.isNotEmpty) ...[
+          Wrap(spacing: 8, runSpacing: 6, children: chips),
+          const SizedBox(height: 10),
+        ],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(child: Text(l.reefBeatMatRoll, style: t.titleSmall)),
+            const SizedBox(width: 8),
+            if (days != null)
+              Text(
+                l.reefBeatDaysLeft(days),
+                style: t.labelMedium?.copyWith(
+                  color: rollColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            if (hasGauge) ...[
+              Expanded(
+                child: _DoseGauge(
+                  fraction: (remaining / total).clamp(0.0, 1.0),
+                  enabled: true,
+                  fill: rollColor,
+                ),
+              ),
+              const SizedBox(width: 10),
+            ] else
+              const Spacer(),
+            Text(
+              lengthText,
+              style: ReefTokens.monoTextStyle.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: tokens.text,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (status.usedTodayCm != null)
+          _StatusRow(
+            label: l.reefBeatMatUsedToday,
+            value: _fmtLen(status.usedTodayCm!),
+          ),
+        if (status.dailyAverageCm != null)
+          _StatusRow(
+            label: l.reefBeatMatAverage,
+            value: l.reefBeatMatPerDay(_fmtLen(status.dailyAverageCm!)),
+          ),
+        if (installed != null)
+          _StatusRow(
+            label: l.reefBeatMatInstalled,
+            value: '${formatDate(installed)}  ·  '
+                '${l.reefBeatMatRollAge(_daysSince(installed))}',
+          ),
+      ],
+    );
+  }
+
+  /// Whole days the current roll has been running (never negative, so a device
+  /// clock set slightly ahead reads as "0 days" rather than "-1").
+  static int _daysSince(DateTime t) {
+    final days = DateTime.now().difference(t).inDays;
+    return days < 0 ? 0 : days;
+  }
+}
+
+/// One label–value line of a status card: dim label left, mono value right.
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({required this.label, required this.value, this.valueColor});
 
   final String label;
   final String value;
@@ -721,13 +886,23 @@ class _HeadRow extends StatelessWidget {
   }
 }
 
-/// The horizontal dosed-today gauge: a rounded track with a fractional fill.
+/// A horizontal gauge: a rounded track with a fractional fill. Used for a
+/// head's dosed-today progress and for the mat's remaining roll.
 class _DoseGauge extends StatelessWidget {
-  const _DoseGauge({required this.fraction, required this.enabled});
+  const _DoseGauge({
+    required this.fraction,
+    required this.enabled,
+    this.fill,
+  });
 
-  /// 0..1 — the portion of today's scheduled volume already delivered.
+  /// 0..1 — the portion of today's scheduled volume already delivered (or, on
+  /// the mat card, the fleece left on the roll).
   final double fraction;
   final bool enabled;
+
+  /// Fill color; defaults to `primary` (dimmed when not [enabled]). The mat
+  /// card passes the roll's severity color so a spent roll reads red.
+  final Color? fill;
 
   @override
   Widget build(BuildContext context) {
@@ -743,7 +918,7 @@ class _DoseGauge extends StatelessWidget {
               widthFactor: fraction,
               heightFactor: 1,
               child: ColoredBox(
-                color: enabled ? tokens.primary : tokens.textFaint,
+                color: fill ?? (enabled ? tokens.primary : tokens.textFaint),
               ),
             ),
           ],
