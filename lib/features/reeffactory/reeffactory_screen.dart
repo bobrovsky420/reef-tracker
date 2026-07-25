@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../data/lan_discovery.dart';
 import '../../data/rf_device_link.dart';
 import '../../data/rf_protocol.dart';
 import '../../domain/parameter_catalog.dart';
@@ -13,6 +14,7 @@ import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../devices/discovery_sheet.dart';
 
 /// Filters a device's live [readings] down to what should be persisted, applying
 /// three rules (pure, so it is unit-tested directly):
@@ -228,7 +230,7 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l.reefFactoryTitle)),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddSheet,
+        onPressed: _showDiscoverySheet,
         icon: const Icon(Icons.add),
         label: Text(l.reefFactoryAddDevice),
       ),
@@ -395,6 +397,34 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
       _live.remove(d.identifier);
       await ref.read(dbProvider).deleteDevice(d.id);
     }
+  }
+
+  /// The primary add path (U39): scan the network and pick from what answered.
+  /// ReefFactory devices advertise nothing over mDNS, so this relies entirely
+  /// on the port sweep — which is exactly why manual entry stays available.
+  Future<void> _showDiscoverySheet() async {
+    final db = ref.read(dbProvider);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => DeviceDiscoverySheet(
+        kind: DiscoveredKind.reeffactory,
+        onAdd: (found) => db.upsertReefFactoryDevice(
+          identifier: found.identifier,
+          model: found.modelCode,
+          address: found.address,
+          name: found.modelDisplayName,
+          tankId: ref.read(activeTankProvider)?.id,
+        ),
+        onUpdateAddress: (existing, found) =>
+            db.updateDeviceAddress(existing.id, found.address),
+        onManualEntry: () {
+          Navigator.pop(ctx);
+          unawaited(_showAddSheet());
+        },
+      ),
+    );
   }
 
   Future<void> _showAddSheet() async {

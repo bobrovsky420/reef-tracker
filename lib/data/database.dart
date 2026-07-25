@@ -1484,6 +1484,27 @@ class AppDatabase extends _$AppDatabase {
         DevicesCompanion(name: Value(name), tankId: Value(tankId)),
       );
 
+  /// Repoints a device at a new LAN address (U39: discovery matched it by
+  /// hwid/serial at an address different from the stored one, typically after a
+  /// DHCP lease change). Deliberately narrow — unlike the upsert paths it must
+  /// not touch the user's name, tank or card position.
+  Future<void> updateDeviceAddress(int id, String address) =>
+      (update(devices)..where((d) => d.id.equals(id))).write(
+        DevicesCompanion(
+          address: Value(address),
+          lastSeenAt: Value(DateTime.now()),
+        ),
+      );
+
+  /// Refines a device's stored model code after a read learned a more precise
+  /// one than identification could give (a mat's `/device-info` says "RSMAT";
+  /// only `/configuration` knows it is an "RSMAT250"). Narrow like
+  /// [updateDeviceAddress] — the user's name, tank and position stand.
+  Future<void> updateDeviceModel(int id, String model) =>
+      (update(devices)..where((d) => d.id.equals(id))).write(
+        DevicesCompanion(model: Value(model)),
+      );
+
   Future<void> deleteDevice(int id) =>
       (delete(devices)..where((d) => d.id.equals(id))).go();
 

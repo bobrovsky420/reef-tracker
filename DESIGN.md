@@ -1276,7 +1276,7 @@ Body text stays the platform default (SF/Roboto).
 | `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 | `/reeffactory` | ReefFactory devices dashboard (U36, experimental): live values from LAN meters |
-| `/reefbeat` | ReefBeat devices dashboard (U38, experimental): status from Red Sea ReefDose pumps, ReefATO+ units and ReefMat filters |
+| `/reefbeat` | ReefBeat devices dashboard (U38, experimental): status from Red Sea ReefDose pumps, ReefATO+ units, ReefMat filters, ReefRun controllers, ReefLED lights and ReefWave pumps |
 | `/settings/devices` | Connected devices — read-only inventory of every ReefFactory / ReefBeat / Hanna device |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
@@ -2400,10 +2400,12 @@ on the device's Wi-Fi network.
 A separate dashboard for **Red Sea ReefBeat** LAN devices — deliberately not
 merged into the ReefFactory screen, because the cards display operational
 status instead of values to save, so there is **no Save path** into
-`Readings`. Three device families are supported: the **ReefDose** dosing pumps
-(`RSDOSE2`/`RSDOSE4`, `hw_type = reef-dosing`), the **ReefATO+** auto-top-off
-unit (`RSATO+`, `hw_type = reef-ato`) and the **ReefMat** roller filter
-(`RSMAT`, `hw_type = reef-mat`). (The ATO's temperature
+`Readings`. Six device families are supported (`kRbSupportedHwTypes`): the
+**ReefDose** dosing pumps (`RSDOSE2`/`RSDOSE4`, `reef-dosing`), the
+**ReefATO+** auto-top-off unit (`RSATO+`, `reef-ato`), the **ReefMat** roller
+filter (`RSMAT`, `reef-mat`), the **ReefRun** DC pump controller (`RSRUN`,
+`reef-run`), the **ReefLED** lights (`RSLED50`…`RSLED160`, `reef-lights`) and
+the **ReefWave** pumps (`RSWAVE25`/`RSWAVE45`, `reef-wave`). (The ATO's temperature
 probe is the one ReefBeat value that *could* feed `Readings` — a deliberate
 future decision, not part of this phase.) Read-only: the app never doses,
 edits schedules or calibrates — a persistent disclaimer points to the
@@ -2437,18 +2439,48 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   `rbStockSeverity`, else the coarse level, and always critical when spent)
   drive the card's colors. The mat's mode/schedule settings, EC-sensor
   connection, last-advance cause and motor-step counters are deliberately not
-  modelled. Parsing is tolerant — absent/malformed fields degrade the card,
-  never crash a refresh. `rbModelDisplayName` maps `hw_model` → friendly name
-  ("ReefDose 4", "ReefATO+", "ReefMat" — mats report only `RSMAT`, the width
-  lives in `/configuration`, which the app doesn't read), the default device
-  name on add.
+  modelled. For a ReefRun (`RbRunStatus`): device flags plus one `RbRunPump`
+  per `pump_<n>` block (name, type/model, `state` — anything but
+  "operational" is `faulted`, an *absent* state is not — speed and pulse in
+  percent, motor temperature, missing-pump/-sensor flags, schedule and
+  sensor-control flags). `sensorWarning` fires only when the EC sensor is
+  disconnected **and** some pump actually follows it, so an unpaired sensor on
+  a manual pump stays quiet. For a ReefLED (`RbLightStatus`): channel output
+  from the `manual` block — which despite its name carries the *current*
+  output in every mode — heatsink temperature, fan duty, the running program
+  (`RbLightStatus.cleanProgramName` strips the epoch-ms suffix the ReefBeat app
+  appends: "Winter Time-1769330261387" → "Winter Time", requiring ≥ 12 digits
+  so "Blue-2" survives), the acclimation ramp and the moon-phase simulation,
+  plus the tilt switch. No temperature threshold is invented — an LED heatsink
+  at 60 °C is normal and must not be judged against tank limits.
+  **The ReefWave is the exception**: its ESP8266 firmware serves *no*
+  `/dashboard` (404), and no endpoint exposes pump speed, wave pattern or
+  schedule — that lives on a second wave-controller chip with no HTTP surface.
+  All that exists locally is `GET /mode` and `GET /wifi`, so `RbWaveStatus`
+  carries the mode plus the Wi-Fi link (SSID, RSSI bucketed by
+  `RbWifiQuality`: good ≥ −60 dBm, fair ≥ −75, weak below — a sump pump behind
+  glass and water is the classic weak-signal case) and the card says so
+  explicitly rather than looking broken. Parsing is tolerant throughout —
+  absent/malformed fields degrade the card, never crash a refresh.
+  `rbModelDisplayName` maps `hw_model` → friendly name ("ReefDose 4",
+  "ReefATO+", "ReefMat 250", "ReefRun", "ReefLED 90", "ReefWave 25"), the
+  default device name on add.
 - **Transport** (`data/rb_device_link.dart`): abstract `RbDeviceLink`
   (fake-able) + `RbHttpLink` over `dart:io` `HttpClient` (the
   `cloud_backup_store.dart` pattern, no new dependency). One `readOnce(host)`
-  per manual refresh = the two GETs; the returned `RbSnapshot` carries the
-  identity plus exactly one of `dose`/`ato`/`mat` per the device's `hw_type`; typed
-  `RbLinkError` (unreachable/timeout/unsupportedModel/protocol) drives
-  specific messages.
+  per manual refresh; the returned `RbSnapshot` carries the identity plus
+  exactly one of `dose`/`ato`/`mat`/`run`/`light`/`wave` per the device's
+  `hw_type`; typed `RbLinkError`
+  (unreachable/timeout/unsupportedModel/protocol) drives specific messages.
+  Most families are `/device-info` + `/dashboard`; a **mat** additionally makes
+  a *tolerant* `/configuration` call purely to recover its sized model code
+  (`RbMatStatus.modelCode` = "RSMAT250" — `/device-info` only ever says
+  "RSMAT"), and a **wave** reads `/mode` (required) + a tolerant `/wifi`. A
+  failed tolerant call degrades the card, never the refresh.
+  `RbIdentityProbe.identify(host)` is a separate, deliberately narrow
+  interface — one `/device-info` GET, no dashboard — used by LAN discovery so
+  it can probe dozens of hosts cheaply; it is kept off `RbDeviceLink` so the
+  dashboards' widget-test fakes don't have to implement it.
 - **Dashboard** (`reefbeat_screen.dart`): mirrors the ReefFactory screen's
   structure (active tank's devices + unassigned in `displayOrder` then
   display-name order, per-card Refresh + Refresh-all, add-by-address probe
@@ -2480,7 +2512,19 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   its age in days. With an unparseable material name there is no denominator,
   so the gauge is dropped and the remaining length stands alone. Lengths
   render as whole centimetres below 1 m and metres with one decimal above.
-  (`_StatusRow`, the label–value line, is shared by the ATO and mat cards.)
+  A ReefRun card renders `_RunStatus`: device chips (clock, battery, level
+  sensor offline) above one `_RunPumpRow` per socket — name, a speed gauge with
+  the percentage beside it, motor temperature, and per-pump chips (pump/sensor
+  not detected, non-operational state). Empty sockets
+  (`RbRunPump.isEmptySocket`) are dropped. A ReefLED card renders
+  `_LightStatus`: chips (clock, battery, fixture tilted, acclimation with days
+  left) above the program name, a `_ChannelBar` per channel (white, blue, and
+  moon only when non-zero — label, gauge, percentage), then moon phase, fan
+  duty and heatsink temperature. A ReefWave card renders `_WaveStatus`: mode,
+  network and signal (colored by `RbWifiQuality`), followed by a dim note
+  explaining that the pump exposes nothing else locally — without it an
+  almost-empty card reads as a bug rather than a vendor limit.
+  (`_StatusRow`, the label–value line, is shared by all the status cards.)
 - Entry points mirror ReefFactory: experimental-gated + Pro-gated
   (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow
   menu and a Settings row. Devices are read once automatically on open;
@@ -2488,6 +2532,83 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
 - **Future phases (deferred):** comparing/syncing head schedules against the
   tank's dosing plan (`DosingEntries`), and logging actually-delivered volumes
   for the dose calculator's consumption math.
+
+### LAN device discovery (U39) — `data/lan_discovery.dart`, `features/devices/discovery_sheet.dart`
+
+Finds every supported ReefBeat and ReefFactory device on the phone's network,
+so a keeper never has to read an IP off a router page. It is the **primary add
+path** on both dashboards (the FAB opens the scan sheet; manual IP entry is one
+tap away inside it and remains the escape hatch for static-IP, VLAN and
+isolated-network setups).
+
+The design follows from measured vendor behaviour, not assumption:
+
+- **Red Sea advertises over mDNS**, and its `_http._tcp` TXT record carries
+  `hwid`, `hw_model` and `hw_type` — the entire `/device-info` identity, with
+  no HTTP request at all.
+- **ReefFactory advertises nothing.** A full `_services._dns-sd._udp`
+  enumeration returns silence from them; they are only findable by connecting.
+
+So **a port-80 sweep of the local /24 is mandatory** — mDNS can never be the
+only mechanism. mDNS instead earns its place as a *classifier*: it identifies
+the Red Sea hosts up front so the sweep's survivors only need the slow
+WebSocket probe for the handful mDNS didn't explain (on a real network, ~14
+protocol probes become ~5). This is also fallback-safe: if mDNS yields nothing
+— the system responder holds the port, a network blocks multicast, or iOS
+withholds the multicast entitlement — discovery still finds everything via the
+sweep, just with more probing. Nothing treats an empty mDNS result as an error.
+
+- **mDNS codec** (`data/mdns_protocol.dart`, pure Dart, byte-level tested): a
+  deliberately partial DNS implementation — PTR query encode, response decode
+  (A/PTR/SRV/TXT, including compression pointers), TXT key/value split — plus
+  `reefBeatIdentityFrom`, which matches on the TXT triple rather than the
+  service name because Red Sea publishes plain `_http._tcp` like any other web
+  server. Queries set the **QU (unicast-response) bit** and bind an ephemeral
+  port instead of :5353: it sidesteps the system responder already holding the
+  well-known port and needs no multicast group membership, hence **no
+  `CHANGE_WIFI_MULTICAST_STATE` on Android**. Decoding is tolerant — a stray or
+  truncated packet yields what could be read, never an exception.
+- **Service** (`LanDiscoveryService`): three phases, emitting
+  `DiscoveryProgress` (`sweeping` → `identifying` → `done`, each with its own
+  scanned/total so the UI shows one honest bar per stage). Phase 1 sweeps
+  port 80 across the local /24 at 48-way concurrency with a 400 ms connect
+  timeout (~2.5 s measured), skipping the phone's own addresses; mDNS runs
+  concurrently (~2 s, so it is free). Phase 2 folds in the mDNS identities.
+  Phase 3 probes only the unexplained open hosts, ReefBeat first (a cheap HTTP
+  GET) then ReefFactory (the WebSocket handshake). Results are keyed by
+  identifier, so the same device seen twice is reported once.
+- **Subnet assumption**: `NetworkInterface` exposes no netmask, so a **/24 is
+  assumed** off each RFC-1918 address (169.254/16 link-local, 127/8 and
+  100.64/10 carrier-grade NAT are excluded — sweeping a carrier's network would
+  be useless and rude), bounded to `maxSubnets` (2) so a phone on Wi-Fi + VPN +
+  hotspot doesn't multiply the sweep.
+- **Seam**: `LanScanner` (prefixes, own addresses, `isPortOpen`, `mdnsSweep`)
+  is abstract, mirroring the `RbDeviceLink`/`RfDeviceLink` fake-injection
+  pattern, so the whole service is unit-tested without a network. The two
+  identity probes are injected the same way, with tighter timeouts (2 s HTTP,
+  3 s WebSocket) than the dashboards' links — discovery probes many hosts that
+  are not reef devices at all, so a 6 s wait per host would dominate the scan.
+- **Sheet** (`DeviceDiscoverySheet`): shows one `kind` at a time — the
+  dashboard's own — so it stays inside that integration's Pro gate, even though
+  one scan finds both vendors. Rows carry a per-family glyph and exactly one
+  action: **Add** (new), **Update** (already registered but answering at a
+  different address), "Added" (unchanged) or "Not supported". Unsupported
+  devices are **shown rather than filtered**: a keeper with a device the app
+  can't read yet should see it was found, not wonder why the scan missed it.
+  The two dead ends explain themselves — `noNetwork` (no private IPv4 at all)
+  and nothing-found (which names AP client isolation as a likely cause).
+- **Address repair** is the lasting value beyond first-time setup. A DHCP lease
+  change silently breaks a stored `Devices.address`; because discovery matches
+  by hwid/serial, one tap repoints the row via `updateDeviceAddress`, which is
+  deliberately narrow — it must not touch the user's name, tank or card
+  position the way the upsert paths do.
+- **Platform**: Android needs nothing new (`INTERNET` is already declared, and
+  `dart:io` sockets bypass the cleartext policy). **iOS requires
+  `NSLocalNetworkUsageDescription`** — without it *any* LAN access fails
+  silently on iOS 14+, manual entry included; see the iOS notes below.
+- **Deferred**: auto-rescan when a stored address stops answering (the natural
+  next step, since the machinery now exists), and discovery of vendors beyond
+  these two.
 
 Connected-device inventory (Settings → Connected devices, route
 `/settings/devices`, `connected_devices_screen.dart`): a read-only union of the

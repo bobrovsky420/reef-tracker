@@ -513,7 +513,260 @@ void main() {
       expect(rbModelDisplayName('RSDOSE2'), 'ReefDose 2');
       expect(rbModelDisplayName('RSATO+'), 'ReefATO+');
       expect(rbModelDisplayName('RSMAT'), 'ReefMat');
+      expect(rbModelDisplayName('RSMAT250'), 'ReefMat 250');
+      expect(rbModelDisplayName('RSRUN'), 'ReefRun');
+      expect(rbModelDisplayName('RSLED90'), 'ReefLED 90');
+      expect(rbModelDisplayName('RSWAVE25'), 'ReefWave 25');
       expect(rbModelDisplayName('RSWAVE'), 'RSWAVE');
+    });
+  });
+
+  group('RbMatStatus model code', () {
+    test('takes the sized model from /configuration', () {
+      // `/device-info` reports a bare "RSMAT"; only the configuration knows the
+      // width. Golden vector: a live RSMAT250 (2026-07-25).
+      final status = RbMatStatus.fromJson(
+        jsonDecode('{"roll_level": "running_low"}') as Map<String, Object?>,
+        configuration:
+            jsonDecode('{"auto_advance": true, "model": "RSMAT250"}')
+                as Map<String, Object?>,
+      );
+      expect(status.modelCode, 'RSMAT250');
+      expect(rbModelDisplayName(status.modelCode!), 'ReefMat 250');
+    });
+
+    test('stays null when the configuration is unreadable', () {
+      final status = RbMatStatus.fromJson(
+        jsonDecode('{"roll_level": "running_low"}') as Map<String, Object?>,
+      );
+      expect(status.modelCode, isNull);
+    });
+  });
+
+  group('RbRunStatus', () {
+    /// Golden vector: a live RSRUN's `GET /dashboard` (2026-07-25).
+    const runDashboardJson = '''
+{
+  "mode": "auto",
+  "is_internet_connected": true,
+  "battery_level": "high",
+  "time_error": false,
+  "linked": false,
+  "synced": true,
+  "ec_sensor_connected": true,
+  "pump_1": {
+    "name": "Return pump",
+    "type": "return",
+    "model": "return-6",
+    "state": "operational",
+    "sensor_controlled": false,
+    "missing_pump": false,
+    "missing_sensor": false,
+    "schedule_enabled": true,
+    "intensity": 80,
+    "pulse": 0,
+    "temperature": 28.292682647705078
+  },
+  "pump_2": {
+    "name": "Skimmer",
+    "type": "skimmer",
+    "model": "rsk-300",
+    "state": "operational",
+    "sensor_controlled": true,
+    "missing_pump": false,
+    "missing_sensor": false,
+    "schedule_enabled": true,
+    "intensity": 70,
+    "pulse": 0,
+    "temperature": 40.243900299072266
+  }
+}
+''';
+
+    test('decodes both pump sockets in order', () {
+      final status = RbRunStatus.fromJson(
+        jsonDecode(runDashboardJson) as Map<String, Object?>,
+      );
+      expect(status.pumps, hasLength(2));
+      expect(status.batteryWarning, isFalse);
+      expect(status.timeError, isFalse);
+
+      final returnPump = status.pumps.first;
+      expect(returnPump.number, 1);
+      expect(returnPump.name, 'Return pump');
+      expect(returnPump.type, 'return');
+      expect(returnPump.intensity, 80);
+      expect(returnPump.temperatureC, closeTo(28.3, 0.05));
+      expect(returnPump.faulted, isFalse);
+      expect(returnPump.sensorControlled, isFalse);
+
+      expect(status.pumps[1].name, 'Skimmer');
+      expect(status.pumps[1].intensity, 70);
+      expect(status.pumps[1].sensorControlled, isTrue);
+    });
+
+    test('a lost EC sensor only warns when a pump actually follows it', () {
+      Map<String, Object?> withSensor({required bool controlled}) => {
+        'ec_sensor_connected': false,
+        'pump_1': {'name': 'Skimmer', 'sensor_controlled': controlled},
+      };
+      expect(RbRunStatus.fromJson(withSensor(controlled: true)).sensorWarning,
+          isTrue);
+      expect(RbRunStatus.fromJson(withSensor(controlled: false)).sensorWarning,
+          isFalse);
+    });
+
+    test('a non-operational state is a fault, an absent one is not', () {
+      expect(RbRunPump.fromJson(1, {'state': 'blocked'}).faulted, isTrue);
+      expect(RbRunPump.fromJson(1, {'state': 'operational'}).faulted, isFalse);
+      expect(RbRunPump.fromJson(1, const {}).faulted, isFalse);
+    });
+
+    test('skips keys that are not pump sockets', () {
+      final status = RbRunStatus.fromJson({
+        'pump_1': {'intensity': 50},
+        'pump_state': 'nonsense',
+        'mode': 'auto',
+      });
+      expect(status.pumps, hasLength(1));
+    });
+  });
+
+  group('RbLightStatus', () {
+    /// Golden vector: a live RSLED90's `GET /dashboard` (2026-07-25).
+    const lightDashboardJson = '''
+{
+  "mode": "auto",
+  "battery_level": "high",
+  "time_error": false,
+  "tilt_switch": false,
+  "acclimation": {
+    "enabled": false,
+    "duration": 50,
+    "remaining_days": 0,
+    "start_intensity_factor": 70,
+    "current_intensity_factor": 100
+  },
+  "moon_phase": {
+    "enabled": false,
+    "name": "Waning Crescent",
+    "intensity": 100,
+    "todays_moon_day": 24
+  },
+  "manual": {
+    "white": 20,
+    "white_pwm": 1832,
+    "blue": 80,
+    "blue_pwm": 3889,
+    "moon": 0,
+    "fan": 100,
+    "temperature": 60.11334228515625
+  },
+  "current_program": {
+    "active_preset": 7,
+    "name": "Winter Time-1769330261387"
+  }
+}
+''';
+
+    test('decodes channels, heatsink temperature and program', () {
+      final status = RbLightStatus.fromJson(
+        jsonDecode(lightDashboardJson) as Map<String, Object?>,
+      );
+      expect(status.mode, 'auto');
+      expect(status.whitePercent, 20);
+      expect(status.bluePercent, 80);
+      expect(status.moonPercent, 0);
+      expect(status.fanPercent, 100);
+      expect(status.temperatureC, closeTo(60.1, 0.05));
+      expect(status.tiltSwitch, isFalse);
+      expect(status.acclimationEnabled, isFalse);
+      expect(status.moonPhaseEnabled, isFalse);
+      expect(status.moonPhaseName, 'Waning Crescent');
+      expect(status.moonDay, 24);
+    });
+
+    test('strips the epoch suffix the ReefBeat app appends to program names',
+        () {
+      expect(
+        RbLightStatus.cleanProgramName('Winter Time-1769330261387'),
+        'Winter Time',
+      );
+      // A program legitimately ending in a short number must survive.
+      expect(RbLightStatus.cleanProgramName('Blue-2'), 'Blue-2');
+      expect(RbLightStatus.cleanProgramName('Ramp-2024'), 'Ramp-2024');
+      expect(RbLightStatus.cleanProgramName(null), isNull);
+    });
+
+    test('a payload missing every optional block still decodes', () {
+      final status = RbLightStatus.fromJson(const {'mode': 'manual'});
+      expect(status.mode, 'manual');
+      expect(status.whitePercent, isNull);
+      expect(status.programName, isNull);
+      expect(status.acclimationEnabled, isFalse);
+    });
+  });
+
+  group('RbWaveStatus', () {
+    /// Golden vectors: a live RSWAVE25's `GET /mode` and `GET /wifi`
+    /// (2026-07-25). It serves no `/dashboard` at all.
+    const waveModeJson = '{"mode": "auto"}';
+    const waveWifiJson = '''
+{
+  "connected": true,
+  "ssid": "FibreBox_X6-21BC17",
+  "channel": 1,
+  "signal_dBm": -69,
+  "ip": "192.168.1.4"
+}
+''';
+
+    test('decodes mode and the Wi-Fi link', () {
+      final status = RbWaveStatus.fromJson(
+        jsonDecode(waveModeJson) as Map<String, Object?>,
+        wifi: jsonDecode(waveWifiJson) as Map<String, Object?>,
+      );
+      expect(status.mode, 'auto');
+      expect(status.wifiConnected, isTrue);
+      expect(status.ssid, 'FibreBox_X6-21BC17');
+      expect(status.signalDbm, -69);
+      expect(status.wifiQuality, RbWifiQuality.fair);
+    });
+
+    test('works with no /wifi payload at all', () {
+      final status = RbWaveStatus.fromJson(
+        jsonDecode(waveModeJson) as Map<String, Object?>,
+      );
+      expect(status.mode, 'auto');
+      expect(status.ssid, isNull);
+      expect(status.wifiQuality, RbWifiQuality.unknown);
+    });
+
+    test('signal buckets', () {
+      RbWifiQuality quality(int dbm) =>
+          RbWaveStatus(signalDbm: dbm).wifiQuality;
+      expect(quality(-40), RbWifiQuality.good);
+      expect(quality(-60), RbWifiQuality.good);
+      expect(quality(-61), RbWifiQuality.fair);
+      expect(quality(-75), RbWifiQuality.fair);
+      expect(quality(-76), RbWifiQuality.weak);
+    });
+  });
+
+  group('kRbSupportedHwTypes', () {
+    test('covers every family with a parser, and nothing else', () {
+      expect(
+        kRbSupportedHwTypes,
+        {
+          kRbDosingHwType,
+          kRbAtoHwType,
+          kRbMatHwType,
+          kRbRunHwType,
+          kRbLightsHwType,
+          kRbWaveHwType,
+        },
+      );
+      expect(kRbSupportedHwTypes.contains('reef-something-new'), isFalse);
     });
   });
 }

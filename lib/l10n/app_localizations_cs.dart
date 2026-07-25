@@ -3102,7 +3102,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Přidejte zařízení Red Sea ReefBeat (např. dávkovač ReefDose, ReefATO nebo ReefMat) podle jeho IP adresy nebo názvu hostitele a sledujte jeho stav.';
+      'Prohledejte svou Wi-Fi síť a najděte zařízení Red Sea ReefBeat – dávkovače ReefDose, ReefATO, ReefMat, ReefRun, ReefLED a ReefWave – nebo přidejte zařízení podle jeho IP adresy.';
 
   @override
   String get reefBeatRefresh => 'Obnovit';
@@ -3161,7 +3161,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Tento typ zařízení ReefBeat zatím není podporován – prozatím jen dávkovače ReefDose, jednotky ReefATO a filtry ReefMat.';
+      'Tento typ zařízení ReefBeat zatím není podporován.';
 
   @override
   String get reefBeatErrProtocol => 'Zařízení se nepodařilo přečíst.';
@@ -3303,6 +3303,155 @@ class AppLocalizationsCs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reefBeatMode => 'Režim';
+
+  @override
+  String get reefBeatModeAuto => 'Automatický';
+
+  @override
+  String get reefBeatModeManual => 'Ruční';
+
+  @override
+  String reefBeatPercent(int value) {
+    return '$value %';
+  }
+
+  @override
+  String reefBeatRunPump(int number) {
+    return 'Čerpadlo $number';
+  }
+
+  @override
+  String get reefBeatRunScheduleOff => 'Plán vypnutý';
+
+  @override
+  String get reefBeatRunTemperature => 'Teplota motoru';
+
+  @override
+  String get reefBeatRunMissingPump => 'Čerpadlo nenalezeno';
+
+  @override
+  String get reefBeatRunMissingSensor => 'Senzor nenalezen';
+
+  @override
+  String reefBeatRunState(Object state) {
+    return 'Stav čerpadla: $state';
+  }
+
+  @override
+  String get reefBeatRunSensorOffline => 'Hladinový senzor offline';
+
+  @override
+  String get reefBeatLightProgram => 'Program';
+
+  @override
+  String get reefBeatLightWhite => 'Bílá';
+
+  @override
+  String get reefBeatLightBlue => 'Modrá';
+
+  @override
+  String get reefBeatLightMoon => 'Měsíc';
+
+  @override
+  String get reefBeatLightFan => 'Ventilátor';
+
+  @override
+  String get reefBeatLightTemperature => 'Chladič';
+
+  @override
+  String get reefBeatLightTilt => 'Svítidlo je nakloněné';
+
+  @override
+  String reefBeatLightAcclimation(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Aklimatizace: zbývá $count dní',
+      few: 'Aklimatizace: zbývají $count dny',
+      one: 'Aklimatizace: zbývá 1 den',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatLightAcclimationOn => 'Probíhá aklimatizace';
+
+  @override
+  String get reefBeatLightMoonPhase => 'Fáze měsíce';
+
+  @override
+  String reefBeatLightMoonDay(Object name, int day) {
+    return '$name, den $day';
+  }
+
+  @override
+  String get reefBeatWaveNetwork => 'Síť';
+
+  @override
+  String get reefBeatWaveSignal => 'Signál';
+
+  @override
+  String get reefBeatWaveSignalGood => 'Dobrý';
+
+  @override
+  String get reefBeatWaveSignalFair => 'Slabší';
+
+  @override
+  String get reefBeatWaveSignalWeak => 'Slabý';
+
+  @override
+  String get reefBeatWaveLimited =>
+      'Čerpadla ReefWave přes místní síť hlásí jen svůj režim a sílu Wi-Fi signálu. Otáčky čerpadla ani vlnové režimy mimo aplikaci ReefBeat dostupné nejsou.';
+
+  @override
+  String get discoveryTitle => 'Prohledat síť';
+
+  @override
+  String get discoverySweeping => 'Hledám zařízení ve vaší Wi-Fi…';
+
+  @override
+  String get discoveryIdentifying => 'Ověřuji nalezená zařízení…';
+
+  @override
+  String get discoveryDone => 'Hledání dokončeno.';
+
+  @override
+  String get discoveryNoNetwork =>
+      'Telefon není připojen k Wi-Fi síti. Připojte se ke stejné Wi-Fi jako vaše zařízení a zkuste to znovu.';
+
+  @override
+  String get discoveryNothingFoundHelp =>
+      'Nenalezeno žádné zařízení. Zkontrolujte, že jsou zapnutá a připojená k této Wi-Fi síti. Některé sítě pro hosty brání zařízením ve vzájemné komunikaci. Zařízení můžete přidat i zadáním jeho IP adresy.';
+
+  @override
+  String get discoveryAdd => 'Přidat';
+
+  @override
+  String get discoveryUpdate => 'Aktualizovat';
+
+  @override
+  String get discoveryAlreadyAdded => 'Přidáno';
+
+  @override
+  String discoveryAddressChanged(Object address) {
+    return 'Přesunuto na $address';
+  }
+
+  @override
+  String get discoveryUnsupported => 'Nepodporováno';
+
+  @override
+  String get discoveryUnsupportedHelp =>
+      'Tento typ zařízení aplikace zatím neumí číst.';
+
+  @override
+  String get discoveryRescan => 'Hledat znovu';
+
+  @override
+  String get discoveryManualEntry => 'Zadat IP adresu';
 
   @override
   String get reefDevicesTitle => 'Připojená zařízení';

@@ -5124,7 +5124,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Add a Red Sea ReefBeat device (e.g. a ReefDose pump, a ReefATO or a ReefMat) by its IP address or hostname to see its status.'**
+  /// **'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose pumps, ReefATO, ReefMat, ReefRun, ReefLED and ReefWave — or add one by its IP address.'**
   String get reefBeatEmptyBody;
 
   /// No description provided for @reefBeatRefresh.
@@ -5226,7 +5226,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatErrUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'That ReefBeat device type isn\'t supported yet — only ReefDose pumps, ReefATO units and ReefMat filters for now.'**
+  /// **'That ReefBeat device type isn\'t supported yet.'**
   String get reefBeatErrUnsupported;
 
   /// No description provided for @reefBeatErrProtocol.
@@ -5432,6 +5432,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, one{1 day} other{{count} days}}'**
   String reefBeatMatRollAge(int count);
+
+  /// No description provided for @reefBeatMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Mode'**
+  String get reefBeatMode;
+
+  /// No description provided for @reefBeatModeAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get reefBeatModeAuto;
+
+  /// No description provided for @reefBeatModeManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get reefBeatModeManual;
+
+  /// A percentage value on a device card (pump speed, light channel, fan duty)
+  ///
+  /// In en, this message translates to:
+  /// **'{value}%'**
+  String reefBeatPercent(int value);
+
+  /// Fallback label for a ReefRun pump socket with no user-set name
+  ///
+  /// In en, this message translates to:
+  /// **'Pump {number}'**
+  String reefBeatRunPump(int number);
+
+  /// No description provided for @reefBeatRunScheduleOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule off'**
+  String get reefBeatRunScheduleOff;
+
+  /// No description provided for @reefBeatRunTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Motor temperature'**
+  String get reefBeatRunTemperature;
+
+  /// No description provided for @reefBeatRunMissingPump.
+  ///
+  /// In en, this message translates to:
+  /// **'Pump not detected'**
+  String get reefBeatRunMissingPump;
+
+  /// No description provided for @reefBeatRunMissingSensor.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensor not detected'**
+  String get reefBeatRunMissingSensor;
+
+  /// Raw firmware state string of a ReefRun pump that isn't operational
+  ///
+  /// In en, this message translates to:
+  /// **'Pump state: {state}'**
+  String reefBeatRunState(Object state);
+
+  /// No description provided for @reefBeatRunSensorOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Level sensor offline'**
+  String get reefBeatRunSensorOffline;
+
+  /// No description provided for @reefBeatLightProgram.
+  ///
+  /// In en, this message translates to:
+  /// **'Program'**
+  String get reefBeatLightProgram;
+
+  /// No description provided for @reefBeatLightWhite.
+  ///
+  /// In en, this message translates to:
+  /// **'White'**
+  String get reefBeatLightWhite;
+
+  /// No description provided for @reefBeatLightBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get reefBeatLightBlue;
+
+  /// No description provided for @reefBeatLightMoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Moon'**
+  String get reefBeatLightMoon;
+
+  /// No description provided for @reefBeatLightFan.
+  ///
+  /// In en, this message translates to:
+  /// **'Fan'**
+  String get reefBeatLightFan;
+
+  /// No description provided for @reefBeatLightTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Heatsink'**
+  String get reefBeatLightTemperature;
+
+  /// No description provided for @reefBeatLightTilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixture tilted'**
+  String get reefBeatLightTilt;
+
+  /// ReefLED acclimation mode is ramping intensity up over this many more days
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Acclimation: 1 day left} other{Acclimation: {count} days left}}'**
+  String reefBeatLightAcclimation(int count);
+
+  /// No description provided for @reefBeatLightAcclimationOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Acclimation running'**
+  String get reefBeatLightAcclimationOn;
+
+  /// No description provided for @reefBeatLightMoonPhase.
+  ///
+  /// In en, this message translates to:
+  /// **'Moon phase'**
+  String get reefBeatLightMoonPhase;
+
+  /// Lunar phase name and the day within the simulated lunar cycle
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, day {day}'**
+  String reefBeatLightMoonDay(Object name, int day);
+
+  /// No description provided for @reefBeatWaveNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network'**
+  String get reefBeatWaveNetwork;
+
+  /// No description provided for @reefBeatWaveSignal.
+  ///
+  /// In en, this message translates to:
+  /// **'Signal'**
+  String get reefBeatWaveSignal;
+
+  /// No description provided for @reefBeatWaveSignalGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get reefBeatWaveSignalGood;
+
+  /// No description provided for @reefBeatWaveSignalFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get reefBeatWaveSignalFair;
+
+  /// No description provided for @reefBeatWaveSignalWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get reefBeatWaveSignalWeak;
+
+  /// No description provided for @reefBeatWaveLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefWave pumps only report their mode and Wi-Fi signal over the local network. Pump speed and wave patterns aren\'t available outside the ReefBeat app.'**
+  String get reefBeatWaveLimited;
+
+  /// No description provided for @discoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan network'**
+  String get discoveryTitle;
+
+  /// No description provided for @discoverySweeping.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for devices on your Wi-Fi…'**
+  String get discoverySweeping;
+
+  /// No description provided for @discoveryIdentifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking what was found…'**
+  String get discoveryIdentifying;
+
+  /// No description provided for @discoveryDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan complete.'**
+  String get discoveryDone;
+
+  /// No description provided for @discoveryNoNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone isn\'t connected to a Wi-Fi network. Connect to the same Wi-Fi as your devices and scan again.'**
+  String get discoveryNoNetwork;
+
+  /// No description provided for @discoveryNothingFoundHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices found. Check they\'re powered on and connected to this Wi-Fi network. Some guest networks stop devices from seeing each other. You can still add a device by typing its IP address.'**
+  String get discoveryNothingFoundHelp;
+
+  /// No description provided for @discoveryAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get discoveryAdd;
+
+  /// No description provided for @discoveryUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get discoveryUpdate;
+
+  /// No description provided for @discoveryAlreadyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get discoveryAlreadyAdded;
+
+  /// A device already on the list answered at a different IP than the stored one, usually after a DHCP lease change
+  ///
+  /// In en, this message translates to:
+  /// **'Moved to {address}'**
+  String discoveryAddressChanged(Object address);
+
+  /// No description provided for @discoveryUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Not supported'**
+  String get discoveryUnsupported;
+
+  /// No description provided for @discoveryUnsupportedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This app can\'t read this device type yet.'**
+  String get discoveryUnsupportedHelp;
+
+  /// No description provided for @discoveryRescan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan again'**
+  String get discoveryRescan;
+
+  /// No description provided for @discoveryManualEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter IP address'**
+  String get discoveryManualEntry;
 
   /// No description provided for @reefDevicesTitle.
   ///

@@ -41,13 +41,34 @@ class RbLinkException implements Exception {
 }
 
 /// The decoded result of one manual refresh: identity + the live status
-/// matching the device family — exactly one of [dose]/[ato]/[mat] is set.
+/// matching the device family — exactly one of [dose]/[ato]/[mat]/[run]/
+/// [light]/[wave] is set.
 class RbSnapshot {
-  const RbSnapshot({required this.info, this.dose, this.ato, this.mat});
+  const RbSnapshot({
+    required this.info,
+    this.dose,
+    this.ato,
+    this.mat,
+    this.run,
+    this.light,
+    this.wave,
+  });
+
   final RbDeviceInfo info;
   final RbDoseStatus? dose;
   final RbAtoStatus? ato;
   final RbMatStatus? mat;
+  final RbRunStatus? run;
+  final RbLightStatus? light;
+  final RbWaveStatus? wave;
+
+  /// The most precise model code known — a mat's `/configuration` reports the
+  /// width ("RSMAT250") that `/device-info` omits; everything else uses its
+  /// `hw_model` as-is.
+  String get modelCode => mat?.modelCode ?? info.hwModel;
+
+  /// The friendly product name for [modelCode] ("ReefMat 250").
+  String get modelDisplayName => rbModelDisplayName(modelCode);
 }
 
 abstract class RbDeviceLink {
@@ -56,8 +77,18 @@ abstract class RbDeviceLink {
   Future<RbSnapshot> readOnce(String host);
 }
 
+/// The cheap identity-only probe LAN discovery uses: one `GET /device-info`,
+/// no dashboard. Kept separate from [RbDeviceLink] so the dashboard's test
+/// fakes — which only ever script whole snapshots — don't have to implement it.
+abstract class RbIdentityProbe {
+  /// Reads just the identity of the device at [host]. Throws
+  /// [RbLinkException] on any failure, including a host that answers HTTP but
+  /// isn't a ReefBeat device.
+  Future<RbDeviceInfo> identify(String host);
+}
+
 /// Real transport over `http://<host>/…`.
-class RbHttpLink implements RbDeviceLink {
+class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
   RbHttpLink({
     this.timeout = const Duration(seconds: 6),
     HttpClient Function()? clientFactory,
@@ -66,32 +97,83 @@ class RbHttpLink implements RbDeviceLink {
   final Duration timeout;
   final HttpClient Function() _clientFactory;
 
-  @override
-  Future<RbSnapshot> readOnce(String host) async {
-    // Be forgiving about pasted addresses: strip a scheme and trailing slash.
-    var h = host.trim();
-    h = h.replaceFirst(RegExp(r'^https?://'), '');
+  /// Be forgiving about pasted addresses: strip a scheme and trailing slashes.
+  static String _normalizeHost(String host) {
+    var h = host.trim().replaceFirst(RegExp(r'^https?://'), '');
     while (h.endsWith('/')) {
       h = h.substring(0, h.length - 1);
     }
+    return h;
+  }
 
-    final infoJson = await _getJson(h, '/device-info');
-    final info = RbDeviceInfo.fromJson(infoJson);
+  @override
+  Future<RbDeviceInfo> identify(String host) async {
+    final info = RbDeviceInfo.fromJson(
+      await _getJson(_normalizeHost(host), '/device-info'),
+    );
     if (info == null) {
       throw const RbLinkException(RbLinkError.protocol, 'no device identity');
     }
-    final dashboard = switch (info.hwType) {
-      kRbDosingHwType || kRbAtoHwType || kRbMatHwType =>
-        await _getJson(h, '/dashboard'),
-      _ => throw RbLinkException(RbLinkError.unsupportedModel, info.hwType),
-    };
-    return switch (info.hwType) {
-      kRbDosingHwType =>
-        RbSnapshot(info: info, dose: RbDoseStatus.fromJson(dashboard)),
-      kRbAtoHwType =>
-        RbSnapshot(info: info, ato: RbAtoStatus.fromJson(dashboard)),
-      _ => RbSnapshot(info: info, mat: RbMatStatus.fromJson(dashboard)),
-    };
+    return info;
+  }
+
+  @override
+  Future<RbSnapshot> readOnce(String host) async {
+    final h = _normalizeHost(host);
+    final info = await identify(h);
+
+    switch (info.hwType) {
+      case kRbDosingHwType:
+        return RbSnapshot(
+          info: info,
+          dose: RbDoseStatus.fromJson(await _getJson(h, '/dashboard')),
+        );
+      case kRbAtoHwType:
+        return RbSnapshot(
+          info: info,
+          ato: RbAtoStatus.fromJson(await _getJson(h, '/dashboard')),
+        );
+      case kRbMatHwType:
+        final dashboard = await _getJson(h, '/dashboard');
+        // Only to recover the sized model code — a mat whose configuration is
+        // unreadable still gets a complete card, just a generic name.
+        final configuration = await _tryGetJson(h, '/configuration');
+        return RbSnapshot(
+          info: info,
+          mat: RbMatStatus.fromJson(dashboard, configuration: configuration),
+        );
+      case kRbRunHwType:
+        return RbSnapshot(
+          info: info,
+          run: RbRunStatus.fromJson(await _getJson(h, '/dashboard')),
+        );
+      case kRbLightsHwType:
+        return RbSnapshot(
+          info: info,
+          light: RbLightStatus.fromJson(await _getJson(h, '/dashboard')),
+        );
+      case kRbWaveHwType:
+        // The wave serves no /dashboard — see rb_protocol.dart. `/mode` is
+        // required (it is the only live value); `/wifi` only enriches it.
+        final mode = await _getJson(h, '/mode');
+        final wifi = await _tryGetJson(h, '/wifi');
+        return RbSnapshot(
+          info: info,
+          wave: RbWaveStatus.fromJson(mode, wifi: wifi),
+        );
+      default:
+        throw RbLinkException(RbLinkError.unsupportedModel, info.hwType);
+    }
+  }
+
+  /// A [_getJson] whose failure is not fatal — for endpoints that only enrich
+  /// a card (the mat's `/configuration`, the wave's `/wifi`).
+  Future<Map<String, Object?>?> _tryGetJson(String host, String path) async {
+    try {
+      return await _getJson(host, path);
+    } on RbLinkException {
+      return null;
+    }
   }
 
   Future<Map<String, Object?>> _getJson(String host, String path) async {

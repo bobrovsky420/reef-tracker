@@ -45,17 +45,101 @@ abstract class RfDeviceLink {
   Future<RfSnapshot> readOnce(String host);
 }
 
+/// What a ReefFactory device says about itself in the `refresh/config` reply,
+/// before any model-specific `join`.
+class RfIdentity {
+  const RfIdentity({
+    required this.serial,
+    required this.modelPrefix,
+    this.modelName,
+    this.displayName,
+  });
+
+  /// The device's 16-character serial ("RFSG012110010070").
+  final String serial;
+
+  /// Its leading 6 characters, which identify the model ("RFSG01").
+  final String modelPrefix;
+
+  /// Internal and friendly model names — both null for a model this app has no
+  /// parser for. Unlike [RfDeviceLink.readOnce], an unknown model is *not* an
+  /// error here: LAN discovery reports it as found-but-unsupported.
+  final String? modelName;
+  final String? displayName;
+
+  bool get supported => modelName != null;
+}
+
+/// The cheap identity-only probe LAN discovery uses: the `get/config`
+/// handshake and nothing more — no `join`, no settings frame. Kept separate
+/// from [RfDeviceLink] so the dashboard's test fakes don't have to implement it.
+abstract class RfIdentityProbe {
+  /// Reads just the identity of the device at [host]. Throws
+  /// [RfLinkException] when the host isn't a ReefFactory device at all.
+  Future<RfIdentity> identify(String host);
+}
+
 /// Real transport over `ws://<host>/controler`, subprotocol `arduino`, binary.
-class RfWebSocketLink implements RfDeviceLink {
+class RfWebSocketLink implements RfDeviceLink, RfIdentityProbe {
   const RfWebSocketLink({this.timeout = const Duration(seconds: 6)});
 
   final Duration timeout;
 
   @override
-  Future<RfSnapshot> readOnce(String host) async {
-    WebSocket socket;
+  Future<RfIdentity> identify(String host) async {
+    final socket = await _connect(host);
+    final result = Completer<RfIdentity>();
+
+    late final StreamSubscription<dynamic> sub;
+    sub = socket.listen(
+      (data) {
+        if (data is! List<int>) return;
+        final frame = RfFrame.decode(data);
+        if (frame.command != 'refresh' || frame.subcommand != 'config') return;
+        final serial = readCString(frame.payload);
+        final spec = rfModelForSerial(serial);
+        if (!result.isCompleted) {
+          result.complete(
+            RfIdentity(
+              serial: serial,
+              modelPrefix: serial.length >= 6 ? serial.substring(0, 6) : '',
+              modelName: spec?.name,
+              displayName: spec?.displayName,
+            ),
+          );
+        }
+      },
+      onError: (Object e) {
+        if (!result.isCompleted) {
+          result.completeError(
+            RfLinkException(RfLinkError.protocol, e.toString()),
+          );
+        }
+      },
+      onDone: () {
+        if (!result.isCompleted) {
+          result.completeError(
+            const RfLinkException(RfLinkError.protocol, 'closed early'),
+          );
+        }
+      },
+      cancelOnError: true,
+    );
+
+    socket.add(RfFrame.encode(command: 'get', subcommand: 'config'));
     try {
-      socket = await WebSocket.connect(
+      return await result.future.timeout(timeout);
+    } on TimeoutException {
+      throw const RfLinkException(RfLinkError.timeout);
+    } finally {
+      await sub.cancel();
+      await socket.close();
+    }
+  }
+
+  Future<WebSocket> _connect(String host) async {
+    try {
+      return await WebSocket.connect(
         'ws://$host/controler',
         protocols: const ['arduino'],
       ).timeout(timeout);
@@ -64,6 +148,11 @@ class RfWebSocketLink implements RfDeviceLink {
     } catch (e) {
       throw RfLinkException(RfLinkError.unreachable, e.toString());
     }
+  }
+
+  @override
+  Future<RfSnapshot> readOnce(String host) async {
+    final socket = await _connect(host);
 
     final result = Completer<RfSnapshot>();
     RfModelSpec? spec;

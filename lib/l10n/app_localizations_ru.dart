@@ -3138,7 +3138,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Добавьте устройство Red Sea ReefBeat (например, дозатор ReefDose, ReefATO или ReefMat) по IP-адресу или имени хоста, чтобы видеть его статус.';
+      'Просканируйте вашу сеть Wi-Fi, чтобы найти устройства Red Sea ReefBeat — дозаторы ReefDose, ReefATO, ReefMat, ReefRun, ReefLED и ReefWave, — или добавьте устройство по IP-адресу.';
 
   @override
   String get reefBeatRefresh => 'Обновить';
@@ -3197,7 +3197,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Этот тип устройства ReefBeat пока не поддерживается — пока только дозаторы ReefDose, устройства ReefATO и фильтры ReefMat.';
+      'Этот тип устройства ReefBeat пока не поддерживается.';
 
   @override
   String get reefBeatErrProtocol => 'Не удалось считать устройство.';
@@ -3342,6 +3342,156 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reefBeatMode => 'Режим';
+
+  @override
+  String get reefBeatModeAuto => 'Авто';
+
+  @override
+  String get reefBeatModeManual => 'Ручной';
+
+  @override
+  String reefBeatPercent(int value) {
+    return '$value %';
+  }
+
+  @override
+  String reefBeatRunPump(int number) {
+    return 'Помпа $number';
+  }
+
+  @override
+  String get reefBeatRunScheduleOff => 'Расписание выкл.';
+
+  @override
+  String get reefBeatRunTemperature => 'Температура мотора';
+
+  @override
+  String get reefBeatRunMissingPump => 'Помпа не обнаружена';
+
+  @override
+  String get reefBeatRunMissingSensor => 'Датчик не обнаружен';
+
+  @override
+  String reefBeatRunState(Object state) {
+    return 'Состояние помпы: $state';
+  }
+
+  @override
+  String get reefBeatRunSensorOffline => 'Датчик уровня недоступен';
+
+  @override
+  String get reefBeatLightProgram => 'Программа';
+
+  @override
+  String get reefBeatLightWhite => 'Белый';
+
+  @override
+  String get reefBeatLightBlue => 'Синий';
+
+  @override
+  String get reefBeatLightMoon => 'Луна';
+
+  @override
+  String get reefBeatLightFan => 'Вентилятор';
+
+  @override
+  String get reefBeatLightTemperature => 'Радиатор';
+
+  @override
+  String get reefBeatLightTilt => 'Светильник наклонён';
+
+  @override
+  String reefBeatLightAcclimation(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Акклиматизация: осталось $count дня',
+      many: 'Акклиматизация: осталось $count дней',
+      few: 'Акклиматизация: осталось $count дня',
+      one: 'Акклиматизация: остался $count день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatLightAcclimationOn => 'Идёт акклиматизация';
+
+  @override
+  String get reefBeatLightMoonPhase => 'Фаза луны';
+
+  @override
+  String reefBeatLightMoonDay(Object name, int day) {
+    return '$name, день $day';
+  }
+
+  @override
+  String get reefBeatWaveNetwork => 'Сеть';
+
+  @override
+  String get reefBeatWaveSignal => 'Сигнал';
+
+  @override
+  String get reefBeatWaveSignalGood => 'Хороший';
+
+  @override
+  String get reefBeatWaveSignalFair => 'Средний';
+
+  @override
+  String get reefBeatWaveSignalWeak => 'Слабый';
+
+  @override
+  String get reefBeatWaveLimited =>
+      'Помпы ReefWave сообщают по локальной сети только свой режим и уровень сигнала Wi-Fi. Скорость помпы и режимы течения вне приложения ReefBeat недоступны.';
+
+  @override
+  String get discoveryTitle => 'Поиск в сети';
+
+  @override
+  String get discoverySweeping => 'Ищем устройства в вашей сети Wi-Fi…';
+
+  @override
+  String get discoveryIdentifying => 'Проверяем найденные устройства…';
+
+  @override
+  String get discoveryDone => 'Поиск завершён.';
+
+  @override
+  String get discoveryNoNetwork =>
+      'Телефон не подключён к сети Wi-Fi. Подключитесь к той же сети, что и ваши устройства, и повторите поиск.';
+
+  @override
+  String get discoveryNothingFoundHelp =>
+      'Устройства не найдены. Убедитесь, что они включены и подключены к этой сети Wi-Fi. Некоторые гостевые сети запрещают устройствам видеть друг друга. Устройство всё ещё можно добавить по IP-адресу.';
+
+  @override
+  String get discoveryAdd => 'Добавить';
+
+  @override
+  String get discoveryUpdate => 'Обновить';
+
+  @override
+  String get discoveryAlreadyAdded => 'Добавлено';
+
+  @override
+  String discoveryAddressChanged(Object address) {
+    return 'Теперь на $address';
+  }
+
+  @override
+  String get discoveryUnsupported => 'Не поддерживается';
+
+  @override
+  String get discoveryUnsupportedHelp =>
+      'Приложение пока не умеет читать этот тип устройств.';
+
+  @override
+  String get discoveryRescan => 'Искать снова';
+
+  @override
+  String get discoveryManualEntry => 'Ввести IP-адрес';
 
   @override
   String get reefDevicesTitle => 'Подключённые устройства';

@@ -3076,7 +3076,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Add a Red Sea ReefBeat device (e.g. a ReefDose pump, a ReefATO or a ReefMat) by its IP address or hostname to see its status.';
+      'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose pumps, ReefATO, ReefMat, ReefRun, ReefLED and ReefWave — or add one by its IP address.';
 
   @override
   String get reefBeatRefresh => 'Refresh';
@@ -3134,7 +3134,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'That ReefBeat device type isn\'t supported yet — only ReefDose pumps, ReefATO units and ReefMat filters for now.';
+      'That ReefBeat device type isn\'t supported yet.';
 
   @override
   String get reefBeatErrProtocol => 'Couldn\'t read the device.';
@@ -3273,6 +3273,154 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reefBeatMode => 'Mode';
+
+  @override
+  String get reefBeatModeAuto => 'Auto';
+
+  @override
+  String get reefBeatModeManual => 'Manual';
+
+  @override
+  String reefBeatPercent(int value) {
+    return '$value%';
+  }
+
+  @override
+  String reefBeatRunPump(int number) {
+    return 'Pump $number';
+  }
+
+  @override
+  String get reefBeatRunScheduleOff => 'Schedule off';
+
+  @override
+  String get reefBeatRunTemperature => 'Motor temperature';
+
+  @override
+  String get reefBeatRunMissingPump => 'Pump not detected';
+
+  @override
+  String get reefBeatRunMissingSensor => 'Sensor not detected';
+
+  @override
+  String reefBeatRunState(Object state) {
+    return 'Pump state: $state';
+  }
+
+  @override
+  String get reefBeatRunSensorOffline => 'Level sensor offline';
+
+  @override
+  String get reefBeatLightProgram => 'Program';
+
+  @override
+  String get reefBeatLightWhite => 'White';
+
+  @override
+  String get reefBeatLightBlue => 'Blue';
+
+  @override
+  String get reefBeatLightMoon => 'Moon';
+
+  @override
+  String get reefBeatLightFan => 'Fan';
+
+  @override
+  String get reefBeatLightTemperature => 'Heatsink';
+
+  @override
+  String get reefBeatLightTilt => 'Fixture tilted';
+
+  @override
+  String reefBeatLightAcclimation(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Acclimation: $count days left',
+      one: 'Acclimation: 1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatLightAcclimationOn => 'Acclimation running';
+
+  @override
+  String get reefBeatLightMoonPhase => 'Moon phase';
+
+  @override
+  String reefBeatLightMoonDay(Object name, int day) {
+    return '$name, day $day';
+  }
+
+  @override
+  String get reefBeatWaveNetwork => 'Network';
+
+  @override
+  String get reefBeatWaveSignal => 'Signal';
+
+  @override
+  String get reefBeatWaveSignalGood => 'Good';
+
+  @override
+  String get reefBeatWaveSignalFair => 'Fair';
+
+  @override
+  String get reefBeatWaveSignalWeak => 'Weak';
+
+  @override
+  String get reefBeatWaveLimited =>
+      'ReefWave pumps only report their mode and Wi-Fi signal over the local network. Pump speed and wave patterns aren\'t available outside the ReefBeat app.';
+
+  @override
+  String get discoveryTitle => 'Scan network';
+
+  @override
+  String get discoverySweeping => 'Looking for devices on your Wi-Fi…';
+
+  @override
+  String get discoveryIdentifying => 'Checking what was found…';
+
+  @override
+  String get discoveryDone => 'Scan complete.';
+
+  @override
+  String get discoveryNoNetwork =>
+      'Your phone isn\'t connected to a Wi-Fi network. Connect to the same Wi-Fi as your devices and scan again.';
+
+  @override
+  String get discoveryNothingFoundHelp =>
+      'No devices found. Check they\'re powered on and connected to this Wi-Fi network. Some guest networks stop devices from seeing each other. You can still add a device by typing its IP address.';
+
+  @override
+  String get discoveryAdd => 'Add';
+
+  @override
+  String get discoveryUpdate => 'Update';
+
+  @override
+  String get discoveryAlreadyAdded => 'Added';
+
+  @override
+  String discoveryAddressChanged(Object address) {
+    return 'Moved to $address';
+  }
+
+  @override
+  String get discoveryUnsupported => 'Not supported';
+
+  @override
+  String get discoveryUnsupportedHelp =>
+      'This app can\'t read this device type yet.';
+
+  @override
+  String get discoveryRescan => 'Scan again';
+
+  @override
+  String get discoveryManualEntry => 'Enter IP address';
 
   @override
   String get reefDevicesTitle => 'Connected devices';

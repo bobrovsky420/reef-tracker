@@ -3104,7 +3104,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Ajoutez un appareil Red Sea ReefBeat (par ex. une pompe ReefDose, un ReefATO ou un ReefMat) par son adresse IP ou son nom d\'hôte pour voir son état.';
+      'Analysez votre réseau Wi-Fi pour trouver vos appareils Red Sea ReefBeat — pompes ReefDose, ReefATO, ReefMat, ReefRun, ReefLED et ReefWave — ou ajoutez un appareil par son adresse IP.';
 
   @override
   String get reefBeatRefresh => 'Actualiser';
@@ -3164,7 +3164,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Ce type d\'appareil ReefBeat n\'est pas encore pris en charge — seulement les pompes ReefDose, les ReefATO et les filtres ReefMat pour l\'instant.';
+      'Ce type d\'appareil ReefBeat n\'est pas encore pris en charge.';
 
   @override
   String get reefBeatErrProtocol => 'Impossible de lire l\'appareil.';
@@ -3303,6 +3303,154 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reefBeatMode => 'Mode';
+
+  @override
+  String get reefBeatModeAuto => 'Automatique';
+
+  @override
+  String get reefBeatModeManual => 'Manuel';
+
+  @override
+  String reefBeatPercent(int value) {
+    return '$value %';
+  }
+
+  @override
+  String reefBeatRunPump(int number) {
+    return 'Pompe $number';
+  }
+
+  @override
+  String get reefBeatRunScheduleOff => 'Programmation désactivée';
+
+  @override
+  String get reefBeatRunTemperature => 'Température du moteur';
+
+  @override
+  String get reefBeatRunMissingPump => 'Pompe non détectée';
+
+  @override
+  String get reefBeatRunMissingSensor => 'Capteur non détecté';
+
+  @override
+  String reefBeatRunState(Object state) {
+    return 'État de la pompe : $state';
+  }
+
+  @override
+  String get reefBeatRunSensorOffline => 'Capteur de niveau hors ligne';
+
+  @override
+  String get reefBeatLightProgram => 'Programme';
+
+  @override
+  String get reefBeatLightWhite => 'Blanc';
+
+  @override
+  String get reefBeatLightBlue => 'Bleu';
+
+  @override
+  String get reefBeatLightMoon => 'Lune';
+
+  @override
+  String get reefBeatLightFan => 'Ventilateur';
+
+  @override
+  String get reefBeatLightTemperature => 'Dissipateur';
+
+  @override
+  String get reefBeatLightTilt => 'Luminaire incliné';
+
+  @override
+  String reefBeatLightAcclimation(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Acclimatation : $count jours restants',
+      one: 'Acclimatation : 1 jour restant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatLightAcclimationOn => 'Acclimatation en cours';
+
+  @override
+  String get reefBeatLightMoonPhase => 'Phase lunaire';
+
+  @override
+  String reefBeatLightMoonDay(Object name, int day) {
+    return '$name, jour $day';
+  }
+
+  @override
+  String get reefBeatWaveNetwork => 'Réseau';
+
+  @override
+  String get reefBeatWaveSignal => 'Signal';
+
+  @override
+  String get reefBeatWaveSignalGood => 'Bon';
+
+  @override
+  String get reefBeatWaveSignalFair => 'Moyen';
+
+  @override
+  String get reefBeatWaveSignalWeak => 'Faible';
+
+  @override
+  String get reefBeatWaveLimited =>
+      'Les pompes ReefWave ne communiquent que leur mode et leur signal Wi-Fi sur le réseau local. La vitesse de la pompe et les programmes de brassage ne sont pas accessibles en dehors de l\'application ReefBeat.';
+
+  @override
+  String get discoveryTitle => 'Analyser le réseau';
+
+  @override
+  String get discoverySweeping => 'Recherche d\'appareils sur votre Wi-Fi…';
+
+  @override
+  String get discoveryIdentifying => 'Vérification des appareils trouvés…';
+
+  @override
+  String get discoveryDone => 'Analyse terminée.';
+
+  @override
+  String get discoveryNoNetwork =>
+      'Votre téléphone n\'est connecté à aucun réseau Wi-Fi. Connectez-vous au même Wi-Fi que vos appareils, puis relancez l\'analyse.';
+
+  @override
+  String get discoveryNothingFoundHelp =>
+      'Aucun appareil trouvé. Vérifiez qu\'ils sont allumés et connectés à ce réseau Wi-Fi. Certains réseaux invités empêchent les appareils de se voir. Vous pouvez toujours ajouter un appareil en saisissant son adresse IP.';
+
+  @override
+  String get discoveryAdd => 'Ajouter';
+
+  @override
+  String get discoveryUpdate => 'Mettre à jour';
+
+  @override
+  String get discoveryAlreadyAdded => 'Ajouté';
+
+  @override
+  String discoveryAddressChanged(Object address) {
+    return 'Désormais sur $address';
+  }
+
+  @override
+  String get discoveryUnsupported => 'Non pris en charge';
+
+  @override
+  String get discoveryUnsupportedHelp =>
+      'L\'application ne sait pas encore lire ce type d\'appareil.';
+
+  @override
+  String get discoveryRescan => 'Relancer l\'analyse';
+
+  @override
+  String get discoveryManualEntry => 'Saisir une adresse IP';
 
   @override
   String get reefDevicesTitle => 'Appareils connectés';

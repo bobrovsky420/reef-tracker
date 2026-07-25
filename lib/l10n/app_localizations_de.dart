@@ -3092,7 +3092,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Füge ein Red-Sea-ReefBeat-Gerät (z. B. eine ReefDose-Pumpe, einen ReefATO oder einen ReefMat) über seine IP-Adresse oder seinen Hostnamen hinzu, um seinen Status zu sehen.';
+      'Durchsuche dein WLAN nach deinen Red-Sea-ReefBeat-Geräten – ReefDose-Pumpen, ReefATO, ReefMat, ReefRun, ReefLED und ReefWave – oder füge ein Gerät über seine IP-Adresse hinzu.';
 
   @override
   String get reefBeatRefresh => 'Aktualisieren';
@@ -3151,7 +3151,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatErrUnsupported =>
-      'Dieser ReefBeat-Gerätetyp wird noch nicht unterstützt – vorerst nur ReefDose-Pumpen, ReefATO-Geräte und ReefMat-Filter.';
+      'Dieser ReefBeat-Gerätetyp wird noch nicht unterstützt.';
 
   @override
   String get reefBeatErrProtocol => 'Gerät konnte nicht gelesen werden.';
@@ -3290,6 +3290,154 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reefBeatMode => 'Modus';
+
+  @override
+  String get reefBeatModeAuto => 'Automatik';
+
+  @override
+  String get reefBeatModeManual => 'Manuell';
+
+  @override
+  String reefBeatPercent(int value) {
+    return '$value %';
+  }
+
+  @override
+  String reefBeatRunPump(int number) {
+    return 'Pumpe $number';
+  }
+
+  @override
+  String get reefBeatRunScheduleOff => 'Zeitplan aus';
+
+  @override
+  String get reefBeatRunTemperature => 'Motortemperatur';
+
+  @override
+  String get reefBeatRunMissingPump => 'Pumpe nicht erkannt';
+
+  @override
+  String get reefBeatRunMissingSensor => 'Sensor nicht erkannt';
+
+  @override
+  String reefBeatRunState(Object state) {
+    return 'Pumpenstatus: $state';
+  }
+
+  @override
+  String get reefBeatRunSensorOffline => 'Füllstandsensor offline';
+
+  @override
+  String get reefBeatLightProgram => 'Programm';
+
+  @override
+  String get reefBeatLightWhite => 'Weiß';
+
+  @override
+  String get reefBeatLightBlue => 'Blau';
+
+  @override
+  String get reefBeatLightMoon => 'Mond';
+
+  @override
+  String get reefBeatLightFan => 'Lüfter';
+
+  @override
+  String get reefBeatLightTemperature => 'Kühlkörper';
+
+  @override
+  String get reefBeatLightTilt => 'Leuchte gekippt';
+
+  @override
+  String reefBeatLightAcclimation(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Eingewöhnung: noch $count Tage',
+      one: 'Eingewöhnung: noch 1 Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reefBeatLightAcclimationOn => 'Eingewöhnung läuft';
+
+  @override
+  String get reefBeatLightMoonPhase => 'Mondphase';
+
+  @override
+  String reefBeatLightMoonDay(Object name, int day) {
+    return '$name, Tag $day';
+  }
+
+  @override
+  String get reefBeatWaveNetwork => 'Netzwerk';
+
+  @override
+  String get reefBeatWaveSignal => 'Signal';
+
+  @override
+  String get reefBeatWaveSignalGood => 'Gut';
+
+  @override
+  String get reefBeatWaveSignalFair => 'Mittel';
+
+  @override
+  String get reefBeatWaveSignalWeak => 'Schwach';
+
+  @override
+  String get reefBeatWaveLimited =>
+      'ReefWave-Pumpen melden über das lokale Netzwerk nur ihren Modus und die WLAN-Signalstärke. Pumpendrehzahl und Strömungsprogramme sind außerhalb der ReefBeat-App nicht verfügbar.';
+
+  @override
+  String get discoveryTitle => 'Netzwerk durchsuchen';
+
+  @override
+  String get discoverySweeping => 'Suche Geräte in deinem WLAN…';
+
+  @override
+  String get discoveryIdentifying => 'Gefundene Geräte werden geprüft…';
+
+  @override
+  String get discoveryDone => 'Suche abgeschlossen.';
+
+  @override
+  String get discoveryNoNetwork =>
+      'Dein Telefon ist mit keinem WLAN verbunden. Verbinde dich mit demselben WLAN wie deine Geräte und suche erneut.';
+
+  @override
+  String get discoveryNothingFoundHelp =>
+      'Keine Geräte gefunden. Prüfe, ob sie eingeschaltet und mit diesem WLAN verbunden sind. Manche Gastnetzwerke verhindern, dass Geräte sich gegenseitig sehen. Du kannst ein Gerät weiterhin über seine IP-Adresse hinzufügen.';
+
+  @override
+  String get discoveryAdd => 'Hinzufügen';
+
+  @override
+  String get discoveryUpdate => 'Aktualisieren';
+
+  @override
+  String get discoveryAlreadyAdded => 'Hinzugefügt';
+
+  @override
+  String discoveryAddressChanged(Object address) {
+    return 'Jetzt unter $address';
+  }
+
+  @override
+  String get discoveryUnsupported => 'Nicht unterstützt';
+
+  @override
+  String get discoveryUnsupportedHelp =>
+      'Diesen Gerätetyp kann die App noch nicht auslesen.';
+
+  @override
+  String get discoveryRescan => 'Erneut suchen';
+
+  @override
+  String get discoveryManualEntry => 'IP-Adresse eingeben';
 
   @override
   String get reefDevicesTitle => 'Verbundene Geräte';

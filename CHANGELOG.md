@@ -5,6 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.43.0] - 2026-07-25
+
+### Added
+- Find devices on your Wi-Fi: tapping Add on the ReefFactory or ReefBeat
+  dashboard now scans your network and lists the devices it found, so you can
+  add each one with a single tap instead of hunting for IP addresses in your
+  router. Devices the app can't read yet are listed too, so you always know
+  what was found. Typing an IP address by hand is still available from inside
+  the scan sheet, for static-IP and segmented networks.
+- Automatic address repair: because devices are matched by their hardware
+  identity rather than their address, a scan spots a device whose IP your
+  router changed and offers to point the app back at it — keeping its name,
+  aquarium and dashboard position.
+- ReefBeat devices: the dashboard now also supports the Red Sea **ReefRun**
+  pump controller. Its card shows each pump's name, speed and motor
+  temperature, and warns when a pump or its sensor isn't detected, when a pump
+  reports a problem, or when a level sensor a pump depends on has gone offline.
+- ReefBeat devices: support for the Red Sea **ReefLED** lights. The card shows
+  the running program, current white/blue/moon output, the simulated moon
+  phase, fan speed and heatsink temperature, and warns about a tilted fixture
+  or a running acclimation ramp with the days left.
+- ReefBeat devices: support for the Red Sea **ReefWave** pumps, showing their
+  operating mode and Wi-Fi signal strength. These pumps only share those two
+  things over the local network — speed and wave patterns are not available
+  outside the ReefBeat app, and the card says so rather than looking empty.
+- iOS: added the local-network usage description required to reach ReefBeat
+  and ReefFactory devices on iOS 14 and later. Without it every local-network
+  read failed silently, including devices added by hand. Not verifiable on
+  Windows — needs a check on a real iOS build.
+
+### Changed
+- ReefMat cards now show the exact model (ReefMat 250 / 500 / 1200) instead of
+  a generic "ReefMat" — the width is read from the mat itself.
+
 ## [0.42.1] - 2026-07-25
 
 ### Added

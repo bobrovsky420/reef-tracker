@@ -10,6 +10,7 @@ import '../data/database.dart';
 import '../data/environment_sources.dart';
 import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
+import '../data/lan_discovery.dart';
 import '../data/notifications.dart';
 import '../data/rb_device_link.dart';
 import '../data/reminder_scheduler.dart';
@@ -786,6 +787,33 @@ final rbDeviceLinkProvider = Provider<RbDeviceLink>((ref) => RbHttpLink());
 /// rationale as [reefFactoryDevicesProvider].
 final reefBeatDevicesProvider = StreamProvider<List<DeviceRecord>>(
   (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reefbeat')),
+);
+
+// --- LAN device discovery (U39) -------------------------------------------
+
+/// The socket primitives discovery runs on. Overridden with a scripted fake in
+/// tests, which is what keeps the service testable without a network.
+final lanScannerProvider = Provider<LanScanner>((ref) => const IoLanScanner());
+
+/// Identity-only probes, separate from the dashboards' links because discovery
+/// wants much tighter timeouts: it probes up to a few dozen hosts, most of
+/// which are not reef devices at all, so a 6 s wait per host would dominate the
+/// scan.
+final rbIdentityProbeProvider = Provider<RbIdentityProbe>(
+  (ref) => RbHttpLink(timeout: const Duration(seconds: 2)),
+);
+
+final rfIdentityProbeProvider = Provider<RfIdentityProbe>(
+  (ref) => const RfWebSocketLink(timeout: Duration(seconds: 3)),
+);
+
+/// Finds ReefBeat and ReefFactory devices on the local network (U39).
+final lanDiscoveryProvider = Provider<LanDiscoveryService>(
+  (ref) => LanDiscoveryService(
+    scanner: ref.watch(lanScannerProvider),
+    reefBeatProbe: ref.watch(rbIdentityProbeProvider),
+    reefFactoryProbe: ref.watch(rfIdentityProbeProvider),
+  ),
 );
 
 /// Every connected device (ReefFactory meters + the Hanna checker once used) —

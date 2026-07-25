@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../data/lan_discovery.dart';
 import '../../data/rb_device_link.dart';
 import '../../data/rb_protocol.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../devices/discovery_sheet.dart';
 
 /// Transient per-device live state held by the screen (not persisted): the
 /// last refresh result.
@@ -48,7 +50,14 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
     setState(() => _live[device.identifier] = const _Live(loading: true));
     try {
       final snap = await ref.read(rbDeviceLinkProvider).readOnce(address);
-      await ref.read(dbProvider).touchDeviceSeen(device.identifier);
+      final db = ref.read(dbProvider);
+      await db.touchDeviceSeen(device.identifier);
+      // A full read can learn a more precise model than identification could —
+      // a mat only reveals its width in `/configuration`. Persist it so the
+      // card header stops saying the generic "RSMAT".
+      if (snap.modelCode != device.model) {
+        await db.updateDeviceModel(device.id, snap.modelCode);
+      }
       if (!mounted) return;
       setState(() => _live[device.identifier] = _Live(snapshot: snap));
     } on RbLinkException catch (e) {
@@ -84,7 +93,7 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l.reefBeatTitle)),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddSheet,
+        onPressed: _showDiscoverySheet,
         icon: const Icon(Icons.add),
         label: Text(l.reefBeatAddDevice),
       ),
@@ -235,6 +244,41 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
       _live.remove(d.identifier);
       await ref.read(dbProvider).deleteDevice(d.id);
     }
+  }
+
+  /// The primary add path (U39): scan the network and pick from what answered.
+  /// Manual IP entry stays one tap away inside the sheet, for the setups a
+  /// sweep can't reach.
+  Future<void> _showDiscoverySheet() async {
+    final db = ref.read(dbProvider);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => DeviceDiscoverySheet(
+        kind: DiscoveredKind.reefbeat,
+        onAdd: (found) => db.upsertReefBeatDevice(
+          identifier: found.identifier,
+          model: found.modelCode,
+          address: found.address,
+          // The friendly product name, as the manual flow defaults to — the
+          // device's own name is a serial-suffixed code.
+          name: found.modelDisplayName,
+          tankId: ref.read(activeTankProvider)?.id,
+        ),
+        onUpdateAddress: (existing, found) =>
+            db.updateDeviceAddress(existing.id, found.address),
+        onManualEntry: () {
+          Navigator.pop(ctx);
+          unawaited(_showAddSheet());
+        },
+      ),
+    );
+    // Anything added or repointed while the sheet was open has no live status
+    // yet, so pull one for the whole list.
+    if (!mounted) return;
+    final devices = ref.read(reefBeatDevicesProvider).value;
+    if (devices != null && devices.isNotEmpty) unawaited(_refreshAll(devices));
   }
 
   Future<void> _showAddSheet() async {
@@ -447,6 +491,12 @@ class _DeviceCard extends StatelessWidget {
               _AtoStatus(status: snap!.ato!)
             else if (snap?.mat != null)
               _MatStatus(status: snap!.mat!)
+            else if (snap?.run != null)
+              _RunStatus(status: snap!.run!)
+            else if (snap?.light != null)
+              _LightStatus(status: snap!.light!)
+            else if (snap?.wave != null)
+              _WaveStatus(status: snap!.wave!)
             else
               Text(
                 l.reefBeatNotReadYet,
@@ -783,6 +833,373 @@ class _MatStatus extends StatelessWidget {
   }
 }
 
+/// The status of a ReefRun pump controller: device-level chips above one block
+/// per connected pump — its speed as a gauge, plus motor temperature and any
+/// pump-level fault.
+class _RunStatus extends StatelessWidget {
+  const _RunStatus({required this.status});
+  final RbRunStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+
+    final pumps = [
+      for (final p in status.pumps)
+        if (!p.isEmptySocket) p,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (status.timeError || status.batteryWarning || status.sensorWarning)
+          ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              if (status.timeError)
+                _WarnChip(
+                  label: l.reefBeatTimeError,
+                  color: tokens.critical,
+                  softColor: tokens.criticalSoft,
+                ),
+              if (status.batteryWarning)
+                _WarnChip(
+                  label: l.reefBeatBatteryLow,
+                  color: tokens.caution,
+                  softColor: tokens.cautionSoft,
+                ),
+              if (status.sensorWarning)
+                _WarnChip(
+                  label: l.reefBeatRunSensorOffline,
+                  color: tokens.caution,
+                  softColor: tokens.cautionSoft,
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        for (final (i, pump) in pumps.indexed) ...[
+          if (i > 0) const SizedBox(height: 12),
+          _RunPumpRow(pump: pump),
+        ],
+      ],
+    );
+  }
+}
+
+/// One ReefRun socket: name and speed, a speed gauge, then motor temperature
+/// and any fault chips.
+class _RunPumpRow extends StatelessWidget {
+  const _RunPumpRow({required this.pump});
+  final RbRunPump pump;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+    final intensity = pump.intensity;
+    final faulted = pump.faulted || pump.missingPump;
+
+    final chips = [
+      if (pump.missingPump)
+        _WarnChip(
+          label: l.reefBeatRunMissingPump,
+          color: tokens.critical,
+          softColor: tokens.criticalSoft,
+        ),
+      if (pump.missingSensor && pump.sensorControlled)
+        _WarnChip(
+          label: l.reefBeatRunMissingSensor,
+          color: tokens.caution,
+          softColor: tokens.cautionSoft,
+        ),
+      if (pump.faulted && !pump.missingPump)
+        _WarnChip(
+          label: l.reefBeatRunState(pump.state ?? ''),
+          color: tokens.caution,
+          softColor: tokens.cautionSoft,
+        ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(
+              child: Text(
+                pump.name?.trim().isNotEmpty == true
+                    ? pump.name!
+                    : l.reefBeatRunPump(pump.number),
+                style: t.titleSmall?.copyWith(
+                  color: faulted ? tokens.textDim : null,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (!pump.scheduleEnabled)
+              Text(
+                l.reefBeatRunScheduleOff,
+                style: t.labelMedium?.copyWith(color: tokens.textDim),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: _DoseGauge(
+                fraction: intensity == null ? 0 : (intensity / 100).clamp(0, 1),
+                enabled: !faulted,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              intensity == null ? '—' : l.reefBeatPercent(intensity),
+              style: ReefTokens.monoTextStyle.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: faulted ? tokens.textDim : tokens.text,
+              ),
+            ),
+          ],
+        ),
+        if (pump.temperatureC != null)
+          _StatusRow(
+            label: l.reefBeatRunTemperature,
+            value: '${pump.temperatureC!.toStringAsFixed(1)} °C',
+          ),
+        if (chips.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(spacing: 8, runSpacing: 6, children: chips),
+        ],
+      ],
+    );
+  }
+}
+
+/// The status of a ReefLED fixture: warning chips, the running program, and a
+/// gauge per output channel with the heatsink temperature below.
+class _LightStatus extends StatelessWidget {
+  const _LightStatus({required this.status});
+  final RbLightStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+
+    final chips = [
+      if (status.timeError)
+        _WarnChip(
+          label: l.reefBeatTimeError,
+          color: tokens.critical,
+          softColor: tokens.criticalSoft,
+        ),
+      if (status.batteryWarning)
+        _WarnChip(
+          label: l.reefBeatBatteryLow,
+          color: tokens.caution,
+          softColor: tokens.cautionSoft,
+        ),
+      if (status.tiltSwitch)
+        _WarnChip(
+          label: l.reefBeatLightTilt,
+          color: tokens.critical,
+          softColor: tokens.criticalSoft,
+        ),
+      if (status.acclimationEnabled)
+        _WarnChip(
+          label: status.acclimationRemainingDays == null
+              ? l.reefBeatLightAcclimationOn
+              : l.reefBeatLightAcclimation(status.acclimationRemainingDays!),
+          color: tokens.caution,
+          softColor: tokens.cautionSoft,
+        ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (chips.isNotEmpty) ...[
+          Wrap(spacing: 8, runSpacing: 6, children: chips),
+          const SizedBox(height: 10),
+        ],
+        if (status.programName != null)
+          _StatusRow(label: l.reefBeatLightProgram, value: status.programName!),
+        if (status.whitePercent != null) ...[
+          const SizedBox(height: 6),
+          _ChannelBar(
+            label: l.reefBeatLightWhite,
+            percent: status.whitePercent!,
+            fill: tokens.text,
+          ),
+        ],
+        if (status.bluePercent != null) ...[
+          const SizedBox(height: 6),
+          _ChannelBar(
+            label: l.reefBeatLightBlue,
+            percent: status.bluePercent!,
+            fill: tokens.primary,
+          ),
+        ],
+        if (status.moonPercent != null && status.moonPercent! > 0) ...[
+          const SizedBox(height: 6),
+          _ChannelBar(
+            label: l.reefBeatLightMoon,
+            percent: status.moonPercent!,
+            fill: tokens.textDim,
+          ),
+        ],
+        const SizedBox(height: 8),
+        if (status.moonPhaseEnabled && status.moonPhaseName != null)
+          _StatusRow(
+            label: l.reefBeatLightMoonPhase,
+            value: status.moonDay == null
+                ? status.moonPhaseName!
+                : l.reefBeatLightMoonDay(status.moonPhaseName!, status.moonDay!),
+          ),
+        if (status.fanPercent != null)
+          _StatusRow(
+            label: l.reefBeatLightFan,
+            value: l.reefBeatPercent(status.fanPercent!),
+          ),
+        if (status.temperatureC != null)
+          _StatusRow(
+            label: l.reefBeatLightTemperature,
+            value: '${status.temperatureC!.toStringAsFixed(1)} °C',
+          ),
+      ],
+    );
+  }
+}
+
+/// One light channel: name, gauge, percentage.
+class _ChannelBar extends StatelessWidget {
+  const _ChannelBar({
+    required this.label,
+    required this.percent,
+    required this.fill,
+  });
+
+  final String label;
+  final int percent;
+  final Color fill;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+    return Row(
+      children: [
+        SizedBox(
+          width: 56,
+          child: Text(
+            label,
+            style: t.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        Expanded(
+          child: _DoseGauge(
+            fraction: (percent / 100).clamp(0.0, 1.0),
+            enabled: true,
+            fill: fill,
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 44,
+          child: Text(
+            l.reefBeatPercent(percent),
+            textAlign: TextAlign.right,
+            style: ReefTokens.monoTextStyle.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: tokens.text,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The status of a ReefWave pump — deliberately just its mode and Wi-Fi link,
+/// with a note saying why. Its firmware exposes nothing else on the LAN (see
+/// rb_protocol.dart); showing an empty card with no explanation would read as
+/// a bug rather than a vendor limit.
+class _WaveStatus extends StatelessWidget {
+  const _WaveStatus({required this.status});
+  final RbWaveStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+
+    final quality = status.wifiQuality;
+    final qualityText = switch (quality) {
+      RbWifiQuality.good => l.reefBeatWaveSignalGood,
+      RbWifiQuality.fair => l.reefBeatWaveSignalFair,
+      RbWifiQuality.weak => l.reefBeatWaveSignalWeak,
+      RbWifiQuality.unknown => null,
+    };
+    final qualityColor = switch (quality) {
+      RbWifiQuality.good => tokens.healthy,
+      RbWifiQuality.fair => tokens.caution,
+      RbWifiQuality.weak => tokens.critical,
+      RbWifiQuality.unknown => tokens.text,
+    };
+    final wifiText = [
+      ?qualityText,
+      if (status.signalDbm != null) '${status.signalDbm} dBm',
+    ].join(' · ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (status.mode != null)
+          _StatusRow(
+            label: l.reefBeatMode,
+            value: _modeText(l, status.mode!),
+          ),
+        if (status.ssid != null)
+          _StatusRow(label: l.reefBeatWaveNetwork, value: status.ssid!),
+        if (wifiText.isNotEmpty)
+          _StatusRow(
+            label: l.reefBeatWaveSignal,
+            value: wifiText,
+            valueColor: qualityColor,
+          ),
+        const SizedBox(height: 10),
+        Text(
+          l.reefBeatWaveLimited,
+          style: t.bodySmall?.copyWith(color: tokens.textDim),
+        ),
+      ],
+    );
+  }
+}
+
+/// The firmware's mode string, localized where we know it and passed through
+/// verbatim where we don't (firmware drift must not blank the row).
+String _modeText(AppLocalizations l, String mode) => switch (mode) {
+  'auto' => l.reefBeatModeAuto,
+  'manual' => l.reefBeatModeManual,
+  _ => mode,
+};
+
 /// One label–value line of a status card: dim label left, mono value right.
 class _StatusRow extends StatelessWidget {
   const _StatusRow({required this.label, required this.value, this.valueColor});
@@ -1076,9 +1493,10 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
       setState(() {
         _found = snap;
         // Default the name to the friendly product name ("ReefDose 4") — the
-        // device's own default name is a serial-suffixed code.
+        // device's own default name is a serial-suffixed code. Uses the
+        // snapshot's refined model, so a mat reads "ReefMat 250".
         if (_name.text.isEmpty) {
-          _name.text = rbModelDisplayName(snap.info.hwModel);
+          _name.text = snap.modelDisplayName;
         }
       });
     } on RbLinkException catch (e) {
@@ -1126,7 +1544,7 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
           if (found != null) ...[
             const SizedBox(height: 16),
             Text(
-              l.reefBeatFound(rbModelDisplayName(found.info.hwModel)),
+              l.reefBeatFound(found.modelDisplayName),
               style: t.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
               ),
@@ -1182,7 +1600,7 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
                   onPressed: () async {
                     await widget.onAdd(
                       hwid: found.info.hwid,
-                      model: found.info.hwModel,
+                      model: found.modelCode,
                       host: _host.text.trim(),
                       name: _name.text.trim().isEmpty
                           ? null
