@@ -1201,13 +1201,11 @@ class _ChannelBar extends StatelessWidget {
   }
 }
 
-/// Every ReefWave on the dashboard, as one entry: a row of compact tiles
-/// instead of a full-width card each.
+/// Every ReefWave on the dashboard, as one card: one row per pump, laid out
+/// like a ReefRun's sockets.
 ///
 /// A tank commonly runs two or more wave pumps, and each has exactly one number
 /// worth showing — a full card apiece pushed everything else off the screen.
-/// The tiles size themselves to fit on one row where they can and wrap into
-/// balanced rows when they can't (4 pumps read 2 + 2, not 3 + 1).
 class _WaveGroup extends StatelessWidget {
   const _WaveGroup({
     super.key,
@@ -1230,96 +1228,65 @@ class _WaveGroup extends StatelessWidget {
   final VoidCallback? Function(DeviceRecord) onMove;
   final void Function(DeviceRecord) onRemove;
 
-  /// Narrowest a tile may get before the row splits — a gauge plus an
-  /// ellipsized name still reads at this width.
-  static const double _minTile = 108;
-  static const double _gap = 10;
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).textTheme;
-    final tokens = ReefTokens.of(context);
 
-    return Padding(
-      key: key,
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l.reefBeatWaveGroup,
-                  style: t.labelLarge?.copyWith(color: tokens.textDim),
-                ),
-              ),
-              if (canReorder)
-                ReorderableDragStartListener(
-                  index: index,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.drag_handle,
-                      size: 18,
-                      color: tokens.textFaint,
-                      semanticLabel: l.reorder,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final count = devices.length;
-              // Fit as many as the width allows, then rebalance so the rows are
-              // even rather than leaving a lone tile on the last row.
-              final maxColumns = ((constraints.maxWidth + _gap) /
-                      (_minTile + _gap))
-                  .floor()
-                  .clamp(1, count);
-              final rows = (count / maxColumns).ceil();
-              final columns = (count / rows).ceil();
-              final width =
-                  (constraints.maxWidth - _gap * (columns - 1)) / columns;
-              return Wrap(
-                spacing: _gap,
-                runSpacing: _gap,
-                children: [
-                  for (final d in devices)
-                    SizedBox(
-                      width: width,
-                      child: _WaveTile(
-                        device: d,
-                        live: liveOf(d),
-                        errorTextOf: errorTextOf,
-                        onRename: () => onRename(d),
-                        onMove: onMove(d),
-                        onRemove: () => onRemove(d),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text(l.reefBeatWaveGroup, style: t.titleMedium)),
+                if (canReorder)
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.drag_handle,
+                        size: 18,
+                        color: ReefTokens.of(context).textFaint,
+                        semanticLabel: l.reorder,
                       ),
                     ),
-                ],
-              );
-            },
-          ),
-        ],
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            for (final (i, d) in devices.indexed) ...[
+              if (i > 0) const SizedBox(height: 12),
+              _WavePumpRow(
+                device: d,
+                live: liveOf(d),
+                errorTextOf: errorTextOf,
+                onRename: () => onRename(d),
+                onMove: onMove(d),
+                onRemove: () => onRemove(d),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// One wave pump: its name and the forward output scheduled for right now,
-/// tagged **Alternate** when the running interval reverses the flow.
+/// One wave pump inside the group card: the forward output scheduled for right
+/// now as a gauge, the pump's name beside it, and its own overflow menu.
 ///
 /// The pump never reports its *live* speed (see rb_protocol.dart), so the
 /// figure comes from the `/auto` schedule resolved against the current time of
 /// day. Only the forward percentage is shown — reverse output and the
-/// alternation durations are parsed but would crowd a tile this size without
-/// telling a keeper anything they act on.
-class _WaveTile extends StatelessWidget {
-  const _WaveTile({
+/// alternation durations are parsed but would crowd the row without telling a
+/// keeper anything they act on.
+class _WavePumpRow extends StatelessWidget {
+  const _WavePumpRow({
     required this.device,
     required this.live,
     required this.errorTextOf,
@@ -1348,102 +1315,63 @@ class _WaveTile extends StatelessWidget {
     final interval = status?.intervalAt(_minuteOfDay(DateTime.now()));
     final forward = interval?.forwardPercent;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 8, 4, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    deviceDisplayName(device),
-                    style: t.titleSmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'rename') onRename();
-                    if (v == 'move') onMove?.call();
-                    if (v == 'remove') onRemove();
-                  },
-                  icon: Icon(
-                    Icons.more_vert,
-                    size: 16,
-                    color: tokens.textFaint,
-                  ),
-                  padding: EdgeInsets.zero,
-                  itemBuilder: (_) => [
-                    PopupMenuItem(value: 'rename', child: Text(l.edit)),
-                    if (onMove != null)
-                      PopupMenuItem(
-                        value: 'move',
-                        child: Text(l.reefBeatMoveToTank),
-                      ),
-                    PopupMenuItem(
-                      value: 'remove',
-                      child: Text(l.reefBeatRemove),
-                    ),
-                  ],
-                ),
-              ],
+    return Row(
+      children: [
+        if (live.loading)
+          const SizedBox(
+            width: _CircularGauge.size,
+            height: _CircularGauge.size,
+            child: Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
-            const SizedBox(height: 4),
-            if (live.loading)
-              const SizedBox(
-                height: _CircularGauge.size,
-                child: Center(
-                  child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-              )
-            else
-              _CircularGauge(percent: forward, enabled: scheduled),
-            const SizedBox(height: 6),
-            if (live.error != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Text(
+          )
+        else
+          _CircularGauge(percent: forward, enabled: scheduled),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                deviceDisplayName(device),
+                style: t.titleSmall,
+                overflow: TextOverflow.ellipsis,
+              ),
+              // The gauge reads as a plain dash when the pump can't be reached;
+              // the reason is the one extra line the row still earns.
+              if (live.error != null)
+                Text(
                   errorTextOf(live.error!),
                   style: t.bodySmall?.copyWith(color: tokens.critical),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              )
-            // The running interval's direction is what a keeper reads off the
-            // tile; an `auto` pump simply doing what it's scheduled to needs no
-            // label, so only a non-auto mode is worth naming.
-            else if (interval?.direction == 'alt')
-              Text(
-                l.reefBeatWaveAlternate,
-                style: t.bodySmall?.copyWith(color: tokens.textDim),
-              )
-            else if (status?.mode != null && status!.mode != 'auto')
-              Text(
-                _modeText(l, status.mode!),
-                style: t.bodySmall?.copyWith(color: tokens.textDim),
-              ),
+            ],
+          ),
+        ),
+        PopupMenuButton<String>(
+          onSelected: (v) {
+            if (v == 'rename') onRename();
+            if (v == 'move') onMove?.call();
+            if (v == 'remove') onRemove();
+          },
+          icon: Icon(Icons.more_vert, size: 18, color: tokens.textFaint),
+          padding: EdgeInsets.zero,
+          itemBuilder: (_) => [
+            PopupMenuItem(value: 'rename', child: Text(l.edit)),
+            if (onMove != null)
+              PopupMenuItem(value: 'move', child: Text(l.reefBeatMoveToTank)),
+            PopupMenuItem(value: 'remove', child: Text(l.reefBeatRemove)),
           ],
         ),
-      ),
+      ],
     );
   }
 }
-
-/// The firmware's mode string, localized where we know it and passed through
-/// verbatim where we don't (firmware drift must not blank the row). `auto`
-/// never reaches this — a scheduled pump carries no mode label.
-String _modeText(AppLocalizations l, String mode) => switch (mode) {
-  'manual' => l.reefBeatModeManual,
-  _ => mode,
-};
 
 /// One label–value line of a status card: dim label left, mono value right.
 class _StatusRow extends StatelessWidget {

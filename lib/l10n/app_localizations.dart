@@ -5445,12 +5445,6 @@ abstract class AppLocalizations {
   /// **'Mode'**
   String get reefBeatMode;
 
-  /// No description provided for @reefBeatModeManual.
-  ///
-  /// In en, this message translates to:
-  /// **'Manual'**
-  String get reefBeatModeManual;
-
   /// A percentage value on a device card (pump speed, light channel, fan duty)
   ///
   /// In en, this message translates to:
@@ -5570,12 +5564,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ReefWave pumps'**
   String get reefBeatWaveGroup;
-
-  /// Label on a ReefWave tile whose running interval alternates flow direction
-  ///
-  /// In en, this message translates to:
-  /// **'Alternate'**
-  String get reefBeatWaveAlternate;
 
   /// No description provided for @discoveryTitle.
   ///

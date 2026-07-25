@@ -3311,9 +3311,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatMode => 'Režim';
 
   @override
-  String get reefBeatModeManual => 'Ruční';
-
-  @override
   String reefBeatPercent(int value) {
     return '$value %';
   }
@@ -3389,9 +3386,6 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatWaveGroup => 'Čerpadla ReefWave';
-
-  @override
-  String get reefBeatWaveAlternate => 'Střídavý';
 
   @override
   String get discoveryTitle => 'Prohledat síť';

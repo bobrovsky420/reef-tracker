@@ -3358,9 +3358,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefBeatMode => 'Tryb';
 
   @override
-  String get reefBeatModeManual => 'Ręczny';
-
-  @override
   String reefBeatPercent(int value) {
     return '$value %';
   }
@@ -3437,9 +3434,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatWaveGroup => 'Pompy ReefWave';
-
-  @override
-  String get reefBeatWaveAlternate => 'Naprzemienny';
 
   @override
   String get discoveryTitle => 'Skanuj sieć';

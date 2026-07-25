@@ -931,7 +931,6 @@
   "reefBeatMatInstalled": "Rolka założona",
   "reefBeatMatRollAge": "{count, plural, one{1 dzień} few{{count} dni} many{{count} dni} other{{count} dnia}}",
   "reefBeatMode": "Tryb",
-  "reefBeatModeManual": "Ręczny",
   "reefBeatPercent": "{value} %",
   "reefBeatRunPump": "Pompa {number}",
   "reefBeatRunScheduleOff": "Harmonogram wył.",
@@ -952,7 +951,6 @@
   "reefBeatLightMoonPhase": "Faza księżyca",
   "reefBeatLightMoonDay": "{name}, dzień {day}",
   "reefBeatWaveGroup": "Pompy ReefWave",
-  "reefBeatWaveAlternate": "Naprzemienny",
 
   "discoveryTitle": "Skanuj sieć",
   "discoverySweeping": "Szukam urządzeń w Twojej sieci Wi-Fi…",

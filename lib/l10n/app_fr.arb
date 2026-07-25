@@ -931,7 +931,6 @@
   "reefBeatMatInstalled": "Rouleau installé",
   "reefBeatMatRollAge": "{count, plural, one{1 jour} other{{count} jours}}",
   "reefBeatMode": "Mode",
-  "reefBeatModeManual": "Manuel",
   "reefBeatPercent": "{value} %",
   "reefBeatRunPump": "Pompe {number}",
   "reefBeatRunScheduleOff": "Programmation désactivée",
@@ -952,7 +951,6 @@
   "reefBeatLightMoonPhase": "Phase lunaire",
   "reefBeatLightMoonDay": "{name}, jour {day}",
   "reefBeatWaveGroup": "Pompes ReefWave",
-  "reefBeatWaveAlternate": "Alterné",
 
   "discoveryTitle": "Analyser le réseau",
   "discoverySweeping": "Recherche d'appareils sur votre Wi-Fi…",

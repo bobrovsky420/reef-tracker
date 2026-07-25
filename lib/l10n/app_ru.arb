@@ -931,7 +931,6 @@
   "reefBeatMatInstalled": "Рулон установлен",
   "reefBeatMatRollAge": "{count, plural, one{{count} день} few{{count} дня} many{{count} дней} other{{count} дня}}",
   "reefBeatMode": "Режим",
-  "reefBeatModeManual": "Ручной",
   "reefBeatPercent": "{value} %",
   "reefBeatRunPump": "Помпа {number}",
   "reefBeatRunScheduleOff": "Расписание выкл.",
@@ -952,7 +951,6 @@
   "reefBeatLightMoonPhase": "Фаза луны",
   "reefBeatLightMoonDay": "{name}, день {day}",
   "reefBeatWaveGroup": "Помпы ReefWave",
-  "reefBeatWaveAlternate": "Попеременно",
 
   "discoveryTitle": "Поиск в сети",
   "discoverySweeping": "Ищем устройства в вашей сети Wi-Fi…",

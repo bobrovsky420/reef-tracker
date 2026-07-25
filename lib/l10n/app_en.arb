@@ -1488,7 +1488,6 @@
   "reefBeatMatRollAge": "{count, plural, one{1 day} other{{count} days}}",
   "@reefBeatMatRollAge": { "description": "How long the mat's current fleece roll has been running, shown after its install date", "placeholders": { "count": { "type": "int" } } },
   "reefBeatMode": "Mode",
-  "reefBeatModeManual": "Manual",
   "reefBeatPercent": "{value}%",
   "@reefBeatPercent": { "description": "A percentage value on a device card (pump speed, light channel, fan duty)", "placeholders": { "value": { "type": "int" } } },
   "reefBeatRunPump": "Pump {number}",
@@ -1515,8 +1514,6 @@
   "reefBeatLightMoonDay": "{name}, day {day}",
   "@reefBeatLightMoonDay": { "description": "Lunar phase name and the day within the simulated lunar cycle", "placeholders": { "name": {}, "day": { "type": "int" } } },
   "reefBeatWaveGroup": "ReefWave pumps",
-  "reefBeatWaveAlternate": "Alternate",
-  "@reefBeatWaveAlternate": { "description": "Label on a ReefWave tile whose running interval alternates flow direction" },
 
   "discoveryTitle": "Scan network",
   "discoverySweeping": "Looking for devices on your Wi-Fi…",

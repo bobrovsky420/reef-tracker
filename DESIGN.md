@@ -2475,8 +2475,8 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   would say less than one. `scheduleApplies` (mode is `auto`, or absent) marks
   whether the figure is what the pump is doing or merely what it is
   scheduled to do — a manually driven pump ignores the schedule, and showing a
-  scheduled 80% for a pump set to 20% as live would be a lie, so the tile dims
-  its gauge and names the mode instead. `/auto` is wave-only
+  scheduled 80% for a pump set to 20% as live would be a lie, so the row **dims
+  its gauge** in that case. `/auto` is wave-only
   (404 on dose, lights and run). `RbWaveStatus` carries only the mode and the
   schedule: `/wifi` is **not** fetched, since nothing displays the link state
   and the call would cost a request per refresh for nothing. Parsing is
@@ -2564,22 +2564,21 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   rather than borrowed status or chart-marker slots, because a channel level
   carries no health meaning.
   **ReefWaves do not get a card each**: `_entriesOf` collapses them into a
-  single `_WaveGroup` entry, positioned where the first of them sat, holding one
-  compact `_WaveTile` per pump — a tank commonly runs two or more, each with
-  exactly one number worth showing, and a full-width card apiece pushed
-  everything else off the screen. Grouping is decided from the **stored model**
-  (`rbIsWaveModel`, prefix-matched on `RSWAVE`) rather than a snapshot's
-  `hw_type`, because the list is built before any read lands and the layout must
-  not reshuffle as refreshes arrive. A `LayoutBuilder` + `Wrap` gives as many
-  columns as a 108 px minimum allows, then **rebalances so rows are even** (4
-  pumps read 2 + 2, not 3 + 1); one pump fills the width. Each tile carries the
-  device name, a `_CircularGauge` of the forward output scheduled for **the
-  current time of day** (resolved from `/auto` against `DateTime.now()`), and
-  its own compact overflow menu; the group carries one drag handle. Under the
-  gauge the tile names what the *running interval* does — **"Alternate"** when
-  its `direction` is `alt` — falling back to the mode only when that is not
-  `auto`: a pump simply doing what it is scheduled to needs no label, and the
-  direction is the part a keeper reads off the tile.
+  single `_WaveGroup` entry, positioned where the first of them sat — a tank
+  commonly runs two or more, each with exactly one number worth showing, and a
+  full-width card apiece pushed everything else off the screen. Grouping is
+  decided from the **stored model** (`rbIsWaveModel`, prefix-matched on
+  `RSWAVE`) rather than a snapshot's `hw_type`, because the list is built before
+  any read lands and the layout must not reshuffle as refreshes arrive. The
+  group is an **ordinary device card** — same `Card`, padding and title row as
+  every other, headed "ReefWave pumps" with the group's single drag handle —
+  holding one `_WavePumpRow` per pump laid out **exactly like a ReefRun
+  socket**: a `_CircularGauge` of the forward output scheduled for **the current
+  time of day** (resolved from `/auto` against `DateTime.now()`) on the left,
+  the device name beside it, and the pump's own overflow menu (Edit / Move /
+  Remove) on the right. Nothing else rides the row — a per-pump link error is
+  the one exception, printed under the name because the gauge otherwise shows a
+  bare dash with no reason.
   (`_StatusRow`, the label–value line, is shared by all the status cards.)
 - Entry points mirror ReefFactory: experimental-gated + Pro-gated
   (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow

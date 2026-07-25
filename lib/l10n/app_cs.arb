@@ -931,7 +931,6 @@
   "reefBeatMatInstalled": "Role vložena",
   "reefBeatMatRollAge": "{count, plural, one{1 den} few{{count} dny} other{{count} dní}}",
   "reefBeatMode": "Režim",
-  "reefBeatModeManual": "Ruční",
   "reefBeatPercent": "{value} %",
   "reefBeatRunPump": "Čerpadlo {number}",
   "reefBeatRunScheduleOff": "Plán vypnutý",
@@ -952,7 +951,6 @@
   "reefBeatLightMoonPhase": "Fáze měsíce",
   "reefBeatLightMoonDay": "{name}, den {day}",
   "reefBeatWaveGroup": "Čerpadla ReefWave",
-  "reefBeatWaveAlternate": "Střídavý",
 
   "discoveryTitle": "Prohledat síť",
   "discoverySweeping": "Hledám zařízení ve vaší Wi-Fi…",
