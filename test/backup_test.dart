@@ -323,6 +323,7 @@ void main() {
         tankId: 1,
         firstSeenAt: DateTime.fromMillisecondsSinceEpoch(1700012000000),
         lastSeenAt: DateTime.fromMillisecondsSinceEpoch(1700013000000),
+        displayOrder: 2,
       ),
       DeviceRecord(
         id: 101,
@@ -334,6 +335,7 @@ void main() {
         tankId: null,
         firstSeenAt: DateTime.fromMillisecondsSinceEpoch(1700014000000),
         lastSeenAt: null,
+        displayOrder: 0,
       ),
     ];
 
@@ -548,6 +550,7 @@ void main() {
       expect(dv0.tankId.value, 1);
       expect(dv0.firstSeenAt.value, deviceRecords[0].firstSeenAt);
       expect(dv0.lastSeenAt.value, deviceRecords[0].lastSeenAt);
+      expect(dv0.displayOrder.value, 2, reason: 'the manual card order rides');
       final dv1 = data.devices[1];
       expect(dv1.kind.value, 'hanna');
       expect(dv1.identifier.value, 'HI98108-BLE-9');
@@ -664,6 +667,31 @@ void main() {
       expect(data.roStageReplacements, isEmpty);
       expect(data.devices, isEmpty);
       expect(data.readings.length, 2);
+    });
+
+    test('tolerates pre-v25 devices without the card order', () {
+      final json = encodeBackup(
+        schemaVersion: 24,
+        tanks: tanks,
+        params: params,
+        readings: readings,
+        waterChanges: waterChanges,
+        carbonChanges: carbonChanges,
+        equipmentCleanings: equipmentCleanings,
+        ratioVisibilities: ratioVisibilities,
+        dosingEntries: dosingEntries,
+        devices: deviceRecords,
+        settings: settings,
+      );
+      final doc = jsonDecode(json) as Map<String, dynamic>;
+      doc.remove('checksum');
+      for (final d in doc['devices'] as List) {
+        (d as Map<String, dynamic>).remove('displayOrder');
+      }
+      final data = decodeBackup(jsonEncode(doc));
+      // Absent, not 0: the column default applies, and the dashboards fall
+      // back to display-name order exactly as they did before v25.
+      expect(data.devices[0].displayOrder.present, isFalse);
     });
 
     test('tolerates pre-v16 rows without the reminder fields', () {

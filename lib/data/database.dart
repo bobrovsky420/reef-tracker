@@ -526,7 +526,17 @@ class Devices extends Table {
   DateTimeColumn get firstSeenAt =>
       dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get lastSeenAt => dateTime().nullable()();
+
+  /// Manual card order on the ReefFactory / ReefBeat dashboards (drag to
+  /// reorder), one sequence per kind. New devices land at the end
+  /// (max + 1); equal values fall back to the display name, so an untouched
+  /// inventory still reads alphabetically.
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
 }
+
+/// What the UI calls a device: explicit name, else vendor model, else the
+/// identifier. Also the tie-break sort key behind [Devices.displayOrder].
+String deviceDisplayName(DeviceRecord d) => d.name ?? d.model ?? d.identifier;
 
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
@@ -562,7 +572,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -811,6 +821,15 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(devices);
         }
       }
+      if (from < 25) {
+        // Manual card order on the device dashboards. `createTable` above
+        // already builds the column when upgrading from before v24, so guard
+        // it (same rule as the water_changes.note case).
+        if (!await _columnExists('devices', 'display_order')) {
+          await m.addColumn(devices, devices.displayOrder);
+        }
+        await _backfillDeviceDisplayOrder();
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -826,6 +845,35 @@ class AppDatabase extends _$AppDatabase {
     "UPDATE readings SET group_id = 'legacy-' || tank_id || '-' || taken_at "
     'WHERE group_id IS NULL',
   );
+
+  /// Freezes the pre-v25 implicit device order (alphabetical by display name,
+  /// per kind) into [Devices.displayOrder], so devices already on a dashboard
+  /// keep their positions once the list becomes drag-orderable. Idempotent:
+  /// it only runs while every row still carries the `0` default.
+  Future<void> _backfillDeviceDisplayOrder() async {
+    final all = await select(devices).get();
+    if (all.isEmpty || all.any((d) => d.displayOrder != 0)) return;
+    final byKind = <String, List<DeviceRecord>>{};
+    for (final d in all) {
+      byKind.putIfAbsent(d.kind, () => []).add(d);
+    }
+    await batch((b) {
+      for (final rows in byKind.values) {
+        rows.sort(
+          (a, z) => deviceDisplayName(
+            a,
+          ).toLowerCase().compareTo(deviceDisplayName(z).toLowerCase()),
+        );
+        for (var i = 0; i < rows.length; i++) {
+          b.update(
+            devices,
+            DevicesCompanion(displayOrder: Value(i)),
+            where: (d) => d.id.equals(rows[i].id),
+          );
+        }
+      }
+    });
+  }
 
   /// Whether a table with [name] currently exists (used to keep migrations
   /// idempotent across multi-version upgrades).
@@ -1295,16 +1343,36 @@ class AppDatabase extends _$AppDatabase {
           ]))
           .watch();
 
-  /// Devices of one [kind] (e.g. `'reeffactory'` for the dashboard).
+  /// Devices of one [kind] (e.g. `'reeffactory'` for the dashboard), in the
+  /// user's manual card order. Rows sharing a [Devices.displayOrder] (a fresh
+  /// inventory that was never reordered) fall back to the display name, which
+  /// the dashboards apply in Dart — `name ?? model ?? identifier` has no
+  /// single column to sort on.
   Stream<List<DeviceRecord>> watchDevicesOfKind(String kind) =>
       (select(devices)
             ..where((d) => d.kind.equals(kind))
-            ..orderBy([(d) => OrderingTerm(expression: d.firstSeenAt)]))
+            ..orderBy([
+              (d) => OrderingTerm(expression: d.displayOrder),
+              (d) => OrderingTerm(expression: d.firstSeenAt),
+            ]))
           .watch();
 
   Future<DeviceRecord?> deviceByIdentifier(String identifier) =>
       (select(devices)..where((d) => d.identifier.equals(identifier)))
           .getSingleOrNull();
+
+  /// Position for a newly added device of [kind]: last on its dashboard.
+  /// max(displayOrder) + 1, not the row count — after removing a middle device
+  /// the count would collide with an existing position.
+  Future<int> _nextDeviceOrder(String kind) async {
+    final rows = await (select(devices)
+      ..where((d) => d.kind.equals(kind))).get();
+    return rows.fold<int>(
+          -1,
+          (m, d) => d.displayOrder > m ? d.displayOrder : m,
+        ) +
+        1;
+  }
 
   /// Adds or updates a ReefBeat device by its `hwid` (the add/edit flow) —
   /// same semantics as [upsertReefFactoryDevice].
@@ -1314,27 +1382,34 @@ class AppDatabase extends _$AppDatabase {
     required String address,
     String? name,
     int? tankId,
-  }) => into(devices).insert(
-    DevicesCompanion.insert(
-      kind: 'reefbeat',
-      identifier: identifier,
-      name: Value(name),
-      model: Value(model),
-      address: Value(address),
-      tankId: Value(tankId),
-      lastSeenAt: Value(DateTime.now()),
-    ),
-    onConflict: DoUpdate(
-      (_) => DevicesCompanion(
+  }) => transaction(() async {
+    // Read-then-insert in one transaction (#10) so concurrent adds can't be
+    // assigned the same displayOrder. An update (the device-moved path) never
+    // touches the order — the card keeps its place.
+    final order = await _nextDeviceOrder('reefbeat');
+    await into(devices).insert(
+      DevicesCompanion.insert(
+        kind: 'reefbeat',
+        identifier: identifier,
+        name: Value(name),
         model: Value(model),
         address: Value(address),
-        name: Value(name),
         tankId: Value(tankId),
         lastSeenAt: Value(DateTime.now()),
+        displayOrder: Value(order),
       ),
-      target: [devices.identifier],
-    ),
-  );
+      onConflict: DoUpdate(
+        (_) => DevicesCompanion(
+          model: Value(model),
+          address: Value(address),
+          name: Value(name),
+          tankId: Value(tankId),
+          lastSeenAt: Value(DateTime.now()),
+        ),
+        target: [devices.identifier],
+      ),
+    );
+  });
 
   /// Adds or updates a ReefFactory device by serial (the add/edit flow). Re-adding
   /// an address whose serial already exists updates that row (the "device moved"
@@ -1345,27 +1420,31 @@ class AppDatabase extends _$AppDatabase {
     required String address,
     String? name,
     int? tankId,
-  }) => into(devices).insert(
-    DevicesCompanion.insert(
-      kind: 'reeffactory',
-      identifier: identifier,
-      name: Value(name),
-      model: Value(model),
-      address: Value(address),
-      tankId: Value(tankId),
-      lastSeenAt: Value(DateTime.now()),
-    ),
-    onConflict: DoUpdate(
-      (_) => DevicesCompanion(
+  }) => transaction(() async {
+    final order = await _nextDeviceOrder('reeffactory');
+    await into(devices).insert(
+      DevicesCompanion.insert(
+        kind: 'reeffactory',
+        identifier: identifier,
+        name: Value(name),
         model: Value(model),
         address: Value(address),
-        name: Value(name),
         tankId: Value(tankId),
         lastSeenAt: Value(DateTime.now()),
+        displayOrder: Value(order),
       ),
-      target: [devices.identifier],
-    ),
-  );
+      onConflict: DoUpdate(
+        (_) => DevicesCompanion(
+          model: Value(model),
+          address: Value(address),
+          name: Value(name),
+          tankId: Value(tankId),
+          lastSeenAt: Value(DateTime.now()),
+        ),
+        target: [devices.identifier],
+      ),
+    );
+  });
 
   /// Records the Hanna checker on first connect: inserts if absent (never
   /// clobbering a user-set name/tank on later measurements), always bumping
@@ -1376,17 +1455,21 @@ class AppDatabase extends _$AppDatabase {
     String? model,
     int? tankId,
   }) async {
-    await into(devices).insert(
-      DevicesCompanion.insert(
-        kind: 'hanna',
-        identifier: identifier,
-        name: Value(name),
-        model: Value(model),
-        tankId: Value(tankId),
-        lastSeenAt: Value(DateTime.now()),
-      ),
-      mode: InsertMode.insertOrIgnore,
-    );
+    await transaction(() async {
+      final order = await _nextDeviceOrder('hanna');
+      await into(devices).insert(
+        DevicesCompanion.insert(
+          kind: 'hanna',
+          identifier: identifier,
+          name: Value(name),
+          model: Value(model),
+          tankId: Value(tankId),
+          lastSeenAt: Value(DateTime.now()),
+          displayOrder: Value(order),
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
+    });
     await touchDeviceSeen(identifier);
   }
 
@@ -1403,6 +1486,22 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteDevice(int id) =>
       (delete(devices)..where((d) => d.id.equals(id))).go();
+
+  /// Persists a new manual card order for a device dashboard, given the shown
+  /// devices' ids in the desired order. Only the listed rows are renumbered —
+  /// devices hidden by the tank filter keep their positions and are ordered
+  /// against this sequence when their own tank is active.
+  Future<void> reorderDevices(List<int> orderedIds) async {
+    await batch((b) {
+      for (var i = 0; i < orderedIds.length; i++) {
+        b.update(
+          devices,
+          DevicesCompanion(displayOrder: Value(i)),
+          where: (d) => d.id.equals(orderedIds[i]),
+        );
+      }
+    });
+  }
 
   Future<ImportSource?> getImportSource(int tankId, String source) =>
       (select(importSources)..where(

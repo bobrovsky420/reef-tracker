@@ -11,10 +11,6 @@ import '../../data/rb_protocol.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 
-/// What the UI calls a device: explicit name, else vendor model, else hwid.
-/// Also the card sort key. (Same convention as the ReefFactory dashboard.)
-String _displayName(DeviceRecord d) => d.name ?? d.model ?? d.identifier;
-
 /// Transient per-device live state held by the screen (not persisted): the
 /// last refresh result.
 class _Live {
@@ -99,14 +95,19 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
           // Tank-scoped view: the active tank's devices plus unassigned ones
           // (assignment lives in the card menu, so hiding them would make
           // them unreachable) — the ReefFactory dashboard's rule.
+          // Manual card order (drag to reorder); devices that share a position
+          // — an inventory never reordered — read alphabetically, as they did
+          // before the order was user-controllable.
           final devices = [
             for (final d in allDevices)
               if (d.tankId == null || d.tankId == activeTank?.id) d,
-          ]..sort(
-              (a, b) => _displayName(a).toLowerCase().compareTo(
-                    _displayName(b).toLowerCase(),
-                  ),
-            );
+          ]..sort((a, b) {
+              final byOrder = a.displayOrder.compareTo(b.displayOrder);
+              if (byOrder != 0) return byOrder;
+              return deviceDisplayName(a).toLowerCase().compareTo(
+                    deviceDisplayName(b).toLowerCase(),
+                  );
+            });
           // One-shot read of the visible devices when the screen opens;
           // everything after that is manual.
           if (!_autoRefreshed && devices.isNotEmpty) {
@@ -117,36 +118,66 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
           }
           final anyLoading =
               devices.any((d) => _live[d.identifier]?.loading ?? false);
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            children: [
-              _DisclaimerBanner(text: l.reefBeatDisclaimer),
-              const SizedBox(height: 12),
-              if (devices.isEmpty)
-                _EmptyState(
-                  title: l.reefBeatEmptyTitle,
-                  body: l.reefBeatEmptyBody,
-                )
-              else ...[
-                OutlinedButton.icon(
-                  onPressed: anyLoading ? null : () => _refreshAll(devices),
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: Text(l.reefBeatRefreshAll),
-                ),
-                const SizedBox(height: 12),
-                for (final d in devices)
-                  _DeviceCard(
-                    device: d,
-                    live: _live[d.identifier] ?? const _Live(),
-                    errorTextOf: (e) => _errorText(l, e),
-                    onRefresh: () => _refresh(d),
-                    // No other tank to move to → no menu item.
-                    onMove: tanks.any((t) => t.id != d.tankId)
-                        ? () => _moveDevice(d)
-                        : null,
-                    onRemove: () => _confirmRemove(d),
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _DisclaimerBanner(text: l.reefBeatDisclaimer),
+                      const SizedBox(height: 12),
+                      if (devices.isEmpty)
+                        _EmptyState(
+                          title: l.reefBeatEmptyTitle,
+                          body: l.reefBeatEmptyBody,
+                        )
+                      else ...[
+                        OutlinedButton.icon(
+                          onPressed: anyLoading
+                              ? null
+                              : () => _refreshAll(devices),
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: Text(l.reefBeatRefreshAll),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ],
                   ),
-              ],
+                ),
+              ),
+              // Drag-orderable cards (the #13 list pattern, cards instead of
+              // rows): the handle sits in each card's header.
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 96),
+                sliver: SliverReorderableList(
+                  itemCount: devices.length,
+                  onReorderItem: (oldIndex, newIndex) {
+                    final ids = [for (final d in devices) d.id];
+                    ids.insert(newIndex, ids.removeAt(oldIndex));
+                    unawaited(ref.read(dbProvider).reorderDevices(ids));
+                  },
+                  itemBuilder: (context, i) {
+                    final d = devices[i];
+                    return _DeviceCard(
+                      key: ValueKey(d.id),
+                      device: d,
+                      index: i,
+                      // A single card has nothing to reorder against.
+                      canReorder: devices.length > 1,
+                      live: _live[d.identifier] ?? const _Live(),
+                      errorTextOf: (e) => _errorText(l, e),
+                      onRefresh: () => _refresh(d),
+                      // No other tank to move to → no menu item.
+                      onMove: tanks.any((t) => t.id != d.tankId)
+                          ? () => _moveDevice(d)
+                          : null,
+                      onRemove: () => _confirmRemove(d),
+                    );
+                  },
+                ),
+              ),
             ],
           );
         },
@@ -187,7 +218,7 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l.reefBeatRemove),
-        content: Text(l.reefBeatRemoveConfirm(_displayName(d))),
+        content: Text(l.reefBeatRemoveConfirm(deviceDisplayName(d))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -310,7 +341,10 @@ class _EmptyState extends StatelessWidget {
 
 class _DeviceCard extends StatelessWidget {
   const _DeviceCard({
+    super.key,
     required this.device,
+    required this.index,
+    required this.canReorder,
     required this.live,
     required this.errorTextOf,
     required this.onRefresh,
@@ -319,6 +353,12 @@ class _DeviceCard extends StatelessWidget {
   });
 
   final DeviceRecord device;
+
+  /// Position in the reorderable list (what the drag handle reports).
+  final int index;
+
+  /// False for a one-card list — nothing to drag against, so no handle.
+  final bool canReorder;
   final _Live live;
   final String Function(RbLinkError) errorTextOf;
   final VoidCallback onRefresh;
@@ -347,7 +387,7 @@ class _DeviceCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_displayName(device), style: t.titleMedium),
+                      Text(deviceDisplayName(device), style: t.titleMedium),
                       Text(
                         '${device.model ?? ''}  ·  ${device.address ?? ''}',
                         style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -355,6 +395,21 @@ class _DeviceCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (canReorder)
+                  ReorderableDragStartListener(
+                    index: index,
+                    // The padding keeps the 18 px glyph draggable with a
+                    // finger (the schedule-list convention).
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.drag_handle,
+                        size: 18,
+                        color: ReefTokens.of(context).textFaint,
+                        semanticLabel: l.reorder,
+                      ),
+                    ),
+                  ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
                     if (v == 'move') onMove?.call();

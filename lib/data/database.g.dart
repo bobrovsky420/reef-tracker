@@ -8047,6 +8047,18 @@ class $DevicesTable extends Devices
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -8058,6 +8070,7 @@ class $DevicesTable extends Devices
     tankId,
     firstSeenAt,
     lastSeenAt,
+    displayOrder,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -8132,6 +8145,15 @@ class $DevicesTable extends Devices
         ),
       );
     }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -8177,6 +8199,10 @@ class $DevicesTable extends Devices
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_seen_at'],
       ),
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
     );
   }
 
@@ -8189,22 +8215,22 @@ class $DevicesTable extends Devices
 class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
   final int id;
 
-  /// `'reeffactory'` | `'hanna'`. Persisted — never rename.
+  /// `'reeffactory'` | `'hanna'` | `'reefbeat'`. Persisted — never rename.
   final String kind;
 
-  /// Stable device identity: a ReefFactory serial (e.g. `RFPM01…`) or the Hanna
-  /// meter's BLE id/serial. Unique — the same physical device is one row even
-  /// if its network address changes.
+  /// Stable device identity: a ReefFactory serial (e.g. `RFPM01…`), a ReefBeat
+  /// `hwid` (MAC-derived), or the Hanna meter's BLE id/serial. Unique — the
+  /// same physical device is one row even if its network address changes.
   final String identifier;
 
   /// User-facing label; defaults to the model/parameter name at add time.
   final String? name;
 
-  /// Model code (`RFSG01`, `RFPM01`, a Hanna model), for display.
+  /// Model code (`RFSG01`, `RFPM01`, `RSDOSE4`, a Hanna model), for display.
   final String? model;
 
-  /// Current network address (host or IP) for ReefFactory meters. Null for
-  /// Hanna (BLE, no address).
+  /// Current network address (host or IP) for ReefFactory/ReefBeat devices.
+  /// Null for Hanna (BLE, no address).
   final String? address;
 
   /// Tank the device's saved readings belong to. Null until assigned; cleared
@@ -8212,6 +8238,12 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
   final int? tankId;
   final DateTime firstSeenAt;
   final DateTime? lastSeenAt;
+
+  /// Manual card order on the ReefFactory / ReefBeat dashboards (drag to
+  /// reorder), one sequence per kind. New devices land at the end
+  /// (max + 1); equal values fall back to the display name, so an untouched
+  /// inventory still reads alphabetically.
+  final int displayOrder;
   const DeviceRecord({
     required this.id,
     required this.kind,
@@ -8222,6 +8254,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     this.tankId,
     required this.firstSeenAt,
     this.lastSeenAt,
+    required this.displayOrder,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8245,6 +8278,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     if (!nullToAbsent || lastSeenAt != null) {
       map['last_seen_at'] = Variable<DateTime>(lastSeenAt);
     }
+    map['display_order'] = Variable<int>(displayOrder);
     return map;
   }
 
@@ -8267,6 +8301,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
       lastSeenAt: lastSeenAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastSeenAt),
+      displayOrder: Value(displayOrder),
     );
   }
 
@@ -8285,6 +8320,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
       tankId: serializer.fromJson<int?>(json['tankId']),
       firstSeenAt: serializer.fromJson<DateTime>(json['firstSeenAt']),
       lastSeenAt: serializer.fromJson<DateTime?>(json['lastSeenAt']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
     );
   }
   @override
@@ -8300,6 +8336,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
       'tankId': serializer.toJson<int?>(tankId),
       'firstSeenAt': serializer.toJson<DateTime>(firstSeenAt),
       'lastSeenAt': serializer.toJson<DateTime?>(lastSeenAt),
+      'displayOrder': serializer.toJson<int>(displayOrder),
     };
   }
 
@@ -8313,6 +8350,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     Value<int?> tankId = const Value.absent(),
     DateTime? firstSeenAt,
     Value<DateTime?> lastSeenAt = const Value.absent(),
+    int? displayOrder,
   }) => DeviceRecord(
     id: id ?? this.id,
     kind: kind ?? this.kind,
@@ -8323,6 +8361,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     tankId: tankId.present ? tankId.value : this.tankId,
     firstSeenAt: firstSeenAt ?? this.firstSeenAt,
     lastSeenAt: lastSeenAt.present ? lastSeenAt.value : this.lastSeenAt,
+    displayOrder: displayOrder ?? this.displayOrder,
   );
   DeviceRecord copyWithCompanion(DevicesCompanion data) {
     return DeviceRecord(
@@ -8341,6 +8380,9 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
       lastSeenAt: data.lastSeenAt.present
           ? data.lastSeenAt.value
           : this.lastSeenAt,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
     );
   }
 
@@ -8355,7 +8397,8 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
           ..write('address: $address, ')
           ..write('tankId: $tankId, ')
           ..write('firstSeenAt: $firstSeenAt, ')
-          ..write('lastSeenAt: $lastSeenAt')
+          ..write('lastSeenAt: $lastSeenAt, ')
+          ..write('displayOrder: $displayOrder')
           ..write(')'))
         .toString();
   }
@@ -8371,6 +8414,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     tankId,
     firstSeenAt,
     lastSeenAt,
+    displayOrder,
   );
   @override
   bool operator ==(Object other) =>
@@ -8384,7 +8428,8 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
           other.address == this.address &&
           other.tankId == this.tankId &&
           other.firstSeenAt == this.firstSeenAt &&
-          other.lastSeenAt == this.lastSeenAt);
+          other.lastSeenAt == this.lastSeenAt &&
+          other.displayOrder == this.displayOrder);
 }
 
 class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
@@ -8397,6 +8442,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
   final Value<int?> tankId;
   final Value<DateTime> firstSeenAt;
   final Value<DateTime?> lastSeenAt;
+  final Value<int> displayOrder;
   const DevicesCompanion({
     this.id = const Value.absent(),
     this.kind = const Value.absent(),
@@ -8407,6 +8453,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     this.tankId = const Value.absent(),
     this.firstSeenAt = const Value.absent(),
     this.lastSeenAt = const Value.absent(),
+    this.displayOrder = const Value.absent(),
   });
   DevicesCompanion.insert({
     this.id = const Value.absent(),
@@ -8418,6 +8465,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     this.tankId = const Value.absent(),
     this.firstSeenAt = const Value.absent(),
     this.lastSeenAt = const Value.absent(),
+    this.displayOrder = const Value.absent(),
   }) : kind = Value(kind),
        identifier = Value(identifier);
   static Insertable<DeviceRecord> custom({
@@ -8430,6 +8478,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     Expression<int>? tankId,
     Expression<DateTime>? firstSeenAt,
     Expression<DateTime>? lastSeenAt,
+    Expression<int>? displayOrder,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -8441,6 +8490,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
       if (tankId != null) 'tank_id': tankId,
       if (firstSeenAt != null) 'first_seen_at': firstSeenAt,
       if (lastSeenAt != null) 'last_seen_at': lastSeenAt,
+      if (displayOrder != null) 'display_order': displayOrder,
     });
   }
 
@@ -8454,6 +8504,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     Value<int?>? tankId,
     Value<DateTime>? firstSeenAt,
     Value<DateTime?>? lastSeenAt,
+    Value<int>? displayOrder,
   }) {
     return DevicesCompanion(
       id: id ?? this.id,
@@ -8465,6 +8516,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
       tankId: tankId ?? this.tankId,
       firstSeenAt: firstSeenAt ?? this.firstSeenAt,
       lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+      displayOrder: displayOrder ?? this.displayOrder,
     );
   }
 
@@ -8498,6 +8550,9 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     if (lastSeenAt.present) {
       map['last_seen_at'] = Variable<DateTime>(lastSeenAt.value);
     }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
     return map;
   }
 
@@ -8512,7 +8567,8 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
           ..write('address: $address, ')
           ..write('tankId: $tankId, ')
           ..write('firstSeenAt: $firstSeenAt, ')
-          ..write('lastSeenAt: $lastSeenAt')
+          ..write('lastSeenAt: $lastSeenAt, ')
+          ..write('displayOrder: $displayOrder')
           ..write(')'))
         .toString();
   }
@@ -15816,6 +15872,7 @@ typedef $$DevicesTableCreateCompanionBuilder =
       Value<int?> tankId,
       Value<DateTime> firstSeenAt,
       Value<DateTime?> lastSeenAt,
+      Value<int> displayOrder,
     });
 typedef $$DevicesTableUpdateCompanionBuilder =
     DevicesCompanion Function({
@@ -15828,6 +15885,7 @@ typedef $$DevicesTableUpdateCompanionBuilder =
       Value<int?> tankId,
       Value<DateTime> firstSeenAt,
       Value<DateTime?> lastSeenAt,
+      Value<int> displayOrder,
     });
 
 final class $$DevicesTableReferences
@@ -15898,6 +15956,11 @@ class $$DevicesTableFilterComposer
 
   ColumnFilters<DateTime> get lastSeenAt => $composableBuilder(
     column: $table.lastSeenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15974,6 +16037,11 @@ class $$DevicesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TanksTableOrderingComposer get tankId {
     final $$TanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -16034,6 +16102,11 @@ class $$DevicesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastSeenAt => $composableBuilder(
     column: $table.lastSeenAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
     builder: (column) => column,
   );
 
@@ -16098,6 +16171,7 @@ class $$DevicesTableTableManager
                 Value<int?> tankId = const Value.absent(),
                 Value<DateTime> firstSeenAt = const Value.absent(),
                 Value<DateTime?> lastSeenAt = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
               }) => DevicesCompanion(
                 id: id,
                 kind: kind,
@@ -16108,6 +16182,7 @@ class $$DevicesTableTableManager
                 tankId: tankId,
                 firstSeenAt: firstSeenAt,
                 lastSeenAt: lastSeenAt,
+                displayOrder: displayOrder,
               ),
           createCompanionCallback:
               ({
@@ -16120,6 +16195,7 @@ class $$DevicesTableTableManager
                 Value<int?> tankId = const Value.absent(),
                 Value<DateTime> firstSeenAt = const Value.absent(),
                 Value<DateTime?> lastSeenAt = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
               }) => DevicesCompanion.insert(
                 id: id,
                 kind: kind,
@@ -16130,6 +16206,7 @@ class $$DevicesTableTableManager
                 tankId: tankId,
                 firstSeenAt: firstSeenAt,
                 lastSeenAt: lastSeenAt,
+                displayOrder: displayOrder,
               ),
           withReferenceMapper: (p0) => p0
               .map(

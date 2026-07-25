@@ -1449,6 +1449,7 @@ Map<String, dynamic> _deviceToJson(DeviceRecord d) => {
   'tankId': d.tankId,
   'firstSeenAt': d.firstSeenAt.millisecondsSinceEpoch,
   'lastSeenAt': d.lastSeenAt?.millisecondsSinceEpoch,
+  'displayOrder': d.displayOrder,
 };
 
 DevicesCompanion _deviceFromJson(Map<String, dynamic> m) => DevicesCompanion(
@@ -1460,6 +1461,11 @@ DevicesCompanion _deviceFromJson(Map<String, dynamic> m) => DevicesCompanion(
   tankId: Value(m['tankId'] as int?),
   firstSeenAt: Value(_date(m['firstSeenAt'])),
   lastSeenAt: Value(_dateOrNull(m['lastSeenAt'])),
+  // Card order arrived with schema v25; pre-v25 backups have no field, and
+  // the shared `0` default restores them in display-name order as before.
+  displayOrder: m['displayOrder'] == null
+      ? const Value.absent()
+      : Value(m['displayOrder'] as int),
 );
 
 Map<String, dynamic> _settingToJson(Setting s) => {

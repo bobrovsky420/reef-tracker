@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/rf_device_link.dart';
 import '../../data/rf_protocol.dart';
@@ -42,10 +43,6 @@ List<({String paramKey, double value})> rfReadingsToSave({
         r,
   ];
 }
-
-/// What the UI calls a device: explicit name, else vendor model, else serial.
-/// Also the card sort key.
-String _displayName(DeviceRecord d) => d.name ?? d.model ?? d.identifier;
 
 /// Transient per-device live state held by the screen (not persisted): the last
 /// refresh result. Saving is a separate, explicit action.
@@ -242,14 +239,19 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
           // Tank-scoped view: only the active tank's devices. Unassigned
           // devices stay visible on every tank — assignment now lives in the
           // card menu, so hiding them would make them unreachable.
+          // Manual card order (drag to reorder); devices that share a position
+          // — an inventory never reordered — read alphabetically, as they did
+          // before the order was user-controllable.
           final devices = [
             for (final d in allDevices)
               if (d.tankId == null || d.tankId == activeTank?.id) d,
-          ]..sort(
-              (a, b) => _displayName(a).toLowerCase().compareTo(
-                    _displayName(b).toLowerCase(),
-                  ),
-            );
+          ]..sort((a, b) {
+              final byOrder = a.displayOrder.compareTo(b.displayOrder);
+              if (byOrder != 0) return byOrder;
+              return deviceDisplayName(a).toLowerCase().compareTo(
+                    deviceDisplayName(b).toLowerCase(),
+                  );
+            });
           // One-shot read of the visible devices when the screen opens;
           // everything after that is manual. (Periodic auto-refresh stays
           // deferred.)
@@ -263,51 +265,86 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
               devices.any((d) => _live[d.identifier]?.loading ?? false);
           final anySnapshot =
               devices.any((d) => _live[d.identifier]?.snapshot != null);
-          return ListView(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-          children: [
-            _DisclaimerBanner(text: l.reefFactoryDisclaimer),
-            const SizedBox(height: 12),
-            if (devices.isEmpty)
-              _EmptyState(title: l.reefFactoryEmptyTitle, body: l.reefFactoryEmptyBody)
-            else ...[
-              // Common actions applied to every device at once.
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: anyLoading ? null : () => _refreshAll(devices),
-                      icon: const Icon(Icons.refresh, size: 18),
-                      label: Text(l.reefFactoryRefreshAll),
-                    ),
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _DisclaimerBanner(text: l.reefFactoryDisclaimer),
+                      const SizedBox(height: 12),
+                      if (devices.isEmpty)
+                        _EmptyState(
+                          title: l.reefFactoryEmptyTitle,
+                          body: l.reefFactoryEmptyBody,
+                        )
+                      else ...[
+                        // Common actions applied to every device at once.
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: anyLoading
+                                    ? null
+                                    : () => _refreshAll(devices),
+                                icon: const Icon(Icons.refresh, size: 18),
+                                label: Text(l.reefFactoryRefreshAll),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: anySnapshot
+                                    ? () => _saveAll(devices)
+                                    : null,
+                                icon: const Icon(Icons.save_outlined, size: 18),
+                                label: Text(l.reefFactorySaveAll),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: anySnapshot ? () => _saveAll(devices) : null,
-                      icon: const Icon(Icons.save_outlined, size: 18),
-                      label: Text(l.reefFactorySaveAll),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              for (final d in devices)
-                _DeviceCard(
-                  device: d,
-                  tank: _tankFor(d.tankId, tanks),
-                  live: _live[d.identifier] ?? const _Live(),
-                  errorTextOf: (e) => _errorText(l, e),
-                  onRefresh: () => _refresh(d),
-                  onSave: (snap) => _save(d, snap),
-                  // No other tank to move to → no menu item.
-                  onMove: tanks.any((t) => t.id != d.tankId)
-                      ? () => _moveDevice(d)
-                      : null,
-                  onRemove: () => _confirmRemove(d),
                 ),
+              ),
+              // Drag-orderable cards (the #13 list pattern, cards instead of
+              // rows): the handle sits in each card's header.
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 96),
+                sliver: SliverReorderableList(
+                  itemCount: devices.length,
+                  onReorderItem: (oldIndex, newIndex) {
+                    final ids = [for (final d in devices) d.id];
+                    ids.insert(newIndex, ids.removeAt(oldIndex));
+                    unawaited(ref.read(dbProvider).reorderDevices(ids));
+                  },
+                  itemBuilder: (context, i) {
+                    final d = devices[i];
+                    return _DeviceCard(
+                      key: ValueKey(d.id),
+                      device: d,
+                      index: i,
+                      // A single card has nothing to reorder against.
+                      canReorder: devices.length > 1,
+                      tank: _tankFor(d.tankId, tanks),
+                      live: _live[d.identifier] ?? const _Live(),
+                      errorTextOf: (e) => _errorText(l, e),
+                      onRefresh: () => _refresh(d),
+                      onSave: (snap) => _save(d, snap),
+                      // No other tank to move to → no menu item.
+                      onMove: tanks.any((t) => t.id != d.tankId)
+                          ? () => _moveDevice(d)
+                          : null,
+                      onRemove: () => _confirmRemove(d),
+                    );
+                  },
+                ),
+              ),
             ],
-          ],
           );
         },
       ),
@@ -347,7 +384,7 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l.reefFactoryRemove),
-        content: Text(l.reefFactoryRemoveConfirm(_displayName(d))),
+        content: Text(l.reefFactoryRemoveConfirm(deviceDisplayName(d))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.reefFactoryRemove)),
@@ -452,7 +489,10 @@ class _EmptyState extends StatelessWidget {
 
 class _DeviceCard extends ConsumerWidget {
   const _DeviceCard({
+    super.key,
     required this.device,
+    required this.index,
+    required this.canReorder,
     required this.tank,
     required this.live,
     required this.errorTextOf,
@@ -463,6 +503,12 @@ class _DeviceCard extends ConsumerWidget {
   });
 
   final DeviceRecord device;
+
+  /// Position in the reorderable list (what the drag handle reports).
+  final int index;
+
+  /// False for a one-card list — nothing to drag against, so no handle.
+  final bool canReorder;
   final Tank? tank;
   final _Live live;
   final String Function(RfLinkError) errorTextOf;
@@ -493,7 +539,7 @@ class _DeviceCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_displayName(device), style: t.titleMedium),
+                      Text(deviceDisplayName(device), style: t.titleMedium),
                       Text(
                         '${device.model ?? ''}  ·  ${device.address ?? ''}',
                         style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -501,6 +547,21 @@ class _DeviceCard extends ConsumerWidget {
                     ],
                   ),
                 ),
+                if (canReorder)
+                  ReorderableDragStartListener(
+                    index: index,
+                    // The padding keeps the 18 px glyph draggable with a
+                    // finger (the schedule-list convention).
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.drag_handle,
+                        size: 18,
+                        color: ReefTokens.of(context).textFaint,
+                        semanticLabel: l.reorder,
+                      ),
+                    ),
+                  ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
                     if (v == 'move') onMove?.call();

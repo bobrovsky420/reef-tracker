@@ -71,6 +71,83 @@ void main() {
     expect(hanna.single.name, 'My checker');
   });
 
+  test('new devices land last and reorderDevices persists a manual order',
+      () async {
+    for (final n in ['A', 'B', 'C']) {
+      await db.upsertReefFactoryDevice(
+        identifier: 'RFPM$n',
+        model: 'RFPM01',
+        address: '192.168.1.1',
+        name: n,
+      );
+    }
+    final added = await db.watchDevicesOfKind('reeffactory').first;
+    expect(added.map(deviceDisplayName), ['A', 'B', 'C']);
+    expect(
+      added.map((d) => d.displayOrder),
+      [0, 1, 2],
+      reason: 'each added device takes the next free position',
+    );
+
+    // Drag C to the front.
+    final ids = added.map((d) => d.id).toList();
+    ids.insert(0, ids.removeAt(2));
+    await db.reorderDevices(ids);
+    expect(
+      (await db.watchDevicesOfKind('reeffactory').first).map(deviceDisplayName),
+      ['C', 'A', 'B'],
+    );
+
+    // Re-adding an existing device (the moved-address path) must not send its
+    // card back to the end.
+    await db.upsertReefFactoryDevice(
+      identifier: 'RFPMC',
+      model: 'RFPM01',
+      address: '192.168.1.99',
+      name: 'C',
+    );
+    final after = await db.watchDevicesOfKind('reeffactory').first;
+    expect(after.map(deviceDisplayName), ['C', 'A', 'B']);
+    expect(after.first.address, '192.168.1.99');
+
+    // A genuinely new device still goes last, after the reordered ones.
+    await db.upsertReefFactoryDevice(
+      identifier: 'RFPMD',
+      model: 'RFPM01',
+      address: '192.168.1.4',
+      name: 'D',
+    );
+    expect(
+      (await db.watchDevicesOfKind('reeffactory').first).map(deviceDisplayName),
+      ['C', 'A', 'B', 'D'],
+    );
+  });
+
+  test('device order is per kind — a ReefBeat add ignores ReefFactory '
+      'positions', () async {
+    await db.upsertReefFactoryDevice(
+      identifier: 'RFPM01A',
+      model: 'RFPM01',
+      address: '192.168.1.15',
+    );
+    await db.upsertReefFactoryDevice(
+      identifier: 'RFSG01A',
+      model: 'RFSG01',
+      address: '192.168.1.7',
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'cc7b5c267a68',
+      model: 'RSDOSE4',
+      address: '192.168.1.3',
+    );
+
+    expect(
+      (await db.watchDevicesOfKind('reefbeat').first).single.displayOrder,
+      0,
+      reason: 'each dashboard has its own sequence starting at 0',
+    );
+  });
+
   test('watchDevicesOfKind filters, deleteDevice removes', () async {
     await db.upsertReefFactoryDevice(
       identifier: 'RFSG012110010070',

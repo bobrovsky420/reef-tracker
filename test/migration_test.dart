@@ -640,6 +640,50 @@ void main() {
     );
   });
 
+  test('upgrading from v24 adds devices.display_order and freezes the old '
+      'alphabetical card order per kind', () async {
+    final file = File('${tempDir.path}/from24-noorder.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    // Added out of alphabetical order, so a working backfill is visible.
+    await seed.upsertReefFactoryDevice(
+      identifier: 'RFSG012110010070',
+      model: 'RFSG01',
+      address: '192.168.1.7',
+      name: 'Salinity',
+    );
+    await seed.upsertReefFactoryDevice(
+      identifier: 'RFPM012204210108',
+      model: 'RFPM01',
+      address: '192.168.1.15',
+      name: 'pH',
+    );
+    await seed.upsertReefBeatDevice(
+      identifier: 'cc7b5c267a68',
+      model: 'RSDOSE4',
+      address: '192.168.1.3',
+      name: 'Dosing pump',
+    );
+    await seed.customStatement(
+      'ALTER TABLE devices DROP COLUMN display_order',
+    );
+    await seed.customStatement('PRAGMA user_version = 24');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+
+    final rf = await db.watchDevicesOfKind('reeffactory').first;
+    expect(
+      rf.map(deviceDisplayName),
+      ['pH', 'Salinity'],
+      reason: 'the pre-v25 implicit order (by display name) is frozen in',
+    );
+    expect(rf.map((d) => d.displayOrder), [0, 1]);
+    // Each kind gets its own sequence, so the ReefBeat card starts at 0 too.
+    final rb = await db.watchDevicesOfKind('reefbeat').first;
+    expect(rb.single.displayOrder, 0);
+  });
+
   group('guarded migration steps are idempotent', () {
     // v3..(schemaVersion-1): re-running each upgrade against a schema that
     // already has every table/column must not throw.

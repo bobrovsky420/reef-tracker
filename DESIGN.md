@@ -132,7 +132,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 24**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 25**
 
 | Table | Key columns |
 |-------|-------------|
@@ -151,7 +151,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RoStages` | id, stageType (`RoStageType.name`; `custom` rows carry [title]), title?, lifespanDays (replace every N days), enabled (the "uncheck if a lower model is used" flag — hidden + silent but history kept), remindEnabled, note?, displayOrder — the shared RO unit's stages (U16). **No tankId by design**: like `Settings`, the RO unit is a property of the household, shared by every aquarium. Default 4-stage set seeded on first RO-screen visit (`seedDefaultRoStages`, guarded by the `ro_stages_seeded` settings flag — not the row count, so deleting every stage sticks) |
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
 | `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
-| `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt? — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows and the ReefBeat dashboard `reefbeat` rows (add / refresh / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds |
+| `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt?, displayOrder — manual card order on the dashboards (v25; one sequence per `kind`, new devices take max+1, ties fall back to the display name `name ?? model ?? identifier` = `deviceDisplayName`) — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows and the ReefBeat dashboard `reefbeat` rows (add / refresh / reorder / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds, still ordered kind-then-oldest |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -252,7 +252,11 @@ plain every-N-days); v18 added the `RoStages` + `RoStageReplacements` tables
 timestamp-grouping fallback; v20 added the `MicroViews` table + its `tankId`
 index (`createTable` guarded by `_tableExists` — U17 element views); v21 added
 the `ManualDoses` table + its `(tankId, dosedAt)` index (`createTable` guarded
-by `_tableExists` — the manual dose log).
+by `_tableExists` — the manual dose log); v25 added `Devices.displayOrder`
+(`addColumn`, guarded) plus `_backfillDeviceDisplayOrder`, which freezes the
+pre-v25 implicit card order (alphabetical by display name, numbered per kind)
+into the column so existing dashboards keep their layout — idempotent, it only
+runs while every row still carries the `0` default.
 Foreign keys are enabled in
 `beforeOpen` (`PRAGMA foreign_keys = ON`), and the database opens in **WAL
 journal mode** (`pragma journal_mode = WAL` in the
@@ -2354,15 +2358,25 @@ on the device's Wi-Fi network.
   returned `RfSnapshot` carries `modelDisplayName` (the vendor product name),
   used as the default device name on add.
 - **Dashboard** (`reeffactory_screen.dart`): shows the **active tank's** devices
-  (plus unassigned ones, so they stay reachable on any tank), sorted by display
-  name (name → model → serial fallback, case-insensitive), one card per
+  (plus unassigned ones, so they stay reachable on any tank), in the user's
+  manual card order — `Devices.displayOrder`, then display name
+  (`deviceDisplayName`: name → model → serial fallback, case-insensitive) for
+  devices sharing a position — one card per
   device with per-device **Refresh** (pull live into the card) and **Save**
   (persist to the device's assigned tank via `insertReadingGroup` +
   `addTrackedParameter`, impossible values dropped), plus common **Refresh
   all** / **Save all** actions over the visible devices. Save-all merges each
   tank's readings from all devices into one group, deduped by parameter.
   Tank assignment is set on add and changed via the card menu's "Move to
-  another tank" picker (hidden when there is no other tank). **Temperature
+  another tank" picker (hidden when there is no other tank). **Card order** is
+  drag-controlled: the header + cards live in a `CustomScrollView`
+  (`SliverToBoxAdapter` for the banner/common actions, `SliverReorderableList`
+  for the cards), each card carrying a `ReorderableDragStartListener` handle
+  next to its menu (hidden for a one-card list) — the #13 list-reorder
+  convention applied to cards. A drop writes `reorderDevices` (sequential
+  positions for the *shown* devices only, so a device hidden by the tank filter
+  keeps its own position). The same structure is used by the ReefBeat
+  dashboard. **Temperature
   source rule** (`_valuesToSave`): a Salinity Guardian's temperature is only
   saved when no `RFTC01` Temperature Controller is assigned to the *same
   tank* — the controller is authoritative for its tank. Add-by-address
@@ -2436,9 +2450,11 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   `RbLinkError` (unreachable/timeout/unsupportedModel/protocol) drives
   specific messages.
 - **Dashboard** (`reefbeat_screen.dart`): mirrors the ReefFactory screen's
-  structure (active tank's devices + unassigned, per-card Refresh +
-  Refresh-all, add-by-address probe sheet, move-to-tank / remove menu,
-  household-scoped `reefBeatDevicesProvider`) minus everything save-related.
+  structure (active tank's devices + unassigned in `displayOrder` then
+  display-name order, per-card Refresh + Refresh-all, add-by-address probe
+  sheet, move-to-tank / remove menu, drag-handle card reordering via
+  `reorderDevices`, household-scoped `reefBeatDevicesProvider`) minus
+  everything save-related.
   Each card renders one `_HeadRow` per head: the supplement name, a
   **horizontal dosed-today gauge** (dosed today ÷ daily dose, `track` token
   under a `primary` fill, mono `26.7 / 40 ml` beside it) and a

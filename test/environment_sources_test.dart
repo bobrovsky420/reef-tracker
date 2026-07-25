@@ -24,6 +24,7 @@ DeviceRecord _device({
   address: address,
   tankId: tankId,
   firstSeenAt: DateTime(2026),
+  displayOrder: 0,
 );
 
 EnvSourceReadings _result({

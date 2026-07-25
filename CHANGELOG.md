@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.42.1] - 2026-07-25
+
+### Added
+- ReefFactory and ReefBeat dashboards: device cards can now be dragged into any
+  order you like using the handle in the card's header. The order is saved per
+  dashboard and rides along in backups; devices you never reordered keep
+  reading alphabetically as before.
+
 ## [0.42.0] - 2026-07-25
 
 ### Added
