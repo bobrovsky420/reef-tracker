@@ -78,7 +78,10 @@ class ReminderNotifications implements ReminderSink {
     tzdata.initializeTimeZones();
     await _plugin.initialize(
       settings: const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        // Small icon must be a monochrome silhouette: Android discards the RGB
+        // channels and tints every opaque pixel, so the launcher icon would
+        // show up as a plain white square in the status bar.
+        android: AndroidInitializationSettings('ic_stat_gauge'),
         // Permission-request flags off: iOS authorization is asked lazily via
         // [requestPermission] when the user first enables a reminder category,
         // never at startup (same rule as Android 13+).
