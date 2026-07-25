@@ -2362,13 +2362,21 @@ on the device's Wi-Fi network.
   manual card order — `Devices.displayOrder`, then display name
   (`deviceDisplayName`: name → model → serial fallback, case-insensitive) for
   devices sharing a position — one card per
-  device with per-device **Refresh** (pull live into the card) and **Save**
+  device, headed by **nothing but that display name** (the model code and IP
+  are not shown: they identify the device to the app, not to a keeper, who
+  reads the card by the name they gave it), carrying a **Save**
   (persist to the device's assigned tank via `insertReadingGroup` +
   `addTrackedParameter`, impossible values dropped), plus common **Refresh
-  all** / **Save all** actions over the visible devices. Save-all merges each
+  all** / **Save all** actions over the visible devices. Reading is
+  all-or-nothing — one Refresh all above the list, no per-card button, since
+  the cards are read together on open anyway and a button per card only
+  repeated it. Save-all merges each
   tank's readings from all devices into one group, deduped by parameter.
   Tank assignment is set on add and changed via the card menu's "Move to
-  another tank" picker (hidden when there is no other tank). **Card order** is
+  another tank" picker (hidden when there is no other tank); the same menu's
+  **Edit** item renames the device (`showDeviceRenameDialog`, shared with the
+  ReefBeat dashboard — an emptied field stores `null`, so the card falls back
+  to the model). **Card order** is
   drag-controlled: the header + cards live in a `CustomScrollView`
   (`SliverToBoxAdapter` for the banner/common actions, `SliverReorderableList`
   for the cards), each card carrying a `ReorderableDragStartListener` handle
@@ -2464,10 +2472,11 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   first one begins, since at 02:00 a schedule starting at 06:00 is still running
   yesterday's last interval rather than nothing. Only `fti` reaches the card:
   reverse output and the alternation durations are parsed but four numbers
-  would say less than one. `scheduleApplies` (mode is `auto`, or absent) gates
-  whether the figure is presented as what the pump is doing or merely what it is
+  would say less than one. `scheduleApplies` (mode is `auto`, or absent) marks
+  whether the figure is what the pump is doing or merely what it is
   scheduled to do — a manually driven pump ignores the schedule, and showing a
-  scheduled 80% for a pump set to 20% would be a lie. `/auto` is wave-only
+  scheduled 80% for a pump set to 20% as live would be a lie, so the tile dims
+  its gauge and names the mode instead. `/auto` is wave-only
   (404 on dose, lights and run). `RbWaveStatus` carries only the mode and the
   schedule: `/wifi` is **not** fetched, since nothing displays the link state
   and the call would cost a request per refresh for nothing. Parsing is
@@ -2494,8 +2503,9 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   dashboards' widget-test fakes don't have to implement it.
 - **Dashboard** (`reefbeat_screen.dart`): mirrors the ReefFactory screen's
   structure (active tank's devices + unassigned in `displayOrder` then
-  display-name order, per-card Refresh + Refresh-all, add-by-address probe
-  sheet, move-to-tank / remove menu, drag-handle card reordering via
+  display-name order, name-only card headers, a single Refresh-all above the
+  list, add-by-address probe sheet, Edit-rename / move-to-tank / remove menu,
+  drag-handle card reordering via
   `reorderDevices`, household-scoped `reefBeatDevicesProvider`) minus
   everything save-related.
   Each card renders one `_HeadRow` per head: the supplement name, a
@@ -2526,7 +2536,11 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   A ReefRun card renders `_RunStatus`: device chips (clock, battery, level
   sensor offline) above one `_RunPumpRow` per socket — a **`_CircularGauge`** of
   the pump's speed on the left, with name, motor temperature and per-pump chips
-  (pump/sensor not detected, non-operational state) beside it. Empty sockets
+  (pump/sensor not detected, non-operational state) beside it. A socket whose
+  `sensor_controlled` is true carries a small **green "Sensor" badge** next to
+  its name — the overflow sensor driving that pump is a standing capability, not
+  a fault, so it takes the `healthy` token rather than a warning color, and no
+  badge at all is shown when the flag is false. Empty sockets
   (`RbRunPump.isEmptySocket`) are dropped. `_CircularGauge` (a `CustomPainter`
   ring with the percentage centred, dimmed when disabled, a dash when the value
   is unknown rather than a misleading zero) is used wherever the number is a
@@ -2534,8 +2548,11 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   opposed to progress through a total, which stays with the horizontal
   `_DoseGauge` (dosed-today, roll remaining, light channels). A ReefLED card renders
   `_LightStatus`: chips (clock, battery, fixture tilted, acclimation with days
-  left) above the program name, a `_ChannelBar` per channel (label, gauge,
-  percentage), then moon phase, fan duty and heatsink temperature. **All three
+  left) above a `_ChannelBar` per channel (label, gauge,
+  percentage), then moon phase, fan duty and heatsink temperature. The running
+  program's name is **not** displayed (it is still parsed — see
+  `cleanProgramName` above): it names a schedule the app can't show or change,
+  so it cost a row without telling a keeper anything they act on. **All three
   channels are listed whenever the fixture reports them, including one at 0%** —
   hiding a zero row would read as "this light has no moon channel" rather than
   "the moon channel is off". The fills come from the `ledWhite`/`ledBlue`/
@@ -2557,10 +2574,12 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   columns as a 108 px minimum allows, then **rebalances so rows are even** (4
   pumps read 2 + 2, not 3 + 1); one pump fills the width. Each tile carries the
   device name, a `_CircularGauge` of the forward output scheduled for **the
-  current time of day** (resolved from `/auto` against `DateTime.now()`), the
-  mode, and its own compact overflow menu; the group carries one drag handle,
-  one Refresh and one note — switching to the off-`auto` wording if *any* pump
-  has been taken off auto, since that caveat wins.
+  current time of day** (resolved from `/auto` against `DateTime.now()`), and
+  its own compact overflow menu; the group carries one drag handle. Under the
+  gauge the tile names what the *running interval* does — **"Alternate"** when
+  its `direction` is `alt` — falling back to the mode only when that is not
+  `auto`: a pump simply doing what it is scheduled to needs no label, and the
+  direction is the part a keeper reads off the tile.
   (`_StatusRow`, the label–value line, is shared by all the status cards.)
 - Entry points mirror ReefFactory: experimental-gated + Pro-gated
   (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow

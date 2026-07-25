@@ -3041,7 +3041,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryNothingToSave =>
-      'Пока нечего сохранять — сначала нажмите «Обновить».';
+      'Пока нечего сохранять — сначала нажмите «Обновить все».';
 
   @override
   String reefFactorySavedSnack(int count) {
@@ -3058,7 +3058,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryNotReadYet =>
-      'Нажмите «Обновить», чтобы считать текущее значение.';
+      'Нажмите «Обновить все», чтобы считать текущее значение.';
 
   @override
   String get reefFactoryNoTank =>
@@ -3072,6 +3072,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryMoveToTank => 'Переместить в другой аквариум';
+
+  @override
+  String get reefFactoryRenameDevice => 'Переименовать устройство';
 
   @override
   String get reefFactoryDeviceNameLabel => 'Название';
@@ -3141,14 +3144,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Просканируйте вашу сеть Wi-Fi, чтобы найти устройства Red Sea ReefBeat — дозаторы ReefDose, ReefATO, ReefMat, ReefRun, ReefLED и ReefWave, — или добавьте устройство по IP-адресу.';
 
   @override
-  String get reefBeatRefresh => 'Обновить';
-
-  @override
   String get reefBeatRefreshAll => 'Обновить все';
 
   @override
   String get reefBeatNotReadYet =>
-      'Нажмите «Обновить», чтобы считать текущий статус.';
+      'Нажмите «Обновить все», чтобы считать текущий статус.';
 
   @override
   String get reefBeatTankLabel => 'Аквариум';
@@ -3158,6 +3158,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatMoveToTank => 'Переместить в другой аквариум';
+
+  @override
+  String get reefBeatRenameDevice => 'Переименовать устройство';
 
   @override
   String get reefBeatDeviceNameLabel => 'Название';
@@ -3347,9 +3350,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatMode => 'Режим';
 
   @override
-  String get reefBeatModeAuto => 'Авто';
-
-  @override
   String get reefBeatModeManual => 'Ручной';
 
   @override
@@ -3383,7 +3383,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatRunSensorOffline => 'Датчик уровня недоступен';
 
   @override
-  String get reefBeatLightProgram => 'Программа';
+  String get reefBeatRunSensorBadge => 'Датчик';
 
   @override
   String get reefBeatLightWhite => 'Белый';
@@ -3428,15 +3428,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get reefBeatWaveGroup => 'Помпы течения';
+  String get reefBeatWaveGroup => 'Помпы ReefWave';
 
   @override
-  String get reefBeatWaveScheduled =>
-      'Поток вперёд, запланированный на это время суток. Помпы ReefWave не сообщают текущую скорость по локальной сети.';
-
-  @override
-  String get reefBeatWaveManual =>
-      'Поток вперёд по расписанию помпы. Помпа не в автоматическом режиме, поэтому может работать иначе.';
+  String get reefBeatWaveAlternate => 'Попеременно';
 
   @override
   String get discoveryTitle => 'Поиск в сети';

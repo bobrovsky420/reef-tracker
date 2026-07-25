@@ -14,6 +14,7 @@ import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
 
 /// Filters a device's live [readings] down to what should be persisted, applying
@@ -56,7 +57,7 @@ class _Live {
 }
 
 /// The ReefFactory devices dashboard (U36): a persistent list of local meters,
-/// each with a manual **Refresh** (pull live values into the card) and a
+/// read on open and by one **Refresh all** above the list, each card carrying a
 /// separate **Save** (persist the shown values as measurements). Read-only —
 /// the app never writes to the devices.
 class ReefFactoryScreen extends ConsumerStatefulWidget {
@@ -335,7 +336,7 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
                       tank: _tankFor(d.tankId, tanks),
                       live: _live[d.identifier] ?? const _Live(),
                       errorTextOf: (e) => _errorText(l, e),
-                      onRefresh: () => _refresh(d),
+                      onRename: () => _renameDevice(d),
                       onSave: (snap) => _save(d, snap),
                       // No other tank to move to → no menu item.
                       onMove: tanks.any((t) => t.id != d.tankId)
@@ -350,6 +351,25 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
           );
         },
       ),
+    );
+  }
+
+  /// Renames [d]. The card header carries nothing but the name now, so a
+  /// keeper-chosen one is what tells two meters of the same model apart. An
+  /// emptied field falls back to the model, as an unnamed device already does.
+  Future<void> _renameDevice(DeviceRecord d) async {
+    final l = AppLocalizations.of(context);
+    final name = await showDeviceRenameDialog(
+      context,
+      title: l.reefFactoryRenameDevice,
+      fieldLabel: l.reefFactoryDeviceNameLabel,
+      initial: d.name ?? '',
+    );
+    if (name == null) return;
+    await ref.read(dbProvider).updateDeviceNameTank(
+      d.id,
+      name: name.isEmpty ? null : name,
+      tankId: d.tankId,
     );
   }
 
@@ -526,7 +546,7 @@ class _DeviceCard extends ConsumerWidget {
     required this.tank,
     required this.live,
     required this.errorTextOf,
-    required this.onRefresh,
+    required this.onRename,
     required this.onSave,
     required this.onMove,
     required this.onRemove,
@@ -542,7 +562,7 @@ class _DeviceCard extends ConsumerWidget {
   final Tank? tank;
   final _Live live;
   final String Function(RfLinkError) errorTextOf;
-  final VoidCallback onRefresh;
+  final VoidCallback onRename;
   final void Function(RfSnapshot) onSave;
 
   /// Null when there is no other tank to move to (the item is hidden).
@@ -566,16 +586,7 @@ class _DeviceCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(deviceDisplayName(device), style: t.titleMedium),
-                      Text(
-                        '${device.model ?? ''}  ·  ${device.address ?? ''}',
-                        style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
+                  child: Text(deviceDisplayName(device), style: t.titleMedium),
                 ),
                 if (canReorder)
                   ReorderableDragStartListener(
@@ -594,10 +605,12 @@ class _DeviceCard extends ConsumerWidget {
                   ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
+                    if (v == 'rename') onRename();
                     if (v == 'move') onMove?.call();
                     if (v == 'remove') onRemove();
                   },
                   itemBuilder: (_) => [
+                    PopupMenuItem(value: 'rename', child: Text(l.edit)),
                     if (onMove != null)
                       PopupMenuItem(value: 'move', child: Text(l.reefFactoryMoveToTank)),
                     PopupMenuItem(value: 'remove', child: Text(l.reefFactoryRemove)),
@@ -642,12 +655,6 @@ class _DeviceCard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                OutlinedButton.icon(
-                  onPressed: live.loading ? null : onRefresh,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: Text(l.reefFactoryRefresh),
-                ),
-                const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: (snap != null && tank != null) ? () => onSave(snap) : null,
                   icon: const Icon(Icons.save_outlined, size: 18),

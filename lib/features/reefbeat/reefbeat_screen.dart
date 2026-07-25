@@ -12,6 +12,7 @@ import '../../data/rb_device_link.dart';
 import '../../data/rb_protocol.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
 
 /// One row of the dashboard list: either a single device, or every ReefWave
@@ -58,11 +59,10 @@ class _Live {
 
 /// The Red Sea ReefBeat devices dashboard (U38): a persistent list of local
 /// ReefBeat devices — ReefDose dosing pumps (2- or 4-head), ReefATO
-/// auto-top-off units and ReefMat roller filters so far — each with a manual
-/// **Refresh** that pulls the device's live status into the card. Unlike the
-/// ReefFactory dashboard this is purely informational: the cards show
-/// operational status, not values to save as readings. Read-only — the app
-/// never writes to the devices.
+/// auto-top-off units and ReefMat roller filters so far — read on open and by
+/// one **Refresh all** above the list. Unlike the ReefFactory dashboard this is
+/// purely informational: the cards show operational status, not values to save
+/// as readings. Read-only — the app never writes to the devices.
 class ReefBeatScreen extends ConsumerStatefulWidget {
   const ReefBeatScreen({super.key});
 
@@ -226,7 +226,7 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
                             liveOf: (d) =>
                                 _live[d.identifier] ?? const _Live(),
                             errorTextOf: (e) => _errorText(l, e),
-                            onRefresh: () => _refreshAll(entry.devices),
+                            onRename: _renameDevice,
                             onMove: (d) => tanks.any((t) => t.id != d.tankId)
                                 ? () => _moveDevice(d)
                                 : null,
@@ -241,7 +241,7 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
                           canReorder: canReorder,
                           live: _live[d.identifier] ?? const _Live(),
                           errorTextOf: (e) => _errorText(l, e),
-                          onRefresh: () => _refresh(d),
+                          onRename: () => _renameDevice(d),
                           // No other tank to move to → no menu item.
                           onMove: tanks.any((t) => t.id != d.tankId)
                               ? () => _moveDevice(d)
@@ -257,6 +257,26 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
           );
         },
       ),
+    );
+  }
+
+  /// Renames [d]. The card header carries nothing but the name now, and a
+  /// device's own name is a serial-suffixed code ("RSDOSE4-1752835676"), so a
+  /// keeper-chosen one is what the list has to read by. An emptied field falls
+  /// back to the model, as an unnamed device already does.
+  Future<void> _renameDevice(DeviceRecord d) async {
+    final l = AppLocalizations.of(context);
+    final name = await showDeviceRenameDialog(
+      context,
+      title: l.reefBeatRenameDevice,
+      fieldLabel: l.reefBeatDeviceNameLabel,
+      initial: d.name ?? '',
+    );
+    if (name == null) return;
+    await ref.read(dbProvider).updateDeviceNameTank(
+      d.id,
+      name: name.isEmpty ? null : name,
+      tankId: d.tankId,
     );
   }
 
@@ -457,7 +477,7 @@ class _DeviceCard extends StatelessWidget {
     required this.canReorder,
     required this.live,
     required this.errorTextOf,
-    required this.onRefresh,
+    required this.onRename,
     required this.onMove,
     required this.onRemove,
   });
@@ -471,7 +491,7 @@ class _DeviceCard extends StatelessWidget {
   final bool canReorder;
   final _Live live;
   final String Function(RbLinkError) errorTextOf;
-  final VoidCallback onRefresh;
+  final VoidCallback onRename;
 
   /// Null when there is no other tank to move to (the item is hidden).
   final VoidCallback? onMove;
@@ -494,16 +514,7 @@ class _DeviceCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(deviceDisplayName(device), style: t.titleMedium),
-                      Text(
-                        '${device.model ?? ''}  ·  ${device.address ?? ''}',
-                        style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
+                  child: Text(deviceDisplayName(device), style: t.titleMedium),
                 ),
                 if (canReorder)
                   ReorderableDragStartListener(
@@ -522,10 +533,12 @@ class _DeviceCard extends StatelessWidget {
                   ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
+                    if (v == 'rename') onRename();
                     if (v == 'move') onMove?.call();
                     if (v == 'remove') onRemove();
                   },
                   itemBuilder: (_) => [
+                    PopupMenuItem(value: 'rename', child: Text(l.edit)),
                     if (onMove != null)
                       PopupMenuItem(
                         value: 'move',
@@ -566,17 +579,6 @@ class _DeviceCard extends StatelessWidget {
                 l.reefBeatNotReadYet,
                 style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: live.loading ? null : onRefresh,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: Text(l.reefBeatRefresh),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -1013,6 +1015,17 @@ class _RunPumpRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  // The overflow (water-level) sensor drives this socket — a
+                  // standing capability, not a fault, so it reads as a quiet
+                  // green badge rather than a warning chip.
+                  if (pump.sensorControlled) ...[
+                    const SizedBox(width: 8),
+                    _WarnChip(
+                      label: l.reefBeatRunSensorBadge,
+                      color: tokens.healthy,
+                      softColor: tokens.healthySoft,
+                    ),
+                  ],
                   const SizedBox(width: 8),
                   if (!pump.scheduleEnabled)
                     Text(
@@ -1038,8 +1051,8 @@ class _RunPumpRow extends StatelessWidget {
   }
 }
 
-/// The status of a ReefLED fixture: warning chips, the running program, and a
-/// gauge per output channel with the heatsink temperature below.
+/// The status of a ReefLED fixture: warning chips and a gauge per output
+/// channel, with the heatsink temperature below.
 class _LightStatus extends StatelessWidget {
   const _LightStatus({required this.status});
   final RbLightStatus status;
@@ -1085,8 +1098,6 @@ class _LightStatus extends StatelessWidget {
           Wrap(spacing: 8, runSpacing: 6, children: chips),
           const SizedBox(height: 10),
         ],
-        if (status.programName != null)
-          _StatusRow(label: l.reefBeatLightProgram, value: status.programName!),
         // All three channels are listed whenever the fixture reports them,
         // including one sitting at 0 — an absent row would read as "the light
         // has no moon channel" rather than "the moon channel is off".
@@ -1205,7 +1216,7 @@ class _WaveGroup extends StatelessWidget {
     required this.canReorder,
     required this.liveOf,
     required this.errorTextOf,
-    required this.onRefresh,
+    required this.onRename,
     required this.onMove,
     required this.onRemove,
   });
@@ -1215,7 +1226,7 @@ class _WaveGroup extends StatelessWidget {
   final bool canReorder;
   final _Live Function(DeviceRecord) liveOf;
   final String Function(RbLinkError) errorTextOf;
-  final VoidCallback onRefresh;
+  final void Function(DeviceRecord) onRename;
   final VoidCallback? Function(DeviceRecord) onMove;
   final void Function(DeviceRecord) onRemove;
 
@@ -1229,15 +1240,6 @@ class _WaveGroup extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).textTheme;
     final tokens = ReefTokens.of(context);
-
-    final snapshots = [
-      for (final d in devices)
-        if (liveOf(d).snapshot?.wave != null) liveOf(d).snapshot!.wave!,
-    ];
-    final anyLoading = devices.any((d) => liveOf(d).loading);
-    // One note for the group. If any pump has been taken off `auto` the
-    // schedule may not describe it, and that caveat wins.
-    final allScheduled = snapshots.every((s) => s.scheduleApplies);
 
     return Padding(
       key: key,
@@ -1266,12 +1268,6 @@ class _WaveGroup extends StatelessWidget {
                     ),
                   ),
                 ),
-              IconButton(
-                onPressed: anyLoading ? null : onRefresh,
-                icon: const Icon(Icons.refresh, size: 18),
-                tooltip: l.reefBeatRefresh,
-                visualDensity: VisualDensity.compact,
-              ),
             ],
           ),
           const SizedBox(height: 2),
@@ -1299,6 +1295,7 @@ class _WaveGroup extends StatelessWidget {
                         device: d,
                         live: liveOf(d),
                         errorTextOf: errorTextOf,
+                        onRename: () => onRename(d),
                         onMove: onMove(d),
                         onRemove: () => onRemove(d),
                       ),
@@ -1307,21 +1304,14 @@ class _WaveGroup extends StatelessWidget {
               );
             },
           ),
-          if (snapshots.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              allScheduled ? l.reefBeatWaveScheduled : l.reefBeatWaveManual,
-              style: t.bodySmall?.copyWith(color: tokens.textDim),
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-/// One wave pump: its name, the forward output scheduled for right now, and
-/// its mode.
+/// One wave pump: its name and the forward output scheduled for right now,
+/// tagged **Alternate** when the running interval reverses the flow.
 ///
 /// The pump never reports its *live* speed (see rb_protocol.dart), so the
 /// figure comes from the `/auto` schedule resolved against the current time of
@@ -1333,6 +1323,7 @@ class _WaveTile extends StatelessWidget {
     required this.device,
     required this.live,
     required this.errorTextOf,
+    required this.onRename,
     required this.onMove,
     required this.onRemove,
   });
@@ -1340,6 +1331,7 @@ class _WaveTile extends StatelessWidget {
   final DeviceRecord device;
   final _Live live;
   final String Function(RbLinkError) errorTextOf;
+  final VoidCallback onRename;
   final VoidCallback? onMove;
   final VoidCallback onRemove;
 
@@ -1353,7 +1345,8 @@ class _WaveTile extends StatelessWidget {
     final tokens = ReefTokens.of(context);
     final status = live.snapshot?.wave;
     final scheduled = status?.scheduleApplies ?? true;
-    final forward = status?.forwardPercentAt(_minuteOfDay(DateTime.now()));
+    final interval = status?.intervalAt(_minuteOfDay(DateTime.now()));
+    final forward = interval?.forwardPercent;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -1373,6 +1366,7 @@ class _WaveTile extends StatelessWidget {
                 ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
+                    if (v == 'rename') onRename();
                     if (v == 'move') onMove?.call();
                     if (v == 'remove') onRemove();
                   },
@@ -1383,6 +1377,7 @@ class _WaveTile extends StatelessWidget {
                   ),
                   padding: EdgeInsets.zero,
                   itemBuilder: (_) => [
+                    PopupMenuItem(value: 'rename', child: Text(l.edit)),
                     if (onMove != null)
                       PopupMenuItem(
                         value: 'move',
@@ -1422,9 +1417,17 @@ class _WaveTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               )
-            else if (status?.mode != null)
+            // The running interval's direction is what a keeper reads off the
+            // tile; an `auto` pump simply doing what it's scheduled to needs no
+            // label, so only a non-auto mode is worth naming.
+            else if (interval?.direction == 'alt')
               Text(
-                _modeText(l, status!.mode!),
+                l.reefBeatWaveAlternate,
+                style: t.bodySmall?.copyWith(color: tokens.textDim),
+              )
+            else if (status?.mode != null && status!.mode != 'auto')
+              Text(
+                _modeText(l, status.mode!),
                 style: t.bodySmall?.copyWith(color: tokens.textDim),
               ),
           ],
@@ -1435,9 +1438,9 @@ class _WaveTile extends StatelessWidget {
 }
 
 /// The firmware's mode string, localized where we know it and passed through
-/// verbatim where we don't (firmware drift must not blank the row).
+/// verbatim where we don't (firmware drift must not blank the row). `auto`
+/// never reaches this — a scheduled pump carries no mode label.
 String _modeText(AppLocalizations l, String mode) => switch (mode) {
-  'auto' => l.reefBeatModeAuto,
   'manual' => l.reefBeatModeManual,
   _ => mode,
 };

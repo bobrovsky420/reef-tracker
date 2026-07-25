@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.43.2] - 2026-07-25
+
+### Added
+- Rename a device from its card: the card menu on the ReefFactory and ReefBeat
+  dashboards now has an Edit item.
+- ReefRun pumps that are driven by the overflow sensor now carry a small green
+  "Sensor" badge, so you can see at a glance which socket the sensor controls.
+
+### Changed
+- Device cards no longer print the device type and IP address under the name.
+  The name you gave the device is what identifies it on the dashboard.
+- One "Refresh all" button above the list replaces the Refresh button on every
+  card — the cards are read together when the screen opens anyway.
+- "Wave pumps" is now called "ReefWave pumps".
+- A ReefWave pump now reads "Alternate" when the wave interval running at this
+  time of day alternates the flow direction, instead of repeating "Auto".
+
+### Removed
+- The program name on ReefLED cards.
+- The note under the ReefWave pumps about the flow being scheduled rather than
+  live.
+
 ## [0.43.1] - 2026-07-25
 
 ### Added

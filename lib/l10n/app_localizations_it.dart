@@ -3003,7 +3003,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefFactoryNothingToSave =>
-      'Ancora niente da salvare: tocca prima Aggiorna.';
+      'Ancora niente da salvare: tocca prima Aggiorna tutto.';
 
   @override
   String reefFactorySavedSnack(int count) {
@@ -3018,7 +3018,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefFactoryNotReadYet =>
-      'Tocca Aggiorna per leggere il valore attuale.';
+      'Tocca Aggiorna tutto per leggere il valore attuale.';
 
   @override
   String get reefFactoryNoTank =>
@@ -3032,6 +3032,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefFactoryMoveToTank => 'Sposta in un\'altra vasca';
+
+  @override
+  String get reefFactoryRenameDevice => 'Rinomina dispositivo';
 
   @override
   String get reefFactoryDeviceNameLabel => 'Nome';
@@ -3102,14 +3105,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Analizza la tua rete Wi-Fi per trovare i dispositivi Red Sea ReefBeat — pompe ReefDose, ReefATO, ReefMat, ReefRun, ReefLED e ReefWave — oppure aggiungi un dispositivo tramite il suo indirizzo IP.';
 
   @override
-  String get reefBeatRefresh => 'Aggiorna';
-
-  @override
   String get reefBeatRefreshAll => 'Aggiorna tutto';
 
   @override
   String get reefBeatNotReadYet =>
-      'Tocca Aggiorna per leggere lo stato attuale.';
+      'Tocca Aggiorna tutto per leggere lo stato attuale.';
 
   @override
   String get reefBeatTankLabel => 'Vasca';
@@ -3119,6 +3119,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatMoveToTank => 'Sposta in un\'altra vasca';
+
+  @override
+  String get reefBeatRenameDevice => 'Rinomina dispositivo';
 
   @override
   String get reefBeatDeviceNameLabel => 'Nome';
@@ -3303,9 +3306,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reefBeatMode => 'Modalità';
 
   @override
-  String get reefBeatModeAuto => 'Automatica';
-
-  @override
   String get reefBeatModeManual => 'Manuale';
 
   @override
@@ -3339,7 +3339,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reefBeatRunSensorOffline => 'Sensore di livello non raggiungibile';
 
   @override
-  String get reefBeatLightProgram => 'Programma';
+  String get reefBeatRunSensorBadge => 'Sensore';
 
   @override
   String get reefBeatLightWhite => 'Bianco';
@@ -3382,15 +3382,10 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get reefBeatWaveGroup => 'Pompe di movimento';
+  String get reefBeatWaveGroup => 'Pompe ReefWave';
 
   @override
-  String get reefBeatWaveScheduled =>
-      'Flusso in avanti programmato per questo momento della giornata. Le pompe ReefWave non comunicano la velocità attuale sulla rete locale.';
-
-  @override
-  String get reefBeatWaveManual =>
-      'Flusso in avanti secondo la programmazione della pompa. La pompa non è in modalità automatica, quindi potrebbe funzionare diversamente.';
+  String get reefBeatWaveAlternate => 'Alternato';
 
   @override
   String get discoveryTitle => 'Analizza la rete';

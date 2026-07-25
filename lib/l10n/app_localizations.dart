@@ -4974,7 +4974,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefFactoryNothingToSave.
   ///
   /// In en, this message translates to:
-  /// **'Nothing to save yet — tap Refresh first.'**
+  /// **'Nothing to save yet — tap Refresh all first.'**
   String get reefFactoryNothingToSave;
 
   /// No description provided for @reefFactorySavedSnack.
@@ -4986,7 +4986,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefFactoryNotReadYet.
   ///
   /// In en, this message translates to:
-  /// **'Tap Refresh to read the current value.'**
+  /// **'Tap Refresh all to read the current value.'**
   String get reefFactoryNotReadYet;
 
   /// No description provided for @reefFactoryNoTank.
@@ -5012,6 +5012,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Move to another tank'**
   String get reefFactoryMoveToTank;
+
+  /// Title of the dialog opened by the device card's Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Rename device'**
+  String get reefFactoryRenameDevice;
 
   /// No description provided for @reefFactoryDeviceNameLabel.
   ///
@@ -5127,12 +5133,6 @@ abstract class AppLocalizations {
   /// **'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose pumps, ReefATO, ReefMat, ReefRun, ReefLED and ReefWave — or add one by its IP address.'**
   String get reefBeatEmptyBody;
 
-  /// No description provided for @reefBeatRefresh.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh'**
-  String get reefBeatRefresh;
-
   /// No description provided for @reefBeatRefreshAll.
   ///
   /// In en, this message translates to:
@@ -5142,7 +5142,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatNotReadYet.
   ///
   /// In en, this message translates to:
-  /// **'Tap Refresh to read the current status.'**
+  /// **'Tap Refresh all to read the current status.'**
   String get reefBeatNotReadYet;
 
   /// No description provided for @reefBeatTankLabel.
@@ -5162,6 +5162,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Move to another tank'**
   String get reefBeatMoveToTank;
+
+  /// Title of the dialog opened by the device card's Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Rename device'**
+  String get reefBeatRenameDevice;
 
   /// No description provided for @reefBeatDeviceNameLabel.
   ///
@@ -5439,12 +5445,6 @@ abstract class AppLocalizations {
   /// **'Mode'**
   String get reefBeatMode;
 
-  /// No description provided for @reefBeatModeAuto.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto'**
-  String get reefBeatModeAuto;
-
   /// No description provided for @reefBeatModeManual.
   ///
   /// In en, this message translates to:
@@ -5499,11 +5499,11 @@ abstract class AppLocalizations {
   /// **'Level sensor offline'**
   String get reefBeatRunSensorOffline;
 
-  /// No description provided for @reefBeatLightProgram.
+  /// Badge on a ReefRun pump whose speed is driven by the overflow (water-level) sensor
   ///
   /// In en, this message translates to:
-  /// **'Program'**
-  String get reefBeatLightProgram;
+  /// **'Sensor'**
+  String get reefBeatRunSensorBadge;
 
   /// No description provided for @reefBeatLightWhite.
   ///
@@ -5568,20 +5568,14 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatWaveGroup.
   ///
   /// In en, this message translates to:
-  /// **'Wave pumps'**
+  /// **'ReefWave pumps'**
   String get reefBeatWaveGroup;
 
-  /// No description provided for @reefBeatWaveScheduled.
+  /// Label on a ReefWave tile whose running interval alternates flow direction
   ///
   /// In en, this message translates to:
-  /// **'Forward flow scheduled for this time of day. ReefWave pumps don\'t report their live speed over the local network.'**
-  String get reefBeatWaveScheduled;
-
-  /// No description provided for @reefBeatWaveManual.
-  ///
-  /// In en, this message translates to:
-  /// **'Forward flow from the pump\'s schedule. The pump isn\'t in auto mode, so it may be running something else.'**
-  String get reefBeatWaveManual;
+  /// **'Alternate'**
+  String get reefBeatWaveAlternate;
 
   /// No description provided for @discoveryTitle.
   ///

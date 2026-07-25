@@ -3005,7 +3005,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryNothingToSave =>
-      'Zatím není co uložit – nejprve klepněte na Obnovit.';
+      'Zatím není co uložit – nejprve klepněte na Obnovit vše.';
 
   @override
   String reefFactorySavedSnack(int count) {
@@ -3021,7 +3021,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryNotReadYet =>
-      'Klepnutím na Obnovit načtete aktuální hodnotu.';
+      'Klepnutím na Obnovit vše načtete aktuální hodnotu.';
 
   @override
   String get reefFactoryNoTank =>
@@ -3035,6 +3035,9 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryMoveToTank => 'Přesunout do jiné nádrže';
+
+  @override
+  String get reefFactoryRenameDevice => 'Přejmenovat zařízení';
 
   @override
   String get reefFactoryDeviceNameLabel => 'Název';
@@ -3105,14 +3108,11 @@ class AppLocalizationsCs extends AppLocalizations {
       'Prohledejte svou Wi-Fi síť a najděte zařízení Red Sea ReefBeat – dávkovače ReefDose, ReefATO, ReefMat, ReefRun, ReefLED a ReefWave – nebo přidejte zařízení podle jeho IP adresy.';
 
   @override
-  String get reefBeatRefresh => 'Obnovit';
-
-  @override
   String get reefBeatRefreshAll => 'Obnovit vše';
 
   @override
   String get reefBeatNotReadYet =>
-      'Klepnutím na Obnovit načtete aktuální stav.';
+      'Klepnutím na Obnovit vše načtete aktuální stav.';
 
   @override
   String get reefBeatTankLabel => 'Nádrž';
@@ -3122,6 +3122,9 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatMoveToTank => 'Přesunout do jiné nádrže';
+
+  @override
+  String get reefBeatRenameDevice => 'Přejmenovat zařízení';
 
   @override
   String get reefBeatDeviceNameLabel => 'Název';
@@ -3308,9 +3311,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatMode => 'Režim';
 
   @override
-  String get reefBeatModeAuto => 'Automatický';
-
-  @override
   String get reefBeatModeManual => 'Ruční';
 
   @override
@@ -3344,7 +3344,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatRunSensorOffline => 'Hladinový senzor offline';
 
   @override
-  String get reefBeatLightProgram => 'Program';
+  String get reefBeatRunSensorBadge => 'Senzor';
 
   @override
   String get reefBeatLightWhite => 'Bílá';
@@ -3388,15 +3388,10 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get reefBeatWaveGroup => 'Proudová čerpadla';
+  String get reefBeatWaveGroup => 'Čerpadla ReefWave';
 
   @override
-  String get reefBeatWaveScheduled =>
-      'Průtok vpřed naplánovaný na tuto denní dobu. Čerpadla ReefWave přes místní síť nehlásí své aktuální otáčky.';
-
-  @override
-  String get reefBeatWaveManual =>
-      'Průtok vpřed podle plánu čerpadla. Čerpadlo není v automatickém režimu, takže může běžet jinak.';
+  String get reefBeatWaveAlternate => 'Střídavý';
 
   @override
   String get discoveryTitle => 'Prohledat síť';
