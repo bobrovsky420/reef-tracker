@@ -22,6 +22,7 @@ import math
 import os
 import random
 import sys
+import tempfile
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -40,9 +41,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "store_assets", "feature-graphic.png")
 
 FONT_DIR = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")
-FONT_TITLE = os.path.join(FONT_DIR, "seguibl.ttf")   # Segoe UI Black
 FONT_BODY = os.path.join(FONT_DIR, "segoeuib.ttf")   # Segoe UI Bold
 FONT_SMALL = os.path.join(FONT_DIR, "segoeui.ttf")   # Segoe UI
+
+# The wordmark uses Bricolage Grotesque, the same face as the website. It only
+# lives in the repo as the woff2 subsets the site serves, which FreeType cannot
+# read, so it is decompressed to a TTF cached in the temp dir.
+BRICOLAGE = os.path.join(ROOT, "docs", "fonts", "BricolageGrotesque-latin.woff2")
 
 # Brand palette, matching lib/app/theme.dart.
 TEAL = (10, 133, 153)
@@ -94,6 +99,26 @@ def rounded_mask(size, box, radius):
     m = Image.new("L", size, 0)
     ImageDraw.Draw(m).rounded_rectangle(box, radius=radius, fill=255)
     return m
+
+
+def title_font(size):
+    """Bricolage Grotesque ExtraBold, at its display optical size."""
+    cache = os.path.join(tempfile.gettempdir(), "BricolageGrotesque-latin.ttf")
+    if (not os.path.exists(cache)
+            or os.path.getmtime(cache) < os.path.getmtime(BRICOLAGE)):
+        try:
+            from fontTools.ttLib import TTFont
+        except ImportError as exc:  # pragma: no cover - setup guidance only
+            raise SystemExit(
+                "Converting the woff2 wordmark font needs fontTools:\n"
+                "    python -m pip install fonttools brotli"
+            ) from exc
+        f = TTFont(BRICOLAGE)
+        f.flavor = None
+        f.save(cache)
+    font = ImageFont.truetype(cache, int(size))
+    font.set_variation_by_axes([96.0, 800.0])  # opsz, wght — in fvar order
+    return font
 # --------------------------------------------------- silhouettes & bubbles --
 
 
@@ -652,15 +677,23 @@ cd.text((PX1 - vw, CY0 + 20 * SS), val, font=f_val, fill=(HEALTHY_LT + (255,)))
 # reads as a comment on the recovery rather than on the whole series.
 chip = "back in range"
 chw = cd.textlength(chip, font=f_cap)
+# Generous side padding: the pill is a full stadium, so its end caps curve in
+# above the x-height and would otherwise crowd the ascender of the first letter.
+CHIP_PAD = 18 * SS
 out_x = max(px for px, py in pts if not (BY0 <= py <= BY1))
-chx = min(out_x + 10 * SS, PX1 - chw - 22 * SS)
-chy = PY1 + 18 * SS
+chx = min(out_x + 10 * SS, PX1 - chw - CHIP_PAD * 2)
+chy = PY1 + 14 * SS
+pill = [chx, chy, chx + chw + CHIP_PAD * 2, chy + 28 * SS]
 cd.rounded_rectangle(
-    [chx, chy - 4 * SS, chx + chw + 22 * SS, chy + 24 * SS],
-    radius=14 * SS, fill=(HEALTHY_LT[0], HEALTHY_LT[1], HEALTHY_LT[2], 54),
+    pill, radius=14 * SS, fill=(HEALTHY_LT[0], HEALTHY_LT[1], HEALTHY_LT[2], 54),
     outline=(HEALTHY_LT + (110,)), width=max(1, int(1.2 * SS)),
 )
-cd.text((chx + 11 * SS, chy + 1 * SS), chip, font=f_cap, fill=(226, 250, 238, 235))
+# Centre the label's ink in the pill — drawing at the ascender line leaves it
+# sitting visibly low, since the ascent is taller than the lowercase ink.
+cink = cd.textbbox((0, 0), chip, font=f_cap)
+cd.text((chx + (pill[2] - pill[0] - (cink[2] - cink[0])) / 2 - cink[0],
+         chy + (pill[3] - pill[1] - (cink[3] + cink[1])) / 2 + 1 * SS),
+        chip, font=f_cap, fill=(226, 250, 238, 235))
 
 scene = Image.alpha_composite(scene, card_layer)
 
@@ -671,21 +704,27 @@ td = ImageDraw.Draw(text_layer)
 
 TX = 118 * SS
 TITLE = "ReefTracker"
+UY = 262 * SS          # top of the accent rule; the wordmark sits on top of it
+TITLE_GAP = 15 * SS    # ink-to-rule clearance
+
 # Shrink to fit the gap between the left margin and the card — never collide.
 max_title_w = CX0 - 46 * SS - TX
-size = 76 * SS
+size = 84 * SS
 while size > 40 * SS:
-    f_title = ImageFont.truetype(FONT_TITLE, int(size))
-    title_w = td.textlength(TITLE, font=f_title)
-    if title_w <= max_title_w:
+    f_title = title_font(size)
+    ink = td.textbbox((0, 0), TITLE, font=f_title)
+    if ink[2] - ink[0] <= max_title_w:
         break
     size -= 1 * SS
 f_tag = ImageFont.truetype(FONT_BODY, int(29 * SS))
 
-td.text((TX, 170 * SS), TITLE, font=f_title, fill=(255, 255, 255, 255))
+# Place by the ink box, not the font's own metrics, so swapping the face does
+# not shift the wordmark relative to the rule below it.
+title_w = ink[2] - ink[0]
+td.text((TX - ink[0], UY - TITLE_GAP - ink[3]), TITLE, font=f_title,
+        fill=(255, 255, 255, 255))
 
 # Accent rule under the wordmark, in the healthy-green brand colour.
-UY = 262 * SS
 rule = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 rd = ImageDraw.Draw(rule)
 steps = 120
@@ -719,8 +758,6 @@ final.save(OUT, "PNG", optimize=True)
 print(f"wrote {OUT} {final.size}")
 
 if "--preview" in sys.argv:
-    import tempfile
-
     d = tempfile.gettempdir()
     cw = OUT_H * 303 / 170
     x0 = int((OUT_W - cw) / 2)

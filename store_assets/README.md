@@ -12,11 +12,25 @@
 `feature-graphic.png` is generated – do not hand-edit it. Regenerate with:
 
 ```powershell
+python -m pip install pillow numpy fonttools brotli   # once
 python tool\gen_feature_graphic.py --preview
 ```
 
 `--preview` additionally writes `_preview-303x170.png` and `_preview-guides.png`
 into `%TEMP%` so the crop can be checked before committing.
+
+### Wordmark font
+
+The wordmark is **Bricolage Grotesque ExtraBold**, the same face the website
+uses. There is no second copy of it: the generator reads
+`docs/fonts/BricolageGrotesque-latin.woff2` (the subset the site serves) and
+decompresses it to a TTF cached in `%TEMP%`, because FreeType cannot load woff2.
+That is what `fonttools` and `brotli` are for. It is a variable font; the
+generator pins the axes to `opsz 96, wght 800`.
+
+The wordmark is positioned by its **ink box**, not by the font's own metrics, so
+changing the face or its size does not shift it relative to the green accent
+rule – the rule is drawn to match the measured ink width.
 
 ### The 303×170 crop rule
 
