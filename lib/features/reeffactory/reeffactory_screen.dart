@@ -607,14 +607,6 @@ class _DeviceCard extends ConsumerWidget {
                 Expanded(
                   child: Text(deviceDisplayName(device), style: t.titleMedium),
                 ),
-                if (badge != null) ...[
-                  const SizedBox(width: 8),
-                  _StateBadge(
-                    label: badge.label,
-                    color: badge.color,
-                    softColor: badge.soft,
-                  ),
-                ],
                 if (canReorder)
                   ReorderableDragStartListener(
                     index: index,
@@ -658,12 +650,27 @@ class _DeviceCard extends ConsumerWidget {
               Wrap(
                 spacing: 16,
                 runSpacing: 8,
+                // The badge rides the value line rather than the card header:
+                // it qualifies the temperature ("34.0 °C — heating"), so it
+                // belongs next to the number it explains.
+                crossAxisAlignment: WrapCrossAlignment.end,
                 children: [
                   for (final r in snap.readings)
                     _ReadingChip(
                       label: l.paramName(r.paramKey),
                       value: r.value,
                       unit: r.unit,
+                    ),
+                  if (badge != null)
+                    Padding(
+                      // Nudges the pill off the value's descender line so its
+                      // centre lands on the digits, not below them.
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: _StateBadge(
+                        label: badge.label,
+                        color: badge.color,
+                        softColor: badge.soft,
+                      ),
                     ),
                 ],
               )
@@ -696,8 +703,8 @@ class _DeviceCard extends ConsumerWidget {
   }
 }
 
-/// A small pill in a card header stating what the device is doing right now
-/// (same shape as the ReefBeat dashboard's status chips).
+/// A small pill next to a live reading stating what the device is doing right
+/// now (same shape as the ReefBeat dashboard's status chips).
 class _StateBadge extends StatelessWidget {
   const _StateBadge({
     required this.label,
