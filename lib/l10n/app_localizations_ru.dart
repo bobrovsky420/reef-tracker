@@ -3458,6 +3458,162 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatWaveGroup => 'Помпы ReefWave';
 
   @override
+  String get apexTitle => 'Neptune Apex';
+
+  @override
+  String get apexMenu => 'Neptune Apex';
+
+  @override
+  String get apexSettingsSubtitle =>
+      'Текущие показания датчиков и состояние розеток Apex';
+
+  @override
+  String get apexDisclaimer =>
+      'Это приложение только считывает ваш Apex. Оно не может переключать розетки, запускать режим кормления или менять программы — для этого используйте Fusion или веб-страницу Apex. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и контроллер.';
+
+  @override
+  String get apexAddDevice => 'Добавить контроллер';
+
+  @override
+  String get apexEmptyTitle => 'Контроллеров пока нет';
+
+  @override
+  String get apexEmptyBody =>
+      'Добавьте Apex по его IP-адресу и учётным данным, которые вы используете на его веб-странице.';
+
+  @override
+  String get apexRefreshAll => 'Обновить все';
+
+  @override
+  String get apexSaveAll => 'Сохранить все';
+
+  @override
+  String get apexSave => 'Сохранить';
+
+  @override
+  String apexSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Сохранено $count показания',
+      many: 'Сохранено $count показаний',
+      few: 'Сохранено $count показания',
+      one: 'Сохранено 1 показание',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get apexNothingToSave => 'Пока нечего сохранять.';
+
+  @override
+  String get apexNoTank =>
+      'Назначьте контроллер аквариуму, чтобы сохранять его показания.';
+
+  @override
+  String get apexNotReadYet =>
+      'Нажмите «Обновить все», чтобы считать текущие значения.';
+
+  @override
+  String get apexNoProbes =>
+      'У этого контроллера нет датчиков, показания которых приложение может сохранить.';
+
+  @override
+  String get apexOutlets => 'Розетки';
+
+  @override
+  String apexShowAll(int count) {
+    return 'Показать ещё $count';
+  }
+
+  @override
+  String get apexShowFewer => 'Показать меньше';
+
+  @override
+  String apexOverridden(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count розетки переключены вручную',
+      many: '$count розеток переключены вручную',
+      few: '$count розетки переключены вручную',
+      one: '1 розетка переключена вручную',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String apexFeedRunning(Object letter) {
+    return 'Идёт режим кормления $letter';
+  }
+
+  @override
+  String get apexRenameDevice => 'Переименовать контроллер';
+
+  @override
+  String get apexDeviceNameLabel => 'Название контроллера';
+
+  @override
+  String get apexCredentialsMenu => 'Войти заново';
+
+  @override
+  String get apexMoveToTank => 'Переместить в другой аквариум';
+
+  @override
+  String get apexRemove => 'Удалить';
+
+  @override
+  String apexRemoveConfirm(Object name) {
+    return 'Удалить «$name»? Сохранённые показания останутся.';
+  }
+
+  @override
+  String get apexSelectTank => 'Выберите аквариум';
+
+  @override
+  String get apexHostLabel => 'IP-адрес или имя хоста';
+
+  @override
+  String get apexHostHint => '192.168.1.50';
+
+  @override
+  String get apexHostHelp =>
+      'Адрес, по которому вы открываете веб-страницу Apex. Найдите его в Fusion в разделе «Misc Setup» или в роутере.';
+
+  @override
+  String get apexUsernameLabel => 'Имя пользователя';
+
+  @override
+  String get apexPasswordLabel => 'Пароль';
+
+  @override
+  String get apexCheck => 'Проверить';
+
+  @override
+  String apexFound(Object model, Object serial) {
+    return 'Найдено: $model · $serial';
+  }
+
+  @override
+  String get apexTankLabel => 'Аквариум';
+
+  @override
+  String get apexErrUnreachable =>
+      'Не удалось связаться с этим адресом. Проверьте, что контроллер включён и находится в этой сети.';
+
+  @override
+  String get apexErrTimeout =>
+      'Подключение есть, но контроллер не ответил вовремя.';
+
+  @override
+  String get apexErrAuth =>
+      'Контроллер отклонил это имя пользователя или пароль.';
+
+  @override
+  String get apexErrProtocol =>
+      'По этому адресу что-то ответило, но это не Apex.';
+
+  @override
   String get discoveryTitle => 'Поиск в сети';
 
   @override
@@ -3509,7 +3665,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefDevicesSubtitle =>
-      'Измерители ReefFactory, устройства ReefBeat и Hanna checker';
+      'Измерители ReefFactory, устройства ReefBeat, контроллеры Apex и Hanna checker';
 
   @override
   String get reefDevicesEmpty => 'Пока нет подключённых устройств.';
@@ -3519,6 +3675,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
+
+  @override
+  String get reefDevicesKindApex => 'Neptune Apex';
 
   @override
   String get reefDevicesKindHanna => 'Hanna checker';

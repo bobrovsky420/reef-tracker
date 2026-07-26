@@ -17,6 +17,21 @@ The app ships on **both Android and iOS** from this single Flutter codebase. Pur
 - Avoid `Platform.isAndroid`/`isIOS` branching unless genuinely required (there is currently none in `lib/` — keep it that way where possible). If you must branch, implement and test both branches.
 - iOS builds only on macOS/CI (Codemagic) — it cannot be built or run on this Windows machine. When a change affects iOS behavior but can't be validated locally, say so in the changelog/commit rather than silently assuming it works.
 
+## Run it on the emulator
+
+`flutter analyze` and a green `flutter test` prove the code compiles and its units behave. They do **not** prove the feature works. **Whenever a change adds or meaningfully alters something a user can see or do, run it on the Android emulator and look at it before calling it done** — navigate to the feature, exercise its main path, and read the screenshots. Report what you actually saw; if you couldn't run it, say so plainly rather than implying it works.
+
+Skip it only when there is nothing to look at: pure refactors, docs, generator/tooling changes, and fixes fully pinned by a test. When in doubt, run it — the cost is a few minutes.
+
+The mechanics on this machine (see also the toolchain notes in memory):
+
+- Boot: `C:\Android\Sdk\emulator\emulator.exe -avd reef_pixel` (also `reef_tab7` / `reef_tab10` / `reef_iphone` for the store-screenshot sizes). Wait on `adb shell getprop sys.boot_completed`.
+- **Don't drive the app with `flutter run` from a non-interactive shell** — it reads EOF on stdin and quits, terminating the app. Build/install once, then launch with `adb shell monkey -p cz.reeftracker.reeftracker -c android.intent.category.LAUNCHER 1` so the app outlives the tooling.
+- A debug build's cold start on this emulator reliably trips Android's "isn't responding" dialog, which then steals every tap. `adb shell settings put global hide_error_dialogs 1` once per boot removes it; it is an emulator artifact, never a finding about the change.
+- Drive with `adb shell input tap/text/swipe` and capture with `adb exec-out screencap -p`. **Look at each screenshot** — a blank or unchanged frame is a failure, not a pass.
+
+**Features that talk to hardware get a fake device, committed under [tool/](tool/).** The app integrates devices most contributors (and the maintainer) don't own, so "untestable without the hardware" would mean untested forever. Write a small `dart:io` server that speaks the real protocol — [tool/apex_emulator.dart](tool/apex_emulator.dart) is the reference: it serves both Apex firmware families, drifts its values, and exposes `/emu/*` endpoints to force a state worth seeing. Two rules make it pay off twice: **the Android emulator reaches the host at `10.0.2.2`** (`10.0.2.2:8080`, entered as the device address), and the server class must be **importable, so a test can drive the real transport against it** ([test/ap_device_link_test.dart](test/ap_device_link_test.dart)) rather than only hand-written fixtures. Say explicitly in the changelog or commit when a feature has only ever been exercised against the fake and never against real hardware.
+
 ## Version bumping
 
 The version lives in [pubspec.yaml](pubspec.yaml) as `major.minor.patch+build`.

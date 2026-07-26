@@ -50,6 +50,7 @@ void main() {
         ProFeature.hannaScan,
         ProFeature.reefFactory,
         ProFeature.reefBeat,
+        ProFeature.apex,
       });
     });
   });

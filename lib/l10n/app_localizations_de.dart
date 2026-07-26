@@ -3402,6 +3402,158 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reefBeatWaveGroup => 'ReefWave-Pumpen';
 
   @override
+  String get apexTitle => 'Neptune Apex';
+
+  @override
+  String get apexMenu => 'Neptune Apex';
+
+  @override
+  String get apexSettingsSubtitle =>
+      'Live-Sondenwerte und Steckdosenstatus vom Apex';
+
+  @override
+  String get apexDisclaimer =>
+      'Diese App liest deinen Apex nur aus. Sie kann keine Steckdosen schalten, keine Fütterungspausen starten und keine Programme ändern – nutze dafür Fusion oder die Apex-Weboberfläche. Das Auslesen funktioniert nur, solange dein Telefon im selben WLAN wie der Controller ist.';
+
+  @override
+  String get apexAddDevice => 'Controller hinzufügen';
+
+  @override
+  String get apexEmptyTitle => 'Noch keine Controller';
+
+  @override
+  String get apexEmptyBody =>
+      'Füge deinen Apex über seine IP-Adresse und die Zugangsdaten hinzu, die du auf seiner Weboberfläche verwendest.';
+
+  @override
+  String get apexRefreshAll => 'Alle aktualisieren';
+
+  @override
+  String get apexSaveAll => 'Alle speichern';
+
+  @override
+  String get apexSave => 'Speichern';
+
+  @override
+  String apexSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Messwerte gespeichert',
+      one: '1 Messwert gespeichert',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get apexNothingToSave => 'Noch nichts zu speichern.';
+
+  @override
+  String get apexNoTank =>
+      'Weise diesen Controller einem Aquarium zu, um seine Messwerte zu speichern.';
+
+  @override
+  String get apexNotReadYet =>
+      'Tippe auf „Alle aktualisieren“, um die aktuellen Werte zu lesen.';
+
+  @override
+  String get apexNoProbes =>
+      'Dieser Controller hat keine Sonden, die die App speichern kann.';
+
+  @override
+  String get apexOutlets => 'Steckdosen';
+
+  @override
+  String apexShowAll(int count) {
+    return '$count weitere anzeigen';
+  }
+
+  @override
+  String get apexShowFewer => 'Weniger anzeigen';
+
+  @override
+  String apexOverridden(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Steckdosen manuell übersteuert',
+      one: '1 Steckdose manuell übersteuert',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String apexFeedRunning(Object letter) {
+    return 'Fütterungspause $letter läuft';
+  }
+
+  @override
+  String get apexRenameDevice => 'Controller umbenennen';
+
+  @override
+  String get apexDeviceNameLabel => 'Controller-Name';
+
+  @override
+  String get apexCredentialsMenu => 'Erneut anmelden';
+
+  @override
+  String get apexMoveToTank => 'In ein anderes Aquarium verschieben';
+
+  @override
+  String get apexRemove => 'Entfernen';
+
+  @override
+  String apexRemoveConfirm(Object name) {
+    return '„$name“ entfernen? Die gespeicherten Messwerte bleiben erhalten.';
+  }
+
+  @override
+  String get apexSelectTank => 'Aquarium auswählen';
+
+  @override
+  String get apexHostLabel => 'IP-Adresse oder Hostname';
+
+  @override
+  String get apexHostHint => '192.168.1.50';
+
+  @override
+  String get apexHostHelp =>
+      'Die Adresse, unter der du die Apex-Weboberfläche öffnest. Zu finden in Fusion unter „Misc Setup“ oder im Router.';
+
+  @override
+  String get apexUsernameLabel => 'Benutzername';
+
+  @override
+  String get apexPasswordLabel => 'Passwort';
+
+  @override
+  String get apexCheck => 'Prüfen';
+
+  @override
+  String apexFound(Object model, Object serial) {
+    return 'Gefunden: $model · $serial';
+  }
+
+  @override
+  String get apexTankLabel => 'Aquarium';
+
+  @override
+  String get apexErrUnreachable =>
+      'Diese Adresse war nicht erreichbar. Prüfe, ob der Controller eingeschaltet und in diesem Netzwerk ist.';
+
+  @override
+  String get apexErrTimeout =>
+      'Verbunden, aber der Controller hat nicht rechtzeitig geantwortet.';
+
+  @override
+  String get apexErrAuth =>
+      'Der Controller hat diesen Benutzernamen oder das Passwort abgelehnt.';
+
+  @override
+  String get apexErrProtocol =>
+      'Diese Adresse hat geantwortet, aber nicht wie ein Apex.';
+
+  @override
   String get discoveryTitle => 'Netzwerk durchsuchen';
 
   @override
@@ -3453,7 +3605,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefDevicesSubtitle =>
-      'ReefFactory-Messgeräte, ReefBeat-Geräte und der Hanna-Checker';
+      'ReefFactory-Messgeräte, ReefBeat-Geräte, Apex-Controller und der Hanna-Checker';
 
   @override
   String get reefDevicesEmpty => 'Noch keine Geräte verbunden.';
@@ -3463,6 +3615,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
+
+  @override
+  String get reefDevicesKindApex => 'Neptune Apex';
 
   @override
   String get reefDevicesKindHanna => 'Hanna-Checker';

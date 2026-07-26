@@ -384,8 +384,19 @@ class SettingsBody extends ConsumerWidget {
                     ? () => context.push('/reefbeat')
                     : () => showProFeatureDialog(context, ProFeature.reefBeat),
               ),
+              // Neptune Apex controllers (U40). Same Pro-gate idiom.
+              ReefSettingsRow(
+                icon: Icons.hub_outlined,
+                title: l.apexTitle,
+                description: l.apexSettingsSubtitle,
+                trailing: const ReefSettingsValue(),
+                onTap: ref.watch(proFeatureProvider(ProFeature.apex))
+                    ? () => context.push('/apex')
+                    : () => showProFeatureDialog(context, ProFeature.apex),
+              ),
               // Read-only inventory of every connected device (ReefFactory
-              // meters, ReefBeat devices + the Hanna checker once used).
+              // meters, ReefBeat devices, Apex controllers + the Hanna checker
+              // once used).
               ReefSettingsRow(
                 icon: Icons.devices_other_outlined,
                 title: l.reefDevicesTitle,

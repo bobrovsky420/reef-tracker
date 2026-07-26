@@ -67,6 +67,7 @@ class _DeviceTile extends StatelessWidget {
     final kindLabel = switch (device.kind) {
       'hanna' => l.reefDevicesKindHanna,
       'reefbeat' => l.reefDevicesKindReefBeat,
+      'apex' => l.reefDevicesKindApex,
       _ => l.reefDevicesKindReefFactory,
     };
     // LAN devices show their address; Hanna is Bluetooth (no address).
@@ -82,6 +83,7 @@ class _DeviceTile extends StatelessWidget {
       leading: Icon(switch (device.kind) {
         'hanna' => Icons.bluetooth,
         'reefbeat' => Icons.water_drop_outlined,
+        'apex' => Icons.hub_outlined,
         _ => Icons.sensors,
       }),
       title: Text(_displayName(device)),

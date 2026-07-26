@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Neptune Apex controllers (experimental): read your Apex over Wi-Fi and save
+  its probe values as measurements. Temperature, pH, ORP and salinity come
+  straight off the controller, and a Trident's alkalinity, calcium and
+  magnesium arrive with them. The card also shows what your outlets are doing,
+  flags any outlet someone has switched by hand so it no longer follows its
+  program, and tells you when a feed cycle is pausing the pumps. Add a
+  controller by its IP address and the login you use on its web page; both
+  current (AOS 5) and older Apex, Apex Jr and Apex Classic controllers are
+  supported, and the app works out which it is talking to. It reads whether
+  your Apex is set to °C or °F and stores the temperature correctly either way.
+  Read-only: switching outlets, feed cycles and programs stay in Fusion. Works
+  on your local network only — your phone has to be on the same Wi-Fi as the
+  controller, and no data goes through a cloud. Your Apex password is stored
+  only on this phone and is deliberately left out of backups, so a restored
+  controller asks for it again.
+
 ### Changed
 - The ReefFactory Temperature Controller's "Heating"/"Cooling" badge now sits
   next to the temperature it explains instead of in the card's title line.

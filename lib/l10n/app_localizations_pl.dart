@@ -3466,6 +3466,161 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefBeatWaveGroup => 'Pompy ReefWave';
 
   @override
+  String get apexTitle => 'Neptune Apex';
+
+  @override
+  String get apexMenu => 'Neptune Apex';
+
+  @override
+  String get apexSettingsSubtitle =>
+      'Bieżące wartości sond i stan gniazd z Apeksa';
+
+  @override
+  String get apexDisclaimer =>
+      'Ta aplikacja tylko odczytuje Twojego Apeksa. Nie może przełączać gniazd, uruchamiać cykli karmienia ani zmieniać programów — użyj do tego Fusion lub strony WWW Apeksa. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co sterownik.';
+
+  @override
+  String get apexAddDevice => 'Dodaj sterownik';
+
+  @override
+  String get apexEmptyTitle => 'Brak sterowników';
+
+  @override
+  String get apexEmptyBody =>
+      'Dodaj Apeksa według jego adresu IP oraz danych logowania używanych na jego stronie WWW.';
+
+  @override
+  String get apexRefreshAll => 'Odśwież wszystkie';
+
+  @override
+  String get apexSaveAll => 'Zapisz wszystkie';
+
+  @override
+  String get apexSave => 'Zapisz';
+
+  @override
+  String apexSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Zapisano $count odczytu',
+      many: 'Zapisano $count odczytów',
+      few: 'Zapisano $count odczyty',
+      one: 'Zapisano 1 odczyt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get apexNothingToSave => 'Nie ma jeszcze czego zapisać.';
+
+  @override
+  String get apexNoTank =>
+      'Przypisz ten sterownik do akwarium, aby zapisywać jego odczyty.';
+
+  @override
+  String get apexNotReadYet =>
+      'Dotknij „Odśwież wszystkie”, aby odczytać bieżące wartości.';
+
+  @override
+  String get apexNoProbes =>
+      'Ten sterownik nie ma sond, których odczyty aplikacja mogłaby zapisać.';
+
+  @override
+  String get apexOutlets => 'Gniazda';
+
+  @override
+  String apexShowAll(int count) {
+    return 'Pokaż jeszcze $count';
+  }
+
+  @override
+  String get apexShowFewer => 'Pokaż mniej';
+
+  @override
+  String apexOverridden(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count gniazda przełączonych ręcznie',
+      many: '$count gniazd przełączonych ręcznie',
+      few: '$count gniazda przełączone ręcznie',
+      one: '1 gniazdo przełączone ręcznie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String apexFeedRunning(Object letter) {
+    return 'Trwa cykl karmienia $letter';
+  }
+
+  @override
+  String get apexRenameDevice => 'Zmień nazwę sterownika';
+
+  @override
+  String get apexDeviceNameLabel => 'Nazwa sterownika';
+
+  @override
+  String get apexCredentialsMenu => 'Zaloguj się ponownie';
+
+  @override
+  String get apexMoveToTank => 'Przenieś do innego akwarium';
+
+  @override
+  String get apexRemove => 'Usuń';
+
+  @override
+  String apexRemoveConfirm(Object name) {
+    return 'Usunąć „$name”? Zapisane odczyty pozostaną.';
+  }
+
+  @override
+  String get apexSelectTank => 'Wybierz akwarium';
+
+  @override
+  String get apexHostLabel => 'Adres IP lub nazwa hosta';
+
+  @override
+  String get apexHostHint => '192.168.1.50';
+
+  @override
+  String get apexHostHelp =>
+      'Adres, pod którym otwierasz stronę WWW Apeksa. Znajdziesz go w Fusion w sekcji „Misc Setup” lub w routerze.';
+
+  @override
+  String get apexUsernameLabel => 'Nazwa użytkownika';
+
+  @override
+  String get apexPasswordLabel => 'Hasło';
+
+  @override
+  String get apexCheck => 'Sprawdź';
+
+  @override
+  String apexFound(Object model, Object serial) {
+    return 'Znaleziono: $model · $serial';
+  }
+
+  @override
+  String get apexTankLabel => 'Akwarium';
+
+  @override
+  String get apexErrUnreachable =>
+      'Nie udało się połączyć z tym adresem. Sprawdź, czy sterownik jest włączony i w tej sieci.';
+
+  @override
+  String get apexErrTimeout =>
+      'Połączono, ale sterownik nie odpowiedział na czas.';
+
+  @override
+  String get apexErrAuth =>
+      'Sterownik odrzucił tę nazwę użytkownika lub hasło.';
+
+  @override
+  String get apexErrProtocol => 'Ten adres odpowiedział, ale nie jak Apex.';
+
+  @override
   String get discoveryTitle => 'Skanuj sieć';
 
   @override
@@ -3517,7 +3672,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefDevicesSubtitle =>
-      'Mierniki ReefFactory, urządzenia ReefBeat i checker Hanna';
+      'Mierniki ReefFactory, urządzenia ReefBeat, sterowniki Apex i checker Hanna';
 
   @override
   String get reefDevicesEmpty => 'Brak podłączonych urządzeń.';
@@ -3527,6 +3682,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
+
+  @override
+  String get reefDevicesKindApex => 'Neptune Apex';
 
   @override
   String get reefDevicesKindHanna => 'Checker Hanna';

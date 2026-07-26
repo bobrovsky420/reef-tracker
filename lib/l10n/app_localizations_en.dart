@@ -3387,6 +3387,155 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reefBeatWaveGroup => 'ReefWave pumps';
 
   @override
+  String get apexTitle => 'Neptune Apex';
+
+  @override
+  String get apexMenu => 'Neptune Apex';
+
+  @override
+  String get apexSettingsSubtitle =>
+      'Live probe values and outlet status from an Apex';
+
+  @override
+  String get apexDisclaimer =>
+      'This app only reads your Apex. It can\'t switch outlets, start feed cycles or change programs — use Fusion or the Apex web page for that. Reading works only while your phone is on the same Wi-Fi network as the controller.';
+
+  @override
+  String get apexAddDevice => 'Add controller';
+
+  @override
+  String get apexEmptyTitle => 'No controllers yet';
+
+  @override
+  String get apexEmptyBody =>
+      'Add your Apex by its IP address and the login you use on its web page.';
+
+  @override
+  String get apexRefreshAll => 'Refresh all';
+
+  @override
+  String get apexSaveAll => 'Save all';
+
+  @override
+  String get apexSave => 'Save';
+
+  @override
+  String apexSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Saved $count readings',
+      one: 'Saved 1 reading',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get apexNothingToSave => 'Nothing to save yet.';
+
+  @override
+  String get apexNoTank =>
+      'Assign this controller to an aquarium to save its readings.';
+
+  @override
+  String get apexNotReadYet => 'Tap Refresh all to read the current values.';
+
+  @override
+  String get apexNoProbes => 'This controller has no probes the app can save.';
+
+  @override
+  String get apexOutlets => 'Outlets';
+
+  @override
+  String apexShowAll(int count) {
+    return 'Show $count more';
+  }
+
+  @override
+  String get apexShowFewer => 'Show fewer';
+
+  @override
+  String apexOverridden(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count outlets overridden',
+      one: '1 outlet overridden',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String apexFeedRunning(Object letter) {
+    return 'Feed cycle $letter running';
+  }
+
+  @override
+  String get apexRenameDevice => 'Rename controller';
+
+  @override
+  String get apexDeviceNameLabel => 'Controller name';
+
+  @override
+  String get apexCredentialsMenu => 'Sign in again';
+
+  @override
+  String get apexMoveToTank => 'Move to another aquarium';
+
+  @override
+  String get apexRemove => 'Remove';
+
+  @override
+  String apexRemoveConfirm(Object name) {
+    return 'Remove \"$name\"? Its saved readings stay.';
+  }
+
+  @override
+  String get apexSelectTank => 'Select aquarium';
+
+  @override
+  String get apexHostLabel => 'IP address or hostname';
+
+  @override
+  String get apexHostHint => '192.168.1.50';
+
+  @override
+  String get apexHostHelp =>
+      'The address you open the Apex web page at. Find it in Fusion under Misc Setup, or on your router.';
+
+  @override
+  String get apexUsernameLabel => 'Username';
+
+  @override
+  String get apexPasswordLabel => 'Password';
+
+  @override
+  String get apexCheck => 'Check';
+
+  @override
+  String apexFound(Object model, Object serial) {
+    return 'Found $model · $serial';
+  }
+
+  @override
+  String get apexTankLabel => 'Aquarium';
+
+  @override
+  String get apexErrUnreachable =>
+      'Couldn\'t reach that address. Check the controller is on and on this network.';
+
+  @override
+  String get apexErrTimeout =>
+      'Connected, but the controller didn\'t answer in time.';
+
+  @override
+  String get apexErrAuth =>
+      'The controller rejected that username or password.';
+
+  @override
+  String get apexErrProtocol => 'That address answered, but not like an Apex.';
+
+  @override
   String get discoveryTitle => 'Scan network';
 
   @override
@@ -3438,7 +3587,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefDevicesSubtitle =>
-      'ReefFactory meters, ReefBeat devices and the Hanna checker';
+      'ReefFactory meters, ReefBeat devices, Apex controllers and the Hanna checker';
 
   @override
   String get reefDevicesEmpty => 'No devices connected yet.';
@@ -3448,6 +3597,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
+
+  @override
+  String get reefDevicesKindApex => 'Neptune Apex';
 
   @override
   String get reefDevicesKindHanna => 'Hanna checker';

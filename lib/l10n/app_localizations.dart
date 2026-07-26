@@ -5601,6 +5601,240 @@ abstract class AppLocalizations {
   /// **'ReefWave pumps'**
   String get reefBeatWaveGroup;
 
+  /// No description provided for @apexTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Neptune Apex'**
+  String get apexTitle;
+
+  /// No description provided for @apexMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Neptune Apex'**
+  String get apexMenu;
+
+  /// No description provided for @apexSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live probe values and outlet status from an Apex'**
+  String get apexSettingsSubtitle;
+
+  /// No description provided for @apexDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'This app only reads your Apex. It can\'t switch outlets, start feed cycles or change programs — use Fusion or the Apex web page for that. Reading works only while your phone is on the same Wi-Fi network as the controller.'**
+  String get apexDisclaimer;
+
+  /// No description provided for @apexAddDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Add controller'**
+  String get apexAddDevice;
+
+  /// No description provided for @apexEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No controllers yet'**
+  String get apexEmptyTitle;
+
+  /// No description provided for @apexEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your Apex by its IP address and the login you use on its web page.'**
+  String get apexEmptyBody;
+
+  /// No description provided for @apexRefreshAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh all'**
+  String get apexRefreshAll;
+
+  /// No description provided for @apexSaveAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Save all'**
+  String get apexSaveAll;
+
+  /// No description provided for @apexSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get apexSave;
+
+  /// No description provided for @apexSavedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Saved 1 reading} other{Saved {count} readings}}'**
+  String apexSavedSnack(int count);
+
+  /// No description provided for @apexNothingToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to save yet.'**
+  String get apexNothingToSave;
+
+  /// No description provided for @apexNoTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign this controller to an aquarium to save its readings.'**
+  String get apexNoTank;
+
+  /// No description provided for @apexNotReadYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Refresh all to read the current values.'**
+  String get apexNotReadYet;
+
+  /// No description provided for @apexNoProbes.
+  ///
+  /// In en, this message translates to:
+  /// **'This controller has no probes the app can save.'**
+  String get apexNoProbes;
+
+  /// No description provided for @apexOutlets.
+  ///
+  /// In en, this message translates to:
+  /// **'Outlets'**
+  String get apexOutlets;
+
+  /// Expands a controller card's outlet list beyond the first few
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String apexShowAll(int count);
+
+  /// No description provided for @apexShowFewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Show fewer'**
+  String get apexShowFewer;
+
+  /// Outlets a person switched by hand, so they no longer follow the Apex program
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 outlet overridden} other{{count} outlets overridden}}'**
+  String apexOverridden(int count);
+
+  /// A feed cycle (A-D) is currently pausing the pumps
+  ///
+  /// In en, this message translates to:
+  /// **'Feed cycle {letter} running'**
+  String apexFeedRunning(Object letter);
+
+  /// No description provided for @apexRenameDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename controller'**
+  String get apexRenameDevice;
+
+  /// No description provided for @apexDeviceNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Controller name'**
+  String get apexDeviceNameLabel;
+
+  /// No description provided for @apexCredentialsMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get apexCredentialsMenu;
+
+  /// No description provided for @apexMoveToTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to another aquarium'**
+  String get apexMoveToTank;
+
+  /// No description provided for @apexRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get apexRemove;
+
+  /// No description provided for @apexRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\"? Its saved readings stay.'**
+  String apexRemoveConfirm(Object name);
+
+  /// No description provided for @apexSelectTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Select aquarium'**
+  String get apexSelectTank;
+
+  /// No description provided for @apexHostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IP address or hostname'**
+  String get apexHostLabel;
+
+  /// No description provided for @apexHostHint.
+  ///
+  /// In en, this message translates to:
+  /// **'192.168.1.50'**
+  String get apexHostHint;
+
+  /// No description provided for @apexHostHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The address you open the Apex web page at. Find it in Fusion under Misc Setup, or on your router.'**
+  String get apexHostHelp;
+
+  /// No description provided for @apexUsernameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get apexUsernameLabel;
+
+  /// No description provided for @apexPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get apexPasswordLabel;
+
+  /// No description provided for @apexCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get apexCheck;
+
+  /// Result of probing an address: the Apex generation and its serial number
+  ///
+  /// In en, this message translates to:
+  /// **'Found {model} · {serial}'**
+  String apexFound(Object model, Object serial);
+
+  /// No description provided for @apexTankLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Aquarium'**
+  String get apexTankLabel;
+
+  /// No description provided for @apexErrUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach that address. Check the controller is on and on this network.'**
+  String get apexErrUnreachable;
+
+  /// No description provided for @apexErrTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected, but the controller didn\'t answer in time.'**
+  String get apexErrTimeout;
+
+  /// No description provided for @apexErrAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'The controller rejected that username or password.'**
+  String get apexErrAuth;
+
+  /// No description provided for @apexErrProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'That address answered, but not like an Apex.'**
+  String get apexErrProtocol;
+
   /// No description provided for @discoveryTitle.
   ///
   /// In en, this message translates to:
@@ -5694,7 +5928,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefDevicesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'ReefFactory meters, ReefBeat devices and the Hanna checker'**
+  /// **'ReefFactory meters, ReefBeat devices, Apex controllers and the Hanna checker'**
   String get reefDevicesSubtitle;
 
   /// No description provided for @reefDevicesEmpty.
@@ -5714,6 +5948,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Red Sea ReefBeat'**
   String get reefDevicesKindReefBeat;
+
+  /// No description provided for @reefDevicesKindApex.
+  ///
+  /// In en, this message translates to:
+  /// **'Neptune Apex'**
+  String get reefDevicesKindApex;
 
   /// No description provided for @reefDevicesKindHanna.
   ///

@@ -127,6 +127,11 @@ class _FakeRbLink implements RbDeviceLink {
     ),
     _ => throw const RbLinkException(RbLinkError.unreachable),
   };
+
+  // The guide screenshots never open the dosing-queue sheet, so this only has
+  // to exist — an empty day is the honest answer for a scripted device.
+  @override
+  Future<List<RbDoseQueueEntry>> readDosingQueue(String host) async => const [];
 }
 
 void main() {

@@ -3417,6 +3417,157 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatWaveGroup => 'Čerpadla ReefWave';
 
   @override
+  String get apexTitle => 'Neptune Apex';
+
+  @override
+  String get apexMenu => 'Neptune Apex';
+
+  @override
+  String get apexSettingsSubtitle => 'Živé hodnoty sond a stav zásuvek z Apexu';
+
+  @override
+  String get apexDisclaimer =>
+      'Tato aplikace váš Apex pouze čte. Nemůže přepínat zásuvky, spouštět krmné cykly ani měnit programy – k tomu použijte Fusion nebo webovou stránku Apexu. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako řídicí jednotka.';
+
+  @override
+  String get apexAddDevice => 'Přidat jednotku';
+
+  @override
+  String get apexEmptyTitle => 'Zatím žádné jednotky';
+
+  @override
+  String get apexEmptyBody =>
+      'Přidejte svůj Apex podle jeho IP adresy a přihlašovacích údajů, které používáte na jeho webové stránce.';
+
+  @override
+  String get apexRefreshAll => 'Obnovit vše';
+
+  @override
+  String get apexSaveAll => 'Uložit vše';
+
+  @override
+  String get apexSave => 'Uložit';
+
+  @override
+  String apexSavedSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Uloženo $count hodnot',
+      few: 'Uloženy $count hodnoty',
+      one: 'Uložena 1 hodnota',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get apexNothingToSave => 'Zatím není co uložit.';
+
+  @override
+  String get apexNoTank =>
+      'Přiřaďte tuto jednotku k akváriu, aby šlo ukládat její hodnoty.';
+
+  @override
+  String get apexNotReadYet =>
+      'Klepnutím na Obnovit vše načtete aktuální hodnoty.';
+
+  @override
+  String get apexNoProbes =>
+      'Tato jednotka nemá sondy, které by aplikace mohla uložit.';
+
+  @override
+  String get apexOutlets => 'Zásuvky';
+
+  @override
+  String apexShowAll(int count) {
+    return 'Zobrazit dalších $count';
+  }
+
+  @override
+  String get apexShowFewer => 'Zobrazit méně';
+
+  @override
+  String apexOverridden(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zásuvek přepnuto ručně',
+      few: '$count zásuvky přepnuty ručně',
+      one: '1 zásuvka přepnuta ručně',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String apexFeedRunning(Object letter) {
+    return 'Běží krmný cyklus $letter';
+  }
+
+  @override
+  String get apexRenameDevice => 'Přejmenovat jednotku';
+
+  @override
+  String get apexDeviceNameLabel => 'Název jednotky';
+
+  @override
+  String get apexCredentialsMenu => 'Přihlásit se znovu';
+
+  @override
+  String get apexMoveToTank => 'Přesunout do jiného akvária';
+
+  @override
+  String get apexRemove => 'Odebrat';
+
+  @override
+  String apexRemoveConfirm(Object name) {
+    return 'Odebrat „$name“? Uložené hodnoty zůstanou.';
+  }
+
+  @override
+  String get apexSelectTank => 'Vyberte akvárium';
+
+  @override
+  String get apexHostLabel => 'IP adresa nebo název hostitele';
+
+  @override
+  String get apexHostHint => '192.168.1.50';
+
+  @override
+  String get apexHostHelp =>
+      'Adresa, na které otevíráte webovou stránku Apexu. Najdete ji ve Fusion v Misc Setup nebo v routeru.';
+
+  @override
+  String get apexUsernameLabel => 'Uživatelské jméno';
+
+  @override
+  String get apexPasswordLabel => 'Heslo';
+
+  @override
+  String get apexCheck => 'Ověřit';
+
+  @override
+  String apexFound(Object model, Object serial) {
+    return 'Nalezeno: $model · $serial';
+  }
+
+  @override
+  String get apexTankLabel => 'Akvárium';
+
+  @override
+  String get apexErrUnreachable =>
+      'Na této adrese se nic neozvalo. Zkontrolujte, že je jednotka zapnutá a v této síti.';
+
+  @override
+  String get apexErrTimeout => 'Připojeno, ale jednotka neodpověděla včas.';
+
+  @override
+  String get apexErrAuth =>
+      'Jednotka odmítla toto uživatelské jméno nebo heslo.';
+
+  @override
+  String get apexErrProtocol => 'Tato adresa odpověděla, ale ne jako Apex.';
+
+  @override
   String get discoveryTitle => 'Prohledat síť';
 
   @override
@@ -3468,7 +3619,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefDevicesSubtitle =>
-      'Měřicí zařízení ReefFactory, zařízení ReefBeat a Hanna checker';
+      'Měřicí zařízení ReefFactory, zařízení ReefBeat, jednotky Apex a Hanna checker';
 
   @override
   String get reefDevicesEmpty => 'Zatím nejsou připojena žádná zařízení.';
@@ -3478,6 +3629,9 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
+
+  @override
+  String get reefDevicesKindApex => 'Neptune Apex';
 
   @override
   String get reefDevicesKindHanna => 'Hanna checker';

@@ -500,7 +500,8 @@ class ImportSources extends Table {
 class Devices extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  /// `'reeffactory'` | `'hanna'` | `'reefbeat'`. Persisted — never rename.
+  /// `'reeffactory'` | `'hanna'` | `'reefbeat'` | `'apex'`. Persisted — never
+  /// rename.
   TextColumn get kind => text()();
 
   /// Stable device identity: a ReefFactory serial (e.g. `RFPM01…`), a ReefBeat
@@ -532,6 +533,21 @@ class Devices extends Table {
   /// (max + 1); equal values fall back to the display name, so an untouched
   /// inventory still reads alphabetically.
   IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+
+  /// Login name for a device whose API is authenticated (U40: Apex only —
+  /// every other integration here is unauthenticated on the LAN). Null for
+  /// the rest.
+  TextColumn get username => text().nullable()();
+
+  /// The matching password, stored **only** in this app-private database.
+  ///
+  /// It is deliberately absent from `_deviceToJson`, so it never rides a
+  /// backup file, a Drive sync document or a share sheet — a restored
+  /// controller row simply asks for the password again. It is not encrypted:
+  /// the platform's app-private storage is the boundary, exactly as it is for
+  /// the rest of the aquarium data, and an Apex password grants nothing beyond
+  /// the LAN it sits on.
+  TextColumn get secret => text().nullable()();
 }
 
 /// What the UI calls a device: explicit name, else vendor model, else the
@@ -572,7 +588,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 26;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -829,6 +845,16 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(devices, devices.displayOrder);
         }
         await _backfillDeviceDisplayOrder();
+      }
+      if (from < 26) {
+        // Credentials for authenticated device APIs (U40, Apex). Guarded like
+        // display_order above: a v24 `createTable` already builds them.
+        if (!await _columnExists('devices', 'username')) {
+          await m.addColumn(devices, devices.username);
+        }
+        if (!await _columnExists('devices', 'secret')) {
+          await m.addColumn(devices, devices.secret);
+        }
       }
     },
     beforeOpen: (details) async {
@@ -1445,6 +1471,61 @@ class AppDatabase extends _$AppDatabase {
       ),
     );
   });
+
+  /// Adds or updates a Neptune Apex controller by serial (U40) — same
+  /// semantics as [upsertReefFactoryDevice], plus the credentials its API
+  /// needs. An update path that passes a null [password] leaves the stored one
+  /// alone, so re-pointing a moved controller doesn't require retyping it.
+  Future<void> upsertApexDevice({
+    required String identifier,
+    required String model,
+    required String address,
+    required String username,
+    String? password,
+    String? name,
+    int? tankId,
+  }) => transaction(() async {
+    final order = await _nextDeviceOrder('apex');
+    await into(devices).insert(
+      DevicesCompanion.insert(
+        kind: 'apex',
+        identifier: identifier,
+        name: Value(name),
+        model: Value(model),
+        address: Value(address),
+        tankId: Value(tankId),
+        lastSeenAt: Value(DateTime.now()),
+        displayOrder: Value(order),
+        username: Value(username),
+        secret: Value(password),
+      ),
+      onConflict: DoUpdate(
+        (_) => DevicesCompanion(
+          model: Value(model),
+          address: Value(address),
+          name: Value(name),
+          tankId: Value(tankId),
+          lastSeenAt: Value(DateTime.now()),
+          username: Value(username),
+          // `absent` rather than `Value(null)`: an omitted password must keep
+          // the stored one, not wipe it.
+          secret: password == null ? const Value.absent() : Value(password),
+        ),
+        target: [devices.identifier],
+      ),
+    );
+  });
+
+  /// Replaces the credentials on a device row (the "password changed on the
+  /// controller" path). Narrow like [updateDeviceAddress] — name, tank and
+  /// card position stand.
+  Future<void> updateDeviceCredentials(
+    int id, {
+    required String username,
+    required String password,
+  }) => (update(devices)..where((d) => d.id.equals(id))).write(
+    DevicesCompanion(username: Value(username), secret: Value(password)),
+  );
 
   /// Records the Hanna checker on first connect: inserts if absent (never
   /// clobbering a user-set name/tank on later measurements), always bumping

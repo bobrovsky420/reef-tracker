@@ -128,8 +128,13 @@ class BackupData {
 
 /// The [Devices.kind] values this app understands (#34 gate). Mirrors the
 /// writers in database.dart (`upsertReefFactoryDevice`, `ensureHannaDevice`,
-/// `upsertReefBeatDevice`).
-const Set<String> _knownDeviceKinds = {'reeffactory', 'hanna', 'reefbeat'};
+/// `upsertReefBeatDevice`, `upsertApexDevice`).
+const Set<String> _knownDeviceKinds = {
+  'reeffactory',
+  'hanna',
+  'reefbeat',
+  'apex',
+};
 
 /// Serializes the whole database to a compact JSON string.
 ///
@@ -1450,6 +1455,10 @@ Map<String, dynamic> _deviceToJson(DeviceRecord d) => {
   'firstSeenAt': d.firstSeenAt.millisecondsSinceEpoch,
   'lastSeenAt': d.lastSeenAt?.millisecondsSinceEpoch,
   'displayOrder': d.displayOrder,
+  'username': d.username,
+  // `secret` is deliberately NOT written (U40). A backup document is a file
+  // the user shares, mails to support and syncs to Drive; a controller
+  // password does not belong in one. A restored Apex row asks for it again.
 };
 
 DevicesCompanion _deviceFromJson(Map<String, dynamic> m) => DevicesCompanion(
@@ -1466,6 +1475,8 @@ DevicesCompanion _deviceFromJson(Map<String, dynamic> m) => DevicesCompanion(
   displayOrder: m['displayOrder'] == null
       ? const Value.absent()
       : Value(m['displayOrder'] as int),
+  // Pre-v26 backups have no field; `secret` is never in one by design.
+  username: Value(m['username'] as String?),
 );
 
 Map<String, dynamic> _settingToJson(Setting s) => {

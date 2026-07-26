@@ -436,6 +436,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           );
                         }
                       }
+                      if (v == 'apex') {
+                        // Neptune Apex dashboard (U40, experimental), same
+                        // gate idiom.
+                        if (ref.read(proFeatureProvider(ProFeature.apex))) {
+                          unawaited(context.push('/apex'));
+                        } else {
+                          unawaited(
+                            showProFeatureDialog(context, ProFeature.apex),
+                          );
+                        }
+                      }
                     },
                     entries: [
                       ReefMenuItem(
@@ -491,6 +502,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           value: 'reefbeat',
                           icon: Icons.water_drop_outlined,
                           label: l.reefBeatMenu,
+                        ),
+                      // Neptune Apex (U40) — experimental opt-in.
+                      if (ref.watch(experimentalEnabledProvider).value ?? false)
+                        ReefMenuItem(
+                          value: 'apex',
+                          icon: Icons.hub_outlined,
+                          label: l.apexMenu,
                         ),
                     ],
                   ),

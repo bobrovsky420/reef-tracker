@@ -151,7 +151,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RoStages` | id, stageType (`RoStageType.name`; `custom` rows carry [title]), title?, lifespanDays (replace every N days), enabled (the "uncheck if a lower model is used" flag — hidden + silent but history kept), remindEnabled, note?, displayOrder — the shared RO unit's stages (U16). **No tankId by design**: like `Settings`, the RO unit is a property of the household, shared by every aquarium. Default 4-stage set seeded on first RO-screen visit (`seedDefaultRoStages`, guarded by the `ro_stages_seeded` settings flag — not the row count, so deleting every stage sticks) |
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
 | `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
-| `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt?, displayOrder — manual card order on the dashboards (v25; one sequence per `kind`, new devices take max+1, ties fall back to the display name `name ?? model ?? identifier` = `deviceDisplayName`) — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows and the ReefBeat dashboard `reefbeat` rows (add / refresh / reorder / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds, still ordered kind-then-oldest |
+| `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`\|`apex`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat/Apex; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt?, displayOrder — manual card order on the dashboards (v25; one sequence per `kind`, new devices take max+1, ties fall back to the display name `name ?? model ?? identifier` = `deviceDisplayName`), username?/secret? — credentials for an authenticated device API (v26; Apex only, and `secret` is deliberately never written to a backup document) — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows, the ReefBeat dashboard `reefbeat` rows and the Apex dashboard `apex` rows (add / refresh / reorder / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds, still ordered kind-then-oldest |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -254,7 +254,9 @@ index (`createTable` guarded by `_tableExists` — U17 element views); v21 added
 the `ManualDoses` table + its `(tankId, dosedAt)` index (`createTable` guarded
 by `_tableExists` — the manual dose log); v25 added `Devices.displayOrder`
 (`addColumn`, guarded) plus `_backfillDeviceDisplayOrder`, which freezes the
-pre-v25 implicit card order (alphabetical by display name, numbered per kind)
+pre-v25 implicit card order (alphabetical by display name, numbered per kind);
+v26 added `Devices.username` / `Devices.secret` (both `addColumn`, guarded the
+same way) for the Apex integration's credentials (U40)
 into the column so existing dashboards keep their layout — idempotent, it only
 runs while every row still carries the `0` default.
 Foreign keys are enabled in
@@ -432,7 +434,7 @@ never wipes live data:
    treatment: unique stage ids, no replacement referencing a missing stage,
    `stageType` whitelisted against `RoStageType`, a custom stage must carry a
    non-blank title, and `lifespanDays` must be ≥ 1. Devices (U36): `kind`
-   whitelisted (`reeffactory`/`hanna`/`reefbeat`), `identifier` non-blank and unique (it
+   whitelisted (`reeffactory`/`hanna`/`reefbeat`/`apex`), `identifier` non-blank and unique (it
    is the merge identity), and a present `tankId` must reference an aquarium
    in the backup. All four recurring
    day-count fields (`cadenceDays`, `lifespanDays`, `testCadenceDays`, dosing
@@ -1277,7 +1279,8 @@ Body text stays the platform default (SF/Roboto).
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 | `/reeffactory` | ReefFactory devices dashboard (U36, experimental): live values from LAN meters |
 | `/reefbeat` | ReefBeat devices dashboard (U38, experimental): status from Red Sea ReefDose pumps, ReefATO+ units, ReefMat filters, ReefRun controllers, ReefLED lights and ReefWave pumps |
-| `/settings/devices` | Connected devices — read-only inventory of every ReefFactory / ReefBeat / Hanna device |
+| `/apex` | Neptune Apex dashboard (U40, experimental): probe values (incl. a Trident's Alk/Ca/Mg) with a Save path into `Readings`, plus outlet and feed-cycle status |
+| `/settings/devices` | Connected devices — read-only inventory of every ReefFactory / ReefBeat / Apex / Hanna device |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
 home shell (see Features). `/` accepts a
@@ -2630,6 +2633,131 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   tank's dosing plan (`DosingEntries`), and logging actually-delivered volumes
   for the dose calculator's consumption math.
 
+### Neptune Apex controllers (U40, Pro, **experimental**) — `features/apex/`, route `/apex`
+
+A third local-device dashboard, for **Neptune Systems Apex** controllers. Unlike
+the other two integrations an Apex is a *controller*, so it sits between them:
+its probes are real water parameters with a **Save path into `Readings`** (like
+ReefFactory) while its outlets are operational status only (like ReefBeat). The
+app never switches an outlet, starts a feed cycle or edits a program — a
+persistent disclaimer points to Fusion / the Apex web page for that and spells
+out the same LAN-only requirement.
+
+- **Two firmware families, discovered not configured** (`data/ap_protocol.dart`,
+  pure Dart, golden-vector tested). An Apex serves one of two shapes and which
+  one has to be found out per read, because a controller can be updated under
+  the app's feet:
+  **AOS 5.x** — `POST /rest/login` with `{login, password, remember_me:false}`
+  answers a `connect.sid`, and `GET /rest/status` (carrying that cookie) returns
+  `{system, inputs, outputs, feed}`. **Classic / Jr / older AOS 4.x** — no
+  `/rest` tree at all (the login POST **404s**, which is exactly the detection
+  signal), so `GET /cgi-bin/status.json` behind HTTP **Basic auth** returns the
+  same information wrapped in a single `istat` key, with identity fields at that
+  level rather than in a `system` object and numbers padded into fixed-width
+  strings (`"30.1 "`). A **401** on the login POST is treated as "try Basic",
+  not as failure — older builds want it on the same paths. Both shapes decode
+  into one `ApStatus`, so nothing above the protocol file branches on family.
+  Neither is documented by Neptune: the layouts follow the long-standing
+  community integrations (Home Assistant's `apex-ha`, Telegraf's `neptune_apex`)
+  and are pinned by `ap_protocol_test.dart`. Parsing is tolerant throughout.
+- **Probes → parameters.** `kApProbeParams` maps `Temp`→temperature,
+  `pH`→ph, `ORP`→orp, `Cond`→salinity (ppt, converted to SG by the save path
+  exactly as the Salinity Guardian's is) and a **Trident**'s `alk`/`ca`/`mg`
+  → alkalinity/calcium/magnesium — the Trident rides the same input list as the
+  analog probes, which is why it needs no separate integration. Every other
+  input (`Amps`, `pwr`, `volts`, `digital`, `in`) is still parsed into
+  `ApStatus.probes` but yields no reading: power and plumbing telemetry has
+  nowhere truthful to be stored. **The first probe of a type wins** — a tank
+  commonly carries a display *and* a sump temperature probe, and saving both
+  would write one parameter twice in the same group; the keeper picks by
+  ordering probes on the controller.
+- **Temperature unit.** An Apex is globally °C or °F and `status` reports a bare
+  number. `GET /rest/config`'s `iconf[].extra.range` (Neptune's own spelling is
+  `"Celcius"`/`"Faren"`) is the only authoritative statement, so the AOS 5 path
+  fetches it **tolerantly** — a controller that won't serve it still gets a
+  complete card. Classic serves no config at all, so `apInferTempUnit` falls
+  back to a **range test, not a guess**: an aquarium sits at 18–32 °C = 64–90 °F
+  and the two intervals do not overlap, so anything above 45 is Fahrenheit.
+- **Outlets** (`ApOutlet`): the raw state string is kept verbatim, and the Apex
+  convention that a leading `A` means "the program decided this" gives `on`
+  (`AON`/`ON` → true, `AOF`/`OFF` → false, `TBL`/`PF1` → **null**, because a
+  profile driving a variable output is not an on/off question) and `overridden`
+  (bare `ON`/`OFF` — a human override that stays until cleared). `alert` and
+  `virtual` outputs are kept out of the card's list, which is about what is
+  powered. An overridden outlet left on is how a return pump stays off after a
+  water change, so it is the one outlet fact promoted to a warning chip.
+- **Feed cycle** (`ApFeed`): both firmwares park an *idle* timer at a sentinel
+  rather than zero, and use different ones (AOS 5 a large number, Classic
+  `name: 6`). `running` is written as one rule covering both — a real cycle
+  1–4 with a remaining time inside the range a feed timer can hold — since the
+  sentinels don't overlap with real values.
+- **Transport** (`data/ap_device_link.dart`): abstract `ApDeviceLink` (fake-able)
+  + `ApHttpLink` over `dart:io` `HttpClient`, timeout 8 s (longer than the
+  ReefBeat link's 6 s — a fully populated controller is measurably slower than a
+  single-purpose device serving one small object). A refresh **logs in afresh**
+  rather than holding a session: it costs one extra request and buys a stateless
+  read with no cookie to expire between two manual refreshes hours apart and no
+  reconnect logic after a controller reboot. Typed `ApLinkError`
+  (unreachable/timeout/**auth**/protocol) drives specific messages; `auth` is
+  the one the keeper can fix from the card, so it renders a "Sign in again"
+  button beside the error.
+- **Credentials.** An Apex is the only authenticated device API here, so
+  `Devices` gained **`username`** and **`secret`** (schema v26, `addColumn`
+  guarded like `display_order`). The password lives only in the app-private
+  database: it is deliberately **absent from `_deviceToJson`**, so it never
+  rides a backup file, a Drive sync document or a share sheet — a restored
+  controller row keeps its address and username and asks for the password
+  again (the dashboard shows that as an `auth` error with the re-sign-in
+  button). `upsertApexDevice` with a null password leaves the stored one alone,
+  so repointing a moved controller doesn't require retyping it.
+- **No discovery.** The LAN sweep (U39) cannot help here: an Apex will not
+  identify itself to an unauthenticated probe, so there is nothing for a
+  credential-less identity check to match on. The FAB opens the manual
+  address + login sheet directly, and the sheet prefills `admin`/`1234` (the
+  factory login, printed in the quick-start guide) because it is right for most
+  controllers.
+- **Dashboard** (`apex_screen.dart`): the ReefFactory structure — active tank's
+  devices + unassigned in `displayOrder` then display-name order, name-only card
+  headers, one **Refresh all** / **Save all** above the list, drag-handle
+  reordering via `reorderDevices`, household-scoped `apexDevicesProvider` — plus
+  a card menu carrying **Sign in again** alongside Edit / Move / Remove. A card
+  shows its readings as the shared value chips, then the status chips (running
+  feed cycle in `healthy`, overridden-outlet count in `caution`), then the
+  outlet list as state-dot pills — collapsed to `kApexOutletPreview` (8) behind
+  "+N more", since a fully populated Apex drives thirty-odd outlets and a wall
+  of them would bury every other card. A profile-driven outlet gets a **hollow
+  ring** rather than a filled dot, so nothing claims a state the controller
+  isn't reporting.
+- **Save filter** (`apReadingsToSave`): canonical-unit conversion plus dropping
+  only the *impossible* (below the catalog's physical floor) — the same rule as
+  ReefFactory, deliberately not extended to the merely implausible, because
+  41 °C is a heater failure a keeper needs recorded rather than noise to be
+  swallowed. **Known cost:** a disconnected Apex probe reporting exactly `0.00`
+  is stored as a real 0. Suppressing that would need a per-parameter
+  zero-sentinel rule that has not been checked against hardware, so it is
+  recorded here rather than guessed at.
+- Entry points mirror the other two: experimental-gated + Pro-gated
+  (`ProFeature.apex`, grandfathered) via the Measurements-tab overflow menu and
+  a Settings row. Controllers are read once automatically on open; after that
+  reads are manual.
+- **Development without hardware** (`tool/apex_emulator.dart`): a fake
+  controller serving both firmware families with drifting probe values, a
+  realistic outlet set (including one left overridden and two profile-driven), a
+  feed cycle that counts down, and `/emu/*` control endpoints to pin a probe,
+  force an outlet or start a cycle. `dart run tool/apex_emulator.dart --port 8080`
+  on the dev machine is reachable from the Android emulator as **10.0.2.2:8080**.
+  The server class is importable, and `ap_device_link_test.dart` drives a real
+  `ApHttpLink` at it — so the login handshake, the firmware detection and both
+  parsers are covered end to end, not only against hand-written JSON.
+- **Deferred:** the Apex's own datalog (`/rest/status/log`, backfilling history
+  rather than point-in-time saves), outlet control, `/cgi-bin/status.xml` (the
+  JSON endpoint covers every controller that serves the XML one), and wiring
+  controllers into `environmentSourcesProvider` as U37 environment sources for
+  the Hanna results step — an Apex reports exactly the salinity/temperature/pH
+  triple that step wants, so it is the obvious next step, but it needs a
+  per-kind Pro gate in that provider rather than the single `reefFactory` one
+  it checks today.
+
 ### LAN device discovery (U39) — `data/lan_discovery.dart`, `features/devices/discovery_sheet.dart`
 
 Finds every supported ReefBeat and ReefFactory device on the phone's network,
@@ -2709,7 +2837,8 @@ sweep, just with more probing. Nothing treats an empty mDNS result as an error.
 
 Connected-device inventory (Settings → Connected devices, route
 `/settings/devices`, `connected_devices_screen.dart`): a read-only union of the
-`Devices` table — ReefFactory meters and ReefBeat devices plus the Hanna
+`Devices` table — ReefFactory meters, ReefBeat devices and Apex controllers
+plus the Hanna
 checker, which `hanna_meter_screen.dart` records via `ensureHannaDevice` on
 first connect. Sorted by display name (name → model → identifier fallback,
 case-insensitive).

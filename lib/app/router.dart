@@ -12,6 +12,7 @@ import '../domain/ratio.dart';
 import '../domain/supplement_catalog.dart';
 import '../features/actions/schedule_screen.dart';
 import '../features/add_reading/add_reading_screen.dart';
+import '../features/apex/apex_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
 import '../features/dosing/dose_calculator_screen.dart';
 import '../features/dosing/dosing_edit_screen.dart';
@@ -182,6 +183,7 @@ final appRouter = GoRouter(
       path: '/reefbeat',
       builder: (context, state) => const ReefBeatScreen(),
     ),
+    GoRoute(path: '/apex', builder: (context, state) => const ApexScreen()),
     GoRoute(path: '/micro', builder: (context, state) => const MicroScreen()),
     GoRoute(
       path: '/micro/add',

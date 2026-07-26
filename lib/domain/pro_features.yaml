@@ -57,3 +57,8 @@ features:
   # local-device integration pattern for another vendor).
   - key: reefBeat
     grandfathered: true
+  # U40 Neptune Apex controller dashboard (experimental) — grandfathered per
+  # the 2026-07-26 decision, consistent with reefFactory/reefBeat (the same
+  # local-device integration pattern for a third vendor).
+  - key: apex
+    grandfathered: true

@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../data/ap_device_link.dart';
 import '../data/cloud_auth.dart';
 import '../data/cloud_auth_google.dart';
 import '../data/cloud_backup_store.dart';
@@ -787,6 +788,16 @@ final rbDeviceLinkProvider = Provider<RbDeviceLink>((ref) => RbHttpLink());
 /// rationale as [reefFactoryDevicesProvider].
 final reefBeatDevicesProvider = StreamProvider<List<DeviceRecord>>(
   (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reefbeat')),
+);
+
+/// Transport used by the Apex dashboard (U40) to read a controller's status.
+/// Overridden with a fake in widget tests.
+final apDeviceLinkProvider = Provider<ApDeviceLink>((ref) => ApHttpLink());
+
+/// The registered Neptune Apex controllers (U40 dashboard cards). Same scoping
+/// rationale as [reefFactoryDevicesProvider].
+final apexDevicesProvider = StreamProvider<List<DeviceRecord>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('apex')),
 );
 
 // --- LAN device discovery (U39) -------------------------------------------
