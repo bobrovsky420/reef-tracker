@@ -3024,6 +3024,12 @@ class AppLocalizationsCs extends AppLocalizations {
       'Klepnutím na Obnovit vše načtete aktuální hodnotu.';
 
   @override
+  String get reefFactoryHeating => 'Ohřev';
+
+  @override
+  String get reefFactoryCooling => 'Chlazení';
+
+  @override
   String get reefFactoryNoTank =>
       'Nejprve přiřaďte nádrž, abyste mohli uložit hodnoty.';
 
@@ -3200,6 +3206,29 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get reefBeatDosingQueue => 'Dnešní fronta dávek';
+
+  @override
+  String get reefBeatDosingQueueEmpty => 'Dnes už žádné dávky nezbývají';
+
+  @override
+  String reefBeatDosingQueueTotal(int count, Object volume) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dávek',
+      few: '$count dávky',
+      one: '1 dávka',
+    );
+    return '$_temp0 · $volume ml';
+  }
+
+  @override
+  String reefBeatDosingQueueVolume(Object volume) {
+    return '$volume ml';
+  }
+
+  @override
   String get reefBeatRecalibration => 'Vyžaduje rekalibraci';
 
   @override
@@ -3267,7 +3296,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatMatRoll => 'Role';
 
   @override
-  String get reefBeatMatRollEmpty => 'Role je spotřebovaná';
+  String get reefBeatMatRollEmpty => 'Konec role';
 
   @override
   String get reefBeatMatRollLow => 'Role se blíží ke konci';

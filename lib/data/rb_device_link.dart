@@ -1,6 +1,7 @@
-// Transport for Red Sea ReefBeat local devices: two plain HTTP GETs against
-// the device's LAN REST API (`/device-info` for identity, `/dashboard` for
-// live status), decoded by rb_protocol.dart.
+// Transport for Red Sea ReefBeat local devices: plain HTTP GETs against the
+// device's LAN REST API (`/device-info` for identity, `/dashboard` for live
+// status, plus a ReefDose's `/dosing-queue` on demand), decoded by
+// rb_protocol.dart.
 //
 // A refresh is a transient request pair (no persistent connection) — it
 // matches the manual-refresh UX of the ReefFactory dashboard and disturbs
@@ -75,6 +76,12 @@ abstract class RbDeviceLink {
   /// Reads one snapshot from the device at [host] (IP or hostname, optionally
   /// with a port). Throws [RbLinkException] on any failure.
   Future<RbSnapshot> readOnce(String host);
+
+  /// Reads a ReefDose's remaining doses for today (`GET /dosing-queue`). Only
+  /// ReefDose pumps serve it, so this is an on-demand read behind the card's
+  /// menu rather than part of [readOnce]. Throws [RbLinkException] on any
+  /// failure; an empty list means the day's dosing is done.
+  Future<List<RbDoseQueueEntry>> readDosingQueue(String host);
 }
 
 /// The cheap identity-only probe LAN discovery uses: one `GET /device-info`,
@@ -124,9 +131,24 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
 
     switch (info.hwType) {
       case kRbDosingHwType:
+        final dashboard = await _getJson(h, '/dashboard');
+        // The dosing queue labels each dose with the head's *short* supplement
+        // name ("Zin"), and only `/head/<n>/settings` carries it — so every
+        // head the dashboard reported is read too. Doing it on every refresh
+        // (rather than once at add time) is what keeps the mapping right after
+        // the keeper reassigns a supplement in the ReefBeat app. Tolerant: a
+        // head whose settings don't answer just keeps no abbreviation.
+        final headSettings = <int, Map<String, Object?>>{};
+        for (final head in RbDoseStatus.fromJson(dashboard).heads) {
+          final settings = await _tryGetJson(
+            h,
+            '/head/${head.number}/settings',
+          );
+          if (settings != null) headSettings[head.number] = settings;
+        }
         return RbSnapshot(
           info: info,
-          dose: RbDoseStatus.fromJson(await _getJson(h, '/dashboard')),
+          dose: RbDoseStatus.fromJson(dashboard, headSettings: headSettings),
         );
       case kRbAtoHwType:
         return RbSnapshot(
@@ -167,6 +189,15 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
     }
   }
 
+  @override
+  Future<List<RbDoseQueueEntry>> readDosingQueue(String host) async {
+    final decoded = await _get(_normalizeHost(host), '/dosing-queue');
+    if (decoded is! List) {
+      throw const RbLinkException(RbLinkError.protocol, 'not a JSON array');
+    }
+    return RbDoseQueueEntry.listFromJson(decoded);
+  }
+
   /// A [_getJson] whose failure is not fatal — for endpoints that only enrich
   /// a card (the mat's `/configuration`, the wave's `/wifi`).
   Future<Map<String, Object?>?> _tryGetJson(String host, String path) async {
@@ -178,6 +209,16 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
   }
 
   Future<Map<String, Object?>> _getJson(String host, String path) async {
+    final decoded = await _get(host, path);
+    if (decoded is! Map<String, Object?>) {
+      throw const RbLinkException(RbLinkError.protocol, 'not a JSON object');
+    }
+    return decoded;
+  }
+
+  /// One GET, decoded. The shape is the caller's business — `/dashboard` and
+  /// friends answer with an object, `/dosing-queue` with an array.
+  Future<Object?> _get(String host, String path) async {
     final client = _clientFactory()..connectionTimeout = timeout;
     try {
       final request = await client
@@ -191,11 +232,7 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
           .transform(utf8.decoder)
           .join()
           .timeout(timeout);
-      final decoded = jsonDecode(body);
-      if (decoded is! Map<String, Object?>) {
-        throw const RbLinkException(RbLinkError.protocol, 'not a JSON object');
-      }
-      return decoded;
+      return jsonDecode(body);
     } on RbLinkException {
       rethrow;
     } on TimeoutException {

@@ -246,6 +246,9 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
                           onMove: tanks.any((t) => t.id != d.tankId)
                               ? () => _moveDevice(d)
                               : null,
+                          onShowQueue: rbIsDoseModel(d.model)
+                              ? () => _showDosingQueue(d)
+                              : null,
                           onRemove: () => _confirmRemove(d),
                         );
                       },
@@ -305,6 +308,27 @@ class _ReefBeatScreenState extends ConsumerState<ReefBeatScreen> {
           .read(dbProvider)
           .updateDeviceNameTank(d.id, name: d.name, tankId: tankId);
     }
+  }
+
+  /// Shows what [d] still has scheduled for today (`/dosing-queue`). Read on
+  /// open rather than with the card — only a ReefDose serves it, and it is a
+  /// detail worth one extra request when asked for, not on every refresh.
+  Future<void> _showDosingQueue(DeviceRecord d) async {
+    final address = d.address;
+    if (address == null || address.isEmpty) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => _DosingQueueSheet(
+        title: deviceDisplayName(d),
+        // The queue names heads by abbreviation only; the last refresh's heads
+        // carry the abbreviation → supplement mapping (see [RbDoseHead]).
+        status: _live[d.identifier]?.snapshot?.dose,
+        load: () => ref.read(rbDeviceLinkProvider).readDosingQueue(address),
+        errorTextOf: (e) => _errorText(AppLocalizations.of(ctx), e),
+      ),
+    );
   }
 
   Future<void> _confirmRemove(DeviceRecord d) async {
@@ -479,6 +503,7 @@ class _DeviceCard extends StatelessWidget {
     required this.errorTextOf,
     required this.onRename,
     required this.onMove,
+    required this.onShowQueue,
     required this.onRemove,
   });
 
@@ -495,6 +520,9 @@ class _DeviceCard extends StatelessWidget {
 
   /// Null when there is no other tank to move to (the item is hidden).
   final VoidCallback? onMove;
+
+  /// Null for anything but a ReefDose — only those serve a dosing queue.
+  final VoidCallback? onShowQueue;
   final VoidCallback onRemove;
 
   @override
@@ -535,6 +563,7 @@ class _DeviceCard extends StatelessWidget {
                   onSelected: (v) {
                     if (v == 'rename') onRename();
                     if (v == 'move') onMove?.call();
+                    if (v == 'queue') onShowQueue?.call();
                     if (v == 'remove') onRemove();
                   },
                   itemBuilder: (_) => [
@@ -543,6 +572,11 @@ class _DeviceCard extends StatelessWidget {
                       PopupMenuItem(
                         value: 'move',
                         child: Text(l.reefBeatMoveToTank),
+                      ),
+                    if (onShowQueue != null)
+                      PopupMenuItem(
+                        value: 'queue',
+                        child: Text(l.reefBeatDosingQueue),
                       ),
                     PopupMenuItem(
                       value: 'remove',
@@ -785,8 +819,10 @@ class _MatStatus extends StatelessWidget {
       _ => '—',
     };
 
-    // The roll is only called "running low" when it still has fleece on it —
-    // once spent it gets the stronger chip instead.
+    // "End of roll" is raised only when the mat itself says so (its `mode`);
+    // until then an urgent roll gets the "running low" chip, colored by the
+    // severity — the firmware's level and remaining length both read empty
+    // long before the fleece is actually gone.
     final lowChip = !status.rollSpent &&
         (severity == RbStockSeverity.caution ||
             severity == RbStockSeverity.critical);
@@ -1414,17 +1450,17 @@ class _StatusRow extends StatelessWidget {
   }
 }
 
+/// Trims trailing ".0" so whole millilitres render bare ("40"), fractional
+/// ones with one decimal ("26.7") — matching the pump's own display. Shared by
+/// the head rows and the dosing-queue sheet.
+String _fmtMl(double v) =>
+    v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1);
+
 /// One dosing head: supplement name + remaining-days tag, a horizontal
 /// dosed-today gauge, and any per-head warnings.
 class _HeadRow extends StatelessWidget {
   const _HeadRow({required this.head});
   final RbDoseHead head;
-
-  /// Trims trailing ".0" so whole millilitres render bare ("40"), fractional
-  /// ones with one decimal ("26.7") — matching the pump's own display.
-  static String _fmtMl(double v) => v == v.roundToDouble()
-      ? v.round().toString()
-      : v.toStringAsFixed(1);
 
   @override
   Widget build(BuildContext context) {
@@ -1695,6 +1731,180 @@ class _WarnChip extends StatelessWidget {
             .labelSmall
             ?.copyWith(color: color, fontWeight: FontWeight.w600),
       ),
+    );
+  }
+}
+
+/// Bottom sheet: what a ReefDose still has scheduled for today, read live from
+/// its `/dosing-queue` when the sheet opens. The pump drops each dose from the
+/// queue as it delivers it, so an empty list is a finished day, not a fault.
+class _DosingQueueSheet extends StatefulWidget {
+  const _DosingQueueSheet({
+    required this.title,
+    required this.status,
+    required this.load,
+    required this.errorTextOf,
+  });
+
+  /// The device's display name — the sheet's own title says what is listed.
+  final String title;
+
+  /// The pump's last-read status, used to resolve each queued dose's head
+  /// abbreviation to the supplement the card names. Null before a successful
+  /// refresh, in which case the rows fall back to the abbreviation.
+  final RbDoseStatus? status;
+  final Future<List<RbDoseQueueEntry>> Function() load;
+  final String Function(RbLinkError) errorTextOf;
+
+  @override
+  State<_DosingQueueSheet> createState() => _DosingQueueSheetState();
+}
+
+class _DosingQueueSheetState extends State<_DosingQueueSheet> {
+  List<RbDoseQueueEntry>? _entries;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    try {
+      final entries = await widget.load();
+      if (!mounted) return;
+      setState(() => _entries = entries);
+    } on RbLinkException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = widget.errorTextOf(e.error));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+    final entries = _entries;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.reefBeatDosingQueue, style: t.titleLarge),
+          const SizedBox(height: 2),
+          Text(
+            widget.title,
+            style: t.bodySmall?.copyWith(color: tokens.textDim),
+          ),
+          const SizedBox(height: 16),
+          if (_error != null)
+            Text(
+              _error!,
+              style: t.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            )
+          else if (entries == null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: LinearProgressIndicator(),
+            )
+          else if (entries.isEmpty)
+            Text(
+              l.reefBeatDosingQueueEmpty,
+              style: t.bodyMedium?.copyWith(color: tokens.textDim),
+            )
+          else ...[
+            Text(
+              l.reefBeatDosingQueueTotal(
+                entries.length,
+                _fmtMl(entries.fold(0, (sum, e) => sum + (e.volumeMl ?? 0))),
+              ),
+              style: t.labelMedium?.copyWith(color: tokens.textDim),
+            ),
+            const SizedBox(height: 10),
+            // The queue can be long (a KH head alone runs a dozen doses a
+            // day), so it scrolls inside the sheet rather than growing past it.
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: entries.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (_, i) => _QueueRow(
+                  entry: entries[i],
+                  head: widget.status?.headForShortName(entries[i].head),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One queued dose: when it is due, which head it is for, how much.
+class _QueueRow extends StatelessWidget {
+  const _QueueRow({required this.entry, required this.head});
+  final RbDoseQueueEntry entry;
+
+  /// The head the pump's abbreviation resolved to, or null when nothing
+  /// matched — see [RbDoseStatus.headForShortName].
+  final RbDoseHead? head;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).textTheme;
+    final tokens = ReefTokens.of(context);
+    final volume = entry.volumeMl;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          MaterialLocalizations.of(context).formatTimeOfDay(
+            TimeOfDay(hour: entry.hour, minute: entry.minute),
+          ),
+          style: ReefTokens.monoTextStyle.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: tokens.text,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          // Named as the card names it, so a queued "Zin" reads "Zinc". With
+          // no matching head the pump's own abbreviation stands — it is still
+          // more use than nothing.
+          child: Text(
+            switch (head) {
+              final RbDoseHead h when h.supplement?.trim().isNotEmpty == true =>
+                h.supplement!.trim(),
+              final RbDoseHead h => l.reefBeatHead(h.number),
+              _ when entry.head?.trim().isNotEmpty == true =>
+                entry.head!.trim(),
+              _ => '—',
+            },
+            style: t.bodyMedium,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (volume != null) ...[
+          const SizedBox(width: 8),
+          Text(
+            l.reefBeatDosingQueueVolume(_fmtMl(volume)),
+            style: ReefTokens.monoTextStyle.copyWith(
+              fontSize: 13,
+              color: tokens.textDim,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

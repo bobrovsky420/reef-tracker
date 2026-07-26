@@ -3014,6 +3014,12 @@ class AppLocalizationsDe extends AppLocalizations {
       'Tippe auf „Alle aktualisieren“, um den aktuellen Wert zu lesen.';
 
   @override
+  String get reefFactoryHeating => 'Heizen';
+
+  @override
+  String get reefFactoryCooling => 'Kühlen';
+
+  @override
   String get reefFactoryNoTank =>
       'Weise zuerst ein Becken zu, um Messwerte zu speichern.';
 
@@ -3189,6 +3195,28 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get reefBeatDosingQueue => 'Heutige Dosierliste';
+
+  @override
+  String get reefBeatDosingQueueEmpty => 'Heute keine Dosierungen mehr';
+
+  @override
+  String reefBeatDosingQueueTotal(int count, Object volume) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Dosierungen',
+      one: '1 Dosierung',
+    );
+    return '$_temp0 · $volume ml';
+  }
+
+  @override
+  String reefBeatDosingQueueVolume(Object volume) {
+    return '$volume ml';
+  }
+
+  @override
   String get reefBeatRecalibration => 'Rekalibrierung nötig';
 
   @override
@@ -3255,7 +3283,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reefBeatMatRoll => 'Rolle';
 
   @override
-  String get reefBeatMatRollEmpty => 'Rolle verbraucht';
+  String get reefBeatMatRollEmpty => 'Rollenende erreicht';
 
   @override
   String get reefBeatMatRollLow => 'Rolle geht zu Ende';

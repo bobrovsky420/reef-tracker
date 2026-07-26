@@ -3067,6 +3067,12 @@ class AppLocalizationsPl extends AppLocalizations {
       'Dotknij „Odśwież wszystkie”, aby odczytać bieżącą wartość.';
 
   @override
+  String get reefFactoryHeating => 'Grzanie';
+
+  @override
+  String get reefFactoryCooling => 'Chłodzenie';
+
+  @override
   String get reefFactoryNoTank =>
       'Najpierw przypisz zbiornik, aby zapisać odczyty.';
 
@@ -3245,6 +3251,30 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get reefBeatDosingQueue => 'Dzisiejsza kolejka dozowania';
+
+  @override
+  String get reefBeatDosingQueueEmpty => 'Na dziś nie ma już dawek';
+
+  @override
+  String reefBeatDosingQueueTotal(int count, Object volume) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dawki',
+      many: '$count dawek',
+      few: '$count dawki',
+      one: '1 dawka',
+    );
+    return '$_temp0 · $volume ml';
+  }
+
+  @override
+  String reefBeatDosingQueueVolume(Object volume) {
+    return '$volume ml';
+  }
+
+  @override
   String get reefBeatRecalibration => 'Wymaga rekalibracji';
 
   @override
@@ -3313,7 +3343,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefBeatMatRoll => 'Rolka';
 
   @override
-  String get reefBeatMatRollEmpty => 'Rolka zużyta';
+  String get reefBeatMatRollEmpty => 'Koniec rolki';
 
   @override
   String get reefBeatMatRollLow => 'Rolka się kończy';

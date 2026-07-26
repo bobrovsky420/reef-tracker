@@ -4989,6 +4989,18 @@ abstract class AppLocalizations {
   /// **'Tap Refresh all to read the current value.'**
   String get reefFactoryNotReadYet;
 
+  /// Badge on a Temperature Controller card while its heater output is running
+  ///
+  /// In en, this message translates to:
+  /// **'Heating'**
+  String get reefFactoryHeating;
+
+  /// Badge on a Temperature Controller card while its cooling output is running
+  ///
+  /// In en, this message translates to:
+  /// **'Cooling'**
+  String get reefFactoryCooling;
+
   /// No description provided for @reefFactoryNoTank.
   ///
   /// In en, this message translates to:
@@ -5271,6 +5283,30 @@ abstract class AppLocalizations {
   /// **'{dosed} ml'**
   String reefBeatDosedNoDaily(Object dosed);
 
+  /// Card menu item and sheet title: the doses a ReefDose pump still has scheduled for today
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s dosing queue'**
+  String get reefBeatDosingQueue;
+
+  /// Shown in the dosing-queue sheet when the pump has finished every scheduled dose for today
+  ///
+  /// In en, this message translates to:
+  /// **'No doses left today'**
+  String get reefBeatDosingQueueEmpty;
+
+  /// Summary line above the dosing queue: how many doses are still due today and their total volume
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 dose} other{{count} doses}} · {volume} ml'**
+  String reefBeatDosingQueueTotal(int count, Object volume);
+
+  /// Volume of a single queued dose; {volume} is a pre-formatted number
+  ///
+  /// In en, this message translates to:
+  /// **'{volume} ml'**
+  String reefBeatDosingQueueVolume(Object volume);
+
   /// No description provided for @reefBeatRecalibration.
   ///
   /// In en, this message translates to:
@@ -5379,10 +5415,10 @@ abstract class AppLocalizations {
   /// **'Roll'**
   String get reefBeatMatRoll;
 
-  /// No description provided for @reefBeatMatRollEmpty.
+  /// Warning chip on the ReefMat card when the mat reports mode "end_of_roll" — the fleece has actually run out and the mat has stopped
   ///
   /// In en, this message translates to:
-  /// **'Roll empty'**
+  /// **'End of roll'**
   String get reefBeatMatRollEmpty;
 
   /// No description provided for @reefBeatMatRollLow.

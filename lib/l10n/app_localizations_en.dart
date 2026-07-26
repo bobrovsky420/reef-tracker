@@ -3001,6 +3001,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap Refresh all to read the current value.';
 
   @override
+  String get reefFactoryHeating => 'Heating';
+
+  @override
+  String get reefFactoryCooling => 'Cooling';
+
+  @override
   String get reefFactoryNoTank => 'Assign a tank first to save readings.';
 
   @override
@@ -3174,6 +3180,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get reefBeatDosingQueue => 'Today\'s dosing queue';
+
+  @override
+  String get reefBeatDosingQueueEmpty => 'No doses left today';
+
+  @override
+  String reefBeatDosingQueueTotal(int count, Object volume) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count doses',
+      one: '1 dose',
+    );
+    return '$_temp0 · $volume ml';
+  }
+
+  @override
+  String reefBeatDosingQueueVolume(Object volume) {
+    return '$volume ml';
+  }
+
+  @override
   String get reefBeatRecalibration => 'Needs recalibration';
 
   @override
@@ -3240,7 +3268,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reefBeatMatRoll => 'Roll';
 
   @override
-  String get reefBeatMatRollEmpty => 'Roll empty';
+  String get reefBeatMatRollEmpty => 'End of roll';
 
   @override
   String get reefBeatMatRollLow => 'Roll running low';

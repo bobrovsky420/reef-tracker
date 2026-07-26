@@ -2348,9 +2348,15 @@ on the device's Wi-Fi network.
   Salinity/pH scale by ÷10000 (salinity computed from raw conductivity +
   temperature with the meter's own PSS-78 formula; pH a direct value); the
   Temperature Controller scales by ÷1000 with a unit byte (°C/°F, normalised to
-  °C) and an all-`0xFF` "probe unavailable" sentinel. `kRfModels` maps prefix →
+  °C) and an all-`0xFF` "probe unavailable" sentinel. Its payload also carries
+  two **output bytes** (13 heating, 22 cooling; non-zero = energised) that
+  `parseThermal` reads into an `RfThermalState` on the snapshot — the device's
+  own relay state, not an inference from temperature vs setpoint, so it already
+  reflects the controller's hysteresis; both-on resolves to heating exactly as
+  the device's web UI does, and a payload too short to reach byte 22 yields null
+  rather than a guess. `kRfModels` maps prefix →
   `RfModelSpec` {telemetry `name`, vendor `displayName`, connect/refresh commands,
-  parser}; a new meter is one entry + parser.
+  parser, optional `parseThermal`}; a new meter is one entry + parser.
 - **Transport** (`data/rf_device_link.dart`): abstract `RfDeviceLink` (fake-able,
   like `HannaMeterLink`) + a `dart:io` WebSocket impl. One `readOnce(host)` per
   manual refresh = transient connect→read→close (no persistent socket; the device
@@ -2364,7 +2370,13 @@ on the device's Wi-Fi network.
   devices sharing a position — one card per
   device, headed by **nothing but that display name** (the model code and IP
   are not shown: they identify the device to the app, not to a keeper, who
-  reads the card by the name they gave it), carrying a **Save**
+  reads the card by the name they gave it) plus — Temperature Controller only —
+  a **Heating / Cooling badge** beside that name whenever the snapshot's
+  `RfThermalState` says an output is running (idle and every other model show
+  none: an always-present badge carries no information, and idle is where a
+  healthy tank sits most of the day). Warm `caution` for heating and the
+  actinic `primary` for cooling — both read as "running" without borrowing the
+  alarm red. The card carries a **Save**
   (persist to the device's assigned tank via `insertReadingGroup` +
   `addTrackedParameter`, impossible values dropped), plus common **Refresh
   all** / **Save all** actions over the visible devices. Reading is
@@ -2442,12 +2454,15 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   no numeric total), fleece usage (`today_usage`, `daily_average_usage`), the
   `setup_date` the roll was fitted, and the three actionable flags
   (`auto_advance`, `is_advancing`, `unclean_sensor`; absent flags stay
-  optimistic so firmware drift can't invent a warning). `rollSpent` (level
-  empty **or** nothing remaining) and `rollSeverity` (reported days through
-  `rbStockSeverity`, else the coarse level, and always critical when spent)
-  drive the card's colors. The mat's mode/schedule settings, EC-sensor
-  connection, last-advance cause and motor-step counters are deliberately not
-  modelled. For a ReefRun (`RbRunStatus`): device flags plus one `RbRunPump`
+  optimistic so firmware drift can't invent a warning). `rollSpent` is
+  `mode == "end_of_roll"` and *only* that — a running mat reports
+  `roll_level: "empty"` and `remaining_length: 0` for days before the fleece is
+  actually gone, so neither may raise the "End of roll" chip; until the mat
+  stops, an urgent roll gets the "running low" chip instead. `rollSeverity`
+  (reported days through `rbStockSeverity`, else the coarse level, and always
+  critical when spent) drives the card's colors. The mat's schedule settings,
+  EC-sensor connection, last-advance cause and motor-step counters are
+  deliberately not modelled. For a ReefRun (`RbRunStatus`): device flags plus one `RbRunPump`
   per `pump_<n>` block (name, type/model, `state` — anything but
   "operational" is `faulted`, an *absent* state is not — speed and pulse in
   percent, motor temperature, missing-pump/-sensor flags, schedule and
@@ -2497,6 +2512,18 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   (`RbMatStatus.modelCode` = "RSMAT250" — `/device-info` only ever says
   "RSMAT"), and a **wave** reads `/mode` (required) + a tolerant `/wifi`. A
   failed tolerant call degrades the card, never the refresh.
+  A **ReefDose** additionally reads `/head/<n>/settings` for each head the
+  dashboard reported — tolerantly, one call per head — purely for
+  `supplement.short_name` (`RbDoseHead.shortName`), the abbreviation the dosing
+  queue identifies a head by. Reading it on *every* refresh rather than once at
+  add time is deliberate: it is what keeps the mapping right for devices added
+  before the feature existed and after a supplement is reassigned in the
+  ReefBeat app.
+  `readDosingQueue(host)` is the one read *outside* a snapshot: a ReefDose's
+  `GET /dosing-queue`, fetched on demand from the card menu rather than on every
+  refresh. It is also the only endpoint answering with a JSON **array**, so the
+  GET helper returns the decoded body untyped and `_getJson` (object) /
+  `readDosingQueue` (array) assert the shape they need.
   `RbIdentityProbe.identify(host)` is a separate, deliberately narrow
   interface — one `/device-info` GET, no dashboard — used by LAN discovery so
   it can probe dozens of hosts cheaply; it is kept off `RbDeviceLink` so the
@@ -2517,7 +2544,22 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   missed dose, device clock error, backup battery low) in caution/critical
   soft-token style. Switched-off heads (`RbDoseHead.switchedOff`: `state !=
   "on"` **or** `daily_doses: 0` — the firmware reports off heads both ways)
-  render dimmed with an "Off" tag. An ATO card renders `_AtoStatus` instead:
+  render dimmed with an "Off" tag. A ReefDose card's menu carries one extra
+  item, **Today's dosing queue** (offered from the *stored* model via
+  `rbIsDoseModel`, so it is there before any read lands): a bottom sheet that
+  calls `readDosingQueue` on open and lists the remaining doses as
+  time · head · volume, with a count-and-total summary above a scrolling list.
+  `RbDoseQueueEntry` carries `time` as seconds from local midnight (37200 →
+  10:20, rendered through `MaterialLocalizations.formatTimeOfDay` so it follows
+  the device's 12/24-hour setting), the head's *abbreviation* ("Zin"), the
+  volume and the raw `dose_type`; entries without a usable in-day time are
+  dropped and the rest sorted by time. `RbDoseStatus.headForShortName` resolves
+  that abbreviation against the last refresh's `RbDoseHead.shortName`
+  (case-insensitive, first head wins) so a row reads "Zinc" — the same label
+  the card carries — falling back to the raw abbreviation when nothing matches
+  (never refreshed, or reassigned since). The pump removes a dose from the queue once delivered, so an
+  empty list is a finished day, not a fault. An ATO card renders `_AtoStatus`
+  instead:
   warning chips (leak = critical, sensor trouble = caution, "filling now" =
   healthy) above label–value rows — water level (healthy/caution-colored),
   probe temperature, today's fills · volume, evaporation (≈/day), and the

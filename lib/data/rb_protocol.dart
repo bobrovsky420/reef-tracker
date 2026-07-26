@@ -122,6 +122,12 @@ String rbModelDisplayName(String hwModel) =>
 bool rbIsWaveModel(String? hwModel) =>
     hwModel != null && hwModel.toUpperCase().startsWith('RSWAVE');
 
+/// Whether [hwModel] is a ReefDose — the only family that serves a dosing
+/// queue, so the card's menu item is offered from the *stored* model, before
+/// any read has landed. Prefix-matched like [rbIsWaveModel].
+bool rbIsDoseModel(String? hwModel) =>
+    hwModel != null && hwModel.toUpperCase().startsWith('RSDOSE');
+
 double? _asDouble(Object? v) => switch (v) {
   final num n => n.toDouble(),
   _ => null,
@@ -178,6 +184,7 @@ class RbDoseHead {
   const RbDoseHead({
     required this.number,
     this.supplement,
+    this.shortName,
     this.enabled = true,
     this.autoDosedToday = 0,
     this.manualDosedToday = 0,
@@ -196,6 +203,12 @@ class RbDoseHead {
 
   /// The supplement name as configured in the ReefBeat app.
   final String? supplement;
+
+  /// The supplement's abbreviation ("Zin" for Zinc, "KH", "Ca") — the label
+  /// the dosing queue identifies a head by, and the only thing tying a queued
+  /// dose to a head. `/dashboard` doesn't carry it; it comes from the head's
+  /// own `/head/<n>/settings`, so it is null when that wasn't read.
+  final String? shortName;
 
   /// `state == "on"`.
   final bool enabled;
@@ -235,11 +248,24 @@ class RbDoseHead {
   /// *absent* `daily_doses` stays tolerant and does not count as off.
   bool get switchedOff => !enabled || dailyDoses == 0;
 
-  static RbDoseHead fromJson(int number, Map<String, Object?> json) {
+  /// [settings] is the head's optional `/head/<n>/settings` payload, read only
+  /// for the supplement's [shortName]; everything else comes from `/dashboard`.
+  static RbDoseHead fromJson(
+    int number,
+    Map<String, Object?> json, {
+    Map<String, Object?>? settings,
+  }) {
     final missed = json['missed_dose'];
+    final supplement = settings?['supplement'];
+    final shortName = supplement is Map<String, Object?>
+        ? supplement['short_name']
+        : null;
     return RbDoseHead(
       number: number,
       supplement: json['supplement'] as String?,
+      shortName: shortName is String && shortName.trim().isNotEmpty
+          ? shortName.trim()
+          : null,
       enabled: json['state'] == null || json['state'] == 'on',
       autoDosedToday: _asDouble(json['auto_dosed_today']) ?? 0,
       manualDosedToday: _asDouble(json['manual_dosed_today']) ?? 0,
@@ -278,7 +304,26 @@ class RbDoseStatus {
   /// Whether the battery flag warrants a warning chip.
   bool get batteryWarning => batteryLevel != null && batteryLevel != 'high';
 
-  static RbDoseStatus fromJson(Map<String, Object?> json) {
+  /// The head a queued dose labelled [shortName] belongs to, or null when no
+  /// head claims that abbreviation — the pump was read before the head
+  /// settings were, or the supplement was reassigned since. Matched
+  /// case-insensitively; the first head wins if two share an abbreviation.
+  RbDoseHead? headForShortName(String? shortName) {
+    final wanted = shortName?.trim().toLowerCase();
+    if (wanted == null || wanted.isEmpty) return null;
+    for (final head in heads) {
+      if (head.shortName?.toLowerCase() == wanted) return head;
+    }
+    return null;
+  }
+
+  /// [headSettings] maps head number → that head's `/head/<n>/settings`
+  /// payload, for the abbreviations `/dashboard` omits. Heads without an entry
+  /// simply carry no [RbDoseHead.shortName].
+  static RbDoseStatus fromJson(
+    Map<String, Object?> json, {
+    Map<int, Map<String, Object?>> headSettings = const {},
+  }) {
     final headsJson = json['heads'];
     final heads = <RbDoseHead>[];
     if (headsJson is Map<String, Object?>) {
@@ -286,7 +331,9 @@ class RbDoseStatus {
         final number = int.tryParse(entry.key);
         final value = entry.value;
         if (number == null || value is! Map<String, Object?>) continue;
-        heads.add(RbDoseHead.fromJson(number, value));
+        heads.add(
+          RbDoseHead.fromJson(number, value, settings: headSettings[number]),
+        );
       }
       heads.sort((a, b) => a.number.compareTo(b.number));
     }
@@ -295,6 +342,68 @@ class RbDoseStatus {
       timeError: json['time_error'] == true,
       heads: heads,
     );
+  }
+}
+
+/// One scheduled dose still to come today, from a ReefDose's `GET
+/// /dosing-queue` — a JSON *array*, unlike every other endpoint. The pump drops
+/// an entry once it has been delivered, so the queue is what is left of the day,
+/// not the whole schedule.
+class RbDoseQueueEntry {
+  const RbDoseQueueEntry({
+    required this.secondsFromMidnight,
+    this.head,
+    this.volumeMl,
+    this.doseType,
+  });
+
+  /// Time of day the dose is due, in seconds from local midnight (`37200` →
+  /// 10:20). Clamped to a single day so a stray value can't render as "27:15".
+  final int secondsFromMidnight;
+
+  /// The head's short name as the pump labels it in the queue ("KH") — its own
+  /// wording, which is not necessarily the supplement name shown on the card
+  /// ("Balling light KH").
+  final String? head;
+
+  /// Volume to be delivered (ml).
+  final double? volumeMl;
+
+  /// The pump's own classification ("Auto", …) — kept verbatim, unmapped.
+  final String? doseType;
+
+  int get hour => secondsFromMidnight ~/ 3600;
+  int get minute => (secondsFromMidnight % 3600) ~/ 60;
+
+  /// Null when the entry carries no usable time — the one field the row is
+  /// built around.
+  static RbDoseQueueEntry? fromJson(Map<String, Object?> json) {
+    final seconds = _asInt(json['time']);
+    if (seconds == null || seconds < 0 || seconds >= Duration.secondsPerDay) {
+      return null;
+    }
+    return RbDoseQueueEntry(
+      secondsFromMidnight: seconds,
+      head: json['head'] is String ? json['head']! as String : null,
+      volumeMl: _asDouble(json['volume']),
+      doseType: json['dose_type'] is String
+          ? json['dose_type']! as String
+          : null,
+    );
+  }
+
+  /// Decodes the whole array, dropping entries that aren't usable objects and
+  /// ordering by time — the pump happens to send them in order, but the list is
+  /// read as a timeline and must not depend on that.
+  static List<RbDoseQueueEntry> listFromJson(List<Object?> json) {
+    final entries = [
+      for (final e in json)
+        if (e is Map<String, Object?>) ?fromJson(e),
+    ];
+    entries.sort(
+      (a, b) => a.secondsFromMidnight.compareTo(b.secondsFromMidnight),
+    );
+    return entries;
   }
 }
 
@@ -405,14 +514,20 @@ class RbAtoStatus {
 /// out of the severity colors.
 enum RbRollLevel { ok, low, empty, unknown }
 
+/// The firmware's `mode` value for a mat that has actually run out and stopped
+/// — the *only* trustworthy signal that the roll is spent. `roll_level` and
+/// `remaining_length` both hit "empty"/0 well before the fleece is gone (a
+/// running mat routinely reports `running_low` with `remaining_length: 0`).
+const String kRbMatEndOfRollMode = 'end_of_roll';
+
 /// The decoded `/dashboard` of a ReefMat roller filter. All lengths are
 /// centimetres (the unit the firmware reports).
 ///
-/// The mat's operating state (`mode`, schedule settings) and its motor-step
-/// counters are deliberately not modelled: the card is about the roll and the
-/// few things a keeper can act on.
+/// The mat's schedule settings and motor-step counters are deliberately not
+/// modelled: the card is about the roll and the few things a keeper can act on.
 class RbMatStatus {
   const RbMatStatus({
+    this.modeRaw,
     this.rollLevelRaw,
     this.daysTillEndOfRoll,
     this.remainingLengthCm,
@@ -431,6 +546,9 @@ class RbMatStatus {
   /// succeeded — `/device-info` only ever reports a bare "RSMAT". Null when the
   /// configuration wasn't readable, in which case the generic name stands.
   final String? modelCode;
+
+  /// The firmware's operating-mode string, verbatim ("auto", "end_of_roll", …).
+  final String? modeRaw;
 
   /// The firmware's roll-level string, verbatim.
   final String? rollLevelRaw;
@@ -479,11 +597,11 @@ class RbMatStatus {
     return RbRollLevel.unknown;
   }
 
-  /// Whether the roll is used up — the firmware says so, or it reports nothing
-  /// left on it.
-  bool get rollSpent =>
-      rollLevel == RbRollLevel.empty ||
-      (remainingLengthCm != null && remainingLengthCm! <= 0);
+  /// Whether the roll is genuinely used up and the mat has stopped. Only
+  /// [kRbMatEndOfRollMode] says that: a mat still running reports
+  /// `remaining_length: 0` and even `roll_level: "empty"` for days beforehand,
+  /// so neither may raise the end-of-roll warning.
+  bool get rollSpent => modeRaw?.toLowerCase() == kRbMatEndOfRollMode;
 
   /// How urgent the roll is, on the same scale as supplement stock and the ATO
   /// reservoir. Null when the device reports neither days nor a level we
@@ -524,9 +642,11 @@ class RbMatStatus {
         material is Map<String, Object?> ? material['name'] as String? : null;
     final installed = json['setup_date'];
     final model = configuration?['model'];
+    final mode = json['mode'];
 
     return RbMatStatus(
       modelCode: model is String && model.isNotEmpty ? model : null,
+      modeRaw: mode is String ? mode : null,
       rollLevelRaw: json['roll_level'] as String?,
       daysTillEndOfRoll: _asInt(json['days_till_end_of_roll']),
       remainingLengthCm: _asDouble(json['remaining_length']),

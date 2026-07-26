@@ -211,6 +211,7 @@ class RfWebSocketLink implements RfDeviceLink, RfIdentityProbe {
                 modelName: spec!.name,
                 modelDisplayName: spec!.displayName,
                 readings: readings,
+                thermal: spec!.parseThermal?.call(frame.payload),
               ),
             );
           }

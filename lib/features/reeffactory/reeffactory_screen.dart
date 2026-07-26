@@ -574,7 +574,26 @@ class _DeviceCard extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
+    final tokens = ReefTokens.of(context);
     final snap = live.snapshot;
+    // What the Temperature Controller's outputs are doing right now. Idle is
+    // deliberately silent — a badge that is always present says nothing, and
+    // "neither output running" is the state a healthy tank sits in most of the
+    // day. Warm amber for heating, the actinic accent for cooling: both read as
+    // "this is running", neither borrows the alarm red.
+    final badge = switch (snap?.thermal) {
+      RfThermalState.heating => (
+          label: l.reefFactoryHeating,
+          color: tokens.caution,
+          soft: tokens.cautionSoft,
+        ),
+      RfThermalState.cooling => (
+          label: l.reefFactoryCooling,
+          color: tokens.primary,
+          soft: tokens.primary.withValues(alpha: 0.14),
+        ),
+      _ => null,
+    };
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -588,6 +607,14 @@ class _DeviceCard extends ConsumerWidget {
                 Expanded(
                   child: Text(deviceDisplayName(device), style: t.titleMedium),
                 ),
+                if (badge != null) ...[
+                  const SizedBox(width: 8),
+                  _StateBadge(
+                    label: badge.label,
+                    color: badge.color,
+                    softColor: badge.soft,
+                  ),
+                ],
                 if (canReorder)
                   ReorderableDragStartListener(
                     index: index,
@@ -664,6 +691,38 @@ class _DeviceCard extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A small pill in a card header stating what the device is doing right now
+/// (same shape as the ReefBeat dashboard's status chips).
+class _StateBadge extends StatelessWidget {
+  const _StateBadge({
+    required this.label,
+    required this.color,
+    required this.softColor,
+  });
+
+  final String label;
+  final Color color;
+  final Color softColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: softColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.copyWith(color: color, fontWeight: FontWeight.w600),
       ),
     );
   }

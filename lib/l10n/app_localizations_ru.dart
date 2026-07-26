@@ -3061,6 +3061,12 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нажмите «Обновить все», чтобы считать текущее значение.';
 
   @override
+  String get reefFactoryHeating => 'Нагрев';
+
+  @override
+  String get reefFactoryCooling => 'Охлаждение';
+
+  @override
   String get reefFactoryNoTank =>
       'Сначала назначьте аквариум, чтобы сохранять показания.';
 
@@ -3237,6 +3243,30 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get reefBeatDosingQueue => 'Очередь дозирования на сегодня';
+
+  @override
+  String get reefBeatDosingQueueEmpty => 'На сегодня доз больше нет';
+
+  @override
+  String reefBeatDosingQueueTotal(int count, Object volume) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дозы',
+      many: '$count доз',
+      few: '$count дозы',
+      one: '$count доза',
+    );
+    return '$_temp0 · $volume мл';
+  }
+
+  @override
+  String reefBeatDosingQueueVolume(Object volume) {
+    return '$volume мл';
+  }
+
+  @override
   String get reefBeatRecalibration => 'Требуется рекалибровка';
 
   @override
@@ -3305,7 +3335,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatMatRoll => 'Рулон';
 
   @override
-  String get reefBeatMatRollEmpty => 'Рулон закончился';
+  String get reefBeatMatRollEmpty => 'Конец рулона';
 
   @override
   String get reefBeatMatRollLow => 'Рулон заканчивается';

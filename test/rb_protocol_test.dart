@@ -131,8 +131,43 @@ const _matDeviceInfoJson = '''
 }
 ''';
 
-/// Golden vector: the same mat's `GET /dashboard` (2026-07-25) — a roll that
-/// has just run out.
+/// Golden vector: the RSDOSE4's `GET /head/1/settings` (2026-07-26), trimmed
+/// to the block that matters — `supplement.short_name` is the abbreviation the
+/// dosing queue labels a dose with, and `/dashboard` reports only the full
+/// `name`.
+const _headSettingsJson = '''
+{
+  "state": "on",
+  "container_volume": 4654.109,
+  "vps": 0.059848,
+  "supplement": {
+    "uid": "19c1c766-407f-47e3-a4ea-71cecd4c0d31",
+    "name": "Balling light KH",
+    "display_name": "KH",
+    "short_name": "KH",
+    "brand_name": "Fauna Marine"
+  },
+  "schedule": {"type": "custom", "dd": 40, "days": [1,2,3,4,5,6,7]}
+}
+''';
+
+/// Golden vector: the RSDOSE4's `GET /dosing-queue` (2026-07-26, 08:10 local)
+/// — a JSON *array* of the doses still due today. The KH head runs 6 doses a
+/// day and had delivered one, so five remain; the three heads that dose once a
+/// day had already run and are absent entirely.
+const _dosingQueueJson = '''
+[
+  {"head":"KH","time":37200,"volume":6.666667,"dose_type":"Auto"},
+  {"head":"KH","time":45600,"volume":6.666667,"dose_type":"Auto"},
+  {"head":"KH","time":54000,"volume":6.666667,"dose_type":"Auto"},
+  {"head":"KH","time":62400,"volume":6.666667,"dose_type":"Auto"},
+  {"head":"KH","time":70800,"volume":6.666667,"dose_type":"Auto"}
+]
+''';
+
+/// Golden vector: the same mat's `GET /dashboard` (2026-07-25) — a *running*
+/// mat that already reports `remaining_length: 0`, which is why neither that
+/// nor `roll_level` may be read as "the roll is spent".
 const _matDashboardJson = '''
 {
   "mode": "auto",
@@ -153,6 +188,39 @@ const _matDashboardJson = '''
   "today_usage": 41,
   "daily_average_usage": 84.1,
   "total_usage": 3250.2,
+  "remaining_length": 0,
+  "material": {
+    "name": "32 Meter",
+    "external_diameter": 10.6,
+    "thickness": 0.023,
+    "is_partial": false
+  }
+}
+''';
+
+/// Golden vector: the same mat's `GET /dashboard` (2026-07-26) once the roll
+/// had genuinely run out and the mat had stopped — `mode` is the only field
+/// that changed meaningfully from [_matDashboardJson].
+const _matEndOfRollDashboardJson = '''
+{
+  "mode": "end_of_roll",
+  "is_internet_connected": true,
+  "is_ec_sensor_connected": true,
+  "unclean_sensor": false,
+  "auto_advance": true,
+  "is_advancing": false,
+  "last_advance_cause": "button",
+  "roll_level": "empty",
+  "days_till_end_of_roll": 0,
+  "internal_ec_average": 0,
+  "external_ec_average": 0,
+  "setup_date": "2026-06-06T11:40:55Z",
+  "cumulative_steps": 12917,
+  "device_setup_date": 1766490401,
+  "lifetime_steps": 72130,
+  "today_usage": 12.4,
+  "daily_average_usage": 85.6,
+  "total_usage": 3291,
   "remaining_length": 0,
   "material": {
     "name": "32 Meter",
@@ -266,6 +334,55 @@ void main() {
       expect(off.recalibrationRequired, isTrue);
     });
 
+    test('head settings add the supplement abbreviation', () {
+      final status = RbDoseStatus.fromJson(
+        {
+          'heads': {
+            '1': {'supplement': 'Balling light KH'},
+            '2': {'supplement': 'Zinc'},
+            '3': {'supplement': 'Nickel'},
+          },
+        },
+        headSettings: {
+          1: _decode(_headSettingsJson),
+          // Malformed / partial settings must not cost the head its row.
+          2: const {'supplement': 'not an object'},
+          // Head 3 wasn't readable at all.
+        },
+      );
+      expect(
+        [for (final h in status.heads) h.shortName],
+        ['KH', null, null],
+      );
+    });
+
+    test('a queued abbreviation resolves to its head', () {
+      final status = RbDoseStatus.fromJson(
+        {
+          'heads': {
+            '1': {'supplement': 'Balling light KH'},
+            '2': {'supplement': 'Zinc'},
+          },
+        },
+        headSettings: {
+          1: const {
+            'supplement': {'short_name': 'KH'},
+          },
+          2: const {
+            'supplement': {'short_name': 'Zin'},
+          },
+        },
+      );
+      expect(status.headForShortName('Zin')?.supplement, 'Zinc');
+      // The queue's casing/padding must not decide whether a head is found.
+      expect(status.headForShortName(' zin ')?.number, 2);
+      expect(status.headForShortName('KH')?.number, 1);
+      // Reassigned since the last refresh, or never read → no match.
+      expect(status.headForShortName('Mg'), isNull);
+      expect(status.headForShortName(''), isNull);
+      expect(status.headForShortName(null), isNull);
+    });
+
     test('an empty or heads-less payload yields no heads', () {
       expect(RbDoseStatus.fromJson(const {}).heads, isEmpty);
       expect(RbDoseStatus.fromJson(const {'heads': 7}).heads, isEmpty);
@@ -284,6 +401,40 @@ void main() {
         [for (final h in status.heads) h.switchedOff],
         [true, false, true, false],
       );
+    });
+  });
+
+  group('RbDoseQueueEntry.listFromJson', () {
+    test('parses the RSDOSE4 golden vector', () {
+      final queue = RbDoseQueueEntry.listFromJson(
+        jsonDecode(_dosingQueueJson) as List<Object?>,
+      );
+      expect(queue, hasLength(5));
+      expect(queue.first.head, 'KH');
+      expect(queue.first.secondsFromMidnight, 37200);
+      expect(queue.first.hour, 10);
+      expect(queue.first.minute, 20);
+      expect(queue.first.volumeMl, closeTo(6.666667, 0.000001));
+      expect(queue.first.doseType, 'Auto');
+      expect(queue.last.hour, 19);
+      expect(queue.last.minute, 40);
+    });
+
+    test('orders by time and drops entries without a usable one', () {
+      final queue = RbDoseQueueEntry.listFromJson(const [
+        {'head': 'Ca', 'time': 45600},
+        {'head': 'KH', 'time': 3600},
+        {'head': 'Mg'}, // no time at all
+        {'head': 'NO3', 'time': 'noon'}, // unparseable
+        {'head': 'PO4', 'time': -1}, // before midnight
+        {'head': 'Fe', 'time': 86400}, // a whole day out
+        'not an object',
+      ]);
+      expect([for (final e in queue) e.head], ['KH', 'Ca']);
+    });
+
+    test('an empty queue is a finished day, not a failure', () {
+      expect(RbDoseQueueEntry.listFromJson(const []), isEmpty);
     });
   });
 
@@ -397,6 +548,7 @@ void main() {
 
     test('parses the RSMAT250 golden vector', () {
       final status = RbMatStatus.fromJson(_decode(_matDashboardJson));
+      expect(status.modeRaw, 'auto');
       expect(status.rollLevelRaw, 'running_low');
       expect(status.rollLevel, RbRollLevel.low);
       expect(status.daysTillEndOfRoll, 0);
@@ -412,9 +564,37 @@ void main() {
         status.rollInstalledAt,
         DateTime.utc(2026, 6, 6, 11, 40, 55).toLocal(),
       );
-      // Nothing left on the roll — spent, whatever the coarse level says.
+      // Still running: `remaining_length: 0` is not the end of the roll, so no
+      // end-of-roll warning — only the urgency the day count earns.
+      expect(status.rollSpent, isFalse);
+      expect(status.rollSeverity, RbStockSeverity.critical);
+    });
+
+    test('parses the end-of-roll golden vector', () {
+      final status = RbMatStatus.fromJson(
+        _decode(_matEndOfRollDashboardJson),
+      );
+      expect(status.modeRaw, 'end_of_roll');
       expect(status.rollSpent, isTrue);
       expect(status.rollSeverity, RbStockSeverity.critical);
+      expect(status.usedTodayCm, 12.4);
+      expect(status.dailyAverageCm, 85.6);
+    });
+
+    test('only the end_of_roll mode marks the roll spent', () {
+      bool spent({String? mode, String? level, double? remaining}) =>
+          RbMatStatus(
+            modeRaw: mode,
+            rollLevelRaw: level,
+            remainingLengthCm: remaining,
+          ).rollSpent;
+      expect(spent(mode: 'end_of_roll'), isTrue);
+      expect(spent(mode: 'END_OF_ROLL'), isTrue);
+      // Everything the firmware reports short of that mode is still running.
+      expect(spent(mode: 'auto', level: 'empty', remaining: 0), isFalse);
+      expect(spent(level: 'end_of_roll'), isFalse);
+      expect(spent(remaining: 0), isFalse);
+      expect(spent(), isFalse);
     });
 
     test('roll level coarsens the firmware strings', () {
@@ -433,8 +613,14 @@ void main() {
     });
 
     test('severity prefers the reported days, then the coarse level', () {
-      RbStockSeverity? sev({int? days, String? level, double? remaining}) =>
+      RbStockSeverity? sev({
+        int? days,
+        String? level,
+        double? remaining,
+        String? mode,
+      }) =>
           RbMatStatus(
+            modeRaw: mode,
             daysTillEndOfRoll: days,
             rollLevelRaw: level,
             remainingLengthCm: remaining,
@@ -442,8 +628,8 @@ void main() {
       expect(sev(days: 30, level: 'high'), RbStockSeverity.healthy);
       expect(sev(days: 10, level: 'high'), RbStockSeverity.caution);
       expect(sev(days: 3, level: 'high'), RbStockSeverity.critical);
-      // A generous day count can't outrank an empty roll.
-      expect(sev(days: 30, remaining: 0), RbStockSeverity.critical);
+      // A generous day count can't outrank a mat that has stopped.
+      expect(sev(days: 30, mode: 'end_of_roll'), RbStockSeverity.critical);
       // No days reported → fall back to the level.
       expect(sev(level: 'high'), RbStockSeverity.healthy);
       expect(sev(level: 'running_low'), RbStockSeverity.caution);
@@ -467,7 +653,9 @@ void main() {
         'material': 'nope',
         'today_usage': 'lots',
         'setup_date': 42,
+        'mode': 7,
       });
+      expect(status.modeRaw, isNull);
       expect(status.rollLevel, RbRollLevel.unknown);
       expect(status.daysTillEndOfRoll, isNull);
       expect(status.remainingLengthCm, isNull);

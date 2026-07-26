@@ -113,4 +113,71 @@ void main() {
       expect(kRfModels['RFTC01']!.parse(Uint8List(4)), isEmpty);
     });
   });
+
+  group('RFTC01 heating/cooling state', () {
+    /// A full 25-byte settings payload: 25.2 °C, °C units, alarms/setpoints,
+    /// with the two output bytes (13 heating, 22 cooling) parameterised.
+    Uint8List tc({required int heat, required int cool}) => Uint8List.fromList([
+          0x00, 0x00, 0x62, 0x70, // 0–3   current temperature 25.200
+          0x00, //                   4     unit byte: °C
+          0x00, 0x00, 0x5d, 0xc0, // 5–8   alarm low 24.000
+          0x00, 0x00, 0x61, 0xa8, // 9–12  heating setpoint 25.000
+          heat, //                   13    heating output
+          0x00, 0x00, 0x6a, 0xc8, // 14–17 alarm high 27.400
+          0x00, 0x00, 0x66, 0xa8, // 18–21 cooling setpoint 26.280
+          cool, //                   22    cooling output
+          0x00, //                   23    reserved
+          0x00, //                   24    sound / light flags
+        ]);
+
+    RfThermalState? state(Uint8List p) => kRfModels['RFTC01']!.parseThermal!(p);
+
+    test('heating output on → heating', () {
+      expect(state(tc(heat: 1, cool: 0)), RfThermalState.heating);
+    });
+
+    test('cooling output on → cooling', () {
+      expect(state(tc(heat: 0, cool: 1)), RfThermalState.cooling);
+    });
+
+    test('neither output on → idle', () {
+      expect(state(tc(heat: 0, cool: 0)), RfThermalState.idle);
+    });
+
+    test('both outputs on → heating, as the device UI itself resolves it', () {
+      expect(state(tc(heat: 1, cool: 1)), RfThermalState.heating);
+    });
+
+    test('the payload still parses its temperature reading', () {
+      final readings = kRfModels['RFTC01']!.parse(tc(heat: 1, cool: 0));
+      expect(readings.single.value, closeTo(25.2, 0.001));
+    });
+
+    test('a payload too short for the output bytes yields null, not a guess', () {
+      expect(state(_hex('00 00 62 70 00 00 00 00 00 00')), isNull);
+      expect(state(Uint8List(22)), isNull);
+    });
+
+    test('live-hardware frame: idle at 25.2 °C between its setpoints', () {
+      // Captured from the Temperature Controller at 192.168.1.6. 29 bytes —
+      // longer than the 25 its own UI reads, which is why the parsers bound-
+      // check rather than assume a length. Decoded: 25.2 °C · °C · alarms
+      // 23.0/27.0 · setpoints heat 24.5 / cool 25.5 · both outputs off ·
+      // byte 24 = 0x90, the firmware's "light off, sound off" flag pair.
+      final payload = _hex(
+        '00 00 62 70 00 00 00 59 d8 00 00 5f b4 00 00 00 '
+        '69 78 00 00 63 9c 00 00 90 00 00 00 00',
+      );
+      expect(state(payload), RfThermalState.idle);
+      expect(
+        kRfModels['RFTC01']!.parse(payload).single.value,
+        closeTo(25.2, 0.001),
+      );
+    });
+
+    test('models with no outputs expose no thermal parser', () {
+      expect(kRfModels['RFSG01']!.parseThermal, isNull);
+      expect(kRfModels['RFPM01']!.parseThermal, isNull);
+    });
+  });
 }

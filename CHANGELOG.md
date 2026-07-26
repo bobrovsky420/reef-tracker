@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.44.0] - 2026-07-26
+
+### Added
+- Today's dosing queue for a ReefDose pump: the card menu has a new item that
+  lists every dose the pump still has to deliver before midnight — time,
+  supplement and volume, with the number of doses and their total above the
+  list. Read live from the pump when you open it; the pump drops each dose from
+  the queue as it delivers it, so an empty list simply means the day's dosing
+  is done. The pump names each queued dose by abbreviation only ("Zin"), so the
+  app reads each head's settings on every refresh and shows the supplement you
+  named it after ("Zinc") — including for pumps added before this version, and
+  after you reassign a supplement in the ReefBeat app.
+- The ReefFactory Temperature Controller card now shows a "Heating" or
+  "Cooling" badge while the controller is actually running that output. The
+  state comes from the controller itself, so it follows its own hysteresis; no
+  badge is shown when neither output is on.
+
+### Fixed
+- The ReefMat card no longer claims the roll is finished while the mat is still
+  running. A working mat reports "empty" and zero remaining length for days
+  before the fleece actually runs out, so the "End of roll" warning now appears
+  only when the mat itself reports that it has reached the end of the roll and
+  stopped – until then the card shows "Roll running low" instead.
+
 ## [0.43.3] - 2026-07-25
 
 ### Changed

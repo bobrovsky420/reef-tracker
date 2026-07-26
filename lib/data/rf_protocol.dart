@@ -14,7 +14,8 @@
 //
 // The layouts here were reverse-engineered from the devices' own web UI and
 // verified against real hardware (RFSG01 @ conductivity 52.4 mS/cm, 24.9 °C →
-// 34.6 ppt; RFPM01 → pH 8.39). See rf_protocol_test.dart for the golden vectors.
+// 34.6 ppt; RFPM01 → pH 8.39; RFTC01 @ 25.2 °C idle between its 24.5/25.5
+// setpoints). See rf_protocol_test.dart for the golden vectors.
 
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -32,6 +33,17 @@ const int _tempScale = 1000;
 /// authoritative temperature source: a Salinity Guardian's temperature reading
 /// is only saved when no device of this model is present.
 const String kRfTempControllerModel = 'RFTC01';
+
+/// What a Temperature Controller's outputs are doing at this instant, as the
+/// device itself reports them — two relay-state bytes in the `settings`
+/// payload, *not* something inferred from temperature vs setpoint. That means
+/// it already accounts for the controller's own hysteresis and timers.
+enum RfThermalState {
+  /// Neither output energised — the water sits inside the programmed range.
+  idle,
+  heating,
+  cooling,
+}
 
 /// A single value read from a device, keyed by the app's parameter-catalog key
 /// (`'salinity'`, `'ph'`, `'temperature'`). [unit] is the unit the value is
@@ -53,6 +65,7 @@ class RfSnapshot {
     required this.modelName,
     required this.modelDisplayName,
     required this.readings,
+    this.thermal,
   });
 
   final String serial;
@@ -66,6 +79,10 @@ class RfSnapshot {
   final String modelDisplayName;
 
   final List<RfReading> readings;
+
+  /// Live heating/cooling state — Temperature Controller only; null for every
+  /// model that reports no such state, and for a payload too short to hold it.
+  final RfThermalState? thermal;
 }
 
 /// One protocol frame, in either direction.
@@ -174,6 +191,7 @@ class RfModelSpec {
     required this.connectCommand,
     required this.refreshCommand,
     required this.parse,
+    this.parseThermal,
   });
 
   /// Human/telemetry label ("salinity", "pH", "temperature").
@@ -194,6 +212,11 @@ class RfModelSpec {
   /// throwing) if the payload is shorter than the known layout — firmware drift
   /// should degrade gracefully, not crash a refresh.
   final List<RfReading> Function(Uint8List payload) parse;
+
+  /// Optional second read of the same `settings` payload for the device's
+  /// operating state. Null for models that report none (salinity, pH) — only
+  /// the Temperature Controller drives outputs.
+  final RfThermalState? Function(Uint8List payload)? parseThermal;
 }
 
 /// RFSG01 Salinity Guardian. Payload (int32 BE ÷10000 unless noted):
@@ -219,11 +242,19 @@ List<RfReading> _parsePh(Uint8List p) {
   return [RfReading('ph', _i32(p, 0) / _scale, '')];
 }
 
-/// RFTC01 Temperature Controller. Payload (from the device's own `RfTc01Main`):
-///   0–3 current temperature (int32 BE ÷1000) · 4 unit byte (0 = °C, else °F) ·
-///   then programmed range / alarm / heating-cooling flags. An all-`0xFF`
-///   temperature field is the meter's "--.-" (probe unavailable) sentinel → no
-///   reading. Temperature is normalised to °C (the catalog's canonical unit).
+/// RFTC01 Temperature Controller. Full payload layout, transcribed from the
+/// device's own `RfTc01Main` settings handler (int32 BE ÷1000 unless noted):
+///
+///     0–3   current temperature      14–17  alarm high
+///     4     unit byte (0 = °C)       18–21  cooling setpoint
+///     5–8   alarm low                22     cooling output (u8)
+///     9–12  heating setpoint         23     reserved
+///     13    heating output (u8)      24     sound (low nibble) / light (high)
+///
+/// The offsets are fixed: the firmware advances the same cursor whether or not
+/// the temperature field holds its all-`0xFF` "--.-" (probe unavailable)
+/// sentinel — which yields no reading here. Temperature is normalised to °C
+/// (the catalog's canonical unit).
 List<RfReading> _parseTemperature(Uint8List p) {
   if (p.length < 5) return const [];
   if (p[0] == 0xFF && p[1] == 0xFF && p[2] == 0xFF && p[3] == 0xFF) {
@@ -236,6 +267,18 @@ List<RfReading> _parseTemperature(Uint8List p) {
     temp = ((temp - 32) * 5 / 9 * 10).round() / 10;
   }
   return [RfReading('temperature', temp, '°C')];
+}
+
+/// The RFTC01's two output bytes (13 heating, 22 cooling; non-zero = on). The
+/// device's own UI resolves a both-on payload as heating, so we do the same
+/// rather than inventing a state its display never shows. A payload too short
+/// to reach byte 22 — older firmware, or drift — yields null (no badge), not a
+/// wrong answer.
+RfThermalState? _parseTcThermal(Uint8List p) {
+  if (p.length < 23) return null;
+  if (p[13] != 0) return RfThermalState.heating;
+  if (p[22] != 0) return RfThermalState.cooling;
+  return RfThermalState.idle;
 }
 
 /// Registry keyed by the 6-character serial prefix. Unknown prefixes yield a
@@ -261,6 +304,7 @@ const Map<String, RfModelSpec> kRfModels = {
     connectCommand: 'tcConnect',
     refreshCommand: 'tcRefresh',
     parse: _parseTemperature,
+    parseThermal: _parseTcThermal,
   ),
 };
 
