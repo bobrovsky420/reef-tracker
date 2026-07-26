@@ -14,6 +14,7 @@ import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_icon_button.dart';
 import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
 
@@ -647,55 +648,62 @@ class _DeviceCard extends ConsumerWidget {
             else if (live.error != null)
               Text(errorTextOf(live.error!), style: t.bodyMedium?.copyWith(color: cs.error))
             else if (snap != null)
-              Wrap(
-                spacing: 16,
-                runSpacing: 8,
-                // The badge rides the value line rather than the card header:
-                // it qualifies the temperature ("34.0 °C — heating"), so it
-                // belongs next to the number it explains.
-                crossAxisAlignment: WrapCrossAlignment.end,
+              // Save rides the value line rather than owning a row below it:
+              // the readings it would persist are right there next to it, and
+              // a card of one temperature doesn't need two rows to say so.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  for (final r in snap.readings)
-                    _ReadingChip(
-                      label: l.paramName(r.paramKey),
-                      value: r.value,
-                      unit: r.unit,
+                  Expanded(
+                    child: Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
+                      // The badge rides the value line rather than the card
+                      // header: it qualifies the temperature ("34.0 °C —
+                      // heating"), so it belongs next to the number it
+                      // explains.
+                      crossAxisAlignment: WrapCrossAlignment.end,
+                      children: [
+                        for (final r in snap.readings)
+                          _ReadingChip(
+                            label: l.paramName(r.paramKey),
+                            value: r.value,
+                            unit: r.unit,
+                          ),
+                        if (badge != null)
+                          Padding(
+                            // Nudges the pill off the value's descender line
+                            // so its centre lands on the digits, not below
+                            // them.
+                            padding: const EdgeInsets.only(bottom: 5),
+                            child: _StateBadge(
+                              label: badge.label,
+                              color: badge.color,
+                              softColor: badge.soft,
+                            ),
+                          ),
+                      ],
                     ),
-                  if (badge != null)
-                    Padding(
-                      // Nudges the pill off the value's descender line so its
-                      // centre lands on the digits, not below them.
-                      padding: const EdgeInsets.only(bottom: 5),
-                      child: _StateBadge(
-                        label: badge.label,
-                        color: badge.color,
-                        softColor: badge.soft,
-                      ),
-                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ReefFilledIconButton(
+                    icon: Icons.save_outlined,
+                    tooltip: l.reefFactorySave,
+                    onPressed: tank != null ? () => onSave(snap) : null,
+                  ),
                 ],
               )
             else
               Text(l.reefFactoryNotReadYet, style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-            const SizedBox(height: 12),
             // A tank assignment is needed before Save can persist; assignment
             // happens via the card menu ("Move to another tank").
             if (tank == null) ...[
+              const SizedBox(height: 10),
               Text(
                 l.reefFactoryNoTank,
                 style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
-              const SizedBox(height: 8),
             ],
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FilledButton.icon(
-                  onPressed: (snap != null && tank != null) ? () => onSave(snap) : null,
-                  icon: const Icon(Icons.save_outlined, size: 18),
-                  label: Text(l.reefFactorySave),
-                ),
-              ],
-            ),
           ],
         ),
       ),

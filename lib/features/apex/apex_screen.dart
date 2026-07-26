@@ -13,6 +13,7 @@ import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/reef_icon_button.dart';
 import '../devices/device_rename_dialog.dart';
 
 /// How many outlets a card lists before collapsing behind "+N more". A fully
@@ -674,16 +675,34 @@ class _ControllerCardState extends State<_ControllerCard> {
                   style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 )
               else
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 8,
+                // Save rides the probe line rather than owning a row of its
+                // own at the foot of the card — below the outlet list it was
+                // both an extra row and far from the values it persists.
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    for (final r in status.readings)
-                      _ReadingChip(
-                        label: l.paramName(r.paramKey),
-                        value: r.value,
-                        unit: r.unit,
+                    Expanded(
+                      child: Wrap(
+                        spacing: 16,
+                        runSpacing: 8,
+                        children: [
+                          for (final r in status.readings)
+                            _ReadingChip(
+                              label: l.paramName(r.paramKey),
+                              value: r.value,
+                              unit: r.unit,
+                            ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    ReefFilledIconButton(
+                      icon: Icons.save_outlined,
+                      tooltip: l.apexSave,
+                      onPressed: widget.tank != null
+                          ? () => widget.onSave(status)
+                          : null,
+                    ),
                   ],
                 ),
               // Status chips: a running feed cycle (pumps are paused right
@@ -748,29 +767,15 @@ class _ControllerCardState extends State<_ControllerCard> {
                 l.apexNotReadYet,
                 style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
-            const SizedBox(height: 12),
+            // A tank assignment is needed before Save can persist; assignment
+            // happens via the card menu ("Move to another tank").
             if (widget.tank == null) ...[
+              const SizedBox(height: 10),
               Text(
                 l.apexNoTank,
                 style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
-              const SizedBox(height: 8),
             ],
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FilledButton.icon(
-                  onPressed:
-                      (status != null &&
-                          status.readings.isNotEmpty &&
-                          widget.tank != null)
-                      ? () => widget.onSave(status)
-                      : null,
-                  icon: const Icon(Icons.save_outlined, size: 18),
-                  label: Text(l.apexSave),
-                ),
-              ],
-            ),
           ],
         ),
       ),

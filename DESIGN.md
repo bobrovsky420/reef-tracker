@@ -1095,6 +1095,14 @@ buttons (`widgets/reef_icon_button.dart`, `ReefIconButton`): a 32 px `surface`
 card with `surfaceBorder`, r9 squircle iOS / circle Android
 (`reefIconButtonShape` in the theme), 16 px `textDim` icon, 48 px hit target;
 the overflow `ReefMenuButton` shares the look via `reefIconButtonStyle`. The
+same file's `ReefFilledIconButton` is the *in-card* counterpart: a card's
+primary action reduced to an icon when a labelled button would cost a whole
+extra row (the device dashboards' inline **Save**) — filled `primary` on
+`onPrimary`, a true `CircleBorder` in both dialects rather than
+`reefPrimaryActionShape` (at 36 px square there is no label for a silhouette to
+agree with, and a circle reads unmistakably as one round icon target),
+36 px visual, 18 px icon, 48 px hit target, and a **required**
+`tooltip` carrying the label it no longer shows as its accessible name. The
 tank switcher title renders at 19 px w700 in the `text` token with a compact
 chevron. Widgets read
 tokens via `ReefTokens.of(context)` (falls back to the brightness-matched
@@ -2382,7 +2390,14 @@ on the device's Wi-Fi network.
   alarm red. The card carries a **Save**
   (persist to the device's assigned tank via `insertReadingGroup` +
   `addTrackedParameter`, impossible values dropped), plus common **Refresh
-  all** / **Save all** actions over the visible devices. Reading is
+  all** / **Save all** actions over the visible devices. Save is an icon-only
+  `ReefFilledIconButton` sitting *inline with the values* (trailing the reading
+  chips on the same line, bottom-aligned) rather than a labelled button on a row
+  of its own: it is the primary action of a card whose whole content is often a
+  single temperature, and a full row for one word made the card taller than what
+  it displayed. It therefore exists only while there are values to save — no
+  disabled placeholder before the first read — and stays disabled (with the
+  card's "not assigned to a tank" note below) until the device has a tank. Reading is
   all-or-nothing — one Refresh all above the list, no per-card button, since
   the cards are read together on open anyway and a button per card only
   repeated it. Save-all merges each
@@ -2721,9 +2736,11 @@ out the same LAN-only requirement.
   headers, one **Refresh all** / **Save all** above the list, drag-handle
   reordering via `reorderDevices`, household-scoped `apexDevicesProvider` — plus
   a card menu carrying **Sign in again** alongside Edit / Move / Remove. A card
-  shows its readings as the shared value chips, then the status chips (running
-  feed cycle in `healthy`, overridden-outlet count in `caution`), then the
-  outlet list as state-dot pills — collapsed to `kApexOutletPreview` (8) behind
+  shows its readings as the shared value chips — with the same inline icon-only
+  **Save** trailing them, which here also pulls the action up next to the probe
+  values instead of stranding it below the outlet list — then the status chips
+  (running feed cycle in `healthy`, overridden-outlet count in `caution`), then
+  the outlet list as state-dot pills — collapsed to `kApexOutletPreview` (8) behind
   "+N more", since a fully populated Apex drives thirty-odd outlets and a wall
   of them would bury every other card. A profile-driven outlet gets a **hollow
   ring** rather than a filled dot, so nothing claims a state the controller

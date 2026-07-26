@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The ReefFactory Temperature Controller's "Heating"/"Cooling" badge now sits
   next to the temperature it explains instead of in the card's title line.
+- On the ReefFactory and Apex device cards, Save is now a small icon button
+  sitting right next to the values it saves, instead of a full-width row of its
+  own below them – the cards are shorter and the action is where you are
+  looking.
 
 ## [1.0.0] - 2026-07-26
 
