@@ -227,8 +227,8 @@ void main() {
     await routeShot('/ratio/po4no3', 'ratio');
     await routeShot('/micro', 'micro');
     await routeShot('/micro/add', 'micro-add');
-    await routeShot('/reeffactory', 'reeffactory');
-    await routeShot('/reefbeat', 'reefbeat');
+    // One page for every vendor now (U41) — the per-vendor routes are gone.
+    await routeShot('/devices', 'devices');
     await routeShot('/tanks', 'tanks');
     await routeShot('/parameters', 'parameters');
 
@@ -250,7 +250,6 @@ void main() {
     await tapIcon(Icons.settings_outlined);
     await shot('settings');
     await routeShot('/settings/backups', 'backups');
-    await routeShot('/settings/devices', 'devices');
     await routeShot('/settings/reminders', 'reminders');
     await routeShot('/settings/import', 'import-sources');
 

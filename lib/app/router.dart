@@ -12,8 +12,8 @@ import '../domain/ratio.dart';
 import '../domain/supplement_catalog.dart';
 import '../features/actions/schedule_screen.dart';
 import '../features/add_reading/add_reading_screen.dart';
-import '../features/apex/apex_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
+import '../features/devices/devices_screen.dart';
 import '../features/dosing/dose_calculator_screen.dart';
 import '../features/dosing/dosing_edit_screen.dart';
 import '../features/dosing/dosing_history_screen.dart';
@@ -30,12 +30,9 @@ import '../features/micro/micro_configure_screen.dart';
 import '../features/micro/micro_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
-import '../features/reefbeat/reefbeat_screen.dart';
-import '../features/reeffactory/reeffactory_screen.dart';
 import '../features/ro/ro_screen.dart';
 import '../features/scan/checker_scan_screen.dart';
 import '../features/settings/backups_screen.dart';
-import '../features/settings/connected_devices_screen.dart';
 import '../features/settings/reminders_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
@@ -167,23 +164,17 @@ final appRouter = GoRouter(
       builder: (context, state) => const RemindersScreen(),
     ),
     GoRoute(
-      path: '/settings/devices',
-      builder: (context, state) => const ConnectedDevicesScreen(),
-    ),
-    GoRoute(
       path: '/schedule',
       builder: (context, state) => const MaintenanceScheduleScreen(),
     ),
     GoRoute(path: '/ro', builder: (context, state) => const RoScreen()),
+    // One route for every connected device (U41). It replaced `/reeffactory`,
+    // `/reefbeat`, `/apex` and the Settings inventory at `/settings/devices` —
+    // the vendor selector on the page does what those four routes used to.
     GoRoute(
-      path: '/reeffactory',
-      builder: (context, state) => const ReefFactoryScreen(),
+      path: '/devices',
+      builder: (context, state) => const DevicesScreen(),
     ),
-    GoRoute(
-      path: '/reefbeat',
-      builder: (context, state) => const ReefBeatScreen(),
-    ),
-    GoRoute(path: '/apex', builder: (context, state) => const ApexScreen()),
     GoRoute(path: '/micro', builder: (context, state) => const MicroScreen()),
     GoRoute(
       path: '/micro/add',

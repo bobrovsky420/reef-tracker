@@ -3625,6 +3625,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discoveryManualEntry => 'Enter IP address';
 
   @override
+  String get devicesTitle => 'Devices';
+
+  @override
+  String get devicesAll => 'All';
+
+  @override
+  String devicesScopeAll(int count) {
+    return 'All devices · $count';
+  }
+
+  @override
+  String devicesScopeVendor(String vendor, int count) {
+    return '$vendor · $count';
+  }
+
+  @override
+  String devicesRefreshAll(int count) {
+    return 'Refresh all ($count)';
+  }
+
+  @override
+  String devicesSaveAll(int count) {
+    return 'Save all ($count)';
+  }
+
+  @override
+  String get devicesDisclaimer =>
+      'This app only reads your devices. It can\'t change settings, dose, switch outlets or calibrate — use the manufacturer\'s own app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.';
+
+  @override
+  String get devicesEmptyTitle => 'No devices yet';
+
+  @override
+  String get devicesEmptyBody =>
+      'Connect a ReefFactory meter, a Red Sea ReefBeat device or a Neptune Apex controller on your local network to see it here.';
+
+  @override
+  String get devicesAddDevice => 'Add device';
+
+  @override
+  String get devicesAddPickBrand => 'Which brand?';
+
+  @override
+  String get devicesReorderBrands => 'Reorder brands';
+
+  @override
+  String get devicesReorderBrandsHint =>
+      'When two devices report the same reading, the brand higher in this list wins.';
+
+  @override
+  String devicesSourceNote(String param, String device) {
+    return '$param from $device';
+  }
+
+  @override
+  String get devicesProLocked =>
+      'Reading your devices live is part of ReefTracker Pro.';
+
+  @override
+  String devicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count devices',
+      one: '1 device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devicesDetails => 'Details';
+
+  @override
   String get reefDevicesTitle => 'Connected devices';
 
   @override

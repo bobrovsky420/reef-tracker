@@ -3713,6 +3713,81 @@ class AppLocalizationsPl extends AppLocalizations {
   String get discoveryManualEntry => 'Wpisz adres IP';
 
   @override
+  String get devicesTitle => 'Urządzenia';
+
+  @override
+  String get devicesAll => 'Wszystkie';
+
+  @override
+  String devicesScopeAll(int count) {
+    return 'Wszystkie urządzenia · $count';
+  }
+
+  @override
+  String devicesScopeVendor(String vendor, int count) {
+    return '$vendor · $count';
+  }
+
+  @override
+  String devicesRefreshAll(int count) {
+    return 'Odśwież wszystkie ($count)';
+  }
+
+  @override
+  String devicesSaveAll(int count) {
+    return 'Zapisz wszystkie ($count)';
+  }
+
+  @override
+  String get devicesDisclaimer =>
+      'Aplikacja tylko odczytuje urządzenia. Nie może zmieniać ustawień, dozować, przełączać gniazd ani kalibrować — użyj do tego aplikacji producenta. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
+
+  @override
+  String get devicesEmptyTitle => 'Brak urządzeń';
+
+  @override
+  String get devicesEmptyBody =>
+      'Podłącz miernik ReefFactory, urządzenie Red Sea ReefBeat lub sterownik Neptune Apex w swojej sieci, aby zobaczyć je tutaj.';
+
+  @override
+  String get devicesAddDevice => 'Dodaj urządzenie';
+
+  @override
+  String get devicesAddPickBrand => 'Która marka?';
+
+  @override
+  String get devicesReorderBrands => 'Zmień kolejność marek';
+
+  @override
+  String get devicesReorderBrandsHint =>
+      'Gdy dwa urządzenia podają ten sam odczyt, wygrywa marka wyżej na tej liście.';
+
+  @override
+  String devicesSourceNote(String param, String device) {
+    return '$param z $device';
+  }
+
+  @override
+  String get devicesProLocked =>
+      'Odczyt urządzeń na żywo jest częścią ReefTracker Pro.';
+
+  @override
+  String devicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count urządzenia',
+      many: '$count urządzeń',
+      few: '$count urządzenia',
+      one: '1 urządzenie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devicesDetails => 'Szczegóły';
+
+  @override
   String get reefDevicesTitle => 'Podłączone urządzenia';
 
   @override

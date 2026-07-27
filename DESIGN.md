@@ -114,6 +114,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type (in listing order). `presetBounds`, `defaultTrackedKeys`. Also `kPresetTargets`/`presetTarget` — default **correction targets** (canonical units) per setup type, defined only where the sensible target is *not* the green-zone midpoint (currently alkalinity: soft/LPS 8.5, SPS 8.0, mixed 8.3 dKH); seeded into `TrackedParameters.targetValue`, editable per tank. **The data (`kPresets`/`kPresetTargets`) is generated from `tank_presets.yaml`** (see below); this file owns the lookups. |
 | `micro.dart` | Microelements (U17) domain rules. `kMicroDefaultBounds` — default zone bounds per element in canonical ppm (derived from the catalog's per-element `defaultBounds`, edited in `parameters.yaml`), anchored on natural seawater / ICP-lab target ranges; contaminants (and silicon) are **one-sided** (green up to a ceiling — no "too little lead"). Used as the fallback when a tank has no `TrackedParameters` row for an element and as the seed when one is created. `kMicroHobbyKitKeys` (the catalog's `hobbyKit`-flagged elements, in catalog order — Sr/I/Fe, the elements home test kits exist for), and `computeMicroStatus(inputs)` → `MicroStatus` (measured / out-of-range counts, worst zone, newest sample date) — the panel's own summary, deliberately **outside** the tank health score: micro is measured on an ICP cadence (months), which the 30-day core freshness rule would permanently read as stale. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
+| `device_vendors.dart` | The vendor model behind the unified Devices screen (U41) — pure, so the ordering rules are unit-tested directly. The device `kind` constants, `kDeviceVendors` (the vendors in **registration order**, which is the default order and the append position for anything a stored order doesn't mention), `deviceKindSaves` (whether a kind can report values a Save persists — a property of the *kind*, so a controller-only card never shows a Save button at all rather than a permanently disabled one), and `orderDeviceVendors(stored, known)`, which resolves the user's arrangement from `SettingKey.deviceVendorOrder`. That parser is deliberately tolerant: the stored value outlives app versions, so unknown kinds are dropped, duplicates collapse, missing ones append, and null/garbage yields exactly `known`. Vendor order is not cosmetic — the Devices screen resolves a duplicated parameter by "first displayed wins", so this list also decides whose reading survives a Save all. The Hanna checker is **not** a vendor here (Bluetooth test kit, not tank hardware on the LAN). |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. Pure (no DB): consumes plain `RatioReading` (`{takenAt, value}`) records and `RatioSettings` (`{visible, displayOrder, bounds}`) instead of drift rows — `database.dart` hosts the thin row→record mappers (#52). The recommended per-kind zone bounds (`kRatioDefaultBounds`, backing `RatioKind.defaultBounds`) are **generated from the `ratios` section of `tank_presets.yaml`** into `ratio.g.dart` — the YAML also documents the chemistry (NSW anchors) behind each range. |
 | `ammonia_toxicity.dart` | Free (toxic) un-ionized ammonia (NH₃) math — pure, DB-free, like `ratio.dart`. A total-ammonia test measures TAN (NH₄⁺ + NH₃); only NH₃ is toxic and its share climbs with pH and temperature (and, mildly, falls with salinity), so a reef converts far more of the same total to the toxic form than a low-pH tank. `freeAmmoniaFraction(pH, tempC, salinityPpt)` = `1 / (1 + 10^(pKa − pH))` with `pKa = 0.09018 + 2729.92/T_K` (**Emerson 1975**) plus a salinity/ionic-strength term (**US EPA 1989** Eq. 5 `I = 19.9273·S/(1000 − 1.005109·S)` + NH₃ salting-out); validated against reef-chemistry reference values (~9–10 % NH₃ at pH 8.3 / 25 °C / 35 ppt, +13 % at 27 °C). `computeFreeAmmonia({ammonia, ph, temperature, salinity})` → `FreeAmmonia?` (total, `freeNh3`, `fraction`, inputs used, `salinityMeasured`, `inputsOutdated`) from each input's latest reading (newest-first records mapped from `Reading`); null until ammonia + pH + temperature all exist; salinity is optional (falls back to `kDefaultSalinityPpt` 35, flagged). Fixed one-sided toxicity bounds `kFreeAmmoniaBounds` (green ≤ 0.02, amber ≤ 0.05 ppm NH₃, anchored on the EPA saltwater chronic criterion 0.035). `inputsOutdated` is set when pH/temp are more than `kAmmoniaInputMaxAge` (7 d) from the ammonia reading — the value still shows, flagged approximate. Basis decision: total ammonia is treated **as NH₃** (matching the `ammonia` parameter's canonical unit); presentation-only (does not feed the health score). See Features. |
 | `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.linearFit`, `TrendDirection`, projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward — and a `recovering` flag). Uses the most recent `window` readings and returns null until that many exist. The projection is **anchored on the fitted (regression) value at the last timestamp**, not the raw last reading, so one noisy endpoint can't swing the forecast. A value already *outside* its green range but moving back toward it is **recovering**: no crossing is forecast (the only bounds ahead are on the far side of green — forecasting them would warn about an improving parameter) and `recovering` is set so the UI could one day surface it positively (TODO U15). Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). Slopes with magnitude < 1e-9 (`_flatEpsilon`) classify as flat (no forecast), a bound projection is dropped when the bound lies opposite the direction of travel ("the bound is behind us"), and bounds failing `ZoneBounds.isValid` produce no forecast at all. See Features. |
@@ -1285,10 +1286,7 @@ Body text stays the platform default (SF/Roboto).
 | `/hanna/measure` | Hanna checker live BLE measurement (U33, experimental): connect → select → run → save in one route |
 | `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
-| `/reeffactory` | ReefFactory devices dashboard (U36, experimental): live values from LAN meters |
-| `/reefbeat` | ReefBeat devices dashboard (U38, experimental): status from Red Sea ReefDose pumps, ReefATO+ units, ReefMat filters, ReefRun controllers, ReefLED lights and ReefWave pumps |
-| `/apex` | Neptune Apex dashboard (U40, experimental): probe values (incl. a Trident's Alk/Ca/Mg) with a Save path into `Readings`, plus outlet and feed-cycle status |
-| `/settings/devices` | Connected devices — read-only inventory of every ReefFactory / ReefBeat / Apex / Hanna device |
+| `/devices` | Every connected device on one page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
 home shell (see Features). `/` accepts a
@@ -2375,7 +2373,71 @@ readout is always confirmed by the user first.
   consistent with `hannaConnect`/`hannaImport`).
 - **Deferred:** remembering the last-used model; torch control.
 
-### ReefFactory local devices (U36, Pro, **experimental**) — `features/reeffactory/`, route `/reeffactory`
+### Unified Devices screen (U41, **experimental**) — `features/devices/devices_screen.dart`, route `/devices`
+
+One page for every LAN device the keeper owns. It replaced four routes — the
+three per-vendor dashboards and the read-only Settings inventory — with one
+screen behind a **vendor selector**, reached from the Measurements-tab overflow
+menu (the Settings device rows are gone; four entry points for one page were
+four ways to say the same thing).
+
+- **Full cards, not summaries.** Each vendor's section renders exactly the cards
+  its own dashboard did: `RfDeviceSection` / `RbDeviceSection` /
+  `ApDeviceSection`, each still living in its vendor's folder with that vendor's
+  wording, dialogs and add flow. What moved out of them is only the
+  orchestration — live snapshots, refresh and save — which the one screen now
+  owns. That placement is the point: switching the filter no longer discards
+  values the user just refreshed, which per-screen state could not avoid.
+- **Vendor chips** in the user's own order, each with its device count. A vendor
+  earns a chip only by having a device in view; with a single vendor the
+  selector disappears entirely (a one-choice selector is noise). The bar scrolls
+  with the content rather than pinning — the app paints a gradient behind the
+  scaffold, so a pinned bar would need an opaque strip of a colour that doesn't
+  exist here.
+- **Vendor order** (`domain/device_vendors.dart`, `orderDeviceVendors`) is
+  user-arrangeable through the app bar's "Reorder brands" sheet and persists in
+  `SettingKey.deviceVendorOrder` as comma-joined kinds. The parser is tolerant by
+  construction because the value outlives app versions: unknown kinds are
+  dropped, duplicates collapse, and any known vendor the stored order doesn't
+  mention is **appended in registration order** — a vendor added by a later
+  update lands at the end, never silently ahead of the user's arrangement. A
+  vendor whose devices were all removed keeps its position, so adding one back
+  puts it where the user left it. Deliberately **not** device-local: see below.
+- **Refresh all / Save all act on the current selection only**, with a scope
+  line above them stating what that is and the counts on the buttons. Reads are
+  sequential *within* a vendor (a meter also serves its vendor's cloud app) but
+  the vendors run concurrently. The on-open auto-read follows the same scope,
+  once per device per session. Save all is **hidden** — not disabled — when the
+  selection holds no meter-capable device (`deviceKindSaves`): for a Red Sea
+  filter there is nothing to save and never will be, and a disabled button would
+  imply "read something first".
+- **Save precedence: first displayed wins.** When two devices report the same
+  parameter for the same tank, the one higher on the page keeps it — vendor
+  order first, then the user's drag order within that vendor. **Reordering a
+  card is the preference UI**; there is no separate setting. Two consequences
+  are deliberate: ReefFactory's own model-aware rule still decides *within*
+  ReefFactory (a Temperature Controller beats a Salinity Guardian's incidental
+  temperature regardless of card order), and the winner is **named in the
+  confirmation** rather than chosen silently — a wrong probe quietly becoming
+  the tank's history is exactly what this rule must not do. This is also why
+  `deviceVendorOrder` rides backups instead of staying device-local: it shapes
+  what gets stored, so it should follow the aquarium data onto a new phone.
+- **Pro gating** (`ProFeature.connectedDevices`): the page, the chips and the
+  card headers are **ungated**, because the inventory this screen absorbed was a
+  Standard feature and a keeper must always be able to see what they own.
+  Reading, saving and adding are gated; a non-entitled install gets a tappable
+  notice where the action buttons sit. The old inventory's facts (brand, model,
+  address, last seen) live in each card menu's **Details** item
+  (`device_details_dialog.dart`).
+- **The Hanna checker is not a vendor here.** It is the keeper's own test kit
+  reached over Bluetooth for one measurement, not tank hardware on the network;
+  it keeps its own screens and its own Pro gates. Consequence worth knowing: the
+  meter is no longer listed anywhere, since the inventory that listed it is
+  gone.
+- **Empty state:** no chips, no scope bar, not even the disclaimer — there is
+  nothing yet to be read-only about — just the message and an Add button.
+
+### ReefFactory local devices (U36, Pro, **experimental**) — `features/reeffactory/`, section of `/devices`
 
 Reads live values from ReefFactory LAN meters (Salinity Guardian `RFSG01`, pH
 Monitor `RFPM01`, Temperature Controller `RFTC01`) over their undocumented binary
@@ -2458,18 +2520,17 @@ on the device's Wi-Fi network.
   so it shows live values immediately without a second read. The device list itself stays
   household-scoped (`reefFactoryDevicesProvider`, a shared `StreamProvider`);
   the screen filters it by the active tank.
-- Entry point is experimental-gated and Pro-gated (`ProFeature.connectedDevices`,
-  grandfathered — the one gate shared by every LAN device integration, see
-  Editions): the Measurements-tab overflow menu (the former Settings row
-  was removed). The visible devices are read once automatically when the
-  screen opens (one-shot, sequential); after that reads are manual — periodic
-  auto-refresh is deferred.
+- Entry point is the Devices screen's ReefFactory chip (U41); reading and saving
+  are Pro-gated on `ProFeature.connectedDevices` (grandfathered — the one gate
+  shared by every LAN device integration, see Editions). Devices in the current
+  selection are read once automatically on open (one-shot, sequential); after
+  that reads are manual — periodic auto-refresh is deferred.
 - The meters double as **environment sources** for the Hanna BLE results step
   (U37, see the Hanna checker section): `RfEnvironmentSource` wraps a device
   row + `RfDeviceLink` behind the device-agnostic `EnvironmentSource`
   interface in `data/environment_sources.dart`.
 
-### ReefBeat devices (U38, Pro, **experimental**) — `features/reefbeat/`, route `/reefbeat`
+### ReefBeat devices (U38, Pro, **experimental**) — `features/reefbeat/`, section of `/devices`
 
 A separate dashboard for **Red Sea ReefBeat** LAN devices — deliberately not
 merged into the ReefFactory screen, because the cards display operational
@@ -2676,15 +2737,14 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   the one exception, printed under the name because the gauge otherwise shows a
   bare dash with no reason.
   (`_StatusRow`, the label–value line, is shared by all the status cards.)
-- Entry points mirror ReefFactory: experimental-gated + Pro-gated
-  (`ProFeature.connectedDevices`, grandfathered) via the Measurements-tab overflow
-  menu and a Settings row. Devices are read once automatically on open;
-  after that reads are manual.
+- Entry point mirrors ReefFactory: the Devices screen's Red Sea chip (U41),
+  with reads gated on `ProFeature.connectedDevices` (grandfathered). Devices are
+  read once automatically on open; after that reads are manual.
 - **Future phases (deferred):** comparing/syncing head schedules against the
   tank's dosing plan (`DosingEntries`), and logging actually-delivered volumes
   for the dose calculator's consumption math.
 
-### Neptune Apex controllers (U40, Pro, **experimental**) — `features/apex/`, route `/apex`
+### Neptune Apex controllers (U40, Pro, **experimental**) — `features/apex/`, section of `/devices`
 
 A third local-device dashboard, for **Neptune Systems Apex** controllers. Unlike
 the other two integrations an Apex is a *controller*, so it sits between them:
@@ -2789,10 +2849,9 @@ out the same LAN-only requirement.
   is stored as a real 0. Suppressing that would need a per-parameter
   zero-sentinel rule that has not been checked against hardware, so it is
   recorded here rather than guessed at.
-- Entry points mirror the other two: experimental-gated + Pro-gated
-  (`ProFeature.connectedDevices`, grandfathered) via the Measurements-tab
-  overflow menu and a Settings row. Controllers are read once automatically on open; after that
-  reads are manual.
+- Entry point mirrors the other two: the Devices screen's Apex chip (U41), with
+  reads gated on `ProFeature.connectedDevices` (grandfathered). Controllers are
+  read once automatically on open; after that reads are manual.
 - **Development without hardware** (`tool/apex_emulator.dart`): a fake
   controller serving both firmware families with drifting probe values, a
   realistic outlet set (including one left overridden and two profile-driven), a

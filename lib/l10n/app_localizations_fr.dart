@@ -3657,6 +3657,79 @@ class AppLocalizationsFr extends AppLocalizations {
   String get discoveryManualEntry => 'Saisir une adresse IP';
 
   @override
+  String get devicesTitle => 'Appareils';
+
+  @override
+  String get devicesAll => 'Tous';
+
+  @override
+  String devicesScopeAll(int count) {
+    return 'Tous les appareils · $count';
+  }
+
+  @override
+  String devicesScopeVendor(String vendor, int count) {
+    return '$vendor · $count';
+  }
+
+  @override
+  String devicesRefreshAll(int count) {
+    return 'Tout actualiser ($count)';
+  }
+
+  @override
+  String devicesSaveAll(int count) {
+    return 'Tout enregistrer ($count)';
+  }
+
+  @override
+  String get devicesDisclaimer =>
+      'L\'application se contente de lire vos appareils. Elle ne peut pas modifier les réglages, doser, commuter les prises ni étalonner — utilisez l\'application du fabricant pour cela. La lecture ne fonctionne que si votre téléphone est sur le même réseau Wi-Fi que les appareils.';
+
+  @override
+  String get devicesEmptyTitle => 'Aucun appareil';
+
+  @override
+  String get devicesEmptyBody =>
+      'Connectez un appareil de mesure ReefFactory, un appareil Red Sea ReefBeat ou un contrôleur Neptune Apex sur votre réseau pour le voir ici.';
+
+  @override
+  String get devicesAddDevice => 'Ajouter un appareil';
+
+  @override
+  String get devicesAddPickBrand => 'Quelle marque ?';
+
+  @override
+  String get devicesReorderBrands => 'Réorganiser les marques';
+
+  @override
+  String get devicesReorderBrandsHint =>
+      'Quand deux appareils rapportent la même mesure, la marque la plus haute dans cette liste l\'emporte.';
+
+  @override
+  String devicesSourceNote(String param, String device) {
+    return '$param depuis $device';
+  }
+
+  @override
+  String get devicesProLocked =>
+      'La lecture en direct de vos appareils fait partie de ReefTracker Pro.';
+
+  @override
+  String devicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count appareils',
+      one: '1 appareil',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devicesDetails => 'Détails';
+
+  @override
   String get reefDevicesTitle => 'Appareils connectés';
 
   @override

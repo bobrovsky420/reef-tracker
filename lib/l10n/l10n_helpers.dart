@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../data/backup.dart';
 import '../domain/clock.dart';
 import '../domain/dashboard_sections.dart';
+import '../domain/device_vendors.dart';
 import '../domain/health_score.dart';
 import '../domain/insights.dart';
 import '../domain/pro_features.dart';
@@ -128,6 +129,18 @@ extension L10nDomain on AppLocalizations {
     // Apex), which share a single gate — the Pro dialog names the capability,
     // not whichever vendor's screen the user happened to tap.
     ProFeature.connectedDevices => reefDevicesTitle,
+  };
+
+  /// The brand name shown on a Devices-screen chip, section header and picker
+  /// row (U41). Reuses the labels the Settings inventory used for the same
+  /// kinds, so one vendor reads identically everywhere. An unknown kind falls
+  /// back to its raw value rather than inventing a name.
+  String deviceVendorName(String kind) => switch (kind) {
+    kDeviceKindReefFactory => reefDevicesKindReefFactory,
+    kDeviceKindReefBeat => reefDevicesKindReefBeat,
+    kDeviceKindApex => reefDevicesKindApex,
+    kDeviceKindHanna => reefDevicesKindHanna,
+    _ => kind,
   };
 
   /// Localized message for a rule-based insight (U28). The [Insight] carries

@@ -1603,6 +1603,79 @@
   "discoveryRescan": "Scan again",
   "discoveryManualEntry": "Enter IP address",
 
+  "devicesTitle": "Devices",
+  "@devicesTitle": {
+    "description": "Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory."
+  },
+  "devicesAll": "All",
+  "@devicesAll": {
+    "description": "The vendor selector's first chip: show every connected device regardless of brand."
+  },
+  "devicesScopeAll": "All devices · {count}",
+  "@devicesScopeAll": {
+    "description": "Scope line above the bulk actions when no vendor filter is applied.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "devicesScopeVendor": "{vendor} · {count}",
+  "@devicesScopeVendor": {
+    "description": "Scope line above the bulk actions when one vendor is selected.",
+    "placeholders": {
+      "vendor": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "devicesRefreshAll": "Refresh all ({count})",
+  "@devicesRefreshAll": {
+    "description": "Reads every device currently in view — the vendor filter scopes it.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "devicesSaveAll": "Save all ({count})",
+  "@devicesSaveAll": {
+    "description": "Saves the readings of every meter in view. Count = devices holding values right now.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "devicesDisclaimer": "This app only reads your devices. It can't change settings, dose, switch outlets or calibrate — use the manufacturer's own app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.",
+  "@devicesDisclaimer": {
+    "description": "The read-only notice shown when no vendor filter is applied; a vendor view swaps in that brand's own wording, which names its app."
+  },
+  "devicesEmptyTitle": "No devices yet",
+  "devicesEmptyBody": "Connect a ReefFactory meter, a Red Sea ReefBeat device or a Neptune Apex controller on your local network to see it here.",
+  "devicesAddDevice": "Add device",
+  "devicesAddPickBrand": "Which brand?",
+  "@devicesAddPickBrand": {
+    "description": "Title of the sheet asking which brand to add, shown only from the All view."
+  },
+  "devicesReorderBrands": "Reorder brands",
+  "devicesReorderBrandsHint": "When two devices report the same reading, the brand higher in this list wins.",
+  "@devicesReorderBrandsHint": {
+    "description": "States the save-precedence rule in the sheet that sets it: vendor order decides which device's value survives Save all."
+  },
+  "devicesSourceNote": "{param} from {device}",
+  "@devicesSourceNote": {
+    "description": "Appended to the Save all confirmation when two devices reported the same parameter, naming the one whose value was kept.",
+    "placeholders": {
+      "param": { "type": "String" },
+      "device": { "type": "String" }
+    }
+  },
+  "devicesProLocked": "Reading your devices live is part of ReefTracker Pro.",
+  "devicesCount": "{count, plural, one{1 device} other{{count} devices}}",
+  "@devicesCount": {
+    "description": "How many devices a brand has, in the reorder sheet.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "devicesDetails": "Details",
+  "@devicesDetails": {
+    "description": "Card menu item opening the device's model / address / last-seen facts, which used to live in the Settings inventory."
+  },
   "reefDevicesTitle": "Connected devices",
   "reefDevicesSubtitle": "ReefFactory meters, ReefBeat devices, Apex controllers and the Hanna checker",
   "reefDevicesEmpty": "No devices connected yet.",

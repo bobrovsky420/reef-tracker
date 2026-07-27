@@ -222,21 +222,27 @@ void main() {
       // which must ride backups to carry the status to a new device, and
       // the Hanna method sets (U33) — user data like the RO stages — and the
       // Hanna environment-capture toggle (U37), which describes the
-      // household's measuring workflow (its devices also ride backups). This
-      // pins the split so a new setting can't be added without deciding its
-      // restore behaviour.
+      // household's measuring workflow (its devices also ride backups), and
+      // the Devices screen's vendor order (U41), which decides whose reading
+      // wins a Save all and so shapes stored data rather than this phone's
+      // display. This pins the split so a new setting can't be added without
+      // deciding its restore behaviour.
       expect(SettingKey.deviceLocalKeys, {
         for (final k in SettingKey.values)
           if (k != SettingKey.roSeeded &&
               k != SettingKey.legacyFreeSince &&
               k != SettingKey.hannaMethodSets &&
-              k != SettingKey.hannaAttachEnvironment)
+              k != SettingKey.hannaAttachEnvironment &&
+              k != SettingKey.deviceVendorOrder)
             k.storageKey,
       });
       expect(SettingKey.roSeeded.deviceLocal, isFalse);
       expect(SettingKey.legacyFreeSince.deviceLocal, isFalse);
       expect(SettingKey.hannaMethodSets.deviceLocal, isFalse);
       expect(SettingKey.hannaAttachEnvironment.deviceLocal, isFalse);
+      expect(SettingKey.deviceVendorOrder.deviceLocal, isFalse);
+      // The chip *selection*, unlike the order, is pure display state.
+      expect(SettingKey.deviceVendorFilter.deviceLocal, isTrue);
     });
 
     test('storage keys are unique', () {

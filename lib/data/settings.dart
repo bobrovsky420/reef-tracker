@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../domain/device_vendors.dart';
 import '../domain/hanna_meter.dart';
 import '../domain/reminders.dart';
 import '../domain/stability_score.dart';
@@ -187,6 +188,14 @@ enum SettingKey {
   // The RO-unit feature switch (U16) is an ordinary display preference like
   // trendEnabled: device-local, default on.
   roUnitEnabled(kRoUnitEnabledKey, deviceLocal: true),
+  // The Devices screen's vendor order (U41). Deliberately NOT device-local,
+  // unlike the other display preferences: it decides which device wins when two
+  // report the same parameter on Save all, so it shapes what gets stored as a
+  // reading and should follow the aquarium data onto a new phone.
+  deviceVendorOrder(kDeviceVendorOrderKey, deviceLocal: false),
+  // Which vendor chip was last selected — a plain display selection like
+  // microView, so device-local.
+  deviceVendorFilter(kDeviceVendorFilterKey, deviceLocal: true),
   // The microelements feature switch (U17): same shape as roUnitEnabled —
   // off only *hides* the panel (dashboard tile + micro test reminders); the
   // stored measurements are untouched and reappear when re-enabled.
@@ -320,7 +329,8 @@ class AppSettings {
 
   // --- theme mode (REDESIGN #16) ---------------------------------------------
 
-  static AppThemeMode decodeThemeMode(String? raw) => AppThemeMode.fromName(raw);
+  static AppThemeMode decodeThemeMode(String? raw) =>
+      AppThemeMode.fromName(raw);
   Stream<AppThemeMode> watchThemeMode() =>
       _watch(SettingKey.themeMode).map(decodeThemeMode);
   Future<void> setThemeMode(AppThemeMode mode) =>
@@ -444,6 +454,27 @@ class AppSettings {
       _watch(SettingKey.microHideUndetectable).map(decodeMicroHideUndetectable);
   Future<void> setMicroHideUndetectable(bool enabled) =>
       _write(SettingKey.microHideUndetectable, enabled.toString());
+
+  // --- devices (U41) -----------------------------------------------------------
+
+  /// The Devices screen's vendor order. Every tolerance (unknown kinds, a
+  /// vendor the app gained later, duplicates) lives in [orderDeviceVendors], so
+  /// a value written by any app version decodes into a usable order.
+  static List<String> decodeDeviceVendorOrder(String? raw) =>
+      orderDeviceVendors(raw);
+  Stream<List<String>> watchDeviceVendorOrder() =>
+      _watch(SettingKey.deviceVendorOrder).map(decodeDeviceVendorOrder);
+  Future<void> setDeviceVendorOrder(List<String> order) =>
+      _write(SettingKey.deviceVendorOrder, encodeDeviceVendorOrder(order));
+
+  /// The last selected vendor chip; empty string = All. The screen still
+  /// validates it against the vendors that actually have devices, so a stored
+  /// vendor whose last device was removed falls back to All on its own.
+  static String decodeDeviceVendorFilter(String? raw) => raw ?? '';
+  Stream<String> watchDeviceVendorFilter() =>
+      _watch(SettingKey.deviceVendorFilter).map(decodeDeviceVendorFilter);
+  Future<void> setDeviceVendorFilter(String? vendor) =>
+      _write(SettingKey.deviceVendorFilter, vendor ?? '');
 
   static bool decodeMicroAttentionOnly(String? raw) => raw == 'true';
   Stream<bool> watchMicroAttentionOnly() =>

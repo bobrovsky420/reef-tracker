@@ -3654,6 +3654,79 @@ class AppLocalizationsIt extends AppLocalizations {
   String get discoveryManualEntry => 'Inserisci indirizzo IP';
 
   @override
+  String get devicesTitle => 'Dispositivi';
+
+  @override
+  String get devicesAll => 'Tutti';
+
+  @override
+  String devicesScopeAll(int count) {
+    return 'Tutti i dispositivi · $count';
+  }
+
+  @override
+  String devicesScopeVendor(String vendor, int count) {
+    return '$vendor · $count';
+  }
+
+  @override
+  String devicesRefreshAll(int count) {
+    return 'Aggiorna tutti ($count)';
+  }
+
+  @override
+  String devicesSaveAll(int count) {
+    return 'Salva tutti ($count)';
+  }
+
+  @override
+  String get devicesDisclaimer =>
+      'L\'app si limita a leggere i tuoi dispositivi. Non può modificare impostazioni, dosare, commutare prese o calibrare — per questo usa l\'app del produttore. La lettura funziona solo se il telefono è sulla stessa rete Wi-Fi dei dispositivi.';
+
+  @override
+  String get devicesEmptyTitle => 'Nessun dispositivo';
+
+  @override
+  String get devicesEmptyBody =>
+      'Collega un misuratore ReefFactory, un dispositivo Red Sea ReefBeat o un controller Neptune Apex sulla tua rete per vederlo qui.';
+
+  @override
+  String get devicesAddDevice => 'Aggiungi dispositivo';
+
+  @override
+  String get devicesAddPickBrand => 'Quale marca?';
+
+  @override
+  String get devicesReorderBrands => 'Riordina le marche';
+
+  @override
+  String get devicesReorderBrandsHint =>
+      'Quando due dispositivi riportano la stessa lettura, vince la marca più in alto in questo elenco.';
+
+  @override
+  String devicesSourceNote(String param, String device) {
+    return '$param da $device';
+  }
+
+  @override
+  String get devicesProLocked =>
+      'La lettura in tempo reale dei dispositivi fa parte di ReefTracker Pro.';
+
+  @override
+  String devicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dispositivi',
+      one: '1 dispositivo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devicesDetails => 'Dettagli';
+
+  @override
   String get reefDevicesTitle => 'Dispositivi connessi';
 
   @override

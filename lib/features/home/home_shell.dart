@@ -406,29 +406,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           );
                         }
                       }
-                      // The three LAN-device dashboards (U36/U38/U40,
-                      // experimental) share one gate — a keeper who may use
-                      // one may use all of them.
-                      const deviceRoutes = {
-                        'reeffactory': '/reeffactory',
-                        'reefbeat': '/reefbeat',
-                        'apex': '/apex',
-                      };
-                      final deviceRoute = deviceRoutes[v];
-                      if (deviceRoute != null) {
-                        if (ref.read(
-                          proFeatureProvider(ProFeature.connectedDevices),
-                        )) {
-                          unawaited(context.push(deviceRoute));
-                        } else {
-                          unawaited(
-                            showProFeatureDialog(
-                              context,
-                              ProFeature.connectedDevices,
-                            ),
-                          );
-                        }
-                      }
+                      // The one Devices screen (U41), covering every vendor.
+                      // Deliberately ungated here: the page is an inventory of
+                      // what the keeper owns — reading and saving are what the
+                      // gate covers, on the page itself.
+                      if (v == 'devices') unawaited(context.push('/devices'));
                     },
                     entries: [
                       ReefMenuItem(
@@ -470,27 +452,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           icon: Icons.photo_camera_outlined,
                           label: l.hannaScanTitle,
                         ),
-                      // ReefFactory local devices (U36) — experimental opt-in,
-                      // like the Hanna entries.
+                      // Every connected device on one page (U41) — the single
+                      // entry point that replaced the three per-vendor items.
+                      // Experimental opt-in, like the Hanna entries.
                       if (ref.watch(experimentalEnabledProvider).value ?? false)
                         ReefMenuItem(
-                          value: 'reeffactory',
-                          icon: Icons.sensors,
-                          label: l.reefFactoryMenu,
-                        ),
-                      // ReefBeat devices (U38) — experimental opt-in.
-                      if (ref.watch(experimentalEnabledProvider).value ?? false)
-                        ReefMenuItem(
-                          value: 'reefbeat',
-                          icon: Icons.water_drop_outlined,
-                          label: l.reefBeatMenu,
-                        ),
-                      // Neptune Apex (U40) — experimental opt-in.
-                      if (ref.watch(experimentalEnabledProvider).value ?? false)
-                        ReefMenuItem(
-                          value: 'apex',
-                          icon: Icons.hub_outlined,
-                          label: l.apexMenu,
+                          value: 'devices',
+                          icon: Icons.settings_input_antenna,
+                          label: l.devicesTitle,
                         ),
                     ],
                   ),

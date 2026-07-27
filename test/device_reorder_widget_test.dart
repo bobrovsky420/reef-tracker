@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
-import 'package:reeftracker/features/reefbeat/reefbeat_screen.dart';
-import 'package:reeftracker/features/reeffactory/reeffactory_screen.dart';
+import 'package:reeftracker/features/devices/devices_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
-/// Drag-to-reorder on the two device dashboards. The seeded devices carry an
-/// **empty address**, so the screens' on-open auto-refresh returns immediately
-/// and no socket is opened under `flutter test`.
+/// The unified Devices screen (U41): drag-to-reorder within a vendor, and the
+/// vendor selector scoping what is shown. The seeded devices carry an **empty
+/// address**, so the screen's on-open auto-refresh returns immediately and no
+/// socket is opened under `flutter test`.
 void main() {
   /// Pumps fake time in small steps — never `pumpAndSettle`, which would hang
   /// on the drift-loading spinner (see the router-test note).
@@ -27,18 +27,14 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
-  Future<void> pumpScreen(
-    WidgetTester tester,
-    AppDatabase db,
-    Widget screen,
-  ) async {
+  Future<void> pumpDevices(WidgetTester tester, AppDatabase db) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [dbProvider.overrideWithValue(db)],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: screen,
+          home: const DevicesScreen(),
         ),
       ),
     );
@@ -78,7 +74,7 @@ void main() {
       );
     }
 
-    await pumpScreen(tester, db, const ReefFactoryScreen());
+    await pumpDevices(tester, db);
     expect(await orderOf(db, 'reeffactory'), ['A meter', 'B meter']);
     // One handle per card, and only because there are two cards.
     expect(find.byIcon(Icons.drag_handle), findsNWidgets(2));
@@ -103,7 +99,7 @@ void main() {
       );
     }
 
-    await pumpScreen(tester, db, const ReefBeatScreen());
+    await pumpDevices(tester, db);
     expect(await orderOf(db, 'reefbeat'), ['A pump', 'B pump']);
 
     await dragDown(tester, find.byIcon(Icons.drag_handle).first);
@@ -122,10 +118,82 @@ void main() {
       name: 'Only pump',
     );
 
-    await pumpScreen(tester, db, const ReefBeatScreen());
+    await pumpDevices(tester, db);
 
     expect(find.text('Only pump'), findsOneWidget);
     expect(find.byIcon(Icons.drag_handle), findsNothing);
+    await unmountApp(tester);
+  });
+
+  testWidgets('one vendor means no selector at all', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await db.upsertReefFactoryDevice(
+      identifier: 'RF-solo',
+      model: 'RFPM01',
+      address: '',
+      name: 'Lone meter',
+    );
+
+    await pumpDevices(tester, db);
+
+    // A one-choice selector is noise: no All chip, no vendor chip, and no
+    // section header either — the page is just the card.
+    expect(find.text('All'), findsNothing);
+    expect(find.byType(ChoiceChip), findsNothing);
+    expect(find.text('Lone meter'), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  testWidgets('the vendor selector scopes the page to one brand', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await db.upsertReefFactoryDevice(
+      identifier: 'RF-1',
+      model: 'RFPM01',
+      address: '',
+      name: 'My meter',
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'RB-1',
+      model: 'RSDOSE4',
+      address: '',
+      name: 'My pump',
+    );
+
+    await pumpDevices(tester, db);
+
+    // All: both vendors' cards, each under its own header.
+    expect(find.text('My meter'), findsOneWidget);
+    expect(find.text('My pump'), findsOneWidget);
+    expect(find.byType(ChoiceChip), findsNWidgets(3)); // All + two vendors
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'ReefFactory  1'));
+    await settle(tester);
+
+    // Filtered: the other vendor's card is gone, the chips stay.
+    expect(find.text('My meter'), findsOneWidget);
+    expect(find.text('My pump'), findsNothing);
+    expect(find.byType(ChoiceChip), findsNWidgets(3));
+    await unmountApp(tester);
+  });
+
+  testWidgets('an empty inventory offers the Add button, nothing else', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    await pumpDevices(tester, db);
+
+    expect(find.text('No devices yet'), findsOneWidget);
+    // No chips, no scope bar, no read-only disclaimer — there is nothing yet
+    // to be read-only about.
+    expect(find.byType(ChoiceChip), findsNothing);
+    expect(find.textContaining('Refresh all'), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'Add device'), findsOneWidget);
     await unmountApp(tester);
   });
 }

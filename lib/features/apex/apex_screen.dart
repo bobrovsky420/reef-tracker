@@ -9,11 +9,11 @@ import '../../data/ap_device_link.dart';
 import '../../data/ap_protocol.dart';
 import '../../data/database.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_icon_button.dart';
+import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 
 /// How many outlets a card lists before collapsing behind "+N more". A fully
@@ -45,31 +45,107 @@ List<({String paramKey, double value})> apReadingsToSave(
   ];
 }
 
-/// Transient per-controller live state held by the screen (not persisted).
-class _Live {
-  const _Live({this.loading = false, this.status, this.error});
+/// Transient per-controller live state (not persisted). Held by the unified
+/// Devices screen (U41), so switching the vendor filter doesn't discard a
+/// status the user just refreshed.
+class ApLive {
+  const ApLive({this.loading = false, this.status, this.error});
   final bool loading;
   final ApStatus? status;
   final ApLinkError? error;
 }
 
-/// The Neptune Apex dashboard (U40): the registered controllers, read on open
-/// and by one **Refresh all**, each card carrying a **Save** that persists its
-/// probe values as measurements. Read-only towards the controller — the app
-/// never switches an outlet, starts a feed cycle or edits a program.
-class ApexScreen extends ConsumerStatefulWidget {
-  const ApexScreen({super.key});
-
-  @override
-  ConsumerState<ApexScreen> createState() => _ApexScreenState();
+/// The credentials stored with a device row, or null when it carries none (a
+/// row restored from a backup — the password is deliberately not in one).
+ApCredentials? apCredentialsOf(DeviceRecord d) {
+  final username = d.username;
+  final password = d.secret;
+  if (username == null || password == null) return null;
+  return ApCredentials(username: username, password: password);
 }
 
-class _ApexScreenState extends ConsumerState<ApexScreen> {
-  /// Live status keyed by device identifier (the controller's serial).
-  final Map<String, _Live> _live = {};
-  bool _autoRefreshed = false;
+/// Reads one controller, returning the outcome for the caller to store. A row
+/// whose password didn't survive a backup restore resolves straight to an auth
+/// error rather than a pointless round trip.
+Future<ApLive> apReadDevice(WidgetRef ref, DeviceRecord device) async {
+  final address = device.address;
+  final credentials = apCredentialsOf(device);
+  if (address == null || address.isEmpty) return const ApLive();
+  if (credentials == null) return const ApLive(error: ApLinkError.auth);
+  try {
+    final status = await ref
+        .read(apDeviceLinkProvider)
+        .readOnce(address, credentials);
+    await ref.read(dbProvider).touchDeviceSeen(device.identifier);
+    return ApLive(status: status);
+  } on ApLinkException catch (e) {
+    return ApLive(error: e.error);
+  }
+}
 
-  Tank? _tankFor(int? id, List<Tank> tanks) {
+String apErrorText(AppLocalizations l, ApLinkError e) => switch (e) {
+  ApLinkError.unreachable => l.apexErrUnreachable,
+  ApLinkError.timeout => l.apexErrTimeout,
+  ApLinkError.auth => l.apexErrAuth,
+  ApLinkError.protocol => l.apexErrProtocol,
+};
+
+/// The Apex section of the Devices screen (U41): one card per controller, each
+/// with its probe values, its outlets and its own Save.
+class ApDeviceSection extends ConsumerWidget {
+  const ApDeviceSection({
+    super.key,
+    required this.devices,
+    required this.live,
+    required this.onSave,
+    required this.onRemoved,
+    required this.onRefreshRequested,
+  });
+
+  /// Already filtered to the active tank and sorted by the parent.
+  final List<DeviceRecord> devices;
+  final Map<String, ApLive> live;
+  final void Function(DeviceRecord device, ApStatus status) onSave;
+  final void Function(String identifier) onRemoved;
+
+  /// Re-read one controller — used after new credentials are entered, so the
+  /// retry uses them immediately.
+  final void Function(DeviceRecord device) onRefreshRequested;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
+    return SliverReorderableList(
+      itemCount: devices.length,
+      onReorderItem: (oldIndex, newIndex) {
+        final ids = [for (final d in devices) d.id];
+        ids.insert(newIndex, ids.removeAt(oldIndex));
+        unawaited(ref.read(dbProvider).reorderDevices(ids));
+      },
+      itemBuilder: (context, i) {
+        final d = devices[i];
+        return _ControllerCard(
+          key: ValueKey(d.id),
+          device: d,
+          index: i,
+          canReorder: devices.length > 1,
+          tank: _tankFor(d.tankId, tanks),
+          live: live[d.identifier] ?? const ApLive(),
+          errorTextOf: (e) => apErrorText(l, e),
+          onRename: () => _renameDevice(context, ref, d),
+          onCredentials: () => _editCredentials(context, ref, d),
+          onSave: (status) => onSave(d, status),
+          onMove: tanks.any((t) => t.id != d.tankId)
+              ? () => _moveDevice(context, ref, d)
+              : null,
+          onRemove: () => _confirmRemove(context, ref, d),
+        );
+      },
+    );
+  }
+
+  static Tank? _tankFor(int? id, List<Tank> tanks) {
     if (id == null) return null;
     for (final t in tanks) {
       if (t.id == id) return t;
@@ -77,271 +153,11 @@ class _ApexScreenState extends ConsumerState<ApexScreen> {
     return null;
   }
 
-  /// The credentials stored with a device row, or null when it carries none
-  /// (a row restored from a backup — the password is deliberately not in one).
-  ApCredentials? _credentialsOf(DeviceRecord d) {
-    final username = d.username;
-    final password = d.secret;
-    if (username == null || password == null) return null;
-    return ApCredentials(username: username, password: password);
-  }
-
-  Future<void> _refresh(DeviceRecord device) async {
-    final address = device.address;
-    final credentials = _credentialsOf(device);
-    if (address == null || address.isEmpty) return;
-    if (credentials == null) {
-      // A restored row: the address survived the backup, the password did not.
-      setState(
-        () => _live[device.identifier] = const _Live(error: ApLinkError.auth),
-      );
-      return;
-    }
-    setState(() => _live[device.identifier] = const _Live(loading: true));
-    try {
-      final status = await ref
-          .read(apDeviceLinkProvider)
-          .readOnce(address, credentials);
-      await ref.read(dbProvider).touchDeviceSeen(device.identifier);
-      if (!mounted) return;
-      setState(() => _live[device.identifier] = _Live(status: status));
-    } on ApLinkException catch (e) {
-      if (!mounted) return;
-      setState(() => _live[device.identifier] = _Live(error: e.error));
-    }
-  }
-
-  /// Reads every controller in turn — sequential, like the other dashboards: a
-  /// controller is also serving Fusion and its own web UI.
-  Future<void> _refreshAll(List<DeviceRecord> devices) async {
-    for (final d in devices) {
-      await _refresh(d);
-    }
-  }
-
-  Future<void> _persistValues(
-    Tank tank,
-    List<({String paramKey, double value})> values,
+  Future<void> _renameDevice(
+    BuildContext context,
+    WidgetRef ref,
+    DeviceRecord d,
   ) async {
-    final db = ref.read(dbProvider);
-    final type = SetupType.fromName(tank.setupType);
-    for (final key in {for (final v in values) v.paramKey}) {
-      await db.addTrackedParameter(tank.id, key, type);
-    }
-    await db.insertReadingGroup(
-      tankId: tank.id,
-      takenAt: DateTime.now(),
-      values: values,
-    );
-  }
-
-  Future<void> _save(DeviceRecord device, ApStatus status) async {
-    final l = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
-    final tank = _tankFor(device.tankId, tanks);
-    if (tank == null) {
-      messenger.showSnackBar(SnackBar(content: Text(l.apexNoTank)));
-      return;
-    }
-    final values = apReadingsToSave(status.readings);
-    if (values.isEmpty) return;
-    try {
-      await _persistValues(tank, values);
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.apexSavedSnack(values.length))),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.saveFailed(e.toString()))),
-      );
-    }
-  }
-
-  /// Saves every controller's last-read values at once, merging readings bound
-  /// for the same tank into one group (deduped by parameter) exactly as the
-  /// ReefFactory dashboard does.
-  Future<void> _saveAll(List<DeviceRecord> devices) async {
-    final l = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
-    final byTank = <int, Map<String, ({String paramKey, double value})>>{};
-    final tankById = <int, Tank>{};
-    var skippedNoTank = false;
-    for (final d in devices) {
-      final status = _live[d.identifier]?.status;
-      if (status == null) continue;
-      final tank = _tankFor(d.tankId, tanks);
-      if (tank == null) {
-        skippedNoTank = true;
-        continue;
-      }
-      final values = apReadingsToSave(status.readings);
-      if (values.isEmpty) continue;
-      final bucket = byTank.putIfAbsent(tank.id, () => {});
-      for (final v in values) {
-        bucket[v.paramKey] = v;
-      }
-      tankById[tank.id] = tank;
-    }
-    if (byTank.isEmpty) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(skippedNoTank ? l.apexNoTank : l.apexNothingToSave),
-        ),
-      );
-      return;
-    }
-    try {
-      var total = 0;
-      for (final entry in byTank.entries) {
-        final values = entry.value.values.toList();
-        await _persistValues(tankById[entry.key]!, values);
-        total += values.length;
-      }
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.apexSavedSnack(total))),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.saveFailed(e.toString()))),
-      );
-    }
-  }
-
-  String _errorText(AppLocalizations l, ApLinkError e) => switch (e) {
-    ApLinkError.unreachable => l.apexErrUnreachable,
-    ApLinkError.timeout => l.apexErrTimeout,
-    ApLinkError.auth => l.apexErrAuth,
-    ApLinkError.protocol => l.apexErrProtocol,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final devicesAsync = ref.watch(apexDevicesProvider);
-    final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
-    final activeTank = ref.watch(activeTankProvider);
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l.apexTitle)),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddSheet,
-        icon: const Icon(Icons.add),
-        label: Text(l.apexAddDevice),
-      ),
-      body: devicesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
-        data: (allDevices) {
-          // Same tank scoping as the other device dashboards: the active
-          // tank's controllers plus unassigned ones, in manual card order with
-          // the display name as the tie-break.
-          final devices = [
-            for (final d in allDevices)
-              if (d.tankId == null || d.tankId == activeTank?.id) d,
-          ]..sort((a, b) {
-            final byOrder = a.displayOrder.compareTo(b.displayOrder);
-            if (byOrder != 0) return byOrder;
-            return deviceDisplayName(
-              a,
-            ).toLowerCase().compareTo(deviceDisplayName(b).toLowerCase());
-          });
-          if (!_autoRefreshed && devices.isNotEmpty) {
-            _autoRefreshed = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) unawaited(_refreshAll(devices));
-            });
-          }
-          final anyLoading = devices.any(
-            (d) => _live[d.identifier]?.loading ?? false,
-          );
-          final anyStatus = devices.any(
-            (d) => _live[d.identifier]?.status != null,
-          );
-          return CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _DisclaimerBanner(text: l.apexDisclaimer),
-                      const SizedBox(height: 12),
-                      if (devices.isEmpty)
-                        _EmptyState(
-                          title: l.apexEmptyTitle,
-                          body: l.apexEmptyBody,
-                        )
-                      else ...[
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: anyLoading
-                                    ? null
-                                    : () => _refreshAll(devices),
-                                icon: const Icon(Icons.refresh, size: 18),
-                                label: Text(l.apexRefreshAll),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: FilledButton.icon(
-                                onPressed: anyStatus
-                                    ? () => _saveAll(devices)
-                                    : null,
-                                icon: const Icon(Icons.save_outlined, size: 18),
-                                label: Text(l.apexSaveAll),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 96),
-                sliver: SliverReorderableList(
-                  itemCount: devices.length,
-                  onReorderItem: (oldIndex, newIndex) {
-                    final ids = [for (final d in devices) d.id];
-                    ids.insert(newIndex, ids.removeAt(oldIndex));
-                    unawaited(ref.read(dbProvider).reorderDevices(ids));
-                  },
-                  itemBuilder: (context, i) {
-                    final d = devices[i];
-                    return _ControllerCard(
-                      key: ValueKey(d.id),
-                      device: d,
-                      index: i,
-                      canReorder: devices.length > 1,
-                      tank: _tankFor(d.tankId, tanks),
-                      live: _live[d.identifier] ?? const _Live(),
-                      errorTextOf: (e) => _errorText(l, e),
-                      onRename: () => _renameDevice(d),
-                      onCredentials: () => _editCredentials(d),
-                      onSave: (status) => _save(d, status),
-                      onMove: tanks.any((t) => t.id != d.tankId)
-                          ? () => _moveDevice(d)
-                          : null,
-                      onRemove: () => _confirmRemove(d),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Future<void> _renameDevice(DeviceRecord d) async {
     final l = AppLocalizations.of(context);
     final name = await showDeviceRenameDialog(
       context,
@@ -362,7 +178,11 @@ class _ApexScreenState extends ConsumerState<ApexScreen> {
   /// Re-enters the controller's login. Needed after the password is changed on
   /// the Apex itself, and after a backup restore — a restored row carries the
   /// username but never the password.
-  Future<void> _editCredentials(DeviceRecord d) async {
+  Future<void> _editCredentials(
+    BuildContext context,
+    WidgetRef ref,
+    DeviceRecord d,
+  ) async {
     final result = await showModalBottomSheet<({String user, String pass})>(
       context: context,
       isScrollControlled: true,
@@ -383,10 +203,14 @@ class _ApexScreenState extends ConsumerState<ApexScreen> {
     // The stored row the refresh reads from is the stream's, not `d` — reread
     // it so the retry uses the credentials just saved.
     final fresh = await ref.read(dbProvider).deviceByIdentifier(d.identifier);
-    if (fresh != null && mounted) unawaited(_refresh(fresh));
+    if (fresh != null) onRefreshRequested(fresh);
   }
 
-  Future<void> _moveDevice(DeviceRecord d) async {
+  Future<void> _moveDevice(
+    BuildContext context,
+    WidgetRef ref,
+    DeviceRecord d,
+  ) async {
     final l = AppLocalizations.of(context);
     final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
     final tankId = await showDialog<int>(
@@ -410,7 +234,11 @@ class _ApexScreenState extends ConsumerState<ApexScreen> {
     }
   }
 
-  Future<void> _confirmRemove(DeviceRecord d) async {
+  Future<void> _confirmRemove(
+    BuildContext context,
+    WidgetRef ref,
+    DeviceRecord d,
+  ) async {
     final l = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
@@ -430,120 +258,56 @@ class _ApexScreenState extends ConsumerState<ApexScreen> {
       ),
     );
     if (ok == true) {
-      _live.remove(d.identifier);
+      onRemoved(d.identifier);
       await ref.read(dbProvider).deleteDevice(d.id);
     }
   }
+}
 
-  /// The add path is manual address + login, with no discovery step: an Apex
-  /// will not identify itself to an unauthenticated probe, so the network
-  /// sweep that finds ReefBeat and ReefFactory devices has nothing to go on
-  /// here (see DESIGN.md).
-  Future<void> _showAddSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: _AddDeviceSheet(
-          link: ref.read(apDeviceLinkProvider),
-          tanks: ref.read(tanksProvider).value ?? const <Tank>[],
-          activeTankId: ref.read(activeTankProvider)?.id,
-          errorTextOf: (e) => _errorText(AppLocalizations.of(ctx), e),
-          onAdd:
-              ({
-                required host,
-                required credentials,
-                required name,
-                required tankId,
-                required status,
-              }) async {
-                await ref
-                    .read(dbProvider)
-                    .upsertApexDevice(
-                      identifier: status.info.serial,
-                      model: status.info.modelCode,
-                      address: host,
-                      username: credentials.username,
-                      password: credentials.password,
-                      name: name,
-                      tankId: tankId,
-                    );
-                // The probe already read the controller — seed the card so it
-                // shows live values without a second round trip.
-                if (mounted) {
-                  setState(
-                    () =>
-                        _live[status.info.serial] = _Live(status: status),
+/// The Apex add path: manual address + login, with no discovery step. An Apex
+/// will not identify itself to an unauthenticated probe, so the network sweep
+/// that finds ReefBeat and ReefFactory devices has nothing to go on here (see
+/// DESIGN.md).
+Future<void> showApAddFlow(
+  BuildContext context,
+  WidgetRef ref, {
+  required void Function(String identifier, ApStatus status) onSeed,
+}) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: _AddDeviceSheet(
+        link: ref.read(apDeviceLinkProvider),
+        tanks: ref.read(tanksProvider).value ?? const <Tank>[],
+        activeTankId: ref.read(activeTankProvider)?.id,
+        errorTextOf: (e) => apErrorText(AppLocalizations.of(ctx), e),
+        onAdd:
+            ({
+              required host,
+              required credentials,
+              required name,
+              required tankId,
+              required status,
+            }) async {
+              await ref
+                  .read(dbProvider)
+                  .upsertApexDevice(
+                    identifier: status.info.serial,
+                    model: status.info.modelCode,
+                    address: host,
+                    username: credentials.username,
+                    password: credentials.password,
+                    name: name,
+                    tankId: tankId,
                   );
-                }
-              },
-        ),
+              onSeed(status.info.serial, status);
+            },
       ),
-    );
-  }
-}
-
-/// The persistent read-only notice, in the tertiary container so it reads as
-/// informational rather than as an error (shared shape with the other device
-/// dashboards).
-class _DisclaimerBanner extends StatelessWidget {
-  const _DisclaimerBanner({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.tertiaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, size: 20, color: cs.onTertiaryContainer),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: cs.onTertiaryContainer),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.title, required this.body});
-  final String title, body;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-      child: Column(
-        children: [
-          Icon(
-            Icons.hub_outlined,
-            size: 48,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 12),
-          Text(title, style: t.titleMedium, textAlign: TextAlign.center),
-          const SizedBox(height: 6),
-          Text(body, style: t.bodyMedium, textAlign: TextAlign.center),
-        ],
-      ),
-    );
-  }
+    ),
+  );
 }
 
 class _ControllerCard extends StatefulWidget {
@@ -566,7 +330,7 @@ class _ControllerCard extends StatefulWidget {
   final int index;
   final bool canReorder;
   final Tank? tank;
-  final _Live live;
+  final ApLive live;
   final String Function(ApLinkError) errorTextOf;
   final VoidCallback onRename;
   final VoidCallback onCredentials;
@@ -627,6 +391,11 @@ class _ControllerCardState extends State<_ControllerCard> {
                     if (v == 'rename') widget.onRename();
                     if (v == 'credentials') widget.onCredentials();
                     if (v == 'move') widget.onMove?.call();
+                    if (v == 'details') {
+                      unawaited(
+                        showDeviceDetailsDialog(context, widget.device),
+                      );
+                    }
                     if (v == 'remove') widget.onRemove();
                   },
                   itemBuilder: (_) => [
@@ -640,6 +409,10 @@ class _ControllerCardState extends State<_ControllerCard> {
                         value: 'move',
                         child: Text(l.apexMoveToTank),
                       ),
+                    PopupMenuItem(
+                      value: 'details',
+                      child: Text(l.devicesDetails),
+                    ),
                     PopupMenuItem(value: 'remove', child: Text(l.apexRemove)),
                   ],
                 ),
@@ -822,9 +595,7 @@ class _OutletPill extends StatelessWidget {
             outlet.name,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: outlet.overridden ? color : tokens.text,
-              fontWeight: outlet.overridden
-                  ? FontWeight.w600
-                  : FontWeight.w400,
+              fontWeight: outlet.overridden ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
         ],
@@ -854,9 +625,10 @@ class _StateBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(
-          context,
-        ).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w600),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -927,7 +699,10 @@ class _CredentialsSheetState extends State<_CredentialsSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.apexCredentialsMenu, style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            l.apexCredentialsMenu,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 16),
           TextField(
             controller: _user,

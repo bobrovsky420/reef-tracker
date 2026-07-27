@@ -5979,6 +5979,108 @@ abstract class AppLocalizations {
   /// **'Enter IP address'**
   String get discoveryManualEntry;
 
+  /// Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get devicesTitle;
+
+  /// The vendor selector's first chip: show every connected device regardless of brand.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get devicesAll;
+
+  /// Scope line above the bulk actions when no vendor filter is applied.
+  ///
+  /// In en, this message translates to:
+  /// **'All devices · {count}'**
+  String devicesScopeAll(int count);
+
+  /// Scope line above the bulk actions when one vendor is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'{vendor} · {count}'**
+  String devicesScopeVendor(String vendor, int count);
+
+  /// Reads every device currently in view — the vendor filter scopes it.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh all ({count})'**
+  String devicesRefreshAll(int count);
+
+  /// Saves the readings of every meter in view. Count = devices holding values right now.
+  ///
+  /// In en, this message translates to:
+  /// **'Save all ({count})'**
+  String devicesSaveAll(int count);
+
+  /// The read-only notice shown when no vendor filter is applied; a vendor view swaps in that brand's own wording, which names its app.
+  ///
+  /// In en, this message translates to:
+  /// **'This app only reads your devices. It can\'t change settings, dose, switch outlets or calibrate — use the manufacturer\'s own app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.'**
+  String get devicesDisclaimer;
+
+  /// No description provided for @devicesEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices yet'**
+  String get devicesEmptyTitle;
+
+  /// No description provided for @devicesEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a ReefFactory meter, a Red Sea ReefBeat device or a Neptune Apex controller on your local network to see it here.'**
+  String get devicesEmptyBody;
+
+  /// No description provided for @devicesAddDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Add device'**
+  String get devicesAddDevice;
+
+  /// Title of the sheet asking which brand to add, shown only from the All view.
+  ///
+  /// In en, this message translates to:
+  /// **'Which brand?'**
+  String get devicesAddPickBrand;
+
+  /// No description provided for @devicesReorderBrands.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder brands'**
+  String get devicesReorderBrands;
+
+  /// States the save-precedence rule in the sheet that sets it: vendor order decides which device's value survives Save all.
+  ///
+  /// In en, this message translates to:
+  /// **'When two devices report the same reading, the brand higher in this list wins.'**
+  String get devicesReorderBrandsHint;
+
+  /// Appended to the Save all confirmation when two devices reported the same parameter, naming the one whose value was kept.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} from {device}'**
+  String devicesSourceNote(String param, String device);
+
+  /// No description provided for @devicesProLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading your devices live is part of ReefTracker Pro.'**
+  String get devicesProLocked;
+
+  /// How many devices a brand has, in the reorder sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 device} other{{count} devices}}'**
+  String devicesCount(int count);
+
+  /// Card menu item opening the device's model / address / last-seen facts, which used to live in the Settings inventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get devicesDetails;
+
   /// No description provided for @reefDevicesTitle.
   ///
   /// In en, this message translates to:

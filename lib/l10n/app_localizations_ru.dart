@@ -3706,6 +3706,81 @@ class AppLocalizationsRu extends AppLocalizations {
   String get discoveryManualEntry => 'Ввести IP-адрес';
 
   @override
+  String get devicesTitle => 'Устройства';
+
+  @override
+  String get devicesAll => 'Все';
+
+  @override
+  String devicesScopeAll(int count) {
+    return 'Все устройства · $count';
+  }
+
+  @override
+  String devicesScopeVendor(String vendor, int count) {
+    return '$vendor · $count';
+  }
+
+  @override
+  String devicesRefreshAll(int count) {
+    return 'Обновить все ($count)';
+  }
+
+  @override
+  String devicesSaveAll(int count) {
+    return 'Сохранить все ($count)';
+  }
+
+  @override
+  String get devicesDisclaimer =>
+      'Приложение только считывает данные с устройств. Оно не может менять настройки, дозировать, переключать розетки или калибровать — для этого используйте приложение производителя. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
+
+  @override
+  String get devicesEmptyTitle => 'Устройств пока нет';
+
+  @override
+  String get devicesEmptyBody =>
+      'Подключите измеритель ReefFactory, устройство Red Sea ReefBeat или контроллер Neptune Apex в своей сети, и оно появится здесь.';
+
+  @override
+  String get devicesAddDevice => 'Добавить устройство';
+
+  @override
+  String get devicesAddPickBrand => 'Какой бренд?';
+
+  @override
+  String get devicesReorderBrands => 'Изменить порядок брендов';
+
+  @override
+  String get devicesReorderBrandsHint =>
+      'Если два устройства сообщают одно и то же значение, побеждает бренд, стоящий выше в этом списке.';
+
+  @override
+  String devicesSourceNote(String param, String device) {
+    return '$param с устройства $device';
+  }
+
+  @override
+  String get devicesProLocked =>
+      'Чтение устройств в реальном времени входит в ReefTracker Pro.';
+
+  @override
+  String devicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count устройства',
+      many: '$count устройств',
+      few: '$count устройства',
+      one: '1 устройство',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devicesDetails => 'Подробности';
+
+  @override
   String get reefDevicesTitle => 'Подключённые устройства';
 
   @override

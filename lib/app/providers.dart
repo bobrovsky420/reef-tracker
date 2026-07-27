@@ -552,6 +552,20 @@ final unitPrefsProvider = Provider<UnitPrefs>((ref) {
   return UnitPrefs(temp: temp, salinity: salinity, volume: volume);
 });
 
+/// The Devices screen's vendor order (U41): the selector chips left-to-right,
+/// the sections top-to-bottom, and — because the screen resolves a duplicated
+/// parameter by "first displayed wins" — which vendor's reading beats which.
+final deviceVendorOrderProvider = _setting(
+  SettingKey.deviceVendorOrder,
+  AppSettings.decodeDeviceVendorOrder,
+);
+
+/// The Devices screen's last selected vendor chip ('' = All).
+final deviceVendorFilterProvider = _setting(
+  SettingKey.deviceVendorFilter,
+  AppSettings.decodeDeviceVendorFilter,
+);
+
 /// Whether the one-time top-bar feature tour has already been shown. Unset
 /// (a fresh install) reads as `false` so the tour runs once; the "Replay tour"
 /// settings action resets it to `'false'` to trigger it again.

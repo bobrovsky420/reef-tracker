@@ -373,45 +373,10 @@ class SettingsBody extends ConsumerWidget {
                 ),
                 onTap: () => settings.setHannaScanFab(!scanFabEnabled),
               ),
-              // Red Sea ReefBeat dosing-pump status (U38). Shares the one
-              // LAN-device gate with the ReefFactory and Apex entries.
-              ReefSettingsRow(
-                icon: Icons.water_drop_outlined,
-                title: l.reefBeatTitle,
-                description: l.reefBeatSettingsSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap:
-                    ref.watch(proFeatureProvider(ProFeature.connectedDevices))
-                    ? () => context.push('/reefbeat')
-                    : () => showProFeatureDialog(
-                        context,
-                        ProFeature.connectedDevices,
-                      ),
-              ),
-              // Neptune Apex controllers (U40). Same gate.
-              ReefSettingsRow(
-                icon: Icons.hub_outlined,
-                title: l.apexTitle,
-                description: l.apexSettingsSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap:
-                    ref.watch(proFeatureProvider(ProFeature.connectedDevices))
-                    ? () => context.push('/apex')
-                    : () => showProFeatureDialog(
-                        context,
-                        ProFeature.connectedDevices,
-                      ),
-              ),
-              // Read-only inventory of every connected device (ReefFactory
-              // meters, ReefBeat devices, Apex controllers + the Hanna checker
-              // once used).
-              ReefSettingsRow(
-                icon: Icons.devices_other_outlined,
-                title: l.reefDevicesTitle,
-                description: l.reefDevicesSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap: () => context.push('/settings/devices'),
-              ),
+              // No device rows here any more (U41): the per-vendor dashboards
+              // and the read-only inventory became one Devices screen, reached
+              // from the Measurements-tab overflow menu. Four Settings rows for
+              // what is one page would be four ways to say the same thing.
             ],
           ],
         ),

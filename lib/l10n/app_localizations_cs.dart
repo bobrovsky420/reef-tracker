@@ -3657,6 +3657,80 @@ class AppLocalizationsCs extends AppLocalizations {
   String get discoveryManualEntry => 'Zadat IP adresu';
 
   @override
+  String get devicesTitle => 'Zařízení';
+
+  @override
+  String get devicesAll => 'Vše';
+
+  @override
+  String devicesScopeAll(int count) {
+    return 'Všechna zařízení · $count';
+  }
+
+  @override
+  String devicesScopeVendor(String vendor, int count) {
+    return '$vendor · $count';
+  }
+
+  @override
+  String devicesRefreshAll(int count) {
+    return 'Obnovit vše ($count)';
+  }
+
+  @override
+  String devicesSaveAll(int count) {
+    return 'Uložit vše ($count)';
+  }
+
+  @override
+  String get devicesDisclaimer =>
+      'Aplikace vaše zařízení pouze čte. Nemůže měnit nastavení, dávkovat, spínat zásuvky ani kalibrovat — k tomu použijte aplikaci výrobce. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
+
+  @override
+  String get devicesEmptyTitle => 'Zatím žádná zařízení';
+
+  @override
+  String get devicesEmptyBody =>
+      'Připojte měřič ReefFactory, zařízení Red Sea ReefBeat nebo řídicí jednotku Neptune Apex ve své síti a uvidíte je zde.';
+
+  @override
+  String get devicesAddDevice => 'Přidat zařízení';
+
+  @override
+  String get devicesAddPickBrand => 'Která značka?';
+
+  @override
+  String get devicesReorderBrands => 'Změnit pořadí značek';
+
+  @override
+  String get devicesReorderBrandsHint =>
+      'Když dvě zařízení hlásí stejnou hodnotu, vyhrává značka výše v tomto seznamu.';
+
+  @override
+  String devicesSourceNote(String param, String device) {
+    return '$param ze zařízení $device';
+  }
+
+  @override
+  String get devicesProLocked =>
+      'Živé čtení zařízení je součástí ReefTracker Pro.';
+
+  @override
+  String devicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count zařízení',
+      few: '$count zařízení',
+      one: '1 zařízení',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devicesDetails => 'Podrobnosti';
+
+  @override
   String get reefDevicesTitle => 'Připojená zařízení';
 
   @override

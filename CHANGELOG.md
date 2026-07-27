@@ -25,6 +25,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   controller asks for it again.
 
 ### Changed
+- All your connected devices now live on one Devices page instead of three
+  separate screens buried in Settings. A row of brand buttons across the top
+  switches between all of them and one brand at a time; brands you don't own
+  never show up, and if you only have one brand the buttons don't appear at all.
+  Every device keeps the same full card it had before — nothing was summarised
+  away. Open it from the menu in the top-right of the Measurements screen.
+- Refresh and Save all now act only on what you're actually looking at, and say
+  how many devices that is. Filter to one brand and the rest of your equipment
+  is left alone. Save all now covers every meter on the page at once and merges
+  readings taken moments apart into a single measurement rather than several.
+- When two devices report the same reading for the same aquarium, the one higher
+  up the page wins, and the confirmation names the device the value came from.
+  You set that preference simply by reordering — drag a card above its
+  neighbours, or reorder the brands from the page's menu.
+- Each device card's menu gained a Details item showing its brand, model,
+  address and when the app last reached it — the facts that used to live in the
+  Settings device list.
 - Connecting aquarium hardware is now one feature rather than three: ReefFactory
   meters, Red Sea ReefBeat devices and Neptune Apex controllers share a single
   entitlement instead of one per brand. Founder's Edition installs keep all of

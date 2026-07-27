@@ -35,6 +35,12 @@ const kRemindersMaintenanceKey = 'reminders_maintenance';
 const kReminderTimeKey = 'reminder_time';
 const kRoSeededKey = 'ro_stages_seeded';
 const kRoUnitEnabledKey = 'ro_unit_enabled';
+// The Devices screen's vendor order (U41): the kinds, comma-joined, in the
+// order the user dragged them into. Also decides which vendor wins a parameter
+// two devices both report — see `orderDeviceVendors`.
+const kDeviceVendorOrderKey = 'device_vendor_order';
+// The Devices screen's last selected vendor chip; empty means "All".
+const kDeviceVendorFilterKey = 'device_vendor_filter';
 const kMicroEnabledKey = 'micro_enabled';
 const kMicroViewKey = 'micro_view';
 const kMicroHideUndetectableKey = 'micro_hide_undetectable';

@@ -10,11 +10,11 @@ import '../../data/lan_discovery.dart';
 import '../../data/rf_device_link.dart';
 import '../../data/rf_protocol.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_icon_button.dart';
+import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
 
@@ -48,35 +48,113 @@ List<({String paramKey, double value})> rfReadingsToSave({
   ];
 }
 
-/// Transient per-device live state held by the screen (not persisted): the last
-/// refresh result. Saving is a separate, explicit action.
-class _Live {
-  const _Live({this.loading = false, this.snapshot, this.error});
+/// Transient per-device live state (not persisted): the last refresh result.
+/// Saving is a separate, explicit action.
+///
+/// Held by the unified Devices screen (U41), not here — one page now owns every
+/// vendor's snapshots, so switching the vendor filter doesn't throw away values
+/// the user just refreshed.
+class RfLive {
+  const RfLive({this.loading = false, this.snapshot, this.error});
   final bool loading;
   final RfSnapshot? snapshot;
   final RfLinkError? error;
 }
 
-/// The ReefFactory devices dashboard (U36): a persistent list of local meters,
-/// read on open and by one **Refresh all** above the list, each card carrying a
-/// separate **Save** (persist the shown values as measurements). Read-only —
-/// the app never writes to the devices.
-class ReefFactoryScreen extends ConsumerStatefulWidget {
-  const ReefFactoryScreen({super.key});
-
-  @override
-  ConsumerState<ReefFactoryScreen> createState() => _ReefFactoryScreenState();
+/// Reads one meter, returning the outcome as an [RfLive] for the caller to
+/// store. Touches `lastSeenAt` on success. The caller owns the loading state,
+/// so a refresh is: set loading → await this → store the result.
+Future<RfLive> rfReadDevice(WidgetRef ref, DeviceRecord device) async {
+  final address = device.address;
+  if (address == null || address.isEmpty) return const RfLive();
+  try {
+    final snap = await ref.read(rfDeviceLinkProvider).readOnce(address);
+    await ref.read(dbProvider).touchDeviceSeen(device.identifier);
+    return RfLive(snapshot: snap);
+  } on RfLinkException catch (e) {
+    return RfLive(error: e.error);
+  }
 }
 
-class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
-  /// Live snapshots keyed by device identifier (serial).
-  final Map<String, _Live> _live = {};
+String rfErrorText(AppLocalizations l, RfLinkError e) => switch (e) {
+  RfLinkError.unreachable => l.reefFactoryErrUnreachable,
+  RfLinkError.timeout => l.reefFactoryErrTimeout,
+  RfLinkError.unsupportedModel => l.reefFactoryErrUnsupported,
+  RfLinkError.protocol => l.reefFactoryErrProtocol,
+};
 
-  /// Whether the on-open auto-read has already run (it must fire only once,
-  /// not on every device-list stream emission).
-  bool _autoRefreshed = false;
+/// The values [snap] would persist for [device], given every ReefFactory device
+/// in view (needed for the temperature-source rule). Only a controller assigned
+/// to the *same tank* suppresses the Guardian's temperature — one tank's
+/// controller says nothing about another tank's water. See [rfReadingsToSave].
+List<({String paramKey, double value})> rfValuesToSave(
+  DeviceRecord device,
+  RfSnapshot snap,
+  List<DeviceRecord> devices,
+) => rfReadingsToSave(
+  deviceModel: device.model,
+  readings: snap.readings,
+  hasTempController: devices.any(
+    (d) => d.model == kRfTempControllerModel && d.tankId == device.tankId,
+  ),
+);
 
-  Tank? _tankFor(int? id, List<Tank> tanks) {
+/// The ReefFactory section of the Devices screen (U41): the meter cards, as one
+/// reorderable sliver. Stateless towards the live values — the parent screen
+/// owns those and passes them in — but it keeps the vendor's own dialogs
+/// (rename / move / remove / add), so ReefFactory wording stays ReefFactory's.
+class RfDeviceSection extends ConsumerWidget {
+  const RfDeviceSection({
+    super.key,
+    required this.devices,
+    required this.live,
+    required this.onSave,
+    required this.onRemoved,
+  });
+
+  /// Already filtered to the active tank and sorted by the parent.
+  final List<DeviceRecord> devices;
+  final Map<String, RfLive> live;
+  final void Function(DeviceRecord device, RfSnapshot snap) onSave;
+
+  /// Lets the parent drop a removed device's live entry.
+  final void Function(String identifier) onRemoved;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
+    return SliverReorderableList(
+      itemCount: devices.length,
+      onReorderItem: (oldIndex, newIndex) {
+        final ids = [for (final d in devices) d.id];
+        ids.insert(newIndex, ids.removeAt(oldIndex));
+        unawaited(ref.read(dbProvider).reorderDevices(ids));
+      },
+      itemBuilder: (context, i) {
+        final d = devices[i];
+        return _DeviceCard(
+          key: ValueKey(d.id),
+          device: d,
+          index: i,
+          // A single card has nothing to reorder against.
+          canReorder: devices.length > 1,
+          tank: _tankFor(d.tankId, tanks),
+          live: live[d.identifier] ?? const RfLive(),
+          errorTextOf: (e) => rfErrorText(l, e),
+          onRename: () => _renameDevice(context, ref, d),
+          onSave: (snap) => onSave(d, snap),
+          // No other tank to move to → no menu item.
+          onMove: tanks.any((t) => t.id != d.tankId)
+              ? () => _moveDevice(context, ref, d)
+              : null,
+          onRemove: () => _confirmRemove(context, ref, d),
+        );
+      },
+    );
+  }
+
+  static Tank? _tankFor(int? id, List<Tank> tanks) {
     if (id == null) return null;
     for (final t in tanks) {
       if (t.id == id) return t;
@@ -84,281 +162,14 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
     return null;
   }
 
-  Future<void> _refresh(DeviceRecord device) async {
-    final address = device.address;
-    if (address == null || address.isEmpty) return;
-    setState(() => _live[device.identifier] = const _Live(loading: true));
-    try {
-      final snap = await ref.read(rfDeviceLinkProvider).readOnce(address);
-      await ref.read(dbProvider).touchDeviceSeen(device.identifier);
-      if (!mounted) return;
-      setState(() => _live[device.identifier] = _Live(snapshot: snap));
-    } on RfLinkException catch (e) {
-      if (!mounted) return;
-      setState(() => _live[device.identifier] = _Live(error: e.error));
-    }
-  }
-
-  /// Refreshes every device in turn (sequential — one socket at a time is gentle
-  /// on the meters, which each also serve the vendor cloud app).
-  Future<void> _refreshAll(List<DeviceRecord> devices) async {
-    for (final d in devices) {
-      await _refresh(d);
-    }
-  }
-
-  /// The values from [snap] to persist for [device], given the full device list
-  /// (needed for the temperature-source rule). Only a controller assigned to
-  /// the *same tank* suppresses the Guardian's temperature — one tank's
-  /// controller says nothing about another tank's water. See [rfReadingsToSave].
-  List<({String paramKey, double value})> _valuesToSave(
-    DeviceRecord device,
-    RfSnapshot snap,
-    List<DeviceRecord> devices,
-  ) =>
-      rfReadingsToSave(
-        deviceModel: device.model,
-        readings: snap.readings,
-        hasTempController: devices.any(
-          (d) =>
-              d.model == kRfTempControllerModel && d.tankId == device.tankId,
-        ),
-      );
-
-  /// Persists one reading group for [tank]. Ensures each parameter is tracked
-  /// first so it appears on the dashboard.
-  Future<void> _persistValues(
-    Tank tank,
-    List<({String paramKey, double value})> values,
-  ) async {
-    final db = ref.read(dbProvider);
-    final type = SetupType.fromName(tank.setupType);
-    for (final key in {for (final v in values) v.paramKey}) {
-      await db.addTrackedParameter(tank.id, key, type);
-    }
-    await db.insertReadingGroup(
-      tankId: tank.id,
-      takenAt: DateTime.now(),
-      values: values,
-    );
-  }
-
-  Future<void> _save(DeviceRecord device, RfSnapshot snap) async {
-    final l = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final devices = ref.read(reefFactoryDevicesProvider).value ?? const [];
-    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
-    final tank = _tankFor(device.tankId, tanks);
-    if (tank == null) {
-      messenger.showSnackBar(SnackBar(content: Text(l.reefFactoryNoTank)));
-      return;
-    }
-    final values = _valuesToSave(device, snap, devices);
-    if (values.isEmpty) return;
-    try {
-      await _persistValues(tank, values);
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.reefFactorySavedSnack(values.length))),
-      );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(e.toString()))));
-    }
-  }
-
-  /// Saves the last-refreshed values of every device at once. Readings destined
-  /// for the same tank are merged into one group (so a Salinity Guardian's
-  /// salinity, a pH Monitor's pH and a Temperature Controller's temperature on
-  /// one tank land together), deduped by parameter.
-  Future<void> _saveAll(List<DeviceRecord> devices) async {
-    final l = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
-    final byTank = <int, Map<String, ({String paramKey, double value})>>{};
-    final tankById = <int, Tank>{};
-    var skippedNoTank = false;
-    for (final d in devices) {
-      final snap = _live[d.identifier]?.snapshot;
-      if (snap == null) continue;
-      final tank = _tankFor(d.tankId, tanks);
-      if (tank == null) {
-        skippedNoTank = true;
-        continue;
-      }
-      final values = _valuesToSave(d, snap, devices);
-      if (values.isEmpty) continue;
-      final bucket = byTank.putIfAbsent(tank.id, () => {});
-      for (final v in values) {
-        bucket[v.paramKey] = v;
-      }
-      tankById[tank.id] = tank;
-    }
-    if (byTank.isEmpty) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(skippedNoTank ? l.reefFactoryNoTank : l.reefFactoryNothingToSave),
-        ),
-      );
-      return;
-    }
-    try {
-      var total = 0;
-      for (final entry in byTank.entries) {
-        final values = entry.value.values.toList();
-        await _persistValues(tankById[entry.key]!, values);
-        total += values.length;
-      }
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.reefFactorySavedSnack(total))),
-      );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(e.toString()))));
-    }
-  }
-
-  String _errorText(AppLocalizations l, RfLinkError e) => switch (e) {
-    RfLinkError.unreachable => l.reefFactoryErrUnreachable,
-    RfLinkError.timeout => l.reefFactoryErrTimeout,
-    RfLinkError.unsupportedModel => l.reefFactoryErrUnsupported,
-    RfLinkError.protocol => l.reefFactoryErrProtocol,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final devicesAsync = ref.watch(reefFactoryDevicesProvider);
-    final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
-    final activeTank = ref.watch(activeTankProvider);
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l.reefFactoryTitle)),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showDiscoverySheet,
-        icon: const Icon(Icons.add),
-        label: Text(l.reefFactoryAddDevice),
-      ),
-      body: devicesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
-        data: (allDevices) {
-          // Tank-scoped view: only the active tank's devices. Unassigned
-          // devices stay visible on every tank — assignment now lives in the
-          // card menu, so hiding them would make them unreachable.
-          // Manual card order (drag to reorder); devices that share a position
-          // — an inventory never reordered — read alphabetically, as they did
-          // before the order was user-controllable.
-          final devices = [
-            for (final d in allDevices)
-              if (d.tankId == null || d.tankId == activeTank?.id) d,
-          ]..sort((a, b) {
-              final byOrder = a.displayOrder.compareTo(b.displayOrder);
-              if (byOrder != 0) return byOrder;
-              return deviceDisplayName(a).toLowerCase().compareTo(
-                    deviceDisplayName(b).toLowerCase(),
-                  );
-            });
-          // One-shot read of the visible devices when the screen opens;
-          // everything after that is manual. (Periodic auto-refresh stays
-          // deferred.)
-          if (!_autoRefreshed && devices.isNotEmpty) {
-            _autoRefreshed = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) unawaited(_refreshAll(devices));
-            });
-          }
-          final anyLoading =
-              devices.any((d) => _live[d.identifier]?.loading ?? false);
-          final anySnapshot =
-              devices.any((d) => _live[d.identifier]?.snapshot != null);
-          return CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _DisclaimerBanner(text: l.reefFactoryDisclaimer),
-                      const SizedBox(height: 12),
-                      if (devices.isEmpty)
-                        _EmptyState(
-                          title: l.reefFactoryEmptyTitle,
-                          body: l.reefFactoryEmptyBody,
-                        )
-                      else ...[
-                        // Common actions applied to every device at once.
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: anyLoading
-                                    ? null
-                                    : () => _refreshAll(devices),
-                                icon: const Icon(Icons.refresh, size: 18),
-                                label: Text(l.reefFactoryRefreshAll),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: FilledButton.icon(
-                                onPressed: anySnapshot
-                                    ? () => _saveAll(devices)
-                                    : null,
-                                icon: const Icon(Icons.save_outlined, size: 18),
-                                label: Text(l.reefFactorySaveAll),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              // Drag-orderable cards (the #13 list pattern, cards instead of
-              // rows): the handle sits in each card's header.
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 96),
-                sliver: SliverReorderableList(
-                  itemCount: devices.length,
-                  onReorderItem: (oldIndex, newIndex) {
-                    final ids = [for (final d in devices) d.id];
-                    ids.insert(newIndex, ids.removeAt(oldIndex));
-                    unawaited(ref.read(dbProvider).reorderDevices(ids));
-                  },
-                  itemBuilder: (context, i) {
-                    final d = devices[i];
-                    return _DeviceCard(
-                      key: ValueKey(d.id),
-                      device: d,
-                      index: i,
-                      // A single card has nothing to reorder against.
-                      canReorder: devices.length > 1,
-                      tank: _tankFor(d.tankId, tanks),
-                      live: _live[d.identifier] ?? const _Live(),
-                      errorTextOf: (e) => _errorText(l, e),
-                      onRename: () => _renameDevice(d),
-                      onSave: (snap) => _save(d, snap),
-                      // No other tank to move to → no menu item.
-                      onMove: tanks.any((t) => t.id != d.tankId)
-                          ? () => _moveDevice(d)
-                          : null,
-                      onRemove: () => _confirmRemove(d),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   /// Renames [d]. The card header carries nothing but the name now, so a
   /// keeper-chosen one is what tells two meters of the same model apart. An
   /// emptied field falls back to the model, as an unnamed device already does.
-  Future<void> _renameDevice(DeviceRecord d) async {
+  Future<void> _renameDevice(
+    BuildContext context,
+    WidgetRef ref,
+    DeviceRecord d,
+  ) async {
     final l = AppLocalizations.of(context);
     final name = await showDeviceRenameDialog(
       context,
@@ -367,17 +178,23 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
       initial: d.name ?? '',
     );
     if (name == null) return;
-    await ref.read(dbProvider).updateDeviceNameTank(
-      d.id,
-      name: name.isEmpty ? null : name,
-      tankId: d.tankId,
-    );
+    await ref
+        .read(dbProvider)
+        .updateDeviceNameTank(
+          d.id,
+          name: name.isEmpty ? null : name,
+          tankId: d.tankId,
+        );
   }
 
   /// Reassigns [d] to a tank picked from a dialog (all tanks except its
   /// current one). Also serves as the initial assignment for an unassigned
   /// device.
-  Future<void> _moveDevice(DeviceRecord d) async {
+  Future<void> _moveDevice(
+    BuildContext context,
+    WidgetRef ref,
+    DeviceRecord d,
+  ) async {
     final l = AppLocalizations.of(context);
     final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
     final tankId = await showDialog<int>(
@@ -401,7 +218,11 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
     }
   }
 
-  Future<void> _confirmRemove(DeviceRecord d) async {
+  Future<void> _confirmRemove(
+    BuildContext context,
+    WidgetRef ref,
+    DeviceRecord d,
+  ) async {
     final l = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
@@ -409,135 +230,102 @@ class _ReefFactoryScreenState extends ConsumerState<ReefFactoryScreen> {
         title: Text(l.reefFactoryRemove),
         content: Text(l.reefFactoryRemoveConfirm(deviceDisplayName(d))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.reefFactoryRemove)),
-        ],
-      ),
-    );
-    if (ok == true) {
-      _live.remove(d.identifier);
-      await ref.read(dbProvider).deleteDevice(d.id);
-    }
-  }
-
-  /// The primary add path (U39): scan the network and pick from what answered.
-  /// ReefFactory devices advertise nothing over mDNS, so this relies entirely
-  /// on the port sweep — which is exactly why manual entry stays available.
-  Future<void> _showDiscoverySheet() async {
-    final db = ref.read(dbProvider);
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (ctx) => DeviceDiscoverySheet(
-        kind: DiscoveredKind.reeffactory,
-        onAdd: (found) => db.upsertReefFactoryDevice(
-          identifier: found.identifier,
-          model: found.modelCode,
-          address: found.address,
-          name: found.modelDisplayName,
-          tankId: ref.read(activeTankProvider)?.id,
-        ),
-        onUpdateAddress: (existing, found) =>
-            db.updateDeviceAddress(existing.id, found.address),
-        onManualEntry: () {
-          Navigator.pop(ctx);
-          unawaited(_showAddSheet());
-        },
-      ),
-    );
-  }
-
-  Future<void> _showAddSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: _AddDeviceSheet(
-          link: ref.read(rfDeviceLinkProvider),
-          tanks: ref.read(tanksProvider).value ?? const <Tank>[],
-          activeTankId: ref.read(activeTankProvider)?.id,
-          errorTextOf: (e) => _errorText(AppLocalizations.of(ctx), e),
-          onAdd: ({required serial, required model, required host, required name, required tankId, required snapshot}) async {
-            await ref.read(dbProvider).upsertReefFactoryDevice(
-              identifier: serial,
-              model: model,
-              address: host,
-              name: name,
-              tankId: tankId,
-            );
-            // The probe already read the device, so seed the new card with
-            // that snapshot — it shows live values right away without a
-            // second connect.
-            if (mounted) {
-              setState(() => _live[serial] = _Live(snapshot: snapshot));
-            }
-          },
-        ),
-      ),
-    );
-  }
-}
-
-/// The persistent read-only notice. Uses the theme's tertiary container so it
-/// reads as informational, not an error.
-class _DisclaimerBanner extends StatelessWidget {
-  const _DisclaimerBanner({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.tertiaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, size: 20, color: cs.onTertiaryContainer),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: cs.onTertiaryContainer),
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.reefFactoryRemove),
           ),
         ],
       ),
     );
+    if (ok == true) {
+      onRemoved(d.identifier);
+      await ref.read(dbProvider).deleteDevice(d.id);
+    }
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.title, required this.body});
-  final String title, body;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-      child: Column(
-        children: [
-          Icon(Icons.sensors_outlined, size: 48, color: Theme.of(context).colorScheme.outline),
-          const SizedBox(height: 12),
-          Text(title, style: t.titleMedium, textAlign: TextAlign.center),
-          const SizedBox(height: 6),
-          Text(body, style: t.bodyMedium, textAlign: TextAlign.center),
-        ],
+/// The ReefFactory add path (U39): scan the network and pick from what
+/// answered, with manual entry one tap away inside the sheet. ReefFactory
+/// devices advertise nothing over mDNS, so this relies entirely on the port
+/// sweep — which is exactly why manual entry stays available.
+///
+/// [onSeed] receives the probe's snapshot for a device that was just added, so
+/// the new card shows live values without a second connect.
+Future<void> showRfAddFlow(
+  BuildContext context,
+  WidgetRef ref, {
+  required void Function(String identifier, RfSnapshot snap) onSeed,
+}) async {
+  final db = ref.read(dbProvider);
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (ctx) => DeviceDiscoverySheet(
+      kind: DiscoveredKind.reeffactory,
+      onAdd: (found) => db.upsertReefFactoryDevice(
+        identifier: found.identifier,
+        model: found.modelCode,
+        address: found.address,
+        name: found.modelDisplayName,
+        tankId: ref.read(activeTankProvider)?.id,
       ),
-    );
-  }
+      onUpdateAddress: (existing, found) =>
+          db.updateDeviceAddress(existing.id, found.address),
+      onManualEntry: () {
+        Navigator.pop(ctx);
+        unawaited(_showRfManualSheet(context, ref, onSeed: onSeed));
+      },
+    ),
+  );
 }
 
+Future<void> _showRfManualSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  required void Function(String identifier, RfSnapshot snap) onSeed,
+}) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: _AddDeviceSheet(
+        link: ref.read(rfDeviceLinkProvider),
+        tanks: ref.read(tanksProvider).value ?? const <Tank>[],
+        activeTankId: ref.read(activeTankProvider)?.id,
+        errorTextOf: (e) => rfErrorText(AppLocalizations.of(ctx), e),
+        onAdd:
+            ({
+              required serial,
+              required model,
+              required host,
+              required name,
+              required tankId,
+              required snapshot,
+            }) async {
+              await ref
+                  .read(dbProvider)
+                  .upsertReefFactoryDevice(
+                    identifier: serial,
+                    model: model,
+                    address: host,
+                    name: name,
+                    tankId: tankId,
+                  );
+              onSeed(serial, snapshot);
+            },
+      ),
+    ),
+  );
+}
+
+/// One meter's card: name + menu, then the live value line with its own Save.
 class _DeviceCard extends ConsumerWidget {
   const _DeviceCard({
     super.key,
@@ -561,7 +349,7 @@ class _DeviceCard extends ConsumerWidget {
   /// False for a one-card list — nothing to drag against, so no handle.
   final bool canReorder;
   final Tank? tank;
-  final _Live live;
+  final RfLive live;
   final String Function(RfLinkError) errorTextOf;
   final VoidCallback onRename;
   final void Function(RfSnapshot) onSave;
@@ -584,15 +372,15 @@ class _DeviceCard extends ConsumerWidget {
     // "this is running", neither borrows the alarm red.
     final badge = switch (snap?.thermal) {
       RfThermalState.heating => (
-          label: l.reefFactoryHeating,
-          color: tokens.caution,
-          soft: tokens.cautionSoft,
-        ),
+        label: l.reefFactoryHeating,
+        color: tokens.caution,
+        soft: tokens.cautionSoft,
+      ),
       RfThermalState.cooling => (
-          label: l.reefFactoryCooling,
-          color: tokens.primary,
-          soft: tokens.primary.withValues(alpha: 0.14),
-        ),
+        label: l.reefFactoryCooling,
+        color: tokens.primary,
+        soft: tokens.primary.withValues(alpha: 0.14),
+      ),
       _ => null,
     };
 
@@ -627,13 +415,26 @@ class _DeviceCard extends ConsumerWidget {
                   onSelected: (v) {
                     if (v == 'rename') onRename();
                     if (v == 'move') onMove?.call();
+                    if (v == 'details') {
+                      unawaited(showDeviceDetailsDialog(context, device));
+                    }
                     if (v == 'remove') onRemove();
                   },
                   itemBuilder: (_) => [
                     PopupMenuItem(value: 'rename', child: Text(l.edit)),
                     if (onMove != null)
-                      PopupMenuItem(value: 'move', child: Text(l.reefFactoryMoveToTank)),
-                    PopupMenuItem(value: 'remove', child: Text(l.reefFactoryRemove)),
+                      PopupMenuItem(
+                        value: 'move',
+                        child: Text(l.reefFactoryMoveToTank),
+                      ),
+                    PopupMenuItem(
+                      value: 'details',
+                      child: Text(l.devicesDetails),
+                    ),
+                    PopupMenuItem(
+                      value: 'remove',
+                      child: Text(l.reefFactoryRemove),
+                    ),
                   ],
                 ),
               ],
@@ -646,7 +447,10 @@ class _DeviceCard extends ConsumerWidget {
                 child: LinearProgressIndicator(),
               )
             else if (live.error != null)
-              Text(errorTextOf(live.error!), style: t.bodyMedium?.copyWith(color: cs.error))
+              Text(
+                errorTextOf(live.error!),
+                style: t.bodyMedium?.copyWith(color: cs.error),
+              )
             else if (snap != null)
               // Save rides the value line rather than owning a row below it:
               // the readings it would persist are right there next to it, and
@@ -694,7 +498,10 @@ class _DeviceCard extends ConsumerWidget {
                 ],
               )
             else
-              Text(l.reefFactoryNotReadYet, style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+              Text(
+                l.reefFactoryNotReadYet,
+                style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
             // A tank assignment is needed before Save can persist; assignment
             // happens via the card menu ("Move to another tank").
             if (tank == null) ...[
@@ -734,17 +541,21 @@ class _StateBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context)
-            .textTheme
-            .labelSmall
-            ?.copyWith(color: color, fontWeight: FontWeight.w600),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 }
 
 class _ReadingChip extends StatelessWidget {
-  const _ReadingChip({required this.label, required this.value, required this.unit});
+  const _ReadingChip({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
   final String label;
   final double value;
   final String unit;
@@ -756,7 +567,10 @@ class _ReadingChip extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+        Text(
+          label.toUpperCase(),
+          style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+        ),
         Text(
           unit.isEmpty ? _fmt(value) : '${_fmt(value)} $unit',
           style: t.titleLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -765,7 +579,8 @@ class _ReadingChip extends StatelessWidget {
     );
   }
 
-  String _fmt(double v) => v == v.roundToDouble() ? v.toStringAsFixed(1) : v.toString();
+  String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(1) : v.toString();
 }
 
 /// Bottom sheet: enter an IP/hostname, we probe and auto-identify the device,
@@ -790,7 +605,8 @@ class _AddDeviceSheet extends StatefulWidget {
     required String? name,
     required int? tankId,
     required RfSnapshot snapshot,
-  }) onAdd;
+  })
+  onAdd;
 
   @override
   State<_AddDeviceSheet> createState() => _AddDeviceSheetState();
@@ -869,23 +685,35 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 10),
-            Text(_error!, style: t.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error)),
+            Text(
+              _error!,
+              style: t.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
           ],
           if (found != null) ...[
             const SizedBox(height: 16),
             Text(
               l.reefFactoryFound(found.modelDisplayName),
-              style: t.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
+              style: t.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
-              [for (final r in found.readings) '${l.paramName(r.paramKey)} ${r.value}${r.unit.isEmpty ? '' : ' ${r.unit}'}'].join('   ·   '),
+              [
+                for (final r in found.readings)
+                  '${l.paramName(r.paramKey)} ${r.value}${r.unit.isEmpty ? '' : ' ${r.unit}'}',
+              ].join('   ·   '),
               style: t.bodyMedium,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _name,
-              decoration: InputDecoration(labelText: l.reefFactoryDeviceNameLabel),
+              decoration: InputDecoration(
+                labelText: l.reefFactoryDeviceNameLabel,
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int?>(
@@ -911,7 +739,11 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
                 FilledButton(
                   onPressed: _probing ? null : _probe,
                   child: _probing
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : Text(l.reefFactoryCheck),
                 )
               else
@@ -921,7 +753,9 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
                       serial: found.serial,
                       model: found.modelPrefix,
                       host: _host.text.trim(),
-                      name: _name.text.trim().isEmpty ? null : _name.text.trim(),
+                      name: _name.text.trim().isEmpty
+                          ? null
+                          : _name.text.trim(),
                       tankId: _tankId,
                       snapshot: found,
                     );
