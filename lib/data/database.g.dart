@@ -8070,15 +8070,6 @@ class $DevicesTable extends Devices
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _secretMeta = const VerificationMeta('secret');
-  @override
-  late final GeneratedColumn<String> secret = GeneratedColumn<String>(
-    'secret',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -8092,7 +8083,6 @@ class $DevicesTable extends Devices
     lastSeenAt,
     displayOrder,
     username,
-    secret,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -8182,12 +8172,6 @@ class $DevicesTable extends Devices
         username.isAcceptableOrUnknown(data['username']!, _usernameMeta),
       );
     }
-    if (data.containsKey('secret')) {
-      context.handle(
-        _secretMeta,
-        secret.isAcceptableOrUnknown(data['secret']!, _secretMeta),
-      );
-    }
     return context;
   }
 
@@ -8241,10 +8225,6 @@ class $DevicesTable extends Devices
         DriftSqlType.string,
         data['${effectivePrefix}username'],
       ),
-      secret: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}secret'],
-      ),
     );
   }
 
@@ -8291,17 +8271,16 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
   /// Login name for a device whose API is authenticated (U40: Apex only —
   /// every other integration here is unauthenticated on the LAN). Null for
   /// the rest.
-  final String? username;
-
-  /// The matching password, stored **only** in this app-private database.
   ///
-  /// It is deliberately absent from `_deviceToJson`, so it never rides a
-  /// backup file, a Drive sync document or a share sheet — a restored
-  /// controller row simply asks for the password again. It is not encrypted:
-  /// the platform's app-private storage is the boundary, exactly as it is for
-  /// the rest of the aquarium data, and an Apex password grants nothing beyond
-  /// the LAN it sits on.
-  final String? secret;
+  /// The matching **password is deliberately not a column** (#68): this table
+  /// rides Android Auto Backup and device-to-device transfer inside the raw
+  /// SQLite file, a channel the app's own backup code never sees, so a secret
+  /// stored here would leave the phone no matter what `_deviceToJson` omits.
+  /// It lives in the backup-excluded sidecar instead — see [DeviceSecrets],
+  /// keyed by [identifier]. The username stays: it is not a secret, and
+  /// keeping it means a restored controller only has to be signed in again,
+  /// not re-identified.
+  final String? username;
   const DeviceRecord({
     required this.id,
     required this.kind,
@@ -8314,7 +8293,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     this.lastSeenAt,
     required this.displayOrder,
     this.username,
-    this.secret,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8342,9 +8320,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     if (!nullToAbsent || username != null) {
       map['username'] = Variable<String>(username);
     }
-    if (!nullToAbsent || secret != null) {
-      map['secret'] = Variable<String>(secret);
-    }
     return map;
   }
 
@@ -8371,9 +8346,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
       username: username == null && nullToAbsent
           ? const Value.absent()
           : Value(username),
-      secret: secret == null && nullToAbsent
-          ? const Value.absent()
-          : Value(secret),
     );
   }
 
@@ -8394,7 +8366,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
       lastSeenAt: serializer.fromJson<DateTime?>(json['lastSeenAt']),
       displayOrder: serializer.fromJson<int>(json['displayOrder']),
       username: serializer.fromJson<String?>(json['username']),
-      secret: serializer.fromJson<String?>(json['secret']),
     );
   }
   @override
@@ -8412,7 +8383,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
       'lastSeenAt': serializer.toJson<DateTime?>(lastSeenAt),
       'displayOrder': serializer.toJson<int>(displayOrder),
       'username': serializer.toJson<String?>(username),
-      'secret': serializer.toJson<String?>(secret),
     };
   }
 
@@ -8428,7 +8398,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     Value<DateTime?> lastSeenAt = const Value.absent(),
     int? displayOrder,
     Value<String?> username = const Value.absent(),
-    Value<String?> secret = const Value.absent(),
   }) => DeviceRecord(
     id: id ?? this.id,
     kind: kind ?? this.kind,
@@ -8441,7 +8410,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     lastSeenAt: lastSeenAt.present ? lastSeenAt.value : this.lastSeenAt,
     displayOrder: displayOrder ?? this.displayOrder,
     username: username.present ? username.value : this.username,
-    secret: secret.present ? secret.value : this.secret,
   );
   DeviceRecord copyWithCompanion(DevicesCompanion data) {
     return DeviceRecord(
@@ -8464,7 +8432,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
           ? data.displayOrder.value
           : this.displayOrder,
       username: data.username.present ? data.username.value : this.username,
-      secret: data.secret.present ? data.secret.value : this.secret,
     );
   }
 
@@ -8481,8 +8448,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
           ..write('firstSeenAt: $firstSeenAt, ')
           ..write('lastSeenAt: $lastSeenAt, ')
           ..write('displayOrder: $displayOrder, ')
-          ..write('username: $username, ')
-          ..write('secret: $secret')
+          ..write('username: $username')
           ..write(')'))
         .toString();
   }
@@ -8500,7 +8466,6 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
     lastSeenAt,
     displayOrder,
     username,
-    secret,
   );
   @override
   bool operator ==(Object other) =>
@@ -8516,8 +8481,7 @@ class DeviceRecord extends DataClass implements Insertable<DeviceRecord> {
           other.firstSeenAt == this.firstSeenAt &&
           other.lastSeenAt == this.lastSeenAt &&
           other.displayOrder == this.displayOrder &&
-          other.username == this.username &&
-          other.secret == this.secret);
+          other.username == this.username);
 }
 
 class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
@@ -8532,7 +8496,6 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
   final Value<DateTime?> lastSeenAt;
   final Value<int> displayOrder;
   final Value<String?> username;
-  final Value<String?> secret;
   const DevicesCompanion({
     this.id = const Value.absent(),
     this.kind = const Value.absent(),
@@ -8545,7 +8508,6 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     this.lastSeenAt = const Value.absent(),
     this.displayOrder = const Value.absent(),
     this.username = const Value.absent(),
-    this.secret = const Value.absent(),
   });
   DevicesCompanion.insert({
     this.id = const Value.absent(),
@@ -8559,7 +8521,6 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     this.lastSeenAt = const Value.absent(),
     this.displayOrder = const Value.absent(),
     this.username = const Value.absent(),
-    this.secret = const Value.absent(),
   }) : kind = Value(kind),
        identifier = Value(identifier);
   static Insertable<DeviceRecord> custom({
@@ -8574,7 +8535,6 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     Expression<DateTime>? lastSeenAt,
     Expression<int>? displayOrder,
     Expression<String>? username,
-    Expression<String>? secret,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -8588,7 +8548,6 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
       if (lastSeenAt != null) 'last_seen_at': lastSeenAt,
       if (displayOrder != null) 'display_order': displayOrder,
       if (username != null) 'username': username,
-      if (secret != null) 'secret': secret,
     });
   }
 
@@ -8604,7 +8563,6 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     Value<DateTime?>? lastSeenAt,
     Value<int>? displayOrder,
     Value<String?>? username,
-    Value<String?>? secret,
   }) {
     return DevicesCompanion(
       id: id ?? this.id,
@@ -8618,7 +8576,6 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
       lastSeenAt: lastSeenAt ?? this.lastSeenAt,
       displayOrder: displayOrder ?? this.displayOrder,
       username: username ?? this.username,
-      secret: secret ?? this.secret,
     );
   }
 
@@ -8658,9 +8615,6 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
     if (username.present) {
       map['username'] = Variable<String>(username.value);
     }
-    if (secret.present) {
-      map['secret'] = Variable<String>(secret.value);
-    }
     return map;
   }
 
@@ -8677,8 +8631,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
           ..write('firstSeenAt: $firstSeenAt, ')
           ..write('lastSeenAt: $lastSeenAt, ')
           ..write('displayOrder: $displayOrder, ')
-          ..write('username: $username, ')
-          ..write('secret: $secret')
+          ..write('username: $username')
           ..write(')'))
         .toString();
   }
@@ -15984,7 +15937,6 @@ typedef $$DevicesTableCreateCompanionBuilder =
       Value<DateTime?> lastSeenAt,
       Value<int> displayOrder,
       Value<String?> username,
-      Value<String?> secret,
     });
 typedef $$DevicesTableUpdateCompanionBuilder =
     DevicesCompanion Function({
@@ -15999,7 +15951,6 @@ typedef $$DevicesTableUpdateCompanionBuilder =
       Value<DateTime?> lastSeenAt,
       Value<int> displayOrder,
       Value<String?> username,
-      Value<String?> secret,
     });
 
 final class $$DevicesTableReferences
@@ -16080,11 +16031,6 @@ class $$DevicesTableFilterComposer
 
   ColumnFilters<String> get username => $composableBuilder(
     column: $table.username,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get secret => $composableBuilder(
-    column: $table.secret,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16171,11 +16117,6 @@ class $$DevicesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get secret => $composableBuilder(
-    column: $table.secret,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   $$TanksTableOrderingComposer get tankId {
     final $$TanksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -16247,9 +16188,6 @@ class $$DevicesTableAnnotationComposer
   GeneratedColumn<String> get username =>
       $composableBuilder(column: $table.username, builder: (column) => column);
 
-  GeneratedColumn<String> get secret =>
-      $composableBuilder(column: $table.secret, builder: (column) => column);
-
   $$TanksTableAnnotationComposer get tankId {
     final $$TanksTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -16313,7 +16251,6 @@ class $$DevicesTableTableManager
                 Value<DateTime?> lastSeenAt = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
                 Value<String?> username = const Value.absent(),
-                Value<String?> secret = const Value.absent(),
               }) => DevicesCompanion(
                 id: id,
                 kind: kind,
@@ -16326,7 +16263,6 @@ class $$DevicesTableTableManager
                 lastSeenAt: lastSeenAt,
                 displayOrder: displayOrder,
                 username: username,
-                secret: secret,
               ),
           createCompanionCallback:
               ({
@@ -16341,7 +16277,6 @@ class $$DevicesTableTableManager
                 Value<DateTime?> lastSeenAt = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
                 Value<String?> username = const Value.absent(),
-                Value<String?> secret = const Value.absent(),
               }) => DevicesCompanion.insert(
                 id: id,
                 kind: kind,
@@ -16354,7 +16289,6 @@ class $$DevicesTableTableManager
                 lastSeenAt: lastSeenAt,
                 displayOrder: displayOrder,
                 username: username,
-                secret: secret,
               ),
           withReferenceMapper: (p0) => p0
               .map(

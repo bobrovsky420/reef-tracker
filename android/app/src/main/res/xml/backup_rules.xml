@@ -12,8 +12,14 @@
     database's fingerprint and the missing/different file is how the app
     detects an OS-level restore and drops the old device's Google Drive sync
     identity (see lib/data/install_id.dart).
+  - app_flutter/.device_secrets (#68): passwords for authenticated device APIs
+    (the Apex controller login). They are documented as never leaving this
+    phone, and this file is the only place they exist — the database, which
+    IS backed up, deliberately has no column for them (see
+    lib/data/device_secrets.dart).
 -->
 <full-backup-content>
     <exclude domain="root" path="app_flutter/backups"/>
     <exclude domain="root" path="app_flutter/.install_id"/>
+    <exclude domain="root" path="app_flutter/.device_secrets"/>
 </full-backup-content>

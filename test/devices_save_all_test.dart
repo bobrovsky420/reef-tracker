@@ -13,6 +13,8 @@ import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/devices/devices_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
+import 'fakes/fake_device_secrets.dart';
+
 /// Save all's cross-vendor merge on the unified Devices screen (U41): when a
 /// meter and a controller report the same parameter for the same tank, the one
 /// **displayed first** must win — vendor order (the "Reorder brands" sheet)
@@ -32,6 +34,10 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
   }
+
+  /// The Apex password lives beside the database, not in it (#68), so the
+  /// screen only reads a controller whose sidecar holds one.
+  final secrets = FakeDeviceSecrets({'AC5:1': 'hunter2'});
 
   /// A tank with one ReefFactory temperature controller and one Apex, both
   /// assigned to it and both about to report a *different* temperature.
@@ -56,7 +62,6 @@ void main() {
       model: 'Apex',
       address: '10.0.0.2',
       username: 'admin',
-      password: 'secret',
       name: 'Apex',
       tankId: tankId,
     );
@@ -68,6 +73,7 @@ void main() {
       ProviderScope(
         overrides: [
           dbProvider.overrideWithValue(db),
+          deviceSecretsProvider.overrideWithValue(secrets),
           rfDeviceLinkProvider.overrideWithValue(const _FakeRfLink(25)),
           apDeviceLinkProvider.overrideWithValue(const _FakeApLink(26)),
         ],

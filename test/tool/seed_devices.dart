@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/device_secrets.dart';
 import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 
@@ -12,7 +13,9 @@ import 'package:reeftracker/domain/setup_type.dart';
 /// emulator with its selector, section headers and reorder sheet all populated.
 ///
 /// The Apex row points at `10.0.2.2:8080` — the host's `tool/apex_emulator.dart`
-/// as seen from the Android emulator — so one card reads real live values. The
+/// as seen from the Android emulator — so one card reads real live values; its
+/// password is written to a sibling `.device_secrets`, which has to be pushed
+/// alongside the database (see [DeviceSecrets]). The
 /// ReefFactory and ReefBeat rows carry unreachable addresses on purpose: their
 /// cards render the offline path, which is just as much a state worth looking
 /// at.
@@ -22,6 +25,10 @@ const _out = String.fromEnvironment(
 );
 
 void main() {
+  // The sidecar write reaches for a platform channel (the iOS backup-exclusion
+  // attribute), which needs a binding even though nothing answers it here.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('generate a devices database', () async {
     final file = File(_out);
     if (await file.exists()) await file.delete();
@@ -64,10 +71,16 @@ void main() {
       model: 'Apex',
       address: '10.0.2.2:8080',
       username: 'admin',
-      password: '1234',
       name: 'Apex',
       tankId: tank,
     );
+    // The Apex password is not in the database (#68) — it lives in the
+    // backup-excluded sidecar, written here beside the .sqlite so the same
+    // `run-as` push that installs the database can install it too. Without it
+    // the seeded card opens on an auth error instead of live values.
+    await DeviceSecrets(
+      directory: () async => file.parent,
+    ).write('APEX-DEMO', '1234');
 
     // Straight to the feature: no first-run tour, experimental opted in (the
     // Devices overflow item only exists behind it).

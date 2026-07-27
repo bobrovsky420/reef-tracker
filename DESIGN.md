@@ -152,7 +152,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RoStages` | id, stageType (`RoStageType.name`; `custom` rows carry [title]), title?, lifespanDays (replace every N days), enabled (the "uncheck if a lower model is used" flag — hidden + silent but history kept), remindEnabled, note?, displayOrder — the shared RO unit's stages (U16). **No tankId by design**: like `Settings`, the RO unit is a property of the household, shared by every aquarium. Default 4-stage set seeded on first RO-screen visit (`seedDefaultRoStages`, guarded by the `ro_stages_seeded` settings flag — not the row count, so deleting every stage sticks) |
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
 | `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
-| `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`\|`apex`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat/Apex; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt?, displayOrder — manual card order on the dashboards (v25; one sequence per `kind`, new devices take max+1, ties fall back to the display name `name ?? model ?? identifier` = `deviceDisplayName`), username?/secret? — credentials for an authenticated device API (v26; Apex only, and `secret` is deliberately never written to a backup document) — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows, the ReefBeat dashboard `reefbeat` rows and the Apex dashboard `apex` rows (add / refresh / reorder / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds, still ordered kind-then-oldest |
+| `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`\|`apex`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat/Apex; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt?, displayOrder — manual card order on the dashboards (v25; one sequence per `kind`, new devices take max+1, ties fall back to the display name `name ?? model ?? identifier` = `deviceDisplayName`), username? — the login name for an authenticated device API (v26; Apex only). The matching **password is deliberately not a column** (#68, v27 dropped the one v26 added): this table rides Android Auto Backup and device transfer inside the raw SQLite file, so it lives in the backup-excluded `.device_secrets` sidecar keyed by `identifier` (`device_secrets.dart`) — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows, the ReefBeat dashboard `reefbeat` rows and the Apex dashboard `apex` rows (add / refresh / reorder / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds, still ordered kind-then-oldest |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -256,8 +256,13 @@ the `ManualDoses` table + its `(tankId, dosedAt)` index (`createTable` guarded
 by `_tableExists` — the manual dose log); v25 added `Devices.displayOrder`
 (`addColumn`, guarded) plus `_backfillDeviceDisplayOrder`, which freezes the
 pre-v25 implicit card order (alphabetical by display name, numbered per kind);
-v26 added `Devices.username` / `Devices.secret` (both `addColumn`, guarded the
-same way) for the Apex integration's credentials (U40)
+v26 added `Devices.username` (`addColumn`, guarded the same way) for the Apex
+integration's login (U40) — it also added a `secret` column for the password,
+which **v27 drops again** (`dropColumn`, guarded by `_columnExists`): the raw
+database rides Android Auto Backup and device transfer, so a password stored
+there left the phone through a channel the app never sees, and it lives in the
+backup-excluded `.device_secrets` sidecar now (#68, see *Device credentials*
+below)
 into the column so existing dashboards keep their layout — idempotent, it only
 runs while every row still carries the `0` default.
 Foreign keys are enabled in
@@ -2819,14 +2824,32 @@ out the same LAN-only requirement.
   the one the keeper can fix from the card, so it renders a "Sign in again"
   button beside the error.
 - **Credentials.** An Apex is the only authenticated device API here, so
-  `Devices` gained **`username`** and **`secret`** (schema v26, `addColumn`
-  guarded like `display_order`). The password lives only in the app-private
-  database: it is deliberately **absent from `_deviceToJson`**, so it never
-  rides a backup file, a Drive sync document or a share sheet — a restored
-  controller row keeps its address and username and asks for the password
-  again (the dashboard shows that as an `auth` error with the re-sign-in
-  button). `upsertApexDevice` with a null password leaves the stored one alone,
-  so repointing a moved controller doesn't require retyping it.
+  `Devices` gained **`username`** (schema v26, `addColumn` guarded like
+  `display_order`). The password is **not in the database** (#68): the app's
+  own JSON export can omit a column, but Android Auto Backup and "copy apps &
+  data" copy the whole SQLite file verbatim through a channel this app never
+  sees, so a secret stored there would leave the phone under a doc comment
+  claiming it couldn't. It lives in **`.device_secrets`** instead
+  (`device_secrets.dart`) — a JSON sidecar next to `reeftracker.sqlite`, keyed
+  by device identifier, excluded from OS backup the same way `.install_id` is
+  (`backup_rules.xml` + **both** sections of `data_extraction_rules.xml` on
+  Android; the `NSURLIsExcludedFromBackupKey` attribute, re-applied after every
+  atomic write, on iOS via the small `FileBackupExclusion` channel in
+  `AppDelegate.swift` — Android needs no runtime call, so nothing answers there
+  and `backup_exclusion.dart` no-ops). Writes are whole-file and serialized;
+  a torn or hand-edited file reads as "no passwords stored".
+  Consequences, all of them the behavior the dashboard already handles: a
+  restored, transferred or reinstalled device finds the row but no password and
+  shows an `auth` error with the re-sign-in button (`apCredentialsOf` resolves
+  to null without a round trip); restoring a backup onto *this* phone keeps
+  working silently, because the sidecar never went anywhere; `upsertApexDevice`
+  can't clobber a stored password because it no longer takes one; and removing
+  a controller deletes its sidecar entry, since the file is keyed by identifier
+  rather than row id. Not encrypted, deliberately: app-private storage is the
+  boundary here as it is for the rest of the aquarium data, and an Apex
+  password grants nothing beyond the LAN it sits on — what changed is that the
+  boundary is now the one the platform actually enforces. (`_deviceToJson` of
+  course still writes no password; there is none to write.)
 - **No discovery.** The LAN sweep (U39) cannot help here: an Apex will not
   identify itself to an unauthenticated probe, so there is nothing for a
   credential-less identity check to match on. The FAB opens the manual

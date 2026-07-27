@@ -521,8 +521,11 @@ class Devices extends Table {
 
   /// Tank the device's saved readings belong to. Null until assigned; cleared
   /// (not cascaded) if the tank is deleted so the device row survives.
-  IntColumn get tankId =>
-      integer().nullable().references(Tanks, #id, onDelete: KeyAction.setNull)();
+  IntColumn get tankId => integer().nullable().references(
+    Tanks,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
 
   DateTimeColumn get firstSeenAt =>
       dateTime().withDefault(currentDateAndTime)();
@@ -537,17 +540,16 @@ class Devices extends Table {
   /// Login name for a device whose API is authenticated (U40: Apex only —
   /// every other integration here is unauthenticated on the LAN). Null for
   /// the rest.
-  TextColumn get username => text().nullable()();
-
-  /// The matching password, stored **only** in this app-private database.
   ///
-  /// It is deliberately absent from `_deviceToJson`, so it never rides a
-  /// backup file, a Drive sync document or a share sheet — a restored
-  /// controller row simply asks for the password again. It is not encrypted:
-  /// the platform's app-private storage is the boundary, exactly as it is for
-  /// the rest of the aquarium data, and an Apex password grants nothing beyond
-  /// the LAN it sits on.
-  TextColumn get secret => text().nullable()();
+  /// The matching **password is deliberately not a column** (#68): this table
+  /// rides Android Auto Backup and device-to-device transfer inside the raw
+  /// SQLite file, a channel the app's own backup code never sees, so a secret
+  /// stored here would leave the phone no matter what `_deviceToJson` omits.
+  /// It lives in the backup-excluded sidecar instead — see [DeviceSecrets],
+  /// keyed by [identifier]. The username stays: it is not a secret, and
+  /// keeping it means a restored controller only has to be signed in again,
+  /// not re-identified.
+  TextColumn get username => text().nullable()();
 }
 
 /// What the UI calls a device: explicit name, else vendor model, else the
@@ -588,7 +590,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 26;
+  int get schemaVersion => 27;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -847,13 +849,23 @@ class AppDatabase extends _$AppDatabase {
         await _backfillDeviceDisplayOrder();
       }
       if (from < 26) {
-        // Credentials for authenticated device APIs (U40, Apex). Guarded like
-        // display_order above: a v24 `createTable` already builds them.
+        // Login name for authenticated device APIs (U40, Apex). Guarded like
+        // display_order above: a v24 `createTable` already builds it.
         if (!await _columnExists('devices', 'username')) {
           await m.addColumn(devices, devices.username);
         }
-        if (!await _columnExists('devices', 'secret')) {
-          await m.addColumn(devices, devices.secret);
+      }
+      if (from < 27) {
+        // v26 also added a `secret` column for the Apex password. It is gone
+        // (#68): the raw database rides Android Auto Backup and device
+        // transfer, so a password stored here left the phone through a channel
+        // this app never sees — it lives in the backup-excluded sidecar now
+        // (see [DeviceSecrets]). Dropping it discards whatever the column
+        // held; a controller simply asks to be signed in again. Guarded
+        // because v27 `createTable`s never build it, and because the upgrade
+        // sweep re-runs every step (see migration_test.dart).
+        if (await _columnExists('devices', 'secret')) {
+          await m.dropColumn(devices, 'secret');
         }
       }
     },
@@ -1347,10 +1359,9 @@ class AppDatabase extends _$AppDatabase {
   /// Deletes the reading groups created by one import (the result sheet's
   /// Undo). Returns the rows removed.
   Future<int> deleteReadingsByGroupIds(int tankId, List<String> groupIds) =>
-      (delete(readings)..where(
-            (r) => r.tankId.equals(tankId) & r.groupId.isIn(groupIds),
-          ))
-          .go();
+      (delete(
+        readings,
+      )..where((r) => r.tankId.equals(tankId) & r.groupId.isIn(groupIds))).go();
 
   /// All import-source rows (few — one per tank+source that ever imported).
   Stream<List<ImportSource>> watchImportSources() =>
@@ -1383,16 +1394,17 @@ class AppDatabase extends _$AppDatabase {
             ]))
           .watch();
 
-  Future<DeviceRecord?> deviceByIdentifier(String identifier) =>
-      (select(devices)..where((d) => d.identifier.equals(identifier)))
-          .getSingleOrNull();
+  Future<DeviceRecord?> deviceByIdentifier(String identifier) => (select(
+    devices,
+  )..where((d) => d.identifier.equals(identifier))).getSingleOrNull();
 
   /// Position for a newly added device of [kind]: last on its dashboard.
   /// max(displayOrder) + 1, not the row count — after removing a middle device
   /// the count would collide with an existing position.
   Future<int> _nextDeviceOrder(String kind) async {
-    final rows = await (select(devices)
-      ..where((d) => d.kind.equals(kind))).get();
+    final rows = await (select(
+      devices,
+    )..where((d) => d.kind.equals(kind))).get();
     return rows.fold<int>(
           -1,
           (m, d) => d.displayOrder > m ? d.displayOrder : m,
@@ -1473,15 +1485,16 @@ class AppDatabase extends _$AppDatabase {
   });
 
   /// Adds or updates a Neptune Apex controller by serial (U40) — same
-  /// semantics as [upsertReefFactoryDevice], plus the credentials its API
-  /// needs. An update path that passes a null [password] leaves the stored one
-  /// alone, so re-pointing a moved controller doesn't require retyping it.
+  /// semantics as [upsertReefFactoryDevice], plus the login name its API
+  /// needs. The password is not part of the row (#68): callers store it
+  /// through [DeviceSecrets], keyed by the same [identifier]. Re-pointing a
+  /// moved controller therefore leaves the stored password alone by
+  /// construction.
   Future<void> upsertApexDevice({
     required String identifier,
     required String model,
     required String address,
     required String username,
-    String? password,
     String? name,
     int? tankId,
   }) => transaction(() async {
@@ -1497,7 +1510,6 @@ class AppDatabase extends _$AppDatabase {
         lastSeenAt: Value(DateTime.now()),
         displayOrder: Value(order),
         username: Value(username),
-        secret: Value(password),
       ),
       onConflict: DoUpdate(
         (_) => DevicesCompanion(
@@ -1507,25 +1519,19 @@ class AppDatabase extends _$AppDatabase {
           tankId: Value(tankId),
           lastSeenAt: Value(DateTime.now()),
           username: Value(username),
-          // `absent` rather than `Value(null)`: an omitted password must keep
-          // the stored one, not wipe it.
-          secret: password == null ? const Value.absent() : Value(password),
         ),
         target: [devices.identifier],
       ),
     );
   });
 
-  /// Replaces the credentials on a device row (the "password changed on the
-  /// controller" path). Narrow like [updateDeviceAddress] — name, tank and
-  /// card position stand.
-  Future<void> updateDeviceCredentials(
-    int id, {
-    required String username,
-    required String password,
-  }) => (update(devices)..where((d) => d.id.equals(id))).write(
-    DevicesCompanion(username: Value(username), secret: Value(password)),
-  );
+  /// Replaces the login name on a device row (the "credentials changed on the
+  /// controller" path; the password half goes to [DeviceSecrets]). Narrow like
+  /// [updateDeviceAddress] — name, tank and card position stand.
+  Future<void> updateDeviceUsername(int id, {required String username}) =>
+      (update(devices)..where((d) => d.id.equals(id))).write(
+        DevicesCompanion(username: Value(username)),
+      );
 
   /// Records the Hanna checker on first connect: inserts if absent (never
   /// clobbering a user-set name/tank on later measurements), always bumping
@@ -1606,9 +1612,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<ImportSource?> getImportSource(int tankId, String source) =>
-      (select(importSources)..where(
-            (s) => s.tankId.equals(tankId) & s.source.equals(source),
-          ))
+      (select(importSources)
+            ..where((s) => s.tankId.equals(tankId) & s.source.equals(source)))
           .getSingleOrNull();
 
   /// Inserts or replaces the (tank, source) row — single statement on the
@@ -1616,11 +1621,9 @@ class AppDatabase extends _$AppDatabase {
   Future<void> upsertImportSource(ImportSourcesCompanion row) =>
       into(importSources).insertOnConflictUpdate(row);
 
-  Future<void> deleteImportSource(int tankId, String source) =>
-      (delete(importSources)..where(
-            (s) => s.tankId.equals(tankId) & s.source.equals(source),
-          ))
-          .go();
+  Future<void> deleteImportSource(int tankId, String source) => (delete(
+    importSources,
+  )..where((s) => s.tankId.equals(tankId) & s.source.equals(source))).go();
 
   // --- Water changes -------------------------------------------------------
 

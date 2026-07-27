@@ -663,9 +663,7 @@ void main() {
       address: '192.168.1.3',
       name: 'Dosing pump',
     );
-    await seed.customStatement(
-      'ALTER TABLE devices DROP COLUMN display_order',
-    );
+    await seed.customStatement('ALTER TABLE devices DROP COLUMN display_order');
     await seed.customStatement('PRAGMA user_version = 24');
     await seed.close();
 
@@ -682,6 +680,40 @@ void main() {
     // Each kind gets its own sequence, so the ReefBeat card starts at 0 too.
     final rb = await db.watchDevicesOfKind('reefbeat').first;
     expect(rb.single.displayOrder, 0);
+  });
+
+  test('upgrading from v26 drops the devices.secret column (#68)', () async {
+    final file = File('${tempDir.path}/from26-secret.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    await seed.upsertApexDevice(
+      identifier: 'AC5:1',
+      model: 'Apex',
+      address: '192.168.1.20',
+      username: 'admin',
+      name: 'Controller',
+    );
+    // Rebuild the v26 shape: the column the Apex password used to live in,
+    // holding one.
+    await seed.customStatement('ALTER TABLE devices ADD COLUMN secret TEXT');
+    await seed.customStatement("UPDATE devices SET secret = 'hunter2'");
+    await seed.customStatement('PRAGMA user_version = 26');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    // Forcing a query runs the upgrade.
+    final device = (await db.watchDevicesOfKind('apex').first).single;
+    expect(device.username, 'admin', reason: 'the login name is not a secret');
+
+    final columns = await db
+        .customSelect('PRAGMA table_info(devices)')
+        .map((r) => r.read<String>('name'))
+        .get();
+    expect(
+      columns,
+      isNot(contains('secret')),
+      reason: 'the password column rode Auto Backup; it is gone with its data',
+    );
   });
 
   group('guarded migration steps are idempotent', () {

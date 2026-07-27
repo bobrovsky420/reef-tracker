@@ -8,6 +8,7 @@ import '../../app/theme.dart';
 import '../../data/ap_device_link.dart';
 import '../../data/ap_protocol.dart';
 import '../../data/database.dart';
+import '../../data/device_secrets.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
@@ -55,12 +56,18 @@ class ApLive {
   final ApLinkError? error;
 }
 
-/// The credentials stored with a device row, or null when it carries none (a
-/// row restored from a backup — the password is deliberately not in one).
-ApCredentials? apCredentialsOf(DeviceRecord d) {
+/// The credentials for a device row: the login name travels with the row, the
+/// password comes from the backup-excluded sidecar (#68). Null when either
+/// half is missing — a row restored from a backup, or one that arrived with an
+/// OS-level restore or phone transfer, has no password on this device.
+Future<ApCredentials?> apCredentialsOf(
+  DeviceSecrets secrets,
+  DeviceRecord d,
+) async {
   final username = d.username;
-  final password = d.secret;
-  if (username == null || password == null) return null;
+  if (username == null) return null;
+  final password = await secrets.read(d.identifier);
+  if (password == null) return null;
   return ApCredentials(username: username, password: password);
 }
 
@@ -69,7 +76,10 @@ ApCredentials? apCredentialsOf(DeviceRecord d) {
 /// error rather than a pointless round trip.
 Future<ApLive> apReadDevice(WidgetRef ref, DeviceRecord device) async {
   final address = device.address;
-  final credentials = apCredentialsOf(device);
+  final credentials = await apCredentialsOf(
+    ref.read(deviceSecretsProvider),
+    device,
+  );
   if (address == null || address.isEmpty) return const ApLive();
   if (credentials == null) return const ApLive(error: ApLinkError.auth);
   try {
@@ -193,13 +203,14 @@ class ApDeviceSection extends ConsumerWidget {
       ),
     );
     if (result == null) return;
+    // Two stores, one login: the name goes on the row, the password into the
+    // backup-excluded sidecar (#68). Password first — a crash between the two
+    // then leaves an unused sidecar entry rather than a row claiming a
+    // credential that isn't there.
+    await ref.read(deviceSecretsProvider).write(d.identifier, result.pass);
     await ref
         .read(dbProvider)
-        .updateDeviceCredentials(
-          d.id,
-          username: result.user,
-          password: result.pass,
-        );
+        .updateDeviceUsername(d.id, username: result.user);
     // The stored row the refresh reads from is the stream's, not `d` — reread
     // it so the retry uses the credentials just saved.
     final fresh = await ref.read(dbProvider).deviceByIdentifier(d.identifier);
@@ -260,6 +271,9 @@ class ApDeviceSection extends ConsumerWidget {
     if (ok == true) {
       onRemoved(d.identifier);
       await ref.read(dbProvider).deleteDevice(d.id);
+      // The sidecar is keyed by identifier, not by row id, so it has to be
+      // told: a forgotten controller must not leave its password behind.
+      await ref.read(deviceSecretsProvider).remove(d.identifier);
     }
   }
 }
@@ -293,13 +307,15 @@ Future<void> showApAddFlow(
               required status,
             }) async {
               await ref
+                  .read(deviceSecretsProvider)
+                  .write(status.info.serial, credentials.password);
+              await ref
                   .read(dbProvider)
                   .upsertApexDevice(
                     identifier: status.info.serial,
                     model: status.info.modelCode,
                     address: host,
                     username: credentials.username,
-                    password: credentials.password,
                     name: name,
                     tankId: tankId,
                   );

@@ -8,6 +8,7 @@ import '../data/cloud_auth.dart';
 import '../data/cloud_auth_google.dart';
 import '../data/cloud_backup_store.dart';
 import '../data/database.dart';
+import '../data/device_secrets.dart';
 import '../data/environment_sources.dart';
 import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
@@ -72,6 +73,10 @@ final dbProvider = Provider<AppDatabase>((ref) {
   ref.onDispose(db.close);
   return db;
 });
+
+/// Passwords for authenticated device APIs (U40, Apex), kept in a
+/// backup-excluded file rather than in the database (#68).
+final deviceSecretsProvider = Provider<DeviceSecrets>((ref) => DeviceSecrets());
 
 /// Platform wrapper for reminder notifications (U1/U2/U12).
 final reminderNotificationsProvider = Provider<ReminderNotifications>(
@@ -853,18 +858,17 @@ final allDevicesProvider = StreamProvider<List<DeviceRecord>>(
 /// kind on [ProFeature.connectedDevices] (the single LAN-device gate), so a
 /// future device kind adds its own wrapped list here without touching either
 /// the Hanna flow or the gating.
-final environmentSourcesProvider = Provider.family<List<EnvironmentSource>, int>(
-  (ref, tankId) {
-    if (!ref.watch(proFeatureProvider(ProFeature.connectedDevices))) {
-      return const [];
-    }
-    return environmentSourcesForTank(
-      tankId: tankId,
-      rfDevices: ref.watch(reefFactoryDevicesProvider).value ?? const [],
-      rfLink: ref.watch(rfDeviceLinkProvider),
-    );
-  },
-);
+final environmentSourcesProvider =
+    Provider.family<List<EnvironmentSource>, int>((ref, tankId) {
+      if (!ref.watch(proFeatureProvider(ProFeature.connectedDevices))) {
+        return const [];
+      }
+      return environmentSourcesForTank(
+        tankId: tankId,
+        rfDevices: ref.watch(reefFactoryDevicesProvider).value ?? const [],
+        rfLink: ref.watch(rfDeviceLinkProvider),
+      );
+    });
 
 /// Whether this device has Bluetooth LE at all (U33). The manifest marks the
 /// Bluetooth/location hardware features `required="false"` so Play doesn't

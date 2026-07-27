@@ -20,9 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   your Apex is set to °C or °F and stores the temperature correctly either way.
   Read-only: switching outlets, feed cycles and programs stay in Fusion. Works
   on your local network only — your phone has to be on the same Wi-Fi as the
-  controller, and no data goes through a cloud. Your Apex password is stored
-  only on this phone and is deliberately left out of backups, so a restored
-  controller asks for it again.
+  controller, and no data goes through a cloud. Your Apex password never leaves
+  this phone: it is kept out of your backups, out of the copy Android keeps in
+  your Google account, and out of a transfer to a new phone — so a restored or
+  transferred install keeps the controller but asks you to sign in again.
 
 ### Changed
 - All your connected devices now live on one Devices page instead of three
