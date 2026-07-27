@@ -2208,7 +2208,7 @@ overflow entry) only exist once the experimental-features master switch
   `EnvironmentSource` (identifier, display name, *primary* parameters, one
   `read()`) is resolved per save-tank by `environmentSourcesProvider`
   (today: ReefFactory meters wrapped in `RfEnvironmentSource`, gated on
-  `ProFeature.reefFactory`; a future device kind is one new implementation —
+  `ProFeature.connectedDevices`; a future device kind is one new implementation —
   the Hanna screen never names a vendor). `selectEnvironmentValues` picks
   exactly **one value per parameter**, never asking the user: dedicated
   device beats incidental reading (generalizing the U36 temperature-source
@@ -2458,8 +2458,9 @@ on the device's Wi-Fi network.
   so it shows live values immediately without a second read. The device list itself stays
   household-scoped (`reefFactoryDevicesProvider`, a shared `StreamProvider`);
   the screen filters it by the active tank.
-- Entry point is experimental-gated and Pro-gated (`ProFeature.reefFactory`,
-  grandfathered): the Measurements-tab overflow menu (the former Settings row
+- Entry point is experimental-gated and Pro-gated (`ProFeature.connectedDevices`,
+  grandfathered — the one gate shared by every LAN device integration, see
+  Editions): the Measurements-tab overflow menu (the former Settings row
   was removed). The visible devices are read once automatically when the
   screen opens (one-shot, sequential); after that reads are manual — periodic
   auto-refresh is deferred.
@@ -2676,7 +2677,7 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   bare dash with no reason.
   (`_StatusRow`, the label–value line, is shared by all the status cards.)
 - Entry points mirror ReefFactory: experimental-gated + Pro-gated
-  (`ProFeature.reefBeat`, grandfathered) via the Measurements-tab overflow
+  (`ProFeature.connectedDevices`, grandfathered) via the Measurements-tab overflow
   menu and a Settings row. Devices are read once automatically on open;
   after that reads are manual.
 - **Future phases (deferred):** comparing/syncing head schedules against the
@@ -2789,8 +2790,8 @@ out the same LAN-only requirement.
   zero-sentinel rule that has not been checked against hardware, so it is
   recorded here rather than guessed at.
 - Entry points mirror the other two: experimental-gated + Pro-gated
-  (`ProFeature.apex`, grandfathered) via the Measurements-tab overflow menu and
-  a Settings row. Controllers are read once automatically on open; after that
+  (`ProFeature.connectedDevices`, grandfathered) via the Measurements-tab
+  overflow menu and a Settings row. Controllers are read once automatically on open; after that
   reads are manual.
 - **Development without hardware** (`tool/apex_emulator.dart`): a fake
   controller serving both firmware families with drifting probe values, a
@@ -2806,9 +2807,10 @@ out the same LAN-only requirement.
   JSON endpoint covers every controller that serves the XML one), and wiring
   controllers into `environmentSourcesProvider` as U37 environment sources for
   the Hanna results step — an Apex reports exactly the salinity/temperature/pH
-  triple that step wants, so it is the obvious next step, but it needs a
-  per-kind Pro gate in that provider rather than the single `reefFactory` one
-  it checks today.
+  triple that step wants, so it is the obvious next step, and since the gate
+  merge (2026-07-27) it is now purely an `ApEnvironmentSource` implementation:
+  `environmentSourcesProvider` checks the one `connectedDevices` gate, which
+  already covers Apex.
 
 ### LAN device discovery (U39) — `data/lan_discovery.dart`, `features/devices/discovery_sheet.dart`
 
@@ -3177,6 +3179,19 @@ the **dose calculator**, and the **tank cap** (all grandfathered: founders
 keep them free forever; a non-entitled install gets `showProFeatureDialog`
 instead of the feature — dormant until a Pro build ships, exercised by
 `test/pro_gate_test.dart`).
+
+**One gate per capability, not per vendor.** Every LAN device integration —
+ReefFactory meters (U36), Red Sea ReefBeat devices (U38), Neptune Apex
+controllers (U40) and whatever vendor comes next — sits behind the single
+`ProFeature.connectedDevices` key (grandfathered), decided 2026-07-27. They
+were three separate grandfathered keys; to a keeper they are one capability
+("connect my hardware"), and per-vendor keys would turn a combined device view
+into a patchwork of locks. The Hanna keys (`hannaImport` / `hannaConnect` /
+`hannaScan`) stay separate: a pocket checker is the keeper's test kit, not tank
+hardware on the network. Merging grandfathered keys is the one case where
+`kGrandfatheredFeatures` may legitimately shrink — the merged key must itself
+be grandfathered and cover every capability it absorbed, which is what
+`test/pro_features_test.dart`'s freeze pin now documents.
 
 **Tank cap (U21):** a Standard install may hold at most `kFreeTankLimit` (2 —
 a display tank plus a quarantine tank, so the free tier never penalizes

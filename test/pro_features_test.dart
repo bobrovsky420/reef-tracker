@@ -35,9 +35,17 @@ void main() {
     test('the grandfathered set contains exactly the promised features', () {
       // THE FREEZE PIN. "Founder's Edition keeps these free forever" is a
       // public promise: entries may be ADDED here (a pre-cutoff feature going
-      // Pro must grandfather), but an existing entry must NEVER be removed.
-      // If this test fails because a key disappeared, revert the
-      // pro_features.yaml change — don't update the expectation.
+      // Pro must grandfather), but a promised capability must NEVER lose its
+      // free-forever status. If this test fails because a key disappeared,
+      // revert the pro_features.yaml change — don't update the expectation.
+      //
+      // The one legitimate exception, and the only reason this list ever
+      // shrinks: several grandfathered keys MERGING into one grandfathered key
+      // covering the same capabilities. `connectedDevices` (2026-07-27) is
+      // exactly that — it replaces reefFactory + reefBeat + apex, so every
+      // install that had those three free still does. A merge that dropped a
+      // capability, or landed on a non-grandfathered key, would break the
+      // promise just as removal would.
       expect(kGrandfatheredFeatures, {
         ProFeature.icpImport,
         ProFeature.doseCalculator,
@@ -48,9 +56,7 @@ void main() {
         ProFeature.hannaImport,
         ProFeature.hannaConnect,
         ProFeature.hannaScan,
-        ProFeature.reefFactory,
-        ProFeature.reefBeat,
-        ProFeature.apex,
+        ProFeature.connectedDevices,
       });
     });
   });

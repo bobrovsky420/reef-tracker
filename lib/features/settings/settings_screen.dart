@@ -373,26 +373,34 @@ class SettingsBody extends ConsumerWidget {
                 ),
                 onTap: () => settings.setHannaScanFab(!scanFabEnabled),
               ),
-              // Red Sea ReefBeat dosing-pump status (U38). Same Pro-gate idiom
-              // as the Hanna rows.
+              // Red Sea ReefBeat dosing-pump status (U38). Shares the one
+              // LAN-device gate with the ReefFactory and Apex entries.
               ReefSettingsRow(
                 icon: Icons.water_drop_outlined,
                 title: l.reefBeatTitle,
                 description: l.reefBeatSettingsSubtitle,
                 trailing: const ReefSettingsValue(),
-                onTap: ref.watch(proFeatureProvider(ProFeature.reefBeat))
+                onTap:
+                    ref.watch(proFeatureProvider(ProFeature.connectedDevices))
                     ? () => context.push('/reefbeat')
-                    : () => showProFeatureDialog(context, ProFeature.reefBeat),
+                    : () => showProFeatureDialog(
+                        context,
+                        ProFeature.connectedDevices,
+                      ),
               ),
-              // Neptune Apex controllers (U40). Same Pro-gate idiom.
+              // Neptune Apex controllers (U40). Same gate.
               ReefSettingsRow(
                 icon: Icons.hub_outlined,
                 title: l.apexTitle,
                 description: l.apexSettingsSubtitle,
                 trailing: const ReefSettingsValue(),
-                onTap: ref.watch(proFeatureProvider(ProFeature.apex))
+                onTap:
+                    ref.watch(proFeatureProvider(ProFeature.connectedDevices))
                     ? () => context.push('/apex')
-                    : () => showProFeatureDialog(context, ProFeature.apex),
+                    : () => showProFeatureDialog(
+                        context,
+                        ProFeature.connectedDevices,
+                      ),
               ),
               // Read-only inventory of every connected device (ReefFactory
               // meters, ReefBeat devices, Apex controllers + the Hanna checker

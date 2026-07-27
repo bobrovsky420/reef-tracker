@@ -124,9 +124,10 @@ extension L10nDomain on AppLocalizations {
     ProFeature.hannaImport => hannaImportTitle,
     ProFeature.hannaConnect => hannaConnectTitle,
     ProFeature.hannaScan => hannaScanTitle,
-    ProFeature.reefFactory => reefFactoryTitle,
-    ProFeature.reefBeat => reefBeatTitle,
-    ProFeature.apex => apexTitle,
+    // One name for every LAN device integration (ReefFactory / ReefBeat /
+    // Apex), which share a single gate — the Pro dialog names the capability,
+    // not whichever vendor's screen the user happened to tap.
+    ProFeature.connectedDevices => reefDevicesTitle,
   };
 
   /// Localized message for a rule-based insight (U28). The [Insight] carries

@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   controller asks for it again.
 
 ### Changed
+- Connecting aquarium hardware is now one feature rather than three: ReefFactory
+  meters, Red Sea ReefBeat devices and Neptune Apex controllers share a single
+  entitlement instead of one per brand. Founder's Edition installs keep all of
+  them free forever exactly as before, and adding support for another brand in
+  future won't need a separate unlock. Hanna checker features are unaffected and
+  stay on their own.
 - The ReefFactory Temperature Controller's "Heating"/"Cooling" badge now sits
   next to the temperature it explains instead of in the card's title line.
 - On the ReefFactory and Apex device cards, Save is now a small icon button

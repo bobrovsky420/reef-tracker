@@ -406,44 +406,26 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           );
                         }
                       }
-                      if (v == 'reeffactory') {
-                        // ReefFactory local-device dashboard (U36, experimental),
-                        // same gate idiom as the Hanna entries.
+                      // The three LAN-device dashboards (U36/U38/U40,
+                      // experimental) share one gate — a keeper who may use
+                      // one may use all of them.
+                      const deviceRoutes = {
+                        'reeffactory': '/reeffactory',
+                        'reefbeat': '/reefbeat',
+                        'apex': '/apex',
+                      };
+                      final deviceRoute = deviceRoutes[v];
+                      if (deviceRoute != null) {
                         if (ref.read(
-                          proFeatureProvider(ProFeature.reefFactory),
+                          proFeatureProvider(ProFeature.connectedDevices),
                         )) {
-                          unawaited(context.push('/reeffactory'));
+                          unawaited(context.push(deviceRoute));
                         } else {
                           unawaited(
                             showProFeatureDialog(
                               context,
-                              ProFeature.reefFactory,
+                              ProFeature.connectedDevices,
                             ),
-                          );
-                        }
-                      }
-                      if (v == 'reefbeat') {
-                        // ReefBeat dosing-pump dashboard (U38, experimental),
-                        // same gate idiom.
-                        if (ref.read(proFeatureProvider(ProFeature.reefBeat))) {
-                          unawaited(context.push('/reefbeat'));
-                        } else {
-                          unawaited(
-                            showProFeatureDialog(
-                              context,
-                              ProFeature.reefBeat,
-                            ),
-                          );
-                        }
-                      }
-                      if (v == 'apex') {
-                        // Neptune Apex dashboard (U40, experimental), same
-                        // gate idiom.
-                        if (ref.read(proFeatureProvider(ProFeature.apex))) {
-                          unawaited(context.push('/apex'));
-                        } else {
-                          unawaited(
-                            showProFeatureDialog(context, ProFeature.apex),
                           );
                         }
                       }

@@ -835,13 +835,15 @@ final allDevicesProvider = StreamProvider<List<DeviceRecord>>(
 
 /// Environment sources (U37) for a tank: the registered devices assigned to it
 /// that can report current environment readings (salinity, temperature, pH) —
-/// what the Hanna results step's Environment card reads. Device-kind gates
-/// apply per kind: ReefFactory rows only count while the install may use
-/// [ProFeature.reefFactory]. A future device kind adds its own wrapped list
-/// here without touching the Hanna flow.
+/// what the Hanna results step's Environment card reads. Gated once for every
+/// kind on [ProFeature.connectedDevices] (the single LAN-device gate), so a
+/// future device kind adds its own wrapped list here without touching either
+/// the Hanna flow or the gating.
 final environmentSourcesProvider = Provider.family<List<EnvironmentSource>, int>(
   (ref, tankId) {
-    if (!ref.watch(proFeatureProvider(ProFeature.reefFactory))) return const [];
+    if (!ref.watch(proFeatureProvider(ProFeature.connectedDevices))) {
+      return const [];
+    }
     return environmentSourcesForTank(
       tankId: tankId,
       rfDevices: ref.watch(reefFactoryDevicesProvider).value ?? const [],

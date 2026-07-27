@@ -47,18 +47,18 @@ features:
   # third acquisition path for the same Hanna readings).
   - key: hannaScan
     grandfathered: true
-  # U36 ReefFactory local-device live values (experimental) — grandfathered,
-  # consistent with the other device-integration paths (hannaConnect/Scan):
-  # usable immediately, Founder installs keep it free forever.
-  - key: reefFactory
-    grandfathered: true
-  # U38 Red Sea ReefBeat dosing-pump dashboard (experimental) — grandfathered
-  # per the 2026-07-24 decision, consistent with reefFactory (the same
-  # local-device integration pattern for another vendor).
-  - key: reefBeat
-    grandfathered: true
-  # U40 Neptune Apex controller dashboard (experimental) — grandfathered per
-  # the 2026-07-26 decision, consistent with reefFactory/reefBeat (the same
-  # local-device integration pattern for a third vendor).
-  - key: apex
+  # Local-device integrations — ReefFactory meters (U36), Red Sea ReefBeat
+  # devices (U38) and Neptune Apex controllers (U40) — behind ONE gate as of
+  # the 2026-07-27 decision. They were three separate grandfathered keys
+  # (reefFactory/reefBeat/apex); to a keeper they are a single capability
+  # ("connect my hardware"), and the combined Devices page would otherwise be a
+  # patchwork of per-vendor locks. Every future vendor joins this key rather
+  # than adding its own.
+  #
+  # Merging keys does NOT weaken the founder promise: keys are never persisted
+  # (entitlement is the legacy_free marker), all three were grandfathered, and
+  # the merged key is too — so every install that had all three free still has
+  # all three free. The Hanna gates stay separate: the checker is the keeper's
+  # own test kit, not a piece of tank hardware on the LAN.
+  - key: connectedDevices
     grandfathered: true
