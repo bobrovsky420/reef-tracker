@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sitting right next to the values it saves, instead of a full-width row of its
   own below them – the cards are shorter and the action is where you are
   looking.
+- When measuring live over Bluetooth with a Hanna checker, the app now beeps
+  and vibrates as each parameter's result arrives – the same double beep the
+  reagent timers use – so you can keep your eyes on the meter or step away
+  between tests.
 
 ## [1.0.0] - 2026-07-26
 

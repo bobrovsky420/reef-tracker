@@ -2152,7 +2152,10 @@ overflow entry) only exist once the experimental-features master switch
   (15 s / 30 s / 2 min), a mono countdown with a stop button, tapping the
   active preset restarts it, and expiry plays a **double beep + haptic**
   (generated asset `assets/sounds/timer_beep.wav`, source
-  `tool/gen_beep.dart`, played via `audioplayers`). While the measuring
+  `tool/gen_beep.dart`, played via `audioplayers`). The **same beep + haptic
+  fires whenever a result frame lands**, so a user working on the meter (or
+  away from the phone) hears each parameter finish; it is driven off a growth
+  in `completedRuns`, so skips and a mid-run disconnect stay silent. While the measuring
   phase is active the screen holds a **wakelock** (`wakelock_plus`,
   `FLAG_KEEP_SCREEN_ON`/`idleTimerDisabled` — no permissions) so the
   display can't sleep mid-chemistry; it releases on every other phase and

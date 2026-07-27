@@ -139,8 +139,22 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
   /// so a reconnect/retry doesn't re-touch it every listener tick.
   bool _deviceCaptured = false;
 
+  /// How many results the previous listener tick had — a growth means the
+  /// meter just delivered another parameter's value.
+  int _completedSeen = 0;
+
   void _onSession() {
     if (!mounted) return;
+    // Each finished parameter earns the same attention signal as the reagent
+    // timer: the user is working on the meter (or across the room waiting on
+    // a reaction), not watching the phone. Skips and a mid-run disconnect
+    // don't add results, so they stay silent.
+    final completed = _session.completedRuns.length;
+    if (completed > _completedSeen) {
+      unawaited(HapticFeedback.vibrate());
+      unawaited(_playBeep());
+    }
+    _completedSeen = completed;
     // Record the checker in the connected-devices inventory (U36) the first
     // time it advertises its name — informational only; the read-only Settings
     // page lists it. The name (e.g. "HI97115 06150128") is the stable identity,
@@ -618,8 +632,9 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     _timerPreset = null;
   }
 
-  /// Best-effort: if audio playback is unavailable the haptic and the
-  /// countdown reaching 0:00 still signal the expiry.
+  /// The attention signal for both the timer expiry and a completed
+  /// measurement. Best-effort: if audio playback is unavailable the haptic
+  /// and the on-screen change still carry it.
   Future<void> _playBeep() async {
     try {
       await _beepPlayer.play(AssetSource('sounds/timer_beep.wav'));
