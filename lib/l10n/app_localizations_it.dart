@@ -2268,6 +2268,50 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get hannaIncludeInSave => 'Salva questo valore';
+
+  @override
+  String get hannaValueImpossible =>
+      'Fuori dall\'intervallo possibile — non verrà salvato';
+
+  @override
+  String get hannaNothingSelected => 'Nessun valore selezionato';
+
+  @override
+  String get hannaRemeasure => 'Misura di nuovo';
+
+  @override
+  String hannaRemeasureCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Misura di nuovo $count valori',
+      one: 'Misura di nuovo 1 valore',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaRemeasureQueued => 'Verrà misurato di nuovo';
+
+  @override
+  String get hannaRemeasureKept =>
+      'Non rimisurato — mantenuto il valore precedente';
+
+  @override
+  String hannaPreviousValue(String value) {
+    return 'prima $value';
+  }
+
+  @override
+  String get hannaMeasuringAgain =>
+      'Nuova misurazione dei parametri selezionati.';
+
+  @override
+  String get hannaRemeasureFailed =>
+      'Il misuratore non ha risposto — non è stato misurato nulla di nuovo e i risultati restano invariati.';
+
+  @override
   String get environmentTitle => 'Ambiente';
 
   @override

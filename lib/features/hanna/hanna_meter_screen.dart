@@ -35,6 +35,11 @@ import 'hanna_meter_session.dart';
 /// inside one reading group, and the shared `hannaLab` (tank, source)
 /// watermark, so a reading captured live today doesn't re-import from a CSV
 /// export of the meter's log tomorrow.
+/// The audio player id for the timer/result beep. Fixed rather than the
+/// package's random UUID: it names the one player this screen owns, on the
+/// native side and in the event channel a widget test has to stub out.
+const kHannaBeepPlayerId = 'reeftracker_hanna_beep';
+
 class HannaMeterScreen extends ConsumerStatefulWidget {
   const HannaMeterScreen({super.key});
 
@@ -56,6 +61,21 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
   /// the remembered location → tank mapping / active tank.
   int? _saveTankOverride;
 
+  /// Results the user unchecked on the confirm step — a value they know is
+  /// wrong (wrong reagent, spoiled cuvette). Kept visible and reversible,
+  /// like a deselected environment chip; identity-keyed, the run objects
+  /// live as long as the session.
+  final Set<HannaMethodRun> _excludedRuns = {};
+
+  /// Results marked with ↻ for another go on the meter. Marking excludes the
+  /// value too — you only redo one you distrust, and a distrusted value must
+  /// never save by accident.
+  final Set<HannaMethodRun> _remeasureMarks = {};
+
+  /// The runs handed to the running re-measure pass, held until it ends so
+  /// the ones that produced a new value can be re-included in one shot.
+  List<HannaMethodRun> _pendingPass = const [];
+
   List<ImportSource>? _sources;
   bool _saving = false;
   bool _saved = false;
@@ -71,7 +91,7 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
   Timer? _timerTicker;
   DateTime? _timerEndsAt;
   Duration? _timerPreset;
-  final _beepPlayer = AudioPlayer();
+  final _beepPlayer = AudioPlayer(playerId: kHannaBeepPlayerId);
 
   /// Whether this state currently holds the wakelock (measuring phase only).
   bool _wakelockOn = false;
@@ -140,7 +160,8 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
   bool _deviceCaptured = false;
 
   /// How many results the previous listener tick had — a growth means the
-  /// meter just delivered another parameter's value.
+  /// meter just delivered another parameter's value. Restored values don't
+  /// count, so an abandoned re-measure can't masquerade as a fresh result.
   int _completedSeen = 0;
 
   void _onSession() {
@@ -149,12 +170,25 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     // timer: the user is working on the meter (or across the room waiting on
     // a reaction), not watching the phone. Skips and a mid-run disconnect
     // don't add results, so they stay silent.
-    final completed = _session.completedRuns.length;
+    final completed = [
+      for (final r in _session.completedRuns)
+        if (!r.remeasureAbandoned) r,
+    ].length;
     if (completed > _completedSeen) {
       unawaited(HapticFeedback.vibrate());
       unawaited(_playBeep());
     }
     _completedSeen = completed;
+    // A finished re-measure pass re-includes what it actually re-measured;
+    // a target that came back without a new value stays unchecked, so a
+    // value the user distrusted can't slip into the save by being skipped.
+    if (_pendingPass.isNotEmpty &&
+        _session.phase != HannaSessionPhase.measuring) {
+      for (final run in _pendingPass) {
+        if (!run.remeasureAbandoned) _excludedRuns.remove(run);
+      }
+      _pendingPass = const [];
+    }
     // Record the checker in the connected-devices inventory (U36) the first
     // time it advertises its name — informational only; the read-only Settings
     // page lists it. The name (e.g. "HI97115 06150128") is the stable identity,
@@ -730,11 +764,23 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (_session.remeasuring)
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              l.hannaMeasuringAgain,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: tokens.textDim),
+            ),
+          ),
         ReefCard(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Column(
             children: [
-              for (final run in _session.runs)
+              // The current pass only: a re-measure lists the parameters it
+              // is redoing, not the whole session.
+              for (final run in _session.passRuns)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -900,7 +946,10 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (_session.endedByDisconnect)
+        // Covers both endings: a run cut short by a drop, and a meter that
+        // went away while the user sat on this step. Either way the values
+        // are safe and the ↻ buttons are gone — say why.
+        if (!_session.canRemeasure)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
@@ -911,71 +960,27 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
             ),
           ),
         ReefCard(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             children: [
               for (var i = 0; i < results.length; i++)
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: i == results.length - 1
-                      ? null
-                      : BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: tokens.surfaceBorder),
-                          ),
-                        ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _methodLabel(l, results[i].method),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: tokens.text,
-                              ),
-                            ),
-                            if (results[i].takenAt != null)
-                              Text(
-                                formatDateTime(
-                                  context,
-                                  results[i].takenAt!,
-                                  weekday: false,
-                                ),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: tokens.textFaint),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (_check(results[i]) != ParamValueCheck.ok)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Icon(
-                            Icons.warning_amber_rounded,
-                            size: 18,
-                            color: _check(results[i]) == ParamValueCheck.impossible
-                                ? tokens.critical
-                                : tokens.caution,
-                          ),
-                        ),
-                      Text(
-                        _formatValue(results[i], prefs),
-                        style: ReefTokens.monoTextStyle.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: tokens.text,
-                        ),
-                      ),
-                    ],
-                  ),
+                _resultRow(
+                  l,
+                  prefs,
+                  results[i],
+                  last: i == results.length - 1,
                 ),
             ],
           ),
         ),
+        if (_remeasureMarks.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _saving ? null : () => unawaited(_startRemeasure()),
+            icon: const Icon(Icons.replay, size: 18),
+            label: Text(l.hannaRemeasureCount(_remeasureMarks.length)),
+          ),
+        ],
         if (target != null && envSources.isNotEmpty) ...[
           SectionHeader(l.environmentTitle),
           _environmentCard(l, attachEnv, target, results),
@@ -1001,7 +1006,12 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: _saving ? null : () => unawaited(_save(target)),
+            // Nothing checked = nothing to write; the environment readings
+            // ride along with the session's values, they aren't a save of
+            // their own.
+            onPressed: _saving || _toSave(results).isEmpty
+                ? null
+                : () => unawaited(_save(target)),
             icon: _saving
                 ? const SizedBox(
                     width: 16,
@@ -1009,10 +1019,14 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.download_done),
-            label: Text(switch (_envToSave(results, target.id, attachEnv).length) {
-              0 => l.hannaSaveButton(_saveableOf(results).length),
-              final envCount => l.hannaSaveButtonEnv(
-                _saveableOf(results).length,
+            label: Text(switch ((
+              _toSave(results).length,
+              _envToSave(results, target.id, attachEnv).length,
+            )) {
+              (0, _) => l.hannaNothingSelected,
+              (final count, 0) => l.hannaSaveButton(count),
+              (final count, final envCount) => l.hannaSaveButtonEnv(
+                count,
                 envCount,
               ),
             }),
@@ -1028,14 +1042,193 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     );
   }
 
+  /// One result on the confirm step: the include checkbox (the whole row is
+  /// its tap target), the value, and the ↻ mark that queues the parameter for
+  /// another go on the meter. The caption carries whichever state the row is
+  /// in — queued, gated, restored, redone — falling back to the meter
+  /// timestamp.
+  Widget _resultRow(
+    AppLocalizations l,
+    UnitPrefs prefs,
+    HannaMethodRun run, {
+    required bool last,
+  }) {
+    final tokens = ReefTokens.of(context);
+    final check = _check(run);
+    final locked = check == ParamValueCheck.impossible;
+    final marked = _remeasureMarks.contains(run);
+    final included = _included(run);
+    // Once the link is gone the captured values are still savable, but
+    // nothing can be measured again without a fresh session.
+    final canRemeasure = !_saving && _session.canRemeasure;
+    final takenAt = run.takenAt == null
+        ? ''
+        : formatDateTime(context, run.takenAt!, weekday: false);
+
+    String caption;
+    Color captionColor;
+    if (marked) {
+      caption = l.hannaRemeasureQueued;
+      captionColor = tokens.primary;
+    } else if (locked) {
+      caption = l.hannaValueImpossible;
+      captionColor = tokens.critical;
+    } else if (run.remeasureAbandoned) {
+      caption = l.hannaRemeasureKept;
+      captionColor = tokens.caution;
+    } else if (run.previousValue != null) {
+      // A redone value, shown against what it replaced — the cheapest sanity
+      // check on whether the second run actually fixed anything.
+      caption =
+          '$takenAt · '
+          '${l.hannaPreviousValue(_formatAmount(run.previousValue!, run.method, prefs))}';
+      captionColor = tokens.textFaint;
+    } else {
+      caption = takenAt;
+      captionColor = tokens.textFaint;
+    }
+
+    return Container(
+      decoration: last
+          ? null
+          : BoxDecoration(
+              border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
+            ),
+      child: InkWell(
+        onTap: locked || _saving ? null : () => setState(() => _toggleIncluded(run)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
+          child: Row(
+            children: [
+              Checkbox(
+                value: included,
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                semanticLabel: l.hannaIncludeInSave,
+                onChanged: locked || _saving
+                    ? null
+                    : (_) => setState(() => _toggleIncluded(run)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _methodLabel(l, run.method),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: included ? tokens.text : tokens.textDim,
+                      ),
+                    ),
+                    if (caption.isNotEmpty)
+                      Text(
+                        caption,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: captionColor),
+                      ),
+                  ],
+                ),
+              ),
+              if (check == ParamValueCheck.implausible)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    size: 18,
+                    color: tokens.caution,
+                  ),
+                ),
+              Text(
+                _formatValue(run, prefs),
+                style: ReefTokens.monoTextStyle.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: included ? tokens.text : tokens.textFaint,
+                  decoration: included ? null : TextDecoration.lineThrough,
+                ),
+              ),
+              if (canRemeasure)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 20,
+                  tooltip: l.hannaRemeasure,
+                  onPressed: () => setState(() => _toggleMark(run)),
+                  icon: Icon(
+                    marked ? Icons.replay_circle_filled : Icons.replay,
+                    color: marked ? tokens.primary : tokens.textDim,
+                  ),
+                )
+              else
+                const SizedBox(width: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tapping the row/checkbox. Re-including a value also clears its ↻ mark —
+  /// "save this" and "this needs redoing" contradict each other.
+  void _toggleIncluded(HannaMethodRun run) {
+    if (_excludedRuns.remove(run)) {
+      _remeasureMarks.remove(run);
+    } else {
+      _excludedRuns.add(run);
+    }
+  }
+
+  /// Tapping ↻. Marking excludes the value from the save; un-marking puts it
+  /// back, the one-tap undo for a mis-tap.
+  void _toggleMark(HannaMethodRun run) {
+    if (_remeasureMarks.remove(run)) {
+      _excludedRuns.remove(run);
+    } else {
+      _remeasureMarks.add(run);
+      _excludedRuns.add(run);
+    }
+  }
+
+  /// Hands the marked results back to the meter as one pass. The marks become
+  /// the pass, so a failure to start puts them back rather than losing the
+  /// user's selection.
+  Future<void> _startRemeasure() async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final targets = [
+      for (final r in _session.completedRuns)
+        if (_remeasureMarks.contains(r)) r,
+    ];
+    if (targets.isEmpty) return;
+    setState(() {
+      _remeasureMarks.clear();
+      _pendingPass = targets;
+    });
+    if (await _session.remeasure(targets)) return;
+    if (!mounted) return;
+    setState(() {
+      _pendingPass = const [];
+      _remeasureMarks.addAll(targets);
+    });
+    messenger.showSnackBar(SnackBar(content: Text(l.hannaRemeasureFailed)));
+  }
+
   ParamValueCheck _check(HannaMethodRun run) =>
       checkParamValue(run.method.paramKey, run.value ?? 0);
 
-  /// Everything except impossible values — those never save (#31 sanity gate
-  /// at meter scale); the red warning icon on the row is their explanation.
-  List<HannaMethodRun> _saveableOf(List<HannaMethodRun> results) => [
+  /// Whether [run] goes into the save: impossible values never do (#31 sanity
+  /// gate at meter scale, the checkbox is locked off), nor do the ones the
+  /// user unchecked or marked for another go.
+  bool _included(HannaMethodRun run) =>
+      _check(run) != ParamValueCheck.impossible && !_excludedRuns.contains(run);
+
+  /// The results that will actually be written — drives the save button's
+  /// count, the environment card's "already measured" rule and [_save].
+  List<HannaMethodRun> _toSave(List<HannaMethodRun> results) => [
     for (final r in results)
-      if (_check(r) != ParamValueCheck.impossible) r,
+      if (_included(r)) r,
   ];
 
   int? _mappedTankId(String? location) {
@@ -1107,7 +1300,9 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
   /// chip stays visible (deselected) on the card; [_envToSave] applies them.
   Map<String, EnvValue> _envDisplay(List<HannaMethodRun> results, int tankId) {
     if (_envValuesTank != tankId) return const {};
-    final measured = {for (final r in _saveableOf(results)) r.method.paramKey};
+    // Keyed on what actually saves: unchecking a bad Hanna pH lets the tank's
+    // own device fill that parameter in instead of leaving a hole.
+    final measured = {for (final r in _toSave(results)) r.method.paramKey};
     return {
       for (final e in (_envValues ?? const <String, EnvValue>{}).entries)
         if (!measured.contains(e.key)) e.key: e.value,
@@ -1281,7 +1476,7 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
   Future<void> _save(Tank tank) async {
     final l = AppLocalizations.of(context);
     final db = ref.read(dbProvider);
-    final results = _saveableOf(_session.completedRuns);
+    final results = _toSave(_session.completedRuns);
     if (results.isEmpty) return;
 
     // Same wrong-tank guard as the U32 import: this meter location was
@@ -1379,8 +1574,12 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
       for (final s in _sources ?? const <ImportSource>[]) {
         if (s.tankId == tank.id && s.source == kHannaImportSource) prior = s;
       }
+      // The watermark covers every value the meter produced this session, not
+      // just the saved ones: a reading the user rejected here still sits in
+      // the meter's own log, and must not come back through a later CSV
+      // export of it.
       var upTo = results.first.takenAt!;
-      for (final r in results) {
+      for (final r in _session.completedRuns) {
         if (r.takenAt!.isAfter(upTo)) upTo = r.takenAt!;
       }
       final priorUpTo = prior?.importedUpTo;
@@ -1502,13 +1701,12 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
       ? l.hannaMethodLowRange(l.paramName(m.paramKey))
       : l.paramName(m.paramKey);
 
-  String _formatValue(HannaMethodRun run, UnitPrefs prefs) {
-    final def = kParameterByKey[run.method.paramKey];
-    final pres = presentationForKey(
-      run.method.paramKey,
-      def?.unit ?? '',
-      prefs,
-    );
-    return '${pres.format(run.value ?? 0)} ${pres.unitLabel}';
+  String _formatValue(HannaMethodRun run, UnitPrefs prefs) =>
+      _formatAmount(run.value ?? 0, run.method, prefs);
+
+  String _formatAmount(double value, HannaMeterMethod method, UnitPrefs prefs) {
+    final def = kParameterByKey[method.paramKey];
+    final pres = presentationForKey(method.paramKey, def?.unit ?? '', prefs);
+    return '${pres.format(value)} ${pres.unitLabel}';
   }
 }

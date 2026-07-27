@@ -2272,6 +2272,48 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get hannaIncludeInSave => 'Uložit tuto hodnotu';
+
+  @override
+  String get hannaValueImpossible => 'Mimo možný rozsah — neuloží se';
+
+  @override
+  String get hannaNothingSelected => 'Není vybrána žádná hodnota';
+
+  @override
+  String get hannaRemeasure => 'Změřit znovu';
+
+  @override
+  String hannaRemeasureCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Změřit znovu $count hodnot',
+      few: 'Změřit znovu $count hodnoty',
+      one: 'Změřit znovu 1 hodnotu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaRemeasureQueued => 'Bude změřeno znovu';
+
+  @override
+  String get hannaRemeasureKept => 'Nezměřeno znovu — zůstává původní hodnota';
+
+  @override
+  String hannaPreviousValue(String value) {
+    return 'původně $value';
+  }
+
+  @override
+  String get hannaMeasuringAgain => 'Znovu se měří vybrané parametry.';
+
+  @override
+  String get hannaRemeasureFailed =>
+      'Přístroj neodpověděl — nic se neměřilo znovu a výsledky zůstávají beze změny.';
+
+  @override
   String get environmentTitle => 'Prostředí';
 
   @override

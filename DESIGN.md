@@ -2146,6 +2146,21 @@ overflow entry) only exist once the experimental-features master switch
   `…,R` frame while the user does the wet chemistry on the meter (progress
   ticks surface the meter's STATUS step). Skip / Finish-now supported; a
   mid-run disconnect keeps the captured values and flags the run.
+- **Passes, not one queue:** `_queue` is a list of indices into `runs` and
+  the cursor indexes *it*, so a session can run the whole queue or any
+  subset of it. The first pass is every run; `remeasure()` re-enters
+  `measuring` from `finished` (the one way back, `_finish` only sends
+  `exit`, so the link is still up) with the user's marked subset, re-running
+  the same `set meas on` + `set setup start` handshake. `passRuns` is what
+  the runner step lists. A target's captured value is **stashed, not
+  dropped** (`previousValue`/`previousTakenAt`): skip, Finish-now, a drop or
+  a meter that stopped answering all restore it and set `remeasureAbandoned`
+  rather than losing a reading. In `_onDisconnected` the restore runs
+  *before* the "anything captured?" test — a pass that re-measured every
+  result would otherwise look like an empty session and be thrown away.
+  `canRemeasure` (finished + `_linkAlive`) gates the offer: a meter that
+  drops *after* the queue finished leaves savable results but nothing to
+  measure again, and it notifies so the buttons disappear.
 - **Runner conveniences:** the meter itself doesn't count the reaction /
   deproteinization waits its method leaflets prescribe, so the runner step
   carries a **reagent reaction timer** card — three one-tap presets
@@ -2161,15 +2176,32 @@ overflow entry) only exist once the experimental-features master switch
   display can't sleep mid-chemistry; it releases on every other phase and
   on dispose. Both are native plugins (#50 pin-risk class) gated through
   `scripts/build-release.ps1` on 2026-07-23.
+- **Confirm step, per result:** each row carries an **include checkbox**
+  (the whole row is its tap target) and a **↻ mark**. Unchecking drops that
+  value from this save while leaving it visible and reversible — the
+  deselected-environment-chip rule. Marking queues the parameter for another
+  pass and unchecks it in the same gesture: you only redo a value you
+  distrust, and a distrusted value must never save by accident. A completed
+  re-measurement re-checks the row (one shot, when the pass ends, so a later
+  manual uncheck sticks) and captions it `was <old value>`; one that came
+  back without a new value stays unchecked and says so. The row caption
+  carries whichever state it is in — queued / gated / restored / redone —
+  falling back to the meter timestamp.
 - **Saving** reuses the U32 machinery: results confirm screen with a
   ReefTracker-tank selector (defaulting through the remembered location →
   tank mapping, then the active tank), the wrong-tank guard, the #31
-  plausibility gate (impossible values never save, implausible behind one
-  batch confirm), then `insertImportedReadings` (one group, per-reading
-  meter timestamps) and an advance of the **shared `hannaLab` watermark** —
-  so a reading captured live doesn't re-import from a later CSV export; a
-  pending settings `rewound` flag is preserved, and the watermark never
-  moves backwards.
+  plausibility gate (impossible values never save — a locked-off checkbox
+  with its reason in the caption — implausible behind one batch confirm),
+  then `insertImportedReadings` (one group, per-reading meter timestamps)
+  and an advance of the **shared `hannaLab` watermark** — so a reading
+  captured live doesn't re-import from a later CSV export; a pending
+  settings `rewound` flag is preserved, and the watermark never moves
+  backwards. The watermark spans **every value the session captured, not
+  just the saved ones**: a rejected or re-measured-away reading is still in
+  the meter's own log, and must not come back through a later CSV export of
+  it. The environment card's "already measured" rule keys on the *included*
+  rows, so unchecking a bad Hanna pH lets the tank's own device fill that
+  parameter in instead of leaving a hole.
 - **Environment capture (U37):** the results step can also save the tank's
   *current environment* (salinity, temperature, pH) read from its connected
   devices, via the device-agnostic `data/environment_sources.dart`:

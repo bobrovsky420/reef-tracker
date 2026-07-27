@@ -3807,6 +3807,66 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{Save 1 reading} other{Save {count} readings}} + {envCount} environment'**
   String hannaSaveButtonEnv(int count, int envCount);
 
+  /// Accessibility label of the checkbox on a result row of the Hanna results step.
+  ///
+  /// In en, this message translates to:
+  /// **'Include in save'**
+  String get hannaIncludeInSave;
+
+  /// No description provided for @hannaValueImpossible.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside the possible range — won\'t be saved'**
+  String get hannaValueImpossible;
+
+  /// No description provided for @hannaNothingSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing selected to save'**
+  String get hannaNothingSelected;
+
+  /// No description provided for @hannaRemeasure.
+  ///
+  /// In en, this message translates to:
+  /// **'Measure again'**
+  String get hannaRemeasure;
+
+  /// Button that sends the results the user marked back to the meter for another measurement pass.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Measure 1 again} other{Measure {count} again}}'**
+  String hannaRemeasureCount(int count);
+
+  /// No description provided for @hannaRemeasureQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Will be measured again'**
+  String get hannaRemeasureQueued;
+
+  /// No description provided for @hannaRemeasureKept.
+  ///
+  /// In en, this message translates to:
+  /// **'Not re-measured — earlier value kept'**
+  String get hannaRemeasureKept;
+
+  /// Caption on a re-measured result row, showing the value the new one replaced; {value} is already formatted with its unit.
+  ///
+  /// In en, this message translates to:
+  /// **'was {value}'**
+  String hannaPreviousValue(String value);
+
+  /// No description provided for @hannaMeasuringAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Measuring the selected parameters again.'**
+  String get hannaMeasuringAgain;
+
+  /// No description provided for @hannaRemeasureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The meter didn\'t respond — nothing was measured again and the results are unchanged.'**
+  String get hannaRemeasureFailed;
+
   /// No description provided for @environmentTitle.
   ///
   /// In en, this message translates to:

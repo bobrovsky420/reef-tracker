@@ -5,9 +5,11 @@ import 'package:flutter/foundation.dart';
 import '../../data/hanna_meter_link.dart';
 import '../../domain/hanna_meter.dart';
 
-/// Where the live-measurement flow currently stands. One-way street per
-/// session: `connecting → ready → measuring → finished`, with [failed] as
-/// the off-ramp; a retry starts over with a fresh link.
+/// Where the live-measurement flow currently stands:
+/// `connecting → ready → measuring → finished`, with [failed] as the
+/// off-ramp; a retry starts over with a fresh link. The one way back is
+/// [HannaMeterSession.remeasure], which re-enters [measuring] from
+/// [finished] for a subset of the queue.
 enum HannaSessionPhase { connecting, ready, measuring, finished, failed }
 
 /// Why the session failed — the link's errors plus a drop after establishment.
@@ -34,6 +36,18 @@ class HannaMethodRun {
   /// The meter's `STATUS` step from the latest progress tick — proof of life
   /// while the user works through reagents on the device.
   int? progressStep;
+
+  /// What this run held before the current re-measure pass. Restored if the
+  /// pass ends without a new value, and shown as a "was …" caption once one
+  /// lands, so a redo can be compared against what it replaced.
+  double? previousValue;
+  DateTime? previousTakenAt;
+
+  /// True when a re-measure pass for this run ended without a new value (the
+  /// user skipped it, finished early, or the link dropped) and the earlier
+  /// reading was put back — the screen leaves such a value out of the save
+  /// until the user says otherwise.
+  bool remeasureAbandoned = false;
 }
 
 /// Drives one connect-and-measure session against a [HannaMeterLink]:
@@ -55,6 +69,11 @@ class HannaMeterSession extends ChangeNotifier {
   StreamSubscription<void>? _discSub;
   bool _disposed = false;
 
+  /// Whether the transport is still usable. Distinct from [phase]: a meter
+  /// that drops *after* the queue finished leaves a perfectly savable set of
+  /// results behind, but nothing can be measured again on it.
+  bool _linkAlive = false;
+
   HannaSessionPhase phase = HannaSessionPhase.connecting;
   HannaSessionErrorKind? error;
 
@@ -75,11 +94,27 @@ class HannaMeterSession extends ChangeNotifier {
   String? resultTankName;
 
   List<HannaMethodRun> runs = const [];
-  int _current = 0;
+
+  /// Indices into [runs] that the current pass measures, in order: every run
+  /// on the first pass, the user's marked subset on a re-measure. [_cursor]
+  /// indexes this queue, not [runs].
+  List<int> _queue = const [];
+  int _cursor = 0;
+
+  /// True while the current pass is a re-measurement of already-captured
+  /// methods rather than the session's first run through the queue.
+  bool remeasuring = false;
+
+  /// The runs of the current pass in queue order — what the runner step
+  /// lists. Identical to [runs] on the first pass.
+  List<HannaMethodRun> get passRuns => [
+    for (final i in _queue)
+      if (i < runs.length) runs[i],
+  ];
 
   HannaMethodRun? get currentRun =>
-      phase == HannaSessionPhase.measuring && _current < runs.length
-      ? runs[_current]
+      phase == HannaSessionPhase.measuring && _cursor < _queue.length
+      ? runs[_queue[_cursor]]
       : null;
 
   List<HannaMethodRun> get completedRuns => [
@@ -102,6 +137,7 @@ class HannaMeterSession extends ChangeNotifier {
     try {
       deviceName = await link.connect();
       if (_disposed) return;
+      _linkAlive = true;
       _notify();
       _lineSub = link.lines.listen(_onLine);
       _discSub = link.onDisconnected.listen((_) => _onDisconnected());
@@ -137,7 +173,9 @@ class HannaMeterSession extends ChangeNotifier {
   Future<void> startMeasurements(List<HannaMeterMethod> methods) async {
     if (phase != HannaSessionPhase.ready || methods.isEmpty) return;
     runs = [for (final m in methods) HannaMethodRun(m)];
-    _current = 0;
+    _queue = [for (var i = 0; i < runs.length; i++) i];
+    _cursor = 0;
+    remeasuring = false;
     phase = HannaSessionPhase.measuring;
     _notify();
     try {
@@ -149,12 +187,83 @@ class HannaMeterSession extends ChangeNotifier {
     }
   }
 
+  /// Whether the results step can still offer another measurement pass: the
+  /// queue is done and the meter is still on the other end of the link.
+  bool get canRemeasure =>
+      phase == HannaSessionPhase.finished && _linkAlive && !_disposed;
+
+  /// Re-enters measurement mode for [targets] — results the user rejected on
+  /// the confirm step (wrong reagent, spoiled cuvette). The meter is still
+  /// connected at this point ([_finish] only sends `exit`), so the pass is
+  /// the same handshake as a first run.
+  ///
+  /// Each target's captured value is stashed, not dropped: an abandoned pass
+  /// puts it back rather than losing a reading the user may still want.
+  /// Returns false if the pass couldn't be started (the meter stopped
+  /// answering) — the results are left exactly as they were.
+  Future<bool> remeasure(List<HannaMethodRun> targets) async {
+    if (!canRemeasure || targets.isEmpty) return false;
+    final queue = [
+      for (var i = 0; i < runs.length; i++)
+        if (targets.contains(runs[i])) i,
+    ];
+    if (queue.isEmpty) return false;
+    for (final i in queue) {
+      final run = runs[i];
+      run.previousValue = run.value;
+      run.previousTakenAt = run.takenAt;
+      run.remeasureAbandoned = false;
+      run.status = HannaRunStatus.pending;
+      run.value = null;
+      run.takenAt = null;
+      run.progressStep = null;
+    }
+    _queue = queue;
+    _cursor = 0;
+    remeasuring = true;
+    phase = HannaSessionPhase.measuring;
+    _notify();
+    try {
+      await _request(hannaCmdMeasOn, (l) => isHannaAck(l, 'SM'));
+      await _request(hannaCmdStart, (l) => isHannaAck(l, 'SS'));
+      await _selectCurrent();
+      return true;
+    } catch (_) {
+      // The meter went to sleep or was walked back to its home screen. Undo
+      // the pass and hand the intact results back to the confirm step.
+      for (final i in queue) {
+        _restorePrevious(runs[i]);
+      }
+      phase = HannaSessionPhase.finished;
+      _notify();
+      return false;
+    }
+  }
+
+  /// Puts a run that was queued for re-measurement but produced no new value
+  /// back the way it was, and flags it as abandoned. Returns false when there
+  /// is nothing to restore (an ordinary first-pass run), leaving the caller
+  /// to mark it skipped.
+  bool _restorePrevious(HannaMethodRun run) {
+    final value = run.previousValue;
+    final takenAt = run.previousTakenAt;
+    if (value == null || takenAt == null) return false;
+    run.value = value;
+    run.takenAt = takenAt;
+    run.status = HannaRunStatus.done;
+    run.progressStep = null;
+    run.previousValue = null;
+    run.previousTakenAt = null;
+    run.remeasureAbandoned = true;
+    return true;
+  }
+
   /// Abandons the currently running method and moves on (the meter is simply
   /// told to select the next method; per-method state on the device resets).
   Future<void> skipCurrent() async {
     final run = currentRun;
     if (run == null) return;
-    run.status = HannaRunStatus.skipped;
+    if (!_restorePrevious(run)) run.status = HannaRunStatus.skipped;
     await _advance();
   }
 
@@ -165,14 +274,14 @@ class HannaMeterSession extends ChangeNotifier {
     for (final r in runs) {
       if (r.status == HannaRunStatus.pending ||
           r.status == HannaRunStatus.running) {
-        r.status = HannaRunStatus.skipped;
+        if (!_restorePrevious(r)) r.status = HannaRunStatus.skipped;
       }
     }
     await _finish();
   }
 
   Future<void> _selectCurrent() async {
-    final run = runs[_current];
+    final run = runs[_queue[_cursor]];
     run.status = HannaRunStatus.running;
     _notify();
     await _request(
@@ -182,8 +291,8 @@ class HannaMeterSession extends ChangeNotifier {
   }
 
   Future<void> _advance() async {
-    _current++;
-    if (_current < runs.length) {
+    _cursor++;
+    if (_cursor < _queue.length) {
       _notify();
       try {
         await _selectCurrent();
@@ -231,23 +340,35 @@ class HannaMeterSession extends ChangeNotifier {
   }
 
   void _onDisconnected() {
-    if (_disposed ||
-        phase == HannaSessionPhase.finished ||
+    if (_disposed) return;
+    final wasAlive = _linkAlive;
+    _linkAlive = false;
+    if (phase == HannaSessionPhase.finished ||
         phase == HannaSessionPhase.failed) {
+      // Nothing to salvage — but a results step still offering another
+      // measurement pass has to stop offering it.
+      if (wasAlive) _notify();
       return;
     }
-    if (phase == HannaSessionPhase.measuring && completedRuns.isNotEmpty) {
+    if (phase == HannaSessionPhase.measuring) {
       // Keep what was captured — the user confirmed each value on the meter;
-      // losing the link afterwards shouldn't throw the results away.
+      // losing the link afterwards shouldn't throw the results away. A run
+      // queued for re-measurement gets its earlier reading back instead of
+      // dying with the pass, so restoring comes before the "anything left?"
+      // test: a pass that re-measured *every* result still has results.
       for (final r in runs) {
-        if (r.status != HannaRunStatus.done) r.status = HannaRunStatus.skipped;
+        if (r.status != HannaRunStatus.done && !_restorePrevious(r)) {
+          r.status = HannaRunStatus.skipped;
+        }
       }
-      endedByDisconnect = true;
-      phase = HannaSessionPhase.finished;
-      _notify();
-    } else {
-      _fail(HannaSessionErrorKind.connectionLost);
+      if (completedRuns.isNotEmpty) {
+        endedByDisconnect = true;
+        phase = HannaSessionPhase.finished;
+        _notify();
+        return;
+      }
     }
+    _fail(HannaSessionErrorKind.connectionLost);
   }
 
   void _fail(HannaSessionErrorKind kind) {
@@ -262,6 +383,10 @@ class HannaMeterSession extends ChangeNotifier {
   Future<String> _request(String cmd, bool Function(String) test) async {
     final link = _link!;
     final reply = link.lines.firstWhere(test).timeout(_replyTimeout);
+    // A failing send abandons `reply`, whose eventual timeout would then be
+    // an unhandled async error. Marking it handled costs nothing — an await
+    // below still receives the error.
+    reply.ignore();
     await link.send(cmd);
     return reply;
   }
@@ -302,6 +427,7 @@ class HannaMeterSession extends ChangeNotifier {
   }
 
   Future<void> _teardownLink() async {
+    _linkAlive = false;
     await _lineSub?.cancel();
     await _discSub?.cancel();
     _lineSub = null;

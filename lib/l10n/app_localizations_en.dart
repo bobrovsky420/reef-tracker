@@ -2255,6 +2255,48 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get hannaIncludeInSave => 'Include in save';
+
+  @override
+  String get hannaValueImpossible =>
+      'Outside the possible range — won\'t be saved';
+
+  @override
+  String get hannaNothingSelected => 'Nothing selected to save';
+
+  @override
+  String get hannaRemeasure => 'Measure again';
+
+  @override
+  String hannaRemeasureCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Measure $count again',
+      one: 'Measure 1 again',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaRemeasureQueued => 'Will be measured again';
+
+  @override
+  String get hannaRemeasureKept => 'Not re-measured — earlier value kept';
+
+  @override
+  String hannaPreviousValue(String value) {
+    return 'was $value';
+  }
+
+  @override
+  String get hannaMeasuringAgain => 'Measuring the selected parameters again.';
+
+  @override
+  String get hannaRemeasureFailed =>
+      'The meter didn\'t respond — nothing was measured again and the results are unchanged.';
+
+  @override
   String get environmentTitle => 'Environment';
 
   @override

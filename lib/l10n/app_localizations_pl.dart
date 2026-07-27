@@ -2298,6 +2298,51 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get hannaIncludeInSave => 'Zapisz tę wartość';
+
+  @override
+  String get hannaValueImpossible =>
+      'Poza możliwym zakresem — nie zostanie zapisane';
+
+  @override
+  String get hannaNothingSelected => 'Nie wybrano nic do zapisania';
+
+  @override
+  String get hannaRemeasure => 'Zmierz ponownie';
+
+  @override
+  String hannaRemeasureCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Zmierz ponownie $count wartości',
+      many: 'Zmierz ponownie $count wartości',
+      few: 'Zmierz ponownie $count wartości',
+      one: 'Zmierz ponownie 1 wartość',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaRemeasureQueued => 'Zostanie zmierzone ponownie';
+
+  @override
+  String get hannaRemeasureKept =>
+      'Nie zmierzono ponownie — zachowano poprzednią wartość';
+
+  @override
+  String hannaPreviousValue(String value) {
+    return 'poprzednio $value';
+  }
+
+  @override
+  String get hannaMeasuringAgain => 'Trwa ponowny pomiar wybranych parametrów.';
+
+  @override
+  String get hannaRemeasureFailed =>
+      'Miernik nie odpowiedział — nic nie zostało zmierzone ponownie, wyniki pozostają bez zmian.';
+
+  @override
   String get environmentTitle => 'Środowisko';
 
   @override

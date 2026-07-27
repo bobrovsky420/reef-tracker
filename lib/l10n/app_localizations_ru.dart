@@ -2292,6 +2292,51 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get hannaIncludeInSave => 'Сохранить это значение';
+
+  @override
+  String get hannaValueImpossible =>
+      'Вне возможного диапазона — не будет сохранено';
+
+  @override
+  String get hannaNothingSelected => 'Ничего не выбрано для сохранения';
+
+  @override
+  String get hannaRemeasure => 'Измерить заново';
+
+  @override
+  String hannaRemeasureCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Измерить заново $count значения',
+      many: 'Измерить заново $count значений',
+      few: 'Измерить заново $count значения',
+      one: 'Измерить заново $count значение',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hannaRemeasureQueued => 'Будет измерено заново';
+
+  @override
+  String get hannaRemeasureKept =>
+      'Заново не измерено — сохранено прежнее значение';
+
+  @override
+  String hannaPreviousValue(String value) {
+    return 'было $value';
+  }
+
+  @override
+  String get hannaMeasuringAgain => 'Выбранные параметры измеряются заново.';
+
+  @override
+  String get hannaRemeasureFailed =>
+      'Прибор не ответил — повторное измерение не начато, результаты не изменились.';
+
+  @override
   String get environmentTitle => 'Параметры среды';
 
   @override

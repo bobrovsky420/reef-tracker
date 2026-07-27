@@ -35,6 +35,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and vibrates as each parameter's result arrives – the same double beep the
   reagent timers use – so you can keep your eyes on the meter or step away
   between tests.
+- The Hanna results screen no longer forces you to take every value or none.
+  Each result has a checkbox – untick one you don't trust (wrong reagent,
+  spoiled cuvette) and it simply isn't saved – and a ↻ button that marks it
+  for another go. "Measure N again" sends everything you marked back to the
+  meter as one short run, then returns to the results with the new values in
+  place, each showing what it replaced. Values you can't save because they
+  are outside the possible range now say so on the row instead of only
+  showing a warning icon, and a value you dropped won't reappear later if you
+  import the meter's own log as a CSV.
 
 ## [1.0.0] - 2026-07-26
 

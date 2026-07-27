@@ -1,74 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/hanna_meter_link.dart';
 import 'package:reeftracker/domain/hanna_meter.dart';
 import 'package:reeftracker/features/hanna/hanna_meter_session.dart';
 
-const _info =
-    'I,HI97115,06150128,FW,v1.07,nRF FW,v1.01,SN,906150128111,RCL,130,English,v5.0';
-const _setup =
-    'GS,2069,0,0,backlight,50,contrast,50,tformat,24h,dformat,YYYY_MM_DD,'
-    'decsep,dot,language,EN.LNG,beep,on,tutorial,on,BLE PAIR,locmax,10,';
+import 'fake_hanna_link.dart';
 
-/// Scripted stand-in for the BLE transport: answers every command the way the
-/// real meter did in the capture. Delivery is asynchronous (plain broadcast
-/// controllers), matching real BLE — the session reacts to a line by sending
-/// the next command, which must not re-enter a dispatch in progress.
-class FakeHannaMeterLink implements HannaMeterLink {
-  final _lines = StreamController<String>.broadcast();
-  final _disc = StreamController<void>.broadcast();
-  final List<String> sent = [];
-
-  /// Overrides keyed by exact command; anything absent uses [_autoReply].
-  final Map<String, List<String>> replies = {};
-
-  HannaLinkException? connectError;
-
-  @override
-  Stream<String> get lines => _lines.stream;
-
-  @override
-  Stream<void> get onDisconnected => _disc.stream;
-
-  @override
-  Future<String> connect() async {
-    final err = connectError;
-    if (err != null) throw err;
-    return 'HI97115 06150128';
-  }
-
-  @override
-  Future<void> send(String command) async {
-    sent.add(command);
-    for (final line in replies[command] ?? _autoReply(command)) {
-      _lines.add(line);
-    }
-  }
-
-  List<String> _autoReply(String cmd) {
-    if (cmd == hannaCmdInfo) return const [_info];
-    if (cmd.startsWith('set time')) return const ['ST,Ack'];
-    if (cmd == hannaCmdGetBattery) return const ['GB,75,%'];
-    if (cmd == hannaCmdGetSetup) return const [_setup];
-    if (cmd == hannaCmdGetTanks) return const ['GL,200G2,TANK2,TANK3,'];
-    if (cmd == hannaCmdMeasOn) return const ['SM,Ack'];
-    if (cmd == hannaCmdStart) return const ['SS,Ack'];
-    if (cmd.startsWith('set setup method')) return const ['SD,Ack'];
-    if (cmd == hannaCmdExit) return const ['SE,Ack'];
-    return const [];
-  }
-
-  void emit(String line) => _lines.add(line);
-
-  void dropConnection() => _disc.add(null);
-
-  @override
-  Future<void> dispose() async {}
-}
-
-String _result(int code, String value, String ts) =>
-    'M,$code, ,$value,0,200G2,0,06150128,$ts,STATUS,11,Z,R';
+const _result = hannaResultFrame;
 
 /// Lets queued microtasks/zero timers run so async stream deliveries land.
 Future<void> _pump() => Future<void>.delayed(Duration.zero);
@@ -199,5 +136,97 @@ void main() {
     await _pump();
     expect(session.phase, HannaSessionPhase.failed);
     expect(session.error, HannaSessionErrorKind.connectionLost);
+  });
+
+  /// Two measured results, sitting on the confirm step.
+  Future<void> measureTwo() async {
+    await session.connect();
+    await session.startMeasurements([
+      hannaMethodByCode(2002)!,
+      hannaMethodByCode(2095)!,
+    ]);
+    link.emit(_result(2002, '8.1', '20260721102041'));
+    await _pump();
+    link.emit(_result(2095, '11.5', '20260721103106'));
+    await _pump();
+    expect(session.phase, HannaSessionPhase.finished);
+  }
+
+  test('remeasure re-runs only the marked results and replaces them', () async {
+    await measureTwo();
+    expect(await session.remeasure([session.runs[0]]), isTrue);
+    expect(session.phase, HannaSessionPhase.measuring);
+    expect(session.remeasuring, isTrue);
+    // The pass — and therefore the runner list — is the marked subset only.
+    expect(session.passRuns, [session.runs[0]]);
+    expect(session.currentRun, session.runs[0]);
+    expect(session.runs[0].previousValue, closeTo(8.1, 1e-9));
+    expect(session.runs[0].value, isNull);
+    expect(session.runs[1].status, HannaRunStatus.done);
+
+    link.emit(_result(2002, '9.4', '20260721111500'));
+    await _pump();
+    expect(session.phase, HannaSessionPhase.finished);
+    expect(session.runs[0].value, closeTo(9.4, 1e-9));
+    expect(session.runs[0].takenAt, DateTime(2026, 7, 21, 11, 15));
+    expect(session.runs[0].remeasureAbandoned, isFalse);
+    // The replaced value stays for the "was …" caption.
+    expect(session.runs[0].previousValue, closeTo(8.1, 1e-9));
+    expect(session.completedRuns.length, 2);
+  });
+
+  test('an abandoned re-measure puts the earlier value back', () async {
+    await measureTwo();
+    await session.remeasure([session.runs[1]]);
+    await session.skipCurrent();
+    expect(session.phase, HannaSessionPhase.finished);
+    expect(session.runs[1].status, HannaRunStatus.done);
+    expect(session.runs[1].value, closeTo(11.5, 1e-9));
+    expect(session.runs[1].takenAt, DateTime(2026, 7, 21, 10, 31, 6));
+    expect(session.runs[1].remeasureAbandoned, isTrue);
+    expect(session.completedRuns.length, 2);
+  });
+
+  test('stopEarly during a re-measure keeps every earlier value', () async {
+    await measureTwo();
+    await session.remeasure(session.runs);
+    await session.stopEarly();
+    expect(session.completedRuns.length, 2);
+    expect(session.runs.map((r) => r.value), [closeTo(8.1, 1e-9), closeTo(11.5, 1e-9)]);
+    expect(session.runs.every((r) => r.remeasureAbandoned), isTrue);
+  });
+
+  test('a disconnect while re-measuring everything keeps the results', () async {
+    await measureTwo();
+    await session.remeasure(session.runs);
+    link.dropConnection();
+    await _pump();
+    // Nothing is "done" at the moment the link drops — the restore has to
+    // come first, or the whole session would be thrown away as empty.
+    expect(session.phase, HannaSessionPhase.finished);
+    expect(session.endedByDisconnect, isTrue);
+    expect(session.completedRuns.length, 2);
+  });
+
+  test('a meter that stops answering leaves the results untouched', () async {
+    await measureTwo();
+    await link.goSilent();
+    expect(await session.remeasure([session.runs[0]]), isFalse);
+    expect(session.phase, HannaSessionPhase.finished);
+    expect(session.completedRuns.length, 2);
+    expect(session.runs[0].value, closeTo(8.1, 1e-9));
+    expect(session.runs[0].remeasureAbandoned, isTrue);
+  });
+
+  test('remeasure is refused once the link has dropped', () async {
+    await session.connect();
+    await session.startMeasurements([hannaMethodByCode(2002)!]);
+    link.emit(_result(2002, '8.1', '20260721102041'));
+    await _pump();
+    link.dropConnection();
+    await _pump();
+    expect(await session.remeasure([session.runs[0]]), isFalse);
+    expect(session.phase, HannaSessionPhase.finished);
+    expect(session.runs[0].value, closeTo(8.1, 1e-9));
   });
 }
