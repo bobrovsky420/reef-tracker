@@ -2419,7 +2419,13 @@ four ways to say the same thing).
   ReefFactory (a Temperature Controller beats a Salinity Guardian's incidental
   temperature regardless of card order), and the winner is **named in the
   confirmation** rather than chosen silently — a wrong probe quietly becoming
-  the tank's history is exactly what this rule must not do. This is also why
+  the tank's history is exactly what this rule must not do. Structurally the
+  rule holds only because the merge walks the *same ordered list the page
+  renders* (`_Scope.inPageOrder`, vendor order then card order) and turns a
+  device into savable values through one `_pendingValues` switch — Save all, the
+  savable count and the button's own visibility (`deviceKindSaves`) all ask
+  there, so no vendor can be honoured by one and forgotten by another. This is
+  also why
   `deviceVendorOrder` rides backups instead of staying device-local: it shapes
   what gets stored, so it should follow the aquarium data onto a new phone.
 - **Pro gating** (`ProFeature.connectedDevices`): the page, the chips and the

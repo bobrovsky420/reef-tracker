@@ -103,25 +103,27 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     setState(() => _apLive[d.identifier] = result);
   }
 
+  /// Reads one device of [kind] — the per-vendor read behind every bulk
+  /// action, so callers can work from a `(kind, device)` pair rather than
+  /// knowing which map holds which vendor.
+  Future<void> _refreshDevice(String kind, DeviceRecord d) => switch (kind) {
+    kDeviceKindReefFactory => _refreshRf(d),
+    kDeviceKindReefBeat => _refreshRb(d),
+    _ => _refreshAp(d),
+  };
+
   /// Reads everything in [scope]. Sequential **within** a vendor — a meter is
   /// also serving the vendor's own cloud app, and one socket at a time is
   /// gentle on it — but the vendors run concurrently, so a slow controller
   /// doesn't hold up the meters.
   Future<void> _refreshScope(_Scope scope) async {
-    Future<void> series(
-      List<DeviceRecord> devices,
-      Future<void> Function(DeviceRecord) read,
-    ) async {
-      for (final d in devices) {
-        await read(d);
+    Future<void> series(String kind) async {
+      for (final d in scope.of(kind)) {
+        await _refreshDevice(kind, d);
       }
     }
 
-    await Future.wait([
-      series(scope.rf, _refreshRf),
-      series(scope.rb, _refreshRb),
-      series(scope.ap, _refreshAp),
-    ]);
+    await Future.wait([for (final kind in scope.order) series(kind)]);
   }
 
   // --- saving ------------------------------------------------------------
@@ -176,6 +178,39 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     }
   }
 
+  /// The values a save would persist for [d] right now: what its last read
+  /// produced, run through that vendor's own save filter. Empty when the device
+  /// hasn't been read yet, holds nothing savable, or is of a kind that never
+  /// reports measurements.
+  ///
+  /// The one place a vendor's live map is turned into savable values — Save
+  /// all, the savable count and the Save-all button's own visibility all ask
+  /// here, so a vendor can't be honoured by one and forgotten by another.
+  List<({String paramKey, double value})> _pendingValues(
+    String kind,
+    DeviceRecord d,
+    _Scope scope,
+  ) {
+    switch (kind) {
+      case kDeviceKindReefFactory:
+        final snap = _rfLive[d.identifier]?.snapshot;
+        if (snap == null) return const [];
+        return rfValuesToSave(d, snap, scope.of(kind));
+      case kDeviceKindApex:
+        final status = _apLive[d.identifier]?.status;
+        if (status == null) return const [];
+        return apReadingsToSave(status.readings);
+      default:
+        // Every meter-capable kind must have a branch above, or Save all would
+        // count its devices (via [deviceKindSaves]) and then save nothing.
+        assert(
+          !deviceKindSaves(kind),
+          'meter-capable vendor "$kind" has no save mapping',
+        );
+        return const [];
+    }
+  }
+
   /// Saves every meter in [scope] at once, merging everything bound for one
   /// tank into a single reading group — so a meter's salinity and a
   /// controller's temperature, read a minute apart, land as one measurement
@@ -219,15 +254,12 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
       }
     }
 
-    // Page order: vendors as the chips read, devices as they sit in each
-    // section.
-    for (final d in scope.rf) {
-      final snap = _rfLive[d.identifier]?.snapshot;
-      if (snap != null) offer(d, rfValuesToSave(d, snap, scope.rf));
-    }
-    for (final d in scope.ap) {
-      final status = _apLive[d.identifier]?.status;
-      if (status != null) offer(d, apReadingsToSave(status.readings));
+    // Page order, from the same list the page renders: vendors in the user's
+    // brand order, devices as they sit in each section. Iterating the vendors
+    // by hand here is exactly how the promise above used to be broken.
+    for (final (kind, d) in scope.inPageOrder) {
+      final values = _pendingValues(kind, d, scope);
+      if (values.isNotEmpty) offer(d, values);
     }
 
     if (byTank.isEmpty) {
@@ -318,39 +350,26 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     final selected = present.contains(_vendor) ? _vendor : null;
     final inScope = selected == null ? present : [selected];
     final scope = _Scope(
-      rf: inScope.contains(kDeviceKindReefFactory) ? rf : const [],
-      rb: inScope.contains(kDeviceKindReefBeat) ? rb : const [],
-      ap: inScope.contains(kDeviceKindApex) ? ap : const [],
+      order: inScope,
+      byVendor: {for (final v in inScope) v: byVendor[v] ?? const []},
     );
 
     // The on-open read, scoped to the selection and once per device.
     if (entitled) {
-      final pending = [
-        for (final d in scope.rf)
-          if (!_autoRead.contains(d.identifier)) d,
-        for (final d in scope.rb)
-          if (!_autoRead.contains(d.identifier)) d,
-        for (final d in scope.ap)
-          if (!_autoRead.contains(d.identifier)) d,
-      ];
-      if (pending.isNotEmpty) {
-        for (final d in pending) {
+      final toRead = _Scope(
+        order: scope.order,
+        byVendor: {
+          for (final kind in scope.order)
+            kind: [
+              for (final d in scope.of(kind))
+                if (!_autoRead.contains(d.identifier)) d,
+            ],
+        },
+      );
+      if (toRead.length > 0) {
+        for (final (_, d) in toRead.inPageOrder) {
           _autoRead.add(d.identifier);
         }
-        final toRead = _Scope(
-          rf: [
-            for (final d in scope.rf)
-              if (pending.contains(d)) d,
-          ],
-          rb: [
-            for (final d in scope.rb)
-              if (pending.contains(d)) d,
-          ],
-          ap: [
-            for (final d in scope.ap)
-              if (pending.contains(d)) d,
-          ],
-        );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) unawaited(_refreshScope(toRead));
         });
@@ -420,7 +439,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
                             busy: _busy(scope),
                             total: scope.length,
                             savable: _savableCount(scope),
-                            meters: scope.rf.length + scope.ap.length,
+                            meters: scope.meters,
                             onRefresh: () => unawaited(_refreshScope(scope)),
                             onSaveAll: () => unawaited(_saveAll(scope)),
                           )
@@ -510,21 +529,19 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     _ => l.devicesDisclaimer,
   };
 
-  bool _busy(_Scope scope) =>
-      scope.rf.any((d) => _rfLive[d.identifier]?.loading ?? false) ||
-      scope.rb.any((d) => _rbLive[d.identifier]?.loading ?? false) ||
-      scope.ap.any((d) => _apLive[d.identifier]?.loading ?? false);
+  bool _busy(_Scope scope) => scope.inPageOrder.any(
+    (e) => switch (e.$1) {
+      kDeviceKindReefFactory => _rfLive[e.$2.identifier]?.loading ?? false,
+      kDeviceKindReefBeat => _rbLive[e.$2.identifier]?.loading ?? false,
+      _ => _apLive[e.$2.identifier]?.loading ?? false,
+    },
+  );
 
   /// How many devices in scope currently hold values a save would persist.
   int _savableCount(_Scope scope) {
     var n = 0;
-    for (final d in scope.rf) {
-      final snap = _rfLive[d.identifier]?.snapshot;
-      if (snap != null && rfValuesToSave(d, snap, scope.rf).isNotEmpty) n++;
-    }
-    for (final d in scope.ap) {
-      final status = _apLive[d.identifier]?.status;
-      if (status != null && apReadingsToSave(status.readings).isNotEmpty) n++;
+    for (final (kind, d) in scope.inPageOrder) {
+      if (_pendingValues(kind, d, scope).isNotEmpty) n++;
     }
     return n;
   }
@@ -687,14 +704,41 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   }
 }
 
-/// The devices in view, per vendor — what Refresh all and Save all act on.
+/// The devices in view — what Refresh all and Save all act on — **in the order
+/// the page renders them**: vendors in the user's brand order, devices in their
+/// own card order within each vendor.
+///
+/// The order is the point, not a convenience: Save all resolves a parameter two
+/// devices both report by "first displayed wins", so anything that walks this
+/// scope must walk [inPageOrder] rather than picking vendors out by hand.
 class _Scope {
-  const _Scope({required this.rf, required this.rb, required this.ap});
-  final List<DeviceRecord> rf;
-  final List<DeviceRecord> rb;
-  final List<DeviceRecord> ap;
+  const _Scope({required this.order, required this.byVendor});
 
-  int get length => rf.length + rb.length + ap.length;
+  /// The vendor kinds in view, in the user's own order.
+  final List<String> order;
+
+  /// Each vendor's devices, already scoped to the active tank and sorted by
+  /// the page.
+  final Map<String, List<DeviceRecord>> byVendor;
+
+  List<DeviceRecord> of(String kind) => byVendor[kind] ?? const [];
+
+  /// Every device in view, paired with its vendor kind, in page order.
+  Iterable<(String, DeviceRecord)> get inPageOrder sync* {
+    for (final kind in order) {
+      for (final d in of(kind)) {
+        yield (kind, d);
+      }
+    }
+  }
+
+  int get length => order.fold(0, (n, kind) => n + of(kind).length);
+
+  /// Devices of a meter-capable kind in view — zero hides Save all entirely.
+  /// Asks [deviceKindSaves] instead of naming vendors, so a future meter vendor
+  /// is counted without an edit here.
+  int get meters =>
+      order.where(deviceKindSaves).fold(0, (n, kind) => n + of(kind).length);
 }
 
 /// The vendor selector: one chip per vendor that has a device, in the user's
