@@ -91,6 +91,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   through the same question.
 
 ### Fixed
+- Scanning your network for devices, or reading one, can no longer be made to
+  eat the phone's memory by something else on the network. The scan knocks on
+  every device it finds – your router, a NAS, a printer – and until now it would
+  keep reading whatever any of them sent back, however much that was. Each read
+  now has a sensible size limit and anything past it is reported as "not a
+  device we recognise". Real aquarium devices send a tiny fraction of the
+  allowance, so nothing about normal use changes.
 - An Apex whose conductivity probe is set to mS/cm instead of ppt no longer
   records a believable but wrong salinity (53 mS/cm was stored as 1.040 SG).
   Nothing in the Apex tells the app which unit the probe uses, so a reading that

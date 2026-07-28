@@ -142,6 +142,17 @@ class RfWebSocketLink implements RfDeviceLink, RfIdentityProbe {
       return await WebSocket.connect(
         'ws://$host/controler',
         protocols: const ['arduino'],
+        // No permessage-deflate (#72). The HTTP links cap their responses, but
+        // dart:io's WebSocket client has no max-message-size and buffers a
+        // whole message *before* our listener sees it — there is no knob on
+        // `WebSocket.connect` to bound that. Compression is negotiated **on**
+        // by default, so leaving it enabled would hand a hostile host a
+        // decompression multiplier on top; a ReefFactory settings frame is a
+        // few hundred bytes of binary and gains nothing from deflate anyway.
+        // What remains — a host that completes a correct handshake at
+        // /controler and then streams — is bounded only by [timeout]'s
+        // teardown, and is not reachable by accident.
+        compression: CompressionOptions.compressionOff,
       ).timeout(timeout);
     } on TimeoutException {
       throw const RfLinkException(RfLinkError.unreachable, 'connect timed out');

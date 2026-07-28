@@ -2709,7 +2709,9 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   `RbIdentityProbe.identify(host)` is a separate, deliberately narrow
   interface — one `/device-info` GET, no dashboard — used by LAN discovery so
   it can probe dozens of hosts cheaply; it is kept off `RbDeviceLink` so the
-  dashboards' widget-test fakes don't have to implement it.
+  dashboards' widget-test fakes don't have to implement it. Responses are
+  size-capped (`maxResponseBytes`, see **Response-size ceilings** under LAN
+  discovery below).
 - **Dashboard** (`reefbeat_screen.dart`): mirrors the ReefFactory screen's
   structure (active tank's devices + unassigned in `displayOrder` then
   display-name order, name-only card headers, a single Refresh-all above the
@@ -2878,7 +2880,9 @@ out the same LAN-only requirement.
   reconnect logic after a controller reboot. Typed `ApLinkError`
   (unreachable/timeout/**auth**/protocol) drives specific messages; `auth` is
   the one the keeper can fix from the card, so it renders a "Sign in again"
-  button beside the error.
+  button beside the error. Responses are size-capped (`maxResponseBytes`, see
+  **Response-size ceilings** under LAN discovery below) — an Apex `/rest/config`
+  is the roomiest case that ceiling was chosen for.
 - **Credentials.** An Apex is the only authenticated device API here, so
   `Devices` gained **`username`** (schema v26, `addColumn` guarded like
   `display_order`). The password is **not in the database** (#68): the app's
@@ -3022,6 +3026,35 @@ sweep, just with more probing. Nothing treats an empty mDNS result as an error.
   identity probes are injected the same way, with tighter timeouts (2 s HTTP,
   3 s WebSocket) than the dashboards' links — discovery probes many hosts that
   are not reef devices at all, so a 6 s wait per host would dominate the scan.
+- **Response-size ceilings** (`data/device_http.dart`, #72). The HTTP links
+  buffer a whole response before decoding, which is why *this* feature makes
+  the ceiling necessary: the sweep points `identify` at every host answering on
+  port 80 — the router admin page, the NAS, a media server — so an unbounded
+  read is a stranger's decision about how much memory the app allocates.
+  `readBoundedText` refuses past `maxResponseBytes`, throwing the link's own
+  `protocol` error so it flows into the existing error mapping. The tier
+  follows **who chose the address**: `kDeviceProbeMaxBytes` (64 KB) on the
+  discovery probe, which reads only a few-hundred-byte `/device-info`, and
+  `kDeviceResponseMaxBytes` (1 MB) everywhere else, sized for the largest
+  legitimate document any supported device serves (an Apex `/rest/config`,
+  which carries every output's program text). Being too *generous* is the safe
+  direction: a ceiling set below a real device would break it with no
+  user-facing knob to raise it. The counter on the drain is the actual defence
+  — `HttpClient.autoUncompress` is on by default, so `contentLength` reports
+  the *compressed* size and a gzipped body can declare kilobytes and expand to
+  gigabytes; the up-front `contentLength` check is only a fast path. The cap
+  lives on the link *instance*, not the method, so `RbHttpLink.identify`
+  inherits 64 KB under discovery and 1 MB under the dashboard with no
+  special-casing.
+  `RfWebSocketLink` cannot be bounded the same way: dart:io's WebSocket client
+  has no max-message-size and buffers a whole message before the listener sees
+  it, with no knob on `WebSocket.connect` to limit it. What it does instead is
+  connect with `CompressionOptions.compressionOff` — permessage-deflate is
+  negotiated **on** by default and would hand a hostile host a decompression
+  multiplier, while ReefFactory's few-hundred-byte binary frames gain nothing
+  from it. The residue (a host that completes a correct handshake at
+  `/controler` and then streams) is bounded only by the 3 s timeout's teardown,
+  and is not reachable by accident.
 - **Sheet** (`DeviceDiscoverySheet`): shows one `kind` at a time — the
   dashboard's own — so it stays inside that integration's Pro gate, even though
   one scan finds both vendors. Rows carry a per-family glyph and exactly one

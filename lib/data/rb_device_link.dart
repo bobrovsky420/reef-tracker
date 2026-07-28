@@ -13,6 +13,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'device_http.dart';
 import 'rb_protocol.dart';
 
 /// Why a refresh failed — surfaced to the UI for a specific message rather
@@ -98,10 +99,20 @@ abstract class RbIdentityProbe {
 class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
   RbHttpLink({
     this.timeout = const Duration(seconds: 6),
+    this.maxResponseBytes = kDeviceResponseMaxBytes,
     HttpClient Function()? clientFactory,
   }) : _clientFactory = clientFactory ?? HttpClient.new;
 
   final Duration timeout;
+
+  /// Response-size ceiling (#72). The cap belongs to the instance, not the
+  /// method: the discovery probe is built with [kDeviceProbeMaxBytes] because
+  /// it is aimed at arbitrary hosts, the dashboard's link keeps the roomier
+  /// default. [identify] therefore inherits whichever one its instance carries,
+  /// which is exactly right and needs no special-casing. Injectable so a test
+  /// can shrink it.
+  final int maxResponseBytes;
+
   final HttpClient Function() _clientFactory;
 
   /// Be forgiving about pasted addresses: strip a scheme and trailing slashes.
@@ -228,13 +239,15 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
       if (response.statusCode != HttpStatus.ok) {
         throw RbLinkException(RbLinkError.protocol, 'HTTP ${response.statusCode}');
       }
-      final body = await response
-          .transform(utf8.decoder)
-          .join()
-          .timeout(timeout);
+      final body = await readBoundedText(
+        response,
+        maxResponseBytes,
+      ).timeout(timeout);
       return jsonDecode(body);
     } on RbLinkException {
       rethrow;
+    } on DeviceResponseTooLarge catch (e) {
+      throw RbLinkException(RbLinkError.protocol, e.detail);
     } on TimeoutException {
       throw const RbLinkException(RbLinkError.timeout);
     } on SocketException catch (e) {

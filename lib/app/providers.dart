@@ -8,6 +8,7 @@ import '../data/cloud_auth.dart';
 import '../data/cloud_auth_google.dart';
 import '../data/cloud_backup_store.dart';
 import '../data/database.dart';
+import '../data/device_http.dart';
 import '../data/device_secrets.dart';
 import '../data/environment_sources.dart';
 import '../data/hanna_meter_link.dart';
@@ -829,8 +830,15 @@ final lanScannerProvider = Provider<LanScanner>((ref) => const IoLanScanner());
 /// wants much tighter timeouts: it probes up to a few dozen hosts, most of
 /// which are not reef devices at all, so a 6 s wait per host would dominate the
 /// scan.
+/// The tight [kDeviceProbeMaxBytes] ceiling belongs here rather than on the
+/// dashboard's link (#72): this is the one instance pointed at hosts nobody
+/// chose — every address answering on port 80 — and all it reads is a
+/// few-hundred-byte `/device-info`.
 final rbIdentityProbeProvider = Provider<RbIdentityProbe>(
-  (ref) => RbHttpLink(timeout: const Duration(seconds: 2)),
+  (ref) => RbHttpLink(
+    timeout: const Duration(seconds: 2),
+    maxResponseBytes: kDeviceProbeMaxBytes,
+  ),
 );
 
 final rfIdentityProbeProvider = Provider<RfIdentityProbe>(

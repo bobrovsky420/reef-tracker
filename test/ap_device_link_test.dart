@@ -203,6 +203,35 @@ void main() {
       );
     });
 
+    test('a response past the #72 ceiling is a protocol error', () async {
+      await startEmulator();
+      // The emulator's /rest/status is ~2 KB, so a 512-byte ceiling stands in
+      // for the real case: a controller (or something at its address) serving
+      // more than the app is willing to hold. The production constant is 1 MB
+      // — this asserts the mechanism, not the number.
+      final capped = ApHttpLink(
+        timeout: const Duration(seconds: 5),
+        maxResponseBytes: 512,
+      );
+      await expectLater(
+        capped.readOnce(host, good),
+        throwsA(
+          isA<ApLinkException>()
+              .having((e) => e.error, 'error', ApLinkError.protocol)
+              .having((e) => e.detail, 'detail', contains('cap')),
+        ),
+      );
+      // The login reply is 27 bytes and must still fit: the ceiling has to bite
+      // on the big document, not on the handshake that precedes it.
+      expect(
+        await ApHttpLink(
+          timeout: const Duration(seconds: 5),
+          maxResponseBytes: 2 * 1024,
+        ).readOnce(host, good).then((s) => s.info.serial),
+        'AC5:12345',
+      );
+    });
+
     test('a scheme and trailing slashes in the address are tolerated', () async {
       await startEmulator();
       final status = await link.readOnce('http://$host/', good);

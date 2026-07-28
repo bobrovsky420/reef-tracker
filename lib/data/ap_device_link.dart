@@ -32,6 +32,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'ap_protocol.dart';
+import 'device_http.dart';
 
 /// Why a read failed — surfaced to the UI for a specific message rather than a
 /// raw exception string.
@@ -81,6 +82,7 @@ abstract class ApDeviceLink {
 class ApHttpLink implements ApDeviceLink {
   ApHttpLink({
     this.timeout = const Duration(seconds: 8),
+    this.maxResponseBytes = kDeviceResponseMaxBytes,
     HttpClient Function()? clientFactory,
   }) : _clientFactory = clientFactory ?? HttpClient.new;
 
@@ -89,6 +91,13 @@ class ApHttpLink implements ApDeviceLink {
   /// device serving one small JSON object, and a read here is at most two
   /// requests behind an explicit user action.
   final Duration timeout;
+
+  /// Response-size ceiling (#72), [kDeviceResponseMaxBytes] in production. An
+  /// Apex is the roomiest case the constant was picked for: `/rest/config`
+  /// carries every output's program text, so it is the largest document any
+  /// supported device serves. Injectable so a test can shrink it.
+  final int maxResponseBytes;
+
   final HttpClient Function() _clientFactory;
 
   /// Be forgiving about pasted addresses: strip a scheme and trailing slashes.
@@ -232,11 +241,13 @@ class ApHttpLink implements ApDeviceLink {
       headers.forEach(request.headers.set);
       if (body != null) request.write(body);
       final response = await request.close().timeout(timeout);
-      final text = await response
-          .transform(utf8.decoder)
-          .join()
-          .timeout(timeout);
+      final text = await readBoundedText(
+        response,
+        maxResponseBytes,
+      ).timeout(timeout);
       return (statusCode: response.statusCode, text: text);
+    } on DeviceResponseTooLarge catch (e) {
+      throw ApLinkException(ApLinkError.protocol, e.detail);
     } on TimeoutException {
       throw const ApLinkException(ApLinkError.timeout);
     } on SocketException catch (e) {
