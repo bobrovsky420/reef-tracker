@@ -3230,6 +3230,39 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String reefBeatDosedManual(Object volume) {
+    return '$volume ml manuale';
+  }
+
+  @override
+  String reefBeatDosedManualExtra(Object volume) {
+    return '+$volume ml manuale';
+  }
+
+  @override
+  String reefBeatDoseDue(Object volume) {
+    return '$volume ml da dosare';
+  }
+
+  @override
+  String get reefBeatPlanComplete => 'Completato';
+
+  @override
+  String reefBeatDoseCount(int done, int total) {
+    return 'Dosi $done/$total';
+  }
+
+  @override
+  String reefBeatDosedSemantics(Object dosed, Object daily) {
+    return '$dosed di $daily ml del programma di oggi dosati';
+  }
+
+  @override
+  String reefBeatDosedManualSemantics(Object volume) {
+    return 'più $volume ml dosati manualmente';
+  }
+
+  @override
   String get reefBeatDosingQueue => 'Coda di dosaggio di oggi';
 
   @override

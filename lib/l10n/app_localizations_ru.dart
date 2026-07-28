@@ -3271,6 +3271,39 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String reefBeatDosedManual(Object volume) {
+    return '$volume мл вручную';
+  }
+
+  @override
+  String reefBeatDosedManualExtra(Object volume) {
+    return '+$volume мл вручную';
+  }
+
+  @override
+  String reefBeatDoseDue(Object volume) {
+    return 'осталось $volume мл';
+  }
+
+  @override
+  String get reefBeatPlanComplete => 'Выполнено';
+
+  @override
+  String reefBeatDoseCount(int done, int total) {
+    return 'Дозы $done/$total';
+  }
+
+  @override
+  String reefBeatDosedSemantics(Object dosed, Object daily) {
+    return 'внесено $dosed из $daily мл сегодняшнего плана';
+  }
+
+  @override
+  String reefBeatDosedManualSemantics(Object volume) {
+    return 'плюс $volume мл внесено вручную';
+  }
+
+  @override
   String get reefBeatDosingQueue => 'Очередь дозирования на сегодня';
 
   @override

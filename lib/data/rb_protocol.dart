@@ -239,8 +239,28 @@ class RbDoseHead {
 
   final bool isFoodHead;
 
-  /// Everything delivered today (ml) — the gauge's filled portion.
+  /// Everything delivered today (ml), schedule plus manual. The honest total,
+  /// but *not* the gauge's numerator: manual dosing is extra on top of the
+  /// plan, so mixing it in reads as "74 / 44 ml" and hides both how far
+  /// through the plan the head is and whether anything is still due. The
+  /// gauge measures the schedule alone — see [scheduledRemaining].
   double get dosedToday => autoDosedToday + manualDosedToday;
+
+  /// Scheduled volume (ml) still to be delivered today, or null when the head
+  /// has no schedule to be measured against (absent or zero [dailyDose] — a
+  /// food head, or one dosed only by hand). Never negative: missed-dose
+  /// recovery can push [autoDosedToday] past [dailyDose], which is a finished
+  /// plan, not a negative debt.
+  double? get scheduledRemaining {
+    final daily = dailyDose;
+    if (daily == null || daily <= 0) return null;
+    final left = daily - autoDosedToday;
+    return left > 0 ? left : 0;
+  }
+
+  /// Today's schedule is fully delivered. False when there is no schedule —
+  /// a manual-only head has nothing to complete.
+  bool get planComplete => scheduledRemaining == 0;
 
   /// Whether the head is effectively switched off. The firmware reports an
   /// off head either as `state != "on"` or as a zero scheduled dose count

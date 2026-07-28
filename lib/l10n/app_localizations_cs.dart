@@ -3231,6 +3231,39 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String reefBeatDosedManual(Object volume) {
+    return '$volume ml ručně';
+  }
+
+  @override
+  String reefBeatDosedManualExtra(Object volume) {
+    return '+$volume ml ručně';
+  }
+
+  @override
+  String reefBeatDoseDue(Object volume) {
+    return 'zbývá $volume ml';
+  }
+
+  @override
+  String get reefBeatPlanComplete => 'Hotovo';
+
+  @override
+  String reefBeatDoseCount(int done, int total) {
+    return 'Dávky $done/$total';
+  }
+
+  @override
+  String reefBeatDosedSemantics(Object dosed, Object daily) {
+    return 'nadávkováno $dosed z $daily ml dnešního plánu';
+  }
+
+  @override
+  String reefBeatDosedManualSemantics(Object volume) {
+    return 'navíc $volume ml nadávkováno ručně';
+  }
+
+  @override
   String get reefBeatDosingQueue => 'Dnešní fronta dávek';
 
   @override

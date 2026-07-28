@@ -1358,9 +1358,56 @@ class _HeadRow extends StatelessWidget {
     final tokens = ReefTokens.of(context);
 
     final daily = head.dailyDose;
-    final dosed = head.dosedToday;
     final days = head.remainingDays;
     final off = head.switchedOff;
+    // The gauge measures the schedule alone: manual dosing is delivered on top
+    // of the plan, so folding it into the fraction both overfills the bar and
+    // hides whether anything is still due. It gets its own suffix below.
+    final auto = head.autoDosedToday;
+    final manual = head.manualDosedToday;
+    final remaining = head.scheduledRemaining;
+
+    // With no schedule to measure against there is nothing to be "through", so
+    // the value line falls back to the plain total — and when every drop of it
+    // was hand-dosed it says so, instead of repeating itself in the suffix.
+    final String valueText;
+    if (daily != null && daily > 0) {
+      valueText = l.reefBeatDosedOfDaily(_fmtMl(auto), _fmtMl(daily));
+    } else if (manual > 0 && auto == 0) {
+      valueText = l.reefBeatDosedManual(_fmtMl(manual));
+    } else {
+      valueText = l.reefBeatDosedNoDaily(_fmtMl(head.dosedToday));
+    }
+
+    // Third line, kept honest by only appearing when it adds something: a head
+    // that finished its plan with no manual dosing is already fully described
+    // by a full bar and "8 / 8 ml".
+    final doses = head.dosesToday;
+    final dailyDoses = head.dailyDoses;
+    final String? progressText = (remaining == null || off)
+        ? null
+        : [
+            remaining > 0
+                ? l.reefBeatDoseDue(_fmtMl(remaining))
+                : l.reefBeatPlanComplete,
+            if (doses != null && dailyDoses != null)
+              l.reefBeatDoseCount(doses, dailyDoses),
+          ].join(' · ');
+    final manualText = manual > 0 && (remaining != null || auto > 0)
+        ? l.reefBeatDosedManualExtra(_fmtMl(manual))
+        : null;
+    final showProgressRow =
+        manualText != null || (remaining != null && remaining > 0 && !off);
+
+    // Screen readers get the two volumes spelled out rather than the terse
+    // "44 / 44 ml", which gives no clue which number is the plan.
+    final semanticsLabel = [
+      daily != null && daily > 0
+          ? l.reefBeatDosedSemantics(_fmtMl(auto), _fmtMl(daily))
+          : valueText,
+      if (manualText != null) l.reefBeatDosedManualSemantics(_fmtMl(manual)),
+      ?progressText,
+    ].join(', ');
     final daysColor = days == null
         ? tokens.textDim
         : switch (rbStockSeverity(days)) {
@@ -1404,31 +1451,65 @@ class _HeadRow extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        // Today's progress: dosed so far vs the scheduled daily total. With no
-        // schedule (daily dose absent/zero) the track stays empty — the mono
-        // text still reports what was dosed.
-        Row(
-          children: [
-            Expanded(
-              child: _DoseGauge(
-                fraction: (daily == null || daily <= 0)
-                    ? 0
-                    : (dosed / daily).clamp(0.0, 1.0),
-                enabled: !off,
+        // Today's progress through the schedule: auto-dosed so far vs the
+        // scheduled daily total. With no schedule (daily dose absent/zero) the
+        // track stays empty — the mono text still reports what was dosed.
+        // Missed-dose recovery can over-deliver, so the fraction is clamped
+        // while the text stays truthful ("48 / 44 ml").
+        Semantics(
+          container: true,
+          excludeSemantics: true,
+          label: semanticsLabel,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _DoseGauge(
+                      fraction: (daily == null || daily <= 0)
+                          ? 0
+                          : (auto / daily).clamp(0.0, 1.0),
+                      enabled: !off,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    valueText,
+                    style: ReefTokens.monoTextStyle.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: off ? tokens.textDim : tokens.text,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              daily == null
-                  ? l.reefBeatDosedNoDaily(_fmtMl(dosed))
-                  : l.reefBeatDosedOfDaily(_fmtMl(dosed), _fmtMl(daily)),
-              style: ReefTokens.monoTextStyle.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: off ? tokens.textDim : tokens.text,
-              ),
-            ),
-          ],
+              if (showProgressRow) ...[
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        progressText ?? '',
+                        style: t.bodySmall?.copyWith(color: tokens.textDim),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (manualText != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        manualText,
+                        style: t.bodySmall?.copyWith(
+                          color: off ? tokens.textDim : tokens.caution,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ],
+          ),
         ),
         if (head.recalibrationRequired || head.missedVolume > 0) ...[
           const SizedBox(height: 6),

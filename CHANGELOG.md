@@ -117,6 +117,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   through the same question.
 
 ### Fixed
+- A Red Sea ReefDose head no longer reads "74 / 44 ml" after you dose something
+  by hand. The bar and the numbers now track only what the pump's own schedule
+  has delivered, so a finished day reads 44 / 44 ml with a full bar, and any
+  volume you added yourself is shown separately as "+30 ml manual". A head that
+  still has doses coming gets a line telling you how much is left today and how
+  many of the day's doses have run – "22 ml due · Doses 3/6" – so you can tell
+  at a glance whether the pump is done or still working. The line only appears
+  when there is something to say.
 - Scanning your network for devices, or reading one, can no longer be made to
   eat the phone's memory by something else on the network. The scan knocks on
   every device it finds – your router, a NAS, a printer – and until now it would

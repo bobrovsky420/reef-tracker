@@ -2735,15 +2735,29 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   `reorderDevices`, household-scoped `reefBeatDevicesProvider`) minus
   everything save-related.
   Each card renders one `_HeadRow` per head: the supplement name, a
-  **horizontal dosed-today gauge** (dosed today ÷ daily dose, `track` token
-  under a `primary` fill, mono `26.7 / 40 ml` beside it) and a
+  **horizontal schedule gauge** (`auto_dosed_today` ÷ `daily_dose`, `track`
+  token under a `primary` fill, mono `26.7 / 40 ml` beside it) and a
   **remaining-days tag** colored by `rbStockSeverity` — `healthy` ≥
   `kRbStockCautionDays` (14), `caution` below it, `critical` below
   `kRbStockCriticalDays` (7) — plus warning chips (recalibration needed,
   missed dose, device clock error, backup battery low) in caution/critical
   soft-token style. Switched-off heads (`RbDoseHead.switchedOff`: `state !=
   "on"` **or** `daily_doses: 0` — the firmware reports off heads both ways)
-  render dimmed with an "Off" tag. A ReefDose card's menu carries one extra
+  render dimmed with an "Off" tag.
+  The gauge deliberately measures the **schedule alone**: `manual_dosed_today`
+  is delivered on top of the plan, so folding it in overfilled the bar and
+  read "74 / 44 ml". Manual volume gets a `caution`-colored `+30 ml manual`
+  suffix instead, and `RbDoseHead.scheduledRemaining` (`daily_dose −
+  auto_dosed_today`, floored at 0 so missed-dose over-delivery is a finished
+  plan rather than a negative debt; null when there is no schedule) drives a
+  third caption line — `22 ml due · Doses 3/6`, or `Complete · Doses 6/6`.
+  That line is rendered **only when it carries information** (manual volume to
+  disclose, or scheduled volume still due on a head that is on), the same
+  conditional-row pattern as the warning chips, so a finished head stays two
+  rows. A head with no schedule shows no caption and reads `15 ml manual` in
+  the value slot when everything it got today was hand-dosed. The whole block
+  is one `Semantics` container spelling the numbers out, since `44 / 44 ml`
+  alone doesn't say which is the plan. A ReefDose card's menu carries one extra
   item, **Today's dosing queue** (offered from the *stored* model via
   `rbIsDoseModel`, so it is there before any read lands): a bottom sheet that
   calls `readDosingQueue` on open and lists the remaining doses as

@@ -5319,6 +5319,48 @@ abstract class AppLocalizations {
   /// **'{dosed} ml'**
   String reefBeatDosedNoDaily(Object dosed);
 
+  /// Value line for a head with no schedule where everything dosed today was dosed by hand
+  ///
+  /// In en, this message translates to:
+  /// **'{volume} ml manual'**
+  String reefBeatDosedManual(Object volume);
+
+  /// Suffix under a head's gauge: volume dosed by hand today, on top of the schedule
+  ///
+  /// In en, this message translates to:
+  /// **'+{volume} ml manual'**
+  String reefBeatDosedManualExtra(Object volume);
+
+  /// Caption under a head's gauge: scheduled volume still to be dosed today
+  ///
+  /// In en, this message translates to:
+  /// **'{volume} ml due'**
+  String reefBeatDoseDue(Object volume);
+
+  /// Caption under a head's gauge when today's whole scheduled volume has been dosed
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get reefBeatPlanComplete;
+
+  /// Caption under a head's gauge: scheduled doses delivered today out of the day's total
+  ///
+  /// In en, this message translates to:
+  /// **'Doses {done}/{total}'**
+  String reefBeatDoseCount(int done, int total);
+
+  /// Screen-reader label for a head's dose gauge, spelling out what the two numbers mean
+  ///
+  /// In en, this message translates to:
+  /// **'{dosed} of {daily} ml of today\'s schedule dosed'**
+  String reefBeatDosedSemantics(Object dosed, Object daily);
+
+  /// Screen-reader label appended to the dose gauge when the head also received manual doses today
+  ///
+  /// In en, this message translates to:
+  /// **'plus {volume} ml dosed manually'**
+  String reefBeatDosedManualSemantics(Object volume);
+
   /// Card menu item and sheet title: the doses a ReefDose pump still has scheduled for today
   ///
   /// In en, this message translates to:

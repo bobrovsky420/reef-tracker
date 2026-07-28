@@ -334,6 +334,55 @@ void main() {
       expect(off.recalibrationRequired, isTrue);
     });
 
+    test('schedule progress ignores manual dosing', () {
+      // Live capture 2026-07-28: head 1 had finished its 44 ml plan and then
+      // received 30 ml by hand. The total is 74 ml, but the plan is done and
+      // nothing is due — the gauge must not read 74 of 44.
+      final head = RbDoseHead.fromJson(1, {
+        'auto_dosed_today': 44,
+        'manual_dosed_today': 30,
+        'daily_dose': 44,
+        'doses_today': 6,
+        'daily_doses': 6,
+      });
+      expect(head.dosedToday, 74);
+      expect(head.scheduledRemaining, 0);
+      expect(head.planComplete, isTrue);
+    });
+
+    test('scheduled volume still due is what the plan has left', () {
+      final head = RbDoseHead.fromJson(1, {
+        'auto_dosed_today': 26.7,
+        'manual_dosed_today': 12,
+        'daily_dose': 40,
+      });
+      expect(head.scheduledRemaining, closeTo(13.3, 1e-9));
+      expect(head.planComplete, isFalse);
+    });
+
+    test('over-delivery counts as a finished plan, never a negative debt', () {
+      // Missed-dose recovery can push the day past its scheduled total.
+      final head = RbDoseHead.fromJson(1, {
+        'auto_dosed_today': 48,
+        'daily_dose': 44,
+      });
+      expect(head.scheduledRemaining, 0);
+      expect(head.planComplete, isTrue);
+    });
+
+    test('a head with no schedule has nothing due and nothing to complete', () {
+      for (final daily in [null, 0]) {
+        final head = RbDoseHead.fromJson(1, {
+          'auto_dosed_today': 0,
+          'manual_dosed_today': 30,
+          'daily_dose': ?daily,
+        });
+        expect(head.scheduledRemaining, isNull, reason: 'daily_dose=$daily');
+        expect(head.planComplete, isFalse, reason: 'daily_dose=$daily');
+        expect(head.dosedToday, 30, reason: 'daily_dose=$daily');
+      }
+    });
+
     test('head settings add the supplement abbreviation', () {
       final status = RbDoseStatus.fromJson(
         {
