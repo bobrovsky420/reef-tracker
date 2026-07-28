@@ -1023,7 +1023,7 @@
   "discoveryRescan": "Skanuj ponownie",
   "discoveryManualEntry": "Wpisz adres IP",
 
-  "devicesTitle": "Urządzenia",
+  "devicesTitle": "Podłączone urządzenia",
   "devicesAll": "Wszystkie",
   "devicesScopeAll": "Wszystkie urządzenia · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

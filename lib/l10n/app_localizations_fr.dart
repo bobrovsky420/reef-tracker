@@ -3657,7 +3657,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get discoveryManualEntry => 'Saisir une adresse IP';
 
   @override
-  String get devicesTitle => 'Appareils';
+  String get devicesTitle => 'Appareils connectés';
 
   @override
   String get devicesAll => 'Tous';

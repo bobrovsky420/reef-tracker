@@ -5979,10 +5979,10 @@ abstract class AppLocalizations {
   /// **'Enter IP address'**
   String get discoveryManualEntry;
 
-  /// Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory.
+  /// Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory. Doubles as its entry label in the Measurements-tab overflow menu, where a bare 'Devices' read ambiguously next to the import entries.
   ///
   /// In en, this message translates to:
-  /// **'Devices'**
+  /// **'Connected devices'**
   String get devicesTitle;
 
   /// The vendor selector's first chip: show every connected device regardless of brand.

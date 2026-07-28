@@ -26,8 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transferred install keeps the controller but asks you to sign in again.
 
 ### Changed
-- All your connected devices now live on one Devices page instead of three
-  separate screens buried in Settings. A row of brand buttons across the top
+- Importing an ICP lab report (Fauna Marin or ZIMS) is now offered in the menu in
+  the top-right of the Measurements screen, next to Import measurements. It used
+  to sit only on the Microelements panel, where it was easy to miss – and it was
+  out of reach entirely if you had the Microelements panel switched off, even
+  though a lab report also carries alkalinity, calcium, magnesium and nutrients.
+- All your connected devices now live on one Connected devices page instead of
+  three separate screens buried in Settings. A row of brand buttons across the top
   switches between all of them and one brand at a time; brands you don't own
   never show up, and if you only have one brand the buttons don't appear at all.
   Every device keeps the same full card it had before — nothing was summarised

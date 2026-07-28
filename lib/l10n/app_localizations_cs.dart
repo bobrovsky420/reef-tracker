@@ -3657,7 +3657,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get discoveryManualEntry => 'Zadat IP adresu';
 
   @override
-  String get devicesTitle => 'Zařízení';
+  String get devicesTitle => 'Připojená zařízení';
 
   @override
   String get devicesAll => 'Vše';

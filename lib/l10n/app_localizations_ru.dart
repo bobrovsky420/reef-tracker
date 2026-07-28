@@ -3706,7 +3706,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get discoveryManualEntry => 'Ввести IP-адрес';
 
   @override
-  String get devicesTitle => 'Устройства';
+  String get devicesTitle => 'Подключённые устройства';
 
   @override
   String get devicesAll => 'Все';

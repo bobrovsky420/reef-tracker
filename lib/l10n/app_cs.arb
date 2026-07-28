@@ -1023,7 +1023,7 @@
   "discoveryRescan": "Hledat znovu",
   "discoveryManualEntry": "Zadat IP adresu",
 
-  "devicesTitle": "Zařízení",
+  "devicesTitle": "Připojená zařízení",
   "devicesAll": "Vše",
   "devicesScopeAll": "Všechna zařízení · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

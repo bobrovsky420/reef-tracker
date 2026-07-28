@@ -1023,7 +1023,7 @@
   "discoveryRescan": "Искать снова",
   "discoveryManualEntry": "Ввести IP-адрес",
 
-  "devicesTitle": "Устройства",
+  "devicesTitle": "Подключённые устройства",
   "devicesAll": "Все",
   "devicesScopeAll": "Все устройства · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

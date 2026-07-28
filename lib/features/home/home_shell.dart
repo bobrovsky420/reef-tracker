@@ -18,6 +18,7 @@ import '../ai_summary/ai_summary_sheet.dart';
 import '../dashboard/comparison_view.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../dosing/dosing_screen.dart';
+import '../import/icp_import_flow.dart';
 import '../import/measurement_import.dart';
 import '../settings/settings_screen.dart';
 
@@ -345,8 +346,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                     ),
                   ),
                 // Overflow menu, contextual to the Measurements tab (the bar is at
-                // icon capacity): the "Ask your AI" summary export (U27) and the
-                // measurement import (U32); future share-ish actions join here.
+                // icon capacity): the "Ask your AI" summary export (U27), the
+                // measurement import (U32) and the ICP report import (U17);
+                // future share-ish actions join here.
                 if (hasTanks && _index == 0)
                   ReefMenuButton<String>(
                     // Same mini-card look as the ReefIconButtons.
@@ -369,6 +371,21 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                               context,
                               ProFeature.hannaImport,
                             ),
+                          );
+                        }
+                      }
+                      if (v == 'import-icp') {
+                        // Same gate idiom, its own feature key (U17): a lab
+                        // report is a measurement file like any other, so it
+                        // belongs in this menu — not only on the micro panel,
+                        // which is hidden when microelements are switched off.
+                        if (ref.read(
+                          proFeatureProvider(ProFeature.icpImport),
+                        )) {
+                          unawaited(runIcpImportFlow(context));
+                        } else {
+                          unawaited(
+                            showProFeatureDialog(context, ProFeature.icpImport),
                           );
                         }
                       }
@@ -422,6 +439,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         value: 'import-measurements',
                         icon: Icons.move_to_inbox_outlined,
                         label: l.measurementImportTitle,
+                      ),
+                      ReefMenuItem(
+                        value: 'import-icp',
+                        icon: Icons.upload_file_outlined,
+                        label: l.icpImportTitle,
                       ),
                       // The Hanna entries only exist while experimental
                       // features are opted into (Settings → Experimental);

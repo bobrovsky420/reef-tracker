@@ -3654,7 +3654,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get discoveryManualEntry => 'Inserisci indirizzo IP';
 
   @override
-  String get devicesTitle => 'Dispositivi';
+  String get devicesTitle => 'Dispositivi connessi';
 
   @override
   String get devicesAll => 'Tutti';

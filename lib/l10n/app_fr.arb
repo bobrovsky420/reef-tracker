@@ -1023,7 +1023,7 @@
   "discoveryRescan": "Relancer l'analyse",
   "discoveryManualEntry": "Saisir une adresse IP",
 
-  "devicesTitle": "Appareils",
+  "devicesTitle": "Appareils connectés",
   "devicesAll": "Tous",
   "devicesScopeAll": "Tous les appareils · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

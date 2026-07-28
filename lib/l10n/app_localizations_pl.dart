@@ -3713,7 +3713,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get discoveryManualEntry => 'Wpisz adres IP';
 
   @override
-  String get devicesTitle => 'Urządzenia';
+  String get devicesTitle => 'Podłączone urządzenia';
 
   @override
   String get devicesAll => 'Wszystkie';

@@ -7,8 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
-import '../../data/icp_import_file.dart';
-import '../../domain/icp_import.dart';
 import '../../domain/micro.dart';
 import '../../domain/parameter_catalog.dart';
 import '../../domain/pro_features.dart';
@@ -20,9 +18,9 @@ import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_icon_button.dart';
 import '../../widgets/reef_menu.dart';
-import '../../widgets/reef_sheet.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/zone_visuals.dart';
+import '../import/icp_import_flow.dart';
 import 'micro_view_sheets.dart';
 
 /// The microelement panel (U17) for the active tank: every ICP element in
@@ -102,7 +100,7 @@ class MicroScreen extends ConsumerWidget {
             // Pro-gated (U19): founders (and, later, Pro purchasers) import;
             // anyone else gets the explanation dialog instead of the picker.
             onPressed: ref.watch(proFeatureProvider(ProFeature.icpImport))
-                ? () => _importReport(context)
+                ? () => unawaited(runIcpImportFlow(context))
                 : () => showProFeatureDialog(context, ProFeature.icpImport),
           ),
           // Setup-ish actions collapsed into the overflow so the (long, in
@@ -219,79 +217,6 @@ class MicroScreen extends ConsumerWidget {
         label: Text(l.microAddMeasurements),
       ),
     );
-  }
-
-  /// ICP report import (U17 phase 2): format choice → file picker → parse →
-  /// preview screen. The format is the user's explicit choice, never sniffed —
-  /// a mismatch fails loudly with a format-specific message.
-  Future<void> _importReport(BuildContext context) async {
-    final l = AppLocalizations.of(context);
-    final format = await showModalBottomSheet<IcpImportFormat>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              // No top inset — the sheet's drag handle already provides it.
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-              child: ReefSheetHeader(l.icpImportTitle),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                l.icpImportFormatHint,
-                style: Theme.of(ctx).textTheme.bodySmall,
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.science_outlined),
-              // Lab/product names — proper nouns, deliberately not localized.
-              title: Text(icpFormatDisplayName(IcpImportFormat.faunaMarin)),
-              subtitle: Text(l.icpImportFormatFaunaMarinHint),
-              onTap: () => Navigator.pop(ctx, IcpImportFormat.faunaMarin),
-            ),
-            ListTile(
-              leading: const Icon(Icons.table_chart_outlined),
-              title: Text(icpFormatDisplayName(IcpImportFormat.zims)),
-              subtitle: Text(l.icpImportFormatZimsHint),
-              onTap: () => Navigator.pop(ctx, IcpImportFormat.zims),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (format == null || !context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    IcpImportResult result;
-    try {
-      final content = await pickIcpCsvContent();
-      if (content == null) return; // Picker cancelled.
-      result = parseIcpCsv(content, format);
-    } on IcpImportException catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(switch (e.reason) {
-            IcpImportRejection.unreadable => l.icpImportUnreadable,
-            IcpImportRejection.wrongFormat => l.icpImportWrongFormat(
-              icpFormatDisplayName(format),
-            ),
-            IcpImportRejection.noValues => l.icpImportNoValues,
-          }),
-        ),
-      );
-      return;
-    } catch (_) {
-      // Picker/platform failure — same user-facing story as unreadable.
-      messenger.showSnackBar(SnackBar(content: Text(l.icpImportUnreadable)));
-      return;
-    }
-    if (context.mounted) {
-      await context.push('/micro/import', extra: result);
-    }
   }
 
   /// Creates a custom maintenance plan reminding the user to test

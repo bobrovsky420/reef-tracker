@@ -1951,7 +1951,12 @@ Parameters list/add-sheet and the health-score inputs to core).
   and **Full ICP** (all elements with section headers, for typing in a lab
   report). Like test sets, the filter narrows what is shown — hidden typed
   values still save. Saving first ensures tracked rows for the entered keys.
-- **ICP report import** (U17 phase 2): an app-bar action on `MicroScreen`.
+- **ICP report import** (U17 phase 2): an app-bar action on `MicroScreen`
+  **and** an entry in the Measurements tab's overflow menu — a lab report
+  carries core parameters too, and the micro panel disappears entirely when
+  microelements are switched off, so the import must not live only there.
+  Both entry points call the same `runIcpImportFlow`
+  (`features/import/icp_import_flow.dart`) and own the same gate.
   **Pro-gated** (U19, grandfathered — see Editions): a non-entitled install
   gets the Pro-feature dialog instead of the flow below (dormant until a Pro
   build ships; every current install is Founder's Edition). The entitled flow:
@@ -2407,7 +2412,9 @@ One page for every LAN device the keeper owns. It replaced four routes — the
 three per-vendor dashboards and the read-only Settings inventory — with one
 screen behind a **vendor selector**, reached from the Measurements-tab overflow
 menu (the Settings device rows are gone; four entry points for one page were
-four ways to say the same thing).
+four ways to say the same thing). Titled **"Connected devices"**
+(`devicesTitle`, shared by the screen and its menu entry) — a bare "Devices"
+read ambiguously in a menu whose other entries are imports.
 
 - **Full cards, not summaries.** Each vendor's section renders exactly the cards
   its own dashboard did: `RfDeviceSection` / `RbDeviceSection` /

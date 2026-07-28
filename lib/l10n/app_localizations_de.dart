@@ -3646,7 +3646,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get discoveryManualEntry => 'IP-Adresse eingeben';
 
   @override
-  String get devicesTitle => 'Geräte';
+  String get devicesTitle => 'Verbundene Geräte';
 
   @override
   String get devicesAll => 'Alle';
