@@ -3706,6 +3706,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get discoveryManualEntry => 'Ввести IP-адрес';
 
   @override
+  String deviceAlreadyAdded(Object name) {
+    return '$name уже добавлено. Чтобы указать новый адрес, используйте Поиск в сети.';
+  }
+
+  @override
   String get devicesTitle => 'Подключённые устройства';
 
   @override

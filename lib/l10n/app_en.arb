@@ -1605,6 +1605,8 @@
   "discoveryUnsupportedHelp": "This app can't read this device type yet.",
   "discoveryRescan": "Scan again",
   "discoveryManualEntry": "Enter IP address",
+  "deviceAlreadyAdded": "{name} is already added. Use Scan network to point it at a new address.",
+  "@deviceAlreadyAdded": { "description": "Shown in the manual add sheet when the probed device's identifier is already on the list, so adding it again would overwrite its name and tank", "placeholders": { "name": {} } },
 
   "devicesTitle": "Connected devices",
   "@devicesTitle": {

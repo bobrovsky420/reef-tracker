@@ -3646,6 +3646,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get discoveryManualEntry => 'IP-Adresse eingeben';
 
   @override
+  String deviceAlreadyAdded(Object name) {
+    return '$name ist bereits hinzugefügt. Verwende Netzwerk durchsuchen, um eine neue Adresse zuzuweisen.';
+  }
+
+  @override
   String get devicesTitle => 'Verbundene Geräte';
 
   @override

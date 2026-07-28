@@ -3654,6 +3654,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get discoveryManualEntry => 'Inserisci indirizzo IP';
 
   @override
+  String deviceAlreadyAdded(Object name) {
+    return '$name è già stato aggiunto. Usa Analizza la rete per assegnargli un nuovo indirizzo.';
+  }
+
+  @override
   String get devicesTitle => 'Dispositivi connessi';
 
   @override

@@ -3657,6 +3657,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get discoveryManualEntry => 'Saisir une adresse IP';
 
   @override
+  String deviceAlreadyAdded(Object name) {
+    return '$name est déjà ajouté. Utilisez Analyser le réseau pour lui attribuer une nouvelle adresse.';
+  }
+
+  @override
   String get devicesTitle => 'Appareils connectés';
 
   @override

@@ -3625,6 +3625,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discoveryManualEntry => 'Enter IP address';
 
   @override
+  String deviceAlreadyAdded(Object name) {
+    return '$name is already added. Use Scan network to point it at a new address.';
+  }
+
+  @override
   String get devicesTitle => 'Connected devices';
 
   @override

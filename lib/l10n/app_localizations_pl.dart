@@ -3713,6 +3713,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get discoveryManualEntry => 'Wpisz adres IP';
 
   @override
+  String deviceAlreadyAdded(Object name) {
+    return '$name jest już dodane. Aby wskazać nowy adres, użyj Skanuj sieć.';
+  }
+
+  @override
   String get devicesTitle => 'Podłączone urządzenia';
 
   @override

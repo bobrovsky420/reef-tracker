@@ -3657,6 +3657,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get discoveryManualEntry => 'Zadat IP adresu';
 
   @override
+  String deviceAlreadyAdded(Object name) {
+    return '$name už je přidáno. Pro změnu adresy použijte Prohledat síť.';
+  }
+
+  @override
   String get devicesTitle => 'Připojená zařízení';
 
   @override

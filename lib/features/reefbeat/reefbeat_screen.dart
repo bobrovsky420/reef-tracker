@@ -311,14 +311,17 @@ Future<void> showRbAddFlow(
           db.updateDeviceAddress(existing.id, found.address),
       onManualEntry: () {
         Navigator.pop(ctx);
-        unawaited(_showRbManualSheet(context, ref, onSeed: onSeed));
+        unawaited(showRbManualSheet(context, ref, onSeed: onSeed));
       },
     ),
   );
   onAdded();
 }
 
-Future<void> _showRbManualSheet(
+/// The type-an-IP half of the add flow, reached from the discovery sheet.
+/// Public only so a widget test can open it without driving a network sweep.
+@visibleForTesting
+Future<void> showRbManualSheet(
   BuildContext context,
   WidgetRef ref, {
   required void Function(String identifier, RbSnapshot snap) onSeed,
@@ -334,6 +337,8 @@ Future<void> _showRbManualSheet(
         tanks: ref.read(tanksProvider).value ?? const <Tank>[],
         activeTankId: ref.read(activeTankProvider)?.id,
         errorTextOf: (e) => rbErrorText(AppLocalizations.of(ctx), e),
+        findExisting: (identifier) =>
+            ref.read(dbProvider).deviceByIdentifier(identifier),
         onAdd:
             ({
               required hwid,
@@ -1797,6 +1802,7 @@ class _AddDeviceSheet extends StatefulWidget {
     required this.tanks,
     required this.activeTankId,
     required this.errorTextOf,
+    required this.findExisting,
     required this.onAdd,
   });
 
@@ -1804,6 +1810,15 @@ class _AddDeviceSheet extends StatefulWidget {
   final List<Tank> tanks;
   final int? activeTankId;
   final String Function(RbLinkError) errorTextOf;
+
+  /// The row already registered under the probed `hwid`, if any (#75). The
+  /// sheet has no notion of an existing device — it prefills the *product*
+  /// name and the *active* tank — so adding one twice would overwrite both.
+  /// It refuses instead and says so; re-pointing a moved device is the
+  /// discovery sheet's job, which matches by identifier and updates only the
+  /// address.
+  final Future<DeviceRecord?> Function(String identifier) findExisting;
+
   final Future<void> Function({
     required String hwid,
     required String model,
@@ -1825,6 +1840,10 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
   String? _error;
   RbSnapshot? _found;
   int? _tankId;
+
+  /// Display name of the already-registered device the probe landed on (#75).
+  /// Non-null puts the sheet in its dead-end state: the message, and Close.
+  String? _duplicateOf;
 
   @override
   void initState() {
@@ -1849,7 +1868,12 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
     });
     try {
       final snap = await widget.link.readOnce(host);
+      final existing = await widget.findExisting(snap.info.hwid);
       if (!mounted) return;
+      if (existing != null) {
+        setState(() => _duplicateOf = deviceDisplayName(existing));
+        return;
+      }
       setState(() {
         _found = snap;
         // Default the name to the friendly product name ("ReefDose 4") — the
@@ -1872,6 +1896,7 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).textTheme;
     final found = _found;
+    final duplicateOf = _duplicateOf;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       child: Column(
@@ -1883,6 +1908,9 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
           TextField(
             controller: _host,
             autofocus: true,
+            // Frozen once the probe lands on an already-added device: with the
+            // Check button gone there is nothing left to do here but close.
+            enabled: duplicateOf == null,
             keyboardType: TextInputType.url,
             decoration: InputDecoration(
               labelText: l.reefBeatHostLabel,
@@ -1892,6 +1920,15 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
             ),
             onSubmitted: (_) => _probe(),
           ),
+          if (duplicateOf != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              l.deviceAlreadyAdded(duplicateOf),
+              style: t.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 10),
             Text(
@@ -1939,39 +1976,46 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(l.cancel),
-              ),
-              const SizedBox(width: 8),
-              if (found == null)
+              if (duplicateOf != null)
                 FilledButton(
-                  onPressed: _probing ? null : _probe,
-                  child: _probing
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l.reefBeatCheck),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l.close),
                 )
-              else
-                FilledButton(
-                  onPressed: () async {
-                    await widget.onAdd(
-                      hwid: found.info.hwid,
-                      model: found.modelCode,
-                      host: _host.text.trim(),
-                      name: _name.text.trim().isEmpty
-                          ? null
-                          : _name.text.trim(),
-                      tankId: _tankId,
-                      snapshot: found,
-                    );
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  child: Text(l.reefBeatAddDevice),
+              else ...[
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l.cancel),
                 ),
+                const SizedBox(width: 8),
+                if (found == null)
+                  FilledButton(
+                    onPressed: _probing ? null : _probe,
+                    child: _probing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(l.reefBeatCheck),
+                  )
+                else
+                  FilledButton(
+                    onPressed: () async {
+                      await widget.onAdd(
+                        hwid: found.info.hwid,
+                        model: found.modelCode,
+                        host: _host.text.trim(),
+                        name: _name.text.trim().isEmpty
+                            ? null
+                            : _name.text.trim(),
+                        tankId: _tankId,
+                        snapshot: found,
+                      );
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    child: Text(l.reefBeatAddDevice),
+                  ),
+              ],
             ],
           ),
         ],

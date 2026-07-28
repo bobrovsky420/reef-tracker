@@ -5979,6 +5979,12 @@ abstract class AppLocalizations {
   /// **'Enter IP address'**
   String get discoveryManualEntry;
 
+  /// Shown in the manual add sheet when the probed device's identifier is already on the list, so adding it again would overwrite its name and tank
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is already added. Use Scan network to point it at a new address.'**
+  String deviceAlreadyAdded(Object name);
+
   /// Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory. Doubles as its entry label in the Measurements-tab overflow menu, where a bare 'Devices' read ambiguously next to the import entries.
   ///
   /// In en, this message translates to:

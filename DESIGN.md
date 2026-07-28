@@ -3069,6 +3069,18 @@ sweep, just with more probing. Nothing treats an empty mDNS result as an error.
   by hwid/serial, one tap repoints the row via `updateDeviceAddress`, which is
   deliberately narrow — it must not touch the user's name, tank or card
   position the way the upsert paths do.
+- **Manual entry refuses a device already on the list** (#75). The type-an-IP
+  sheet (`showRbManualSheet` / `showRfManualSheet`) has no notion of an
+  existing row: it prefills the **product** name and the **active** tank, so a
+  second add would revert a renamed card to its factory label and re-point it
+  at whatever tank happens to be selected — exactly what the address-repair
+  path above exists to avoid. Once the probe resolves the `hwid`/serial the
+  sheet looks it up (`deviceByIdentifier`); a hit ends it in a dead end that
+  names the stored device ("Left doser is already added"), freezes the address
+  field and offers **Close** alone — no Check, no Add, no name/tank fields, and
+  no write. Re-pointing a moved device therefore has exactly one route, the
+  discovery sheet's `updateDeviceAddress`. Apex is deliberately left out: its
+  re-add is also how a changed username/password is stored.
 - **Platform**: Android needs nothing new (`INTERNET` is already declared, and
   `dart:io` sockets bypass the cleartext policy). **iOS requires
   `NSLocalNetworkUsageDescription`** — without it *any* LAN access fails

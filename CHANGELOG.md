@@ -119,6 +119,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the file now, so a backup you mail to support or keep in a shared Drive
   folder no longer reveals your email address. Existing backups are unaffected
   and still restore normally.
+- Adding a Red Sea or ReefFactory device by typing its IP address a second time
+  no longer overwrites the name you gave it and the tank you put it on. The
+  add sheet always suggests the product name ("ReefDose 4") and the tank you
+  are currently looking at, so re-adding a device you already have – the usual
+  reflex after it moves to a new address – quietly undid both. It now tells you
+  which of your devices answered at that address and stops there. To point a
+  device that has moved at its new address, use Scan network, which changes the
+  address only.
 
 ### Removed
 - Settings → Experimental no longer repeats the "Hanna checker" and "Scan
