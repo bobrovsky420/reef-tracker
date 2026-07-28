@@ -86,10 +86,6 @@
 
   "parameters": "Параметры",
   "noActiveAquarium": "Нет активного аквариума.",
-  "reapplyPreset": "Повторно применить пресет {type}",
-  "reapplyPresetTitle": "Повторно применить пресет {type}?",
-  "reapplyPresetBody": "Это перезапишет границы зелёная/жёлтая/красная всех отслеживаемых параметров значениями по умолчанию: параметры на главном экране — по пресету типа аквариума, микроэлементы — встроенными значениями по умолчанию. Ваши измерения сохранятся.",
-  "presetApplied": "Пресет применён.",
   "noBoundariesSet": "Границы не заданы",
   "boundsSummary": "OK {greenLow}–{greenHigh} {unit}  •  красная <{amberLow} / >{amberHigh}",
   "editZones": "Изменить зоны",
@@ -1049,5 +1045,12 @@
   "reefDevicesKindApex": "Neptune Apex",
   "reefDevicesKindHanna": "Hanna checker",
   "reefDevicesBluetooth": "Bluetooth",
-  "reefDevicesLastSeen": "Был(а) в сети {date}"
+  "reefDevicesLastSeen": "Был(а) в сети {date}",
+  "resetParamDefaults": "Сбросить до значений по умолчанию",
+  "resetParamDefaultsTitle": "Сбросить все параметры до значений по умолчанию?",
+  "resetParamDefaultsBody": "Каждый параметр вернётся к рекомендованным границам для этого типа аквариума, а микроэлементы — к встроенным значениям. Границы, заданные вами, будут удалены. Измерения сохранятся.",
+  "paramDefaultsRestored": "Параметры сброшены до значений по умолчанию.",
+  "resetThisParamDefaults": "Сбросить этот параметр до значений по умолчанию",
+  "reset": "Сбросить",
+  "followingDefaults": "Используются значения по умолчанию"
 }

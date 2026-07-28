@@ -5,6 +5,7 @@ import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/health_score.dart';
 import 'package:reeftracker/domain/micro.dart';
+import 'package:reeftracker/domain/presets.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/trend.dart';
 import 'package:reeftracker/domain/units.dart';
@@ -195,7 +196,12 @@ void main() {
 
     // Trend parity: the capped feed must yield exactly the trend the full
     // history yields (computeTrend never looks past its window).
-    final tracked = await db.getTrackedParameters(a);
+    // Resolve like the provider does: the rows carry no bounds of their own.
+    final tracked = resolveParameters(
+      await db.getTrackedParameters(a),
+      SetupType.mixed,
+      await db.getParameterOverrides(a),
+    );
     final ph = tracked.firstWhere((p) => p.paramKey == 'ph');
     final full = await db.watchReadingsForTank(a).first;
     final points = <DosePoint>[
@@ -203,7 +209,7 @@ void main() {
     ];
     final expectedTrend = computeTrend(
       points: points,
-      bounds: boundsOf(ph),
+      bounds: ph.bounds,
       window: kTrendDefaultWindow,
     );
     expect(container.read(tankTrendsProvider)['ph'], expectedTrend);
@@ -215,7 +221,7 @@ void main() {
       for (final p in tracked.where((t) => t.enabled))
         (
           paramKey: p.paramKey,
-          bounds: boundsOf(p),
+          bounds: p.bounds,
           latest: p.paramKey == 'ph' ? latest.value : null,
           takenAt: p.paramKey == 'ph' ? latest.takenAt : null,
         ),
@@ -344,7 +350,7 @@ void main() {
       final alk = (await db.getTrackedParameters(
         tankId,
       )).firstWhere((t) => t.paramKey == 'alkalinity');
-      final bounds = boundsOf(alk);
+      final bounds = defaultBoundsFor(SetupType.mixed, alk.paramKey);
       await db.insertReading(
         tankId: tankId,
         paramKey: 'alkalinity',
@@ -369,7 +375,7 @@ void main() {
       final alk = (await db.getTrackedParameters(
         tankId,
       )).firstWhere((t) => t.paramKey == 'alkalinity');
-      final bounds = boundsOf(alk);
+      final bounds = defaultBoundsFor(SetupType.mixed, alk.paramKey);
       await db.insertReading(
         tankId: tankId,
         paramKey: 'alkalinity',

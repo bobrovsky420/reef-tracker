@@ -159,7 +159,7 @@ class TrendChart extends StatefulWidget {
   });
 
   final List<Reading> readings;
-  final TrackedParameter? param;
+  final ResolvedParameter? param;
   final ParamPresentation pres;
 
   /// Logged maintenance actions drawn as dashed vertical lines (U6); build
@@ -222,7 +222,7 @@ class _TrendChartState extends State<TrendChart> {
       );
     }
     final p = widget.param;
-    final canonical = p != null ? boundsOf(p) : const ZoneBounds();
+    final canonical = p?.bounds ?? const ZoneBounds();
     double? d(double? v) => v == null ? null : pres.toDisplay(v);
     final bounds = ZoneBounds(
       amberLow: d(canonical.amberLow),

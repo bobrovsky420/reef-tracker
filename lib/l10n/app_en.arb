@@ -121,12 +121,6 @@
 
   "parameters": "Parameters",
   "noActiveAquarium": "No active aquarium.",
-  "reapplyPreset": "Re-apply {type} preset",
-  "@reapplyPreset": { "placeholders": { "type": {} } },
-  "reapplyPresetTitle": "Re-apply {type} preset?",
-  "@reapplyPresetTitle": { "placeholders": { "type": {} } },
-  "reapplyPresetBody": "This overwrites the green/amber/red boundaries of all tracked parameters: dashboard parameters get the aquarium-type preset values, microelements their built-in defaults. Your readings are kept.",
-  "presetApplied": "Preset applied.",
   "noBoundariesSet": "No boundaries set",
   "boundsSummary": "OK {greenLow}–{greenHigh} {unit}  •  red <{amberLow} / >{amberHigh}",
   "@boundsSummary": { "placeholders": { "greenLow": {}, "greenHigh": {}, "unit": {}, "amberLow": {}, "amberHigh": {} } },
@@ -1690,5 +1684,19 @@
   "reefDevicesKindHanna": "Hanna checker",
   "reefDevicesBluetooth": "Bluetooth",
   "reefDevicesLastSeen": "Last seen {date}",
-  "@reefDevicesLastSeen": { "placeholders": { "date": {} } }
+  "@reefDevicesLastSeen": { "placeholders": { "date": {} } },
+  "resetParamDefaults": "Reset to defaults",
+  "@resetParamDefaults": {"description": "Menu item on Manage parameters: drop every per-tank override."},
+  "resetParamDefaultsTitle": "Reset all parameters to defaults?",
+  "@resetParamDefaultsTitle": {"description": "Confirmation dialog title for resetting all parameters."},
+  "resetParamDefaultsBody": "Every parameter goes back to the recommended boundaries for this aquarium type, and microelements to their built-in defaults. Boundaries you set yourself are discarded. Your readings are kept.",
+  "@resetParamDefaultsBody": {"description": "Confirmation dialog body; warns that user-set boundaries are discarded."},
+  "paramDefaultsRestored": "Parameters reset to defaults.",
+  "@paramDefaultsRestored": {"description": "SnackBar after resetting all parameters."},
+  "resetThisParamDefaults": "Reset this parameter to defaults",
+  "@resetThisParamDefaults": {"description": "Action in the parameter editor: drop this parameter's override."},
+  "reset": "Reset",
+  "@reset": {"description": "Generic confirm label for a reset action."},
+  "followingDefaults": "Following the defaults",
+  "@followingDefaults": {"description": "Editor hint shown while a parameter has no override."}
 }

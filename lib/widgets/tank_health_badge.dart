@@ -544,7 +544,7 @@ class _StabilityParamRow extends StatelessWidget {
   });
 
   final ParameterStability stability;
-  final TrackedParameter? param;
+  final ResolvedParameter? param;
   final UnitPrefs prefs;
 
   /// Effective stability window, for the muted rows' "N tests in D d" note.
@@ -669,7 +669,7 @@ class _ParamRow extends StatelessWidget {
   });
 
   final ParameterHealth health;
-  final TrackedParameter? param;
+  final ResolvedParameter? param;
   final UnitPrefs prefs;
   final bool muted;
 

@@ -164,7 +164,7 @@ class _ParamChartCard extends StatelessWidget {
     required this.chartHeight,
   });
 
-  final TrackedParameter param;
+  final ResolvedParameter param;
   final List<Reading> inRange;
   final UnitPrefs prefs;
   final List<ActionMarker> markers;
@@ -178,7 +178,7 @@ class _ParamChartCard extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
     final pres = presentationOf(param, prefs);
-    final bounds = boundsOf(param);
+    final bounds = param.bounds;
     // Header value tracks the chart: the newest reading *in range* (inRange is
     // ascending), not the newest overall — otherwise a zone-colored value would
     // sit above a "No readings in range" chart and imply in-range data (#22).

@@ -153,7 +153,7 @@ void main() {
       'lead': 0.012,
     };
     for (final key in icp.keys) {
-      await db.addTrackedParameter(tank, key, SetupType.mixed);
+      await db.addTrackedParameter(tank, key);
     }
     await db.insertReadingGroup(
       tankId: tank,

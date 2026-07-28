@@ -9,7 +9,6 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/hanna_import.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
@@ -537,10 +536,9 @@ class _HannaImportScreenState extends ConsumerState<HannaImportScreen> {
     try {
       // Each parameter needs its tracked row (idempotent, seeds preset
       // bounds), same as the ICP import.
-      final type = SetupType.fromName(tank.setupType);
       final keys = {for (final s in sessions) ...s.map((r) => r.paramKey)};
       for (final key in keys) {
-        await db.addTrackedParameter(tank.id, key, type);
+        await db.addTrackedParameter(tank.id, key);
       }
       // One group per session, every reading on its own file timestamp.
       final groupIds = <String>[];

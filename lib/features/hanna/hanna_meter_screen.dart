@@ -14,7 +14,6 @@ import '../../data/environment_sources.dart';
 import '../../domain/hanna_import.dart';
 import '../../domain/hanna_meter.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
@@ -1551,13 +1550,11 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
         );
         if (choice != SuspectChoice.save || !mounted) return;
       }
-
-      final type = SetupType.fromName(tank.setupType);
       for (final key in {
         for (final r in results) r.method.paramKey,
         for (final e in envToSave) e.paramKey,
       }) {
-        await db.addTrackedParameter(tank.id, key, type);
+        await db.addTrackedParameter(tank.id, key);
       }
       // One session = one reading group, each reading on its own meter
       // timestamp (the U32 rule — collapsing would break the rewind-diff).

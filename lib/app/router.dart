@@ -84,8 +84,8 @@ final appRouter = GoRouter(
       path: '/parameters/:id/edit',
       builder: (context, state) {
         final param = state.extra;
-        if (param is TrackedParameter) return ParameterEditScreen(param: param);
-        return _ResolveById<TrackedParameter>(
+        if (param is ResolvedParameter) return ParameterEditScreen(param: param);
+        return _ResolveById<ResolvedParameter>(
           id: int.tryParse(state.pathParameters['id'] ?? ''),
           listenable: trackedParametersProvider,
           idOf: (p) => p.id,

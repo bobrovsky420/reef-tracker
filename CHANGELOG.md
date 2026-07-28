@@ -26,6 +26,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transferred install keeps the controller but asks you to sign in again.
 
 ### Changed
+- Parameter ranges now follow the recommended values instead of copying them
+  once. A tank only stores the boundaries you set yourself; everything else
+  reads the recommended range for your aquarium type (or, for microelements,
+  the built-in default) as it stands today. So changing a tank's type now
+  re-colours every parameter you have not customised straight away, and future
+  updates to the recommended ranges reach your tank without you doing anything.
+  The parameter editor shows "Following the defaults" when a parameter has no
+  boundaries of its own, and a **Reset to defaults** action when it does.
+- **Re-apply preset** in the Manage parameters menu is replaced by **Reset to
+  defaults**, which clears the boundaries you set and returns every parameter
+  to the recommended ranges.
+- **Boundaries you had customised are not carried over by this update.** Every
+  parameter starts again from the recommended range for your aquarium type; set
+  yours again where you need them. Your measurements, tanks and everything else
+  are untouched. Restoring a backup taken before this update behaves the same
+  way — the tank comes back with the recommended ranges.
+- The suggested green/amber/red ranges for 20 microelements – strontium, iron,
+  silicon, zinc, vanadium, copper, nickel, molybdenum, lithium, aluminium,
+  antimony, tin, silver, tungsten, lanthanum, titanium, arsenic, cadmium,
+  mercury and lead – now match the reference ranges Fauna Marin prints on its
+  ICP reports, so a result their report calls green reads green here too. Zinc,
+  vanadium, copper, nickel and silicon gained a *lower* limit as well: the app
+  now flags them when they run too low, not only when they run too high. This
+  only affects elements you have not tracked yet – anything already on your
+  Microelements panel keeps the ranges you have, and every range stays editable
+  per tank.
 - Importing an ICP lab report (Fauna Marin or ZIMS) is now offered in the menu in
   the top-right of the Measurements screen, next to Import measurements. It used
   to sit only on the Microelements panel, where it was easy to miss – and it was

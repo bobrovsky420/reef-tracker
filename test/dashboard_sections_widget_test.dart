@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/domain/zones.dart';
 import 'package:reeftracker/features/dashboard/dashboard_screen.dart';
 import 'package:reeftracker/features/micro/micro_summary_tile.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
@@ -154,8 +155,10 @@ void main() {
       (await db.getActiveTankId())!,
     );
     final alk = tracked.firstWhere((p) => p.paramKey == 'alkalinity');
-    await db.updateTrackedParameter(
-      alk.copyWith(greenLow: const Value(12), greenHigh: const Value(8)),
+    await db.setParameterOverride(
+      alk.tankId,
+      alk.paramKey,
+      const ZoneBounds(greenLow: 12, greenHigh: 8),
     );
     await settle(tester);
 

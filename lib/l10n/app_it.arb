@@ -86,10 +86,6 @@
 
   "parameters": "Parametri",
   "noActiveAquarium": "Nessun acquario attivo.",
-  "reapplyPreset": "Riapplica il preset {type}",
-  "reapplyPresetTitle": "Riapplicare il preset {type}?",
-  "reapplyPresetBody": "I limiti verde/arancione/rosso di tutti i parametri monitorati verranno sovrascritti con i valori predefiniti: quelli del preset del tipo di vasca per i parametri della dashboard, i valori integrati per gli oligoelementi. Le tue misurazioni vengono conservate.",
-  "presetApplied": "Preset applicato.",
   "noBoundariesSet": "Nessun limite impostato",
   "boundsSummary": "OK {greenLow}–{greenHigh} {unit}  •  rosso <{amberLow} / >{amberHigh}",
   "editZones": "Modifica zone",
@@ -1049,5 +1045,12 @@
   "reefDevicesKindApex": "Neptune Apex",
   "reefDevicesKindHanna": "Checker Hanna",
   "reefDevicesBluetooth": "Bluetooth",
-  "reefDevicesLastSeen": "Visto {date}"
+  "reefDevicesLastSeen": "Visto {date}",
+  "resetParamDefaults": "Ripristina i valori predefiniti",
+  "resetParamDefaultsTitle": "Ripristinare i valori predefiniti di tutti i parametri?",
+  "resetParamDefaultsBody": "Ogni parametro torna ai limiti consigliati per questo tipo di acquario e i microelementi ai loro valori predefiniti. I limiti impostati da te vengono eliminati. Le misurazioni sono conservate.",
+  "paramDefaultsRestored": "Parametri ripristinati ai valori predefiniti.",
+  "resetThisParamDefaults": "Ripristina i valori predefiniti di questo parametro",
+  "reset": "Ripristina",
+  "followingDefaults": "Usa i valori predefiniti"
 }

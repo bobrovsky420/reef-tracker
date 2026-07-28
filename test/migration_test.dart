@@ -537,44 +537,66 @@ void main() {
     expect(await indexNames(db), contains('idx_manual_doses_tank_dosed'));
   });
 
-  test('upgrading from v21 adds target_value and backfills the alkalinity '
-      'target from the tank setup type', () async {
-    // seedFullSchemaAt-style: build current schema with two tanks, then drop
-    // the column to reconstruct a genuine v21 file where the from<22 step
-    // must add it and run the preset backfill.
-    final file = File('${tempDir.path}/from21-notarget.sqlite');
+  test('upgrading from v27 drops the bound/target columns and keeps NO '
+      'overrides, so every tank falls back to the defaults', () async {
+    // Reconstruct a genuine pre-v28 file: build the current schema, then add
+    // the five columns back and give one parameter a hand-tuned band, exactly
+    // as a real user's database would have carried it.
+    final file = File('${tempDir.path}/from27-inline-bounds.sqlite');
     final seed = AppDatabase(NativeDatabase(file));
-    final mixedId = await seed.createTankWithPreset(
+    final tankId = await seed.createTankWithPreset(
       name: 'Mixed',
       type: SetupType.mixed,
     );
-    final fishId = await seed.createTankWithPreset(
-      name: 'Fish',
-      type: SetupType.fishOnly,
-    );
+    for (final col in const [
+      'amber_low',
+      'green_low',
+      'green_high',
+      'amber_high',
+      'target_value',
+    ]) {
+      await seed.customStatement(
+        'ALTER TABLE tracked_parameters ADD COLUMN $col REAL',
+      );
+    }
     await seed.customStatement(
-      'ALTER TABLE tracked_parameters DROP COLUMN target_value',
+      "UPDATE tracked_parameters SET green_low = 99, target_value = 42 "
+      "WHERE param_key = 'alkalinity'",
     );
-    await seed.customStatement('PRAGMA user_version = 21');
+    await seed.customStatement('DROP TABLE IF EXISTS parameter_overrides');
+    await seed.customStatement('PRAGMA user_version = 27');
     await seed.close();
 
     final db = AppDatabase(NativeDatabase(file));
     addTearDown(db.close);
 
-    final mixed = await db.getTrackedParameters(mixedId);
+    // The columns are gone...
+    final cols = await db
+        .customSelect("SELECT name FROM pragma_table_info('tracked_parameters')")
+        .get();
+    final names = cols.map((r) => r.read<String>('name')).toSet();
     expect(
-      mixed.firstWhere((p) => p.paramKey == 'alkalinity').targetValue,
-      presetTarget(SetupType.mixed, 'alkalinity'),
-      reason: 'existing rows get the setup-type default target',
+      names.intersection({
+        'amber_low',
+        'green_low',
+        'green_high',
+        'amber_high',
+        'target_value',
+      }),
+      isEmpty,
     );
-    expect(
-      mixed.firstWhere((p) => p.paramKey == 'calcium').targetValue,
-      isNull,
-      reason: 'parameters without a preset target stay null',
-    );
-    // A setup type whose preset has no targets at all is untouched.
-    final fish = await db.getTrackedParameters(fishId);
-    expect(fish.every((p) => p.targetValue == null), isTrue);
+
+    // ...and deliberately NOT carried into the new table: the hand-tuned 99
+    // is discarded, and alkalinity resolves the mixed preset again. This is
+    // the documented cost of keeping defaults live for everyone.
+    expect(await db.getParameterOverrides(tankId), isEmpty);
+    final alk = (await db.getTrackedParameters(
+      tankId,
+    )).firstWhere((p) => p.paramKey == 'alkalinity');
+    final resolved = ResolvedParameter.resolve(alk, SetupType.mixed, null);
+    expect(resolved.isCustomised, isFalse);
+    expect(resolved.bounds, presetBounds(SetupType.mixed, 'alkalinity'));
+    expect(resolved.target, presetTarget(SetupType.mixed, 'alkalinity'));
   });
 
   test('upgrading from v18 backfills legacy reading group ids (#15)', () async {

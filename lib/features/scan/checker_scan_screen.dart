@@ -10,7 +10,6 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/hanna_checker.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/seven_segment.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
@@ -890,11 +889,7 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     final messenger = ScaffoldMessenger.of(context);
     final db = ref.read(dbProvider);
     try {
-      await db.addTrackedParameter(
-        tank.id,
-        checker.paramKey,
-        SetupType.fromName(tank.setupType),
-      );
+      await db.addTrackedParameter(tank.id, checker.paramKey);
       await db.insertReadingGroup(
         tankId: tank.id,
         takenAt: DateTime.now(),

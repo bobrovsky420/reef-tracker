@@ -57,9 +57,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     // "firstWhereOrNull" without package:collection — the param may have been
     // untracked/deleted while this screen is open; null falls back to the
     // catalog-based presentation below instead of crashing.
-    final TrackedParameter? param = tracked
+    final ResolvedParameter? param = tracked
         .where((t) => t.paramKey == widget.paramKey)
-        .cast<TrackedParameter?>()
+        .cast<ResolvedParameter?>()
         .firstWhere((t) => true, orElse: () => null);
     final readingsAsync = ref.watch(paramReadingsProvider(widget.paramKey));
     // select + TrendResult's value equality: another parameter's trend
@@ -259,9 +259,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   /// True when the newest reading in range classifies below the green zone —
   /// the case a correction dose can fix (values above range are water-change
   /// territory, so no CTA there).
-  bool _belowGreen(TrackedParameter? param, List<Reading> data) {
+  bool _belowGreen(ResolvedParameter? param, List<Reading> data) {
     if (param == null || data.isEmpty) return false;
-    final greenLow = boundsOf(param).greenLow;
+    final greenLow = param.bounds.greenLow;
     return greenLow != null && data.last.value < greenLow;
   }
 
@@ -345,10 +345,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   Widget _readingsSliver(
     BuildContext context,
     List<Reading> data,
-    TrackedParameter? param,
+    ResolvedParameter? param,
     ParamPresentation pres,
   ) {
-    final bounds = param != null ? boundsOf(param) : const ZoneBounds();
+    final bounds = param?.bounds ?? const ZoneBounds();
     final tokens = ReefTokens.of(context);
     return ReefSliverCard(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),

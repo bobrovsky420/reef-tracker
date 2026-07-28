@@ -28,6 +28,7 @@ import '../domain/pro_features.dart';
 import '../domain/ratio.dart';
 import '../domain/reminders.dart';
 import '../domain/ro.dart';
+import '../domain/setup_type.dart';
 import '../domain/stability_score.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
@@ -150,14 +151,49 @@ final _trackedParametersFamily = StreamProvider.autoDispose
           _dedup(ref.watch(dbProvider).watchTrackedParameters(tankId)),
     );
 
-/// Tracked parameters for the active tank.
-final trackedParametersProvider = Provider<AsyncValue<List<TrackedParameter>>>((
-  ref,
-) {
-  final tank = ref.watch(activeTankProvider);
-  if (tank == null) return const AsyncValue.data([]);
-  return ref.watch(_trackedParametersFamily(tank.id));
-});
+final _parameterOverridesFamily = StreamProvider.autoDispose
+    .family<List<ParameterOverride>, int>(
+      (ref, tankId) =>
+          _dedup(ref.watch(dbProvider).watchParameterOverrides(tankId)),
+    );
+
+/// The active tank's stored bound/target overrides, keyed by parameter. Only
+/// the bound editors need these directly — everything else reads
+/// [trackedParametersProvider], which has them already resolved.
+final parameterOverridesProvider =
+    Provider<AsyncValue<Map<String, ParameterOverride>>>((ref) {
+      final tank = ref.watch(activeTankProvider);
+      if (tank == null) return const AsyncValue.data({});
+      return ref
+          .watch(_parameterOverridesFamily(tank.id))
+          .whenData((l) => {for (final o in l) o.paramKey: o});
+    });
+
+/// Tracked parameters for the active tank, with zone bounds and correction
+/// target **already resolved** — the tank's override where it has one, the
+/// setup-type preset / catalog default where it does not.
+///
+/// Consumers that need to write a row back use `p.row`, which never carries
+/// resolved values; see [ResolvedParameter].
+final trackedParametersProvider =
+    Provider<AsyncValue<List<ResolvedParameter>>>((ref) {
+      final tank = ref.watch(activeTankProvider);
+      if (tank == null) return const AsyncValue.data([]);
+      final rows = ref.watch(_trackedParametersFamily(tank.id));
+      final overrides = ref.watch(_parameterOverridesFamily(tank.id));
+      if (rows.hasError) return AsyncValue.error(rows.error!, rows.stackTrace!);
+      if (overrides.hasError) {
+        return AsyncValue.error(overrides.error!, overrides.stackTrace!);
+      }
+      // Both streams must have landed before anything renders: resolving rows
+      // against a not-yet-loaded override list would flash the defaults over a
+      // tank's own bounds on every cold start.
+      final r = rows.value, o = overrides.value;
+      if (r == null || o == null) return const AsyncValue.loading();
+      return AsyncValue.data(
+        resolveParameters(r, SetupType.fromName(tank.setupType), o),
+      );
+    });
 
 final _tankReadingsFamily = StreamProvider.autoDispose
     .family<List<Reading>, int>(
@@ -296,7 +332,7 @@ final dosingElementZonesProvider = Provider<Map<String, Zone>>((ref) {
       continue;
     }
     final bounds = switch (rowByKey[key]) {
-      final row? => boundsOf(row),
+      final row? => row.bounds,
       null => microDefaultBounds(key),
     };
     final zone = bounds.classify(reading.value);
@@ -959,7 +995,7 @@ final tankTrendsProvider = Provider<Map<String, TrendResult>>((ref) {
   for (final p in tracked) {
     final pts = byParam[p.paramKey];
     if (pts == null) continue;
-    final t = computeTrend(points: pts, bounds: boundsOf(p), window: window);
+    final t = computeTrend(points: pts, bounds: p.bounds, window: window);
     if (t != null) result[p.paramKey] = t;
   }
   return result;
@@ -988,7 +1024,7 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
     for (final p in tracked.where((t) => t.enabled && isCoreParam(t.paramKey)))
       (
         paramKey: p.paramKey,
-        bounds: boundsOf(p),
+        bounds: p.bounds,
         latest: latest[p.paramKey]?.value,
         takenAt: latest[p.paramKey]?.takenAt,
       ),
@@ -1066,7 +1102,7 @@ final tankStabilityProvider = Provider<TankStability>((ref) {
     for (final p in tracked.where((t) => t.enabled && isCoreParam(t.paramKey)))
       (
         paramKey: p.paramKey,
-        bounds: boundsOf(p),
+        bounds: p.bounds,
         points: byParam[p.paramKey] ?? const [],
       ),
   ];
@@ -1102,7 +1138,7 @@ final tankInsightsProvider = Provider<List<Insight>>((ref) {
   }
 
   final core = tracked.where((t) => t.enabled && isCoreParam(t.paramKey));
-  final bounds = {for (final p in core) p.paramKey: boundsOf(p)};
+  final bounds = {for (final p in core) p.paramKey: p.bounds};
 
   final health = computeTankHealth([
     for (final p in core)
@@ -1143,7 +1179,7 @@ final tankInsightsProvider = Provider<List<Insight>>((ref) {
 /// the *effective* bounds — the row's when present, else the catalog defaults.
 typedef MicroElementStatus = ({
   ParameterDef def,
-  TrackedParameter? row,
+  ResolvedParameter? row,
   Reading? latest,
   ZoneBounds bounds,
 });
@@ -1157,7 +1193,7 @@ typedef MicroElementStatus = ({
 /// mid-build (setState-during-build crash). Single-layer derivation is the
 /// same proven shape as [tankHealthProvider].
 List<MicroElementStatus> _microElements(
-  List<TrackedParameter> tracked,
+  List<ResolvedParameter> tracked,
   List<Reading> readings,
 ) {
   final rowByKey = {for (final t in tracked) t.paramKey: t};
@@ -1173,7 +1209,7 @@ List<MicroElementStatus> _microElements(
         row: rowByKey[def.key],
         latest: latest[def.key],
         bounds: switch (rowByKey[def.key]) {
-          final row? => boundsOf(row),
+          final row? => row.bounds,
           null => microDefaultBounds(def.key),
         },
       ),

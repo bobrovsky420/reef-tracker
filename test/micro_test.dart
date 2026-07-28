@@ -177,10 +177,20 @@ void main() {
 
     test('natural seawater values classify green', () {
       expect(kMicroDefaultBounds['iodine']!.classify(0.06), Zone.green);
-      expect(kMicroDefaultBounds['strontium']!.classify(8.1), Zone.green);
       expect(kMicroDefaultBounds['sodium']!.classify(10760), Zone.green);
       expect(kMicroDefaultBounds['lithium']!.classify(0.18), Zone.green);
       expect(kMicroDefaultBounds['molybdenum']!.classify(0.01), Zone.green);
+    });
+
+    test('KNOWN EXCEPTION: strontium at natural-seawater level reads amber', () {
+      // Sr is the one element whose adopted lab band (6.5–8.0 mg/L) sits
+      // BELOW natural seawater (~8.1 mg/L at 35 ppt) — so an NSW-matching
+      // tank is flagged amber-high by default. The same lab's own prose
+      // recommends 7–10 mg/L, which would contain NSW; the gauge is what we
+      // adopted. Widen greenHigh to 10 (amberHigh 11) to restore the
+      // NSW-is-green invariant if this proves noisy in the field.
+      expect(kMicroDefaultBounds['strontium']!.classify(8.1), Zone.amber);
+      expect(kMicroDefaultBounds['strontium']!.classify(7.5), Zone.green);
     });
   });
 
@@ -260,13 +270,15 @@ void main() {
     test('status zone is the dominant deviation: an amber majority reads '
         'amber even with a red present', () {
       final t = DateTime(2026, 6, 1);
+      // Explicit bounds, not catalog defaults: this asserts the dominance
+      // arithmetic, which must not break when a default gets retuned.
+      const keepLow = ZoneBounds(greenHigh: 1, amberHigh: 2);
       final s = computeMicroStatus([
-        // Red (beyond the amber ceiling 0.001).
-        (paramKey: 'mercury', bounds: b('mercury'), latest: 0.01, takenAt: t),
-        // Two ambers (between green ceiling and amber ceiling).
-        (paramKey: 'lead', bounds: b('lead'), latest: 0.005, takenAt: t),
-        // Amber (between tin's green ceiling 0.003 and amber ceiling 0.01).
-        (paramKey: 'tin', bounds: b('tin'), latest: 0.005, takenAt: t),
+        // Red (beyond the amber ceiling).
+        (paramKey: 'mercury', bounds: keepLow, latest: 5, takenAt: t),
+        // Two ambers (between the green and amber ceilings).
+        (paramKey: 'lead', bounds: keepLow, latest: 1.5, takenAt: t),
+        (paramKey: 'tin', bounds: keepLow, latest: 1.5, takenAt: t),
       ]);
       expect(s.outOfRange, 3);
       expect(s.statusZone, Zone.amber);
@@ -320,7 +332,7 @@ void main() {
     test('microHiddenAsUndetectable: a zero contaminant reading is hidden '
         '(zero is fine for "keep low" elements)', () {
       expect(microHiddenAsUndetectable(b('lead'), 0), isTrue);
-      expect(microHiddenAsUndetectable(b('zinc'), 0), isTrue);
+      expect(microHiddenAsUndetectable(b('aluminium'), 0), isTrue);
     });
 
     test('microHiddenAsUndetectable: zero stays visible where it means a '
@@ -328,6 +340,9 @@ void main() {
       expect(microHiddenAsUndetectable(b('sodium'), 0), isFalse);
       expect(microHiddenAsUndetectable(b('iodine'), 0), isFalse);
       expect(microHiddenAsUndetectable(b('potassium'), 0), isFalse);
+      // Zinc gained a lower bound with the lab reference bands: an
+      // undetectable zinc is a deficiency to surface, not a clean result.
+      expect(microHiddenAsUndetectable(b('zinc'), 0), isFalse);
     });
 
     test('microHiddenAsUndetectable: only exact zeros are hidden, not '

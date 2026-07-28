@@ -79,6 +79,20 @@ class ZoneBounds {
     amberHigh: amberHigh ?? this.amberHigh,
   );
 
+  /// Value equality over the four bounds. Needed to answer "are these bounds
+  /// still the defaults?" — the question the bound editor asks before deciding
+  /// whether to store a per-tank override at all.
+  @override
+  bool operator ==(Object other) =>
+      other is ZoneBounds &&
+      other.amberLow == amberLow &&
+      other.greenLow == greenLow &&
+      other.greenHigh == greenHigh &&
+      other.amberHigh == amberHigh;
+
+  @override
+  int get hashCode => Object.hash(amberLow, greenLow, greenHigh, amberHigh);
+
   /// Classifies [value] into a [Zone] using these boundaries.
   Zone classify(double value) {
     if (isEmpty || !isValid) return Zone.unknown;

@@ -277,23 +277,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get noActiveAquarium => 'Nessun acquario attivo.';
 
   @override
-  String reapplyPreset(Object type) {
-    return 'Riapplica il preset $type';
-  }
-
-  @override
-  String reapplyPresetTitle(Object type) {
-    return 'Riapplicare il preset $type?';
-  }
-
-  @override
-  String get reapplyPresetBody =>
-      'I limiti verde/arancione/rosso di tutti i parametri monitorati verranno sovrascritti con i valori predefiniti: quelli del preset del tipo di vasca per i parametri della dashboard, i valori integrati per gli oligoelementi. Le tue misurazioni vengono conservate.';
-
-  @override
-  String get presetApplied => 'Preset applicato.';
-
-  @override
   String get noBoundariesSet => 'Nessun limite impostato';
 
   @override
@@ -3760,4 +3743,29 @@ class AppLocalizationsIt extends AppLocalizations {
   String reefDevicesLastSeen(Object date) {
     return 'Visto $date';
   }
+
+  @override
+  String get resetParamDefaults => 'Ripristina i valori predefiniti';
+
+  @override
+  String get resetParamDefaultsTitle =>
+      'Ripristinare i valori predefiniti di tutti i parametri?';
+
+  @override
+  String get resetParamDefaultsBody =>
+      'Ogni parametro torna ai limiti consigliati per questo tipo di acquario e i microelementi ai loro valori predefiniti. I limiti impostati da te vengono eliminati. Le misurazioni sono conservate.';
+
+  @override
+  String get paramDefaultsRestored =>
+      'Parametri ripristinati ai valori predefiniti.';
+
+  @override
+  String get resetThisParamDefaults =>
+      'Ripristina i valori predefiniti di questo parametro';
+
+  @override
+  String get reset => 'Ripristina';
+
+  @override
+  String get followingDefaults => 'Usa i valori predefiniti';
 }

@@ -277,23 +277,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get noActiveAquarium => 'Žádné aktivní akvárium.';
 
   @override
-  String reapplyPreset(Object type) {
-    return 'Znovu použít přednastavení $type';
-  }
-
-  @override
-  String reapplyPresetTitle(Object type) {
-    return 'Znovu použít přednastavení $type?';
-  }
-
-  @override
-  String get reapplyPresetBody =>
-      'Tím se hranice zelená/oranžová/červená u všech sledovaných parametrů přepíší výchozími hodnotami: parametry na přehledu podle přednastavení typu akvária, mikroprvky podle vestavěných výchozích hodnot. Vaše měření zůstanou zachována.';
-
-  @override
-  String get presetApplied => 'Přednastavení použito.';
-
-  @override
   String get noBoundariesSet => 'Hranice nenastaveny';
 
   @override
@@ -3764,4 +3747,28 @@ class AppLocalizationsCs extends AppLocalizations {
   String reefDevicesLastSeen(Object date) {
     return 'Naposledy $date';
   }
+
+  @override
+  String get resetParamDefaults => 'Obnovit výchozí hodnoty';
+
+  @override
+  String get resetParamDefaultsTitle =>
+      'Obnovit u všech parametrů výchozí hodnoty?';
+
+  @override
+  String get resetParamDefaultsBody =>
+      'Každý parametr se vrátí k doporučeným hranicím pro tento typ akvária a mikroprvky k vestavěným výchozím hodnotám. Hranice, které jste nastavili sami, budou zahozeny. Naměřené hodnoty zůstanou zachovány.';
+
+  @override
+  String get paramDefaultsRestored => 'Parametry obnoveny na výchozí hodnoty.';
+
+  @override
+  String get resetThisParamDefaults =>
+      'Obnovit výchozí hodnoty tohoto parametru';
+
+  @override
+  String get reset => 'Obnovit';
+
+  @override
+  String get followingDefaults => 'Používá výchozí hodnoty';
 }

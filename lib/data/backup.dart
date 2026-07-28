@@ -63,6 +63,7 @@ class BackupData {
     required this.schemaVersion,
     required this.tanks,
     required this.params,
+    this.paramOverrides = const [],
     required this.readings,
     required this.waterChanges,
     required this.carbonChanges,
@@ -86,6 +87,10 @@ class BackupData {
 
   final List<TanksCompanion> tanks;
   final List<TrackedParametersCompanion> params;
+
+  /// Per-tank zone-bound/target overrides (schema v28+). Absent in older
+  /// backups, which simply restore with every parameter on its defaults.
+  final List<ParameterOverridesCompanion> paramOverrides;
   final List<ReadingsCompanion> readings;
   final List<WaterChangesCompanion> waterChanges;
   final List<CarbonChangesCompanion> carbonChanges;
@@ -149,6 +154,7 @@ String encodeBackup({
   required int schemaVersion,
   required List<Tank> tanks,
   required List<TrackedParameter> params,
+  List<ParameterOverride> paramOverrides = const [],
   required List<Reading> readings,
   required List<WaterChange> waterChanges,
   required List<CarbonChange> carbonChanges,
@@ -182,6 +188,7 @@ String encodeBackup({
     'device': ?deviceName,
     'tanks': tanks.map(_tankToJson).toList(),
     'trackedParameters': params.map(_paramToJson).toList(),
+    'parameterOverrides': paramOverrides.map(_paramOverrideToJson).toList(),
     'readings': readings.map(_readingToJson).toList(),
     'waterChanges': waterChanges.map(_waterChangeToJson).toList(),
     'carbonChanges': carbonChanges.map(_carbonChangeToJson).toList(),
@@ -404,6 +411,13 @@ BackupData decodeBackup(String jsonString) {
     schemaVersion: schemaVersion,
     tanks: section('tanks', _tankFromJson),
     params: section('trackedParameters', _paramFromJson),
+    // Absent in every pre-v28 backup: those restore with all parameters on
+    // their defaults, which is exactly what the v28 migration does too.
+    paramOverrides: section(
+      'parameterOverrides',
+      _paramOverrideFromJson,
+      required: false,
+    ),
     readings: section('readings', _readingFromJson),
     waterChanges: section(
       'waterChanges',
@@ -536,6 +550,10 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   }
 
   requireTank('trackedParameters', data.params.map((r) => r.tankId.value));
+  requireTank(
+    'parameterOverrides',
+    data.paramOverrides.map((r) => r.tankId.value),
+  );
   requireTank('readings', data.readings.map((r) => r.tankId.value));
   requireTank('waterChanges', data.waterChanges.map((r) => r.tankId.value));
   requireTank('carbonChanges', data.carbonChanges.map((r) => r.tankId.value));
@@ -891,6 +909,7 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
     db.restoreFromBackup(
       tankRows: data.tanks,
       paramRows: data.params,
+      paramOverrideRows: data.paramOverrides,
       readingRows: data.readings,
       waterChangeRows: data.waterChanges,
       carbonChangeRows: data.carbonChanges,
@@ -926,6 +945,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   final schemaVersion = db.schemaVersion;
   final allTanks = await db.getAllTanks();
   var params = await db.getAllTrackedParameters();
+  var paramOverrides = await db.getAllParameterOverrides();
   var readings = await db.getAllReadings();
   var waterChanges = await db.getAllWaterChanges();
   var carbonChanges = await db.getAllCarbonChanges();
@@ -963,6 +983,9 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   ];
   if (hidden.isNotEmpty) {
     params = params.where((r) => !hidden.contains(r.tankId)).toList();
+    paramOverrides = paramOverrides
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
     readings = readings.where((r) => !hidden.contains(r.tankId)).toList();
     waterChanges = waterChanges
         .where((r) => !hidden.contains(r.tankId))
@@ -1004,6 +1027,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       schemaVersion: schemaVersion,
       tanks: tanks,
       params: params,
+      paramOverrides: paramOverrides,
       readings: readings,
       waterChanges: waterChanges,
       carbonChanges: carbonChanges,
@@ -1126,12 +1150,7 @@ Map<String, dynamic> _paramToJson(TrackedParameter t) => {
   'unit': t.unit,
   'enabled': t.enabled,
   'displayOrder': t.displayOrder,
-  'amberLow': t.amberLow,
-  'greenLow': t.greenLow,
-  'greenHigh': t.greenHigh,
-  'amberHigh': t.amberHigh,
   'testCadenceDays': t.testCadenceDays,
-  'targetValue': t.targetValue,
 };
 
 TrackedParametersCompanion _paramFromJson(Map<String, dynamic> m) =>
@@ -1142,14 +1161,35 @@ TrackedParametersCompanion _paramFromJson(Map<String, dynamic> m) =>
       unit: Value(m['unit'] as String),
       enabled: Value(m['enabled'] as bool),
       displayOrder: Value(m['displayOrder'] as int),
+      // Absent in pre-v16 backups → no test reminder (U1).
+      testCadenceDays: Value(m['testCadenceDays'] as int?),
+      // `amberLow`/`greenLow`/`greenHigh`/`amberHigh`/`targetValue` were
+      // carried here until schema v28. They now live in `parameterOverrides`,
+      // and a pre-v28 backup's copies are deliberately IGNORED rather than
+      // imported as overrides: restoring them would mark every parameter as
+      // customised and freeze the tank on the defaults that were current when
+      // the backup was taken — the same reason v28's migration drops the
+      // columns instead of copying them.
+    );
+
+Map<String, dynamic> _paramOverrideToJson(ParameterOverride o) => {
+  'tankId': o.tankId,
+  'paramKey': o.paramKey,
+  'amberLow': o.amberLow,
+  'greenLow': o.greenLow,
+  'greenHigh': o.greenHigh,
+  'amberHigh': o.amberHigh,
+  'targetValue': o.targetValue,
+};
+
+ParameterOverridesCompanion _paramOverrideFromJson(Map<String, dynamic> m) =>
+    ParameterOverridesCompanion(
+      tankId: Value(m['tankId'] as int),
+      paramKey: Value(m['paramKey'] as String),
       amberLow: Value((m['amberLow'] as num?)?.toDouble()),
       greenLow: Value((m['greenLow'] as num?)?.toDouble()),
       greenHigh: Value((m['greenHigh'] as num?)?.toDouble()),
       amberHigh: Value((m['amberHigh'] as num?)?.toDouble()),
-      // Absent in pre-v16 backups → no test reminder (U1).
-      testCadenceDays: Value(m['testCadenceDays'] as int?),
-      // Absent in pre-v22 backups → correction target falls back to the
-      // green-zone midpoint.
       targetValue: Value((m['targetValue'] as num?)?.toDouble()),
     );
 

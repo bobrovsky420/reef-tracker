@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
@@ -147,28 +146,26 @@ class _ConfigureRow extends ConsumerWidget {
   }
 
   /// Opens the standard bounds editor, creating the element's tracked row
-  /// first when it doesn't exist yet (seeded with the catalog defaults by
-  /// `addTrackedParameter`).
+  /// first when it doesn't exist yet. The new row carries no bounds — they
+  /// resolve from the catalog default until the user overrides them.
   Future<void> _editBounds(BuildContext context, WidgetRef ref) async {
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
-    var row = element.row;
-    if (row == null) {
+    var id = element.row?.id;
+    if (id == null) {
       final db = ref.read(dbProvider);
-      await db.addTrackedParameter(
-        tank.id,
-        element.def.key,
-        SetupType.fromName(tank.setupType),
-      );
+      await db.addTrackedParameter(tank.id, element.def.key);
       for (final t in await db.getTrackedParameters(tank.id)) {
         if (t.paramKey == element.def.key) {
-          row = t;
+          id = t.id;
           break;
         }
       }
     }
-    if (row != null && context.mounted) {
-      await context.push('/parameters/${row.id}/edit', extra: row);
+    // No `extra`: the edit route resolves the row (and its override) by id,
+    // so it can never be handed a stale or unresolved object (#1).
+    if (id != null && context.mounted) {
+      await context.push('/parameters/$id/edit');
     }
   }
 }

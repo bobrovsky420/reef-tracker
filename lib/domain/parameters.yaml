@@ -167,8 +167,15 @@ parameters:
   # `defaultBounds` are sensible starting points anchored on natural seawater
   # (NSW at 35 ppt: Na ~10 760, K ~400, S ~905, B ~4.4, Br ~65, Sr ~8.1 ppm;
   # I ~60 µg/L, Mo ~10 µg/L, Li ~180 µg/L, Ba ~10–15 µg/L) and the target
-  # ranges ICP labs publish — deliberately generous, and editable per tank
-  # exactly like core-parameter bounds. `hobbyKit` marks the elements
+  # ranges ICP labs publish — editable per tank exactly like core-parameter
+  # bounds. Sr, Fe, Si, Zn, V, Cu, Ni, Mo, Li, Al, Sb, Sn, Ag, W, La, Ti, As,
+  # Cd, Hg and Pb follow the Fauna Marin lab reference bands (their report
+  # gauges' green/yellow zones). Where that lab publishes only a reference
+  # range and no gauge (the contaminants), the range end is `greenHigh` and
+  # `amberHigh` is +10% — the ratio their gauged elements use throughout.
+  # Contaminants keep one-sided bounds even where the lab states a lower
+  # reference bound: "too little lead/lanthanum/titanium" is not a condition
+  # worth alarming on. `hobbyKit` marks the elements
   # hobbyists test at home between ICPs (Salifert/Red Sea kits exist for
   # these) — the compact filter of the micro entry form.
   - key: strontium
@@ -180,7 +187,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 50
-    defaultBounds: { amberLow: 5.5, greenLow: 7.0, greenHigh: 9.5, amberHigh: 12.0 }
+    defaultBounds: { amberLow: 2.0, greenLow: 6.5, greenHigh: 8.0, amberHigh: 10.0 }
 
   # Iodine sits with the halogens on the report, in mg/L (e.g. 0.102) —
   # three decimals cover the reference-range resolution (0.055–0.080).
@@ -205,7 +212,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 2
-    defaultBounds: { greenHigh: 0.005, amberHigh: 0.015 }
+    defaultBounds: { greenHigh: 0.0025, amberHigh: 0.0028 }
 
   # Major ions (mg/L on ICP reports; wide tolerances).
   - key: sodium
@@ -262,8 +269,12 @@ parameters:
     defaultBounds: { amberLow: 45, greenLow: 55, greenHigh: 75, amberHigh: 95 }
 
   # Silicon sits with the majors on ICP reports — in mg/L like them (e.g.
-  # 0.2) — but is wanted *low* (diatoms), so its default bounds are
-  # one-sided like a contaminant's.
+  # 0.2). Labs treat it as two-sided: too much feeds diatoms, too little
+  # shows as green film algae and poor sponge growth. `amberLow` deliberately
+  # EQUALS `greenLow` so the low side is red-straight-to-green with no amber
+  # step (a null amberLow would instead make everything below green amber —
+  # zones.dart only reds beyond a *defined* amber bound); the zero-width band
+  # is dropped by zoneBands().
   - key: silicon
     unit: mg/L
     decimals: 2
@@ -272,7 +283,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 10
-    defaultBounds: { greenHigh: 0.15, amberHigh: 0.5 }
+    defaultBounds: { amberLow: 0.1, greenLow: 0.1, greenHigh: 0.2, amberHigh: 0.22 }
 
   # Desirable trace elements (µg/L range).
   - key: zinc
@@ -284,7 +295,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.01, amberHigh: 0.03 }
+    defaultBounds: { amberLow: 0.0027, greenLow: 0.003, greenHigh: 0.008, amberHigh: 0.0088 }
 
   - key: vanadium
     unit: "µg/L"
@@ -295,7 +306,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.003, amberHigh: 0.008 }
+    defaultBounds: { amberLow: 0.0018, greenLow: 0.002, greenHigh: 0.01, amberHigh: 0.011 }
 
   - key: copper
     unit: "µg/L"
@@ -306,7 +317,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.002, amberHigh: 0.01 }
+    defaultBounds: { amberLow: 0.0018, greenLow: 0.002, greenHigh: 0.006, amberHigh: 0.0066 }
 
   - key: nickel
     unit: "µg/L"
@@ -317,7 +328,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.002, amberHigh: 0.008 }
+    defaultBounds: { amberLow: 0.0027, greenLow: 0.003, greenHigh: 0.006, amberHigh: 0.0066 }
 
   - key: manganese
     unit: "µg/L"
@@ -339,7 +350,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { amberLow: 0.001, greenLow: 0.005, greenHigh: 0.015, amberHigh: 0.03 }
+    defaultBounds: { amberLow: 0.009, greenLow: 0.01, greenHigh: 0.02, amberHigh: 0.022 }
 
   - key: chromium
     unit: "µg/L"
@@ -372,7 +383,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 5
-    defaultBounds: { amberLow: 0.05, greenLow: 0.12, greenHigh: 0.25, amberHigh: 0.4 }
+    defaultBounds: { amberLow: 0.162, greenLow: 0.18, greenHigh: 0.35, amberHigh: 0.385 }
 
   - key: barium
     unit: "µg/L"
@@ -407,7 +418,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 2
-    defaultBounds: { greenHigh: 0.01, amberHigh: 0.05 }
+    defaultBounds: { greenHigh: 0.03, amberHigh: 0.033 }
 
   - key: antimony
     unit: "µg/L"
@@ -418,7 +429,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.002, amberHigh: 0.01 }
+    defaultBounds: { greenHigh: 0.01, amberHigh: 0.011 }
 
   - key: tin
     unit: "µg/L"
@@ -429,7 +440,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.003, amberHigh: 0.01 }
+    defaultBounds: { greenHigh: 0.01, amberHigh: 0.011 }
 
   - key: beryllium
     unit: "µg/L"
@@ -451,7 +462,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.0005, amberHigh: 0.002 }
+    defaultBounds: { greenHigh: 0.01, amberHigh: 0.011 }
 
   - key: tungsten
     unit: "µg/L"
@@ -462,7 +473,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.001, amberHigh: 0.005 }
+    defaultBounds: { greenHigh: 0.03, amberHigh: 0.033 }
 
   - key: lanthanum
     unit: "µg/L"
@@ -473,7 +484,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.001, amberHigh: 0.005 }
+    defaultBounds: { greenHigh: 0.01, amberHigh: 0.011 }
 
   - key: titanium
     unit: "µg/L"
@@ -484,7 +495,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.002, amberHigh: 0.01 }
+    defaultBounds: { greenHigh: 0.0035, amberHigh: 0.0039 }
 
   - key: zirconium
     unit: "µg/L"
@@ -506,7 +517,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.004, amberHigh: 0.012 }
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.0011 }
 
   - key: cadmium
     unit: "µg/L"
@@ -517,7 +528,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.0005, amberHigh: 0.002 }
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.0011 }
 
   - key: mercury
     unit: "µg/L"
@@ -528,7 +539,7 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.0003, amberHigh: 0.001 }
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.0011 }
 
   - key: lead
     unit: "µg/L"
@@ -539,4 +550,4 @@ parameters:
     minValue: 0
     plausibleMin: 0
     plausibleMax: 1
-    defaultBounds: { greenHigh: 0.002, amberHigh: 0.008 }
+    defaultBounds: { greenHigh: 0.001, amberHigh: 0.0011 }

@@ -10,6 +10,7 @@ import '../../data/database.dart';
 import '../../domain/ammonia_toxicity.dart';
 import '../../domain/dashboard_sections.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/presets.dart';
 import '../../domain/ratio.dart';
 import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
@@ -53,15 +54,15 @@ class ManageParametersScreen extends ConsumerWidget {
             iconStyle: reefIconButtonStyle(context),
             tooltip: l.moreOptions,
             onSelected: (v) async {
-              if (v == 'preset') {
-                await _confirmApplyPreset(context, ref, tank.id, type);
+              if (v == 'reset') {
+                await _confirmResetDefaults(context, ref, tank.id);
               }
             },
             entries: [
               ReefMenuItem(
-                value: 'preset',
-                icon: Icons.playlist_add_check,
-                label: l.reapplyPreset(l.setupLabel(type)),
+                value: 'reset',
+                icon: Icons.restart_alt,
+                label: l.resetParamDefaults,
               ),
             ],
           ),
@@ -297,7 +298,7 @@ class ManageParametersScreen extends ConsumerWidget {
   Widget _paramRow(
     BuildContext context,
     WidgetRef ref,
-    TrackedParameter param,
+    ResolvedParameter param,
     UnitPrefs prefs,
     int index, {
     required bool grouped,
@@ -316,7 +317,7 @@ class ManageParametersScreen extends ConsumerWidget {
           value: param.enabled,
           onChanged: (v) => ref
               .read(dbProvider)
-              .updateTrackedParameter(param.copyWith(enabled: v)),
+              .updateTrackedParameter(param.row.copyWith(enabled: v)),
         ),
       ),
       title: _titleWithGroup(
@@ -326,7 +327,7 @@ class ManageParametersScreen extends ConsumerWidget {
         // sections to belong to.
         grouped ? l.dashSectionLabel(sectionOfParam(param.paramKey)) : null,
       ),
-      sub: _boundsSummary(l, boundsOf(param), pres),
+      sub: _boundsSummary(l, param.bounds, pres),
       trailing: [
         _editIcon(
           context,
@@ -425,7 +426,7 @@ class ManageParametersScreen extends ConsumerWidget {
     WidgetRef ref,
     int tankId,
     SetupType type,
-    List<TrackedParameter> tracked,
+    List<ResolvedParameter> tracked,
   ) async {
     final l = AppLocalizations.of(context);
     final existing = tracked.map((e) => e.paramKey).toSet();
@@ -465,22 +466,24 @@ class ManageParametersScreen extends ConsumerWidget {
       ),
     );
     if (key != null) {
-      await ref.read(dbProvider).addTrackedParameter(tankId, key, type);
+      await ref.read(dbProvider).addTrackedParameter(tankId, key);
     }
   }
 
-  Future<void> _confirmApplyPreset(
+  /// Deletes every override for the tank, so all its parameters go back to
+  /// following the setup-type preset / catalog defaults. Nothing is
+  /// recomputed — the defaults are resolved on read.
+  Future<void> _confirmResetDefaults(
     BuildContext context,
     WidgetRef ref,
     int tankId,
-    SetupType type,
   ) async {
     final l = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l.reapplyPresetTitle(l.setupLabel(type))),
-        content: Text(l.reapplyPresetBody),
+        title: Text(l.resetParamDefaultsTitle),
+        content: Text(l.resetParamDefaultsBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -488,17 +491,17 @@ class ManageParametersScreen extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.apply),
+            child: Text(l.reset),
           ),
         ],
       ),
     );
     if (ok ?? false) {
-      await ref.read(dbProvider).applyPreset(tankId, type);
+      await ref.read(dbProvider).resetParameterDefaults(tankId);
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(l.presetApplied)));
+        ).showSnackBar(SnackBar(content: Text(l.paramDefaultsRestored)));
       }
     }
   }
@@ -543,7 +546,7 @@ sealed class _DashItem {
 
 class _ParamItem extends _DashItem {
   _ParamItem(this.param);
-  final TrackedParameter param;
+  final ResolvedParameter param;
   @override
   DashboardSortKey get key => paramSortKey(param.paramKey, param.displayOrder);
   @override
@@ -603,7 +606,7 @@ String _ratioBoundsSummary(AppLocalizations l, RatioKind kind, ZoneBounds b) {
 class ParameterEditScreen extends ConsumerStatefulWidget {
   const ParameterEditScreen({super.key, required this.param});
 
-  final TrackedParameter param;
+  final ResolvedParameter param;
 
   @override
   ConsumerState<ParameterEditScreen> createState() =>
@@ -630,7 +633,7 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     // Edit boundaries in the user's display unit; values are stored canonically.
     _pres = presentationOf(widget.param, ref.read(unitPrefsProvider));
     _unit = TextEditingController(text: widget.param.unit);
-    final target = widget.param.targetValue;
+    final target = widget.param.target;
     _target = TextEditingController(
       text: target == null
           ? ''
@@ -651,17 +654,32 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     super.dispose();
   }
 
-  /// The parameter's stored (canonical) bounds converted into the display space
-  /// the editor edits in.
+  /// The parameter's *effective* (canonical) bounds — its override, or the
+  /// defaults it is currently following — converted into the display space the
+  /// editor edits in. Seeding the fields with the resolved values is what lets
+  /// "Reset to defaults" be a visible, reversible action rather than a hidden
+  /// state: the user always edits the numbers they can see.
   ZoneBounds get _displayBounds => ZoneBounds(
-    amberLow: _toDisplay(widget.param.amberLow),
-    greenLow: _toDisplay(widget.param.greenLow),
-    greenHigh: _toDisplay(widget.param.greenHigh),
-    amberHigh: _toDisplay(widget.param.amberHigh),
+    amberLow: _toDisplay(widget.param.bounds.amberLow),
+    greenLow: _toDisplay(widget.param.bounds.greenLow),
+    greenHigh: _toDisplay(widget.param.bounds.greenHigh),
+    amberHigh: _toDisplay(widget.param.bounds.amberHigh),
   );
 
   double? _toDisplay(double? canonical) =>
       canonical == null ? null : _pres.toDisplay(canonical);
+
+  /// The tank's setup type — what "the defaults" means for this parameter.
+  SetupType get _setupType =>
+      SetupType.fromName(ref.read(activeTankProvider)!.setupType);
+
+  /// Drops this parameter back to the defaults and closes the editor.
+  Future<void> _resetToDefaults() async {
+    await ref
+        .read(dbProvider)
+        .clearParameterOverride(widget.param.tankId, widget.param.paramKey);
+    if (mounted) context.pop();
+  }
 
   Future<void> _save() async {
     final l = AppLocalizations.of(context);
@@ -685,23 +703,43 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     final cadence = _customCadence
         ? int.parse(_customDays.text.trim())
         : _cadence;
-    await ref
-        .read(dbProvider)
-        .updateTrackedParameter(
-          widget.param.copyWith(
-            // Temp/salinity unit follows app settings, microelement units
-            // are fixed by the catalog; keep the stored unit either way.
-            unit: _pres.unitFollowsSettings || _pres.unitFixed
-                ? widget.param.unit
-                : _unit.text.trim(),
-            amberLow: Value(canon(b.amberLow)),
-            greenLow: Value(canon(b.greenLow)),
-            greenHigh: Value(canon(b.greenHigh)),
-            amberHigh: Value(canon(b.amberHigh)),
-            testCadenceDays: Value(cadence),
-            targetValue: Value(canon(parseUserDouble(_target.text))),
-          ),
-        );
+    final db = ref.read(dbProvider);
+    await db.updateTrackedParameter(
+      widget.param.row.copyWith(
+        // Temp/salinity unit follows app settings, microelement units
+        // are fixed by the catalog; keep the stored unit either way.
+        unit: _pres.unitFollowsSettings || _pres.unitFixed
+            ? widget.param.unit
+            : _unit.text.trim(),
+        testCadenceDays: Value(cadence),
+      ),
+    );
+
+    final canonical = ZoneBounds(
+      amberLow: canon(b.amberLow),
+      greenLow: canon(b.greenLow),
+      greenHigh: canon(b.greenHigh),
+      amberHigh: canon(b.amberHigh),
+    );
+    final target = canon(parseUserDouble(_target.text));
+    // Saving values that still equal the defaults must NOT create an override:
+    // otherwise opening this screen to change only the test cadence would
+    // silently opt the parameter out of every future default change.
+    final defaults = defaultBoundsFor(_setupType, widget.param.paramKey);
+    final defaultTarget = defaultTargetFor(_setupType, widget.param.paramKey);
+    if (canonical == defaults && target == defaultTarget) {
+      await db.clearParameterOverride(
+        widget.param.tankId,
+        widget.param.paramKey,
+      );
+    } else {
+      await db.setParameterOverride(
+        widget.param.tankId,
+        widget.param.paramKey,
+        canonical,
+        target: target,
+      );
+    }
     if (mounted) context.pop();
   }
 
@@ -779,6 +817,27 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
                     initial: _displayBounds,
                     format: (v) => formatLocaleNumber(v, _pres.decimals),
                   ),
+                  // The only way back to the defaults once a parameter carries
+                  // an override — the fields above are seeded with the
+                  // resolved values either way, so nothing else distinguishes
+                  // the two states.
+                  if (widget.param.isCustomised)
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton.icon(
+                        onPressed: _resetToDefaults,
+                        icon: const Icon(Icons.restart_alt, size: 18),
+                        label: Text(l.resetThisParamDefaults),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        l.followingDefaults,
+                        style: TextStyle(fontSize: 12, color: tokens.textDim),
+                      ),
+                    ),
                   const SizedBox(height: 12),
                   // Correction target for the dose calculator (in the same
                   // display space as the bounds above). Empty = the middle of

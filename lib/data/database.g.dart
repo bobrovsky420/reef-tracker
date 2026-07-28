@@ -698,50 +698,6 @@ class $TrackedParametersTable extends TrackedParameters
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _amberLowMeta = const VerificationMeta(
-    'amberLow',
-  );
-  @override
-  late final GeneratedColumn<double> amberLow = GeneratedColumn<double>(
-    'amber_low',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _greenLowMeta = const VerificationMeta(
-    'greenLow',
-  );
-  @override
-  late final GeneratedColumn<double> greenLow = GeneratedColumn<double>(
-    'green_low',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _greenHighMeta = const VerificationMeta(
-    'greenHigh',
-  );
-  @override
-  late final GeneratedColumn<double> greenHigh = GeneratedColumn<double>(
-    'green_high',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _amberHighMeta = const VerificationMeta(
-    'amberHigh',
-  );
-  @override
-  late final GeneratedColumn<double> amberHigh = GeneratedColumn<double>(
-    'amber_high',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _testCadenceDaysMeta = const VerificationMeta(
     'testCadenceDays',
   );
@@ -753,17 +709,6 @@ class $TrackedParametersTable extends TrackedParameters
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _targetValueMeta = const VerificationMeta(
-    'targetValue',
-  );
-  @override
-  late final GeneratedColumn<double> targetValue = GeneratedColumn<double>(
-    'target_value',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -772,12 +717,7 @@ class $TrackedParametersTable extends TrackedParameters
     unit,
     enabled,
     displayOrder,
-    amberLow,
-    greenLow,
-    greenHigh,
-    amberHigh,
     testCadenceDays,
-    targetValue,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -833,45 +773,12 @@ class $TrackedParametersTable extends TrackedParameters
         ),
       );
     }
-    if (data.containsKey('amber_low')) {
-      context.handle(
-        _amberLowMeta,
-        amberLow.isAcceptableOrUnknown(data['amber_low']!, _amberLowMeta),
-      );
-    }
-    if (data.containsKey('green_low')) {
-      context.handle(
-        _greenLowMeta,
-        greenLow.isAcceptableOrUnknown(data['green_low']!, _greenLowMeta),
-      );
-    }
-    if (data.containsKey('green_high')) {
-      context.handle(
-        _greenHighMeta,
-        greenHigh.isAcceptableOrUnknown(data['green_high']!, _greenHighMeta),
-      );
-    }
-    if (data.containsKey('amber_high')) {
-      context.handle(
-        _amberHighMeta,
-        amberHigh.isAcceptableOrUnknown(data['amber_high']!, _amberHighMeta),
-      );
-    }
     if (data.containsKey('test_cadence_days')) {
       context.handle(
         _testCadenceDaysMeta,
         testCadenceDays.isAcceptableOrUnknown(
           data['test_cadence_days']!,
           _testCadenceDaysMeta,
-        ),
-      );
-    }
-    if (data.containsKey('target_value')) {
-      context.handle(
-        _targetValueMeta,
-        targetValue.isAcceptableOrUnknown(
-          data['target_value']!,
-          _targetValueMeta,
         ),
       );
     }
@@ -908,29 +815,9 @@ class $TrackedParametersTable extends TrackedParameters
         DriftSqlType.int,
         data['${effectivePrefix}display_order'],
       )!,
-      amberLow: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}amber_low'],
-      ),
-      greenLow: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}green_low'],
-      ),
-      greenHigh: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}green_high'],
-      ),
-      amberHigh: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}amber_high'],
-      ),
       testCadenceDays: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}test_cadence_days'],
-      ),
-      targetValue: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}target_value'],
       ),
     );
   }
@@ -949,21 +836,11 @@ class TrackedParameter extends DataClass
   final String unit;
   final bool enabled;
   final int displayOrder;
-  final double? amberLow;
-  final double? greenLow;
-  final double? greenHigh;
-  final double? amberHigh;
 
   /// "Remind to test every N days" (U1); null = no reminder for this
   /// parameter. The reminder anchors elastically on the parameter's latest
   /// reading (see `domain/reminders.dart`).
   final int? testCadenceDays;
-
-  /// Correction target for the dose calculator's correction mode, in the
-  /// parameter's canonical unit. Seeded from the setup-type preset
-  /// (`kPresetTargets`) where one exists; null falls back to the green-zone
-  /// midpoint at use time.
-  final double? targetValue;
   const TrackedParameter({
     required this.id,
     required this.tankId,
@@ -971,12 +848,7 @@ class TrackedParameter extends DataClass
     required this.unit,
     required this.enabled,
     required this.displayOrder,
-    this.amberLow,
-    this.greenLow,
-    this.greenHigh,
-    this.amberHigh,
     this.testCadenceDays,
-    this.targetValue,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -987,23 +859,8 @@ class TrackedParameter extends DataClass
     map['unit'] = Variable<String>(unit);
     map['enabled'] = Variable<bool>(enabled);
     map['display_order'] = Variable<int>(displayOrder);
-    if (!nullToAbsent || amberLow != null) {
-      map['amber_low'] = Variable<double>(amberLow);
-    }
-    if (!nullToAbsent || greenLow != null) {
-      map['green_low'] = Variable<double>(greenLow);
-    }
-    if (!nullToAbsent || greenHigh != null) {
-      map['green_high'] = Variable<double>(greenHigh);
-    }
-    if (!nullToAbsent || amberHigh != null) {
-      map['amber_high'] = Variable<double>(amberHigh);
-    }
     if (!nullToAbsent || testCadenceDays != null) {
       map['test_cadence_days'] = Variable<int>(testCadenceDays);
-    }
-    if (!nullToAbsent || targetValue != null) {
-      map['target_value'] = Variable<double>(targetValue);
     }
     return map;
   }
@@ -1016,24 +873,9 @@ class TrackedParameter extends DataClass
       unit: Value(unit),
       enabled: Value(enabled),
       displayOrder: Value(displayOrder),
-      amberLow: amberLow == null && nullToAbsent
-          ? const Value.absent()
-          : Value(amberLow),
-      greenLow: greenLow == null && nullToAbsent
-          ? const Value.absent()
-          : Value(greenLow),
-      greenHigh: greenHigh == null && nullToAbsent
-          ? const Value.absent()
-          : Value(greenHigh),
-      amberHigh: amberHigh == null && nullToAbsent
-          ? const Value.absent()
-          : Value(amberHigh),
       testCadenceDays: testCadenceDays == null && nullToAbsent
           ? const Value.absent()
           : Value(testCadenceDays),
-      targetValue: targetValue == null && nullToAbsent
-          ? const Value.absent()
-          : Value(targetValue),
     );
   }
 
@@ -1049,12 +891,7 @@ class TrackedParameter extends DataClass
       unit: serializer.fromJson<String>(json['unit']),
       enabled: serializer.fromJson<bool>(json['enabled']),
       displayOrder: serializer.fromJson<int>(json['displayOrder']),
-      amberLow: serializer.fromJson<double?>(json['amberLow']),
-      greenLow: serializer.fromJson<double?>(json['greenLow']),
-      greenHigh: serializer.fromJson<double?>(json['greenHigh']),
-      amberHigh: serializer.fromJson<double?>(json['amberHigh']),
       testCadenceDays: serializer.fromJson<int?>(json['testCadenceDays']),
-      targetValue: serializer.fromJson<double?>(json['targetValue']),
     );
   }
   @override
@@ -1067,12 +904,7 @@ class TrackedParameter extends DataClass
       'unit': serializer.toJson<String>(unit),
       'enabled': serializer.toJson<bool>(enabled),
       'displayOrder': serializer.toJson<int>(displayOrder),
-      'amberLow': serializer.toJson<double?>(amberLow),
-      'greenLow': serializer.toJson<double?>(greenLow),
-      'greenHigh': serializer.toJson<double?>(greenHigh),
-      'amberHigh': serializer.toJson<double?>(amberHigh),
       'testCadenceDays': serializer.toJson<int?>(testCadenceDays),
-      'targetValue': serializer.toJson<double?>(targetValue),
     };
   }
 
@@ -1083,12 +915,7 @@ class TrackedParameter extends DataClass
     String? unit,
     bool? enabled,
     int? displayOrder,
-    Value<double?> amberLow = const Value.absent(),
-    Value<double?> greenLow = const Value.absent(),
-    Value<double?> greenHigh = const Value.absent(),
-    Value<double?> amberHigh = const Value.absent(),
     Value<int?> testCadenceDays = const Value.absent(),
-    Value<double?> targetValue = const Value.absent(),
   }) => TrackedParameter(
     id: id ?? this.id,
     tankId: tankId ?? this.tankId,
@@ -1096,14 +923,9 @@ class TrackedParameter extends DataClass
     unit: unit ?? this.unit,
     enabled: enabled ?? this.enabled,
     displayOrder: displayOrder ?? this.displayOrder,
-    amberLow: amberLow.present ? amberLow.value : this.amberLow,
-    greenLow: greenLow.present ? greenLow.value : this.greenLow,
-    greenHigh: greenHigh.present ? greenHigh.value : this.greenHigh,
-    amberHigh: amberHigh.present ? amberHigh.value : this.amberHigh,
     testCadenceDays: testCadenceDays.present
         ? testCadenceDays.value
         : this.testCadenceDays,
-    targetValue: targetValue.present ? targetValue.value : this.targetValue,
   );
   TrackedParameter copyWithCompanion(TrackedParametersCompanion data) {
     return TrackedParameter(
@@ -1115,16 +937,9 @@ class TrackedParameter extends DataClass
       displayOrder: data.displayOrder.present
           ? data.displayOrder.value
           : this.displayOrder,
-      amberLow: data.amberLow.present ? data.amberLow.value : this.amberLow,
-      greenLow: data.greenLow.present ? data.greenLow.value : this.greenLow,
-      greenHigh: data.greenHigh.present ? data.greenHigh.value : this.greenHigh,
-      amberHigh: data.amberHigh.present ? data.amberHigh.value : this.amberHigh,
       testCadenceDays: data.testCadenceDays.present
           ? data.testCadenceDays.value
           : this.testCadenceDays,
-      targetValue: data.targetValue.present
-          ? data.targetValue.value
-          : this.targetValue,
     );
   }
 
@@ -1137,12 +952,7 @@ class TrackedParameter extends DataClass
           ..write('unit: $unit, ')
           ..write('enabled: $enabled, ')
           ..write('displayOrder: $displayOrder, ')
-          ..write('amberLow: $amberLow, ')
-          ..write('greenLow: $greenLow, ')
-          ..write('greenHigh: $greenHigh, ')
-          ..write('amberHigh: $amberHigh, ')
-          ..write('testCadenceDays: $testCadenceDays, ')
-          ..write('targetValue: $targetValue')
+          ..write('testCadenceDays: $testCadenceDays')
           ..write(')'))
         .toString();
   }
@@ -1155,12 +965,7 @@ class TrackedParameter extends DataClass
     unit,
     enabled,
     displayOrder,
-    amberLow,
-    greenLow,
-    greenHigh,
-    amberHigh,
     testCadenceDays,
-    targetValue,
   );
   @override
   bool operator ==(Object other) =>
@@ -1172,12 +977,7 @@ class TrackedParameter extends DataClass
           other.unit == this.unit &&
           other.enabled == this.enabled &&
           other.displayOrder == this.displayOrder &&
-          other.amberLow == this.amberLow &&
-          other.greenLow == this.greenLow &&
-          other.greenHigh == this.greenHigh &&
-          other.amberHigh == this.amberHigh &&
-          other.testCadenceDays == this.testCadenceDays &&
-          other.targetValue == this.targetValue);
+          other.testCadenceDays == this.testCadenceDays);
 }
 
 class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
@@ -1187,12 +987,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
   final Value<String> unit;
   final Value<bool> enabled;
   final Value<int> displayOrder;
-  final Value<double?> amberLow;
-  final Value<double?> greenLow;
-  final Value<double?> greenHigh;
-  final Value<double?> amberHigh;
   final Value<int?> testCadenceDays;
-  final Value<double?> targetValue;
   const TrackedParametersCompanion({
     this.id = const Value.absent(),
     this.tankId = const Value.absent(),
@@ -1200,12 +995,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     this.unit = const Value.absent(),
     this.enabled = const Value.absent(),
     this.displayOrder = const Value.absent(),
-    this.amberLow = const Value.absent(),
-    this.greenLow = const Value.absent(),
-    this.greenHigh = const Value.absent(),
-    this.amberHigh = const Value.absent(),
     this.testCadenceDays = const Value.absent(),
-    this.targetValue = const Value.absent(),
   });
   TrackedParametersCompanion.insert({
     this.id = const Value.absent(),
@@ -1214,12 +1004,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     required String unit,
     this.enabled = const Value.absent(),
     this.displayOrder = const Value.absent(),
-    this.amberLow = const Value.absent(),
-    this.greenLow = const Value.absent(),
-    this.greenHigh = const Value.absent(),
-    this.amberHigh = const Value.absent(),
     this.testCadenceDays = const Value.absent(),
-    this.targetValue = const Value.absent(),
   }) : tankId = Value(tankId),
        paramKey = Value(paramKey),
        unit = Value(unit);
@@ -1230,12 +1015,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     Expression<String>? unit,
     Expression<bool>? enabled,
     Expression<int>? displayOrder,
-    Expression<double>? amberLow,
-    Expression<double>? greenLow,
-    Expression<double>? greenHigh,
-    Expression<double>? amberHigh,
     Expression<int>? testCadenceDays,
-    Expression<double>? targetValue,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1244,12 +1024,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
       if (unit != null) 'unit': unit,
       if (enabled != null) 'enabled': enabled,
       if (displayOrder != null) 'display_order': displayOrder,
-      if (amberLow != null) 'amber_low': amberLow,
-      if (greenLow != null) 'green_low': greenLow,
-      if (greenHigh != null) 'green_high': greenHigh,
-      if (amberHigh != null) 'amber_high': amberHigh,
       if (testCadenceDays != null) 'test_cadence_days': testCadenceDays,
-      if (targetValue != null) 'target_value': targetValue,
     });
   }
 
@@ -1260,12 +1035,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     Value<String>? unit,
     Value<bool>? enabled,
     Value<int>? displayOrder,
-    Value<double?>? amberLow,
-    Value<double?>? greenLow,
-    Value<double?>? greenHigh,
-    Value<double?>? amberHigh,
     Value<int?>? testCadenceDays,
-    Value<double?>? targetValue,
   }) {
     return TrackedParametersCompanion(
       id: id ?? this.id,
@@ -1274,12 +1044,7 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
       unit: unit ?? this.unit,
       enabled: enabled ?? this.enabled,
       displayOrder: displayOrder ?? this.displayOrder,
-      amberLow: amberLow ?? this.amberLow,
-      greenLow: greenLow ?? this.greenLow,
-      greenHigh: greenHigh ?? this.greenHigh,
-      amberHigh: amberHigh ?? this.amberHigh,
       testCadenceDays: testCadenceDays ?? this.testCadenceDays,
-      targetValue: targetValue ?? this.targetValue,
     );
   }
 
@@ -1304,23 +1069,8 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
     if (displayOrder.present) {
       map['display_order'] = Variable<int>(displayOrder.value);
     }
-    if (amberLow.present) {
-      map['amber_low'] = Variable<double>(amberLow.value);
-    }
-    if (greenLow.present) {
-      map['green_low'] = Variable<double>(greenLow.value);
-    }
-    if (greenHigh.present) {
-      map['green_high'] = Variable<double>(greenHigh.value);
-    }
-    if (amberHigh.present) {
-      map['amber_high'] = Variable<double>(amberHigh.value);
-    }
     if (testCadenceDays.present) {
       map['test_cadence_days'] = Variable<int>(testCadenceDays.value);
-    }
-    if (targetValue.present) {
-      map['target_value'] = Variable<double>(targetValue.value);
     }
     return map;
   }
@@ -1334,12 +1084,493 @@ class TrackedParametersCompanion extends UpdateCompanion<TrackedParameter> {
           ..write('unit: $unit, ')
           ..write('enabled: $enabled, ')
           ..write('displayOrder: $displayOrder, ')
+          ..write('testCadenceDays: $testCadenceDays')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ParameterOverridesTable extends ParameterOverrides
+    with TableInfo<$ParameterOverridesTable, ParameterOverride> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ParameterOverridesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _paramKeyMeta = const VerificationMeta(
+    'paramKey',
+  );
+  @override
+  late final GeneratedColumn<String> paramKey = GeneratedColumn<String>(
+    'param_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amberLowMeta = const VerificationMeta(
+    'amberLow',
+  );
+  @override
+  late final GeneratedColumn<double> amberLow = GeneratedColumn<double>(
+    'amber_low',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _greenLowMeta = const VerificationMeta(
+    'greenLow',
+  );
+  @override
+  late final GeneratedColumn<double> greenLow = GeneratedColumn<double>(
+    'green_low',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _greenHighMeta = const VerificationMeta(
+    'greenHigh',
+  );
+  @override
+  late final GeneratedColumn<double> greenHigh = GeneratedColumn<double>(
+    'green_high',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amberHighMeta = const VerificationMeta(
+    'amberHigh',
+  );
+  @override
+  late final GeneratedColumn<double> amberHigh = GeneratedColumn<double>(
+    'amber_high',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _targetValueMeta = const VerificationMeta(
+    'targetValue',
+  );
+  @override
+  late final GeneratedColumn<double> targetValue = GeneratedColumn<double>(
+    'target_value',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    tankId,
+    paramKey,
+    amberLow,
+    greenLow,
+    greenHigh,
+    amberHigh,
+    targetValue,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'parameter_overrides';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ParameterOverride> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('param_key')) {
+      context.handle(
+        _paramKeyMeta,
+        paramKey.isAcceptableOrUnknown(data['param_key']!, _paramKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_paramKeyMeta);
+    }
+    if (data.containsKey('amber_low')) {
+      context.handle(
+        _amberLowMeta,
+        amberLow.isAcceptableOrUnknown(data['amber_low']!, _amberLowMeta),
+      );
+    }
+    if (data.containsKey('green_low')) {
+      context.handle(
+        _greenLowMeta,
+        greenLow.isAcceptableOrUnknown(data['green_low']!, _greenLowMeta),
+      );
+    }
+    if (data.containsKey('green_high')) {
+      context.handle(
+        _greenHighMeta,
+        greenHigh.isAcceptableOrUnknown(data['green_high']!, _greenHighMeta),
+      );
+    }
+    if (data.containsKey('amber_high')) {
+      context.handle(
+        _amberHighMeta,
+        amberHigh.isAcceptableOrUnknown(data['amber_high']!, _amberHighMeta),
+      );
+    }
+    if (data.containsKey('target_value')) {
+      context.handle(
+        _targetValueMeta,
+        targetValue.isAcceptableOrUnknown(
+          data['target_value']!,
+          _targetValueMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {tankId, paramKey};
+  @override
+  ParameterOverride map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ParameterOverride(
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      paramKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}param_key'],
+      )!,
+      amberLow: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amber_low'],
+      ),
+      greenLow: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}green_low'],
+      ),
+      greenHigh: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}green_high'],
+      ),
+      amberHigh: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amber_high'],
+      ),
+      targetValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}target_value'],
+      ),
+    );
+  }
+
+  @override
+  $ParameterOverridesTable createAlias(String alias) {
+    return $ParameterOverridesTable(attachedDatabase, alias);
+  }
+}
+
+class ParameterOverride extends DataClass
+    implements Insertable<ParameterOverride> {
+  final int tankId;
+  final String paramKey;
+  final double? amberLow;
+  final double? greenLow;
+  final double? greenHigh;
+  final double? amberHigh;
+
+  /// Correction target for the dose calculator's correction mode, in the
+  /// parameter's canonical unit. Null inside a present row = no explicit
+  /// target; callers fall back to the setup-type preset's target and then to
+  /// the green-zone midpoint.
+  final double? targetValue;
+  const ParameterOverride({
+    required this.tankId,
+    required this.paramKey,
+    this.amberLow,
+    this.greenLow,
+    this.greenHigh,
+    this.amberHigh,
+    this.targetValue,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['tank_id'] = Variable<int>(tankId);
+    map['param_key'] = Variable<String>(paramKey);
+    if (!nullToAbsent || amberLow != null) {
+      map['amber_low'] = Variable<double>(amberLow);
+    }
+    if (!nullToAbsent || greenLow != null) {
+      map['green_low'] = Variable<double>(greenLow);
+    }
+    if (!nullToAbsent || greenHigh != null) {
+      map['green_high'] = Variable<double>(greenHigh);
+    }
+    if (!nullToAbsent || amberHigh != null) {
+      map['amber_high'] = Variable<double>(amberHigh);
+    }
+    if (!nullToAbsent || targetValue != null) {
+      map['target_value'] = Variable<double>(targetValue);
+    }
+    return map;
+  }
+
+  ParameterOverridesCompanion toCompanion(bool nullToAbsent) {
+    return ParameterOverridesCompanion(
+      tankId: Value(tankId),
+      paramKey: Value(paramKey),
+      amberLow: amberLow == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amberLow),
+      greenLow: greenLow == null && nullToAbsent
+          ? const Value.absent()
+          : Value(greenLow),
+      greenHigh: greenHigh == null && nullToAbsent
+          ? const Value.absent()
+          : Value(greenHigh),
+      amberHigh: amberHigh == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amberHigh),
+      targetValue: targetValue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetValue),
+    );
+  }
+
+  factory ParameterOverride.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ParameterOverride(
+      tankId: serializer.fromJson<int>(json['tankId']),
+      paramKey: serializer.fromJson<String>(json['paramKey']),
+      amberLow: serializer.fromJson<double?>(json['amberLow']),
+      greenLow: serializer.fromJson<double?>(json['greenLow']),
+      greenHigh: serializer.fromJson<double?>(json['greenHigh']),
+      amberHigh: serializer.fromJson<double?>(json['amberHigh']),
+      targetValue: serializer.fromJson<double?>(json['targetValue']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'tankId': serializer.toJson<int>(tankId),
+      'paramKey': serializer.toJson<String>(paramKey),
+      'amberLow': serializer.toJson<double?>(amberLow),
+      'greenLow': serializer.toJson<double?>(greenLow),
+      'greenHigh': serializer.toJson<double?>(greenHigh),
+      'amberHigh': serializer.toJson<double?>(amberHigh),
+      'targetValue': serializer.toJson<double?>(targetValue),
+    };
+  }
+
+  ParameterOverride copyWith({
+    int? tankId,
+    String? paramKey,
+    Value<double?> amberLow = const Value.absent(),
+    Value<double?> greenLow = const Value.absent(),
+    Value<double?> greenHigh = const Value.absent(),
+    Value<double?> amberHigh = const Value.absent(),
+    Value<double?> targetValue = const Value.absent(),
+  }) => ParameterOverride(
+    tankId: tankId ?? this.tankId,
+    paramKey: paramKey ?? this.paramKey,
+    amberLow: amberLow.present ? amberLow.value : this.amberLow,
+    greenLow: greenLow.present ? greenLow.value : this.greenLow,
+    greenHigh: greenHigh.present ? greenHigh.value : this.greenHigh,
+    amberHigh: amberHigh.present ? amberHigh.value : this.amberHigh,
+    targetValue: targetValue.present ? targetValue.value : this.targetValue,
+  );
+  ParameterOverride copyWithCompanion(ParameterOverridesCompanion data) {
+    return ParameterOverride(
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      paramKey: data.paramKey.present ? data.paramKey.value : this.paramKey,
+      amberLow: data.amberLow.present ? data.amberLow.value : this.amberLow,
+      greenLow: data.greenLow.present ? data.greenLow.value : this.greenLow,
+      greenHigh: data.greenHigh.present ? data.greenHigh.value : this.greenHigh,
+      amberHigh: data.amberHigh.present ? data.amberHigh.value : this.amberHigh,
+      targetValue: data.targetValue.present
+          ? data.targetValue.value
+          : this.targetValue,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ParameterOverride(')
+          ..write('tankId: $tankId, ')
+          ..write('paramKey: $paramKey, ')
           ..write('amberLow: $amberLow, ')
           ..write('greenLow: $greenLow, ')
           ..write('greenHigh: $greenHigh, ')
           ..write('amberHigh: $amberHigh, ')
-          ..write('testCadenceDays: $testCadenceDays, ')
           ..write('targetValue: $targetValue')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    tankId,
+    paramKey,
+    amberLow,
+    greenLow,
+    greenHigh,
+    amberHigh,
+    targetValue,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ParameterOverride &&
+          other.tankId == this.tankId &&
+          other.paramKey == this.paramKey &&
+          other.amberLow == this.amberLow &&
+          other.greenLow == this.greenLow &&
+          other.greenHigh == this.greenHigh &&
+          other.amberHigh == this.amberHigh &&
+          other.targetValue == this.targetValue);
+}
+
+class ParameterOverridesCompanion extends UpdateCompanion<ParameterOverride> {
+  final Value<int> tankId;
+  final Value<String> paramKey;
+  final Value<double?> amberLow;
+  final Value<double?> greenLow;
+  final Value<double?> greenHigh;
+  final Value<double?> amberHigh;
+  final Value<double?> targetValue;
+  final Value<int> rowid;
+  const ParameterOverridesCompanion({
+    this.tankId = const Value.absent(),
+    this.paramKey = const Value.absent(),
+    this.amberLow = const Value.absent(),
+    this.greenLow = const Value.absent(),
+    this.greenHigh = const Value.absent(),
+    this.amberHigh = const Value.absent(),
+    this.targetValue = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ParameterOverridesCompanion.insert({
+    required int tankId,
+    required String paramKey,
+    this.amberLow = const Value.absent(),
+    this.greenLow = const Value.absent(),
+    this.greenHigh = const Value.absent(),
+    this.amberHigh = const Value.absent(),
+    this.targetValue = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : tankId = Value(tankId),
+       paramKey = Value(paramKey);
+  static Insertable<ParameterOverride> custom({
+    Expression<int>? tankId,
+    Expression<String>? paramKey,
+    Expression<double>? amberLow,
+    Expression<double>? greenLow,
+    Expression<double>? greenHigh,
+    Expression<double>? amberHigh,
+    Expression<double>? targetValue,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (tankId != null) 'tank_id': tankId,
+      if (paramKey != null) 'param_key': paramKey,
+      if (amberLow != null) 'amber_low': amberLow,
+      if (greenLow != null) 'green_low': greenLow,
+      if (greenHigh != null) 'green_high': greenHigh,
+      if (amberHigh != null) 'amber_high': amberHigh,
+      if (targetValue != null) 'target_value': targetValue,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ParameterOverridesCompanion copyWith({
+    Value<int>? tankId,
+    Value<String>? paramKey,
+    Value<double?>? amberLow,
+    Value<double?>? greenLow,
+    Value<double?>? greenHigh,
+    Value<double?>? amberHigh,
+    Value<double?>? targetValue,
+    Value<int>? rowid,
+  }) {
+    return ParameterOverridesCompanion(
+      tankId: tankId ?? this.tankId,
+      paramKey: paramKey ?? this.paramKey,
+      amberLow: amberLow ?? this.amberLow,
+      greenLow: greenLow ?? this.greenLow,
+      greenHigh: greenHigh ?? this.greenHigh,
+      amberHigh: amberHigh ?? this.amberHigh,
+      targetValue: targetValue ?? this.targetValue,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (paramKey.present) {
+      map['param_key'] = Variable<String>(paramKey.value);
+    }
+    if (amberLow.present) {
+      map['amber_low'] = Variable<double>(amberLow.value);
+    }
+    if (greenLow.present) {
+      map['green_low'] = Variable<double>(greenLow.value);
+    }
+    if (greenHigh.present) {
+      map['green_high'] = Variable<double>(greenHigh.value);
+    }
+    if (amberHigh.present) {
+      map['amber_high'] = Variable<double>(amberHigh.value);
+    }
+    if (targetValue.present) {
+      map['target_value'] = Variable<double>(targetValue.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ParameterOverridesCompanion(')
+          ..write('tankId: $tankId, ')
+          ..write('paramKey: $paramKey, ')
+          ..write('amberLow: $amberLow, ')
+          ..write('greenLow: $greenLow, ')
+          ..write('greenHigh: $greenHigh, ')
+          ..write('amberHigh: $amberHigh, ')
+          ..write('targetValue: $targetValue, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -8857,6 +9088,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TanksTable tanks = $TanksTable(this);
   late final $TrackedParametersTable trackedParameters =
       $TrackedParametersTable(this);
+  late final $ParameterOverridesTable parameterOverrides =
+      $ParameterOverridesTable(this);
   late final $ReadingsTable readings = $ReadingsTable(this);
   late final $WaterChangesTable waterChanges = $WaterChangesTable(this);
   late final $CarbonChangesTable carbonChanges = $CarbonChangesTable(this);
@@ -8929,6 +9162,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     tanks,
     trackedParameters,
+    parameterOverrides,
     readings,
     waterChanges,
     carbonChanges,
@@ -8964,6 +9198,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('tracked_parameters', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('parameter_overrides', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -9105,6 +9346,27 @@ final class $$TanksTableReferences
 
     final cache = $_typedResult.readTableOrNull(
       _trackedParametersRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ParameterOverridesTable, List<ParameterOverride>>
+  _parameterOverridesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.parameterOverrides,
+        aliasName: 'tanks__id__parameter_overrides__tank_id',
+      );
+
+  $$ParameterOverridesTableProcessedTableManager get parameterOverridesRefs {
+    final manager = $$ParameterOverridesTableTableManager(
+      $_db,
+      $_db.parameterOverrides,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _parameterOverridesRefsTable($_db),
     );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
@@ -9418,6 +9680,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
           }) => $$TrackedParametersTableFilterComposer(
             $db: $db,
             $table: $db.trackedParameters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> parameterOverridesRefs(
+    Expression<bool> Function($$ParameterOverridesTableFilterComposer f) f,
+  ) {
+    final $$ParameterOverridesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.parameterOverrides,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ParameterOverridesTableFilterComposer(
+            $db: $db,
+            $table: $db.parameterOverrides,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9855,6 +10142,32 @@ class $$TanksTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> parameterOverridesRefs<T extends Object>(
+    Expression<T> Function($$ParameterOverridesTableAnnotationComposer a) f,
+  ) {
+    final $$ParameterOverridesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.parameterOverrides,
+          getReferencedColumn: (t) => t.tankId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ParameterOverridesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.parameterOverrides,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> readingsRefs<T extends Object>(
     Expression<T> Function($$ReadingsTableAnnotationComposer a) f,
   ) {
@@ -10174,6 +10487,7 @@ class $$TanksTableTableManager
           Tank,
           PrefetchHooks Function({
             bool trackedParametersRefs,
+            bool parameterOverridesRefs,
             bool readingsRefs,
             bool waterChangesRefs,
             bool carbonChangesRefs,
@@ -10256,6 +10570,7 @@ class $$TanksTableTableManager
           prefetchHooksCallback:
               ({
                 trackedParametersRefs = false,
+                parameterOverridesRefs = false,
                 readingsRefs = false,
                 waterChangesRefs = false,
                 carbonChangesRefs = false,
@@ -10273,6 +10588,7 @@ class $$TanksTableTableManager
                   db: db,
                   explicitlyWatchedTables: [
                     if (trackedParametersRefs) db.trackedParameters,
+                    if (parameterOverridesRefs) db.parameterOverrides,
                     if (readingsRefs) db.readings,
                     if (waterChangesRefs) db.waterChanges,
                     if (carbonChangesRefs) db.carbonChanges,
@@ -10304,6 +10620,27 @@ class $$TanksTableTableManager
                                 table,
                                 p0,
                               ).trackedParametersRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (parameterOverridesRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          ParameterOverride
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._parameterOverridesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).parameterOverridesRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.tankId == item.id,
@@ -10572,6 +10909,7 @@ typedef $$TanksTableProcessedTableManager =
       Tank,
       PrefetchHooks Function({
         bool trackedParametersRefs,
+        bool parameterOverridesRefs,
         bool readingsRefs,
         bool waterChangesRefs,
         bool carbonChangesRefs,
@@ -10594,12 +10932,7 @@ typedef $$TrackedParametersTableCreateCompanionBuilder =
       required String unit,
       Value<bool> enabled,
       Value<int> displayOrder,
-      Value<double?> amberLow,
-      Value<double?> greenLow,
-      Value<double?> greenHigh,
-      Value<double?> amberHigh,
       Value<int?> testCadenceDays,
-      Value<double?> targetValue,
     });
 typedef $$TrackedParametersTableUpdateCompanionBuilder =
     TrackedParametersCompanion Function({
@@ -10609,12 +10942,7 @@ typedef $$TrackedParametersTableUpdateCompanionBuilder =
       Value<String> unit,
       Value<bool> enabled,
       Value<int> displayOrder,
-      Value<double?> amberLow,
-      Value<double?> greenLow,
-      Value<double?> greenHigh,
-      Value<double?> amberHigh,
       Value<int?> testCadenceDays,
-      Value<double?> targetValue,
     });
 
 final class $$TrackedParametersTableReferences
@@ -10682,33 +11010,8 @@ class $$TrackedParametersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get amberLow => $composableBuilder(
-    column: $table.amberLow,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get greenLow => $composableBuilder(
-    column: $table.greenLow,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get greenHigh => $composableBuilder(
-    column: $table.greenHigh,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get amberHigh => $composableBuilder(
-    column: $table.amberHigh,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<int> get testCadenceDays => $composableBuilder(
     column: $table.testCadenceDays,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get targetValue => $composableBuilder(
-    column: $table.targetValue,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10770,33 +11073,8 @@ class $$TrackedParametersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get amberLow => $composableBuilder(
-    column: $table.amberLow,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get greenLow => $composableBuilder(
-    column: $table.greenLow,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get greenHigh => $composableBuilder(
-    column: $table.greenHigh,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get amberHigh => $composableBuilder(
-    column: $table.amberHigh,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<int> get testCadenceDays => $composableBuilder(
     column: $table.testCadenceDays,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get targetValue => $composableBuilder(
-    column: $table.targetValue,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -10850,25 +11128,8 @@ class $$TrackedParametersTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get amberLow =>
-      $composableBuilder(column: $table.amberLow, builder: (column) => column);
-
-  GeneratedColumn<double> get greenLow =>
-      $composableBuilder(column: $table.greenLow, builder: (column) => column);
-
-  GeneratedColumn<double> get greenHigh =>
-      $composableBuilder(column: $table.greenHigh, builder: (column) => column);
-
-  GeneratedColumn<double> get amberHigh =>
-      $composableBuilder(column: $table.amberHigh, builder: (column) => column);
-
   GeneratedColumn<int> get testCadenceDays => $composableBuilder(
     column: $table.testCadenceDays,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get targetValue => $composableBuilder(
-    column: $table.targetValue,
     builder: (column) => column,
   );
 
@@ -10935,12 +11196,7 @@ class $$TrackedParametersTableTableManager
                 Value<String> unit = const Value.absent(),
                 Value<bool> enabled = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
-                Value<double?> amberLow = const Value.absent(),
-                Value<double?> greenLow = const Value.absent(),
-                Value<double?> greenHigh = const Value.absent(),
-                Value<double?> amberHigh = const Value.absent(),
                 Value<int?> testCadenceDays = const Value.absent(),
-                Value<double?> targetValue = const Value.absent(),
               }) => TrackedParametersCompanion(
                 id: id,
                 tankId: tankId,
@@ -10948,12 +11204,7 @@ class $$TrackedParametersTableTableManager
                 unit: unit,
                 enabled: enabled,
                 displayOrder: displayOrder,
-                amberLow: amberLow,
-                greenLow: greenLow,
-                greenHigh: greenHigh,
-                amberHigh: amberHigh,
                 testCadenceDays: testCadenceDays,
-                targetValue: targetValue,
               ),
           createCompanionCallback:
               ({
@@ -10963,12 +11214,7 @@ class $$TrackedParametersTableTableManager
                 required String unit,
                 Value<bool> enabled = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
-                Value<double?> amberLow = const Value.absent(),
-                Value<double?> greenLow = const Value.absent(),
-                Value<double?> greenHigh = const Value.absent(),
-                Value<double?> amberHigh = const Value.absent(),
                 Value<int?> testCadenceDays = const Value.absent(),
-                Value<double?> targetValue = const Value.absent(),
               }) => TrackedParametersCompanion.insert(
                 id: id,
                 tankId: tankId,
@@ -10976,12 +11222,7 @@ class $$TrackedParametersTableTableManager
                 unit: unit,
                 enabled: enabled,
                 displayOrder: displayOrder,
-                amberLow: amberLow,
-                greenLow: greenLow,
-                greenHigh: greenHigh,
-                amberHigh: amberHigh,
                 testCadenceDays: testCadenceDays,
-                targetValue: targetValue,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -11050,6 +11291,379 @@ typedef $$TrackedParametersTableProcessedTableManager =
       $$TrackedParametersTableUpdateCompanionBuilder,
       (TrackedParameter, $$TrackedParametersTableReferences),
       TrackedParameter,
+      PrefetchHooks Function({bool tankId})
+    >;
+typedef $$ParameterOverridesTableCreateCompanionBuilder =
+    ParameterOverridesCompanion Function({
+      required int tankId,
+      required String paramKey,
+      Value<double?> amberLow,
+      Value<double?> greenLow,
+      Value<double?> greenHigh,
+      Value<double?> amberHigh,
+      Value<double?> targetValue,
+      Value<int> rowid,
+    });
+typedef $$ParameterOverridesTableUpdateCompanionBuilder =
+    ParameterOverridesCompanion Function({
+      Value<int> tankId,
+      Value<String> paramKey,
+      Value<double?> amberLow,
+      Value<double?> greenLow,
+      Value<double?> greenHigh,
+      Value<double?> amberHigh,
+      Value<double?> targetValue,
+      Value<int> rowid,
+    });
+
+final class $$ParameterOverridesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ParameterOverridesTable,
+          ParameterOverride
+        > {
+  $$ParameterOverridesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('parameter_overrides__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ParameterOverridesTableFilterComposer
+    extends Composer<_$AppDatabase, $ParameterOverridesTable> {
+  $$ParameterOverridesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get paramKey => $composableBuilder(
+    column: $table.paramKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amberLow => $composableBuilder(
+    column: $table.amberLow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get greenLow => $composableBuilder(
+    column: $table.greenLow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get greenHigh => $composableBuilder(
+    column: $table.greenHigh,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amberHigh => $composableBuilder(
+    column: $table.amberHigh,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get targetValue => $composableBuilder(
+    column: $table.targetValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ParameterOverridesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ParameterOverridesTable> {
+  $$ParameterOverridesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get paramKey => $composableBuilder(
+    column: $table.paramKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amberLow => $composableBuilder(
+    column: $table.amberLow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get greenLow => $composableBuilder(
+    column: $table.greenLow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get greenHigh => $composableBuilder(
+    column: $table.greenHigh,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amberHigh => $composableBuilder(
+    column: $table.amberHigh,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get targetValue => $composableBuilder(
+    column: $table.targetValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ParameterOverridesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ParameterOverridesTable> {
+  $$ParameterOverridesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get paramKey =>
+      $composableBuilder(column: $table.paramKey, builder: (column) => column);
+
+  GeneratedColumn<double> get amberLow =>
+      $composableBuilder(column: $table.amberLow, builder: (column) => column);
+
+  GeneratedColumn<double> get greenLow =>
+      $composableBuilder(column: $table.greenLow, builder: (column) => column);
+
+  GeneratedColumn<double> get greenHigh =>
+      $composableBuilder(column: $table.greenHigh, builder: (column) => column);
+
+  GeneratedColumn<double> get amberHigh =>
+      $composableBuilder(column: $table.amberHigh, builder: (column) => column);
+
+  GeneratedColumn<double> get targetValue => $composableBuilder(
+    column: $table.targetValue,
+    builder: (column) => column,
+  );
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ParameterOverridesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ParameterOverridesTable,
+          ParameterOverride,
+          $$ParameterOverridesTableFilterComposer,
+          $$ParameterOverridesTableOrderingComposer,
+          $$ParameterOverridesTableAnnotationComposer,
+          $$ParameterOverridesTableCreateCompanionBuilder,
+          $$ParameterOverridesTableUpdateCompanionBuilder,
+          (ParameterOverride, $$ParameterOverridesTableReferences),
+          ParameterOverride,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$ParameterOverridesTableTableManager(
+    _$AppDatabase db,
+    $ParameterOverridesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ParameterOverridesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ParameterOverridesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ParameterOverridesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> tankId = const Value.absent(),
+                Value<String> paramKey = const Value.absent(),
+                Value<double?> amberLow = const Value.absent(),
+                Value<double?> greenLow = const Value.absent(),
+                Value<double?> greenHigh = const Value.absent(),
+                Value<double?> amberHigh = const Value.absent(),
+                Value<double?> targetValue = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ParameterOverridesCompanion(
+                tankId: tankId,
+                paramKey: paramKey,
+                amberLow: amberLow,
+                greenLow: greenLow,
+                greenHigh: greenHigh,
+                amberHigh: amberHigh,
+                targetValue: targetValue,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int tankId,
+                required String paramKey,
+                Value<double?> amberLow = const Value.absent(),
+                Value<double?> greenLow = const Value.absent(),
+                Value<double?> greenHigh = const Value.absent(),
+                Value<double?> amberHigh = const Value.absent(),
+                Value<double?> targetValue = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ParameterOverridesCompanion.insert(
+                tankId: tankId,
+                paramKey: paramKey,
+                amberLow: amberLow,
+                greenLow: greenLow,
+                greenHigh: greenHigh,
+                amberHigh: amberHigh,
+                targetValue: targetValue,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ParameterOverridesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable:
+                                    $$ParameterOverridesTableReferences
+                                        ._tankIdTable(db),
+                                referencedColumn:
+                                    $$ParameterOverridesTableReferences
+                                        ._tankIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ParameterOverridesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ParameterOverridesTable,
+      ParameterOverride,
+      $$ParameterOverridesTableFilterComposer,
+      $$ParameterOverridesTableOrderingComposer,
+      $$ParameterOverridesTableAnnotationComposer,
+      $$ParameterOverridesTableCreateCompanionBuilder,
+      $$ParameterOverridesTableUpdateCompanionBuilder,
+      (ParameterOverride, $$ParameterOverridesTableReferences),
+      ParameterOverride,
       PrefetchHooks Function({bool tankId})
     >;
 typedef $$ReadingsTableCreateCompanionBuilder =
@@ -16498,6 +17112,8 @@ class $AppDatabaseManager {
       $$TanksTableTableManager(_db, _db.tanks);
   $$TrackedParametersTableTableManager get trackedParameters =>
       $$TrackedParametersTableTableManager(_db, _db.trackedParameters);
+  $$ParameterOverridesTableTableManager get parameterOverrides =>
+      $$ParameterOverridesTableTableManager(_db, _db.parameterOverrides);
   $$ReadingsTableTableManager get readings =>
       $$ReadingsTableTableManager(_db, _db.readings);
   $$WaterChangesTableTableManager get waterChanges =>

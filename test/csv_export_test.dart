@@ -31,10 +31,6 @@ void main() {
       unit: unit,
       enabled: true,
       displayOrder: 0,
-      amberLow: null,
-      greenLow: null,
-      greenHigh: null,
-      amberHigh: null,
     );
     Reading reading(String key, double value, {DateTime? at, String? note}) =>
         Reading(

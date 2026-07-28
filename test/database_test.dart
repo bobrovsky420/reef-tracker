@@ -10,6 +10,7 @@ import 'package:reeftracker/domain/presets.dart';
 import 'package:reeftracker/domain/reminders.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/units.dart';
+import 'package:reeftracker/domain/zones.dart';
 
 /// Routes path_provider to a temp folder so the real file-backed open path
 /// (`AppDatabase()` → `_open()`) works under `flutter test`.
@@ -45,13 +46,14 @@ void main() {
         for (var i = 0; i < params.length; i++) {
           expect(params[i].displayOrder, i);
         }
-        // Bounds copied from the preset for a known parameter.
+        // Bounds are NOT copied: a seeded tank carries no overrides and
+        // resolves the preset on read instead (v28).
+        expect(await db.getParameterOverrides(id), isEmpty);
         final alk = params.firstWhere((p) => p.paramKey == 'alkalinity');
-        final preset = presetBounds(SetupType.sps, 'alkalinity');
-        expect(alk.amberLow, preset.amberLow);
-        expect(alk.greenLow, preset.greenLow);
-        expect(alk.greenHigh, preset.greenHigh);
-        expect(alk.amberHigh, preset.amberHigh);
+        expect(
+          ResolvedParameter.resolve(alk, SetupType.sps, null).bounds,
+          presetBounds(SetupType.sps, 'alkalinity'),
+        );
       },
     );
 
@@ -75,18 +77,21 @@ void main() {
       expect(await db.getActiveTankId(), id);
     });
 
-    test('seeds the correction target where the preset defines one', () async {
+    test('resolves the correction target where the preset defines one, '
+        'without storing it', () async {
       final id = await db.createTankWithPreset(
         name: 'Reef',
         type: SetupType.sps,
       );
+      expect(await db.getParameterOverrides(id), isEmpty);
       final params = await db.getTrackedParameters(id);
       final alk = params.firstWhere((p) => p.paramKey == 'alkalinity');
-      expect(alk.targetValue, presetTarget(SetupType.sps, 'alkalinity'));
-      expect(alk.targetValue, isNotNull);
+      final resolvedAlk = ResolvedParameter.resolve(alk, SetupType.sps, null);
+      expect(resolvedAlk.target, presetTarget(SetupType.sps, 'alkalinity'));
+      expect(resolvedAlk.target, isNotNull);
       // No preset target -> null (correction falls back to the green mid).
       final ca = params.firstWhere((p) => p.paramKey == 'calcium');
-      expect(ca.targetValue, isNull);
+      expect(ResolvedParameter.resolve(ca, SetupType.sps, null).target, isNull);
     });
   });
 
@@ -99,13 +104,13 @@ void main() {
       final before = (await db.getTrackedParameters(id)).length;
 
       // 'iodine' is not in the fish-only preset.
-      await db.addTrackedParameter(id, 'iodine', SetupType.fishOnly);
+      await db.addTrackedParameter(id, 'iodine');
       final keys = (await db.getTrackedParameters(id)).map((p) => p.paramKey);
       expect(keys, contains('iodine'));
       expect((await db.getTrackedParameters(id)).length, before + 1);
 
       // Adding it again does nothing.
-      await db.addTrackedParameter(id, 'iodine', SetupType.fishOnly);
+      await db.addTrackedParameter(id, 'iodine');
       expect((await db.getTrackedParameters(id)).length, before + 1);
     });
 
@@ -126,7 +131,7 @@ void main() {
       );
       await db.removeTrackedParameter(params[1].id);
 
-      await db.addTrackedParameter(id, 'iodine', SetupType.fishOnly);
+      await db.addTrackedParameter(id, 'iodine');
       final after = await db.getTrackedParameters(id);
       final added = after.firstWhere((p) => p.paramKey == 'iodine');
       expect(
@@ -140,104 +145,160 @@ void main() {
     });
   });
 
-  group('applyPreset', () {
-    test('resets core bounds from the preset and micro bounds from the '
-        'catalog defaults (backfills legacy all-null micro rows)', () async {
-      final id = await db.createTankWithPreset(
-        name: 'R',
-        type: SetupType.mixed,
-      );
-      // Customize a core parameter away from the preset.
+  group('parameter overrides (v28)', () {
+    test('with no override a parameter follows the setup-type preset, and '
+        'changing the tank type re-resolves it', () async {
+      final id = await db.createTankWithPreset(name: 'M', type: SetupType.soft);
       final alk = (await db.getTrackedParameters(
         id,
       )).firstWhere((p) => p.paramKey == 'alkalinity');
-      await db.updateTrackedParameter(
-        alk.copyWith(greenLow: const Value(1.0), greenHigh: const Value(2.0)),
+
+      expect(
+        ResolvedParameter.resolve(alk, SetupType.soft, null).bounds,
+        presetBounds(SetupType.soft, 'alkalinity'),
       );
-      // A legacy microelement row with no bounds — the pre-microelements
-      // upgrade state (potassium tracked before catalog defaults existed).
-      await db
-          .into(db.trackedParameters)
-          .insert(
-            TrackedParametersCompanion.insert(
-              tankId: id,
-              paramKey: 'potassium',
-              unit: 'ppm',
-            ),
-          );
-
-      await db.applyPreset(id, SetupType.mixed);
-
-      final after = await db.getTrackedParameters(id);
-      final alkAfter = after.firstWhere((p) => p.paramKey == 'alkalinity');
-      final preset = presetBounds(SetupType.mixed, 'alkalinity');
-      expect(alkAfter.greenLow, preset.greenLow);
-      expect(alkAfter.greenHigh, preset.greenHigh);
-
-      final k = after.firstWhere((p) => p.paramKey == 'potassium');
-      final defaults = microDefaultBounds('potassium');
-      expect(k.amberLow, defaults.amberLow);
-      expect(k.greenLow, defaults.greenLow);
-      expect(k.greenHigh, defaults.greenHigh);
-      expect(k.amberHigh, defaults.amberHigh);
+      // The whole point of resolving on read: nothing was rewritten, yet the
+      // same row now answers with the SPS band.
+      expect(
+        ResolvedParameter.resolve(alk, SetupType.sps, null).bounds,
+        presetBounds(SetupType.sps, 'alkalinity'),
+      );
     });
 
-    test('a core parameter outside the setup-type preset keeps its custom '
-        'bounds', () async {
-      final id = await db.createTankWithPreset(
-        name: 'F',
-        type: SetupType.fishOnly,
-      );
-      // 'calcium' is not in the fish-only preset and is not a microelement,
-      // so applyPreset has no default source for it.
-      await db.addTrackedParameter(id, 'calcium', SetupType.fishOnly);
-      final ca = (await db.getTrackedParameters(
+    test('a microelement with no override follows the catalog default', () async {
+      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
+      await db.addTrackedParameter(id, 'potassium');
+      final k = (await db.getTrackedParameters(
         id,
-      )).firstWhere((p) => p.paramKey == 'calcium');
-      await db.updateTrackedParameter(
-        ca.copyWith(
-          greenLow: const Value(400.0),
-          greenHigh: const Value(450.0),
-        ),
+      )).firstWhere((p) => p.paramKey == 'potassium');
+      expect(
+        ResolvedParameter.resolve(k, SetupType.sps, null).bounds,
+        microDefaultBounds('potassium'),
       );
-
-      await db.applyPreset(id, SetupType.fishOnly);
-
-      final after = (await db.getTrackedParameters(
-        id,
-      )).firstWhere((p) => p.paramKey == 'calcium');
-      expect(after.greenLow, 400.0);
-      expect(after.greenHigh, 450.0);
     });
 
-    test('resets a customized correction target to the setup-type default '
-        '(null where the preset defines none)', () async {
-      final id = await db.createTankWithPreset(
-        name: 'R',
-        type: SetupType.mixed,
+    test('an override wins over the default, and nulls inside it stay '
+        'meaningful', () async {
+      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
+      // Only a ceiling: the low side is deliberately unbounded.
+      await db.setParameterOverride(
+        id,
+        'alkalinity',
+        const ZoneBounds(greenHigh: 9, amberHigh: 11),
       );
-      final params = await db.getTrackedParameters(id);
-      final alk = params.firstWhere((p) => p.paramKey == 'alkalinity');
-      final ca = params.firstWhere((p) => p.paramKey == 'calcium');
-      await db.updateTrackedParameter(
-        alk.copyWith(targetValue: const Value(9.9)),
+      final o = (await db.getParameterOverrides(id)).single;
+      final alk = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'alkalinity');
+      final r = ResolvedParameter.resolve(alk, SetupType.sps, o);
+      expect(r.isCustomised, isTrue);
+      expect(r.bounds, const ZoneBounds(greenHigh: 9, amberHigh: 11));
+      expect(r.bounds.amberLow, isNull);
+    });
+
+    test('an all-null override is still an override: "no zones at all", not '
+        '"use the defaults"', () async {
+      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
+      await db.setParameterOverride(id, 'alkalinity', const ZoneBounds());
+      final o = (await db.getParameterOverrides(id)).single;
+      final alk = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'alkalinity');
+      final r = ResolvedParameter.resolve(alk, SetupType.sps, o);
+      expect(r.isCustomised, isTrue);
+      expect(r.bounds.isEmpty, isTrue);
+    });
+
+    test('setParameterOverride upserts on (tank, param)', () async {
+      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
+      await db.setParameterOverride(
+        id,
+        'calcium',
+        const ZoneBounds(greenLow: 400, greenHigh: 450),
       );
-      await db.updateTrackedParameter(
-        ca.copyWith(targetValue: const Value(444.0)),
+      await db.setParameterOverride(
+        id,
+        'calcium',
+        const ZoneBounds(greenLow: 410, greenHigh: 440),
+        target: 425,
+      );
+      final all = await db.getParameterOverrides(id);
+      expect(all, hasLength(1));
+      expect(all.single.greenLow, 410);
+      expect(all.single.targetValue, 425);
+    });
+
+    test('clearParameterOverride drops one parameter back to the defaults', () async {
+      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
+      await db.setParameterOverride(
+        id,
+        'calcium',
+        const ZoneBounds(greenLow: 1, greenHigh: 2),
+      );
+      await db.setParameterOverride(
+        id,
+        'alkalinity',
+        const ZoneBounds(greenLow: 3, greenHigh: 4),
+      );
+      await db.clearParameterOverride(id, 'calcium');
+      expect(
+        (await db.getParameterOverrides(id)).map((o) => o.paramKey),
+        ['alkalinity'],
+      );
+    });
+
+    test('resetParameterDefaults drops every override of that tank only', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.sps);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.sps);
+      await db.setParameterOverride(
+        a,
+        'calcium',
+        const ZoneBounds(greenLow: 1, greenHigh: 2),
+      );
+      await db.setParameterOverride(
+        b,
+        'calcium',
+        const ZoneBounds(greenLow: 1, greenHigh: 2),
       );
 
-      await db.applyPreset(id, SetupType.mixed);
+      await db.resetParameterDefaults(a);
 
-      final after = await db.getTrackedParameters(id);
-      expect(
-        after.firstWhere((p) => p.paramKey == 'alkalinity').targetValue,
-        presetTarget(SetupType.mixed, 'alkalinity'),
+      expect(await db.getParameterOverrides(a), isEmpty);
+      expect(await db.getParameterOverrides(b), hasLength(1));
+    });
+
+    test('an override outlives untracking its parameter, so re-adding it '
+        'restores the bounds the user set', () async {
+      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
+      await db.addTrackedParameter(id, 'potassium');
+      await db.setParameterOverride(
+        id,
+        'potassium',
+        const ZoneBounds(greenLow: 390, greenHigh: 410),
       );
-      expect(
-        after.firstWhere((p) => p.paramKey == 'calcium').targetValue,
-        isNull,
-        reason: 'no preset target -> reset to null, like the bounds',
+      final row = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'potassium');
+
+      await db.removeTrackedParameter(row.id);
+      expect(await db.getParameterOverrides(id), hasLength(1));
+
+      await db.addTrackedParameter(id, 'potassium');
+      final o = (await db.getParameterOverrides(id)).single;
+      expect(o.greenLow, 390);
+      expect(o.greenHigh, 410);
+    });
+
+    test('deleting a tank cascades to its overrides', () async {
+      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
+      await db.setParameterOverride(
+        id,
+        'calcium',
+        const ZoneBounds(greenLow: 400, greenHigh: 450),
       );
+      await db.softDeleteTank(id);
+      await db.hardDeleteTank(id);
+      expect(await db.getParameterOverrides(id), isEmpty);
     });
   });
 
@@ -750,16 +811,17 @@ void main() {
   });
 
   group('row -> domain bridges', () {
-    test('boundsOf mirrors the stored zone bounds', () async {
+    test('boundsOfOverride mirrors a stored override row', () async {
       final id = await db.createTankWithPreset(name: 'A', type: SetupType.sps);
-      final alk = (await db.getTrackedParameters(
-        id,
-      )).firstWhere((p) => p.paramKey == 'alkalinity');
-      final bounds = boundsOf(alk);
-      expect(bounds.amberLow, alk.amberLow);
-      expect(bounds.greenLow, alk.greenLow);
-      expect(bounds.greenHigh, alk.greenHigh);
-      expect(bounds.amberHigh, alk.amberHigh);
+      const custom = ZoneBounds(
+        amberLow: 6,
+        greenLow: 7,
+        greenHigh: 9,
+        amberHigh: 11,
+      );
+      await db.setParameterOverride(id, 'alkalinity', custom);
+      final o = (await db.getParameterOverrides(id)).single;
+      expect(boundsOfOverride(o), custom);
     });
 
     test('presentationOf converts temperature to the preferred unit', () async {
@@ -770,7 +832,7 @@ void main() {
       final temp = (await db.getTrackedParameters(
         id,
       )).firstWhere((p) => p.paramKey == 'temperature');
-      final pres = presentationOf(
+      final pres = presentationOfRow(
         temp,
         const UnitPrefs(temp: TempUnit.fahrenheit),
       );

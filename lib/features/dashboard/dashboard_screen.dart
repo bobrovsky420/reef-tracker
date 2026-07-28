@@ -248,7 +248,7 @@ class DashboardBody extends ConsumerWidget {
     BuildContext context,
     AppLocalizations l,
     DashboardSection section,
-    TrackedParameter param,
+    ResolvedParameter param,
     List<Reading> history,
     UnitPrefs prefs,
     TrendResult? trend,
@@ -260,7 +260,7 @@ class DashboardBody extends ConsumerWidget {
     switch (section) {
       case DashboardSection.coreChemistry:
       case DashboardSection.nutrients:
-        final bounds = boundsOf(param);
+        final bounds = param.bounds;
         final def = kParameterByKey[param.paramKey];
         final axis = gaugeAxis(
           bounds,
@@ -286,7 +286,7 @@ class DashboardBody extends ConsumerWidget {
           title: l.paramShortName(param.paramKey),
           pres: presentationOf(param, prefs),
           zone: latest != null
-              ? boundsOf(param).classify(latest.value)
+              ? param.bounds.classify(latest.value)
               : Zone.unknown,
           latest: latest?.value,
           previous: previous?.value,
@@ -619,7 +619,7 @@ class _ParameterTile extends StatelessWidget {
     this.trendHorizon = kTrendDefaultHorizon,
   });
 
-  final TrackedParameter param;
+  final ResolvedParameter param;
   final List<Reading> history;
   final UnitPrefs prefs;
   final TrendResult? trend;
@@ -630,7 +630,7 @@ class _ParameterTile extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final name = l.paramName(param.paramKey);
     final latest = history.isNotEmpty ? history.first : null;
-    final bounds = boundsOf(param);
+    final bounds = param.bounds;
     final zone = latest != null ? bounds.classify(latest.value) : Zone.unknown;
     final pres = presentationOf(param, prefs);
 

@@ -53,10 +53,6 @@ void main() {
         unit: 'dKH',
         enabled: true,
         displayOrder: 0,
-        amberLow: 7.0,
-        greenLow: 7.5,
-        greenHigh: 9.0,
-        amberHigh: 9.5,
         testCadenceDays: 7,
       ),
       TrackedParameter(
@@ -66,10 +62,6 @@ void main() {
         unit: '',
         enabled: false,
         displayOrder: 1,
-        amberLow: null,
-        greenLow: null,
-        greenHigh: null,
-        amberHigh: null,
       ),
     ];
     final readings = [
@@ -381,9 +373,9 @@ void main() {
       expect(p0.id.value, 5);
       expect(p0.tankId.value, 1);
       expect(p0.enabled.value, true);
-      expect(p0.amberHigh.value, 9.5);
+      expect(p0.testCadenceDays.value, 7);
       expect(data.params[1].enabled.value, false);
-      expect(data.params[1].greenLow.value, isNull);
+      expect(data.params[1].displayOrder.value, 1);
 
       final r0 = data.readings[0];
       expect(r0.id.value, 10);
@@ -1576,6 +1568,91 @@ void main() {
         dosingEntries: [dosingEntry(50, 1, intervalDays: -3)],
       );
       expect(() => validateBackup(d, appSchemaVersion: 21), returnsNormally);
+    });
+  });
+
+  group('parameter overrides in backups (v28)', () {
+    test('round-trip preserves a tank\'s overrides', () async {
+      final json = encodeBackup(
+        schemaVersion: 28,
+        tanks: [],
+        params: [],
+        paramOverrides: [
+          const ParameterOverride(
+            tankId: 1,
+            paramKey: 'alkalinity',
+            amberLow: 7,
+            greenLow: 7.5,
+            greenHigh: 8.5,
+            amberHigh: 9,
+            targetValue: 8.2,
+          ),
+          // Nulls inside a row stay meaningful: a one-sided ceiling.
+          const ParameterOverride(
+            tankId: 1,
+            paramKey: 'copper',
+            greenHigh: 0.006,
+            amberHigh: 0.0066,
+          ),
+        ],
+        readings: [],
+        waterChanges: [],
+        carbonChanges: [],
+        equipmentCleanings: [],
+        ratioVisibilities: [],
+        dosingEntries: [],
+        manualDoses: [],
+        readingTemplates: [],
+        microViews: [],
+        maintenanceSchedules: [],
+        roStages: [],
+        roStageReplacements: [],
+        importSources: [],
+        devices: [],
+        settings: [],
+      );
+      final data = decodeBackup(json);
+      expect(data.paramOverrides, hasLength(2));
+      final alk = data.paramOverrides.first;
+      expect(alk.paramKey.value, 'alkalinity');
+      expect(alk.greenLow.value, 7.5);
+      expect(alk.targetValue.value, 8.2);
+      final cu = data.paramOverrides.last;
+      expect(cu.greenHigh.value, 0.006);
+      expect(cu.amberLow.value, isNull);
+    });
+
+    test('a pre-v28 backup decodes with no overrides — its inline bounds are '
+        'deliberately ignored, like the v28 migration', () {
+      final data = decodeBackup(
+        jsonEncode({
+          'format': kBackupFormat,
+          'version': kBackupVersion,
+          'schemaVersion': 27,
+          'tanks': <dynamic>[],
+          'trackedParameters': [
+            {
+              'id': 1,
+              'tankId': 1,
+              'paramKey': 'alkalinity',
+              'unit': 'dKH',
+              'enabled': true,
+              'displayOrder': 0,
+              // Carried by every pre-v28 backup; must not become an override.
+              'amberLow': 7.0,
+              'greenLow': 99.0,
+              'greenHigh': 9.0,
+              'amberHigh': 9.5,
+              'targetValue': 42.0,
+            },
+          ],
+          'readings': <dynamic>[],
+          'settings': <dynamic>[],
+        }),
+      );
+      expect(data.paramOverrides, isEmpty);
+      expect(data.params, hasLength(1));
+      expect(data.params.single.paramKey.value, 'alkalinity');
     });
   });
 

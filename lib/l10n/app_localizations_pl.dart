@@ -278,23 +278,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noActiveAquarium => 'Brak aktywnego akwarium.';
 
   @override
-  String reapplyPreset(Object type) {
-    return 'Zastosuj ponownie preset $type';
-  }
-
-  @override
-  String reapplyPresetTitle(Object type) {
-    return 'Zastosować ponownie preset $type?';
-  }
-
-  @override
-  String get reapplyPresetBody =>
-      'Spowoduje to nadpisanie granic zielona/pomarańczowa/czerwona wszystkich śledzonych parametrów wartościami domyślnymi: parametry pulpitu według presetu typu akwarium, mikroelementy według wbudowanych wartości domyślnych. Twoje pomiary zostaną zachowane.';
-
-  @override
-  String get presetApplied => 'Preset zastosowany.';
-
-  @override
   String get noBoundariesSet => 'Nie ustawiono granic';
 
   @override
@@ -3821,4 +3804,29 @@ class AppLocalizationsPl extends AppLocalizations {
   String reefDevicesLastSeen(Object date) {
     return 'Ostatnio $date';
   }
+
+  @override
+  String get resetParamDefaults => 'Przywróć wartości domyślne';
+
+  @override
+  String get resetParamDefaultsTitle =>
+      'Przywrócić wartości domyślne wszystkich parametrów?';
+
+  @override
+  String get resetParamDefaultsBody =>
+      'Każdy parametr wróci do zalecanych granic dla tego typu akwarium, a mikroelementy do wbudowanych wartości domyślnych. Granice ustawione samodzielnie zostaną odrzucone. Pomiary zostaną zachowane.';
+
+  @override
+  String get paramDefaultsRestored =>
+      'Przywrócono domyślne wartości parametrów.';
+
+  @override
+  String get resetThisParamDefaults =>
+      'Przywróć domyślne wartości tego parametru';
+
+  @override
+  String get reset => 'Przywróć';
+
+  @override
+  String get followingDefaults => 'Używa wartości domyślnych';
 }

@@ -22,7 +22,7 @@ Future<int?> showTestSetEditSheet(
   BuildContext context, {
   required AppDatabase db,
   required int tankId,
-  required List<TrackedParameter> params,
+  required List<ResolvedParameter> params,
   ReadingTemplate? template,
   Set<String> initialKeys = const {},
 }) {
@@ -74,7 +74,7 @@ class _TestSetEditSheet extends StatefulWidget {
   /// list. Keys of [template] outside this list (disabled/untracked meanwhile)
   /// are not shown but are preserved on save, so a set survives parameter
   /// churn (see [ReadingTemplates]).
-  final List<TrackedParameter> params;
+  final List<ResolvedParameter> params;
   final ReadingTemplate? template;
   final Set<String> initialKeys;
 
@@ -226,7 +226,7 @@ class _TestSetsManageSheet extends ConsumerWidget {
         ref.watch(readingTemplatesProvider).value ?? const <ReadingTemplate>[];
     final tracked =
         ref.watch(trackedParametersProvider).value ??
-        const <TrackedParameter>[];
+        const <ResolvedParameter>[];
     final params = [
       for (final p in tracked)
         if (p.enabled) p,

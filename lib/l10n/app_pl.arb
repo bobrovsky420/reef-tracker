@@ -86,10 +86,6 @@
 
   "parameters": "Parametry",
   "noActiveAquarium": "Brak aktywnego akwarium.",
-  "reapplyPreset": "Zastosuj ponownie preset {type}",
-  "reapplyPresetTitle": "Zastosować ponownie preset {type}?",
-  "reapplyPresetBody": "Spowoduje to nadpisanie granic zielona/pomarańczowa/czerwona wszystkich śledzonych parametrów wartościami domyślnymi: parametry pulpitu według presetu typu akwarium, mikroelementy według wbudowanych wartości domyślnych. Twoje pomiary zostaną zachowane.",
-  "presetApplied": "Preset zastosowany.",
   "noBoundariesSet": "Nie ustawiono granic",
   "boundsSummary": "OK {greenLow}–{greenHigh} {unit}  •  czerwona <{amberLow} / >{amberHigh}",
   "editZones": "Edytuj strefy",
@@ -1049,5 +1045,12 @@
   "reefDevicesKindApex": "Neptune Apex",
   "reefDevicesKindHanna": "Checker Hanna",
   "reefDevicesBluetooth": "Bluetooth",
-  "reefDevicesLastSeen": "Ostatnio {date}"
+  "reefDevicesLastSeen": "Ostatnio {date}",
+  "resetParamDefaults": "Przywróć wartości domyślne",
+  "resetParamDefaultsTitle": "Przywrócić wartości domyślne wszystkich parametrów?",
+  "resetParamDefaultsBody": "Każdy parametr wróci do zalecanych granic dla tego typu akwarium, a mikroelementy do wbudowanych wartości domyślnych. Granice ustawione samodzielnie zostaną odrzucone. Pomiary zostaną zachowane.",
+  "paramDefaultsRestored": "Przywrócono domyślne wartości parametrów.",
+  "resetThisParamDefaults": "Przywróć domyślne wartości tego parametru",
+  "reset": "Przywróć",
+  "followingDefaults": "Używa wartości domyślnych"
 }

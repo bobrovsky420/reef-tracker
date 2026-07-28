@@ -277,23 +277,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noActiveAquarium => 'Aucun aquarium actif.';
 
   @override
-  String reapplyPreset(Object type) {
-    return 'Réappliquer le préréglage $type';
-  }
-
-  @override
-  String reapplyPresetTitle(Object type) {
-    return 'Réappliquer le préréglage $type ?';
-  }
-
-  @override
-  String get reapplyPresetBody =>
-      'Les limites verte/orange/rouge de tous les paramètres suivis seront remplacées par les valeurs par défaut : celles du préréglage du type de bac pour les paramètres du tableau de bord, les valeurs intégrées pour les oligo-éléments. Vos mesures sont conservées.';
-
-  @override
-  String get presetApplied => 'Préréglage appliqué.';
-
-  @override
   String get noBoundariesSet => 'Aucune limite définie';
 
   @override
@@ -3763,4 +3746,29 @@ class AppLocalizationsFr extends AppLocalizations {
   String reefDevicesLastSeen(Object date) {
     return 'Vu $date';
   }
+
+  @override
+  String get resetParamDefaults => 'Rétablir les valeurs par défaut';
+
+  @override
+  String get resetParamDefaultsTitle =>
+      'Rétablir les valeurs par défaut de tous les paramètres ?';
+
+  @override
+  String get resetParamDefaultsBody =>
+      'Chaque paramètre retrouve les limites recommandées pour ce type d\'aquarium, et les micro-éléments leurs valeurs par défaut intégrées. Les limites que vous avez définies sont supprimées. Vos mesures sont conservées.';
+
+  @override
+  String get paramDefaultsRestored =>
+      'Paramètres rétablis aux valeurs par défaut.';
+
+  @override
+  String get resetThisParamDefaults =>
+      'Rétablir les valeurs par défaut de ce paramètre';
+
+  @override
+  String get reset => 'Rétablir';
+
+  @override
+  String get followingDefaults => 'Utilise les valeurs par défaut';
 }

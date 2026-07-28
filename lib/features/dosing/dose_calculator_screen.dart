@@ -279,11 +279,11 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     final latestReading = readings.isEmpty ? null : readings.last.value;
     final trackedRow = (ref.watch(trackedParametersProvider).value ?? const [])
         .where((t) => t.paramKey == element)
-        .cast<TrackedParameter?>()
+        .cast<ResolvedParameter?>()
         .firstWhere((t) => true, orElse: () => null);
     final defaultTarget = trackedRow == null
         ? null
-        : trackedRow.targetValue ?? _greenMid(boundsOf(trackedRow));
+        : trackedRow.target ?? _greenMid(trackedRow.bounds);
     // Salinity-adjusted target: when the per-tank switch is on, the
     // 35 ppt-referenced target — typed or default, both are "book" values —
     // is scaled to the tank's measured salinity. The target *field* keeps

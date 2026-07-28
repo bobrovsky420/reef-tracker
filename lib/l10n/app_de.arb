@@ -86,10 +86,6 @@
 
   "parameters": "Parameter",
   "noActiveAquarium": "Kein aktives Aquarium.",
-  "reapplyPreset": "Voreinstellung {type} erneut anwenden",
-  "reapplyPresetTitle": "Voreinstellung {type} erneut anwenden?",
-  "reapplyPresetBody": "Dadurch werden die grün/orange/rot-Grenzen aller verfolgten Parameter mit den Standardwerten überschrieben: Dashboard-Parameter mit der Voreinstellung des Aquarientyps, Spurenelemente mit ihren eingebauten Standardwerten. Deine Messungen bleiben erhalten.",
-  "presetApplied": "Voreinstellung angewendet.",
   "noBoundariesSet": "Keine Grenzen festgelegt",
   "boundsSummary": "OK {greenLow}–{greenHigh} {unit}  •  rot <{amberLow} / >{amberHigh}",
   "editZones": "Zonen bearbeiten",
@@ -1049,5 +1045,12 @@
   "reefDevicesKindApex": "Neptune Apex",
   "reefDevicesKindHanna": "Hanna-Checker",
   "reefDevicesBluetooth": "Bluetooth",
-  "reefDevicesLastSeen": "Zuletzt gesehen {date}"
+  "reefDevicesLastSeen": "Zuletzt gesehen {date}",
+  "resetParamDefaults": "Auf Standardwerte zurücksetzen",
+  "resetParamDefaultsTitle": "Alle Parameter auf Standardwerte zurücksetzen?",
+  "resetParamDefaultsBody": "Jeder Parameter erhält wieder die empfohlenen Grenzwerte für diesen Aquarientyp, Mikroelemente ihre eingebauten Standardwerte. Selbst gesetzte Grenzwerte werden verworfen. Deine Messwerte bleiben erhalten.",
+  "paramDefaultsRestored": "Parameter auf Standardwerte zurückgesetzt.",
+  "resetThisParamDefaults": "Diesen Parameter auf Standardwerte zurücksetzen",
+  "reset": "Zurücksetzen",
+  "followingDefaults": "Nutzt die Standardwerte"
 }

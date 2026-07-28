@@ -86,10 +86,6 @@
 
   "parameters": "Parametry",
   "noActiveAquarium": "Žádné aktivní akvárium.",
-  "reapplyPreset": "Znovu použít přednastavení {type}",
-  "reapplyPresetTitle": "Znovu použít přednastavení {type}?",
-  "reapplyPresetBody": "Tím se hranice zelená/oranžová/červená u všech sledovaných parametrů přepíší výchozími hodnotami: parametry na přehledu podle přednastavení typu akvária, mikroprvky podle vestavěných výchozích hodnot. Vaše měření zůstanou zachována.",
-  "presetApplied": "Přednastavení použito.",
   "noBoundariesSet": "Hranice nenastaveny",
   "boundsSummary": "OK {greenLow}–{greenHigh} {unit}  •  červená <{amberLow} / >{amberHigh}",
   "editZones": "Upravit zóny",
@@ -1049,5 +1045,12 @@
   "reefDevicesKindApex": "Neptune Apex",
   "reefDevicesKindHanna": "Hanna checker",
   "reefDevicesBluetooth": "Bluetooth",
-  "reefDevicesLastSeen": "Naposledy {date}"
+  "reefDevicesLastSeen": "Naposledy {date}",
+  "resetParamDefaults": "Obnovit výchozí hodnoty",
+  "resetParamDefaultsTitle": "Obnovit u všech parametrů výchozí hodnoty?",
+  "resetParamDefaultsBody": "Každý parametr se vrátí k doporučeným hranicím pro tento typ akvária a mikroprvky k vestavěným výchozím hodnotám. Hranice, které jste nastavili sami, budou zahozeny. Naměřené hodnoty zůstanou zachovány.",
+  "paramDefaultsRestored": "Parametry obnoveny na výchozí hodnoty.",
+  "resetThisParamDefaults": "Obnovit výchozí hodnoty tohoto parametru",
+  "reset": "Obnovit",
+  "followingDefaults": "Používá výchozí hodnoty"
 }

@@ -9,7 +9,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../domain/dose_calculator.dart';
-import '../domain/micro.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/presets.dart';
 import '../domain/ratio.dart';
@@ -58,6 +57,14 @@ class Tanks extends Table {
 }
 
 /// A parameter the user tracks for a specific tank, plus its zone boundaries.
+/// A parameter this tank tracks. Carries only per-tank *facts* — which
+/// parameters are shown, in what order, in which unit, how often to test.
+///
+/// Zone bounds and the correction target deliberately live elsewhere, in
+/// [ParameterOverrides]: they have defaults (the setup-type preset for core
+/// parameters, the catalog for microelements) that are resolved on read, so a
+/// tank that has not overridden them follows those defaults forever instead of
+/// freezing a copy at the moment the row was created.
 class TrackedParameters extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tankId =>
@@ -66,21 +73,43 @@ class TrackedParameters extends Table {
   TextColumn get unit => text()();
   BoolColumn get enabled => boolean().withDefault(const Constant(true))();
   IntColumn get displayOrder => integer().withDefault(const Constant(0))();
-  RealColumn get amberLow => real().nullable()();
-  RealColumn get greenLow => real().nullable()();
-  RealColumn get greenHigh => real().nullable()();
-  RealColumn get amberHigh => real().nullable()();
 
   /// "Remind to test every N days" (U1); null = no reminder for this
   /// parameter. The reminder anchors elastically on the parameter's latest
   /// reading (see `domain/reminders.dart`).
   IntColumn get testCadenceDays => integer().nullable()();
+}
+
+/// A tank's **override** of a parameter's zone bounds and correction target.
+///
+/// The presence of the row is the whole signal: a row means "the user chose
+/// these", no row means "follow the defaults" (`defaultBoundsFor` /
+/// `defaultTargetFor`). Nulls *inside* a row keep their usual meaning —
+/// unbounded on that side — so one-sided ceilings stay expressible, and a row
+/// with all five null is a legitimate "show this parameter with no zones at
+/// all".
+///
+/// Keyed by `(tankId, paramKey)` rather than by `TrackedParameters.id`, like
+/// [RatioVisibilities]: an override outlives untracking its parameter, so
+/// removing a parameter and adding it back restores the user's settings rather
+/// than silently resetting them.
+class ParameterOverrides extends Table {
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+  TextColumn get paramKey => text()();
+  RealColumn get amberLow => real().nullable()();
+  RealColumn get greenLow => real().nullable()();
+  RealColumn get greenHigh => real().nullable()();
+  RealColumn get amberHigh => real().nullable()();
 
   /// Correction target for the dose calculator's correction mode, in the
-  /// parameter's canonical unit. Seeded from the setup-type preset
-  /// (`kPresetTargets`) where one exists; null falls back to the green-zone
-  /// midpoint at use time.
+  /// parameter's canonical unit. Null inside a present row = no explicit
+  /// target; callers fall back to the setup-type preset's target and then to
+  /// the green-zone midpoint.
   RealColumn get targetValue => real().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {tankId, paramKey};
 }
 
 /// A single logged measurement.
@@ -569,6 +598,7 @@ class Settings extends Table {
   tables: [
     Tanks,
     TrackedParameters,
+    ParameterOverrides,
     Readings,
     WaterChanges,
     CarbonChanges,
@@ -590,7 +620,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 27;
+  int get schemaVersion => 28;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -803,29 +833,12 @@ class AppDatabase extends _$AppDatabase {
         );
       }
       if (from < 22) {
-        // Correction target (dose calculator correction mode). Existing rows
-        // get the setup-type default where the preset defines one; everything
-        // else stays null and falls back to the green-zone midpoint at use
-        // time. The IS NULL guard keeps the backfill idempotent.
-        if (!await _columnExists('tracked_parameters', 'target_value')) {
-          await m.addColumn(trackedParameters, trackedParameters.targetValue);
-        }
-        for (final MapEntry(key: type, value: targets)
-            in kPresetTargets.entries) {
-          for (final MapEntry(key: param, value: target) in targets.entries) {
-            await customUpdate(
-              'UPDATE tracked_parameters SET target_value = ? '
-              'WHERE target_value IS NULL AND param_key = ? AND tank_id IN '
-              '(SELECT id FROM tanks WHERE setup_type = ?)',
-              variables: [
-                Variable<double>(target),
-                Variable<String>(param),
-                Variable<String>(type.name),
-              ],
-              updates: {trackedParameters},
-            );
-          }
-        }
+        // Historically: added `tracked_parameters.target_value` and backfilled
+        // it from the setup-type presets. Both are now pointless work — v28
+        // drops that column (targets live in `parameter_overrides`, and an
+        // absent override resolves through `defaultTargetFor`), and the column
+        // no longer exists on the table class to add. Kept as a numbered
+        // no-op so the step sequence stays readable against git history.
       }
       if (from < 23) {
         // Measurement import watermark + location mapping (U32).
@@ -866,6 +879,35 @@ class AppDatabase extends _$AppDatabase {
         // sweep re-runs every step (see migration_test.dart).
         if (await _columnExists('devices', 'secret')) {
           await m.dropColumn(devices, 'secret');
+        }
+      }
+      if (from < 28) {
+        // Zone bounds and the correction target moved off `tracked_parameters`
+        // into `parameter_overrides`, where the *presence of a row* means "the
+        // user chose these" — everything else resolves from the setup-type
+        // preset / catalog on read, so defaults stay live.
+        //
+        // The five old columns are dropped WITHOUT being carried across: every
+        // tank falls back to the current defaults. That is deliberate. Copying
+        // them would have marked every existing tank as customised, freezing
+        // all of them on whatever was seeded when their rows were created —
+        // which is the exact problem this table exists to end. Hand-tuned
+        // bounds are lost; see CHANGELOG.
+        if (!await _tableExists('parameter_overrides')) {
+          await m.createTable(parameterOverrides);
+        }
+        for (final col in const [
+          'amber_low',
+          'green_low',
+          'green_high',
+          'amber_high',
+          'target_value',
+        ]) {
+          // Guarded: a v28 `createTable` never builds these, and the upgrade
+          // sweep re-runs every step (see migration_test.dart).
+          if (await _columnExists('tracked_parameters', col)) {
+            await m.dropColumn(trackedParameters, col);
+          }
         }
       }
     },
@@ -1024,13 +1066,16 @@ class AppDatabase extends _$AppDatabase {
   Future<void> purgeDeletedTanks() =>
       (delete(tanks)..where((t) => t.deletedAt.isNotNull())).go();
 
+  /// Seeds the setup type's default parameter set. Bounds and target are
+  /// deliberately not written: with no [ParameterOverrides] row they resolve
+  /// from the setup-type preset / catalog on every read, so a seeded tank
+  /// follows the defaults instead of freezing a copy of them.
   Future<void> _seedTrackedParameters(int tankId, SetupType type) async {
     final keys = defaultTrackedKeys(type);
     await batch((b) {
       for (var i = 0; i < keys.length; i++) {
         final key = keys[i];
         final def = kParameterByKey[key];
-        final bounds = presetBounds(type, key);
         b.insert(
           trackedParameters,
           TrackedParametersCompanion.insert(
@@ -1038,11 +1083,6 @@ class AppDatabase extends _$AppDatabase {
             paramKey: key,
             unit: def?.unit ?? '',
             displayOrder: Value(i),
-            amberLow: Value(bounds.amberLow),
-            greenLow: Value(bounds.greenLow),
-            greenHigh: Value(bounds.greenHigh),
-            amberHigh: Value(bounds.amberHigh),
-            targetValue: Value(presetTarget(type, key)),
           ),
         );
       }
@@ -1066,11 +1106,12 @@ class AppDatabase extends _$AppDatabase {
   /// Adds a parameter to a tank if not already present (seeding preset bounds).
   /// The exists-check and insert run in one transaction (#10) so a double-fire
   /// (double-tap, launch/resume race) can't insert the parameter twice.
-  Future<void> addTrackedParameter(
-    int tankId,
-    String paramKey,
-    SetupType type,
-  ) async {
+  /// Bounds and target are NOT seeded: they resolve from the setup-type preset
+  /// (core) or the catalog (microelements) on every read, so a newly tracked
+  /// parameter follows the defaults and keeps following them. Any pre-existing
+  /// [ParameterOverrides] row for the key survives untracking, so re-adding a
+  /// parameter restores the user's own bounds rather than resetting them.
+  Future<void> addTrackedParameter(int tankId, String paramKey) async {
     await transaction(() async {
       final existing =
           await (select(trackedParameters)..where(
@@ -1079,10 +1120,6 @@ class AppDatabase extends _$AppDatabase {
               .get();
       if (existing.isNotEmpty) return;
       final def = kParameterByKey[paramKey];
-      // Setup-type presets cover core parameters; microelements (U17) seed
-      // from their catalog defaults instead (empty for anything else).
-      final preset = presetBounds(type, paramKey);
-      final bounds = preset.isEmpty ? microDefaultBounds(paramKey) : preset;
       // max(displayOrder) + 1, not the row count: after removing a middle
       // parameter the count could collide with an existing order (same fix as
       // insertDosingEntry).
@@ -1097,11 +1134,6 @@ class AppDatabase extends _$AppDatabase {
           paramKey: paramKey,
           unit: def?.unit ?? '',
           displayOrder: Value(order),
-          amberLow: Value(bounds.amberLow),
-          greenLow: Value(bounds.greenLow),
-          greenHigh: Value(bounds.greenHigh),
-          amberHigh: Value(bounds.amberHigh),
-          targetValue: Value(presetTarget(type, paramKey)),
         ),
       );
     });
@@ -1132,37 +1164,50 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  /// Re-applies the default zone bounds to every tracked parameter of a tank:
-  /// the setup-type preset for parameters it knows about, the microelement
-  /// catalog defaults otherwise (the same source rule as [addTrackedParameter]).
-  /// Rows with no default from either source (core parameters outside the
-  /// preset) keep their current bounds. Does not add/remove parameters.
-  Future<void> applyPreset(int tankId, SetupType type) async {
-    final params = await getTrackedParameters(tankId);
-    await batch((b) {
-      for (final param in params) {
-        final preset = presetBounds(type, param.paramKey);
-        final bounds = preset.isEmpty
-            ? microDefaultBounds(param.paramKey)
-            : preset;
-        if (bounds.isEmpty) continue;
-        b.update(
-          trackedParameters,
-          TrackedParametersCompanion(
-            amberLow: Value(bounds.amberLow),
-            greenLow: Value(bounds.greenLow),
-            greenHigh: Value(bounds.greenHigh),
-            amberHigh: Value(bounds.amberHigh),
-            // Re-applying the preset resets the correction target to the
-            // setup-type default too (null where none) — same semantics as
-            // the bounds it sits alongside.
-            targetValue: Value(presetTarget(type, param.paramKey)),
-          ),
-          where: (t) => t.id.equals(param.id),
-        );
-      }
-    });
-  }
+  // --- Parameter overrides -------------------------------------------------
+
+  Stream<List<ParameterOverride>> watchParameterOverrides(int tankId) =>
+      (select(parameterOverrides)
+        ..where((o) => o.tankId.equals(tankId))).watch();
+
+  Future<List<ParameterOverride>> getParameterOverrides(int tankId) =>
+      (select(parameterOverrides)..where((o) => o.tankId.equals(tankId))).get();
+
+  /// Stores a tank's own bounds/target for a parameter. An all-null [bounds]
+  /// with a null [target] is still an override — "show this parameter with no
+  /// zones" — so callers that mean "go back to the defaults" must call
+  /// [clearParameterOverride] instead of writing empty values.
+  Future<void> setParameterOverride(
+    int tankId,
+    String paramKey,
+    ZoneBounds bounds, {
+    double? target,
+  }) => into(parameterOverrides).insertOnConflictUpdate(
+    ParameterOverridesCompanion.insert(
+      tankId: tankId,
+      paramKey: paramKey,
+      amberLow: Value(bounds.amberLow),
+      greenLow: Value(bounds.greenLow),
+      greenHigh: Value(bounds.greenHigh),
+      amberHigh: Value(bounds.amberHigh),
+      targetValue: Value(target),
+    ),
+  );
+
+  /// Drops one parameter back to the defaults.
+  Future<void> clearParameterOverride(int tankId, String paramKey) =>
+      (delete(parameterOverrides)..where(
+            (o) => o.tankId.equals(tankId) & o.paramKey.equals(paramKey),
+          ))
+          .go();
+
+  /// Drops **every** parameter of a tank back to the defaults — the
+  /// "Reset all parameters to defaults" action. Nothing is recomputed or
+  /// written: with no override rows left, each parameter resolves from its
+  /// setup-type preset / catalog default on the next read, which is also why
+  /// this stays correct when those defaults later change.
+  Future<void> resetParameterDefaults(int tankId) =>
+      (delete(parameterOverrides)..where((o) => o.tankId.equals(tankId))).go();
 
   // --- Readings ------------------------------------------------------------
 
@@ -2490,6 +2535,10 @@ class AppDatabase extends _$AppDatabase {
   Future<List<TrackedParameter>> getAllTrackedParameters() =>
       select(trackedParameters).get();
 
+  /// Every parameter override, across all tanks.
+  Future<List<ParameterOverride>> getAllParameterOverrides() =>
+      select(parameterOverrides).get();
+
   /// Every reading, across all tanks.
   Future<List<Reading>> getAllReadings() => select(readings).get();
 
@@ -2567,6 +2616,9 @@ class AppDatabase extends _$AppDatabase {
   Future<void> restoreFromBackup({
     required List<TanksCompanion> tankRows,
     required List<TrackedParametersCompanion> paramRows,
+    // Optional with an empty default: pre-v28 backups carry no override
+    // section, and restore then simply leaves every parameter on its defaults.
+    List<ParameterOverridesCompanion> paramOverrideRows = const [],
     required List<ReadingsCompanion> readingRows,
     required List<WaterChangesCompanion> waterChangeRows,
     required List<CarbonChangesCompanion> carbonChangeRows,
@@ -2618,6 +2670,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(roStages).go();
       await delete(importSources).go();
       await delete(trackedParameters).go();
+      await delete(parameterOverrides).go();
       // Preserve device-local preferences: wipe only the settings the restore
       // is allowed to replace.
       if (preserveSettingKeys.isEmpty) {
@@ -2632,6 +2685,7 @@ class AppDatabase extends _$AppDatabase {
       await batch((b) {
         b.insertAll(tanks, tankRows);
         b.insertAll(trackedParameters, paramRows);
+        b.insertAll(parameterOverrides, paramOverrideRows);
         b.insertAll(readings, readingRows);
         b.insertAll(waterChanges, waterChangeRows);
         b.insertAll(carbonChanges, carbonChangeRows);
@@ -2758,17 +2812,84 @@ Future<Directory> _documentsDir() async {
   return getApplicationDocumentsDirectory();
 }
 
-/// Convenience: build [ZoneBounds] from a tracked-parameter row.
-ZoneBounds boundsOf(TrackedParameter p) => ZoneBounds(
-  amberLow: p.amberLow,
-  greenLow: p.greenLow,
-  greenHigh: p.greenHigh,
-  amberHigh: p.amberHigh,
+/// Convenience: build [ZoneBounds] from an override row.
+ZoneBounds boundsOfOverride(ParameterOverride o) => ZoneBounds(
+  amberLow: o.amberLow,
+  greenLow: o.greenLow,
+  greenHigh: o.greenHigh,
+  amberHigh: o.amberHigh,
 );
+
+/// A tracked parameter with its zone bounds and correction target already
+/// resolved — the tank's [ParameterOverride] where one exists, the setup-type
+/// preset / catalog default where it does not.
+///
+/// This is what the UI and the domain aggregates consume. It deliberately
+/// **cannot be written back to the database**: only [row] can, and [row] never
+/// carries resolved values, so no write path (the enable/disable toggle
+/// replaces the whole row) can silently freeze today's defaults into a tank.
+class ResolvedParameter {
+  const ResolvedParameter({
+    required this.row,
+    required this.bounds,
+    required this.target,
+    required this.isCustomised,
+  });
+
+  /// Resolves [row] against the tank's [override] (null = none stored) and the
+  /// defaults for [type].
+  factory ResolvedParameter.resolve(
+    TrackedParameter row,
+    SetupType type,
+    ParameterOverride? override,
+  ) => ResolvedParameter(
+    row: row,
+    bounds: override != null
+        ? boundsOfOverride(override)
+        : defaultBoundsFor(type, row.paramKey),
+    target: override != null
+        ? override.targetValue
+        : defaultTargetFor(type, row.paramKey),
+    isCustomised: override != null,
+  );
+
+  final TrackedParameter row;
+  final ZoneBounds bounds;
+  final double? target;
+
+  /// True when these values came from a stored override rather than the
+  /// defaults — what the editor's "Reset to defaults" affordance keys off.
+  final bool isCustomised;
+
+  int get id => row.id;
+  int get tankId => row.tankId;
+  String get paramKey => row.paramKey;
+  String get unit => row.unit;
+  bool get enabled => row.enabled;
+  int get displayOrder => row.displayOrder;
+  int? get testCadenceDays => row.testCadenceDays;
+}
+
+/// Resolves a whole tank's parameters in one pass.
+List<ResolvedParameter> resolveParameters(
+  List<TrackedParameter> rows,
+  SetupType type,
+  List<ParameterOverride> overrides,
+) {
+  final byKey = {for (final o in overrides) o.paramKey: o};
+  return [
+    for (final r in rows) ResolvedParameter.resolve(r, type, byKey[r.paramKey]),
+  ];
+}
 
 /// Convenience: resolve how to present a tracked parameter's values given the
 /// user's unit preferences.
-ParamPresentation presentationOf(TrackedParameter p, UnitPrefs prefs) =>
+ParamPresentation presentationOf(ResolvedParameter p, UnitPrefs prefs) =>
+    presentationForKey(p.paramKey, p.unit, prefs);
+
+/// Same, for a raw row (the paths that read rows straight from the database
+/// rather than through `trackedParametersProvider`).
+ParamPresentation presentationOfRow(TrackedParameter p, UnitPrefs prefs) =>
     presentationForKey(p.paramKey, p.unit, prefs);
 
 // --- Domain mappers ----------------------------------------------------------

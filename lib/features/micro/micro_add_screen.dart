@@ -6,7 +6,6 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../domain/micro.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
@@ -113,9 +112,8 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
       // Ensure each element has its tracked row (idempotent; seeds the
       // catalog default bounds) so history/bounds editing have a home, then
       // insert the whole batch as one reading group.
-      final type = SetupType.fromName(tank.setupType);
       for (final key in entries.keys) {
-        await db.addTrackedParameter(tank.id, key, type);
+        await db.addTrackedParameter(tank.id, key);
       }
       await db.insertReadingGroup(
         tankId: tank.id,

@@ -74,7 +74,7 @@ void main() {
         takenAt: now.subtract(const Duration(days: 60)),
       );
       // Micro element measured 2 months ago: included regardless of window.
-      await db.addTrackedParameter(tank, 'copper', SetupType.mixed);
+      await db.addTrackedParameter(tank, 'copper');
       await db.insertReading(
         tankId: tank,
         paramKey: 'copper',
@@ -148,7 +148,7 @@ void main() {
         amountLiters: 30,
         note: 'salinity matched',
       );
-      await db.addTrackedParameter(tank, 'copper', SetupType.mixed);
+      await db.addTrackedParameter(tank, 'copper');
       await db.insertReading(
         tankId: tank,
         paramKey: 'copper',

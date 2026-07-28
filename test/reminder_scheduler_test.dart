@@ -117,7 +117,7 @@ void main() {
         t,
       )).firstWhere((p) => p.paramKey == 'alkalinity');
       await db.setTestCadence(alk.id, 7);
-      await db.addTrackedParameter(t, 'iodine', SetupType.mixed);
+      await db.addTrackedParameter(t, 'iodine');
       final iodine = (await db.getTrackedParameters(
         t,
       )).firstWhere((p) => p.paramKey == 'iodine');

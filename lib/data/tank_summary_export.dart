@@ -45,7 +45,7 @@ const int _kRecentPerParam = 40;
 
 /// One core parameter's slice of the summary.
 typedef SummaryParam = ({
-  TrackedParameter param,
+  ResolvedParameter param,
   Reading? latest,
 
   /// Window-filtered readings, newest first.
@@ -58,7 +58,7 @@ typedef SummaryParam = ({
 /// membership misleading).
 typedef SummaryMicro = ({
   String paramKey,
-  TrackedParameter? row,
+  ResolvedParameter? row,
   Reading latest,
 });
 
@@ -119,7 +119,13 @@ Future<TankSummaryData?> collectTankSummary(
   final recent = await db.getRecentReadingsPerParam(tankId, _kRecentPerParam);
   if (recent.isEmpty) return null;
 
-  final tracked = await db.getTrackedParameters(tankId);
+  // Resolve bounds/targets here, once: the export runs outside the provider
+  // layer, so it does the same override-or-default resolution the UI does.
+  final tracked = resolveParameters(
+    await db.getTrackedParameters(tankId),
+    SetupType.fromName(tank.setupType),
+    await db.getParameterOverrides(tankId),
+  );
   final settings = {for (final s in await db.getAllSettings()) s.key: s.value};
   String? raw(SettingKey k) => settings[k.storageKey];
   final trendEnabled = AppSettings.decodeTrendEnabled(
@@ -160,7 +166,7 @@ Future<TankSummaryData?> collectTankSummary(
   final core = tracked
       .where((t) => t.enabled && isCoreParam(t.paramKey))
       .toList();
-  final bounds = {for (final p in core) p.paramKey: boundsOf(p)};
+  final bounds = {for (final p in core) p.paramKey: p.bounds};
 
   final trends = <String, TrendResult>{};
   if (trendEnabled) {
@@ -357,7 +363,7 @@ String encodeTankSummary(
     buf.writeln('## ${l.aiSummaryParamsHeading}');
     for (final p in withReadings) {
       final pres = presentationOf(p.param, prefs);
-      final b = boundsOf(p.param);
+      final b = p.param.bounds;
       final latest = p.latest!;
       buf
         ..writeln()
@@ -503,7 +509,7 @@ String encodeTankSummary(
         prefs,
       );
       final bounds = switch (m.row) {
-        final row? => boundsOf(row),
+        final row? => row.bounds,
         null => microDefaultBounds(m.paramKey),
       };
       final zone = bounds.classify(m.latest.value);

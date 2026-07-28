@@ -7,7 +7,6 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/icp_import.dart';
 import '../../domain/parameter_catalog.dart';
-import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
@@ -135,9 +134,8 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
       // Same mechanics as the manual micro form: ensure each parameter has
       // its tracked row (idempotent; seeds catalog default bounds), then
       // insert the whole report as one atomic reading group.
-      final type = SetupType.fromName(tank.setupType);
       for (final key in values.keys) {
-        await db.addTrackedParameter(tank.id, key, type);
+        await db.addTrackedParameter(tank.id, key);
       }
       await db.insertReadingGroup(
         tankId: tank.id,
@@ -258,7 +256,7 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
   Widget _sectionCard(
     ParamCategory category,
     UnitPrefs prefs,
-    Map<String, TrackedParameter> rowByKey,
+    Map<String, ResolvedParameter> rowByKey,
     Map<String, ZoneBounds> microBounds,
   ) {
     final entries = [
@@ -287,7 +285,7 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
     String key,
     double canonical,
     UnitPrefs prefs,
-    TrackedParameter? row,
+    ResolvedParameter? row,
     ZoneBounds? microBoundsFor, {
     required bool isLast,
   }) {
@@ -298,7 +296,7 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
     // Effective bounds: the micro panel's (row's or catalog default) for
     // elements, the tracked row's for core parameters. A core parameter
     // without a tracked row shows no chip — there is nothing to classify by.
-    final bounds = microBoundsFor ?? (row != null ? boundsOf(row) : null);
+    final bounds = microBoundsFor ?? row?.bounds;
     final zone = bounds?.classify(canonical) ?? Zone.unknown;
 
     return Container(

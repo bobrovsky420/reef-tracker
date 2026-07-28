@@ -7,6 +7,7 @@
 /// This file owns the lookups.
 library;
 
+import 'micro.dart';
 import 'setup_type.dart';
 import 'zones.dart';
 
@@ -23,11 +24,36 @@ ZoneBounds presetBounds(SetupType type, String paramKey) =>
 /// where the sensible target is NOT simply the middle of the green zone
 /// (currently alkalinity, whose wide safe band sits above the commonly
 /// recommended set point); callers fall back to the green-zone midpoint.
-/// Seeded into `TrackedParameters.targetValue` (editable per tank, like the
-/// bounds).
+/// Never stored: a tank keeps only its own override (`ParameterOverrides`),
+/// and the absence of one resolves through [defaultTargetFor].
 double? presetTarget(SetupType type, String paramKey) =>
     kPresetTargets[type]?[paramKey];
 
 /// The parameter keys tracked by default for a setup type, in preset order.
 List<String> defaultTrackedKeys(SetupType type) =>
     (kPresets[type] ?? const {}).keys.toList();
+
+/// **The** default zone bounds for [paramKey] on a tank of [type] — the single
+/// answer to "what should this parameter's zones be when the tank has not
+/// overridden them".
+///
+/// Core parameters resolve to their setup-type preset, microelements to their
+/// catalog default (`parameters.yaml`). Empty when neither defines one — a
+/// real case, not a bug: fish-only tanks have no calcium or alkalinity preset,
+/// so tracking calcium there gives an uncoloured "No boundaries set" row until
+/// the user sets bounds by hand.
+///
+/// Resolved on **read**, never stored. Changing a tank's setup type, or
+/// shipping a new catalog, therefore re-colours every parameter the tank has
+/// not overridden — with no migration and no re-apply step.
+ZoneBounds defaultBoundsFor(SetupType type, String paramKey) {
+  final preset = presetBounds(type, paramKey);
+  return preset.isEmpty ? microDefaultBounds(paramKey) : preset;
+}
+
+/// The default correction target for [paramKey] on a tank of [type]. Only the
+/// setup-type presets define targets (currently alkalinity); microelements
+/// have none and fall back to the green-zone midpoint at use time. Same
+/// read-time resolution contract as [defaultBoundsFor].
+double? defaultTargetFor(SetupType type, String paramKey) =>
+    presetTarget(type, paramKey);

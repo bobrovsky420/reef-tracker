@@ -582,30 +582,6 @@ abstract class AppLocalizations {
   /// **'No active aquarium.'**
   String get noActiveAquarium;
 
-  /// No description provided for @reapplyPreset.
-  ///
-  /// In en, this message translates to:
-  /// **'Re-apply {type} preset'**
-  String reapplyPreset(Object type);
-
-  /// No description provided for @reapplyPresetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Re-apply {type} preset?'**
-  String reapplyPresetTitle(Object type);
-
-  /// No description provided for @reapplyPresetBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This overwrites the green/amber/red boundaries of all tracked parameters: dashboard parameters get the aquarium-type preset values, microelements their built-in defaults. Your readings are kept.'**
-  String get reapplyPresetBody;
-
-  /// No description provided for @presetApplied.
-  ///
-  /// In en, this message translates to:
-  /// **'Preset applied.'**
-  String get presetApplied;
-
   /// No description provided for @noBoundariesSet.
   ///
   /// In en, this message translates to:
@@ -6140,6 +6116,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last seen {date}'**
   String reefDevicesLastSeen(Object date);
+
+  /// Menu item on Manage parameters: drop every per-tank override.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get resetParamDefaults;
+
+  /// Confirmation dialog title for resetting all parameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all parameters to defaults?'**
+  String get resetParamDefaultsTitle;
+
+  /// Confirmation dialog body; warns that user-set boundaries are discarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Every parameter goes back to the recommended boundaries for this aquarium type, and microelements to their built-in defaults. Boundaries you set yourself are discarded. Your readings are kept.'**
+  String get resetParamDefaultsBody;
+
+  /// SnackBar after resetting all parameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Parameters reset to defaults.'**
+  String get paramDefaultsRestored;
+
+  /// Action in the parameter editor: drop this parameter's override.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset this parameter to defaults'**
+  String get resetThisParamDefaults;
+
+  /// Generic confirm label for a reset action.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// Editor hint shown while a parameter has no override.
+  ///
+  /// In en, this message translates to:
+  /// **'Following the defaults'**
+  String get followingDefaults;
 }
 
 class _AppLocalizationsDelegate

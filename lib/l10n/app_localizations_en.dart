@@ -277,23 +277,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noActiveAquarium => 'No active aquarium.';
 
   @override
-  String reapplyPreset(Object type) {
-    return 'Re-apply $type preset';
-  }
-
-  @override
-  String reapplyPresetTitle(Object type) {
-    return 'Re-apply $type preset?';
-  }
-
-  @override
-  String get reapplyPresetBody =>
-      'This overwrites the green/amber/red boundaries of all tracked parameters: dashboard parameters get the aquarium-type preset values, microelements their built-in defaults. Your readings are kept.';
-
-  @override
-  String get presetApplied => 'Preset applied.';
-
-  @override
   String get noBoundariesSet => 'No boundaries set';
 
   @override
@@ -3731,4 +3714,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String reefDevicesLastSeen(Object date) {
     return 'Last seen $date';
   }
+
+  @override
+  String get resetParamDefaults => 'Reset to defaults';
+
+  @override
+  String get resetParamDefaultsTitle => 'Reset all parameters to defaults?';
+
+  @override
+  String get resetParamDefaultsBody =>
+      'Every parameter goes back to the recommended boundaries for this aquarium type, and microelements to their built-in defaults. Boundaries you set yourself are discarded. Your readings are kept.';
+
+  @override
+  String get paramDefaultsRestored => 'Parameters reset to defaults.';
+
+  @override
+  String get resetThisParamDefaults => 'Reset this parameter to defaults';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get followingDefaults => 'Following the defaults';
 }

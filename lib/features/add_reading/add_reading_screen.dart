@@ -79,7 +79,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
 
   /// Opens the create sheet, pre-checking the parameters that currently hold
   /// typed values; the freshly created set becomes the active filter.
-  Future<void> _createTestSet(List<TrackedParameter> params) async {
+  Future<void> _createTestSet(List<ResolvedParameter> params) async {
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
     final prefill = {
@@ -96,13 +96,13 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     if (id != null && mounted) _selectTemplate(id);
   }
 
-  Future<void> _save(List<TrackedParameter> params) async {
+  Future<void> _save(List<ResolvedParameter> params) async {
     final l = AppLocalizations.of(context);
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
     final prefs = ref.read(unitPrefsProvider);
-    final entries = <TrackedParameter, double>{};
-    final implausible = <TrackedParameter>[];
+    final entries = <ResolvedParameter, double>{};
+    final implausible = <ResolvedParameter>[];
     for (final p in params) {
       final text = _controllers[p.id]?.text.trim() ?? '';
       if (text.isEmpty) continue;
@@ -327,7 +327,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     AppLocalizations l,
     List<ReadingTemplate> templates,
     ReadingTemplate? selected,
-    List<TrackedParameter> params,
+    List<ResolvedParameter> params,
   ) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -372,7 +372,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     );
   }
 
-  Widget _paramRow(TrackedParameter p, UnitPrefs prefs, {required bool isLast}) {
+  Widget _paramRow(ResolvedParameter p, UnitPrefs prefs, {required bool isLast}) {
     final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
     final pres = presentationOf(p, prefs);
@@ -423,7 +423,7 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
               builder: (context, text, _) {
                 final value = parseUserDouble(text.text);
                 if (value == null) return const SizedBox.shrink();
-                final zone = boundsOf(p).classify(pres.toCanonical(value));
+                final zone = p.bounds.classify(pres.toCanonical(value));
                 return ZoneChip(zone, compact: true);
               },
             ),

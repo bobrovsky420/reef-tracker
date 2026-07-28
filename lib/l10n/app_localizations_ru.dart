@@ -278,23 +278,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noActiveAquarium => 'Нет активного аквариума.';
 
   @override
-  String reapplyPreset(Object type) {
-    return 'Повторно применить пресет $type';
-  }
-
-  @override
-  String reapplyPresetTitle(Object type) {
-    return 'Повторно применить пресет $type?';
-  }
-
-  @override
-  String get reapplyPresetBody =>
-      'Это перезапишет границы зелёная/жёлтая/красная всех отслеживаемых параметров значениями по умолчанию: параметры на главном экране — по пресету типа аквариума, микроэлементы — встроенными значениями по умолчанию. Ваши измерения сохранятся.';
-
-  @override
-  String get presetApplied => 'Пресет применён.';
-
-  @override
   String get noBoundariesSet => 'Границы не заданы';
 
   @override
@@ -3814,4 +3797,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String reefDevicesLastSeen(Object date) {
     return 'Был(а) в сети $date';
   }
+
+  @override
+  String get resetParamDefaults => 'Сбросить до значений по умолчанию';
+
+  @override
+  String get resetParamDefaultsTitle =>
+      'Сбросить все параметры до значений по умолчанию?';
+
+  @override
+  String get resetParamDefaultsBody =>
+      'Каждый параметр вернётся к рекомендованным границам для этого типа аквариума, а микроэлементы — к встроенным значениям. Границы, заданные вами, будут удалены. Измерения сохранятся.';
+
+  @override
+  String get paramDefaultsRestored =>
+      'Параметры сброшены до значений по умолчанию.';
+
+  @override
+  String get resetThisParamDefaults =>
+      'Сбросить этот параметр до значений по умолчанию';
+
+  @override
+  String get reset => 'Сбросить';
+
+  @override
+  String get followingDefaults => 'Используются значения по умолчанию';
 }

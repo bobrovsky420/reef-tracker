@@ -278,23 +278,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noActiveAquarium => 'Kein aktives Aquarium.';
 
   @override
-  String reapplyPreset(Object type) {
-    return 'Voreinstellung $type erneut anwenden';
-  }
-
-  @override
-  String reapplyPresetTitle(Object type) {
-    return 'Voreinstellung $type erneut anwenden?';
-  }
-
-  @override
-  String get reapplyPresetBody =>
-      'Dadurch werden die grün/orange/rot-Grenzen aller verfolgten Parameter mit den Standardwerten überschrieben: Dashboard-Parameter mit der Voreinstellung des Aquarientyps, Spurenelemente mit ihren eingebauten Standardwerten. Deine Messungen bleiben erhalten.';
-
-  @override
-  String get presetApplied => 'Voreinstellung angewendet.';
-
-  @override
   String get noBoundariesSet => 'Keine Grenzen festgelegt';
 
   @override
@@ -3752,4 +3735,29 @@ class AppLocalizationsDe extends AppLocalizations {
   String reefDevicesLastSeen(Object date) {
     return 'Zuletzt gesehen $date';
   }
+
+  @override
+  String get resetParamDefaults => 'Auf Standardwerte zurücksetzen';
+
+  @override
+  String get resetParamDefaultsTitle =>
+      'Alle Parameter auf Standardwerte zurücksetzen?';
+
+  @override
+  String get resetParamDefaultsBody =>
+      'Jeder Parameter erhält wieder die empfohlenen Grenzwerte für diesen Aquarientyp, Mikroelemente ihre eingebauten Standardwerte. Selbst gesetzte Grenzwerte werden verworfen. Deine Messwerte bleiben erhalten.';
+
+  @override
+  String get paramDefaultsRestored =>
+      'Parameter auf Standardwerte zurückgesetzt.';
+
+  @override
+  String get resetThisParamDefaults =>
+      'Diesen Parameter auf Standardwerte zurücksetzen';
+
+  @override
+  String get reset => 'Zurücksetzen';
+
+  @override
+  String get followingDefaults => 'Nutzt die Standardwerte';
 }

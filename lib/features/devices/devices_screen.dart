@@ -7,7 +7,6 @@ import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../domain/device_vendors.dart';
 import '../../domain/pro_features.dart';
-import '../../domain/setup_type.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/implausible_value_dialog.dart';
@@ -161,9 +160,8 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     DateTime takenAt,
   ) async {
     final db = ref.read(dbProvider);
-    final type = SetupType.fromName(tank.setupType);
     for (final key in {for (final v in values) v.paramKey}) {
-      await db.addTrackedParameter(tank.id, key, type);
+      await db.addTrackedParameter(tank.id, key);
     }
     await db.insertReadingGroup(
       tankId: tank.id,

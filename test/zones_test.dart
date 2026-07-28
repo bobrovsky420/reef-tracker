@@ -29,6 +29,19 @@ void main() {
       expect(b.classify(9.1), Zone.red);
     });
 
+    test('value equality — what decides "still the defaults?" (v28)', () {
+      // The bound editor stores an override only when the submitted values
+      // differ from the resolved defaults; that comparison is this operator.
+      const a = ZoneBounds(amberLow: 7, greenLow: 7.5, greenHigh: 8.5, amberHigh: 9);
+      const b = ZoneBounds(amberLow: 7, greenLow: 7.5, greenHigh: 8.5, amberHigh: 9);
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(const ZoneBounds(amberLow: 7, greenLow: 7.5, greenHigh: 8.5)));
+      // A null bound is not the same as an absent-but-equal one.
+      expect(const ZoneBounds(greenHigh: 1), isNot(const ZoneBounds()));
+      expect(const ZoneBounds(), const ZoneBounds());
+    });
+
     test('empty bounds are unknown', () {
       expect(const ZoneBounds().classify(5), Zone.unknown);
     });
@@ -51,6 +64,29 @@ void main() {
       const amberLowOnly = ZoneBounds(amberLow: 5, greenHigh: 8.5);
       expect(amberLowOnly.classify(1), Zone.red);
       expect(amberLowOnly.classify(6), Zone.green); // within unbounded green
+    });
+
+    test('amberLow == greenLow drops the low amber step (silicon)', () {
+      // Red straight into green on the low side: a null amberLow would make
+      // everything below green *amber*, so silicon's catalog default sets the
+      // two bounds equal instead.
+      const noLowAmber = ZoneBounds(
+        amberLow: 0.1,
+        greenLow: 0.1,
+        greenHigh: 0.2,
+        amberHigh: 0.22,
+      );
+      expect(noLowAmber.isValid, isTrue);
+      expect(noLowAmber.classify(0.09), Zone.red);
+      expect(noLowAmber.classify(0.1), Zone.green);
+      expect(noLowAmber.classify(0.2), Zone.green);
+      expect(noLowAmber.classify(0.21), Zone.amber);
+      expect(noLowAmber.classify(0.23), Zone.red);
+
+      // ...and the zero-width amber band is dropped rather than painted.
+      final bands = zoneBands(noLowAmber, 0, 0.3);
+      expect(bands.where((b) => b.zone == Zone.amber), hasLength(1));
+      expect(bands.singleWhere((b) => b.zone == Zone.amber).y1, 0.2);
     });
 
     test('green with unbounded sides', () {

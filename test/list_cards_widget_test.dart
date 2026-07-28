@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/theme.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/presets.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/actions/actions_screen.dart';
 import 'package:reeftracker/features/dosing/dosing_screen.dart';
@@ -133,7 +134,7 @@ void main() {
     final alk = (await db.getTrackedParameters(
       tankId,
     )).firstWhere((t) => t.paramKey == 'alkalinity');
-    final bounds = boundsOf(alk);
+    final bounds = defaultBoundsFor(SetupType.mixed, alk.paramKey);
     await db.insertReading(
       tankId: tankId,
       paramKey: 'alkalinity',

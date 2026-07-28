@@ -179,9 +179,14 @@ void main() {
       if (amberHigh != null && greenHigh == null) {
         errors.add('"$key": defaultBounds.amberHigh requires greenHigh');
       }
+      // Non-decreasing, matching the bound editors' `orderOk` rule. Equal
+      // neighbours are legal and meaningful: `amberLow == greenLow` expresses
+      // "red straight into green, no amber step on that side" (silicon) —
+      // classify() reds below the shared bound and zoneBands() drops the
+      // zero-width amber band.
       for (var i = 1; i < present.length; i++) {
-        if (present[i - 1] >= present[i]) {
-          errors.add('"$key": defaultBounds must be strictly ascending');
+        if (present[i - 1] > present[i]) {
+          errors.add('"$key": defaultBounds must be ascending');
           break;
         }
       }

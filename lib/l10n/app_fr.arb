@@ -86,10 +86,6 @@
 
   "parameters": "Paramètres",
   "noActiveAquarium": "Aucun aquarium actif.",
-  "reapplyPreset": "Réappliquer le préréglage {type}",
-  "reapplyPresetTitle": "Réappliquer le préréglage {type} ?",
-  "reapplyPresetBody": "Les limites verte/orange/rouge de tous les paramètres suivis seront remplacées par les valeurs par défaut : celles du préréglage du type de bac pour les paramètres du tableau de bord, les valeurs intégrées pour les oligo-éléments. Vos mesures sont conservées.",
-  "presetApplied": "Préréglage appliqué.",
   "noBoundariesSet": "Aucune limite définie",
   "boundsSummary": "OK {greenLow}–{greenHigh} {unit}  •  rouge <{amberLow} / >{amberHigh}",
   "editZones": "Modifier les zones",
@@ -1049,5 +1045,12 @@
   "reefDevicesKindApex": "Neptune Apex",
   "reefDevicesKindHanna": "Testeur Hanna",
   "reefDevicesBluetooth": "Bluetooth",
-  "reefDevicesLastSeen": "Vu {date}"
+  "reefDevicesLastSeen": "Vu {date}",
+  "resetParamDefaults": "Rétablir les valeurs par défaut",
+  "resetParamDefaultsTitle": "Rétablir les valeurs par défaut de tous les paramètres ?",
+  "resetParamDefaultsBody": "Chaque paramètre retrouve les limites recommandées pour ce type d'aquarium, et les micro-éléments leurs valeurs par défaut intégrées. Les limites que vous avez définies sont supprimées. Vos mesures sont conservées.",
+  "paramDefaultsRestored": "Paramètres rétablis aux valeurs par défaut.",
+  "resetThisParamDefaults": "Rétablir les valeurs par défaut de ce paramètre",
+  "reset": "Rétablir",
+  "followingDefaults": "Utilise les valeurs par défaut"
 }
