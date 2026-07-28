@@ -142,6 +142,9 @@ const Set<String> _knownDeviceKinds = {
 /// the encode work and the file size of every backup in the rotation (which
 /// also counts against the ~25 MB Android cloud-backup quota), and
 /// [decodeBackup] is whitespace-agnostic, so nothing reads the indentation.
+///
+/// **Device-local settings are dropped from the document** (#69), not merely
+/// ignored on the way back in: see the `settings` entry below.
 String encodeBackup({
   required int schemaVersion,
   required List<Tank> tanks,
@@ -163,6 +166,9 @@ String encodeBackup({
   required List<Setting> settings,
   String? deviceName,
 }) {
+  // Built once — [SettingKey.deviceLocalKeys] is a getter that materializes a
+  // new set on every read, and the settings section is filtered row by row.
+  final deviceLocalKeys = SettingKey.deviceLocalKeys;
   final map = <String, dynamic>{
     'format': kBackupFormat,
     'version': kBackupVersion,
@@ -196,7 +202,25 @@ String encodeBackup({
         .toList(),
     'importSources': importSources.map(_importSourceToJson).toList(),
     'devices': devices.map(_deviceToJson).toList(),
-    'settings': settings.map(_settingToJson).toList(),
+    // Device-local keys never enter the document (#69). The restore side
+    // already refuses to *apply* them (`preserveSettingKeys`), but these files
+    // are built to travel — the share sheet ("mail it to support"), a shared
+    // Drive folder, the U35 cross-device pull — and the section would
+    // otherwise carry `sync_gdrive_account` (the user's Google address in
+    // plaintext), the #62 install fingerprint and the rest of this phone's
+    // sync bookkeeping. Filtering here, at the one choke point every writer
+    // goes through, makes "must not ride backups onto another device" true of
+    // what a backup *contains*, not only of what a restore keeps. Nothing
+    // reads them back, `kBackupVersion` is untouched (a missing settings row
+    // is indistinguishable from an unset preference, which is what every
+    // reader already assumes), and [backupContentHash] strips the whole
+    // section, so the U24 dirty gate and U35 lineage checks are unaffected.
+    // The U19 founder marker `legacy_free_since` is deliberately *not*
+    // device-local and still rides.
+    'settings': [
+      for (final s in settings)
+        if (!deviceLocalKeys.contains(s.key)) _settingToJson(s),
+    ],
   };
   final payload = jsonEncode(map);
   // Integrity checksum (T7): sha256 over the compact JSON of the document

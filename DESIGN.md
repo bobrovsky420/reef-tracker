@@ -218,7 +218,9 @@ truth for each key, its default, and its typed encode/decode, so call sites stop
 doing stringly-typed `== 'true'` / `int.tryParse(..) ?? default` with the
 default duplicated everywhere. The `SettingKey` enum registers every key with a
 `deviceLocal` flag; `SettingKey.deviceLocalKeys` is what `restoreFromBackup`
-preserves (#18). Providers delegate to the facade's `watchX()` streams; screens
+preserves (#18) **and what `encodeBackup` leaves out of a backup document
+entirely** (#69) — device-local means "never leaves this device", not merely
+"not applied on the way back in". Providers delegate to the facade's `watchX()` streams; screens
 call its `setX(value)` setters. The raw key strings themselves live in the leaf
 `data/setting_keys.dart` (re-exported by `settings.dart`) so `database.dart`'s
 active-tank helpers can share them without an import cycle (#55).
@@ -407,6 +409,19 @@ U19): keys a restore may **add but never remove** — a locally present value
 wins over whatever the backup carries, including its absence, so restoring a
 marker-less backup can't wipe the early-adopter status that nothing could
 re-seed (see Editions below).
+
+The same set is applied on the **encode** side (#69): `encodeBackup` writes only
+the non-device-local settings rows, so a backup document never *contains*
+`sync_gdrive_account` (the user's Google address in plaintext), the
+`install_fingerprint`, `sync_device_name` or any other per-device row — these
+files are built to travel (share sheet, a shared Drive folder, the U35
+cross-device pull), and the restore-side filter only ever protected the
+receiving device. Dropping a row is invisible to readers (a missing settings row
+already means "unset"), so `kBackupVersion` is unchanged and older apps import
+new files as before; `backupContentHash` strips the whole `settings` section
+anyway, so the U24 dirty gate and U35 lineage checks are unaffected. The U19
+founder marker `legacy_free_since` is deliberately **not** device-local and
+still rides.
 
 The `devices` section (U36) is the one exception to wipe-and-replace: the
 connected-device inventory is **merged**. Local rows always survive — their

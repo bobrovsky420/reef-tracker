@@ -69,6 +69,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   showing a warning icon, and a value you dropped won't reappear later if you
   import the meter's own log as a CSV.
 
+### Fixed
+- Backup files no longer contain this phone's private settings. Until now every
+  exported, shared or cloud-synced backup carried the Google account address
+  used for Drive sync in plain text, along with the phone's own sync
+  bookkeeping – even though restoring a backup never applied any of it. Only
+  your aquarium data and the settings that are meant to travel with it are in
+  the file now, so a backup you mail to support or keep in a shared Drive
+  folder no longer reveals your email address. Existing backups are unaffected
+  and still restore normally.
+
 ## [1.0.0] - 2026-07-26
 
 ### Changed

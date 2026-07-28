@@ -9,6 +9,7 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/supplement_catalog.dart';
 
@@ -271,10 +272,14 @@ void main() {
         displayOrder: 2,
       ),
     ];
+    // A settings store as a real device holds it: device-local preferences
+    // (which encodeBackup drops, #69) mixed with the keys that ride backups.
     final settings = [
       const Setting(key: 'temp_unit', value: 'fahrenheit'),
       const Setting(key: 'active_tank_id', value: '1'),
       const Setting(key: 'locale', value: null),
+      const Setting(key: 'legacy_free_since', value: '0.26.0'),
+      const Setting(key: 'ro_stages_seeded', value: null),
     ];
     final roStages = [
       const RoStage(
@@ -560,10 +565,13 @@ void main() {
       expect(dv1.tankId.value, isNull);
       expect(dv1.lastSeenAt.value, isNull);
 
-      expect(data.settings.length, 3);
-      expect(data.settings[0].key.value, 'temp_unit');
-      expect(data.settings[0].value.value, 'fahrenheit');
-      expect(data.settings[2].value.value, isNull);
+      // Only the non-device-local rows are in the document (#69), values and
+      // nulls preserved.
+      expect(data.settings.length, 2);
+      expect(data.settings[0].key.value, 'legacy_free_since');
+      expect(data.settings[0].value.value, '0.26.0');
+      expect(data.settings[1].key.value, 'ro_stages_seeded');
+      expect(data.settings[1].value.value, isNull);
     });
 
     test(
@@ -1867,6 +1875,63 @@ void main() {
       expect(await dst.getSetting('locale'), 'de');
       // …while the aquarium data was restored.
       expect((await dst.getAllTanks()).length, 1);
+    });
+
+    test('the document carries no device-local settings at all (#69)', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src); // seeds temp_unit
+      // The sensitive half of the sync identity, as a connected device holds
+      // it: the account is the user's Google address in plaintext.
+      await src.setSetting('sync_gdrive_account', 'reefkeeper@gmail.com');
+      await src.setSetting('sync_gdrive_folder_id', 'folder-abc123');
+      await src.setSetting('sync_gdrive_last_pushed_hash', 'deadbeef');
+      await src.setSetting('sync_gdrive_last_pushed_name', 'backup-2026.json');
+      await src.setSetting('sync_device_name', 'Kitchen phone');
+      await src.setSetting('install_fingerprint', 'fp-0123456789');
+      // Not device-local (U19): must still ride.
+      await src.setSetting('legacy_free_since', '0.26.0');
+
+      final json = await encodeBackupFromDb(src);
+
+      // Nothing device-local is in the document — checked against the registry
+      // so a key added later is covered without touching this test.
+      final data = decodeBackup(json);
+      final encodedKeys = data.settings.map((s) => s.key.value).toSet();
+      expect(
+        encodedKeys.intersection(SettingKey.deviceLocalKeys),
+        isEmpty,
+        reason: 'these files are shared — the share sheet, a shared Drive '
+            'folder, the U35 cross-device pull',
+      );
+      // …and the plaintext email is nowhere in the bytes, whatever key it sat
+      // under.
+      expect(json, isNot(contains('reefkeeper@gmail.com')));
+      expect(json, isNot(contains('fp-0123456789')));
+      // The founder marker is the deliberate exception.
+      expect(encodedKeys, contains('legacy_free_since'));
+
+      // The aquarium data is unaffected, and a restore still behaves.
+      final dst = newDb();
+      addTearDown(dst.close);
+      await importBackup(dst, data);
+      expect((await dst.getAllTanks()).length, 1);
+      expect(await dst.getSetting('sync_gdrive_account'), isNull);
+      expect(await dst.getSetting('legacy_free_since'), '0.26.0');
+    });
+
+    test('stripping the settings section leaves the sync hash stable '
+        '(#69 × U24)', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src);
+      final before = backupContentHash(await encodeBackupFromDb(src));
+      // Connecting Drive writes device-local rows only: the dirty gate must
+      // not see that as a data change (it already strips `settings`, and now
+      // they never reach the document either).
+      await src.setSetting('sync_gdrive_account', 'reefkeeper@gmail.com');
+      await src.setSetting('sync_device_name', 'Kitchen phone');
+      expect(backupContentHash(await encodeBackupFromDb(src)), before);
     });
 
     test('the early-adopter marker rides a backup onto a new device '
