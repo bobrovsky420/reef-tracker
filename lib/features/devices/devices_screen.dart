@@ -10,6 +10,7 @@ import '../../domain/pro_features.dart';
 import '../../domain/setup_type.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/implausible_value_dialog.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../apex/apex_screen.dart';
 import '../reefbeat/reefbeat_screen.dart';
@@ -42,11 +43,22 @@ import '../reeffactory/reeffactory_screen.dart';
 /// be able to see what they have connected. Reading, saving and adding are
 /// gated; a non-entitled install gets a banner where the action buttons sit.
 class DevicesScreen extends ConsumerStatefulWidget {
-  const DevicesScreen({super.key});
+  const DevicesScreen({super.key, this.staleAfter = kDeviceSnapshotStaleAfter});
+
+  /// How old a held snapshot may be before a save re-reads it (see
+  /// [kDeviceSnapshotStaleAfter]). A parameter only so that a test can set it
+  /// to zero and exercise the re-read without waiting out the real window.
+  final Duration staleAfter;
 
   @override
   ConsumerState<DevicesScreen> createState() => _DevicesScreenState();
 }
+
+/// A held snapshot older than this is re-read before its values are saved
+/// (#76). Two minutes is long enough that an ordinary "read, glance, save"
+/// never pays for a second round trip, and short enough that nothing stale
+/// gets stamped into the history as a current measurement.
+const Duration kDeviceSnapshotStaleAfter = Duration(minutes: 2);
 
 class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   /// Live state per vendor, keyed by device identifier. Held at page level so
@@ -59,6 +71,12 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   /// current selection only; switching to a vendor not yet read pulls it then,
   /// and switching back doesn't re-read — that is what Refresh is for.
   final Set<String> _autoRead = {};
+
+  /// When each device's held snapshot was actually read. It dates the reading
+  /// group a save writes, and decides what [_freshen] re-reads first (#76) —
+  /// the page keeps a snapshot for as long as it is on screen, so "now" is not
+  /// a safe stand-in for either.
+  final Map<String, DateTime> _readAt = {};
 
   /// The selected vendor kind, or null for All. Null until the stored
   /// preference has been applied once (see [_restoreSelection]).
@@ -86,21 +104,30 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     setState(() => _rfLive[d.identifier] = const RfLive(loading: true));
     final result = await rfReadDevice(ref, d);
     if (!mounted) return;
-    setState(() => _rfLive[d.identifier] = result);
+    setState(() {
+      _rfLive[d.identifier] = result;
+      if (result.snapshot != null) _readAt[d.identifier] = DateTime.now();
+    });
   }
 
   Future<void> _refreshRb(DeviceRecord d) async {
     setState(() => _rbLive[d.identifier] = const RbLive(loading: true));
     final result = await rbReadDevice(ref, d);
     if (!mounted) return;
-    setState(() => _rbLive[d.identifier] = result);
+    setState(() {
+      _rbLive[d.identifier] = result;
+      if (result.snapshot != null) _readAt[d.identifier] = DateTime.now();
+    });
   }
 
   Future<void> _refreshAp(DeviceRecord d) async {
     setState(() => _apLive[d.identifier] = const ApLive(loading: true));
     final result = await apReadDevice(ref, d);
     if (!mounted) return;
-    setState(() => _apLive[d.identifier] = result);
+    setState(() {
+      _apLive[d.identifier] = result;
+      if (result.status != null) _readAt[d.identifier] = DateTime.now();
+    });
   }
 
   /// Reads one device of [kind] — the per-vendor read behind every bulk
@@ -131,6 +158,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   Future<void> _persistValues(
     Tank tank,
     List<({String paramKey, double value})> values,
+    DateTime takenAt,
   ) async {
     final db = ref.read(dbProvider);
     final type = SetupType.fromName(tank.setupType);
@@ -139,7 +167,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     }
     await db.insertReadingGroup(
       tankId: tank.id,
-      takenAt: DateTime.now(),
+      takenAt: takenAt,
       values: values,
     );
   }
@@ -152,31 +180,61 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     return null;
   }
 
-  /// Saves one card's values — the per-card Save button.
-  Future<void> _saveOne(
-    DeviceRecord device,
-    List<({String paramKey, double value})> values,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
-    final tank = _tankFor(device.tankId, tanks);
-    if (tank == null) {
-      messenger.showSnackBar(SnackBar(content: Text(l.reefFactoryNoTank)));
-      return;
+  /// Re-reads every device whose held snapshot has aged past
+  /// [DevicesScreen.staleAfter] before its values are written (#76). The page reads
+  /// each device once when it opens and then holds that snapshot for as long
+  /// as it is on screen; without this, a keeper who opens Devices, gets
+  /// distracted and taps Save an hour later writes hour-old probe values into
+  /// the history as a measurement taken now — which then feeds trend slopes,
+  /// the stability window and the health freshness rule. The Hanna results
+  /// step already does exactly this for its environment card.
+  ///
+  /// A failed re-read is not fatal: the card shows the error, the held
+  /// snapshot stays behind it, and the save goes ahead with those values on
+  /// their own (older) read time — the save must never block on the LAN.
+  Future<void> _freshen(_Scope scope, DeviceRecord? only) async {
+    final now = DateTime.now();
+    final stale = <String, List<DeviceRecord>>{};
+    for (final (kind, d) in scope.inPageOrder) {
+      if (only != null && d.identifier != only.identifier) continue;
+      if (_pendingValues(kind, d, scope).isEmpty) continue;
+      final at = _readAt[d.identifier];
+      if (at != null && now.difference(at) <= widget.staleAfter) continue;
+      (stale[kind] ??= []).add(d);
     }
-    if (values.isEmpty) return;
-    try {
-      await _persistValues(tank, values);
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.reefFactorySavedSnack(values.length))),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l.saveFailed(e.toString()))),
-      );
-    }
+    if (stale.isEmpty) return;
+    final heldRf = {
+      for (final d in stale[kDeviceKindReefFactory] ?? const <DeviceRecord>[])
+        d.identifier: _rfLive[d.identifier]?.snapshot,
+    };
+    final heldAp = {
+      for (final d in stale[kDeviceKindApex] ?? const <DeviceRecord>[])
+        d.identifier: _apLive[d.identifier]?.status,
+    };
+    // Through the ordinary read path, so the same one-socket-at-a-time
+    // courtesy per vendor applies.
+    await _refreshScope(_Scope(order: stale.keys.toList(), byVendor: stale));
+    if (!mounted) return;
+    setState(() {
+      for (final e in heldRf.entries) {
+        final snap = e.value;
+        if (snap == null || _rfLive[e.key]?.snapshot != null) continue;
+        _rfLive[e.key] = RfLive(snapshot: snap, error: _rfLive[e.key]?.error);
+      }
+      for (final e in heldAp.entries) {
+        final status = e.value;
+        if (status == null || _apLive[e.key]?.status != null) continue;
+        _apLive[e.key] = ApLive(status: status, error: _apLive[e.key]?.error);
+      }
+    });
   }
+
+  /// Saves one card's values — the per-card Save button. The device's own
+  /// vendor list still rides along in [scope], because a ReefFactory meter's
+  /// values depend on which *other* meters the tank has (the Temperature
+  /// Controller rule).
+  Future<void> _saveOne(DeviceRecord device, _Scope scope) =>
+      _save(scope, only: device);
 
   /// The values a save would persist for [d] right now: what its last read
   /// produced, run through that vendor's own save filter. Empty when the device
@@ -211,10 +269,10 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     }
   }
 
-  /// Saves every meter in [scope] at once, merging everything bound for one
-  /// tank into a single reading group — so a meter's salinity and a
-  /// controller's temperature, read a minute apart, land as one measurement
-  /// instead of two.
+  /// Saves every meter in [scope] at once ([only] narrows it to one card),
+  /// merging everything bound for one tank into a single reading group — so a
+  /// meter's salinity and a controller's temperature, read a minute apart,
+  /// land as one measurement instead of two.
   ///
   /// **First displayed wins.** When two devices report the same parameter for
   /// the same tank, the one higher on the page keeps it: vendor order first
@@ -222,13 +280,24 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   /// vendor. Reordering a card *is* the preference UI. The winner is named in
   /// the confirmation rather than chosen silently — a wrong probe quietly
   /// becoming your history is exactly what this rule must not do.
-  Future<void> _saveAll(_Scope scope) async {
+  ///
+  /// The same reasoning is why the values go through [_freshen] and the
+  /// suspicious-value confirmation on the way: this is the one path device
+  /// readings take into the database, and it now applies the guards manual
+  /// entry has always had (#71, #76).
+  Future<void> _save(_Scope scope, {DeviceRecord? only}) async {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+
+    await _freshen(scope, only);
+    if (!mounted) return;
     final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
 
     final byTank = <int, Map<String, ({String paramKey, double value})>>{};
     final tankById = <int, Tank>{};
+    // tankId → the oldest read time among the values in its group. Stamping
+    // the group with it never claims a value is fresher than it is.
+    final readAtByTank = <int, DateTime>{};
     // paramKey → the display name of the device whose value won it.
     final winner = <String, String>{};
     final contested = <String>{};
@@ -247,6 +316,11 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
         if (existing == null) {
           bucket[v.paramKey] = v;
           winner[v.paramKey] = deviceDisplayName(d);
+          final at = _readAt[d.identifier];
+          final group = readAtByTank[tank.id];
+          if (at != null && (group == null || at.isBefore(group))) {
+            readAtByTank[tank.id] = at;
+          }
         } else if (existing.value != v.value) {
           // A real disagreement, not two devices echoing the same figure.
           contested.add(v.paramKey);
@@ -258,8 +332,45 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     // brand order, devices as they sit in each section. Iterating the vendors
     // by hand here is exactly how the promise above used to be broken.
     for (final (kind, d) in scope.inPageOrder) {
+      if (only != null && d.identifier != only.identifier) continue;
       final values = _pendingValues(kind, d, scope);
       if (values.isNotEmpty) offer(d, values);
+    }
+
+    // The #31 gate the device paths never had: values that are storable but
+    // suspicious — outside the plausible range, or sitting on the probe's
+    // "no signal" rail — are named to the keeper before they become history.
+    // Only the winners are questioned; a value that lost the merge is never
+    // written, so asking about it would be noise.
+    final suspect = <(int, String), SuspectValue>{};
+    for (final tankEntry in byTank.entries) {
+      for (final v in tankEntry.value.values) {
+        final reason = deviceSuspectReason(v.paramKey, v.value);
+        if (reason == null) continue;
+        suspect[(tankEntry.key, v.paramKey)] = SuspectValue(
+          v.paramKey,
+          v.value,
+          reason: reason,
+        );
+      }
+    }
+    if (suspect.isNotEmpty) {
+      final choice = await showImplausibleValuesDialog(
+        context,
+        values: suspect.values.toList(),
+        prefs: ref.read(unitPrefsProvider),
+        intro: l.implausibleIntroDevices,
+        // Declining drops the suspicious values and keeps the rest: one bad
+        // probe must not cost the keeper every other reading in a Save all.
+        allowSkip: true,
+      );
+      if (choice == SuspectChoice.cancel || !mounted) return;
+      if (choice == SuspectChoice.skip) {
+        for (final (tankId, paramKey) in suspect.keys) {
+          byTank[tankId]?.remove(paramKey);
+        }
+        byTank.removeWhere((_, values) => values.isEmpty);
+      }
     }
 
     if (byTank.isEmpty) {
@@ -276,7 +387,11 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
       var total = 0;
       for (final entry in byTank.entries) {
         final values = entry.value.values.toList();
-        await _persistValues(tankById[entry.key]!, values);
+        await _persistValues(
+          tankById[entry.key]!,
+          values,
+          readAtByTank[entry.key] ?? DateTime.now(),
+        );
         total += values.length;
       }
       final notes = [
@@ -441,7 +556,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
                             savable: _savableCount(scope),
                             meters: scope.meters,
                             onRefresh: () => unawaited(_refreshScope(scope)),
-                            onSaveAll: () => unawaited(_saveAll(scope)),
+                            onSaveAll: () => unawaited(_save(scope)),
                           )
                         : _ProNotice(
                             onTap: () => unawaited(
@@ -485,17 +600,29 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     );
   }
 
+  /// The scope a per-card Save runs in: that card's vendor, with the rest of
+  /// its section still present, since a device's savable values can depend on
+  /// its neighbours (the ReefFactory temperature-source rule).
+  _Scope _vendorScope(String vendor, Map<String, List<DeviceRecord>> byVendor) =>
+      _Scope(
+        order: [vendor],
+        byVendor: {vendor: byVendor[vendor] ?? const []},
+      );
+
   Widget _sectionFor(String vendor, Map<String, List<DeviceRecord>> byVendor) =>
       switch (vendor) {
         kDeviceKindReefFactory => RfDeviceSection(
           devices: byVendor[vendor]!,
           live: _rfLive,
-          onSave: (d, snap) => unawaited(
-            _saveOne(d, rfValuesToSave(d, snap, byVendor[vendor]!)),
-          ),
+          // The shown snapshot is deliberately ignored: the save funnel
+          // re-reads a stale one and re-derives the values from the live map,
+          // so both Save buttons write through exactly the same guards.
+          onSave: (d, _) =>
+              unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
           onRemoved: (id) => setState(() {
             _rfLive.remove(id);
             _autoRead.remove(id);
+            _readAt.remove(id);
           }),
         ),
         kDeviceKindReefBeat => RbDeviceSection(
@@ -504,16 +631,18 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
           onRemoved: (id) => setState(() {
             _rbLive.remove(id);
             _autoRead.remove(id);
+            _readAt.remove(id);
           }),
         ),
         _ => ApDeviceSection(
           devices: byVendor[vendor]!,
           live: _apLive,
-          onSave: (d, status) =>
-              unawaited(_saveOne(d, apReadingsToSave(status.readings))),
+          onSave: (d, _) =>
+              unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
           onRemoved: (id) => setState(() {
             _apLive.remove(id);
             _autoRead.remove(id);
+            _readAt.remove(id);
           }),
           onRefreshRequested: (d) => unawaited(_refreshAp(d)),
         ),
@@ -565,7 +694,10 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
           ref,
           onSeed: (id, snap) {
             if (mounted) {
-              setState(() => _rfLive[id] = RfLive(snapshot: snap));
+              setState(() {
+                _rfLive[id] = RfLive(snapshot: snap);
+                _readAt[id] = DateTime.now();
+              });
             }
           },
         );
@@ -575,7 +707,10 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
           ref,
           onSeed: (id, snap) {
             if (mounted) {
-              setState(() => _rbLive[id] = RbLive(snapshot: snap));
+              setState(() {
+                _rbLive[id] = RbLive(snapshot: snap);
+                _readAt[id] = DateTime.now();
+              });
             }
           },
           // Anything added or repointed by the discovery half has no live
@@ -588,7 +723,10 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
           ref,
           onSeed: (id, status) {
             if (mounted) {
-              setState(() => _apLive[id] = ApLive(status: status));
+              setState(() {
+                _apLive[id] = ApLive(status: status);
+                _readAt[id] = DateTime.now();
+              });
             }
           },
         );

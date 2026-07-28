@@ -19,6 +19,7 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/experimental_chip.dart';
+import '../../widgets/implausible_value_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_settings.dart';
 import '../../widgets/reef_value_row.dart';
@@ -1513,29 +1514,42 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
       }
     }
 
-    // One batch confirm for implausible values (#31 at bulk scale).
-    final implausible = [
-      for (final r in results)
-        if (_check(r) == ParamValueCheck.implausible) r,
-    ];
-    if (implausible.isNotEmpty) {
-      final proceed = await _confirmImplausible(l, implausible);
-      if (proceed != true || !mounted) return;
-    }
-
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
       // Environment capture (U37): re-read silently when the shown values
       // have gone stale (the user may have sat on the results step); the
       // shown values are the fallback — the save never blocks on the LAN.
+      // Ahead of the confirmation below, so the device values are questioned
+      // with the meter's own rather than riding in unexamined (#71).
       final attachEnv = ref.read(hannaAttachEnvironmentProvider).value ?? false;
       var envToSave = _envToSave(results, tank.id, attachEnv);
       if (envToSave.isNotEmpty &&
           (_envFetchedAt == null ||
               DateTime.now().difference(_envFetchedAt!) > _envStaleAfter)) {
         await _fetchEnvironment(tank.id);
+        if (!mounted) return;
         envToSave = _envToSave(results, tank.id, attachEnv);
+      }
+
+      // One batch confirm for every suspicious value (#31 at bulk scale): the
+      // meter's own results, plus the environment values the tank's devices
+      // reported — the same gate, whichever end the number came from.
+      final suspect = [
+        for (final r in results)
+          if (_check(r) == ParamValueCheck.implausible)
+            SuspectValue(r.method.paramKey, r.value!),
+        for (final e in envToSave)
+          if (deviceSuspectReason(e.paramKey, e.value) case final reason?)
+            SuspectValue(e.paramKey, e.value, reason: reason),
+      ];
+      if (suspect.isNotEmpty) {
+        final choice = await showImplausibleValuesDialog(
+          context,
+          values: suspect,
+          prefs: ref.read(unitPrefsProvider),
+        );
+        if (choice != SuspectChoice.save || !mounted) return;
       }
 
       final type = SetupType.fromName(tank.setupType);
@@ -1614,61 +1628,6 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     }
   }
 
-  Future<bool?> _confirmImplausible(
-    AppLocalizations l,
-    List<HannaMethodRun> runs,
-  ) {
-    final prefs = ref.read(unitPrefsProvider);
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.implausibleTitle),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l.implausibleIntro),
-              const SizedBox(height: 12),
-              for (final r in runs)
-                if (kParameterByKey[r.method.paramKey] case final def?)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Builder(
-                      builder: (_) {
-                        final pres = presentationForKey(
-                          def.key,
-                          def.unit,
-                          prefs,
-                        );
-                        return Text(
-                          l.implausibleValueLine(
-                            l.paramName(def.key),
-                            '${pres.format(r.value!)} ${pres.unitLabel}',
-                            pres.format(def.plausibleMin!),
-                            '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
-                          ),
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        );
-                      },
-                    ),
-                  ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.saveAnyway),
-          ),
-        ],
-      ),
-    );
-  }
 
   Future<void> _confirmDiscard() async {
     final l = AppLocalizations.of(context);

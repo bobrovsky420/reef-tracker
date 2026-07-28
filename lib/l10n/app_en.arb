@@ -165,6 +165,12 @@
   "implausibleIntro": "The following is outside the typical range. Check for a typo before saving.",
   "implausibleValueLine": "{name}: {value} (typical {min}–{max})",
   "@implausibleValueLine": { "description": "One line per suspicious reading in the confirmation dialog. value/max include the unit label, min is a bare number.", "placeholders": { "name": {}, "value": {}, "min": {}, "max": {} } },
+  "implausibleRailLine": "{name}: {value} – reads as nothing at all (probe disconnected?)",
+  "@implausibleRailLine": { "description": "Line in the confirmation dialog for a device value sitting exactly on the parameter's floor (0 dKH, no salt at all) — the reading a probe gives when it has lost its signal. value includes the unit label.", "placeholders": { "name": {}, "value": {} } },
+  "implausibleIntroDevices": "A connected device reported values that look wrong. Check the probe before saving.",
+  "@implausibleIntroDevices": { "description": "Intro line of the confirmation dialog when the suspicious values came from a connected device rather than being typed in." },
+  "implausibleSkip": "Skip",
+  "@implausibleSkip": { "description": "Button that leaves the suspicious values out and saves the rest (device saves only)." },
   "saveAnyway": "Save anyway",
   "enterAtLeastOneValue": "Enter at least one value.",
   "savedReadings": "{count, plural, one{Saved 1 reading.} other{Saved {count} readings.}}",
@@ -941,7 +947,6 @@
     "placeholders": { "location": { "type": "String" }, "tank": { "type": "String" }, "other": { "type": "String" } }
   },
   "measurementImportSettingsTitle": "Measurement import",
-  "measurementImportSettingsSubtitle": "Hanna Lab import status per tank",
   "hannaImportImportedUpTo": "Imported up to {date}",
   "@hannaImportImportedUpTo": {
     "description": "Watermark line in the import settings; {date} is a formatted date-time.",
@@ -955,15 +960,13 @@
 
   "hannaConnectTitle": "Hanna checker",
   "@hannaConnectTitle": {
-    "description": "Direct BLE connection feature (U33): settings row, screen title, Pro-dialog feature name."
+    "description": "Direct BLE connection feature (U33): menu action, screen title, Pro-dialog feature name."
   },
-  "hannaConnectSubtitle": "Measure parameters over Bluetooth (HI97115)",
   "hannaMeasureAction": "Measure with Hanna checker",
   "hannaScanTitle": "Scan checker display",
   "@hannaScanTitle": {
-    "description": "Checker camera scan feature (U34): menu action, settings row, screen title, Pro-dialog feature name."
+    "description": "Checker camera scan feature (U34): menu action, screen title, Pro-dialog feature name."
   },
-  "hannaScanSubtitle": "Read a pocket checker's display with the camera",
   "hannaScanPickHint": "Reads the value straight from the checker's display. First pick your model — the HI number is printed on the front of the checker.",
   "hannaScanPickTitle": "Checker model",
   "hannaScanGuide": "Fit the display into the frame",

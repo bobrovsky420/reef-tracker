@@ -409,6 +409,18 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String implausibleRailLine(Object name, Object value) {
+    return '$name: $value – не измеряет ничего (датчик отключён?)';
+  }
+
+  @override
+  String get implausibleIntroDevices =>
+      'Подключённое устройство сообщает значения, которые выглядят неверными. Проверьте датчик перед сохранением.';
+
+  @override
+  String get implausibleSkip => 'Пропустить';
+
+  @override
   String get saveAnyway => 'Всё равно сохранить';
 
   @override
@@ -2025,10 +2037,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get measurementImportSettingsTitle => 'Импорт измерений';
 
   @override
-  String get measurementImportSettingsSubtitle =>
-      'Статус импорта Hanna Lab по аквариумам';
-
-  @override
   String hannaImportImportedUpTo(String date) {
     return 'Импортировано по $date';
   }
@@ -2053,18 +2061,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hannaConnectTitle => 'Фотометр Hanna';
 
   @override
-  String get hannaConnectSubtitle =>
-      'Измерение параметров по Bluetooth (HI97115)';
-
-  @override
   String get hannaMeasureAction => 'Измерить фотометром Hanna';
 
   @override
   String get hannaScanTitle => 'Сканировать дисплей чекера';
-
-  @override
-  String get hannaScanSubtitle =>
-      'Считывание дисплея карманного чекера камерой';
 
   @override
   String get hannaScanPickHint =>

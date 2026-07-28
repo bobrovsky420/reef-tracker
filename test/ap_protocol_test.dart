@@ -258,6 +258,48 @@ void main() {
     });
   });
 
+  group('conductivity unit (#73)', () {
+    ApStatus condStatus(num value) => ApStatus.fromRestJson({
+      'inputs': [
+        {'did': 'base_Cond', 'type': 'Cond', 'name': 'Salinity', 'value': value},
+      ],
+    });
+
+    test('a ppt reading is kept and stays in ppt on the wire', () {
+      final reading = condStatus(35).readings.single;
+      expect(reading.paramKey, 'salinity');
+      expect(reading.value, 35);
+      expect(reading.unit, 'ppt');
+    });
+
+    test('a mS/cm reading is dropped rather than converted', () {
+      // An Apex conductivity input can be configured to display mS/cm, and
+      // nothing on the wire says which. Reef seawater is ≈35 ppt but ≈53
+      // mS/cm, and `pptToSg(53) ≈ 1.040` would sit inside the plausible
+      // salinity band — a believable, wrong number no later gate can catch.
+      expect(condStatus(53).readings, isEmpty);
+      expect(condStatus(kApCondMaxPpt + 0.1).readings, isEmpty);
+      // The boundary itself is still ppt: high, but a reading, not a unit.
+      expect(condStatus(kApCondMaxPpt).readings, hasLength(1));
+    });
+
+    test('a dropped Cond probe does not shadow a second one', () {
+      final status = ApStatus.fromRestJson({
+        'inputs': [
+          {'did': 'a', 'type': 'Cond', 'name': 'mS probe', 'value': 53},
+          {'did': 'b', 'type': 'Cond', 'name': 'ppt probe', 'value': 34.6},
+        ],
+      });
+      expect(status.readings.single.value, 34.6);
+    });
+
+    test('a zero reading is left for the save path to question', () {
+      // An unplugged probe reading 0 ppt is a real ppt value — the rail rule
+      // puts it to the keeper instead of the protocol guessing on its behalf.
+      expect(condStatus(0).readings.single.value, 0);
+    });
+  });
+
   group('tolerance', () {
     test('an empty document yields an empty, non-throwing status', () {
       final status = ApStatus.fromRestJson(const {});

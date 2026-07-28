@@ -320,7 +320,9 @@ class SettingsBody extends ConsumerWidget {
           label: l.experimentalSection,
           children: [
             ReefSettingsRow(
-              icon: Icons.biotech_outlined,
+              // Same antenna icon the Measurements-tab overflow menu uses for
+              // Devices — the switch is what puts that entry there.
+              icon: Icons.settings_input_antenna,
               title: l.experimentalToggleTitle,
               description: l.experimentalToggleSubtitle,
               trailing: Switch.adaptive(
@@ -331,40 +333,12 @@ class SettingsBody extends ConsumerWidget {
                   settings.setExperimentalEnabled(!experimentalEnabled),
             ),
             if (experimentalEnabled) ...[
-              // Hanna checker live measurement (U33). Pro-gated on entry,
-              // same idiom as the Drive-sync connect row; hidden entirely on
-              // devices without a BLE stack (the manifest keeps Bluetooth
-              // optional so Play doesn't filter the app there).
-              if (ref.watch(hannaBleSupportedProvider).value ?? true)
-                ReefSettingsRow(
-                  icon: Icons.bluetooth,
-                  title: l.hannaConnectTitle,
-                  description: l.hannaConnectSubtitle,
-                  trailing: const ReefSettingsValue(),
-                  onTap: ref.watch(proFeatureProvider(ProFeature.hannaConnect))
-                      ? () => context.push('/hanna/measure')
-                      : () => showProFeatureDialog(
-                          context,
-                          ProFeature.hannaConnect,
-                        ),
-                ),
-              // Checker camera scan (U34) — read a pocket checker's LCD with
-              // the camera. Same Pro-gate idiom.
-              ReefSettingsRow(
-                icon: Icons.photo_camera_outlined,
-                title: l.hannaScanTitle,
-                description: l.hannaScanSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap: ref.watch(proFeatureProvider(ProFeature.hannaScan))
-                    ? () => context.push('/hanna/scan')
-                    : () => showProFeatureDialog(context, ProFeature.hannaScan),
-              ),
               // Opt-in quick-access camera button above "Add reading": most
               // users don't own a pocket checker, so the FAB space is off by
               // default. Without it the scan stays reachable from the
-              // Measurements-tab overflow menu and the row above.
+              // Measurements-tab overflow menu.
               ReefSettingsRow(
-                icon: Icons.smart_button,
+                icon: Icons.photo_camera_outlined,
                 title: l.hannaScanFabTitle,
                 description: l.hannaScanFabSubtitle,
                 trailing: Switch.adaptive(
@@ -373,10 +347,11 @@ class SettingsBody extends ConsumerWidget {
                 ),
                 onTap: () => settings.setHannaScanFab(!scanFabEnabled),
               ),
-              // No device rows here any more (U41): the per-vendor dashboards
-              // and the read-only inventory became one Devices screen, reached
-              // from the Measurements-tab overflow menu. Four Settings rows for
-              // what is one page would be four ways to say the same thing.
+              // No feature rows here any more: the Hanna checker (U33), the
+              // checker scan (U34) and the Devices screen (U41) are all reached
+              // from the Measurements-tab overflow menu. Settings rows for them
+              // would only be a second way to say the same thing; the switch
+              // above is what makes them appear at all.
             ],
           ],
         ),
@@ -522,15 +497,6 @@ class SettingsBody extends ConsumerWidget {
                   titleColor: Theme.of(context).colorScheme.error,
                 ),
             ],
-            // Measurement import status/rewind (U32) — only meaningful once
-            // something was imported, hidden until then.
-            if ((ref.watch(importSourcesProvider).value ?? const []).isNotEmpty)
-              ReefSettingsRow(
-                icon: Icons.move_to_inbox_outlined,
-                title: l.measurementImportSettingsTitle,
-                description: l.measurementImportSettingsSubtitle,
-                onTap: () => context.push('/settings/import'),
-              ),
           ],
         ),
         ReefSettingsSection(

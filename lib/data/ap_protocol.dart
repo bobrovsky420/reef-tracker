@@ -235,6 +235,23 @@ const Map<String, String> _paramWireUnits = {
   'magnesium': 'ppm',
 };
 
+/// The highest conductivity reading that can still be **ppt**, above which the
+/// probe is reporting some other unit (#73).
+///
+/// An Apex conductivity input can be configured to display mS/cm instead of
+/// ppt, and nothing on the wire says which: `status` reports a bare number, and
+/// unlike temperature there is no verified `/rest/config` spelling to read it
+/// from. The two scales are far enough apart to separate — reef seawater is
+/// ≈35 ppt but ≈53 mS/cm, and no aquarium runs at 45 ppt — so a value above
+/// this is not ppt, and the reading is dropped rather than converted into a
+/// believable lie (`pptToSg(53) ≈ 1.040` sits squarely inside the plausible
+/// salinity band, so no later gate would catch it).
+///
+/// The low end is deliberately *not* fenced here: 0 ppt from an unplugged
+/// probe is a real ppt reading, and the save paths' rail check questions it
+/// with the keeper instead of guessing on their behalf.
+const double kApCondMaxPpt = 45;
+
 /// One decoded read of a controller.
 class ApStatus {
   const ApStatus({
@@ -263,6 +280,11 @@ class ApStatus {
   /// probes (display and sump); saving both would write one parameter twice in
   /// the same group, and the app has no way to know which is the display tank.
   /// The keeper controls the choice by ordering probes in the Apex itself.
+  ///
+  /// A conductivity probe reporting something that cannot be ppt contributes
+  /// nothing — see [kApCondMaxPpt]. It is resolved here rather than in the save
+  /// path so that no consumer, card or future integration ever sees a number
+  /// labelled with a unit it isn't in.
   List<ApReading> get readings {
     final out = <ApReading>[];
     final seen = <String>{};
@@ -270,7 +292,7 @@ class ApStatus {
       final key = kApProbeParams[p.type];
       if (key == null || !seen.add(key)) continue;
       final value = key == 'temperature' ? p.celsius(tempUnit) : p.value;
-      if (value == null) {
+      if (value == null || (key == 'salinity' && value > kApCondMaxPpt)) {
         seen.remove(key);
         continue;
       }
@@ -419,6 +441,13 @@ ApTempUnit? apTempUnitFromConfig(Map<String, Object?>? config) {
 /// Fahrenheit number — no water an Apex is plumbed into is 45 °C — and
 /// anything below it is Celsius. With no temperature probe at all the answer
 /// doesn't matter, and Celsius (the catalog's unit) is the identity choice.
+///
+/// What it **cannot** distinguish: a Fahrenheit reading at or below 45 °F — a
+/// tank at 7 °C or colder, or a probe sitting in air in an unheated room. Such
+/// a controller's temperature is taken as Celsius and stored 20-odd degrees
+/// too high. For a Classic controller this is the only unit resolution there
+/// is, so the mistake is caught downstream instead: 40–45 °C is outside the
+/// catalog's plausible band and the save path asks before storing it.
 ApTempUnit apInferTempUnit(List<ApProbe> probes) {
   for (final p in probes) {
     if (p.type != 'Temp') continue;

@@ -10,6 +10,7 @@ import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/implausible_value_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_segmented.dart';
 import '../../widgets/reef_value_row.dart';
@@ -95,10 +96,14 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
       return;
     }
     if (implausible.isNotEmpty) {
-      final proceed = await _confirmImplausible(l, [
-        for (final d in implausible) (d, entries[d.key]!),
-      ], prefs);
-      if (proceed != true || !mounted) return;
+      final choice = await showImplausibleValuesDialog(
+        context,
+        values: [
+          for (final d in implausible) SuspectValue(d.key, entries[d.key]!),
+        ],
+        prefs: prefs,
+      );
+      if (choice != SuspectChoice.save || !mounted) return;
     }
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
@@ -135,56 +140,6 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  /// Mirrors Add Reading's implausible-value confirmation (#31).
-  Future<bool?> _confirmImplausible(
-    AppLocalizations l,
-    List<(ParameterDef, double)> values,
-    UnitPrefs prefs,
-  ) {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.implausibleTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l.implausibleIntro),
-            const SizedBox(height: 12),
-            for (final (def, canonical) in values)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Builder(
-                  builder: (_) {
-                    final pres = presentationForKey(def.key, def.unit, prefs);
-                    return Text(
-                      l.implausibleValueLine(
-                        l.paramName(def.key),
-                        '${pres.format(canonical)} ${pres.unitLabel}',
-                        pres.format(def.plausibleMin!),
-                        '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
-                      ),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.saveAnyway),
-          ),
-        ],
-      ),
-    );
   }
 
   ParamPresentation _presFor(MicroElementStatus e, UnitPrefs prefs) =>

@@ -409,6 +409,18 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String implausibleRailLine(Object name, Object value) {
+    return '$name: $value – non misura proprio nulla (sonda scollegata?)';
+  }
+
+  @override
+  String get implausibleIntroDevices =>
+      'Un dispositivo collegato riporta valori che sembrano sbagliati. Controlla la sonda prima di salvare.';
+
+  @override
+  String get implausibleSkip => 'Salta';
+
+  @override
   String get saveAnyway => 'Salva comunque';
 
   @override
@@ -2007,10 +2019,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get measurementImportSettingsTitle => 'Import misurazioni';
 
   @override
-  String get measurementImportSettingsSubtitle =>
-      'Stato dell\'import Hanna Lab per acquario';
-
-  @override
   String hannaImportImportedUpTo(String date) {
     return 'Importato fino al $date';
   }
@@ -2035,18 +2043,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get hannaConnectTitle => 'Fotometro Hanna';
 
   @override
-  String get hannaConnectSubtitle =>
-      'Misura i parametri via Bluetooth (HI97115)';
-
-  @override
   String get hannaMeasureAction => 'Misura con il fotometro Hanna';
 
   @override
   String get hannaScanTitle => 'Scansiona il display del checker';
-
-  @override
-  String get hannaScanSubtitle =>
-      'Leggi il display di un checker tascabile con la fotocamera';
 
   @override
   String get hannaScanPickHint =>

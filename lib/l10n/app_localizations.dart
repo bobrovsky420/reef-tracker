@@ -791,6 +791,24 @@ abstract class AppLocalizations {
     Object max,
   );
 
+  /// Line in the confirmation dialog for a device value sitting exactly on the parameter's floor (0 dKH, no salt at all) — the reading a probe gives when it has lost its signal. value includes the unit label.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {value} – reads as nothing at all (probe disconnected?)'**
+  String implausibleRailLine(Object name, Object value);
+
+  /// Intro line of the confirmation dialog when the suspicious values came from a connected device rather than being typed in.
+  ///
+  /// In en, this message translates to:
+  /// **'A connected device reported values that look wrong. Check the probe before saving.'**
+  String get implausibleIntroDevices;
+
+  /// Button that leaves the suspicious values out and saves the rest (device saves only).
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get implausibleSkip;
+
   /// No description provided for @saveAnyway.
   ///
   /// In en, this message translates to:
@@ -3411,12 +3429,6 @@ abstract class AppLocalizations {
   /// **'Measurement import'**
   String get measurementImportSettingsTitle;
 
-  /// No description provided for @measurementImportSettingsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Hanna Lab import status per tank'**
-  String get measurementImportSettingsSubtitle;
-
   /// Watermark line in the import settings; {date} is a formatted date-time.
   ///
   /// In en, this message translates to:
@@ -3453,17 +3465,11 @@ abstract class AppLocalizations {
   /// **'The next import will ask again from which date to start. Already-imported readings stay; the tank assignment is remembered.'**
   String get hannaImportResetBody;
 
-  /// Direct BLE connection feature (U33): settings row, screen title, Pro-dialog feature name.
+  /// Direct BLE connection feature (U33): menu action, screen title, Pro-dialog feature name.
   ///
   /// In en, this message translates to:
   /// **'Hanna checker'**
   String get hannaConnectTitle;
-
-  /// No description provided for @hannaConnectSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Measure parameters over Bluetooth (HI97115)'**
-  String get hannaConnectSubtitle;
 
   /// No description provided for @hannaMeasureAction.
   ///
@@ -3471,17 +3477,11 @@ abstract class AppLocalizations {
   /// **'Measure with Hanna checker'**
   String get hannaMeasureAction;
 
-  /// Checker camera scan feature (U34): menu action, settings row, screen title, Pro-dialog feature name.
+  /// Checker camera scan feature (U34): menu action, screen title, Pro-dialog feature name.
   ///
   /// In en, this message translates to:
   /// **'Scan checker display'**
   String get hannaScanTitle;
-
-  /// No description provided for @hannaScanSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Read a pocket checker\'s display with the camera'**
-  String get hannaScanSubtitle;
 
   /// No description provided for @hannaScanPickHint.
   ///

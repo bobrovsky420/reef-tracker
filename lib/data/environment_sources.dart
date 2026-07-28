@@ -101,6 +101,12 @@ class RfEnvironmentSource implements EnvironmentSource {
         // and impossible values are noise, not data. The dashboard's
         // temperature-source rule is deliberately NOT applied here —
         // [selectEnvironmentValues]'s dedicated-device priority generalizes it.
+        //
+        // Only *impossible* values are dropped, and only here: a suspicious
+        // one (outside the plausible range, or on the probe's rail) is a
+        // question for the keeper, not for a data source to answer silently,
+        // so it travels on and the Hanna results step puts it to them with
+        // the meter's own values (#71).
         for (final r in snap.readings.map(
           (r) => (
             paramKey: r.paramKey,

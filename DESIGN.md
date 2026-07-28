@@ -110,7 +110,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** (How a zone *renders* — its color/icon — is the `ZoneVisuals` extension in `widgets/zone_visuals.dart`, keeping this file Flutter-free; #53.) Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. `classify` deliberately tests **red before green**, so a beyond-amber value can't short-circuit to "green" through an open (null) green side. Bounds violating the ordering invariant (`isValid` = present bounds non-decreasing; violations are possible only via restored/hand-edited backups, the editors validate) are treated as **unusable**: `classify` returns `unknown` and `zoneBands` paints nothing, instead of labeling every value amber. Amber-only bounds (both greens null) classify — and paint — the region between the ambers as green, keeping tile color and chart bands in agreement. |
 | `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). Rounding (not truncating) avoids under-counting: a reading 18 h into its 7th day reads as 7 days, not 6 — which matters right at the 30-day health-freshness cutoff. |
 | `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse) — including the fixed catalog presentation for micro elements (U17): canonical storage stays ppm, display units mirror the ICP report — mg/L (identity) for the majors/halogens, µg/L (×`displayFactor` 1000) for traces/contaminants — and the stored per-tank unit label is **ignored** in favor of the catalog's (`unitFixed`, so rows seeded under an earlier catalog — 'ppm', or 'µg/L' for iodine/silicon before they moved to mg/L — can't mislabel a value). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. Display formatting is the mirror image: `formatLocaleNumber`/`formatLocaleNumberTrim` render with the locale's decimal separator (grouping deliberately off — grouped output with decimals would mix separators, which the parser rejects, and formatted values are seeded back into edit fields); all user-facing number formatting routes through them (`ParamPresentation.format`, volumes, dose amounts, ratios, chart axes). |
-| `parameter_catalog.dart` | `kReefParameters` — the master list: the **core** dashboard set (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP) plus the 33-element ICP **micro panel** (U17). The data is **generated from `parameters.yaml`** (see the row below); this file owns the `ParameterDef` model + lookups. Each `ParameterDef` carries a `ParamCategory` (core / major / trace / contaminant — `isCoreParam` and `kMicroParameters` are the surface filters), an element `symbol` for micro elements, and a fixed display unit matching the ICP report (mg/L for Na/K/S/B/Br/Sr/I/Si, µg/L via `displayFactor` 1000 for traces/contaminants — over canonical-ppm storage in both cases). Sr/I/Fe predate the panel and were recategorized to `trace`, K later to `major` (keys and stored ppm values unchanged; iron additionally displays in µg/L — presentation-only). Plus `kParameterByKey` lookup and `formatParamValue`. Each `ParameterDef` also carries **value-sanity limits in canonical units**: `minValue` = hard physical floor (0 for concentrations, 1.0 for SG; ORP has none — legitimately negative) and a deliberately generous `plausibleMin`/`plausibleMax` pair (e.g. Mg 800–2000, SG 1.0–1.05). `checkParamValue(paramKey, canonicalValue)` → `ParamValueCheck` (ok / impossible / implausible): **impossible** values are rejected by the reading inputs outright; **implausible** ones require an explicit "Save anyway" confirmation that echoes the value as parsed next to the typical range — the backstop that turns a locale decimal-separator mis-parse (`1,300` → 1.3) into a visible prompt instead of silent data corruption, while keeping extreme-but-real crash readings recordable. Enforced in Add Reading and the history value-edit dialog, always on the canonical value (after °F/ppt conversion). Each `ParameterDef` further carries the per-parameter domain facts that used to be hardcoded next to their consumers: `defaultBounds` (micro default zone bounds — required for microelements, forbidden for core, whose defaults are the setup-type presets), `hobbyKit`, `maxDailyRise` and `importance` — the derived views (`kMicroDefaultBounds`/`kMicroHobbyKitKeys`, `kMaxDailyRiseByElement`, `importanceWeightFor`) stay in `micro.dart`/`supplement_catalog.dart`/`health_score.dart` so call sites are unchanged. |
+| `parameter_catalog.dart` | `kReefParameters` — the master list: the **core** dashboard set (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP) plus the 33-element ICP **micro panel** (U17). The data is **generated from `parameters.yaml`** (see the row below); this file owns the `ParameterDef` model + lookups. Each `ParameterDef` carries a `ParamCategory` (core / major / trace / contaminant — `isCoreParam` and `kMicroParameters` are the surface filters), an element `symbol` for micro elements, and a fixed display unit matching the ICP report (mg/L for Na/K/S/B/Br/Sr/I/Si, µg/L via `displayFactor` 1000 for traces/contaminants — over canonical-ppm storage in both cases). Sr/I/Fe predate the panel and were recategorized to `trace`, K later to `major` (keys and stored ppm values unchanged; iron additionally displays in µg/L — presentation-only). Plus `kParameterByKey` lookup and `formatParamValue`. Each `ParameterDef` also carries **value-sanity limits in canonical units**: `minValue` = hard physical floor (0 for concentrations, 1.0 for SG; ORP has none — legitimately negative) and a deliberately generous `plausibleMin`/`plausibleMax` pair (e.g. Mg 800–2000, SG 1.0–1.05). `checkParamValue(paramKey, canonicalValue)` → `ParamValueCheck` (ok / impossible / implausible): **impossible** values are rejected by the reading inputs outright; **implausible** ones require an explicit "Save anyway" confirmation that echoes the value as parsed next to the typical range — the backstop that turns a locale decimal-separator mis-parse (`1,300` → 1.3) into a visible prompt instead of silent data corruption, while keeping extreme-but-real crash readings recordable. Enforced on the canonical value (after °F/ppt conversion) by **every** write path through one shared dialog, `widgets/implausible_value_dialog.dart#showImplausibleValuesDialog` (Add Reading, the history value-edit dialog, the micro and ICP forms, both Hanna paths, the checker scan, and — since #71 — the Devices save funnel); it takes `SuspectValue`s and returns save / skip / cancel, so no screen re-implements the wording or the "typical min–max" line. `isRailValue(paramKey, value)` is its companion for **device** data: a value sitting exactly on a floor that is also the plausible minimum (0 dKH, SG 1.0 = no salt) is a legal reading `checkParamValue` must call `ok`, but from a probe it is the "no signal" rail, so the device paths question it (`deviceSuspectReason`).  Each `ParameterDef` further carries the per-parameter domain facts that used to be hardcoded next to their consumers: `defaultBounds` (micro default zone bounds — required for microelements, forbidden for core, whose defaults are the setup-type presets), `hobbyKit`, `maxDailyRise` and `importance` — the derived views (`kMicroDefaultBounds`/`kMicroHobbyKitKeys`, `kMaxDailyRiseByElement`, `importanceWeightFor`) stay in `micro.dart`/`supplement_catalog.dart`/`health_score.dart` so call sites are unchanged. |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type (in listing order). `presetBounds`, `defaultTrackedKeys`. Also `kPresetTargets`/`presetTarget` — default **correction targets** (canonical units) per setup type, defined only where the sensible target is *not* the green-zone midpoint (currently alkalinity: soft/LPS 8.5, SPS 8.0, mixed 8.3 dKH); seeded into `TrackedParameters.targetValue`, editable per tank. **The data (`kPresets`/`kPresetTargets`) is generated from `tank_presets.yaml`** (see below); this file owns the lookups. |
 | `micro.dart` | Microelements (U17) domain rules. `kMicroDefaultBounds` — default zone bounds per element in canonical ppm (derived from the catalog's per-element `defaultBounds`, edited in `parameters.yaml`), anchored on natural seawater / ICP-lab target ranges; contaminants (and silicon) are **one-sided** (green up to a ceiling — no "too little lead"). Used as the fallback when a tank has no `TrackedParameters` row for an element and as the seed when one is created. `kMicroHobbyKitKeys` (the catalog's `hobbyKit`-flagged elements, in catalog order — Sr/I/Fe, the elements home test kits exist for), and `computeMicroStatus(inputs)` → `MicroStatus` (measured / out-of-range counts, worst zone, newest sample date) — the panel's own summary, deliberately **outside** the tank health score: micro is measured on an ICP cadence (months), which the 30-day core freshness rule would permanently read as stale. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
@@ -200,9 +200,11 @@ salinity-adjusted-target switch — the same JSON-list-of-tank-ids shape, but
 listing the tanks where it is **on**; the default is off), and
 `experimental_enabled` (the experimental-features master switch, default
 **off** — off completely hides every surface of the experimental features,
-currently Hanna checker BLE U33 and checker camera scan U34: their
-Settings → Experimental rows, the Measurements-tab overflow entries and the
-scan FAB; purely visibility, nothing stored is touched), and
+currently Hanna checker BLE U33, checker camera scan U34 and the Devices
+screen U41: their Measurements-tab overflow entries and the scan FAB
+(Settings → Experimental itself holds only the switch and the scan-FAB
+preference — no per-feature rows); purely visibility, nothing stored is
+touched), and
 `hanna_scan_fab` (the opt-in camera-scan quick button above "Add reading",
 default off — most users don't own a pocket checker, so the FAB space is
 opt-in; without it the scan stays reachable via the overflow menu). The
@@ -1302,7 +1304,7 @@ Body text stays the platform default (SF/Roboto).
 | `/micro/configure` | Element settings: all catalog elements, each row opens the zone-bounds editor |
 | `/micro/import` | ICP report CSV import preview (`extra` = `IcpImportResult`; redirects to `/micro` without one) |
 | `/import/hanna` | Hanna Lab measurement import preview (U32; `extra` = `HannaImportResult`; redirects to `/` without one) |
-| `/settings/import` | Measurement-import status per tank: watermark rewind (*Change date…*) / *Reset* |
+| `/settings/import` | Measurement-import status per tank: watermark rewind (*Change date…*) / *Reset*. **No entry point in the UI** — the Settings row was removed; reachable by deep link only |
 | `/hanna/measure` | Hanna checker live BLE measurement (U33, experimental): connect → select → run → save in one route |
 | `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
@@ -2093,9 +2095,11 @@ re-import; only what's new is added.
   offers Undo, which deletes exactly the created groups and restores the
   prior watermark row. An unchanged file short-circuits to "You're up to
   date".
-- **Settings surface** (`import_sources_screen.dart`, row in Settings → data
-  section, hidden until something was imported; `importSourcesProvider`):
-  per tank+source the location + "Imported up to …", with **Change date…**
+- **Settings surface** (`import_sources_screen.dart`, route `/settings/import`,
+  `importSourcesProvider`) — **no longer linked from Settings**: the row in the
+  Backup section was removed, so the screen is reachable by deep link only
+  (kept for the guide-screenshot harness and a possible future entry point).
+  Per tank+source the location + "Imported up to …", with **Change date…**
   (picker capped at the current watermark — moving it *forward* would
   silently swallow readings, so it can't) and **Reset** (clears the
   watermark → the cutoff question is asked again; the mapping is kept).
@@ -2116,8 +2120,8 @@ badge everywhere the feature surfaces (settings row, screen title, in-screen
 note). Scope is **measurements only** — a second in-screen note
 (`hannaMeasureOnlyNote`) points users to the vendor's Hanna Lab app for
 meter settings and firmware updates. Like every experimental feature it is **hidden entirely by default**:
-all its entry points (the Settings → Experimental row, the Measurements-tab
-overflow entry) only exist once the experimental-features master switch
+its entry point (the Measurements-tab overflow entry — Settings carries no row
+for it) only exists once the experimental-features master switch
 (`experimental_enabled`, Settings → Experimental) is turned on.
 
 - **Layering:** `domain/hanna_meter.dart` (pure protocol: commands, the
@@ -2241,7 +2245,11 @@ overflow entry) only exist once the experimental-features master switch
   save-tank change, silently re-read at save time when older than 5 min,
   and degrade without ever blocking or failing the save. Saved values join
   the session's reading group at their own read time as ordinary readings;
-  the `hannaLab` watermark stays meter-only.
+  the `hannaLab` watermark stays meter-only. The staleness re-read runs
+  **before** the batch confirm, and the device values are questioned in it
+  alongside the meter's own (#71) — the source drops only the *impossible*,
+  because whether a suspicious reading is worth keeping is a question for the
+  keeper, not for a data source to answer silently.
 - **Platform:** `flutter_blue_plus` pinned `<2.0.0` (the 2.x line requires a
   paid commercial license; 1.x is BSD-3). Android manifest carries
   `BLUETOOTH_SCAN`/`BLUETOOTH_CONNECT` (+ legacy trio ≤ API 30,
@@ -2356,8 +2364,8 @@ readout is always confirmed by the user first.
   at icon capacity). Whenever the FAB isn't shown (preference off, or not
   entitled) the tab's overflow menu carries the entry instead (Pro dialog
   on tap for non-entitled installs — a locked FAB would be
-  prime-real-estate frustration, so the FAB never shows locked). The
-  Settings → Experimental row exists for both, gate on tap.
+  prime-real-estate frustration, so the FAB never shows locked). Settings →
+  Experimental carries only the FAB preference, not an entry of its own.
 - **Flow** (`features/scan/checker_scan_screen.dart`, one route hosts all
   phases): camera-first (no picker gate) →
   live viewfinder (`camera` plugin, back camera, `medium` preset, ~6 fps
@@ -2448,6 +2456,32 @@ four ways to say the same thing).
   also why
   `deviceVendorOrder` rides backups instead of staying device-local: it shapes
   what gets stored, so it should follow the aquarium data onto a new phone.
+- **The device→database funnel** (`_save`, one method behind both Save all and
+  every card's Save button). Device readings used to enter the database on a
+  path that skipped the guards manual entry has; they now pass three, in this
+  order:
+  1. **Freshen** (`_freshen`): any contributing snapshot older than
+     `kDeviceSnapshotStaleAfter` (2 min) is re-read first, because the page
+     holds its snapshots for as long as it is on screen and would otherwise
+     stamp hour-old probe values as a measurement taken now. A failed re-read is
+     **not** fatal — the card shows the error, the held snapshot stays behind it,
+     and the save proceeds with those values; the save must never block on the
+     LAN. Mirrors the Hanna results step, which does the same for its
+     environment card. Injectable as `DevicesScreen.staleAfter` so tests can
+     exercise the re-read without waiting.
+  2. **Question the suspicious** (`deviceSuspectReason` → the shared
+     `showImplausibleValuesDialog`, `widgets/implausible_value_dialog.dart`):
+     the #31 gate, plus a **rail check** (`isRailValue`) for values sitting
+     exactly on a floor that is also the bottom of the plausible range — 0 dKH,
+     0 ppt of salt — which `checkParamValue` calls `ok` and which from a probe
+     means "no signal". Only merge *winners* are questioned (a value that lost
+     is never written). Unlike every other call site the dialog offers **Skip**
+     rather than Cancel: it drops the questioned values and saves the rest, so
+     one bad probe cannot cost a Save all its other readings. `impossible` stays
+     a silent drop at each vendor's own filter.
+  3. **Stamp honestly**: the group's `takenAt` is the *oldest* contributing read
+     time, never `DateTime.now()`, so a group never claims a value is fresher
+     than it is.
 - **Pro gating** (`ProFeature.connectedDevices`): the page, the chips and the
   card headers are **ungated**, because the inventory this screen absorbed was a
   Standard feature and a keeper must always be able to see what they own.
@@ -2889,10 +2923,21 @@ out the same LAN-only requirement.
   only the *impossible* (below the catalog's physical floor) — the same rule as
   ReefFactory, deliberately not extended to the merely implausible, because
   41 °C is a heater failure a keeper needs recorded rather than noise to be
-  swallowed. **Known cost:** a disconnected Apex probe reporting exactly `0.00`
-  is stored as a real 0. Suppressing that would need a per-parameter
-  zero-sentinel rule that has not been checked against hardware, so it is
-  recorded here rather than guessed at.
+  swallowed. What is merely suspicious — implausible, or a probe on its rail
+  such as that disconnected `0.00` — is not swallowed either: the Devices
+  screen's save funnel puts it to the keeper (see U41 above).
+- **Conductivity unit** (`kApCondMaxPpt`, 45): an Apex `Cond` input can be
+  configured to display **mS/cm** instead of ppt and nothing on the wire says
+  which — `status` reports a bare number, and unlike temperature there is no
+  verified `/rest/config` spelling to read it from. A reading above 45 therefore
+  cannot be ppt and is dropped in `ApStatus.readings`, so no card or consumer
+  ever sees a number labelled with a unit it isn't in. The alternative was
+  worse than useless: reef seawater is ≈35 ppt but ≈53 mS/cm, and
+  `pptToSg(53) ≈ 1.040` lands *inside* the plausible salinity band, so the
+  keeper would see a believable, wrong salinity that no later gate could catch.
+  The **low** end is deliberately not fenced — 0 ppt is a real ppt reading, and
+  the rail check questions it with the keeper rather than the protocol guessing
+  (the `icp_import` policy: never guess a unit).
 - Entry point mirrors the other two: the Devices screen's Apex chip (U41), with
   reads gated on `ProFeature.connectedDevices` (grandfathered). Controllers are
   read once automatically on open; after that reads are manual.
@@ -3358,15 +3403,18 @@ schedule above), the **Reverse osmosis unit** feature switch (U16 — hides the
 Actions-tab row and silences RO reminders), and the **Microelements** feature
 switch (U17 — hides the dashboard tile and silences micro test reminders;
 measurements are kept); **Tools** (link to the salinity calculator);
+**Experimental** (the `experimental_enabled` master switch — antenna icon,
+matching the Devices entry it unlocks in the Measurements-tab overflow menu —
+plus, while it is on, the **camera scan button** preference `hanna_scan_fab`.
+No per-feature rows: the Hanna checker, the checker scan and the Devices
+screen are all entered from that overflow menu);
 **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency, a link to the **Manage backups**
 screen (see Data → Automatic backup), the **Google Drive sync** row +
 persistent upload-error row (U24 — see Data → Google Drive backup sync;
 connect is Pro-gated via `ProFeature.driveSync`; the connect flow ends in
 the **device name** dialog (U35), also reachable from the connected row's
-options dialog), and the **Measurement
-import** row (U32 — pushes `/settings/import`; hidden until a tank has
-imported, i.e. `importSourcesProvider` is non-empty). The **About** section holds the
+options dialog). The **About** section holds the
 aquarium count, Replay tour, three **website link rows** (user guide, support
 & FAQ, privacy policy on reeftracker.org — `url_launcher`,
 `LaunchMode.externalApplication`, no `canLaunchUrl` (extra package-visibility

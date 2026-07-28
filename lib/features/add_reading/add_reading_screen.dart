@@ -11,6 +11,7 @@ import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/implausible_value_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_value_row.dart';
 import '../../widgets/zone_chip.dart';
@@ -139,10 +140,19 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
       return;
     }
     if (implausible.isNotEmpty) {
-      final proceed = await _confirmImplausible(l, [
-        for (final p in implausible) (p, entries[p]!),
-      ], prefs);
-      if (proceed != true || !mounted) return;
+      final choice = await showImplausibleValuesDialog(
+        context,
+        values: [
+          for (final p in implausible)
+            SuspectValue(
+              p.paramKey,
+              entries[p]!,
+              pres: presentationOf(p, prefs),
+            ),
+        ],
+        prefs: prefs,
+      );
+      if (choice != SuspectChoice.save || !mounted) return;
     }
     setState(() => _saving = true);
     final db = ref.read(dbProvider);
@@ -175,61 +185,6 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  /// Asks the user to confirm values outside their plausible range before
-  /// saving (#31). Shows each suspicious value as the app understood it, in
-  /// the display unit, next to the typical range — which is what exposes a
-  /// locale mis-parse (`1,300` read as 1.3).
-  Future<bool?> _confirmImplausible(
-    AppLocalizations l,
-    List<(TrackedParameter, double)> values,
-    UnitPrefs prefs,
-  ) {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.implausibleTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l.implausibleIntro),
-            const SizedBox(height: 12),
-            for (final (p, canonical) in values)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Builder(
-                  builder: (_) {
-                    final pres = presentationOf(p, prefs);
-                    // `implausible` implies the catalog defines the range.
-                    final def = kParameterByKey[p.paramKey]!;
-                    return Text(
-                      l.implausibleValueLine(
-                        l.paramName(p.paramKey),
-                        '${pres.format(canonical)} ${pres.unitLabel}',
-                        pres.format(def.plausibleMin!),
-                        '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
-                      ),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.saveAnyway),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

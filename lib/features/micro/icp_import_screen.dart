@@ -12,6 +12,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/implausible_value_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_value_row.dart';
 import '../../widgets/section_header.dart';
@@ -86,10 +87,14 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
       }
     }
     if (implausible.isNotEmpty) {
-      final proceed = await _confirmImplausible(l, [
-        for (final d in implausible) (d, values[d.key]!),
-      ], prefs);
-      if (proceed != true || !mounted) return;
+      final choice = await showImplausibleValuesDialog(
+        context,
+        values: [
+          for (final d in implausible) SuspectValue(d.key, values[d.key]!),
+        ],
+        prefs: prefs,
+      );
+      if (choice != SuspectChoice.save || !mounted) return;
     }
 
     // Re-import guard: the Fauna Marin sample id travels in the reading note,
@@ -157,56 +162,6 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  /// Mirrors the Add Reading / micro-entry implausible-value confirmation.
-  Future<bool?> _confirmImplausible(
-    AppLocalizations l,
-    List<(ParameterDef, double)> values,
-    UnitPrefs prefs,
-  ) {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.implausibleTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l.implausibleIntro),
-            const SizedBox(height: 12),
-            for (final (def, canonical) in values)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Builder(
-                  builder: (_) {
-                    final pres = presentationForKey(def.key, def.unit, prefs);
-                    return Text(
-                      l.implausibleValueLine(
-                        l.paramName(def.key),
-                        '${pres.format(canonical)} ${pres.unitLabel}',
-                        pres.format(def.plausibleMin!),
-                        '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
-                      ),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.saveAnyway),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

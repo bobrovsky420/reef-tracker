@@ -173,6 +173,26 @@ ParamValueCheck checkParamValue(String paramKey, double value) {
   return ParamValueCheck.ok;
 }
 
+/// Whether [value] sits exactly on a floor that is also the bottom of the
+/// plausible range — 0 dKH, no salt at all, zero of a nutrient.
+///
+/// [checkParamValue] calls these `ok`, and for a typed-in reading they *are*:
+/// a keeper can genuinely measure zero nitrate. They matter for **device**
+/// data, where the same number is what a probe reports once it has lost its
+/// signal — and because the floor and the plausible minimum coincide for these
+/// parameters, neither tier of the sanity gate can see it (#71). Device save
+/// paths therefore question a rail value instead of storing it as fact.
+///
+/// False whenever the two bounds differ: a calcium of 0 ppm or a pH of 0 is
+/// already `implausible`, and nothing here needs to say so twice.
+bool isRailValue(String paramKey, double value) {
+  final def = kParameterByKey[paramKey];
+  if (def == null) return false;
+  final min = def.minValue;
+  final lo = def.plausibleMin;
+  return min != null && lo != null && min == lo && value == lo;
+}
+
 /// Lookup by key for O(1) access.
 final Map<String, ParameterDef> kParameterByKey = {
   for (final p in kReefParameters) p.key: p,

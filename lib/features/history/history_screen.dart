@@ -19,6 +19,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/implausible_value_dialog.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_value_row.dart';
@@ -891,8 +892,13 @@ class _ReadingDialogState extends State<_ReadingDialog> {
             // before it replaces the stored one (#31).
             if (checkParamValue(widget.paramKey, canonical) ==
                 ParamValueCheck.implausible) {
-              final proceed = await _confirmImplausible(l, canonical);
-              if (proceed != true) return;
+              final choice = await showImplausibleValuesDialog(
+                context,
+                values: [
+                  SuspectValue(widget.paramKey, canonical, pres: widget.pres),
+                ],
+              );
+              if (choice != SuspectChoice.save) return;
             }
             if (!context.mounted) return;
             Navigator.pop(context, _ReadingEdit(_time, canonical));
@@ -903,44 +909,4 @@ class _ReadingDialogState extends State<_ReadingDialog> {
     );
   }
 
-  /// Asks the user to confirm a value outside the plausible range, echoing the
-  /// value as the app understood it (which is what exposes a locale mis-parse).
-  Future<bool?> _confirmImplausible(AppLocalizations l, double canonical) {
-    // `implausible` implies the catalog defines the range.
-    final def = kParameterByKey[widget.paramKey]!;
-    final pres = widget.pres;
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.implausibleTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l.implausibleIntro),
-            const SizedBox(height: 12),
-            Text(
-              l.implausibleValueLine(
-                l.paramName(widget.paramKey),
-                '${pres.format(canonical)} ${pres.unitLabel}',
-                pres.format(def.plausibleMin!),
-                '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
-              ),
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.saveAnyway),
-          ),
-        ],
-      ),
-    );
-  }
 }

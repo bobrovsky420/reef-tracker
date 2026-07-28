@@ -408,6 +408,18 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String implausibleRailLine(Object name, Object value) {
+    return '$name: $value – neměří vůbec nic (odpojená sonda?)';
+  }
+
+  @override
+  String get implausibleIntroDevices =>
+      'Připojené zařízení hlásí hodnoty, které vypadají chybně. Před uložením zkontrolujte sondu.';
+
+  @override
+  String get implausibleSkip => 'Přeskočit';
+
+  @override
   String get saveAnyway => 'Přesto uložit';
 
   @override
@@ -2010,10 +2022,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get measurementImportSettingsTitle => 'Import měření';
 
   @override
-  String get measurementImportSettingsSubtitle =>
-      'Stav importu z Hanna Lab podle akvária';
-
-  @override
   String hannaImportImportedUpTo(String date) {
     return 'Importováno do $date';
   }
@@ -2038,18 +2046,10 @@ class AppLocalizationsCs extends AppLocalizations {
   String get hannaConnectTitle => 'Fotometr Hanna';
 
   @override
-  String get hannaConnectSubtitle =>
-      'Měření parametrů přes Bluetooth (HI97115)';
-
-  @override
   String get hannaMeasureAction => 'Měřit fotometrem Hanna';
 
   @override
   String get hannaScanTitle => 'Skenovat displej checkeru';
-
-  @override
-  String get hannaScanSubtitle =>
-      'Přečtení displeje kapesního checkeru fotoaparátem';
 
   @override
   String get hannaScanPickHint =>

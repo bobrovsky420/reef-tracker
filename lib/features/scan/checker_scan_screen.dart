@@ -16,6 +16,7 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/experimental_chip.dart';
+import '../../widgets/implausible_value_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_settings.dart';
 import '../../widgets/reef_value_row.dart';
@@ -877,8 +878,12 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     // confirm (impossible never reaches here — the button is disabled).
     if (checkParamValue(checker.paramKey, canonical) ==
         ParamValueCheck.implausible) {
-      final proceed = await _confirmImplausible(l, checker, canonical);
-      if (proceed != true || !mounted) return;
+      final choice = await showImplausibleValuesDialog(
+        context,
+        values: [SuspectValue(checker.paramKey, canonical)],
+        prefs: ref.read(unitPrefsProvider),
+      );
+      if (choice != SuspectChoice.save || !mounted) return;
     }
 
     setState(() => _saving = true);
@@ -908,36 +913,4 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     }
   }
 
-  Future<bool?> _confirmImplausible(
-    AppLocalizations l,
-    HannaChecker checker,
-    double canonical,
-  ) {
-    final def = kParameterByKey[checker.paramKey];
-    if (def?.plausibleMin == null || def?.plausibleMax == null) {
-      return Future.value(true);
-    }
-    final prefs = ref.read(unitPrefsProvider);
-    final pres = presentationForKey(def!.key, def.unit, prefs);
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.implausibleTitle),
-        content: Text(
-          '${l.implausibleIntro}\n\n'
-          '${l.implausibleValueLine(l.paramName(def.key), '${pres.format(canonical)} ${pres.unitLabel}', pres.format(def.plausibleMin!), '${pres.format(def.plausibleMax!)} ${pres.unitLabel}')}',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.saveAnyway),
-          ),
-        ],
-      ),
-    );
-  }
 }

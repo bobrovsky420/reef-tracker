@@ -408,6 +408,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String implausibleRailLine(Object name, Object value) {
+    return '$name: $value – reads as nothing at all (probe disconnected?)';
+  }
+
+  @override
+  String get implausibleIntroDevices =>
+      'A connected device reported values that look wrong. Check the probe before saving.';
+
+  @override
+  String get implausibleSkip => 'Skip';
+
+  @override
   String get saveAnyway => 'Save anyway';
 
   @override
@@ -1996,10 +2008,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get measurementImportSettingsTitle => 'Measurement import';
 
   @override
-  String get measurementImportSettingsSubtitle =>
-      'Hanna Lab import status per tank';
-
-  @override
   String hannaImportImportedUpTo(String date) {
     return 'Imported up to $date';
   }
@@ -2024,18 +2032,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hannaConnectTitle => 'Hanna checker';
 
   @override
-  String get hannaConnectSubtitle =>
-      'Measure parameters over Bluetooth (HI97115)';
-
-  @override
   String get hannaMeasureAction => 'Measure with Hanna checker';
 
   @override
   String get hannaScanTitle => 'Scan checker display';
-
-  @override
-  String get hannaScanSubtitle =>
-      'Read a pocket checker\'s display with the camera';
 
   @override
   String get hannaScanPickHint =>

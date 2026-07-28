@@ -59,6 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and vibrates as each parameter's result arrives – the same double beep the
   reagent timers use – so you can keep your eyes on the meter or step away
   between tests.
+- Settings → Experimental now carries an antenna icon, the same one the
+  Devices entry uses in the Measurements tab's ⋮ menu, and the camera scan
+  button row shows a camera instead of a generic button glyph.
 - The Hanna results screen no longer forces you to take every value or none.
   Each result has a checkbox – untick one you don't trust (wrong reagent,
   spoiled cuvette) and it simply isn't saved – and a ↻ button that marks it
@@ -69,7 +72,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   showing a warning icon, and a value you dropped won't reappear later if you
   import the meter's own log as a CSV.
 
+- Saving from a connected device now asks before storing a value that looks
+  wrong: one far outside the typical range for that parameter, or one that
+  reads as nothing at all – 0 dKH, no salt in the water – which usually means a
+  probe has come loose or lost its signal. A single question covers the whole
+  save and shows each value against its typical range, so you can see at a
+  glance what the app understood. "Save anyway" keeps them; "Skip" leaves just
+  those values out and still saves everything else, so one bad probe no longer
+  costs you the readings from every other device. Typed-in readings have always
+  asked this – the device pages were the one place a wrong-but-possible number
+  went into your history silently, where it quietly skewed trends, stability and
+  the health score. The tank values attached to a live Hanna session now go
+  through the same question.
+
 ### Fixed
+- An Apex whose conductivity probe is set to mS/cm instead of ppt no longer
+  records a believable but wrong salinity (53 mS/cm was stored as 1.040 SG).
+  Nothing in the Apex tells the app which unit the probe uses, so a reading that
+  cannot be ppt is now left out of the card and out of your history rather than
+  guessed at – the same rule the ICP import follows. Controllers set to ppt are
+  unaffected.
+- Readings saved from the Devices page are no longer stamped with the moment you
+  tapped Save. The page reads each device once when it opens and holds that
+  snapshot, so opening Devices, getting distracted and saving an hour later
+  recorded hour-old probe values as a measurement taken just now. Anything older
+  than two minutes is now re-read before it is saved, and if a device can't be
+  reached the values already on screen are saved with the time they were really
+  read.
 - Backup files no longer contain this phone's private settings. Until now every
   exported, shared or cloud-synced backup carried the Google account address
   used for Drive sync in plain text, along with the phone's own sync
@@ -78,6 +107,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the file now, so a backup you mail to support or keep in a shared Drive
   folder no longer reveals your email address. Existing backups are unaffected
   and still restore normally.
+
+### Removed
+- Settings → Experimental no longer repeats the "Hanna checker" and "Scan
+  checker display" entries. Both stay exactly where you use them, in the
+  Measurements tab's ⋮ menu; the section now holds just the experimental
+  switch itself and the camera scan button preference.
+- The "Measurement import" row is gone from Settings → Backup & Restore. It
+  only ever appeared after a Hanna Lab CSV import and showed the per-aquarium
+  import status; importing itself is unchanged and still lives in the
+  Measurements tab's ⋮ menu, including the duplicate protection and one-tap
+  undo.
 
 ## [1.0.0] - 2026-07-26
 

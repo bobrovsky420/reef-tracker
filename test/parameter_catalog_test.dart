@@ -144,6 +144,39 @@ void main() {
     });
   });
 
+  group('isRailValue (#71)', () {
+    test('fires where the hard floor and the plausible floor coincide', () {
+      // The blind spot the two tiers of checkParamValue cannot see: these
+      // values are legal readings, and from a probe they are "no signal".
+      expect(isRailValue('salinity', 1.0), isTrue); // 0 ppt of salt
+      expect(isRailValue('alkalinity', 0), isTrue);
+      expect(isRailValue('nitrate', 0), isTrue);
+      for (final key in ['salinity', 'alkalinity', 'nitrate']) {
+        expect(
+          checkParamValue(key, kParameterByKey[key]!.plausibleMin!),
+          ParamValueCheck.ok,
+          reason: '$key rail must be invisible to the sanity gate',
+        );
+      }
+    });
+
+    test('does not fire where the two floors differ', () {
+      // 0 ppm calcium and pH 0 are already implausible; nothing needs to say
+      // so twice, and a genuine 10 °C is not a rail at all.
+      expect(isRailValue('calcium', 0), isFalse);
+      expect(isRailValue('ph', 0), isFalse);
+      expect(isRailValue('temperature', 10), isFalse);
+      // ORP has no floor to sit on.
+      expect(isRailValue('orp', -300), isFalse);
+    });
+
+    test('only the floor itself counts, and unknown keys never do', () {
+      expect(isRailValue('alkalinity', 0.1), isFalse);
+      expect(isRailValue('salinity', 1.001), isFalse);
+      expect(isRailValue('not-a-param', 0), isFalse);
+    });
+  });
+
   group('formatParamValue', () {
     test('uses the parameter precision', () {
       // pH -> 2 decimals, calcium -> 0, salinity -> 3.
