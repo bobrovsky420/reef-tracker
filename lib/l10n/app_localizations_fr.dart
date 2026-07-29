@@ -1540,6 +1540,12 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get trendOscillating => 'Fluctue — pas de direction nette';
+
+  @override
+  String get trendChipOscillating => 'Fluctuant';
+
+  @override
   String get trendHorizon => 'Horizon d\'alerte';
 
   @override
@@ -2512,6 +2518,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String insightForecastHigh(Object param, int days) {
     return '$param monte — pourrait sortir de sa plage dans ~$days j';
+  }
+
+  @override
+  String insightOscillating(Object param) {
+    return '$param fluctue au lieu de dériver — aucune tendance fiable';
   }
 
   @override

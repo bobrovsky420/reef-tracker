@@ -10,7 +10,18 @@
 /// forward to the parameter's zone boundaries to estimate when the value will
 /// enter the amber and red zones. A trend is only produced once at least
 /// `window` readings exist.
+///
+/// A fitted slope is not automatically a *trend*, though: run a line through a
+/// parameter that merely oscillates and you get a confident-looking slope whose
+/// **sign flips with the window size**, and a forecast built on it warns about
+/// a crossing that will never happen (#31). Every fit is therefore significance
+/// tested — [TrendResult.slopeSignificant] — and only a slope distinguishable
+/// from zero is allowed to produce a forecast. A rejected slope whose scatter is
+/// large relative to the parameter's own green band is reported as
+/// [TrendResult.oscillating] instead: swinging, not drifting.
 library;
+
+import 'dart:math' as math;
 
 import 'dose_calculator.dart' show DosePoint, linearFit;
 import 'zones.dart';
@@ -46,6 +57,34 @@ const bool kTrendDefaultEnabled = true;
 /// holding steady, so noise doesn't read as a trend with a far-off "forecast".
 const double _flatEpsilon = 1e-9;
 
+/// Relative swing (residual RMS / [oscillationScale]) at or above which a
+/// non-significant fit is called [TrendResult.oscillating] rather than passed
+/// over in silence. Matches the stability score's "variable" threshold — the
+/// relative oscillation at which `stability_score.dart` drops a parameter's
+/// sub-score below 70 — so the two features agree about which parameters are
+/// swinging noticeably. Below it, the scatter is small enough that "no trend"
+/// is the whole story and no message is worth showing.
+const double kTrendOscillationRelative = 0.37;
+
+/// Two-sided 95% critical values of Student's t by degrees of freedom, indexed
+/// `df - 1`. A slope counts as real when `|slope| / SE(slope)` clears the entry
+/// for its `n - 2` degrees of freedom (two spent on the fit).
+///
+/// The df-dependent value matters: a flat `t >= 2` rule passes the very
+/// six-point pH fits this test exists to reject, because with df = 4 the
+/// threshold is 2.776, not 2. Beyond the table the true critical value keeps
+/// falling toward 1.96; the last entry is reused instead, which errs toward
+/// suppressing a marginal forecast rather than inventing one.
+const List<double> _tCritical95 = [
+  12.706, 4.303, 3.182, 2.776, 2.571, //
+  2.447, 2.365, 2.306, 2.262, 2.228, //
+  2.201, 2.179, 2.160, 2.145, 2.131, //
+  2.120, 2.110, 2.101, 2.093, 2.086, //
+];
+
+double _tCriticalFor(int df) =>
+    _tCritical95[math.min(df, _tCritical95.length) - 1];
+
 /// Direction of a parameter's recent movement.
 enum TrendDirection { rising, falling, flat }
 
@@ -59,6 +98,9 @@ class TrendResult {
     this.daysToRed,
     this.daysToGreen,
     this.recovering = false,
+    this.slopeSignificant = true,
+    this.sigma,
+    this.relativeSwing,
   });
 
   /// Signed least-squares slope over the window, in canonical units per day
@@ -93,6 +135,36 @@ class TrendResult {
   /// estimates when it will be back in range, surfaced positively (U15).
   final bool recovering;
 
+  /// True when the fitted slope is distinguishable from zero at 95% confidence
+  /// (`|slope| / SE(slope)` clears [_tCriticalFor] for `n - 2` df). False means
+  /// the readings scatter too much around the line for its direction to be
+  /// trusted — no forecast is produced, and [direction], while still the
+  /// measured sign, must not be presented as where the value is heading.
+  ///
+  /// Always true for a two-point fit: with zero degrees of freedom there is
+  /// nothing to test, and the pre-existing "any window >= 2 forecasts"
+  /// behaviour is kept rather than silently dropped.
+  final bool slopeSignificant;
+
+  /// Residual RMS around the fitted line in canonical units ("the typical
+  /// swing"), or null for a two-point fit. Same measure as
+  /// `stability_score.dart`'s per-parameter sigma, over the trend's window.
+  final double? sigma;
+
+  /// [sigma] as a fraction of the parameter's [oscillationScale] — scale- and
+  /// unit-free, so pH and calcium compare fairly. Null when [sigma] is null or
+  /// the bounds give no scale to measure against.
+  final double? relativeSwing;
+
+  /// True when the readings swing noticeably ([kTrendOscillationRelative])
+  /// without a slope that survives the significance test: the honest summary is
+  /// "bouncing around", not a direction and certainly not a forecast. Drives the
+  /// oscillating chip/insight in place of a fabricated crossing estimate (#31).
+  bool get oscillating =>
+      !slopeSignificant &&
+      relativeSwing != null &&
+      relativeSwing! >= kTrendOscillationRelative;
+
   /// True when the value is heading out of its healthy range and we can say
   /// roughly when.
   bool get hasForecast => daysToAmber != null || daysToRed != null;
@@ -112,7 +184,10 @@ class TrendResult {
       other.daysToAmber == daysToAmber &&
       other.daysToRed == daysToRed &&
       other.daysToGreen == daysToGreen &&
-      other.recovering == recovering;
+      other.recovering == recovering &&
+      other.slopeSignificant == slopeSignificant &&
+      other.sigma == sigma &&
+      other.relativeSwing == relativeSwing;
 
   @override
   int get hashCode => Object.hash(
@@ -123,6 +198,9 @@ class TrendResult {
     daysToRed,
     daysToGreen,
     recovering,
+    slopeSignificant,
+    sigma,
+    relativeSwing,
   );
 }
 
@@ -155,6 +233,42 @@ TrendResult? computeTrend({
   if (fit == null) return null;
   final slope = fit.slopePerDay;
 
+  // Is this slope distinguishable from zero, or is it a line drawn through
+  // noise? Residual RMS (n - 2 df, matching stability_score.dart) gives the
+  // standard error of the slope, SE = sigma / sqrt(Sxx).
+  final n = recent.length;
+  final t0 = recent.first.t.millisecondsSinceEpoch.toDouble();
+  const msPerDay = 86400000.0;
+  final xs = [
+    for (final p in recent)
+      (p.t.millisecondsSinceEpoch.toDouble() - t0) / msPerDay,
+  ];
+  final meanX = xs.reduce((a, b) => a + b) / n;
+  var sxx = 0.0;
+  var ssResidual = 0.0;
+  for (var i = 0; i < n; i++) {
+    sxx += (xs[i] - meanX) * (xs[i] - meanX);
+    final fitted = fit.valueAtLast + slope * (xs[i] - xs.last);
+    final residual = recent[i].value - fitted;
+    ssResidual += residual * residual;
+  }
+  // n == 2 fits the two points exactly: no residual, no degrees of freedom,
+  // nothing to test — keep the historical "always forecasts" behaviour.
+  final double? sigma = n > 2 ? math.sqrt(ssResidual / (n - 2)) : null;
+  final bool slopeSignificant;
+  if (sigma == null) {
+    slopeSignificant = true;
+  } else {
+    final se = sigma / math.sqrt(sxx);
+    slopeSignificant =
+        se == 0 || slope.abs() / se >= _tCriticalFor(n - 2);
+  }
+
+  final scale = oscillationScale(bounds);
+  final double? relativeSwing = (sigma != null && scale != null)
+      ? sigma / scale
+      : null;
+
   final TrendDirection direction;
   if (slope > _flatEpsilon) {
     direction = TrendDirection.rising;
@@ -181,9 +295,13 @@ TrendResult? computeTrend({
   final aboveGreen =
       (b.greenHigh != null && current > b.greenHigh!) ||
       (b.amberHigh != null && current > b.amberHigh!);
+  // A slope that failed the significance test says nothing about where the
+  // value is going, so it can neither promise a recovery nor threaten a
+  // crossing — every projection below collapses to null (#31).
   final recovering =
-      (belowGreen && direction == TrendDirection.rising) ||
-      (aboveGreen && direction == TrendDirection.falling);
+      slopeSignificant &&
+      ((belowGreen && direction == TrendDirection.rising) ||
+          (aboveGreen && direction == TrendDirection.falling));
 
   // Days until the line from `current` at `slope` reaches `bound`, but only
   // when that bound lies ahead in the direction of travel (a bound behind us
@@ -191,7 +309,11 @@ TrendResult? computeTrend({
   // within numerical noise of "now" reports 0 — the fitted anchor is a
   // computed value, so an exact on-the-bound hit can land a few ulps off.
   double? daysTo(double? bound) {
-    if (bound == null || direction == TrendDirection.flat) return null;
+    if (bound == null ||
+        direction == TrendDirection.flat ||
+        !slopeSignificant) {
+      return null;
+    }
     final days = (bound - current) / slope;
     if (days.abs() < 1e-9) return 0;
     return days < 0 ? null : days;
@@ -227,5 +349,8 @@ TrendResult? computeTrend({
     daysToRed: toRed,
     daysToGreen: toGreen,
     recovering: recovering,
+    slopeSignificant: slopeSignificant,
+    sigma: sigma,
+    relativeSwing: relativeSwing,
   );
 }

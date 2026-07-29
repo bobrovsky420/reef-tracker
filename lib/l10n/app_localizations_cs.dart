@@ -1539,6 +1539,12 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get trendOscillating => 'Kolísá — bez jasného směru';
+
+  @override
+  String get trendChipOscillating => 'Kolísá';
+
+  @override
   String get trendHorizon => 'Horizont upozornění';
 
   @override
@@ -2514,6 +2520,11 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String insightForecastHigh(Object param, int days) {
     return '$param stoupá — může opustit rozsah za ~$days d';
+  }
+
+  @override
+  String insightOscillating(Object param) {
+    return '$param spíše kolísá, než by mířil jedním směrem — trend nelze určit';
   }
 
   @override

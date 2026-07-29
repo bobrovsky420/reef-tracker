@@ -146,6 +146,8 @@ class InsightsCard extends ConsumerWidget {
       (i.isLow ?? false) ? Icons.trending_down : Icons.trending_up,
     InsightKind.recovering =>
       (i.isLow ?? true) ? Icons.trending_up : Icons.trending_down,
+    // No direction to point at — matches the trend card's oscillating icon.
+    InsightKind.oscillating => Icons.swap_vert,
     InsightKind.staleTest => Icons.schedule,
   };
   return (icon, color);

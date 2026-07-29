@@ -38,6 +38,12 @@ enum InsightKind {
   /// [InsightSeverity.notice] when only the amber bound is.
   forecast,
 
+  /// The readings swing enough to matter but no direction survives the trend's
+  /// significance test ([TrendResult.oscillating]): the parameter is bouncing,
+  /// not drifting. [InsightSeverity.notice], no [Insight.days] — the whole
+  /// point is that no crossing estimate is honest here (#31).
+  oscillating,
+
   /// The value is out of range but heading back toward green
   /// ([TrendResult.recovering], the U15 positive surface):
   /// [InsightSeverity.positive], [Insight.days] estimates re-entry when the
@@ -164,9 +170,13 @@ List<Insight> computeInsights({
           );
         } else {
           // Rule 1: out of range, with a "still worsening" qualifier when
-          // the trend points further away from green.
+          // the trend points further away from green. A slope that failed the
+          // significance test doesn't qualify — "and still falling" about a
+          // series that is merely bouncing is the same false claim the
+          // forecast rule was suppressed for (#31).
           final worsening =
               trend != null &&
+              trend.slopeSignificant &&
               isLow != null &&
               (isLow
                   ? trend.direction == TrendDirection.falling
@@ -199,6 +209,19 @@ List<Insight> computeInsights({
                 : InsightSeverity.notice,
             isLow: trend.direction == TrendDirection.falling,
             days: _roundDays(trend.soonestCrossing!),
+          ),
+        );
+      } else if (p.zone == Zone.green && trend != null && trend.oscillating) {
+        // Rule 5: in range, but the readings swing too much for the fitted
+        // slope to mean anything. Said plainly instead of the forecast that
+        // used to be extrapolated from the noise (#31). Only for in-range
+        // parameters: an amber/red value already has a louder message, and
+        // "it's also swinging" would just crowd the card.
+        insights.add(
+          Insight(
+            paramKey: p.paramKey,
+            kind: InsightKind.oscillating,
+            severity: InsightSeverity.notice,
           ),
         );
       }

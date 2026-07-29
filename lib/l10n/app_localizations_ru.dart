@@ -1550,6 +1550,12 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get trendOscillating => 'Колеблется — направление не определено';
+
+  @override
+  String get trendChipOscillating => 'Колеблется';
+
+  @override
   String get trendHorizon => 'Горизонт оповещения';
 
   @override
@@ -2542,6 +2548,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String insightForecastHigh(Object param, int days) {
     return '$param растёт — может выйти из диапазона через ~$days дн.';
+  }
+
+  @override
+  String insightOscillating(Object param) {
+    return '$param колеблется, а не смещается — надёжного тренда нет';
   }
 
   @override

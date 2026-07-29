@@ -26,6 +26,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transferred install keeps the controller but asks you to sign in again.
 
 ### Changed
+- Trend warnings are no longer produced from readings that are merely bouncing.
+  A parameter that swings — pH being the classic one — could previously get a
+  confident "leaves its range in ~12 days" warning drawn through the scatter,
+  with the direction flipping depending on how many readings the trend used.
+  The app now checks whether the measured direction is real before forecasting
+  anything: if the readings scatter too much for the direction to be trusted,
+  no crossing is predicted. Instead the parameter is reported as **swinging**,
+  with the size of the typical swing (for example "±0.11 pH") on the history
+  trend card and an "Unsettled" marker on the dashboard tile. Parameters that
+  are genuinely drifting are unaffected and still warn as before. A value that
+  is out of range is likewise no longer described as "still falling" when its
+  direction can't be trusted.
+
 - Parameter ranges now follow the recommended values instead of copying them
   once. A tank only stores the boundaries you set yourself; everything else
   reads the recommended range for your aquarium type (or, for microelements,

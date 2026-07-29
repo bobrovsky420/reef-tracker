@@ -21,6 +21,29 @@ IconData _directionIcon(TrendDirection d) {
   }
 }
 
+/// An oscillating parameter has no direction to point at — the up/down arrow
+/// gives way to the swap arrows (#31).
+const IconData _oscillatingIcon = Icons.swap_vert;
+
+/// The icon for a whole [TrendResult]: the swap arrows when it is oscillating,
+/// and otherwise the direction — but *flat* whenever the slope failed the
+/// significance test, so the arrow never points somewhere the accompanying
+/// "holding steady" text says the value isn't going (#31). The measured rate
+/// is still printed beside it; only the claim of a direction is withdrawn.
+IconData _trendIcon(TrendResult t) => t.oscillating
+    ? _oscillatingIcon
+    : _directionIcon(
+        t.slopeSignificant ? t.direction : TrendDirection.flat,
+      );
+
+/// The typical swing as a signed-free magnitude in display units, e.g.
+/// "±0.11 pH". The conversion is affine, so a *delta* converts as
+/// `toDisplay(sigma) - toDisplay(0)` — the same rule as [_signedRate].
+String _swing(double sigma, ParamPresentation pres) {
+  final disp = (pres.toDisplay(sigma) - pres.toDisplay(0)).abs();
+  return '±${formatLocaleNumber(disp, pres.decimals)} ${pres.unitLabel}';
+}
+
 /// Rounds a positive day estimate to a whole number, never below 1 ("~1 d").
 int _days(double v) => math.max(1, v.round());
 
@@ -51,9 +74,13 @@ class TrendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
-    final rate = l.trendRatePerDay(
-      '${_signedRate(trend, pres)} ${pres.unitLabel}',
-    );
+    // An oscillating series has a fitted rate, but it is a line through noise —
+    // showing it as the headline is the claim this state exists to retract
+    // (#31). The measured swing replaces it as the honest summary.
+    final oscillating = trend.oscillating;
+    final rate = oscillating
+        ? _swing(trend.sigma!, pres)
+        : l.trendRatePerDay('${_signedRate(trend, pres)} ${pres.unitLabel}');
 
     final lines = <Widget>[];
     if (trend.daysToGreen != null) {
@@ -81,9 +108,15 @@ class TrendCard extends StatelessWidget {
       );
     }
     if (lines.isEmpty) {
+      // "Staying within range at this rate" only makes sense when there *is* a
+      // trusted rate; a slope that failed the significance test is, by
+      // definition, indistinguishable from holding steady.
       lines.add(
         _forecastLine(
-          trend.direction == TrendDirection.flat
+          oscillating
+              ? l.trendOscillating
+              : (trend.direction == TrendDirection.flat ||
+                    !trend.slopeSignificant)
               ? l.trendFlat
               : l.trendWithinRange,
           tokens.textDim,
@@ -103,11 +136,7 @@ class TrendCard extends StatelessWidget {
               color: tokens.track,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              _directionIcon(trend.direction),
-              size: 16,
-              color: tokens.textDim,
-            ),
+            child: Icon(_trendIcon(trend), size: 16, color: tokens.textDim),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -146,7 +175,9 @@ class TrendCard extends StatelessWidget {
 
 /// Compact dashboard-tile forecast: the soonest threshold the value is heading
 /// for — or, for a recovering value, when it is back in its green range — shown
-/// only when that crossing is within [horizonDays]. Renders nothing otherwise.
+/// only when that crossing is within [horizonDays]. A parameter that is merely
+/// swinging gets a neutral "unsettled" chip instead of the crossing estimate
+/// that used to be extrapolated from its noise (#31). Renders nothing otherwise.
 class TrendChip extends StatelessWidget {
   const TrendChip({super.key, required this.trend, required this.horizonDays});
 
@@ -158,7 +189,13 @@ class TrendChip extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final String text;
     final Color color;
-    if (trend.daysToGreen != null && trend.daysToGreen! <= horizonDays) {
+    if (trend.oscillating) {
+      // Deliberately not an alarm colour: swinging is worth knowing, but it is
+      // an observation about the data, not a zone problem.
+      text = l.trendChipOscillating;
+      color = ReefTokens.of(context).textDim;
+    } else if (trend.daysToGreen != null &&
+        trend.daysToGreen! <= horizonDays) {
       text = l.trendChipRecovering(_days(trend.daysToGreen!));
       color = Zone.green.colorOf(context);
     } else if (trend.daysToAmber != null && trend.daysToAmber! <= horizonDays) {
@@ -173,7 +210,7 @@ class TrendChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(_directionIcon(trend.direction), size: 13, color: color),
+        Icon(_trendIcon(trend), size: 13, color: color),
         const SizedBox(width: 2),
         Flexible(
           child: Text(

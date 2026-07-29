@@ -177,6 +177,65 @@ void main() {
     });
   });
 
+  group('rule 5 — oscillating (#31)', () {
+    // What computeTrend produces for a swinging series: a measured slope with
+    // no significance, and a swing wide relative to the green band.
+    const swinging = TrendResult(
+      slopePerDay: -0.2,
+      direction: TrendDirection.falling,
+      window: 6,
+      slopeSignificant: false,
+      sigma: 0.5,
+      relativeSwing: 0.6,
+    );
+
+    test('an in-range swinging value is reported as swinging, not forecast', () {
+      final insights = computeInsights(
+        health: healthWith([fresh('alkalinity', 8)]),
+        trends: const {'alkalinity': swinging},
+        bounds: const {'alkalinity': alkBounds},
+        now: now,
+      );
+      final i = insights.single;
+      expect(i.kind, InsightKind.oscillating);
+      expect(i.severity, InsightSeverity.notice);
+      expect(i.days, isNull); // no crossing estimate is honest here
+      expect(i.isLow, isNull);
+    });
+
+    test('scatter below the threshold says nothing at all', () {
+      const quiet = TrendResult(
+        slopePerDay: -0.01,
+        direction: TrendDirection.falling,
+        window: 6,
+        slopeSignificant: false,
+        sigma: 0.05,
+        relativeSwing: 0.06,
+      );
+      final insights = computeInsights(
+        health: healthWith([fresh('alkalinity', 8)]),
+        trends: const {'alkalinity': quiet},
+        bounds: const {'alkalinity': alkBounds},
+        now: now,
+      );
+      expect(insights, isEmpty);
+    });
+
+    test('an out-of-range value keeps its louder message', () {
+      // Amber-low and swinging: the out-of-range warning stands alone, and it
+      // must not claim the value is "still falling" on an untrusted slope.
+      final insights = computeInsights(
+        health: healthWith([fresh('alkalinity', 6.5)]),
+        trends: const {'alkalinity': swinging},
+        bounds: const {'alkalinity': alkBounds},
+        now: now,
+      );
+      final i = insights.single;
+      expect(i.kind, InsightKind.outOfRange);
+      expect(i.worsening, isFalse);
+    });
+  });
+
   group('rule 3 — recovering', () {
     test('a recovering out-of-range value reassures instead of alarming', () {
       const trend = TrendResult(

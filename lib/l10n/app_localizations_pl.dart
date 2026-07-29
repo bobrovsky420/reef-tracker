@@ -1555,6 +1555,12 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get trendOscillating => 'Waha się — brak wyraźnego kierunku';
+
+  @override
+  String get trendChipOscillating => 'Wahania';
+
+  @override
   String get trendHorizon => 'Horyzont alertu';
 
   @override
@@ -2547,6 +2553,11 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String insightForecastHigh(Object param, int days) {
     return '$param rośnie — może opuścić zakres za ~$days dn.';
+  }
+
+  @override
+  String insightOscillating(Object param) {
+    return '$param waha się, zamiast dryfować — brak wiarygodnego trendu';
   }
 
   @override

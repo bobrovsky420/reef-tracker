@@ -253,20 +253,6 @@ TankStability computeTankStability(
   );
 }
 
-/// Scale that "a big swing" is measured against: the green half-width when
-/// the green band is two-sided, else the width of whichever green→amber gap
-/// exists (a one-sided range still says how much slack the user considers
-/// "close to the edge"). Null = no usable scale, parameter unmeasurable.
-double? _oscillationScale(ZoneBounds b) {
-  final gl = b.greenLow, gh = b.greenHigh;
-  if (gl != null && gh != null && gh > gl) return (gh - gl) / 2;
-  final ah = b.amberHigh;
-  if (gh != null && ah != null && ah > gh) return ah - gh;
-  final al = b.amberLow;
-  if (gl != null && al != null && gl > al) return gl - al;
-  return null;
-}
-
 /// Detrended relative oscillation of [points] (already window-filtered,
 /// oldest first) mapped to a 0–100 sub-score, or null when unmeasurable.
 ({double score, double sigma})? _subScore(
@@ -276,7 +262,7 @@ double? _oscillationScale(ZoneBounds b) {
   if (points.length < kStabilityMinReadings) return null;
   final span = points.last.t.difference(points.first.t);
   if (span < const Duration(hours: kStabilityMinSpanHours)) return null;
-  final scale = _oscillationScale(bounds);
+  final scale = oscillationScale(bounds); // shared with trend.dart, zones.dart
   if (scale == null) return null;
 
   final fit = linearFit(points);

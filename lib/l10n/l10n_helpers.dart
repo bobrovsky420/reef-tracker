@@ -159,6 +159,8 @@ extension L10nDomain on AppLocalizations {
         return (i.isLow ?? false)
             ? insightForecastLow(name, i.days!)
             : insightForecastHigh(name, i.days!);
+      case InsightKind.oscillating:
+        return insightOscillating(name);
       case InsightKind.recovering:
         return i.days != null
             ? insightRecoveringDays(name, i.days!)

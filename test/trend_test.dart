@@ -264,19 +264,39 @@ void main() {
 
   group('projection anchor (#26)', () {
     test('projects from the fitted line, not a noisy raw endpoint', () {
-      // One outlier endpoint (9.05 after a steady 8.0→8.3 run) inflates the
-      // slope; the anchor is the regression value at the last timestamp
-      // (mean 8.33 + slope 0.23 × 2 = 8.79, still inside green), so the amber
-      // crossing survives instead of vanishing behind the raw 9.05.
+      // A firm 0.2/day rise overshooting to 9.05 on the last test. The raw
+      // endpoint is already past greenHigh (a projection anchored on it would
+      // put the amber crossing in the past and report nothing); the anchor is
+      // the regression value at the last timestamp (mean 8.45 + slope 0.25 × 2
+      // = 8.95, still inside green), so the crossing survives.
+      final t = computeTrend(
+        points: series([8.0, 8.2, 8.4, 8.6, 9.05]),
+        bounds: bounds,
+        window: 5,
+      )!;
+      expect(t.slopePerDay, closeTo(0.25, 1e-9));
+      expect(t.recovering, isFalse);
+      expect(t.slopeSignificant, isTrue);
+      expect(t.daysToAmber, closeTo((9 - 8.95) / 0.25, 1e-6)); // ≈ 0.2 d
+      expect(t.daysToRed, closeTo((10 - 8.95) / 0.25, 1e-6)); // ≈ 4.2 d
+    });
+
+    test('a single outlier big enough to fail the t-test forecasts nothing', () {
+      // The same shape but with the rise carried entirely by the outlier
+      // (8.0→8.3 in 0.1 steps, then 9.05): |t| = 3.07 against a df-3 critical
+      // value of 3.182, i.e. p ≈ 0.055. Marginal, and marginal is exactly what
+      // #31 declines to build a "crosses amber tomorrow" warning on.
       final t = computeTrend(
         points: series([8.0, 8.1, 8.2, 8.3, 9.05]),
         bounds: bounds,
         window: 5,
       )!;
-      expect(t.slopePerDay, closeTo(0.23, 1e-9));
-      expect(t.recovering, isFalse);
-      expect(t.daysToAmber, closeTo((9 - 8.79) / 0.23, 1e-6)); // ≈ 0.9 d
-      expect(t.daysToRed, closeTo((10 - 8.79) / 0.23, 1e-6)); // ≈ 5.3 d
+      expect(t.slopePerDay, closeTo(0.23, 1e-9)); // still measured…
+      expect(t.direction, TrendDirection.rising); // …and still signed…
+      expect(t.slopeSignificant, isFalse); // …but not trusted.
+      expect(t.hasForecast, isFalse);
+      expect(t.daysToAmber, isNull);
+      expect(t.daysToRed, isNull);
     });
   });
 
@@ -319,6 +339,104 @@ void main() {
       expect(t.direction, TrendDirection.rising);
       expect(t.hasForecast, isFalse);
       expect(t.recovering, isFalse);
+    });
+  });
+
+  group('slope significance (#31)', () {
+    test('a clean drift is significant and still forecasts', () {
+      final t = computeTrend(
+        points: series([8.5, 8.4, 8.2, 8.1, 7.9, 7.8]),
+        bounds: bounds,
+        window: 5,
+      )!;
+      expect(t.slopeSignificant, isTrue);
+      expect(t.oscillating, isFalse);
+      expect(t.hasForecast, isTrue);
+      expect(t.sigma, lessThan(0.05)); // hugs the line
+    });
+
+    test('an oscillating series forecasts nothing and reports the swing', () {
+      // Sawtooth around 8.3 with no underlying drift: the fit finds a slope,
+      // but nowhere near its own standard error.
+      final t = computeTrend(
+        points: series([8.6, 8.0, 8.6, 8.0, 8.6, 8.0]),
+        bounds: bounds,
+        window: 5,
+      )!;
+      expect(t.slopeSignificant, isFalse);
+      expect(t.hasForecast, isFalse);
+      expect(t.daysToGreen, isNull);
+      expect(t.recovering, isFalse);
+      expect(t.oscillating, isTrue);
+      expect(t.sigma, greaterThan(0.25));
+      // Swing measured against the green half-width ((9 - 7.5) / 2 = 0.75).
+      expect(t.relativeSwing, closeTo(t.sigma! / 0.75, 1e-9));
+    });
+
+    test('small scatter is neither significant nor worth calling out', () {
+      // Wobbles of ±0.02 in a 1.5-wide green band: no trend, but nothing to
+      // report either — oscillating stays false so no message is shown.
+      final t = computeTrend(
+        points: series([8.30, 8.32, 8.28, 8.31, 8.29, 8.30]),
+        bounds: bounds,
+        window: 5,
+      )!;
+      expect(t.slopeSignificant, isFalse);
+      expect(t.hasForecast, isFalse);
+      expect(t.relativeSwing, lessThan(kTrendOscillationRelative));
+      expect(t.oscillating, isFalse);
+    });
+
+    test('the threshold is df-aware, not a flat |t| >= 2', () {
+      // |t| = 2.32 over 6 points (df 4, critical 2.776): a flat "|t| >= 2"
+      // rule would pass this; the df-aware one must not.
+      final pts = [
+        (t: t0, value: 8.47),
+        (t: t0.add(const Duration(days: 1, hours: 18)), value: 8.38),
+        (t: t0.add(const Duration(days: 2, hours: 20)), value: 8.44),
+        (t: t0.add(const Duration(days: 3, hours: 14)), value: 8.28),
+        (t: t0.add(const Duration(days: 3, hours: 17)), value: 8.38),
+        (t: t0.add(const Duration(days: 4, hours: 13)), value: 8.31),
+      ];
+      // pH-like bounds (mixed reef): green 7.9–8.4.
+      const phBounds = ZoneBounds(
+        amberLow: 7.8,
+        greenLow: 7.9,
+        greenHigh: 8.4,
+        amberHigh: 8.6,
+      );
+      final t = computeTrend(points: pts, bounds: phBounds, window: 5)!;
+      expect(t.direction, TrendDirection.falling);
+      expect(t.slopeSignificant, isFalse);
+      expect(t.hasForecast, isFalse);
+    });
+
+    test('a two-point fit has nothing to test and keeps forecasting', () {
+      final t = computeTrend(
+        points: series([8.5, 8.7]),
+        bounds: bounds,
+        window: 2,
+      )!;
+      expect(t.sigma, isNull);
+      expect(t.relativeSwing, isNull);
+      expect(t.slopeSignificant, isTrue);
+      expect(t.oscillating, isFalse);
+      expect(t.daysToAmber, closeTo(1.5, 1e-9));
+    });
+
+    test('bounds with no usable scale leave the swing unmeasured', () {
+      // Nothing to divide sigma by: no relative swing, so never "oscillating"
+      // — but the significance test itself is unaffected.
+      const noScale = ZoneBounds(greenHigh: 9);
+      final t = computeTrend(
+        points: series([8.6, 8.0, 8.6, 8.0, 8.6, 8.0]),
+        bounds: noScale,
+        window: 5,
+      )!;
+      expect(t.sigma, isNotNull);
+      expect(t.relativeSwing, isNull);
+      expect(t.slopeSignificant, isFalse);
+      expect(t.oscillating, isFalse);
     });
   });
 }

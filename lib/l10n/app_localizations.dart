@@ -2637,6 +2637,18 @@ abstract class AppLocalizations {
   /// **'Recovering ~{days} d'**
   String trendChipRecovering(int days);
 
+  /// History trend card note for a parameter whose readings scatter too much for the fitted slope to be trusted; shown instead of a forecast. The headline above it shows the typical swing ("±0.11 pH") instead of a per-day rate.
+  ///
+  /// In en, this message translates to:
+  /// **'Swinging — no clear direction'**
+  String get trendOscillating;
+
+  /// Compact dashboard chip for a parameter that is swinging without a reliable trend. Neutral in tone — an observation about the readings, not an alarm. Keep it to one or two words; the chip is very narrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsettled'**
+  String get trendChipOscillating;
+
   /// No description provided for @trendHorizon.
   ///
   /// In en, this message translates to:
@@ -4166,6 +4178,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{param} is heading high — may leave its range in ~{days} d'**
   String insightForecastHigh(Object param, int days);
+
+  /// Insight: the parameter is in range, but its readings swing too much for a trend direction to be established, so no forecast is shown.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} is swinging rather than drifting — no reliable trend'**
+  String insightOscillating(Object param);
 
   /// Positive insight: value out of range but moving back toward it; no time estimate available.
   ///

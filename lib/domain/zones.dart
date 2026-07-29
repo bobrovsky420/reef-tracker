@@ -111,6 +111,27 @@ class ZoneBounds {
   }
 }
 
+/// Scale that "a big swing" in this parameter is measured against: the green
+/// half-width when the green band is two-sided, else the width of whichever
+/// green→amber gap exists (a one-sided range still says how much slack the user
+/// considers "close to the edge"). Null when [b] offers no usable scale.
+///
+/// Dividing a residual RMS by this turns it into a unit- and scale-free number
+/// — a 0.2 pH swing and a 20 ppm calcium swing become comparable — which is why
+/// both `stability_score.dart` (sub-scores) and `trend.dart` (the oscillating
+/// verdict) measure scatter against it. Shared here so the two can never drift
+/// apart on what counts as a big swing.
+double? oscillationScale(ZoneBounds b) {
+  if (!b.isValid) return null;
+  final gl = b.greenLow, gh = b.greenHigh;
+  if (gl != null && gh != null && gh > gl) return (gh - gl) / 2;
+  final ah = b.amberHigh;
+  if (gh != null && ah != null && ah > gh) return ah - gh;
+  final al = b.amberLow;
+  if (gl != null && al != null && gl > al) return gl - al;
+  return null;
+}
+
 /// The canonical `[min, max]` axis a gauge dial or linear ratio track renders
 /// (REDESIGN #7/#8).
 typedef GaugeAxis = ({double min, double max});
