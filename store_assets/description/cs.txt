@@ -1,0 +1,30 @@
+ReefTracker je offline deník pro mořské akvárium, určený akvaristům, kteří chtějí své chemii doopravdy rozumět - ne jen vyplňovat tabulku.
+
+Zapisujte výsledky testů a hned uvidíte, jestli je každý parametr v pořádku, na hraně, nebo kritický - díky přehledným zeleným, oranžovým a červeným zónám. Sledujte vývoj v čase, odhalte pomalý posun dřív, než se zvrhne v problém, a mějte celkové skóre zdraví akvária na jednom místě.
+
+Co si můžete sledovat
+- Základní parametry: teplota, pH, salinita, KH, vápník, hořčík, dusičnany, fosforečnany, amoniak, dusitany, ORP
+- Mikropanel s 33 prvky pro stopové látky - laboratorní rozbory naimportujete přímo z Fauna Marin nebo z libovolného exportu ve formátu ZIMS, místo abyste každou hodnotu opisovali ručně
+- Více akvárií, každé s vlastní sadou parametrů, cíli a historií
+- Záznamy výměn vody, výměn uhlí a čištění techniky
+- Dávkovací plány přípravků a kalkulačka dávek, která odhadne spotřebu z vaší vlastní historie testů
+- Klíčové poměry (PO4:NO3, Mg:Ca) a toxicita volného amoniaku, spočítané automaticky z hodnot, které už máte
+
+Čtěte přímo ze své techniky
+- Fotometry Hanna: připojte se přes Bluetooth a ukládejte každý výsledek hned, jak přijde, nebo namiřte fotoaparát na displej a nechte hodnotu přečíst aplikaci
+- Měřidla ReefFactory, zařízení Red Sea ReefBeat a řídicí jednotky Neptune Apex (experimentální): načtěte hodnoty sond přímo z techniky a uložte je jako měření
+- Všechno na jedné stránce Zařízení, přes vaši vlastní Wi-Fi - bez cloudové služby mezi tím
+
+Mějte údržbu pod kontrolou
+- Připomínky testování, dávkování i opakovaných úkolů údržby (výměny vody, filtrační punčochy, čištění skla a další)
+- Sledování jednotlivých stupňů RO filtru, takže vždy víte, kdy je čas na další vložku
+
+Vidět celek
+- Skóre zdraví akvária a skóre stability shrnou, jak na tom jste a jak stabilně
+- Detekce trendů odhadne, kdy hodnota opustí svůj rozsah, a poctivě řekne, když parametr jen kolísá, místo aby hádala směr
+- Chytré tipy vypíchnou těch pár věcí, které si tento týden opravdu zaslouží vaši pozornost
+
+Soukromí od základu
+Všechno je uložené lokálně ve vašem zařízení. Žádný účet, žádná registrace, žádné reklamy - vaše data jsou vaše. Spojení s akvarijní technikou zůstává ve vaší síti. Zálohovat a obnovovat můžete kdykoli přes systémové sdílení.
+
+ReefTracker je připravený pro akvária rybí, s měkkými korály, LPS, SPS i smíšená - výchozí parametry a cíle přizpůsobí tomu, jaké akvárium vedete.

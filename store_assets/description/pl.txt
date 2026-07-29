@@ -1,0 +1,30 @@
+ReefTracker to działający offline dziennik akwarium morskiego dla akwarystów, którzy chcą naprawdę rozumieć chemię swojego zbiornika - a nie tylko wypełniać arkusz.
+
+Zapisuj wyniki testów i od razu zobacz, czy każdy parametr jest w porządku, na granicy czy krytyczny - dzięki czytelnym strefom zielonej, bursztynowej i czerwonej. Obserwuj trendy w czasie, wyłap powolny dryf, zanim zmieni się w katastrofę, i miej ogólny wskaźnik zdrowia zbiornika na widoku.
+
+Co możesz śledzić
+- Parametry podstawowe: temperatura, pH, zasolenie, KH, wapń, magnez, azotany, fosforany, amoniak, azotyny, ORP
+- Mikropanel 33 pierwiastków dla pierwiastków śladowych - raporty laboratoryjne zaimportujesz wprost z Fauna Marin albo z dowolnego eksportu w formacie ZIMS, zamiast przepisywać każdą wartość
+- Wiele zbiorników, każdy z własnym zestawem parametrów, celami i historią
+- Dzienniki podmian wody, wymiany węgla i czyszczenia sprzętu
+- Plany dozowania preparatów i kalkulator dawki, który szacuje zużycie na podstawie Twojej własnej historii testów
+- Kluczowe stosunki (PO4:NO3, Mg:Ca) oraz toksyczność wolnego amoniaku, liczone automatycznie z już wprowadzonych odczytów
+
+Czytaj prosto ze sprzętu
+- Fotometry Hanna: połącz się przez Bluetooth i zapisuj każdy wynik, gdy tylko się pojawi, albo skieruj aparat na wyświetlacz i pozwól aplikacji odczytać liczbę
+- Mierniki ReefFactory, urządzenia Red Sea ReefBeat i sterowniki Neptune Apex (eksperymentalnie): pobieraj wartości sond prosto ze sprzętu i zapisuj je jako pomiary
+- Wszystko na jednej stronie Urządzenia, przez Twoje własne Wi-Fi - bez usługi chmurowej pośrodku
+
+Panuj nad konserwacją
+- Przypomnienia o testach, dozowaniu i powtarzalnych zadaniach (podmiany wody, skarpety filtracyjne, czyszczenie szyby i inne)
+- Śledzenie stopni filtra RO, żebyś zawsze wiedział, kiedy wymienić kolejny wkład
+
+Szerszy obraz
+- Wskaźnik zdrowia i wskaźnik stabilności podsumowują, gdzie jesteś i jak równo szło
+- Wykrywanie trendu przewiduje, kiedy wartość opuści swój zakres, i uczciwie mówi, że parametr po prostu się waha, zamiast zgadywać kierunek
+- Inteligentne wskazówki pokazują tych kilka rzeczy, które naprawdę zasługują w tym tygodniu na Twoją uwagę
+
+Prywatność u podstaw
+Wszystko jest przechowywane lokalnie na Twoim urządzeniu. Bez konta, bez rejestracji, bez reklam - Twoje dane należą do Ciebie. Połączenia ze sprzętem akwarystycznym zostają w Twojej sieci. Kopię zapasową zrobisz i przywrócisz w każdej chwili przez systemowe udostępnianie.
+
+Zbiornik rybny, miękkie koralowce, LPS, SPS czy mieszany - ReefTracker dopasowuje domyślne parametry i cele do rodzaju akwarium, które prowadzisz.

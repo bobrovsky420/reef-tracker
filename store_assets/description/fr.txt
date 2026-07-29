@@ -1,0 +1,30 @@
+ReefTracker est le carnet de bord hors ligne pour aquarium récifal, pensé pour les aquariophiles qui veulent vraiment comprendre la chimie de leur bac - pas seulement remplir un tableur.
+
+Notez vos tests et voyez immédiatement si chaque paramètre est bon, limite ou critique, grâce à des zones vertes, orange et rouges bien lisibles. Suivez les tendances dans le temps, repérez une dérive lente avant qu'elle ne tourne mal, et gardez un score de santé global sous les yeux.
+
+Ce que vous pouvez suivre
+- Paramètres principaux : température, pH, salinité, KH, calcium, magnésium, nitrates, phosphates, ammoniaque, nitrites, redox
+- Panneau de 33 éléments pour les oligo-éléments - importez les rapports de laboratoire directement depuis Fauna Marin ou depuis n'importe quel export au format ZIMS, au lieu de ressaisir chaque valeur
+- Plusieurs bacs, chacun avec ses paramètres, ses cibles et son historique
+- Journaux des changements d'eau, des changements de charbon et des nettoyages de matériel
+- Plans de dosage des additifs et calculateur de dose qui estime la consommation à partir de votre propre historique de tests
+- Rapports clés (PO4:NO3, Mg:Ca) et toxicité de l'ammoniaque libre, calculés automatiquement à partir de vos relevés
+
+Lisez directement votre matériel
+- Photomètres Hanna : connectez-vous en Bluetooth et enregistrez chaque résultat dès qu'il arrive, ou pointez l'appareil photo sur l'écran et laissez l'app lire le nombre
+- Appareils ReefFactory, matériel Red Sea ReefBeat et contrôleurs Neptune Apex (expérimental) : récupérez les valeurs des sondes directement sur le matériel et enregistrez-les comme mesures
+- Le tout sur une seule page Appareils, via votre propre Wi-Fi - sans service cloud au milieu
+
+Gardez l'entretien en main
+- Rappels pour les tests, le dosage et les tâches récurrentes (changements d'eau, chaussettes de filtration, nettoyage des vitres et plus)
+- Suivi des étages du filtre osmoseur, pour toujours savoir quand la prochaine cartouche arrive à échéance
+
+Voir l'ensemble
+- Le score de santé et le score de stabilité résument où vous en êtes et à quel point c'est resté régulier
+- La détection de tendance prévoit quand une valeur va sortir de sa plage, et le dit franchement quand un paramètre ne fait qu'osciller au lieu de deviner une direction
+- Les analyses intelligentes font ressortir les quelques points qui méritent vraiment votre attention cette semaine
+
+Confidentiel par conception
+Tout est stocké localement sur votre appareil. Pas de compte, pas d'inscription, pas de publicité - vos données sont les vôtres. Les connexions au matériel d'aquarium restent sur votre réseau. Sauvegardez et restaurez à tout moment via le menu de partage.
+
+Bac de poissons, coraux mous, LPS, SPS ou récifal mixte : ReefTracker adapte ses paramètres et ses cibles par défaut au type d'aquarium que vous tenez.

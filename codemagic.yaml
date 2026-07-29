@@ -95,6 +95,11 @@ workflows:
       - name: Build signed IPA
         script: flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
       - name: Push localized What's New
+        # Uses Codemagic's own `app-store-connect` CLI, not fastlane: `deliver`
+        # prompts for confirmation when it finds no Deliverfile and then dies
+        # ("Could not retrieve response as fastlane runs in non-interactive
+        # mode"). This tool is pre-installed, never interactive, and reads the
+        # same APP_STORE_CONNECT_* variables the integration already exports.
         script: |
           set -e
           # Version name without the +build suffix — the App Store version
@@ -104,27 +109,70 @@ workflows:
           echo "Publishing release notes for $VERSION from $NOTES"
           test -d "$NOTES" || { echo "No release notes for $VERSION — write them first (CLAUDE.md)"; exit 1; }
 
-          # fastlane wants the ASC API key as a JSON file. Built with python so
-          # the PEM's newlines survive; the Codemagic integration exports these
-          # three variables (verify the names in Codemagic > Integrations if
-          # this step fails to authenticate).
-          python3 -c 'import json, os; print(json.dumps({
-            "key_id": os.environ["APP_STORE_CONNECT_KEY_IDENTIFIER"],
-            "issuer_id": os.environ["APP_STORE_CONNECT_ISSUER_ID"],
-            "key": os.environ["APP_STORE_CONNECT_PRIVATE_KEY"],
-            "in_house": False,
-          }))' > /tmp/asc_key.json
+          cat > /tmp/publish_notes.py <<'PY'
+          import json, os, subprocess, sys
 
-          fastlane deliver \
-            --api_key_path /tmp/asc_key.json \
-            --app_identifier cz.reeftracker.reeftracker \
-            --app_version "$VERSION" \
-            --metadata_path "$NOTES" \
-            --skip_binary_upload true \
-            --skip_screenshots true \
-            --force true \
-            --run_precheck_before_submit false \
-            --submit_for_review false          # (1) flip to true to submit
+          version, notes_dir = sys.argv[1], sys.argv[2]
+          BUNDLE_ID = "cz.reeftracker.reeftracker"
+
+          def asc(*args):
+              """Run an app-store-connect query and return its parsed JSON."""
+              r = subprocess.run(["app-store-connect", *args, "--json"],
+                                 capture_output=True, text=True)
+              if r.returncode != 0:
+                  sys.exit("app-store-connect {} failed:\n{}".format(" ".join(args), r.stderr))
+              data = json.loads(r.stdout or "[]")
+              # Tolerate a {"data": [...]} envelope and a single-resource dict.
+              if isinstance(data, dict):
+                  data = data.get("data", data)
+              if isinstance(data, dict):
+                  data = [data]
+              return data
+
+          def attr(obj, name):
+              """Field lookup that tolerates both flat and {attributes:{}} shapes."""
+              return (obj.get("attributes") or {}).get(name, obj.get(name))
+
+          apps = asc("apps", "list", "--bundle-id-identifier", BUNDLE_ID,
+                     "--strict-match-identifier")
+          if not apps:
+              sys.exit("No app found for bundle id " + BUNDLE_ID)
+          app_id = apps[0]["id"]
+
+          versions = asc("apps", "app-store-versions", app_id,
+                         "--version-string", version, "--platform", "IOS")
+          if not versions:
+              sys.exit("No App Store version record for {} — create it in App Store "
+                       "Connect first, then re-run this build.".format(version))
+          version_id = versions[0]["id"]
+
+          existing = {attr(l, "locale"): l["id"]
+                      for l in asc("app-store-versions", "localizations", version_id)}
+
+          updated, skipped = [], []
+          for locale in sorted(os.listdir(notes_dir)):
+              path = os.path.join(notes_dir, locale, "release_notes.txt")
+              if not os.path.isfile(path):
+                  continue
+              loc_id = existing.get(locale)
+              if not loc_id:
+                  # The listing has no such language — never silently drop it.
+                  skipped.append(locale)
+                  continue
+              r = subprocess.run(["app-store-connect", "app-store-version-localizations",
+                                  "modify", loc_id, "--whats-new", "@file:" + path])
+              if r.returncode != 0:
+                  sys.exit("Failed to set What's New for " + locale)
+              updated.append(locale)
+
+          print("What's New updated for: " + (", ".join(updated) or "NOTHING"))
+          if skipped:
+              print("SKIPPED — no such locale on the App Store listing: " + ", ".join(skipped))
+          if not updated:
+              sys.exit("No locale was updated — check the listing's languages.")
+          PY
+
+          python3 /tmp/publish_notes.py "$VERSION" "$NOTES"
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log

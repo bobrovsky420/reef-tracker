@@ -1,0 +1,30 @@
+ReefTracker is the offline reef-aquarium logbook built for hobbyists who want real insight into their tank's chemistry - not just a spreadsheet.
+
+Log your water tests and instantly see whether each parameter is healthy, borderline, or critical with clear green/amber/red zones. Watch trends over time, catch a slow drift before it becomes a crash, and get an overall tank Health Score at a glance.
+
+What you can track
+- Core parameters: temperature, pH, salinity, alkalinity, calcium, magnesium, nitrate, phosphate, ammonia, nitrite, ORP
+- 33-element ICP micro-panel for trace elements - import lab reports directly from Fauna Marin or any ZIMS-format export instead of typing every value by hand
+- Multiple tanks, each with its own parameter set, targets, and history
+- Water changes, carbon changes, and equipment cleaning logs
+- Supplement dosing plans and a dose calculator that estimates consumption from your own test history
+- Key ratios (PO4:NO3, Mg:Ca) and free-ammonia toxicity, computed automatically from your existing readings
+
+Read your equipment directly
+- Hanna checkers: connect over Bluetooth and save each result as it arrives, or point your camera at the display and let the app read the number
+- ReefFactory meters, Red Sea ReefBeat devices and Neptune Apex controllers (experimental): take probe values straight off the hardware and save them as measurements
+- All of it on one Connected devices page, over your own Wi-Fi - no cloud service in between
+
+Stay on top of maintenance
+- Reminders for testing, dosing, and recurring maintenance tasks (water changes, filter socks, glass cleaning, and more)
+- Reverse-osmosis filter stage tracking, so you always know when the next cartridge is due
+
+See the big picture
+- Tank Health Score and Stability Score summarize where you stand and how steady you've been
+- Trend detection projects when a value is headed out of range, and says so plainly when a parameter is merely swinging rather than guessing a direction
+- Smart insights surface the handful of things that actually deserve your attention this week
+
+Private by design
+Everything is stored locally on your device. There's no account, no sign-up, and no ads - your data is yours. Connections to aquarium hardware stay on your own network. Back up and restore anytime via the share sheet.
+
+Built for fish-only, soft coral, LPS, SPS, and mixed reef setups alike, ReefTracker adapts its default parameters and targets to the kind of tank you run.

@@ -1,0 +1,30 @@
+ReefTracker è il diario offline per l'acquario di barriera, pensato per chi vuole capire davvero la chimica della propria vasca - non solo compilare un foglio di calcolo.
+
+Registra i test dell'acqua e vedi subito se ogni parametro è a posto, al limite o critico, con zone verdi, ambra e rosse ben leggibili. Segui gli andamenti nel tempo, individua una deriva lenta prima che diventi un crollo e tieni sott'occhio il punteggio di salute della vasca.
+
+Che cosa puoi seguire
+- Parametri principali: temperatura, pH, salinità, alcalinità, calcio, magnesio, nitrati, fosfati, ammoniaca, nitriti, ORP
+- Pannello di 33 elementi per gli oligoelementi - importa i referti di laboratorio direttamente da Fauna Marin o da qualunque esportazione in formato ZIMS, invece di digitare ogni valore
+- Più vasche, ognuna con i suoi parametri, obiettivi e storico
+- Registri di cambi d'acqua, cambi di carbone e pulizia delle attrezzature
+- Piani di dosaggio degli integratori e calcolatore della dose che stima il consumo dal tuo storico di test
+- Rapporti chiave (PO4:NO3, Mg:Ca) e tossicità dell'ammoniaca libera, calcolati in automatico dalle letture che hai già
+
+Leggi direttamente dalle tue attrezzature
+- Fotometri Hanna: collegati via Bluetooth e salva ogni risultato appena arriva, oppure inquadra il display con la fotocamera e lascia che sia l'app a leggere il numero
+- Misuratori ReefFactory, dispositivi Red Sea ReefBeat e centraline Neptune Apex (sperimentale): preleva i valori delle sonde direttamente dall'hardware e salvali come misurazioni
+- Tutto in un'unica pagina Dispositivi, sulla tua rete Wi-Fi - senza alcun servizio cloud di mezzo
+
+Tieni sotto controllo la manutenzione
+- Promemoria per test, dosaggi e attività ricorrenti (cambi d'acqua, calze filtranti, pulizia dei vetri e altro)
+- Monitoraggio degli stadi dell'impianto a osmosi, così sai sempre quando scade la prossima cartuccia
+
+Guarda il quadro d'insieme
+- Punteggio di salute e punteggio di stabilità riassumono a che punto sei e quanto sei stato costante
+- Il rilevamento degli andamenti prevede quando un valore uscirà dal suo intervallo e dice chiaramente quando un parametro sta solo oscillando, invece di indovinare una direzione
+- Gli spunti intelligenti mettono in evidenza le poche cose che meritano davvero attenzione questa settimana
+
+Riservato per costruzione
+Tutto è memorizzato in locale sul tuo dispositivo. Nessun account, nessuna registrazione, nessuna pubblicità - i tuoi dati sono tuoi. Le connessioni all'hardware dell'acquario restano sulla tua rete. Backup e ripristino quando vuoi tramite la funzione di condivisione.
+
+Vasca di soli pesci, coralli molli, LPS, SPS o barriera mista: ReefTracker adatta parametri e obiettivi predefiniti al tipo di acquario che gestisci.

@@ -1,0 +1,30 @@
+ReefTracker ist das Offline-Logbuch für Meerwasseraquarien - für alle, die ihre Wasserwerte wirklich verstehen wollen und nicht nur eine Tabelle führen.
+
+Trage deine Wassertests ein und sieh sofort, ob ein Wert in Ordnung, grenzwertig oder kritisch ist: klare grüne, gelbe und rote Zonen. Verfolge Verläufe über die Zeit, erkenne ein langsames Abdriften, bevor daraus ein Absturz wird, und behalte den Gesundheitswert deines Beckens auf einen Blick im Auge.
+
+Was du erfassen kannst
+- Kernparameter: Temperatur, pH, Salinität, Karbonathärte, Calcium, Magnesium, Nitrat, Phosphat, Ammoniak, Nitrit, Redoxpotenzial
+- Mikropanel mit 33 Elementen für Spurenelemente - Laborberichte importierst du direkt aus Fauna Marin oder aus jedem Export im ZIMS-Format, statt jeden Wert abzutippen
+- Mehrere Becken, jedes mit eigenen Parametern, Zielwerten und Historie
+- Protokolle für Wasserwechsel, Kohlewechsel und Technikreinigung
+- Dosierpläne für Zusätze und ein Dosierrechner, der den Verbrauch aus deiner eigenen Testhistorie schätzt
+- Wichtige Verhältnisse (PO4:NO3, Mg:Ca) und die Toxizität des freien Ammoniaks, automatisch aus vorhandenen Werten berechnet
+
+Lies deine Technik direkt aus
+- Hanna Photometer: per Bluetooth verbinden und jedes Ergebnis speichern, sobald es vorliegt, oder die Kamera auf das Display halten und die Zahl von der App ablesen lassen
+- ReefFactory Messgeräte, Red Sea ReefBeat Geräte und Neptune Apex Controller (experimentell): Sondenwerte direkt von der Hardware übernehmen und als Messung speichern
+- Alles auf einer Geräte-Seite, über dein eigenes WLAN - ohne Cloud-Dienst dazwischen
+
+Wartung im Griff
+- Erinnerungen für Tests, Dosierung und wiederkehrende Aufgaben (Wasserwechsel, Filtersocken, Scheibenreinigung und mehr)
+- Standzeiten der einzelnen Osmose-Filterstufen, damit du weißt, wann die nächste Kartusche fällig ist
+
+Das große Ganze
+- Gesundheits- und Stabilitätswert fassen zusammen, wo du stehst und wie ruhig es lief
+- Die Trenderkennung schätzt, wann ein Wert seinen Bereich verlässt, und sagt ehrlich Bescheid, wenn ein Parameter nur schwankt, statt eine Richtung zu raten
+- Intelligente Hinweise zeigen die wenigen Dinge, die diese Woche wirklich deine Aufmerksamkeit verdienen
+
+Privat by design
+Alles bleibt lokal auf deinem Gerät. Kein Konto, keine Registrierung, keine Werbung - deine Daten gehören dir. Verbindungen zur Aquarientechnik bleiben in deinem Netzwerk. Sichern und Wiederherstellen jederzeit über die Teilen-Funktion.
+
+Ob Fischbecken, Weichkorallen, LPS, SPS oder Mischbecken: ReefTracker passt Standardparameter und Zielwerte an die Art deines Aquariums an.
