@@ -32,7 +32,10 @@ workflows:
       - name: Run tests
         # The full suite runs locally before every release too; drop this step
         # if free minutes get tight — it's a repeat, not the only gate.
-        script: flutter test
+        # `--exclude-tags golden` is mandatory here: the golden PNGs are
+        # generated on Windows and macOS rasterizes text differently, so they
+        # fail on CI by construction (see dart_test.yaml).
+        script: flutter test --exclude-tags golden
       - name: Apply provisioning profiles
         script: xcode-project use-profiles
       - name: Build signed IPA
@@ -85,7 +88,8 @@ workflows:
       - name: Flutter pub get
         script: flutter pub get
       - name: Run tests
-        script: flutter test
+        # Goldens excluded — Windows-generated PNGs, see dart_test.yaml.
+        script: flutter test --exclude-tags golden
       - name: Apply provisioning profiles
         script: xcode-project use-profiles
       - name: Build signed IPA
