@@ -1031,6 +1031,7 @@
   "deviceAlreadyAdded": "{name} ist bereits hinzugefügt. Verwende Netzwerk durchsuchen, um eine neue Adresse zuzuweisen.",
 
   "devicesTitle": "Verbundene Geräte",
+  "devicesTab": "Geräte",
   "devicesAll": "Alle",
   "devicesScopeAll": "Alle Geräte · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

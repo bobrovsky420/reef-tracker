@@ -3660,6 +3660,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get devicesTitle => 'Connected devices';
 
   @override
+  String get devicesTab => 'Devices';
+
+  @override
   String get devicesAll => 'All';
 
   @override

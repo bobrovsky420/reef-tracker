@@ -3692,6 +3692,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get devicesTitle => 'Připojená zařízení';
 
   @override
+  String get devicesTab => 'Zařízení';
+
+  @override
   String get devicesAll => 'Vše';
 
   @override

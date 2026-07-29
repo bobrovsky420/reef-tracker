@@ -1624,7 +1624,11 @@
 
   "devicesTitle": "Connected devices",
   "@devicesTitle": {
-    "description": "Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory. Doubles as its entry label in the Measurements-tab overflow menu, where a bare 'Devices' read ambiguously next to the import entries."
+    "description": "Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory. Used by the standalone '/devices' route's app bar."
+  },
+  "devicesTab": "Devices",
+  "@devicesTab": {
+    "description": "Label of the Devices bottom-navigation tab (U42). Short where 'devicesTitle' is not: a nav label has one line beside four siblings, and the tab bar is the context that 'Connected' otherwise supplies."
   },
   "devicesAll": "All",
   "@devicesAll": {

@@ -3741,6 +3741,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get devicesTitle => 'Подключённые устройства';
 
   @override
+  String get devicesTab => 'Устройства';
+
+  @override
   String get devicesAll => 'Все';
 
   @override

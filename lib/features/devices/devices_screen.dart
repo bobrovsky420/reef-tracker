@@ -15,12 +15,56 @@ import '../apex/apex_screen.dart';
 import '../reefbeat/reefbeat_screen.dart';
 import '../reeffactory/reeffactory_screen.dart';
 
-/// The unified Devices screen (U41): every LAN device the keeper has connected,
+/// Standalone Devices route (`/devices`). With tanks present, Devices is the
+/// home shell's fourth bottom-nav tab (U42) and nothing pushes this route; it
+/// remains as a stable deep-link target and for hosts without the bottom bar,
+/// mirroring `SettingsScreen` and `/settings`.
+///
+/// Stateful only to own [_bodyKey]: a key minted in `build` would be a new key
+/// on every rebuild, and the body's live snapshots would go with the old one.
+class DevicesScreen extends StatefulWidget {
+  const DevicesScreen({super.key, this.staleAfter = kDeviceSnapshotStaleAfter});
+
+  /// See [DevicesBody.staleAfter].
+  final Duration staleAfter;
+
+  @override
+  State<DevicesScreen> createState() => _DevicesScreenState();
+}
+
+class _DevicesScreenState extends State<DevicesScreen> {
+  /// The body owns its own state, so the FAB reaches it through a key rather
+  /// than duplicating the add flow — the same arrangement the home shell uses.
+  final GlobalKey<DevicesBodyState> _bodyKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l.devicesTitle)),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          final body = _bodyKey.currentState;
+          if (body != null) unawaited(body.addDevice());
+        },
+        icon: const Icon(Icons.add),
+        label: Text(l.devicesAddDevice),
+      ),
+      body: DevicesBody(key: _bodyKey, staleAfter: widget.staleAfter),
+    );
+  }
+}
+
+/// The unified Devices body (U41): every LAN device the keeper has connected,
 /// on one page, behind a vendor selector.
 ///
-/// It replaces the three per-vendor dashboards (`/reeffactory`, `/reefbeat`,
+/// It replaced the three per-vendor dashboards (`/reeffactory`, `/reefbeat`,
 /// `/apex`) *and* the read-only Settings inventory (`/settings/devices`) — four
-/// routes collapsed into one, reached from the Measurements-tab overflow menu.
+/// routes collapsed into one. Scaffold-less, so the same body serves both the
+/// home shell's Devices tab (U42) and the standalone [DevicesScreen]; the host
+/// owns the app bar and the add-device FAB, which calls [addDevice] on this
+/// state (the add flows seed the live maps held here, which a top-level
+/// function could not reach).
 ///
 /// The shape that keeps a mixed fleet readable:
 /// - **Vendor chips** across the top, in the user's own order ([kDeviceVendors]
@@ -41,16 +85,27 @@ import '../reeffactory/reeffactory_screen.dart';
 /// the inventory it replaced was a Standard feature, and a keeper must always
 /// be able to see what they have connected. Reading, saving and adding are
 /// gated; a non-entitled install gets a banner where the action buttons sit.
-class DevicesScreen extends ConsumerStatefulWidget {
-  const DevicesScreen({super.key, this.staleAfter = kDeviceSnapshotStaleAfter});
+class DevicesBody extends ConsumerStatefulWidget {
+  const DevicesBody({
+    super.key,
+    this.staleAfter = kDeviceSnapshotStaleAfter,
+    this.active = true,
+  });
 
   /// How old a held snapshot may be before a save re-reads it (see
   /// [kDeviceSnapshotStaleAfter]). A parameter only so that a test can set it
   /// to zero and exercise the re-read without waiting out the real window.
   final Duration staleAfter;
 
+  /// Whether this body is the tab the user is actually looking at. The home
+  /// shell keeps every tab built inside an `IndexedStack`, so without this the
+  /// on-open read would hit the LAN on every app launch — for a page nobody
+  /// opened. False suppresses the automatic read only; everything the user
+  /// asks for explicitly still works.
+  final bool active;
+
   @override
-  ConsumerState<DevicesScreen> createState() => _DevicesScreenState();
+  DevicesBodyState createState() => DevicesBodyState();
 }
 
 /// A held snapshot older than this is re-read before its values are saved
@@ -59,7 +114,7 @@ class DevicesScreen extends ConsumerStatefulWidget {
 /// gets stamped into the history as a current measurement.
 const Duration kDeviceSnapshotStaleAfter = Duration(minutes: 2);
 
-class _DevicesScreenState extends ConsumerState<DevicesScreen> {
+class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// Live state per vendor, keyed by device identifier. Held at page level so
   /// it survives filter switches.
   final Map<String, RfLive> _rfLive = {};
@@ -81,6 +136,11 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   /// preference has been applied once (see [_restoreSelection]).
   String? _vendor;
   bool _selectionRestored = false;
+
+  /// The vendors that had a chip on the last build. Kept so [addDevice] — which
+  /// the host's FAB calls between builds — can resolve the effective selection
+  /// exactly as the page renders it, without re-deriving it from the providers.
+  List<String> _present = const [];
 
   /// Applies the persisted filter once the setting has loaded, dropping it if
   /// that vendor no longer has any devices (its last one was removed).
@@ -179,7 +239,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   }
 
   /// Re-reads every device whose held snapshot has aged past
-  /// [DevicesScreen.staleAfter] before its values are written (#76). The page reads
+  /// [DevicesBody.staleAfter] before its values are written (#76). The page reads
   /// each device once when it opens and then holds that snapshot for as long
   /// as it is on screen; without this, a keeper who opens Devices, gets
   /// distracted and taps Save an hour later writes hour-old probe values into
@@ -459,6 +519,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
       for (final v in order)
         if ((byVendor[v] ?? const []).isNotEmpty) v,
     ];
+    _present = present;
     _restoreSelection(present);
     final selected = present.contains(_vendor) ? _vendor : null;
     final inScope = selected == null ? present : [selected];
@@ -467,8 +528,9 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
       byVendor: {for (final v in inScope) v: byVendor[v] ?? const []},
     );
 
-    // The on-open read, scoped to the selection and once per device.
-    if (entitled) {
+    // The on-open read, scoped to the selection and once per device. Only for
+    // the tab actually on screen — see [DevicesBody.active].
+    if (entitled && widget.active) {
       final toRead = _Scope(
         order: scope.order,
         byVendor: {
@@ -489,123 +551,101 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
       }
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l.devicesTitle),
-        actions: [
-          // Vendor order is only meaningful with more than one vendor on the
-          // page — and it is what decides save precedence, so it lives beside
-          // the list it orders rather than in Settings.
-          if (present.length > 1)
-            PopupMenuButton<String>(
-              onSelected: (_) => unawaited(_showReorderSheet(order, byVendor)),
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'reorder',
-                  child: Text(l.devicesReorderBrands),
-                ),
-              ],
+    if (present.isEmpty) return const _EmptyState();
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          sliver: SliverToBoxAdapter(
+            child: _DisclaimerBanner(text: _disclaimerFor(l, selected)),
+          ),
+        ),
+        // Scrolls with the content rather than pinning: the app paints
+        // a gradient behind the scaffold, so a pinned bar would need an
+        // opaque strip of a colour that doesn't exist here — and the
+        // list is short enough that the chips are never far away.
+        if (present.length > 1)
+          SliverToBoxAdapter(
+            child: _VendorBar(
+              vendors: present,
+              selected: selected,
+              countOf: (v) => (byVendor[v] ?? const []).length,
+              onSelected: _select,
+              // Vendor order is only meaningful with more than one
+              // vendor on the page — and it is what decides save
+              // precedence, so it sits on the bar it reorders rather
+              // than in an app-bar menu the tab host doesn't own.
+              onReorder: () => unawaited(_showReorderSheet(order, byVendor)),
             ),
-        ],
-      ),
-      floatingActionButton: present.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => unawaited(_addDevice(entitled, selected)),
-              icon: const Icon(Icons.add),
-              label: Text(l.devicesAddDevice),
-            ),
-      body: present.isEmpty
-          ? _EmptyState(onAdd: () => unawaited(_addDevice(entitled, null)))
-          : CustomScrollView(
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                  sliver: SliverToBoxAdapter(
-                    child: _DisclaimerBanner(text: _disclaimerFor(l, selected)),
-                  ),
-                ),
-                // Scrolls with the content rather than pinning: the app paints
-                // a gradient behind the scaffold, so a pinned bar would need an
-                // opaque strip of a colour that doesn't exist here — and the
-                // list is short enough that the chips are never far away.
-                if (present.length > 1)
-                  SliverToBoxAdapter(
-                    child: _VendorBar(
-                      vendors: present,
-                      selected: selected,
-                      countOf: (v) => (byVendor[v] ?? const []).length,
-                      onSelected: _select,
+          ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          sliver: SliverToBoxAdapter(
+            child: entitled
+                ? _ScopeBar(
+                    label: selected == null
+                        ? l.devicesScopeAll(scope.length)
+                        : l.devicesScopeVendor(
+                            l.deviceVendorName(selected),
+                            scope.length,
+                          ),
+                    busy: _busy(scope),
+                    total: scope.length,
+                    savable: _savableCount(scope),
+                    meters: scope.meters,
+                    onRefresh: () => unawaited(_refreshScope(scope)),
+                    onSaveAll: () => unawaited(_save(scope)),
+                  )
+                : _ProNotice(
+                    onTap: () => unawaited(
+                      showProFeatureDialog(
+                        context,
+                        ProFeature.connectedDevices,
+                      ),
                     ),
                   ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                  sliver: SliverToBoxAdapter(
-                    child: entitled
-                        ? _ScopeBar(
-                            label: selected == null
-                                ? l.devicesScopeAll(scope.length)
-                                : l.devicesScopeVendor(
-                                    l.deviceVendorName(selected),
-                                    scope.length,
-                                  ),
-                            busy: _busy(scope),
-                            total: scope.length,
-                            savable: _savableCount(scope),
-                            meters: scope.meters,
-                            onRefresh: () => unawaited(_refreshScope(scope)),
-                            onSaveAll: () => unawaited(_save(scope)),
-                          )
-                        : _ProNotice(
-                            onTap: () => unawaited(
-                              showProFeatureDialog(
-                                context,
-                                ProFeature.connectedDevices,
-                              ),
-                            ),
-                          ),
+          ),
+        ),
+        for (final vendor in inScope) ...[
+          // Headers separate the vendors in All; with one vendor in
+          // view its chip already names it.
+          if (selected == null && present.length > 1)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  l.deviceVendorName(vendor).toUpperCase(),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    letterSpacing: 0.8,
                   ),
                 ),
-                for (final vendor in inScope) ...[
-                  // Headers separate the vendors in All; with one vendor in
-                  // view its chip already names it.
-                  if (selected == null && present.length > 1)
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-                      sliver: SliverToBoxAdapter(
-                        child: Text(
-                          l.deviceVendorName(vendor).toUpperCase(),
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                                letterSpacing: 0.8,
-                              ),
-                        ),
-                      ),
-                    )
-                  else
-                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    sliver: _sectionFor(vendor, byVendor),
-                  ),
-                ],
-                const SliverToBoxAdapter(child: SizedBox(height: 96)),
-              ],
-            ),
+              ),
+            )
+          else
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            sliver: _sectionFor(vendor, byVendor),
+          ),
+        ],
+        // Room for the host's FAB, plus whatever the host reserves
+        // below the list (the shell's translucent tab bar).
+        SliverToBoxAdapter(
+          child: SizedBox(height: 96 + MediaQuery.paddingOf(context).bottom),
+        ),
+      ],
     );
   }
 
   /// The scope a per-card Save runs in: that card's vendor, with the rest of
   /// its section still present, since a device's savable values can depend on
   /// its neighbours (the ReefFactory temperature-source rule).
-  _Scope _vendorScope(String vendor, Map<String, List<DeviceRecord>> byVendor) =>
-      _Scope(
-        order: [vendor],
-        byVendor: {vendor: byVendor[vendor] ?? const []},
-      );
+  _Scope _vendorScope(
+    String vendor,
+    Map<String, List<DeviceRecord>> byVendor,
+  ) =>
+      _Scope(order: [vendor], byVendor: {vendor: byVendor[vendor] ?? const []});
 
   Widget _sectionFor(String vendor, Map<String, List<DeviceRecord>> byVendor) =>
       switch (vendor) {
@@ -674,6 +714,17 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
   }
 
   // --- actions -----------------------------------------------------------
+
+  /// Runs the add-device flow for the current selection — the host's FAB calls
+  /// this rather than a top-level function, because the flows seed this state's
+  /// live maps with what the new device reported (see [DevicesBody]).
+  Future<void> addDevice() => _addDevice(
+    ref.read(proFeatureProvider(ProFeature.connectedDevices)),
+    // In a vendor view the brand is already chosen. A stored selection whose
+    // last device has since been removed has no chip either, so it must not
+    // decide the brand here.
+    _present.contains(_vendor) ? _vendor : null,
+  );
 
   /// Adding is a Pro action like reading: a device you can register but never
   /// read would be a dead card.
@@ -885,6 +936,7 @@ class _VendorBar extends StatelessWidget {
     required this.selected,
     required this.countOf,
     required this.onSelected,
+    required this.onReorder,
   });
 
   final List<String> vendors;
@@ -892,27 +944,45 @@ class _VendorBar extends StatelessWidget {
   final int Function(String) countOf;
   final void Function(String?) onSelected;
 
+  /// Opens the brand-order sheet. Sits outside the horizontal scroller so it
+  /// stays reachable however far the chips are scrolled.
+  final VoidCallback onReorder;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 10, 4, 10),
       child: Row(
         children: [
-          ChoiceChip(
-            label: Text(l.devicesAll),
-            selected: selected == null,
-            onSelected: (_) => onSelected(null),
-          ),
-          for (final v in vendors) ...[
-            const SizedBox(width: 8),
-            ChoiceChip(
-              label: Text('${l.deviceVendorName(v)}  ${countOf(v)}'),
-              selected: selected == v,
-              onSelected: (_) => onSelected(v),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    label: Text(l.devicesAll),
+                    selected: selected == null,
+                    onSelected: (_) => onSelected(null),
+                  ),
+                  for (final v in vendors) ...[
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text('${l.deviceVendorName(v)}  ${countOf(v)}'),
+                      selected: selected == v,
+                      onSelected: (_) => onSelected(v),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ],
+          ),
+          IconButton(
+            tooltip: l.devicesReorderBrands,
+            icon: const Icon(Icons.swap_vert),
+            onPressed: onReorder,
+          ),
         ],
       ),
     );
@@ -1060,11 +1130,11 @@ class _DisclaimerBanner extends StatelessWidget {
   }
 }
 
-/// No devices at all: one clear message and the button that fixes it. No chips,
-/// no scope bar, no disclaimer — there is nothing yet to be read-only about.
+/// No devices at all: one clear message, pointing at the host's add-device FAB.
+/// No chips, no scope bar, no disclaimer — there is nothing yet to be read-only
+/// about.
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onAdd});
-  final VoidCallback onAdd;
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
@@ -1092,12 +1162,6 @@ class _EmptyState extends StatelessWidget {
               l.devicesEmptyBody,
               style: t.bodyMedium,
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add),
-              label: Text(l.devicesAddDevice),
             ),
           ],
         ),

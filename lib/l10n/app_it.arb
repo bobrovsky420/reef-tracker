@@ -1031,6 +1031,7 @@
   "deviceAlreadyAdded": "{name} è già stato aggiunto. Usa Analizza la rete per assegnargli un nuovo indirizzo.",
 
   "devicesTitle": "Dispositivi connessi",
+  "devicesTab": "Dispositivi",
   "devicesAll": "Tutti",
   "devicesScopeAll": "Tutti i dispositivi · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

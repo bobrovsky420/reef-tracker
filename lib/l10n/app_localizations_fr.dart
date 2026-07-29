@@ -3692,6 +3692,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get devicesTitle => 'Appareils connectés';
 
   @override
+  String get devicesTab => 'Appareils';
+
+  @override
   String get devicesAll => 'Tous';
 
   @override

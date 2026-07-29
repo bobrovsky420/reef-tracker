@@ -3689,6 +3689,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get devicesTitle => 'Dispositivi connessi';
 
   @override
+  String get devicesTab => 'Dispositivi';
+
+  @override
   String get devicesAll => 'Tutti';
 
   @override

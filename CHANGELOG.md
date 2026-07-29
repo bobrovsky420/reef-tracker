@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Connected devices now has its own tab in the bottom bar (experimental).
+  Checking your meters, pumps and controllers is one tap from anywhere in the
+  app instead of two taps into the Measurements menu, and the page keeps its
+  place and its readings while you move between tabs. Adding a device is the
+  tab's own button, and devices are only read when you are actually looking at
+  them. Like every experimental feature, the tab appears only with Experimental
+  features turned on in Settings.
+
+### Changed
+- The Connected devices page's "Reorder brands" moved out of the menu onto the
+  row of brand buttons it reorders.
+
+### Fixed
+- Bottom-bar tab names no longer break onto a second line — which pushed that
+  tab's icon out of line with the others — on narrow phones or at large system
+  font sizes. All five names now keep one size on every phone, and one that
+  cannot fit is shortened rather than wrapped.
+
 ## [1.1.0] - 2026-07-29
 
 ### Added

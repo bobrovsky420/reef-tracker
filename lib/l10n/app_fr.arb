@@ -1031,6 +1031,7 @@
   "deviceAlreadyAdded": "{name} est déjà ajouté. Utilisez Analyser le réseau pour lui attribuer une nouvelle adresse.",
 
   "devicesTitle": "Appareils connectés",
+  "devicesTab": "Appareils",
   "devicesAll": "Tous",
   "devicesScopeAll": "Tous les appareils · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

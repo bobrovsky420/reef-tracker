@@ -202,7 +202,8 @@ listing the tanks where it is **on**; the default is off), and
 `experimental_enabled` (the experimental-features master switch, default
 **off** — off completely hides every surface of the experimental features,
 currently Hanna checker BLE U33, checker camera scan U34 and the Devices
-screen U41: their Measurements-tab overflow entries and the scan FAB
+screen U41: the Hanna Measurements-tab overflow entries, the scan FAB and the
+**Devices bottom-nav tab** (U42)
 (Settings → Experimental itself holds only the switch and the scan-FAB
 preference — no per-feature rows); purely visibility, nothing stored is
 touched), and
@@ -1298,7 +1299,7 @@ Body text stays the platform default (SF/Roboto).
 
 | Route | Screen |
 |-------|--------|
-| `/` | Home shell — bottom-nav host for the Measurements (Dashboard), Actions, Dosing, and Settings tabs (U33) |
+| `/` | Home shell — bottom-nav host for the Measurements (Dashboard), Actions, Dosing, Devices (U42, experimental) and Settings (U33) tabs |
 | `/tanks`, `/tanks/new`, `/tanks/:id/edit` | Manage / create / edit tanks |
 | `/parameters`, `/parameters/:id/edit` | Manage tracked parameters & zone bounds |
 | `/add-reading` | Log a batch of readings |
@@ -1323,13 +1324,14 @@ Body text stays the platform default (SF/Roboto).
 | `/hanna/measure` | Hanna checker live BLE measurement (U33, experimental): connect → select → run → save in one route |
 | `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
-| `/devices` | Every connected device on one page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory |
+| `/devices` | Standalone Devices page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory. Since U42 the same body is the home shell's Devices tab and nothing pushes this route; it stays as a stable deep-link target, mirroring `/settings` |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
 home shell (see Features). `/` accepts a
-`?tab=measurements|actions|dosing|settings` query selecting a bottom-nav tab —
-the only URL form a notification tap can carry; `HomeShell` applies it in
-`initState`/`didUpdateWidget`.
+`?tab=measurements|actions|dosing|devices|settings` query selecting a bottom-nav
+tab — the only URL form a notification tap can carry; `HomeShell` applies it in
+`initState`/`didUpdateWidget`. `?tab=devices` resolves like any other, and is
+simply ignored when the experimental switch hides that destination.
 
 The two `:id` edit routes treat `state.extra` (the object passed by in-app
 `context.push`) as a fast path only: when it is absent — deep link, state
@@ -1346,23 +1348,75 @@ home instead of silently opening the PO₄/NO₃ ratio (T8).
 
 ### Home shell (`home/home_shell.dart`) — `/`
 
-`HomeShell` is the app's root scaffold. It hosts four peer destinations —
-**Measurements** (the dashboard), **Actions**, **Dosing**, and **Settings**
-(U33) — behind a bottom `NavigationBar`, swapping only the body via an
-`IndexedStack` so each tab keeps its scroll/state. The **app bar is shared**
-across the three content tabs: the `TankSelector` (each of them is
+`HomeShell` is the app's root scaffold. It hosts up to five peer destinations —
+**Measurements** (the dashboard), **Actions**, **Dosing**, **Devices** (U42)
+and **Settings** (U33) — behind a bottom `NavigationBar`, swapping only the
+body via an `IndexedStack` so each tab keeps its scroll/state. The **app bar
+is shared** across the content tabs: the `TankSelector` (each of them is
 tank-scoped, and the bottom-nav label already names the current screen) plus
 the manage-parameters button and per-tab contextual actions. The **Settings
 tab renders no app bar** — just an inline `titleLarge` "Settings" heading
 (`_SettingsTab`, a `SafeArea` over the shared `SettingsBody`; see Settings).
 The **FAB is per-tab**: "Add reading" on Measurements, "Add action"
 (`showAddActionSheet`) on Actions, "Add supplement" (pushes `/dosing/edit`)
-on Dosing, and none on Settings. With no tanks, the bottom bar and FAB are
+on Dosing, "Add device" on Devices, and none on Settings. With no tanks, the
+bottom bar and FAB are
 hidden and `NoTanksView` is shown — it carries its own settings button
 pushing the standalone `/settings` route, so backup restore stays reachable
 on a fresh install (the shell renders the Measurements chrome then, whatever
 tab was last selected). The tab screens expose their bodies (`DashboardBody`,
-`ActionsBody`, `DosingBody`, `SettingsBody`) and the shell composes them.
+`ActionsBody`, `DosingBody`, `DevicesBody`, `SettingsBody`) and the shell
+composes them.
+
+**Destinations are identified by a `_Tab` value, not by an index** (U42). The
+Devices destination is conditional — it exists only while the
+`experimental_enabled` master switch is on — so a position in the bar is no
+longer a stable identity: `_visibleTabs(experimental)` builds the destination
+list, the bar converts a tap through `visible[i]` and its selection through
+`visible.indexOf(tab)`, and everything else (contextual app-bar actions, the
+per-tab FAB, the deep-link `?tab=` mapping) reasons in `_Tab` values. Turning
+the switch off while standing on Devices falls back to Measurements rather
+than leaving the bar with a selection it does not show. The `IndexedStack`
+always carries **all five** children in enum order, including Devices while it
+has no destination, so hiding the tab never discards the page's held device
+snapshots; what the shell gates instead is the automatic LAN read, via
+`DevicesBody.active` — without it the on-open read would fire for every tab on
+every launch, for a page nobody opened. The Devices FAB reaches
+`DevicesBodyState.addDevice()` through a `GlobalKey`, because the add flows
+seed the live snapshots that state holds (a top-level call could not).
+
+**Label fit** (`_navBarFixedLabels` / `fitNavBarLabel`): the fifth destination
+cut every label's share of the bar by a fifth. At the authored size all seven
+languages still fit, down to a 320 dp phone, but with the system font enlarged
+the longest ones — German "Einstellungen", Italian "Impostazioni", Russian
+"Дозирование" — no longer do, and `Text` answers that by breaking the word
+across two lines; the second line shoves that destination's icon out of line
+with its four neighbours, which reads as a broken bar rather than a long word.
+
+So the bar **pins its labels to one fixed size** — every label, on every
+screen, at every system font setting — and truncates one that still cannot fit
+its slot. No ellipsis (it would cost another character of an already-short
+word) and no wrapping; a bar whose text is the same size everywhere was the
+explicit design call, and truncation is what pays for it. Deliberate
+consequence: these five labels alone ignore the system font setting. Icons and
+every other screen still honour it in full.
+
+The cut is applied to the **string**, not by the text layout, because there is
+no way in from outside: `NavigationDestination` takes a `String` and builds a
+plain `Text`, and while `Text` would inherit `maxLines`/`softWrap` from an
+ambient `DefaultTextStyle`, `NavigationBar` builds a `Material`, whose own
+`AnimatedDefaultTextStyle` replaces anything set above it. `fitNavBarLabel`
+therefore measures with a `TextPainter` and binary-searches the longest prefix
+that fits, cutting whole characters so a label can never end in half a
+composed glyph. Its width budget is exact rather than an estimate: each
+destination is an `Expanded` in a `Row` and its label is laid out against that
+slot with no horizontal padding, so the budget is `barWidth / destinations`.
+Being a pure function, the rule is unit-tested directly — a widget test would
+prove nothing, since `flutter test` draws every glyph as a square of the font
+size. Device screenshots (all seven languages, 320/360/411 dp, font scales up
+to 2.0) are what confirm the real words land: at the pinned size none of them
+is actually truncated today, so the cut is the guarantee for narrower screens
+and labels added later.
 
 **First-run feature tour:** `HomeShell` registers a `showcaseview` `ShowcaseView`
 (in `initState`, unregistered in `dispose`) and spotlights the less-obvious
@@ -2436,15 +2490,27 @@ readout is always confirmed by the user first.
   consistent with `hannaConnect`/`hannaImport`).
 - **Deferred:** remembering the last-used model; torch control.
 
-### Unified Devices screen (U41, **experimental**) — `features/devices/devices_screen.dart`, route `/devices`
+### Unified Devices screen (U41, **experimental**) — `features/devices/devices_screen.dart`, home-shell tab + route `/devices`
 
 One page for every LAN device the keeper owns. It replaced four routes — the
 three per-vendor dashboards and the read-only Settings inventory — with one
-screen behind a **vendor selector**, reached from the Measurements-tab overflow
-menu (the Settings device rows are gone; four entry points for one page were
-four ways to say the same thing). Titled **"Connected devices"**
-(`devicesTitle`, shared by the screen and its menu entry) — a bare "Devices"
-read ambiguously in a menu whose other entries are imports.
+page behind a **vendor selector** (the Settings device rows are gone; four
+entry points for one page were four ways to say the same thing).
+
+- **Entry point: its own bottom-nav tab** (U42, labelled `devicesTab`
+  "Devices"), which replaced the Measurements-tab overflow entry — a live
+  fleet is something a keeper checks the way they check measurements, not
+  something buried two taps into a menu of one-shot imports. The tab exists
+  only with the experimental master switch on, like every other surface of
+  these features. The standalone `devicesTitle` "Connected devices" survives
+  as the pushed `/devices` route's app-bar title, where the extra word still
+  earns its place.
+- **`DevicesBody` is scaffold-less**, so the same body serves the tab and the
+  route; the host owns the app bar and the add-device FAB (see Home shell for
+  the `GlobalKey`/`active` wiring). "Reorder brands" moved off the app bar
+  onto the vendor bar it reorders — the tab host owns no menu of its own, and
+  the control now sits with the chips whose order it sets. The empty state is
+  icon + text only, like every other tab's: the host's FAB is the add button.
 
 - **Full cards, not summaries.** Each vendor's section renders exactly the cards
   its own dashboard did: `RfDeviceSection` / `RbDeviceSection` /
@@ -2460,7 +2526,7 @@ read ambiguously in a menu whose other entries are imports.
   scaffold, so a pinned bar would need an opaque strip of a colour that doesn't
   exist here.
 - **Vendor order** (`domain/device_vendors.dart`, `orderDeviceVendors`) is
-  user-arrangeable through the app bar's "Reorder brands" sheet and persists in
+  user-arrangeable through the vendor bar's "Reorder brands" sheet and persists in
   `SettingKey.deviceVendorOrder` as comma-joined kinds. The parser is tolerant by
   construction because the value outlives app versions: unknown kinds are
   dropped, duplicates collapse, and any known vendor the stored order doesn't
@@ -2472,7 +2538,9 @@ read ambiguously in a menu whose other entries are imports.
   line above them stating what that is and the counts on the buttons. Reads are
   sequential *within* a vendor (a meter also serves its vendor's cloud app) but
   the vendors run concurrently. The on-open auto-read follows the same scope,
-  once per device per session. Save all is **hidden** — not disabled — when the
+  once per device per session — and only while the page is the tab actually on
+  screen (`DevicesBody.active`), so being a permanently-built `IndexedStack`
+  child never turns app launch into a LAN sweep. Save all is **hidden** — not disabled — when the
   selection holds no meter-capable device (`deviceKindSaves`): for a Red Sea
   filter there is nothing to save and never will be, and a disabled button would
   imply "read something first".
@@ -3463,7 +3531,7 @@ the cap.
 ### Settings (`settings_screen.dart`)
 
 Settings surfaces in two shells (U33): with tanks present it is the home
-shell's **fourth bottom-nav tab** (no app bar, inline title — see Home
+shell's **last bottom-nav tab** (no app bar, inline title — see Home
 shell); the standalone pushed `/settings` route (`SettingsScreen`, a plain
 `Scaffold` + `AppBar` around the same `SettingsBody`) remains only for the
 no-tanks welcome screen, which needs a back-affordance path to backup
@@ -3508,10 +3576,10 @@ Actions-tab row and silences RO reminders), and the **Microelements** feature
 switch (U17 — hides the dashboard tile and silences micro test reminders;
 measurements are kept); **Tools** (link to the salinity calculator);
 **Experimental** (the `experimental_enabled` master switch — antenna icon,
-matching the Devices entry it unlocks in the Measurements-tab overflow menu —
-plus, while it is on, the **camera scan button** preference `hanna_scan_fab`.
-No per-feature rows: the Hanna checker, the checker scan and the Devices
-screen are all entered from that overflow menu);
+matching the Devices bottom-nav tab it unlocks (U42) — plus, while it is on,
+the **camera scan button** preference `hanna_scan_fab`. No per-feature rows:
+the Hanna checker and the checker scan are entered from the Measurements-tab
+overflow menu, Devices from its own tab);
 **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency, a link to the **Manage backups**
 screen (see Data → Automatic backup), the **Google Drive sync** row +

@@ -3748,6 +3748,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get devicesTitle => 'Podłączone urządzenia';
 
   @override
+  String get devicesTab => 'Urządzenia';
+
+  @override
   String get devicesAll => 'Wszystkie';
 
   @override

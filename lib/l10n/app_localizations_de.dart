@@ -3681,6 +3681,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get devicesTitle => 'Verbundene Geräte';
 
   @override
+  String get devicesTab => 'Geräte';
+
+  @override
   String get devicesAll => 'Alle';
 
   @override

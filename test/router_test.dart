@@ -13,6 +13,8 @@ import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/actions/schedule_screen.dart';
 import 'package:reeftracker/features/add_reading/add_reading_screen.dart';
 import 'package:reeftracker/features/calculator/salinity_calculator_screen.dart';
+import 'package:reeftracker/features/dashboard/dashboard_screen.dart';
+import 'package:reeftracker/features/devices/devices_screen.dart';
 import 'package:reeftracker/features/dosing/dose_calculator_screen.dart';
 import 'package:reeftracker/features/dosing/dosing_edit_screen.dart';
 import 'package:reeftracker/features/dosing/dosing_history_screen.dart';
@@ -255,6 +257,110 @@ void main() {
     expect(find.byType(SettingsBody), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
     await unmountApp(tester);
+  });
+
+  testWidgets('U42: the Devices tab appears only with experimental features '
+      'on, and hosts the page inline', (tester) async {
+    final db = await pumpRouterApp(tester);
+    await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+    await settle(tester);
+
+    // Off (the default): four destinations and no antenna — the experimental
+    // master switch hides every surface, and a permanent tab would be the
+    // loudest one.
+    expect(find.byIcon(Icons.settings_input_antenna), findsNothing);
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).destinations,
+      hasLength(4),
+    );
+
+    await AppSettings(db).setExperimentalEnabled(true);
+    await settle(tester);
+
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).destinations,
+      hasLength(5),
+    );
+    await tester.tap(find.byIcon(Icons.settings_input_antenna));
+    await settle(tester);
+
+    // Inline in the shell — no route push — with the shared app bar (devices
+    // are tank-scoped, so the tank selector stays) and the add-device FAB.
+    expect(find.byType(HomeShell), findsOneWidget);
+    expect(find.byType(DevicesBody), findsOneWidget);
+    expect(find.byType(DevicesScreen), findsNothing);
+    expect(find.byType(AppBar), findsOneWidget);
+    expect(
+      find.widgetWithText(FloatingActionButton, 'Add device'),
+      findsOneWidget,
+    );
+
+    // The deep-link form selects it too.
+    appRouter.go('/?tab=measurements');
+    await settle(tester);
+    expect(find.byType(DashboardBody), findsOneWidget);
+    appRouter.go('/?tab=devices');
+    await settle(tester);
+    expect(find.byType(DevicesBody), findsOneWidget);
+
+    // Switching the master switch back off must not leave the bar selecting a
+    // destination it no longer shows.
+    await AppSettings(db).setExperimentalEnabled(false);
+    await settle(tester);
+    expect(find.byIcon(Icons.settings_input_antenna), findsNothing);
+    expect(find.byType(DashboardBody), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  // U42: the fifth destination cut every label's share of the bar by a fifth.
+  // At the authored size all seven languages still fit down to a 320 dp phone,
+  // but with the system font enlarged the longest ones don't, and `Text`
+  // answers that by breaking the word across two lines — which shoves that
+  // destination's icon out of line with its four neighbours. So the bar pins
+  // its labels to one fixed size and cuts what still cannot fit.
+  //
+  // The cut is applied to the string, because `NavigationDestination` takes a
+  // `String` and `NavigationBar`'s internal `Material` overrides any ambient
+  // `DefaultTextStyle` — see `_navBarFixedLabels`. That makes the rule a pure
+  // function, testable without laying out the bar (which would prove nothing
+  // anyway: widget tests draw every glyph as a square of the font size).
+  group('U42: nav-bar label fit', () {
+    // Which is exactly what makes the arithmetic below predictable: in the
+    // test font every character is `fontSize` wide.
+    const style = TextStyle(fontSize: 10);
+    String fit(String label, double maxWidth) => fitNavBarLabel(
+      label,
+      maxWidth: maxWidth,
+      style: style,
+      direction: TextDirection.ltr,
+    );
+
+    test('a label that fits is left alone', () {
+      expect(fit('Geräte', 100), 'Geräte');
+      // Exactly filling the slot still counts as fitting.
+      expect(fit('Geräte', 60), 'Geräte');
+    });
+
+    test('a label too long for its slot is cut, not wrapped or ellipsized', () {
+      // 45 logical pixels holds four 10-wide characters.
+      expect(fit('Einstellungen', 45), 'Eins');
+      expect(fit('Einstellungen', 45), isNot(contains('…')));
+      expect(fit('Einstellungen', 45), isNot(contains('\n')));
+    });
+
+    test('the cut lands on whole characters', () {
+      // A slot too narrow for even one character yields nothing rather than
+      // half a glyph.
+      expect(fit('Dosierung', 4), isEmpty);
+      // Two 10-wide characters fit in 25; the third would not, and no part of
+      // it is kept.
+      expect(fit('Zařízení', 25), 'Za');
+      // A character built from a surrogate pair is kept or dropped whole — a
+      // half-pair would render as a replacement box.
+      final cut = fit('🐟🐟', 15);
+      expect(cut.characters, hasLength(1));
+      expect(cut.length, 2, reason: 'the pair survives intact');
+    });
   });
 
   testWidgets('U33: with no tanks the welcome screen links the standalone '

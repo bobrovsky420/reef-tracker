@@ -1031,6 +1031,7 @@
   "deviceAlreadyAdded": "{name} уже добавлено. Чтобы указать новый адрес, используйте Поиск в сети.",
 
   "devicesTitle": "Подключённые устройства",
+  "devicesTab": "Устройства",
   "devicesAll": "Все",
   "devicesScopeAll": "Все устройства · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

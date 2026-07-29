@@ -180,7 +180,7 @@ void main() {
     await unmountApp(tester);
   });
 
-  testWidgets('an empty inventory offers the Add button, nothing else', (
+  testWidgets('an empty inventory offers the Add FAB, nothing else', (
     tester,
   ) async {
     final db = AppDatabase(NativeDatabase.memory());
@@ -193,7 +193,12 @@ void main() {
     // to be read-only about.
     expect(find.byType(ChoiceChip), findsNothing);
     expect(find.textContaining('Refresh all'), findsNothing);
-    expect(find.widgetWithText(FilledButton, 'Add device'), findsOneWidget);
+    // Adding is the host's FAB (U42), which stays put whether the page is
+    // empty or full — the empty state no longer carries a button of its own.
+    expect(
+      find.widgetWithText(FloatingActionButton, 'Add device'),
+      findsOneWidget,
+    );
     await unmountApp(tester);
   });
 }

@@ -6021,11 +6021,17 @@ abstract class AppLocalizations {
   /// **'{name} is already added. Use Scan network to point it at a new address.'**
   String deviceAlreadyAdded(Object name);
 
-  /// Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory. Doubles as its entry label in the Measurements-tab overflow menu, where a bare 'Devices' read ambiguously next to the import entries.
+  /// Title of the unified Devices screen (U41), which replaced the three per-vendor dashboards and the Settings inventory. Used by the standalone '/devices' route's app bar.
   ///
   /// In en, this message translates to:
   /// **'Connected devices'**
   String get devicesTitle;
+
+  /// Label of the Devices bottom-navigation tab (U42). Short where 'devicesTitle' is not: a nav label has one line beside four siblings, and the tab bar is the context that 'Connected' otherwise supplies.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get devicesTab;
 
   /// The vendor selector's first chip: show every connected device regardless of brand.
   ///

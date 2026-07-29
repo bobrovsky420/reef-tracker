@@ -1031,6 +1031,7 @@
   "deviceAlreadyAdded": "{name} už je přidáno. Pro změnu adresy použijte Prohledat síť.",
 
   "devicesTitle": "Připojená zařízení",
+  "devicesTab": "Zařízení",
   "devicesAll": "Vše",
   "devicesScopeAll": "Všechna zařízení · {count}",
   "devicesScopeVendor": "{vendor} · {count}",

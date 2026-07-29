@@ -17,22 +17,33 @@ import '../actions/actions_screen.dart';
 import '../ai_summary/ai_summary_sheet.dart';
 import '../dashboard/comparison_view.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../devices/devices_screen.dart';
 import '../dosing/dosing_screen.dart';
 import '../import/icp_import_flow.dart';
 import '../import/measurement_import.dart';
 import '../settings/settings_screen.dart';
 
+/// The home shell's peer destinations, in bottom-bar order.
+///
+/// The enum — rather than the bare indices this used to carry — exists because
+/// [_Tab.devices] is conditional (U42: it only appears with the experimental
+/// master switch on), so a destination's position in the bar is no longer a
+/// stable identity. Everything reasons in tab values; the bar converts to and
+/// from positions in [_HomeShellState._visibleTabs].
+enum _Tab { measurements, actions, dosing, devices, settings }
+
 /// Home screen hosting the app's primary peer destinations — Measurements,
-/// Actions, Dosing, and Settings (U33) — behind a bottom [NavigationBar].
-/// Owns the shared app bar (tank selector + contextual actions, shown on the
-/// three content tabs; the Settings tab renders no app bar, only an inline
-/// title) and a per-tab FAB. Tab bodies are kept alive via [IndexedStack] so
-/// each preserves its scroll position and state when switching.
+/// Actions, Dosing, Devices (U42, experimental) and Settings (U33) — behind a
+/// bottom [NavigationBar]. Owns the shared app bar (tank selector + contextual
+/// actions, shown on the content tabs; the Settings tab renders no app bar,
+/// only an inline title) and a per-tab FAB. Tab bodies are kept alive via
+/// [IndexedStack] so each preserves its scroll position and state when
+/// switching.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key, this.tab});
 
-  /// Optional tab request from a deep link (`/?tab=actions|dosing|settings`),
-  /// e.g. a
+  /// Optional tab request from a deep link
+  /// (`/?tab=actions|dosing|devices|settings`), e.g. a
   /// reminder-notification tap. Null (or an unknown value) leaves the current
   /// tab alone.
   final String? tab;
@@ -50,16 +61,33 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   /// redirect-home path).
   static _HomeShellState? _showcaseOwner;
 
-  int _index = 0;
+  _Tab _tab = _Tab.measurements;
 
-  /// Maps the deep-link `tab` value to a bottom-nav index; null = no change.
-  static int? _tabIndex(String? tab) => switch (tab) {
-    'measurements' => 0,
-    'actions' => 1,
-    'dosing' => 2,
-    'settings' => 3,
+  /// The key through which the Devices tab's FAB reaches that body's state —
+  /// the add flows seed the live snapshots it holds, so the action cannot be a
+  /// plain top-level call (see [DevicesBody]).
+  final GlobalKey<DevicesBodyState> _devicesKey = GlobalKey();
+
+  /// Maps the deep-link `tab` value to a destination; null = no change.
+  static _Tab? _tabValue(String? tab) => switch (tab) {
+    'measurements' => _Tab.measurements,
+    'actions' => _Tab.actions,
+    'dosing' => _Tab.dosing,
+    'devices' => _Tab.devices,
+    'settings' => _Tab.settings,
     _ => null,
   };
+
+  /// The destinations the bar actually shows. Devices only joins with the
+  /// experimental master switch on — off hides every surface of the
+  /// experimental features, and a permanent tab would be the loudest one.
+  static List<_Tab> _visibleTabs(bool devices) => [
+    _Tab.measurements,
+    _Tab.actions,
+    _Tab.dosing,
+    if (devices) _Tab.devices,
+    _Tab.settings,
+  ];
 
   /// On the Measurements tab, whether to show the stacked-graph comparison view
   /// instead of the card grid. Kept here so it survives tab switches.
@@ -98,16 +126,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     super.didUpdateWidget(oldWidget);
     // A repeat navigation to '/' with a tab query (notification tap while the
     // shell is already mounted) re-runs the route builder on this same state.
-    final requested = _tabIndex(widget.tab);
+    final requested = _tabValue(widget.tab);
     if (widget.tab != oldWidget.tab && requested != null) {
-      setState(() => _index = requested);
+      setState(() => _tab = requested);
     }
   }
 
   @override
   void initState() {
     super.initState();
-    _index = _tabIndex(widget.tab) ?? 0;
+    _tab = _tabValue(widget.tab) ?? _Tab.measurements;
     // Register the showcase controller for this screen's scope. Localized
     // tooltip text/buttons are supplied per-Showcase in build (where
     // AppLocalizations is available).
@@ -126,7 +154,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         if (!mounted) return;
         if (_tourPhase == 1) {
           _tourPhase = 2;
-          setState(() => _index = 2);
+          setState(() => _tab = _Tab.dosing);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             ShowcaseView.get().startShowCase([
@@ -137,14 +165,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         } else {
           _tourPhase = 0;
           _markTourSeen();
-          setState(() => _index = 0);
+          setState(() => _tab = _Tab.measurements);
         }
       },
       // Skipping returns to Measurements if we'd already switched to Dosing.
       onDismiss: (_) {
         if (!mounted) return;
         _markTourSeen();
-        if (_tourPhase == 2) setState(() => _index = 0);
+        if (_tourPhase == 2) setState(() => _tab = _Tab.measurements);
         _tourPhase = 0;
       },
     );
@@ -168,7 +196,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   /// Starts the top-bar tour once a tank exists. The seen flag is persisted when
   /// the tour ends (see [_markTourSeen]), not here. Phase-1 targets (the compare
-  /// toggle) only exist on the Measurements tab, so we force [_index] back to it
+  /// toggle) only exist on the Measurements tab, so we force [_tab] back to it
   /// before starting — this also makes "Replay tour" work no matter which tab
   /// was last open.
   void _maybeStartTour(bool hasTanks) {
@@ -182,7 +210,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _tourPhase = 1;
-      if (_index != 0) setState(() => _index = 0);
+      if (_tab != _Tab.measurements) {
+        setState(() => _tab = _Tab.measurements);
+      }
       ShowcaseView.get().startShowCase([
         _tankTourKey,
         _compareTourKey,
@@ -235,15 +265,23 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       child: child,
     );
 
+    // The Devices tab exists only with experimental features on; switching
+    // them off while standing on it must not leave the bar with a selection it
+    // no longer shows.
+    final experimental = ref.watch(experimentalEnabledProvider).value ?? false;
+    final visibleTabs = _visibleTabs(experimental);
+
     // The Settings tab lives behind the bottom bar, which is hidden with no
     // tanks — render Measurements then, so the welcome view keeps the shared
     // app bar (NoTanksView carries its own settings button, U33).
-    final index = hasTanks ? _index : 0;
+    final tab = hasTanks && visibleTabs.contains(_tab)
+        ? _tab
+        : _Tab.measurements;
 
     // The FAB appear animation plays only when the FAB shows up after a build
     // that had none; `_hadFab == null` is the very first build, where the FAB
     // is shown full-size without any animation.
-    final showFab = hasTanks && index != 3;
+    final showFab = hasTanks && tab != _Tab.settings;
     final fabEntering = showFab && _hadFab == false;
     _hadFab = showFab;
 
@@ -251,7 +289,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       // The Settings tab has no app bar — its body renders a plain inline
       // title instead (U33); every shared app-bar element is contextual to
       // the content tabs.
-      appBar: index == 3
+      appBar: tab == _Tab.settings
           ? null
           : AppBar(
               // The tank selector stays on all content tabs — every one of them is
@@ -271,7 +309,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               actions: [
                 // Toggle the Measurements tab between the card grid and the stacked
                 // comparison graphs.
-                if (hasTanks && _index == 0)
+                if (hasTanks && tab == _Tab.measurements)
                   tourStep(
                     _compareTourKey,
                     l.tourCompareTitle,
@@ -286,14 +324,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                     ),
                   ),
                 // Maintenance schedule (U12), contextual to the Actions tab.
-                if (hasTanks && _index == 1)
+                if (hasTanks && tab == _Tab.actions)
                   ReefIconButton(
                     tooltip: l.maintenanceSchedule,
                     icon: Icons.event_repeat,
                     onPressed: () => context.push('/schedule'),
                   ),
                 // Dosing history, contextual to the Dosing tab. First step of phase 2.
-                if (hasTanks && _index == 2)
+                if (hasTanks && tab == _Tab.dosing)
                   tourStep(
                     _dosingHistoryTourKey,
                     l.tourDosingHistoryTitle,
@@ -307,7 +345,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                   ),
                 // Dose calculator, contextual to the Dosing tab. The tour switches to
                 // this tab to spotlight it as its final step.
-                if (hasTanks && _index == 2)
+                if (hasTanks && tab == _Tab.dosing)
                   tourStep(
                     _doseCalcTourKey,
                     l.tourDoseCalcTitle,
@@ -349,7 +387,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 // icon capacity): the "Ask your AI" summary export (U27), the
                 // measurement import (U32) and the ICP report import (U17);
                 // future share-ish actions join here.
-                if (hasTanks && _index == 0)
+                if (hasTanks && tab == _Tab.measurements)
                   ReefMenuButton<String>(
                     // Same mini-card look as the ReefIconButtons.
                     icon: Icons.more_vert,
@@ -416,18 +454,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           unawaited(context.push('/hanna/scan'));
                         } else {
                           unawaited(
-                            showProFeatureDialog(
-                              context,
-                              ProFeature.hannaScan,
-                            ),
+                            showProFeatureDialog(context, ProFeature.hannaScan),
                           );
                         }
                       }
-                      // The one Devices screen (U41), covering every vendor.
-                      // Deliberately ungated here: the page is an inventory of
-                      // what the keeper owns — reading and saving are what the
-                      // gate covers, on the page itself.
-                      if (v == 'devices') unawaited(context.push('/devices'));
                     },
                     entries: [
                       ReefMenuItem(
@@ -467,22 +497,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                           !(ref.watch(
                                 proFeatureProvider(ProFeature.hannaScan),
                               ) &&
-                              (ref.watch(hannaScanFabProvider).value ??
-                                  false)))
+                              (ref.watch(hannaScanFabProvider).value ?? false)))
                         ReefMenuItem(
                           value: 'hanna-scan',
                           icon: Icons.photo_camera_outlined,
                           label: l.hannaScanTitle,
                         ),
-                      // Every connected device on one page (U41) — the single
-                      // entry point that replaced the three per-vendor items.
-                      // Experimental opt-in, like the Hanna entries.
-                      if (ref.watch(experimentalEnabledProvider).value ?? false)
-                        ReefMenuItem(
-                          value: 'devices',
-                          icon: Icons.settings_input_antenna,
-                          label: l.devicesTitle,
-                        ),
+                      // No Devices entry: with the experimental switch on, the
+                      // page is a bottom-nav tab of its own (U42), and with it
+                      // off neither surface exists.
                     ],
                   ),
               ],
@@ -492,12 +515,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
         data: (tanks) {
           if (tanks.isEmpty) return const NoTanksView();
+          // One child per [_Tab], in enum order — including Devices while it
+          // has no destination, so hiding the tab never discards the page's
+          // held snapshots. Its automatic LAN read is what `active` gates.
           return IndexedStack(
-            index: index,
+            index: tab.index,
             children: [
               _compare ? const ComparisonBody() : const DashboardBody(),
               const ActionsBody(),
               const DosingBody(),
+              DevicesBody(key: _devicesKey, active: tab == _Tab.devices),
               const _SettingsTab(),
             ],
           );
@@ -527,59 +554,96 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                       ),
                     ),
                   ),
-                  child: _buildNavigationBar(l),
+                  child: _navBarFixedLabels(
+                    destinations: visibleTabs.length,
+                    builder: (slotWidth) =>
+                        _buildNavigationBar(l, tab, visibleTabs, slotWidth),
+                  ),
                 ),
               ),
             )
           : null,
       // No FAB on the Settings tab — there is nothing to add there.
-      floatingActionButton: showFab ? _buildFab(context, l, fabEntering) : null,
+      floatingActionButton: showFab
+          ? _buildFab(context, l, tab, fabEntering)
+          : null,
       // The stock entrance (scale + ~45° turn, pivoting on the whole child)
       // is replaced by [_FabEntrance] so every tab animates identically.
       floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
     );
   }
 
-  NavigationBar _buildNavigationBar(AppLocalizations l) {
+  Widget _buildNavigationBar(
+    AppLocalizations l,
+    _Tab tab,
+    List<_Tab> visible,
+    double slotWidth,
+  ) {
+    // Selected and unselected labels share a size and weight in
+    // `navigationBarTheme` (only the colour differs), so one resolve measures
+    // both.
+    final style =
+        Theme.of(context).navigationBarTheme.labelTextStyle?.resolve({}) ??
+        const TextStyle();
+    final direction = Directionality.of(context);
+    String fit(String label) => fitNavBarLabel(
+      label,
+      maxWidth: slotWidth,
+      style: style,
+      direction: direction,
+    );
     return NavigationBar(
       // Height (64 — compact vs the 80 M3 default), label behavior, colors
       // and the per-platform active-tab treatment come from
       // `navigationBarTheme` in theme.dart.
-      selectedIndex: _index,
-      onDestinationSelected: (i) => setState(() => _index = i),
+      selectedIndex: visible.indexOf(tab),
+      onDestinationSelected: (i) => setState(() => _tab = visible[i]),
       destinations: [
-        NavigationDestination(
-          icon: const Icon(Icons.speed_outlined),
-          selectedIcon: const Icon(Icons.speed),
-          label: l.measurements,
-        ),
-        NavigationDestination(
-          // Keep the outlined glyph even when selected.
-          icon: const Icon(Icons.fact_check_outlined),
-          selectedIcon: const Icon(Icons.fact_check_outlined),
-          label: l.actions,
-        ),
-        NavigationDestination(
-          // Keep the outlined glyph even when selected.
-          icon: const Icon(Icons.science_outlined),
-          selectedIcon: const Icon(Icons.science_outlined),
-          label: l.dosing,
-        ),
-        NavigationDestination(
-          // Keep the outlined glyph even when selected.
-          icon: const Icon(Icons.settings_outlined),
-          selectedIcon: const Icon(Icons.settings_outlined),
-          label: l.settings,
-        ),
+        for (final t in visible)
+          switch (t) {
+            _Tab.measurements => NavigationDestination(
+              icon: const Icon(Icons.speed_outlined),
+              selectedIcon: const Icon(Icons.speed),
+              label: fit(l.measurements),
+            ),
+            // The rest keep the outlined glyph even when selected.
+            _Tab.actions => NavigationDestination(
+              icon: const Icon(Icons.fact_check_outlined),
+              selectedIcon: const Icon(Icons.fact_check_outlined),
+              label: fit(l.actions),
+            ),
+            _Tab.dosing => NavigationDestination(
+              icon: const Icon(Icons.science_outlined),
+              selectedIcon: const Icon(Icons.science_outlined),
+              label: fit(l.dosing),
+            ),
+            // The antenna the Devices page has carried since it was a menu
+            // entry (U41), now as its own destination (U42).
+            _Tab.devices => NavigationDestination(
+              icon: const Icon(Icons.settings_input_antenna),
+              selectedIcon: const Icon(Icons.settings_input_antenna),
+              label: fit(l.devicesTab),
+            ),
+            _Tab.settings => NavigationDestination(
+              icon: const Icon(Icons.settings_outlined),
+              selectedIcon: const Icon(Icons.settings_outlined),
+              label: fit(l.settings),
+            ),
+          },
       ],
     );
   }
 
-  Widget _buildFab(BuildContext context, AppLocalizations l, bool entering) {
+  Widget _buildFab(
+    BuildContext context,
+    AppLocalizations l,
+    _Tab tab,
+    bool entering,
+  ) {
     return _FabEntrance(
       entering: entering,
       builder: (scale) {
-        if (_index == 0) {
+        if (tab == _Tab.measurements) {
           // Manual entry stays the primary FAB; the checker camera scan (U34)
           // rides above it as a small sibling — it is the same action done
           // faster, and it must be thumb-reachable while the other hand holds
@@ -622,13 +686,29 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             ],
           );
         }
-        if (_index == 1) {
+        if (tab == _Tab.actions) {
           return ScaleTransition(
             scale: scale,
             child: FloatingActionButton.extended(
               onPressed: () => showAddActionSheet(context, ref),
               icon: const Icon(Icons.add),
               label: Text(l.addAction),
+            ),
+          );
+        }
+        if (tab == _Tab.devices) {
+          return ScaleTransition(
+            scale: scale,
+            child: FloatingActionButton.extended(
+              // Straight into the body's own add flow, so a device added here
+              // still seeds the live snapshot it reported on the way in — and
+              // the Pro gate stays where the rest of the page's gating is.
+              onPressed: () {
+                final devices = _devicesKey.currentState;
+                if (devices != null) unawaited(devices.addDevice());
+              },
+              icon: const Icon(Icons.add),
+              label: Text(l.devicesAddDevice),
             ),
           );
         }
@@ -642,6 +722,96 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         );
       },
     );
+  }
+}
+
+/// Renders the bottom bar's labels at one fixed size and cuts off whatever
+/// does not fit (U42).
+///
+/// Adding the fifth destination cut every label's share of the bar by a fifth.
+/// At the authored size all seven languages still fit, down to a 320 dp phone,
+/// but with the system font enlarged the longest ones — German
+/// "Einstellungen", Italian "Impostazioni", Russian "Дозирование" — no longer
+/// do, and `Text` answers that by breaking the word across two lines. The
+/// second line shoves that destination's icon out of line with its four
+/// neighbours, which reads as a broken bar rather than a long word.
+///
+/// So the labels are pinned to exactly the authored size — every label, on
+/// every screen, at every system font setting — and one that still cannot fit
+/// its slot is truncated where it runs out of room. No ellipsis (it would cost
+/// another character of an already-short word) and no wrapping.
+///
+/// The truncation is done to the **string**, not by the text layout, because
+/// there is no way in from outside: `NavigationDestination` takes a `String`
+/// and builds a plain `Text`, and while `Text` would inherit `maxLines` and
+/// `softWrap` from an ambient [DefaultTextStyle], `NavigationBar` builds a
+/// [Material], whose own `AnimatedDefaultTextStyle` replaces anything set
+/// above it. Cutting the string first is the one approach the widget cannot
+/// undo.
+///
+/// Pinning the size means these five labels alone ignore the system font
+/// setting. Icons and every other screen still honour it in full.
+Widget _navBarFixedLabels({
+  required int destinations,
+  required Widget Function(double slotWidth) builder,
+}) => MediaQuery.withClampedTextScaling(
+  minScaleFactor: 1,
+  maxScaleFactor: 1,
+  child: LayoutBuilder(
+    // Each destination is an `Expanded` in a `Row` and its label is laid out
+    // against that slot with no horizontal padding, so this is exactly the
+    // width the label will be given.
+    builder: (context, constraints) =>
+        builder(constraints.maxWidth / destinations),
+  ),
+);
+
+/// [label], cut to the longest leading run of characters that fits [maxWidth]
+/// on one line in [style]. Returns it unchanged when it already fits — which,
+/// at the size the bar pins its labels to, is every supported language down to
+/// a 320 dp phone; this is the guarantee for anything narrower, and for labels
+/// added later.
+///
+/// Cuts whole characters, so a truncated label can never end in half of a
+/// composed glyph.
+@visibleForTesting
+String fitNavBarLabel(
+  String label, {
+  required double maxWidth,
+  required TextStyle style,
+  required TextDirection direction,
+}) {
+  final painter = TextPainter(
+    textDirection: direction,
+    // The bar pins its labels to the authored size, so measuring at that size
+    // is exact rather than an estimate.
+    textScaler: TextScaler.noScaling,
+    maxLines: 1,
+  );
+  double widthOf(String text) {
+    painter.text = TextSpan(text: text, style: style);
+    painter.layout();
+    return painter.width;
+  }
+
+  try {
+    if (widthOf(label) <= maxWidth) return label;
+    final chars = label.characters.toList();
+    // Longest prefix that fits. `lo` is always a fitting length (the empty
+    // string trivially fits), `hi` always one that doesn't.
+    var lo = 0;
+    var hi = chars.length;
+    while (hi - lo > 1) {
+      final mid = (lo + hi) ~/ 2;
+      if (widthOf(chars.take(mid).join()) <= maxWidth) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    return chars.take(lo).join();
+  } finally {
+    painter.dispose();
   }
 }
 

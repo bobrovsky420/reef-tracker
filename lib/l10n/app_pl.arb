@@ -1031,6 +1031,7 @@
   "deviceAlreadyAdded": "{name} jest już dodane. Aby wskazać nowy adres, użyj Skanuj sieć.",
 
   "devicesTitle": "Podłączone urządzenia",
+  "devicesTab": "Urządzenia",
   "devicesAll": "Wszystkie",
   "devicesScopeAll": "Wszystkie urządzenia · {count}",
   "devicesScopeVendor": "{vendor} · {count}",
