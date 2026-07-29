@@ -129,11 +129,16 @@ workflows:
         auth: integration
         # The release candidate still lands in TestFlight first.
         submit_to_testflight: true
-        # (2) flip to true once a dry run has shown the notes land correctly.
+        # (2) flip to true once a dry run has shown the notes land correctly —
+        # and uncomment `release_type` below in the SAME edit. Codemagic rejects
+        # the config if `release_type` is present without App Store submission
+        # ("App Store review submission is required for release_type"), so the
+        # two keys travel together.
         submit_to_app_store: false
-        # Keep MANUAL: an approval at 3am must not put the build in front of
-        # every user on its own — 1.1.0 resets customised parameter bounds.
-        release_type: MANUAL
+        # Keep MANUAL when you enable it: an approval at 3am must not put the
+        # build in front of every user on its own — 1.1.0 resets customised
+        # parameter bounds.
+        # release_type: MANUAL
       email:
         recipients:
           - bobrovsky@seznam.cz
