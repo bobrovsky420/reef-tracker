@@ -62,7 +62,9 @@ There is **one changelog for both platforms**: prefix an entry with `iOS:` or `A
 
 **Every release build must ship with store release notes**, written in the same change that cuts the release — a release is not complete until they exist. They are the text attached to the upload in Play ("What's new") and App Store Connect ("What's New").
 
-- They live in `store_assets/release_notes/<version>/<lang>.txt` — one plain-text file per language, named with the same language codes as the ARB files (`en`, `cs`, `de`, `ru`, `pl`, `fr`, `it`). **All languages are required**, same rule as [Localization](#localization) below: no language may be left out.
+- They live in `store_assets/release_notes/<version>/<lang>.txt` — one plain-text file per language, named with the same language codes as the ARB files (`en`, `cs`, `de`, `ru`, `pl`, `fr`, `it`). **All languages are required**, same rule as [Localization](#localization) below: no language may be left out. These files are the master copy; each store gets a derived form alongside them, and all three must say the same thing:
+  - `play-console.txt` — every language in one `<en-GB>…</en-GB>` block, pasted into Play's "What's new" field (Play's region-qualified codes: `en-GB`, `cs-CZ`, `de-DE`, `ru-RU`, `pl-PL`, `fr-FR`, `it-IT`).
+  - `appstore/<locale>/release_notes.txt` — fastlane `deliver` metadata layout, using Apple's locale codes (`en-GB`, `cs`, `de-DE`, `ru`, `pl`, `fr-FR`, `it`). **This path is load-bearing**: the `ios-store-release` workflow in [codemagic.yaml](codemagic.yaml) derives it from `pubspec.yaml` and fails the build if the directory is missing.
 - Source them from that version's `CHANGELOG.md` section, rewritten for reef keepers: what they get, not what changed in the code. Drop entries with no user-visible effect.
 - **Keep each file under 500 characters** — that is Play's hard limit per language, and the App Store's larger limit is satisfied automatically by the same text.
 - Short bullet lines (`•` or `-`), no version number, no date, no headings — the stores render the text as-is under their own version heading.

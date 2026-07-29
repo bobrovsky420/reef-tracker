@@ -1,0 +1,5 @@
+• Neptune Apex controllers (experimental): read pH, temperature, ORP, salinity and Trident values over Wi-Fi, plus your outlet states.
+• All connected devices now share one Devices page, in the Measurements menu.
+• Saving from a device asks before storing a reading that looks wrong.
+• Hanna results: keep only the values you trust, or measure any of them again.
+• Parameter ranges now follow the recommended values. Boundaries you customised are reset – please set them again.

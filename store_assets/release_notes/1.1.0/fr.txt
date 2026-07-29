@@ -1,0 +1,5 @@
+• Contrôleurs Neptune Apex (expérimental) : pH, température, ORP, salinité et valeurs Trident lus en Wi-Fi, avec l'état de vos prises.
+• Tous les appareils connectés sur une seule page Appareils, dans le menu des mesures.
+• L'app demande confirmation avant d'enregistrer une valeur suspecte.
+• Résultats Hanna : ne gardez que les valeurs fiables, ou remesurez-en certaines.
+• Les plages suivent désormais les valeurs recommandées. Vos limites personnalisées sont réinitialisées – à refaire.

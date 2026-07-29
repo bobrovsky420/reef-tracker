@@ -1,0 +1,5 @@
+• Neptune Apex Controller (experimentell): pH, Temperatur, ORP, Salinität und Trident-Werte über WLAN auslesen, dazu der Zustand der Steckdosen.
+• Alle verbundenen Geräte liegen jetzt auf einer Geräte-Seite im Messwerte-Menü.
+• Vor dem Speichern eines auffälligen Gerätewerts fragt die App nach.
+• Hanna-Ergebnisse: nur die Werte übernehmen, denen du traust, oder einzelne neu messen.
+• Parameterbereiche folgen jetzt den Empfehlungen. Eigene Grenzen werden zurückgesetzt – bitte neu einstellen.

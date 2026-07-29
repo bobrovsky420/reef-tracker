@@ -43,7 +43,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>ReefTracker uses the camera to read the number shown on your Hanna checker&#8217;s display so you can save it as a measurement without typing. Images are processed on the device and never stored or uploaded.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>ReefTracker looks for your Red Sea ReefBeat and ReefFactory devices on your Wi-Fi network so you can add them without typing an IP address, and reads their status directly from them. Nothing is sent outside your home network.</string>
+	<string>ReefTracker connects to your aquarium devices on your Wi-Fi network: Red Sea ReefBeat, ReefFactory meters and Neptune Apex controllers. It finds them without you typing an IP address and reads their status and probe values directly from them. Nothing is sent outside your home network.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_http._tcp</string>

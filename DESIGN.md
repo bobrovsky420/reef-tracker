@@ -133,7 +133,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 25**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 28**
 
 | Table | Key columns |
 |-------|-------------|

@@ -1,0 +1,5 @@
+• Sterowniki Neptune Apex (eksperymentalne): odczyt pH, temperatury, ORP, zasolenia i wartości z Tridenta przez Wi-Fi oraz stanu gniazd.
+• Wszystkie podłączone urządzenia są teraz na jednej stronie Urządzenia w menu Pomiarów.
+• Przed zapisaniem podejrzanego odczytu z urządzenia aplikacja zapyta.
+• Wyniki Hanna: zapisz tylko wartości, którym ufasz, albo zmierz wybrane ponownie.
+• Zakresy parametrów idą za wartościami zalecanymi. Własne granice zostały zresetowane – ustaw je ponownie.

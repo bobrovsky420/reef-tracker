@@ -1,0 +1,49 @@
+<en-GB>
+• Neptune Apex controllers (experimental): read pH, temperature, ORP, salinity and Trident values over Wi-Fi, plus your outlet states.
+• All connected devices now share one Devices page, in the Measurements menu.
+• Saving from a device asks before storing a reading that looks wrong.
+• Hanna results: keep only the values you trust, or measure any of them again.
+• Parameter ranges now follow the recommended values. Boundaries you customised are reset – please set them again.
+</en-GB>
+<cs-CZ>
+• Řídicí jednotky Neptune Apex (experimentální): přes Wi-Fi načtete pH, teplotu, ORP, salinitu a hodnoty z Tridentu i stav zásuvek.
+• Všechna připojená zařízení najdete na jedné stránce Zařízení v nabídce Měření.
+• Před uložením podezřelé hodnoty ze zařízení se aplikace zeptá.
+• Výsledky Hanna: uložte jen hodnoty, kterým věříte, nebo je změřte znovu.
+• Rozsahy parametrů nyní sledují doporučené hodnoty. Vlastní meze se vynulují – nastavte si je prosím znovu.
+</cs-CZ>
+<de-DE>
+• Neptune Apex Controller (experimentell): pH, Temperatur, ORP, Salinität und Trident-Werte über WLAN auslesen, dazu der Zustand der Steckdosen.
+• Alle verbundenen Geräte liegen jetzt auf einer Geräte-Seite im Messwerte-Menü.
+• Vor dem Speichern eines auffälligen Gerätewerts fragt die App nach.
+• Hanna-Ergebnisse: nur die Werte übernehmen, denen du traust, oder einzelne neu messen.
+• Parameterbereiche folgen jetzt den Empfehlungen. Eigene Grenzen werden zurückgesetzt – bitte neu einstellen.
+</de-DE>
+<ru-RU>
+• Контроллеры Neptune Apex (эксперимент): чтение pH, температуры, ORP, солёности и данных Trident по Wi-Fi, а также состояния розеток.
+• Все подключённые устройства теперь на одной странице «Устройства» в меню измерений.
+• Перед сохранением подозрительного значения с устройства приложение спросит.
+• Результаты Hanna: сохраняйте только те значения, которым доверяете, или измерьте заново.
+• Диапазоны параметров следуют рекомендованным значениям. Ваши границы сброшены – задайте их снова.
+</ru-RU>
+<pl-PL>
+• Sterowniki Neptune Apex (eksperymentalne): odczyt pH, temperatury, ORP, zasolenia i wartości z Tridenta przez Wi-Fi oraz stanu gniazd.
+• Wszystkie podłączone urządzenia są teraz na jednej stronie Urządzenia w menu Pomiarów.
+• Przed zapisaniem podejrzanego odczytu z urządzenia aplikacja zapyta.
+• Wyniki Hanna: zapisz tylko wartości, którym ufasz, albo zmierz wybrane ponownie.
+• Zakresy parametrów idą za wartościami zalecanymi. Własne granice zostały zresetowane – ustaw je ponownie.
+</pl-PL>
+<fr-FR>
+• Contrôleurs Neptune Apex (expérimental) : pH, température, ORP, salinité et valeurs Trident lus en Wi-Fi, avec l'état de vos prises.
+• Tous les appareils connectés sur une seule page Appareils, dans le menu des mesures.
+• L'app demande confirmation avant d'enregistrer une valeur suspecte.
+• Résultats Hanna : ne gardez que les valeurs fiables, ou remesurez-en certaines.
+• Les plages suivent désormais les valeurs recommandées. Vos limites personnalisées sont réinitialisées – à refaire.
+</fr-FR>
+<it-IT>
+• Centraline Neptune Apex (sperimentale): pH, temperatura, ORP, salinità e valori Trident letti via Wi-Fi, con lo stato delle prese.
+• Tutti i dispositivi collegati ora in un'unica pagina Dispositivi, nel menu delle misurazioni.
+• Prima di salvare un valore sospetto da un dispositivo l'app chiede conferma.
+• Risultati Hanna: salva solo i valori di cui ti fidi, o rimisura quelli che vuoi.
+• Gli intervalli seguono i valori consigliati. I limiti personalizzati sono azzerati – reimpostali.
+</it-IT>

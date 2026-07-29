@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-07-29
 
 ### Added
 - Neptune Apex controllers (experimental): read your Apex over Wi-Fi and save
@@ -174,6 +174,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which of your devices answered at that address and stops there. To point a
   device that has moved at its new address, use Scan network, which changes the
   address only.
+- iOS: the permission iOS asks for before the app may reach devices on your
+  Wi-Fi network now mentions Neptune Apex controllers as well as Red Sea and
+  ReefFactory. Adding an Apex used to raise a prompt that named neither it nor
+  controllers in general. Text only — not validated on a device, as iOS cannot
+  be built on the development machine.
 
 ### Removed
 - Settings → Experimental no longer repeats the "Hanna checker" and "Scan

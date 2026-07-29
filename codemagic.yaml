@@ -54,3 +54,89 @@ workflows:
         notify:
           success: true
           failure: true
+
+  # ---------------------------------------------------------------------------
+  # Release workflow. Same build as `ios-release` above, plus the localized
+  # "What's New" for every language. Start it from the Codemagic UI ONLY when
+  # cutting a real release — ordinary test builds keep using `ios-release`,
+  # which is deliberately left untouched so it cannot regress.
+  #
+  # The steps are duplicated rather than shared through YAML anchors: this file
+  # cannot be validated on Windows, so keeping the two workflows independent
+  # means a mistake here can never break the working TestFlight path.
+  #
+  # NOTHING IS SUBMITTED FOR REVIEW YET — see the two flags marked (1) and (2)
+  # at the bottom. The first run only writes metadata, so you can read it in
+  # App Store Connect before anything reaches Apple.
+  ios-store-release:
+    name: iOS release → App Store (notes + submit)
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    integrations:
+      app_store_connect: ReefTracker ASC key
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: cz.reeftracker.reeftracker
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Run tests
+        script: flutter test
+      - name: Apply provisioning profiles
+        script: xcode-project use-profiles
+      - name: Build signed IPA
+        script: flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
+      - name: Push localized What's New
+        script: |
+          set -e
+          # Version name without the +build suffix — the App Store version
+          # record this metadata belongs to (single stream, see CLAUDE.md).
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | cut -d'+' -f1)
+          NOTES="store_assets/release_notes/$VERSION/appstore"
+          echo "Publishing release notes for $VERSION from $NOTES"
+          test -d "$NOTES" || { echo "No release notes for $VERSION — write them first (CLAUDE.md)"; exit 1; }
+
+          # fastlane wants the ASC API key as a JSON file. Built with python so
+          # the PEM's newlines survive; the Codemagic integration exports these
+          # three variables (verify the names in Codemagic > Integrations if
+          # this step fails to authenticate).
+          python3 -c 'import json, os; print(json.dumps({
+            "key_id": os.environ["APP_STORE_CONNECT_KEY_IDENTIFIER"],
+            "issuer_id": os.environ["APP_STORE_CONNECT_ISSUER_ID"],
+            "key": os.environ["APP_STORE_CONNECT_PRIVATE_KEY"],
+            "in_house": False,
+          }))' > /tmp/asc_key.json
+
+          fastlane deliver \
+            --api_key_path /tmp/asc_key.json \
+            --app_identifier cz.reeftracker.reeftracker \
+            --app_version "$VERSION" \
+            --metadata_path "$NOTES" \
+            --skip_binary_upload true \
+            --skip_screenshots true \
+            --force true \
+            --run_precheck_before_submit false \
+            --submit_for_review false          # (1) flip to true to submit
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # The release candidate still lands in TestFlight first.
+        submit_to_testflight: true
+        # (2) flip to true once a dry run has shown the notes land correctly.
+        submit_to_app_store: false
+        # Keep MANUAL: an approval at 3am must not put the build in front of
+        # every user on its own — 1.1.0 resets customised parameter bounds.
+        release_type: MANUAL
+      email:
+        recipients:
+          - bobrovsky@seznam.cz
+        notify:
+          success: true
+          failure: true

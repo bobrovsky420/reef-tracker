@@ -1,0 +1,5 @@
+• Řídicí jednotky Neptune Apex (experimentální): přes Wi-Fi načtete pH, teplotu, ORP, salinitu a hodnoty z Tridentu i stav zásuvek.
+• Všechna připojená zařízení najdete na jedné stránce Zařízení v nabídce Měření.
+• Před uložením podezřelé hodnoty ze zařízení se aplikace zeptá.
+• Výsledky Hanna: uložte jen hodnoty, kterým věříte, nebo je změřte znovu.
+• Rozsahy parametrů nyní sledují doporučené hodnoty. Vlastní meze se vynulují – nastavte si je prosím znovu.

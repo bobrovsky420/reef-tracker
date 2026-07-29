@@ -1,0 +1,5 @@
+• Centraline Neptune Apex (sperimentale): pH, temperatura, ORP, salinità e valori Trident letti via Wi-Fi, con lo stato delle prese.
+• Tutti i dispositivi collegati ora in un'unica pagina Dispositivi, nel menu delle misurazioni.
+• Prima di salvare un valore sospetto da un dispositivo l'app chiede conferma.
+• Risultati Hanna: salva solo i valori di cui ti fidi, o rimisura quelli che vuoi.
+• Gli intervalli seguono i valori consigliati. I limiti personalizzati sono azzerati – reimpostali.
