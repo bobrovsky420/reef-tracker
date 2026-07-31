@@ -756,6 +756,16 @@ restoring another device's backup never renames this one). Providers:
 `syncGdriveAccountProvider`, `syncGdriveLastPushAtProvider`,
 `syncGdriveLastErrorAtProvider`.
 
+Turning sync off locally is **one function, never a hand-copied list**:
+`AppSettings.clearGDriveSyncState()` clears `SettingKey.gdriveSyncKeys` — every
+key whose storage name starts with `sync_gdrive_`, derived from the enum the way
+`deviceLocalKeys` is. Both callers use it: `disconnectGDrive` (which adds the
+revoke) and `reconcileInstallFingerprint` below (which cannot revoke). The two
+were hand-copied until #74, and the copy silently missed U35's two filename keys
+for a release, so a transferred database kept the old phone's
+`sync_gdrive_last_pushed_name` and suppressed its own restore prompt on
+reconnect. `sync_device_name` sits outside the prefix on purpose and survives.
+
 - **Install fingerprint** (`install_id.dart`, #62): device-local only guards
   the app's *own* JSON restore — Android OS Auto Backup / device transfer
   copies the raw SQLite file verbatim, which would carry the old device's
@@ -2486,6 +2496,16 @@ readout is always confirmed by the user first.
   is **not locally testable** (validate via CI before claiming support).
   App-lifecycle observer releases/reacquires the camera on
   background/foreground.
+- **One camera at a time** (#77): `_startCamera` is the only opener and has
+  four callers — first frame, Rescan, retry-after-error, and the `resumed`
+  lifecycle callback — so it must be safe to call against a start that is
+  already running or finished. A re-entrant call is dropped (`_starting`, the
+  phase check cannot do this job: the method *sets* the phase it tests), and it
+  disposes any existing controller before building a new one. Without both,
+  two controllers survived with their image streams feeding the decoder and
+  the hardware held open. Pinned by `test/checker_scan_camera_test.dart`
+  against `test/fakes/fake_camera_platform.dart`, a `CameraPlatform` fake whose
+  gate reproduces a slow `initialize()`.
 - **Tier:** `hannaScan`, `grandfathered: true` (2026-07-21 decision,
   consistent with `hannaConnect`/`hannaImport`).
 - **Deferred:** remembering the last-used model; torch control.

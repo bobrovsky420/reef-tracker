@@ -180,6 +180,50 @@ void main() {
     await unmountApp(tester);
   });
 
+  testWidgets('the brand-reorder sheet\'s handles are labelled for TalkBack', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await db.upsertReefFactoryDevice(
+      identifier: 'RF-1',
+      model: 'RFPM01',
+      address: '',
+      name: 'My meter',
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'RB-1',
+      model: 'RSDOSE4',
+      address: '',
+      name: 'My pump',
+    );
+
+    await pumpDevices(tester, db);
+    // One device per vendor, so the cards carry no handles of their own and
+    // every handle counted below belongs to the sheet.
+    expect(find.byIcon(Icons.drag_handle), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.swap_vert));
+    await settle(tester);
+
+    expect(find.text('Reorder brands'), findsOneWidget);
+    // The sheet's only affordance: it must name itself, or the ordering that
+    // decides Save-all precedence is unreachable without sight. Counted as
+    // "all of them", not a fixed number — the sheet lists every known brand,
+    // so a new vendor must not be able to slip in unlabelled either.
+    final handles = find.byIcon(Icons.drag_handle);
+    final labelled = find.byWidgetPredicate(
+      (w) =>
+          w is Icon &&
+          w.icon == Icons.drag_handle &&
+          w.semanticLabel == 'Reorder',
+    );
+    expect(handles, findsAtLeastNWidgets(2));
+    expect(labelled.evaluate().length, handles.evaluate().length);
+
+    await unmountApp(tester);
+  });
+
   testWidgets('an empty inventory offers the Add FAB, nothing else', (
     tester,
   ) async {

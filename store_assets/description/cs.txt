@@ -11,9 +11,10 @@ Co si můžete sledovat
 - Klíčové poměry (PO4:NO3, Mg:Ca) a toxicita volného amoniaku, spočítané automaticky z hodnot, které už máte
 
 Čtěte přímo ze své techniky
-- Fotometry Hanna: připojte se přes Bluetooth a ukládejte každý výsledek hned, jak přijde, nebo namiřte fotoaparát na displej a nechte hodnotu přečíst aplikaci
-- Měřidla ReefFactory, zařízení Red Sea ReefBeat a řídicí jednotky Neptune Apex (experimentální): načtěte hodnoty sond přímo z techniky a uložte je jako měření
-- Všechno na jedné stránce Zařízení, přes vaši vlastní Wi-Fi - bez cloudové služby mezi tím
+- Fotometry Hanna (experimentální): připojte se přes Bluetooth a ukládejte každý výsledek hned, jak přijde, nebo namiřte fotoaparát na displej a nechte hodnotu přečíst aplikaci
+- Měřidla ReefFactory a řídicí jednotky Neptune Apex (experimentální): načtěte hodnoty sond přímo z techniky a uložte je jako měření
+- Zařízení Red Sea ReefBeat (experimentální): sledujte naživo průběh dávkování, hladiny zásobníků, roli filtru a stav čerpadel, s přehlednými varováními
+- Zařízení na Wi-Fi jsou všechna na jedné stránce Zařízení, přes vaši vlastní síť - bez cloudové služby mezi tím
 
 Mějte údržbu pod kontrolou
 - Připomínky testování, dávkování i opakovaných úkolů údržby (výměny vody, filtrační punčochy, čištění skla a další)
@@ -25,6 +26,6 @@ Vidět celek
 - Chytré tipy vypíchnou těch pár věcí, které si tento týden opravdu zaslouží vaši pozornost
 
 Soukromí od základu
-Všechno je uložené lokálně ve vašem zařízení. Žádný účet, žádná registrace, žádné reklamy - vaše data jsou vaše. Spojení s akvarijní technikou zůstává ve vaší síti. Zálohovat a obnovovat můžete kdykoli přes systémové sdílení.
+Všechno je ve výchozím nastavení uložené lokálně ve vašem zařízení, s volitelnou zálohou na váš vlastní Google Disk (Android). Účet není potřeba, žádná registrace, žádné reklamy - vaše data jsou vaše. Spojení s akvarijní technikou zůstává ve vaší síti. Zálohovat a obnovovat můžete kdykoli přes systémové sdílení.
 
 ReefTracker je připravený pro akvária rybí, s měkkými korály, LPS, SPS i smíšená - výchozí parametry a cíle přizpůsobí tomu, jaké akvárium vedete.

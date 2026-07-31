@@ -81,6 +81,14 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
   double? _emaR, _emaG, _emaB;
 
   CameraController? _controller;
+
+  /// Whether a [_startCamera] is already in flight. `initialize()` takes
+  /// visible time on a slow device, and the phase check inside `_startCamera`
+  /// cannot catch a second call (that method *sets* the phase it tests), so
+  /// without this two controllers would survive — the first one undisposed,
+  /// its image stream still feeding the decoder (#77).
+  bool _starting = false;
+
   _CameraError? _cameraError;
   final _vote = SevenSegmentVote();
   bool _decoding = false;
@@ -136,18 +144,27 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
 
   // --- camera ----------------------------------------------------------------
 
+  /// Opens the camera and starts the decode stream, resetting the scan state.
+  /// Safe to call while one is already running or still starting: a re-entrant
+  /// call is dropped, and an existing controller is disposed before a new one
+  /// is built, so the resume path is idempotent (#77).
   Future<void> _startCamera() async {
-    setState(() {
-      _phase = _ScanPhase.scanning;
-      _cameraError = null;
-      _candidate = null;
-      _reading = null;
-      _candidates = const [];
-      _selectedModel = null;
-      _emaR = _emaG = _emaB = null;
-      _vote.reset();
-    });
+    if (_starting) return;
+    _starting = true;
     try {
+      setState(() {
+        _phase = _ScanPhase.scanning;
+        _cameraError = null;
+        _candidate = null;
+        _reading = null;
+        _candidates = const [];
+        _selectedModel = null;
+        _emaR = _emaG = _emaB = null;
+        _vote.reset();
+      });
+      // Whatever was open goes first — overwriting `_controller` would strand
+      // the old one with its image stream still running.
+      await _stopCamera();
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         if (mounted) setState(() => _cameraError = _CameraError.unavailable);
@@ -197,6 +214,10 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
       }
     } catch (_) {
       if (mounted) setState(() => _cameraError = _CameraError.failed);
+    } finally {
+      // In a `finally` so an early return or a camera error can't wedge the
+      // flag on and leave retry/resume permanently dead.
+      _starting = false;
     }
   }
 

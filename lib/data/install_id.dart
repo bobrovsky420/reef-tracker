@@ -84,12 +84,9 @@ Future<void> _reconcile(AppDatabase db) async {
     // The database carries another install's fingerprint → it arrived via OS
     // restore/transfer. Drop the old device's sync identity (local clear
     // only — `disconnectGDrive` minus the revoke, which would need the old
-    // device's Credential Manager session anyway).
-    await settings.setSyncGdriveAccount(null);
-    await settings.setSyncGdriveFolderId(null);
-    await settings.setSyncGdriveLastPushedHash(null);
-    await settings.setSyncGdriveLastPushAt(null);
-    await settings.setSyncGdriveLastErrorAt(null);
+    // device's Credential Manager session anyway). Literally the same clear,
+    // not a copy of it: the copy drifted once already (#74).
+    await settings.clearGDriveSyncState();
   }
 
   // Adopt the file's id when it exists (it *is* this install's identity);

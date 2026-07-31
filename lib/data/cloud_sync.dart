@@ -459,14 +459,9 @@ Future<void> disconnectGDrive(AppDatabase db, CloudAuth auth) async {
     // what turns sync off, and the user can always revoke from their Google
     // account settings.
   }
-  final settings = AppSettings(db);
-  await settings.setSyncGdriveAccount(null);
-  await settings.setSyncGdriveFolderId(null);
-  await settings.setSyncGdriveLastPushedHash(null);
-  await settings.setSyncGdriveLastPushedName(null);
-  await settings.setSyncGdriveDismissedName(null);
-  await settings.setSyncGdriveLastPushAt(null);
-  await settings.setSyncGdriveLastErrorAt(null);
+  // Every `sync_gdrive_*` key, derived rather than listed here — the same
+  // clear `reconcileInstallFingerprint` runs after a device transfer (#74).
   // `sync_device_name` deliberately survives: it names this device, not the
   // account relationship, and should greet a later reconnect prefilled.
+  await AppSettings(db).clearGDriveSyncState();
 }

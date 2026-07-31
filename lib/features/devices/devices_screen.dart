@@ -862,9 +862,12 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
                       // decorative glyph next to a long-press-only row.
                       trailing: ReorderableDragStartListener(
                         index: i,
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Icon(Icons.drag_handle),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.drag_handle,
+                            semanticLabel: l.reorder,
+                          ),
                         ),
                       ),
                     );

@@ -11,9 +11,10 @@ Was du erfassen kannst
 - Wichtige Verhältnisse (PO4:NO3, Mg:Ca) und die Toxizität des freien Ammoniaks, automatisch aus vorhandenen Werten berechnet
 
 Lies deine Technik direkt aus
-- Hanna Photometer: per Bluetooth verbinden und jedes Ergebnis speichern, sobald es vorliegt, oder die Kamera auf das Display halten und die Zahl von der App ablesen lassen
-- ReefFactory Messgeräte, Red Sea ReefBeat Geräte und Neptune Apex Controller (experimentell): Sondenwerte direkt von der Hardware übernehmen und als Messung speichern
-- Alles auf einer Geräte-Seite, über dein eigenes WLAN - ohne Cloud-Dienst dazwischen
+- Hanna Photometer (experimentell): per Bluetooth verbinden und jedes Ergebnis speichern, sobald es vorliegt, oder die Kamera auf das Display halten und die Zahl von der App ablesen lassen
+- ReefFactory Messgeräte und Neptune Apex Controller (experimentell): Sondenwerte direkt von der Hardware übernehmen und als Messung speichern
+- Red Sea ReefBeat Geräte (experimentell): Dosierfortschritt, Behälterfüllstände, Filterrolle und Pumpenstatus live verfolgen, mit klaren Warnungen
+- Die WLAN-Geräte stehen alle auf einer Geräte-Seite, über dein eigenes Netzwerk - ohne Cloud-Dienst dazwischen
 
 Wartung im Griff
 - Erinnerungen für Tests, Dosierung und wiederkehrende Aufgaben (Wasserwechsel, Filtersocken, Scheibenreinigung und mehr)
@@ -25,6 +26,6 @@ Das große Ganze
 - Intelligente Hinweise zeigen die wenigen Dinge, die diese Woche wirklich deine Aufmerksamkeit verdienen
 
 Privat by design
-Alles bleibt lokal auf deinem Gerät. Kein Konto, keine Registrierung, keine Werbung - deine Daten gehören dir. Verbindungen zur Aquarientechnik bleiben in deinem Netzwerk. Sichern und Wiederherstellen jederzeit über die Teilen-Funktion.
+Alles bleibt standardmäßig lokal auf deinem Gerät, mit optionalem Backup in dein eigenes Google Drive (Android). Kein Konto nötig, keine Registrierung, keine Werbung - deine Daten gehören dir. Verbindungen zur Aquarientechnik bleiben in deinem Netzwerk. Sichern und Wiederherstellen jederzeit über die Teilen-Funktion.
 
 Ob Fischbecken, Weichkorallen, LPS, SPS oder Mischbecken: ReefTracker passt Standardparameter und Zielwerte an die Art deines Aquariums an.

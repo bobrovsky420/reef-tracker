@@ -11,9 +11,10 @@ Co możesz śledzić
 - Kluczowe stosunki (PO4:NO3, Mg:Ca) oraz toksyczność wolnego amoniaku, liczone automatycznie z już wprowadzonych odczytów
 
 Czytaj prosto ze sprzętu
-- Fotometry Hanna: połącz się przez Bluetooth i zapisuj każdy wynik, gdy tylko się pojawi, albo skieruj aparat na wyświetlacz i pozwól aplikacji odczytać liczbę
-- Mierniki ReefFactory, urządzenia Red Sea ReefBeat i sterowniki Neptune Apex (eksperymentalnie): pobieraj wartości sond prosto ze sprzętu i zapisuj je jako pomiary
-- Wszystko na jednej stronie Urządzenia, przez Twoje własne Wi-Fi - bez usługi chmurowej pośrodku
+- Fotometry Hanna (eksperymentalnie): połącz się przez Bluetooth i zapisuj każdy wynik, gdy tylko się pojawi, albo skieruj aparat na wyświetlacz i pozwól aplikacji odczytać liczbę
+- Mierniki ReefFactory i sterowniki Neptune Apex (eksperymentalnie): pobieraj wartości sond prosto ze sprzętu i zapisuj je jako pomiary
+- Urządzenia Red Sea ReefBeat (eksperymentalnie): śledź na żywo postęp dozowania, poziomy zbiorników, rolkę filtra i stan pomp, z czytelnymi ostrzeżeniami
+- Urządzenia Wi-Fi znajdziesz wszystkie na jednej stronie Urządzenia, przez Twoją własną sieć - bez usługi chmurowej pośrodku
 
 Panuj nad konserwacją
 - Przypomnienia o testach, dozowaniu i powtarzalnych zadaniach (podmiany wody, skarpety filtracyjne, czyszczenie szyby i inne)
@@ -25,6 +26,6 @@ Szerszy obraz
 - Inteligentne wskazówki pokazują tych kilka rzeczy, które naprawdę zasługują w tym tygodniu na Twoją uwagę
 
 Prywatność u podstaw
-Wszystko jest przechowywane lokalnie na Twoim urządzeniu. Bez konta, bez rejestracji, bez reklam - Twoje dane należą do Ciebie. Połączenia ze sprzętem akwarystycznym zostają w Twojej sieci. Kopię zapasową zrobisz i przywrócisz w każdej chwili przez systemowe udostępnianie.
+Wszystko jest domyślnie przechowywane lokalnie na Twoim urządzeniu, z opcjonalną kopią zapasową na Twoim własnym Dysku Google (Android). Konto nie jest potrzebne, bez rejestracji, bez reklam - Twoje dane należą do Ciebie. Połączenia ze sprzętem akwarystycznym zostają w Twojej sieci. Kopię zapasową zrobisz i przywrócisz w każdej chwili przez systemowe udostępnianie.
 
 Zbiornik rybny, miękkie koralowce, LPS, SPS czy mieszany - ReefTracker dopasowuje domyślne parametry i cele do rodzaju akwarium, które prowadzisz.

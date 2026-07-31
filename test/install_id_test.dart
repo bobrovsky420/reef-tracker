@@ -44,12 +44,30 @@ void main() {
   AppDatabase newDb() => AppDatabase(NativeDatabase.memory());
   File idFile() => File(p.join(docsDir.path, kInstallIdFileName));
 
+  /// A fully populated sync identity: **every** `sync_gdrive_*` key, plus the
+  /// device name that must survive. Naming only some of them is what let #74
+  /// hide — the U35 filename keys were set nowhere, so nothing noticed the
+  /// reconcile leaving them behind.
   Future<void> connectSync(AppSettings settings) async {
     await settings.setSyncGdriveAccount('reef@example.com');
     await settings.setSyncGdriveFolderId('folder-1');
     await settings.setSyncGdriveLastPushedHash('hash-1');
+    await settings.setSyncGdriveLastPushedName('reeftracker-20260701.json');
+    await settings.setSyncGdriveDismissedName('reeftracker-20260601.json');
     await settings.setSyncGdriveLastPushAt(DateTime(2026, 7, 1));
     await settings.setSyncGdriveLastErrorAt(DateTime(2026, 7, 2));
+    await settings.setSyncDeviceName('Old phone');
+  }
+
+  /// Guards the fixture above against the enum growing past it.
+  Future<void> expectEverySyncKeySet(AppDatabase db) async {
+    for (final key in SettingKey.gdriveSyncKeys) {
+      expect(
+        await db.getSetting(key.storageKey),
+        isNotNull,
+        reason: 'connectSync does not populate ${key.storageKey}',
+      );
+    }
   }
 
   test('fresh install: seeds matching fingerprint in file and database', () async {
@@ -90,20 +108,26 @@ void main() {
       // while this install has no .install_id file (excluded from OS backup).
       await settings.setInstallFingerprint('old-device-fingerprint');
       await connectSync(settings);
+      await expectEverySyncKeySet(db);
 
       await reconcileInstallFingerprint(db);
 
-      expect(await settings.readSyncGdriveAccount(), isNull);
-      expect(await settings.readSyncGdriveFolderId(), isNull);
-      expect(await settings.readSyncGdriveLastPushedHash(), isNull);
-      expect(
-        await settings.watchSyncGdriveLastPushAt().first,
-        isNull,
-      );
-      expect(
-        await settings.watchSyncGdriveLastErrorAt().first,
-        isNull,
-      );
+      // Every `sync_gdrive_*` key, enumerated rather than named (#74): the
+      // hand-written list missed the two U35 keys for a whole release, and a
+      // hand-written assertion would have missed them with it. In particular
+      // `sync_gdrive_last_pushed_name` — left behind, it makes the newest
+      // cloud file look like *this* device's own upload on reconnect, so the
+      // restore proposal is suppressed on the phone that just arrived.
+      for (final key in SettingKey.gdriveSyncKeys) {
+        expect(
+          await db.getSetting(key.storageKey),
+          isNull,
+          reason: '${key.storageKey} survived the device transfer',
+        );
+      }
+      // The device's own label is not part of the account relationship, so it
+      // survives here exactly as it does across a disconnect.
+      expect(await settings.readSyncDeviceName(), 'Old phone');
       // Reseeded with a fresh identity, consistent on both sides.
       final fileId = (await idFile().readAsString()).trim();
       expect(fileId, isNot('old-device-fingerprint'));

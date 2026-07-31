@@ -414,13 +414,15 @@ void main() {
       await disconnectGDrive(db, auth);
 
       expect(auth.disconnectCalls, 1);
-      expect(await settings.readSyncGdriveAccount(), isNull);
-      expect(await settings.readSyncGdriveFolderId(), isNull);
-      expect(await settings.readSyncGdriveLastPushedHash(), isNull);
-      expect(await settings.readSyncGdriveLastPushedName(), isNull);
-      expect(await settings.readSyncGdriveDismissedName(), isNull);
-      expect(await db.getSetting(kSyncGdriveLastPushAtKey), isNull);
-      expect(await db.getSetting(kSyncGdriveLastErrorAtKey), isNull);
+      // Enumerated, so the test's title stays true as keys are added (#74) —
+      // the hand-written version of this list is what drifted.
+      for (final key in SettingKey.gdriveSyncKeys) {
+        expect(
+          await db.getSetting(key.storageKey),
+          isNull,
+          reason: '${key.storageKey} survived the disconnect',
+        );
+      }
       // The device's own label survives a disconnect: it names the device,
       // not the account relationship.
       expect(await settings.readSyncDeviceName(), 'Aquarium phone');

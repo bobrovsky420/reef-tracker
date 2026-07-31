@@ -279,6 +279,17 @@ enum SettingKey {
     for (final k in values)
       if (k.deviceLocal) k.storageKey,
   };
+
+  /// Every key holding this device's Google Drive sync state, derived from the
+  /// `sync_gdrive_` prefix rather than hand-listed (#74: the list was copied
+  /// into two places and the U35 keys reached only one of them, so a
+  /// device-transfer kept the old phone's filename bookkeeping). Deriving it
+  /// means the next `sync_gdrive_*` key is covered by both callers for free.
+  ///
+  /// [syncDeviceName] is deliberately outside the prefix: it labels *this*
+  /// device, not the account relationship, and survives a disconnect.
+  static Iterable<SettingKey> get gdriveSyncKeys =>
+      values.where((k) => k.storageKey.startsWith('sync_gdrive_'));
 }
 
 /// Typed facade over the [AppDatabase] key/value `Settings` store. Cheap to
@@ -768,6 +779,22 @@ class AppSettings {
     SettingKey.syncGdriveLastErrorAt,
     when?.millisecondsSinceEpoch.toString(),
   );
+
+  /// Clears every `sync_gdrive_*` key in one call — the *local* half of
+  /// turning Drive sync off, shared by the two callers that need it:
+  /// `disconnectGDrive` (which additionally revokes the grant) and
+  /// `reconcileInstallFingerprint` (which cannot revoke — that would need the
+  /// old device's Credential Manager session).
+  ///
+  /// Deriving the set from [SettingKey.gdriveSyncKeys] rather than listing the
+  /// setters is the point: the hand-copied version drifted (#74), leaving a
+  /// transferred database holding the previous phone's pushed/dismissed
+  /// filenames. [setSyncDeviceName] is untouched by design — see the getter.
+  Future<void> clearGDriveSyncState() async {
+    for (final key in SettingKey.gdriveSyncKeys) {
+      await _write(key, null);
+    }
+  }
 
   // --- install fingerprint (#62) -----------------------------------------------
 

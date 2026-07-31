@@ -21,6 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   row of brand buttons it reorders.
 
 ### Fixed
+- The checker camera scan no longer opens a second camera on top of the first
+  when a scan restarts while the camera is still starting up — tapping Try
+  again, or returning to the app mid-start. That left scanning sluggish and
+  could keep the camera busy after leaving the screen; slower phones hit it
+  most.
+- Android: after moving to a new phone with Google's device transfer, ReefTracker
+  again offers to restore your latest cloud backup when you reconnect Google
+  Drive. It could previously stay silent on exactly that phone, because it had
+  kept the old phone's record of which backup it last uploaded and mistook the
+  cloud copy for its own.
+- Screen readers now announce the drag handles in the Connected devices
+  "Reorder brands" sheet as "Reorder", like every other reorderable list in the
+  app. Previously they were unnamed, which made the brand order — the setting
+  that decides which device's reading wins when two report the same thing —
+  unusable with TalkBack or VoiceOver.
 - Bottom-bar tab names no longer break onto a second line — which pushed that
   tab's icon out of line with the others — on narrow phones or at large system
   font sizes. All five names now keep one size on every phone, and one that

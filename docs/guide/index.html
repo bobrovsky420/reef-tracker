@@ -86,7 +86,7 @@
 <p class="crumb"><a href="../">← ReefTracker home</a></p>
 
 <h1>ReefTracker User Guide</h1>
-<p class="updated">Last updated: 24 July 2026</p>
+<p class="updated">Last updated: 31 July 2026</p>
 
 <p class="lead">ReefTracker is an offline reef-aquarium companion for Android and
 iOS. It keeps your water tests, dosing, maintenance and equipment in one place
@@ -115,7 +115,7 @@ for you forever (see <a href="#pro">Editions</a>). Features marked
     <li><a href="#ro">Reverse-osmosis unit</a></li>
     <li><a href="#reminders">Reminders &amp; notifications</a></li>
     <li><a href="#import">Importing measurements &amp; Hanna checkers</a></li>
-    <li><a href="#devices">Smart devices: ReefFactory &amp; Red Sea</a></li>
+    <li><a href="#devices">Connected devices: ReefFactory, Red Sea &amp; Apex</a></li>
     <li><a href="#backup">Backup, export &amp; sync</a></li>
     <li><a href="#settings">Settings &amp; personalization</a></li>
     <li><a href="#pro">Editions: Standard, Pro &amp; Founder</a></li>
@@ -127,9 +127,11 @@ for you forever (see <a href="#pro">Editions</a>). Features marked
 
 <p>On first launch, pick your language and create your first aquarium. Choose a
 <strong>setup type</strong> – fish-only, soft coral, LPS, SPS or mixed reef –
-and ReefTracker seeds the recommended parameters <em>and</em> safe ranges for
-that kind of tank. You can change every range later, so the preset is a
-starting point, not a commitment. Add the tank volume (used by the dose
+and ReefTracker selects the recommended parameters <em>and</em> safe ranges for
+that kind of tank. Until you customize a range it keeps following the
+recommendation for your setup type – change the tank's type later and the
+colors follow – and you can set your own boundaries on any parameter at any
+time, so the preset is a starting point, not a commitment. Add the tank volume (used by the dose
 calculator), and optionally the vendor/model and a start date.</p>
 
 <p>A short <strong>feature tour</strong> then highlights the less obvious
@@ -280,7 +282,13 @@ rate of change. If a value is drifting toward the edge of its range, the
 dashboard shows an <strong>early warning</strong> ("amber in ~5 d") <em>before</em>
 anything is wrong. A value that is out of range but heading <em>back</em> is
 recognized as <strong>recovering</strong> and shown positively instead of being
-flagged. The trend window and alert horizon are configurable in
+flagged. A parameter whose readings merely <em>swing</em> – pH is the classic
+example – gets no forecast at all: when the readings scatter too much for
+their direction to be trusted, the parameter is reported as
+<strong>swinging</strong>, with the size of the typical swing (say
+"±0.11 pH") on the trend card and an <strong>Unsettled</strong> marker on its
+dashboard tile, rather than a confident warning drawn through the scatter.
+The trend window and alert horizon are configurable in
 <strong>Settings → Trends</strong>.</p>
 
 <p>The <strong>compare view</strong> (chart icon in the top bar of the
@@ -518,15 +526,24 @@ zoom so you can scan from a comfortable distance. An optional quick-scan camera
 button next to <em>Add reading</em> can be enabled in Settings →
 Experimental.</p>
 
-<h2 id="devices">Smart devices: ReefFactory &amp; Red Sea</h2>
+<h2 id="devices">Connected devices: ReefFactory, Red Sea &amp; Neptune Apex</h2>
 
-<p>If ReefFactory smart meters or Red Sea ReefBeat equipment run on your
-aquarium, ReefTracker can talk to them directly over your home Wi-Fi – no
-cloud account in between. Both dashboards live in the Measurements tab's
+<div class="shots">
+  <figure class="shot"><img src="../img/devices.png" alt="Connected devices page" loading="lazy">
+    <figcaption>The Connected devices page – every brand in one place</figcaption></figure>
+</div>
+
+<p>If ReefFactory smart meters, Red Sea ReefBeat equipment or a Neptune Apex
+controller run on your aquarium, ReefTracker can talk to them directly over
+your home Wi-Fi – no cloud account in between. Everything lives on one
+<strong>Connected devices</strong> page, opened from the Measurements tab's
 <strong>⋮ menu</strong> once experimental features are enabled
-(Settings → Experimental). Everything is strictly <strong>read-only</strong>:
-ReefTracker never doses, never changes a schedule and never calibrates –
-settings and firmware stay in the vendor's own app.</p>
+(Settings → Experimental). A row of brand buttons across the top switches
+between <em>All</em> – every device, grouped by brand – and one brand at a
+time; brands you don't own never appear, and with a single brand the buttons
+disappear entirely. Everything is strictly <strong>read-only</strong>:
+ReefTracker never doses, never switches an outlet, never changes a schedule
+and never calibrates – settings and firmware stay in the vendor's own app.</p>
 
 <div class="tip"><strong>Same network required:</strong> ReefTracker reaches
 these devices directly on your local network, so your phone must be connected
@@ -535,26 +552,42 @@ data, on a guest network, or on a separate IoT/VPN network – the devices simpl
 can't be reached, and the cards report the address as unreachable. There is no
 cloud relay: reading works only while you are on the same network.</div>
 
+<h3>Adding devices – and finding them again</h3>
+
+<p>Tap <strong>Add</strong> and ReefTracker searches your Wi-Fi for
+ReefFactory meters and Red Sea ReefBeat devices, then lists what it found so
+you can add each one with a single tap – no hunting for IP addresses in your
+router's settings. Typing an IP address or hostname by hand remains available
+for unusual network setups, and an Apex controller is always added that way,
+together with the login you use on its own web page.</p>
+
+<p>Devices are recognized by their <em>hardware identity</em>, not their
+address. When your router hands a device a new IP and its card stops
+responding, run <strong>Scan network</strong> again: the scan spots the moved
+device and one tap points its card back at it, keeping the card's name,
+aquarium and position – re-adding it as a new device isn't needed (and the
+app will tell you so if you try). Reserving a fixed IP for each device in
+your router's settings avoids the shuffle entirely. The <strong>Edit</strong>
+item in a card's menu renames a device to whatever you call it, and
+<strong>Details</strong> shows its brand, model, address and when the app
+last reached it.</p>
+
 <h3>ReefFactory meters <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
 
 <div class="shots">
-  <figure class="shot"><img src="../img/reeffactory.png" alt="ReefFactory devices dashboard" loading="lazy">
+  <figure class="shot"><img src="../img/reeffactory.png" alt="ReefFactory device cards" loading="lazy">
     <figcaption>ReefFactory meters with live values, ready to save</figcaption></figure>
 </div>
 
 <p>Supported meters: the <strong>Salinity Guardian</strong>, the
 <strong>pH Monitor</strong> and the <strong>Temperature Controller</strong>.
-Add a meter by its IP address or hostname – the app connects, identifies the
-model and names the card after the product. Each card shows the meter's
-current values with a per-device <strong>Refresh</strong>, and – unlike the
-Red Sea dashboard – a <strong>Save</strong> button: the values are stored as
+The app identifies the model and names the card after the ReefFactory
+product. Each card shows the meter's current values with a
+<strong>Save</strong> button right beside them: the values are stored as
 ordinary readings for the tank the meter is assigned to, feeding your graphs,
-trends and health score like any hand-entered test.
-<strong>Refresh all</strong> / <strong>Save all</strong> handle every meter at
-once; Save all merges each tank's values into a single test session. If both a
-Salinity Guardian and a Temperature Controller serve the same tank, the
-controller's temperature wins – you never get two competing temperature
-readings from one save.</p>
+trends and health score like any hand-entered test. The Temperature
+Controller's temperature carries a <em>Heating</em> or <em>Cooling</em> badge
+whenever the controller is actually running that output.</p>
 
 <h3>Red Sea ReefBeat devices <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
 
@@ -563,8 +596,8 @@ readings from one save.</p>
     <figcaption>ReefDose heads and ReefATO+ status at a glance</figcaption></figure>
 </div>
 
-<p>The ReefBeat dashboard shows <em>operational status</em> rather than values
-to save. Three device families are supported:</p>
+<p>The ReefBeat cards show <em>operational status</em> rather than values to
+save. Six device families are supported:</p>
 
 <ul>
   <li><strong>ReefDose 2 / ReefDose 4</strong> dosing pumps – one row per
@@ -587,34 +620,71 @@ to save. Three device families are supported:</p>
       roll. Chips warn you when the roll is spent or nearly spent, when the
       sensor needs cleaning, when automatic advancing is switched off, and
       while the mat is advancing.</li>
+  <li><strong>ReefRun</strong> pump controller – your return and skimmer
+      pumps, each with its speed as a circular gauge and its motor
+      temperature, with warnings for a missing pump or water-level sensor, a
+      pump reporting a problem, a low backup battery or a wrong clock.</li>
+  <li><strong>ReefLED</strong> lights – current white, blue and moon output as
+      gauges, the simulated moon phase, fan speed and heatsink temperature,
+      with warnings for a knocked or tilted fixture and a running acclimation
+      ramp (with the days left).</li>
+  <li><strong>ReefWave</strong> pumps – all wave pumps in one card, one line
+      each, showing the flow each is scheduled to run right now (the pumps
+      don't report a live speed over the local network); a pump taken off
+      auto is dimmed.</li>
 </ul>
 
-<p>Devices are added by IP address or hostname, identified automatically, and
-assigned to a tank (movable later from the card menu). The dashboard reads
-every device once when opened; after that, refresh is manual.</p>
+<h3>Neptune Apex controllers <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
 
-<p>With more than one device on a dashboard – on either the Red Sea or the
-ReefFactory one – you can put the cards in whatever order suits you: press the
-<strong>drag handle</strong> in a card's header and move the card up or down.
-The order is remembered per dashboard and travels with your backups.</p>
+<p>Add your Apex by its IP address and the login you use on its own web page –
+both current (AOS&nbsp;5) and older Apex, Apex Jr and Apex Classic
+controllers are supported, and the app works out which it is talking to. The
+card shows the controller's probe values – temperature, pH, ORP and salinity,
+plus a Trident's alkalinity, calcium and magnesium – ready to save as
+measurements, and the app reads whether your Apex is set to °C or °F so the
+temperature is stored correctly either way. The card also shows what every
+outlet is doing, flags an outlet that has been switched by hand and no longer
+follows its program – the forgotten override that leaves a return pump off
+after a water change – and tells you when a feed cycle is pausing the pumps.
+Switching outlets, feed cycles and programs stay in Fusion. Your Apex
+password never leaves the phone: it is kept out of your backups, out of the
+copy Android keeps in your Google account and out of a transfer to a new
+device – a restored install keeps the controller but asks you to sign in
+again.</p>
 
-<div class="tip"><strong>Tip:</strong> addresses can change when your router
-reassigns them – reserving a fixed IP for each device in your router keeps the
-cards reachable; if an address does change, just re-add the device and the
-existing card is updated in place. And remember that your phone has to be on
-the same Wi-Fi network as the devices for any of this to work.</div>
+<h3>Refreshing &amp; saving <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
 
-<h3>Connected devices list</h3>
+<p>The page reads every device in view when it opens; after that,
+<strong>Refresh</strong> re-reads exactly the devices currently on screen –
+and says how many that is – so filtering to one brand leaves the rest of your
+equipment alone. <strong>Save all</strong> stores the readings of every meter
+in view in one go and merges values taken moments apart into a single test
+session. Values older than a couple of minutes are re-read before saving, so
+opening the page, getting distracted and saving an hour later never stamps
+hour-old probe values as a fresh measurement.</p>
 
-<div class="shots">
-  <figure class="shot"><img src="../img/devices.png" alt="Connected devices inventory" loading="lazy">
-    <figcaption>Settings → Connected devices: every device in one list</figcaption></figure>
-</div>
+<p>When two devices report the same reading for the same aquarium, the one
+higher up the page wins, and the confirmation names the device the value came
+from. You set that preference simply by ordering: press the <strong>drag
+handle</strong> in a card's header to move it above its neighbours, or
+reorder whole brands with <strong>Reorder brands</strong> in the page's menu.
+The order is remembered and travels with your backups.</p>
 
-<p><strong>Settings → Connected devices</strong> keeps a read-only inventory of
-every device you've ever connected – ReefFactory meters, Red Sea ReefBeat
-devices and your Hanna checker – with model, address and when it was last
-seen.</p>
+<p>Before a device reading joins your history, the app checks it the same way
+it checks what you type by hand: a value far outside the typical range for
+its parameter, or one that reads as nothing at all – 0&nbsp;dKH, no salt in
+the water, the classic sign a probe has come loose – is shown to you with its
+typical range beside it. Keep it if you know it's real, or skip just that
+value and still save everything else the other devices reported.</p>
+
+<h3>Standard edition &amp; the device list</h3>
+
+<p>Live reading is a <span class="pro">PRO</span> feature – one entitlement
+covers all three brands. Whatever your edition, the Connected devices page
+still lists every device you've added – ReefFactory meters, Red Sea ReefBeat
+devices, your Apex and your Hanna checker – and each card's
+<strong>Details</strong> shows its model, address and when the app last
+reached it.</p>
 
 <h2 id="backup">Backup, export &amp; sync</h2>
 
@@ -684,6 +754,15 @@ the app derives from – plus its target value and testing reminder. Ranges are
 per aquarium, so your SPS display and your quarantine tank can have different
 targets. Ratio cards and the free-ammonia row are managed here too.</p>
 
+<p>A parameter you haven't customized shows <strong>Following the
+defaults</strong>: it reads the recommended range for your aquarium type (or
+the built-in default, for microelements) as it stands today, so changing the
+tank's type re-colors it immediately and improvements to the recommended
+ranges arrive with app updates on their own. Boundaries you set yourself
+stick until you clear them – a <strong>Reset to defaults</strong> action on
+the parameter (and, for the whole tank, in the Manage parameters menu)
+returns things to the recommendations.</p>
+
 <h3>Tools</h3>
 <div class="shots">
   <figure class="shot"><img src="../img/salinity.png" alt="Salinity calculator" loading="lazy">
@@ -709,8 +788,7 @@ guide:</p>
   <tr><td>ICP report import</td><td>One-step Fauna Marin / ATI import</td></tr>
   <tr><td>Hanna Lab import</td><td>CSV import from the Hanna Lab app</td></tr>
   <tr><td>Hanna checker connection &amp; scan</td><td>Live Bluetooth measurements and camera reading <em>(experimental)</em></td></tr>
-  <tr><td>ReefFactory meters</td><td>Live salinity, pH and temperature saved as readings <em>(experimental)</em></td></tr>
-  <tr><td>Red Sea ReefBeat dashboard</td><td>ReefDose, ReefATO+ &amp; ReefMat status over Wi-Fi <em>(experimental)</em></td></tr>
+  <tr><td>Connected devices</td><td>ReefFactory, Red Sea ReefBeat &amp; Neptune Apex live over your Wi-Fi – one entitlement covers all brands <em>(experimental)</em></td></tr>
   <tr><td>Google Drive sync</td><td>Automatic cloud backups (Android)</td></tr>
 </table>
 

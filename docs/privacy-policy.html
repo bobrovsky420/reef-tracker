@@ -62,7 +62,7 @@
 <p class="crumb"><a href="./">← ReefTracker home</a></p>
 
 <h1>Privacy Policy for ReefTracker</h1>
-<p class="updated">Last updated: 23 July 2026</p>
+<p class="updated">Last updated: 31 July 2026</p>
 
 <p>ReefTracker ("the app") is an offline application for tracking reef aquarium
 water parameters. This policy explains how the app handles your information.
@@ -74,7 +74,10 @@ Google Drive backup, your data is uploaded only to your own Google Drive.</p>
 <p><strong>None.</strong> The app does not collect any personal information. It
 has no user accounts, no login, and no servers. All data you enter – such as
 your tanks, water parameter readings, and settings – is stored
-<strong>only locally on your device</strong>.</p>
+<strong>locally on your device</strong>. The only copies that can exist
+anywhere else are backups in <strong>your own</strong> accounts – the optional
+Google Drive backup and the Android system backup described below – never
+anything held by the developer.</p>
 
 <h2>How your data is used</h2>
 <p>Your data is used solely to provide the app's features on your device
@@ -114,6 +117,18 @@ turn it on. When enabled:</p>
 <a href="https://developers.google.com/terms/api-services-user-data-policy">Google
 API Services User Data Policy</a>, including the Limited Use requirements.</p>
 
+<h2>Android system backup</h2>
+<p>On Android, the operating system itself backs up app data to the Google
+account signed in on the device, as it does for most apps ("Android Auto
+Backup"). This backup is created and managed by Android, not by the app, and
+follows your device's backup settings – you can turn it off for the whole
+device under Android's Settings → Google → Backup. The copy goes only to
+<strong>your own Google account</strong>, where Android uses it to restore
+your data when you reinstall the app or move to a new phone; the developer
+has no access to it. Passwords for aquarium equipment that the app stores
+(such as a Neptune Apex controller login) are <strong>excluded</strong> from
+this backup and never leave your device.</p>
+
 <h2>Camera (checker display scan)</h2>
 <p>The app can use your device's camera for one optional feature: scanning the
 display of a Hanna pocket checker to read a measurement without typing it. The
@@ -130,19 +145,36 @@ like any other reading. On older Android versions (Android 11 and below), the
 system requires the location permission for Bluetooth scanning; the app does
 not determine, store, or transmit your location.</p>
 
+<h2>Local network (aquarium devices)</h2>
+<p>The app can optionally connect to aquarium equipment on your own Wi-Fi
+network – ReefFactory meters, Red Sea ReefBeat devices, and Neptune Apex
+controllers – to read their values, and can search your local network for
+such devices when you tap Add. All of this happens directly between your
+phone and the equipment on your own network: nothing is relayed through a
+cloud service, nothing is sent to the developer, and only the readings you
+choose to save are stored – locally, like any other reading. The login for an
+Apex controller is kept only on your phone and is sent only to your own
+controller; it is excluded from every kind of backup (see above). On iOS,
+using this feature triggers the system's Local Network permission prompt. If
+you never add a device, the app never accesses your local network.</p>
+
 <h2>Data retention and deletion</h2>
 <p>All data lives on your device for as long as you keep it there. You can
 delete any of it at any time inside the app, and uninstalling the app removes
 all of its data from your device. Backup files you created remain wherever
 you stored them until you delete them; backups in your Google Drive can be
-deleted from your Drive at any time. Because the developer holds no copy of
-your data, there is nothing further to request deletion of.</p>
+deleted from your Drive at any time. If the Android system backup is enabled,
+its copy remains in your own Google account under Android's backup policy so
+that a reinstall can restore it – you can manage or delete it through your
+device's backup settings. Because the developer holds no copy of your data,
+there is nothing further to request deletion of.</p>
 
 <h2>Permissions</h2>
 <p>The app only requests device permissions needed for features you use:
 saving or sharing backup files at your request, showing reminder notifications
-if you set reminders, the camera if you scan a checker's display, and
-Bluetooth if you connect a Hanna meter (see above). It does not access your
+if you set reminders, the camera if you scan a checker's display, Bluetooth
+if you connect a Hanna meter, and local network access if you connect
+aquarium devices on your Wi-Fi (see above). It does not access your
 contacts or microphone.</p>
 
 <h2>Children's privacy</h2>
