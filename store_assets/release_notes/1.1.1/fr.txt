@@ -1,0 +1,7 @@
+• Onglet Appareils (expérimental) : instruments, pompes et contrôleurs en un tap ; le checker Hanna a sa carte.
+• Copie de secours avant chaque restauration ; les sauvegardes sont toujours cohérentes.
+• Après un changement de téléphone, la restauration cloud est de nouveau proposée.
+• Le minuteur de réactif sonne même téléphone verrouillé.
+• Les bips baissent votre musique au lieu de l'arrêter.
+• Les appareils suivent votre séparateur décimal et °C/°F.
+• Nombreuses corrections de traduction.

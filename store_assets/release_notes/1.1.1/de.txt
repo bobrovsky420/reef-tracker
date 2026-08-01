@@ -1,0 +1,7 @@
+• Eigener Geräte-Tab (experimentell): Messgeräte, Pumpen und Controller einen Tipp entfernt; eigene Karte für den Hanna-Checker.
+• Wiederherstellen legt erst eine Sicherheitskopie an; Backups sind immer konsistent.
+• Nach dem Handy-Wechsel wird die Cloud-Wiederherstellung wieder angeboten.
+• Der Reagenz-Timer klingelt auch bei gesperrtem Telefon.
+• Timer-Töne senken deine Musik ab, statt sie zu stoppen.
+• Gerätewerte folgen deinem Dezimalzeichen und °C/°F.
+• Viele Übersetzungskorrekturen.

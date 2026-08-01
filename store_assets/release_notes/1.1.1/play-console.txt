@@ -1,0 +1,56 @@
+<en-GB>
+• Devices get their own tab (experimental): meters, pumps and controllers one tap away; the Hanna checker has its own card.
+• Restoring a backup first saves a safety copy; backups are always a consistent snapshot.
+• Cloud restore is offered again after moving to a new phone.
+• Timer beeps lower your music instead of pausing it.
+• Device readings use your decimal separator and °C/°F.
+• Many translation fixes.
+</en-GB>
+<cs-CZ>
+• Zařízení mají vlastní záložku (experimentální): měřiče, čerpadla a řídicí jednotky na jedno klepnutí; Hanna checker má vlastní kartu.
+• Obnova zálohy nejdřív uloží pojistnou kopii; zálohy jsou vždy konzistentním snímkem.
+• Po přechodu na nový telefon se znovu nabídne obnova z cloudu.
+• Pípnutí časovače hudbu jen ztlumí, místo aby ji zastavilo.
+• Hodnoty ze zařízení používají vaši desetinnou čárku a °C/°F.
+• Mnoho jazykových oprav.
+</cs-CZ>
+<de-DE>
+• Eigener Geräte-Tab (experimentell): Messgeräte, Pumpen und Controller einen Tipp entfernt; eigene Karte für den Hanna-Checker.
+• Wiederherstellen legt erst eine Sicherheitskopie an; Backups sind immer konsistent.
+• Nach dem Handy-Wechsel wird die Cloud-Wiederherstellung wieder angeboten.
+• Timer-Töne senken deine Musik ab, statt sie zu stoppen.
+• Gerätewerte folgen deinem Dezimalzeichen und °C/°F.
+• Viele Übersetzungskorrekturen.
+</de-DE>
+<ru-RU>
+• У устройств своя вкладка (эксперимент): измерители, помпы и контроллеры в одно касание; у чекера Hanna своя карточка.
+• Перед восстановлением сохраняется страховочная копия; резервные копии всегда целостны.
+• После переезда на новый телефон облачное восстановление снова предлагается.
+• Сигналы таймера приглушают музыку, а не останавливают её.
+• Устройства используют ваш десятичный разделитель и °C/°F.
+• Много исправлений перевода.
+</ru-RU>
+<pl-PL>
+• Urządzenia mają własną zakładkę (eksperymentalne): mierniki, pompy i sterowniki na jedno dotknięcie; checker Hanna ma własną kartę.
+• Przed przywróceniem zapisywana jest kopia bezpieczeństwa; kopie są zawsze spójne.
+• Po zmianie telefonu przywracanie z chmury znów jest proponowane.
+• Sygnały timera przyciszają muzykę zamiast ją zatrzymywać.
+• Urządzenia używają Twojego separatora dziesiętnego i °C/°F.
+• Wiele poprawek tłumaczenia.
+</pl-PL>
+<fr-FR>
+• Onglet Appareils (expérimental) : instruments, pompes et contrôleurs en un tap ; le checker Hanna a sa carte.
+• Copie de secours avant chaque restauration ; les sauvegardes sont toujours cohérentes.
+• Après un changement de téléphone, la restauration cloud est de nouveau proposée.
+• Les bips baissent votre musique au lieu de l'arrêter.
+• Les appareils suivent votre séparateur décimal et °C/°F.
+• Nombreuses corrections de traduction.
+</fr-FR>
+<it-IT>
+• Scheda Dispositivi dedicata (sperimentale): strumenti, pompe e centraline a un tocco; il checker Hanna ha il suo riquadro.
+• Prima di un ripristino viene salvata una copia di sicurezza; i backup sono sempre coerenti.
+• Dopo il cambio di telefono il ripristino dal cloud viene riproposto.
+• I bip abbassano la musica invece di fermarla.
+• I dispositivi usano il tuo separatore decimale e °C/°F.
+• Molte correzioni alle traduzioni.
+</it-IT>
