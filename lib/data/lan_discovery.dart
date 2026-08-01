@@ -96,6 +96,7 @@ class DiscoveryProgress {
     this.scanned = 0,
     this.total = 0,
     this.noNetwork = false,
+    this.permissionDenied = false,
   });
 
   final DiscoveryPhase phase;
@@ -110,6 +111,27 @@ class DiscoveryProgress {
   /// interface the app can't see. The UI explains this rather than reporting
   /// "no devices found".
   final bool noNetwork;
+
+  /// The OS refused the sweep's connections outright (#89) — iOS 14+ with the
+  /// Local Network permission denied. Everything LAN fails in that state,
+  /// manual IP entry included, so the UI points at the system setting instead
+  /// of blaming the router. Only set on the [DiscoveryPhase.done] event.
+  final bool permissionDenied;
+}
+
+/// What one TCP probe of the sweep learned about a host.
+enum PortProbe {
+  /// The port accepted a connection.
+  open,
+
+  /// Nothing usable answered — refused, timed out, or any ordinary failure.
+  closed,
+
+  /// The **OS** refused the connection before it left the phone (#89): on
+  /// iOS 14+ a denied Local Network permission fails every LAN connect
+  /// immediately with EPERM/EHOSTUNREACH. Never reported on Android, which
+  /// has no such permission.
+  denied,
 }
 
 /// The raw network primitives discovery needs, behind a seam so the service is
@@ -122,8 +144,9 @@ abstract class LanScanner {
   /// The phone's own addresses, skipped by the sweep.
   Future<Set<String>> localAddresses();
 
-  /// Whether [ip] accepts a TCP connection on [port] within [timeout].
-  Future<bool> isPortOpen(String ip, int port, Duration timeout);
+  /// Whether [ip] accepts a TCP connection on [port] within [timeout] — and,
+  /// when it doesn't, whether the OS itself blocked the attempt (#89).
+  Future<PortProbe> probePort(String ip, int port, Duration timeout);
 
   /// One mDNS sweep, returning Red Sea identities keyed by the responder's IP.
   /// Returns empty rather than throwing when mDNS is unavailable.
@@ -191,6 +214,7 @@ class LanDiscoveryService {
 
     // --- Phase 1: who is listening on port 80 at all? --------------------
     final open = <String>[];
+    var denied = 0;
     var scanned = 0;
     yield DiscoveryProgress(
       phase: DiscoveryPhase.sweeping,
@@ -200,10 +224,17 @@ class LanDiscoveryService {
     for (var i = 0; i < hosts.length; i += sweepConcurrency) {
       final batch = hosts.skip(i).take(sweepConcurrency).toList();
       final results = await Future.wait([
-        for (final ip in batch) scanner.isPortOpen(ip, 80, connectTimeout),
+        for (final ip in batch) scanner.probePort(ip, 80, connectTimeout),
       ]);
       for (var j = 0; j < batch.length; j++) {
-        if (results[j]) open.add(batch[j]);
+        switch (results[j]) {
+          case PortProbe.open:
+            open.add(batch[j]);
+          case PortProbe.denied:
+            denied++;
+          case PortProbe.closed:
+            break;
+        }
       }
       scanned += batch.length;
       yield DiscoveryProgress(
@@ -236,7 +267,9 @@ class LanDiscoveryService {
     var probed = 0;
     for (var i = 0; i < unexplained.length; i += probeConcurrency) {
       final batch = unexplained.skip(i).take(probeConcurrency).toList();
-      final results = await Future.wait([for (final ip in batch) _identify(ip)]);
+      final results = await Future.wait([
+        for (final ip in batch) _identify(ip),
+      ]);
       for (final device in results) {
         if (device != null) found[device.identifier] = device;
       }
@@ -254,6 +287,12 @@ class LanDiscoveryService {
       devices: found.values.toList(),
       scanned: unexplained.length,
       total: unexplained.length,
+      // A denied Local Network permission (#89) rejects *every* probe
+      // immediately — a majority of the sweep, nothing open, nothing found
+      // (mDNS multicast is blocked in the same state). A network where a few
+      // hosts merely answer strangely never claims it.
+      permissionDenied:
+          found.isEmpty && open.isEmpty && denied > hosts.length ~/ 2,
     );
   }
 
@@ -325,10 +364,19 @@ class IoLanScanner implements LanScanner {
 
   Future<List<InternetAddress>> _addresses() async {
     final out = <InternetAddress>[];
-    for (final iface in await NetworkInterface.list(
-      type: InternetAddressType.IPv4,
-      includeLoopback: false,
-    )) {
+    // #85: an enumeration failure must degrade to "no network to scan" (an
+    // explained dead end) — an escaping error would kill the whole scan
+    // stream, and the sheet with it.
+    final List<NetworkInterface> interfaces;
+    try {
+      interfaces = await NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLoopback: false,
+      );
+    } catch (_) {
+      return out;
+    }
+    for (final iface in interfaces) {
       out.addAll(iface.addresses);
     }
     return out;
@@ -350,17 +398,34 @@ class IoLanScanner implements LanScanner {
   }
 
   @override
-  Future<Set<String>> localAddresses() async =>
-      {for (final a in await _addresses()) a.address};
+  Future<Set<String>> localAddresses() async => {
+    for (final a in await _addresses()) a.address,
+  };
+
+  /// Whether a refused connect can mean the OS blocked LAN access. Only iOS
+  /// has the Local Network permission (#89); Android must never report
+  /// [PortProbe.denied] — its EHOSTUNREACH is an ordinary absent-host answer,
+  /// not a policy statement, and the notice the flag drives names an iOS
+  /// setting.
+  static final bool _canBeDenied = Platform.isIOS;
+
+  /// Darwin errnos of a connect the OS itself refused: EPERM (1) and
+  /// EHOSTUNREACH (65) — what a denied Local Network permission produces,
+  /// immediately, for every LAN peer.
+  static const _deniedErrnos = {1, 65};
 
   @override
-  Future<bool> isPortOpen(String ip, int port, Duration timeout) async {
+  Future<PortProbe> probePort(String ip, int port, Duration timeout) async {
     try {
       final socket = await Socket.connect(ip, port, timeout: timeout);
       socket.destroy();
-      return true;
+      return PortProbe.open;
+    } on SocketException catch (e) {
+      return _canBeDenied && _deniedErrnos.contains(e.osError?.errorCode)
+          ? PortProbe.denied
+          : PortProbe.closed;
     } catch (_) {
-      return false;
+      return PortProbe.closed;
     }
   }
 

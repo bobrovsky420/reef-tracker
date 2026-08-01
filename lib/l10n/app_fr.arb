@@ -636,6 +636,8 @@
   "hannaTimerStop": "Arrêter le minuteur",
   "hannaTimerSec": "{n} s",
   "hannaTimerMin": "{n} min",
+  "hannaTimerDoneTitle": "Minuteur de réactif terminé",
+  "hannaTimerDoneBody": "Le temps est écoulé — poursuivez la mesure sur votre appareil.",
   "hannaResultsTitle": "Résultats des mesures",
   "hannaResultsDisconnected": "La connexion a été perdue — les résultats déjà obtenus sont conservés.",
   "hannaNoResults": "Aucune mesure n'a été enregistrée.",
@@ -1027,6 +1029,8 @@
   "discoveryUnsupported": "Non pris en charge",
   "discoveryUnsupportedHelp": "L'application ne sait pas encore lire ce type d'appareil.",
   "discoveryRescan": "Relancer l'analyse",
+  "discoveryFailed": "L'analyse s'est interrompue à cause d'une erreur inattendue. Relancez l'analyse.",
+  "discoveryPermissionDenied": "ReefTracker n'est pas autorisé à accéder à votre réseau local : ni l'analyse ni les adresses saisies à la main ne peuvent fonctionner. Autorisez l'accès dans Réglages → Confidentialité et sécurité → Réseau local, puis relancez l'analyse.",
   "discoveryManualEntry": "Saisir une adresse IP",
   "deviceAlreadyAdded": "{name} est déjà ajouté. Utilisez Analyser le réseau pour lui attribuer une nouvelle adresse.",
 

@@ -139,6 +139,12 @@ int? _asInt(Object? v) => switch (v) {
   _ => null,
 };
 
+/// #84: the string twin of [_asDouble]/[_asInt]. A bare `as String?` cast
+/// breaks the file's tolerance contract — firmware serving `"mode": 1` would
+/// crash the refresh as a TypeError instead of degrading the card — so every
+/// string field goes through this instead.
+String? _asString(Object? v) => v is String ? v : null;
+
 /// Identity from `GET /device-info`. [hwid] is the stable unique identifier
 /// (MAC-derived); [hwType] discriminates the device family.
 class RbDeviceInfo {
@@ -173,8 +179,8 @@ class RbDeviceInfo {
       hwType: hwType,
       hwModel: hwModel,
       hwid: hwid,
-      name: json['name'] as String?,
-      status: json['status'] as String?,
+      name: _asString(json['name']),
+      status: _asString(json['status']),
     );
   }
 }
@@ -282,7 +288,7 @@ class RbDoseHead {
         : null;
     return RbDoseHead(
       number: number,
-      supplement: json['supplement'] as String?,
+      supplement: _asString(json['supplement']),
       shortName: shortName is String && shortName.trim().isNotEmpty
           ? shortName.trim()
           : null,
@@ -293,7 +299,7 @@ class RbDoseHead {
       dailyDose: _asDouble(json['daily_dose']),
       dailyDoses: _asInt(json['daily_doses']),
       remainingDays: _asInt(json['remaining_days']),
-      stockLevel: json['stock_level'] as String?,
+      stockLevel: _asString(json['stock_level']),
       recalibrationRequired: json['recalibration_required'] == true,
       missedVolume: missed is Map<String, Object?>
           ? (_asDouble(missed['missed_volume']) ?? 0)
@@ -358,7 +364,7 @@ class RbDoseStatus {
       heads.sort((a, b) => a.number.compareTo(b.number));
     }
     return RbDoseStatus(
-      batteryLevel: json['battery_level'] as String?,
+      batteryLevel: _asString(json['battery_level']),
       timeError: json['time_error'] == true,
       heads: heads,
     );
@@ -404,11 +410,9 @@ class RbDoseQueueEntry {
     }
     return RbDoseQueueEntry(
       secondsFromMidnight: seconds,
-      head: json['head'] is String ? json['head']! as String : null,
+      head: _asString(json['head']),
       volumeMl: _asDouble(json['volume']),
-      doseType: json['dose_type'] is String
-          ? json['dose_type']! as String
-          : null,
+      doseType: _asString(json['dose_type']),
     );
   }
 
@@ -493,7 +497,8 @@ class RbAtoStatus {
       // Only an active, connected sensor reporting other than "dry" alarms —
       // a disabled or absent sensor stays quiet.
       final status = leak['status'];
-      leakAlarm = leak['connected'] == true &&
+      leakAlarm =
+          leak['connected'] == true &&
           leak['enabled'] != false &&
           status is String &&
           status != 'dry';
@@ -515,7 +520,7 @@ class RbAtoStatus {
     }
 
     return RbAtoStatus(
-      waterLevelRaw: json['water_level'] as String?,
+      waterLevelRaw: _asString(json['water_level']),
       isPumpOn: json['is_pump_on'] == true,
       todayFills: _asInt(json['today_fills']),
       todayVolumeMl: _asDouble(json['today_volume_usage']),
@@ -658,8 +663,9 @@ class RbMatStatus {
     Map<String, Object?>? configuration,
   }) {
     final material = json['material'];
-    final materialName =
-        material is Map<String, Object?> ? material['name'] as String? : null;
+    final materialName = material is Map<String, Object?>
+        ? _asString(material['name'])
+        : null;
     final installed = json['setup_date'];
     final model = configuration?['model'];
     final mode = json['mode'];
@@ -667,7 +673,7 @@ class RbMatStatus {
     return RbMatStatus(
       modelCode: model is String && model.isNotEmpty ? model : null,
       modeRaw: mode is String ? mode : null,
-      rollLevelRaw: json['roll_level'] as String?,
+      rollLevelRaw: _asString(json['roll_level']),
       daysTillEndOfRoll: _asInt(json['days_till_end_of_roll']),
       remainingLengthCm: _asDouble(json['remaining_length']),
       rollLengthCm: parseRollLengthCm(materialName),
@@ -743,10 +749,10 @@ class RbRunPump {
 
   static RbRunPump fromJson(int number, Map<String, Object?> json) => RbRunPump(
     number: number,
-    name: json['name'] as String?,
-    type: json['type'] as String?,
-    model: json['model'] as String?,
-    state: json['state'] as String?,
+    name: _asString(json['name']),
+    type: _asString(json['type']),
+    model: _asString(json['model']),
+    state: _asString(json['state']),
     intensity: _asInt(json['intensity']),
     pulse: _asInt(json['pulse']),
     temperatureC: _asDouble(json['temperature']),
@@ -798,7 +804,7 @@ class RbRunStatus {
     }
     pumps.sort((a, b) => a.number.compareTo(b.number));
     return RbRunStatus(
-      batteryLevel: json['battery_level'] as String?,
+      batteryLevel: _asString(json['battery_level']),
       timeError: json['time_error'] == true,
       ecSensorConnected: json['ec_sensor_connected'] != false,
       pumps: pumps,
@@ -885,13 +891,12 @@ class RbLightStatus {
     final moon = json['moon_phase'];
     final program = json['current_program'];
 
-    int? channel(String key) => manual is Map<String, Object?>
-        ? _asInt(manual[key])
-        : null;
+    int? channel(String key) =>
+        manual is Map<String, Object?> ? _asInt(manual[key]) : null;
 
     return RbLightStatus(
-      mode: json['mode'] as String?,
-      batteryLevel: json['battery_level'] as String?,
+      mode: _asString(json['mode']),
+      batteryLevel: _asString(json['battery_level']),
       timeError: json['time_error'] == true,
       tiltSwitch: json['tilt_switch'] == true,
       whitePercent: channel('white'),
@@ -902,7 +907,7 @@ class RbLightStatus {
           ? _asDouble(manual['temperature'])
           : null,
       programName: program is Map<String, Object?>
-          ? cleanProgramName(program['name'] as String?)
+          ? cleanProgramName(_asString(program['name']))
           : null,
       acclimationEnabled:
           acclimation is Map<String, Object?> && acclimation['enabled'] == true,
@@ -914,7 +919,7 @@ class RbLightStatus {
           : null,
       moonPhaseEnabled: moon is Map<String, Object?> && moon['enabled'] == true,
       moonPhaseName: moon is Map<String, Object?>
-          ? moon['name'] as String?
+          ? _asString(moon['name'])
           : null,
       moonDay: moon is Map<String, Object?>
           ? _asInt(moon['todays_moon_day'])
@@ -970,9 +975,9 @@ class RbWaveInterval {
       reversePercent: _asInt(json['rti']),
       forwardMinutes: _asInt(json['frt']),
       reverseMinutes: _asInt(json['rrt']),
-      name: json['name'] as String?,
-      type: json['type'] as String?,
-      direction: json['direction'] as String?,
+      name: _asString(json['name']),
+      type: _asString(json['type']),
+      direction: _asString(json['direction']),
     );
   }
 }
@@ -1035,6 +1040,6 @@ class RbWaveStatus {
       }
       intervals.sort((a, b) => a.startMinute.compareTo(b.startMinute));
     }
-    return RbWaveStatus(mode: mode['mode'] as String?, intervals: intervals);
+    return RbWaveStatus(mode: _asString(mode['mode']), intervals: intervals);
   }
 }

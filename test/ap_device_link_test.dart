@@ -129,19 +129,13 @@ void main() {
       await startEmulator();
       await _control(emulator, '/emu/probe?name=pH&value=7.62');
       final status = await link.readOnce(host, good);
-      expect(
-        status.readings.firstWhere((r) => r.paramKey == 'ph').value,
-        7.62,
-      );
+      expect(status.readings.firstWhere((r) => r.paramKey == 'ph').value, 7.62);
     });
   });
 
   group('Classic', () {
     test('falls back to Basic auth when /rest/login 404s', () async {
-      await startEmulator(
-        firmware: EmuFirmware.classic,
-        serial: 'AJ:98765',
-      );
+      await startEmulator(firmware: EmuFirmware.classic, serial: 'AJ:98765');
       final status = await link.readOnce(host, good);
       expect(status.info.firmware, ApFirmware.classic);
       expect(status.info.serial, 'AJ:98765');
@@ -185,23 +179,26 @@ void main() {
       );
     });
 
-    test('a host that answers but is not an Apex is a protocol error', () async {
-      await startEmulator();
-      // Address it under a path prefix, so neither /rest/login nor
-      // /cgi-bin/status.json exists there: the server answers, but with
-      // nothing an Apex serves — the router admin page a mistyped address
-      // usually lands on, in miniature.
-      await expectLater(
-        link.readOnce('$host/not-an-apex', good),
-        throwsA(
-          isA<ApLinkException>().having(
-            (e) => e.error,
-            'error',
-            ApLinkError.protocol,
+    test(
+      'a host that answers but is not an Apex is a protocol error',
+      () async {
+        await startEmulator();
+        // Address it under a path prefix, so neither /rest/login nor
+        // /cgi-bin/status.json exists there: the server answers, but with
+        // nothing an Apex serves — the router admin page a mistyped address
+        // usually lands on, in miniature.
+        await expectLater(
+          link.readOnce('$host/not-an-apex', good),
+          throwsA(
+            isA<ApLinkException>().having(
+              (e) => e.error,
+              'error',
+              ApLinkError.protocol,
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
 
     test('a response past the #72 ceiling is a protocol error', () async {
       await startEmulator();
@@ -232,10 +229,60 @@ void main() {
       );
     });
 
-    test('a scheme and trailing slashes in the address are tolerated', () async {
-      await startEmulator();
-      final status = await link.readOnce('http://$host/', good);
-      expect(status.info.serial, 'AC5:12345');
+    test(
+      'a scheme and trailing slashes in the address are tolerated',
+      () async {
+        await startEmulator();
+        final status = await link.readOnce('http://$host/', good);
+        expect(status.info.serial, 'AC5:12345');
+      },
+    );
+
+    test(
+      'a typed address with a garbage port is a protocol error (#83)',
+      () async {
+        await startEmulator();
+        // `Uri.parse('http://1.2.3.4:bad/…')` throws FormatException — before
+        // #83 that escaped the ApLinkException contract and the add-sheet Check
+        // silently did nothing.
+        await expectLater(
+          link.readOnce('1.2.3.4:bad', good),
+          throwsA(
+            isA<ApLinkException>().having(
+              (e) => e.error,
+              'error',
+              ApLinkError.protocol,
+            ),
+          ),
+        );
+      },
+    );
+
+    test('a hostile login reply with a newline session id is a protocol '
+        'error, not a wedge (#83)', () async {
+      // Not the emulator: a *hostile* host at the stored address, answering
+      // the login with a session id that would corrupt the Cookie header.
+      final server = await HttpServer.bind('127.0.0.1', 0);
+      server.listen((request) async {
+        request.response
+          ..statusCode = HttpStatus.ok
+          ..write('{"connect.sid": "abc\\ndef"}');
+        await request.response.close();
+      });
+      try {
+        await expectLater(
+          link.readOnce('127.0.0.1:${server.port}', good),
+          throwsA(
+            isA<ApLinkException>().having(
+              (e) => e.error,
+              'error',
+              ApLinkError.protocol,
+            ),
+          ),
+        );
+      } finally {
+        await server.close(force: true);
+      }
     });
   });
 }

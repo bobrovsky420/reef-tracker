@@ -636,6 +636,8 @@
   "hannaTimerStop": "Zatrzymaj minutnik",
   "hannaTimerSec": "{n} s",
   "hannaTimerMin": "{n} min",
+  "hannaTimerDoneTitle": "Minutnik odczynnika zakończony",
+  "hannaTimerDoneBody": "Czas minął — kontynuuj pomiar na mierniku.",
   "hannaResultsTitle": "Wyniki pomiarów",
   "hannaResultsDisconnected": "Połączenie zostało utracone — dotychczasowe wyniki pozostają.",
   "hannaNoResults": "Nie zarejestrowano żadnych pomiarów.",
@@ -1027,6 +1029,8 @@
   "discoveryUnsupported": "Nieobsługiwane",
   "discoveryUnsupportedHelp": "Aplikacja nie potrafi jeszcze odczytać tego typu urządzenia.",
   "discoveryRescan": "Skanuj ponownie",
+  "discoveryFailed": "Skanowanie przerwał nieoczekiwany błąd. Spróbuj zeskanować ponownie.",
+  "discoveryPermissionDenied": "ReefTracker nie ma dostępu do sieci lokalnej, więc ani skanowanie, ani ręcznie wpisane adresy nie zadziałają. Zezwól na dostęp w Ustawienia → Prywatność i ochrona → Sieć lokalna, a potem zeskanuj ponownie.",
   "discoveryManualEntry": "Wpisz adres IP",
   "deviceAlreadyAdded": "{name} jest już dodane. Aby wskazać nowy adres, użyj funkcji „Skanuj sieć”.",
 

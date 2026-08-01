@@ -11,12 +11,20 @@ class _FakeScanner implements LanScanner {
     this.prefixes = const ['192.168.1'],
     this.mine = const {'192.168.1.100'},
     this.openHosts = const {},
+    this.deniedHosts = const {},
+    this.denyAll = false,
     this.mdns = const {},
   });
 
   final List<String> prefixes;
   final Set<String> mine;
   final Set<String> openHosts;
+
+  /// Hosts whose probe the OS refuses ([PortProbe.denied]); [denyAll] scripts
+  /// the iOS denied-Local-Network state, where *every* connect is refused.
+  final Set<String> deniedHosts;
+  final bool denyAll;
+
   final Map<String, RbMdnsIdentity> mdns;
 
   /// Every host the sweep actually tried, so tests can assert coverage.
@@ -29,9 +37,11 @@ class _FakeScanner implements LanScanner {
   Future<Set<String>> localAddresses() async => mine;
 
   @override
-  Future<bool> isPortOpen(String ip, int port, Duration timeout) async {
+  Future<PortProbe> probePort(String ip, int port, Duration timeout) async {
     swept.add(ip);
-    return openHosts.contains(ip);
+    if (openHosts.contains(ip)) return PortProbe.open;
+    if (denyAll || deniedHosts.contains(ip)) return PortProbe.denied;
+    return PortProbe.closed;
   }
 
   @override
@@ -93,11 +103,13 @@ void main() {
     );
     final rb = _FakeRbProbe({});
     final rf = _FakeRfProbe({});
-    final result = await runScan(LanDiscoveryService(
-      scanner: scanner,
-      reefBeatProbe: rb,
-      reefFactoryProbe: rf,
-    ));
+    final result = await runScan(
+      LanDiscoveryService(
+        scanner: scanner,
+        reefBeatProbe: rb,
+        reefFactoryProbe: rf,
+      ),
+    );
 
     expect(result.phase, DiscoveryPhase.done);
     expect(result.devices, hasLength(2));
@@ -108,34 +120,38 @@ void main() {
     expect(rf.calls, isEmpty);
   });
 
-  test('ReefFactory devices, which advertise nothing, are found by the sweep',
-      () async {
-    final scanner = _FakeScanner(openHosts: {'192.168.1.7'});
-    final rb = _FakeRbProbe({});
-    final rf = _FakeRfProbe({
-      '192.168.1.7': const RfIdentity(
-        serial: 'RFSG012110010070',
-        modelPrefix: 'RFSG01',
-        modelName: 'salinity',
-        displayName: 'Salinity Guardian',
-      ),
-    });
-    final result = await runScan(LanDiscoveryService(
-      scanner: scanner,
-      reefBeatProbe: rb,
-      reefFactoryProbe: rf,
-    ));
+  test(
+    'ReefFactory devices, which advertise nothing, are found by the sweep',
+    () async {
+      final scanner = _FakeScanner(openHosts: {'192.168.1.7'});
+      final rb = _FakeRbProbe({});
+      final rf = _FakeRfProbe({
+        '192.168.1.7': const RfIdentity(
+          serial: 'RFSG012110010070',
+          modelPrefix: 'RFSG01',
+          modelName: 'salinity',
+          displayName: 'Salinity Guardian',
+        ),
+      });
+      final result = await runScan(
+        LanDiscoveryService(
+          scanner: scanner,
+          reefBeatProbe: rb,
+          reefFactoryProbe: rf,
+        ),
+      );
 
-    expect(result.devices, hasLength(1));
-    final device = result.devices.single;
-    expect(device.kind, DiscoveredKind.reeffactory);
-    expect(device.identifier, 'RFSG012110010070');
-    expect(device.modelDisplayName, 'Salinity Guardian');
-    expect(device.supported, isTrue);
-    expect(device.viaMdns, isFalse);
-    // ReefBeat is tried first because it is the cheaper probe.
-    expect(rb.calls, ['192.168.1.7']);
-  });
+      expect(result.devices, hasLength(1));
+      final device = result.devices.single;
+      expect(device.kind, DiscoveredKind.reeffactory);
+      expect(device.identifier, 'RFSG012110010070');
+      expect(device.modelDisplayName, 'Salinity Guardian');
+      expect(device.supported, isTrue);
+      expect(device.viaMdns, isFalse);
+      // ReefBeat is tried first because it is the cheaper probe.
+      expect(rb.calls, ['192.168.1.7']);
+    },
+  );
 
   test('only hosts mDNS could not explain get a protocol probe', () async {
     final scanner = _FakeScanner(
@@ -144,11 +160,13 @@ void main() {
     );
     final rb = _FakeRbProbe({});
     final rf = _FakeRfProbe({});
-    await runScan(LanDiscoveryService(
-      scanner: scanner,
-      reefBeatProbe: rb,
-      reefFactoryProbe: rf,
-    ));
+    await runScan(
+      LanDiscoveryService(
+        scanner: scanner,
+        reefBeatProbe: rb,
+        reefFactoryProbe: rf,
+      ),
+    );
 
     expect(rb.calls, containsAll(['192.168.1.1', '192.168.1.16']));
     expect(rb.calls, isNot(contains('192.168.1.3')));
@@ -159,11 +177,13 @@ void main() {
       openHosts: {'192.168.1.4'},
       mdns: {'192.168.1.4': _mdns('e868e7eb7a28', 'RSWAVE25', 'reef-future')},
     );
-    final result = await runScan(LanDiscoveryService(
-      scanner: scanner,
-      reefBeatProbe: _FakeRbProbe({}),
-      reefFactoryProbe: _FakeRfProbe({}),
-    ));
+    final result = await runScan(
+      LanDiscoveryService(
+        scanner: scanner,
+        reefBeatProbe: _FakeRbProbe({}),
+        reefFactoryProbe: _FakeRfProbe({}),
+      ),
+    );
 
     final device = result.devices.single;
     expect(device.supported, isFalse);
@@ -177,11 +197,13 @@ void main() {
         openHosts: {'192.168.1.9'},
         mdns: {'192.168.1.9': _mdns('aa', 'RSX', type)},
       );
-      final result = await runScan(LanDiscoveryService(
-        scanner: scanner,
-        reefBeatProbe: _FakeRbProbe({}),
-        reefFactoryProbe: _FakeRfProbe({}),
-      ));
+      final result = await runScan(
+        LanDiscoveryService(
+          scanner: scanner,
+          reefBeatProbe: _FakeRbProbe({}),
+          reefFactoryProbe: _FakeRfProbe({}),
+        ),
+      );
       expect(result.devices.single.supported, isTrue, reason: type);
     }
   });
@@ -193,35 +215,43 @@ void main() {
       openHosts: {'192.168.1.3'},
       mdns: {'192.168.1.3': _mdns('cc7b5c267a68', 'RSDOSE4', kRbDosingHwType)},
     );
-    final result = await runScan(LanDiscoveryService(
-      scanner: scanner,
-      reefBeatProbe: _FakeRbProbe({
-        '192.168.1.3': _info('cc7b5c267a68', 'RSDOSE4', kRbDosingHwType),
-      }),
-      reefFactoryProbe: _FakeRfProbe({}),
-    ));
+    final result = await runScan(
+      LanDiscoveryService(
+        scanner: scanner,
+        reefBeatProbe: _FakeRbProbe({
+          '192.168.1.3': _info('cc7b5c267a68', 'RSDOSE4', kRbDosingHwType),
+        }),
+        reefFactoryProbe: _FakeRfProbe({}),
+      ),
+    );
     expect(result.devices, hasLength(1));
   });
 
-  test('reports noNetwork rather than an empty result when there is no LAN',
-      () async {
-    final result = await runScan(LanDiscoveryService(
-      scanner: _FakeScanner(prefixes: const []),
-      reefBeatProbe: _FakeRbProbe({}),
-      reefFactoryProbe: _FakeRfProbe({}),
-    ));
-    expect(result.noNetwork, isTrue);
-    expect(result.phase, DiscoveryPhase.done);
-    expect(result.devices, isEmpty);
-  });
+  test(
+    'reports noNetwork rather than an empty result when there is no LAN',
+    () async {
+      final result = await runScan(
+        LanDiscoveryService(
+          scanner: _FakeScanner(prefixes: const []),
+          reefBeatProbe: _FakeRbProbe({}),
+          reefFactoryProbe: _FakeRfProbe({}),
+        ),
+      );
+      expect(result.noNetwork, isTrue);
+      expect(result.phase, DiscoveryPhase.done);
+      expect(result.devices, isEmpty);
+    },
+  );
 
   test('sweeps the whole /24 except the phone itself', () async {
     final scanner = _FakeScanner(mine: const {'192.168.1.100'});
-    await runScan(LanDiscoveryService(
-      scanner: scanner,
-      reefBeatProbe: _FakeRbProbe({}),
-      reefFactoryProbe: _FakeRfProbe({}),
-    ));
+    await runScan(
+      LanDiscoveryService(
+        scanner: scanner,
+        reefBeatProbe: _FakeRbProbe({}),
+        reefFactoryProbe: _FakeRfProbe({}),
+      ),
+    );
     expect(scanner.swept, hasLength(253));
     expect(scanner.swept, contains('192.168.1.1'));
     expect(scanner.swept, contains('192.168.1.254'));
@@ -234,12 +264,14 @@ void main() {
       prefixes: const ['192.168.1', '10.0.0', '172.16.5'],
       mine: const {},
     );
-    await runScan(LanDiscoveryService(
-      scanner: scanner,
-      reefBeatProbe: _FakeRbProbe({}),
-      reefFactoryProbe: _FakeRfProbe({}),
-      maxSubnets: 2,
-    ));
+    await runScan(
+      LanDiscoveryService(
+        scanner: scanner,
+        reefBeatProbe: _FakeRbProbe({}),
+        reefFactoryProbe: _FakeRfProbe({}),
+        maxSubnets: 2,
+      ),
+    );
     expect(scanner.swept, hasLength(254 * 2));
     expect(scanner.swept.any((ip) => ip.startsWith('172.16.5')), isFalse);
   });
@@ -268,12 +300,63 @@ void main() {
   });
 
   test('a host that is neither vendor is dropped silently', () async {
-    final result = await runScan(LanDiscoveryService(
-      scanner: _FakeScanner(openHosts: {'192.168.1.1', '192.168.1.16'}),
-      reefBeatProbe: _FakeRbProbe({}),
-      reefFactoryProbe: _FakeRfProbe({}),
-    ));
+    final result = await runScan(
+      LanDiscoveryService(
+        scanner: _FakeScanner(openHosts: {'192.168.1.1', '192.168.1.16'}),
+        reefBeatProbe: _FakeRbProbe({}),
+        reefFactoryProbe: _FakeRfProbe({}),
+      ),
+    );
     expect(result.devices, isEmpty);
     expect(result.noNetwork, isFalse);
+    expect(result.permissionDenied, isFalse);
+  });
+
+  test(
+    'a sweep the OS refuses outright reports permissionDenied (#89)',
+    () async {
+      // The iOS denied-Local-Network state: every connect fails immediately as
+      // refused-by-policy, nothing opens, mDNS is equally blocked.
+      final result = await runScan(
+        LanDiscoveryService(
+          scanner: _FakeScanner(denyAll: true),
+          reefBeatProbe: _FakeRbProbe({}),
+          reefFactoryProbe: _FakeRfProbe({}),
+        ),
+      );
+      expect(result.phase, DiscoveryPhase.done);
+      expect(result.devices, isEmpty);
+      expect(result.permissionDenied, isTrue);
+    },
+  );
+
+  test('scattered refusals never claim a permission problem', () async {
+    final result = await runScan(
+      LanDiscoveryService(
+        scanner: _FakeScanner(deniedHosts: {'192.168.1.5', '192.168.1.6'}),
+        reefBeatProbe: _FakeRbProbe({}),
+        reefFactoryProbe: _FakeRfProbe({}),
+      ),
+    );
+    expect(result.permissionDenied, isFalse);
+  });
+
+  test('anything actually found disproves a denied sweep', () async {
+    // Contradictory by construction (denied means multicast is blocked too),
+    // but the honest reading of "a device was found" wins over the errnos.
+    final result = await runScan(
+      LanDiscoveryService(
+        scanner: _FakeScanner(
+          denyAll: true,
+          mdns: {
+            '192.168.1.3': _mdns('cc7b5c267a68', 'RSDOSE4', kRbDosingHwType),
+          },
+        ),
+        reefBeatProbe: _FakeRbProbe({}),
+        reefFactoryProbe: _FakeRfProbe({}),
+      ),
+    );
+    expect(result.devices, hasLength(1));
+    expect(result.permissionDenied, isFalse);
   });
 }

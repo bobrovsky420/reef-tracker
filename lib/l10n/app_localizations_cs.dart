@@ -2211,6 +2211,13 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get hannaTimerDoneTitle => 'Časovač činidla doběhl';
+
+  @override
+  String get hannaTimerDoneBody =>
+      'Čas vypršel — pokračujte v měření na přístroji.';
+
+  @override
   String get hannaResultsTitle => 'Výsledky měření';
 
   @override
@@ -3681,6 +3688,14 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get discoveryManualEntry => 'Zadat IP adresu';
+
+  @override
+  String get discoveryFailed =>
+      'Hledání skončilo neočekávanou chybou. Zkuste hledat znovu.';
+
+  @override
+  String get discoveryPermissionDenied =>
+      'ReefTracker nemá povolený přístup k místní síti, takže hledání ani ručně zadané adresy nemohou fungovat. Povolte ho v Nastavení → Soukromí a zabezpečení → Místní síť a pak hledejte znovu.';
 
   @override
   String deviceAlreadyAdded(Object name) {

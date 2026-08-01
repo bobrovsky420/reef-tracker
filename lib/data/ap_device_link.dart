@@ -132,7 +132,10 @@ class ApHttpLink implements ApDeviceLink {
       '/rest/config',
       headers: {'Cookie': 'connect.sid=$session'},
     );
-    return ApStatus.fromRestJson(status, tempUnit: apTempUnitFromConfig(config));
+    return ApStatus.fromRestJson(
+      status,
+      tempUnit: apTempUnitFromConfig(config),
+    );
   }
 
   /// Opens an AOS 5.x session, or returns null when this controller has no
@@ -160,10 +163,24 @@ class ApHttpLink implements ApDeviceLink {
     final sid = decoded['connect.sid'];
     if (sid is! String || sid.isEmpty) {
       // A 200 with no session is how some builds report bad credentials.
-      throw const ApLinkException(ApLinkError.auth, 'no session in login reply');
+      throw const ApLinkException(
+        ApLinkError.auth,
+        'no session in login reply',
+      );
+    }
+    // #83: the session id is LAN-attacker-controlled data headed for a Cookie
+    // header. A real Apex mints a printable token; anything with whitespace or
+    // control characters is refused here rather than letting HttpHeaders throw
+    // on it (the catch in [_send] is the backstop, this is the clean error).
+    if (!_cookieToken.hasMatch(sid)) {
+      throw const ApLinkException(ApLinkError.protocol, 'malformed session id');
     }
     return sid;
   }
+
+  /// Printable ASCII with no whitespace — the shape of every cookie value an
+  /// Apex actually mints.
+  static final RegExp _cookieToken = RegExp(r'^[\x21-\x7e]+$');
 
   /// The Classic path: Basic auth against `/cgi-bin/status.json`. The
   /// cache-busting query parameter is what the Apex's own web UI sends; older
@@ -234,10 +251,9 @@ class ApHttpLink implements ApDeviceLink {
     final client = _clientFactory()..connectionTimeout = timeout;
     try {
       final url = Uri.parse('http://$host$path');
-      final request = await (method == 'POST'
-              ? client.postUrl(url)
-              : client.getUrl(url))
-          .timeout(timeout);
+      final request =
+          await (method == 'POST' ? client.postUrl(url) : client.getUrl(url))
+              .timeout(timeout);
       headers.forEach(request.headers.set);
       if (body != null) request.write(body);
       final response = await request.close().timeout(timeout);
@@ -254,6 +270,13 @@ class ApHttpLink implements ApDeviceLink {
       throw ApLinkException(ApLinkError.unreachable, e.message);
     } on HttpException catch (e) {
       throw ApLinkException(ApLinkError.unreachable, e.message);
+    } on FormatException catch (e) {
+      // #83: `Uri.parse` on a typed address with a bad `:port`, or a header
+      // value the device controls (the login session id) containing a
+      // character HttpHeaders rejects. Both are "not an Apex conversation",
+      // and must not escape the ApLinkException contract every caller relies
+      // on.
+      throw ApLinkException(ApLinkError.protocol, e.message);
     } finally {
       client.close(force: true);
     }

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,7 +49,8 @@ class HannaMeterScreen extends ConsumerStatefulWidget {
   ConsumerState<HannaMeterScreen> createState() => _HannaMeterScreenState();
 }
 
-class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
+class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen>
+    with WidgetsBindingObserver {
   late final HannaMeterSession _session;
 
   /// Checked method codes on the selection step.
@@ -135,6 +138,22 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // #91: the attention beep must duck, not silence, whatever the keeper is
+    // listening to — the player's default takes exclusive focus (Android
+    // AUDIOFOCUS_GAIN pauses music without resuming it, iOS `.playback`
+    // stops it), and a multi-parameter run beeps several times. On iOS the
+    // context is global; this screen owns the app's only player, so that is
+    // exactly the scope wanted.
+    unawaited(
+      _beepPlayer
+          .setAudioContext(
+            AudioContextConfig(
+              focus: AudioContextConfigFocus.duckOthers,
+            ).build(),
+          )
+          .catchError((_) {}),
+    );
     _session = HannaMeterSession(ref.read(hannaMeterLinkFactoryProvider));
     _session.addListener(_onSession);
     unawaited(_session.connect());
@@ -147,12 +166,44 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timerTicker?.cancel();
     _setWakelock(false);
     unawaited(_beepPlayer.dispose());
     _session.removeListener(_onSession);
     _session.dispose();
     super.dispose();
+  }
+
+  /// #90: iOS suspends Dart timers while the phone is locked or the app is
+  /// backgrounded — the reagent beep, whose whole purpose is reaching a user
+  /// across the room, would only sound on unlock, after the reaction window
+  /// was missed. Hand a running timer's expiry to a scheduled notification
+  /// for the background stretch and take it back on resume. Android never
+  /// schedules one: its process keeps the in-app timer (and beep) running,
+  /// and an *inexact* alarm can be minutes late — useless against a 15 s
+  /// reagent window.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (defaultTargetPlatform != TargetPlatform.iOS) return;
+    final notifications = ref.read(reminderNotificationsProvider);
+    if (state == AppLifecycleState.paused) {
+      final ends = _timerEndsAt;
+      if (ends == null) return;
+      final l = AppLocalizations.of(context);
+      unawaited(
+        notifications
+            .scheduleTimerChime(
+              fireAt: ends,
+              channelName: l.hannaTimerHint,
+              title: l.hannaTimerDoneTitle,
+              body: l.hannaTimerDoneBody,
+            )
+            .catchError((_) {}),
+      );
+    } else if (state == AppLifecycleState.resumed) {
+      unawaited(notifications.cancelTimerChime().catchError((_) {}));
+    }
   }
 
   /// Set once we've recorded this checker in the connected-devices inventory,
@@ -197,10 +248,12 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     if (!_deviceCaptured && deviceName != null && deviceName.isNotEmpty) {
       _deviceCaptured = true;
       unawaited(
-        ref.read(dbProvider).ensureHannaDevice(
-          identifier: deviceName,
-          model: deviceName.split(' ').first,
-        ),
+        ref
+            .read(dbProvider)
+            .ensureHannaDevice(
+              identifier: deviceName,
+              model: deviceName.split(' ').first,
+            ),
       );
     }
     final measuring = _session.phase == HannaSessionPhase.measuring;
@@ -220,8 +273,7 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     unawaited(WakelockPlus.toggle(enable: on).catchError((_) {}));
   }
 
-  String? get _selectedMeterTank =>
-      _meterTank < _session.meterTanks.length
+  String? get _selectedMeterTank => _meterTank < _session.meterTanks.length
       ? _session.meterTanks[_meterTank]
       : null;
 
@@ -298,9 +350,7 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              connectedToDevice
-                  ? (_session.deviceName ?? '')
-                  : l.hannaScanHint,
+              connectedToDevice ? (_session.deviceName ?? '') : l.hannaScanHint,
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -319,7 +369,8 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
       HannaSessionErrorKind.bluetoothOff => l.hannaErrBluetoothOff,
       HannaSessionErrorKind.notFound => l.hannaErrNotFound,
       HannaSessionErrorKind.connectionLost => l.hannaErrConnectionLost,
-      HannaSessionErrorKind.connectionFailed || null => l.hannaErrConnectionFailed,
+      HannaSessionErrorKind.connectionFailed ||
+      null => l.hannaErrConnectionFailed,
     };
     return Center(
       child: Padding(
@@ -830,9 +881,8 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
                       else if (run.status == HannaRunStatus.skipped)
                         Text(
                           l.hannaStatusSkipped,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(color: tokens.textFaint),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: tokens.textFaint),
                         ),
                     ],
                   ),
@@ -868,28 +918,29 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
     );
   }
 
-  Widget _runIcon(HannaMethodRun run, ReefTokens tokens) => switch (run.status) {
-    HannaRunStatus.pending => Icon(
-      Icons.radio_button_unchecked,
-      size: 20,
-      color: tokens.textFaint,
-    ),
-    HannaRunStatus.running => const SizedBox(
-      width: 20,
-      height: 20,
-      child: CircularProgressIndicator(strokeWidth: 2),
-    ),
-    HannaRunStatus.done => Icon(
-      Icons.check_circle,
-      size: 20,
-      color: tokens.healthy,
-    ),
-    HannaRunStatus.skipped => Icon(
-      Icons.remove_circle_outline,
-      size: 20,
-      color: tokens.textFaint,
-    ),
-  };
+  Widget _runIcon(HannaMethodRun run, ReefTokens tokens) =>
+      switch (run.status) {
+        HannaRunStatus.pending => Icon(
+          Icons.radio_button_unchecked,
+          size: 20,
+          color: tokens.textFaint,
+        ),
+        HannaRunStatus.running => const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        HannaRunStatus.done => Icon(
+          Icons.check_circle,
+          size: 20,
+          color: tokens.healthy,
+        ),
+        HannaRunStatus.skipped => Icon(
+          Icons.remove_circle_outline,
+          size: 20,
+          color: tokens.textFaint,
+        ),
+      };
 
   // --- results ---------------------------------------------------------------
 
@@ -964,12 +1015,7 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
           child: Column(
             children: [
               for (var i = 0; i < results.length; i++)
-                _resultRow(
-                  l,
-                  prefs,
-                  results[i],
-                  last: i == results.length - 1,
-                ),
+                _resultRow(l, prefs, results[i], last: i == results.length - 1),
             ],
           ),
         ),
@@ -1095,7 +1141,9 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
               border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
             ),
       child: InkWell(
-        onTap: locked || _saving ? null : () => setState(() => _toggleIncluded(run)),
+        onTap: locked || _saving
+            ? null
+            : () => setState(() => _toggleIncluded(run)),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
           child: Row(
@@ -1624,7 +1672,6 @@ class _HannaMeterScreenState extends ConsumerState<HannaMeterScreen> {
       if (mounted) setState(() => _saving = false);
     }
   }
-
 
   Future<void> _confirmDiscard() async {
     final l = AppLocalizations.of(context);

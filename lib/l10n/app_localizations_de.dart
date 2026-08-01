@@ -2210,6 +2210,13 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get hannaTimerDoneTitle => 'Reagenz-Timer abgelaufen';
+
+  @override
+  String get hannaTimerDoneBody =>
+      'Die Zeit ist um — setze die Messung am Messgerät fort.';
+
+  @override
   String get hannaResultsTitle => 'Messergebnisse';
 
   @override
@@ -3670,6 +3677,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get discoveryManualEntry => 'IP-Adresse eingeben';
+
+  @override
+  String get discoveryFailed =>
+      'Die Suche ist mit einem unerwarteten Fehler abgebrochen. Versuche es noch einmal.';
+
+  @override
+  String get discoveryPermissionDenied =>
+      'ReefTracker darf nicht auf dein lokales Netzwerk zugreifen, deshalb funktionieren weder die Suche noch eingetippte Adressen. Erlaube den Zugriff unter Einstellungen → Datenschutz & Sicherheit → Lokales Netzwerk und suche dann erneut.';
 
   @override
   String deviceAlreadyAdded(Object name) {

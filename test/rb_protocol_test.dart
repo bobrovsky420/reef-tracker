@@ -231,8 +231,7 @@ const _matEndOfRollDashboardJson = '''
 }
 ''';
 
-Map<String, Object?> _decode(String s) =>
-    jsonDecode(s) as Map<String, Object?>;
+Map<String, Object?> _decode(String s) => jsonDecode(s) as Map<String, Object?>;
 
 void main() {
   group('RbDeviceInfo.fromJson', () {
@@ -399,10 +398,7 @@ void main() {
           // Head 3 wasn't readable at all.
         },
       );
-      expect(
-        [for (final h in status.heads) h.shortName],
-        ['KH', null, null],
-      );
+      expect([for (final h in status.heads) h.shortName], ['KH', null, null]);
     });
 
     test('a queued abbreviation resolves to its head', () {
@@ -620,9 +616,7 @@ void main() {
     });
 
     test('parses the end-of-roll golden vector', () {
-      final status = RbMatStatus.fromJson(
-        _decode(_matEndOfRollDashboardJson),
-      );
+      final status = RbMatStatus.fromJson(_decode(_matEndOfRollDashboardJson));
       expect(status.modeRaw, 'end_of_roll');
       expect(status.rollSpent, isTrue);
       expect(status.rollSeverity, RbStockSeverity.critical);
@@ -667,13 +661,12 @@ void main() {
         String? level,
         double? remaining,
         String? mode,
-      }) =>
-          RbMatStatus(
-            modeRaw: mode,
-            daysTillEndOfRoll: days,
-            rollLevelRaw: level,
-            remainingLengthCm: remaining,
-          ).rollSeverity;
+      }) => RbMatStatus(
+        modeRaw: mode,
+        daysTillEndOfRoll: days,
+        rollLevelRaw: level,
+        remainingLengthCm: remaining,
+      ).rollSeverity;
       expect(sev(days: 30, level: 'high'), RbStockSeverity.healthy);
       expect(sev(days: 10, level: 'high'), RbStockSeverity.caution);
       expect(sev(days: 3, level: 'high'), RbStockSeverity.critical);
@@ -736,7 +729,10 @@ void main() {
     test('thresholds: red below $kRbStockCriticalDays days, amber below '
         '$kRbStockCautionDays', () {
       expect(rbStockSeverity(0), RbStockSeverity.critical);
-      expect(rbStockSeverity(kRbStockCriticalDays - 1), RbStockSeverity.critical);
+      expect(
+        rbStockSeverity(kRbStockCriticalDays - 1),
+        RbStockSeverity.critical,
+      );
       expect(rbStockSeverity(kRbStockCriticalDays), RbStockSeverity.caution);
       expect(rbStockSeverity(kRbStockCautionDays - 1), RbStockSeverity.caution);
       expect(rbStockSeverity(kRbStockCautionDays), RbStockSeverity.healthy);
@@ -867,10 +863,14 @@ void main() {
         'ec_sensor_connected': false,
         'pump_1': {'name': 'Skimmer', 'sensor_controlled': controlled},
       };
-      expect(RbRunStatus.fromJson(withSensor(controlled: true)).sensorWarning,
-          isTrue);
-      expect(RbRunStatus.fromJson(withSensor(controlled: false)).sensorWarning,
-          isFalse);
+      expect(
+        RbRunStatus.fromJson(withSensor(controlled: true)).sensorWarning,
+        isTrue,
+      );
+      expect(
+        RbRunStatus.fromJson(withSensor(controlled: false)).sensorWarning,
+        isFalse,
+      );
     });
 
     test('a non-operational state is a fault, an absent one is not', () {
@@ -943,17 +943,19 @@ void main() {
       expect(status.moonDay, 24);
     });
 
-    test('strips the epoch suffix the ReefBeat app appends to program names',
-        () {
-      expect(
-        RbLightStatus.cleanProgramName('Winter Time-1769330261387'),
-        'Winter Time',
-      );
-      // A program legitimately ending in a short number must survive.
-      expect(RbLightStatus.cleanProgramName('Blue-2'), 'Blue-2');
-      expect(RbLightStatus.cleanProgramName('Ramp-2024'), 'Ramp-2024');
-      expect(RbLightStatus.cleanProgramName(null), isNull);
-    });
+    test(
+      'strips the epoch suffix the ReefBeat app appends to program names',
+      () {
+        expect(
+          RbLightStatus.cleanProgramName('Winter Time-1769330261387'),
+          'Winter Time',
+        );
+        // A program legitimately ending in a short number must survive.
+        expect(RbLightStatus.cleanProgramName('Blue-2'), 'Blue-2');
+        expect(RbLightStatus.cleanProgramName('Ramp-2024'), 'Ramp-2024');
+        expect(RbLightStatus.cleanProgramName(null), isNull);
+      },
+    );
 
     test('a payload missing every optional block still decodes', () {
       final status = RbLightStatus.fromJson(const {'mode': 'manual'});
@@ -1006,10 +1008,9 @@ void main() {
 ''';
 
     RbWaveStatus withSchedule({String mode = 'auto', String? auto}) =>
-        RbWaveStatus.fromJson(
-          {'mode': mode},
-          auto: jsonDecode(auto ?? waveAutoJson) as Map<String, Object?>,
-        );
+        RbWaveStatus.fromJson({
+          'mode': mode,
+        }, auto: jsonDecode(auto ?? waveAutoJson) as Map<String, Object?>);
 
     test('decodes the wave schedule', () {
       final status = withSchedule();
@@ -1042,7 +1043,8 @@ void main() {
       // A schedule that starts at 06:00 has nothing "current" at 02:00 unless
       // the day is treated as wrapping — the pump is running the last interval.
       final status = withSchedule(
-        auto: '{"intervals":['
+        auto:
+            '{"intervals":['
             '{"st":360,"fti":80},'
             '{"st":1320,"fti":25}]}',
       );
@@ -1052,7 +1054,8 @@ void main() {
 
     test('an out-of-order or partial schedule still resolves', () {
       final status = withSchedule(
-        auto: '{"intervals":['
+        auto:
+            '{"intervals":['
             '{"st":1320,"fti":30},'
             '{"st":0,"fti":10},'
             '{"name":"broken, no st or fti"},'
@@ -1080,18 +1083,97 @@ void main() {
 
   group('kRbSupportedHwTypes', () {
     test('covers every family with a parser, and nothing else', () {
+      expect(kRbSupportedHwTypes, {
+        kRbDosingHwType,
+        kRbAtoHwType,
+        kRbMatHwType,
+        kRbRunHwType,
+        kRbLightsHwType,
+        kRbWaveHwType,
+      });
+      expect(kRbSupportedHwTypes.contains('reef-something-new'), isFalse);
+    });
+  });
+
+  group('wrong-typed fields (#84)', () {
+    // The tolerance contract, exercised where it used to break: a firmware
+    // update serving a number where a string used to be must degrade the
+    // field to null, never crash the refresh as a TypeError.
+    test('every string slot tolerates a number', () {
+      final info = RbDeviceInfo.fromJson(const {
+        'hw_type': 'reef-dosing',
+        'hw_model': 'RSDOSE4',
+        'hwid': 'cc7b5c267a68',
+        'name': 42,
+        'status': 1,
+      })!;
+      expect(info.name, isNull);
+      expect(info.status, isNull);
+
+      final dose = RbDoseStatus.fromJson(const {
+        'battery_level': 3,
+        'heads': {
+          '1': {'supplement': 7, 'stock_level': 2, 'state': 'on'},
+        },
+      });
+      expect(dose.batteryLevel, isNull);
+      expect(dose.heads.single.supplement, isNull);
+      expect(dose.heads.single.stockLevel, isNull);
+
+      final queue = RbDoseQueueEntry.fromJson(const {
+        'time': 37200,
+        'head': 4,
+        'dose_type': 1,
+      })!;
+      expect(queue.head, isNull);
+      expect(queue.doseType, isNull);
+
       expect(
-        kRbSupportedHwTypes,
-        {
-          kRbDosingHwType,
-          kRbAtoHwType,
-          kRbMatHwType,
-          kRbRunHwType,
-          kRbLightsHwType,
-          kRbWaveHwType,
+        RbAtoStatus.fromJson(const {'water_level': 2}).waterLevelRaw,
+        isNull,
+      );
+
+      final mat = RbMatStatus.fromJson(const {
+        'mode': 1,
+        'roll_level': 0,
+        'material': {'name': 32},
+      });
+      expect(mat.modeRaw, isNull);
+      expect(mat.rollLevelRaw, isNull);
+      expect(mat.materialName, isNull);
+
+      final run = RbRunStatus.fromJson(const {
+        'battery_level': 9,
+        'pump_1': {'name': 1, 'type': 2, 'model': 3, 'state': 4},
+      });
+      expect(run.batteryLevel, isNull);
+      expect(run.pumps.single.name, isNull);
+      expect(run.pumps.single.state, isNull);
+      // An unreadable state must stay optimistic, not read as a fault.
+      expect(run.pumps.single.faulted, isFalse);
+
+      final light = RbLightStatus.fromJson(const {
+        'mode': 1,
+        'battery_level': 0,
+        'current_program': {'name': 5},
+        'moon_phase': {'enabled': true, 'name': 3},
+      });
+      expect(light.mode, isNull);
+      expect(light.programName, isNull);
+      expect(light.moonPhaseName, isNull);
+
+      final wave = RbWaveStatus.fromJson(
+        const {'mode': 1},
+        auto: const {
+          'intervals': [
+            {'st': 0, 'fti': 60, 'name': 2, 'type': 3, 'direction': 4},
+          ],
         },
       );
-      expect(kRbSupportedHwTypes.contains('reef-something-new'), isFalse);
+      expect(wave.mode, isNull);
+      expect(wave.intervals.single.name, isNull);
+      // An unreadable mode stays optimistic, like an absent one.
+      expect(wave.scheduleApplies, isTrue);
     });
   });
 }

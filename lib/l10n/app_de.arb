@@ -636,6 +636,8 @@
   "hannaTimerStop": "Timer anhalten",
   "hannaTimerSec": "{n} s",
   "hannaTimerMin": "{n} Min.",
+  "hannaTimerDoneTitle": "Reagenz-Timer abgelaufen",
+  "hannaTimerDoneBody": "Die Zeit ist um — setze die Messung am Messgerät fort.",
   "hannaResultsTitle": "Messergebnisse",
   "hannaResultsDisconnected": "Die Verbindung wurde unterbrochen — die bisher erfassten Ergebnisse bleiben erhalten.",
   "hannaNoResults": "Keine Messungen erfasst.",
@@ -1027,6 +1029,8 @@
   "discoveryUnsupported": "Nicht unterstützt",
   "discoveryUnsupportedHelp": "Diesen Gerätetyp kann die App noch nicht auslesen.",
   "discoveryRescan": "Erneut suchen",
+  "discoveryFailed": "Die Suche ist mit einem unerwarteten Fehler abgebrochen. Versuche es noch einmal.",
+  "discoveryPermissionDenied": "ReefTracker darf nicht auf dein lokales Netzwerk zugreifen, deshalb funktionieren weder die Suche noch eingetippte Adressen. Erlaube den Zugriff unter Einstellungen → Datenschutz & Sicherheit → Lokales Netzwerk und suche dann erneut.",
   "discoveryManualEntry": "IP-Adresse eingeben",
   "deviceAlreadyAdded": "{name} ist bereits hinzugefügt. Verwende Netzwerk durchsuchen, um eine neue Adresse zuzuweisen.",
 

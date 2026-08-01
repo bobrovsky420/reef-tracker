@@ -2213,6 +2213,13 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get hannaTimerDoneTitle => 'Minuteur de réactif terminé';
+
+  @override
+  String get hannaTimerDoneBody =>
+      'Le temps est écoulé — poursuivez la mesure sur votre appareil.';
+
+  @override
   String get hannaResultsTitle => 'Résultats des mesures';
 
   @override
@@ -3682,6 +3689,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get discoveryManualEntry => 'Saisir une adresse IP';
+
+  @override
+  String get discoveryFailed =>
+      'L\'analyse s\'est interrompue à cause d\'une erreur inattendue. Relancez l\'analyse.';
+
+  @override
+  String get discoveryPermissionDenied =>
+      'ReefTracker n\'est pas autorisé à accéder à votre réseau local : ni l\'analyse ni les adresses saisies à la main ne peuvent fonctionner. Autorisez l\'accès dans Réglages → Confidentialité et sécurité → Réseau local, puis relancez l\'analyse.';
 
   @override
   String deviceAlreadyAdded(Object name) {

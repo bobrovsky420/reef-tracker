@@ -124,11 +124,23 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
     return h;
   }
 
+  /// #84 backstop: the payload parsers are written to tolerate firmware drift,
+  /// but if one still trips over an unforeseen shape, the resulting [Error]
+  /// (a TypeError, typically) must degrade to the [RbLinkError.protocol] every
+  /// consumer already handles — not crash the refresh, wedge the card's
+  /// spinner, or kill the discovery scan stream.
+  static T _decode<T>(T Function() parse) {
+    try {
+      return parse();
+    } on Error catch (e) {
+      throw RbLinkException(RbLinkError.protocol, e.toString());
+    }
+  }
+
   @override
   Future<RbDeviceInfo> identify(String host) async {
-    final info = RbDeviceInfo.fromJson(
-      await _getJson(_normalizeHost(host), '/device-info'),
-    );
+    final json = await _getJson(_normalizeHost(host), '/device-info');
+    final info = _decode(() => RbDeviceInfo.fromJson(json));
     if (info == null) {
       throw const RbLinkException(RbLinkError.protocol, 'no device identity');
     }
@@ -150,7 +162,9 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
         // the keeper reassigns a supplement in the ReefBeat app. Tolerant: a
         // head whose settings don't answer just keeps no abbreviation.
         final headSettings = <int, Map<String, Object?>>{};
-        for (final head in RbDoseStatus.fromJson(dashboard).heads) {
+        for (final head in _decode(
+          () => RbDoseStatus.fromJson(dashboard),
+        ).heads) {
           final settings = await _tryGetJson(
             h,
             '/head/${head.number}/settings',
@@ -159,12 +173,15 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
         }
         return RbSnapshot(
           info: info,
-          dose: RbDoseStatus.fromJson(dashboard, headSettings: headSettings),
+          dose: _decode(
+            () => RbDoseStatus.fromJson(dashboard, headSettings: headSettings),
+          ),
         );
       case kRbAtoHwType:
+        final dashboard = await _getJson(h, '/dashboard');
         return RbSnapshot(
           info: info,
-          ato: RbAtoStatus.fromJson(await _getJson(h, '/dashboard')),
+          ato: _decode(() => RbAtoStatus.fromJson(dashboard)),
         );
       case kRbMatHwType:
         final dashboard = await _getJson(h, '/dashboard');
@@ -173,17 +190,21 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
         final configuration = await _tryGetJson(h, '/configuration');
         return RbSnapshot(
           info: info,
-          mat: RbMatStatus.fromJson(dashboard, configuration: configuration),
+          mat: _decode(
+            () => RbMatStatus.fromJson(dashboard, configuration: configuration),
+          ),
         );
       case kRbRunHwType:
+        final dashboard = await _getJson(h, '/dashboard');
         return RbSnapshot(
           info: info,
-          run: RbRunStatus.fromJson(await _getJson(h, '/dashboard')),
+          run: _decode(() => RbRunStatus.fromJson(dashboard)),
         );
       case kRbLightsHwType:
+        final dashboard = await _getJson(h, '/dashboard');
         return RbSnapshot(
           info: info,
-          light: RbLightStatus.fromJson(await _getJson(h, '/dashboard')),
+          light: _decode(() => RbLightStatus.fromJson(dashboard)),
         );
       case kRbWaveHwType:
         // The wave serves no /dashboard — see rb_protocol.dart. `/mode` is
@@ -193,7 +214,7 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
         final auto = await _tryGetJson(h, '/auto');
         return RbSnapshot(
           info: info,
-          wave: RbWaveStatus.fromJson(mode, auto: auto),
+          wave: _decode(() => RbWaveStatus.fromJson(mode, auto: auto)),
         );
       default:
         throw RbLinkException(RbLinkError.unsupportedModel, info.hwType);
@@ -206,7 +227,7 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
     if (decoded is! List) {
       throw const RbLinkException(RbLinkError.protocol, 'not a JSON array');
     }
-    return RbDoseQueueEntry.listFromJson(decoded);
+    return _decode(() => RbDoseQueueEntry.listFromJson(decoded));
   }
 
   /// A [_getJson] whose failure is not fatal — for endpoints that only enrich
@@ -237,7 +258,10 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
           .timeout(timeout);
       final response = await request.close().timeout(timeout);
       if (response.statusCode != HttpStatus.ok) {
-        throw RbLinkException(RbLinkError.protocol, 'HTTP ${response.statusCode}');
+        throw RbLinkException(
+          RbLinkError.protocol,
+          'HTTP ${response.statusCode}',
+        );
       }
       final body = await readBoundedText(
         response,

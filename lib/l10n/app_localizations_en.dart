@@ -2198,6 +2198,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get hannaTimerDoneTitle => 'Reagent timer finished';
+
+  @override
+  String get hannaTimerDoneBody =>
+      'Time\'s up — continue the measurement on your meter.';
+
+  @override
   String get hannaResultsTitle => 'Measurement results';
 
   @override
@@ -3650,6 +3657,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discoveryManualEntry => 'Enter IP address';
+
+  @override
+  String get discoveryFailed =>
+      'The scan ran into an unexpected error and stopped. Try scanning again.';
+
+  @override
+  String get discoveryPermissionDenied =>
+      'ReefTracker isn\'t allowed to access your local network, so scanning and typed-in addresses can\'t work. Allow it under Settings → Privacy & Security → Local Network, then scan again.';
 
   @override
   String deviceAlreadyAdded(Object name) {

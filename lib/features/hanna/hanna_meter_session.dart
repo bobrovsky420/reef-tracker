@@ -124,37 +124,61 @@ class HannaMeterSession extends ChangeNotifier {
 
   static const _replyTimeout = Duration(seconds: 8);
 
+  /// Monotonic connect generation (#88): a second [connect] — a double-tapped
+  /// "Try again" — supersedes the first, whose remaining awaits must neither
+  /// drive the phase nor fail the session once the winner owns the link.
+  int _connectGen = 0;
+
+  /// True when [gen]'s connect attempt has been superseded (or the session
+  /// disposed) — everything it still holds must be dropped on the floor.
+  bool _stale(int gen) => _disposed || gen != _connectGen;
+
   /// (Re)starts the whole session with a fresh link. Safe to call from the
-  /// failed phase as the retry action.
+  /// failed phase as the retry action; re-entrant — a connect already in
+  /// flight is superseded, its link torn down, its late completions ignored.
   Future<void> connect() async {
-    await _teardownLink();
-    final link = _linkFactory();
-    _link = link;
+    final gen = ++_connectGen;
+    // Phase first, teardown second: disposing the loser's link can take
+    // seconds, and the failed view's retry button must not stay live for
+    // them (#77's class).
     phase = HannaSessionPhase.connecting;
     error = null;
     endedByDisconnect = false;
     _notify();
+    await _teardownLink();
+    if (_stale(gen)) return;
+    final link = _linkFactory();
+    _link = link;
     try {
-      deviceName = await link.connect();
-      if (_disposed) return;
+      final name = await link.connect();
+      if (_stale(gen)) return;
+      deviceName = name;
       _linkAlive = true;
       _notify();
       _lineSub = link.lines.listen(_onLine);
       _discSub = link.onDisconnected.listen((_) => _onDisconnected());
 
-      info = parseHannaInfo(
-        await _request(hannaCmdInfo, (l) => parseHannaInfo(l) != null),
+      final infoLine = await _request(
+        hannaCmdInfo,
+        (l) => parseHannaInfo(l) != null,
       );
+      if (_stale(gen)) return;
+      info = parseHannaInfo(infoLine);
       await _request(hannaCmdSetTime(_clock()), (l) => isHannaAck(l, 'ST'));
-      battery = parseHannaBattery(
-        await _request(hannaCmdGetBattery, (l) => parseHannaBattery(l) != null),
+      final batteryLine = await _request(
+        hannaCmdGetBattery,
+        (l) => parseHannaBattery(l) != null,
       );
+      if (_stale(gen)) return;
+      battery = parseHannaBattery(batteryLine);
       await _request(hannaCmdGetSetup, (l) => l.startsWith('GS'));
-      meterTanks = await _collectTanks();
-      if (_disposed) return;
+      final tanks = await _collectTanks();
+      if (_stale(gen)) return;
+      meterTanks = tanks;
       phase = HannaSessionPhase.ready;
       _notify();
     } on HannaLinkException catch (e) {
+      if (_stale(gen)) return;
       _fail(switch (e.error) {
         HannaLinkError.unsupported => HannaSessionErrorKind.unsupported,
         HannaLinkError.bluetoothOff => HannaSessionErrorKind.bluetoothOff,
@@ -163,6 +187,7 @@ class HannaMeterSession extends ChangeNotifier {
           HannaSessionErrorKind.connectionFailed,
       });
     } catch (_) {
+      if (_stale(gen)) return;
       _fail(HannaSessionErrorKind.connectionFailed);
     }
   }

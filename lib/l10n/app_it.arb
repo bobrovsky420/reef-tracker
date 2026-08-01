@@ -636,6 +636,8 @@
   "hannaTimerStop": "Ferma il timer",
   "hannaTimerSec": "{n} s",
   "hannaTimerMin": "{n} min",
+  "hannaTimerDoneTitle": "Timer del reagente terminato",
+  "hannaTimerDoneBody": "Tempo scaduto — continua la misurazione sullo strumento.",
   "hannaResultsTitle": "Risultati delle misurazioni",
   "hannaResultsDisconnected": "La connessione è stata persa — i risultati acquisiti finora restano.",
   "hannaNoResults": "Nessuna misurazione acquisita.",
@@ -1027,6 +1029,8 @@
   "discoveryUnsupported": "Non supportato",
   "discoveryUnsupportedHelp": "L'app non è ancora in grado di leggere questo tipo di dispositivo.",
   "discoveryRescan": "Scansiona di nuovo",
+  "discoveryFailed": "La scansione si è interrotta per un errore imprevisto. Prova a scansionare di nuovo.",
+  "discoveryPermissionDenied": "ReefTracker non è autorizzato ad accedere alla rete locale, quindi né la scansione né gli indirizzi digitati a mano possono funzionare. Consenti l'accesso in Impostazioni → Privacy e sicurezza → Rete locale, poi scansiona di nuovo.",
   "discoveryManualEntry": "Inserisci indirizzo IP",
   "deviceAlreadyAdded": "{name} è già stato aggiunto. Usa Scansiona la rete per assegnargli un nuovo indirizzo.",
 

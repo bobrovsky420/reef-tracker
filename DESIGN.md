@@ -2304,7 +2304,18 @@ for it) only exists once the experimental-features master switch
   `tool/gen_beep.dart`, played via `audioplayers`). The **same beep + haptic
   fires whenever a result frame lands**, so a user working on the meter (or
   away from the phone) hears each parameter finish; it is driven off a growth
-  in `completedRuns`, so skips and a mid-run disconnect stay silent. While the measuring
+  in `completedRuns`, so skips and a mid-run disconnect stay silent. The beep
+  **ducks** other audio instead of silencing it (#91:
+  `AudioContextConfig(focus: duckOthers)` → Android `gainTransientMayDuck`,
+  iOS `.duckOthers` — the player's default takes exclusive focus, which
+  pauses the keeper's music without resuming it). On **iOS** a running timer
+  hands its expiry to a one-shot **scheduled notification** when the app
+  backgrounds and takes it back on resume (#90: iOS suspends Dart timers on
+  lock/background, so the in-app beep alone would fire only on unlock, after
+  the reaction window was missed; the notification plays the default system
+  sound — the beep asset isn't visible to the notification center — and
+  Android never schedules one, its process keeps the in-app timer running).
+  Both halves are iOS-unvalidated locally (CI-only builds). While the measuring
   phase is active the screen holds a **wakelock** (`wakelock_plus`,
   `FLAG_KEEP_SCREEN_ON`/`idleTimerDisabled` — no permissions) so the
   display can't sleep mid-chemistry; it releases on every other phase and
@@ -2378,7 +2389,14 @@ for it) only exists once the experimental-features master switch
   already bonded) so typing the code can't time the handshake out, and the
   notify subscribe carries a 60 s timeout for iOS's implicit pairing
   prompt. iOS has `NSBluetoothAlwaysUsageDescription` but is **not locally
-  testable** (validate via CI before claiming support).
+  testable** (validate via CI before claiming support). **Lifecycle (#88):**
+  the link checks `_disposed` after every await of its connect flow — backing
+  out during the 15 s scan used to let the in-flight connect resume on the
+  disposed link, opening a GATT connection nothing ever closed (the meter
+  stayed held, blocking the official Hanna app, until Bluetooth was toggled);
+  and the session's `connect()` carries a generation counter, so a
+  double-tapped "Try again" supersedes the first attempt instead of two
+  handshakes fighting over one set of fields.
 - **Tier:** `hannaConnect`, `grandfathered: true` (2026-07-21 decision,
   consistent with `hannaImport`).
 - **Deferred:** `get log` bulk history pull (the meter logs readings
@@ -2809,7 +2827,13 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   schedule: `/wifi` is **not** fetched, since nothing displays the link state
   and the call would cost a request per refresh for nothing. Parsing is
   tolerant throughout —
-  absent/malformed fields degrade the card, never crash a refresh.
+  absent/malformed fields degrade the card, never crash a refresh. That
+  contract covers types, not just absence (#84): string fields go through
+  `_asString` exactly like the numeric `_asDouble`/`_asInt`, so a firmware
+  update serving `"mode": 1` degrades the field to null; and the transport
+  wraps every parser call, mapping any unforeseen decode `Error` to
+  `RbLinkError.protocol` rather than crashing the refresh (or, in discovery,
+  killing the whole scan stream).
   `rbModelDisplayName` maps `hw_model` → friendly name ("ReefDose 4",
   "ReefATO+", "ReefMat 250", "ReefRun", "ReefLED 90", "ReefWave 25"), the
   default device name on add.
@@ -3027,7 +3051,11 @@ out the same LAN-only requirement.
   the one the keeper can fix from the card, so it renders a "Sign in again"
   button beside the error. Responses are size-capped (`maxResponseBytes`, see
   **Response-size ceilings** under LAN discovery below) — an Apex `/rest/config`
-  is the roomiest case that ceiling was chosen for.
+  is the roomiest case that ceiling was chosen for. Every transport failure
+  maps into the exception contract, `FormatException` included (#83: a typed
+  address with a garbage `:port`, or a hostile login reply whose session id
+  would corrupt a header — non-token session ids are additionally refused
+  before they can reach a Cookie header).
 - **Credentials.** An Apex is the only authenticated device API here, so
   `Devices` gained **`username`** (schema v26, `addColumn` guarded like
   `display_order`). The password is **not in the database** (#68): the app's
@@ -3207,8 +3235,12 @@ sweep, just with more probing. Nothing treats an empty mDNS result as an error.
   different address), "Added" (unchanged) or "Not supported". Unsupported
   devices are **shown rather than filtered**: a keeper with a device the app
   can't read yet should see it was found, not wonder why the scan missed it.
-  The two dead ends explain themselves — `noNetwork` (no private IPv4 at all)
-  and nothing-found (which names AP client isolation as a likely cause).
+  The dead ends explain themselves — `noNetwork` (no private IPv4 at all),
+  nothing-found (which names AP client isolation as a likely cause), a
+  scan-stream failure (#85: the sheet listens with an `onError` that lands on
+  a synthetic done state, so whatever was found stays usable and Rescan
+  re-enables, instead of wedging at "scanning" forever), and the iOS
+  Local-Network denial notice (#89 — see the iOS notes below).
 - **Address repair** is the lasting value beyond first-time setup. A DHCP lease
   change silently breaks a stored `Devices.address`; because discovery matches
   by hwid/serial, one tap repoints the row via `updateDeviceAddress`, which is
@@ -3230,6 +3262,23 @@ sweep, just with more probing. Nothing treats an empty mDNS result as an error.
   `dart:io` sockets bypass the cleartext policy). **iOS requires
   `NSLocalNetworkUsageDescription`** — without it *any* LAN access fails
   silently on iOS 14+, manual entry included; see the iOS notes below.
+- **iOS notes (Local Network permission, #89)**: on iOS 14+ the *first* sweep
+  triggers the permission prompt mid-scan, so that scan typically completes
+  empty before the user has answered — a rescan after granting works. After a
+  **deny**, every LAN connect fails instantly and manual IP entry is just as
+  blocked as the sweep, so a generic "no devices found" (blaming the router,
+  suggesting manual entry) would mislead on both counts. Detection is
+  behavioral, at the scanner: `IoLanScanner.probePort` maps a connect the OS
+  itself refused (Darwin errnos EPERM/EHOSTUNREACH — gated to iOS via
+  `Platform.isIOS`, because Android has no such permission and its own
+  EHOSTUNREACH is an ordinary absent-host answer) to `PortProbe.denied`, and
+  `scan()` reports `DiscoveryProgress.permissionDenied` on the done event when
+  a majority of the sweep was denied and nothing opened or was found. The
+  sheet then shows a dedicated notice pointing at Settings → Privacy &
+  Security → Local Network. **Not yet validated on a real iOS device** (iOS
+  builds only on CI): the majority-denied plumbing is unit-tested through the
+  scanner seam, but the exact errnos a denied device produces are the part
+  that needs confirming on hardware.
 - **Deferred**: auto-rescan when a stored address stops answering (the natural
   next step, since the machinery now exists), and discovery of vendors beyond
   these two.

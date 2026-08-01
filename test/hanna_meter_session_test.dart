@@ -1,9 +1,36 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/hanna_meter_link.dart';
 import 'package:reeftracker/domain/hanna_meter.dart';
 import 'package:reeftracker/features/hanna/hanna_meter_session.dart';
 
 import 'fake_hanna_link.dart';
+
+/// A link whose connect blocks on [gate] and honors disposal the way the real
+/// BLE link does after #88 — the raw material for the connect-race tests.
+class _SlowConnectLink extends FakeHannaMeterLink {
+  _SlowConnectLink(this.gate);
+  final Completer<void> gate;
+  bool disposed = false;
+
+  @override
+  Future<String> connect() async {
+    await gate.future;
+    if (disposed) {
+      throw const HannaLinkException(
+        HannaLinkError.connectionFailed,
+        'link disposed',
+      );
+    }
+    return super.connect();
+  }
+
+  @override
+  Future<void> dispose() async {
+    disposed = true;
+  }
+}
 
 const _result = hannaResultFrame;
 
@@ -192,21 +219,27 @@ void main() {
     await session.remeasure(session.runs);
     await session.stopEarly();
     expect(session.completedRuns.length, 2);
-    expect(session.runs.map((r) => r.value), [closeTo(8.1, 1e-9), closeTo(11.5, 1e-9)]);
+    expect(session.runs.map((r) => r.value), [
+      closeTo(8.1, 1e-9),
+      closeTo(11.5, 1e-9),
+    ]);
     expect(session.runs.every((r) => r.remeasureAbandoned), isTrue);
   });
 
-  test('a disconnect while re-measuring everything keeps the results', () async {
-    await measureTwo();
-    await session.remeasure(session.runs);
-    link.dropConnection();
-    await _pump();
-    // Nothing is "done" at the moment the link drops — the restore has to
-    // come first, or the whole session would be thrown away as empty.
-    expect(session.phase, HannaSessionPhase.finished);
-    expect(session.endedByDisconnect, isTrue);
-    expect(session.completedRuns.length, 2);
-  });
+  test(
+    'a disconnect while re-measuring everything keeps the results',
+    () async {
+      await measureTwo();
+      await session.remeasure(session.runs);
+      link.dropConnection();
+      await _pump();
+      // Nothing is "done" at the moment the link drops — the restore has to
+      // come first, or the whole session would be thrown away as empty.
+      expect(session.phase, HannaSessionPhase.finished);
+      expect(session.endedByDisconnect, isTrue);
+      expect(session.completedRuns.length, 2);
+    },
+  );
 
   test('a meter that stops answering leaves the results untouched', () async {
     await measureTwo();
@@ -228,5 +261,47 @@ void main() {
     expect(await session.remeasure([session.runs[0]]), isFalse);
     expect(session.phase, HannaSessionPhase.finished);
     expect(session.runs[0].value, closeTo(8.1, 1e-9));
+  });
+
+  test('a second connect supersedes a stalled first one (#88)', () async {
+    // The double-tapped "Try again": attempt A stalls mid-connect, attempt B
+    // must tear A's link down, win the session, and stay won when A's
+    // leftovers finally resolve.
+    final gate = Completer<void>();
+    final slow = _SlowConnectLink(gate);
+    final fast = FakeHannaMeterLink();
+    var calls = 0;
+    final s = HannaMeterSession(
+      () => ++calls == 1 ? slow : fast,
+      clock: () => DateTime(2026, 7, 21, 12),
+    );
+    final first = s.connect();
+    await _pump(); // A is now blocked inside its link's connect()
+    await s.connect(); // B
+    expect(s.phase, HannaSessionPhase.ready);
+    expect(slow.disposed, isTrue);
+    gate.complete(); // the loser resumes…
+    await first;
+    // …and must not clobber the winner's session.
+    expect(s.phase, HannaSessionPhase.ready);
+    expect(s.deviceName, 'HI97115 06150128');
+    s.dispose();
+  });
+
+  test('a connect that loses to dispose() stays silent (#88)', () async {
+    final gate = Completer<void>();
+    final slow = _SlowConnectLink(gate);
+    final s = HannaMeterSession(
+      () => slow,
+      clock: () => DateTime(2026, 7, 21, 12),
+    );
+    final pending = s.connect();
+    await _pump();
+    s.dispose();
+    await _pump();
+    expect(slow.disposed, isTrue); // dispose() tore the in-flight link down
+    gate.complete();
+    await pending; // resolves without failing the disposed session
+    expect(s.phase, HannaSessionPhase.connecting); // never flipped to failed
   });
 }

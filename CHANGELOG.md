@@ -21,6 +21,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   row of brand buttons it reorders.
 
 ### Fixed
+- The reagent timer and result beeps on the Hanna live-measurement screen now
+  lower the volume of whatever you are listening to instead of stopping it —
+  previously a podcast or music paused at the first beep and did not resume.
+- iOS: the reagent timer now reaches you when the phone is locked or the app is
+  in the background — a notification with the system sound fires at expiry
+  instead of the beep waiting silently for the next unlock, after the reaction
+  window was missed. (Not yet verified on a real iPhone.)
+- iOS: when local-network access is denied, the device scan now says so and
+  points at Settings → Privacy & Security → Local Network, instead of
+  reporting "no devices found" and suggesting a manual IP address that is just
+  as blocked. (Not yet verified on a real iPhone.)
+- Backing out of the Hanna connect screen during the Bluetooth scan no longer
+  leaves the meter held by a half-open connection that blocked it — including
+  for the official Hanna app — until Bluetooth was toggled off and on. A
+  double-tapped "Try again" no longer starts two competing connection attempts.
+- A device scan that hits an unexpected error no longer sticks at "scanning"
+  with Scan again disabled — it now stops, explains itself, and lets you rescan.
+  Whatever it had already found stays usable.
+- An Apex address typed with a bad port (like "192.168.1.50:80x") now reports
+  "not an Apex" on Check instead of silently doing nothing; a malformed reply
+  at the stored address can no longer wedge the card's refresh spinner.
+- A ReefBeat firmware update changing a field's type can no longer freeze the
+  device card at a permanent spinner (with Refresh all stuck disabled) or kill
+  a running device scan — the odd field now simply drops off the card.
 - A one-off maintenance task with a due date is no longer silently marked done
   by an action logged *before* it was planned: a "Water change — Aug 15" task
   now stays due (chip and notification) even though a routine water change was

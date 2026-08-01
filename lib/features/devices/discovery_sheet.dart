@@ -41,7 +41,7 @@ class DeviceDiscoverySheet extends ConsumerStatefulWidget {
 
   /// Points an already-registered device at its new address.
   final Future<void> Function(DeviceRecord existing, DiscoveredDevice found)
-      onUpdateAddress;
+  onUpdateAddress;
 
   /// Falls back to typing an IP by hand — kept for static-IP, VLAN and
   /// isolated-network setups that a sweep cannot reach.
@@ -55,6 +55,10 @@ class DeviceDiscoverySheet extends ConsumerStatefulWidget {
 class _DeviceDiscoverySheetState extends ConsumerState<DeviceDiscoverySheet> {
   StreamSubscription<DiscoveryProgress>? _sub;
   DiscoveryProgress? _progress;
+
+  /// The scan stream errored out (#85) — shown instead of the nothing-found
+  /// help, whose router advice would mislead about what happened.
+  bool _scanFailed = false;
 
   /// Identifiers with an add/update in flight, so a row can't be double-tapped.
   final Set<String> _busy = {};
@@ -73,10 +77,32 @@ class _DeviceDiscoverySheetState extends ConsumerState<DeviceDiscoverySheet> {
 
   void _startScan() {
     unawaited(_sub?.cancel());
-    setState(() => _progress = null);
-    _sub = ref.read(lanDiscoveryProvider).scan().listen((p) {
-      if (mounted) setState(() => _progress = p);
+    setState(() {
+      _progress = null;
+      _scanFailed = false;
     });
+    _sub = ref
+        .read(lanDiscoveryProvider)
+        .scan()
+        .listen(
+          (p) {
+            if (mounted) setState(() => _progress = p);
+          },
+          onError: (Object e, StackTrace s) {
+            // #85: an escaping pipeline error used to wedge the sheet at
+            // "scanning" with Rescan disabled forever. Land on a synthetic done
+            // state instead: whatever was found stays usable, Rescan re-enables,
+            // and the failure is said out loud.
+            if (!mounted) return;
+            setState(() {
+              _scanFailed = true;
+              _progress = DiscoveryProgress(
+                phase: DiscoveryPhase.done,
+                devices: _progress?.devices ?? const [],
+              );
+            });
+          },
+        );
   }
 
   Future<void> _run(String identifier, Future<void> Function() action) async {
@@ -95,10 +121,13 @@ class _DeviceDiscoverySheetState extends ConsumerState<DeviceDiscoverySheet> {
     final progress = _progress;
     final scanning = progress == null || progress.phase != DiscoveryPhase.done;
 
-    final existing = switch (widget.kind) {
-      DiscoveredKind.reefbeat => ref.watch(reefBeatDevicesProvider).value,
-      DiscoveredKind.reeffactory => ref.watch(reefFactoryDevicesProvider).value,
-    } ?? const <DeviceRecord>[];
+    final existing =
+        switch (widget.kind) {
+          DiscoveredKind.reefbeat => ref.watch(reefBeatDevicesProvider).value,
+          DiscoveredKind.reeffactory =>
+            ref.watch(reefFactoryDevicesProvider).value,
+        } ??
+        const <DeviceRecord>[];
     final byIdentifier = {for (final d in existing) d.identifier: d};
 
     final devices = [
@@ -131,6 +160,12 @@ class _DeviceDiscoverySheetState extends ConsumerState<DeviceDiscoverySheet> {
             ],
             if (progress?.noNetwork == true)
               _Notice(text: l.discoveryNoNetwork)
+            else if (progress?.permissionDenied == true)
+              // #89: iOS Local Network permission denied — the router advice
+              // below would mislead, and manual IP entry is equally blocked.
+              _Notice(text: l.discoveryPermissionDenied)
+            else if (_scanFailed && devices.isEmpty)
+              _Notice(text: l.discoveryFailed)
             else if (devices.isEmpty && !scanning)
               _Notice(text: l.discoveryNothingFoundHelp)
             else
@@ -146,10 +181,8 @@ class _DeviceDiscoverySheetState extends ConsumerState<DeviceDiscoverySheet> {
                       device: device,
                       state: _stateOf(device, known),
                       busy: _busy.contains(device.identifier),
-                      onAdd: () => _run(
-                        device.identifier,
-                        () => widget.onAdd(device),
-                      ),
+                      onAdd: () =>
+                          _run(device.identifier, () => widget.onAdd(device)),
                       onUpdate: known == null
                           ? null
                           : () => _run(
@@ -260,21 +293,21 @@ class _DeviceRow extends StatelessWidget {
             )
           : switch (state) {
               _RowState.fresh => FilledButton(
-                  onPressed: onAdd,
-                  child: Text(l.discoveryAdd),
-                ),
+                onPressed: onAdd,
+                child: Text(l.discoveryAdd),
+              ),
               _RowState.moved => FilledButton.tonal(
-                  onPressed: onUpdate,
-                  child: Text(l.discoveryUpdate),
-                ),
+                onPressed: onUpdate,
+                child: Text(l.discoveryUpdate),
+              ),
               _RowState.known => Text(
-                  l.discoveryAlreadyAdded,
-                  style: t.labelMedium?.copyWith(color: tokens.textDim),
-                ),
+                l.discoveryAlreadyAdded,
+                style: t.labelMedium?.copyWith(color: tokens.textDim),
+              ),
               _RowState.unsupported => Text(
-                  l.discoveryUnsupported,
-                  style: t.labelMedium?.copyWith(color: tokens.textFaint),
-                ),
+                l.discoveryUnsupported,
+                style: t.labelMedium?.copyWith(color: tokens.textFaint),
+              ),
             },
     );
   }
@@ -311,10 +344,9 @@ class _Notice extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: Theme.of(context)
-            .textTheme
-            .bodySmall
-            ?.copyWith(color: cs.onSurfaceVariant),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
       ),
     );
   }

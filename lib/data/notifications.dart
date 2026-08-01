@@ -189,4 +189,53 @@ class ReminderNotifications implements ReminderSink {
     ReminderKind.dosing => 'reminders_dosing',
     ReminderKind.maintenance => 'reminders_maintenance',
   };
+
+  /// Fixed id of the one-shot reagent-timer chime (#90), far outside the
+  /// 1..[_maxPending] range the reminder sync issues. The sync's `cancelAll`
+  /// would clear a pending chime anyway — acceptable, because resyncs run on
+  /// launch/resume, exactly when the foreground timer takes over again.
+  static const _timerChimeId = 9001;
+
+  /// Schedules a single notification at [fireAt] — the iOS stand-in for the
+  /// Hanna reagent-timer beep (#90): iOS suspends Dart timers when the phone
+  /// locks or the app backgrounds, so without this the beep meant to reach a
+  /// user across the room would only sound on unlock, after the reaction
+  /// window was missed. Plays the platform's default notification sound (the
+  /// in-app beep asset isn't visible to the iOS notification center).
+  Future<void> scheduleTimerChime({
+    required DateTime fireAt,
+    required String channelName,
+    required String title,
+    required String body,
+  }) async {
+    if (!_initialized) return;
+    if (!fireAt.isAfter(DateTime.now())) return;
+    await _plugin.zonedSchedule(
+      id: _timerChimeId,
+      title: title,
+      body: body,
+      scheduledDate: tz.TZDateTime.from(fireAt.toUtc(), tz.UTC),
+      notificationDetails: NotificationDetails(
+        // Android never schedules a chime (the in-app timer keeps running in
+        // the background there), but the channel keeps the call total should
+        // that change. [channelName] is localized by the caller, same
+        // division of labor as [PlannedNotification.channelName].
+        android: AndroidNotificationDetails(
+          'hanna_timer',
+          channelName,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(threadIdentifier: 'hanna_timer'),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  /// Cancels a pending chime — the app is foreground again, the in-app beep
+  /// owns the expiry.
+  Future<void> cancelTimerChime() async {
+    if (!_initialized) return;
+    await _plugin.cancel(id: _timerChimeId);
+  }
 }

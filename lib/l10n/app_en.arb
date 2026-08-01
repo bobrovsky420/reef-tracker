@@ -1054,6 +1054,10 @@
     "description": "Mini button starting an n-minute reaction timer; keep as short as possible.",
     "placeholders": { "n": { "type": "int" } }
   },
+  "hannaTimerDoneTitle": "Reagent timer finished",
+  "@hannaTimerDoneTitle": { "description": "Title of the system notification that stands in for the in-app timer beep when the phone is locked or the app is in the background (iOS — Android keeps the in-app beep running)." },
+  "hannaTimerDoneBody": "Time's up — continue the measurement on your meter.",
+  "@hannaTimerDoneBody": { "description": "Body of the reagent-timer notification." },
   "hannaResultsTitle": "Measurement results",
   "hannaResultsDisconnected": "The connection was lost — the results captured so far are kept.",
   "hannaNoResults": "No measurements were captured.",
@@ -1619,6 +1623,9 @@
   "discoveryUnsupportedHelp": "This app can't read this device type yet.",
   "discoveryRescan": "Scan again",
   "discoveryManualEntry": "Enter IP address",
+  "discoveryFailed": "The scan ran into an unexpected error and stopped. Try scanning again.",
+  "discoveryPermissionDenied": "ReefTracker isn't allowed to access your local network, so scanning and typed-in addresses can't work. Allow it under Settings → Privacy & Security → Local Network, then scan again.",
+  "@discoveryPermissionDenied": { "description": "Shown when the OS refuses local-network access outright (the iOS 14+ Local Network permission — the state doesn't exist on Android). Points at the iOS system setting." },
   "deviceAlreadyAdded": "{name} is already added. Use Scan network to point it at a new address.",
   "@deviceAlreadyAdded": { "description": "Shown in the manual add sheet when the probed device's identifier is already on the list, so adding it again would overwrite its name and tank", "placeholders": { "name": {} } },
 

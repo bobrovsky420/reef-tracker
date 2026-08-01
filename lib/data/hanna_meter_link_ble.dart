@@ -60,11 +60,25 @@ class BleHannaMeterLink implements HannaMeterLink {
       throw const HannaLinkException(HannaLinkError.unsupported);
     }
     await _ensureAdapterOn();
+    _throwIfDisposed(); // nothing acquired yet — don't start a pointless scan
 
     final device = await _scanForMeter();
     _device = device;
+    if (_disposed) {
+      // #88: the owner backed out during the scan — dispose() already ran
+      // with nothing to disconnect. Undo the fresh acquisition here instead
+      // of resuming a connect nobody wants: without this, the link opens a
+      // GATT connection that nothing ever closes and the meter stays held
+      // (blocking the official Hanna app too) until Bluetooth is toggled.
+      await _teardownDevice();
+      throw const HannaLinkException(
+        HannaLinkError.connectionFailed,
+        'link disposed',
+      );
+    }
     try {
       await device.connect(timeout: _connectTimeout);
+      _throwIfDisposed();
       // The meter protects its characteristics behind LE bonding with
       // passkey entry — on first use the system dialog asks for the code
       // shown on the meter's display (confirmed against the real device;
@@ -75,15 +89,22 @@ class BleHannaMeterLink implements HannaMeterLink {
       // system pairing prompt implicitly, hence its own long timeout.
       if (defaultTargetPlatform == TargetPlatform.android) {
         await device.createBond(timeout: 120);
+        _throwIfDisposed();
       }
       final (write, notify) = await _pickCharacteristics(device);
+      _throwIfDisposed();
       _write = write;
 
       await notify.setNotifyValue(true, timeout: 60);
+      _throwIfDisposed();
       _subs.add(
         notify.onValueReceived.listen((chunk) {
-          for (final line in _buffer.feed(utf8.decode(chunk, allowMalformed: true))) {
-            _lines.add(line);
+          for (final line in _buffer.feed(
+            utf8.decode(chunk, allowMalformed: true),
+          )) {
+            // Guarded like `_disconnected.add` below: a chunk racing dispose()
+            // must not write to a closed controller (#88).
+            if (!_disposed) _lines.add(line);
           }
         }),
       );
@@ -105,6 +126,19 @@ class BleHannaMeterLink implements HannaMeterLink {
     }
     final adv = device.platformName;
     return adv.isNotEmpty ? adv : kHannaMeterNamePrefix;
+  }
+
+  /// #88: dispose() landing between two awaits of [connect] must abort the
+  /// flow. Thrown *inside* the connect try-block, so the existing catch tears
+  /// the freshly obtained device down (disconnect, cancel subscriptions)
+  /// before rethrowing.
+  void _throwIfDisposed() {
+    if (_disposed) {
+      throw const HannaLinkException(
+        HannaLinkError.connectionFailed,
+        'link disposed',
+      );
+    }
   }
 
   Future<void> _ensureAdapterOn() async {
@@ -142,7 +176,8 @@ class BleHannaMeterLink implements HannaMeterLink {
       await FlutterBluePlus.startScan(timeout: _scanTimeout);
       final device = await found.future.timeout(
         _scanTimeout + const Duration(seconds: 2),
-        onTimeout: () => throw const HannaLinkException(HannaLinkError.notFound),
+        onTimeout: () =>
+            throw const HannaLinkException(HannaLinkError.notFound),
       );
       return device;
     } on HannaLinkException {
@@ -195,7 +230,10 @@ class BleHannaMeterLink implements HannaMeterLink {
   Future<void> send(String command) async {
     final w = _write;
     if (w == null) {
-      throw const HannaLinkException(HannaLinkError.connectionFailed, 'not connected');
+      throw const HannaLinkException(
+        HannaLinkError.connectionFailed,
+        'not connected',
+      );
     }
     // Bare ASCII, no terminator, acknowledged write — exactly what the
     // capture shows the official app doing (ATT Write Request 0x12).

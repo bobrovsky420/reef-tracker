@@ -636,6 +636,8 @@
   "hannaTimerStop": "Zastavit časovač",
   "hannaTimerSec": "{n} s",
   "hannaTimerMin": "{n} min",
+  "hannaTimerDoneTitle": "Časovač činidla doběhl",
+  "hannaTimerDoneBody": "Čas vypršel — pokračujte v měření na přístroji.",
   "hannaResultsTitle": "Výsledky měření",
   "hannaResultsDisconnected": "Spojení bylo přerušeno — dosud zachycené výsledky zůstávají.",
   "hannaNoResults": "Žádná měření nebyla zachycena.",
@@ -1027,6 +1029,8 @@
   "discoveryUnsupported": "Nepodporováno",
   "discoveryUnsupportedHelp": "Tento typ zařízení aplikace zatím neumí číst.",
   "discoveryRescan": "Hledat znovu",
+  "discoveryFailed": "Hledání skončilo neočekávanou chybou. Zkuste hledat znovu.",
+  "discoveryPermissionDenied": "ReefTracker nemá povolený přístup k místní síti, takže hledání ani ručně zadané adresy nemohou fungovat. Povolte ho v Nastavení → Soukromí a zabezpečení → Místní síť a pak hledejte znovu.",
   "discoveryManualEntry": "Zadat IP adresu",
   "deviceAlreadyAdded": "{name} už je přidáno. Pro změnu adresy použijte Prohledat síť.",
 

@@ -2230,6 +2230,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get hannaTimerDoneTitle => 'Таймер реагента завершён';
+
+  @override
+  String get hannaTimerDoneBody =>
+      'Время вышло — продолжите измерение на приборе.';
+
+  @override
   String get hannaResultsTitle => 'Результаты измерений';
 
   @override
@@ -3732,6 +3739,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discoveryManualEntry => 'Ввести IP-адрес';
+
+  @override
+  String get discoveryFailed =>
+      'Поиск прервался из-за непредвиденной ошибки. Попробуйте выполнить поиск ещё раз.';
+
+  @override
+  String get discoveryPermissionDenied =>
+      'У ReefTracker нет доступа к локальной сети, поэтому ни поиск, ни ввод адреса вручную не сработают. Разрешите доступ в Настройки → Конфиденциальность и безопасность → Локальная сеть и повторите поиск.';
 
   @override
   String deviceAlreadyAdded(Object name) {

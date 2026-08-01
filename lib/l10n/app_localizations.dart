@@ -3753,6 +3753,18 @@ abstract class AppLocalizations {
   /// **'{n} min'**
   String hannaTimerMin(int n);
 
+  /// Title of the system notification that stands in for the in-app timer beep when the phone is locked or the app is in the background (iOS — Android keeps the in-app beep running).
+  ///
+  /// In en, this message translates to:
+  /// **'Reagent timer finished'**
+  String get hannaTimerDoneTitle;
+
+  /// Body of the reagent-timer notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Time\'s up — continue the measurement on your meter.'**
+  String get hannaTimerDoneBody;
+
   /// No description provided for @hannaResultsTitle.
   ///
   /// In en, this message translates to:
@@ -6014,6 +6026,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter IP address'**
   String get discoveryManualEntry;
+
+  /// No description provided for @discoveryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The scan ran into an unexpected error and stopped. Try scanning again.'**
+  String get discoveryFailed;
+
+  /// Shown when the OS refuses local-network access outright (the iOS 14+ Local Network permission — the state doesn't exist on Android). Points at the iOS system setting.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefTracker isn\'t allowed to access your local network, so scanning and typed-in addresses can\'t work. Allow it under Settings → Privacy & Security → Local Network, then scan again.'**
+  String get discoveryPermissionDenied;
 
   /// Shown in the manual add sheet when the probed device's identifier is already on the list, so adding it again would overwrite its name and tank
   ///
