@@ -94,9 +94,11 @@ void main() {
   ];
 
   Future<void> tapSaveAll(WidgetTester tester) async {
-    // Both devices hold a value, so the button reads "Save all (2)" — the
+    // Both devices hold a value, so the FAB reads "Save all (2)" — the
     // per-card Save buttons carry no such label.
-    await tester.tap(find.widgetWithText(FilledButton, 'Save all (2)'));
+    await tester.tap(
+      find.widgetWithText(FloatingActionButton, 'Save all (2)'),
+    );
     await settle(tester);
   }
 

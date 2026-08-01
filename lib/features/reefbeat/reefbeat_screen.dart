@@ -636,6 +636,21 @@ class _AtoStatus extends ConsumerWidget {
               ref.watch(unitPrefsProvider),
             ),
           ),
+        // Only an attached, enabled sensor earns the row — an absent one would
+        // otherwise read as "dry", which is exactly the wrong reassurance.
+        // Known statuses are localized; an unrecognized one shows verbatim
+        // (the waterLevelRaw convention).
+        if (status.leakSensorActive)
+          _StatusRow(
+            label: l.reefBeatAtoLeakSensor,
+            value: switch (status.leakStatusRaw) {
+              'dry' => l.reefBeatAtoLeakDry,
+              'rodi_water_leak' => l.reefBeatAtoLeakRodi,
+              final String raw => raw,
+              null => '—',
+            },
+            valueColor: status.leakAlarm ? tokens.critical : tokens.healthy,
+          ),
         if (todayText.isNotEmpty)
           _StatusRow(label: l.reefBeatAtoToday, value: todayText),
         if (status.dailyVolumeAvgMl != null)
@@ -904,9 +919,14 @@ class _RunPumpRow extends ConsumerWidget {
           color: tokens.caution,
           softColor: tokens.cautionSoft,
         ),
+      // A full skimmer cup is the one non-operational state a keeper acts on
+      // routinely, so it gets its own plain label instead of the generic
+      // raw-state chip ("full_cup").
       if (pump.faulted && !pump.missingPump)
         _WarnChip(
-          label: l.reefBeatRunState(pump.state ?? ''),
+          label: pump.fullCup
+              ? l.reefBeatRunFullCup
+              : l.reefBeatRunState(pump.state ?? ''),
           color: tokens.caution,
           softColor: tokens.cautionSoft,
         ),

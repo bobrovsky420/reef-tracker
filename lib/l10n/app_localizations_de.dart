@@ -3358,6 +3358,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reefBeatAtoReservoir => 'Vorratsbehälter';
 
   @override
+  String get reefBeatAtoLeakSensor => 'Lecksensor';
+
+  @override
+  String get reefBeatAtoLeakDry => 'Trocken';
+
+  @override
+  String get reefBeatAtoLeakRodi => 'RO/DI-Wasserleck';
+
+  @override
   String get reefBeatMatRoll => 'Rolle';
 
   @override
@@ -3429,6 +3438,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String reefBeatRunState(Object state) {
     return 'Pumpenstatus: $state';
   }
+
+  @override
+  String get reefBeatRunFullCup => 'Becher voll';
 
   @override
   String get reefBeatRunSensorOffline => 'Füllstandsensor offline';
@@ -3729,10 +3741,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get devicesEmptyBody =>
-      'Verbinde ein ReefFactory-Messgerät, ein Red Sea ReefBeat-Gerät oder einen Neptune Apex-Controller in deinem Netzwerk, um es hier zu sehen.';
+      'Verbinde ein ReefFactory-Messgerät, ein Red Sea ReefBeat-Gerät oder einen Neptune Apex-Controller in deinem Netzwerk — oder miss mit einem Hanna-Photometer über Bluetooth —, um es hier zu sehen.';
 
   @override
   String get devicesAddDevice => 'Gerät hinzufügen';
+
+  @override
+  String get devicesHannaDisclaimer =>
+      'Das Photometer verbindet sich nur während einer Messung über Bluetooth — starte sie über seine Karte. Abgeschlossene Messungen werden in deinen Messwerten gespeichert.';
 
   @override
   String get devicesAddPickBrand => 'Welche Marke?';
@@ -3795,6 +3811,29 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String reefDevicesLastSeen(Object date) {
     return 'Zuletzt gesehen $date';
+  }
+
+  @override
+  String get hannaSerialNumber => 'Seriennummer';
+
+  @override
+  String get hannaLastMeasurement => 'Letzte Messung';
+
+  @override
+  String get hannaNewMeasurement => 'Neue Messung';
+
+  @override
+  String get hannaRenameDevice => 'Photometer umbenennen';
+
+  @override
+  String get hannaDeviceNameLabel => 'Name des Photometers';
+
+  @override
+  String get hannaRemove => 'Entfernen';
+
+  @override
+  String hannaRemoveConfirm(Object name) {
+    return '„$name“ entfernen? Gespeicherte Werte bleiben erhalten; nach der nächsten Messung erscheint das Photometer wieder.';
   }
 
   @override

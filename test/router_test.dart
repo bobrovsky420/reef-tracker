@@ -285,14 +285,17 @@ void main() {
     await settle(tester);
 
     // Inline in the shell — no route push — with the shared app bar (devices
-    // are tank-scoped, so the tank selector stays) and the add-device FAB.
+    // are tank-scoped, so the tank selector stays), which carries the
+    // add-device action; the FAB slot holds the bulk read/save actions, and
+    // with no devices (and no entitlement) it stays empty.
     expect(find.byType(HomeShell), findsOneWidget);
     expect(find.byType(DevicesBody), findsOneWidget);
     expect(find.byType(DevicesScreen), findsNothing);
     expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byTooltip('Add device'), findsOneWidget);
     expect(
       find.widgetWithText(FloatingActionButton, 'Add device'),
-      findsOneWidget,
+      findsNothing,
     );
 
     // The deep-link form selects it too.

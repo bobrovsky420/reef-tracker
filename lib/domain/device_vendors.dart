@@ -1,12 +1,14 @@
 /// The device-vendor model behind the unified Devices screen (U41). Pure
 /// domain — no Flutter, no DB — so the ordering rules are unit-tested directly.
 ///
-/// A *vendor* here is a `Devices.kind` value that has its own LAN integration
-/// and therefore its own selector chip: ReefFactory meters (U36), Red Sea
-/// ReefBeat devices (U38) and Neptune Apex controllers (U40). The Hanna checker
-/// is deliberately **not** one — it is the keeper's own test kit reached over
-/// Bluetooth for a single measurement, not tank hardware sitting on the network,
-/// and it keeps its own screens and its own Pro gates.
+/// A *vendor* here is a `Devices.kind` value that has its own section and
+/// selector chip on the page: ReefFactory meters (U36), Red Sea ReefBeat
+/// devices (U38), Neptune Apex controllers (U40) — and, since U43, the Hanna
+/// checker. The checker is the odd one out: it is the keeper's own test kit
+/// reached over Bluetooth for a single measurement, not tank hardware sitting
+/// on the network, so its card is inventory plus a "new measurement" entry
+/// point — never polled ([deviceKindRefreshes]), never saved from
+/// ([deviceKindSaves]), and it keeps its own Pro gate (`hannaConnect`).
 library;
 
 const String kDeviceKindReefFactory = 'reeffactory';
@@ -23,6 +25,7 @@ const List<String> kDeviceVendors = [
   kDeviceKindReefFactory,
   kDeviceKindReefBeat,
   kDeviceKindApex,
+  kDeviceKindHanna,
 ];
 
 /// Whether devices of [kind] can report values that Save persists as readings.
@@ -35,6 +38,13 @@ const List<String> kDeviceVendors = [
 /// of it is a measurement.
 bool deviceKindSaves(String kind) =>
     kind == kDeviceKindReefFactory || kind == kDeviceKindApex;
+
+/// Whether devices of [kind] are read over the LAN by the page's refresh
+/// actions (on-open auto-read and Refresh all alike). The Hanna checker is
+/// not: it is connected over Bluetooth only for the duration of a measurement
+/// session its card starts, so there is nothing to poll — and it must not be
+/// counted by the Refresh-all button either.
+bool deviceKindRefreshes(String kind) => kind != kDeviceKindHanna;
 
 /// The user's vendor order, resolved from the [stored] setting value against
 /// the vendors this build knows ([known], defaulting to [kDeviceVendors]).

@@ -15,10 +15,13 @@ import 'package:reeftracker/domain/setup_type.dart';
 /// The Apex row points at `10.0.2.2:8080` — the host's `tool/apex_emulator.dart`
 /// as seen from the Android emulator — so one card reads real live values; its
 /// password is written to a sibling `.device_secrets`, which has to be pushed
-/// alongside the database (see [DeviceSecrets]). The
-/// ReefFactory and ReefBeat rows carry unreachable addresses on purpose: their
-/// cards render the offline path, which is just as much a state worth looking
-/// at.
+/// alongside the database (see [DeviceSecrets]). Two ReefBeat rows point at
+/// `tool/reefbeat_emulator.dart` the same way (`--type ato` on :8090, `--type
+/// run` on :8091), so the ATO's leak-sensor row and the ReefRun's full-cup
+/// state can be forced and looked at. The ReefFactory rows and the third
+/// ReefBeat row carry unreachable addresses on purpose: their cards render the
+/// offline path, which is just as much a state worth looking at. A Hanna
+/// checker row (U43) rounds out the vendor set — it has no address to reach.
 const _out = String.fromEnvironment(
   'SEED_OUT',
   defaultValue: r'C:\Android\reefbuild\seed_devices.sqlite',
@@ -66,6 +69,24 @@ void main() {
       name: 'ReefDose 4',
       tankId: tank,
     );
+    await db.upsertReefBeatDevice(
+      identifier: 'RSATO-EMU',
+      model: 'RSATO+',
+      address: '10.0.2.2:8090',
+      name: 'ReefATO+',
+      tankId: tank,
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'RSRUN-EMU',
+      model: 'RSRUN',
+      address: '10.0.2.2:8091',
+      name: 'ReefRun',
+      tankId: tank,
+    );
+    await db.ensureHannaDevice(
+      identifier: 'HI97115 06150128',
+      model: 'HI97115',
+    );
     await db.upsertApexDevice(
       identifier: 'APEX-DEMO',
       model: 'Apex',
@@ -83,9 +104,12 @@ void main() {
     ).write('APEX-DEMO', '1234');
 
     // Straight to the feature: no first-run tour, experimental opted in (the
-    // Devices overflow item only exists behind it).
+    // Devices tab only exists behind it), and the founder marker so the
+    // page's Pro actions (read, save, add) are live rather than the lock
+    // notice.
     await settings.setTourSeen(true);
     await settings.setExperimentalEnabled(true);
+    await settings.seedLegacyFreeSince('0.0.0-seed');
 
     await db.close();
     stdout.writeln('Wrote $_out');

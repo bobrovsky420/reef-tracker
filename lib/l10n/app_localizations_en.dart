@@ -3341,6 +3341,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reefBeatAtoReservoir => 'Reservoir';
 
   @override
+  String get reefBeatAtoLeakSensor => 'Leak sensor';
+
+  @override
+  String get reefBeatAtoLeakDry => 'Dry';
+
+  @override
+  String get reefBeatAtoLeakRodi => 'RO/DI water leak';
+
+  @override
   String get reefBeatMatRoll => 'Roll';
 
   @override
@@ -3412,6 +3421,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String reefBeatRunState(Object state) {
     return 'Pump state: $state';
   }
+
+  @override
+  String get reefBeatRunFullCup => 'Full cup';
 
   @override
   String get reefBeatRunSensorOffline => 'Level sensor offline';
@@ -3709,10 +3721,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get devicesEmptyBody =>
-      'Connect a ReefFactory meter, a Red Sea ReefBeat device or a Neptune Apex controller on your local network to see it here.';
+      'Connect a ReefFactory meter, a Red Sea ReefBeat device or a Neptune Apex controller on your local network — or measure with a Hanna checker over Bluetooth — to see it here.';
 
   @override
   String get devicesAddDevice => 'Add device';
+
+  @override
+  String get devicesHannaDisclaimer =>
+      'The checker connects over Bluetooth only while a measurement runs — start one from its card. Finished measurements are saved into your log.';
 
   @override
   String get devicesAddPickBrand => 'Which brand?';
@@ -3775,6 +3791,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String reefDevicesLastSeen(Object date) {
     return 'Last seen $date';
+  }
+
+  @override
+  String get hannaSerialNumber => 'Serial number';
+
+  @override
+  String get hannaLastMeasurement => 'Last measurement';
+
+  @override
+  String get hannaNewMeasurement => 'New measurement';
+
+  @override
+  String get hannaRenameDevice => 'Rename checker';
+
+  @override
+  String get hannaDeviceNameLabel => 'Checker name';
+
+  @override
+  String get hannaRemove => 'Remove';
+
+  @override
+  String hannaRemoveConfirm(Object name) {
+    return 'Remove \"$name\"? Its saved readings stay, and it returns after its next measurement.';
   }
 
   @override

@@ -63,10 +63,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   _Tab _tab = _Tab.measurements;
 
-  /// The key through which the Devices tab's FAB reaches that body's state —
-  /// the add flows seed the live snapshots it holds, so the action cannot be a
-  /// plain top-level call (see [DevicesBody]).
+  /// The key through which the Devices tab's app-bar add action and FABs
+  /// reach that body's state — the add flows seed the live snapshots it holds,
+  /// so the actions cannot be plain top-level calls (see [DevicesBody]).
   final GlobalKey<DevicesBodyState> _devicesKey = GlobalKey();
+
+  /// What the Devices body last published for its Refresh all / Save all FABs
+  /// (see [DevicesBody.fabStatus]).
+  final ValueNotifier<DevicesFabStatus> _devicesFab = ValueNotifier(
+    const DevicesFabStatus(),
+  );
 
   /// Maps the deep-link `tab` value to a destination; null = no change.
   static _Tab? _tabValue(String? tab) => switch (tab) {
@@ -180,6 +186,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   void dispose() {
+    _devicesFab.dispose();
     // Only the owning instance may unregister — see [_showcaseOwner].
     if (identical(_showcaseOwner, this)) {
       ShowcaseView.get().unregister();
@@ -329,6 +336,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                     tooltip: l.maintenanceSchedule,
                     icon: Icons.event_repeat,
                     onPressed: () => context.push('/schedule'),
+                  ),
+                // Add device, contextual to the Devices tab: the FAB slot
+                // carries the bulk read/save actions, so adding lives up here.
+                if (hasTanks && tab == _Tab.devices)
+                  ReefIconButton(
+                    tooltip: l.devicesAddDevice,
+                    icon: Icons.add,
+                    onPressed: () {
+                      final devices = _devicesKey.currentState;
+                      if (devices != null) unawaited(devices.addDevice());
+                    },
                   ),
                 // Dosing history, contextual to the Dosing tab. First step of phase 2.
                 if (hasTanks && tab == _Tab.dosing)
@@ -524,7 +542,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               _compare ? const ComparisonBody() : const DashboardBody(),
               const ActionsBody(),
               const DosingBody(),
-              DevicesBody(key: _devicesKey, active: tab == _Tab.devices),
+              DevicesBody(
+                key: _devicesKey,
+                active: tab == _Tab.devices,
+                fabStatus: _devicesFab,
+              ),
               const _SettingsTab(),
             ],
           );
@@ -697,19 +719,21 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           );
         }
         if (tab == _Tab.devices) {
-          return ScaleTransition(
+          // The bulk actions the page's own bar used to carry (adding moved
+          // to the app bar). Straight into the body's own methods, so the
+          // save funnel and its guards stay where the rest of the page's
+          // logic is.
+          return DevicesActionFabs(
+            status: _devicesFab,
             scale: scale,
-            child: FloatingActionButton.extended(
-              // Straight into the body's own add flow, so a device added here
-              // still seeds the live snapshot it reported on the way in — and
-              // the Pro gate stays where the rest of the page's gating is.
-              onPressed: () {
-                final devices = _devicesKey.currentState;
-                if (devices != null) unawaited(devices.addDevice());
-              },
-              icon: const Icon(Icons.add),
-              label: Text(l.devicesAddDevice),
-            ),
+            onRefreshAll: () {
+              final devices = _devicesKey.currentState;
+              if (devices != null) unawaited(devices.refreshAll());
+            },
+            onSaveAll: () {
+              final devices = _devicesKey.currentState;
+              if (devices != null) unawaited(devices.saveAll());
+            },
           );
         }
         return ScaleTransition(

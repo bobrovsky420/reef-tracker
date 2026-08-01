@@ -5517,6 +5517,24 @@ abstract class AppLocalizations {
   /// **'Reservoir'**
   String get reefBeatAtoReservoir;
 
+  /// Row label on the ReefATO card for the attached leak-detection sensor's status
+  ///
+  /// In en, this message translates to:
+  /// **'Leak sensor'**
+  String get reefBeatAtoLeakSensor;
+
+  /// Leak-sensor status value: no water detected
+  ///
+  /// In en, this message translates to:
+  /// **'Dry'**
+  String get reefBeatAtoLeakDry;
+
+  /// Leak-sensor status value: the sensor detects fresh (RO/DI) water where it shouldn't be
+  ///
+  /// In en, this message translates to:
+  /// **'RO/DI water leak'**
+  String get reefBeatAtoLeakRodi;
+
   /// No description provided for @reefBeatMatRoll.
   ///
   /// In en, this message translates to:
@@ -5630,6 +5648,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pump state: {state}'**
   String reefBeatRunState(Object state);
+
+  /// Chip on a ReefRun skimmer pump that paused itself because its collection cup is full (firmware state "full_cup")
+  ///
+  /// In en, this message translates to:
+  /// **'Full cup'**
+  String get reefBeatRunFullCup;
 
   /// No description provided for @reefBeatRunSensorOffline.
   ///
@@ -6102,7 +6126,7 @@ abstract class AppLocalizations {
   /// No description provided for @devicesEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Connect a ReefFactory meter, a Red Sea ReefBeat device or a Neptune Apex controller on your local network to see it here.'**
+  /// **'Connect a ReefFactory meter, a Red Sea ReefBeat device or a Neptune Apex controller on your local network — or measure with a Hanna checker over Bluetooth — to see it here.'**
   String get devicesEmptyBody;
 
   /// No description provided for @devicesAddDevice.
@@ -6110,6 +6134,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add device'**
   String get devicesAddDevice;
+
+  /// The notice shown when the Hanna vendor filter is selected; replaces the generic Wi-Fi read-only wording, which doesn't fit a Bluetooth test kit.
+  ///
+  /// In en, this message translates to:
+  /// **'The checker connects over Bluetooth only while a measurement runs — start one from its card. Finished measurements are saved into your log.'**
+  String get devicesHannaDisclaimer;
 
   /// Title of the sheet asking which brand to add, shown only from the All view.
   ///
@@ -6206,6 +6236,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last seen {date}'**
   String reefDevicesLastSeen(Object date);
+
+  /// Row label on the Hanna checker's device card
+  ///
+  /// In en, this message translates to:
+  /// **'Serial number'**
+  String get hannaSerialNumber;
+
+  /// Row label on the Hanna checker's device card: when the checker last ran a measurement session
+  ///
+  /// In en, this message translates to:
+  /// **'Last measurement'**
+  String get hannaLastMeasurement;
+
+  /// Button on the Hanna checker's device card starting a live Bluetooth measurement
+  ///
+  /// In en, this message translates to:
+  /// **'New measurement'**
+  String get hannaNewMeasurement;
+
+  /// Title of the dialog opened by the Hanna card's Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Rename checker'**
+  String get hannaRenameDevice;
+
+  /// No description provided for @hannaDeviceNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Checker name'**
+  String get hannaDeviceNameLabel;
+
+  /// No description provided for @hannaRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get hannaRemove;
+
+  /// Confirmation for removing a Hanna checker from the Devices page; the row is re-created automatically on the next BLE connect
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\"? Its saved readings stay, and it returns after its next measurement.'**
+  String hannaRemoveConfirm(Object name);
 
   /// Menu item on Manage parameters: drop every per-tank override.
   ///

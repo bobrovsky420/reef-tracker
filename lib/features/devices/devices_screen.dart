@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
@@ -14,6 +16,7 @@ import '../../widgets/pro_feature_dialog.dart';
 import '../apex/apex_screen.dart';
 import '../reefbeat/reefbeat_screen.dart';
 import '../reeffactory/reeffactory_screen.dart';
+import 'hanna_device_section.dart';
 
 /// Standalone Devices route (`/devices`). With tanks present, Devices is the
 /// home shell's fourth bottom-nav tab (U42) and nothing pushes this route; it
@@ -33,24 +36,189 @@ class DevicesScreen extends StatefulWidget {
 }
 
 class _DevicesScreenState extends State<DevicesScreen> {
-  /// The body owns its own state, so the FAB reaches it through a key rather
-  /// than duplicating the add flow — the same arrangement the home shell uses.
+  /// The body owns its own state, so the app bar's add action and the FABs
+  /// reach it through a key rather than duplicating the flows — the same
+  /// arrangement the home shell uses.
   final GlobalKey<DevicesBodyState> _bodyKey = GlobalKey();
+
+  /// What the body last published for the FABs — see [DevicesBody.fabStatus].
+  final ValueNotifier<DevicesFabStatus> _fabStatus = ValueNotifier(
+    const DevicesFabStatus(),
+  );
+
+  @override
+  void dispose() {
+    _fabStatus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l.devicesTitle)),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final body = _bodyKey.currentState;
-          if (body != null) unawaited(body.addDevice());
-        },
-        icon: const Icon(Icons.add),
-        label: Text(l.devicesAddDevice),
+      appBar: AppBar(
+        title: Text(l.devicesTitle),
+        actions: [
+          // Adding moved up here so the FAB slots could take the bulk actions
+          // — an icon is enough for the rarer of the two jobs.
+          IconButton(
+            tooltip: l.devicesAddDevice,
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              final body = _bodyKey.currentState;
+              if (body != null) unawaited(body.addDevice());
+            },
+          ),
+        ],
       ),
-      body: DevicesBody(key: _bodyKey, staleAfter: widget.staleAfter),
+      floatingActionButton: DevicesActionFabs(
+        status: _fabStatus,
+        onRefreshAll: () {
+          final body = _bodyKey.currentState;
+          if (body != null) unawaited(body.refreshAll());
+        },
+        onSaveAll: () {
+          final body = _bodyKey.currentState;
+          if (body != null) unawaited(body.saveAll());
+        },
+      ),
+      body: DevicesBody(
+        key: _bodyKey,
+        staleAfter: widget.staleAfter,
+        fabStatus: _fabStatus,
+      ),
+    );
+  }
+}
+
+/// What the host needs to render the bulk-action FABs: the counts and flags
+/// the in-page action bar used before the buttons moved to the FAB slot. The
+/// body publishes it after each build ([DevicesBody.fabStatus]); value
+/// equality keeps an unchanged build from notifying anyone.
+class DevicesFabStatus {
+  const DevicesFabStatus({
+    this.entitled = false,
+    this.refreshable = 0,
+    this.busy = false,
+    this.meters = 0,
+    this.savable = 0,
+    this.saving = false,
+  });
+
+  /// Reading and saving are Pro ([ProFeature.connectedDevices]); the body
+  /// shows its lock notice instead, so the FABs hide entirely.
+  final bool entitled;
+
+  /// Devices in scope a Refresh all would actually read — LAN kinds only
+  /// ([deviceKindRefreshes]), so a Hanna checker never inflates the count.
+  final int refreshable;
+
+  /// A read is in flight somewhere in scope — Refresh all disables and shows
+  /// a spinner for its duration.
+  final bool busy;
+
+  /// Meter-capable devices in scope — zero means Save all is meaningless here
+  /// and is hidden rather than disabled, exactly as the action bar did.
+  final int meters;
+
+  /// Devices in scope holding values right now (Save all's count).
+  final int savable;
+
+  /// A save is already in flight — Save all disables for its duration (#86).
+  final bool saving;
+
+  @override
+  bool operator ==(Object other) =>
+      other is DevicesFabStatus &&
+      other.entitled == entitled &&
+      other.refreshable == refreshable &&
+      other.busy == busy &&
+      other.meters == meters &&
+      other.savable == savable &&
+      other.saving == saving;
+
+  @override
+  int get hashCode =>
+      Object.hash(entitled, refreshable, busy, meters, savable, saving);
+}
+
+/// The Devices tab's floating actions: Refresh all above Save all, fed by the
+/// body's published [DevicesFabStatus]. Shared by the standalone
+/// [DevicesScreen] and the home shell's Devices tab, which passes [scale] so
+/// the buttons play its FAB entrance animation.
+class DevicesActionFabs extends StatelessWidget {
+  const DevicesActionFabs({
+    super.key,
+    required this.status,
+    required this.onRefreshAll,
+    required this.onSaveAll,
+    this.scale,
+  });
+
+  final ValueListenable<DevicesFabStatus> status;
+  final VoidCallback onRefreshAll;
+  final VoidCallback onSaveAll;
+  final Animation<double>? scale;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return ValueListenableBuilder<DevicesFabStatus>(
+      valueListenable: status,
+      builder: (context, s, _) {
+        // Non-entitled installs act through the body's lock notice; an empty
+        // (or Hanna-only) scope has nothing to refresh or save.
+        if (!s.entitled || (s.refreshable == 0 && s.meters == 0)) {
+          return const SizedBox.shrink();
+        }
+        final cs = Theme.of(context).colorScheme;
+        final saveDisabled = s.savable == 0 || s.saving;
+        Widget wrap(Widget child) =>
+            scale == null ? child : ScaleTransition(scale: scale!, child: child);
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (s.refreshable > 0)
+              wrap(
+                FloatingActionButton.extended(
+                  heroTag: 'devices-refresh-fab',
+                  // FABs carry no disabled look of their own, so the busy
+                  // state dims the colors by hand and swaps in a spinner.
+                  backgroundColor: s.busy ? cs.surfaceContainerHighest : null,
+                  foregroundColor: s.busy
+                      ? cs.onSurface.withValues(alpha: 0.38)
+                      : null,
+                  onPressed: s.busy ? null : onRefreshAll,
+                  icon: s.busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  label: Text(l.devicesRefreshAll(s.refreshable)),
+                ),
+              ),
+            if (s.refreshable > 0 && s.meters > 0) const SizedBox(height: 12),
+            if (s.meters > 0)
+              wrap(
+                FloatingActionButton.extended(
+                  heroTag: 'devices-save-fab',
+                  backgroundColor: saveDisabled
+                      ? cs.surfaceContainerHighest
+                      : null,
+                  foregroundColor: saveDisabled
+                      ? cs.onSurface.withValues(alpha: 0.38)
+                      : null,
+                  onPressed: saveDisabled ? null : onSaveAll,
+                  icon: const Icon(Icons.save_outlined),
+                  label: Text(l.devicesSaveAll(s.savable)),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -62,9 +230,10 @@ class _DevicesScreenState extends State<DevicesScreen> {
 /// `/apex`) *and* the read-only Settings inventory (`/settings/devices`) — four
 /// routes collapsed into one. Scaffold-less, so the same body serves both the
 /// home shell's Devices tab (U42) and the standalone [DevicesScreen]; the host
-/// owns the app bar and the add-device FAB, which calls [addDevice] on this
-/// state (the add flows seed the live maps held here, which a top-level
-/// function could not reach).
+/// owns the app bar (whose add action calls [addDevice] on this state — the
+/// add flows seed the live maps held here, which a top-level function could
+/// not reach) and the Refresh all / Save all FABs, wired through [fabStatus],
+/// [refreshAll] and [saveAll].
 ///
 /// The shape that keeps a mixed fleet readable:
 /// - **Vendor chips** across the top, in the user's own order ([kDeviceVendors]
@@ -75,7 +244,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
 ///   cards its own dashboard did. In All they sit under vendor headers, in the
 ///   vendor's own order; filtering changes nothing about a card's neighbours.
 /// - **Refresh all / Save all act on the current selection only**, and the
-///   scope line above them says what that is. Save all is *hidden* — not
+///   scope line above the list says what that is. Save all is *hidden* — not
 ///   disabled — when the selection holds no meter-capable device, because for
 ///   a Red Sea filter there is nothing to save and never will be.
 /// - Live snapshots live **here**, not in the sections, so switching the filter
@@ -90,6 +259,7 @@ class DevicesBody extends ConsumerStatefulWidget {
     super.key,
     this.staleAfter = kDeviceSnapshotStaleAfter,
     this.active = true,
+    this.fabStatus,
   });
 
   /// How old a held snapshot may be before a save re-reads it (see
@@ -103,6 +273,12 @@ class DevicesBody extends ConsumerStatefulWidget {
   /// opened. False suppresses the automatic read only; everything the user
   /// asks for explicitly still works.
   final bool active;
+
+  /// Where each build publishes what the host's FABs need ([DevicesFabStatus])
+  /// — the host can't watch this state directly, and the FABs live in its
+  /// Scaffold, not in this body. Published post-frame, value-compared, so a
+  /// build that changed nothing notifies no one.
+  final ValueNotifier<DevicesFabStatus>? fabStatus;
 
   @override
   DevicesBodyState createState() => DevicesBodyState();
@@ -145,9 +321,14 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   bool _saving = false;
 
   /// The vendors that had a chip on the last build. Kept so [addDevice] — which
-  /// the host's FAB calls between builds — can resolve the effective selection
-  /// exactly as the page renders it, without re-deriving it from the providers.
+  /// the host's app bar calls between builds — can resolve the effective
+  /// selection exactly as the page renders it, without re-deriving it from the
+  /// providers.
   List<String> _present = const [];
+
+  /// The scope the last build rendered — what the host's Refresh all / Save
+  /// all FABs act on between builds, same reasoning as [_present].
+  _Scope _scope = const _Scope(order: [], byVendor: {});
 
   /// Applies the persisted filter once the setting has loaded, dropping it if
   /// that vendor no longer has any devices (its last one was removed).
@@ -202,13 +383,15 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   Future<void> _refreshDevice(String kind, DeviceRecord d) => switch (kind) {
     kDeviceKindReefFactory => _refreshRf(d),
     kDeviceKindReefBeat => _refreshRb(d),
-    _ => _refreshAp(d),
+    kDeviceKindApex => _refreshAp(d),
+    // The Hanna checker is not a polled device (see [deviceKindRefreshes]).
+    _ => Future.value(),
   };
 
-  /// Reads everything in [scope]. Sequential **within** a vendor — a meter is
-  /// also serving the vendor's own cloud app, and one socket at a time is
-  /// gentle on it — but the vendors run concurrently, so a slow controller
-  /// doesn't hold up the meters.
+  /// Reads everything refreshable in [scope]. Sequential **within** a vendor —
+  /// a meter is also serving the vendor's own cloud app, and one socket at a
+  /// time is gentle on it — but the vendors run concurrently, so a slow
+  /// controller doesn't hold up the meters.
   Future<void> _refreshScope(_Scope scope) async {
     Future<void> series(String kind) async {
       for (final d in scope.of(kind)) {
@@ -216,7 +399,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
       }
     }
 
-    await Future.wait([for (final kind in scope.order) series(kind)]);
+    await Future.wait([
+      for (final kind in scope.order)
+        if (deviceKindRefreshes(kind)) series(kind),
+    ]);
   }
 
   // --- saving ------------------------------------------------------------
@@ -529,10 +715,15 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
       ref.watch(apexDevicesProvider).value ?? const [],
       tankId,
     );
+    final ha = _scoped(
+      ref.watch(hannaDevicesProvider).value ?? const [],
+      tankId,
+    );
     final byVendor = {
       kDeviceKindReefFactory: rf,
       kDeviceKindReefBeat: rb,
       kDeviceKindApex: ap,
+      kDeviceKindHanna: ha,
     };
 
     // A vendor earns a chip only by having a device in view.
@@ -548,18 +739,26 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
       order: inScope,
       byVendor: {for (final v in inScope) v: byVendor[v] ?? const []},
     );
+    _scope = scope;
+    _publishFabStatus(entitled, scope);
 
     // The on-open read, scoped to the selection and once per device. Only for
-    // the tab actually on screen — see [DevicesBody.active].
+    // the tab actually on screen — see [DevicesBody.active]. Non-refreshable
+    // kinds (the Hanna checker) are left out rather than marked read, so the
+    // guards stay honest if one ever becomes refreshable.
     if (entitled && widget.active) {
       final toRead = _Scope(
-        order: scope.order,
+        order: [
+          for (final kind in scope.order)
+            if (deviceKindRefreshes(kind)) kind,
+        ],
         byVendor: {
           for (final kind in scope.order)
-            kind: [
-              for (final d in scope.of(kind))
-                if (!_autoRead.contains(d.identifier)) d,
-            ],
+            if (deviceKindRefreshes(kind))
+              kind: [
+                for (final d in scope.of(kind))
+                  if (!_autoRead.contains(d.identifier)) d,
+              ],
         },
       );
       if (toRead.length > 0) {
@@ -602,21 +801,19 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
           sliver: SliverToBoxAdapter(
+            // The scope line names what the host's Refresh all / Save all
+            // FABs act on — the buttons themselves moved to the FAB slot.
             child: entitled
-                ? _ScopeBar(
-                    label: selected == null
+                ? Text(
+                    selected == null
                         ? l.devicesScopeAll(scope.length)
                         : l.devicesScopeVendor(
                             l.deviceVendorName(selected),
                             scope.length,
                           ),
-                    busy: _busy(scope),
-                    saving: _saving,
-                    total: scope.length,
-                    savable: _savableCount(scope),
-                    meters: scope.meters,
-                    onRefresh: () => unawaited(_refreshScope(scope)),
-                    onSaveAll: () => unawaited(_save(scope)),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   )
                 : _ProNotice(
                     onTap: () => unawaited(
@@ -660,6 +857,33 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     );
   }
 
+  /// Publishes what the host's FABs need for the frame just built. Post-frame
+  /// because the host may rebuild in response, and value-compared (via
+  /// [DevicesFabStatus.==]) so a no-change build notifies no one — the
+  /// post-frame callback itself must not schedule another frame forever.
+  void _publishFabStatus(bool entitled, _Scope scope) {
+    final notifier = widget.fabStatus;
+    if (notifier == null) return;
+    final status = DevicesFabStatus(
+      entitled: entitled,
+      refreshable: scope.refreshables,
+      busy: _busy(scope),
+      meters: scope.meters,
+      savable: _savableCount(scope),
+      saving: _saving,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) notifier.value = status;
+    });
+  }
+
+  /// Reads every refreshable device in the current selection — the host's
+  /// Refresh all FAB.
+  Future<void> refreshAll() => _refreshScope(_scope);
+
+  /// Saves every meter in the current selection — the host's Save all FAB.
+  Future<void> saveAll() => _save(_scope);
+
   /// The scope a per-card Save runs in: that card's vendor, with the rest of
   /// its section still present, since a device's savable values can depend on
   /// its neighbours (the ReefFactory temperature-source rule).
@@ -696,6 +920,9 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
             _readAt.remove(id);
           }),
         ),
+        // No live map and no removal bookkeeping: the checker's card is
+        // inventory plus a measure button, nothing here holds its state.
+        kDeviceKindHanna => HannaDeviceSection(devices: byVendor[vendor]!),
         _ => ApDeviceSection(
           devices: byVendor[vendor]!,
           live: _apLive,
@@ -719,6 +946,9 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     kDeviceKindReefFactory => l.reefFactoryDisclaimer,
     kDeviceKindReefBeat => l.reefBeatDisclaimer,
     kDeviceKindApex => l.apexDisclaimer,
+    // Its own wording: the generic text promises Wi-Fi reads, and the checker
+    // is a Bluetooth device read only during a measurement session.
+    kDeviceKindHanna => l.devicesHannaDisclaimer,
     _ => l.devicesDisclaimer,
   };
 
@@ -726,7 +956,8 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     (e) => switch (e.$1) {
       kDeviceKindReefFactory => _rfLive[e.$2.identifier]?.loading ?? false,
       kDeviceKindReefBeat => _rbLive[e.$2.identifier]?.loading ?? false,
-      _ => _apLive[e.$2.identifier]?.loading ?? false,
+      kDeviceKindApex => _apLive[e.$2.identifier]?.loading ?? false,
+      _ => false, // the Hanna checker has no in-page read to be busy with
     },
   );
 
@@ -741,11 +972,11 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
 
   // --- actions -----------------------------------------------------------
 
-  /// Runs the add-device flow for the current selection — the host's FAB calls
-  /// this rather than a top-level function, because the flows seed this state's
-  /// live maps with what the new device reported (see [DevicesBody]).
+  /// Runs the add-device flow for the current selection — the host's app-bar
+  /// action calls this rather than a top-level function, because the flows
+  /// seed this state's live maps with what the new device reported (see
+  /// [DevicesBody]).
   Future<void> addDevice() => _addDevice(
-    ref.read(proFeatureProvider(ProFeature.connectedDevices)),
     // In a vendor view the brand is already chosen. A stored selection whose
     // last device has since been removed has no chip either, so it must not
     // decide the brand here.
@@ -753,15 +984,28 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   );
 
   /// Adding is a Pro action like reading: a device you can register but never
-  /// read would be a dead card.
-  Future<void> _addDevice(bool entitled, String? vendor) async {
-    if (!entitled) {
-      await showProFeatureDialog(context, ProFeature.connectedDevices);
-      return;
-    }
+  /// read would be a dead card. Gated per kind, after the brand is known —
+  /// the Hanna checker carries its own gate (`hannaConnect`), separate from
+  /// the LAN devices' `connectedDevices` (it is the keeper's own test kit,
+  /// not tank hardware).
+  Future<void> _addDevice(String? vendor) async {
     // In a vendor view the brand is already chosen; in All, ask.
     final kind = vendor ?? await _pickVendor();
     if (kind == null || !mounted) return;
+    if (kind == kDeviceKindHanna) {
+      // There is no add sheet: the checker records itself on first connect,
+      // so "adding" one is running a measurement.
+      if (!ref.read(proFeatureProvider(ProFeature.hannaConnect))) {
+        await showProFeatureDialog(context, ProFeature.hannaConnect);
+        return;
+      }
+      await context.push('/hanna/measure');
+      return;
+    }
+    if (!ref.read(proFeatureProvider(ProFeature.connectedDevices))) {
+      await showProFeatureDialog(context, ProFeature.connectedDevices);
+      return;
+    }
     switch (kind) {
       case kDeviceKindReefFactory:
         await showRfAddFlow(
@@ -810,6 +1054,12 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
 
   Future<String?> _pickVendor() {
     final l = AppLocalizations.of(context);
+    // The checker's entry points exist only behind the experimental opt-in
+    // and on hardware with a BLE stack at all — the same two gates as the
+    // Measurements-tab menu entry (U33).
+    final hannaAvailable =
+        (ref.read(experimentalEnabledProvider).value ?? false) &&
+        (ref.read(hannaBleSupportedProvider).value ?? true);
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -826,11 +1076,12 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
               ),
             ),
             for (final v in kDeviceVendors)
-              ListTile(
-                leading: Icon(deviceVendorIcon(v)),
-                title: Text(l.deviceVendorName(v)),
-                onTap: () => Navigator.pop(ctx, v),
-              ),
+              if (v != kDeviceKindHanna || hannaAvailable)
+                ListTile(
+                  leading: Icon(deviceVendorIcon(v)),
+                  title: Text(l.deviceVendorName(v)),
+                  onTap: () => Navigator.pop(ctx, v),
+                ),
           ],
         ),
       ),
@@ -955,6 +1206,13 @@ class _Scope {
   /// is counted without an edit here.
   int get meters =>
       order.where(deviceKindSaves).fold(0, (n, kind) => n + of(kind).length);
+
+  /// Devices a Refresh all would actually read — the button's count, and zero
+  /// hides it (a Hanna-only view has nothing to poll). Same open-ended idiom
+  /// as [meters], via [deviceKindRefreshes].
+  int get refreshables => order
+      .where(deviceKindRefreshes)
+      .fold(0, (n, kind) => n + of(kind).length);
 }
 
 /// The vendor selector: one chip per vendor that has a device, in the user's
@@ -1018,80 +1276,7 @@ class _VendorBar extends StatelessWidget {
   }
 }
 
-/// The scope line plus the two bulk actions it describes.
-class _ScopeBar extends StatelessWidget {
-  const _ScopeBar({
-    required this.label,
-    required this.busy,
-    required this.saving,
-    required this.total,
-    required this.savable,
-    required this.meters,
-    required this.onRefresh,
-    required this.onSaveAll,
-  });
-
-  final String label;
-  final bool busy;
-
-  /// A save is already in flight — Save all disables for its duration (#86).
-  final bool saving;
-
-  /// Devices the refresh would read — the button carries the number so "all"
-  /// never has to be guessed at.
-  final int total;
-
-  /// Devices in scope holding values right now (Save all's count).
-  final int savable;
-
-  /// Meter-capable devices in scope — zero means Save all is meaningless here
-  /// and is hidden rather than disabled.
-  final int meters;
-  final VoidCallback onRefresh;
-  final VoidCallback onSaveAll;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: busy ? null : onRefresh,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: Text(l.devicesRefreshAll(total)),
-              ),
-            ),
-            if (meters > 0) ...[
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: savable > 0 && !saving ? onSaveAll : null,
-                  icon: const Icon(Icons.save_outlined, size: 18),
-                  label: Text(l.devicesSaveAll(savable)),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// What sits where the action buttons would be on a non-entitled install: the
+/// What sits where the scope line would be on a non-entitled install: the
 /// list stays readable, reading and saving do not.
 class _ProNotice extends StatelessWidget {
   const _ProNotice({required this.onTap});
@@ -1163,9 +1348,9 @@ class _DisclaimerBanner extends StatelessWidget {
   }
 }
 
-/// No devices at all: one clear message, pointing at the host's add-device FAB.
-/// No chips, no scope bar, no disclaimer — there is nothing yet to be read-only
-/// about.
+/// No devices at all: one clear message, pointing at the host's app-bar add
+/// action. No chips, no scope line, no disclaimer — there is nothing yet to be
+/// read-only about.
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
@@ -1208,5 +1393,6 @@ class _EmptyState extends StatelessWidget {
 IconData deviceVendorIcon(String kind) => switch (kind) {
   kDeviceKindReefFactory => Icons.sensors,
   kDeviceKindReefBeat => Icons.water_drop_outlined,
+  kDeviceKindHanna => Icons.bluetooth,
   _ => Icons.hub_outlined,
 };

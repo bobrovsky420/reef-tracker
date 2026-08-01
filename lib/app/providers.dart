@@ -856,6 +856,13 @@ final apexDevicesProvider = StreamProvider<List<DeviceRecord>>(
   (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('apex')),
 );
 
+/// The registered Hanna checkers — recorded by the measurement flow on first
+/// BLE connect (`ensureHannaDevice`), shown as their own Devices-page section
+/// (U43). Same scoping rationale as [reefFactoryDevicesProvider].
+final hannaDevicesProvider = StreamProvider<List<DeviceRecord>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('hanna')),
+);
+
 // --- LAN device discovery (U39) -------------------------------------------
 
 /// The socket primitives discovery runs on. Overridden with a scripted fake in

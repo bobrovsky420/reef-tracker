@@ -224,25 +224,23 @@ void main() {
     await unmountApp(tester);
   });
 
-  testWidgets('an empty inventory offers the Add FAB, nothing else', (
-    tester,
-  ) async {
+  testWidgets('an empty inventory offers the app-bar add action, nothing '
+      'else', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
     await pumpDevices(tester, db);
 
     expect(find.text('No devices yet'), findsOneWidget);
-    // No chips, no scope bar, no read-only disclaimer — there is nothing yet
+    // No chips, no scope line, no read-only disclaimer — there is nothing yet
     // to be read-only about.
     expect(find.byType(ChoiceChip), findsNothing);
     expect(find.textContaining('Refresh all'), findsNothing);
-    // Adding is the host's FAB (U42), which stays put whether the page is
-    // empty or full — the empty state no longer carries a button of its own.
-    expect(
-      find.widgetWithText(FloatingActionButton, 'Add device'),
-      findsOneWidget,
-    );
+    // Adding sits in the host's app bar, which stays put whether the page is
+    // empty or full; the FAB slot holds the bulk actions, and an empty
+    // inventory has nothing for them to act on.
+    expect(find.byTooltip('Add device'), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsNothing);
     await unmountApp(tester);
   });
 }

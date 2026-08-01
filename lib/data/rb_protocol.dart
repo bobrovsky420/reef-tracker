@@ -448,6 +448,9 @@ class RbAtoStatus {
     this.volumeLeftMl,
     this.daysTillEmpty,
     this.leakAlarm = false,
+    this.leakSensorConnected = false,
+    this.leakSensorEnabled = false,
+    this.leakStatusRaw,
     this.sensorWarning = false,
     this.temperatureC,
   });
@@ -475,6 +478,17 @@ class RbAtoStatus {
   /// The leak sensor reports water where it shouldn't be.
   final bool leakAlarm;
 
+  /// The leak-sensor block's own facts: whether a sensor is attached and
+  /// switched on, and its raw status string (`"dry"`, `"rodi_water_leak"`, …)
+  /// verbatim — the card's status row shows them, so a keeper sees the sensor
+  /// standing guard rather than only hearing from it when it alarms.
+  final bool leakSensorConnected;
+  final bool leakSensorEnabled;
+  final String? leakStatusRaw;
+
+  /// An attached, enabled leak sensor — what earns the card its status row.
+  bool get leakSensorActive => leakSensorConnected && leakSensorEnabled;
+
   /// The level sensor is in error or not connected — top-off is unreliable.
   final bool sensorWarning;
 
@@ -492,17 +506,21 @@ class RbAtoStatus {
 
   static RbAtoStatus fromJson(Map<String, Object?> json) {
     final leak = json['leak_sensor'];
-    var leakAlarm = false;
+    var leakConnected = false;
+    var leakEnabled = false;
+    String? leakStatus;
     if (leak is Map<String, Object?>) {
-      // Only an active, connected sensor reporting other than "dry" alarms —
-      // a disabled or absent sensor stays quiet.
-      final status = leak['status'];
-      leakAlarm =
-          leak['connected'] == true &&
-          leak['enabled'] != false &&
-          status is String &&
-          status != 'dry';
+      leakConnected = leak['connected'] == true;
+      leakEnabled = leak['enabled'] != false;
+      leakStatus = _asString(leak['status']);
     }
+    // Only an active, connected sensor reporting other than "dry" alarms —
+    // a disabled or absent sensor stays quiet.
+    final leakAlarm =
+        leakConnected &&
+        leakEnabled &&
+        leakStatus != null &&
+        leakStatus != 'dry';
 
     final sensor = json['ato_sensor'];
     var sensorWarning = false;
@@ -528,6 +546,9 @@ class RbAtoStatus {
       volumeLeftMl: _asDouble(json['volume_left']),
       daysTillEmpty: _asInt(json['days_till_empty']),
       leakAlarm: leakAlarm,
+      leakSensorConnected: leakConnected,
+      leakSensorEnabled: leakEnabled,
+      leakStatusRaw: leakStatus,
       sensorWarning: sensorWarning,
       temperatureC: temperatureC,
     );
@@ -742,6 +763,11 @@ class RbRunPump {
   /// Whether the pump reports a state other than healthy. An *absent* state
   /// stays optimistic rather than raising a warning out of nowhere.
   bool get faulted => state != null && state != 'operational';
+
+  /// The skimmer's collection cup is full and the pump has paused itself
+  /// (`state == "full_cup"`). Distinguished from the generic fault so the card
+  /// can say "Full cup" instead of echoing the raw firmware string.
+  bool get fullCup => state == 'full_cup';
 
   /// Nothing to show a keeper — an empty socket rather than a real pump.
   bool get isEmptySocket =>

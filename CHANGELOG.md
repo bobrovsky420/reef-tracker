@@ -11,12 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Connected devices now has its own tab in the bottom bar (experimental).
   Checking your meters, pumps and controllers is one tap from anywhere in the
   app instead of two taps into the Measurements menu, and the page keeps its
-  place and its readings while you move between tabs. Adding a device is the
-  tab's own button, and devices are only read when you are actually looking at
-  them. Like every experimental feature, the tab appears only with Experimental
-  features turned on in Settings.
+  place and its readings while you move between tabs. Devices are only read
+  when you are actually looking at them. Like every experimental feature, the
+  tab appears only with Experimental features turned on in Settings.
+- The Hanna checker appears on the Connected devices page as its own brand
+  once it has connected at least once: a card with its name, serial number and
+  the time of its last measurement, plus a button that starts a new
+  measurement right from the page.
+- The ReefATO+ card now shows the leak sensor standing guard: a "Leak sensor:
+  Dry" line whenever one is attached and enabled — not only the alarm once
+  water is detected. A detected leak still raises the red "Leak detected!"
+  warning, now alongside what the sensor found (e.g. RO/DI water).
 
 ### Changed
+- On the Connected devices tab, "Refresh all" and "Save all" are now floating
+  buttons that stay in reach however far the list is scrolled; "Add device"
+  moved up into the top bar.
+- A ReefRun skimmer pump that paused itself because its collection cup is full
+  now says "Full cup" plainly instead of showing the firmware's raw state
+  code.
 - The Connected devices page's "Reorder brands" moved out of the menu onto the
   row of brand buttons it reorders.
 

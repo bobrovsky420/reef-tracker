@@ -3368,6 +3368,15 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatAtoReservoir => 'Zásobník';
 
   @override
+  String get reefBeatAtoLeakSensor => 'Senzor úniku';
+
+  @override
+  String get reefBeatAtoLeakDry => 'Sucho';
+
+  @override
+  String get reefBeatAtoLeakRodi => 'Únik RO/DI vody';
+
+  @override
   String get reefBeatMatRoll => 'Role';
 
   @override
@@ -3440,6 +3449,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String reefBeatRunState(Object state) {
     return 'Stav čerpadla: $state';
   }
+
+  @override
+  String get reefBeatRunFullCup => 'Plný kalíšek';
 
   @override
   String get reefBeatRunSensorOffline => 'Hladinový senzor offline';
@@ -3740,10 +3752,14 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get devicesEmptyBody =>
-      'Připojte měřič ReefFactory, zařízení Red Sea ReefBeat nebo řídicí jednotku Neptune Apex ve své síti a uvidíte je zde.';
+      'Připojte měřič ReefFactory, zařízení Red Sea ReefBeat nebo řídicí jednotku Neptune Apex ve své síti — nebo změřte hodnoty Hanna checkerem přes Bluetooth — a uvidíte je zde.';
 
   @override
   String get devicesAddDevice => 'Přidat zařízení';
+
+  @override
+  String get devicesHannaDisclaimer =>
+      'Hanna checker se připojuje přes Bluetooth jen během měření — spusťte ho z jeho karty. Dokončená měření se uloží mezi vaše záznamy.';
 
   @override
   String get devicesAddPickBrand => 'Která značka?';
@@ -3807,6 +3823,29 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String reefDevicesLastSeen(Object date) {
     return 'Naposledy $date';
+  }
+
+  @override
+  String get hannaSerialNumber => 'Sériové číslo';
+
+  @override
+  String get hannaLastMeasurement => 'Poslední měření';
+
+  @override
+  String get hannaNewMeasurement => 'Nové měření';
+
+  @override
+  String get hannaRenameDevice => 'Přejmenovat checker';
+
+  @override
+  String get hannaDeviceNameLabel => 'Název checkeru';
+
+  @override
+  String get hannaRemove => 'Odebrat';
+
+  @override
+  String hannaRemoveConfirm(Object name) {
+    return 'Odebrat „$name“? Uložené hodnoty zůstanou a po dalším měření se checker objeví znovu.';
   }
 
   @override

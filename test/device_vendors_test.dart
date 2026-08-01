@@ -10,7 +10,8 @@ void main() {
     });
 
     test('a stored order is honoured', () {
-      expect(orderDeviceVendors('apex,reefbeat,reeffactory'), [
+      expect(orderDeviceVendors('hanna,apex,reefbeat,reeffactory'), [
+        kDeviceKindHanna,
         kDeviceKindApex,
         kDeviceKindReefBeat,
         kDeviceKindReefFactory,
@@ -23,25 +24,28 @@ void main() {
         kDeviceKindReefFactory,
         // Not mentioned → appended in registration order.
         kDeviceKindReefBeat,
+        kDeviceKindHanna,
       ]);
     });
 
     test('a vendor the app gained later is appended, never promoted', () {
-      // The stored value predates the Apex integration.
+      // The stored value predates the Apex integration and the Hanna vendor
+      // (U43) alike — both land at the end, in registration order.
       expect(orderDeviceVendors('reefbeat,reeffactory'), [
         kDeviceKindReefBeat,
         kDeviceKindReefFactory,
         kDeviceKindApex,
+        kDeviceKindHanna,
       ]);
     });
 
     test('unknown kinds are dropped, not rendered as ghost chips', () {
-      // A vendor removed from the app, and the Hanna kind, which is not a
-      // Devices-screen vendor at all.
-      expect(orderDeviceVendors('seneye,hanna,apex'), [
+      // A vendor removed from the app.
+      expect(orderDeviceVendors('seneye,apex'), [
         kDeviceKindApex,
         kDeviceKindReefFactory,
         kDeviceKindReefBeat,
+        kDeviceKindHanna,
       ]);
     });
 
@@ -50,6 +54,7 @@ void main() {
         kDeviceKindApex,
         kDeviceKindReefFactory,
         kDeviceKindReefBeat,
+        kDeviceKindHanna,
       ]);
     });
 
@@ -61,6 +66,7 @@ void main() {
         'apex',
         'reefbeat,reefbeat',
         'apex,reeffactory,reefbeat',
+        'hanna,apex,reeffactory,reefbeat',
       ]) {
         final order = orderDeviceVendors(stored);
         expect(order.toSet(), kDeviceVendors.toSet(), reason: 'stored=$stored');
@@ -71,6 +77,7 @@ void main() {
     test('encode round-trips through the parser', () {
       const order = [
         kDeviceKindApex,
+        kDeviceKindHanna,
         kDeviceKindReefFactory,
         kDeviceKindReefBeat,
       ];
@@ -88,9 +95,24 @@ void main() {
       expect(deviceKindSaves(kDeviceKindReefBeat), isFalse);
     });
 
-    test('an unknown kind is not assumed savable', () {
+    test('the Hanna checker saves through its own flow, not the page', () {
       expect(deviceKindSaves(kDeviceKindHanna), isFalse);
+    });
+
+    test('an unknown kind is not assumed savable', () {
       expect(deviceKindSaves('seneye'), isFalse);
+    });
+  });
+
+  group('deviceKindRefreshes (U43)', () {
+    test('every LAN vendor is polled by the refresh actions', () {
+      expect(deviceKindRefreshes(kDeviceKindReefFactory), isTrue);
+      expect(deviceKindRefreshes(kDeviceKindReefBeat), isTrue);
+      expect(deviceKindRefreshes(kDeviceKindApex), isTrue);
+    });
+
+    test('the Hanna checker is Bluetooth-only and never polled', () {
+      expect(deviceKindRefreshes(kDeviceKindHanna), isFalse);
     });
   });
 }

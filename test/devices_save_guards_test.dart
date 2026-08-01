@@ -97,7 +97,9 @@ void main() {
   }
 
   Future<void> tapSaveAll(WidgetTester tester, int savable) async {
-    await tester.tap(find.widgetWithText(FilledButton, 'Save all ($savable)'));
+    await tester.tap(
+      find.widgetWithText(FloatingActionButton, 'Save all ($savable)'),
+    );
     await settle(tester);
   }
 

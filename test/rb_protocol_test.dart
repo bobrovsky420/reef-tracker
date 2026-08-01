@@ -116,6 +116,61 @@ const _atoDashboardJson = '''
 }
 ''';
 
+/// Golden vector: the same RSATO+'s `GET /dashboard` while its leak sensor
+/// was standing in RO/DI water (2026-08-01) — the unit switches `mode` to
+/// "leak", stops the pump and sounds the buzzer.
+const _atoLeakDashboardJson = '''
+{
+  "mode": "leak",
+  "active_shortcut": "no_shortcut",
+  "is_internet_connected": true,
+  "check_sensor": false,
+  "s1_average": 450,
+  "s2_average": 386,
+  "water_level": "desired_level_2",
+  "pump_state": "off",
+  "prev_pump_state": "pump_on",
+  "is_pump_on": false,
+  "last_pump_on_cause": "ec_sensor_s1",
+  "pump_consumption": 0,
+  "pump_speed": 58,
+  "flow_rate": 1700,
+  "pump_soft_blockage_threshold": 0,
+  "pump_blockage_threshold": 1167.60009765625,
+  "pump_empty_threshold": 729.75,
+  "last_fill_date": 1785555430,
+  "today_fills": 3,
+  "today_volume_usage": 1217,
+  "total_volume_usage": 0,
+  "total_fills": 1783,
+  "daily_fills_average": null,
+  "daily_volume_average": null,
+  "volume_left": 26000,
+  "days_till_empty": null,
+  "leak_sensor": {
+    "connected": true,
+    "enabled": true,
+    "buzzer_enabled": true,
+    "buzzer_on": true,
+    "current_read": 5,
+    "status": "rodi_water_leak"
+  },
+  "ato_sensor": {
+    "is_sensor_error": false,
+    "is_temp_enabled": true,
+    "temperature_log_enabled": true,
+    "connected": true,
+    "last_installation_date": 1750146309,
+    "current_level": "desired",
+    "code": "509",
+    "is_calibrated": true,
+    "last_adjustment_date": null,
+    "current_read": 25.7149996757507,
+    "temperature_probe_status": "connected"
+  }
+}
+''';
+
 /// Golden vector: a live RSMAT250's `GET /device-info` (2026-07-25). Mats
 /// report only "RSMAT" as the model — the width lives in `/configuration`,
 /// which the app doesn't read.
@@ -500,8 +555,27 @@ void main() {
       expect(status.volumeLeftMl, 3467);
       expect(status.daysTillEmpty, 1);
       expect(status.leakAlarm, isFalse);
+      // The sensor is attached and switched on, standing dry — that is what
+      // earns the card its quiet "Leak sensor: Dry" row.
+      expect(status.leakSensorActive, isTrue);
+      expect(status.leakStatusRaw, 'dry');
       expect(status.sensorWarning, isFalse);
       expect(status.temperatureC, closeTo(24.965, 0.001));
+    });
+
+    test('parses the leak-mode golden vector', () {
+      final status = RbAtoStatus.fromJson(_decode(_atoLeakDashboardJson));
+      expect(status.leakAlarm, isTrue);
+      expect(status.leakSensorActive, isTrue);
+      expect(status.leakStatusRaw, 'rodi_water_leak');
+      // The rest of the dashboard stays readable through the alarm — the
+      // nulled averages must degrade to absent, not crash the parse.
+      expect(status.waterLevel, RbAtoWaterLevel.ok);
+      expect(status.todayFills, 3);
+      expect(status.dailyVolumeAvgMl, isNull);
+      expect(status.daysTillEmpty, isNull);
+      expect(status.volumeLeftMl, 26000);
+      expect(status.temperatureC, closeTo(25.715, 0.001));
     });
 
     test('water-level strings map to coarse levels', () {
@@ -536,6 +610,18 @@ void main() {
       );
       // Enabled flag absent stays tolerant — a connected wet sensor alarms.
       expect(alarm({'connected': true, 'status': 'wet'}), isTrue);
+    });
+
+    test('the leak-sensor row only exists for an attached, enabled sensor', () {
+      bool active(Object? leak) =>
+          RbAtoStatus.fromJson({'leak_sensor': leak}).leakSensorActive;
+      expect(active({'connected': true, 'enabled': true, 'status': 'dry'}),
+          isTrue);
+      expect(active({'connected': true, 'status': 'dry'}), isTrue);
+      expect(active({'connected': false, 'enabled': true}), isFalse);
+      expect(active({'connected': true, 'enabled': false}), isFalse);
+      expect(active(null), isFalse);
+      expect(active('nope'), isFalse);
     });
 
     test('sensor warning on error or disconnect; temperature suppressed when '
@@ -877,6 +963,16 @@ void main() {
       expect(RbRunPump.fromJson(1, {'state': 'blocked'}).faulted, isTrue);
       expect(RbRunPump.fromJson(1, {'state': 'operational'}).faulted, isFalse);
       expect(RbRunPump.fromJson(1, const {}).faulted, isFalse);
+    });
+
+    test('a full skimmer cup is recognized among the fault states', () {
+      final full = RbRunPump.fromJson(2, {'state': 'full_cup'});
+      expect(full.fullCup, isTrue);
+      // Still a fault — the pump has paused itself — but the card labels it
+      // "Full cup" instead of echoing the raw state.
+      expect(full.faulted, isTrue);
+      expect(RbRunPump.fromJson(2, {'state': 'blocked'}).fullCup, isFalse);
+      expect(RbRunPump.fromJson(2, const {}).fullCup, isFalse);
     });
 
     test('skips keys that are not pump sockets', () {

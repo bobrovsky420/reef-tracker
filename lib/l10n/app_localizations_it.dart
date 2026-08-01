@@ -3366,6 +3366,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reefBeatAtoReservoir => 'Serbatoio';
 
   @override
+  String get reefBeatAtoLeakSensor => 'Sensore perdite';
+
+  @override
+  String get reefBeatAtoLeakDry => 'Asciutto';
+
+  @override
+  String get reefBeatAtoLeakRodi => 'Perdita di acqua RO/DI';
+
+  @override
   String get reefBeatMatRoll => 'Rotolo';
 
   @override
@@ -3437,6 +3446,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String reefBeatRunState(Object state) {
     return 'Stato pompa: $state';
   }
+
+  @override
+  String get reefBeatRunFullCup => 'Bicchiere pieno';
 
   @override
   String get reefBeatRunSensorOffline => 'Sensore di livello non raggiungibile';
@@ -3738,10 +3750,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get devicesEmptyBody =>
-      'Collega un misuratore ReefFactory, un dispositivo Red Sea ReefBeat o un controller Neptune Apex sulla tua rete per vederlo qui.';
+      'Collega un misuratore ReefFactory, un dispositivo Red Sea ReefBeat o un controller Neptune Apex sulla tua rete — oppure misura con un checker Hanna via Bluetooth — per vederlo qui.';
 
   @override
   String get devicesAddDevice => 'Aggiungi dispositivo';
+
+  @override
+  String get devicesHannaDisclaimer =>
+      'Il checker si collega via Bluetooth solo durante una misurazione — avviala dalla sua scheda. Le misurazioni completate vengono salvate nel tuo registro.';
 
   @override
   String get devicesAddPickBrand => 'Quale marca?';
@@ -3804,6 +3820,29 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String reefDevicesLastSeen(Object date) {
     return 'Visto $date';
+  }
+
+  @override
+  String get hannaSerialNumber => 'Numero di serie';
+
+  @override
+  String get hannaLastMeasurement => 'Ultima misurazione';
+
+  @override
+  String get hannaNewMeasurement => 'Nuova misurazione';
+
+  @override
+  String get hannaRenameDevice => 'Rinomina il checker';
+
+  @override
+  String get hannaDeviceNameLabel => 'Nome del checker';
+
+  @override
+  String get hannaRemove => 'Rimuovi';
+
+  @override
+  String hannaRemoveConfirm(Object name) {
+    return 'Rimuovere \"$name\"? I valori salvati restano e il checker ricomparirà dopo la prossima misurazione.';
   }
 
   @override

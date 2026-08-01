@@ -114,7 +114,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type (in listing order). `presetBounds`, `defaultTrackedKeys`. Also `kPresetTargets`/`presetTarget` — default **correction targets** (canonical units) per setup type, defined only where the sensible target is *not* the green-zone midpoint (currently alkalinity: soft/LPS 8.5, SPS 8.0, mixed 8.3 dKH); seeded into `TrackedParameters.targetValue`, editable per tank. **The data (`kPresets`/`kPresetTargets`) is generated from `tank_presets.yaml`** (see below); this file owns the lookups. |
 | `micro.dart` | Microelements (U17) domain rules. `kMicroDefaultBounds` — default zone bounds per element in canonical ppm (derived from the catalog's per-element `defaultBounds`, edited in `parameters.yaml`), anchored on natural seawater / ICP-lab target ranges — Sr, Fe, Si, Zn, V, Cu, Ni, Mo, Li, Al, Sb, Sn, Ag, W, La, Ti, As, Cd, Hg and Pb follow the **Fauna Marin lab reference bands** read off that lab's report gauges (where it publishes a bare reference range and no gauge, the range end is `greenHigh` and `amberHigh` is +10%, the ratio its gauged elements use). Contaminants stay **one-sided** (green up to a ceiling — no "too little lead") even where that lab states a lower reference bound. Silicon is the one element with a green *floor* but no low amber step: its `amberLow` deliberately **equals** its `greenLow` so the low side goes red straight into green — a null `amberLow` would instead classify everything below green as amber, since `zones.dart` only reds beyond a *defined* amber bound (the zero-width band is dropped by `zoneBands`). One consequence is pinned by a test: the adopted Sr band (6.5–8.0 mg/L) sits below natural seawater (~8.1), so an NSW-level strontium reads amber by default. Used as the fallback when a tank has no `TrackedParameters` row for an element and as the seed when one is created. `kMicroHobbyKitKeys` (the catalog's `hobbyKit`-flagged elements, in catalog order — Sr/I/Fe, the elements home test kits exist for), and `computeMicroStatus(inputs)` → `MicroStatus` (measured / out-of-range counts, worst zone, newest sample date) — the panel's own summary, deliberately **outside** the tank health score: micro is measured on an ICP cadence (months), which the 30-day core freshness rule would permanently read as stale. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
-| `device_vendors.dart` | The vendor model behind the unified Devices screen (U41) — pure, so the ordering rules are unit-tested directly. The device `kind` constants, `kDeviceVendors` (the vendors in **registration order**, which is the default order and the append position for anything a stored order doesn't mention), `deviceKindSaves` (whether a kind can report values a Save persists — a property of the *kind*, so a controller-only card never shows a Save button at all rather than a permanently disabled one), and `orderDeviceVendors(stored, known)`, which resolves the user's arrangement from `SettingKey.deviceVendorOrder`. That parser is deliberately tolerant: the stored value outlives app versions, so unknown kinds are dropped, duplicates collapse, missing ones append, and null/garbage yields exactly `known`. Vendor order is not cosmetic — the Devices screen resolves a duplicated parameter by "first displayed wins", so this list also decides whose reading survives a Save all. The Hanna checker is **not** a vendor here (Bluetooth test kit, not tank hardware on the LAN). |
+| `device_vendors.dart` | The vendor model behind the unified Devices screen (U41) — pure, so the ordering rules are unit-tested directly. The device `kind` constants, `kDeviceVendors` (the vendors in **registration order**, which is the default order and the append position for anything a stored order doesn't mention), `deviceKindSaves` (whether a kind can report values a Save persists — a property of the *kind*, so a controller-only card never shows a Save button at all rather than a permanently disabled one), and `orderDeviceVendors(stored, known)`, which resolves the user's arrangement from `SettingKey.deviceVendorOrder`. That parser is deliberately tolerant: the stored value outlives app versions, so unknown kinds are dropped, duplicates collapse, missing ones append, and null/garbage yields exactly `known`. Vendor order is not cosmetic — the Devices screen resolves a duplicated parameter by "first displayed wins", so this list also decides whose reading survives a Save all. Since U43 the Hanna checker **is** a vendor (its card is inventory + a measure entry point), but the odd one out: `deviceKindRefreshes` is false for it — a Bluetooth test kit connected only during a measurement session has nothing to poll, so the refresh actions and their counts skip it — and `deviceKindSaves` is false too (its readings save through its own flow). |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. Pure (no DB): consumes plain `RatioReading` (`{takenAt, value}`) records and `RatioSettings` (`{visible, displayOrder, bounds}`) instead of drift rows — `database.dart` hosts the thin row→record mappers (#52). The recommended per-kind zone bounds (`kRatioDefaultBounds`, backing `RatioKind.defaultBounds`) are **generated from the `ratios` section of `tank_presets.yaml`** into `ratio.g.dart` — the YAML also documents the chemistry (NSW anchors) behind each range. |
 | `ammonia_toxicity.dart` | Free (toxic) un-ionized ammonia (NH₃) math — pure, DB-free, like `ratio.dart`. A total-ammonia test measures TAN (NH₄⁺ + NH₃); only NH₃ is toxic and its share climbs with pH and temperature (and, mildly, falls with salinity), so a reef converts far more of the same total to the toxic form than a low-pH tank. `freeAmmoniaFraction(pH, tempC, salinityPpt)` = `1 / (1 + 10^(pKa − pH))` with `pKa = 0.09018 + 2729.92/T_K` (**Emerson 1975**) plus a salinity/ionic-strength term (**US EPA 1989** Eq. 5 `I = 19.9273·S/(1000 − 1.005109·S)` + NH₃ salting-out); validated against reef-chemistry reference values (~9–10 % NH₃ at pH 8.3 / 25 °C / 35 ppt, +13 % at 27 °C). `computeFreeAmmonia({ammonia, ph, temperature, salinity})` → `FreeAmmonia?` (total, `freeNh3`, `fraction`, inputs used, `salinityMeasured`, `inputsOutdated`) from each input's latest reading (newest-first records mapped from `Reading`); null until ammonia + pH + temperature all exist; salinity is optional (falls back to `kDefaultSalinityPpt` 35, flagged). Fixed one-sided toxicity bounds `kFreeAmmoniaBounds` (green ≤ 0.02, amber ≤ 0.05 ppm NH₃, anchored on the EPA saltwater chronic criterion 0.035). `inputsOutdated` is set when pH/temp are more than `kAmmoniaInputMaxAge` (7 d) from the ammonia reading — the value still shows, flagged approximate. Basis decision: total ammonia is treated **as NH₃** (matching the `ammonia` parameter's canonical unit); presentation-only (does not feed the health score). See Features. |
 | `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.linearFit`, `TrendDirection`, projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward — and a `recovering` flag). Uses the most recent `window` readings and returns null until that many exist. The projection is **anchored on the fitted (regression) value at the last timestamp**, not the raw last reading, so one noisy endpoint can't swing the forecast. A value already *outside* its green range but moving back toward it is **recovering**: no crossing is forecast (the only bounds ahead are on the far side of green — forecasting them would warn about an improving parameter) and `recovering` is set so the UI could one day surface it positively (TODO U15). Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). Slopes with magnitude < 1e-9 (`_flatEpsilon`) classify as flat (no forecast), a bound projection is dropped when the bound lies opposite the direction of travel ("the bound is behind us"), and bounds failing `ZoneBounds.isValid` produce no forecast at all. **Significance gate (#31):** a fitted slope only forecasts when it is distinguishable from zero — `|slope| / SE(slope)` ≥ the two-sided 95% Student-t critical value for `n − 2` df (`_tCritical95`, table-driven because a flat `|t| ≥ 2` rule passes the very six-point fits this rejects; beyond df 20 the last entry is reused, erring toward suppression). Otherwise `slopeSignificant` is false and *every* projection collapses to null, `recovering` included — a line through noise has a sign that flips with the window size, so it can neither promise a recovery nor threaten a crossing. `sigma` (residual RMS, n−2 dof, null for a two-point fit which has nothing to test and keeps its historical forecasts) and `relativeSwing` (`sigma / oscillationScale(bounds)`) are reported alongside; a non-significant fit whose `relativeSwing` ≥ `kTrendOscillationRelative`=0.37 — the same relative swing at which `stability_score.dart` calls a parameter "variable" — sets **`oscillating`**, the UI's cue to say *swinging, not drifting* instead of a fabricated crossing. See Features. |
@@ -1344,7 +1344,7 @@ Body text stays the platform default (SF/Roboto).
 | `/hanna/measure` | Hanna checker live BLE measurement (U33, experimental): connect → select → run → save in one route |
 | `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
-| `/devices` | Standalone Devices page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory. Since U42 the same body is the home shell's Devices tab and nothing pushes this route; it stays as a stable deep-link target, mirroring `/settings` |
+| `/devices` | Standalone Devices page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers and (U43) the Hanna checker. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory. Since U42 the same body is the home shell's Devices tab and nothing pushes this route; it stays as a stable deep-link target, mirroring `/settings` |
 
 The Actions log is no longer a standalone route — it is the second tab inside the
 home shell (see Features). `/` accepts a
@@ -1379,7 +1379,10 @@ tab renders no app bar** — just an inline `titleLarge` "Settings" heading
 (`_SettingsTab`, a `SafeArea` over the shared `SettingsBody`; see Settings).
 The **FAB is per-tab**: "Add reading" on Measurements, "Add action"
 (`showAddActionSheet`) on Actions, "Add supplement" (pushes `/dosing/edit`)
-on Dosing, "Add device" on Devices, and none on Settings. With no tanks, the
+on Dosing, the Refresh all / Save all pair (`DevicesActionFabs`, fed by the
+body-published `DevicesFabStatus` — see the Devices screen) on Devices with
+"Add device" as that tab's app-bar icon action, and none on Settings. With no
+tanks, the
 bottom bar and FAB are
 hidden and `NoTanksView` is shown — it carries its own settings button
 pushing the standalone `/settings` route, so backup restore stays reachable
@@ -1401,9 +1404,10 @@ always carries **all five** children in enum order, including Devices while it
 has no destination, so hiding the tab never discards the page's held device
 snapshots; what the shell gates instead is the automatic LAN read, via
 `DevicesBody.active` — without it the on-open read would fire for every tab on
-every launch, for a page nobody opened. The Devices FAB reaches
-`DevicesBodyState.addDevice()` through a `GlobalKey`, because the add flows
-seed the live snapshots that state holds (a top-level call could not).
+every launch, for a page nobody opened. The Devices app-bar add action and
+FABs reach `DevicesBodyState` (`addDevice()`, `refreshAll()`, `saveAll()`)
+through a `GlobalKey`, because the add flows seed the live snapshots that
+state holds (a top-level call could not).
 
 **Label fit** (`_navBarFixedLabels` / `fitNavBarLabel`): the fifth destination
 cut every label's share of the bar by a fifth. At the authored size all seven
@@ -2232,9 +2236,11 @@ badge everywhere the feature surfaces (settings row, screen title, in-screen
 note). Scope is **measurements only** — a second in-screen note
 (`hannaMeasureOnlyNote`) points users to the vendor's Hanna Lab app for
 meter settings and firmware updates. Like every experimental feature it is **hidden entirely by default**:
-its entry point (the Measurements-tab overflow entry — Settings carries no row
-for it) only exists once the experimental-features master switch
-(`experimental_enabled`, Settings → Experimental) is turned on.
+its entry points (the Measurements-tab overflow entry and, since U43, the
+checker card's "New measurement" button + Hanna brand entry on the Devices
+page — Settings carries no row for it) only exist once the
+experimental-features master switch (`experimental_enabled`, Settings →
+Experimental) is turned on.
 
 - **Layering:** `domain/hanna_meter.dart` (pure protocol: commands, the
   method-code registry, `HannaLineBuffer` MTU reassembly, end-anchored frame
@@ -2557,11 +2563,21 @@ entry points for one page were four ways to say the same thing).
   as the pushed `/devices` route's app-bar title, where the extra word still
   earns its place.
 - **`DevicesBody` is scaffold-less**, so the same body serves the tab and the
-  route; the host owns the app bar and the add-device FAB (see Home shell for
-  the `GlobalKey`/`active` wiring). "Reorder brands" moved off the app bar
-  onto the vendor bar it reorders — the tab host owns no menu of its own, and
-  the control now sits with the chips whose order it sets. The empty state is
-  icon + text only, like every other tab's: the host's FAB is the add button.
+  route; the host owns the app bar — whose **add-device action** (an icon
+  button, U43) calls `addDevice` on the body's state — and the **Refresh all /
+  Save all FABs** (see Home shell for the `GlobalKey`/`active` wiring). The
+  FAB slot carries the bulk actions rather than adding, because reading is the
+  page's frequent action and adding its rare one. The body can't be watched by
+  its host, so each build **publishes a `DevicesFabStatus`**
+  (entitled/refreshable/busy/meters/savable/saving) into a host-owned
+  `ValueNotifier` (`DevicesBody.fabStatus`) — post-frame and value-compared,
+  so an unchanged build notifies no one — and the shared `DevicesActionFabs`
+  widget renders from it (taking the home shell's entrance animation as an
+  optional `scale`). "Reorder brands" moved off the app bar onto the vendor
+  bar it reorders — the tab host owns no menu of its own, and the control now
+  sits with the chips whose order it sets. The empty state is icon + text
+  only, like every other tab's: the app bar's + is the add button, and the
+  FABs hide (nothing to refresh or save).
 
 - **Full cards, not summaries.** Each vendor's section renders exactly the cards
   its own dashboard did: `RfDeviceSection` / `RbDeviceSection` /
@@ -2586,12 +2602,15 @@ entry points for one page were four ways to say the same thing).
   vendor whose devices were all removed keeps its position, so adding one back
   puts it where the user left it. Deliberately **not** device-local: see below.
 - **Refresh all / Save all act on the current selection only**, with a scope
-  line above them stating what that is and the counts on the buttons. Reads are
+  line above the list stating what that is and the counts on the FABs. Reads are
   sequential *within* a vendor (a meter also serves its vendor's cloud app) but
   the vendors run concurrently. The on-open auto-read follows the same scope,
   once per device per session — and only while the page is the tab actually on
   screen (`DevicesBody.active`), so being a permanently-built `IndexedStack`
-  child never turns app launch into a LAN sweep. Save all is **hidden** — not disabled — when the
+  child never turns app launch into a LAN sweep. Both the refresh actions and
+  their counts cover only refreshable kinds (`deviceKindRefreshes` — the Hanna
+  checker is never polled), and Refresh all hides when nothing in view is.
+  Save all is **hidden** — not disabled — when the
   selection holds no meter-capable device (`deviceKindSaves`): for a Red Sea
   filter there is nothing to save and never will be, and a disabled button would
   imply "read something first".
@@ -2642,16 +2661,30 @@ entry points for one page were four ways to say the same thing).
   card headers are **ungated**, because the inventory this screen absorbed was a
   Standard feature and a keeper must always be able to see what they own.
   Reading, saving and adding are gated; a non-entitled install gets a tappable
-  notice where the action buttons sit. The old inventory's facts (brand, model,
+  notice where the scope line sits, and the FABs hide with it. The old
+  inventory's facts (brand, model,
   address, last seen) live in each card menu's **Details** item
   (`device_details_dialog.dart`).
-- **The Hanna checker is not a vendor here.** It is the keeper's own test kit
-  reached over Bluetooth for one measurement, not tank hardware on the network;
-  it keeps its own screens and its own Pro gates. Consequence worth knowing: the
-  meter is no longer listed anywhere, since the inventory that listed it is
-  gone.
-- **Empty state:** no chips, no scope bar, not even the disclaimer — there is
-  nothing yet to be read-only about — just the message and an Add button.
+- **The Hanna checker is a vendor since U43** (`HannaDeviceSection`,
+  `features/devices/hanna_device_section.dart`) — but the odd one out. There is
+  no add flow: the measurement flow records the checker on first BLE connect
+  (`ensureHannaDevice`), so the section simply lists what that wrote — and the
+  add path for the Hanna brand (chip selected, or picked in the brand sheet) is
+  *running a measurement* (`/hanna/measure`). The card is inventory plus the
+  one action the device exists for: name, serial (the identifier's tail —
+  the checker advertises `<model> <serial>`), the last-measurement time
+  (`lastSeenAt`, touched exactly when a measurement session connects) and a
+  **New measurement** button. Never polled (`deviceKindRefreshes` false), never
+  saved from (`deviceKindSaves` false; its readings arrive through the
+  session's own save with the U32 watermark). Gates stay the checker's own:
+  the measure button and the brand-sheet entry exist only behind the
+  experimental switch + a BLE stack (like every U33 entry point), the tap is
+  Pro-gated on `hannaConnect` — not the LAN devices' `connectedDevices` — and
+  the card itself is ungated inventory like every other card. Removing the
+  card says so: the row re-creates itself on the next measurement.
+- **Empty state:** no chips, no scope line, not even the disclaimer — there is
+  nothing yet to be read-only about — just the message pointing at the app
+  bar's add action.
 
 ### ReefFactory local devices (U36, Pro, **experimental**) — `features/reeffactory/`, section of `/devices`
 
@@ -2775,8 +2808,12 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   (`RbAtoStatus`): water level (raw firmware string coarsened to
   `RbAtoWaterLevel` ok/low/high/unknown), pump-on flag, today's fills and
   volume, average daily volume (evaporation), reservoir estimate
-  (`volume_left`, `days_till_empty`), a leak-sensor block (alarms only when
-  connected + enabled + not "dry") and the level-sensor block (error/
+  (`volume_left`, `days_till_empty`), the leak-sensor block — the alarm fires
+  only when connected + enabled + not "dry", and the block's own facts
+  (`leakSensorConnected`/`leakSensorEnabled`/`leakStatusRaw`, with
+  `leakSensorActive` combining the first two) are exposed so the card can show
+  the sensor standing guard rather than only hearing from it on alarm — and
+  the level-sensor block (error/
   disconnect warning, temperature probe in °C, suppressed when disabled or
   unplugged). For a mat (`RbMatStatus`): the roll (coarse `roll_level` string
   coarsened to `RbRollLevel` ok/low/empty/unknown, `days_till_end_of_roll`,
@@ -2795,7 +2832,9 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   EC-sensor connection, last-advance cause and motor-step counters are
   deliberately not modelled. For a ReefRun (`RbRunStatus`): device flags plus one `RbRunPump`
   per `pump_<n>` block (name, type/model, `state` — anything but
-  "operational" is `faulted`, an *absent* state is not — speed and pulse in
+  "operational" is `faulted`, an *absent* state is not, and `fullCup`
+  singles out `"full_cup"`, the skimmer pausing itself on a full collection
+  cup — speed and pulse in
   percent, motor temperature, missing-pump/-sensor flags, schedule and
   sensor-control flags). `sensorWarning` fires only when the EC sensor is
   disconnected **and** some pump actually follows it, so an unpaired sensor on
@@ -2915,7 +2954,11 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   instead:
   warning chips (leak = critical, sensor trouble = caution, "filling now" =
   healthy) above label–value rows — water level (healthy/caution-colored),
-  probe temperature, today's fills · volume, evaporation (≈/day), and the
+  probe temperature, the **leak sensor's standing status** (shown only while a
+  sensor is attached + enabled — an absent sensor must not read as a
+  reassuring "Dry"; "dry" and "rodi_water_leak" are localized, an
+  unrecognized status shows verbatim, colored healthy/critical), today's
+  fills · volume, evaporation (≈/day), and the
   reservoir (volume left · days left, colored by the same `rbStockSeverity`
   thresholds as supplement stock). Volumes render as millilitres below 1 L
   and litres with one decimal above. A ReefMat card renders `_MatStatus`:
@@ -2931,7 +2974,10 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   A ReefRun card renders `_RunStatus`: device chips (clock, battery, level
   sensor offline) above one `_RunPumpRow` per socket — a **`_CircularGauge`** of
   the pump's speed on the left, with name, motor temperature and per-pump chips
-  (pump/sensor not detected, non-operational state) beside it. A socket whose
+  (pump/sensor not detected, non-operational state — where a skimmer's
+  `full_cup` gets its own plain "Full cup" label instead of the raw-state
+  chip, it being the one non-operational state a keeper acts on routinely)
+  beside it. A socket whose
   `sensor_controlled` is true carries a small **green "Sensor" badge** next to
   its name — the overflow sensor driving that pump is a standing capability, not
   a fault, so it takes the `healthy` token rather than a warning color, and no
@@ -2978,6 +3024,16 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
 - Entry point mirrors ReefFactory: the Devices screen's Red Sea chip (U41),
   with reads gated on `ProFeature.connectedDevices` (grandfathered). Devices are
   read once automatically on open; after that reads are manual.
+- **Development without hardware** (`tool/reefbeat_emulator.dart`): a fake
+  ReefBeat device serving `/device-info` + `/dashboard` from the golden
+  vectors — one process per device, `--type ato` or `--type run` — with
+  `/emu/*` endpoints to **force the states real hardware only shows when
+  something is wrong**: `/emu/leak?status=rodi_water_leak` stands the ATO's
+  leak sensor in water, `/emu/pump?n=2&state=full_cup` fills the skimmer cup.
+  Reached from the Android emulator at `10.0.2.2:<port>`; importable, so
+  `rb_emulator_test.dart` drives the real `RbHttpLink` against it (the
+  `apex_emulator` pattern). `test/tool/seed_devices.dart` points two ReefBeat
+  rows at its default ports (:8090/:8091).
 - **Future phases (deferred):** comparing/syncing head schedules against the
   tank's dosing plan (`DosingEntries`), and logging actually-delivered volumes
   for the dose calculator's consumption math.

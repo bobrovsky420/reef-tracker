@@ -3370,6 +3370,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get reefBeatAtoReservoir => 'Réservoir';
 
   @override
+  String get reefBeatAtoLeakSensor => 'Capteur de fuite';
+
+  @override
+  String get reefBeatAtoLeakDry => 'Sec';
+
+  @override
+  String get reefBeatAtoLeakRodi => 'Fuite d\'eau RO/DI';
+
+  @override
   String get reefBeatMatRoll => 'Rouleau';
 
   @override
@@ -3441,6 +3450,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String reefBeatRunState(Object state) {
     return 'État de la pompe : $state';
   }
+
+  @override
+  String get reefBeatRunFullCup => 'Godet plein';
 
   @override
   String get reefBeatRunSensorOffline => 'Capteur de niveau hors ligne';
@@ -3741,10 +3753,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get devicesEmptyBody =>
-      'Connectez un appareil de mesure ReefFactory, un appareil Red Sea ReefBeat ou un contrôleur Neptune Apex sur votre réseau pour le voir ici.';
+      'Connectez un appareil de mesure ReefFactory, un appareil Red Sea ReefBeat ou un contrôleur Neptune Apex sur votre réseau — ou mesurez avec un checker Hanna en Bluetooth — pour le voir ici.';
 
   @override
   String get devicesAddDevice => 'Ajouter un appareil';
+
+  @override
+  String get devicesHannaDisclaimer =>
+      'Le checker ne se connecte en Bluetooth que pendant une mesure — lancez-la depuis sa carte. Les mesures terminées sont enregistrées dans votre journal.';
 
   @override
   String get devicesAddPickBrand => 'Quelle marque ?';
@@ -3807,6 +3823,29 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String reefDevicesLastSeen(Object date) {
     return 'Vu $date';
+  }
+
+  @override
+  String get hannaSerialNumber => 'Numéro de série';
+
+  @override
+  String get hannaLastMeasurement => 'Dernière mesure';
+
+  @override
+  String get hannaNewMeasurement => 'Nouvelle mesure';
+
+  @override
+  String get hannaRenameDevice => 'Renommer le checker';
+
+  @override
+  String get hannaDeviceNameLabel => 'Nom du checker';
+
+  @override
+  String get hannaRemove => 'Retirer';
+
+  @override
+  String hannaRemoveConfirm(Object name) {
+    return 'Retirer « $name » ? Les valeurs enregistrées sont conservées et le checker réapparaîtra après sa prochaine mesure.';
   }
 
   @override
