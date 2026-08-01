@@ -13,6 +13,7 @@ import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/device_values.dart';
 import '../../widgets/reef_icon_button.dart';
 import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
@@ -115,7 +116,10 @@ class ApDeviceSection extends ConsumerWidget {
   /// Already filtered to the active tank and sorted by the parent.
   final List<DeviceRecord> devices;
   final Map<String, ApLive> live;
-  final void Function(DeviceRecord device, ApStatus status) onSave;
+
+  /// Null while the parent has a save in flight — every card's Save button
+  /// disables for the duration (#86).
+  final void Function(DeviceRecord device, ApStatus status)? onSave;
   final void Function(String identifier) onRemoved;
 
   /// Re-read one controller — used after new credentials are entered, so the
@@ -145,7 +149,7 @@ class ApDeviceSection extends ConsumerWidget {
           errorTextOf: (e) => apErrorText(l, e),
           onRename: () => _renameDevice(context, ref, d),
           onCredentials: () => _editCredentials(context, ref, d),
-          onSave: (status) => onSave(d, status),
+          onSave: onSave == null ? null : (status) => onSave!(d, status),
           onMove: tanks.any((t) => t.id != d.tankId)
               ? () => _moveDevice(context, ref, d)
               : null,
@@ -350,7 +354,9 @@ class _ControllerCard extends StatefulWidget {
   final String Function(ApLinkError) errorTextOf;
   final VoidCallback onRename;
   final VoidCallback onCredentials;
-  final void Function(ApStatus) onSave;
+
+  /// Null while a save is in flight — the button disables (#86).
+  final void Function(ApStatus)? onSave;
   final VoidCallback? onMove;
   final VoidCallback onRemove;
 
@@ -477,6 +483,7 @@ class _ControllerCardState extends State<_ControllerCard> {
                         children: [
                           for (final r in status.readings)
                             _ReadingChip(
+                              paramKey: r.paramKey,
                               label: l.paramName(r.paramKey),
                               value: r.value,
                               unit: r.unit,
@@ -488,8 +495,8 @@ class _ControllerCardState extends State<_ControllerCard> {
                     ReefFilledIconButton(
                       icon: Icons.save_outlined,
                       tooltip: l.apexSave,
-                      onPressed: widget.tank != null
-                          ? () => widget.onSave(status)
+                      onPressed: widget.tank != null && widget.onSave != null
+                          ? () => widget.onSave!(status)
                           : null,
                     ),
                   ],
@@ -650,18 +657,20 @@ class _StateBadge extends StatelessWidget {
   }
 }
 
-class _ReadingChip extends StatelessWidget {
+class _ReadingChip extends ConsumerWidget {
   const _ReadingChip({
+    required this.paramKey,
     required this.label,
     required this.value,
     required this.unit,
   });
+  final String paramKey;
   final String label;
   final double value;
   final String unit;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     return Column(
@@ -672,15 +681,17 @@ class _ReadingChip extends StatelessWidget {
           style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant),
         ),
         Text(
-          unit.isEmpty ? _fmt(value) : '${_fmt(value)} $unit',
+          formatDeviceReading(
+            paramKey: paramKey,
+            value: value,
+            unit: unit,
+            prefs: ref.watch(unitPrefsProvider),
+          ),
           style: t.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );
   }
-
-  String _fmt(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(1) : v.toString();
 }
 
 /// Username/password entry, shared by the add sheet's inline fields and the
@@ -711,45 +722,50 @@ class _CredentialsSheetState extends State<_CredentialsSheet> {
     final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l.apexCredentialsMenu,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _user,
-            decoration: InputDecoration(labelText: l.apexUsernameLabel),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _pass,
-            autofocus: true,
-            obscureText: true,
-            decoration: InputDecoration(labelText: l.apexPasswordLabel),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(l.cancel),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, (
-                  user: _user.text.trim(),
-                  pass: _pass.text,
-                )),
-                child: Text(l.save),
-              ),
-            ],
-          ),
-        ],
+      // Scrollable like the add sheet: the keyboard is up from frame one
+      // (autofocus) and at large text scale the fields would otherwise
+      // overflow with the buttons unreachable (#103, the #44 class).
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.apexCredentialsMenu,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _user,
+              decoration: InputDecoration(labelText: l.apexUsernameLabel),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _pass,
+              autofocus: true,
+              obscureText: true,
+              decoration: InputDecoration(labelText: l.apexPasswordLabel),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l.cancel),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, (
+                    user: _user.text.trim(),
+                    pass: _pass.text,
+                  )),
+                  child: Text(l.save),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -757,7 +773,7 @@ class _CredentialsSheetState extends State<_CredentialsSheet> {
 
 /// Bottom sheet: address + login, probe to identify, then name it and pick a
 /// tank before adding.
-class _AddDeviceSheet extends StatefulWidget {
+class _AddDeviceSheet extends ConsumerStatefulWidget {
   const _AddDeviceSheet({
     required this.link,
     required this.tanks,
@@ -780,10 +796,10 @@ class _AddDeviceSheet extends StatefulWidget {
   onAdd;
 
   @override
-  State<_AddDeviceSheet> createState() => _AddDeviceSheetState();
+  ConsumerState<_AddDeviceSheet> createState() => _AddDeviceSheetState();
 }
 
-class _AddDeviceSheetState extends State<_AddDeviceSheet> {
+class _AddDeviceSheetState extends ConsumerState<_AddDeviceSheet> {
   final _host = TextEditingController();
   // The factory login every Apex ships with. Prefilling it is not a security
   // hole — it is printed in the quick-start guide — and it is right for most
@@ -903,8 +919,8 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
               Text(
                 [
                   for (final r in found.readings)
-                    '${l.paramName(r.paramKey)} ${r.value}'
-                        '${r.unit.isEmpty ? '' : ' ${r.unit}'}',
+                    '${l.paramName(r.paramKey)} '
+                        '${formatDeviceReading(paramKey: r.paramKey, value: r.value, unit: r.unit, prefs: ref.watch(unitPrefsProvider))}',
                 ].join('   ·   '),
                 style: t.bodyMedium,
               ),

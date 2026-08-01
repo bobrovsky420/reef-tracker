@@ -175,7 +175,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String timeDaysAgo(int count) {
-    return '$count dn. temu';
+    return '$count d temu';
   }
 
   @override
@@ -550,12 +550,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
-    return '$percent% toksyczne · pH $ph · $temp';
+    return '$percent% w formie toksycznej · pH $ph · $temp';
   }
 
   @override
   String freeAmmoniaPercent(Object percent) {
-    return '$percent% toksyczne';
+    return '$percent% w formie toksycznej';
   }
 
   @override
@@ -644,7 +644,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noWaterChanges => 'Brak podmian wody.';
 
   @override
-  String get amountNotRecorded => 'Ilość nie zapisana';
+  String get amountNotRecorded => 'Nie zapisano ilości';
 
   @override
   String get actions => 'Czynności';
@@ -668,7 +668,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get weightOptional => 'Waga (opcjonalnie)';
 
   @override
-  String get weightNotRecorded => 'Waga nie zapisana';
+  String get weightNotRecorded => 'Nie zapisano wagi';
 
   @override
   String gramsSuffix(Object value) {
@@ -701,7 +701,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get dosingNoDosage => 'Brak dawki';
 
   @override
-  String get supplementStopped => 'Preparat zatrzymany';
+  String get supplementStopped => 'Preparat odstawiony';
 
   @override
   String get dosingHistoryTitle => 'Historia dozowania';
@@ -710,7 +710,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get dosingHistoryEmpty => 'Brak historii dozowania.';
 
   @override
-  String get dosingHistoryCurrent => 'Bieżąca';
+  String get dosingHistoryCurrent => 'Bieżąca dawka';
 
   @override
   String dosingHistorySince(Object date) {
@@ -1132,7 +1132,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aboutDescription =>
-      'Offline\'owy tracker parametrów akwarium morskiego z historią, wykresami czasowymi i strefami zdrowia zielona/pomarańczowa/czerwona.';
+      'Działająca offline aplikacja do śledzenia parametrów akwarium morskiego — z historią pomiarów, wykresami w czasie i strefami zdrowia: zieloną, pomarańczową i czerwoną.';
 
   @override
   String get aboutUserGuide => 'Podręcznik użytkownika';
@@ -1526,32 +1526,32 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String trendAmberInDays(int days) {
-    return 'Osiągnie strefę uwagi za ~$days dn.';
+    return 'Osiągnie strefę uwagi za ~$days d';
   }
 
   @override
   String trendRedInDays(int days) {
-    return 'Osiągnie strefę krytyczną za ~$days dn.';
+    return 'Osiągnie strefę krytyczną za ~$days d';
   }
 
   @override
   String trendChipAmber(int days) {
-    return 'Uwaga ~$days dn.';
+    return 'Uwaga ~$days d';
   }
 
   @override
   String trendChipRed(int days) {
-    return 'Działaj ~$days dn.';
+    return 'Działaj ~$days d';
   }
 
   @override
   String trendBackInRangeDays(int days) {
-    return 'Poprawia się — wróci do zakresu za ~$days dn.';
+    return 'Poprawia się — wróci do zakresu za ~$days d';
   }
 
   @override
   String trendChipRecovering(int days) {
-    return 'Poprawia się ~$days dn.';
+    return 'Poprawia się ~$days d';
   }
 
   @override
@@ -1609,7 +1609,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get paramSalinity => 'Zasolenie';
 
   @override
-  String get paramAlkalinity => 'Twardość węglanowa';
+  String get paramAlkalinity => 'Alkaliczność (KH)';
 
   @override
   String get paramAlkalinityShort => 'KH';
@@ -1621,16 +1621,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get paramMagnesium => 'Magnez (Mg)';
 
   @override
-  String get paramNitrate => 'Azotan (NO₃)';
+  String get paramNitrate => 'Azotany (NO₃)';
 
   @override
-  String get paramPhosphate => 'Fosforan (PO₄)';
+  String get paramPhosphate => 'Fosforany (PO₄)';
 
   @override
   String get paramAmmonia => 'Amoniak (NH₃/₄)';
 
   @override
-  String get paramNitrite => 'Azotyn (NO₂)';
+  String get paramNitrite => 'Azotyny (NO₂)';
 
   @override
   String get paramOrp => 'ORP';
@@ -2381,7 +2381,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get helpAlkalinity =>
-      'Twardość węglanowa. Utrzymuj stabilną — unikaj wahań.';
+      'Alkaliczność (KH). Utrzymuj stabilną — unikaj wahań.';
 
   @override
   String get helpNitrate =>
@@ -2439,7 +2439,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String healthScoreOf(int score) {
-    return '$score ze 100';
+    return '$score na 100';
   }
 
   @override
@@ -2465,7 +2465,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String stabilityIntro(int days) {
-    return 'Jak równo utrzymywały się parametry przez ostatnie $days dni.';
+    return 'Jak stabilnie utrzymywały się parametry przez ostatnie $days dni.';
   }
 
   @override
@@ -2547,12 +2547,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String insightForecastLow(Object param, int days) {
-    return '$param spada — może opuścić zakres za ~$days dn.';
+    return '$param spada — może opuścić zakres za ~$days d';
   }
 
   @override
   String insightForecastHigh(Object param, int days) {
-    return '$param rośnie — może opuścić zakres za ~$days dn.';
+    return '$param rośnie — może opuścić zakres za ~$days d';
   }
 
   @override
@@ -2567,7 +2567,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String insightRecoveringDays(Object param, int days) {
-    return '$param poprawia się — wróci do zakresu za ~$days dn.';
+    return '$param poprawia się — wróci do zakresu za ~$days d';
   }
 
   @override
@@ -3050,7 +3050,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get roAllOk => 'Wszystkie elementy w porządku';
 
   @override
-  String get notifRoTitle => 'Wymień filtry odwróconej osmozy';
+  String get notifRoTitle => 'Wymień wkłady filtra RO';
 
   @override
   String get reefFactoryTitle => 'Urządzenia ReefFactory';
@@ -3070,7 +3070,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefFactoryEmptyBody =>
-      'Dodaj miernik ReefFactory według adresu IP lub nazwy hosta, aby odczytywać jego bieżące wartości.';
+      'Dodaj miernik ReefFactory, podając adres IP lub nazwę hosta, aby odczytywać jego bieżące wartości.';
 
   @override
   String get reefFactoryRefresh => 'Odśwież';
@@ -3193,7 +3193,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Przeskanuj swoją sieć Wi-Fi, aby znaleźć urządzenia Red Sea ReefBeat — dozowniki ReefDose, ReefATO, ReefMat, ReefRun, ReefLED i ReefWave — albo dodaj urządzenie według adresu IP.';
+      'Przeskanuj swoją sieć Wi-Fi, aby znaleźć urządzenia Red Sea ReefBeat — dozowniki ReefDose, ReefATO, ReefMat, ReefRun, ReefLED i ReefWave — albo dodaj urządzenie, podając adres IP.';
 
   @override
   String get reefBeatRefreshAll => 'Odśwież wszystkie';
@@ -3409,7 +3409,7 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get reefBeatAtoReservoir => 'Zbiornik zapasu';
+  String get reefBeatAtoReservoir => 'Zbiornik dolewki';
 
   @override
   String get reefBeatMatRoll => 'Rolka';
@@ -3559,7 +3559,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get apexEmptyBody =>
-      'Dodaj Apeksa według jego adresu IP oraz danych logowania używanych na jego stronie WWW.';
+      'Dodaj Apeksa, podając jego adres IP oraz dane logowania używane na jego stronie WWW.';
 
   @override
   String get apexRefreshAll => 'Odśwież wszystkie';
@@ -3741,7 +3741,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String deviceAlreadyAdded(Object name) {
-    return '$name jest już dodane. Aby wskazać nowy adres, użyj Skanuj sieć.';
+    return '$name jest już dodane. Aby wskazać nowy adres, użyj funkcji „Skanuj sieć”.';
   }
 
   @override

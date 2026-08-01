@@ -546,17 +546,17 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
-    return '$percent % toxických · pH $ph · $temp';
+    return '$percent % v toxické formě · pH $ph · $temp';
   }
 
   @override
   String freeAmmoniaPercent(Object percent) {
-    return '$percent % toxických';
+    return '$percent % v toxické formě';
   }
 
   @override
   String get freeAmmoniaExplain =>
-      'Test amoniaku měří celkový amoniak, ale toxická je jen neionizovaná část (NH₃). Její podíl roste s pH a teplotou, takže rifové akvárium přeměňuje na toxickou formu více amoniaku než nádrž s nízkým pH. Tento odhad rozdělí poslední naměřený celkový amoniak podle posledního pH, teploty a salinity.';
+      'Test amoniaku měří celkový amoniak, ale toxická je jen neionizovaná část (NH₃). Její podíl roste s pH a teplotou, takže útesové akvárium přeměňuje na toxickou formu více amoniaku než nádrž s nízkým pH. Tento odhad rozdělí poslední naměřený celkový amoniak podle posledního pH, teploty a salinity.';
 
   @override
   String freeAmmoniaDialogFree(Object value) {
@@ -644,22 +644,22 @@ class AppLocalizationsCs extends AppLocalizations {
   String get amountNotRecorded => 'Množství nezaznamenáno';
 
   @override
-  String get actions => 'Úkony';
+  String get actions => 'Údržba';
 
   @override
-  String get noActions => 'Zatím žádné úkony.';
+  String get noActions => 'Zatím žádné záznamy údržby.';
 
   @override
-  String get addAction => 'Přidat úkon';
+  String get addAction => 'Přidat záznam údržby';
 
   @override
   String get waterChange => 'Výměna vody';
 
   @override
-  String get carbonChange => 'Výměna uhlí';
+  String get carbonChange => 'Výměna aktivního uhlí';
 
   @override
-  String get recordCarbonChange => 'Zaznamenat výměnu uhlí';
+  String get recordCarbonChange => 'Zaznamenat výměnu aktivního uhlí';
 
   @override
   String get weightOptional => 'Hmotnost (volitelné)';
@@ -676,10 +676,10 @@ class AppLocalizationsCs extends AppLocalizations {
   String get gramSymbol => 'g';
 
   @override
-  String get equipmentCleaning => 'Čištění vybavení';
+  String get equipmentCleaning => 'Čištění techniky';
 
   @override
-  String get recordEquipmentCleaning => 'Zaznamenat čištění vybavení';
+  String get recordEquipmentCleaning => 'Zaznamenat čištění techniky';
 
   @override
   String get dosing => 'Dávkování';
@@ -870,8 +870,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get salinityCalculator => 'Kalkulačka salinity';
 
   @override
-  String get salinityCalculatorSubtitle =>
-      'Převod ppt ↔ specifická hustota (SG)';
+  String get salinityCalculatorSubtitle => 'Převod ppt ↔ hustota (SG)';
 
   @override
   String get backupSection => 'Záloha';
@@ -1209,7 +1208,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Převod mezi praktickou salinitou (ppt) a specifickou hustotou (SG). Pište do kteréhokoli pole.';
 
   @override
-  String get specificGravity => 'Specifická hustota';
+  String get specificGravity => 'Hustota (SG)';
 
   @override
   String get referencePoints => 'Referenční hodnoty';
@@ -1563,7 +1562,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get zoneAttention => 'Pozor';
 
   @override
-  String get zoneActNow => 'Jednat ihned';
+  String get zoneActNow => 'Zasáhnout ihned';
 
   @override
   String get zoneUnknown => '—';
@@ -2032,10 +2031,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Příští import se znovu zeptá, od kterého data začít. Už importovaná měření zůstávají; přiřazení akvária se pamatuje.';
 
   @override
-  String get hannaConnectTitle => 'Fotometr Hanna';
+  String get hannaConnectTitle => 'Hanna checker';
 
   @override
-  String get hannaMeasureAction => 'Měřit fotometrem Hanna';
+  String get hannaMeasureAction => 'Měřit Hanna checkerem';
 
   @override
   String get hannaScanTitle => 'Skenovat displej checkeru';
@@ -2347,7 +2346,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Teplota vody. Stabilita je důležitější než přesná hodnota.';
 
   @override
-  String get helpSalinity => 'Specifická hustota. ~1,026 SG ≈ 35 ppt.';
+  String get helpSalinity => 'Hustota (SG). ~1,026 SG ≈ 35 ppt.';
 
   @override
   String get helpAlkalinity =>
@@ -2524,7 +2523,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String insightOscillating(Object param) {
-    return '$param spíše kolísá, než by mířil jedním směrem — trend nelze určit';
+    return '$param: hodnota spíše kolísá, než aby směřovala jedním směrem — trend nelze určit';
   }
 
   @override
@@ -2939,13 +2938,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get roStageDiResin => 'DI pryskyřice';
 
   @override
-  String get roCustomStage => 'Vlastní díl';
+  String get roCustomStage => 'Vlastní stupeň';
 
   @override
-  String get roAddStage => 'Přidat díl';
+  String get roAddStage => 'Přidat stupeň';
 
   @override
-  String get roEditStage => 'Upravit díl';
+  String get roEditStage => 'Upravit stupeň';
 
   @override
   String get roLifespanLabel => 'Vyměnit každých';
@@ -2984,25 +2983,25 @@ class AppLocalizationsCs extends AppLocalizations {
   String get roNoReplacementYet => 'Zatím žádná zaznamenaná výměna';
 
   @override
-  String get roDeleteStageTitle => 'Smazat díl?';
+  String get roDeleteStageTitle => 'Smazat stupeň?';
 
   @override
   String get roDeleteStageBody =>
-      'Odstraní díl i historii jeho výměn. Nelze vzít zpět.';
+      'Odstraní stupeň i historii jeho výměn. Nelze vzít zpět.';
 
   @override
   String get roEmptyBody =>
-      'Žádné díly. Přidejte filtry své RO jednotky tlačítkem +.';
+      'Žádné stupně. Přidejte filtry své RO jednotky tlačítkem +.';
 
   @override
   String get roSetupPrompt => 'Sledujte výměny filtrů a membrány';
 
   @override
   String get roUnitToggleSubtitle =>
-      'Zobrazit na kartě Úkony, s připomínkami výměn filtrů';
+      'Zobrazit na kartě Údržba, s připomínkami výměn filtrů';
 
   @override
-  String get roAllOk => 'Všechny díly v pořádku';
+  String get roAllOk => 'Všechny stupně v pořádku';
 
   @override
   String get notifRoTitle => 'Vyměňte filtry reverzní osmózy';
@@ -3496,7 +3495,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get apexDisclaimer =>
-      'Tato aplikace váš Apex pouze čte. Nemůže přepínat zásuvky, spouštět krmné cykly ani měnit programy – k tomu použijte Fusion nebo webovou stránku Apexu. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako řídicí jednotka.';
+      'Tato aplikace váš Apex pouze čte. Nemůže přepínat zásuvky, spouštět krmení ani měnit programy – k tomu použijte Fusion nebo webovou stránku Apexu. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako řídicí jednotka.';
 
   @override
   String get apexAddDevice => 'Přidat jednotku';
@@ -3569,7 +3568,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String apexFeedRunning(Object letter) {
-    return 'Běží krmný cyklus $letter';
+    return 'Běží krmení $letter';
   }
 
   @override

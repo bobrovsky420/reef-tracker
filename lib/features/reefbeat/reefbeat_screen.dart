@@ -10,8 +10,10 @@ import '../../data/database.dart';
 import '../../data/lan_discovery.dart';
 import '../../data/rb_device_link.dart';
 import '../../data/rb_protocol.dart';
+import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/device_values.dart';
 import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
@@ -544,17 +546,17 @@ class _PumpStatus extends StatelessWidget {
 /// running) above label–value rows — water level, probe temperature, today's
 /// top-off activity, average evaporation, and the reservoir estimate with
 /// days-left colored by the shared stock severity.
-class _AtoStatus extends StatelessWidget {
+class _AtoStatus extends ConsumerWidget {
   const _AtoStatus({required this.status});
   final RbAtoStatus status;
 
   /// The ATO reports millilitres but moves litres — show litres with one
   /// decimal from 1 L up, bare millilitres below.
   static String _fmtVol(double ml) =>
-      ml >= 1000 ? '${(ml / 1000).toStringAsFixed(1)} L' : '${ml.round()} ml';
+      ml >= 1000 ? '${formatLocaleNumber(ml / 1000, 1)} L' : '${ml.round()} ml';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
 
@@ -629,7 +631,10 @@ class _AtoStatus extends StatelessWidget {
         if (status.temperatureC != null)
           _StatusRow(
             label: l.reefBeatAtoTemperature,
-            value: '${status.temperatureC!.toStringAsFixed(1)} °C',
+            value: formatDeviceTempC(
+              status.temperatureC!,
+              ref.watch(unitPrefsProvider),
+            ),
           ),
         if (todayText.isNotEmpty)
           _StatusRow(label: l.reefBeatAtoToday, value: todayText),
@@ -660,7 +665,7 @@ class _MatStatus extends StatelessWidget {
   /// The mat reports centimetres but a roll is metres long — show metres with
   /// one decimal from 1 m up, whole centimetres below.
   static String _fmtLen(double cm) =>
-      cm >= 100 ? '${(cm / 100).toStringAsFixed(1)} m' : '${cm.round()} cm';
+      cm >= 100 ? '${formatLocaleNumber(cm / 100, 1)} m' : '${cm.round()} cm';
 
   @override
   Widget build(BuildContext context) {
@@ -874,12 +879,12 @@ class _RunStatus extends StatelessWidget {
 
 /// One ReefRun socket: name and speed, a speed gauge, then motor temperature
 /// and any fault chips.
-class _RunPumpRow extends StatelessWidget {
+class _RunPumpRow extends ConsumerWidget {
   const _RunPumpRow({required this.pump});
   final RbRunPump pump;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).textTheme;
     final tokens = ReefTokens.of(context);
@@ -953,7 +958,10 @@ class _RunPumpRow extends StatelessWidget {
               if (pump.temperatureC != null)
                 _StatusRow(
                   label: l.reefBeatRunTemperature,
-                  value: '${pump.temperatureC!.toStringAsFixed(1)} °C',
+                  value: formatDeviceTempC(
+                    pump.temperatureC!,
+                    ref.watch(unitPrefsProvider),
+                  ),
                 ),
               if (chips.isNotEmpty) ...[
                 const SizedBox(height: 6),
@@ -969,12 +977,12 @@ class _RunPumpRow extends StatelessWidget {
 
 /// The status of a ReefLED fixture: warning chips and a gauge per output
 /// channel, with the heatsink temperature below.
-class _LightStatus extends StatelessWidget {
+class _LightStatus extends ConsumerWidget {
   const _LightStatus({required this.status});
   final RbLightStatus status;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
 
@@ -1060,7 +1068,10 @@ class _LightStatus extends StatelessWidget {
         if (status.temperatureC != null)
           _StatusRow(
             label: l.reefBeatLightTemperature,
-            value: '${status.temperatureC!.toStringAsFixed(1)} °C',
+            value: formatDeviceTempC(
+              status.temperatureC!,
+              ref.watch(unitPrefsProvider),
+            ),
           ),
       ],
     );
@@ -1340,10 +1351,10 @@ class _StatusRow extends StatelessWidget {
 }
 
 /// Trims trailing ".0" so whole millilitres render bare ("40"), fractional
-/// ones with one decimal ("26.7") — matching the pump's own display. Shared by
-/// the head rows and the dosing-queue sheet.
-String _fmtMl(double v) =>
-    v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1);
+/// ones with one locale-formatted decimal ("26,7" for a comma locale, #102) —
+/// matching the pump's own display. Shared by the head rows and the
+/// dosing-queue sheet.
+String _fmtMl(double v) => formatLocaleNumberTrim(v);
 
 /// One dosing head: supplement name + remaining-days tag, a horizontal
 /// dosed-today gauge, and any per-head warnings.
@@ -1980,126 +1991,135 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
     final duplicateOf = _duplicateOf;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l.reefBeatAddDevice, style: t.titleLarge),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _host,
-            autofocus: true,
-            // Frozen once the probe lands on an already-added device: with the
-            // Check button gone there is nothing left to do here but close.
-            enabled: duplicateOf == null,
-            keyboardType: TextInputType.url,
-            decoration: InputDecoration(
-              labelText: l.reefBeatHostLabel,
-              hintText: l.reefBeatHostHint,
-              helperText: l.reefBeatHostHelp,
-              helperMaxLines: 2,
-            ),
-            onSubmitted: (_) => _probe(),
-          ),
-          if (duplicateOf != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              l.deviceAlreadyAdded(duplicateOf),
-              style: t.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ],
-          if (_error != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              _error!,
-              style: t.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ],
-          if (found != null) ...[
+      // Scrollable like the Apex add sheet: the keyboard is up from frame one
+      // (autofocus) and at large text scale the probe result + fields would
+      // otherwise overflow with the Add button unreachable (#103, the #44
+      // class).
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.reefBeatAddDevice, style: t.titleLarge),
             const SizedBox(height: 16),
-            Text(
-              l.reefBeatFound(found.modelDisplayName),
-              style: t.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
+            TextField(
+              controller: _host,
+              autofocus: true,
+              // Frozen once the probe lands on an already-added device: with the
+              // Check button gone there is nothing left to do here but close.
+              enabled: duplicateOf == null,
+              keyboardType: TextInputType.url,
+              decoration: InputDecoration(
+                labelText: l.reefBeatHostLabel,
+                hintText: l.reefBeatHostHint,
+                helperText: l.reefBeatHostHelp,
+                helperMaxLines: 2,
               ),
+              onSubmitted: (_) => _probe(),
             ),
-            if (found.dose != null) ...[
-              const SizedBox(height: 4),
+            if (duplicateOf != null) ...[
+              const SizedBox(height: 10),
               Text(
-                [
-                  for (final h in found.dose!.heads)
-                    if (h.supplement?.trim().isNotEmpty == true) h.supplement!,
-                ].join('   ·   '),
-                style: t.bodyMedium,
+                l.deviceAlreadyAdded(duplicateOf),
+                style: t.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
             ],
-            const SizedBox(height: 12),
-            TextField(
-              controller: _name,
-              decoration: InputDecoration(labelText: l.reefBeatDeviceNameLabel),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<int?>(
-              initialValue: _tankId,
-              decoration: InputDecoration(labelText: l.reefBeatTankLabel),
-              items: [
-                for (final tk in widget.tanks)
-                  DropdownMenuItem(value: tk.id, child: Text(tk.name)),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _error!,
+                style: t.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ],
+            if (found != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                l.reefBeatFound(found.modelDisplayName),
+                style: t.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              if (found.dose != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  [
+                    for (final h in found.dose!.heads)
+                      if (h.supplement?.trim().isNotEmpty == true)
+                        h.supplement!,
+                  ].join('   ·   '),
+                  style: t.bodyMedium,
+                ),
               ],
-              onChanged: (v) => setState(() => _tankId = v),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _name,
+                decoration: InputDecoration(
+                  labelText: l.reefBeatDeviceNameLabel,
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int?>(
+                initialValue: _tankId,
+                decoration: InputDecoration(labelText: l.reefBeatTankLabel),
+                items: [
+                  for (final tk in widget.tanks)
+                    DropdownMenuItem(value: tk.id, child: Text(tk.name)),
+                ],
+                onChanged: (v) => setState(() => _tankId = v),
+              ),
+            ],
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (duplicateOf != null)
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l.close),
+                  )
+                else ...[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l.cancel),
+                  ),
+                  const SizedBox(width: 8),
+                  if (found == null)
+                    FilledButton(
+                      onPressed: _probing ? null : _probe,
+                      child: _probing
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l.reefBeatCheck),
+                    )
+                  else
+                    FilledButton(
+                      onPressed: () async {
+                        await widget.onAdd(
+                          hwid: found.info.hwid,
+                          model: found.modelCode,
+                          host: _host.text.trim(),
+                          name: _name.text.trim().isEmpty
+                              ? null
+                              : _name.text.trim(),
+                          tankId: _tankId,
+                          snapshot: found,
+                        );
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      child: Text(l.reefBeatAddDevice),
+                    ),
+                ],
+              ],
             ),
           ],
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (duplicateOf != null)
-                FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(l.close),
-                )
-              else ...[
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(l.cancel),
-                ),
-                const SizedBox(width: 8),
-                if (found == null)
-                  FilledButton(
-                    onPressed: _probing ? null : _probe,
-                    child: _probing
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l.reefBeatCheck),
-                  )
-                else
-                  FilledButton(
-                    onPressed: () async {
-                      await widget.onAdd(
-                        hwid: found.info.hwid,
-                        model: found.modelCode,
-                        host: _host.text.trim(),
-                        name: _name.text.trim().isEmpty
-                            ? null
-                            : _name.text.trim(),
-                        tankId: _tankId,
-                        snapshot: found,
-                      );
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: Text(l.reefBeatAddDevice),
-                  ),
-              ],
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

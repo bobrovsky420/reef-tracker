@@ -220,8 +220,9 @@ String encodeBackup({
     // what a backup *contains*, not only of what a restore keeps. Nothing
     // reads them back, `kBackupVersion` is untouched (a missing settings row
     // is indistinguishable from an unset preference, which is what every
-    // reader already assumes), and [backupContentHash] strips the whole
-    // section, so the U24 dirty gate and U35 lineage checks are unaffected.
+    // reader already assumes), and [backupContentHash] applies the same
+    // filter before hashing (#93), so the U24 dirty gate and U35 lineage
+    // checks are unaffected.
     // The U19 founder marker `legacy_free_since` is deliberately *not*
     // device-local and still rides.
     'settings': [
@@ -241,20 +242,29 @@ String encodeBackup({
 }
 
 /// Content hash for the cloud-sync dirty gate (U24): sha256 hex of the backup
-/// document with `exportedAt`, `device`, `checksum`, and the **entire
-/// `settings` section** removed.
+/// document with `exportedAt`, `device` and `checksum` removed and the
+/// `settings` section **normalized** — device-local keys and the sticky
+/// founder marker dropped, remaining rows sorted by key.
 ///
 /// Two backups of the same aquarium data must hash identically even though
-/// every encode stamps a fresh `exportedAt` and settings carry per-device
-/// stamps (`last_auto_backup_at`, `sync_gdrive_last_push_at`, …) that differ
-/// between devices and between encodes — without stripping these, every
+/// every encode stamps a fresh `exportedAt` — without stripping it, every
 /// encode would look "dirty", so a read-only device would re-upload on every
-/// launch and bury the writer device's newer file. Decode–strip–re-encode
-/// (rather than assuming key positions) keeps the function total over any
-/// well-formed backup document, including files downloaded from the cloud
-/// (echo-push suppression after a restore hashes the downloaded document with
-/// this same function). jsonDecode preserves key order and Dart's number
-/// encoding round-trips, so equal documents re-encode to equal bytes.
+/// launch and bury the writer device's newer file. The settings section *is*
+/// hashed (#93): what survives the #69 device-local filter is data-bearing
+/// (`hanna_method_sets`, `device_vendor_order`, `ro_stages_seeded`, …), and
+/// stripping it wholesale made settings-only edits hash "clean" — never
+/// pushed, silently overwritten by the next U35 fast-forward restore. The
+/// normalization keeps the hash stable across devices anyway: device-local
+/// keys are re-filtered here because cloud files written before #69 still
+/// carry them, `legacy_free_since` is excluded because a restore deliberately
+/// plants it on devices whose own encode would then differ, and the sort
+/// removes insertion-order noise (the table accretes rows in first-write
+/// order, which differs per device). Decode–strip–re-encode (rather than
+/// assuming key positions) keeps the function total over any well-formed
+/// backup document, including files downloaded from the cloud (echo-push
+/// suppression after a restore hashes the downloaded document with this same
+/// function). jsonDecode preserves key order and Dart's number encoding
+/// round-trips, so equal documents re-encode to equal bytes.
 ///
 /// Throws [InvalidBackupException] ([BackupRejection.notBackupFile]) when
 /// [jsonString] is not a JSON object at all.
@@ -281,8 +291,24 @@ String backupContentHash(String jsonString) {
     // still hash clean — differing only by `device` — or the dirty gate would
     // re-upload the data that just came down.
     ..remove('device')
-    ..remove('checksum')
-    ..remove('settings');
+    ..remove('checksum');
+  final settings = decoded['settings'];
+  if (settings is List) {
+    final deviceLocal = SettingKey.deviceLocalKeys;
+    final rows = <Map<String, dynamic>>[
+      for (final row in settings)
+        if (row is Map<String, dynamic> &&
+            row['key'] is String &&
+            !deviceLocal.contains(row['key']) &&
+            row['key'] != kLegacyFreeSinceKey)
+          row,
+    ]..sort((a, b) => (a['key'] as String).compareTo(b['key'] as String));
+    decoded['settings'] = rows;
+  } else {
+    // A crafted/ancient document without a well-formed section: hash without
+    // it rather than throw — this function must stay total (see above).
+    decoded.remove('settings');
+  }
   return sha256.convert(utf8.encode(jsonEncode(decoded))).toString();
 }
 
@@ -932,6 +958,74 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
       stickySettingKeys: const {kLegacyFreeSinceKey},
     );
 
+/// Everything [encodeBackupFromDb] reads, captured in one snapshot.
+typedef _BackupSnapshot = ({
+  List<Tank> allTanks,
+  List<TrackedParameter> params,
+  List<ParameterOverride> paramOverrides,
+  List<Reading> readings,
+  List<WaterChange> waterChanges,
+  List<CarbonChange> carbonChanges,
+  List<EquipmentCleaning> equipmentCleanings,
+  List<RatioVisibility> ratioVisibilities,
+  List<DosingEntry> dosingEntries,
+  List<ManualDose> manualDoses,
+  List<ReadingTemplate> readingTemplates,
+  List<MicroView> microViews,
+  List<MaintenanceSchedule> maintenanceSchedules,
+  List<ImportSource> importSources,
+  List<RoStage> roStages,
+  List<RoStageReplacement> roStageReplacements,
+  List<DeviceRecord> deviceRecords,
+  List<Setting> settings,
+  String? deviceName,
+});
+
+/// All ~18 table reads inside one transaction (#92): a write committing
+/// between two of the sequential SELECTs (`createTankWithPreset` racing a
+/// resume-triggered auto-backup, say) would otherwise produce a document
+/// whose sections disagree — one that passes the byte-verify, enters the
+/// rotation as the newest file, uploads to Drive, and is rejected by
+/// `validateBackup` only at restore time. Drift queues writers behind the
+/// transaction, which also serializes an encode against a concurrent
+/// `importBackup` (its restore runs in its own transaction).
+///
+/// A separate function on purpose: the transaction callback captures [db],
+/// and the VM captures closure variables per *scope*, so if this closure
+/// lived inside [encodeBackupFromDb] its context — with the database handle
+/// in it — would ride along into the `Isolate.run` message and fail as
+/// unsendable.
+Future<_BackupSnapshot> _readBackupSnapshot(AppDatabase db) => db.transaction(
+  () async => (
+    allTanks: await db.getAllTanks(),
+    params: await db.getAllTrackedParameters(),
+    paramOverrides: await db.getAllParameterOverrides(),
+    readings: await db.getAllReadings(),
+    waterChanges: await db.getAllWaterChanges(),
+    carbonChanges: await db.getAllCarbonChanges(),
+    equipmentCleanings: await db.getAllEquipmentCleanings(),
+    ratioVisibilities: await db.getAllRatioVisibilities(),
+    dosingEntries: await db.getAllDosingEntries(),
+    manualDoses: await db.getAllManualDoses(),
+    readingTemplates: await db.getAllReadingTemplates(),
+    microViews: await db.getAllMicroViews(),
+    maintenanceSchedules: await db.getAllMaintenanceSchedules(),
+    importSources: await db.getAllImportSources(),
+    // Device-scoped (no tankId) — never subject to the soft-delete filtering.
+    roStages: await db.getAllRoStages(),
+    roStageReplacements: await db.getAllRoStageReplacements(),
+    // Device-scoped with an *optional* tank assignment (U36) — the row always
+    // rides the backup; only a soft-deleted assignment is cleared by the
+    // caller.
+    deviceRecords: await db.getAllDevices(),
+    settings: await db.getAllSettings(),
+    // The user-chosen device name (U35) — stamped as top-level provenance so
+    // the restore prompt can say which device wrote the file without digging
+    // through the settings section.
+    deviceName: await AppSettings(db).readSyncDeviceName(),
+  ),
+);
+
 /// Serializes the entire database to a backup JSON string by reading every
 /// table. Shared by manual export and the automatic backup service.
 ///
@@ -943,31 +1037,26 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
 /// string comes back via `Isolate.exit`, without a copy.
 Future<String> encodeBackupFromDb(AppDatabase db) async {
   final schemaVersion = db.schemaVersion;
-  final allTanks = await db.getAllTanks();
-  var params = await db.getAllTrackedParameters();
-  var paramOverrides = await db.getAllParameterOverrides();
-  var readings = await db.getAllReadings();
-  var waterChanges = await db.getAllWaterChanges();
-  var carbonChanges = await db.getAllCarbonChanges();
-  var equipmentCleanings = await db.getAllEquipmentCleanings();
-  var ratioVisibilities = await db.getAllRatioVisibilities();
-  var dosingEntries = await db.getAllDosingEntries();
-  var manualDoses = await db.getAllManualDoses();
-  var readingTemplates = await db.getAllReadingTemplates();
-  var microViews = await db.getAllMicroViews();
-  var maintenanceSchedules = await db.getAllMaintenanceSchedules();
-  var importSources = await db.getAllImportSources();
-  // Device-scoped (no tankId) — never subject to the soft-delete filtering.
-  final roStages = await db.getAllRoStages();
-  final roStageReplacements = await db.getAllRoStageReplacements();
-  // Device-scoped with an *optional* tank assignment (U36) — the row always
-  // rides the backup; only a soft-deleted assignment is cleared below.
-  var deviceRecords = await db.getAllDevices();
-  final settings = await db.getAllSettings();
-  // The user-chosen device name (U35) — stamped as top-level provenance so the
-  // restore prompt can say which device wrote the file without digging through
-  // the settings section.
-  final deviceName = await AppSettings(db).readSyncDeviceName();
+  final snap = await _readBackupSnapshot(db);
+  final allTanks = snap.allTanks;
+  var params = snap.params;
+  var paramOverrides = snap.paramOverrides;
+  var readings = snap.readings;
+  var waterChanges = snap.waterChanges;
+  var carbonChanges = snap.carbonChanges;
+  var equipmentCleanings = snap.equipmentCleanings;
+  var ratioVisibilities = snap.ratioVisibilities;
+  var dosingEntries = snap.dosingEntries;
+  var manualDoses = snap.manualDoses;
+  var readingTemplates = snap.readingTemplates;
+  var microViews = snap.microViews;
+  var maintenanceSchedules = snap.maintenanceSchedules;
+  var importSources = snap.importSources;
+  final roStages = snap.roStages;
+  final roStageReplacements = snap.roStageReplacements;
+  var deviceRecords = snap.deviceRecords;
+  final settings = snap.settings;
+  final deviceName = snap.deviceName;
   // Soft-deleted tanks (U10) are conceptually deleted — their rows only
   // persist through the brief undo window. Exclude them and their child rows
   // so a backup racing that window never resurrects the tank. `deletedAt`

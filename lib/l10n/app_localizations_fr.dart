@@ -78,7 +78,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get compareView => 'Comparer les graphiques';
 
   @override
-  String get gridView => 'Vue grille';
+  String get gridView => 'Vue en grille';
 
   @override
   String get addReading => 'Ajouter une mesure';
@@ -232,13 +232,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get volumeOptional => 'Volume (facultatif)';
 
   @override
-  String get vendorOptional => 'Fabricant (facultatif)';
+  String get vendorOptional => 'Marque (facultative)';
 
   @override
   String get modelOptional => 'Modèle (facultatif)';
 
   @override
-  String get notesOptional => 'Notes (facultatif)';
+  String get notesOptional => 'Notes (facultatives)';
 
   @override
   String get createAquarium => 'Créer l\'aquarium';
@@ -346,7 +346,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Chaque limite orange nécessite sa limite verte correspondante du même côté.';
 
   @override
-  String get noteOptional => 'Note (facultatif)';
+  String get noteOptional => 'Note (facultative)';
 
   @override
   String get saveReadings => 'Enregistrer les mesures';
@@ -555,7 +555,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get freeAmmoniaExplain =>
-      'Un test d\'ammoniac mesure l\'ammoniac total, mais seule la partie non ionisée (NH₃) est toxique. Sa proportion augmente avec le pH et la température, si bien qu\'un aquarium récifal en convertit une plus grande part sous la forme toxique qu\'un bac à pH bas. Cette estimation répartit votre dernière mesure d\'ammoniac total à partir des dernières valeurs de pH, de température et de salinité.';
+      'Un test d\'ammoniac mesure l\'ammoniac total, mais seule la fraction non ionisée (NH₃) est toxique. Sa proportion augmente avec le pH et la température : dans un aquarium récifal, une plus grande part passe donc sous la forme toxique que dans un bac à pH plus bas. Cette estimation répartit votre dernière mesure d\'ammoniac total d\'après les dernières valeurs de pH, de température et de salinité.';
 
   @override
   String freeAmmoniaDialogFree(Object value) {
@@ -607,16 +607,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ratioMgCaTitle => 'Rapport Mg : Ca';
 
   @override
-  String get ratioCaAlkLabel => 'Ca : Alc';
+  String get ratioCaAlkLabel => 'Ca : KH';
 
   @override
-  String get ratioCaAlkTitle => 'Rapport Ca : Alc';
+  String get ratioCaAlkTitle => 'Rapport Ca : KH';
 
   @override
-  String get ratioMgAlkLabel => 'Mg : Alc';
+  String get ratioMgAlkLabel => 'Mg : KH';
 
   @override
-  String get ratioMgAlkTitle => 'Rapport Mg : Alc';
+  String get ratioMgAlkTitle => 'Rapport Mg : KH';
 
   @override
   String get ratioNoData =>
@@ -634,7 +634,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get recordWaterChange => 'Enregistrer un changement d\'eau';
 
   @override
-  String get amountLitersOptional => 'Quantité (facultatif)';
+  String get amountLitersOptional => 'Quantité (facultative)';
 
   @override
   String get noWaterChanges => 'Pas encore de changement d\'eau.';
@@ -684,20 +684,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dosing => 'Dosage';
 
   @override
-  String get addSupplement => 'Ajouter un supplément';
+  String get addSupplement => 'Ajouter un additif';
 
   @override
-  String get noDosing => 'Pas encore de supplément.';
+  String get noDosing => 'Pas encore d\'additif.';
 
   @override
   String get noDosingHint =>
-      'Ajoutez les suppléments que vous dosez dans ce bac — fabricant, produit et, si vous le souhaitez, dose et programme.';
+      'Ajoutez les additifs que vous dosez dans ce bac — marque, produit et, si vous le souhaitez, dose et programme.';
 
   @override
   String get dosingNoDosage => 'Aucune dose définie';
 
   @override
-  String get supplementStopped => 'Supplément arrêté';
+  String get supplementStopped => 'Additif arrêté';
 
   @override
   String get dosingHistoryTitle => 'Historique de dosage';
@@ -746,16 +746,16 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette dose consignée sera définitivement supprimée de l\'historique et du calcul de dose. Cette action est irréversible.';
 
   @override
-  String get dosingNew => 'Ajouter un supplément';
+  String get dosingNew => 'Ajouter un additif';
 
   @override
-  String get dosingEdit => 'Modifier le supplément';
+  String get dosingEdit => 'Modifier l\'additif';
 
   @override
-  String get dosingVendor => 'Fabricant';
+  String get dosingVendor => 'Marque';
 
   @override
-  String get dosingVendorName => 'Nom du fabricant';
+  String get dosingVendorName => 'Nom de la marque';
 
   @override
   String get dosingProduct => 'Produit';
@@ -823,7 +823,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get dosingTimeOptional => 'Heure (facultatif)';
+  String get dosingTimeOptional => 'Heure (facultative)';
 
   @override
   String get unitsSection => 'Unités';
@@ -1303,7 +1303,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get doseCalcPerDay => 'jour';
 
   @override
-  String get doseCalcPotencyTitle => 'Concentration du supplément';
+  String get doseCalcPotencyTitle => 'Concentration de l\'additif';
 
   @override
   String get doseCalcPotencyFromCatalog =>
@@ -1369,7 +1369,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get doseCalcNeedsPotency =>
-      'Saisissez la concentration du supplément pour obtenir une recommandation de dose.';
+      'Saisissez la concentration de l\'additif pour obtenir une recommandation de dose.';
 
   @override
   String get doseCalcInsufficient =>
@@ -1570,7 +1570,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get zoneUnknown => '—';
 
   @override
-  String get setupFishOnly => 'Poissons uniquement';
+  String get setupFishOnly => 'Fish only';
 
   @override
   String get setupSoft => 'Coraux mous';
@@ -1618,7 +1618,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get paramNitrite => 'Nitrite (NO₂)';
 
   @override
-  String get paramOrp => 'ORP';
+  String get paramOrp => 'Redox (ORP)';
 
   @override
   String get paramPotassium => 'Potassium (K)';
@@ -1736,7 +1736,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get microEmptyHint =>
-      'Suivez les oligo-éléments à partir de tests domestiques ou d\'analyses ICP en laboratoire.';
+      'Suivez les oligo-éléments à partir de tests en gouttes ou d\'analyses ICP en laboratoire.';
 
   @override
   String get microAllOk => 'Tout est dans la plage';
@@ -1758,7 +1758,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get microAddTitle => 'Mesures d\'oligo-éléments';
 
   @override
-  String get microChipHobby => 'Tests domestiques';
+  String get microChipHobby => 'Tests en gouttes';
 
   @override
   String get microChipFullIcp => 'ICP complet';
@@ -2029,10 +2029,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le prochain import redemandera à partir de quelle date commencer. Les mesures déjà importées sont conservées ; l\'association à l\'aquarium est mémorisée.';
 
   @override
-  String get hannaConnectTitle => 'Photomètre Hanna';
+  String get hannaConnectTitle => 'Checker Hanna';
 
   @override
-  String get hannaMeasureAction => 'Mesurer avec le photomètre Hanna';
+  String get hannaMeasureAction => 'Mesurer avec le Checker Hanna';
 
   @override
   String get hannaScanTitle => 'Scanner l\'écran du checker';
@@ -2087,7 +2087,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get experimentalToggleSubtitle =>
-      'Essayez des fonctions encore en test : connexion Bluetooth du checker Hanna et scan de l\'écran';
+      'Essayez des fonctions encore en test : connexion Bluetooth du Checker Hanna et scan de l\'écran';
 
   @override
   String get hannaScanFabTitle => 'Bouton de scan caméra';
@@ -2146,7 +2146,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hannaAquarium => 'Aquarium';
 
   @override
-  String get hannaSetsTitle => 'Ensembles de tests';
+  String get hannaSetsTitle => 'Jeux de tests';
 
   @override
   String hannaSetCount(int count) {
@@ -2160,10 +2160,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get hannaSaveSet => 'Enregistrer la sélection comme ensemble';
+  String get hannaSaveSet => 'Enregistrer la sélection comme jeu de tests';
 
   @override
-  String get hannaSetName => 'Nom de l\'ensemble';
+  String get hannaSetName => 'Nom du jeu de tests';
 
   @override
   String get hannaSetUpdate => 'Mettre à jour depuis la sélection actuelle';
@@ -2197,7 +2197,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hannaFinishNow => 'Terminer';
 
   @override
-  String get hannaTimerHint => 'Minuteur de réaction du réactif';
+  String get hannaTimerHint => 'Minuteur du temps de réaction';
 
   @override
   String get hannaTimerStop => 'Arrêter le minuteur';
@@ -2541,7 +2541,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get aiSummaryAction => 'Demandez à votre IA';
+  String get aiSummaryAction => 'Demander à votre IA';
 
   @override
   String get aiSummaryPrivacyNote =>
@@ -2757,7 +2757,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get remindersDosingSubtitle =>
-      'À l\'heure de dosage de chaque supplément';
+      'À l\'heure de dosage de chaque additif';
 
   @override
   String get remindersMaintenanceSubtitle =>
@@ -2941,13 +2941,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get roStageDiResin => 'Résine déionisante (DI)';
 
   @override
-  String get roCustomStage => 'Élément personnalisé';
+  String get roCustomStage => 'Cartouche personnalisée';
 
   @override
-  String get roAddStage => 'Ajouter un élément';
+  String get roAddStage => 'Ajouter une cartouche';
 
   @override
-  String get roEditStage => 'Modifier l\'élément';
+  String get roEditStage => 'Modifier la cartouche';
 
   @override
   String get roLifespanLabel => 'Remplacer tous les';
@@ -2987,15 +2987,15 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun remplacement enregistré pour l\'instant';
 
   @override
-  String get roDeleteStageTitle => 'Supprimer l\'élément ?';
+  String get roDeleteStageTitle => 'Supprimer la cartouche ?';
 
   @override
   String get roDeleteStageBody =>
-      'L\'élément et l\'historique de ses remplacements seront supprimés. Cette action est irréversible.';
+      'La cartouche et l\'historique de ses remplacements seront supprimés. Cette action est irréversible.';
 
   @override
   String get roEmptyBody =>
-      'Aucun élément. Ajoutez les filtres de votre osmoseur avec +.';
+      'Aucune cartouche. Ajoutez les filtres de votre osmoseur avec +.';
 
   @override
   String get roSetupPrompt =>
@@ -3006,7 +3006,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Afficher dans l\'onglet Actions, avec rappels de remplacement des filtres';
 
   @override
-  String get roAllOk => 'Tous les éléments sont OK';
+  String get roAllOk => 'Toutes les cartouches sont OK';
 
   @override
   String get notifRoTitle => 'Remplacer les filtres de l\'osmoseur';
@@ -3496,7 +3496,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get apexDisclaimer =>
-      'Cette application se contente de lire votre Apex. Elle ne peut pas commuter les prises, lancer un cycle de nourrissage ni modifier les programmes — utilisez Fusion ou la page web de l\'Apex pour cela. La lecture ne fonctionne que si votre téléphone est sur le même réseau Wi-Fi que le contrôleur.';
+      'Cette application se contente de lire votre Apex. Elle ne peut pas allumer ou éteindre les prises, lancer un cycle de nourrissage ni modifier les programmes — utilisez Fusion ou la page web de l\'Apex pour cela. La lecture ne fonctionne que si votre téléphone est sur le même réseau Wi-Fi que le contrôleur.';
 
   @override
   String get apexAddDevice => 'Ajouter un contrôleur';
@@ -3719,7 +3719,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get devicesDisclaimer =>
-      'L\'application se contente de lire vos appareils. Elle ne peut pas modifier les réglages, doser, commuter les prises ni étalonner — utilisez l\'application du fabricant pour cela. La lecture ne fonctionne que si votre téléphone est sur le même réseau Wi-Fi que les appareils.';
+      'L\'application se contente de lire vos appareils. Elle ne peut pas modifier les réglages, doser, allumer ou éteindre les prises ni étalonner — utilisez l\'application du fabricant pour cela. La lecture ne fonctionne que si votre téléphone est sur le même réseau Wi-Fi que les appareils.';
 
   @override
   String get devicesEmptyTitle => 'Aucun appareil';
@@ -3769,7 +3769,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reefDevicesSubtitle =>
-      'Appareils ReefFactory, appareils ReefBeat, contrôleurs Apex et testeur Hanna';
+      'Appareils ReefFactory, appareils ReefBeat, contrôleurs Apex et Checker Hanna';
 
   @override
   String get reefDevicesEmpty => 'Aucun appareil connecté.';
@@ -3784,7 +3784,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get reefDevicesKindApex => 'Neptune Apex';
 
   @override
-  String get reefDevicesKindHanna => 'Testeur Hanna';
+  String get reefDevicesKindHanna => 'Checker Hanna';
 
   @override
   String get reefDevicesBluetooth => 'Bluetooth';

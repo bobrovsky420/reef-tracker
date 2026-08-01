@@ -54,8 +54,8 @@ void main() {
       ],
     };
 
-    test('ignores exportedAt, device, checksum, and the whole settings '
-        'section', () {
+    test('ignores exportedAt, device, checksum, and device-local settings '
+        'rows (#93: the section itself is hashed now)', () {
       final a = doc();
       final b = doc()
         ..['exportedAt'] = '2026-07-16T09:30:00.000'
@@ -70,6 +70,43 @@ void main() {
       expect(
         backupContentHash(jsonEncode(a)),
         backupContentHash(jsonEncode(b)),
+      );
+    });
+
+    test('a data-bearing settings row dirties the hash; row order, pre-#69 '
+        'device-local rows and the founder marker do not (#93)', () {
+      final a = doc()
+        ..['settings'] = [
+          {'key': 'device_vendor_order', 'value': 'apex,reefbeat'},
+          {'key': 'hanna_method_sets', 'value': '{"alkalinity":"hi97115"}'},
+        ];
+      // The same data-bearing rows in the other order, plus rows a pre-#69
+      // cloud file still carries: device-local bookkeeping, and the sticky
+      // founder marker (a restore plants it locally, so the restoring
+      // device's next encode would otherwise differ from the file it just
+      // pulled).
+      final b = doc()
+        ..['settings'] = [
+          {'key': 'sync_gdrive_account', 'value': 'reefkeeper@gmail.com'},
+          {'key': 'legacy_free_since', 'value': '0.26.0'},
+          {'key': 'hanna_method_sets', 'value': '{"alkalinity":"hi97115"}'},
+          {'key': 'device_vendor_order', 'value': 'apex,reefbeat'},
+        ];
+      expect(
+        backupContentHash(jsonEncode(a)),
+        backupContentHash(jsonEncode(b)),
+      );
+
+      // An edited method set is a data change: it must read dirty — the old
+      // whole-section strip made it sync-invisible (#93).
+      final c = doc()
+        ..['settings'] = [
+          {'key': 'device_vendor_order', 'value': 'apex,reefbeat'},
+          {'key': 'hanna_method_sets', 'value': '{"alkalinity":"hi97104"}'},
+        ];
+      expect(
+        backupContentHash(jsonEncode(a)),
+        isNot(backupContentHash(jsonEncode(c))),
       );
     });
 
@@ -142,6 +179,23 @@ void main() {
         CloudSyncOutcome.skippedDisabled,
       );
       expect(store.writeCalls, 0);
+    });
+
+    test('a settings-only data change (a method-set edit) reads dirty '
+        '(#93)', () async {
+      await connectAndSeed();
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      // A Hanna method-set edit is aquarium data even though it lives in the
+      // settings table: it must push, not skip clean.
+      await db.setSetting('hanna_method_sets', '{"alkalinity":"hi97115"}');
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      expect(store.writeCalls, 2);
     });
 
     test('pushes when dirty, then skips clean until data changes', () async {
@@ -515,25 +569,31 @@ void main() {
       expect(proposal.contents, isNull);
     });
 
-    test('diverged when this device also holds data that never synced', () async {
-      await reader.createTankWithPreset(name: 'Nano', type: SetupType.mixed);
-      await seedAndPush();
-      final proposal = await checkCloudNewerBackup(reader, store: store);
-      expect(proposal, isNotNull);
-      expect(proposal!.diverged, isTrue);
-    });
+    test(
+      'diverged when this device also holds data that never synced',
+      () async {
+        await reader.createTankWithPreset(name: 'Nano', type: SetupType.mixed);
+        await seedAndPush();
+        final proposal = await checkCloudNewerBackup(reader, store: store);
+        expect(proposal, isNotNull);
+        expect(proposal!.diverged, isTrue);
+      },
+    );
 
-    test('a dismissed file stays quiet until an even newer one appears', () async {
-      await seedAndPush();
-      final proposal = await checkCloudNewerBackup(reader, store: store);
-      await dismissCloudRestore(reader, proposal!.file.name);
-      expect(await checkCloudNewerBackup(reader, store: store), isNull);
+    test(
+      'a dismissed file stays quiet until an even newer one appears',
+      () async {
+        await seedAndPush();
+        final proposal = await checkCloudNewerBackup(reader, store: store);
+        await dismissCloudRestore(reader, proposal!.file.name);
+        expect(await checkCloudNewerBackup(reader, store: store), isNull);
 
-      await pushNewer();
-      final again = await checkCloudNewerBackup(reader, store: store);
-      expect(again, isNotNull);
-      expect(again!.file.name, isNot(proposal.file.name));
-    });
+        await pushNewer();
+        final again = await checkCloudNewerBackup(reader, store: store);
+        expect(again, isNotNull);
+        expect(again!.file.name, isNot(proposal.file.name));
+      },
+    );
 
     test('content identical to local data is adopted silently (no proposal, '
         'lineage backfilled)', () async {
@@ -637,10 +697,7 @@ void main() {
         CloudSyncOutcome.skippedClean,
       );
       expect(await checkCloudNewerBackup(reader, store: store), isNull);
-      expect(
-        await AppSettings(reader).readSyncGdriveDismissedName(),
-        isNull,
-      );
+      expect(await AppSettings(reader).readSyncGdriveDismissedName(), isNull);
     });
 
     test('empty device (onboarding): restores without writing a pointless '
@@ -683,14 +740,17 @@ void main() {
       expect(await fetchNewestCloudBackup(store), isNull);
     });
 
-    test('fetchNewestCloudBackup: newest backup, foreign files ignored', () async {
-      store.files['reeftracker-auto-20260101-000000-000.json'] = [1];
-      store.files['reeftracker-auto-20260201-000000-000.json'] = [2];
-      store.files['holiday-photo.jpg'] = [3];
+    test(
+      'fetchNewestCloudBackup: newest backup, foreign files ignored',
+      () async {
+        store.files['reeftracker-auto-20260101-000000-000.json'] = [1];
+        store.files['reeftracker-auto-20260201-000000-000.json'] = [2];
+        store.files['holiday-photo.jpg'] = [3];
 
-      final newest = await fetchNewestCloudBackup(store);
-      expect(newest?.name, 'reeftracker-auto-20260201-000000-000.json');
-    });
+        final newest = await fetchNewestCloudBackup(store);
+        expect(newest?.name, 'reeftracker-auto-20260201-000000-000.json');
+      },
+    );
 
     test('founder backup: data restored AND push sync connected (the founder '
         'marker rides the backup)', () async {

@@ -144,7 +144,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noReadings => 'Keine Messungen';
 
   @override
-  String get dashSectionCoreChemistry => 'Basischemie';
+  String get dashSectionCoreChemistry => 'Basiswerte';
 
   @override
   String get dashSectionNutrients => 'Nährstoffe';
@@ -580,7 +580,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get freeAmmoniaOutdatedWarning =>
-      'pH-Wert oder Temperatur wurden zuletzt mehr als eine Woche vor diesem Ammoniak-Messwert gemessen, daher kann der giftige Anteil ungenau sein.';
+      'pH-Wert oder Temperatur wurden zuletzt mehr als eine Woche von diesem Ammoniak-Messwert entfernt gemessen, daher kann der giftige Anteil ungenau sein.';
 
   @override
   String get freeAmmoniaShowTitle => 'Freies Ammoniak (NH₃) anzeigen';
@@ -644,10 +644,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get amountNotRecorded => 'Menge nicht erfasst';
 
   @override
-  String get actions => 'Maßnahmen';
+  String get actions => 'Pflege';
 
   @override
-  String get noActions => 'Noch keine Maßnahmen.';
+  String get noActions => 'Noch keine Pflege-Einträge.';
 
   @override
   String get addAction => 'Maßnahme hinzufügen';
@@ -676,10 +676,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gramSymbol => 'g';
 
   @override
-  String get equipmentCleaning => 'Gerätereinigung';
+  String get equipmentCleaning => 'Technik-Reinigung';
 
   @override
-  String get recordEquipmentCleaning => 'Gerätereinigung erfassen';
+  String get recordEquipmentCleaning => 'Technik-Reinigung erfassen';
 
   @override
   String get dosing => 'Dosierung';
@@ -1132,7 +1132,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aboutUserGuideSubtitle =>
-      'So nutzen Sie jede Funktion, mit Screenshots';
+      'So nutzt du jede Funktion, mit Screenshots';
 
   @override
   String get aboutSupport => 'Support & FAQ';
@@ -1599,7 +1599,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get paramAlkalinityShort => 'KH';
 
   @override
-  String get paramCalcium => 'Kalzium (Ca)';
+  String get paramCalcium => 'Calcium (Ca)';
 
   @override
   String get paramMagnesium => 'Magnesium (Mg)';
@@ -1617,7 +1617,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get paramNitrite => 'Nitrit (NO₂)';
 
   @override
-  String get paramOrp => 'ORP';
+  String get paramOrp => 'Redox (ORP)';
 
   @override
   String get paramPotassium => 'Kalium (K)';
@@ -1722,7 +1722,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get microTitle => 'Spurenelemente';
 
   @override
-  String get microSectionMajor => 'Hauptelemente';
+  String get microSectionMajor => 'Makroelemente';
 
   @override
   String get microSectionTrace => 'Spurenelemente';
@@ -1956,7 +1956,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hannaImportSkippedTitle => 'Nicht importiert';
 
   @override
-  String get hannaImportSkipRange => 'außerhalb des Testbereichs';
+  String get hannaImportSkipRange => 'außerhalb des Messbereichs';
 
   @override
   String get hannaImportSkipUnknown => 'Test wird von der App nicht erfasst';
@@ -2036,7 +2036,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hannaScanPickHint =>
-      'Liest den Wert direkt vom Display des Checkers ab. Wählen Sie zuerst Ihr Modell — die HI-Nummer ist vorne auf dem Checker aufgedruckt.';
+      'Liest den Wert direkt vom Display des Checkers ab. Wähle zuerst dein Modell — die HI-Nummer ist vorne auf dem Checker aufgedruckt.';
 
   @override
   String get hannaScanPickTitle => 'Checker-Modell';
@@ -2058,7 +2058,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hannaScanCameraDenied =>
-      'Kamerazugriff wurde verweigert. Erlauben Sie den Kamerazugriff in den Systemeinstellungen, um das Display zu scannen.';
+      'Kamerazugriff wurde verweigert. Erlaube den Kamerazugriff in den Systemeinstellungen, um das Display zu scannen.';
 
   @override
   String get hannaScanCameraFailed =>
@@ -2066,11 +2066,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hannaScanImpossibleNote =>
-      'Dieser Wert ist für diesen Parameter unmöglich und kann nicht gespeichert werden. Scannen Sie erneut oder prüfen Sie, ob das richtige Modell gewählt ist.';
+      'Dieser Wert ist für diesen Parameter unmöglich und kann nicht gespeichert werden. Scanne erneut oder prüfe, ob das richtige Modell gewählt ist.';
 
   @override
   String get hannaScanImplausibleNote =>
-      'Dieser Wert liegt außerhalb des plausiblen Bereichs — prüfen Sie ihn vor dem Speichern.';
+      'Dieser Wert liegt außerhalb des plausiblen Bereichs — prüfe ihn vor dem Speichern.';
 
   @override
   String get experimentalBadge => 'Experimentell';
@@ -2098,14 +2098,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hannaMeasureOnlyNote =>
-      'Es werden nur Messungen unterstützt. Zum Ändern der Geräteeinstellungen oder für Firmware-Updates verwenden Sie die Hersteller-App Hanna Lab.';
+      'Es werden nur Messungen unterstützt. Zum Ändern der Geräteeinstellungen oder für Firmware-Updates verwende die Hersteller-App Hanna Lab.';
 
   @override
   String get hannaScanning => 'Suche nach dem Messgerät…';
 
   @override
   String get hannaScanHint =>
-      'Schalten Sie das Gerät ein und halten Sie es in der Nähe des Telefons.';
+      'Schalte das Gerät ein und halte es in der Nähe des Telefons.';
 
   @override
   String get hannaReadingSetup =>
@@ -2121,7 +2121,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hannaErrNotFound =>
-      'Kein Messgerät gefunden. Stellen Sie sicher, dass es eingeschaltet und in Reichweite ist.';
+      'Kein Messgerät gefunden. Stelle sicher, dass es eingeschaltet und in Reichweite ist.';
 
   @override
   String get hannaErrConnectionFailed =>
@@ -2177,8 +2177,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hannaStartMeasurements => 'Messungen starten';
 
   @override
-  String get hannaFollowMeter =>
-      'Folgen Sie den Anweisungen auf dem Messgerät.';
+  String get hannaFollowMeter => 'Folge den Anweisungen auf dem Messgerät.';
 
   @override
   String hannaStepN(int step) {
@@ -2700,13 +2699,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get healthDisplaySubtitle => 'Wo die Zustandsübersicht erscheint';
 
   @override
-  String get healthDisplayBoth => 'Abzeichen & Karte';
+  String get healthDisplayBoth => 'Symbol & Karte';
 
   @override
-  String get healthDisplayBadge => 'Nur Abzeichen';
+  String get healthDisplayBadge => 'Nur Symbol';
 
   @override
-  String get healthDisplayOff => 'Verborgen';
+  String get healthDisplayOff => 'Ausgeblendet';
 
   @override
   String get routeNotFoundTitle => 'Seite nicht gefunden';
@@ -2930,7 +2929,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get roStageMembrane => 'RO-Membran';
 
   @override
-  String get roStageDiResin => 'DI-Harz';
+  String get roStageDiResin => 'Mischbettharz';
 
   @override
   String get roCustomStage => 'Eigenes Teil';
@@ -2993,7 +2992,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get roUnitToggleSubtitle =>
-      'Im Maßnahmen-Tab anzeigen, mit Erinnerungen an Filterwechsel';
+      'Im Pflege-Tab anzeigen, mit Erinnerungen an Filterwechsel';
 
   @override
   String get roAllOk => 'Alle Teile in Ordnung';

@@ -80,6 +80,10 @@ DueStatus dueStatus(DateTime dueAt, {DateTime? now}) =>
 ///   first-due date must win until a completion moves past it.
 /// * One-off ([cadenceDays] null): due at [scheduledAt]; once done (or with
 ///   no date at all) it is never due again — the caller retires the plan.
+///   The same floor applies: a [lastDone] *before* [scheduledAt] is the
+///   pre-plan action-log anchor (typed plans pass the newest logged action
+///   of that type, which predates the plan itself), not this task's
+///   completion — only a completion at/after the planned date retires it.
 /// * A stored cadence < 1 (possible only via restored/hand-edited data) means
 ///   the true cadence is unknown → null, mirroring `dailyEquivalentDose`'s
 ///   treatment of invalid intervals (#8) rather than guessing "daily".
@@ -93,8 +97,14 @@ DateTime? nextElasticDue({
   DateTime? now,
 }) {
   if (cadenceDays == null) {
-    // One-off: due at its planned date until completed.
-    return lastDone == null ? scheduledAt : null;
+    // One-off: due at its planned date until completed. A completion that
+    // predates the planned date is the pre-plan anchor, not this task's
+    // completion — the scheduledAt floor again (#97).
+    if (lastDone == null) return scheduledAt;
+    if (scheduledAt != null && scheduledAt.isAfter(lastDone)) {
+      return scheduledAt;
+    }
+    return null;
   }
   if (cadenceDays < 1) return null;
   if (lastDone == null) return scheduledAt ?? (now ?? DateTime.now());
@@ -205,13 +215,16 @@ DateTime? nextMaintenanceDue({
   if (cadenceDays < 1) return null;
   if (lastDone == null) return scheduledAt ?? (now ?? DateTime.now());
   final targetMonth = DateTime(lastDone.year, lastDone.month + cadenceDays);
-  return DateTime(
+  final due = DateTime(
     targetMonth.year,
     targetMonth.month,
     _clampToMonth(lastDone.day, targetMonth),
     lastDone.hour,
     lastDone.minute,
   );
+  // The scheduledAt floor promised "in every mode" by the doc above (#97).
+  if (scheduledAt != null && scheduledAt.isAfter(due)) return scheduledAt;
+  return due;
 }
 
 /// [day] clamped to the number of days in [month]'s month.

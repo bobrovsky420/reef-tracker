@@ -61,6 +61,19 @@ void main() {
       );
     });
 
+    test('one-off: a pre-plan action does not retire it (#97 floor — typed '
+        'plans pass the newest logged action, which predates the plan)', () {
+      final seed = DateTime(2026, 8, 15, 9);
+      expect(
+        nextElasticDue(
+          scheduledAt: seed,
+          lastDone: DateTime(2026, 7, 12, 11),
+          now: now,
+        ),
+        seed,
+      );
+    });
+
     test('one-off without a date is never due', () {
       expect(nextElasticDue(now: now), isNull);
     });
@@ -149,6 +162,31 @@ void main() {
           now: now,
         ),
         DateTime(2026, 4, 30, 8),
+      );
+    });
+
+    test('months: a later planned first-due floors the month step (#97 — '
+        'same rule the weeks mode already had)', () {
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 6, 20, 8),
+          cadenceDays: 1,
+          cadenceUnit: 'months',
+          scheduledAt: DateTime(2026, 8, 5),
+          now: now,
+        ),
+        DateTime(2026, 8, 5),
+      );
+      // An earlier seed is ignored, exactly like the elastic branch.
+      expect(
+        nextMaintenanceDue(
+          lastDone: DateTime(2026, 6, 20, 8),
+          cadenceDays: 1,
+          cadenceUnit: 'months',
+          scheduledAt: DateTime(2026, 6, 1),
+          now: now,
+        ),
+        DateTime(2026, 7, 20, 8),
       );
     });
 
@@ -330,9 +368,19 @@ void main() {
     test('no repeat fields: one-off passthrough', () {
       final seed = DateTime(2026, 7, 20, 9);
       expect(nextMaintenanceDue(scheduledAt: seed, now: now), seed);
+      // A completion at/after the planned date retires it; one *before* it is
+      // the pre-plan action-log anchor and does not (#97 floor).
+      expect(
+        nextMaintenanceDue(
+          scheduledAt: seed,
+          lastDone: seed.add(const Duration(hours: 2)),
+          now: now,
+        ),
+        isNull,
+      );
       expect(
         nextMaintenanceDue(scheduledAt: seed, lastDone: now, now: now),
-        isNull,
+        seed,
       );
     });
   });

@@ -651,7 +651,10 @@ void main() {
                 RegExp(r',\s*"roStageReplacements":\s*\[.*?\]', dotAll: true),
                 '',
               )
-              .replaceFirst(RegExp(r',\s*"devices":\s*\[.*?\]', dotAll: true), '')
+              .replaceFirst(
+                RegExp(r',\s*"devices":\s*\[.*?\]', dotAll: true),
+                '',
+              )
               // Older backups predate the checksum too (T7); with it left in,
               // the stripped document would (correctly) fail verification.
               .replaceFirst(RegExp(r',\s*"checksum":\s*"[^"]*"'), '');
@@ -1456,7 +1459,10 @@ void main() {
     });
 
     test('rejects a device referencing a missing aquarium (U36)', () {
-      final d = dataWith(tanks: [tank(1)], devices: [device('RF-AAA', tankId: 99)]);
+      final d = dataWith(
+        tanks: [tank(1)],
+        devices: [device('RF-AAA', tankId: 99)],
+      );
       expect(
         () => validateBackup(d, appSchemaVersion: 23),
         rejectedWith(BackupRejection.inconsistent),
@@ -1838,6 +1844,43 @@ void main() {
       expect(await dst.getSetting('temp_unit'), isNull);
     });
 
+    test('encode racing concurrent multi-table writes always yields an '
+        'internally consistent document (#92)', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await seed(db);
+      // A writer hammering inserts that span several sections (a new tank
+      // plus its preset parameters plus readings). Without the encode
+      // transaction, a write committing between two of the sequential
+      // SELECTs yields a document whose child rows point at a tank the
+      // tanks section missed — caught only by validateBackup at restore
+      // time. The writer is bounded (not while-encoding) on purpose: the
+      // main isolate is free during the encode's Isolate.run, so an
+      // unbounded writer grows the database faster each round and the test
+      // never terminates.
+      var writerDone = false;
+      final writer = () async {
+        for (var i = 0; i < 25; i++) {
+          final id = await db.createTankWithPreset(
+            name: 'Race $i',
+            type: SetupType.mixed,
+          );
+          await db.insertReadingGroup(
+            tankId: id,
+            takenAt: DateTime(2026, 2, 1 + (i % 27)),
+            values: const [(paramKey: 'ph', value: 8.0)],
+          );
+        }
+      }().whenComplete(() => writerDone = true);
+      var rounds = 0;
+      while (!writerDone || rounds < 3) {
+        final data = decodeBackup(await encodeBackupFromDb(db));
+        validateBackup(data, appSchemaVersion: db.schemaVersion);
+        rounds++;
+      }
+      await writer;
+    });
+
     test(
       'restore backfills group ids for readings without one (#15)',
       () async {
@@ -1978,7 +2021,8 @@ void main() {
       expect(
         encodedKeys.intersection(SettingKey.deviceLocalKeys),
         isEmpty,
-        reason: 'these files are shared — the share sheet, a shared Drive '
+        reason:
+            'these files are shared — the share sheet, a shared Drive '
             'folder, the U35 cross-device pull',
       );
       // …and the plaintext email is nowhere in the bytes, whatever key it sat
@@ -1997,15 +2041,16 @@ void main() {
       expect(await dst.getSetting('legacy_free_since'), '0.26.0');
     });
 
-    test('stripping the settings section leaves the sync hash stable '
+    test('device-local settings rows leave the sync hash stable '
         '(#69 × U24)', () async {
       final src = newDb();
       addTearDown(src.close);
       await seed(src);
       final before = backupContentHash(await encodeBackupFromDb(src));
       // Connecting Drive writes device-local rows only: the dirty gate must
-      // not see that as a data change (it already strips `settings`, and now
-      // they never reach the document either).
+      // not see that as a data change (they never reach the document, and
+      // #93's normalized settings hash re-filters them for older cloud
+      // files).
       await src.setSetting('sync_gdrive_account', 'reefkeeper@gmail.com');
       await src.setSetting('sync_device_name', 'Kitchen phone');
       expect(backupContentHash(await encodeBackupFromDb(src)), before);
@@ -2082,80 +2127,77 @@ void main() {
       expect(tanks.single.name, 'Reef');
     });
 
-    test(
-      'devices merge on restore: same serial or same name skips, local rows '
-      'always win (U36)',
-      () async {
-        final src = newDb();
-        addTearDown(src.close);
-        final srcTank = await src.createTankWithPreset(
-          name: 'Reef',
-          type: SetupType.mixed,
-        );
-        await src.upsertReefFactoryDevice(
-          identifier: 'RF-AAA',
-          model: 'RFPM01',
-          address: '10.0.0.5',
-          name: 'Display pH',
-          tankId: srcTank,
-        );
-        await src.upsertReefFactoryDevice(
-          identifier: 'RF-BBB',
-          model: 'RFSG01',
-          address: '10.0.0.6',
-          name: 'Salinity',
-        );
-        await src.upsertReefFactoryDevice(
-          identifier: 'RF-CCC',
-          model: 'RFPM01',
-          address: '10.0.0.7',
-          name: 'Frag pH',
-        );
-        final data = decodeBackup(await encodeBackupFromDb(src));
+    test('devices merge on restore: same serial or same name skips, local rows '
+        'always win (U36)', () async {
+      final src = newDb();
+      addTearDown(src.close);
+      final srcTank = await src.createTankWithPreset(
+        name: 'Reef',
+        type: SetupType.mixed,
+      );
+      await src.upsertReefFactoryDevice(
+        identifier: 'RF-AAA',
+        model: 'RFPM01',
+        address: '10.0.0.5',
+        name: 'Display pH',
+        tankId: srcTank,
+      );
+      await src.upsertReefFactoryDevice(
+        identifier: 'RF-BBB',
+        model: 'RFSG01',
+        address: '10.0.0.6',
+        name: 'Salinity',
+      );
+      await src.upsertReefFactoryDevice(
+        identifier: 'RF-CCC',
+        model: 'RFPM01',
+        address: '10.0.0.7',
+        name: 'Frag pH',
+      );
+      final data = decodeBackup(await encodeBackupFromDb(src));
 
-        final dst = newDb();
-        addTearDown(dst.close);
-        final dstTank = await dst.createTankWithPreset(
-          name: 'Old',
-          type: SetupType.sps,
-        );
-        // Same serial as the backup's RF-AAA, configured for *this* network
-        // and assigned to a local tank — must survive untouched (bar the tank
-        // link, whose target is wiped by the restore).
-        await dst.upsertReefFactoryDevice(
-          identifier: 'RF-AAA',
-          model: 'RFPM01',
-          address: '192.168.1.20',
-          name: 'Sump pH',
-          tankId: dstTank,
-        );
-        // Different serial but the same display name as the backup's RF-BBB —
-        // that backup row must be skipped.
-        await dst.upsertReefFactoryDevice(
-          identifier: 'RF-ZZZ',
-          model: 'RFSG01',
-          address: '192.168.1.21',
-          name: 'Salinity',
-        );
+      final dst = newDb();
+      addTearDown(dst.close);
+      final dstTank = await dst.createTankWithPreset(
+        name: 'Old',
+        type: SetupType.sps,
+      );
+      // Same serial as the backup's RF-AAA, configured for *this* network
+      // and assigned to a local tank — must survive untouched (bar the tank
+      // link, whose target is wiped by the restore).
+      await dst.upsertReefFactoryDevice(
+        identifier: 'RF-AAA',
+        model: 'RFPM01',
+        address: '192.168.1.20',
+        name: 'Sump pH',
+        tankId: dstTank,
+      );
+      // Different serial but the same display name as the backup's RF-BBB —
+      // that backup row must be skipped.
+      await dst.upsertReefFactoryDevice(
+        identifier: 'RF-ZZZ',
+        model: 'RFSG01',
+        address: '192.168.1.21',
+        name: 'Salinity',
+      );
 
-        await importBackup(dst, data);
+      await importBackup(dst, data);
 
-        final restored = await dst.getAllDevices();
-        final byId = {for (final d in restored) d.identifier: d};
-        expect(byId.keys, unorderedEquals(['RF-AAA', 'RF-ZZZ', 'RF-CCC']));
-        // Local RF-AAA won: the backup's address/name did not clobber it.
-        expect(byId['RF-AAA']!.address, '192.168.1.20');
-        expect(byId['RF-AAA']!.name, 'Sump pH');
-        // Its tank assignment was cleared by the tank wipe (FK set-null) —
-        // never left pointing into the restored tanks.
-        expect(byId['RF-AAA']!.tankId, isNull);
-        // The name-collision row kept its local serial and address.
-        expect(byId['RF-ZZZ']!.address, '192.168.1.21');
-        // RF-CCC was new on this phone — inserted from the backup.
-        expect(byId['RF-CCC']!.address, '10.0.0.7');
-        expect(byId['RF-CCC']!.name, 'Frag pH');
-      },
-    );
+      final restored = await dst.getAllDevices();
+      final byId = {for (final d in restored) d.identifier: d};
+      expect(byId.keys, unorderedEquals(['RF-AAA', 'RF-ZZZ', 'RF-CCC']));
+      // Local RF-AAA won: the backup's address/name did not clobber it.
+      expect(byId['RF-AAA']!.address, '192.168.1.20');
+      expect(byId['RF-AAA']!.name, 'Sump pH');
+      // Its tank assignment was cleared by the tank wipe (FK set-null) —
+      // never left pointing into the restored tanks.
+      expect(byId['RF-AAA']!.tankId, isNull);
+      // The name-collision row kept its local serial and address.
+      expect(byId['RF-ZZZ']!.address, '192.168.1.21');
+      // RF-CCC was new on this phone — inserted from the backup.
+      expect(byId['RF-CCC']!.address, '10.0.0.7');
+      expect(byId['RF-CCC']!.name, 'Frag pH');
+    });
 
     test('imports an older backup missing later sections', () async {
       final src = newDb();

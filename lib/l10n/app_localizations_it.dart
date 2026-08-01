@@ -229,16 +229,16 @@ class AppLocalizationsIt extends AppLocalizations {
       'Per questo tipo di vasca verranno impostati i parametri predefiniti e i limiti delle zone. Potrai regolarli in qualsiasi momento.';
 
   @override
-  String get volumeOptional => 'Volume (facoltativo)';
+  String get volumeOptional => 'Volume (opzionale)';
 
   @override
-  String get vendorOptional => 'Produttore (facoltativo)';
+  String get vendorOptional => 'Produttore (opzionale)';
 
   @override
-  String get modelOptional => 'Modello (facoltativo)';
+  String get modelOptional => 'Modello (opzionale)';
 
   @override
-  String get notesOptional => 'Note (facoltativo)';
+  String get notesOptional => 'Note (opzionale)';
 
   @override
   String get createAquarium => 'Crea acquario';
@@ -346,7 +346,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Ogni limite arancione richiede il corrispondente limite verde sullo stesso lato.';
 
   @override
-  String get noteOptional => 'Nota (facoltativo)';
+  String get noteOptional => 'Nota (opzionale)';
 
   @override
   String get saveReadings => 'Salva misurazioni';
@@ -634,7 +634,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get recordWaterChange => 'Registra cambio d\'acqua';
 
   @override
-  String get amountLitersOptional => 'Quantità (facoltativo)';
+  String get amountLitersOptional => 'Quantità (opzionale)';
 
   @override
   String get noWaterChanges => 'Ancora nessun cambio d\'acqua.';
@@ -661,7 +661,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get recordCarbonChange => 'Registra cambio carbone attivo';
 
   @override
-  String get weightOptional => 'Peso (facoltativo)';
+  String get weightOptional => 'Peso (opzionale)';
 
   @override
   String get weightNotRecorded => 'Peso non registrato';
@@ -773,7 +773,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get dosingCustom => 'Altro…';
 
   @override
-  String get dosingDosageOptional => 'Dosaggio (facoltativo)';
+  String get dosingDosageOptional => 'Dosaggio (opzionale)';
 
   @override
   String get dosingAmount => 'Quantità';
@@ -823,7 +823,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get dosingTimeOptional => 'Ora (facoltativo)';
+  String get dosingTimeOptional => 'Ora (opzionale)';
 
   @override
   String get unitsSection => 'Unità';
@@ -1919,7 +1919,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Storico CSV condiviso dall\'app Hanna Lab';
 
   @override
-  String get hannaImportTitle => 'Import Hanna Lab';
+  String get hannaImportTitle => 'Importazione Hanna Lab';
 
   @override
   String get hannaImportIntoTank => 'Importa nell\'acquario';
@@ -1932,7 +1932,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get hannaImportFirstFromHint =>
-      'Primo import in questo acquario: scegli da quando importare. Le misurazioni più vecchie verranno ignorate per sempre — utile se le hai già inserite a mano.';
+      'Prima importazione in questo acquario: scegli da quando importare. Le misurazioni più vecchie verranno ignorate per sempre — utile se le hai già inserite a mano.';
 
   @override
   String hannaImportNewCount(int count) {
@@ -1994,7 +1994,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get hannaImportUndone => 'Import annullato.';
+  String get hannaImportUndone => 'Importazione annullata.';
 
   @override
   String get hannaImportWrongTankTitle => 'Un altro acquario?';
@@ -2005,7 +2005,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get measurementImportSettingsTitle => 'Import misurazioni';
+  String get measurementImportSettingsTitle => 'Importazione misurazioni';
 
   @override
   String hannaImportImportedUpTo(String date) {
@@ -2022,17 +2022,17 @@ class AppLocalizationsIt extends AppLocalizations {
   String get hannaImportReset => 'Ripristina';
 
   @override
-  String get hannaImportResetTitle => 'Ripristinare l\'import Hanna Lab?';
+  String get hannaImportResetTitle => 'Ripristinare l\'importazione Hanna Lab?';
 
   @override
   String get hannaImportResetBody =>
-      'Il prossimo import chiederà di nuovo da quale data iniziare. Le misurazioni già importate restano; l\'abbinamento dell\'acquario viene ricordato.';
+      'La prossima importazione chiederà di nuovo da quale data iniziare. Le misurazioni già importate restano; l\'abbinamento dell\'acquario viene ricordato.';
 
   @override
-  String get hannaConnectTitle => 'Fotometro Hanna';
+  String get hannaConnectTitle => 'Checker Hanna';
 
   @override
-  String get hannaMeasureAction => 'Misura con il fotometro Hanna';
+  String get hannaMeasureAction => 'Misura con il checker Hanna';
 
   @override
   String get hannaScanTitle => 'Scansiona il display del checker';
@@ -2171,7 +2171,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String hannaMethodLowRange(String name) {
-    return '$name (gamma bassa)';
+    return '$name (scala bassa)';
   }
 
   @override
@@ -2687,7 +2687,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get dashboardLayoutSubtitle =>
-      'Come sono disposte le schede nella scheda Misurazioni';
+      'Come sono disposti i riquadri nella scheda Misurazioni';
 
   @override
   String get dashboardLayoutGrouped => 'Raggruppato';
@@ -2929,7 +2929,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get roStageSediment => 'Filtro sedimenti';
 
   @override
-  String get roStageCarbonBlock => 'Blocco di carbone';
+  String get roStageCarbonBlock => 'Carbon block';
 
   @override
   String get roStageMembrane => 'Membrana osmotica';
@@ -3146,7 +3146,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Analizza la tua rete Wi-Fi per trovare i dispositivi Red Sea ReefBeat — pompe ReefDose, ReefATO, ReefMat, ReefRun, ReefLED e ReefWave — oppure aggiungi un dispositivo tramite il suo indirizzo IP.';
+      'Scansiona la tua rete Wi-Fi per trovare i dispositivi Red Sea ReefBeat — pompe ReefDose, ReefATO, ReefMat, ReefRun, ReefLED e ReefWave — oppure aggiungi un dispositivo tramite il suo indirizzo IP.';
 
   @override
   String get reefBeatRefreshAll => 'Aggiorna tutto';
@@ -3533,7 +3533,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get apexNotReadYet =>
-      'Tocca «Aggiorna tutti» per leggere i valori attuali.';
+      'Tocca \"Aggiorna tutti\" per leggere i valori attuali.';
 
   @override
   String get apexNoProbes =>
@@ -3583,7 +3583,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String apexRemoveConfirm(Object name) {
-    return 'Rimuovere «$name»? Le letture salvate restano.';
+    return 'Rimuovere \"$name\"? Le letture salvate restano.';
   }
 
   @override
@@ -3597,7 +3597,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get apexHostHelp =>
-      'L\'indirizzo con cui apri la pagina web dell\'Apex. Lo trovi in Fusion sotto «Misc Setup» o nel router.';
+      'L\'indirizzo con cui apri la pagina web dell\'Apex. Lo trovi in Fusion sotto \"Misc Setup\" o nel router.';
 
   @override
   String get apexUsernameLabel => 'Nome utente';
@@ -3633,7 +3633,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questo indirizzo ha risposto, ma non come un Apex.';
 
   @override
-  String get discoveryTitle => 'Analizza la rete';
+  String get discoveryTitle => 'Scansiona la rete';
 
   @override
   String get discoverySweeping =>
@@ -3643,7 +3643,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get discoveryIdentifying => 'Verifica dei dispositivi trovati…';
 
   @override
-  String get discoveryDone => 'Analisi completata.';
+  String get discoveryDone => 'Scansione completata.';
 
   @override
   String get discoveryNoNetwork =>
@@ -3675,14 +3675,14 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'app non è ancora in grado di leggere questo tipo di dispositivo.';
 
   @override
-  String get discoveryRescan => 'Analizza di nuovo';
+  String get discoveryRescan => 'Scansiona di nuovo';
 
   @override
   String get discoveryManualEntry => 'Inserisci indirizzo IP';
 
   @override
   String deviceAlreadyAdded(Object name) {
-    return '$name è già stato aggiunto. Usa Analizza la rete per assegnargli un nuovo indirizzo.';
+    return '$name è già stato aggiunto. Usa Scansiona la rete per assegnargli un nuovo indirizzo.';
   }
 
   @override
@@ -3800,7 +3800,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get resetParamDefaultsBody =>
-      'Ogni parametro torna ai limiti consigliati per questo tipo di acquario e i microelementi ai loro valori predefiniti. I limiti impostati da te vengono eliminati. Le misurazioni sono conservate.';
+      'Ogni parametro torna ai limiti consigliati per questo tipo di acquario e gli oligoelementi ai loro valori predefiniti. I limiti impostati da te vengono eliminati. Le misurazioni sono conservate.';
 
   @override
   String get paramDefaultsRestored =>

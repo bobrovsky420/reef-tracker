@@ -13,6 +13,7 @@ import '../../domain/parameter_catalog.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/device_values.dart';
 import '../../widgets/reef_icon_button.dart';
 import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
@@ -115,7 +116,10 @@ class RfDeviceSection extends ConsumerWidget {
   /// Already filtered to the active tank and sorted by the parent.
   final List<DeviceRecord> devices;
   final Map<String, RfLive> live;
-  final void Function(DeviceRecord device, RfSnapshot snap) onSave;
+
+  /// Null while the parent has a save in flight — every card's Save button
+  /// disables for the duration (#86).
+  final void Function(DeviceRecord device, RfSnapshot snap)? onSave;
 
   /// Lets the parent drop a removed device's live entry.
   final void Function(String identifier) onRemoved;
@@ -143,7 +147,7 @@ class RfDeviceSection extends ConsumerWidget {
           live: live[d.identifier] ?? const RfLive(),
           errorTextOf: (e) => rfErrorText(l, e),
           onRename: () => _renameDevice(context, ref, d),
-          onSave: (snap) => onSave(d, snap),
+          onSave: onSave == null ? null : (snap) => onSave!(d, snap),
           // No other tank to move to → no menu item.
           onMove: tanks.any((t) => t.id != d.tankId)
               ? () => _moveDevice(context, ref, d)
@@ -357,7 +361,9 @@ class _DeviceCard extends ConsumerWidget {
   final RfLive live;
   final String Function(RfLinkError) errorTextOf;
   final VoidCallback onRename;
-  final void Function(RfSnapshot) onSave;
+
+  /// Null while a save is in flight — the button disables (#86).
+  final void Function(RfSnapshot)? onSave;
 
   /// Null when there is no other tank to move to (the item is hidden).
   final VoidCallback? onMove;
@@ -475,6 +481,7 @@ class _DeviceCard extends ConsumerWidget {
                       children: [
                         for (final r in snap.readings)
                           _ReadingChip(
+                            paramKey: r.paramKey,
                             label: l.paramName(r.paramKey),
                             value: r.value,
                             unit: r.unit,
@@ -498,7 +505,9 @@ class _DeviceCard extends ConsumerWidget {
                   ReefFilledIconButton(
                     icon: Icons.save_outlined,
                     tooltip: l.reefFactorySave,
-                    onPressed: tank != null ? () => onSave(snap) : null,
+                    onPressed: tank != null && onSave != null
+                        ? () => onSave!(snap)
+                        : null,
                   ),
                 ],
               )
@@ -555,18 +564,20 @@ class _StateBadge extends StatelessWidget {
   }
 }
 
-class _ReadingChip extends StatelessWidget {
+class _ReadingChip extends ConsumerWidget {
   const _ReadingChip({
+    required this.paramKey,
     required this.label,
     required this.value,
     required this.unit,
   });
+  final String paramKey;
   final String label;
   final double value;
   final String unit;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     return Column(
@@ -577,20 +588,22 @@ class _ReadingChip extends StatelessWidget {
           style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant),
         ),
         Text(
-          unit.isEmpty ? _fmt(value) : '${_fmt(value)} $unit',
+          formatDeviceReading(
+            paramKey: paramKey,
+            value: value,
+            unit: unit,
+            prefs: ref.watch(unitPrefsProvider),
+          ),
           style: t.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );
   }
-
-  String _fmt(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(1) : v.toString();
 }
 
 /// Bottom sheet: enter an IP/hostname, we probe and auto-identify the device,
 /// then let the user name it and pick a tank before adding.
-class _AddDeviceSheet extends StatefulWidget {
+class _AddDeviceSheet extends ConsumerStatefulWidget {
   const _AddDeviceSheet({
     required this.link,
     required this.tanks,
@@ -624,10 +637,10 @@ class _AddDeviceSheet extends StatefulWidget {
   onAdd;
 
   @override
-  State<_AddDeviceSheet> createState() => _AddDeviceSheetState();
+  ConsumerState<_AddDeviceSheet> createState() => _AddDeviceSheetState();
 }
 
-class _AddDeviceSheetState extends State<_AddDeviceSheet> {
+class _AddDeviceSheetState extends ConsumerState<_AddDeviceSheet> {
   final _host = TextEditingController();
   final _name = TextEditingController();
   bool _probing = false;
@@ -690,126 +703,133 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
     final duplicateOf = _duplicateOf;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l.reefFactoryAddDevice, style: t.titleLarge),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _host,
-            autofocus: true,
-            // Frozen once the probe lands on an already-added device: with the
-            // Check button gone there is nothing left to do here but close.
-            enabled: duplicateOf == null,
-            keyboardType: TextInputType.url,
-            decoration: InputDecoration(
-              labelText: l.reefFactoryHostLabel,
-              hintText: l.reefFactoryHostHint,
-              helperText: l.reefFactoryHostHelp,
-              helperMaxLines: 2,
-            ),
-            onSubmitted: (_) => _probe(),
-          ),
-          if (duplicateOf != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              l.deviceAlreadyAdded(duplicateOf),
-              style: t.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ],
-          if (_error != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              _error!,
-              style: t.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ],
-          if (found != null) ...[
+      // Scrollable like the Apex add sheet: the keyboard is up from frame one
+      // (autofocus) and at large text scale the probe result + fields would
+      // otherwise overflow with the Add button unreachable (#103, the #44
+      // class).
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.reefFactoryAddDevice, style: t.titleLarge),
             const SizedBox(height: 16),
-            Text(
-              l.reefFactoryFound(found.modelDisplayName),
-              style: t.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              [
-                for (final r in found.readings)
-                  '${l.paramName(r.paramKey)} ${r.value}${r.unit.isEmpty ? '' : ' ${r.unit}'}',
-              ].join('   ·   '),
-              style: t.bodyMedium,
-            ),
-            const SizedBox(height: 12),
             TextField(
-              controller: _name,
+              controller: _host,
+              autofocus: true,
+              // Frozen once the probe lands on an already-added device: with the
+              // Check button gone there is nothing left to do here but close.
+              enabled: duplicateOf == null,
+              keyboardType: TextInputType.url,
               decoration: InputDecoration(
-                labelText: l.reefFactoryDeviceNameLabel,
+                labelText: l.reefFactoryHostLabel,
+                hintText: l.reefFactoryHostHint,
+                helperText: l.reefFactoryHostHelp,
+                helperMaxLines: 2,
               ),
+              onSubmitted: (_) => _probe(),
             ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<int?>(
-              initialValue: _tankId,
-              decoration: InputDecoration(labelText: l.reefFactoryTankLabel),
-              items: [
-                for (final tk in widget.tanks)
-                  DropdownMenuItem(value: tk.id, child: Text(tk.name)),
+            if (duplicateOf != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                l.deviceAlreadyAdded(duplicateOf),
+                style: t.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _error!,
+                style: t.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ],
+            if (found != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                l.reefFactoryFound(found.modelDisplayName),
+                style: t.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                [
+                  for (final r in found.readings)
+                    '${l.paramName(r.paramKey)} '
+                        '${formatDeviceReading(paramKey: r.paramKey, value: r.value, unit: r.unit, prefs: ref.watch(unitPrefsProvider))}',
+                ].join('   ·   '),
+                style: t.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _name,
+                decoration: InputDecoration(
+                  labelText: l.reefFactoryDeviceNameLabel,
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int?>(
+                initialValue: _tankId,
+                decoration: InputDecoration(labelText: l.reefFactoryTankLabel),
+                items: [
+                  for (final tk in widget.tanks)
+                    DropdownMenuItem(value: tk.id, child: Text(tk.name)),
+                ],
+                onChanged: (v) => setState(() => _tankId = v),
+              ),
+            ],
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (duplicateOf != null)
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l.close),
+                  )
+                else ...[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l.cancel),
+                  ),
+                  const SizedBox(width: 8),
+                  if (found == null)
+                    FilledButton(
+                      onPressed: _probing ? null : _probe,
+                      child: _probing
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l.reefFactoryCheck),
+                    )
+                  else
+                    FilledButton(
+                      onPressed: () async {
+                        await widget.onAdd(
+                          serial: found.serial,
+                          model: found.modelPrefix,
+                          host: _host.text.trim(),
+                          name: _name.text.trim().isEmpty
+                              ? null
+                              : _name.text.trim(),
+                          tankId: _tankId,
+                          snapshot: found,
+                        );
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      child: Text(l.reefFactoryAddDevice),
+                    ),
+                ],
               ],
-              onChanged: (v) => setState(() => _tankId = v),
             ),
           ],
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (duplicateOf != null)
-                FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(l.close),
-                )
-              else ...[
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(l.cancel),
-                ),
-                const SizedBox(width: 8),
-                if (found == null)
-                  FilledButton(
-                    onPressed: _probing ? null : _probe,
-                    child: _probing
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l.reefFactoryCheck),
-                  )
-                else
-                  FilledButton(
-                    onPressed: () async {
-                      await widget.onAdd(
-                        serial: found.serial,
-                        model: found.modelPrefix,
-                        host: _host.text.trim(),
-                        name: _name.text.trim().isEmpty
-                            ? null
-                            : _name.text.trim(),
-                        tankId: _tankId,
-                        snapshot: found,
-                      );
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: Text(l.reefFactoryAddDevice),
-                  ),
-              ],
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

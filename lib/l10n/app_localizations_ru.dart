@@ -393,7 +393,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String implausibleRailLine(Object name, Object value) {
-    return '$name: $value – не измеряет ничего (датчик отключён?)';
+    return '$name: $value – похоже, датчик ничего не измеряет (отключён?)';
   }
 
   @override
@@ -549,12 +549,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String freeAmmoniaBreakdown(Object percent, Object ph, Object temp) {
-    return '$percent% токсичного · pH $ph · $temp';
+    return '$percent% в токсичной форме · pH $ph · $temp';
   }
 
   @override
   String freeAmmoniaPercent(Object percent) {
-    return '$percent% токсичного';
+    return '$percent% в токсичной форме';
   }
 
   @override
@@ -611,16 +611,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ratioMgCaTitle => 'Соотношение Mg : Ca';
 
   @override
-  String get ratioCaAlkLabel => 'Ca : Alk';
+  String get ratioCaAlkLabel => 'Ca : KH';
 
   @override
-  String get ratioCaAlkTitle => 'Соотношение Ca : Alk';
+  String get ratioCaAlkTitle => 'Соотношение Ca : KH';
 
   @override
-  String get ratioMgAlkLabel => 'Mg : Alk';
+  String get ratioMgAlkLabel => 'Mg : KH';
 
   @override
-  String get ratioMgAlkTitle => 'Соотношение Mg : Alk';
+  String get ratioMgAlkTitle => 'Соотношение Mg : KH';
 
   @override
   String get ratioNoData =>
@@ -701,7 +701,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dosingNoDosage => 'Доза не указана';
 
   @override
-  String get supplementStopped => 'Добавка остановлена';
+  String get supplementStopped => 'Дозирование остановлено';
 
   @override
   String get dosingHistoryTitle => 'История дозирования';
@@ -710,7 +710,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dosingHistoryEmpty => 'Истории дозирования пока нет.';
 
   @override
-  String get dosingHistoryCurrent => 'Текущая';
+  String get dosingHistoryCurrent => 'Действует';
 
   @override
   String dosingHistorySince(Object date) {
@@ -786,7 +786,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dosingUnit => 'Единица';
 
   @override
-  String get dosingBasis => 'Основа';
+  String get dosingBasis => 'Из расчёта';
 
   @override
   String get dosingPerDay => 'в день';
@@ -823,7 +823,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'Каждые $n дня',
       many: 'Каждые $n дней',
       few: 'Каждые $n дня',
-      one: 'Каждый $n-й день',
+      one: 'Раз в $n день',
     );
     return '$_temp0';
   }
@@ -1129,7 +1129,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aboutDescription =>
-      'Офлайн-трекер параметров морского аквариума с историей, графиками по времени и зонами здоровья зелёная/жёлтая/красная.';
+      'Офлайн-дневник параметров морского аквариума: история измерений, графики и зоны состояния — зелёная, жёлтая и красная.';
 
   @override
   String get aboutUserGuide => 'Руководство пользователя';
@@ -1154,7 +1154,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get editionLabel => 'Издание';
 
   @override
-  String get editionFounder => 'Издание основателя';
+  String get editionFounder => 'Версия основателя';
 
   @override
   String get editionStandard => 'Стандартное';
@@ -1536,7 +1536,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String trendChipRed(int days) {
-    return 'Действие ~$days дн.';
+    return 'Срочно: ~$days д.';
   }
 
   @override
@@ -1604,7 +1604,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paramSalinity => 'Солёность';
 
   @override
-  String get paramAlkalinity => 'Карб. жёсткость';
+  String get paramAlkalinity => 'Щёлочность (KH)';
 
   @override
   String get paramAlkalinityShort => 'KH';
@@ -1628,7 +1628,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paramNitrite => 'Нитрит (NO₂)';
 
   @override
-  String get paramOrp => 'ORP';
+  String get paramOrp => 'ОВП (ORP)';
 
   @override
   String get paramPotassium => 'Калий (K)';
@@ -1733,10 +1733,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get microTitle => 'Микроэлементы';
 
   @override
-  String get microSectionMajor => 'Основные элементы';
+  String get microSectionMajor => 'Макроэлементы';
 
   @override
-  String get microSectionTrace => 'Следовые элементы';
+  String get microSectionTrace => 'Микроэлементы';
 
   @override
   String get microSectionContaminants => 'Загрязнители';
@@ -1746,7 +1746,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get microEmptyHint =>
-      'Отслеживайте микроэлементы по домашним тестам или ICP-анализам.';
+      'Отслеживайте микроэлементы по капельным тестам или ICP-анализам.';
 
   @override
   String get microAllOk => 'Всё в пределах диапазона';
@@ -1768,7 +1768,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get microAddTitle => 'Измерения микроэлементов';
 
   @override
-  String get microChipHobby => 'Домашние тесты';
+  String get microChipHobby => 'Капельные тесты';
 
   @override
   String get microChipFullIcp => 'Полный ICP';
@@ -2069,7 +2069,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hannaScanGlareHint => 'слегка наклоните, чтобы избежать бликов';
 
   @override
-  String get hannaScanZoomHint => 'масштаб — щипком двумя пальцами';
+  String get hannaScanZoomHint =>
+      'масштаб — сведением/разведением двух пальцев';
 
   @override
   String get hannaScanRescan => 'Сканировать снова';
@@ -2643,7 +2644,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String aiSummaryHealthLine(int score, Object grade) {
-    return 'Оценка здоровья: $score из 100 ($grade)';
+    return 'Оценка состояния: $score из 100 ($grade)';
   }
 
   @override
@@ -2934,7 +2935,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'Каждые $n недели',
       many: 'Каждые $n недель',
       few: 'Каждые $n недели',
-      one: 'Каждую $n-ю неделю',
+      one: 'Раз в $n неделю',
     );
     return '$_temp0';
   }
@@ -2947,7 +2948,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: 'Каждые $n месяца',
       many: 'Каждые $n месяцев',
       few: 'Каждые $n месяца',
-      one: 'Каждый $n-й месяц',
+      one: 'Раз в $n месяц',
     );
     return '$_temp0';
   }
@@ -2978,13 +2979,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get roStageDiResin => 'DI-смола';
 
   @override
-  String get roCustomStage => 'Свой элемент';
+  String get roCustomStage => 'Своя ступень';
 
   @override
-  String get roAddStage => 'Добавить элемент';
+  String get roAddStage => 'Добавить ступень';
 
   @override
-  String get roEditStage => 'Изменить элемент';
+  String get roEditStage => 'Изменить ступень';
 
   @override
   String get roLifespanLabel => 'Менять каждые';
@@ -3023,15 +3024,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get roNoReplacementYet => 'Замены ещё не записаны';
 
   @override
-  String get roDeleteStageTitle => 'Удалить элемент?';
+  String get roDeleteStageTitle => 'Удалить ступень?';
 
   @override
   String get roDeleteStageBody =>
-      'Элемент и история его замен будут удалены. Это нельзя отменить.';
+      'Ступень и история её замен будут удалены. Это нельзя отменить.';
 
   @override
   String get roEmptyBody =>
-      'Нет элементов. Добавьте фильтры вашей установки кнопкой +.';
+      'Нет ступеней. Добавьте фильтры вашей установки кнопкой +.';
 
   @override
   String get roSetupPrompt => 'Следите за заменой фильтров и мембраны';
@@ -3041,7 +3042,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Показывать на вкладке «Действия», с напоминаниями о замене фильтров';
 
   @override
-  String get roAllOk => 'Все элементы в порядке';
+  String get roAllOk => 'Все ступени в порядке';
 
   @override
   String get notifRoTitle => 'Замените фильтры обратного осмоса';
@@ -3339,7 +3340,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get reefBeatRecalibration => 'Требуется рекалибровка';
+  String get reefBeatRecalibration => 'Требуется повторная калибровка';
 
   @override
   String reefBeatMissedDose(Object volume) {
@@ -3734,7 +3735,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String deviceAlreadyAdded(Object name) {
-    return '$name уже добавлено. Чтобы указать новый адрес, используйте Поиск в сети.';
+    return 'Устройство $name уже добавлено. Чтобы указать новый адрес, используйте Поиск в сети.';
   }
 
   @override
@@ -3842,7 +3843,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String reefDevicesLastSeen(Object date) {
-    return 'Был(а) в сети $date';
+    return 'Последний раз на связи $date';
   }
 
   @override

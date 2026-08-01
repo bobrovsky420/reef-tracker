@@ -137,6 +137,13 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   String? _vendor;
   bool _selectionRestored = false;
 
+  /// A save is in flight (the #3/#86 re-entrancy class): [_save] awaits a
+  /// possible [_freshen] round of LAN traffic before its DB writes, and
+  /// `insertReadingGroup` is a blind insert — a second tap during that window
+  /// would write a full duplicate group. One flag guards every save surface
+  /// (Save all and both vendors' per-card buttons all funnel through [_save]).
+  bool _saving = false;
+
   /// The vendors that had a chip on the last build. Kept so [addDevice] — which
   /// the host's FAB calls between builds — can resolve the effective selection
   /// exactly as the page renders it, without re-deriving it from the providers.
@@ -344,6 +351,20 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// readings take into the database, and it now applies the guards manual
   /// entry has always had (#71, #76).
   Future<void> _save(_Scope scope, {DeviceRecord? only}) async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await _saveGuarded(scope, only: only);
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      } else {
+        _saving = false;
+      }
+    }
+  }
+
+  Future<void> _saveGuarded(_Scope scope, {DeviceRecord? only}) async {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
@@ -590,6 +611,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
                             scope.length,
                           ),
                     busy: _busy(scope),
+                    saving: _saving,
                     total: scope.length,
                     savable: _savableCount(scope),
                     meters: scope.meters,
@@ -655,8 +677,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
           // The shown snapshot is deliberately ignored: the save funnel
           // re-reads a stale one and re-derives the values from the live map,
           // so both Save buttons write through exactly the same guards.
-          onSave: (d, _) =>
-              unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
+          onSave: _saving
+              ? null
+              : (d, _) =>
+                    unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
           onRemoved: (id) => setState(() {
             _rfLive.remove(id);
             _autoRead.remove(id);
@@ -675,8 +699,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
         _ => ApDeviceSection(
           devices: byVendor[vendor]!,
           live: _apLive,
-          onSave: (d, _) =>
-              unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
+          onSave: _saving
+              ? null
+              : (d, _) =>
+                    unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
           onRemoved: (id) => setState(() {
             _apLive.remove(id);
             _autoRead.remove(id);
@@ -997,6 +1023,7 @@ class _ScopeBar extends StatelessWidget {
   const _ScopeBar({
     required this.label,
     required this.busy,
+    required this.saving,
     required this.total,
     required this.savable,
     required this.meters,
@@ -1006,6 +1033,9 @@ class _ScopeBar extends StatelessWidget {
 
   final String label;
   final bool busy;
+
+  /// A save is already in flight — Save all disables for its duration (#86).
+  final bool saving;
 
   /// Devices the refresh would read — the button carries the number so "all"
   /// never has to be guessed at.
@@ -1048,7 +1078,7 @@ class _ScopeBar extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: savable > 0 ? onSaveAll : null,
+                  onPressed: savable > 0 && !saving ? onSaveAll : null,
                   icon: const Icon(Icons.save_outlined, size: 18),
                   label: Text(l.devicesSaveAll(savable)),
                 ),

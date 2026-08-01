@@ -240,9 +240,8 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     await controller?.dispose();
   }
 
-  CheckerColor? get _emaColor => _emaR == null
-      ? null
-      : classifyCaseColor(_emaR!, _emaG!, _emaB!);
+  CheckerColor? get _emaColor =>
+      _emaR == null ? null : classifyCaseColor(_emaR!, _emaG!, _emaB!);
 
   void _onFrame(CameraImage image) {
     if (_decoding || _phase != _ScanPhase.scanning) return;
@@ -385,8 +384,7 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     final plane = image.planes.first;
     final gray = switch (image.format.group) {
       // The first plane is luma in every YUV layout.
-      ImageFormatGroup.yuv420 ||
-      ImageFormatGroup.nv21 => grayFromLumaPlane(
+      ImageFormatGroup.yuv420 || ImageFormatGroup.nv21 => grayFromLumaPlane(
         plane.bytes,
         plane.bytesPerRow,
         crop,
@@ -443,9 +441,7 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
 
   String _checkerLabel(AppLocalizations l, HannaChecker c) {
     final name = l.paramName(c.paramKey);
-    return c.tag == null
-        ? '${c.model} · $name'
-        : '${c.model} · $name ${c.tag}';
+    return c.tag == null ? '${c.model} · $name' : '${c.model} · $name ${c.tag}';
   }
 
   /// Label for a candidate within [pool]: when several models of the pool
@@ -459,8 +455,8 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
   ) => outcomeIsShared(c, pool) ? l.paramName(c.paramKey) : _checkerLabel(l, c);
 
   String _checkerRange(HannaChecker c) =>
-      '${c.min.toStringAsFixed(c.decimals)}–'
-      '${c.max.toStringAsFixed(c.decimals)} ${c.unit}';
+      '${formatLocaleNumber(c.min, c.decimals)}–'
+      '${formatLocaleNumber(c.max, c.decimals)} ${c.unit}';
 
   /// Manual model selection — the fallback when auto-detection has to be
   /// overridden (locks the vote to that model's format).
@@ -542,7 +538,11 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.no_photography_outlined, size: 40, color: tokens.textDim),
+              Icon(
+                Icons.no_photography_outlined,
+                size: 40,
+                color: tokens.textDim,
+              ),
               const SizedBox(height: 16),
               Text(
                 message,
@@ -580,9 +580,8 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
                         );
                         return GestureDetector(
                           onScaleStart: (_) => _zoomAtScaleStart = _zoom,
-                          onScaleUpdate: (d) => unawaited(
-                            _setZoom(_zoomAtScaleStart * d.scale),
-                          ),
+                          onScaleUpdate: (d) =>
+                              unawaited(_setZoom(_zoomAtScaleStart * d.scale)),
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
@@ -593,8 +592,7 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
                                 width:
                                     box.maxWidth * (guide.right - guide.left),
                                 height:
-                                    box.maxHeight *
-                                    (guide.bottom - guide.top),
+                                    box.maxHeight * (guide.bottom - guide.top),
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
                                     border: Border.all(
@@ -620,12 +618,11 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
                                     ),
                                     child: Text(
                                       '${_zoom.toStringAsFixed(1)}×',
-                                      style: ReefTokens.monoTextStyle
-                                          .copyWith(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
+                                      style: ReefTokens.monoTextStyle.copyWith(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -928,5 +925,4 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
       if (mounted) setState(() => _saving = false);
     }
   }
-
 }

@@ -21,6 +21,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   row of brand buttons it reorders.
 
 ### Fixed
+- A one-off maintenance task with a due date is no longer silently marked done
+  by an action logged *before* it was planned: a "Water change — Aug 15" task
+  now stays due (chip and notification) even though a routine water change was
+  logged in July. Monthly plans with an explicit first-due date likewise no
+  longer show as overdue on day one — the date you picked wins until a
+  completion moves past it, exactly as weekly plans already behaved.
+- Double-tapping Save (or Save all) on the Connected devices page no longer
+  records the readings twice. The buttons now disable while a save is running —
+  which can take a moment when a stale device is re-read first.
+- Backups are now written from a single consistent snapshot of the database. A
+  backup that happened to run at the same moment as a write (for example the
+  automatic backup racing a new tank being created) could previously capture
+  half of the change and be rejected as damaged when restored.
+- Cloud backup now notices changes that live only in settings — Hanna method
+  sets, the brand order on the Devices page, RO-unit setup. Editing one of
+  those without logging a reading previously never triggered an upload, and the
+  edit could be silently undone by a later restore prompt from another device.
+- The device screens now respect your language's decimal separator and your
+  temperature unit. Probe values on the Apex, ReefFactory and ReefBeat cards,
+  the ReefATO water temperature, ReefRun and ReefLED equipment temperatures and
+  the dosing volumes previously always showed "8.2" and "25.6 °C" even where
+  the rest of the app shows "8,2" and "78,1 °F"; the checker scan screen's
+  measuring-range line did the same.
+- The ReefBeat and ReefFactory "Add device" sheets and the Apex password sheet
+  now scroll when the keyboard is up. At larger font sizes on shorter screens
+  the Add button could sit unreachable below the keyboard, with no way to
+  finish adding the device.
+- Many wording and grammar corrections across all six translations, verified
+  against how reef keepers actually speak in each language: Czech, German,
+  Russian, Polish, French and Italian. Highlights: Russian schedules no longer
+  say "Каждую 1-ю неделю" for weekly plans, German consistently uses "du" and
+  the terms printed on German products (Calcium, Redox, Mischbettharz), Polish
+  uses "Alkaliczność (KH)" and plural nutrient names, French unifies the Hanna
+  device on "checker" and dosing on "additif", Italian says "Scansiona la rete"
+  and "oligoelementi", and optional-field markers agree grammatically
+  everywhere.
 - The checker camera scan no longer opens a second camera on top of the first
   when a scan restarts while the camera is still starting up — tapping Try
   again, or returning to the app mid-start. That left scanning sluggish and
