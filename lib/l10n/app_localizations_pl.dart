@@ -3641,6 +3641,18 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get apexOutletOnSemantics => 'włączone';
+
+  @override
+  String get apexOutletOffSemantics => 'wyłączone';
+
+  @override
+  String get apexOutletProfileSemantics => 'sterowane profilem';
+
+  @override
+  String get apexOutletOverriddenSemantics => 'przełączone ręcznie';
+
+  @override
   String apexFeedRunning(Object letter) {
     return 'Trwa cykl karmienia $letter';
   }

@@ -309,6 +309,21 @@ void main() {
       );
     });
 
+    test('a throw before the upload (DB dead during pre-flight/encode) is a '
+        'failure, not an escaped exception (#95)', () async {
+      await connectAndSeed();
+      // Closing the database makes every read throw — including the
+      // pre-flight account/tank reads and the encode, which used to sit
+      // *before* the try and escaped the "Never throws" contract straight
+      // into the fire-and-forget callers.
+      await db.close();
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.failed,
+      );
+      expect(store.writeCalls, 0);
+    });
+
     test(
       'dead grant (no token → CloudAuthRequiredException) is a failure',
       () async {

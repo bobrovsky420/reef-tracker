@@ -173,8 +173,9 @@ class DevicesActionFabs extends StatelessWidget {
         }
         final cs = Theme.of(context).colorScheme;
         final saveDisabled = s.savable == 0 || s.saving;
-        Widget wrap(Widget child) =>
-            scale == null ? child : ScaleTransition(scale: scale!, child: child);
+        Widget wrap(Widget child) => scale == null
+            ? child
+            : ScaleTransition(scale: scale!, child: child);
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -348,6 +349,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   // --- reading -----------------------------------------------------------
 
   Future<void> _refreshRf(DeviceRecord d) async {
+    if (!mounted) return;
     setState(() => _rfLive[d.identifier] = const RfLive(loading: true));
     final result = await rfReadDevice(ref, d);
     if (!mounted) return;
@@ -358,6 +360,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   }
 
   Future<void> _refreshRb(DeviceRecord d) async {
+    if (!mounted) return;
     setState(() => _rbLive[d.identifier] = const RbLive(loading: true));
     final result = await rbReadDevice(ref, d);
     if (!mounted) return;
@@ -368,6 +371,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   }
 
   Future<void> _refreshAp(DeviceRecord d) async {
+    if (!mounted) return;
     setState(() => _apLive[d.identifier] = const ApLive(loading: true));
     final result = await apReadDevice(ref, d);
     if (!mounted) return;
@@ -395,6 +399,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   Future<void> _refreshScope(_Scope scope) async {
     Future<void> series(String kind) async {
       for (final d in scope.of(kind)) {
+        if (!mounted) return;
         await _refreshDevice(kind, d);
       }
     }

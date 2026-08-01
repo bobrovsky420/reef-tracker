@@ -3635,6 +3635,18 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get apexOutletOnSemantics => 'включено';
+
+  @override
+  String get apexOutletOffSemantics => 'выключено';
+
+  @override
+  String get apexOutletProfileSemantics => 'управляется профилем';
+
+  @override
+  String get apexOutletOverriddenSemantics => 'переключено вручную';
+
+  @override
   String apexFeedRunning(Object letter) {
     return 'Идёт режим кормления $letter';
   }

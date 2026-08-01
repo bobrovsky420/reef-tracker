@@ -2,6 +2,7 @@
 // cancel-all-then-reschedule, the past-date guard, and the 64-item pending cap
 // (iOS silently drops requests beyond the soonest 64, so the sync sorts and
 // truncates on every platform).
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/notifications.dart';
@@ -14,6 +15,10 @@ import 'package:timezone/timezone.dart';
 class _FakePlugin implements FlutterLocalNotificationsPlugin {
   final scheduled = <({int id, String? title, TZDateTime date})>[];
   int cancelAllCalls = 0;
+
+  /// 1-based `zonedSchedule` call indices that throw (#98).
+  final throwOnCalls = <int>{};
+  int _scheduleCalls = 0;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -43,6 +48,10 @@ class _FakePlugin implements FlutterLocalNotificationsPlugin {
     String? payload,
     DateTimeComponents? matchDateTimeComponents,
   }) async {
+    _scheduleCalls++;
+    if (throwOnCalls.contains(_scheduleCalls)) {
+      throw StateError('plugin refused entry $_scheduleCalls');
+    }
     scheduled.add((id: id, title: title, date: scheduledDate));
   }
 }
@@ -80,6 +89,29 @@ void main() {
     for (var i = 1; i < dates.length; i++) {
       expect(dates[i].isAfter(dates[i - 1]), isTrue);
     }
+  });
+
+  test('syncPlanned skips throwing entries, schedules the rest, '
+      'reports once (#98)', () async {
+    final plugin = _FakePlugin()..throwOnCalls.addAll({2, 5});
+    final sink = ReminderNotifications(plugin: plugin);
+    await sink.init(onTap: (_) {});
+
+    // cancelAll has already run when the loop starts, so before the per-item
+    // isolation one throw wiped the whole set: everything cancelled, the
+    // tail never scheduled.
+    final reported = <FlutterErrorDetails>[];
+    final prior = FlutterError.onError;
+    FlutterError.onError = reported.add;
+    addTearDown(() => FlutterError.onError = prior);
+
+    final now = DateTime.now();
+    await sink.syncPlanned([
+      for (var i = 1; i <= 6; i++) _planned('r$i', now.add(Duration(days: i))),
+    ]);
+
+    expect(plugin.scheduled.map((s) => s.title), ['r1', 'r3', 'r4', 'r6']);
+    expect(reported, hasLength(1));
   });
 
   test('syncPlanned is a no-op before init', () async {

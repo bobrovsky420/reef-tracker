@@ -12,6 +12,7 @@
 /// the next launch/resume resync.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_10y.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -160,26 +161,48 @@ class ReminderNotifications implements ReminderSink {
     final upcoming =
         planned.where((n) => n.fireAtLocal.isAfter(cutoff)).toList()
           ..sort((a, b) => a.fireAtLocal.compareTo(b.fireAtLocal));
+    // Per-item isolation (#98): cancelAll already ran, so a single plugin
+    // throw must not abandon the tail of the set unscheduled — skip the bad
+    // entry, schedule the rest, report the first failure once.
     var id = 1;
+    Object? firstError;
+    StackTrace? firstStack;
     for (final n in upcoming.take(_maxPending)) {
-      await _plugin.zonedSchedule(
-        id: id++,
-        title: n.title,
-        body: n.body,
-        scheduledDate: tz.TZDateTime.from(n.fireAtLocal.toUtc(), tz.UTC),
-        notificationDetails: NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channelId(n.kind),
-            n.channelName,
-            importance: Importance.defaultImportance,
-            priority: Priority.defaultPriority,
+      try {
+        await _plugin.zonedSchedule(
+          id: id++,
+          title: n.title,
+          body: n.body,
+          scheduledDate: tz.TZDateTime.from(n.fireAtLocal.toUtc(), tz.UTC),
+          notificationDetails: NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channelId(n.kind),
+              n.channelName,
+              importance: Importance.defaultImportance,
+              priority: Priority.defaultPriority,
+            ),
+            // No channels on iOS; the thread identifier groups reminders of
+            // the same kind in Notification Center instead.
+            iOS: DarwinNotificationDetails(
+              threadIdentifier: _channelId(n.kind),
+            ),
           ),
-          // No channels on iOS; the thread identifier groups reminders of the
-          // same kind in Notification Center instead.
-          iOS: DarwinNotificationDetails(threadIdentifier: _channelId(n.kind)),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          payload: n.payload,
+        );
+      } catch (e, s) {
+        firstError ??= e;
+        firstStack ??= s;
+      }
+    }
+    if (firstError != null) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: firstError,
+          stack: firstStack,
+          library: 'reminders',
+          context: ErrorSummary('scheduling reminder notifications'),
         ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        payload: n.payload,
       );
     }
   }

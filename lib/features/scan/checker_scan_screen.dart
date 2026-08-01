@@ -696,7 +696,10 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
                       : candidateCheckersFor(cand);
                   final outcomes = distinctOutcomeCheckers(matches);
                   return SizedBox(
-                    height: 28,
+                    // Scaled (#105): a fixed 28 would clip the digits the
+                    // user verifies against the meter's LCD at large text
+                    // scale (the #44 rule).
+                    height: MediaQuery.textScalerOf(context).scale(28),
                     child: Text(
                       cand == null
                           ? '· · ·'

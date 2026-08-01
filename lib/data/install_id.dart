@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'backup_exclusion.dart';
 import 'database.dart';
 import 'settings.dart';
 
@@ -32,8 +33,10 @@ import 'settings.dart';
 
 /// Name of the fingerprint file, sibling to `reeftracker.sqlite` in the app
 /// documents directory. Must stay excluded from OS backup in
-/// `backup_rules.xml` and `data_extraction_rules.xml` (both sections) — the
-/// whole scheme rests on this file *not* riding the OS channel.
+/// `backup_rules.xml` and `data_extraction_rules.xml` (both sections) on
+/// Android, and via the `NSURLIsExcludedFromBackupKey` attribute
+/// ([excludeFromDeviceBackup]) on iOS — the whole scheme rests on this file
+/// *not* riding the OS channel.
 const String kInstallIdFileName = '.install_id';
 
 /// Once-per-process slot: the check is only meaningful before the first Drive
@@ -75,6 +78,10 @@ Future<void> _reconcile(AppDatabase db) async {
   if (await file.exists()) {
     final raw = (await file.readAsString()).trim();
     if (raw.isNotEmpty) fileId = raw;
+    // Re-applied opportunistically (#96): versions before the fix wrote the
+    // file without the iOS backup-exclusion attribute, so existing installs
+    // heal on their next launch. No-op on Android (the XML rules cover it).
+    await excludeFromDeviceBackup(file.path);
   }
   final dbId = await settings.readInstallFingerprint();
 
@@ -100,6 +107,11 @@ Future<void> _reconcile(AppDatabase db) async {
     final tmp = File('${file.path}.tmp');
     await tmp.writeAsString(id, flush: true);
     await tmp.rename(file.path);
+    // After the rename, not before: the attribute lives on the file the name
+    // now points at (same rule as `.device_secrets`). Without it the iOS
+    // fingerprint rides iCloud backup/Quick Start together with the database,
+    // and the #62 restore detection reads "all quiet" forever (#96).
+    await excludeFromDeviceBackup(file.path);
   }
   await settings.setInstallFingerprint(id);
 }

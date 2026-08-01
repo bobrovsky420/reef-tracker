@@ -3554,6 +3554,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get apexOutletOnSemantics => 'on';
+
+  @override
+  String get apexOutletOffSemantics => 'off';
+
+  @override
+  String get apexOutletProfileSemantics => 'profile-driven';
+
+  @override
+  String get apexOutletOverriddenSemantics => 'manually overridden';
+
+  @override
   String apexFeedRunning(Object letter) {
     return 'Feed cycle $letter running';
   }

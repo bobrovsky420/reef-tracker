@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -70,16 +71,53 @@ void main() {
     }
   }
 
-  test('fresh install: seeds matching fingerprint in file and database', () async {
+  test(
+    'fresh install: seeds matching fingerprint in file and database',
+    () async {
+      final db = newDb();
+      addTearDown(db.close);
+
+      await reconcileInstallFingerprint(db);
+
+      final fileId = (await idFile().readAsString()).trim();
+      final dbId = await AppSettings(db).readInstallFingerprint();
+      expect(fileId, isNotEmpty);
+      expect(dbId, fileId);
+    },
+  );
+
+  test('applies the iOS backup-exclusion attribute on write and re-applies '
+      'it on the all-quiet launch (#96)', () async {
+    // Without the attribute the iOS fingerprint rides iCloud backup together
+    // with the database and the #62 restore detection reads "all quiet"
+    // forever — the file must go through `excludeFromDeviceBackup` like
+    // `.device_secrets` does.
+    const channel = MethodChannel('cz.reeftracker/file_backup');
+    final excluded = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          expect(call.method, 'exclude');
+          excluded.add((call.arguments as Map)['path'] as String);
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null),
+    );
+
     final db = newDb();
     addTearDown(db.close);
 
+    // Fresh install: the attribute lands on the just-renamed file.
     await reconcileInstallFingerprint(db);
+    expect(excluded, [idFile().path]);
 
-    final fileId = (await idFile().readAsString()).trim();
-    final dbId = await AppSettings(db).readInstallFingerprint();
-    expect(fileId, isNotEmpty);
-    expect(dbId, fileId);
+    // The normal all-quiet launch re-applies it, healing installs whose
+    // file predates the fix.
+    excluded.clear();
+    resetInstallFingerprintForTest();
+    await reconcileInstallFingerprint(db);
+    expect(excluded, [idFile().path]);
   });
 
   test('matching fingerprint: sync identity untouched', () async {
@@ -97,93 +135,84 @@ void main() {
     expect(await settings.readSyncGdriveLastPushedHash(), 'hash-1');
   });
 
-  test(
-    'database fingerprint without file (OS restore onto fresh install) '
-    'clears the sync identity and reseeds',
-    () async {
-      final db = newDb();
-      addTearDown(db.close);
-      final settings = AppSettings(db);
-      // The restored database: the old device's fingerprint + sync identity,
-      // while this install has no .install_id file (excluded from OS backup).
-      await settings.setInstallFingerprint('old-device-fingerprint');
-      await connectSync(settings);
-      await expectEverySyncKeySet(db);
-
-      await reconcileInstallFingerprint(db);
-
-      // Every `sync_gdrive_*` key, enumerated rather than named (#74): the
-      // hand-written list missed the two U35 keys for a whole release, and a
-      // hand-written assertion would have missed them with it. In particular
-      // `sync_gdrive_last_pushed_name` — left behind, it makes the newest
-      // cloud file look like *this* device's own upload on reconnect, so the
-      // restore proposal is suppressed on the phone that just arrived.
-      for (final key in SettingKey.gdriveSyncKeys) {
-        expect(
-          await db.getSetting(key.storageKey),
-          isNull,
-          reason: '${key.storageKey} survived the device transfer',
-        );
-      }
-      // The device's own label is not part of the account relationship, so it
-      // survives here exactly as it does across a disconnect.
-      expect(await settings.readSyncDeviceName(), 'Old phone');
-      // Reseeded with a fresh identity, consistent on both sides.
-      final fileId = (await idFile().readAsString()).trim();
-      expect(fileId, isNot('old-device-fingerprint'));
-      expect(await settings.readInstallFingerprint(), fileId);
-    },
-  );
-
-  test(
-    'database fingerprint differing from the file adopts the file id '
-    'and clears the sync identity',
-    () async {
-      final db = newDb();
-      addTearDown(db.close);
-      final settings = AppSettings(db);
-      await idFile().writeAsString('this-device-id');
-      await settings.setInstallFingerprint('old-device-fingerprint');
-      await connectSync(settings);
-
-      await reconcileInstallFingerprint(db);
-
-      expect(await settings.readSyncGdriveAccount(), isNull);
-      expect(await settings.readInstallFingerprint(), 'this-device-id');
-      expect((await idFile().readAsString()).trim(), 'this-device-id');
-    },
-  );
-
-  test(
-    'no database fingerprint (upgrade from a pre-fingerprint version) '
-    'seeds without clearing an existing connection',
-    () async {
-      final db = newDb();
-      addTearDown(db.close);
-      final settings = AppSettings(db);
-      await connectSync(settings);
-
-      await reconcileInstallFingerprint(db);
-
-      // Indistinguishable from an OS restore of a pre-fingerprint database,
-      // so it must never clear — only start fingerprinting from here on.
-      expect(await settings.readSyncGdriveAccount(), 'reef@example.com');
-      expect(await settings.readInstallFingerprint(), isNotNull);
-    },
-  );
-
-  test('no database fingerprint but file present: adopts the file id', () async {
+  test('database fingerprint without file (OS restore onto fresh install) '
+      'clears the sync identity and reseeds', () async {
     final db = newDb();
     addTearDown(db.close);
-    await idFile().writeAsString('this-device-id\n');
+    final settings = AppSettings(db);
+    // The restored database: the old device's fingerprint + sync identity,
+    // while this install has no .install_id file (excluded from OS backup).
+    await settings.setInstallFingerprint('old-device-fingerprint');
+    await connectSync(settings);
+    await expectEverySyncKeySet(db);
 
     await reconcileInstallFingerprint(db);
 
-    expect(
-      await AppSettings(db).readInstallFingerprint(),
-      'this-device-id',
-    );
+    // Every `sync_gdrive_*` key, enumerated rather than named (#74): the
+    // hand-written list missed the two U35 keys for a whole release, and a
+    // hand-written assertion would have missed them with it. In particular
+    // `sync_gdrive_last_pushed_name` — left behind, it makes the newest
+    // cloud file look like *this* device's own upload on reconnect, so the
+    // restore proposal is suppressed on the phone that just arrived.
+    for (final key in SettingKey.gdriveSyncKeys) {
+      expect(
+        await db.getSetting(key.storageKey),
+        isNull,
+        reason: '${key.storageKey} survived the device transfer',
+      );
+    }
+    // The device's own label is not part of the account relationship, so it
+    // survives here exactly as it does across a disconnect.
+    expect(await settings.readSyncDeviceName(), 'Old phone');
+    // Reseeded with a fresh identity, consistent on both sides.
+    final fileId = (await idFile().readAsString()).trim();
+    expect(fileId, isNot('old-device-fingerprint'));
+    expect(await settings.readInstallFingerprint(), fileId);
   });
+
+  test('database fingerprint differing from the file adopts the file id '
+      'and clears the sync identity', () async {
+    final db = newDb();
+    addTearDown(db.close);
+    final settings = AppSettings(db);
+    await idFile().writeAsString('this-device-id');
+    await settings.setInstallFingerprint('old-device-fingerprint');
+    await connectSync(settings);
+
+    await reconcileInstallFingerprint(db);
+
+    expect(await settings.readSyncGdriveAccount(), isNull);
+    expect(await settings.readInstallFingerprint(), 'this-device-id');
+    expect((await idFile().readAsString()).trim(), 'this-device-id');
+  });
+
+  test('no database fingerprint (upgrade from a pre-fingerprint version) '
+      'seeds without clearing an existing connection', () async {
+    final db = newDb();
+    addTearDown(db.close);
+    final settings = AppSettings(db);
+    await connectSync(settings);
+
+    await reconcileInstallFingerprint(db);
+
+    // Indistinguishable from an OS restore of a pre-fingerprint database,
+    // so it must never clear — only start fingerprinting from here on.
+    expect(await settings.readSyncGdriveAccount(), 'reef@example.com');
+    expect(await settings.readInstallFingerprint(), isNotNull);
+  });
+
+  test(
+    'no database fingerprint but file present: adopts the file id',
+    () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await idFile().writeAsString('this-device-id\n');
+
+      await reconcileInstallFingerprint(db);
+
+      expect(await AppSettings(db).readInstallFingerprint(), 'this-device-id');
+    },
+  );
 
   test('memoized per process: second call does not re-run the check', () async {
     final db = newDb();

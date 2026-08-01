@@ -783,7 +783,11 @@ reconnect. `sync_device_name` sits outside the prefix on purpose and survives.
   device and fake a "connected" state there. A random id is written to both
   the Settings table (`install_fingerprint`, device-local) and a sibling
   `.install_id` file that `backup_rules.xml` / `data_extraction_rules.xml`
-  exclude from every OS channel. `main.dart` reconciles once per process
+  exclude from every OS channel on Android; on iOS the
+  `NSURLIsExcludedFromBackupKey` attribute is applied after every write and
+  re-applied opportunistically on launch (#96), so the fingerprint never rides
+  iCloud backup/Quick Start with the database. `main.dart` reconciles once per
+  process
   before the first sync: database fingerprint present but file
   missing/different ⇒ the database arrived via OS restore ⇒ the
   `sync_gdrive_*` keys are cleared locally (no revoke — the grant belongs to

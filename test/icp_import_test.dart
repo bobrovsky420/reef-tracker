@@ -102,6 +102,27 @@ void main() {
       expect(r.values['phosphate'], 0.05);
     });
 
+    test('a non-numeric po4g falls through to po4er (#101)', () {
+      // Labs print `<0,01` at the detection limit — presence must not block
+      // the fallback the way `??` on the raw cells did.
+      const csv =
+          'na;po4g;po4er;analysis_date;sample_id\n'
+          '11127;<0,01;0,044457;2026-06-01 15:36:59;X1\n';
+      final r = parseIcpCsv(csv, IcpImportFormat.faunaMarin);
+      expect(r.values['phosphate'], 0.044457);
+      expect(r.skipped, isNot(contains('po4g')));
+    });
+
+    test('phosphate never silently disappears: unparseable po4 pair is '
+        'reported as skipped (#101)', () {
+      const csv =
+          'na;po4g;po4er;analysis_date;sample_id\n'
+          '11127;<0,01;<0,01;2026-06-01 15:36:59;X1\n';
+      final r = parseIcpCsv(csv, IcpImportFormat.faunaMarin);
+      expect(r.values.containsKey('phosphate'), isFalse);
+      expect(r.skipped, contains('po4g'));
+    });
+
     test('accepts dot decimals (non-German export locale)', () {
       const csv =
           'na;zn;i;analysis_date;sample_id\n'

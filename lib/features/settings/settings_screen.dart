@@ -807,6 +807,13 @@ class SettingsBody extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
+      // Safety copy into the rotation before the replace (#94), mirroring
+      // `restoreCloudBackup`: everything since the newest rotation entry is
+      // otherwise unrecoverable on confirm. A failed write aborts the
+      // restore (the catch below) rather than proceeding uncovered.
+      if ((await db.getTanks()).isNotEmpty) {
+        await backupNow(db);
+      }
       await importBackup(db, data);
       if (context.mounted) _snack(context, l.backupRestored);
     } on InvalidBackupException catch (e) {

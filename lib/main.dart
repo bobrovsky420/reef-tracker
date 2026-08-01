@@ -132,8 +132,24 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
       final notifications = ref.read(reminderNotificationsProvider);
       final db = ref.read(dbProvider);
       await notifications.init(
-        onTap: (payload) =>
-            unawaited(handleReminderPayload(db, payload, appRouter.go)),
+        // Fires long after run()'s own catchError has settled, so it needs
+        // its own handler (#99) — a bad payload must not become an unhandled
+        // async error.
+        onTap: (payload) => unawaited(
+          handleReminderPayload(db, payload, appRouter.go).catchError((
+            Object e,
+            StackTrace s,
+          ) {
+            FlutterError.reportError(
+              FlutterErrorDetails(
+                exception: e,
+                stack: s,
+                library: 'reminders',
+                context: ErrorSummary('handling a notification tap'),
+              ),
+            );
+          }),
+        ),
       );
       final scheduler = ref.read(reminderSchedulerProvider)..start();
       await scheduler.resync();
@@ -311,7 +327,10 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     );
     if (proposal == null) return false;
     unawaited(
-      _showCloudRestoreDialog(db, proposal).catchError((Object e, StackTrace s) {
+      _showCloudRestoreDialog(db, proposal).catchError((
+        Object e,
+        StackTrace s,
+      ) {
         FlutterError.reportError(
           FlutterErrorDetails(
             exception: e,

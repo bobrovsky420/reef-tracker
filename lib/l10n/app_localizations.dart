@@ -5847,6 +5847,30 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{1 outlet overridden} other{{count} outlets overridden}}'**
   String apexOverridden(int count);
 
+  /// Screen-reader state of an outlet pill whose dot is filled: the outlet is powered on. Read as '<outlet name>, on'
+  ///
+  /// In en, this message translates to:
+  /// **'on'**
+  String get apexOutletOnSemantics;
+
+  /// Screen-reader state of an outlet pill whose ring is hollow: the outlet is powered off. Read as '<outlet name>, off'
+  ///
+  /// In en, this message translates to:
+  /// **'off'**
+  String get apexOutletOffSemantics;
+
+  /// Screen-reader state of an outlet pill showing a dash: a variable output (pump ramp/profile, e.g. TBL/PF1) that is neither on nor off
+  ///
+  /// In en, this message translates to:
+  /// **'profile-driven'**
+  String get apexOutletProfileSemantics;
+
+  /// Screen-reader suffix for an outlet someone switched by hand, so it no longer follows the Apex program. Appended as '<outlet name>, on, manually overridden'
+  ///
+  /// In en, this message translates to:
+  /// **'manually overridden'**
+  String get apexOutletOverriddenSemantics;
+
   /// A feed cycle (A-D) is currently pausing the pumps
   ///
   /// In en, this message translates to:

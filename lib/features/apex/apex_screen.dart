@@ -588,40 +588,76 @@ class _OutletPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
     final on = outlet.on;
     final color = outlet.overridden
         ? tokens.caution
         : (on == true ? tokens.healthy : tokens.textFaint);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: tokens.track,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // A profile-driven output (TBL/PF1) is neither on nor off, so it
-          // gets a hollow ring rather than a filled dot claiming a state.
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: on == null ? null : color,
-              border: on == null ? Border.all(color: color, width: 1.5) : null,
+    // The dot's state, spelled out for screen readers (#104) — without it
+    // TalkBack reads bare outlet names, defeating the list's purpose of
+    // making a forgotten override visible. excludeSemantics keeps the name
+    // from being read twice.
+    final semantics = [
+      outlet.name,
+      switch (on) {
+        true => l.apexOutletOnSemantics,
+        false => l.apexOutletOffSemantics,
+        null => l.apexOutletProfileSemantics,
+      },
+      if (outlet.overridden) l.apexOutletOverriddenSemantics,
+    ].join(', ');
+    return Semantics(
+      label: semantics,
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: tokens.track,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Never color alone (#104): on is a filled dot, off a hollow
+            // ring. A profile-driven output (TBL/PF1) is neither on nor off,
+            // so it gets a dash claiming no switched state at all.
+            SizedBox(
+              width: 8,
+              height: 8,
+              child: on == null
+                  ? Center(
+                      child: Container(
+                        width: 8,
+                        height: 2.5,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(1.25),
+                        ),
+                      ),
+                    )
+                  : DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: on ? color : null,
+                        border: on
+                            ? null
+                            : Border.all(color: color, width: 1.5),
+                      ),
+                    ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            outlet.name,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: outlet.overridden ? color : tokens.text,
-              fontWeight: outlet.overridden ? FontWeight.w600 : FontWeight.w400,
+            const SizedBox(width: 8),
+            Text(
+              outlet.name,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: outlet.overridden ? color : tokens.text,
+                fontWeight: outlet.overridden
+                    ? FontWeight.w600
+                    : FontWeight.w400,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

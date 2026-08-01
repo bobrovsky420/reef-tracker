@@ -80,23 +80,27 @@ Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
   CloudBackupStore store,
 ) async {
   final settings = AppSettings(db);
-  if (await settings.readSyncGdriveAccount() == null) {
-    return CloudSyncOutcome.skippedDisabled;
-  }
-  // Same "nothing to protect" rule as the local auto-backup: no visible
-  // tanks means an empty document that would only evict a useful older file
-  // from the cloud rotation.
-  if ((await db.getTanks()).isEmpty) return CloudSyncOutcome.skippedDisabled;
-
-  // Encode + hash off the UI isolate (T5): this runs right after the first
-  // frame, and the encode is the same cost as the local auto-backup's.
-  final json = await encodeBackupFromDb(db);
-  final hash = await Isolate.run(() => backupContentHash(json));
-  if (hash == await settings.readSyncGdriveLastPushedHash()) {
-    return CloudSyncOutcome.skippedClean;
-  }
-
+  // The whole body sits inside the try (#95): the pre-flight reads and the
+  // encode can throw too (a failing DB, an isolate spawn error), and a throw
+  // escaping here would break the "Never throws" contract the
+  // fire-and-forget callers rely on, bypassing the error stamp.
   try {
+    if (await settings.readSyncGdriveAccount() == null) {
+      return CloudSyncOutcome.skippedDisabled;
+    }
+    // Same "nothing to protect" rule as the local auto-backup: no visible
+    // tanks means an empty document that would only evict a useful older file
+    // from the cloud rotation.
+    if ((await db.getTanks()).isEmpty) return CloudSyncOutcome.skippedDisabled;
+
+    // Encode + hash off the UI isolate (T5): this runs right after the first
+    // frame, and the encode is the same cost as the local auto-backup's.
+    final json = await encodeBackupFromDb(db);
+    final hash = await Isolate.run(() => backupContentHash(json));
+    if (hash == await settings.readSyncGdriveLastPushedHash()) {
+      return CloudSyncOutcome.skippedClean;
+    }
+
     var folderId = await settings.readSyncGdriveFolderId();
     folderId ??= await store.ensureFolder();
     await settings.setSyncGdriveFolderId(folderId);

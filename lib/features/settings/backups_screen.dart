@@ -59,9 +59,17 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     _backups = _loadBackups();
   }
 
-  void _reload() => setState(() => _backups = _loadBackups());
+  // Block bodies on purpose: with `() => _backups = _loadBackups()` the
+  // closure returns the assigned Future, and setState's debug assert throws
+  // on a Future-returning callback — reloads silently never happened in
+  // debug builds (release strips the assert, which is why it went unnoticed).
+  void _reload() => setState(() {
+    _backups = _loadBackups();
+  });
 
-  void _reloadDrive() => setState(() => _drive = _loadDrive());
+  void _reloadDrive() => setState(() {
+    _drive = _loadDrive();
+  });
 
   Future<List<CloudBackupFile>> _loadDrive() async {
     final store = ref.read(cloudBackupStoreProvider);
@@ -461,16 +469,31 @@ class _BackupRow extends ConsumerWidget {
 
     try {
       // Decode in a worker isolate (T5) so a large backup doesn't freeze the
-      // UI; InvalidBackupException crosses the boundary typed.
+      // UI; InvalidBackupException crosses the boundary typed. Contents are
+      // read *before* the safety copy below — its rotation prune could
+      // otherwise delete the very file being restored.
       final contents = await file.readAsString();
       final data = await Isolate.run(() => decodeBackup(contents));
-      await importBackup(ref.read(dbProvider), data);
+      final db = ref.read(dbProvider);
+      // Safety copy into the rotation before the replace (#94), mirroring
+      // `restoreCloudBackup`. A failed write aborts the restore (the catch
+      // below) rather than proceeding uncovered.
+      if ((await db.getTanks()).isNotEmpty) {
+        await backupNow(db);
+      }
+      await importBackup(db, data);
       if (context.mounted) _snack(context, l.backupRestored);
     } on InvalidBackupException catch (e) {
       if (context.mounted) _snack(context, l.backupRejection(e.reason));
+      return;
     } catch (_) {
       if (context.mounted) _snack(context, l.backupImportFailed);
+      return;
     }
+    // The safety copy changed the folder contents — reload the list so it
+    // shows up immediately, same as after a delete. Outside the try: a
+    // reload hiccup must not relabel a completed restore as failed.
+    onChanged();
   }
 
   Future<void> _share(BuildContext context, AppLocalizations l) async {

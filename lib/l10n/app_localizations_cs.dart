@@ -3586,6 +3586,18 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get apexOutletOnSemantics => 'zapnuto';
+
+  @override
+  String get apexOutletOffSemantics => 'vypnuto';
+
+  @override
+  String get apexOutletProfileSemantics => 'řízeno profilem';
+
+  @override
+  String get apexOutletOverriddenSemantics => 'přepnuto ručně';
+
+  @override
   String apexFeedRunning(Object letter) {
     return 'Běží krmení $letter';
   }

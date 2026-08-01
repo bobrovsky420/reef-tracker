@@ -212,8 +212,17 @@ IcpImportResult _parseFaunaMarin(String content) {
   }
   // Orthophosphate (mg/L): prefer the photometric measurement (`po4g`), fall
   // back to the value the lab calculates from ICP phosphorus (`po4er`).
-  final po4 = _parseCsvNumber(cell('po4g') ?? cell('po4er') ?? '');
-  if (po4 != null) values['phosphate'] = po4;
+  // Precedence is by *parseability*, not presence — a present-but-non-numeric
+  // `po4g` (labs print `<0.01` at the detection limit) must not block the
+  // fallback (#101). If neither parses, the skipped list surfaces it.
+  final po4g = cell('po4g');
+  final po4er = cell('po4er');
+  final po4 = _parseCsvNumber(po4g ?? '') ?? _parseCsvNumber(po4er ?? '');
+  if (po4 != null) {
+    values['phosphate'] = po4;
+  } else if (po4g != null || po4er != null) {
+    skipped.add(po4g != null ? 'po4g' : 'po4er');
+  }
   if (values.isEmpty) {
     throw const IcpImportException(IcpImportRejection.noValues);
   }

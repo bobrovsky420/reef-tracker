@@ -266,7 +266,8 @@ DateTime? _parseHannaDate(String raw) {
   final hour = int.parse(m.group(4)!);
   final minute = int.parse(m.group(5)!);
   final second = int.parse(m.group(6)!);
-  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23) return null;
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  if (hour > 23 || minute > 59 || second > 59) return null;
   final dt = DateTime(year, month, day, hour, minute, second);
   // DateTime rolls over out-of-range days (31/04 → 01/05); reject those.
   return dt.day == day && dt.month == month ? dt : null;

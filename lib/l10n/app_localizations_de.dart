@@ -3573,6 +3573,18 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get apexOutletOnSemantics => 'ein';
+
+  @override
+  String get apexOutletOffSemantics => 'aus';
+
+  @override
+  String get apexOutletProfileSemantics => 'profilgesteuert';
+
+  @override
+  String get apexOutletOverriddenSemantics => 'manuell übersteuert';
+
+  @override
   String apexFeedRunning(Object letter) {
     return 'Fütterungspause $letter läuft';
   }

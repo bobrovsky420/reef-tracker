@@ -122,6 +122,23 @@ void main() {
       expect(r.skipped.single.reason, HannaSkipReason.badValue);
     });
 
+    test('rejects out-of-range minutes and seconds as badValue (#100)', () {
+      // DateTime would silently roll 14:75:00 over to 15:15:00 — a shifted
+      // timestamp is worse than a skipped row.
+      const csv =
+          'Meter,HI97115\n'
+          'Reading,Unit,Method,Date,Status,Note\n'
+          '8.1,dKH,Alkalinity Marine,19/07/2026 14:75:00,,\n'
+          '8.2,dKH,Alkalinity Marine,19/07/2026 14:00:99,,\n';
+      final r = parseHannaCsv(csv);
+      expect(r.rows, isEmpty);
+      expect(r.skipped, hasLength(2));
+      expect(
+        r.skipped.map((s) => s.reason),
+        everyElement(HannaSkipReason.badValue),
+      );
+    });
+
     test('throws wrongFormat for a non-Hanna CSV', () {
       expect(
         () => parseHannaCsv('Date,Measurement,Value\n2026-01-01,pH,8.1\n'),

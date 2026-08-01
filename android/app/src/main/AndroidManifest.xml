@@ -49,12 +49,17 @@
          which the app never uses (enableAudio: false) — and which makes
          Play infer a required microphone. Strip it. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
+    <!-- Predictive back (#106): the opt-in that makes Android 14+ actually
+         run the PredictiveBackPageTransitionsBuilder the theme selects —
+         without it the peek-behind animation never engages and the builder
+         permanently runs its fallback. -->
     <application
         android:label="ReefTracker"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:allowBackup="true">
         <activity
             android:name=".MainActivity"

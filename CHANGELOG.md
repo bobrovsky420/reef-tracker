@@ -87,6 +87,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now scroll when the keyboard is up. At larger font sizes on shorter screens
   the Add button could sit unreachable below the keyboard, with no way to
   finish adding the device.
+- Restoring a backup — from a picked file or from the Manage backups list — now
+  writes a safety backup of your current data into the rotation first, exactly
+  as restoring a cloud backup already did. If the restore turns out to be a
+  mistake, the state from just before it is one restore away; the Manage
+  backups list shows the new safety copy immediately.
+- Reminder scheduling is now resilient to a single bad entry: one notification
+  the system refuses no longer silently unschedules everything after it until
+  the next app launch.
+- Hanna CSV rows with an impossible time (like 14:75:00) are now reported as
+  unreadable instead of being imported minutes later than the meter recorded
+  them.
+- A Fauna Marin ICP report printing phosphate at the detection limit (like
+  "<0,01") no longer loses phosphate entirely — the value the lab calculated
+  from ICP phosphorus is used instead, and if neither number is usable the
+  report says the column was skipped.
+- A rare failure while preparing the cloud backup upload (before any network
+  traffic) is now recorded like any other sync failure instead of leaving
+  Settings showing a healthy sync state.
+- iOS: the install fingerprint that detects an iCloud restore/new-phone
+  transfer is now kept out of the iCloud backup itself — on a restored phone
+  the app can once again tell it is not the original device. (Groundwork for
+  cloud backup on iOS; not yet verified on a real iPhone.)
+- Android: the system's predictive back animation (peeking at the screen
+  behind while you swipe) now actually engages — it was styled in but never
+  enabled.
+- Apex outlet states are no longer color-only: an outlet that is off shows a
+  hollow ring instead of a gray dot, a profile-driven output shows a dash, and
+  screen readers announce each outlet's name with its state ("on", "off",
+  "profile-driven", "manually overridden") instead of the bare name.
+- The live readout under the checker camera scan no longer clips the digits at
+  large system font sizes.
 - Many wording and grammar corrections across all six translations, verified
   against how reef keepers actually speak in each language: Czech, German,
   Russian, Polish, French and Italian. Highlights: Russian schedules no longer
