@@ -1,0 +1,6 @@
+• Devices get their own tab (experimental): meters, pumps and controllers one tap away; the Hanna checker has its own card.
+• Restoring a backup first saves a safety copy; backups are always a consistent snapshot.
+• The reagent timer now rings even with the phone locked.
+• Timer beeps lower your music instead of pausing it.
+• Device readings use your decimal separator and °C/°F.
+• Many translation fixes.

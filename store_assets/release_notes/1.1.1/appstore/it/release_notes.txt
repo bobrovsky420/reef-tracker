@@ -1,0 +1,6 @@
+• Scheda Dispositivi dedicata (sperimentale): strumenti, pompe e centraline a un tocco; il checker Hanna ha il suo riquadro.
+• Prima di un ripristino viene salvata una copia di sicurezza; i backup sono sempre coerenti.
+• Il timer del reagente ora suona anche a telefono bloccato.
+• I bip abbassano la musica invece di fermarla.
+• I dispositivi usano il tuo separatore decimale e °C/°F.
+• Molte correzioni alle traduzioni.

@@ -1,0 +1,7 @@
+• Zařízení mají vlastní záložku (experimentální): měřiče, čerpadla a řídicí jednotky na jedno klepnutí; Hanna checker má vlastní kartu.
+• Obnova zálohy nejdřív uloží pojistnou kopii; zálohy jsou vždy konzistentním snímkem.
+• Po přechodu na nový telefon se znovu nabídne obnova z cloudu.
+• Časovač činidla nyní zazvoní i při zamčeném telefonu.
+• Pípnutí časovače hudbu jen ztlumí, místo aby ji zastavilo.
+• Hodnoty ze zařízení používají vaši desetinnou čárku a °C/°F.
+• Mnoho jazykových oprav.

@@ -1,0 +1,6 @@
+• Urządzenia mają własną zakładkę (eksperymentalne): mierniki, pompy i sterowniki na jedno dotknięcie; checker Hanna ma własną kartę.
+• Przed przywróceniem zapisywana jest kopia bezpieczeństwa; kopie są zawsze spójne.
+• Timer odczynnika dzwoni także przy zablokowanym telefonie.
+• Sygnały timera przyciszają muzykę zamiast ją zatrzymywać.
+• Urządzenia używają Twojego separatora dziesiętnego i °C/°F.
+• Wiele poprawek tłumaczenia.
