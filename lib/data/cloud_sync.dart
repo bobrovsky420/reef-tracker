@@ -469,3 +469,21 @@ Future<void> disconnectGDrive(AppDatabase db, CloudAuth auth) async {
   // account relationship, and should greet a later reconnect prefilled.
   await AppSettings(db).clearGDriveSyncState();
 }
+
+/// Saves the user-chosen device name (U35) and returns whether it actually
+/// changed (input is normalized like the setting itself: trimmed, empty ⇒
+/// null). A change also clears the pushed-hash dirty gate: `device` is
+/// deliberately excluded from [backupContentHash] (a restore must not read
+/// dirty), so without this a rename would only reach the cloud with the next
+/// real data change — and a device naming itself for the first time (a
+/// connect from before the name prompt existed) would keep its whole
+/// rotation anonymous until then. Callers kick [runGDriveSyncIfDirty] on
+/// `true` so a freshly-labeled file appears in the rotation right away.
+Future<bool> renameSyncDevice(AppDatabase db, String? name) async {
+  final settings = AppSettings(db);
+  final normalized = AppSettings.decodeSyncDeviceName(name);
+  if (normalized == await settings.readSyncDeviceName()) return false;
+  await settings.setSyncDeviceName(normalized);
+  await settings.setSyncGdriveLastPushedHash(null);
+  return true;
+}

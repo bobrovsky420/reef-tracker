@@ -1125,6 +1125,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get backupsDeviceNameNudge => 'Указать имя устройства';
+
+  @override
+  String get backupsDeviceNameNudgeHint =>
+      'Помечает резервные копии, загружаемые с этого устройства';
+
+  @override
   String get aboutAppName => 'О приложении ReefTracker';
 
   @override

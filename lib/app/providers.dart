@@ -15,6 +15,7 @@ import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
 import '../data/lan_discovery.dart';
 import '../data/notifications.dart';
+import '../data/os_device_name.dart';
 import '../data/rb_device_link.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/rf_device_link.dart';
@@ -780,6 +781,22 @@ final cloudBackupStoreProvider = Provider<CloudBackupStore>(
 final syncGdriveAccountProvider = _setting(
   SettingKey.syncGdriveAccount,
   AppSettings.decodeSyncGdriveAccount,
+);
+
+/// The user-chosen name stamped onto this device's cloud uploads (U35), or
+/// null when none was set — a connect from before the name prompt existed
+/// was never asked. Drives the Manage-backups nudge row.
+final syncDeviceNameProvider = _setting(
+  SettingKey.syncDeviceName,
+  AppSettings.decodeSyncDeviceName,
+);
+
+/// The OS-reported device name used to prefill the device-name dialog when
+/// no name is stored yet. A provider purely as a test seam: the plugin
+/// channel never answers under `flutter test`, so widget tests override this
+/// instead of stalling on [osDeviceName]'s timeout.
+final osDeviceNameProvider = FutureProvider<String?>(
+  (ref) => osDeviceName(),
 );
 
 /// When the most recent Drive push completed, or null before the first one.

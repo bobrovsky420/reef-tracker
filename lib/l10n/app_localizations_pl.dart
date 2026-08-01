@@ -1128,6 +1128,13 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get backupsDeviceNameNudge => 'Ustaw nazwę urządzenia';
+
+  @override
+  String get backupsDeviceNameNudgeHint =>
+      'Oznacza kopie zapasowe przesyłane z tego urządzenia';
+
+  @override
   String get aboutAppName => 'O aplikacji ReefTracker';
 
   @override

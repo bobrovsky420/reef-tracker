@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Dry" line whenever one is attached and enabled — not only the alarm once
   water is detected. A detected leak still raises the red "Leak detected!"
   warning, now alongside what the sensor found (e.g. RO/DI water).
+- Android: Manage backups points out when this device has no name set for its
+  Google Drive uploads and lets you set one right there — connections made
+  before device names existed were never asked, so their backups showed no
+  device.
+- Android: the device-name dialog now starts out filled with the phone's own
+  name as Android reports it (e.g. "Pixel 7", or the name you gave the phone
+  in its settings) — correct it or just save.
 
 ### Changed
 - On the Connected devices tab, "Refresh all" and "Save all" are now floating
@@ -36,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of "Red Sea ReefBeat" and "Hanna checker".
 
 ### Fixed
+- Android: setting or changing the device name now uploads a freshly labeled
+  backup to Google Drive right away — previously the new name waited for the
+  next data change, so the backup list kept showing unlabeled or stale-named
+  files indefinitely.
 - The reagent timer and result beeps on the Hanna live-measurement screen now
   lower the volume of whatever you are listening to instead of stopping it —
   previously a podcast or music paused at the first beep and did not resume.

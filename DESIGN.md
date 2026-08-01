@@ -809,7 +809,22 @@ the writing device's name from the listing metadata (U35) and offer restore
 (the shared `restoreCloudBackup` path: local safety backup → download → the
 same 3-stage `importBackup` pipeline → echo suppression) and delete, and a
 section-level unavailable row when listing fails (local backups stay
-usable).
+usable). While connected without a device name (a connect from before the
+U35 prompt existed was never asked), the Drive section leads with a nudge
+row that opens the shared device-name dialog
+(`sync_device_name_dialog.dart`, also the connect flow's and the options
+dialog's editor). When no name is stored yet, the dialog prefills with the
+OS-reported device name (`os_device_name.dart` over `device_info_plus`:
+Android's user-assigned Settings name, else manufacturer + model; iOS's
+personalized name, else the commercial model name) — read through
+`osDeviceNameProvider` purely as a test seam, since the plugin channel never
+answers under `flutter test`, with a 2 s production timeout so a platform
+hiccup can't stall the dialog. Prefill only: nothing is saved unseen, and a
+stored name always wins. Saving a *changed* name goes through `renameSyncDevice`,
+which clears `sync_gdrive_last_pushed_hash` — `device` is hash-excluded, so
+a rename would otherwise not upload until the next real data change — and
+every caller follows up with an immediate push, so a freshly-labeled file
+enters the rotation right away.
 
 Platform config: `INTERNET` permission in the main Android manifest (the
 app's only network use; debug/profile carry it implicitly for hot reload).
@@ -3728,7 +3743,9 @@ screen (see Data → Automatic backup), the **Google Drive sync** row +
 persistent upload-error row (U24 — see Data → Google Drive backup sync;
 connect is Pro-gated via `ProFeature.driveSync`; the connect flow ends in
 the **device name** dialog (U35), also reachable from the connected row's
-options dialog). The **About** section holds the
+options dialog and from the Manage-backups nudge row — a rename pushes a
+freshly-labeled backup immediately, see Data → Google Drive backup sync).
+The **About** section holds the
 aquarium count, Replay tour, three **website link rows** (user guide, support
 & FAQ, privacy policy on reeftracker.org — `url_launcher`,
 `LaunchMode.externalApplication`, no `canLaunchUrl` (extra package-visibility

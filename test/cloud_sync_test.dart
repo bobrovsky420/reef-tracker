@@ -259,6 +259,44 @@ void main() {
       );
     });
 
+    test('renameSyncDevice dirties the gate so the label reaches the cloud '
+        'without a data change (device is hash-excluded)', () async {
+      await connectAndSeed();
+      await runGDriveSyncIfDirty(db, store: store);
+      expect(store.writeCalls, 1);
+      // A pre-name upload carries no device metadata — the state every
+      // pre-prompt connect is stuck in.
+      expect(
+        store.fileMetadata[store.files.keys.single],
+        isNot(contains(kCloudMetaDevice)),
+      );
+
+      // Whitespace normalizes to "still no name": nothing changed, and the
+      // next run must stay clean.
+      expect(await renameSyncDevice(db, '  '), isFalse);
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.skippedClean,
+      );
+
+      // A real (first) name pushes immediately, labeled.
+      expect(await renameSyncDevice(db, 'Aquarium phone'), isTrue);
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      final newest = (store.files.keys.toList()..sort()).last;
+      expect(store.fileMetadata[newest]?[kCloudMetaDevice], 'Aquarium phone');
+
+      // Re-saving the same name (modulo trim) is not a change — no re-upload.
+      expect(await renameSyncDevice(db, ' Aquarium phone '), isFalse);
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.skippedClean,
+      );
+      expect(store.writeCalls, 2);
+    });
+
     test('offline is silent: no error stamp, retried next run', () async {
       await connectAndSeed();
       store.offline = true;

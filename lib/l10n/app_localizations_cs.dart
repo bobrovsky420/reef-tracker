@@ -1118,6 +1118,13 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get backupsDeviceNameNudge => 'Nastavit název zařízení';
+
+  @override
+  String get backupsDeviceNameNudgeHint =>
+      'Označí zálohy nahrané z tohoto zařízení';
+
+  @override
   String get aboutAppName => 'O aplikaci ReefTracker';
 
   @override

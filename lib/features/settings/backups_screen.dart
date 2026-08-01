@@ -20,6 +20,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_settings.dart';
+import 'sync_device_name_dialog.dart';
 
 /// Lists the rotating automatic backups stored on the device — plus, when
 /// Drive sync is connected (U24), the backups in the app's Google Drive
@@ -107,6 +108,12 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         defaultTargetPlatform == TargetPlatform.android &&
         ref.watch(syncGdriveAccountProvider).value != null;
     if (driveConnected) _drive ??= _loadDrive();
+    // Connected but nameless (a connect from before the name prompt existed,
+    // U35): every file this device uploads shows anonymous in this very list.
+    // `hasValue` keeps the row from flashing during the initial settings load.
+    final deviceName = ref.watch(syncDeviceNameProvider);
+    final nudgeDeviceName =
+        driveConnected && deviceName.hasValue && deviceName.value == null;
     return Scaffold(
       appBar: AppBar(title: Text(l.backupsScreenTitle)),
       body: FutureBuilder<List<_BackupEntry>>(
@@ -143,7 +150,14 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                 localSection,
                 ReefSettingsSection(
                   label: l.backupsDriveSection,
-                  children: _driveRows(l, driveSnapshot),
+                  children: [
+                    // Above the listing rows, independent of their fate: the
+                    // nudge is about this device's own setting, not the
+                    // folder contents.
+                    if (nudgeDeviceName)
+                      _DeviceNameNudgeRow(onPushed: _reloadDrive),
+                    ..._driveRows(l, driveSnapshot),
+                  ],
                 ),
               ],
             ),
@@ -192,6 +206,43 @@ class _QuietRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = ReefTokens.of(context);
     return ReefSettingsRow(icon: icon, title: text, titleColor: tokens.textDim);
+  }
+}
+
+/// Call-to-action shown while Drive sync is connected but this device has no
+/// name set: opens the shared device-name dialog. On an actual change the
+/// dialog cleared the dirty gate (see `renameSyncDevice`), so the immediate
+/// sync here uploads a labeled file — [onPushed] then reloads the listing so
+/// it shows up. The row itself disappears reactively via
+/// `syncDeviceNameProvider` the moment the name is saved.
+class _DeviceNameNudgeRow extends ConsumerWidget {
+  const _DeviceNameNudgeRow({required this.onPushed});
+
+  final VoidCallback onPushed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    return ReefSettingsRow(
+      icon: Icons.smartphone_outlined,
+      title: l.backupsDeviceNameNudge,
+      description: l.backupsDeviceNameNudgeHint,
+      onTap: () => unawaited(_setName(context, ref)),
+    );
+  }
+
+  Future<void> _setName(BuildContext context, WidgetRef ref) async {
+    // Read before the dialog: saving a name unmounts this very row (the
+    // `syncDeviceNameProvider` watch), and the disposed element's `ref`
+    // throws — which would silently skip the push (caught on-device).
+    final db = ref.read(dbProvider);
+    final store = ref.read(cloudBackupStoreProvider);
+    if (!await showSyncDeviceNameDialog(context, ref)) return;
+    final outcome = await runGDriveSyncIfDirty(db, store: store);
+    // Only a confirmed upload changes the folder contents; offline/failed
+    // outcomes are already surfaced by the Settings error row, and reloading
+    // here would just repaint the same list.
+    if (outcome == CloudSyncOutcome.pushed) onPushed();
   }
 }
 

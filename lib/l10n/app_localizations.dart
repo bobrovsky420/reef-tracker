@@ -1979,6 +1979,18 @@ abstract class AppLocalizations {
   /// **'{size} — too large to restore'**
   String backupsDriveTooLarge(Object size);
 
+  /// Tappable row at the top of the Google Drive section in Manage backups, shown while Drive sync is connected but no device name is set; opens the device-name dialog so new uploads are labeled.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a device name'**
+  String get backupsDeviceNameNudge;
+
+  /// Sub-line of the device-name nudge row in Manage backups.
+  ///
+  /// In en, this message translates to:
+  /// **'Labels the backups this device uploads'**
+  String get backupsDeviceNameNudgeHint;
+
   /// No description provided for @aboutAppName.
   ///
   /// In en, this message translates to:

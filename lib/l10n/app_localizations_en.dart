@@ -1114,6 +1114,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get backupsDeviceNameNudge => 'Set a device name';
+
+  @override
+  String get backupsDeviceNameNudgeHint =>
+      'Labels the backups this device uploads';
+
+  @override
   String get aboutAppName => 'About ReefTracker';
 
   @override

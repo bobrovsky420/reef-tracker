@@ -63,6 +63,10 @@ void main() {
           appVersionProvider.overrideWith((ref) async => '1.0.0+1'),
           cloudAuthProvider.overrideWithValue(auth),
           cloudBackupStoreProvider.overrideWithValue(store),
+          // The real device_info_plus channel never answers under
+          // `flutter test` — the dialog would stall on osDeviceName's
+          // timeout instead of opening within settle().
+          osDeviceNameProvider.overrideWith((ref) async => 'Pixel Test'),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -109,8 +113,10 @@ void main() {
       expect(await AppSettings(db).readSyncGdriveAccount(), 'reef@test.dev');
       expect(find.text('Pro feature'), findsNothing);
 
-      // The device-name dialog follows the successful connect.
+      // The device-name dialog follows the successful connect, prefilled
+      // with the OS-reported name — which the user can correct freely.
       expect(find.text('Device name'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Pixel Test'), findsOneWidget);
       await tester.enterText(find.byType(TextField), 'Living room tablet');
       await tester.tap(find.text('Save'));
       await settle(tester);

@@ -1119,6 +1119,13 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get backupsDeviceNameNudge => 'Imposta un nome per il dispositivo';
+
+  @override
+  String get backupsDeviceNameNudgeHint =>
+      'Identifica i backup caricati da questo dispositivo';
+
+  @override
   String get aboutAppName => 'Informazioni su ReefTracker';
 
   @override

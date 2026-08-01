@@ -544,6 +544,10 @@
   "@backupsDriveLoadFailed": { "description": "Shown in the Google Drive section when listing the Drive folder fails (offline, revoked access)." },
   "backupsDriveTooLarge": "{size} — too large to restore",
   "@backupsDriveTooLarge": { "description": "Error sub-line on a Google Drive backup row whose file exceeds the download size cap; restore is disabled for it.", "placeholders": { "size": {} } },
+  "backupsDeviceNameNudge": "Set a device name",
+  "@backupsDeviceNameNudge": { "description": "Tappable row at the top of the Google Drive section in Manage backups, shown while Drive sync is connected but no device name is set; opens the device-name dialog so new uploads are labeled." },
+  "backupsDeviceNameNudgeHint": "Labels the backups this device uploads",
+  "@backupsDeviceNameNudgeHint": { "description": "Sub-line of the device-name nudge row in Manage backups." },
 
   "aboutAppName": "About ReefTracker",
   "aboutDescription": "Offline reef aquarium parameter tracker with history, time graphs, and green/amber/red health zones.",
