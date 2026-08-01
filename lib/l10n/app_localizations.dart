@@ -6210,7 +6210,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefDevicesKindReefBeat.
   ///
   /// In en, this message translates to:
-  /// **'Red Sea ReefBeat'**
+  /// **'Red Sea'**
   String get reefDevicesKindReefBeat;
 
   /// No description provided for @reefDevicesKindApex.
@@ -6222,7 +6222,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefDevicesKindHanna.
   ///
   /// In en, this message translates to:
-  /// **'Hanna checker'**
+  /// **'Hanna'**
   String get reefDevicesKindHanna;
 
   /// No description provided for @reefDevicesBluetooth.

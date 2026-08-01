@@ -3777,13 +3777,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reefDevicesKindReefFactory => 'ReefFactory';
 
   @override
-  String get reefDevicesKindReefBeat => 'Red Sea ReefBeat';
+  String get reefDevicesKindReefBeat => 'Red Sea';
 
   @override
   String get reefDevicesKindApex => 'Neptune Apex';
 
   @override
-  String get reefDevicesKindHanna => 'Hanna checker';
+  String get reefDevicesKindHanna => 'Hanna';
 
   @override
   String get reefDevicesBluetooth => 'Bluetooth';

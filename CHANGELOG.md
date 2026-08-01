@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   code.
 - The Connected devices page's "Reorder brands" moved out of the menu onto the
   row of brand buttons it reorders.
+- Shorter brand names on the Connected devices page: "Red Sea" and "Hanna"
+  instead of "Red Sea ReefBeat" and "Hanna checker".
 
 ### Fixed
 - The reagent timer and result beeps on the Hanna live-measurement screen now
