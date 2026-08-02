@@ -7,16 +7,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/seven_segment.dart';
 import 'package:reeftracker/features/scan/checker_scan_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
 import 'fakes/fake_camera_platform.dart';
 
 /// The camera-scan screen's controller lifecycle (#77). The screen opens the
-/// camera from four places — first frame, Rescan, retry-after-error, and the
-/// `resumed` lifecycle callback — so "start while a start is already running"
-/// is reachable by ordinary taps on a slow phone, and used to leave a second
-/// controller alive with its image stream still feeding the decoder.
+/// camera from five places — first frame, Rescan, retry-after-error, the
+/// `resumed` lifecycle callback, and back-from-confirm (the PopScope handler,
+/// #116a) — so "start while a start is already running" is reachable by
+/// ordinary taps on a slow phone, and used to leave a second controller alive
+/// with its image stream still feeding the decoder.
 void main() {
   late FakeCameraPlatform camera;
   late AppDatabase db;
@@ -135,5 +137,70 @@ void main() {
 
     expect(camera.liveCameras, isEmpty);
     expect(camera.activeStreams, isEmpty);
+  });
+
+  testWidgets('back from the confirm step restarts the viewfinder instead of '
+      'leaving; back from the viewfinder pops (#116a)', (tester) async {
+    // The screen must sit on a pushed route so there is something to pop to.
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dbProvider.overrideWithValue(db)],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: Text('base')),
+        ),
+      ),
+    );
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    unawaited(
+      navigator.push(
+        MaterialPageRoute<void>(builder: (_) => const CheckerScanScreen()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(camera.createdCameras, hasLength(1));
+
+    // Enter the confirm phase the way an accepted vote does.
+    final state = tester.state<State<CheckerScanScreen>>(
+      find.byType(CheckerScanScreen),
+    );
+    (state as dynamic).debugEnterConfirmPhase(
+      const SevenSegmentReading('0.30'),
+    );
+    // The camera stop is deferred (`Future(_stopCamera)`) and disposes
+    // asynchronously — give the event loop a few turns.
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(camera.liveCameras, isEmpty, reason: 'confirm releases the camera');
+
+    // System back from confirm: the route must NOT pop — the PopScope
+    // handler (the fifth _startCamera caller) returns to the viewfinder.
+    expect(await navigator.maybePop(), isTrue);
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(CheckerScanScreen), findsOneWidget);
+    expect(camera.createdCameras, hasLength(2), reason: 'camera restarted');
+    expect(camera.liveCameras, hasLength(1));
+    expect(camera.activeStreams, hasLength(1));
+
+    // System back from the viewfinder leaves the flow. Bounded pumps, not
+    // pumpAndSettle: the outgoing viewfinder can host a live animation
+    // during the route transition, which would keep pumpAndSettle spinning.
+    expect(await navigator.maybePop(), isTrue);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(find.byType(CheckerScanScreen), findsNothing);
+    expect(find.text('base'), findsOneWidget);
+    expect(camera.liveCameras, isEmpty);
+
+    // In-body unmount: the confirm view watched drift streams, whose
+    // zero-duration close timers must flush before the binding's
+    // pending-timer invariant runs (teardown-time is too late).
+    await unmount(tester);
+    await tester.pump(const Duration(seconds: 1));
   });
 }

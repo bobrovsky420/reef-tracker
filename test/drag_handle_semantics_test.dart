@@ -14,6 +14,11 @@ void main() {
   /// Line comments are stripped before the paren scan below: a comment such as
   /// "draggable with a finger (the schedule-list convention)" would otherwise
   /// have to be balanced for the scan to find the right closing paren.
+  ///
+  /// KNOWN LIMITATION (#116b): this is a lexical strip — a `//` *inside a
+  /// string literal* truncates that line too, which can unbalance the paren
+  /// scan. The per-handle balance guard in the test body turns that from a
+  /// silent false pass into a loud failure at the offending site.
   String withoutLineComments(String source) => source
       .split('\n')
       .map((line) {
@@ -47,18 +52,27 @@ void main() {
 
     for (final file in files) {
       final source = withoutLineComments(file.readAsStringSync());
-      final lines = source.split('\n');
       for (var start = source.indexOf(marker); start != -1;) {
         final open = start + marker.length - 1;
-        if (!argumentsAt(source, open).contains('semanticLabel:')) {
-          final line = '\n'.allMatches(source.substring(0, start)).length + 1;
+        final args = argumentsAt(source, open);
+        final line = '\n'.allMatches(source.substring(0, start)).length + 1;
+        // Guards the scan itself (#116b): an unbalanced snippet means
+        // `argumentsAt` ran off the end of the file — the comment strip ate
+        // real code (a `//` inside a string literal) — and the
+        // `semanticLabel:` check below would be matching against the rest of
+        // the file rather than this handle's arguments.
+        expect(
+          args.endsWith(')'),
+          isTrue,
+          reason:
+              'Unbalanced paren scan at ${file.path}:$line — '
+              'a // inside a string literal upstream of this handle?',
+        );
+        if (!args.contains('semanticLabel:')) {
           offenders.add('${file.path}:$line');
         }
         start = source.indexOf(marker, open);
       }
-      // Guards the scan itself: a file with handles must still have lines to
-      // report against, i.e. the strip above didn't eat the source.
-      expect(lines, isNotEmpty);
     }
 
     expect(

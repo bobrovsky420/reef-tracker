@@ -240,6 +240,22 @@ class _CheckerScanScreenState extends ConsumerState<CheckerScanScreen>
     await controller?.dispose();
   }
 
+  /// Test-only (#116a): enters the confirm phase the way an accepted vote
+  /// does — reading, candidates, phase, deferred camera stop — without
+  /// needing a synthetic camera frame the decoder would accept. Exists so the
+  /// PopScope back-from-confirm path (the fifth `_startCamera` caller) is
+  /// drivable under `flutter test`.
+  @visibleForTesting
+  void debugEnterConfirmPhase(SevenSegmentReading reading) {
+    setState(() {
+      _reading = reading;
+      _candidates = candidateCheckersFor(reading, color: _emaColor);
+      _selectedModel = _candidates.isEmpty ? null : _candidates.first;
+      _phase = _ScanPhase.confirm;
+    });
+    unawaited(Future(_stopCamera));
+  }
+
   CheckerColor? get _emaColor =>
       _emaR == null ? null : classifyCaseColor(_emaR!, _emaG!, _emaB!);
 

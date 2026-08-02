@@ -776,10 +776,17 @@ Layers, all injected and plugin-free below the adapter:
   records `sync_gdrive_dismissed_name` — quiet until an even newer foreign
   file appears; prompt suppression only, pushes keep their normal rules.
   Never throws (offline/dead grant/garbage file ⇒ null, retry next launch;
-  this read path never stamps the error key). `main.dart` runs it **before**
-  the launch push (a stale-but-dirty device pushing first would bury the
-  newer file), launch-only (not on resume), and parks the push for the
-  session's first cycle while a proposal is on screen. On a fresh install
+  this read path never stamps the error key). The launch wiring lives in
+  `data/cloud_restore_flow.dart` (T17): `runLaunchBackupAndSync` runs the
+  check **before** the launch push (a stale-but-dirty device pushing first
+  would bury the newer file) and parks the push while a proposal is on
+  screen; `CloudRestoreFlow` owns the once-per-process latch (launch-only,
+  not on resume) and the choice handling (notNow/keepMine/restore), with the
+  dialog itself in `app/cloud_restore_dialog.dart` (barrier dismiss maps to
+  notNow; a never-shown dialog records nothing so the next launch
+  re-proposes). `main.dart` supplies only the Flutter glue (dialog, SnackBar,
+  error funnel); the flow is pinned by `cloud_restore_flow_test.dart` +
+  `cloud_restore_dialog_test.dart`. On a fresh install
   the same flow doubles as new-device onboarding (empty local data ⇒ plain
   fast-forward). `restoreCloudBackup` is the shared accept path (also used
   by the Manage-backups Drive tiles): local safety backup via `backupNow`
@@ -2623,8 +2630,9 @@ readout is always confirmed by the user first.
   App-lifecycle observer releases/reacquires the camera on
   background/foreground.
 - **One camera at a time** (#77): `_startCamera` is the only opener and has
-  four callers — first frame, Rescan, retry-after-error, and the `resumed`
-  lifecycle callback — so it must be safe to call against a start that is
+  five callers — first frame, Rescan, retry-after-error, the `resumed`
+  lifecycle callback, and back-from-confirm (the `PopScope` handler that
+  returns to the viewfinder, #116a) — so it must be safe to call against a start that is
   already running or finished. A re-entrant call is dropped (`_starting`, the
   phase check cannot do this job: the method *sets* the phase it tests), and it
   disposes any existing controller before building a new one. Without both,
@@ -2809,6 +2817,17 @@ on the device's Wi-Fi network.
   tolerates several clients). Typed `RfLinkError` drives specific messages. The
   returned `RfSnapshot` carries `modelDisplayName` (the vendor product name),
   used as the default device name on add.
+- **Development without hardware** (`tool/reeffactory_emulator.dart`, T18): a
+  fake meter serving the same WebSocket surface (`/controler`, subprotocol
+  `arduino`, binary frames) for all three models with drifting values and
+  `/emu/set` pin endpoints; `dart run tool/reeffactory_emulator.dart --port 8081`
+  is reachable from the Android emulator as **10.0.2.2:8081**. The server class
+  is importable, and `rf_device_link_test.dart` drives the real
+  `RfWebSocketLink` at it — connect/join state machine, error mapping
+  (unreachable / timeout / unsupported model / closed-early / empty payload),
+  stray-text-frame tolerance and teardown. The fake hand-rolls the wire format
+  independently of `rf_protocol.dart` so a codec regression cannot break both
+  sides identically. Still never validated against real ReefFactory hardware.
 - **Dashboard** (`reeffactory_screen.dart`): shows the **active tank's** devices
   (plus unassigned ones, so they stay reachable on any tank), in the user's
   manual card order — `Devices.displayOrder`, then display name

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/auto_backup.dart';
@@ -15,6 +16,7 @@ import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 
 import 'fakes/fake_cloud_backup_store.dart';
+import 'sync_test_helpers.dart';
 
 /// Routes path_provider to a throwaway temp folder — the U35 restore path
 /// writes a local safety backup and `importBackup` rehearses into a temp
@@ -577,6 +579,13 @@ void main() {
       await settings.setSyncGdriveLastPushAt(DateTime(2026, 7, 15));
       await settings.setSyncGdriveLastErrorAt(DateTime(2026, 7, 15));
       await settings.setSyncDeviceName('Aquarium phone');
+      // Guard the hand-written fixture above (#116c): an 8th sync key would
+      // otherwise make the enumerated null-check below pass vacuously.
+      await expectEverySyncKeySet(
+        db,
+        keys: SettingKey.gdriveSyncKeys,
+        fixture: 'the disconnect fixture',
+      );
 
       await disconnectGDrive(db, auth);
 
@@ -822,6 +831,42 @@ void main() {
 
       expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
       expect(await listAutoBackups(), isEmpty);
+    });
+
+    test('failed safety backup ABORTS the restore: rethrows, local data '
+        'survives, no lineage recorded (T19)', () async {
+      // The abort-on-failed-safety-write contract holds structurally today
+      // (backupNow is simply not wrapped), but best-effort-wrapping backup
+      // writes is an established idiom in cloud_sync.dart (#63) — this pin
+      // is what makes that refactor fail loudly instead of silently
+      // converting the last defense against unrecoverable data loss.
+      await reader.createTankWithPreset(name: 'Nano', type: SetupType.mixed);
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      expect(proposal!.diverged, isTrue);
+
+      // Make the safety write fail for real: a *file* squatting on the
+      // backups folder name makes autoBackupDir's create() throw.
+      File(p.join(docsDir.path, 'backups')).writeAsStringSync('not a dir');
+
+      await expectLater(
+        restoreCloudBackup(
+          reader,
+          store: store,
+          file: proposal.file,
+          contents: proposal.contents,
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+
+      // The live DB still holds the pre-restore rows…
+      expect((await reader.getTanks()).map((t) => t.name), ['Nano']);
+      // …no sync lineage was recorded (a failed restore must not mark the
+      // cloud file as this device's synced state)…
+      expect(await AppSettings(reader).readSyncGdriveLastPushedName(), isNull);
+      expect(await AppSettings(reader).readSyncGdriveLastPushedHash(), isNull);
+      // …and once the filesystem recovers, the same file is proposed again.
+      File(p.join(docsDir.path, 'backups')).deleteSync();
+      expect(await checkCloudNewerBackup(reader, store: store), isNotNull);
     });
   });
 
