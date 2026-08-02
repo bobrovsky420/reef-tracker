@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   verified against automated tests only, not yet on a physical iPhone — it
   ships behind the same careful safety rules as the Android sync (a local
   safety copy before any restore, uploads never overwrite newer backups).
+- The aquarium editor now explains, right when you switch a tank to Fish
+  only, that this profile has no default ranges for alkalinity, calcium,
+  magnesium and phosphate — so it's no surprise when those gauges lose
+  their colours.
 
 ### Changed
 - The default strontium range now matches natural seawater: green is

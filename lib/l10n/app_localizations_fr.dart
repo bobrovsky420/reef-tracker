@@ -229,6 +229,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les paramètres par défaut et les limites de zones seront configurés pour ce type de bac. Vous pourrez les ajuster à tout moment.';
 
   @override
+  String get fishOnlyPresetNote =>
+      'Le préréglage Fish only ne définit aucune limite pour l\'alcalinité, le calcium, le magnésium ou les phosphates – si vous suivez ces paramètres, ils n\'afficheront pas de couleurs de zone tant que vous n\'aurez pas défini vos propres limites.';
+
+  @override
   String get volumeOptional => 'Volume (facultatif)';
 
   @override

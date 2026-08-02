@@ -71,6 +71,7 @@
   "enterAName": "Saisissez un nom",
   "setupType": "Type de bac",
   "presetSeedNote": "Les paramètres par défaut et les limites de zones seront configurés pour ce type de bac. Vous pourrez les ajuster à tout moment.",
+  "fishOnlyPresetNote": "Le préréglage Fish only ne définit aucune limite pour l'alcalinité, le calcium, le magnésium ou les phosphates – si vous suivez ces paramètres, ils n'afficheront pas de couleurs de zone tant que vous n'aurez pas défini vos propres limites.",
   "volumeOptional": "Volume (facultatif)",
   "vendorOptional": "Marque (facultative)",
   "modelOptional": "Modèle (facultatif)",

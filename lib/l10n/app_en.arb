@@ -103,6 +103,7 @@
   "enterAName": "Enter a name",
   "setupType": "Setup type",
   "presetSeedNote": "Default parameters and zone boundaries will be set up for this setup type. You can fine-tune them anytime.",
+  "fishOnlyPresetNote": "The Fish only preset sets no boundaries for alkalinity, calcium, magnesium or phosphate – if you track these parameters, they show no zone colours until you set your own boundaries.",
   "volumeOptional": "Volume (optional)",
   "vendorOptional": "Vendor (optional)",
   "modelOptional": "Model (optional)",

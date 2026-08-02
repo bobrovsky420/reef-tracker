@@ -229,6 +229,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Per questo tipo di vasca verranno impostati i parametri predefiniti e i limiti delle zone. Potrai regolarli in qualsiasi momento.';
 
   @override
+  String get fishOnlyPresetNote =>
+      'Il preset Solo pesci non imposta limiti per alcalinità, calcio, magnesio o fosfati – se monitori questi parametri, non mostreranno i colori delle zone finché non imposterai i tuoi limiti.';
+
+  @override
   String get volumeOptional => 'Volume (opzionale)';
 
   @override

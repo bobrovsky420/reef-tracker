@@ -498,6 +498,12 @@ abstract class AppLocalizations {
   /// **'Default parameters and zone boundaries will be set up for this setup type. You can fine-tune them anytime.'**
   String get presetSeedNote;
 
+  /// No description provided for @fishOnlyPresetNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The Fish only preset sets no boundaries for alkalinity, calcium, magnesium or phosphate – if you track these parameters, they show no zone colours until you set your own boundaries.'**
+  String get fishOnlyPresetNote;
+
   /// No description provided for @volumeOptional.
   ///
   /// In en, this message translates to:

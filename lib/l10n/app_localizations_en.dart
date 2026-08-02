@@ -229,6 +229,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Default parameters and zone boundaries will be set up for this setup type. You can fine-tune them anytime.';
 
   @override
+  String get fishOnlyPresetNote =>
+      'The Fish only preset sets no boundaries for alkalinity, calcium, magnesium or phosphate – if you track these parameters, they show no zone colours until you set your own boundaries.';
+
+  @override
   String get volumeOptional => 'Volume (optional)';
 
   @override

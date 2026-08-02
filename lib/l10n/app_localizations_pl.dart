@@ -230,6 +230,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Dla tego typu zbiornika zostaną ustawione domyślne parametry i granice stref. Możesz je dostroić w dowolnym momencie.';
 
   @override
+  String get fishOnlyPresetNote =>
+      'Profil Tylko ryby nie ustawia granic dla alkaliczności, wapnia, magnezu ani fosforanów – jeśli śledzisz te parametry, nie będą miały kolorów stref, dopóki nie ustawisz własnych granic.';
+
+  @override
   String get volumeOptional => 'Objętość (opcjonalnie)';
 
   @override

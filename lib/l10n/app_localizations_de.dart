@@ -230,6 +230,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Für diesen Beckentyp werden Standardparameter und Zonengrenzen eingerichtet. Du kannst sie jederzeit anpassen.';
 
   @override
+  String get fishOnlyPresetNote =>
+      'Die Vorlage „Nur Fische“ legt keine Grenzen für Alkalinität, Calcium, Magnesium oder Phosphat fest – falls du diese Parameter erfasst, zeigen sie keine Zonenfarben, bis du eigene Grenzen festlegst.';
+
+  @override
   String get volumeOptional => 'Volumen (optional)';
 
   @override
