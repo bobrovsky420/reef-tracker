@@ -1973,11 +1973,101 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load backups from Google Drive'**
   String get backupsDriveLoadFailed;
 
-  /// Error sub-line on a Google Drive backup row whose file exceeds the download size cap; restore is disabled for it.
+  /// Error sub-line on a cloud backup row whose file exceeds the download size cap; restore is disabled for it.
   ///
   /// In en, this message translates to:
   /// **'{size} — too large to restore'**
   String backupsDriveTooLarge(Object size);
+
+  /// Platform-neutral name of the cloud backup sync feature in the Pro dialog / paywall listings — covers Google Drive sync on Android (U24) and iCloud sync on iOS (U44).
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud backup'**
+  String get cloudSyncFeatureName;
+
+  /// Settings row + dialog title for the iCloud backup sync (U44, iOS only).
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud backup'**
+  String get syncIcloudTitle;
+
+  /// Settings row subtitle while iCloud sync is off — tapping turns it on.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up automatically to your iCloud Drive'**
+  String get syncIcloudSubtitle;
+
+  /// Body of the enabled iCloud row's options dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups are uploaded to the \"ReefTracker\" folder in your iCloud Drive. You can browse them in the Files app.'**
+  String get syncIcloudDialogBody;
+
+  /// Dialog action that turns iCloud backup sync off (there is no account to disconnect).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get syncIcloudDisable;
+
+  /// Snackbar after turning iCloud backup on; also the welcome-restore confirmation when sync came on with it.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups will sync to your iCloud Drive'**
+  String get syncIcloudEnabledSnack;
+
+  /// Snackbar after turning iCloud backup off; reassures that no cloud files were deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud backup turned off. Backups already uploaded stay in your iCloud Drive.'**
+  String get syncIcloudDisabledSnack;
+
+  /// Snackbar when the iCloud container can't be reached — signed out of iCloud, or iCloud Drive disabled for the app.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud isn\'t available. Sign in to iCloud and turn on iCloud Drive for ReefTracker in the device Settings.'**
+  String get syncIcloudUnavailable;
+
+  /// Persistent error row in Settings → Backup after a failed iCloud push, cleared by the next success (the syncGdriveLastFailed idiom).
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud upload failed on {when}'**
+  String syncIcloudLastFailed(Object when);
+
+  /// Section header for the iCloud backups list in Manage backups.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud'**
+  String get backupsIcloudSection;
+
+  /// Shown in the iCloud section while the app's iCloud folder holds no backups; also the welcome-restore message when there is nothing to restore.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups in iCloud yet'**
+  String get backupsIcloudEmpty;
+
+  /// Shown in the iCloud section when listing the folder fails; also the welcome-restore failure message.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load backups from iCloud'**
+  String get backupsIcloudLoadFailed;
+
+  /// Welcome-screen (no aquariums yet) action that restores the newest backup from iCloud Drive — the second-device / reinstall path (U44). Deliberately not Pro-gated.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from iCloud'**
+  String get welcomeRestoreIcloud;
+
+  /// iCloud wording of syncRestoreBody — the U35 launch proposal on iOS (U44).
+  ///
+  /// In en, this message translates to:
+  /// **'A newer backup from “{device}” ({when}) is in your iCloud Drive. Restore it to this device? Your settings on this device are kept.'**
+  String syncRestoreBodyIcloud(Object device, Object when);
+
+  /// iCloud wording of syncRestoreDivergedBody (U44).
+  ///
+  /// In en, this message translates to:
+  /// **'A newer backup from “{device}” ({when}) is in your iCloud Drive, but this device also has changes that were never uploaded. Restoring replaces this device\'s data with the backup — a local safety copy is saved first.'**
+  String syncRestoreDivergedBodyIcloud(Object device, Object when);
 
   /// Tappable row at the top of the Google Drive section in Manage backups, shown while Drive sync is connected but no device name is set; opens the device-name dialog so new uploads are labeled.
   ///

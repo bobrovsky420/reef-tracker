@@ -10,28 +10,137 @@ import 'cloud_backup_store.dart';
 import 'database.dart';
 import 'settings.dart';
 
-/// Google Drive backup sync engine (U24).
+/// Cloud backup sync engine — Google Drive on Android (U24), iCloud Drive on
+/// iOS (U44).
 ///
 /// Backup-**file** sync, not record-level data sync: the engine pushes the
 /// current database state as one more timestamped backup document into the
-/// app-owned Drive folder and prunes the folder to the newest N — no merging,
+/// app-owned cloud folder and prunes the folder to the newest N — no merging,
 /// ever. Multi-device safety comes from the content-hash dirty gate: a device
 /// whose data hasn't changed (a read-mostly second phone) hashes clean and
 /// never uploads, so it can't bury the writer device's newer file; a stale
 /// writer can add an older-stamped file but never destroy a newer one.
 ///
 /// Opportunistic like the local auto-backup (launch/resume/back-up-now, no
-/// background workers): `main.dart` calls [runGDriveSyncIfDirty] right after
+/// background workers): `main.dart` calls [runCloudSyncIfDirty] right after
 /// `runAutoBackupIfDue` completes. The engine has its own single-flight slot,
 /// mirroring `_autoBackupInFlight`, so a launch and a near-simultaneous
 /// resume share one run.
 ///
-/// Everything is injected ([CloudBackupStore], [CloudAuth]) — the engine
-/// never touches `google_sign_in` (plugin calls throw under `flutter test`)
-/// or the network directly, so `cloud_sync_test.dart` drives it entirely
-/// against in-memory fakes.
+/// Everything is injected ([CloudBackupStore], [CloudAuth], [CloudSyncState])
+/// — the engine never touches `google_sign_in`, a platform channel (both
+/// throw under `flutter test`) or the network directly, so
+/// `cloud_sync_test.dart` drives it entirely against in-memory fakes. Which
+/// provider a device uses is decided once, in `cloudBackupStoreProvider` /
+/// `cloudSyncStateProvider` (the U24 platform branch) — the engine itself is
+/// provider-blind.
 
-/// How a [runGDriveSyncIfDirty] run ended. Informational: the run itself
+/// Per-provider sync-state pack (U44): everything the engine and the U35
+/// checks persist differs between providers only in *which settings keys*
+/// hold it (`sync_gdrive_*` vs `sync_icloud_*`) and in what "enabled" means
+/// (account presence vs a plain toggle). Kept as one seam so the engine can't
+/// half-migrate the way the hand-copied key list once did (#74).
+sealed class CloudSyncState {
+  const CloudSyncState(this.settings);
+
+  final AppSettings settings;
+
+  /// Whether sync is on for this provider on this device.
+  Future<bool> isEnabled();
+
+  /// Cached provider folder id, when this provider caches one (Drive).
+  /// Reading null makes the engine call [CloudBackupStore.ensureFolder].
+  Future<String?> readFolderId();
+  Future<void> setFolderId(String? id);
+
+  Future<String?> readLastPushedHash();
+  Future<void> setLastPushedHash(String? hash);
+  Future<String?> readLastPushedName();
+  Future<void> setLastPushedName(String? name);
+  Future<void> setLastPushAt(DateTime? when);
+  Future<void> setLastErrorAt(DateTime? when);
+  Future<String?> readDismissedName();
+  Future<void> setDismissedName(String? name);
+}
+
+/// Google Drive keys (U24): the connected account's presence is the on-state,
+/// and the Drive folder id is cached (re-resolved on a 404, the user may have
+/// deleted the folder on drive.google.com).
+class GDriveSyncState extends CloudSyncState {
+  const GDriveSyncState(super.settings);
+
+  @override
+  Future<bool> isEnabled() async =>
+      await settings.readSyncGdriveAccount() != null;
+  @override
+  Future<String?> readFolderId() => settings.readSyncGdriveFolderId();
+  @override
+  Future<void> setFolderId(String? id) => settings.setSyncGdriveFolderId(id);
+  @override
+  Future<String?> readLastPushedHash() =>
+      settings.readSyncGdriveLastPushedHash();
+  @override
+  Future<void> setLastPushedHash(String? hash) =>
+      settings.setSyncGdriveLastPushedHash(hash);
+  @override
+  Future<String?> readLastPushedName() =>
+      settings.readSyncGdriveLastPushedName();
+  @override
+  Future<void> setLastPushedName(String? name) =>
+      settings.setSyncGdriveLastPushedName(name);
+  @override
+  Future<void> setLastPushAt(DateTime? when) =>
+      settings.setSyncGdriveLastPushAt(when);
+  @override
+  Future<void> setLastErrorAt(DateTime? when) =>
+      settings.setSyncGdriveLastErrorAt(when);
+  @override
+  Future<String?> readDismissedName() => settings.readSyncGdriveDismissedName();
+  @override
+  Future<void> setDismissedName(String? name) =>
+      settings.setSyncGdriveDismissedName(name);
+}
+
+/// iCloud keys (U44): a plain enabled flag (the Apple ID is the OS's
+/// business, there is no account to hold) and **no cached folder id** — the
+/// ubiquity container is re-resolved every run by `ensureFolder` (one cheap
+/// channel call; a persisted path could go stale across OS updates with no
+/// 404-style recovery signal, so [readFolderId] always answers null).
+class ICloudSyncState extends CloudSyncState {
+  const ICloudSyncState(super.settings);
+
+  @override
+  Future<bool> isEnabled() => settings.readSyncIcloudEnabled();
+  @override
+  Future<String?> readFolderId() async => null;
+  @override
+  Future<void> setFolderId(String? id) async {}
+  @override
+  Future<String?> readLastPushedHash() =>
+      settings.readSyncIcloudLastPushedHash();
+  @override
+  Future<void> setLastPushedHash(String? hash) =>
+      settings.setSyncIcloudLastPushedHash(hash);
+  @override
+  Future<String?> readLastPushedName() =>
+      settings.readSyncIcloudLastPushedName();
+  @override
+  Future<void> setLastPushedName(String? name) =>
+      settings.setSyncIcloudLastPushedName(name);
+  @override
+  Future<void> setLastPushAt(DateTime? when) =>
+      settings.setSyncIcloudLastPushAt(when);
+  @override
+  Future<void> setLastErrorAt(DateTime? when) =>
+      settings.setSyncIcloudLastErrorAt(when);
+  @override
+  Future<String?> readDismissedName() => settings.readSyncIcloudDismissedName();
+  @override
+  Future<void> setDismissedName(String? name) =>
+      settings.setSyncIcloudDismissedName(name);
+}
+
+/// How a [runCloudSyncIfDirty] run ended. Informational: the run itself
 /// records success/failure state in settings; callers only need this for
 /// user-visible feedback on the manual "Sync now" path.
 enum CloudSyncOutcome {
@@ -49,45 +158,46 @@ enum CloudSyncOutcome {
   offline,
 
   /// The provider rejected the call or silent auth failed; the error stamp
-  /// (`sync_gdrive_last_error_at`) was recorded and Settings shows it.
+  /// (`sync_gdrive_last_error_at` / `sync_icloud_last_error_at`) was recorded
+  /// and Settings shows it.
   failed,
 }
 
 /// In-flight guard mirroring `_autoBackupInFlight` (launch post-frame and a
 /// `resumed` event can fire near-simultaneously); concurrent callers share
-/// the same run's outcome.
+/// the same run's outcome. One module-global slot is enough: a device only
+/// ever runs one provider (the platform branch in `cloudSyncStateProvider`).
 Future<CloudSyncOutcome>? _syncInFlight;
 
-/// Pushes the current database state to Google Drive if the account is
-/// connected and the aquarium data changed since the last push. Never throws;
-/// failures are stamped into `sync_gdrive_last_error_at` (cleared by the next
+/// Pushes the current database state to the cloud provider if sync is enabled
+/// and the aquarium data changed since the last push. Never throws; failures
+/// are stamped into the provider's last-error key (cleared by the next
 /// successful run) and reported as [CloudSyncOutcome.failed].
-Future<CloudSyncOutcome> runGDriveSyncIfDirty(
+Future<CloudSyncOutcome> runCloudSyncIfDirty(
   AppDatabase db, {
   required CloudBackupStore store,
+  required CloudSyncState state,
 }) {
   final existing = _syncInFlight;
   if (existing != null) return existing;
   late final Future<CloudSyncOutcome> run;
-  run = _runGDriveSyncIfDirty(db, store).whenComplete(() {
+  run = _runCloudSyncIfDirty(db, store, state).whenComplete(() {
     if (identical(_syncInFlight, run)) _syncInFlight = null;
   });
   return _syncInFlight = run;
 }
 
-Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
+Future<CloudSyncOutcome> _runCloudSyncIfDirty(
   AppDatabase db,
   CloudBackupStore store,
+  CloudSyncState state,
 ) async {
-  final settings = AppSettings(db);
   // The whole body sits inside the try (#95): the pre-flight reads and the
   // encode can throw too (a failing DB, an isolate spawn error), and a throw
   // escaping here would break the "Never throws" contract the
   // fire-and-forget callers rely on, bypassing the error stamp.
   try {
-    if (await settings.readSyncGdriveAccount() == null) {
-      return CloudSyncOutcome.skippedDisabled;
-    }
+    if (!await state.isEnabled()) return CloudSyncOutcome.skippedDisabled;
     // Same "nothing to protect" rule as the local auto-backup: no visible
     // tanks means an empty document that would only evict a useful older file
     // from the cloud rotation.
@@ -97,19 +207,20 @@ Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
     // frame, and the encode is the same cost as the local auto-backup's.
     final json = await encodeBackupFromDb(db);
     final hash = await Isolate.run(() => backupContentHash(json));
-    if (hash == await settings.readSyncGdriveLastPushedHash()) {
+    if (hash == await state.readLastPushedHash()) {
       return CloudSyncOutcome.skippedClean;
     }
 
-    var folderId = await settings.readSyncGdriveFolderId();
+    var folderId = await state.readFolderId();
     folderId ??= await store.ensureFolder();
-    await settings.setSyncGdriveFolderId(folderId);
+    await state.setFolderId(folderId);
     final name = cloudBackupFileName(DateTime.now());
     // Advisory metadata (U35): the launch restore check on *other* devices
     // reads the device name and content hash straight off the listing,
-    // without downloading the file.
+    // without downloading the file. A provider without metadata support
+    // (iCloud) drops it; the checks degrade to the download path.
     final metadata = {
-      kCloudMetaDevice: ?await settings.readSyncDeviceName(),
+      kCloudMetaDevice: ?await state.settings.readSyncDeviceName(),
       kCloudMetaContentHash: hash,
     };
     try {
@@ -120,20 +231,25 @@ Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
       // propagates to the error stamp below.
       if (e.statusCode != 404) rethrow;
       folderId = await store.ensureFolder();
-      await settings.setSyncGdriveFolderId(folderId);
+      await state.setFolderId(folderId);
       await store.write(folderId, name, utf8.encode(json), metadata: metadata);
     }
-    // The upload is durable on Drive at this point — record it before the
+    // The upload is durable at this point (on Drive; on iCloud it is durably
+    // queued in the local container for the OS daemon) — record it before the
     // prune (#63), matching the local contract (`writeAutoBackup` first,
     // best-effort prune after). Stamping late would let a prune-only network
     // hiccup discard the push record: the dirty gate re-uploads the identical
     // DB next launch, or a non-IO throw stamps a false "sync failed".
-    await settings.setSyncGdriveLastPushedHash(hash);
-    await settings.setSyncGdriveLastPushedName(name);
-    await settings.setSyncGdriveLastPushAt(DateTime.now());
-    await settings.setSyncGdriveLastErrorAt(null);
+    await state.setLastPushedHash(hash);
+    await state.setLastPushedName(name);
+    await state.setLastPushAt(DateTime.now());
+    await state.setLastErrorAt(null);
     try {
-      await _pruneCloud(store, folderId, await settings.readAutoBackupKeep());
+      await _pruneCloud(
+        store,
+        folderId,
+        await state.settings.readAutoBackupKeep(),
+      );
     } catch (_) {
       // Best-effort, like the local prune: at most one extra stale file is
       // left for the next run to trim.
@@ -145,7 +261,7 @@ Future<CloudSyncOutcome> _runGDriveSyncIfDirty(
     return CloudSyncOutcome.offline;
   } catch (_) {
     try {
-      await settings.setSyncGdriveLastErrorAt(DateTime.now());
+      await state.setLastErrorAt(DateTime.now());
     } catch (_) {
       // Best-effort: if the DB write fails too there is nothing left to do.
     }
@@ -202,15 +318,14 @@ Future<void> _pruneCloud(
 /// Also clears the dismissed-file marker: the declined proposal is moot once
 /// a cloud restore actually happened.
 Future<void> recordRestoredCloudBackup(
-  AppDatabase db,
   String json, {
+  required CloudSyncState state,
   String? fileName,
 }) async {
   final hash = await Isolate.run(() => backupContentHash(json));
-  final settings = AppSettings(db);
-  await settings.setSyncGdriveLastPushedHash(hash);
-  if (fileName != null) await settings.setSyncGdriveLastPushedName(fileName);
-  await settings.setSyncGdriveDismissedName(null);
+  await state.setLastPushedHash(hash);
+  if (fileName != null) await state.setLastPushedName(fileName);
+  await state.setDismissedName(null);
 }
 
 /// A newer cloud backup another device wrote, found by [checkCloudNewerBackup]
@@ -249,23 +364,23 @@ class CloudRestoreProposal {
 /// dismissed exactly this file.
 ///
 /// Freshness is decided by **lineage, not clocks**: the newest cloud file is
-/// foreign iff its name differs from `sync_gdrive_last_pushed_name` (and its
+/// foreign iff its name differs from the provider's last-pushed name (and its
 /// content hash from the last pushed hash — covering uploads from before
 /// filenames were recorded). Device clocks never order anything; timestamps
 /// are display-only. Never throws: any failure (offline, dead grant, garbage
 /// file) reads as "nothing to propose" and the next launch retries.
 ///
-/// Must run **before** the launch Drive push: a stale-but-dirty device that
+/// Must run **before** the launch cloud push: a stale-but-dirty device that
 /// pushed first would bury the newer file this check is trying to surface.
 Future<CloudRestoreProposal?> checkCloudNewerBackup(
   AppDatabase db, {
   required CloudBackupStore store,
+  required CloudSyncState state,
 }) async {
   try {
-    final settings = AppSettings(db);
-    if (await settings.readSyncGdriveAccount() == null) return null;
+    if (!await state.isEnabled()) return null;
 
-    var folderId = await settings.readSyncGdriveFolderId();
+    var folderId = await state.readFolderId();
     List<CloudBackupFile> files;
     try {
       folderId ??= await store.ensureFolder();
@@ -276,7 +391,7 @@ Future<CloudRestoreProposal?> checkCloudNewerBackup(
       folderId = await store.ensureFolder();
       files = await store.list(folderId);
     }
-    await settings.setSyncGdriveFolderId(folderId);
+    await state.setFolderId(folderId);
 
     final backups =
         files
@@ -295,12 +410,12 @@ Future<CloudRestoreProposal?> checkCloudNewerBackup(
     if ((newest.sizeBytes ?? 0) > kCloudBackupMaxBytes) return null;
 
     // Ours by name — the overwhelmingly common case, settled by the listing
-    // alone (one REST call, no download, no local encode).
-    if (newest.name == await settings.readSyncGdriveLastPushedName()) {
+    // alone (one list call, no download, no local encode).
+    if (newest.name == await state.readLastPushedName()) {
       return null;
     }
 
-    final lastPushedHash = await settings.readSyncGdriveLastPushedHash();
+    final lastPushedHash = await state.readLastPushedHash();
     var remoteHash = newest.metadata[kCloudMetaContentHash];
     var deviceName = newest.metadata[kCloudMetaDevice];
     String? contents;
@@ -316,11 +431,11 @@ Future<CloudRestoreProposal?> checkCloudNewerBackup(
       // Content-identical to this device's own last push/restore (an upload
       // from before filenames were recorded): backfill the name so the next
       // launch takes the cheap path, and stay quiet.
-      await settings.setSyncGdriveLastPushedName(newest.name);
+      await state.setLastPushedName(newest.name);
       return null;
     }
 
-    if (newest.name == await settings.readSyncGdriveDismissedName()) {
+    if (newest.name == await state.readDismissedName()) {
       return null;
     }
 
@@ -333,8 +448,8 @@ Future<CloudRestoreProposal?> checkCloudNewerBackup(
         // Another device pushed data identical to what this one holds —
         // nothing to restore. Adopt the file as this device's synced state so
         // neither the dirty gate nor this check ever reconsiders it.
-        await settings.setSyncGdriveLastPushedHash(currentHash);
-        await settings.setSyncGdriveLastPushedName(newest.name);
+        await state.setLastPushedHash(currentHash);
+        await state.setLastPushedName(newest.name);
         return null;
       }
       // Diverged = this device holds changes that never reached the cloud:
@@ -352,14 +467,14 @@ Future<CloudRestoreProposal?> checkCloudNewerBackup(
   } catch (_) {
     // Offline, dead grant, a garbage file where a backup should be — all
     // read as "nothing to propose"; the next launch simply retries. This is
-    // a read path: it must never stamp `sync_gdrive_last_error_at`.
+    // a read path: it must never stamp the provider's last-error key.
     return null;
   }
 }
 
 /// The newest restorable backup in the cloud folder, or null when it holds
-/// none — the welcome-screen "Restore from Google Drive" path (U35): a fresh,
-/// unconnected device adopting the cloud state, so unlike
+/// none — the welcome-screen "Restore from Google Drive / iCloud" path (U35):
+/// a fresh, unconnected device adopting the cloud state, so unlike
 /// [checkCloudNewerBackup] there is no lineage to compare against and no
 /// cached folder id. **Deliberately ungated** (U19: limits gate creation,
 /// never access — pulling your own data is access; only ongoing push sync is
@@ -382,29 +497,31 @@ Future<CloudBackupFile?> fetchNewestCloudBackup(CloudBackupStore store) async {
 }
 
 /// Completes the welcome-screen restore (U35) once the user confirmed: the
-/// shared [restoreCloudBackup] path, then push sync is connected — the
-/// account persisted — **only when the restored data entitles this install**
-/// to [ProFeature.driveSync] (the founder marker rides the backup, so a
-/// founder's second device comes out fully synced; a Standard install gets
-/// its data and nothing else — the ungated action is the one-shot pull,
-/// ongoing sync stays the gated feature). Returns whether sync was connected,
-/// so the UI can word its confirmation.
+/// shared [restoreCloudBackup] path, then push sync is turned on — via the
+/// caller's [enableSync], which persists the provider's on-state (the Google
+/// account on Android, the iCloud toggle on iOS) — **only when the restored
+/// data entitles this install** to [ProFeature.cloudSync] (the founder marker
+/// rides the backup, so a founder's second device comes out fully synced; a
+/// Standard install gets its data and nothing else — the ungated action is
+/// the one-shot pull, ongoing sync stays the gated feature). Returns whether
+/// sync was turned on, so the UI can word its confirmation.
 Future<bool> completeWelcomeRestore(
   AppDatabase db, {
   required CloudBackupStore store,
+  required CloudSyncState state,
   required CloudBackupFile file,
-  required String accountEmail,
+  required Future<void> Function() enableSync,
 }) async {
-  await restoreCloudBackup(db, store: store, file: file);
+  await restoreCloudBackup(db, store: store, state: state, file: file);
   final edition = AppSettings.decodeEdition(
     await db.getSetting(kLegacyFreeSinceKey),
   );
   final entitled = hasProFeature(
-    ProFeature.driveSync,
+    ProFeature.cloudSync,
     purchased: false,
     legacyFree: edition == AppEdition.founder,
   );
-  if (entitled) await AppSettings(db).setSyncGdriveAccount(accountEmail);
+  if (entitled) await enableSync();
   return entitled;
 }
 
@@ -412,8 +529,8 @@ Future<bool> completeWelcomeRestore(
 /// prompt stays quiet until an even newer foreign file appears. Deliberately
 /// only prompt suppression — pushes keep following the normal dirty-gate
 /// rules.
-Future<void> dismissCloudRestore(AppDatabase db, String fileName) =>
-    AppSettings(db).setSyncGdriveDismissedName(fileName);
+Future<void> dismissCloudRestore(CloudSyncState state, String fileName) =>
+    state.setDismissedName(fileName);
 
 /// Downloads and restores cloud backup [file] into the live database (U35):
 /// the accept path of the launch proposal and of the Manage-backups Drive
@@ -429,6 +546,7 @@ Future<void> dismissCloudRestore(AppDatabase db, String fileName) =>
 Future<void> restoreCloudBackup(
   AppDatabase db, {
   required CloudBackupStore store,
+  required CloudSyncState state,
   required CloudBackupFile file,
   String? contents,
 }) async {
@@ -438,7 +556,7 @@ Future<void> restoreCloudBackup(
     await backupNow(db);
   }
   await importBackup(db, data);
-  await recordRestoredCloudBackup(db, doc, fileName: file.name);
+  await recordRestoredCloudBackup(doc, state: state, fileName: file.name);
 }
 
 /// Interactive connect flow driven from Settings: account picker + consent
@@ -477,13 +595,17 @@ Future<void> disconnectGDrive(AppDatabase db, CloudAuth auth) async {
 /// dirty), so without this a rename would only reach the cloud with the next
 /// real data change — and a device naming itself for the first time (a
 /// connect from before the name prompt existed) would keep its whole
-/// rotation anonymous until then. Callers kick [runGDriveSyncIfDirty] on
+/// rotation anonymous until then. Callers kick [runCloudSyncIfDirty] on
 /// `true` so a freshly-labeled file appears in the rotation right away.
+/// Both providers' hashes are cleared unconditionally — the inactive one's
+/// key is null anyway, and the shared name dialog has no business knowing
+/// which provider this device runs.
 Future<bool> renameSyncDevice(AppDatabase db, String? name) async {
   final settings = AppSettings(db);
   final normalized = AppSettings.decodeSyncDeviceName(name);
   if (normalized == await settings.readSyncDeviceName()) return false;
   await settings.setSyncDeviceName(normalized);
   await settings.setSyncGdriveLastPushedHash(null);
+  await settings.setSyncIcloudLastPushedHash(null);
   return true;
 }

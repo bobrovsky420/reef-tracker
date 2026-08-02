@@ -53,7 +53,7 @@ and no account.
 | App metadata       | `package_info_plus` (real version/build for the About box) |
 | Feature tour       | `showcaseview` (first-run spotlight tour of the top bar) |
 | Reminders          | `flutter_local_notifications` (scheduled local notifications; requires core-library desugaring in `android/app/build.gradle.kts` and the two receivers declared in the app manifest) + `timezone` (pure Dart; instants are scheduled as absolute UTC — no timezone-lookup plugin) |
-| Cloud backup sync  | `google_sign_in` v7 (Google SSO + short-lived `drive.file` tokens, U24; **Android-only surface** — iOS gets its own solution later) + plain `dart:io` REST for the Drive calls (deliberately no `googleapis` package) |
+| Cloud backup sync  | Android: `google_sign_in` v7 (Google SSO + short-lived `drive.file` tokens, U24) + plain `dart:io` REST for the Drive calls (deliberately no `googleapis` package). iOS: the app's iCloud Drive container over a hand-written platform channel (U44 — no plugin) |
 
 > ⚠️ **Pinned plugins.** `share_plus` (10.1.4) and `file_picker` (11.0.0) are
 > pinned to exact known-good versions, and `package_info_plus` is held below 10:
@@ -643,23 +643,36 @@ Settings keys: `auto_backup_enabled` (default on), `auto_backup_interval`
 `autoBackupIntervalProvider`, `lastBackupAtProvider`,
 `lastBackupErrorAtProvider`.
 
-### Google Drive backup sync (U24) + multi-device restore (U35) — `cloud_sync.dart`, `cloud_backup_store.dart`, `cloud_auth.dart`/`cloud_auth_google.dart`
+### Cloud backup sync — Google Drive on Android (U24), iCloud on iOS (U44) + multi-device restore (U35) — `cloud_sync.dart`, `cloud_backup_store.dart`, `icloud_backup_store.dart`, `cloud_auth.dart`/`cloud_auth_google.dart`
 
-**Android-only by decision** (iOS will get a separate proprietary solution;
-the plugin compiles into the iOS app but is never invoked or configured
-there — the Settings row and the Manage-backups Drive section are hidden
-behind `defaultTargetPlatform == TargetPlatform.android`, the codebase's one
-deliberate platform branch, testable via
+**One provider-blind engine, two providers, chosen per platform** in
+`cloudBackupStoreProvider` / `cloudSyncStateProvider` — still the codebase's
+one deliberate `defaultTargetPlatform` branch (now two-sided: the Settings
+row, Manage-backups section and welcome-restore button render the Drive
+surface on Android and the iCloud surface on iOS; testable via
 `debugDefaultTargetPlatformOverride`). Backup-**file** sync, not record-level
 data sync: the engine pushes
 the current database state as one more timestamped document
 (`reeftracker-auto-<UTC stamp>.json`, the local rotation's naming) into an
-app-owned **visible "ReefTracker" folder** in the user's My Drive, and prunes
+app-owned **visible folder** — a "ReefTracker" folder in the user's My Drive,
+or the app's iCloud Drive container shown as a ReefTracker folder in the
+Files app — and prunes
 the folder to `auto_backup_keep` newest. No folder picker anywhere — the U20
 lesson — because the `drive.file` scope (non-sensitive, no OAuth verification
-review) sees exactly the files the app created.
+review) sees exactly the files the app created, and the iCloud container is
+app-owned by construction.
 
 Layers, all injected and plugin-free below the adapter:
+
+- **`CloudSyncState`** (seam, U44): the per-provider settings-key pack —
+  what "enabled" means (Drive: account presence; iCloud: the
+  `sync_icloud_enabled` toggle), whether a folder id is cached (Drive: yes,
+  404 ⇒ re-resolve; iCloud: never — the container is re-resolved every run,
+  a persisted path could go stale with no 404-style recovery signal), and
+  which keys hold the dirty-gate hash, U35 lineage names, push time and
+  error stamp. `GDriveSyncState` / `ICloudSyncState`, both driven by the one
+  engine — kept as a seam so a provider can't half-migrate the way the
+  hand-copied key list once did (#74).
 
 - **`CloudBackupStore`** (seam): `ensureFolder`/`list`/`read`/`write`/`delete`
   over opaque provider ids, provider-neutral so OneDrive can slot in later;
@@ -684,6 +697,30 @@ Layers, all injected and plugin-free below the adapter:
   synthetic `CloudApiException(413)`, and the Manage-backups Drive list
   renders an over-cap entry as an error tile (restore removed, delete kept)
   instead of attempting the download.
+- **`ICloudBackupStore`** (U44, iOS): the same [CloudBackupStore] contract
+  over a hand-written platform channel (`cz.reeftracker/icloud_backup` →
+  `ICloudBackupChannel` in `ios/Runner/AppDelegate.swift`, kept there like
+  the #68 channel — no plugin, the #50 policy). Files live in the ubiquity
+  container's `Documents/`; a `write` is a coordinated atomic write into the
+  local container (durably queued — the OS daemon uploads, so `offline`
+  effectively disappears from the push path), `list` runs an
+  `NSMetadataQuery` (the one API that reports evicted items under their real
+  names and sizes), `read` triggers the download and waits, bounded by the
+  same #58 timeout and #64 byte cap (checked native-side before the bytes
+  cross the channel, re-checked in Dart). **No advisory metadata** — iCloud
+  has no `appProperties` analog — so uploads carry none and the U35 checks
+  take their documented degrade path (one download + hash for a foreign
+  newest file; the device name then comes from the document's own `device`
+  field). Error mapping: `unavailable` (signed out / iCloud Drive off) ⇒
+  `CloudAuthRequiredException`, `timeout` ⇒ `SocketException` (offline
+  branch), `too_large` ⇒ 413, everything else ⇒ `CloudApiException(500)`.
+  Native requirements: `Runner.entitlements` (CloudDocuments +
+  `iCloud.cz.reeftracker.reeftracker`, wired via `CODE_SIGN_ENTITLEMENTS`),
+  the Info.plist `NSUbiquitousContainers` dict (document-scope public, so
+  the folder shows in Files — note Apple only re-reads that dict when the
+  bundle version increments), and the iCloud capability + container on the
+  App ID in the developer portal (a manual step; Codemagic's automatic
+  signing then regenerates the profile).
 - **`CloudAuth`** (seam) + **`GoogleDriveAuth`** (`google_sign_in` v7,
   Credential Manager): interactive `connect()` = system account picker +
   consent (cancel ⇒ null, never an error); silent `accessToken()` serves a
@@ -762,9 +799,14 @@ Settings keys — **fresh names, deliberately not U20's orphaned
 `sync_gdrive_last_pushed_name`, `sync_gdrive_dismissed_name`, and
 `sync_device_name` (the user-chosen device label; survives disconnect, and
 travels only *inside* backup documents as the top-level `device` field —
-restoring another device's backup never renames this one). Providers:
+restoring another device's backup never renames this one). The iCloud pack
+(U44) mirrors it under the `sync_icloud_` prefix — `sync_icloud_enabled`
+(the toggle that *is* the on-state; there is no account), plus the same
+pushed-hash / push-at / error-at / pushed-name / dismissed-name stamps and
+**no folder-id key** (see `ICloudSyncState`). Providers:
 `syncGdriveAccountProvider`, `syncGdriveLastPushAtProvider`,
-`syncGdriveLastErrorAtProvider`.
+`syncGdriveLastErrorAtProvider`; `syncIcloudEnabledProvider`,
+`syncIcloudLastPushAtProvider`, `syncIcloudLastErrorAtProvider`.
 
 Turning sync off locally is **one function, never a hand-copied list**:
 `AppSettings.clearGDriveSyncState()` clears `SettingKey.gdriveSyncKeys` — every
@@ -775,6 +817,10 @@ were hand-copied until #74, and the copy silently missed U35's two filename keys
 for a release, so a transferred database kept the old phone's
 `sync_gdrive_last_pushed_name` and suppressed its own restore prompt on
 reconnect. `sync_device_name` sits outside the prefix on purpose and survives.
+The iCloud twins are `clearICloudSyncState()` (everything — the "Turn off"
+action) and `clearICloudSyncLineage()` (everything **except** the enabled
+flag — the reconcile's clear, see below), both derived from
+`SettingKey.icloudSyncKeys` the same way.
 
 - **Install fingerprint** (`install_id.dart`, #62): device-local only guards
   the app's *own* JSON restore — Android OS Auto Backup / device transfer
@@ -792,25 +838,44 @@ reconnect. `sync_device_name` sits outside the prefix on purpose and survives.
   missing/different ⇒ the database arrived via OS restore ⇒ the
   `sync_gdrive_*` keys are cleared locally (no revoke — the grant belongs to
   the old device) and a fresh id is seeded, forcing a deliberate re-connect.
+  **The iCloud pack is treated differently on purpose (U44):** only the
+  lineage stamps are cleared (`clearICloudSyncLineage`) — the
+  `sync_icloud_enabled` toggle survives, because the identity behind iCloud
+  sync is the device's Apple ID, which an OS restore legitimately carries,
+  and silently turning backup *off* after a phone migration is the worse
+  failure. The cleared stamps self-heal: the first launch's U35 check hashes
+  the "foreign" newest cloud file equal to the restored data and adopts it
+  silently, backfilling name and hash.
   A fingerprint-less database only seeds, never clears (indistinguishable
   from a pre-fingerprint upgrade); I/O failures fail open (log + sync as
   before) so a broken filesystem can't disconnect a working sync.
 
 UI: a Settings → Backup row (connect when absent — **Pro-gated**,
-`ProFeature.driveSync`, **`grandfathered: true`** (explicit 2026-07-15
+`ProFeature.cloudSync` (renamed from `driveSync` 2026-08-01 when the iCloud
+half was built — keys are never persisted, the `connectedDevices`-merge
+precedent; the paywall name is the platform-neutral `cloudSyncFeatureName`),
+**`grandfathered: true`** (explicit 2026-07-15
 decision, like the stability score): Founder installs — today, every install —
 use it free forever, Standard installs get the Pro dialog; gate on the connect
 action only per U19's "limits gate creation, never access"; when connected:
 account + last-upload status, tap → dialog with Disconnect, which keeps the
 cloud files)
-plus the persistent upload-error row; the **Manage backups** screen gains an
-"On this device" / "Google Drive" split when connected — Drive tiles show
-the writing device's name from the listing metadata (U35) and offer restore
+plus the persistent upload-error row. The iOS twin (U44) is the same pair of
+rows with the toggle in place of the account: enabling first verifies the
+container is reachable (`ensureFolder`; unavailable ⇒ a "sign in to iCloud"
+snack and nothing is flipped), then the device-name prompt and an immediate
+first push; the options dialog offers rename / **Turn off**
+(`clearICloudSyncState` — no revoke exists) / OK. The **Manage backups**
+screen gains an
+"On this device" / "Google Drive" (or "iCloud") split when connected — cloud
+tiles show
+the writing device's name from the listing metadata (U35; absent on iCloud,
+where uploads carry no metadata) and offer restore
 (the shared `restoreCloudBackup` path: local safety backup → download → the
 same 3-stage `importBackup` pipeline → echo suppression) and delete, and a
 section-level unavailable row when listing fails (local backups stay
 usable). While connected without a device name (a connect from before the
-U35 prompt existed was never asked), the Drive section leads with a nudge
+U35 prompt existed was never asked), the cloud section leads with a nudge
 row that opens the shared device-name dialog
 (`sync_device_name_dialog.dart`, also the connect flow's and the options
 dialog's editor). When no name is stored yet, the dialog prefills with the
@@ -821,7 +886,9 @@ personalized name, else the commercial model name) — read through
 answers under `flutter test`, with a 2 s production timeout so a platform
 hiccup can't stall the dialog. Prefill only: nothing is saved unseen, and a
 stored name always wins. Saving a *changed* name goes through `renameSyncDevice`,
-which clears `sync_gdrive_last_pushed_hash` — `device` is hash-excluded, so
+which clears both providers' pushed hashes (the inactive one's key is null
+anyway; the shared dialog has no business knowing which provider this device
+runs) — `device` is hash-excluded, so
 a rename would otherwise not upload until the next real data change — and
 every caller follows up with an immediate push, so a freshly-labeled file
 enters the rotation right away.
@@ -1666,11 +1733,14 @@ behind a confirmation dialog**:
   only hides (measurements stay stored).
 - Empty states: `NoTanksView` (first-run welcome: a language selector +
   add-aquarium prompt — lets the user pick their language before creating a tank
-  without opening Settings — plus, on Android, the **ungated "Restore from
-  Google Drive"** entry (U35): account picker → `fetchNewestCloudBackup` →
+  without opening Settings — plus the **ungated cloud-restore** entry (U35):
+  "Restore from Google Drive" on Android (account picker first) or "Restore
+  from iCloud" on iOS (no picker — iCloud availability *is* the sign-in
+  state, U44); then `fetchNewestCloudBackup` →
   confirm dialog naming the writing device → `completeWelcomeRestore`, which
-  connects push sync only when the restored data entitles the install to
-  `ProFeature.driveSync` — the founder marker rides the backup, solving the
+  turns push sync on (persists the account / flips the toggle) only when the
+  restored data entitles the install to
+  `ProFeature.cloudSync` — the founder marker rides the backup, solving the
   post-founder second-device chicken-and-egg where the gated Settings connect
   row would otherwise be the only way in) and `_NoParamsView`.
 - **Manage Parameters** (`ManageParametersScreen`) keeps its single
@@ -2240,7 +2310,7 @@ re-import; only what's new is added.
   watermark → the cutoff question is asked again; the mapping is kept).
   Both set `rewound`.
 - **Tier:** `hannaImport`, `grandfathered: true` (explicit 2026-07-19
-  decision, same reasoning as driveSync/stabilityScore/smartInsights).
+  decision, same reasoning as cloudSync (then `driveSync`)/stabilityScore/smartInsights).
 - **Deferred:** share-target registration (Android `ACTION_SEND`/`VIEW` +
   iOS document types) so Hanna Lab's share sheet lists ReefTracker directly;
   more source formats.
@@ -3739,12 +3809,13 @@ the Hanna checker and the checker scan are entered from the Measurements-tab
 overflow menu, Devices from its own tab);
 **Backup & Restore** (export → share sheet, import → file picker → full replace), plus an
 **Automatic backup** toggle + frequency, a link to the **Manage backups**
-screen (see Data → Automatic backup), the **Google Drive sync** row +
-persistent upload-error row (U24 — see Data → Google Drive backup sync;
-connect is Pro-gated via `ProFeature.driveSync`; the connect flow ends in
+screen (see Data → Automatic backup), the **cloud sync** row +
+persistent upload-error row (Google Drive on Android, U24; iCloud on iOS,
+U44 — see Data → Cloud backup sync;
+enabling is Pro-gated via `ProFeature.cloudSync`; the enable flow ends in
 the **device name** dialog (U35), also reachable from the connected row's
 options dialog and from the Manage-backups nudge row — a rename pushes a
-freshly-labeled backup immediately, see Data → Google Drive backup sync).
+freshly-labeled backup immediately, see Data → Cloud backup sync).
 The **About** section holds the
 aquarium count, Replay tour, three **website link rows** (user guide, support
 & FAQ, privacy policy on reeftracker.org — `url_launcher`,

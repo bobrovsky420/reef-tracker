@@ -11,6 +11,12 @@
 #      below in `integrations.app_store_connect`.
 #   2. Nothing else — `ios_signing` makes Codemagic create and manage the
 #      distribution certificate + provisioning profile for the bundle id.
+#
+# iCloud backup (U44) prerequisite, once, in the Apple developer portal:
+# the App ID cz.reeftracker.reeftracker needs the iCloud capability with
+# container iCloud.cz.reeftracker.reeftracker (matching Runner.entitlements),
+# or signing fails with an entitlement/profile mismatch. Codemagic's
+# automatic signing picks the capability up from the App ID after that.
 workflows:
   ios-release:
     name: iOS release → TestFlight

@@ -28,7 +28,13 @@ features:
     grandfathered: true
   - key: stabilityScore
     grandfathered: true
-  - key: driveSync
+  # One gate for cloud backup sync on both platforms — Google Drive on
+  # Android (U24), iCloud Drive on iOS (U44). Renamed from `driveSync`
+  # 2026-08-01 when the iCloud half was built: keys are never persisted, and
+  # to a keeper this is one capability ("my backups live in the cloud") —
+  # the connectedDevices merge precedent. Grandfathering carries over
+  # unchanged, so Founder installs get it free on either platform.
+  - key: cloudSync
     grandfathered: true
   - key: smartInsights
     grandfathered: true

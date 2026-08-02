@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -308,7 +309,11 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     // would race the user's decision (and bury the newer file the dialog is
     // about). Declining just delays the push to the next launch/resume.
     if (wrote && !proposalShown) {
-      await runGDriveSyncIfDirty(db, store: ref.read(cloudBackupStoreProvider));
+      await runCloudSyncIfDirty(
+        db,
+        store: ref.read(cloudBackupStoreProvider),
+        state: ref.read(cloudSyncStateProvider),
+      );
     }
   }
 
@@ -324,6 +329,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     final proposal = await checkCloudNewerBackup(
       db,
       store: ref.read(cloudBackupStoreProvider),
+      state: ref.read(cloudSyncStateProvider),
     );
     if (proposal == null) return false;
     unawaited(
@@ -361,13 +367,21 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
           // for a store that somehow didn't.
           null => proposal.file.name,
         };
+        // Same dialog, provider-appropriate wording: the U35 check now runs
+        // on both platforms (U44), and "your Google Drive" would be a lie on
+        // an iPhone.
+        final isIcloud = defaultTargetPlatform == TargetPlatform.iOS;
         return AlertDialog(
           icon: const Icon(Icons.cloud_download_outlined),
           title: Text(l.syncRestoreTitle),
           content: Text(
             proposal.diverged
-                ? l.syncRestoreDivergedBody(device, when)
-                : l.syncRestoreBody(device, when),
+                ? (isIcloud
+                      ? l.syncRestoreDivergedBodyIcloud(device, when)
+                      : l.syncRestoreDivergedBody(device, when))
+                : (isIcloud
+                      ? l.syncRestoreBodyIcloud(device, when)
+                      : l.syncRestoreBody(device, when)),
           ),
           actions: [
             TextButton(
@@ -391,21 +405,29 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     switch (choice) {
       // Barrier dismiss counts as "not now": quiet until a newer file shows.
       case null || _CloudRestoreChoice.notNow:
-        await dismissCloudRestore(db, proposal.file.name);
+        await dismissCloudRestore(
+          ref.read(cloudSyncStateProvider),
+          proposal.file.name,
+        );
       case _CloudRestoreChoice.keepMine:
         // The user chose this device's data: push it now so it becomes the
         // newest cloud state (the other device gets the mirror proposal).
         // Never destructive — the declined file stays in the cloud rotation.
-        await dismissCloudRestore(db, proposal.file.name);
-        await runGDriveSyncIfDirty(
+        await dismissCloudRestore(
+          ref.read(cloudSyncStateProvider),
+          proposal.file.name,
+        );
+        await runCloudSyncIfDirty(
           db,
           store: ref.read(cloudBackupStoreProvider),
+          state: ref.read(cloudSyncStateProvider),
         );
       case _CloudRestoreChoice.restore:
         try {
           await restoreCloudBackup(
             db,
             store: ref.read(cloudBackupStoreProvider),
+            state: ref.read(cloudSyncStateProvider),
             file: proposal.file,
             contents: proposal.contents,
           );

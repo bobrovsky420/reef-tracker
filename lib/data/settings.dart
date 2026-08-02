@@ -244,6 +244,15 @@ enum SettingKey {
   // backup document's top-level `device` field instead).
   syncGdriveLastPushedName(kSyncGdriveLastPushedNameKey, deviceLocal: true),
   syncGdriveDismissedName(kSyncGdriveDismissedNameKey, deviceLocal: true),
+  // iCloud backup sync state (U44) — device-local for the same reason the
+  // Drive keys are: the enabled flag and the pushed/dismissed bookkeeping
+  // describe *this* device's relationship to the cloud folder.
+  syncIcloudEnabled(kSyncIcloudEnabledKey, deviceLocal: true),
+  syncIcloudLastPushedHash(kSyncIcloudLastPushedHashKey, deviceLocal: true),
+  syncIcloudLastPushAt(kSyncIcloudLastPushAtKey, deviceLocal: true),
+  syncIcloudLastErrorAt(kSyncIcloudLastErrorAtKey, deviceLocal: true),
+  syncIcloudLastPushedName(kSyncIcloudLastPushedNameKey, deviceLocal: true),
+  syncIcloudDismissedName(kSyncIcloudDismissedNameKey, deviceLocal: true),
   syncDeviceName(kSyncDeviceNameKey, deviceLocal: true),
   // Random id of the install that wrote this database (#62). Device-local:
   // the app's own JSON restore must keep *this* device's fingerprint, exactly
@@ -290,6 +299,12 @@ enum SettingKey {
   /// device, not the account relationship, and survives a disconnect.
   static Iterable<SettingKey> get gdriveSyncKeys =>
       values.where((k) => k.storageKey.startsWith('sync_gdrive_'));
+
+  /// Every key holding this device's iCloud sync state (U44), derived by
+  /// prefix exactly like [gdriveSyncKeys] (#74: derive, never hand-copy).
+  /// [syncDeviceName] sits outside this prefix too and survives.
+  static Iterable<SettingKey> get icloudSyncKeys =>
+      values.where((k) => k.storageKey.startsWith('sync_icloud_'));
 }
 
 /// Typed facade over the [AppDatabase] key/value `Settings` store. Cheap to
@@ -792,6 +807,81 @@ class AppSettings {
   /// filenames. [setSyncDeviceName] is untouched by design — see the getter.
   Future<void> clearGDriveSyncState() async {
     for (final key in SettingKey.gdriveSyncKeys) {
+      await _write(key, null);
+    }
+  }
+
+  // --- iCloud sync (U44) -------------------------------------------------------
+
+  /// Whether iCloud backup sync is on (iOS). Unlike Drive there is no account
+  /// to hold — the OS's Apple ID is the identity — so this plain flag is the
+  /// on-state.
+  static bool decodeSyncIcloudEnabled(String? raw) => raw == 'true';
+  Stream<bool> watchSyncIcloudEnabled() =>
+      _watch(SettingKey.syncIcloudEnabled).map(decodeSyncIcloudEnabled);
+  Future<bool> readSyncIcloudEnabled() async =>
+      decodeSyncIcloudEnabled(await _read(SettingKey.syncIcloudEnabled));
+  Future<void> setSyncIcloudEnabled(bool enabled) =>
+      _write(SettingKey.syncIcloudEnabled, enabled.toString());
+
+  /// The iCloud counterparts of the Drive stamps — same contracts as their
+  /// `SyncGdrive` twins (dirty gate / echo suppression, U35 lineage names,
+  /// push time, persistent error).
+  Future<String?> readSyncIcloudLastPushedHash() =>
+      _read(SettingKey.syncIcloudLastPushedHash);
+  Future<void> setSyncIcloudLastPushedHash(String? hash) =>
+      _write(SettingKey.syncIcloudLastPushedHash, hash);
+
+  static DateTime? decodeSyncIcloudLastPushAt(String? raw) =>
+      _parseEpochMillis(raw);
+  Stream<DateTime?> watchSyncIcloudLastPushAt() =>
+      _watch(SettingKey.syncIcloudLastPushAt).map(decodeSyncIcloudLastPushAt);
+  Future<void> setSyncIcloudLastPushAt(DateTime? when) => _write(
+    SettingKey.syncIcloudLastPushAt,
+    when?.millisecondsSinceEpoch.toString(),
+  );
+
+  static DateTime? decodeSyncIcloudLastErrorAt(String? raw) =>
+      _parseEpochMillis(raw);
+  Stream<DateTime?> watchSyncIcloudLastErrorAt() =>
+      _watch(SettingKey.syncIcloudLastErrorAt).map(decodeSyncIcloudLastErrorAt);
+  Future<void> setSyncIcloudLastErrorAt(DateTime? when) => _write(
+    SettingKey.syncIcloudLastErrorAt,
+    when?.millisecondsSinceEpoch.toString(),
+  );
+
+  Future<String?> readSyncIcloudLastPushedName() =>
+      _read(SettingKey.syncIcloudLastPushedName);
+  Future<void> setSyncIcloudLastPushedName(String? name) =>
+      _write(SettingKey.syncIcloudLastPushedName, name);
+
+  Future<String?> readSyncIcloudDismissedName() =>
+      _read(SettingKey.syncIcloudDismissedName);
+  Future<void> setSyncIcloudDismissedName(String? name) =>
+      _write(SettingKey.syncIcloudDismissedName, name);
+
+  /// Clears every `sync_icloud_*` key — the "turn iCloud backup off" action
+  /// (the [clearGDriveSyncState] analog; there is no grant to revoke).
+  Future<void> clearICloudSyncState() async {
+    for (final key in SettingKey.icloudSyncKeys) {
+      await _write(key, null);
+    }
+  }
+
+  /// Clears the iCloud lineage stamps but keeps the enabled flag — what
+  /// `reconcileInstallFingerprint` runs after an OS restore (U44).
+  ///
+  /// Deliberate deviation from the Drive reconcile, which clears everything:
+  /// Drive disconnects because the OAuth session doesn't ride a transfer
+  /// while a foreign account identity does (#62). On iOS the identity *is*
+  /// the device's Apple ID, which an OS restore legitimately carries — and
+  /// silently turning backup OFF after a phone migration is the worse
+  /// failure. Cleared stamps self-heal: the first launch's U35 check hashes
+  /// the "foreign" newest cloud file equal to the restored data and adopts it
+  /// silently.
+  Future<void> clearICloudSyncLineage() async {
+    for (final key in SettingKey.icloudSyncKeys) {
+      if (key == SettingKey.syncIcloudEnabled) continue;
       await _write(key, null);
     }
   }

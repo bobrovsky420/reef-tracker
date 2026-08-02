@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show listEquals, mapEquals;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, listEquals, mapEquals;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -7,12 +8,14 @@ import '../data/ap_device_link.dart';
 import '../data/cloud_auth.dart';
 import '../data/cloud_auth_google.dart';
 import '../data/cloud_backup_store.dart';
+import '../data/cloud_sync.dart';
 import '../data/database.dart';
 import '../data/device_http.dart';
 import '../data/device_secrets.dart';
 import '../data/environment_sources.dart';
 import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
+import '../data/icloud_backup_store.dart';
 import '../data/lan_discovery.dart';
 import '../data/notifications.dart';
 import '../data/os_device_name.dart';
@@ -176,25 +179,26 @@ final parameterOverridesProvider =
 ///
 /// Consumers that need to write a row back use `p.row`, which never carries
 /// resolved values; see [ResolvedParameter].
-final trackedParametersProvider =
-    Provider<AsyncValue<List<ResolvedParameter>>>((ref) {
-      final tank = ref.watch(activeTankProvider);
-      if (tank == null) return const AsyncValue.data([]);
-      final rows = ref.watch(_trackedParametersFamily(tank.id));
-      final overrides = ref.watch(_parameterOverridesFamily(tank.id));
-      if (rows.hasError) return AsyncValue.error(rows.error!, rows.stackTrace!);
-      if (overrides.hasError) {
-        return AsyncValue.error(overrides.error!, overrides.stackTrace!);
-      }
-      // Both streams must have landed before anything renders: resolving rows
-      // against a not-yet-loaded override list would flash the defaults over a
-      // tank's own bounds on every cold start.
-      final r = rows.value, o = overrides.value;
-      if (r == null || o == null) return const AsyncValue.loading();
-      return AsyncValue.data(
-        resolveParameters(r, SetupType.fromName(tank.setupType), o),
-      );
-    });
+final trackedParametersProvider = Provider<AsyncValue<List<ResolvedParameter>>>(
+  (ref) {
+    final tank = ref.watch(activeTankProvider);
+    if (tank == null) return const AsyncValue.data([]);
+    final rows = ref.watch(_trackedParametersFamily(tank.id));
+    final overrides = ref.watch(_parameterOverridesFamily(tank.id));
+    if (rows.hasError) return AsyncValue.error(rows.error!, rows.stackTrace!);
+    if (overrides.hasError) {
+      return AsyncValue.error(overrides.error!, overrides.stackTrace!);
+    }
+    // Both streams must have landed before anything renders: resolving rows
+    // against a not-yet-loaded override list would flash the defaults over a
+    // tank's own bounds on every cold start.
+    final r = rows.value, o = overrides.value;
+    if (r == null || o == null) return const AsyncValue.loading();
+    return AsyncValue.data(
+      resolveParameters(r, SetupType.fromName(tank.setupType), o),
+    );
+  },
+);
 
 final _tankReadingsFamily = StreamProvider.autoDispose
     .family<List<Reading>, int>(
@@ -766,13 +770,48 @@ final lastBackupErrorAtProvider = _setting(
 
 /// Google auth for Drive sync (U24). A provider so tests (and any future
 /// platform without the Google path) can override it with a fake — nothing
-/// else in the app touches the `google_sign_in` plugin.
+/// else in the app touches the `google_sign_in` plugin. Android-only in
+/// practice: iCloud (U44) has no auth layer at all (the OS's Apple ID is the
+/// identity), so no iOS branch exists here.
 final cloudAuthProvider = Provider<CloudAuth>((ref) => GoogleDriveAuth());
 
-/// The Drive-backed [CloudBackupStore] the sync engine and the Manage-backups
-/// Drive section talk to. Same override story as [cloudAuthProvider].
+/// The [CloudBackupStore] the sync engine and the Manage-backups cloud
+/// section talk to: Google Drive on Android (U24), the iCloud ubiquity
+/// container on iOS (U44). This pair of providers IS the platform branch the
+/// engine itself is blind to; same override story as [cloudAuthProvider].
 final cloudBackupStoreProvider = Provider<CloudBackupStore>(
-  (ref) => DriveBackupStore(ref.watch(cloudAuthProvider).accessToken),
+  (ref) => defaultTargetPlatform == TargetPlatform.iOS
+      ? ICloudBackupStore()
+      : DriveBackupStore(ref.watch(cloudAuthProvider).accessToken),
+);
+
+/// The per-provider sync-state pack matching [cloudBackupStoreProvider]:
+/// which settings keys hold the dirty gate, lineage names and error stamp.
+final cloudSyncStateProvider = Provider<CloudSyncState>(
+  (ref) => defaultTargetPlatform == TargetPlatform.iOS
+      ? ICloudSyncState(ref.watch(settingsProvider))
+      : GDriveSyncState(ref.watch(settingsProvider)),
+);
+
+/// Whether iCloud backup sync is on (U44, iOS) — the toggle that is the
+/// on-state where Drive uses the account's presence.
+final syncIcloudEnabledProvider = _setting(
+  SettingKey.syncIcloudEnabled,
+  AppSettings.decodeSyncIcloudEnabled,
+);
+
+/// When the most recent iCloud push completed, or null before the first one.
+final syncIcloudLastPushAtProvider = _setting(
+  SettingKey.syncIcloudLastPushAt,
+  AppSettings.decodeSyncIcloudLastPushAt,
+);
+
+/// When the most recent iCloud push attempt failed (offline doesn't count),
+/// or null if the latest attempt succeeded — the [syncGdriveLastErrorAtProvider]
+/// idiom.
+final syncIcloudLastErrorAtProvider = _setting(
+  SettingKey.syncIcloudLastErrorAt,
+  AppSettings.decodeSyncIcloudLastErrorAt,
 );
 
 /// The Google account Drive sync pushes to, or null when not connected
@@ -795,9 +834,7 @@ final syncDeviceNameProvider = _setting(
 /// no name is stored yet. A provider purely as a test seam: the plugin
 /// channel never answers under `flutter test`, so widget tests override this
 /// instead of stalling on [osDeviceName]'s timeout.
-final osDeviceNameProvider = FutureProvider<String?>(
-  (ref) => osDeviceName(),
-);
+final osDeviceNameProvider = FutureProvider<String?>((ref) => osDeviceName());
 
 /// When the most recent Drive push completed, or null before the first one.
 final syncGdriveLastPushAtProvider = _setting(

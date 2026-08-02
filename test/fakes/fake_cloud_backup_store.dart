@@ -20,9 +20,19 @@ class FakeCloudBackupStore implements CloudBackupStore {
   bool offline = false;
   bool failWrites = false;
 
+  /// Discards the advisory metadata at write time, the way the iCloud store
+  /// does (U44: no `appProperties` analog) — listings then carry none and the
+  /// U35 checks must take their download degrade path.
+  bool dropMetadata = false;
+
   /// Thrown from [list] when set — the prune-only failure of #63, where the
   /// upload succeeded but the connection died before the prune's listing.
   Object? listError;
+
+  /// Thrown from [ensureFolder] when set — e.g.
+  /// [CloudAuthRequiredException] to simulate the iCloud container being
+  /// unavailable (signed out / iCloud Drive off, U44).
+  Object? ensureFolderError;
 
   int ensureFolderCalls = 0;
   int writeCalls = 0;
@@ -50,6 +60,8 @@ class FakeCloudBackupStore implements CloudBackupStore {
   @override
   Future<String> ensureFolder() async {
     _checkOnline();
+    final e = ensureFolderError;
+    if (e != null) throw e;
     ensureFolderCalls++;
     return _folderId;
   }
@@ -92,7 +104,9 @@ class FakeCloudBackupStore implements CloudBackupStore {
     if (failWrites) throw const CloudApiException(500, 'write failed');
     writeCalls++;
     files[name] = bytes;
-    if (metadata.isNotEmpty) fileMetadata[name] = Map.of(metadata);
+    if (metadata.isNotEmpty && !dropMetadata) {
+      fileMetadata[name] = Map.of(metadata);
+    }
   }
 
   @override

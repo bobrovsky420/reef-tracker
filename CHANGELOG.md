@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- iOS: iCloud backup sync — the iPhone counterpart of the Android Google
+  Drive sync. Turn it on in Settings → Backup and every backup is uploaded
+  to a visible "ReefTracker" folder in your iCloud Drive, where you can
+  browse the files in the Files app; the folder is pruned to the same depth
+  as the on-device rotation. No account setup inside the app — your
+  device's Apple ID is used, so enabling it is a single tap (plus naming
+  the device, so you can tell your devices apart in Manage backups).
+- iOS: multi-device restore over iCloud, matching the Android behavior:
+  when another of your devices has uploaded a newer backup, the app offers
+  to restore it at launch — a plain offer when this device is unchanged, an
+  explicit choice with a local safety copy when both changed — and the
+  welcome screen on a fresh install can pull everything back from iCloud
+  with one tap, without Pro.
+- iOS: Manage backups gains an iCloud section listing the cloud copies for
+  restore or delete alongside the on-device ones.
+- Note for this build: the iCloud feature is newly built and has been
+  verified against automated tests only, not yet on a physical iPhone — it
+  ships behind the same careful safety rules as the Android sync (a local
+  safety copy before any restore, uploads never overwrite newer backups).
+
 ## [1.1.1] - 2026-08-01
 
 ### Added

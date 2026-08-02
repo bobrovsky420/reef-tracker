@@ -841,17 +841,23 @@ class NoTanksView extends ConsumerWidget {
               label: Text(l.addAquarium),
             ),
             const SizedBox(height: 8),
-            // One-shot cloud restore for a new/second device (U35) — the
-            // Android-only Drive surface, and **deliberately ungated** unlike
-            // the Settings connect row (U19: limits gate creation, never
-            // access — pulling your own data back is access; whether ongoing
-            // push sync turns on afterwards depends on what the restored
-            // data entitles).
+            // One-shot cloud restore for a new/second device (U35) — Google
+            // Drive on Android, iCloud on iOS (U44) — **deliberately
+            // ungated** unlike the Settings connect row (U19: limits gate
+            // creation, never access — pulling your own data back is access;
+            // whether ongoing push sync turns on afterwards depends on what
+            // the restored data entitles).
             if (defaultTargetPlatform == TargetPlatform.android)
               TextButton.icon(
                 onPressed: () => unawaited(_restoreFromDrive(context, ref, l)),
                 icon: const Icon(Icons.cloud_download_outlined, size: 18),
                 label: Text(l.welcomeRestoreDrive),
+              )
+            else if (defaultTargetPlatform == TargetPlatform.iOS)
+              TextButton.icon(
+                onPressed: () => unawaited(_restoreFromICloud(context, ref, l)),
+                icon: const Icon(Icons.cloud_download_outlined, size: 18),
+                label: Text(l.welcomeRestoreIcloud),
               ),
             // Settings must stay reachable with zero tanks (Settings →
             // Backups → restore is the reinstall path). The bottom bar's
@@ -923,8 +929,9 @@ class NoTanksView extends ConsumerWidget {
       final synced = await completeWelcomeRestore(
         db,
         store: store,
+        state: ref.read(cloudSyncStateProvider),
         file: newest,
-        accountEmail: account.email,
+        enableSync: () => AppSettings(db).setSyncGdriveAccount(account.email),
       );
       messenger.showSnackBar(
         SnackBar(
@@ -936,12 +943,93 @@ class NoTanksView extends ConsumerWidget {
         ),
       );
     } on InvalidBackupException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(l.backupRejection(e.reason))));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.backupRejection(e.reason))),
+      );
     } catch (_) {
       // Offline, revoked consent mid-flow, or the provider said no — one
       // quiet message either way; the button is still there to retry.
+      messenger.showSnackBar(SnackBar(content: Text(l.backupsDriveLoadFailed)));
+    }
+  }
+
+  /// The iOS twin of [_restoreFromDrive] (U44): no account picker — iCloud
+  /// availability *is* the sign-in state — then the same newest-file →
+  /// confirm → shared restore path. Push sync afterwards is the enabled
+  /// toggle instead of a persisted account, granted on the same entitlement
+  /// rule.
+  Future<void> _restoreFromICloud(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final db = ref.read(dbProvider);
+    try {
+      final store = ref.read(cloudBackupStoreProvider);
+      final CloudBackupFile? newest;
+      try {
+        newest = await fetchNewestCloudBackup(store);
+      } on CloudAuthRequiredException {
+        // Signed out of iCloud / iCloud Drive off for the app: actionable,
+        // so it gets its own message instead of the generic load failure.
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.syncIcloudUnavailable)),
+        );
+        return;
+      }
+      if (newest == null) {
+        messenger.showSnackBar(SnackBar(content: Text(l.backupsIcloudEmpty)));
+        return;
+      }
+      if (!context.mounted) return;
+      // No listing metadata on iCloud (U44): the writing device's name only
+      // travels inside the document, which isn't downloaded yet here.
+      final device =
+          newest.metadata[kCloudMetaDevice] ?? l.syncRestoreUnknownDevice;
+      final when = switch (newest.modifiedAt) {
+        final at? => formatDateTime(context, at.toLocal(), weekday: false),
+        null => newest.name,
+      };
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: const Icon(Icons.cloud_download_outlined),
+          title: Text(l.syncRestoreTitle),
+          content: Text(l.syncRestoreBodyIcloud(device, when)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.restore),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+
+      final synced = await completeWelcomeRestore(
+        db,
+        store: store,
+        state: ref.read(cloudSyncStateProvider),
+        file: newest,
+        enableSync: () => AppSettings(db).setSyncIcloudEnabled(true),
+      );
       messenger.showSnackBar(
-        SnackBar(content: Text(l.backupsDriveLoadFailed)),
+        SnackBar(
+          content: Text(synced ? l.syncIcloudEnabledSnack : l.backupRestored),
+        ),
+      );
+    } on InvalidBackupException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.backupRejection(e.reason))),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.backupsIcloudLoadFailed)),
       );
     }
   }

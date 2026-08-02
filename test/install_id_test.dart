@@ -45,10 +45,12 @@ void main() {
   AppDatabase newDb() => AppDatabase(NativeDatabase.memory());
   File idFile() => File(p.join(docsDir.path, kInstallIdFileName));
 
-  /// A fully populated sync identity: **every** `sync_gdrive_*` key, plus the
-  /// device name that must survive. Naming only some of them is what let #74
-  /// hide — the U35 filename keys were set nowhere, so nothing noticed the
-  /// reconcile leaving them behind.
+  /// A fully populated sync identity: **every** `sync_gdrive_*` and
+  /// `sync_icloud_*` key, plus the device name that must survive. Naming only
+  /// some of them is what let #74 hide — the U35 filename keys were set
+  /// nowhere, so nothing noticed the reconcile leaving them behind. (A real
+  /// device only ever runs one provider; populating both here is what proves
+  /// each gets its own clearing rule.)
   Future<void> connectSync(AppSettings settings) async {
     await settings.setSyncGdriveAccount('reef@example.com');
     await settings.setSyncGdriveFolderId('folder-1');
@@ -57,12 +59,20 @@ void main() {
     await settings.setSyncGdriveDismissedName('reeftracker-20260601.json');
     await settings.setSyncGdriveLastPushAt(DateTime(2026, 7, 1));
     await settings.setSyncGdriveLastErrorAt(DateTime(2026, 7, 2));
+    await settings.setSyncIcloudEnabled(true);
+    await settings.setSyncIcloudLastPushedHash('hash-1');
+    await settings.setSyncIcloudLastPushedName('reeftracker-20260701.json');
+    await settings.setSyncIcloudDismissedName('reeftracker-20260601.json');
+    await settings.setSyncIcloudLastPushAt(DateTime(2026, 7, 1));
+    await settings.setSyncIcloudLastErrorAt(DateTime(2026, 7, 2));
     await settings.setSyncDeviceName('Old phone');
   }
 
-  /// Guards the fixture above against the enum growing past it.
+  /// Guards the fixture above against either enum-derived set growing past it.
   Future<void> expectEverySyncKeySet(AppDatabase db) async {
-    for (final key in SettingKey.gdriveSyncKeys) {
+    for (final key in SettingKey.gdriveSyncKeys.followedBy(
+      SettingKey.icloudSyncKeys,
+    )) {
       expect(
         await db.getSetting(key.storageKey),
         isNotNull,
@@ -161,6 +171,24 @@ void main() {
         reason: '${key.storageKey} survived the device transfer',
       );
     }
+    // iCloud (U44): the lineage stamps are cleared like the Drive keys, but
+    // the enabled flag deliberately SURVIVES — the identity behind iCloud
+    // sync is the Apple ID, which an OS restore legitimately carries, and
+    // silently turning backup off after a phone migration is the worse
+    // failure. The cleared stamps self-heal via the U35 silent-adopt path.
+    for (final key in SettingKey.icloudSyncKeys) {
+      if (key == SettingKey.syncIcloudEnabled) continue;
+      expect(
+        await db.getSetting(key.storageKey),
+        isNull,
+        reason: '${key.storageKey} survived the device transfer',
+      );
+    }
+    expect(
+      await settings.readSyncIcloudEnabled(),
+      isTrue,
+      reason: 'the iCloud enabled flag must survive an OS restore (U44)',
+    );
     // The device's own label is not part of the account relationship, so it
     // survives here exactly as it does across a disconnect.
     expect(await settings.readSyncDeviceName(), 'Old phone');

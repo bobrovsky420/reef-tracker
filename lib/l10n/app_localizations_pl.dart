@@ -1128,6 +1128,63 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncFeatureName => 'Kopia zapasowa w chmurze';
+
+  @override
+  String get syncIcloudTitle => 'Kopia zapasowa iCloud';
+
+  @override
+  String get syncIcloudSubtitle =>
+      'Automatycznie twórz kopie zapasowe na Twoim iCloud Drive';
+
+  @override
+  String get syncIcloudDialogBody =>
+      'Kopie zapasowe są przesyłane do folderu „ReefTracker” na Twoim iCloud Drive. Możesz je przeglądać w aplikacji Pliki.';
+
+  @override
+  String get syncIcloudDisable => 'Wyłącz';
+
+  @override
+  String get syncIcloudEnabledSnack =>
+      'Kopie zapasowe będą synchronizowane z Twoim iCloud Drive';
+
+  @override
+  String get syncIcloudDisabledSnack =>
+      'Kopia zapasowa iCloud wyłączona. Przesłane już kopie zapasowe pozostaną na Twoim iCloud Drive.';
+
+  @override
+  String get syncIcloudUnavailable =>
+      'iCloud jest niedostępny. Zaloguj się do iCloud i włącz iCloud Drive dla ReefTracker w Ustawieniach urządzenia.';
+
+  @override
+  String syncIcloudLastFailed(Object when) {
+    return 'Przesyłanie do iCloud nie powiodło się $when';
+  }
+
+  @override
+  String get backupsIcloudSection => 'iCloud';
+
+  @override
+  String get backupsIcloudEmpty => 'W iCloud nie ma jeszcze kopii zapasowych';
+
+  @override
+  String get backupsIcloudLoadFailed =>
+      'Nie udało się wczytać kopii zapasowych z iCloud';
+
+  @override
+  String get welcomeRestoreIcloud => 'Przywróć z iCloud';
+
+  @override
+  String syncRestoreBodyIcloud(Object device, Object when) {
+    return 'Na Twoim iCloud Drive jest nowsza kopia zapasowa z urządzenia „$device” ($when). Przywrócić ją na tym urządzeniu? Ustawienia tego urządzenia zostaną zachowane.';
+  }
+
+  @override
+  String syncRestoreDivergedBodyIcloud(Object device, Object when) {
+    return 'Na Twoim iCloud Drive jest nowsza kopia zapasowa z urządzenia „$device” ($when), ale to urządzenie ma też zmiany, które nie zostały przesłane. Przywrócenie zastąpi dane tego urządzenia kopią zapasową — najpierw zostanie zapisana lokalna kopia bezpieczeństwa.';
+  }
+
+  @override
   String get backupsDeviceNameNudge => 'Ustaw nazwę urządzenia';
 
   @override

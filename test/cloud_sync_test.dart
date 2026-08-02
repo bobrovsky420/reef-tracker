@@ -9,6 +9,7 @@ import 'package:reeftracker/data/auto_backup.dart';
 import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/cloud_backup_store.dart';
 import 'package:reeftracker/data/cloud_sync.dart';
+import 'package:reeftracker/data/cloud_sync.dart' as cloud;
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
@@ -27,6 +28,65 @@ class _FakePathProvider extends PathProviderPlatform
   @override
   Future<String?> getTemporaryPath() async => root;
 }
+
+// --- Drive-shaped compatibility wrappers -------------------------------------
+//
+// Most of this suite predates the U44 generalization (one engine, per-provider
+// [CloudSyncState]). These wrappers keep its call sites on the original Drive
+// shapes while driving the real provider-neutral functions with the same
+// [GDriveSyncState] production wires up on Android — the local declarations
+// shadow the imported names; the `cloud.` prefix reaches the real ones.
+
+GDriveSyncState _gdrive(AppDatabase db) => GDriveSyncState(AppSettings(db));
+
+Future<CloudSyncOutcome> runGDriveSyncIfDirty(
+  AppDatabase db, {
+  required CloudBackupStore store,
+}) => cloud.runCloudSyncIfDirty(db, store: store, state: _gdrive(db));
+
+Future<CloudRestoreProposal?> checkCloudNewerBackup(
+  AppDatabase db, {
+  required CloudBackupStore store,
+}) => cloud.checkCloudNewerBackup(db, store: store, state: _gdrive(db));
+
+Future<void> dismissCloudRestore(AppDatabase db, String fileName) =>
+    cloud.dismissCloudRestore(_gdrive(db), fileName);
+
+Future<void> restoreCloudBackup(
+  AppDatabase db, {
+  required CloudBackupStore store,
+  required CloudBackupFile file,
+  String? contents,
+}) => cloud.restoreCloudBackup(
+  db,
+  store: store,
+  state: _gdrive(db),
+  file: file,
+  contents: contents,
+);
+
+Future<void> recordRestoredCloudBackup(
+  AppDatabase db,
+  String json, {
+  String? fileName,
+}) => cloud.recordRestoredCloudBackup(
+  json,
+  state: _gdrive(db),
+  fileName: fileName,
+);
+
+Future<bool> completeWelcomeRestore(
+  AppDatabase db, {
+  required CloudBackupStore store,
+  required CloudBackupFile file,
+  required String accountEmail,
+}) => cloud.completeWelcomeRestore(
+  db,
+  store: store,
+  state: _gdrive(db),
+  file: file,
+  enableSync: () => AppSettings(db).setSyncGdriveAccount(accountEmail),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -848,6 +908,136 @@ void main() {
       expect(synced, isFalse);
       expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
       expect(await AppSettings(reader).readSyncGdriveAccount(), isNull);
+    });
+  });
+
+  group('iCloud state pack (U44)', () {
+    late AppDatabase db;
+    late AppSettings settings;
+    late FakeCloudBackupStore store;
+
+    setUp(() {
+      db = AppDatabase(NativeDatabase.memory());
+      settings = AppSettings(db);
+      store = FakeCloudBackupStore();
+    });
+    tearDown(() => db.close());
+
+    ICloudSyncState icloud(AppDatabase d) => ICloudSyncState(AppSettings(d));
+
+    test('the enabled toggle is the on-state; a push stamps only the '
+        'sync_icloud_* keys', () async {
+      await db.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      expect(
+        await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db)),
+        CloudSyncOutcome.skippedDisabled,
+      );
+
+      await settings.setSyncIcloudEnabled(true);
+      expect(
+        await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db)),
+        CloudSyncOutcome.pushed,
+      );
+      expect(store.files, hasLength(1));
+      expect(await settings.readSyncIcloudLastPushedHash(), isNotNull);
+      expect(await settings.readSyncIcloudLastPushedName(), isNotNull);
+      // The Drive keys stay untouched — the packs are disjoint by prefix.
+      expect(await settings.readSyncGdriveLastPushedHash(), isNull);
+      expect(await settings.readSyncGdriveFolderId(), isNull);
+
+      expect(
+        await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db)),
+        CloudSyncOutcome.skippedClean,
+      );
+      expect(store.writeCalls, 1);
+    });
+
+    test('no cached folder id: ensureFolder is called on every run', () async {
+      await settings.setSyncIcloudEnabled(true);
+      await db.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db));
+      final callsAfterFirst = store.ensureFolderCalls;
+      expect(callsAfterFirst, greaterThan(0));
+      await db.createTankWithPreset(name: 'Frag', type: SetupType.mixed);
+      await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db));
+      expect(store.ensureFolderCalls, greaterThan(callsAfterFirst));
+    });
+
+    test('metadata-less provider: the U35 check identifies a foreign file '
+        'through the download path and reads the device name from the '
+        'document', () async {
+      store.dropMetadata = true; // iCloud has no appProperties analog.
+      final writer = AppDatabase(NativeDatabase.memory());
+      addTearDown(writer.close);
+      final writerSettings = AppSettings(writer);
+      await writerSettings.setSyncIcloudEnabled(true);
+      await writerSettings.setSyncDeviceName('Kitchen iPad');
+      await writer.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      expect(
+        await cloud.runCloudSyncIfDirty(
+          writer,
+          store: store,
+          state: icloud(writer),
+        ),
+        CloudSyncOutcome.pushed,
+      );
+
+      await settings.setSyncIcloudEnabled(true);
+      final proposal = await cloud.checkCloudNewerBackup(
+        db,
+        store: store,
+        state: icloud(db),
+      );
+      expect(proposal, isNotNull);
+      // No listing metadata — the name came out of the downloaded document,
+      // which the proposal carries along so the restore won't re-download.
+      expect(proposal!.deviceName, 'Kitchen iPad');
+      expect(proposal.contents, isNotNull);
+
+      await cloud.restoreCloudBackup(
+        db,
+        store: store,
+        state: icloud(db),
+        file: proposal.file,
+        contents: proposal.contents,
+      );
+      expect((await db.getTanks()).map((t) => t.name), ['Reef']);
+      // Echo suppression landed in the iCloud keys.
+      expect(
+        await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db)),
+        CloudSyncOutcome.skippedClean,
+      );
+      expect(
+        await cloud.checkCloudNewerBackup(db, store: store, state: icloud(db)),
+        isNull,
+      );
+    });
+
+    test('welcome restore turns the toggle on for an entitled install and '
+        'not for a Standard one', () async {
+      store.dropMetadata = true;
+      final writer = AppDatabase(NativeDatabase.memory());
+      addTearDown(writer.close);
+      await AppSettings(writer).setSyncIcloudEnabled(true);
+      await writer.setSetting(kLegacyFreeSinceKey, '0.28.0');
+      await writer.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      await cloud.runCloudSyncIfDirty(
+        writer,
+        store: store,
+        state: icloud(writer),
+      );
+
+      final newest = await fetchNewestCloudBackup(store);
+      final synced = await cloud.completeWelcomeRestore(
+        db,
+        store: store,
+        state: icloud(db),
+        file: newest!,
+        enableSync: () => settings.setSyncIcloudEnabled(true),
+      );
+      expect(synced, isTrue);
+      expect(await settings.readSyncIcloudEnabled(), isTrue);
+      expect((await db.getTanks()).map((t) => t.name), ['Reef']);
     });
   });
 }

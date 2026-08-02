@@ -1125,6 +1125,63 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncFeatureName => 'Облачное резервное копирование';
+
+  @override
+  String get syncIcloudTitle => 'Резервное копирование в iCloud';
+
+  @override
+  String get syncIcloudSubtitle =>
+      'Автоматически сохранять резервные копии в ваш iCloud Drive';
+
+  @override
+  String get syncIcloudDialogBody =>
+      'Резервные копии загружаются в папку «ReefTracker» в вашем iCloud Drive. Их можно просмотреть в приложении «Файлы».';
+
+  @override
+  String get syncIcloudDisable => 'Выключить';
+
+  @override
+  String get syncIcloudEnabledSnack =>
+      'Резервные копии будут синхронизироваться с вашим iCloud Drive';
+
+  @override
+  String get syncIcloudDisabledSnack =>
+      'Резервное копирование в iCloud выключено. Уже загруженные резервные копии останутся в вашем iCloud Drive.';
+
+  @override
+  String get syncIcloudUnavailable =>
+      'iCloud недоступен. Войдите в iCloud и включите iCloud Drive для ReefTracker в настройках устройства.';
+
+  @override
+  String syncIcloudLastFailed(Object when) {
+    return 'Загрузка в iCloud не удалась $when';
+  }
+
+  @override
+  String get backupsIcloudSection => 'iCloud';
+
+  @override
+  String get backupsIcloudEmpty => 'В iCloud пока нет резервных копий';
+
+  @override
+  String get backupsIcloudLoadFailed =>
+      'Не удалось загрузить список резервных копий из iCloud';
+
+  @override
+  String get welcomeRestoreIcloud => 'Восстановить из iCloud';
+
+  @override
+  String syncRestoreBodyIcloud(Object device, Object when) {
+    return 'В вашем iCloud Drive есть более новая резервная копия с устройства «$device» ($when). Восстановить её на этом устройстве? Настройки этого устройства сохранятся.';
+  }
+
+  @override
+  String syncRestoreDivergedBodyIcloud(Object device, Object when) {
+    return 'В вашем iCloud Drive есть более новая резервная копия с устройства «$device» ($when), но на этом устройстве тоже есть изменения, которые не были загружены. Восстановление заменит данные этого устройства резервной копией — сначала будет сохранена локальная резервная копия.';
+  }
+
+  @override
   String get backupsDeviceNameNudge => 'Указать имя устройства';
 
   @override

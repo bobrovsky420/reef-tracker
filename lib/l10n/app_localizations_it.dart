@@ -1119,6 +1119,63 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncFeatureName => 'Backup cloud';
+
+  @override
+  String get syncIcloudTitle => 'Backup iCloud';
+
+  @override
+  String get syncIcloudSubtitle =>
+      'Esegui il backup automaticamente sul tuo iCloud Drive';
+
+  @override
+  String get syncIcloudDialogBody =>
+      'I backup vengono caricati nella cartella \"ReefTracker\" del tuo iCloud Drive. Puoi consultarli nell\'app File.';
+
+  @override
+  String get syncIcloudDisable => 'Disattiva';
+
+  @override
+  String get syncIcloudEnabledSnack =>
+      'I backup verranno sincronizzati sul tuo iCloud Drive';
+
+  @override
+  String get syncIcloudDisabledSnack =>
+      'Backup iCloud disattivato. I backup già caricati restano sul tuo iCloud Drive.';
+
+  @override
+  String get syncIcloudUnavailable =>
+      'iCloud non è disponibile. Accedi a iCloud e attiva iCloud Drive per ReefTracker nelle Impostazioni del dispositivo.';
+
+  @override
+  String syncIcloudLastFailed(Object when) {
+    return 'Caricamento su iCloud non riuscito il $when';
+  }
+
+  @override
+  String get backupsIcloudSection => 'iCloud';
+
+  @override
+  String get backupsIcloudEmpty => 'Ancora nessun backup su iCloud';
+
+  @override
+  String get backupsIcloudLoadFailed =>
+      'Impossibile caricare i backup da iCloud';
+
+  @override
+  String get welcomeRestoreIcloud => 'Ripristina da iCloud';
+
+  @override
+  String syncRestoreBodyIcloud(Object device, Object when) {
+    return 'Nel tuo iCloud Drive c\'è un backup più recente da \"$device\" ($when). Ripristinarlo su questo dispositivo? Le impostazioni di questo dispositivo vengono mantenute.';
+  }
+
+  @override
+  String syncRestoreDivergedBodyIcloud(Object device, Object when) {
+    return 'Nel tuo iCloud Drive c\'è un backup più recente da \"$device\" ($when), ma questo dispositivo contiene anche modifiche mai caricate. Il ripristino sostituisce i dati di questo dispositivo con il backup — prima viene salvata una copia di sicurezza locale.';
+  }
+
+  @override
   String get backupsDeviceNameNudge => 'Imposta un nome per il dispositivo';
 
   @override

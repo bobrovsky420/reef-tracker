@@ -120,7 +120,10 @@ extension L10nDomain on AppLocalizations {
     ProFeature.doseCalculator => doseCalcTitle,
     ProFeature.unlimitedTanks => unlimitedTanksTitle,
     ProFeature.stabilityScore => stabilityScoreProName,
-    ProFeature.driveSync => syncGdriveTitle,
+    // Platform-neutral name: the same gate covers Google Drive sync on
+    // Android (U24) and iCloud sync on iOS (U44), so neither provider's
+    // screen title fits the paywall listing.
+    ProFeature.cloudSync => cloudSyncFeatureName,
     ProFeature.smartInsights => insightsProName,
     ProFeature.hannaImport => hannaImportTitle,
     ProFeature.hannaConnect => hannaConnectTitle,

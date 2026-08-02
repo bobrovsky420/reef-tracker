@@ -24,9 +24,11 @@ import 'settings.dart';
 /// channel, the file does not — so after an OS restore the database carries
 /// the *old* install's fingerprint while the file is missing (fresh install)
 /// or holds this install's own. [reconcileInstallFingerprint] runs once per
-/// process, before the first Drive sync: on mismatch it clears the
+/// process, before the first cloud sync: on mismatch it clears the
 /// `sync_gdrive_*` keys (the local half of `disconnectGDrive` — no revoke; the
-/// grant belongs to the old device) so the user re-connects deliberately.
+/// grant belongs to the old device) so the user re-connects deliberately, and
+/// the `sync_icloud_*` lineage stamps — but not the iCloud enabled flag,
+/// which the same Apple ID legitimately carries through an iOS restore (U44).
 ///
 /// A database with **no** fingerprint proves nothing — it may be a legitimate
 /// upgrade from a pre-fingerprint version — so it only seeds, never clears.
@@ -94,6 +96,13 @@ Future<void> _reconcile(AppDatabase db) async {
     // device's Credential Manager session anyway). Literally the same clear,
     // not a copy of it: the copy drifted once already (#74).
     await settings.clearGDriveSyncState();
+    // iCloud (U44) deliberately keeps its enabled flag and clears only the
+    // lineage stamps: the identity behind iCloud sync is the device's Apple
+    // ID, which an OS restore legitimately carries — silently turning backup
+    // OFF after a phone migration would be the worse failure. The cleared
+    // stamps self-heal via the U35 silent-adopt path. See
+    // [AppSettings.clearICloudSyncLineage].
+    await settings.clearICloudSyncLineage();
   }
 
   // Adopt the file's id when it exists (it *is* this install's identity);
