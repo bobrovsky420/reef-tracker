@@ -23,8 +23,9 @@ import '../../widgets/reef_settings.dart';
 import 'sync_device_name_dialog.dart';
 
 /// Lists the rotating automatic backups stored on the device — plus, when
-/// Drive sync is connected (U24), the backups in the app's Google Drive
-/// folder — and lets the user restore, share (local only), or delete each.
+/// cloud sync is on, the backups in the app's cloud folder (Google Drive on
+/// Android, U24; iCloud Drive on iOS, U44) — and lets the user restore,
+/// share (local only), or delete each.
 ///
 /// Layout per REDESIGN #23: rebuilt on the `reef_settings.dart` primitives (a
 /// Settings push screen speaks the Settings dialect on both platforms) — one
@@ -49,10 +50,10 @@ Future<List<_BackupEntry>> _loadBackups() async {
 class _BackupsScreenState extends ConsumerState<BackupsScreen> {
   late Future<List<_BackupEntry>> _backups;
 
-  /// The Drive folder listing — created lazily on the first connected build
+  /// The cloud folder listing — created lazily on the first connected build
   /// (mirrors the pre-redesign mount-on-connect section), reloaded in place
   /// after mutations. A network call, not a watchable stream.
-  Future<List<CloudBackupFile>>? _drive;
+  Future<List<CloudBackupFile>>? _cloud;
 
   @override
   void initState() {
@@ -68,14 +69,16 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     _backups = _loadBackups();
   });
 
-  void _reloadDrive() => setState(() {
-    _drive = _loadDrive();
+  void _reloadCloud() => setState(() {
+    _cloud = _loadCloud();
   });
 
-  Future<List<CloudBackupFile>> _loadDrive() async {
+  Future<List<CloudBackupFile>> _loadCloud() async {
     final store = ref.read(cloudBackupStoreProvider);
-    final settings = ref.read(settingsProvider);
-    var folderId = await settings.readSyncGdriveFolderId();
+    // The provider-neutral state pack (U44) owns the folder-id caching rules
+    // (Drive caches, iCloud re-resolves every time).
+    final state = ref.read(cloudSyncStateProvider);
+    var folderId = await state.readFolderId();
     List<CloudBackupFile> files;
     try {
       folderId ??= await store.ensureFolder();
@@ -87,7 +90,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       folderId = await store.ensureFolder();
       files = await store.list(folderId);
     }
-    await settings.setSyncGdriveFolderId(folderId);
+    await state.setFolderId(folderId);
     return files
         .where(
           (f) =>
@@ -101,19 +104,22 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    // Drive section only on Android (the U24 surface is Android-only — same
-    // deliberate platform branch as the Settings row) and only when
-    // connected: otherwise the screen keeps its original local-only layout.
-    final driveConnected =
-        defaultTargetPlatform == TargetPlatform.android &&
-        ref.watch(syncGdriveAccountProvider).value != null;
-    if (driveConnected) _drive ??= _loadDrive();
+    // The cloud section shows only while sync is on — Drive-connected on
+    // Android (U24), the iCloud toggle on iOS (U44); same deliberate
+    // platform branch as the Settings rows. Otherwise the screen keeps its
+    // original local-only layout.
+    final isIos = defaultTargetPlatform == TargetPlatform.iOS;
+    final cloudConnected = isIos
+        ? (ref.watch(syncIcloudEnabledProvider).value ?? false)
+        : defaultTargetPlatform == TargetPlatform.android &&
+              ref.watch(syncGdriveAccountProvider).value != null;
+    if (cloudConnected) _cloud ??= _loadCloud();
     // Connected but nameless (a connect from before the name prompt existed,
     // U35): every file this device uploads shows anonymous in this very list.
     // `hasValue` keeps the row from flashing during the initial settings load.
     final deviceName = ref.watch(syncDeviceNameProvider);
     final nudgeDeviceName =
-        driveConnected && deviceName.hasValue && deviceName.value == null;
+        cloudConnected && deviceName.hasValue && deviceName.value == null;
     return Scaffold(
       appBar: AppBar(title: Text(l.backupsScreenTitle)),
       body: FutureBuilder<List<_BackupEntry>>(
@@ -123,15 +129,15 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final entries = snapshot.data ?? const <_BackupEntry>[];
-          if (entries.isEmpty && !driveConnected) {
+          if (entries.isEmpty && !cloudConnected) {
             return _EmptyState(l: l);
           }
           final localSection = ReefSettingsSection(
             // The section label only earns its place when both storages show.
-            label: driveConnected ? l.backupsLocalSection : null,
+            label: cloudConnected ? l.backupsLocalSection : null,
             children: [
               if (entries.isEmpty)
-                // Only reachable with the Drive section below (the full-screen
+                // Only reachable with the cloud section below (the full-screen
                 // empty state handles the local-only case): a quiet hint keeps
                 // the section structure intact.
                 _QuietRow(text: l.noAutoBackups)
@@ -140,23 +146,23 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                   _BackupRow(file: e.file, stat: e.stat, onChanged: _reload),
             ],
           );
-          if (!driveConnected) {
+          if (!cloudConnected) {
             return ReefSettingsList(sections: [localSection]);
           }
           return FutureBuilder<List<CloudBackupFile>>(
-            future: _drive,
-            builder: (context, driveSnapshot) => ReefSettingsList(
+            future: _cloud,
+            builder: (context, cloudSnapshot) => ReefSettingsList(
               sections: [
                 localSection,
                 ReefSettingsSection(
-                  label: l.backupsDriveSection,
+                  label: isIos ? l.backupsIcloudSection : l.backupsDriveSection,
                   children: [
                     // Above the listing rows, independent of their fate: the
                     // nudge is about this device's own setting, not the
                     // folder contents.
                     if (nudgeDeviceName)
-                      _DeviceNameNudgeRow(onPushed: _reloadDrive),
-                    ..._driveRows(l, driveSnapshot),
+                      _DeviceNameNudgeRow(onPushed: _reloadCloud),
+                    ..._cloudRows(l, isIos, cloudSnapshot),
                   ],
                 ),
               ],
@@ -167,8 +173,9 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     );
   }
 
-  List<Widget> _driveRows(
+  List<Widget> _cloudRows(
     AppLocalizations l,
+    bool isIos,
     AsyncSnapshot<List<CloudBackupFile>> snapshot,
   ) {
     if (snapshot.connectionState != ConnectionState.done) {
@@ -182,14 +189,21 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     if (snapshot.hasError) {
       // Offline or the provider said no — either way the local list above
       // stays fully usable; this section just reports itself unavailable.
-      return [_QuietRow(icon: Icons.cloud_off, text: l.backupsDriveLoadFailed)];
+      return [
+        _QuietRow(
+          icon: Icons.cloud_off,
+          text: isIos ? l.backupsIcloudLoadFailed : l.backupsDriveLoadFailed,
+        ),
+      ];
     }
     final files = snapshot.data ?? const <CloudBackupFile>[];
     if (files.isEmpty) {
-      return [_QuietRow(text: l.backupsDriveEmpty)];
+      return [
+        _QuietRow(text: isIos ? l.backupsIcloudEmpty : l.backupsDriveEmpty),
+      ];
     }
     return [
-      for (final f in files) _DriveBackupRow(file: f, onChanged: _reloadDrive),
+      for (final f in files) _CloudBackupRow(file: f, onChanged: _reloadCloud),
     ];
   }
 }
@@ -209,7 +223,7 @@ class _QuietRow extends StatelessWidget {
   }
 }
 
-/// Call-to-action shown while Drive sync is connected but this device has no
+/// Call-to-action shown while cloud sync is on but this device has no
 /// name set: opens the shared device-name dialog. On an actual change the
 /// dialog cleared the dirty gate (see `renameSyncDevice`), so the immediate
 /// sync here uploads a labeled file — [onPushed] then reloads the listing so
@@ -237,8 +251,9 @@ class _DeviceNameNudgeRow extends ConsumerWidget {
     // throws — which would silently skip the push (caught on-device).
     final db = ref.read(dbProvider);
     final store = ref.read(cloudBackupStoreProvider);
+    final state = ref.read(cloudSyncStateProvider);
     if (!await showSyncDeviceNameDialog(context, ref)) return;
-    final outcome = await runGDriveSyncIfDirty(db, store: store);
+    final outcome = await runCloudSyncIfDirty(db, store: store, state: state);
     // Only a confirmed upload changes the folder contents; offline/failed
     // outcomes are already surfaced by the Settings error row, and reloading
     // here would just repaint the same list.
@@ -253,8 +268,8 @@ TextStyle _sizeStyle(BuildContext context) => ReefTokens.monoTextStyle.copyWith(
   color: ReefTokens.of(context).textDim,
 );
 
-class _DriveBackupRow extends ConsumerWidget {
-  const _DriveBackupRow({required this.file, required this.onChanged});
+class _CloudBackupRow extends ConsumerWidget {
+  const _CloudBackupRow({required this.file, required this.onChanged});
 
   final CloudBackupFile file;
   final VoidCallback onChanged;
@@ -340,6 +355,7 @@ class _DriveBackupRow extends ConsumerWidget {
       await restoreCloudBackup(
         ref.read(dbProvider),
         store: ref.read(cloudBackupStoreProvider),
+        state: ref.read(cloudSyncStateProvider),
         file: file,
       );
       if (context.mounted) _snack(context, l.backupRestored);

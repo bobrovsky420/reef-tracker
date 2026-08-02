@@ -1118,6 +1118,61 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncFeatureName => 'Zálohování do cloudu';
+
+  @override
+  String get syncIcloudTitle => 'Zálohování na iCloud';
+
+  @override
+  String get syncIcloudSubtitle => 'Automaticky zálohovat na váš iCloud Drive';
+
+  @override
+  String get syncIcloudDialogBody =>
+      'Zálohy se nahrávají do složky „ReefTracker“ ve vašem iCloud Drive. Můžete si je prohlédnout v aplikaci Soubory.';
+
+  @override
+  String get syncIcloudDisable => 'Vypnout';
+
+  @override
+  String get syncIcloudEnabledSnack =>
+      'Zálohy se budou synchronizovat na váš iCloud Drive';
+
+  @override
+  String get syncIcloudDisabledSnack =>
+      'Zálohování na iCloud vypnuto. Již nahrané zálohy zůstávají na vašem iCloud Drive.';
+
+  @override
+  String get syncIcloudUnavailable =>
+      'iCloud není k dispozici. Přihlaste se k iCloudu a zapněte iCloud Drive pro ReefTracker v Nastavení zařízení.';
+
+  @override
+  String syncIcloudLastFailed(Object when) {
+    return 'Nahrání na iCloud selhalo $when';
+  }
+
+  @override
+  String get backupsIcloudSection => 'iCloud';
+
+  @override
+  String get backupsIcloudEmpty => 'Na iCloudu zatím nejsou žádné zálohy';
+
+  @override
+  String get backupsIcloudLoadFailed => 'Zálohy z iCloudu se nepodařilo načíst';
+
+  @override
+  String get welcomeRestoreIcloud => 'Obnovit z iCloudu';
+
+  @override
+  String syncRestoreBodyIcloud(Object device, Object when) {
+    return 'Ve vašem iCloud Drive je novější záloha ze zařízení „$device“ ($when). Obnovit ji do tohoto zařízení? Nastavení tohoto zařízení zůstanou zachována.';
+  }
+
+  @override
+  String syncRestoreDivergedBodyIcloud(Object device, Object when) {
+    return 'Ve vašem iCloud Drive je novější záloha ze zařízení „$device“ ($when), toto zařízení ale obsahuje i změny, které nebyly nahrány. Obnovením se data tohoto zařízení nahradí zálohou — nejdříve se uloží místní záložní kopie.';
+  }
+
+  @override
   String get backupsDeviceNameNudge => 'Nastavit název zařízení';
 
   @override

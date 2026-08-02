@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
+import 'package:reeftracker/data/cloud_backup_store.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/features/settings/settings_screen.dart';
@@ -92,8 +93,11 @@ void main() {
       await tester.tap(find.text('Google Drive sync'));
       await settle(tester);
       expect(find.text('Pro feature'), findsOneWidget);
+      // The paywall names the platform-neutral capability (U44: one
+      // cloudSync gate covers Drive on Android and iCloud on iOS), not the
+      // tapped row's provider-specific title.
       expect(
-        find.text('Google Drive sync is part of ReefTracker Pro.'),
+        find.text('Cloud backup is part of ReefTracker Pro.'),
         findsOneWidget,
       );
       // No connect happened.
@@ -160,9 +164,8 @@ void main() {
     }
   });
 
-  testWidgets('the entire Drive UI is absent on iOS (Android-only surface)', (
-    tester,
-  ) async {
+  testWidgets('iOS renders the iCloud surface instead of the Drive one '
+      '(U44)', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     try {
       await pumpSettings(
@@ -173,6 +176,95 @@ void main() {
       expect(find.text('Google Drive sync'), findsNothing);
       expect(find.textContaining('reef@test.dev'), findsNothing);
       expect(find.textContaining('Google Drive upload failed'), findsNothing);
+      expect(find.text('iCloud backup'), findsOneWidget);
+      expect(
+        find.text('Back up automatically to your iCloud Drive'),
+        findsOneWidget,
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('iOS non-entitled install: the tap explains the Pro gate '
+      'instead of enabling (U44)', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      final db = await pumpSettings(tester, founder: false);
+      await tester.tap(find.text('iCloud backup'));
+      await settle(tester);
+      expect(find.text('Pro feature'), findsOneWidget);
+      expect(
+        find.text('Cloud backup is part of ReefTracker Pro.'),
+        findsOneWidget,
+      );
+      expect(await AppSettings(db).readSyncIcloudEnabled(), isFalse);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('iOS founder: the tap enables, asks for a device name, and '
+      'the row shows the status (U44)', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      final db = await pumpSettings(tester);
+      await tester.tap(find.text('iCloud backup'));
+      await settle(tester);
+
+      expect(await AppSettings(db).readSyncIcloudEnabled(), isTrue);
+      // The same U35 device-name prompt as the Drive connect flow.
+      expect(find.text('Device name'), findsOneWidget);
+      await tester.tap(find.text('Save'));
+      await settle(tester);
+      expect(find.textContaining('Nothing uploaded yet'), findsOneWidget);
+
+      // The options dialog turns it off again; cloud files are kept (there
+      // is nothing to revoke).
+      await tester.tap(find.text('iCloud backup'));
+      await settle(tester);
+      await tester.tap(find.text('Turn off'));
+      await settle(tester);
+      expect(await AppSettings(db).readSyncIcloudEnabled(), isFalse);
+      expect(
+        find.text('Back up automatically to your iCloud Drive'),
+        findsOneWidget,
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('iOS with iCloud unavailable: the tap explains and nothing is '
+      'flipped (U44)', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      final db = await pumpSettings(tester);
+      store.ensureFolderError = const CloudAuthRequiredException();
+      await tester.tap(find.text('iCloud backup'));
+      await settle(tester);
+      expect(find.textContaining("iCloud isn't available"), findsOneWidget);
+      expect(await AppSettings(db).readSyncIcloudEnabled(), isFalse);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('iOS: a recorded iCloud upload failure shows the persistent '
+      'warning row (U44)', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      final db = await pumpSettings(tester);
+      await AppSettings(db).setSyncIcloudEnabled(true);
+      await AppSettings(
+        db,
+      ).setSyncIcloudLastErrorAt(DateTime(2026, 7, 15, 8, 30));
+      await settle(tester);
+      expect(find.textContaining('iCloud upload failed'), findsOneWidget);
     } finally {
       debugDefaultTargetPlatformOverride = null;
       await unmountApp(tester);

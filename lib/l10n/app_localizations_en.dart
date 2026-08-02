@@ -1114,6 +1114,60 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncFeatureName => 'Cloud backup';
+
+  @override
+  String get syncIcloudTitle => 'iCloud backup';
+
+  @override
+  String get syncIcloudSubtitle => 'Back up automatically to your iCloud Drive';
+
+  @override
+  String get syncIcloudDialogBody =>
+      'Backups are uploaded to the \"ReefTracker\" folder in your iCloud Drive. You can browse them in the Files app.';
+
+  @override
+  String get syncIcloudDisable => 'Turn off';
+
+  @override
+  String get syncIcloudEnabledSnack => 'Backups will sync to your iCloud Drive';
+
+  @override
+  String get syncIcloudDisabledSnack =>
+      'iCloud backup turned off. Backups already uploaded stay in your iCloud Drive.';
+
+  @override
+  String get syncIcloudUnavailable =>
+      'iCloud isn\'t available. Sign in to iCloud and turn on iCloud Drive for ReefTracker in the device Settings.';
+
+  @override
+  String syncIcloudLastFailed(Object when) {
+    return 'iCloud upload failed on $when';
+  }
+
+  @override
+  String get backupsIcloudSection => 'iCloud';
+
+  @override
+  String get backupsIcloudEmpty => 'No backups in iCloud yet';
+
+  @override
+  String get backupsIcloudLoadFailed => 'Couldn\'t load backups from iCloud';
+
+  @override
+  String get welcomeRestoreIcloud => 'Restore from iCloud';
+
+  @override
+  String syncRestoreBodyIcloud(Object device, Object when) {
+    return 'A newer backup from “$device” ($when) is in your iCloud Drive. Restore it to this device? Your settings on this device are kept.';
+  }
+
+  @override
+  String syncRestoreDivergedBodyIcloud(Object device, Object when) {
+    return 'A newer backup from “$device” ($when) is in your iCloud Drive, but this device also has changes that were never uploaded. Restoring replaces this device\'s data with the backup — a local safety copy is saved first.';
+  }
+
+  @override
   String get backupsDeviceNameNudge => 'Set a device name';
 
   @override

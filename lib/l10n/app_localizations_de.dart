@@ -1121,6 +1121,62 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncFeatureName => 'Cloud-Backup';
+
+  @override
+  String get syncIcloudTitle => 'iCloud-Backup';
+
+  @override
+  String get syncIcloudSubtitle => 'Automatisch in dein iCloud Drive sichern';
+
+  @override
+  String get syncIcloudDialogBody =>
+      'Backups werden in den Ordner „ReefTracker“ in deinem iCloud Drive hochgeladen. Du kannst sie in der Dateien-App ansehen.';
+
+  @override
+  String get syncIcloudDisable => 'Ausschalten';
+
+  @override
+  String get syncIcloudEnabledSnack =>
+      'Backups werden in dein iCloud Drive synchronisiert';
+
+  @override
+  String get syncIcloudDisabledSnack =>
+      'iCloud-Backup ausgeschaltet. Bereits hochgeladene Backups bleiben in deinem iCloud Drive erhalten.';
+
+  @override
+  String get syncIcloudUnavailable =>
+      'iCloud ist nicht verfügbar. Melde dich bei iCloud an und aktiviere iCloud Drive für ReefTracker in den Einstellungen des Geräts.';
+
+  @override
+  String syncIcloudLastFailed(Object when) {
+    return 'Upload zu iCloud fehlgeschlagen am $when';
+  }
+
+  @override
+  String get backupsIcloudSection => 'iCloud';
+
+  @override
+  String get backupsIcloudEmpty => 'Noch keine Backups in iCloud';
+
+  @override
+  String get backupsIcloudLoadFailed =>
+      'Backups konnten nicht aus iCloud geladen werden';
+
+  @override
+  String get welcomeRestoreIcloud => 'Aus iCloud wiederherstellen';
+
+  @override
+  String syncRestoreBodyIcloud(Object device, Object when) {
+    return 'In deinem iCloud Drive liegt ein neueres Backup von „$device“ ($when). Auf diesem Gerät wiederherstellen? Deine Einstellungen auf diesem Gerät bleiben erhalten.';
+  }
+
+  @override
+  String syncRestoreDivergedBodyIcloud(Object device, Object when) {
+    return 'In deinem iCloud Drive liegt ein neueres Backup von „$device“ ($when), aber dieses Gerät enthält auch Änderungen, die nie hochgeladen wurden. Beim Wiederherstellen werden die Daten dieses Geräts durch das Backup ersetzt — zuvor wird eine lokale Sicherheitskopie gespeichert.';
+  }
+
+  @override
   String get backupsDeviceNameNudge => 'Gerätenamen festlegen';
 
   @override

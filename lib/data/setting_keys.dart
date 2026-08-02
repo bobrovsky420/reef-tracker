@@ -68,6 +68,18 @@ const kSyncGdriveLastErrorAtKey = 'sync_gdrive_last_error_at';
 const kSyncGdriveLastPushedNameKey = 'sync_gdrive_last_pushed_name';
 const kSyncGdriveDismissedNameKey = 'sync_gdrive_dismissed_name';
 const kSyncDeviceNameKey = 'sync_device_name';
+// iCloud backup sync (U44) — the iOS counterpart of `sync_gdrive_*`, same
+// `sync_<provider>_` shape. There is no account: the OS's Apple ID is the
+// identity, so a plain enabled flag is the on-state where Drive uses the
+// account's presence. No folder-id key either — the ubiquity container is
+// re-resolved every run (one cheap channel call; a persisted path could go
+// stale across OS updates with no 404-style recovery signal).
+const kSyncIcloudEnabledKey = 'sync_icloud_enabled';
+const kSyncIcloudLastPushedHashKey = 'sync_icloud_last_pushed_hash';
+const kSyncIcloudLastPushAtKey = 'sync_icloud_last_push_at';
+const kSyncIcloudLastErrorAtKey = 'sync_icloud_last_error_at';
+const kSyncIcloudLastPushedNameKey = 'sync_icloud_last_pushed_name';
+const kSyncIcloudDismissedNameKey = 'sync_icloud_dismissed_name';
 // Random id identifying the install that wrote this database (#62); paired
 // with the backup-excluded `.install_id` file — see `install_id.dart`.
 const kInstallFingerprintKey = 'install_fingerprint';

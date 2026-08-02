@@ -51,7 +51,7 @@ void main() {
         ProFeature.doseCalculator,
         ProFeature.unlimitedTanks,
         ProFeature.stabilityScore,
-        ProFeature.driveSync,
+        ProFeature.cloudSync,
         ProFeature.smartInsights,
         ProFeature.hannaImport,
         ProFeature.hannaConnect,

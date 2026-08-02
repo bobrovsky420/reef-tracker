@@ -50,6 +50,18 @@
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ReefTracker only reads files you explicitly select when importing a backup or CSV file. It does not browse or modify your photo library.</string>
+	<key>NSUbiquitousContainers</key>
+	<dict>
+		<key>iCloud.cz.reeftracker.reeftracker</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerName</key>
+			<string>ReefTracker</string>
+			<key>NSUbiquitousContainerSupportedFolderLevels</key>
+			<string>Any</string>
+		</dict>
+	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

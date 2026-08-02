@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../app/providers.dart';
 import '../../data/auto_backup.dart';
 import '../../data/backup.dart';
+import '../../data/cloud_backup_store.dart';
 import '../../data/cloud_sync.dart';
 import '../../data/csv_export.dart';
 import '../../data/database.dart';
@@ -444,13 +445,11 @@ class SettingsBody extends ConsumerWidget {
                 onTap: () => context.push('/settings/backups'),
               ),
             ],
-            // Google Drive sync (U24) — **Android-only surface** (iOS gets
-            // its own cloud-backup solution later; the plugin is
-            // unconfigured there, so the row would only ever produce an
-            // error snackbar). This is the codebase's one deliberate
-            // platform branch; defaultTargetPlatform (not dart:io Platform)
-            // so widget tests can exercise both sides via
-            // debugDefaultTargetPlatformOverride.
+            // Cloud backup sync — Google Drive on Android (U24), iCloud on
+            // iOS (U44). Still the codebase's one deliberate platform
+            // branch, now with both sides implemented;
+            // defaultTargetPlatform (not dart:io Platform) so widget tests
+            // can exercise both via debugDefaultTargetPlatformOverride.
             if (defaultTargetPlatform == TargetPlatform.android) ...[
               // Presence of the connected account IS the "on" state (no
               // separate toggle); Pro-gated on the connect action only — a
@@ -474,10 +473,10 @@ class SettingsBody extends ConsumerWidget {
                   icon: Icons.add_to_drive,
                   title: l.syncGdriveTitle,
                   description: l.syncGdriveSubtitle,
-                  onTap: ref.watch(proFeatureProvider(ProFeature.driveSync))
+                  onTap: ref.watch(proFeatureProvider(ProFeature.cloudSync))
                       ? () => _connectGdrive(context, ref, l)
                       : () =>
-                            showProFeatureDialog(context, ProFeature.driveSync),
+                            showProFeatureDialog(context, ProFeature.cloudSync),
                 ),
               // Same loud-persistent-warning idiom as the local backup
               // (#22): non-null means the latest push attempt failed
@@ -489,6 +488,49 @@ class SettingsBody extends ConsumerWidget {
                   icon: Icons.cloud_off,
                   iconColor: Theme.of(context).colorScheme.error,
                   title: l.syncGdriveLastFailed(
+                    formatDateTime(
+                      context,
+                      syncErrorAt.toLocal(),
+                      weekday: false,
+                    ),
+                  ),
+                  titleColor: Theme.of(context).colorScheme.error,
+                ),
+            ] else if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+              // iCloud (U44): a plain toggle is the on-state — no account to
+              // pick, the OS's Apple ID is the identity. Same Pro gate as
+              // the Drive connect (one cloudSync feature, U19 rules: the
+              // gate sits on turning sync ON, never on data access).
+              if (ref.watch(syncIcloudEnabledProvider).value ?? false)
+                ReefSettingsRow(
+                  icon: Icons.cloud_outlined,
+                  title: l.syncIcloudTitle,
+                  description: switch (ref
+                      .watch(syncIcloudLastPushAtProvider)
+                      .value) {
+                    final at? => l.syncGdriveLastPush(
+                      formatDateTime(context, at.toLocal(), weekday: false),
+                    ),
+                    null => l.syncGdriveNeverPushed,
+                  },
+                  onTap: () => _icloudOptions(context, ref, l),
+                )
+              else
+                ReefSettingsRow(
+                  icon: Icons.cloud_outlined,
+                  title: l.syncIcloudTitle,
+                  description: l.syncIcloudSubtitle,
+                  onTap: ref.watch(proFeatureProvider(ProFeature.cloudSync))
+                      ? () => _enableIcloud(context, ref, l)
+                      : () =>
+                            showProFeatureDialog(context, ProFeature.cloudSync),
+                ),
+              if (ref.watch(syncIcloudLastErrorAtProvider).value
+                  case final syncErrorAt?)
+                ReefSettingsRow(
+                  icon: Icons.cloud_off,
+                  iconColor: Theme.of(context).colorScheme.error,
+                  title: l.syncIcloudLastFailed(
                     formatDateTime(
                       context,
                       syncErrorAt.toLocal(),
@@ -598,12 +640,16 @@ class SettingsBody extends ConsumerWidget {
       return;
     }
     // A manual backup is the user's explicit "protect this now" — mirror it
-    // to Drive immediately (U24) instead of waiting for the next launch or
-    // resume. The engine's own dirty gate still applies: unchanged data
-    // uploads nothing. Fire-and-forget; failures land in the persistent
-    // `sync_gdrive_last_error_at` row like every other push.
+    // to the cloud immediately (U24/U44) instead of waiting for the next
+    // launch or resume. The engine's own dirty gate still applies: unchanged
+    // data uploads nothing. Fire-and-forget; failures land in the persistent
+    // last-error row like every other push.
     unawaited(
-      runGDriveSyncIfDirty(db, store: ref.read(cloudBackupStoreProvider)),
+      runCloudSyncIfDirty(
+        db,
+        store: ref.read(cloudBackupStoreProvider),
+        state: ref.read(cloudSyncStateProvider),
+      ),
     );
   }
 
@@ -627,7 +673,11 @@ class SettingsBody extends ConsumerWidget {
         SnackBar(content: Text(l.syncGdriveConnectedSnack(account.email))),
       );
       unawaited(
-        runGDriveSyncIfDirty(db, store: ref.read(cloudBackupStoreProvider)),
+        runCloudSyncIfDirty(
+          db,
+          store: ref.read(cloudBackupStoreProvider),
+          state: ref.read(cloudSyncStateProvider),
+        ),
       );
     } catch (_) {
       messenger.showSnackBar(
@@ -673,13 +723,105 @@ class SettingsBody extends ConsumerWidget {
         // with whenever the next data change happens.
         if (context.mounted && await showSyncDeviceNameDialog(context, ref)) {
           unawaited(
-            runGDriveSyncIfDirty(db, store: ref.read(cloudBackupStoreProvider)),
+            runCloudSyncIfDirty(
+              db,
+              store: ref.read(cloudBackupStoreProvider),
+              state: ref.read(cloudSyncStateProvider),
+            ),
           );
         }
       case 'disconnect':
         await disconnectGDrive(db, ref.read(cloudAuthProvider));
         messenger.showSnackBar(
           SnackBar(content: Text(l.syncGdriveDisconnectedSnack)),
+        );
+    }
+  }
+
+  /// Turns iCloud backup sync on (U44): verify the container is reachable
+  /// first — `ensureFolder` throws [CloudAuthRequiredException] when the user
+  /// is signed out of iCloud or iCloud Drive is off for the app, and flipping
+  /// the toggle anyway would only manufacture a persistent error row — then
+  /// the device-name prompt (same U35 reasoning as the Drive connect) and an
+  /// immediate first push.
+  Future<void> _enableIcloud(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final db = ref.read(dbProvider);
+    final store = ref.read(cloudBackupStoreProvider);
+    try {
+      await store.ensureFolder();
+    } on CloudAuthRequiredException {
+      messenger.showSnackBar(SnackBar(content: Text(l.syncIcloudUnavailable)));
+      return;
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l.syncIcloudUnavailable)));
+      return;
+    }
+    await ref.read(settingsProvider).setSyncIcloudEnabled(true);
+    if (context.mounted) await showSyncDeviceNameDialog(context, ref);
+    messenger.showSnackBar(SnackBar(content: Text(l.syncIcloudEnabledSnack)));
+    unawaited(
+      runCloudSyncIfDirty(
+        db,
+        store: store,
+        state: ref.read(cloudSyncStateProvider),
+      ),
+    );
+  }
+
+  /// Options dialog for the enabled iCloud row — the `_gdriveOptions` shape
+  /// with "turn off" instead of "disconnect" (there is no grant to revoke;
+  /// files already uploaded stay in iCloud Drive).
+  Future<void> _icloudOptions(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final db = ref.read(dbProvider);
+    final action = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.cloud_outlined),
+        title: Text(l.syncIcloudTitle),
+        content: Text(l.syncIcloudDialogBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'rename'),
+            child: Text(l.syncDeviceNameAction),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'disable'),
+            child: Text(l.syncIcloudDisable),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(MaterialLocalizations.of(ctx).okButtonLabel),
+          ),
+        ],
+      ),
+    );
+    switch (action) {
+      case 'rename':
+        if (context.mounted && await showSyncDeviceNameDialog(context, ref)) {
+          unawaited(
+            runCloudSyncIfDirty(
+              db,
+              store: ref.read(cloudBackupStoreProvider),
+              state: ref.read(cloudSyncStateProvider),
+            ),
+          );
+        }
+      case 'disable':
+        // The whole `sync_icloud_*` state, derived by prefix (#74) — a later
+        // re-enable starts with fresh lineage, like a Drive reconnect.
+        await ref.read(settingsProvider).clearICloudSyncState();
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.syncIcloudDisabledSnack)),
         );
     }
   }

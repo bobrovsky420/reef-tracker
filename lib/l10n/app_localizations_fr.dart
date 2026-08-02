@@ -1120,6 +1120,64 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get cloudSyncFeatureName => 'Sauvegarde cloud';
+
+  @override
+  String get syncIcloudTitle => 'Sauvegarde iCloud';
+
+  @override
+  String get syncIcloudSubtitle =>
+      'Sauvegarder automatiquement sur votre iCloud Drive';
+
+  @override
+  String get syncIcloudDialogBody =>
+      'Les sauvegardes sont envoyées dans le dossier « ReefTracker » de votre iCloud Drive. Vous pouvez les consulter dans l\'app Fichiers.';
+
+  @override
+  String get syncIcloudDisable => 'Désactiver';
+
+  @override
+  String get syncIcloudEnabledSnack =>
+      'Les sauvegardes seront synchronisées sur votre iCloud Drive';
+
+  @override
+  String get syncIcloudDisabledSnack =>
+      'Sauvegarde iCloud désactivée. Les sauvegardes déjà envoyées restent sur votre iCloud Drive.';
+
+  @override
+  String get syncIcloudUnavailable =>
+      'iCloud n\'est pas disponible. Connectez-vous à iCloud et activez iCloud Drive pour ReefTracker dans les Réglages de l\'appareil.';
+
+  @override
+  String syncIcloudLastFailed(Object when) {
+    return 'Échec de l\'envoi vers iCloud le $when';
+  }
+
+  @override
+  String get backupsIcloudSection => 'iCloud';
+
+  @override
+  String get backupsIcloudEmpty =>
+      'Aucune sauvegarde sur iCloud pour l\'instant';
+
+  @override
+  String get backupsIcloudLoadFailed =>
+      'Impossible de charger les sauvegardes depuis iCloud';
+
+  @override
+  String get welcomeRestoreIcloud => 'Restaurer depuis iCloud';
+
+  @override
+  String syncRestoreBodyIcloud(Object device, Object when) {
+    return 'Une sauvegarde plus récente de « $device » ($when) se trouve dans votre iCloud Drive. La restaurer sur cet appareil ? Les réglages de cet appareil sont conservés.';
+  }
+
+  @override
+  String syncRestoreDivergedBodyIcloud(Object device, Object when) {
+    return 'Une sauvegarde plus récente de « $device » ($when) se trouve dans votre iCloud Drive, mais cet appareil contient aussi des modifications qui n\'ont jamais été envoyées. La restauration remplace les données de cet appareil par la sauvegarde — une copie de sécurité locale est d\'abord enregistrée.';
+  }
+
+  @override
   String get backupsDeviceNameNudge => 'Définir un nom d\'appareil';
 
   @override
