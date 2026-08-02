@@ -10,6 +10,8 @@ import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/install_id.dart';
 import 'package:reeftracker/data/settings.dart';
 
+import 'sync_test_helpers.dart';
+
 /// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so
 /// the fingerprint-file logic can run under `flutter test`.
 class _FakePathProvider extends PathProviderPlatform
@@ -66,19 +68,6 @@ void main() {
     await settings.setSyncIcloudLastPushAt(DateTime(2026, 7, 1));
     await settings.setSyncIcloudLastErrorAt(DateTime(2026, 7, 2));
     await settings.setSyncDeviceName('Old phone');
-  }
-
-  /// Guards the fixture above against either enum-derived set growing past it.
-  Future<void> expectEverySyncKeySet(AppDatabase db) async {
-    for (final key in SettingKey.gdriveSyncKeys.followedBy(
-      SettingKey.icloudSyncKeys,
-    )) {
-      expect(
-        await db.getSetting(key.storageKey),
-        isNotNull,
-        reason: 'connectSync does not populate ${key.storageKey}',
-      );
-    }
   }
 
   test(
@@ -154,7 +143,7 @@ void main() {
     // while this install has no .install_id file (excluded from OS backup).
     await settings.setInstallFingerprint('old-device-fingerprint');
     await connectSync(settings);
-    await expectEverySyncKeySet(db);
+    await expectEverySyncKeySet(db, fixture: 'connectSync');
 
     await reconcileInstallFingerprint(db);
 
