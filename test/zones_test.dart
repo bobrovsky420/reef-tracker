@@ -66,10 +66,13 @@ void main() {
       expect(amberLowOnly.classify(6), Zone.green); // within unbounded green
     });
 
-    test('amberLow == greenLow drops the low amber step (silicon)', () {
+    test('amberLow == greenLow drops the low amber step', () {
       // Red straight into green on the low side: a null amberLow would make
-      // everything below green *amber*, so silicon's catalog default sets the
-      // two bounds equal instead.
+      // everything below green *amber*; equal bounds express "no low amber
+      // step" instead. (Silicon's catalog default used this shape until
+      // 2026-08-02 — it now carries a real 0–0.1 amber band, see
+      // micro_test.dart — but the mechanism stays supported for per-tank
+      // custom bounds.)
       const noLowAmber = ZoneBounds(
         amberLow: 0.1,
         greenLow: 0.1,
