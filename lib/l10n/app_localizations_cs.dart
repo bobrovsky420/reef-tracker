@@ -229,6 +229,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Pro tento typ nádrže se nastaví výchozí parametry a hranice zón. Kdykoli je můžete doladit.';
 
   @override
+  String get fishOnlyPresetNote =>
+      'Předvolba Pouze ryby nenastavuje žádné hranice pro alkalitu, vápník, hořčík ani fosforečnany – pokud tyto parametry sledujete, nebudou mít barevné zóny, dokud si nenastavíte vlastní hranice.';
+
+  @override
   String get volumeOptional => 'Objem (nepovinné)';
 
   @override

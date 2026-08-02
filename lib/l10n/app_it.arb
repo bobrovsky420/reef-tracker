@@ -71,6 +71,7 @@
   "enterAName": "Inserisci un nome",
   "setupType": "Tipo di vasca",
   "presetSeedNote": "Per questo tipo di vasca verranno impostati i parametri predefiniti e i limiti delle zone. Potrai regolarli in qualsiasi momento.",
+  "fishOnlyPresetNote": "Il preset Solo pesci non imposta limiti per alcalinità, calcio, magnesio o fosfati – se monitori questi parametri, non mostreranno i colori delle zone finché non imposterai i tuoi limiti.",
   "volumeOptional": "Volume (opzionale)",
   "vendorOptional": "Produttore (opzionale)",
   "modelOptional": "Modello (opzionale)",

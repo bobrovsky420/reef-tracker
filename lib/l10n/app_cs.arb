@@ -71,6 +71,7 @@
   "enterAName": "Zadejte název",
   "setupType": "Typ nádrže",
   "presetSeedNote": "Pro tento typ nádrže se nastaví výchozí parametry a hranice zón. Kdykoli je můžete doladit.",
+  "fishOnlyPresetNote": "Předvolba Pouze ryby nenastavuje žádné hranice pro alkalitu, vápník, hořčík ani fosforečnany – pokud tyto parametry sledujete, nebudou mít barevné zóny, dokud si nenastavíte vlastní hranice.",
   "volumeOptional": "Objem (nepovinné)",
   "vendorOptional": "Výrobce (nepovinné)",
   "modelOptional": "Model (nepovinné)",

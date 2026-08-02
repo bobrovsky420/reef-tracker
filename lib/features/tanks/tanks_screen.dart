@@ -475,6 +475,16 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
                 l.presetSeedNote,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+            // Switching an existing tank to fish-only silently strips the
+            // zone colouring from Alk/Ca/Mg/PO₄ (the preset defines no
+            // bounds for them and #82 resolves bounds on read) — warn at
+            // the moment of choice. Create mode needs no warning: those
+            // parameters aren't tracked by default there at all.
+            if (_isEdit && _type == SetupType.fishOnly)
+              Text(
+                l.fishOnlyPresetNote,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _volume,
