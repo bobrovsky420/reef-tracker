@@ -28,6 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ships behind the same careful safety rules as the Android sync (a local
   safety copy before any restore, uploads never overwrite newer backups).
 
+### Changed
+- The default strontium range now matches natural seawater: green is
+  7–10 mg/L (previously 6.5–8), so a tank sitting at the natural ~8.1 mg/L
+  reads green instead of slightly high. Tanks with a custom strontium range
+  keep their own settings.
+- Low silicate is now a gentle nudge instead of an alarm: below 0.1 mg/L —
+  including tanks deliberately run at zero — the default range shows amber
+  rather than red. The high side (diatom territory) is unchanged, and custom
+  silicon ranges are unaffected.
+
 ## [1.1.1] - 2026-08-01
 
 ### Added

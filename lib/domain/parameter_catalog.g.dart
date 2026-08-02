@@ -130,10 +130,10 @@ const List<ParameterDef> kReefParameters = [
     plausibleMin: 0,
     plausibleMax: 50,
     defaultBounds: ZoneBounds(
-      amberLow: 2.0,
-      greenLow: 6.5,
-      greenHigh: 8.0,
-      amberHigh: 10.0,
+      amberLow: 6.5,
+      greenLow: 7.0,
+      greenHigh: 10.0,
+      amberHigh: 11.0,
     ),
     hobbyKit: true,
   ),
@@ -257,7 +257,7 @@ const List<ParameterDef> kReefParameters = [
     plausibleMin: 0,
     plausibleMax: 10,
     defaultBounds: ZoneBounds(
-      amberLow: 0.1,
+      amberLow: 0.0,
       greenLow: 0.1,
       greenHigh: 0.2,
       amberHigh: 0.22,

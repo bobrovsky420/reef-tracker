@@ -180,17 +180,23 @@ void main() {
       expect(kMicroDefaultBounds['sodium']!.classify(10760), Zone.green);
       expect(kMicroDefaultBounds['lithium']!.classify(0.18), Zone.green);
       expect(kMicroDefaultBounds['molybdenum']!.classify(0.01), Zone.green);
+      // Sr ~8.1 mg/L at 35 ppt. The Fauna Marin *gauge* band (6.5–8.0) sits
+      // below NSW and was reverted 2026-08-02 in favour of the same report's
+      // prose recommendation (7–10) precisely to keep this invariant
+      // (TODO.md #81 comment 4). Do not re-adopt the gauge band.
+      expect(kMicroDefaultBounds['strontium']!.classify(8.1), Zone.green);
     });
 
-    test('KNOWN EXCEPTION: strontium at natural-seawater level reads amber', () {
-      // Sr is the one element whose adopted lab band (6.5–8.0 mg/L) sits
-      // BELOW natural seawater (~8.1 mg/L at 35 ppt) — so an NSW-matching
-      // tank is flagged amber-high by default. The same lab's own prose
-      // recommends 7–10 mg/L, which would contain NSW; the gauge is what we
-      // adopted. Widen greenHigh to 10 (amberHigh 11) to restore the
-      // NSW-is-green invariant if this proves noisy in the field.
-      expect(kMicroDefaultBounds['strontium']!.classify(8.1), Zone.amber);
-      expect(kMicroDefaultBounds['strontium']!.classify(7.5), Zone.green);
+    test('zero silicate reads amber, never red (#81 comment 6)', () {
+      // Many reefkeepers deliberately run silicate at zero; the default low
+      // side is soft (amberLow 0), so 0–0.1 mg/L is amber — a nudge, not an
+      // alarm. Only the high side (diatom territory) can go red.
+      final si = kMicroDefaultBounds['silicon']!;
+      expect(si.classify(0), Zone.amber);
+      expect(si.classify(0.05), Zone.amber);
+      expect(si.classify(0.15), Zone.green);
+      expect(si.classify(0.21), Zone.amber);
+      expect(si.classify(0.25), Zone.red);
     });
   });
 
