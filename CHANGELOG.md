@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   only, that this profile has no default ranges for alkalinity, calcium,
   magnesium and phosphate — so it's no surprise when those gauges lose
   their colours.
+- Share diagnostics (Settings → About): the app now keeps a small on-device
+  log of its internal errors (size-capped, never sent anywhere by itself)
+  and can share it as a text file — so a problem that only happens on your
+  device can be attached to a support message instead of being unfindable.
 
 ### Changed
 - The default strontium range now matches natural seawater: green is
@@ -702,16 +706,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.38.5] - 2026-07-23
 
+### Changed
+- Hanna checker connection: the meter screen now notes that only taking
+  measurements is supported — changing the meter's settings or updating
+  its firmware is done in Hanna's own Hanna Lab app.
+
 ### Fixed
 - Switching from the Settings tab to Measurements no longer swings the
   "Add reading" button (and the quick-scan button above it) in with a
   rotating wobble — it now fades in the same way as on the Actions and
   Dosing tabs.
-
-### Changed
-- Hanna checker connection: the meter screen now notes that only taking
-  measurements is supported — changing the meter's settings or updating
-  its firmware is done in Hanna's own Hanna Lab app.
 
 ## [0.38.4] - 2026-07-23
 
@@ -783,6 +787,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.37.3] - 2026-07-22
 
+### Added
+- Checker scan: pinch-to-zoom in the viewfinder (starts at 2×) — fill the
+  frame from a distance the camera can actually focus at, instead of
+  holding the phone right against the checker. Focus and exposure now
+  target the display area rather than the checker body.
+
+### Changed
+- Checker scan: the viewfinder frame is now 2:1, matching the display
+  window's true shape.
+
 ### Fixed
 - Checker scan: scanning could not recognize anything on a phone (or
   occasionally showed a stray "1") because the camera frames reach the
@@ -795,16 +809,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   glue digits together (a lost decimal would change the value ten-fold —
   such frames are now refused instead), and a reading of exactly "1" alone
   is never trusted (it is the pattern every stray shadow produces).
-
-### Added
-- Checker scan: pinch-to-zoom in the viewfinder (starts at 2×) — fill the
-  frame from a distance the camera can actually focus at, instead of
-  holding the phone right against the checker. Focus and exposure now
-  target the display area rather than the checker body.
-
-### Changed
-- Checker scan: the viewfinder frame is now 2:1, matching the display
-  window's true shape.
 
 ## [0.37.2] - 2026-07-21
 - Checker scan: the viewfinder frame now has the shape of the checker's
@@ -1607,6 +1611,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.20.0] - 2026-07-07
 
+### Added
+- The parameter history screen has a Share button that exports the chart as an
+  image — ready for posting to reef forums or sending to a fellow reefer.
+- A parameter that is out of range but trending back toward its healthy range
+  now shows an encouraging green "Recovering" state instead of staying silent:
+  the dashboard tile gets a "Recovering ~N d" chip and the history trend card
+  a "Recovering — back in range in ~N d" line, estimating when the value will
+  be back in its green range (in all five languages).
+
 ### Changed
 - Measurements recorded together are now recognized as one batch by a stored
   batch id in every case (delete one-vs-all prompt, re-timing a batch), never
@@ -1617,15 +1630,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - The first-run tour's spotlight around the aquarium selector hugged the text
   too tightly; it now has a little breathing room.
-
-### Added
-- The parameter history screen has a Share button that exports the chart as an
-  image — ready for posting to reef forums or sending to a fellow reefer.
-- A parameter that is out of range but trending back toward its healthy range
-  now shows an encouraging green "Recovering" state instead of staying silent:
-  the dashboard tile gets a "Recovering ~N d" chip and the history trend card
-  a "Recovering — back in range in ~N d" line, estimating when the value will
-  be back in its green range (in all five languages).
 
 ## [0.19.0] - 2026-07-06
 
@@ -1841,6 +1845,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   batch-aware confirmation and Undo as swiping), and the supplement edit
   screen has a Stop action — so TalkBack and switch-access users can manage
   entries too.
+- Settings now shows a **persistent warning when the last backup attempt
+  failed** ("Last backup failed on …"), cleared automatically by the next
+  successful backup. Previously a failing backup was completely silent, so you
+  could believe you were protected while nothing was being written.
 
 ### Changed
 - **Numbers now display in your language's format**: Czech, German, Polish and
@@ -1861,6 +1869,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   both light and dark mode); status chips, list drag handles and the
   parameter switches are now **labeled for screen readers**; the gram suffix in
   the carbon dialog is localized.
+- The dose calculator's **"stable" verdict now scales with your dose** (±5%,
+  with a small absolute floor) instead of a flat 0.5 ml: a large mismatch on a
+  small dose of a potent supplement is no longer waved through as "keep your
+  current dose", and big dosers aren't nagged over trivial tweaks.
+- **Exported backups no longer linger in the app's share cache**: the plaintext
+  copy the share sheet works from is removed as soon as the share is dismissed,
+  and any copy left by a completed share is cleaned up on the next export.
+- **Android cloud Auto Backup no longer uploads the rotating JSON backups**
+  alongside the database — they are the same data twice, doubled the cleartext
+  copies in Google Drive, and ate into the backup quota. Device-to-device
+  transfer still carries everything.
+- Screens that show a lot of history (measurements, charts, water/carbon/cleaning
+  logs, and dosing) now load faster and stay snappy as your log grows, thanks to
+  new database indexes on the most-used lookups.
 
 ### Fixed
 - **Switching aquariums no longer flashes the previous tank's data**: for a
@@ -1884,21 +1906,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An empty chart series now shows "No readings in this range" instead of
   being able to crash the chart widget (defensive; not reachable from the
   current screens).
-
-### Changed
-- The dose calculator's **"stable" verdict now scales with your dose** (±5%,
-  with a small absolute floor) instead of a flat 0.5 ml: a large mismatch on a
-  small dose of a potent supplement is no longer waved through as "keep your
-  current dose", and big dosers aren't nagged over trivial tweaks.
-- **Exported backups no longer linger in the app's share cache**: the plaintext
-  copy the share sheet works from is removed as soon as the share is dismissed,
-  and any copy left by a completed share is cleaned up on the next export.
-- **Android cloud Auto Backup no longer uploads the rotating JSON backups**
-  alongside the database — they are the same data twice, doubled the cleartext
-  copies in Google Drive, and ate into the backup quota. Device-to-device
-  transfer still carries everything.
-
-### Fixed
 - **Trends no longer warn about a parameter that is recovering**: a value
   outside its range but moving back toward green used to get an "attention in
   ~N days" forecast for crossing the *far* boundary; it now simply shows the
@@ -1927,19 +1934,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   backup file" message on import instead of a generic "import failed".
 - A backup file whose version field is **missing or damaged** (e.g. truncated
   by a failed download) is no longer misreported as "backup from a newer app".
-
-### Added
-- Settings now shows a **persistent warning when the last backup attempt
-  failed** ("Last backup failed on …"), cleared automatically by the next
-  successful backup. Previously a failing backup was completely silent, so you
-  could believe you were protected while nothing was being written.
-
-### Changed
-- Screens that show a lot of history (measurements, charts, water/carbon/cleaning
-  logs, and dosing) now load faster and stay snappy as your log grows, thanks to
-  new database indexes on the most-used lookups.
-
-### Fixed
 - **Database errors are no longer invisible**: when reading data fails (e.g. a
   damaged database), the app now shows a "Some data failed to load" warning and
   logs the error, instead of silently rendering the affected screens as if the

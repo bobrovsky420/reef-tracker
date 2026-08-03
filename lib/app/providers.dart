@@ -12,6 +12,7 @@ import '../data/cloud_sync.dart';
 import '../data/database.dart';
 import '../data/device_http.dart';
 import '../data/device_secrets.dart';
+import '../data/diagnostics_log.dart';
 import '../data/environment_sources.dart';
 import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
@@ -72,6 +73,13 @@ final appVersionProvider = FutureProvider<String>((ref) async {
   final info = await PackageInfo.fromPlatform();
   return '${info.version}+${info.buildNumber}';
 });
+
+/// The on-device error log (#107). One instance per container: `main()`
+/// installs the global error hooks on it, and Settings → About shares its
+/// contents. Tests override with a temp-dir instance.
+final diagnosticsLogProvider = Provider<DiagnosticsLog>(
+  (ref) => DiagnosticsLog(),
+);
 
 /// The singleton app database.
 final dbProvider = Provider<AppDatabase>((ref) {
@@ -949,12 +957,6 @@ final lanDiscoveryProvider = Provider<LanDiscoveryService>(
     reefBeatProbe: ref.watch(rbIdentityProbeProvider),
     reefFactoryProbe: ref.watch(rfIdentityProbeProvider),
   ),
-);
-
-/// Every connected device (ReefFactory meters + the Hanna checker once used) —
-/// the read-only Settings "Connected devices" inventory.
-final allDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevices()),
 );
 
 /// Environment sources (U37) for a tank: the registered devices assigned to it

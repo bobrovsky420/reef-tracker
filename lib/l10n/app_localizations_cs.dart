@@ -1210,6 +1210,19 @@ class AppLocalizationsCs extends AppLocalizations {
   String get linkOpenFailed => 'Odkaz se nepodařilo otevřít';
 
   @override
+  String get shareDiagnostics => 'Sdílet diagnostiku';
+
+  @override
+  String get shareDiagnosticsSubtitle =>
+      'Odeslat protokol chyb aplikace podpoře';
+
+  @override
+  String get diagnosticsEmpty => 'Žádné chyby nebyly zaznamenány';
+
+  @override
+  String get diagnosticsShareFailed => 'Diagnostiku se nepodařilo sdílet';
+
+  @override
   String get editionLabel => 'Edice';
 
   @override

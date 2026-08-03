@@ -5,7 +5,11 @@
 | `app-icon-512.png`, `app-icon-dark-512.png` | Play / App Store listing icon |
 | `feature-graphic.png` | Play Store feature graphic – **must be exactly 1024×500** |
 | `screenshots/` | Store screenshots (see the guide-screenshot harness) |
-| `release_notes/<version>/<lang>.txt` | Store "What's new" text, per release |
+| `description/<lang>.txt` | Full store description (Play "Full description" / App Store "Description"), all 7 languages |
+| `short_description/<lang>.txt` | Play short description – **hard limit 80 chars per language** (the promotional texts below are longer and must not be pasted there) |
+| `promotional_text/<lang>.txt` | App Store "Promotional Text" (up to 170 chars) |
+| `release_notes/<version>/<lang>.txt` | Store "What's new" text, per release – the master copy. Each release also carries two derived forms that must say the same thing: `release_notes/<version>/play-console.txt` (all languages in one file, Play's region-qualified codes) and `release_notes/<version>/appstore/<locale>/release_notes.txt` (fastlane layout; **load-bearing** – the `ios-store-release` workflow in codemagic.yaml derives this path from pubspec.yaml and fails without it) |
+| `sample-data.json` | Seed backup used by the store-screenshot / guide harness |
 
 ## Feature graphic
 

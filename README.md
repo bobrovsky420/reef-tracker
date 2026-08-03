@@ -6,8 +6,10 @@ health zones, history graphs and trends, dosing, maintenance schedules,
 reminders, and safe backups. All data stays on-device (SQLite) — no account,
 no server, no ads.
 
-The app has a free **Standard** edition and a **Pro** tier; the feature/edition
-registry lives in [lib/domain/pro_features.yaml](lib/domain/pro_features.yaml).
+A paid **Pro** tier is planned but not live yet (TODO U19) — today every
+install is the free Founder's Edition and the features marked *Pro* below are
+free for it. The feature/edition registry that will drive the paywall lives in
+[lib/domain/pro_features.yaml](lib/domain/pro_features.yaml).
 
 ## Features
 

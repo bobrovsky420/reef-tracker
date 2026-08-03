@@ -1417,14 +1417,6 @@ class AppDatabase extends _$AppDatabase {
 
   // --- Connected devices (U36) ---------------------------------------------
 
-  /// All device rows, kind then oldest-first — the read-only Settings inventory.
-  Stream<List<DeviceRecord>> watchDevices() =>
-      (select(devices)..orderBy([
-            (d) => OrderingTerm(expression: d.kind),
-            (d) => OrderingTerm(expression: d.firstSeenAt),
-          ]))
-          .watch();
-
   /// Devices of one [kind] (e.g. `'reeffactory'` for the dashboard), in the
   /// user's manual card order. Rows sharing a [Devices.displayOrder] (a fresh
   /// inventory that was never reordered) fall back to the display name, which

@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/providers.dart';
@@ -14,6 +16,7 @@ import '../../data/cloud_backup_store.dart';
 import '../../data/cloud_sync.dart';
 import '../../data/csv_export.dart';
 import '../../data/database.dart';
+import '../../data/export_share.dart';
 import '../../domain/pro_features.dart';
 import '../../domain/stability_score.dart';
 import '../../domain/trend.dart';
@@ -578,6 +581,16 @@ class SettingsBody extends ConsumerWidget {
               trailing: const ReefSettingsValue(),
               onTap: () => _openWebsite(context, l, 'support.html'),
             ),
+            // The on-device error log (#107) — what support asks for when a
+            // report can't be reproduced. Shared as plain text, nothing sent
+            // anywhere by itself.
+            ReefSettingsRow(
+              icon: Icons.bug_report_outlined,
+              title: l.shareDiagnostics,
+              description: l.shareDiagnosticsSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => _shareDiagnostics(context, ref, l),
+            ),
             ReefSettingsRow(
               icon: Icons.privacy_tip_outlined,
               title: l.aboutPrivacyPolicy,
@@ -622,6 +635,36 @@ class SettingsBody extends ConsumerWidget {
     } catch (_) {}
     if (!ok) {
       messenger.showSnackBar(SnackBar(content: Text(l.linkOpenFailed)));
+    }
+  }
+
+  /// Shares the diagnostics log (#107) as a plain-text file, prefixed with
+  /// the app version and OS so a support thread identifies the build without
+  /// a follow-up question.
+  Future<void> _shareDiagnostics(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final body = await ref.read(diagnosticsLogProvider).read();
+    if (body == null) {
+      messenger.showSnackBar(SnackBar(content: Text(l.diagnosticsEmpty)));
+      return;
+    }
+    final version = ref.read(appVersionProvider).value ?? '';
+    final header =
+        'ReefTracker $version\n'
+        '${Platform.operatingSystem} ${Platform.operatingSystemVersion}\n\n';
+    final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
+    try {
+      await shareExportFile(
+        fileName: '$kDiagnosticsExportPrefix$stamp.txt',
+        content: header + body,
+        mimeType: 'text/plain',
+      );
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l.diagnosticsShareFailed)));
     }
   }
 

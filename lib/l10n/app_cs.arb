@@ -358,6 +358,10 @@
   "aboutSupportSubtitle": "Získejte pomoc nebo nahlaste problém",
   "aboutPrivacyPolicy": "Zásady ochrany soukromí",
   "linkOpenFailed": "Odkaz se nepodařilo otevřít",
+  "shareDiagnostics": "Sdílet diagnostiku",
+  "shareDiagnosticsSubtitle": "Odeslat protokol chyb aplikace podpoře",
+  "diagnosticsEmpty": "Žádné chyby nebyly zaznamenány",
+  "diagnosticsShareFailed": "Diagnostiku se nepodařilo sdílet",
 
   "editionLabel": "Edice",
   "editionFounder": "Zakladatelská edice",

@@ -88,7 +88,12 @@ dependencies:
   # Hanna pocket-checker LCD with the on-device seven-segment decoder
   # (lib/domain/seven_segment.dart) — no ML Kit / OCR dependency. Native
   # plugin (#50 pin-risk class) — must pass the scripts/build-release.ps1
-  # gate.
+  # gate. HELD below 0.12 (#108, verified 2026-08-03): 0.12.0+2 pulls
+  # camera_android_camerax 0.7.x (jni/jni_flutter), after which the release
+  # build fails in :app:compileReleaseJavaWithJavac — the generated plugin
+  # registrant still references the dev-only integration_test plugin that
+  # release builds exclude. 0.11 builds clean (A/B-tested same day). Re-try
+  # together with the #50 trio bump.
   camera: ^0.11.0
   # Hanna measurement timers: plays the bundled double-beep when a reagent
   # reaction timer runs out (assets/sounds/timer_beep.wav) — Flutter has no

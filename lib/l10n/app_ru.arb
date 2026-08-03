@@ -358,6 +358,10 @@
   "aboutSupportSubtitle": "Получить помощь или сообщить о проблеме",
   "aboutPrivacyPolicy": "Политика конфиденциальности",
   "linkOpenFailed": "Не удалось открыть ссылку",
+  "shareDiagnostics": "Поделиться диагностикой",
+  "shareDiagnosticsSubtitle": "Отправить журнал ошибок приложения в поддержку",
+  "diagnosticsEmpty": "Ошибок не зафиксировано",
+  "diagnosticsShareFailed": "Не удалось поделиться диагностикой",
 
   "editionLabel": "Издание",
   "editionFounder": "Версия основателя",

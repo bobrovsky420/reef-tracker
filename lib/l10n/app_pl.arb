@@ -358,6 +358,10 @@
   "aboutSupportSubtitle": "Uzyskaj pomoc lub zgłoś problem",
   "aboutPrivacyPolicy": "Polityka prywatności",
   "linkOpenFailed": "Nie udało się otworzyć linku",
+  "shareDiagnostics": "Udostępnij diagnostykę",
+  "shareDiagnosticsSubtitle": "Wyślij dziennik błędów aplikacji do pomocy technicznej",
+  "diagnosticsEmpty": "Nie zarejestrowano żadnych błędów",
+  "diagnosticsShareFailed": "Nie udało się udostępnić diagnostyki",
 
   "editionLabel": "Edycja",
   "editionFounder": "Edycja założycielska",

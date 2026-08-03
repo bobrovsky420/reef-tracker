@@ -13,6 +13,10 @@ updates:
       - dependency-name: share_plus
       - dependency-name: file_picker
       - dependency-name: package_info_plus
+      # camera is held below 0.12 for the same release-build reason (#108):
+      # camerax 0.7.x breaks the release plugin registrant. Re-try with the
+      # trio bump above.
+      - dependency-name: camera
   - package-ecosystem: github-actions
     directory: /
     schedule:
