@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../app/providers.dart';
 import '../app/theme.dart';
 import '../data/database.dart';
+import '../domain/parameter_catalog.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
 import '../features/actions/action_markers.dart';
@@ -249,6 +250,20 @@ class _TrendChartState extends State<TrendChart> {
     final pad = (maxY - minY).abs() < 1e-9 ? 1.0 : (maxY - minY) * 0.12;
     minY -= pad;
     maxY += pad;
+    // Parameters that physically cannot go negative (canonical minValue == 0:
+    // concentrations, nutrients) never get a negative axis — clamp the padded
+    // floor to zero. Non-zero floors (salinity's SG 1.0) keep plain padding:
+    // clamping there would put an off-grid edge label right next to the first
+    // interval tick, the exact crowding this chart's axes avoid.
+    final def = p == null ? null : kParameterByKey[p.row.paramKey];
+    var clampedToZero = false;
+    if (def?.minValue == 0) {
+      final zero = pres.toDisplay(0);
+      if (minY < zero) {
+        minY = zero;
+        clampedToZero = true;
+      }
+    }
 
     final hasWindow = widget.minX != null && widget.maxX != null;
     final isSingle = !hasWindow && spots.length == 1;
@@ -325,6 +340,14 @@ class _TrendChartState extends State<TrendChart> {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 44,
+              // The padded min/max are arbitrary values (data extreme ± 12%)
+              // whose labels crowd the neighbouring interval tick (#overlap:
+              // 29.9 under 30.0) — leave the axis to its nice ticks. The one
+              // meaningful edge is a floor clamped to zero: it sits exactly on
+              // the tick grid, a full interval from its neighbour, so it keeps
+              // its label.
+              minIncluded: clampedToZero,
+              maxIncluded: false,
               getTitlesWidget: (v, meta) => Text(
                 formatLocaleNumber(v, pres.decimals.clamp(0, 2)),
                 style: const TextStyle(fontSize: 10),

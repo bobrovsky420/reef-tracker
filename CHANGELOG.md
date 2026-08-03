@@ -45,6 +45,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rather than red. The high side (diatom territory) is unchanged, and custom
   silicon ranges are unaffected.
 
+### Fixed
+- Parameter graphs no longer draw overlapping value labels on the left axis
+  when the graph's edge fell close to a gridline (e.g. 29.9 under 30.0 on a
+  salinity chart) — the axis now shows only its evenly spaced gridline labels.
+- Graphs of values that cannot go negative (nitrate, phosphate and other
+  concentrations) no longer extend the axis below zero; they stop at a
+  labeled 0 instead of showing impossible values like −2.4.
+- The Devices tab now really remembers the selected brand chip across app
+  restarts — a startup race made it fall back to All even though the choice
+  was saved.
+
 ## [1.1.1] - 2026-08-01
 
 ### Added
