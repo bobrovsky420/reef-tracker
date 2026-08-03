@@ -11,8 +11,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// error emissions from a provider's `Stream`/`Future`, so one hook covers
 /// every async failure path.
 ///
-/// Every failure is reported to [FlutterError] (console in debug, crash
-/// reporting hooks in release). [showError] — the user-visible warning — is
+/// Every failure is reported to [FlutterError] — console in debug; in every
+/// mode the `installDiagnosticsHooks` hook (#107) appends it to the
+/// on-device diagnostics log shared from Settings → About, which is all the
+/// "crash reporting" this offline app has. [showError] — the user-visible
+/// warning — is
 /// rate-limited by [throttle]: a single broken query cascades through several
 /// derived providers and is retried automatically by riverpod, and one
 /// warning covers all of them.

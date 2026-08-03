@@ -2135,6 +2135,30 @@ abstract class AppLocalizations {
   /// **'Could not open the link'**
   String get linkOpenFailed;
 
+  /// Settings → About row sharing the on-device error log as a text file (#107).
+  ///
+  /// In en, this message translates to:
+  /// **'Share diagnostics'**
+  String get shareDiagnostics;
+
+  /// Subtitle of the share-diagnostics row.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the app\'s error log to support'**
+  String get shareDiagnosticsSubtitle;
+
+  /// SnackBar shown when the diagnostics log is empty — nothing to share.
+  ///
+  /// In en, this message translates to:
+  /// **'No errors have been recorded'**
+  String get diagnosticsEmpty;
+
+  /// SnackBar shown when handing the diagnostics file to the OS share sheet fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not share the diagnostics'**
+  String get diagnosticsShareFailed;
+
   /// Settings row label showing which edition of the app this install is entitled to.
   ///
   /// In en, this message translates to:

@@ -29,8 +29,13 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: cz.reeftracker.reeftracker
-      flutter: stable
-      xcode: latest
+      # Pinned (T20): the workflow producing the store artifact must not float.
+      # 3.44.6 = the locally validated toolchain (scripts/build-release.ps1 and
+      # the dev machine); 26.4 = what `latest` resolved to for the last green
+      # TestFlight build (2026-08-02). Bump both deliberately, together with
+      # ci.yml's flutter-version, never by image drift.
+      flutter: 3.44.6
+      xcode: "26.4"
       cocoapods: default
     scripts:
       - name: Flutter pub get
@@ -51,6 +56,11 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      # T20: no Podfile/Podfile.lock is committed yet (they only materialize on
+      # macOS). Exposed as artifacts so the next green build's pair can be
+      # downloaded and committed, locking the transitive pod set.
+      - ios/Podfile
+      - ios/Podfile.lock
     publishing:
       app_store_connect:
         auth: integration
@@ -87,8 +97,9 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: cz.reeftracker.reeftracker
-      flutter: stable
-      xcode: latest
+      # Pinned (T20) — keep identical to ios-release above; bump together.
+      flutter: 3.44.6
+      xcode: "26.4"
       cocoapods: default
     scripts:
       - name: Flutter pub get
@@ -182,6 +193,11 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      # T20: no Podfile/Podfile.lock is committed yet (they only materialize on
+      # macOS). Exposed as artifacts so the next green build's pair can be
+      # downloaded and committed, locking the transitive pod set.
+      - ios/Podfile
+      - ios/Podfile.lock
     publishing:
       app_store_connect:
         auth: integration

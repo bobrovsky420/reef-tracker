@@ -14,12 +14,16 @@ const String kCsvExportPrefix = 'reeftracker-readings-';
 /// Filename prefix of chart-image exports (history screen's share action).
 const String kChartExportPrefix = 'reeftracker-chart-';
 
+/// Filename prefix of diagnostics-log exports (#107, Settings → About).
+const String kDiagnosticsExportPrefix = 'reeftracker-diagnostics-';
+
 /// Whether [name] matches one of our export naming patterns. Only such files
 /// are ever swept — foreign files in the shared temp/cache dirs are untouched.
 bool _isOurExport(String name) =>
     (name.startsWith(kBackupExportPrefix) && name.endsWith('.json')) ||
     (name.startsWith(kCsvExportPrefix) && name.endsWith('.csv')) ||
-    (name.startsWith(kChartExportPrefix) && name.endsWith('.png'));
+    (name.startsWith(kChartExportPrefix) && name.endsWith('.png')) ||
+    (name.startsWith(kDiagnosticsExportPrefix) && name.endsWith('.txt'));
 
 /// Stages [content] as a temp file named [fileName] and hands it to the OS
 /// share sheet.

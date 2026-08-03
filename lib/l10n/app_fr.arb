@@ -358,6 +358,10 @@
   "aboutSupportSubtitle": "Obtenir de l'aide ou signaler un problème",
   "aboutPrivacyPolicy": "Politique de confidentialité",
   "linkOpenFailed": "Impossible d'ouvrir le lien",
+  "shareDiagnostics": "Partager le diagnostic",
+  "shareDiagnosticsSubtitle": "Envoyer le journal d'erreurs de l'application au support",
+  "diagnosticsEmpty": "Aucune erreur n'a été enregistrée",
+  "diagnosticsShareFailed": "Impossible de partager le diagnostic",
 
   "editionLabel": "Édition",
   "editionFounder": "Édition Fondateur",

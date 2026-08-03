@@ -1214,6 +1214,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get linkOpenFailed => 'Link konnte nicht geöffnet werden';
 
   @override
+  String get shareDiagnostics => 'Diagnose teilen';
+
+  @override
+  String get shareDiagnosticsSubtitle =>
+      'Fehlerprotokoll der App an den Support senden';
+
+  @override
+  String get diagnosticsEmpty => 'Es wurden keine Fehler aufgezeichnet';
+
+  @override
+  String get diagnosticsShareFailed => 'Diagnose konnte nicht geteilt werden';
+
+  @override
   String get editionLabel => 'Edition';
 
   @override

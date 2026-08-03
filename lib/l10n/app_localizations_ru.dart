@@ -1219,6 +1219,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get linkOpenFailed => 'Не удалось открыть ссылку';
 
   @override
+  String get shareDiagnostics => 'Поделиться диагностикой';
+
+  @override
+  String get shareDiagnosticsSubtitle =>
+      'Отправить журнал ошибок приложения в поддержку';
+
+  @override
+  String get diagnosticsEmpty => 'Ошибок не зафиксировано';
+
+  @override
+  String get diagnosticsShareFailed => 'Не удалось поделиться диагностикой';
+
+  @override
   String get editionLabel => 'Издание';
 
   @override

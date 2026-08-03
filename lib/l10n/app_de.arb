@@ -358,6 +358,10 @@
   "aboutSupportSubtitle": "Hilfe erhalten oder ein Problem melden",
   "aboutPrivacyPolicy": "Datenschutzerklärung",
   "linkOpenFailed": "Link konnte nicht geöffnet werden",
+  "shareDiagnostics": "Diagnose teilen",
+  "shareDiagnosticsSubtitle": "Fehlerprotokoll der App an den Support senden",
+  "diagnosticsEmpty": "Es wurden keine Fehler aufgezeichnet",
+  "diagnosticsShareFailed": "Diagnose konnte nicht geteilt werden",
 
   "editionLabel": "Edition",
   "editionFounder": "Gründer-Edition",

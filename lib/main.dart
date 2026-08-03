@@ -12,6 +12,7 @@ import 'app/providers.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
 import 'data/cloud_restore_flow.dart';
+import 'data/diagnostics_log.dart';
 import 'data/reminder_scheduler.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/l10n_helpers.dart';
@@ -22,6 +23,11 @@ Future<void> main() async {
   final container = ProviderContainer(
     observers: [ProviderErrorObserver(showError: _warnDataLoadFailed)],
   );
+  // Route every FlutterError.reportError (the observer above included) and
+  // every unhandled async error into the on-device diagnostics log (#107),
+  // shared from Settings → About. Before the settings pre-warm below so even
+  // a failing database open on a broken device leaves a trace.
+  installDiagnosticsHooks(container.read(diagnosticsLogProvider));
   // Pre-warm the settings map — which carries the stored locale override —
   // before the first frame (#24): without this the app renders its first
   // frame(s) in the system language and then snaps to the chosen one. Also
