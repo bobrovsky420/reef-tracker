@@ -4545,7 +4545,7 @@ abstract class AppLocalizations {
   /// **'Flat'**
   String get dashboardLayoutFlat;
 
-  /// Dashboard layout option: the flat card grid where each card also shows a small 7-day graph of recent readings.
+  /// Dashboard layout option: the flat card grid where each card also shows a small 14-day graph of recent readings.
   ///
   /// In en, this message translates to:
   /// **'Flat with graphs'**

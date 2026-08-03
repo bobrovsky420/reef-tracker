@@ -40,7 +40,7 @@ import '../micro/micro_summary_tile.dart';
 /// [DashboardBody]): [groupedKey] orders the sectioned layout (#6), [flatOrder]
 /// the original single user-ordered grid. Each layout gets its own widget —
 /// [tile] is the classic flat-grid card (frozen pre-redesign look), [graph]
-/// that same card with a 7-day sparkline (the flat-with-graphs layout, U45),
+/// that same card with a 14-day sparkline (the flat-with-graphs layout, U45),
 /// [grouped] the grouped-layout form (#7 gauge dial / #9 env pill / #8 ratio
 /// *row* — assembled into one card per section — falling back to the flat tile
 /// where no richer form applies).
@@ -532,7 +532,7 @@ class DashboardBody extends ConsumerWidget {
 /// Dashboard tile for a [RatioKind], laid out identically to [_ParameterTile]:
 /// title, the latest ratio value colored by its health zone, a trend indicator,
 /// and a relative timestamp. With [sparkline] (the flat-with-graphs layout,
-/// U45) a 7-day sparkline of the *displayed* metric ([ratioChartY] — matching
+/// U45) a 14-day sparkline of the *displayed* metric ([ratioChartY] — matching
 /// the ratio history chart's shape) fills the middle. Tapping it opens that
 /// ratio's history graph.
 class _RatioTile extends StatelessWidget {
@@ -557,7 +557,7 @@ class _RatioTile extends StatelessWidget {
   /// shown muted instead of zone-colored.
   final bool stale;
 
-  /// Fill the middle with a 7-day [Sparkline] instead of empty space.
+  /// Fill the middle with a 14-day [Sparkline] instead of empty space.
   final bool sparkline;
 
   @override
@@ -677,7 +677,7 @@ class _ParameterTile extends StatelessWidget {
   final TrendResult? trend;
   final int trendHorizon;
 
-  /// Fill the middle with a 7-day [Sparkline] of the readings instead of
+  /// Fill the middle with a 14-day [Sparkline] of the readings instead of
   /// empty space (the flat-with-graphs layout, U45).
   final bool sparkline;
 
