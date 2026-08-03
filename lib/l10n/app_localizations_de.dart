@@ -2767,6 +2767,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dashboardLayoutFlat => 'Flach';
 
   @override
+  String get dashboardLayoutFlatGraph => 'Flach mit Diagrammen';
+
+  @override
   String get healthDisplayTitle => 'Beckenzustand';
 
   @override

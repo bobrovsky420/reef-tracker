@@ -774,6 +774,7 @@
   "dashboardLayoutSubtitle": "Wie die Karten im Tab „Messungen“ angeordnet werden",
   "dashboardLayoutGrouped": "Gruppiert",
   "dashboardLayoutFlat": "Flach",
+  "dashboardLayoutFlatGraph": "Flach mit Diagrammen",
 
   "healthDisplayTitle": "Beckenzustand",
   "healthDisplaySubtitle": "Wo die Zustandsübersicht erscheint",

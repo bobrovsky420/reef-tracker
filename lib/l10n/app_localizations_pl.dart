@@ -2812,6 +2812,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get dashboardLayoutFlat => 'Płaski';
 
   @override
+  String get dashboardLayoutFlatGraph => 'Płaski z wykresami';
+
+  @override
   String get healthDisplayTitle => 'Kondycja zbiornika';
 
   @override

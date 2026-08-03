@@ -2772,6 +2772,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get dashboardLayoutFlat => 'Ploché';
 
   @override
+  String get dashboardLayoutFlatGraph => 'Ploché s grafy';
+
+  @override
   String get healthDisplayTitle => 'Zdraví nádrže';
 
   @override

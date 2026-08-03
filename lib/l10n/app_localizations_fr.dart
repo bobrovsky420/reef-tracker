@@ -2773,6 +2773,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dashboardLayoutFlat => 'Plat';
 
   @override
+  String get dashboardLayoutFlatGraph => 'Plat avec graphiques';
+
+  @override
   String get healthDisplayTitle => 'Santé du bac';
 
   @override

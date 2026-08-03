@@ -2749,6 +2749,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardLayoutFlat => 'Flat';
 
   @override
+  String get dashboardLayoutFlatGraph => 'Flat with graphs';
+
+  @override
   String get healthDisplayTitle => 'Tank health';
 
   @override
