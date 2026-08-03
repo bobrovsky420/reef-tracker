@@ -331,12 +331,19 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// all FABs act on between builds, same reasoning as [_present].
   _Scope _scope = const _Scope(order: [], byVendor: {});
 
-  /// Applies the persisted filter once the setting has loaded, dropping it if
-  /// that vendor no longer has any devices (its last one was removed).
-  void _restoreSelection(List<String> present) {
+  /// Applies the persisted filter once the setting *and* the device lists have
+  /// loaded, dropping it if that vendor no longer has any devices (its last
+  /// one was removed). Judging the stored vendor against still-loading lists
+  /// would drop a valid selection on every cold start — the settings map
+  /// usually wins the race against the four device streams — so the latch
+  /// waits for both sides.
+  void _restoreSelection(
+    List<String> present, {
+    required bool devicesLoaded,
+    required String? stored,
+  }) {
     if (_selectionRestored) return;
-    final stored = ref.read(deviceVendorFilterProvider).value;
-    if (stored == null) return; // Setting not loaded yet — try next build.
+    if (stored == null || !devicesLoaded) return; // Not loaded — next build.
     _selectionRestored = true;
     if (stored.isNotEmpty && present.contains(stored)) _vendor = stored;
   }
@@ -708,22 +715,14 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     final entitled = ref.watch(proFeatureProvider(ProFeature.connectedDevices));
     final order = ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors;
 
-    final rf = _scoped(
-      ref.watch(reefFactoryDevicesProvider).value ?? const [],
-      tankId,
-    );
-    final rb = _scoped(
-      ref.watch(reefBeatDevicesProvider).value ?? const [],
-      tankId,
-    );
-    final ap = _scoped(
-      ref.watch(apexDevicesProvider).value ?? const [],
-      tankId,
-    );
-    final ha = _scoped(
-      ref.watch(hannaDevicesProvider).value ?? const [],
-      tankId,
-    );
+    final rfAsync = ref.watch(reefFactoryDevicesProvider);
+    final rbAsync = ref.watch(reefBeatDevicesProvider);
+    final apAsync = ref.watch(apexDevicesProvider);
+    final haAsync = ref.watch(hannaDevicesProvider);
+    final rf = _scoped(rfAsync.value ?? const [], tankId);
+    final rb = _scoped(rbAsync.value ?? const [], tankId);
+    final ap = _scoped(apAsync.value ?? const [], tankId);
+    final ha = _scoped(haAsync.value ?? const [], tankId);
     final byVendor = {
       kDeviceKindReefFactory: rf,
       kDeviceKindReefBeat: rb,
@@ -737,7 +736,18 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
         if ((byVendor[v] ?? const []).isNotEmpty) v,
     ];
     _present = present;
-    _restoreSelection(present);
+    // Watched, not read: the setting's arrival must itself trigger a rebuild,
+    // or a settings map that loads after the last device rebuild would leave
+    // the stored selection unapplied until something else redraws the page.
+    _restoreSelection(
+      present,
+      devicesLoaded:
+          rfAsync.hasValue &&
+          rbAsync.hasValue &&
+          apAsync.hasValue &&
+          haAsync.hasValue,
+      stored: ref.watch(deviceVendorFilterProvider).value,
+    );
     final selected = present.contains(_vendor) ? _vendor : null;
     final inScope = selected == null ? present : [selected];
     final scope = _Scope(

@@ -93,6 +93,17 @@ void main() {
         takenAt: daysAgo(5 - i),
       );
     }
+    // Phosphate hugging zero (ULNS-style): the 12% chart padding would put
+    // the axis floor at −0.015 ppm — exercises the zero clamp + labeled 0
+    // bottom line on the graph.
+    for (final (i, v) in [0.22, 0.16, 0.12, 0.08, 0.01].indexed) {
+      await db.insertReading(
+        tankId: tank,
+        paramKey: 'phosphate',
+        value: v,
+        takenAt: daysAgo(4 - i),
+      );
+    }
     // Environment series (temperature/pH/salinity) so the Environment section
     // and the derived free-ammonia calc have inputs.
     for (final (i, v) in [25.8, 26.0, 26.1].indexed) {
