@@ -1616,19 +1616,33 @@ behind a confirmation dialog**:
   (the U26 split — presentation-only gate). Rides the same
   `healthDisplayProvider` card visibility as the health header, since both
   are derived summaries of the same readings.
-- **Two selectable layouts** (`dashboardLayoutProvider`, `DashboardLayout`,
+- **Three selectable layouts** (`dashboardLayoutProvider`, `DashboardLayout`,
   device-local Settings → Dashboard, default `grouped`). The setting picks
-  which of the two dashboards below renders, and also drives the ordering of
+  which of the dashboards below renders, and also drives the ordering of
   the **compare view** and the **Manage Parameters** list so the whole
-  Measurements tab stays coherent. `DashboardBody` builds every tile once
-  carrying both ordering keys and then branches (`_appendGrouped` /
+  Measurements tab stays coherent (both flat layouts share the flat ordering
+  — those screens branch on `== grouped`). `DashboardBody` builds every tile
+  once carrying both ordering keys and then branches (`_appendGrouped` /
   `_appendClassic`); **all future dashboard visual work targets the grouped
-  layout** — classic is a frozen fallback.
+  layout** — classic is a frozen fallback, flat-with-graphs its one variant.
   - **Flat** (internally `classic` — the stored setting value and code names
     keep the old id): the original single `SliverGrid` mixing `_ParameterTile`s and
     `_RatioTile`s in one user-managed flat order (`displayOrder` /
     `ratioRowOrder`), `MicroSummaryTile` pinned as the last cell. Manage
     Parameters shows one freely-ordered flat list with no section captions.
+  - **Flat with graphs** (`flatGraph`, U45): the same flat grid in taller
+    cells, each parameter/ratio card additionally filled with a **7-day
+    sparkline** (`widgets/sparkline.dart` — a `CustomPainter` polyline,
+    time-scaled x across the trailing window so measurement gaps show, y
+    spanning the in-window value range, 2 px line + end dot in the theme
+    primary; status color stays reserved for the value text). Ratio cards
+    plot the displayed metric (`ratioChartY`) so the shape matches the ratio
+    history chart; the free-ammonia and microelements cards have no series
+    and reuse their flat forms. Like the gauge dials, the sparkline is
+    fixed-size — only the text portion of the cell height scales with the
+    font setting (#44). Data comes from the same `recentReadingsProvider`
+    head the tiles already receive (40 newest per parameter — ample for 7
+    days); readings older than the window simply leave the graph area empty.
   - **Grouped**: the categorized layout described next.
 - **Grouped into fixed sections** (REDESIGN #6, `domain/dashboard_sections.dart`):
   Core chemistry (alkalinity, calcium, magnesium) → Nutrients (nitrate,
@@ -3807,7 +3821,8 @@ Groups, in order: **Language**; **Appearance** (the theme-mode
 System/Light/Dark `ReefSegmented` row — device-local `theme_mode`, REDESIGN
 #16, see Theming); **Units** (temp/salinity/volume as
 `ReefSegmented` controls); a **Dashboard**
-section (the **dashboard-layout** dropdown — "Flat" (internally `classic`, listed first) vs "Grouped",
+section (the **dashboard-layout** dropdown — "Flat" (internally `classic`, listed first) /
+"Flat with graphs" (`flatGraph`, U45) / "Grouped",
 `dashboardLayoutProvider`, default grouped, see Dashboard above — plus the
 tank-health display dropdown + the **stability window** selector,
 U26 — `kStabilityWindowChoices` 30/60/90 d, shown only to installs entitled to

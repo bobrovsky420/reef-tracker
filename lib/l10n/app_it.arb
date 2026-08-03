@@ -774,6 +774,7 @@
   "dashboardLayoutSubtitle": "Come sono disposti i riquadri nella scheda Misurazioni",
   "dashboardLayoutGrouped": "Raggruppato",
   "dashboardLayoutFlat": "Piatto",
+  "dashboardLayoutFlatGraph": "Piatto con grafici",
 
   "healthDisplayTitle": "Salute della vasca",
   "healthDisplaySubtitle": "Dove mostrare il riepilogo della salute",

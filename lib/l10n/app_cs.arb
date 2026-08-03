@@ -774,6 +774,7 @@
   "dashboardLayoutSubtitle": "Jak karty uspořádat na kartě Měření",
   "dashboardLayoutGrouped": "Skupiny",
   "dashboardLayoutFlat": "Ploché",
+  "dashboardLayoutFlatGraph": "Ploché s grafy",
 
   "healthDisplayTitle": "Zdraví nádrže",
   "healthDisplaySubtitle": "Kde zobrazit souhrn zdraví",

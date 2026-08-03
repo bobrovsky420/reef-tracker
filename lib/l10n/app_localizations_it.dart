@@ -2771,6 +2771,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get dashboardLayoutFlat => 'Piatto';
 
   @override
+  String get dashboardLayoutFlatGraph => 'Piatto con grafici';
+
+  @override
   String get healthDisplayTitle => 'Salute della vasca';
 
   @override

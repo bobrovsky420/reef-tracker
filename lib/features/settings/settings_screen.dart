@@ -180,6 +180,7 @@ class SettingsBody extends ConsumerWidget {
                 onChanged: settings.setDashboardLayout,
                 items: [
                   (DashboardLayout.classic, l.dashboardLayoutFlat),
+                  (DashboardLayout.flatGraph, l.dashboardLayoutFlatGraph),
                   (DashboardLayout.grouped, l.dashboardLayoutGrouped),
                 ],
               ),

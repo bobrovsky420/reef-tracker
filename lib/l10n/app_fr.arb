@@ -774,6 +774,7 @@
   "dashboardLayoutSubtitle": "Comment les cartes sont organisées dans l'onglet Mesures",
   "dashboardLayoutGrouped": "Groupé",
   "dashboardLayoutFlat": "Plat",
+  "dashboardLayoutFlatGraph": "Plat avec graphiques",
 
   "healthDisplayTitle": "Santé du bac",
   "healthDisplaySubtitle": "Où afficher le résumé de santé",

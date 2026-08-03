@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- New "Flat with graphs" dashboard layout (Settings → Dashboard): the flat
+  card grid where every parameter and ratio card also shows a small graph of
+  its last 7 days of readings under the color-coded current value.
 - iOS: iCloud backup sync — the iPhone counterpart of the Android Google
   Drive sync. Turn it on in Settings → Backup and every backup is uploaded
   to a visible "ReefTracker" folder in your iCloud Drive, where you can

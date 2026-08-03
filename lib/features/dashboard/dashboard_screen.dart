@@ -30,23 +30,26 @@ import '../../widgets/reef_card.dart';
 import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_settings.dart';
 import '../../widgets/section_header.dart';
+import '../../widgets/sparkline.dart';
 import '../../widgets/tank_health_badge.dart';
 import '../../widgets/trend_view.dart';
 import '../../widgets/zone_visuals.dart';
 import '../micro/micro_summary_tile.dart';
 
-/// One dashboard item built for both layouts in a single pass (see
+/// One dashboard item built for all layouts in a single pass (see
 /// [DashboardBody]): [groupedKey] orders the sectioned layout (#6), [flatOrder]
 /// the original single user-ordered grid. Each layout gets its own widget —
-/// [tile] is the classic flat-grid card (frozen pre-redesign look), [grouped]
-/// the grouped-layout form (#7 gauge dial / #9 env pill / #8 ratio *row* —
-/// assembled into one card per section — falling back to the flat tile where
-/// no richer form applies).
+/// [tile] is the classic flat-grid card (frozen pre-redesign look), [graph]
+/// that same card with a 7-day sparkline (the flat-with-graphs layout, U45),
+/// [grouped] the grouped-layout form (#7 gauge dial / #9 env pill / #8 ratio
+/// *row* — assembled into one card per section — falling back to the flat tile
+/// where no richer form applies).
 typedef _DashEntry = ({
   DashboardSection section,
   DashboardSortKey groupedKey,
   double flatOrder,
   Widget tile,
+  Widget graph,
   Widget grouped,
 });
 
@@ -109,6 +112,14 @@ class DashboardBody extends ConsumerWidget {
             groupedKey: paramSortKey(param.paramKey, param.displayOrder),
             flatOrder: param.displayOrder.toDouble(),
             tile: tile,
+            graph: _ParameterTile(
+              param: param,
+              history: history,
+              prefs: prefs,
+              trend: trends[param.paramKey],
+              trendHorizon: trendHorizon,
+              sparkline: true,
+            ),
             grouped: _groupedParamTile(
               context,
               l,
@@ -154,6 +165,13 @@ class DashboardBody extends ConsumerWidget {
               bounds: bounds,
               stale: stale,
             ),
+            graph: _RatioTile(
+              kind: kind,
+              points: series,
+              bounds: bounds,
+              stale: stale,
+              sparkline: true,
+            ),
             // The grouped layout collapses the section into one card of rows
             // (#8); `_appendGrouped` interleaves the hairline dividers.
             grouped: RatioRow(
@@ -190,6 +208,9 @@ class DashboardBody extends ConsumerWidget {
             groupedKey: const DashboardSortKey(DashboardSection.ratios, -1, -1),
             flatOrder: 999.5,
             tile: FreeAmmoniaTile(data: fa, prefs: prefs),
+            // Derived from the latest input readings only — no history series
+            // exists to draw, so the graph layout reuses the flat tile.
+            graph: FreeAmmoniaTile(data: fa, prefs: prefs),
             grouped: FreeAmmoniaRow(data: fa, prefs: prefs),
           ));
         }
@@ -212,8 +233,14 @@ class DashboardBody extends ConsumerWidget {
           ],
         ];
 
-        if (layout == DashboardLayout.classic) {
-          _appendClassic(context, slivers, entries, microEnabled: microEnabled);
+        if (layout != DashboardLayout.grouped) {
+          _appendClassic(
+            context,
+            slivers,
+            entries,
+            microEnabled: microEnabled,
+            graphs: layout == DashboardLayout.flatGraph,
+          );
         } else {
           _appendGrouped(
             context,
@@ -303,17 +330,21 @@ class DashboardBody extends ConsumerWidget {
   /// Classic layout: the original single grid mixing measurements and ratios
   /// in one user-managed order, with the Microelements tile (U17) pinned as
   /// the last cell. Frozen pre-redesign look — the gauge/pill/row forms
-  /// (#7–#10) target the grouped layout only.
+  /// (#7–#10) target the grouped layout only. With [graphs] (the
+  /// flat-with-graphs layout, U45) the same grid shows each card's sparkline
+  /// variant, in taller cells — the sparkline is fixed-size, so like the
+  /// gauge dials (#44) only the text portion scales with the font setting.
   void _appendClassic(
     BuildContext context,
     List<Widget> slivers,
     List<_DashEntry> entries, {
     required bool microEnabled,
+    bool graphs = false,
   }) {
     final sorted = [...entries]
       ..sort((a, b) => a.flatOrder.compareTo(b.flatOrder));
     final tiles = [
-      for (final e in sorted) e.tile,
+      for (final e in sorted) graphs ? e.graph : e.tile,
       if (microEnabled) const MicroSummaryTile(grid: true),
     ];
     slivers.add(
@@ -322,7 +353,8 @@ class DashboardBody extends ConsumerWidget {
         sliver: _tileGrid(
           context,
           tiles,
-          height: MediaQuery.textScalerOf(context).scale(143),
+          height:
+              MediaQuery.textScalerOf(context).scale(143) + (graphs ? 48 : 0),
         ),
       ),
     );
@@ -499,13 +531,17 @@ class DashboardBody extends ConsumerWidget {
 
 /// Dashboard tile for a [RatioKind], laid out identically to [_ParameterTile]:
 /// title, the latest ratio value colored by its health zone, a trend indicator,
-/// and a relative timestamp. Tapping it opens that ratio's history graph.
+/// and a relative timestamp. With [sparkline] (the flat-with-graphs layout,
+/// U45) a 7-day sparkline of the *displayed* metric ([ratioChartY] — matching
+/// the ratio history chart's shape) fills the middle. Tapping it opens that
+/// ratio's history graph.
 class _RatioTile extends StatelessWidget {
   const _RatioTile({
     required this.kind,
     required this.points,
     required this.bounds,
     this.stale = false,
+    this.sparkline = false,
   });
 
   final RatioKind kind;
@@ -520,6 +556,9 @@ class _RatioTile extends StatelessWidget {
   /// state (its halves are further apart than [kRatioMaxSkew]): the value is
   /// shown muted instead of zone-colored.
   final bool stale;
+
+  /// Fill the middle with a 7-day [Sparkline] instead of empty space.
+  final bool sparkline;
 
   @override
   Widget build(BuildContext context) {
@@ -540,7 +579,19 @@ class _RatioTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
-          const Spacer(),
+          if (sparkline && points.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Expanded(
+              child: Sparkline(
+                points: [
+                  for (final p in points)
+                    (time: p.time, value: ratioChartY(kind, p.ratio)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+          ] else
+            const Spacer(),
           if (latest == null)
             Text(l.noReadings, style: TextStyle(color: hint))
           else
@@ -617,6 +668,7 @@ class _ParameterTile extends StatelessWidget {
     required this.prefs,
     this.trend,
     this.trendHorizon = kTrendDefaultHorizon,
+    this.sparkline = false,
   });
 
   final ResolvedParameter param;
@@ -624,6 +676,10 @@ class _ParameterTile extends StatelessWidget {
   final UnitPrefs prefs;
   final TrendResult? trend;
   final int trendHorizon;
+
+  /// Fill the middle with a 7-day [Sparkline] of the readings instead of
+  /// empty space (the flat-with-graphs layout, U45).
+  final bool sparkline;
 
   @override
   Widget build(BuildContext context) {
@@ -647,7 +703,20 @@ class _ParameterTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
-          const Spacer(),
+          if (sparkline && history.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Expanded(
+              child: Sparkline(
+                points: [
+                  // history is newest-first; the sparkline wants oldest-first.
+                  for (final r in history.reversed)
+                    (time: r.takenAt, value: r.value),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+          ] else
+            const Spacer(),
           if (latest == null)
             Text(
               l.noReadings,

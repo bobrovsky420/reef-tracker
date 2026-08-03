@@ -13,6 +13,7 @@ import 'package:reeftracker/widgets/env_pill.dart';
 import 'package:reeftracker/widgets/param_gauge.dart';
 import 'package:reeftracker/widgets/ratio_row.dart';
 import 'package:reeftracker/widgets/reef_card.dart';
+import 'package:reeftracker/widgets/sparkline.dart';
 
 /// Structural widget tests for the dashboard layouts (REDESIGN #6–#10): in
 /// the grouped layout, section headers render for populated groups, a group
@@ -194,6 +195,37 @@ void main() {
       ),
       findsNothing,
     );
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('flat-with-graphs layout renders the flat tiles plus a '
+      'sparkline for cards with recent readings (U45)', (tester) async {
+    final db = await pumpDashboard(tester, layout: DashboardLayout.flatGraph);
+
+    // Like classic: flat tiles, no headers, no grouped forms.
+    expect(find.text('Alkalinity'), findsOneWidget);
+    expect(coreHeader, findsNothing);
+    expect(find.byType(ParamGaugeCard), findsNothing);
+    expect(find.byType(EnvPill), findsNothing);
+    expect(find.byType(RatioRow), findsNothing);
+    // No readings yet → no card has a sparkline to draw.
+    expect(find.byType(Sparkline), findsNothing);
+
+    // One reading only: enough for the sparkline (a lone in-window point
+    // draws its end dot), while keeping the change indicator away — with the
+    // square-glyph test font the full value row can't fit a tile, which on
+    // real fonts it comfortably does.
+    await db.insertReading(
+      tankId: (await db.getActiveTankId())!,
+      paramKey: 'alkalinity',
+      value: 8.2,
+      takenAt: DateTime.now().subtract(const Duration(days: 2)),
+    );
+    await settle(tester);
+
+    // Exactly the measured parameter gained a sparkline.
+    expect(find.byType(Sparkline), findsOneWidget);
 
     await unmountApp(tester);
   });
