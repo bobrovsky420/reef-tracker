@@ -14,7 +14,9 @@ class Sparkline extends StatelessWidget {
   const Sparkline({
     super.key,
     required this.points,
-    this.window = const Duration(days: 7),
+    // Two weeks so a parameter tested only weekly still shows a line
+    // (two-plus points), not a lone dot.
+    this.window = const Duration(days: 14),
     this.color,
   });
 

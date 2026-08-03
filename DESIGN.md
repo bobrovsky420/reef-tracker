@@ -1631,8 +1631,9 @@ behind a confirmation dialog**:
     `ratioRowOrder`), `MicroSummaryTile` pinned as the last cell. Manage
     Parameters shows one freely-ordered flat list with no section captions.
   - **Flat with graphs** (`flatGraph`, U45): the same flat grid in taller
-    cells, each parameter/ratio card additionally filled with a **7-day
-    sparkline** (`widgets/sparkline.dart` — a `CustomPainter` polyline,
+    cells, each parameter/ratio card additionally filled with a **14-day
+    sparkline** (two weeks so a weekly-tested parameter still draws a line,
+    not a lone dot; `widgets/sparkline.dart` — a `CustomPainter` polyline,
     time-scaled x across the trailing window so measurement gaps show, y
     spanning the in-window value range, 2 px line + end dot in the theme
     primary; status color stays reserved for the value text). Ratio cards
@@ -1641,8 +1642,8 @@ behind a confirmation dialog**:
     and reuse their flat forms. Like the gauge dials, the sparkline is
     fixed-size — only the text portion of the cell height scales with the
     font setting (#44). Data comes from the same `recentReadingsProvider`
-    head the tiles already receive (40 newest per parameter — ample for 7
-    days); readings older than the window simply leave the graph area empty.
+    head the tiles already receive (40 newest per parameter — ample for two
+    weeks); readings older than the window simply leave the graph area empty.
   - **Grouped**: the categorized layout described next.
 - **Grouped into fixed sections** (REDESIGN #6, `domain/dashboard_sections.dart`):
   Core chemistry (alkalinity, calcium, magnesium) → Nutrients (nitrate,

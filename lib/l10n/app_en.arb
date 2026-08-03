@@ -1282,7 +1282,7 @@
   },
   "dashboardLayoutFlatGraph": "Flat with graphs",
   "@dashboardLayoutFlatGraph": {
-    "description": "Dashboard layout option: the flat card grid where each card also shows a small 7-day graph of recent readings."
+    "description": "Dashboard layout option: the flat card grid where each card also shows a small 14-day graph of recent readings."
   },
 
   "healthDisplayTitle": "Tank health",

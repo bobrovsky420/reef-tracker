@@ -102,7 +102,7 @@ enum DashboardLayout {
   /// Environment sections (the default, and the target of future work).
   grouped,
 
-  /// [classic]'s flat grid with a 7-day sparkline added to each card.
+  /// [classic]'s flat grid with a 14-day sparkline added to each card.
   /// Shares the flat ordering everywhere the layout choice matters
   /// (compare view, Manage Parameters) — only the card face differs.
   flatGraph;
