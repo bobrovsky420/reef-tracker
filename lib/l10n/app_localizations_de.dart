@@ -2498,6 +2498,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get healthNoReadingsYet => 'Noch keine Messwerte';
 
   @override
+  String lastTestedAgo(String ago) {
+    return 'Zuletzt gemessen $ago';
+  }
+
+  @override
   String healthScoreOf(int score) {
     return '$score von 100';
   }

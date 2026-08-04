@@ -2500,6 +2500,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get healthNoReadingsYet => 'Zatím žádná měření';
 
   @override
+  String lastTestedAgo(String ago) {
+    return 'Naposledy měřeno $ago';
+  }
+
+  @override
   String healthScoreOf(int score) {
     return '$score ze 100';
   }

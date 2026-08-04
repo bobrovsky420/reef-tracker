@@ -709,6 +709,7 @@
   "healthNotTestedDays": "Pas testé depuis {count} j",
   "healthNeverTested": "Jamais testé",
   "healthNoReadingsYet": "Pas encore de mesures",
+  "lastTestedAgo": "Dernier test {ago}",
   "healthScoreOf": "{score} sur 100",
 
   "stabilityTitle": "Stabilité",

@@ -2528,6 +2528,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get healthNoReadingsYet => 'Пока нет измерений';
 
   @override
+  String lastTestedAgo(String ago) {
+    return 'Последний тест $ago';
+  }
+
+  @override
   String healthScoreOf(int score) {
     return '$score из 100';
   }

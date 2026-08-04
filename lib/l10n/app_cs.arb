@@ -709,6 +709,7 @@
   "healthNotTestedDays": "Neměřeno {count} d",
   "healthNeverTested": "Zatím neměřeno",
   "healthNoReadingsYet": "Zatím žádná měření",
+  "lastTestedAgo": "Naposledy měřeno {ago}",
   "healthScoreOf": "{score} ze 100",
 
   "stabilityTitle": "Stabilita",

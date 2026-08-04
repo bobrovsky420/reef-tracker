@@ -709,6 +709,7 @@
   "healthNotTestedDays": "Не измерялось {count} дн.",
   "healthNeverTested": "Ещё не измерялось",
   "healthNoReadingsYet": "Пока нет измерений",
+  "lastTestedAgo": "Последний тест {ago}",
   "healthScoreOf": "{score} из 100",
 
   "stabilityTitle": "Стабильность",

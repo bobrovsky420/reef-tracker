@@ -31,15 +31,37 @@ TextStyle _ringNumberStyle(double ringSize, Color color) =>
 
 /// A circular progress ring filled to [score]/100 in [color] over a neutral
 /// `track` circle (REDESIGN §A.2), with [center] drawn in the middle. Used at
-/// several sizes by the health badges below.
-class _ScoreRing extends StatelessWidget {
-  const _ScoreRing({
+/// several sizes by the health badges below and by the aquarium list (U7).
+class ScoreRing extends StatelessWidget {
+  const ScoreRing({
+    super.key,
     required this.score,
     required this.color,
     required this.size,
     this.stroke = 4,
     this.center,
   });
+
+  /// The ring with the score itself at its centre (an em dash when there is
+  /// none) — the form the dashboard header and the aquarium list share, so
+  /// neither has to know the §A.2 numeral style.
+  factory ScoreRing.withScore({
+    Key? key,
+    required int? score,
+    required Color color,
+    required double size,
+    double stroke = 4,
+  }) => ScoreRing(
+    key: key,
+    score: score,
+    color: color,
+    size: size,
+    stroke: stroke,
+    center: Text(
+      score != null ? '$score' : '—',
+      style: _ringNumberStyle(size, color),
+    ),
+  );
 
   /// 0–100, or null when there's no score (renders an empty track).
   final int? score;
@@ -138,7 +160,7 @@ class TankHealthBadgeCompact extends ConsumerWidget {
         onTap: () => showTankHealthSheet(context),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: _ScoreRing(
+          child: ScoreRing(
             score: health.score,
             color: color,
             size: 28,
@@ -192,15 +214,11 @@ class TankHealthHeader extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
                   child: Row(
                     children: [
-                      _ScoreRing(
+                      ScoreRing.withScore(
                         score: health.score,
                         color: color,
                         size: 72,
                         stroke: 7,
-                        center: Text(
-                          health.hasData ? '${health.score}' : '—',
-                          style: _ringNumberStyle(72, color),
-                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -298,15 +316,11 @@ class _StabilityHeaderPanel extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _ScoreRing(
+              ScoreRing.withScore(
                 score: stability.score,
                 color: color,
                 size: 60,
                 stroke: 7,
-                center: Text(
-                  stability.hasData ? '${stability.score}' : '—',
-                  style: _ringNumberStyle(60, color),
-                ),
               ),
               const SizedBox(height: 5),
               Text(l.stabilityTitle, style: caption),
@@ -354,15 +368,11 @@ class _TankHealthSheet extends ConsumerWidget {
             // Header: ring + grade + score.
             Row(
               children: [
-                _ScoreRing(
+                ScoreRing.withScore(
                   score: health.score,
                   color: color,
                   size: 56,
                   stroke: 5,
-                  center: Text(
-                    health.hasData ? '${health.score}' : '—',
-                    style: _ringNumberStyle(56, color),
-                  ),
                 ),
                 const SizedBox(width: 14),
                 Column(
@@ -454,15 +464,11 @@ class _TankStabilitySheet extends ConsumerWidget {
             // Header: ring + grade + score.
             Row(
               children: [
-                _ScoreRing(
+                ScoreRing.withScore(
                   score: stability.score,
                   color: color,
                   size: 56,
                   stroke: 5,
-                  center: Text(
-                    stability.hasData ? '${stability.score}' : '—',
-                    style: _ringNumberStyle(56, color),
-                  ),
                 ),
                 const SizedBox(width: 14),
                 Column(

@@ -337,6 +337,38 @@ void main() {
       await db.insertRoReplacement(stageId: stage.id, replacedAt: replacedAt);
     }
 
+    // --- Two more aquariums (U7) ---------------------------------------------
+    // The aquarium list scores every tank, so the sample data carries all
+    // three freshness states: the display tank above (tested today), a frag
+    // tank a fortnight behind, and a quarantine tank never tested at all.
+    final frag = await db.createTankWithPreset(
+      name: 'Frag Tank',
+      type: SetupType.sps,
+      volumeLiters: 60,
+      startDate: daysAgo(120),
+    );
+    for (final r in const [
+      (key: 'alkalinity', value: 7.4),
+      (key: 'calcium', value: 415.0),
+      (key: 'nitrate', value: 22.0),
+    ]) {
+      await db.insertReading(
+        tankId: frag,
+        paramKey: r.key,
+        value: r.value,
+        takenAt: daysAgo(12),
+      );
+    }
+    await db.createTankWithPreset(
+      name: 'Quarantine',
+      type: SetupType.fishOnly,
+      volumeLiters: 40,
+      startDate: daysAgo(9),
+    );
+    // Creating a tank activates it, so hand the display tank back: the seed
+    // exists to demo a stocked dashboard, not an empty quarantine bin.
+    await db.setActiveTank(tank);
+
     await db.close();
 
     // Sanity: the file exists and holds the active plan we expect.

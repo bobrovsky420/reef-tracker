@@ -2480,6 +2480,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthNoReadingsYet => 'No readings yet';
 
   @override
+  String lastTestedAgo(String ago) {
+    return 'Last tested $ago';
+  }
+
+  @override
   String healthScoreOf(int score) {
     return '$score of 100';
   }

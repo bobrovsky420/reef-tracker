@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- The aquarium list now shows how each tank is doing: every row carries that
+  tank's health score in its own color plus a line saying when it was last
+  tested ("Last tested 2 d ago", "Not tested in 41 d" in amber once the
+  readings go stale, or "Not tested yet"). Tapping a row switches to that
+  aquarium and takes you back where you came from.
 - Untrack a parameter: swipe it away in Manage Parameters (or use the new
   Untrack action when editing it) to remove it from the app without losing
   anything — all its readings and your custom ranges are kept, an Undo is

@@ -2532,6 +2532,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get healthNoReadingsYet => 'Brak pomiarów';
 
   @override
+  String lastTestedAgo(String ago) {
+    return 'Ostatni pomiar $ago';
+  }
+
+  @override
   String healthScoreOf(int score) {
     return '$score na 100';
   }
