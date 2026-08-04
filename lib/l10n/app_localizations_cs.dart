@@ -270,11 +270,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get clear => 'Vymazat';
 
   @override
-  String sinceDate(Object date) {
-    return 'od $date';
-  }
-
-  @override
   String get parameters => 'Parametry';
 
   @override

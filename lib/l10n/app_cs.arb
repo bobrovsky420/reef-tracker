@@ -83,7 +83,6 @@
   "notSet": "Nenastaveno",
   "setDate": "Nastavit",
   "clear": "Vymazat",
-  "sinceDate": "od {date}",
 
   "parameters": "Parametry",
   "noActiveAquarium": "Žádné aktivní akvárium.",

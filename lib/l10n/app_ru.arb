@@ -83,7 +83,6 @@
   "notSet": "Не задано",
   "setDate": "Задать",
   "clear": "Очистить",
-  "sinceDate": "с {date}",
 
   "parameters": "Параметры",
   "noActiveAquarium": "Нет активного аквариума.",

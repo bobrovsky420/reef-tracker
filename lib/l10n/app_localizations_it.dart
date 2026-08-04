@@ -270,11 +270,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clear => 'Cancella';
 
   @override
-  String sinceDate(Object date) {
-    return 'dal $date';
-  }
-
-  @override
   String get parameters => 'Parametri';
 
   @override

@@ -83,7 +83,6 @@
   "notSet": "Non définie",
   "setDate": "Définir",
   "clear": "Effacer",
-  "sinceDate": "depuis le {date}",
 
   "parameters": "Paramètres",
   "noActiveAquarium": "Aucun aquarium actif.",

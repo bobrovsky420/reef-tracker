@@ -3817,8 +3817,10 @@ to/from the display unit and
 captures optional free-text `vendor` and `model` (single line) plus multi-line
 `notes`. The setup type drives which parameters are seeded. The list is one
 `ReefCard` of divided rows (name + a `healthySoft`/`primary` "Active" tag,
-"volume · type · since date" sub with mono numerals, overflow menu). The
-Settings → About row keeps the `Icons.waves` glyph.
+"volume · type · start date" sub with mono numerals, overflow menu). The date
+is bare — the "since" qualifier was dropped when the freshness line landed
+below it, since it only cost width and wrapped the year onto a second line on
+a phone. The Settings → About row keeps the `Icons.waves` glyph.
 
 **Per-tank status (U7).** Each row also answers "does this tank need me",
 fed by `tanksOverviewProvider` (see the provider graph above):

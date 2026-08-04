@@ -570,12 +570,6 @@ abstract class AppLocalizations {
   /// **'Clear'**
   String get clear;
 
-  /// No description provided for @sinceDate.
-  ///
-  /// In en, this message translates to:
-  /// **'since {date}'**
-  String sinceDate(Object date);
-
   /// No description provided for @parameters.
   ///
   /// In en, this message translates to:
