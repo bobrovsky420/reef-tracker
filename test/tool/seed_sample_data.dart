@@ -85,12 +85,23 @@ void main() {
     // Nitrate coming down after a spike: above greenHigh (10 in the mixed
     // preset) but falling ~1.5/day → back in range in ~3 d. Exercises the
     // positive "Recovering" trend chip/card (U15).
+    //
+    // Nitrate and phosphate are stamped a few minutes apart on the days they
+    // share, the way a real testing session records them (a Hanna checker
+    // timestamps each measurement as it is taken). That is what the PO₄ : NO₃
+    // ratio series has to collapse into one point per day (#33) instead of
+    // plotting the intermediate new-NO₃-with-yesterday's-PO₄ pairing.
+    DateTime session(int d, int hour, int minute) {
+      final day = daysAgo(d);
+      return DateTime(day.year, day.month, day.day, hour, minute);
+    }
+
     for (final (i, v) in [22.0, 20.5, 19.0, 17.5, 16.0, 14.5].indexed) {
       await db.insertReading(
         tankId: tank,
         paramKey: 'nitrate',
         value: v,
-        takenAt: daysAgo(5 - i),
+        takenAt: session(5 - i, 14, 15),
       );
     }
     // Phosphate hugging zero (ULNS-style): the 12% chart padding would put
@@ -101,7 +112,7 @@ void main() {
         tankId: tank,
         paramKey: 'phosphate',
         value: v,
-        takenAt: daysAgo(4 - i),
+        takenAt: session(4 - i, 14, 20),
       );
     }
     // Environment series (temperature/pH/salinity) so the Environment section

@@ -1980,7 +1980,16 @@ the last three shown as a single number = numerator/denominator to one decimal.
   timestamp where either parameter was measured, the most recent value of the
   *other* is carried forward, so a point exists whenever both have ≥1 reading.
   Points whose denominator is 0 at that instant are skipped (no
-  division-by-zero / NaN on the chart).
+  division-by-zero / NaN on the chart). **One point per local calendar day**
+  (`collapseSameDay`, default on): a testing session stamps each measurement
+  with its own exact time (a Hanna checker records NO₃ at 14:15 and PO₄ at
+  14:20 of the same sitting), and the carry-forward would otherwise plot the
+  intermediate 14:15 pairing of the new NO₃ with the *previous* PO₄ as a second
+  dot beside the real one — an artifact of the entry order, not a tank state
+  (#33). The day's last point wins, so it pairs that day's final value of both
+  parameters. `collapseSameDay: false` keeps the raw per-timestamp series (used
+  by the merge-pass tests). `latestRatio` is unaffected — it already pairs the
+  newest reading of each.
 - `formatRatioValue(kind, ratio)` renders per the kind's `RatioDisplay`;
   `ratioChartY(kind, ratio)` maps a ratio to its plotted Y (PO₄ : NO₃ plots the
   inverse N). `ratioBreakdown` shows the raw inputs. `formatRatio`/`formatRatioN`

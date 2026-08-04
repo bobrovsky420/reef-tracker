@@ -124,13 +124,24 @@ RatioPoint? latestRatio(
 /// so a ratio is produced whenever both have been recorded at least once. Both
 /// lists must be oldest-first.
 ///
+/// Same-day points collapse into one (unless [collapseSameDay] is false): a
+/// testing session stamps each measurement with its own exact time — a Hanna
+/// checker records NO₃ at 14:15 and PO₄ at 14:20 of the same sitting — and the
+/// carry-forward would otherwise plot the 14:15 pairing of the *new* NO₃ with
+/// the *previous* PO₄ as its own dot, right beside the real one. That
+/// intermediate pairing is an artifact of the order the session was entered in,
+/// not a tank state that ever existed, so a day contributes a single point,
+/// carrying that day's last value of each parameter (#33). Days are the local
+/// calendar days of the reading timestamps.
+///
 /// A single merge pass with two carry-forward cursors — O(n+m), not a rescan of
 /// both lists per merged timestamp (T15); this runs on the dashboard path for
 /// every visible ratio card.
 List<RatioPoint> computeRatioSeries(
   List<RatioReading> numerator,
-  List<RatioReading> denominator,
-) {
+  List<RatioReading> denominator, {
+  bool collapseSameDay = true,
+}) {
   if (numerator.isEmpty || denominator.isEmpty) return const [];
 
   final points = <RatioPoint>[];
@@ -153,17 +164,30 @@ List<RatioPoint> computeRatioSeries(
     }
     if (num == null || den == null) continue;
     if (den.value == 0) continue;
-    points.add(
-      RatioPoint(
-        time: t,
-        ratio: num.value / den.value,
-        numerator: num.value,
-        denominator: den.value,
-      ),
+    final point = RatioPoint(
+      time: t,
+      ratio: num.value / den.value,
+      numerator: num.value,
+      denominator: den.value,
     );
+    // Later in the same day supersedes: by construction the last point of a day
+    // pairs that day's final value of both parameters.
+    if (collapseSameDay &&
+        points.isNotEmpty &&
+        _sameDay(points.last.time, t)) {
+      points[points.length - 1] = point;
+    } else {
+      points.add(point);
+    }
   }
   return points;
 }
+
+/// Whether two instants fall on the same local calendar day. Compared
+/// field-wise rather than by truncating to midnight, which would be ambiguous
+/// on a DST transition day.
+bool _sameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
 
 /// Formats a value with precision that scales with its magnitude, so both
 /// small (~0.01) and large (~1400) values read cleanly. Used for the raw
