@@ -4179,6 +4179,12 @@ abstract class AppLocalizations {
   /// **'No readings yet'**
   String get healthNoReadingsYet;
 
+  /// Freshness line on an aquarium-list row (U7). {ago} is a relative time such as "2 d ago"; older tests use healthNotTestedDays instead.
+  ///
+  /// In en, this message translates to:
+  /// **'Last tested {ago}'**
+  String lastTestedAgo(String ago);
+
   /// No description provided for @healthScoreOf.
   ///
   /// In en, this message translates to:

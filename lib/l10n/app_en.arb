@@ -1161,6 +1161,11 @@
   "@healthNotTestedDays": { "placeholders": { "count": { "type": "int" } } },
   "healthNeverTested": "Not tested yet",
   "healthNoReadingsYet": "No readings yet",
+  "lastTestedAgo": "Last tested {ago}",
+  "@lastTestedAgo": {
+    "description": "Freshness line on an aquarium-list row (U7). {ago} is a relative time such as \"2 d ago\"; older tests use healthNotTestedDays instead.",
+    "placeholders": { "ago": { "type": "String" } }
+  },
   "healthScoreOf": "{score} of 100",
   "@healthScoreOf": { "placeholders": { "score": { "type": "int" } } },
 

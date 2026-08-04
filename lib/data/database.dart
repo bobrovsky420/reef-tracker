@@ -1103,6 +1103,17 @@ class AppDatabase extends _$AppDatabase {
             ..orderBy([(t) => OrderingTerm(expression: t.displayOrder)]))
           .get();
 
+  /// Every tank's tracked parameters at once (U7 overview), tank then display
+  /// order. The aquarium list scores *all* tanks, so it reads one unfiltered
+  /// query instead of one query per tank — its cost is independent of how many
+  /// aquariums the install holds.
+  Stream<List<TrackedParameter>> watchAllTrackedParameters() =>
+      (select(trackedParameters)..orderBy([
+            (t) => OrderingTerm(expression: t.tankId),
+            (t) => OrderingTerm(expression: t.displayOrder),
+          ]))
+          .watch();
+
   /// Adds a parameter to a tank if not already present (seeding preset bounds).
   /// The exists-check and insert run in one transaction (#10) so a double-fire
   /// (double-tap, launch/resume race) can't insert the parameter twice.
@@ -1195,6 +1206,12 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<ParameterOverride>> getParameterOverrides(int tankId) =>
       (select(parameterOverrides)..where((o) => o.tankId.equals(tankId))).get();
+
+  /// Every tank's overrides at once, the companion of
+  /// [watchAllTrackedParameters] — the aquarium list resolves each tank's
+  /// bounds before it can score them (U7 overview).
+  Stream<List<ParameterOverride>> watchAllParameterOverrides() =>
+      select(parameterOverrides).watch();
 
   /// Stores a tank's own bounds/target for a parameter. An all-null [bounds]
   /// with a null [target] is still an override — "show this parameter with no
@@ -1292,6 +1309,26 @@ class AppDatabase extends _$AppDatabase {
   /// timers that FakeAsync only fires during pumps, so `.first` deadlocks).
   Future<List<Reading>> getRecentReadingsPerParam(int tankId, int limit) =>
       _recentReadingsPerParam(tankId, limit).get();
+
+  /// The newest reading of every (tank, parameter) pair across **all** tanks
+  /// (U7 overview) — the aquarium list needs each tank's current standing, not
+  /// its history, so this is the head-only, tank-wide sibling of
+  /// [watchRecentReadingsPerParam]: one row per pair (low hundreds app-wide)
+  /// instead of [kRecentReadingsPerParam] per parameter of one tank, in one
+  /// query whatever the tank count. Same window function and index
+  /// (`idx_readings_tank_param_taken`), partitioned by tank as well; the `id`
+  /// tiebreak keeps same-second readings deterministic. Readings of
+  /// soft-deleted tanks ride along and are dropped by the caller's join
+  /// against the live tank list.
+  Stream<List<Reading>> watchLatestReadingPerParamAllTanks() => customSelect(
+    'SELECT * FROM ('
+    'SELECT r.*, ROW_NUMBER() OVER '
+    '(PARTITION BY tank_id, param_key ORDER BY taken_at DESC, id DESC) '
+    'AS rn FROM readings r'
+    ') WHERE rn = 1 '
+    'ORDER BY tank_id, param_key',
+    readsFrom: {readings},
+  ).asyncMap(readings.mapFromRow).watch();
 
   /// All of a tank's readings taken on/after [cutoff], newest first (U26).
   ///

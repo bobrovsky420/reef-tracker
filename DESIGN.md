@@ -1133,6 +1133,22 @@ The graph:
   the overall score/band/grade via `computeTankHealth`. **Core parameters
   only** — microelements are excluded (ICP cadence vs the 30-day freshness
   rule; the panel has its own summary via `microStatusProvider`).
+- `tanksOverviewProvider` — `List<TankOverview>` (`{tank, health, lastTestedAt}`
+  records, value-equal from their members) for the aquarium list (U7). The one
+  place that scores **every** tank, so it deliberately breaks the tank-family
+  pattern: three autoDispose app-wide feeds — `watchAllTrackedParameters`,
+  `watchAllParameterOverrides` and `watchLatestReadingPerParamAllTanks` (the
+  head-only, `PARTITION BY tank_id, param_key` sibling of
+  `watchRecentReadingsPerParam`: one row per pair instead of
+  `kRecentReadingsPerParam` per parameter) — so its cost is a constant three
+  queries whatever the tank count, and it lives only while the screen is
+  mounted. Per tank it resolves bounds with `resolveParameters` and re-runs
+  `computeTankHealth` over the same **core-parameters-only** input as
+  `tankHealthProvider`, so a row's ring reads identically to the dashboard of
+  the tank it activates; `lastTestedAt` is the newest *core* reading (counting
+  microelements would report a months-old ICP import as a fresh test). Stays
+  `loading` until all four sources have landed — rendering earlier would flash
+  "not tested yet" over tanks that are merely still loading.
 - `tankStabilityProvider` — `TankStability` for the active tank (U26, Pro).
   Same shape as `tankHealthProvider`: a memoized plain `Provider` deriving
   directly from `trackedParametersProvider` + a **time-bounded** readings feed
@@ -3800,10 +3816,36 @@ SnackBar; see the deletion & undo conventions above). Editor converts volume
 to/from the display unit and
 captures optional free-text `vendor` and `model` (single line) plus multi-line
 `notes`. The setup type drives which parameters are seeded. The list is one
-`ReefCard` of divided rows (waves glyph, name + a `healthySoft`/`primary`
-"Active" tag, "volume · type · since date" sub with mono numerals, overflow
-menu); tapping a row activates that tank. The Settings → About row keeps the
-`Icons.waves` glyph.
+`ReefCard` of divided rows (name + a `healthySoft`/`primary` "Active" tag,
+"volume · type · since date" sub with mono numerals, overflow menu). The
+Settings → About row keeps the `Icons.waves` glyph.
+
+**Per-tank status (U7).** Each row also answers "does this tank need me",
+fed by `tanksOverviewProvider` (see the provider graph above):
+
+- The leading glyph is that tank's **health ring** (the shared `ScoreRing`
+  from `tank_health_badge.dart` at 40 px, score inside, band colour on the
+  arc — `—` when nothing is scoreable). The waves glyph returns when the user
+  set Settings → Dashboard → health display to `off`: the ring is a score and
+  follows that opt-out, the freshness line is not and stays.
+- A third line states when a **core** parameter was last measured
+  (`_LastTestedLine`): `lastTestedAgo` with a relative label under 7 days,
+  the health sheet's own `healthNotTestedDays` beyond that (a relative label
+  decays into a bare date there, and the elapsed span is the point), and
+  `healthNeverTested` with no readings at all. It turns amber exactly at
+  `kHealthFreshnessDays`, the moment the score stops trusting the reading, so
+  the colour change and the ring going grey always coincide.
+- The row deliberately carries **no offender name**: the ring says *whether*,
+  the dashboard of the tank you just activated says *what*. Row order stays
+  creation order — a selector whose rows re-sort by health would move under
+  the user's thumb.
+- **Tapping a row activates that tank and pops back** to wherever the screen
+  was opened from (the app-bar selector or Settings). The overflow menu's
+  "Make active" deliberately stays put: someone mid-management shouldn't be
+  thrown off the screen.
+
+Covered by `test/tanks_overview_test.dart` (the three freshness states, the
+tap-activates-and-pops behaviour, the health-display-off branch).
 
 ### Editions & the early-adopter marker (U19 phase 0)
 

@@ -8,21 +8,29 @@ import 'package:intl/intl.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../domain/clock.dart';
+import '../../domain/health_score.dart';
 import '../../domain/pro_features.dart';
 import '../../domain/setup_type.dart';
 import '../../domain/units.dart';
+import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_value_row.dart';
+import '../../widgets/tank_health_badge.dart';
+import '../../widgets/zone_visuals.dart';
 
-/// Lists all aquariums with add / edit / delete / switch actions.
+/// Lists all aquariums with add / edit / delete / switch actions, each row
+/// carrying that tank's status (U7 overview).
 ///
 /// Layout per REDESIGN #19: the tanks collapse into one `ReefCard` of
-/// hairline-divided rows (#11 row pattern) — waves icon, name + active tag,
-/// "volume · type · date" sub with mono numerals, trailing overflow menu.
+/// hairline-divided rows (#11 row pattern) — health ring, name + active tag,
+/// "volume · type · date" sub with mono numerals, a freshness line, trailing
+/// overflow menu. Tapping a row activates that tank and returns to wherever
+/// the screen was opened from.
 class TanksScreen extends ConsumerWidget {
   const TanksScreen({super.key});
 
@@ -30,37 +38,41 @@ class TanksScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final tanksAsync = ref.watch(tanksProvider);
+    final overviewAsync = ref.watch(tanksOverviewProvider);
     final active = ref.watch(activeTankProvider);
     final volumeUnit = ref.watch(unitPrefsProvider).volume;
+    // A user who switched the health score off (Settings → Dashboard) gets the
+    // plain waves glyph back; the freshness line is not a score and stays.
+    final showRing =
+        (ref.watch(healthDisplayProvider).value ?? HealthDisplay.both)
+            .showBadge;
 
     return Scaffold(
       appBar: AppBar(title: Text(l.aquariums)),
-      body: tanksAsync.when(
+      body: overviewAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.errorWith(e.toString()))),
-        data: (tanks) {
-          if (tanks.isEmpty) {
+        data: (overviews) {
+          if (overviews.isEmpty) {
             return Center(child: Text(l.noAquariumsYet));
           }
           return ListView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
             children: [
               ReefCard(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 6,
-                  horizontal: 8,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                 child: Column(
                   children: [
-                    for (var i = 0; i < tanks.length; i++)
+                    for (var i = 0; i < overviews.length; i++)
                       _row(
                         context,
                         ref,
                         l,
-                        tanks[i],
+                        overviews[i],
                         volumeUnit,
-                        isActive: tanks[i].id == active?.id,
-                        isLast: i == tanks.length - 1,
+                        showRing: showRing,
+                        isActive: overviews[i].tank.id == active?.id,
+                        isLast: i == overviews.length - 1,
                       ),
                   ],
                 ),
@@ -98,11 +110,13 @@ class TanksScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppLocalizations l,
-    Tank t,
+    TankOverview overview,
     VolumeUnit volumeUnit, {
+    required bool showRing,
     required bool isActive,
     required bool isLast,
   }) {
+    final t = overview.tank;
     final tokens = ReefTokens.of(context);
     final type = SetupType.fromName(t.setupType);
     // "volume · type · date" (§A.6 sub line): numeric spans in mono.
@@ -129,48 +143,76 @@ class TanksScreen extends ConsumerWidget {
       ],
     );
 
+    final health = overview.health;
+    final ringColor = health.band.colorOf(context);
+
     // The rows ripple on the card's own Material (the InkWell ancestor).
     return InkWell(
-      onTap: () => ref.read(dbProvider).setActiveTank(t.id),
+      // Picking a tank is the point of this screen: activate and hand the user
+      // back to where they came from (the app-bar selector, or Settings).
+      // The overflow menu's "Make active" deliberately stays put — someone
+      // mid-management shouldn't be thrown off the screen.
+      onTap: () async {
+        await ref.read(dbProvider).setActiveTank(t.id);
+        if (context.mounted && context.canPop()) context.pop();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
         decoration: isLast
             ? null
             : BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: tokens.surfaceBorder),
-                ),
+                border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
               ),
         child: Row(
           children: [
-            Icon(Icons.waves, size: 18, color: tokens.textDim),
+            if (showRing)
+              Semantics(
+                label:
+                    '${l.healthTitle}: ${l.healthGradeLabel(health.grade)}'
+                    '${health.hasData ? ', ${l.healthScoreOf(health.score!)}' : ''}',
+                child: ScoreRing.withScore(
+                  score: health.score,
+                  color: ringColor,
+                  size: 40,
+                  stroke: 4,
+                ),
+              )
+            else
+              Icon(Icons.waves, size: 18, color: tokens.textDim),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          t.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: tokens.text,
+              // One node for the three text lines, so a screen reader announces
+              // "<name>, active, 450 L · Mixed reef, last tested 2 d ago" in one
+              // go; the ring and the overflow menu keep their own nodes.
+              child: MergeSemantics(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            t.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: tokens.text,
+                            ),
                           ),
                         ),
-                      ),
-                      if (isActive) ...[
-                        const SizedBox(width: 8),
-                        _ActiveTag(label: l.active),
+                        if (isActive) ...[
+                          const SizedBox(width: 8),
+                          _ActiveTag(label: l.active),
+                        ],
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text.rich(sub),
-                ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text.rich(sub),
+                    const SizedBox(height: 2),
+                    _LastTestedLine(lastTestedAt: overview.lastTestedAt),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -300,6 +342,59 @@ class _ActiveTag extends StatelessWidget {
           color: tokens.primary,
         ),
       ),
+    );
+  }
+}
+
+/// The freshness line of an aquarium row (U7): when one of the tank's **core**
+/// parameters was last measured.
+///
+/// Under a week it reads as elapsed time ("Last tested 2 d ago"); past that a
+/// relative label would decay into a bare date, so it switches to the health
+/// sheet's own "Not tested in N d" wording — the elapsed span is the point.
+/// It turns amber once the newest reading passes [kHealthFreshnessDays], the
+/// exact moment the health score stops trusting it, so the colour change and
+/// the ring going grey always happen together.
+class _LastTestedLine extends StatelessWidget {
+  const _LastTestedLine({required this.lastTestedAt});
+
+  final DateTime? lastTestedAt;
+
+  /// Below this the label stays relative ("2 d ago"); above it the elapsed
+  /// span is spelled out instead ([relativeTimeLabel] falls back to an
+  /// absolute date at exactly this age).
+  static const int _relativeDays = 7;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+    final at = lastTestedAt;
+
+    final String text;
+    final Color color;
+    if (at == null) {
+      text = l.healthNeverTested;
+      color = tokens.textFaint;
+    } else {
+      final days = daysSince(at);
+      if (days > kHealthFreshnessDays) {
+        text = l.healthNotTestedDays(days);
+        color = Zone.amber.colorOf(context);
+      } else if (days >= _relativeDays) {
+        text = l.healthNotTestedDays(days);
+        color = tokens.textDim;
+      } else {
+        text = l.lastTestedAgo(relativeTimeLabel(l, at));
+        color = tokens.textDim;
+      }
+    }
+
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(fontSize: 12, color: color),
     );
   }
 }

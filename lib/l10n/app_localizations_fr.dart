@@ -2502,6 +2502,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get healthNoReadingsYet => 'Pas encore de mesures';
 
   @override
+  String lastTestedAgo(String ago) {
+    return 'Dernier test $ago';
+  }
+
+  @override
   String healthScoreOf(int score) {
     return '$score sur 100';
   }

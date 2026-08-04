@@ -1095,6 +1095,135 @@ final tankHealthProvider = Provider<TankHealth>((ref) {
   return computeTankHealth(inputs);
 });
 
+// --- All-tanks overview (U7) -------------------------------------------------
+//
+// The aquarium list shows every tank's standing, not just the active one's, so
+// these three feeds deliberately break the tank-family pattern above and read
+// *all* tanks in one query each: a constant query count whatever the tank
+// count, and one row per (tank, parameter) instead of the dashboard's
+// 40-per-parameter head. All three are autoDispose — they live only while the
+// Aquariums screen is mounted, and the active tank's own feeds are untouched.
+
+final _allTrackedParametersProvider =
+    StreamProvider.autoDispose<List<TrackedParameter>>(
+      (ref) => _dedup(ref.watch(dbProvider).watchAllTrackedParameters()),
+    );
+
+final _allParameterOverridesProvider =
+    StreamProvider.autoDispose<List<ParameterOverride>>(
+      (ref) => _dedup(ref.watch(dbProvider).watchAllParameterOverrides()),
+    );
+
+final _allLatestReadingsProvider = StreamProvider.autoDispose<List<Reading>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchLatestReadingPerParamAllTanks()),
+);
+
+/// One row of the aquarium list (U7): the tank, its overall health scored
+/// exactly like the dashboard's, and when one of its **core** parameters was
+/// last measured (microelements ride an ICP cadence of months — counting them
+/// would report a tank as freshly tested when nothing current exists).
+///
+/// A record, so it is value-equal from its members like [MicroElementStatus].
+typedef TankOverview = ({Tank tank, TankHealth health, DateTime? lastTestedAt});
+
+/// Status of every aquarium for the tank list (U7). Loading until all four
+/// sources have landed: rendering earlier would flash "never tested" rings
+/// over tanks that are merely still loading (the #20 rule, applied to a
+/// screen that is not active-tank scoped).
+///
+/// Single-layer derivation from the stream wrappers — chaining plain providers
+/// self-invalidates mid-build (see [_microElements]) — and it re-runs the
+/// (cheap) scoring per tank rather than reaching into [tankHealthProvider].
+final tanksOverviewProvider =
+    Provider.autoDispose<AsyncValue<List<TankOverview>>>((ref) {
+      final tanks = ref.watch(tanksProvider);
+      final tracked = ref.watch(_allTrackedParametersProvider);
+      final overrides = ref.watch(_allParameterOverridesProvider);
+      final latest = ref.watch(_allLatestReadingsProvider);
+
+      for (final source in <AsyncValue<Object>>[
+        tanks,
+        tracked,
+        overrides,
+        latest,
+      ]) {
+        if (source.hasError) {
+          return AsyncValue.error(source.error!, source.stackTrace!);
+        }
+      }
+      final tankRows = tanks.value;
+      final trackedRows = tracked.value;
+      final overrideRows = overrides.value;
+      final latestRows = latest.value;
+      if (tankRows == null ||
+          trackedRows == null ||
+          overrideRows == null ||
+          latestRows == null) {
+        return const AsyncValue.loading();
+      }
+
+      final trackedByTank = <int, List<TrackedParameter>>{};
+      for (final row in trackedRows) {
+        (trackedByTank[row.tankId] ??= []).add(row);
+      }
+      final overridesByTank = <int, List<ParameterOverride>>{};
+      for (final row in overrideRows) {
+        (overridesByTank[row.tankId] ??= []).add(row);
+      }
+      // The query already yields exactly one row per (tank, parameter).
+      final latestByTank = <int, Map<String, Reading>>{};
+      for (final row in latestRows) {
+        (latestByTank[row.tankId] ??= {})[row.paramKey] = row;
+      }
+
+      return AsyncValue.data([
+        for (final tank in tankRows)
+          _overviewOf(
+            tank,
+            trackedByTank[tank.id] ?? const [],
+            overridesByTank[tank.id] ?? const [],
+            latestByTank[tank.id] ?? const {},
+          ),
+      ]);
+    });
+
+TankOverview _overviewOf(
+  Tank tank,
+  List<TrackedParameter> tracked,
+  List<ParameterOverride> overrides,
+  Map<String, Reading> latest,
+) {
+  final resolved = resolveParameters(
+    tracked,
+    SetupType.fromName(tank.setupType),
+    overrides,
+  );
+  DateTime? lastTestedAt;
+  final inputs = <HealthInput>[
+    // Core parameters only, matching [tankHealthProvider] — the list's ring
+    // must read the same as the dashboard's for the tank it activates.
+    for (final p in resolved.where((p) => p.enabled && isCoreParam(p.paramKey)))
+      (
+        paramKey: p.paramKey,
+        bounds: p.bounds,
+        latest: latest[p.paramKey]?.value,
+        takenAt: latest[p.paramKey]?.takenAt,
+      ),
+  ];
+  for (final p in inputs) {
+    final takenAt = p.takenAt;
+    if (takenAt != null &&
+        (lastTestedAt == null || takenAt.isAfter(lastTestedAt))) {
+      lastTestedAt = takenAt;
+    }
+  }
+  return (
+    tank: tank,
+    health: computeTankHealth(inputs),
+    lastTestedAt: lastTestedAt,
+  );
+}
+
 /// Weeks the "Ask your AI" summary export covers (4/8/12, default
 /// [kAiSummaryDefaultWeeks] — U27). Device-local UI preference, persisted so
 /// the pre-share sheet reopens on the last-used window.
