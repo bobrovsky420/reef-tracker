@@ -92,6 +92,8 @@
   "editZones": "Upravit zóny",
   "addParameter": "Přidat parametr",
   "allParametersAdded": "Všechny parametry už jsou přidány.",
+  "untrackParameter": "Přestat sledovat",
+  "parameterUntracked": "Parametr se už nesleduje – naměřené hodnoty zůstávají zachovány",
   "unitWithValue": "Jednotka: {unit}",
   "unitFromSettingsNote": "Nastaveno v Nastavení. Hranice níže používají tuto jednotku.",
   "unit": "Jednotka",

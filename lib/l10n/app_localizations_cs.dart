@@ -304,6 +304,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get allParametersAdded => 'Všechny parametry už jsou přidány.';
 
   @override
+  String get untrackParameter => 'Přestat sledovat';
+
+  @override
+  String get parameterUntracked =>
+      'Parametr se už nesleduje – naměřené hodnoty zůstávají zachovány';
+
+  @override
   String unitWithValue(Object unit) {
     return 'Jednotka: $unit';
   }

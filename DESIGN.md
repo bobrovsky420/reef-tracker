@@ -3734,6 +3734,23 @@ action (deletes just its row); one that does not shows a "Following the
 defaults" hint. **Reset all parameters to defaults** in the app-bar menu is
 the same operation for the whole tank (`resetParameterDefaults`).
 
+**Untrack (U11).** A parameter row can be removed entirely: swipe the manage
+row, or the Untrack app-bar action on `ParameterEditScreen` (the accessible
+non-swipe counterpart, #45, which pops after). Both go through
+`untrackParameterWithUndo` — immediate `removeTrackedParameter` plus an Undo
+SnackBar that writes the captured row back verbatim
+(`restoreTrackedParameter`, a no-op if the parameter was re-added meanwhile) —
+the U10 cheap-to-restore pattern, no confirm dialog. **Readings are never
+touched** (`Readings` has no FK to tracked rows, and there is deliberately no
+reading-delete option here), and a `ParameterOverrides` row survives by design,
+so re-adding the parameter from the catalog sheet restores full history *and*
+the user's own bounds; only the row-borne state (display order, custom unit,
+test cadence) is undo-only. Untracked parameters return to the add sheet, and
+any device save or file import that meets the parameter again re-tracks it
+automatically (every such path calls `addTrackedParameter` before inserting).
+Ratio and free-ammonia rows are visibility toggles over derived values and are
+not untrackable; the derived free-ammonia row disappears with ammonia.
+
 ### Add reading (`add_reading_screen.dart`)
 
 Enter several **core** parameters at once for a single timestamp (group) —

@@ -304,6 +304,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allParametersAdded => 'All parameters are already added.';
 
   @override
+  String get untrackParameter => 'Untrack';
+
+  @override
+  String get parameterUntracked => 'Parameter untracked – readings are kept';
+
+  @override
   String unitWithValue(Object unit) {
     return 'Unit: $unit';
   }

@@ -304,6 +304,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get allParametersAdded => 'Tous les paramètres sont déjà ajoutés.';
 
   @override
+  String get untrackParameter => 'Ne plus suivre';
+
+  @override
+  String get parameterUntracked =>
+      'Paramètre retiré du suivi – les mesures sont conservées';
+
+  @override
   String unitWithValue(Object unit) {
     return 'Unité : $unit';
   }

@@ -1145,6 +1145,28 @@ class AppDatabase extends _$AppDatabase {
   Future<void> removeTrackedParameter(int id) =>
       (delete(trackedParameters)..where((t) => t.id.equals(id))).go();
 
+  /// Writes a captured pre-untrack row back verbatim — the Undo of
+  /// [removeTrackedParameter] (U11, the U10 restore pattern). Re-inserting the
+  /// original row restores everything the row itself carried — display order,
+  /// custom unit and the test cadence — while readings and any
+  /// [ParameterOverrides] row were never touched by the removal. Guarded by
+  /// the same transactional exists-check as [addTrackedParameter]: if the
+  /// parameter was re-added meanwhile the undo is a no-op, because no UNIQUE
+  /// index on (tankId, paramKey) exists to stop a duplicate (#10).
+  Future<void> restoreTrackedParameter(TrackedParameter row) async {
+    await transaction(() async {
+      final existing =
+          await (select(trackedParameters)..where(
+                (t) =>
+                    t.tankId.equals(row.tankId) &
+                    t.paramKey.equals(row.paramKey),
+              ))
+              .get();
+      if (existing.isNotEmpty) return;
+      await into(trackedParameters).insert(row);
+    });
+  }
+
   /// Sets (or clears, with null) a parameter's "remind to test every N days"
   /// cadence (U1).
   Future<void> setTestCadence(int id, int? days) =>
@@ -1167,8 +1189,9 @@ class AppDatabase extends _$AppDatabase {
   // --- Parameter overrides -------------------------------------------------
 
   Stream<List<ParameterOverride>> watchParameterOverrides(int tankId) =>
-      (select(parameterOverrides)
-        ..where((o) => o.tankId.equals(tankId))).watch();
+      (select(
+        parameterOverrides,
+      )..where((o) => o.tankId.equals(tankId))).watch();
 
   Future<List<ParameterOverride>> getParameterOverrides(int tankId) =>
       (select(parameterOverrides)..where((o) => o.tankId.equals(tankId))).get();
@@ -1195,11 +1218,9 @@ class AppDatabase extends _$AppDatabase {
   );
 
   /// Drops one parameter back to the defaults.
-  Future<void> clearParameterOverride(int tankId, String paramKey) =>
-      (delete(parameterOverrides)..where(
-            (o) => o.tankId.equals(tankId) & o.paramKey.equals(paramKey),
-          ))
-          .go();
+  Future<void> clearParameterOverride(int tankId, String paramKey) => (delete(
+    parameterOverrides,
+  )..where((o) => o.tankId.equals(tankId) & o.paramKey.equals(paramKey))).go();
 
   /// Drops **every** parameter of a tank back to the defaults — the
   /// "Reset all parameters to defaults" action. Nothing is recomputed or

@@ -305,6 +305,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get allParametersAdded => 'Все параметры уже добавлены.';
 
   @override
+  String get untrackParameter => 'Не отслеживать';
+
+  @override
+  String get parameterUntracked =>
+      'Параметр больше не отслеживается – измерения сохранены';
+
+  @override
   String unitWithValue(Object unit) {
     return 'Единица: $unit';
   }
