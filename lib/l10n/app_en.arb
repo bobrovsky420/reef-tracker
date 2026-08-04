@@ -117,8 +117,6 @@
   "notSet": "Not set",
   "setDate": "Set",
   "clear": "Clear",
-  "sinceDate": "since {date}",
-  "@sinceDate": { "placeholders": { "date": {} } },
 
   "parameters": "Parameters",
   "noActiveAquarium": "No active aquarium.",

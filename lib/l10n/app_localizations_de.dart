@@ -271,11 +271,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get clear => 'Entfernen';
 
   @override
-  String sinceDate(Object date) {
-    return 'seit $date';
-  }
-
-  @override
   String get parameters => 'Parameter';
 
   @override

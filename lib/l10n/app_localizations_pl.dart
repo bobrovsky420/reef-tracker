@@ -271,11 +271,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get clear => 'Wyczyść';
 
   @override
-  String sinceDate(Object date) {
-    return 'od $date';
-  }
-
-  @override
   String get parameters => 'Parametry';
 
   @override

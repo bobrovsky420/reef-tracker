@@ -133,12 +133,12 @@ class TanksScreen extends ConsumerWidget {
           sep,
         ],
         TextSpan(text: l.setupLabel(type)),
+        // The bare start date, no "since" — with the freshness line right
+        // below it, the qualifier only cost width and pushed the year onto a
+        // second line on a phone.
         if (t.startDate != null) ...[
           sep,
-          TextSpan(
-            text: l.sinceDate(DateFormat.yMMMd().format(t.startDate!)),
-            style: mono,
-          ),
+          TextSpan(text: DateFormat.yMMMd().format(t.startDate!), style: mono),
         ],
       ],
     );

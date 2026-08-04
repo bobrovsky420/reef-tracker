@@ -271,11 +271,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clear => 'Очистить';
 
   @override
-  String sinceDate(Object date) {
-    return 'с $date';
-  }
-
-  @override
   String get parameters => 'Параметры';
 
   @override
