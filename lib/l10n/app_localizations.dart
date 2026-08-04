@@ -624,6 +624,18 @@ abstract class AppLocalizations {
   /// **'All parameters are already added.'**
   String get allParametersAdded;
 
+  /// Tooltip/label for removing a parameter from the tracked list (U11): swipe action on Manage Parameters and the app-bar icon on the parameter edit screen. Readings are always kept; re-adding the parameter restores its history and custom boundaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Untrack'**
+  String get untrackParameter;
+
+  /// SnackBar shown after untracking a parameter; paired with an Undo action that restores the tracked row exactly as it was.
+  ///
+  /// In en, this message translates to:
+  /// **'Parameter untracked – readings are kept'**
+  String get parameterUntracked;
+
   /// No description provided for @unitWithValue.
   ///
   /// In en, this message translates to:

@@ -92,6 +92,8 @@
   "editZones": "Изменить зоны",
   "addParameter": "Добавить параметр",
   "allParametersAdded": "Все параметры уже добавлены.",
+  "untrackParameter": "Не отслеживать",
+  "parameterUntracked": "Параметр больше не отслеживается – измерения сохранены",
   "unitWithValue": "Единица: {unit}",
   "unitFromSettingsNote": "Задаётся в Настройках. Границы ниже используют эту единицу.",
   "unit": "Единица",

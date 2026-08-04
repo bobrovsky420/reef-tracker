@@ -92,6 +92,8 @@
   "editZones": "Edytuj strefy",
   "addParameter": "Dodaj parametr",
   "allParametersAdded": "Wszystkie parametry są już dodane.",
+  "untrackParameter": "Przestań śledzić",
+  "parameterUntracked": "Parametr nie jest już śledzony – pomiary zostały zachowane",
   "unitWithValue": "Jednostka: {unit}",
   "unitFromSettingsNote": "Ustawiane w Ustawieniach. Poniższe granice używają tej jednostki.",
   "unit": "Jednostka",

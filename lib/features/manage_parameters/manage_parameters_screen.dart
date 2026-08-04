@@ -306,37 +306,55 @@ class ManageParametersScreen extends ConsumerWidget {
   }) {
     final l = AppLocalizations.of(context);
     final pres = presentationOf(param, prefs);
-    return _manageRow(
-      context,
+    // Swipe-to-untrack (U11) — the dosing-list Dismissible idiom. Only real
+    // tracked rows are untrackable: ratio and free-ammonia rows are visibility
+    // toggles over derived values, so they get no swipe. The Dismissible
+    // carries the reorderable item key; the row shell gets its own.
+    return Dismissible(
       key: ValueKey('p${param.id}'),
-      // Name the switch after its row so screen readers don't announce an
-      // anonymous switch (#48).
-      leading: Semantics(
-        label: l.paramName(param.paramKey),
-        child: Switch.adaptive(
-          value: param.enabled,
-          onChanged: (v) => ref
-              .read(dbProvider)
-              .updateTrackedParameter(param.row.copyWith(enabled: v)),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Theme.of(context).colorScheme.error,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        child: Icon(
+          Icons.playlist_remove,
+          color: Theme.of(context).colorScheme.onError,
         ),
       ),
-      title: _titleWithGroup(
+      confirmDismiss: (_) => untrackParameterWithUndo(context, ref, param.row),
+      child: _manageRow(
         context,
-        l.paramName(param.paramKey),
-        // No section caption in the classic (flat) layout — there are no
-        // sections to belong to.
-        grouped ? l.dashSectionLabel(sectionOfParam(param.paramKey)) : null,
-      ),
-      sub: _boundsSummary(l, param.bounds, pres),
-      trailing: [
-        _editIcon(
-          context,
-          l.editZones,
-          () => context.push('/parameters/${param.id}/edit', extra: param),
+        key: ValueKey('pd${param.id}'),
+        // Name the switch after its row so screen readers don't announce an
+        // anonymous switch (#48).
+        leading: Semantics(
+          label: l.paramName(param.paramKey),
+          child: Switch.adaptive(
+            value: param.enabled,
+            onChanged: (v) => ref
+                .read(dbProvider)
+                .updateTrackedParameter(param.row.copyWith(enabled: v)),
+          ),
         ),
-        _dragHandle(context, l, index),
-      ],
-      isLast: isLast,
+        title: _titleWithGroup(
+          context,
+          l.paramName(param.paramKey),
+          // No section caption in the classic (flat) layout — there are no
+          // sections to belong to.
+          grouped ? l.dashSectionLabel(sectionOfParam(param.paramKey)) : null,
+        ),
+        sub: _boundsSummary(l, param.bounds, pres),
+        trailing: [
+          _editIcon(
+            context,
+            l.editZones,
+            () => context.push('/parameters/${param.id}/edit', extra: param),
+          ),
+          _dragHandle(context, l, index),
+        ],
+        isLast: isLast,
+      ),
     );
   }
 
@@ -505,6 +523,38 @@ class ManageParametersScreen extends ConsumerWidget {
       }
     }
   }
+}
+
+/// Untracks the parameter immediately and shows an "Undo" SnackBar that writes
+/// the captured row back verbatim (U11 — no confirm dialog per the U10
+/// principle: readings and any bounds override survive untracking by design,
+/// and the undo restores the row itself, so nothing is lost; re-adding later
+/// from the catalog sheet brings the full history back either way). Shared by
+/// the swipe gesture on the manage list and the edit screen's app-bar action —
+/// the latter is the accessible, non-swipe path (#45) and pops right after;
+/// `ScaffoldMessenger.of` resolves to the app-level messenger, so the SnackBar
+/// survives the pop. Returns true (the row should dismiss).
+Future<bool> untrackParameterWithUndo(
+  BuildContext context,
+  WidgetRef ref,
+  TrackedParameter row,
+) async {
+  final l = AppLocalizations.of(context);
+  final db = ref.read(dbProvider);
+  final messenger = ScaffoldMessenger.of(context);
+  await db.removeTrackedParameter(row.id);
+  messenger
+    ..clearSnackBars()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(l.parameterUntracked),
+        action: SnackBarAction(
+          label: l.undo,
+          onPressed: () => db.restoreTrackedParameter(row),
+        ),
+      ),
+    );
+  return true;
 }
 
 /// Row title plus the faint dashboard-section caption (#6). The list is
@@ -751,7 +801,23 @@ class _ParameterEditScreenState extends ConsumerState<ParameterEditScreen> {
     // Form grouped into card sections (REDESIGN #19): Unit / Safe ranges /
     // Testing reminder.
     return Scaffold(
-      appBar: AppBar(title: Text(l.paramName(widget.param.paramKey))),
+      appBar: AppBar(
+        title: Text(l.paramName(widget.param.paramKey)),
+        actions: [
+          // Untrack (U11) — the accessible, non-swipe counterpart of the
+          // manage list's swipe gesture (#45), like the dosing edit screen's
+          // Stop. Untracks immediately with an Undo SnackBar (app-level
+          // messenger, so it outlives the pop).
+          IconButton(
+            icon: const Icon(Icons.playlist_remove),
+            tooltip: l.untrackParameter,
+            onPressed: () async {
+              await untrackParameterWithUndo(context, ref, widget.param.row);
+              if (context.mounted) Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
       body: Form(
         key: _formKey,
         child: ListView(

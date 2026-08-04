@@ -92,6 +92,8 @@
   "editZones": "Zonen bearbeiten",
   "addParameter": "Parameter hinzufügen",
   "allParametersAdded": "Alle Parameter sind bereits hinzugefügt.",
+  "untrackParameter": "Nicht mehr verfolgen",
+  "parameterUntracked": "Parameter wird nicht mehr verfolgt – Messwerte bleiben erhalten",
   "unitWithValue": "Einheit: {unit}",
   "unitFromSettingsNote": "In den Einstellungen festgelegt. Die Grenzen unten verwenden diese Einheit.",
   "unit": "Einheit",

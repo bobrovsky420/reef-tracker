@@ -143,6 +143,65 @@ void main() {
       final orders = after.map((p) => p.displayOrder).toList();
       expect(orders.toSet().length, orders.length);
     });
+
+    test('restoreTrackedParameter re-inserts the captured row verbatim, and '
+        'untracking never touches readings (U11)', () async {
+      final id = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      await db.insertReading(
+        tankId: id,
+        paramKey: 'alkalinity',
+        value: 8.2,
+        takenAt: DateTime(2026, 8, 1),
+      );
+      final row = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'alkalinity');
+      // Give the row per-row state that only the verbatim restore preserves.
+      await db.setTestCadence(row.id, 7);
+      final captured = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'alkalinity');
+
+      await db.removeTrackedParameter(captured.id);
+      expect(
+        (await db.getTrackedParameters(id)).map((p) => p.paramKey),
+        isNot(contains('alkalinity')),
+      );
+      // The reading is untouched — readings have no FK to tracked rows.
+      expect(await db.select(db.readings).get(), hasLength(1));
+
+      await db.restoreTrackedParameter(captured);
+      final restored = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'alkalinity');
+      // Full row equality: id, displayOrder, unit and testCadenceDays all
+      // come back — an addTrackedParameter re-add would reset them.
+      expect(restored, captured);
+    });
+
+    test('restoreTrackedParameter is a no-op when the parameter was re-added '
+        'meanwhile (no UNIQUE index to stop a duplicate, #10)', () async {
+      final id = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      final captured = (await db.getTrackedParameters(
+        id,
+      )).firstWhere((p) => p.paramKey == 'alkalinity');
+      await db.removeTrackedParameter(captured.id);
+      await db.addTrackedParameter(id, 'alkalinity');
+
+      await db.restoreTrackedParameter(captured);
+      expect(
+        (await db.getTrackedParameters(
+          id,
+        )).where((p) => p.paramKey == 'alkalinity'),
+        hasLength(1),
+      );
+    });
   });
 
   group('parameter overrides (v28)', () {
@@ -165,17 +224,23 @@ void main() {
       );
     });
 
-    test('a microelement with no override follows the catalog default', () async {
-      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
-      await db.addTrackedParameter(id, 'potassium');
-      final k = (await db.getTrackedParameters(
-        id,
-      )).firstWhere((p) => p.paramKey == 'potassium');
-      expect(
-        ResolvedParameter.resolve(k, SetupType.sps, null).bounds,
-        microDefaultBounds('potassium'),
-      );
-    });
+    test(
+      'a microelement with no override follows the catalog default',
+      () async {
+        final id = await db.createTankWithPreset(
+          name: 'M',
+          type: SetupType.sps,
+        );
+        await db.addTrackedParameter(id, 'potassium');
+        final k = (await db.getTrackedParameters(
+          id,
+        )).firstWhere((p) => p.paramKey == 'potassium');
+        expect(
+          ResolvedParameter.resolve(k, SetupType.sps, null).bounds,
+          microDefaultBounds('potassium'),
+        );
+      },
+    );
 
     test('an override wins over the default, and nulls inside it stay '
         'meaningful', () async {
@@ -228,44 +293,52 @@ void main() {
       expect(all.single.targetValue, 425);
     });
 
-    test('clearParameterOverride drops one parameter back to the defaults', () async {
-      final id = await db.createTankWithPreset(name: 'M', type: SetupType.sps);
-      await db.setParameterOverride(
-        id,
-        'calcium',
-        const ZoneBounds(greenLow: 1, greenHigh: 2),
-      );
-      await db.setParameterOverride(
-        id,
-        'alkalinity',
-        const ZoneBounds(greenLow: 3, greenHigh: 4),
-      );
-      await db.clearParameterOverride(id, 'calcium');
-      expect(
-        (await db.getParameterOverrides(id)).map((o) => o.paramKey),
-        ['alkalinity'],
-      );
-    });
+    test(
+      'clearParameterOverride drops one parameter back to the defaults',
+      () async {
+        final id = await db.createTankWithPreset(
+          name: 'M',
+          type: SetupType.sps,
+        );
+        await db.setParameterOverride(
+          id,
+          'calcium',
+          const ZoneBounds(greenLow: 1, greenHigh: 2),
+        );
+        await db.setParameterOverride(
+          id,
+          'alkalinity',
+          const ZoneBounds(greenLow: 3, greenHigh: 4),
+        );
+        await db.clearParameterOverride(id, 'calcium');
+        expect((await db.getParameterOverrides(id)).map((o) => o.paramKey), [
+          'alkalinity',
+        ]);
+      },
+    );
 
-    test('resetParameterDefaults drops every override of that tank only', () async {
-      final a = await db.createTankWithPreset(name: 'A', type: SetupType.sps);
-      final b = await db.createTankWithPreset(name: 'B', type: SetupType.sps);
-      await db.setParameterOverride(
-        a,
-        'calcium',
-        const ZoneBounds(greenLow: 1, greenHigh: 2),
-      );
-      await db.setParameterOverride(
-        b,
-        'calcium',
-        const ZoneBounds(greenLow: 1, greenHigh: 2),
-      );
+    test(
+      'resetParameterDefaults drops every override of that tank only',
+      () async {
+        final a = await db.createTankWithPreset(name: 'A', type: SetupType.sps);
+        final b = await db.createTankWithPreset(name: 'B', type: SetupType.sps);
+        await db.setParameterOverride(
+          a,
+          'calcium',
+          const ZoneBounds(greenLow: 1, greenHigh: 2),
+        );
+        await db.setParameterOverride(
+          b,
+          'calcium',
+          const ZoneBounds(greenLow: 1, greenHigh: 2),
+        );
 
-      await db.resetParameterDefaults(a);
+        await db.resetParameterDefaults(a);
 
-      expect(await db.getParameterOverrides(a), isEmpty);
-      expect(await db.getParameterOverrides(b), hasLength(1));
-    });
+        expect(await db.getParameterOverrides(a), isEmpty);
+        expect(await db.getParameterOverrides(b), hasLength(1));
+      },
+    );
 
     test('an override outlives untracking its parameter, so re-adding it '
         'restores the bounds the user set', () async {

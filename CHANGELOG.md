@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Untrack a parameter: swipe it away in Manage Parameters (or use the new
+  Untrack action when editing it) to remove it from the app without losing
+  anything — all its readings and your custom ranges are kept, an Undo is
+  offered, and adding the parameter back later restores its full history.
 - New "Flat with graphs" dashboard layout (Settings → Dashboard): the flat
   card grid where every parameter and ratio card also shows a small graph of
   its last two weeks of readings under the color-coded current value.
