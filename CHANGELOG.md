@@ -63,6 +63,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Devices tab now really remembers the selected brand chip across app
   restarts — a startup race made it fall back to All even though the choice
   was saved.
+- Ratio graphs (PO₄ : NO₃, Mg : Ca, Ca : Alk, Mg : Alk) now show a single
+  point per day. One testing session recorded each measurement at its own
+  time — nitrate at 14:15, phosphate at 14:20 — and the graph drew an extra
+  point in between, pairing the new nitrate with the *previous* phosphate.
+  Each day now plots the ratio of that day's final values, and the list under
+  the graph matches.
 
 ## [1.1.1] - 2026-08-01
 
