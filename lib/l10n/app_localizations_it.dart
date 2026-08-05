@@ -1245,6 +1245,56 @@ class AppLocalizationsIt extends AppLocalizations {
       'Stai usando l\'edizione standard di ReefTracker.';
 
   @override
+  String get editionPro => 'Pro';
+
+  @override
+  String get editionFounderPro => 'Edizione fondatori + Pro';
+
+  @override
+  String get proInfoBody =>
+      'Grazie! Lo sblocco Pro è attivo su questo dispositivo. Tutte le funzioni Pro sono a tua disposizione.';
+
+  @override
+  String get paywallTitle => 'ReefTracker Pro';
+
+  @override
+  String get paywallIntro =>
+      'Un solo acquisto, nessun abbonamento e nessun account — lo sblocco resta legato all\'account dello store di questo dispositivo.';
+
+  @override
+  String paywallBuy(Object price) {
+    return 'Sblocca Pro — $price';
+  }
+
+  @override
+  String get paywallRestore => 'Ripristina acquisti';
+
+  @override
+  String get paywallWorking => 'Connessione allo store…';
+
+  @override
+  String get paywallPurchased => 'Pro sbloccato. Grazie!';
+
+  @override
+  String get paywallRestored => 'Il tuo sblocco Pro è stato ripristinato.';
+
+  @override
+  String get paywallNothingToRestore =>
+      'Nessun acquisto precedente trovato per questo account dello store.';
+
+  @override
+  String get paywallPending =>
+      'Il pagamento è ancora in conferma. Pro si sbloccherà appena andrà a buon fine.';
+
+  @override
+  String get paywallFailed =>
+      'Lo store non è riuscito a completare l\'operazione. Riprova.';
+
+  @override
+  String get paywallUnavailable =>
+      'Gli acquisti in-app non sono disponibili su questo dispositivo.';
+
+  @override
   String get proFeatureTitle => 'Funzionalità Pro';
 
   @override

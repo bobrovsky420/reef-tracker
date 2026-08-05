@@ -83,9 +83,9 @@ class TanksScreen extends ConsumerWidget {
       ),
       // The tank cap (U21): a Standard install may hold at most kFreeTankLimit
       // live tanks — Pro/Founder lifts it. Gated at creation only, so tanks
-      // beyond the cap (restored backup) stay fully usable. While the list is
-      // still loading the gate stays open, matching proFeatureProvider's
-      // never-flash-a-lock rule; _save() holds the authoritative check.
+      // beyond the cap (restored backup) stay fully usable. A still-loading
+      // list counts as zero tanks, so the button stays enabled; _save() holds
+      // the authoritative check.
       floatingActionButton: FloatingActionButton.extended(
         onPressed:
             canCreateTank(
@@ -95,11 +95,19 @@ class TanksScreen extends ConsumerWidget {
               ),
             )
             ? () => context.push('/tanks/new')
-            : () => showProFeatureDialog(
-                context,
-                ProFeature.unlimitedTanks,
-                body: l.tankLimitBody(kFreeTankLimit),
-              ),
+            // Not `runProGated`: the cap is a *count* check, not a plain gate,
+            // so entitlement alone doesn't decide this button. Unlocking lifts
+            // the cap, so the form is where the user wanted to be either way.
+            : () async {
+                if (await showProFeatureDialog(
+                      context,
+                      ProFeature.unlimitedTanks,
+                      body: l.tankLimitBody(kFreeTankLimit),
+                    ) &&
+                    context.mounted) {
+                  await context.push('/tanks/new');
+                }
+              },
         icon: const Icon(Icons.add),
         label: Text(l.addAquarium),
       ),
@@ -501,16 +509,17 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
         );
         final tankCount = (await db.getTanks()).length;
         if (!canCreateTank(tankCount, unlimitedTanks: unlimited)) {
-          if (mounted) {
-            unawaited(
-              showProFeatureDialog(
-                context,
-                ProFeature.unlimitedTanks,
-                body: l.tankLimitBody(kFreeTankLimit),
-              ),
-            );
+          if (!mounted) return;
+          // Falls through to the create when the user unlocks from here —
+          // otherwise they would have to retype the form they just filled in.
+          if (!await showProFeatureDialog(
+            context,
+            ProFeature.unlimitedTanks,
+            body: l.tankLimitBody(kFreeTankLimit),
+          )) {
+            return;
           }
-          return;
+          if (!mounted) return;
         }
         await db.createTankWithPreset(
           name: _name.text.trim(),

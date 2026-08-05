@@ -1,17 +1,44 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/entitlement.dart';
 import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/features/settings/settings_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
-/// Widget tests for the Edition row in Settings (U19 phase 0): the row shows
-/// "Founder's Edition" when the early-adopter marker is present, "Standard"
-/// when it is absent, and tapping opens the explanation dialog.
+/// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so
+/// the entitlement sidecar has somewhere to live (see router_test.dart).
+class _FakePathProvider extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
+  _FakePathProvider(this.root);
+  final String root;
+  @override
+  Future<String?> getApplicationDocumentsPath() async => root;
+  @override
+  Future<String?> getTemporaryPath() async => root;
+}
+
+/// Widget tests for the Edition row in Settings (U19): the row states the two
+/// orthogonal entitlement facts — the early-adopter marker and a bought Pro
+/// unlock — in all four combinations, and tapping explains the one that
+/// matters.
 void main() {
+  late Directory docsDir;
+  setUp(() async {
+    docsDir = await Directory.systemTemp.createTemp('reeftracker-edition-');
+    PathProviderPlatform.instance = _FakePathProvider(docsDir.path);
+  });
+  tearDown(() async {
+    if (await docsDir.exists()) await docsDir.delete(recursive: true);
+  });
+
   /// Bounded fake-time settle — NOT pumpAndSettle (see router_test.dart).
   Future<void> settle(WidgetTester tester) async {
     for (var i = 0; i < 20; i++) {
@@ -32,6 +59,7 @@ void main() {
   Future<AppDatabase> pumpSettings(
     WidgetTester tester, {
     String? legacyFreeSince,
+    bool purchased = false,
   }) async {
     // Tall surface so the About section (bottom of the list) is on screen.
     tester.view.physicalSize = const Size(800, 2800);
@@ -42,10 +70,14 @@ void main() {
     if (legacyFreeSince != null) {
       await db.setSetting(kLegacyFreeSinceKey, legacyFreeSince);
     }
+    final entitlement = ProEntitlementStore();
+    addTearDown(entitlement.dispose);
+    if (purchased) await entitlement.write(true);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           dbProvider.overrideWithValue(db),
+          proEntitlementStoreProvider.overrideWithValue(entitlement),
           appVersionProvider.overrideWith((ref) async => '1.0.0+1'),
         ],
         child: MaterialApp(
@@ -97,6 +129,41 @@ void main() {
       await tester.tap(find.text('Standard'));
       await settle(tester);
       expect(find.textContaining('standard edition'), findsOneWidget);
+    } finally {
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('a purchased install with no marker shows Pro', (tester) async {
+    try {
+      await pumpSettings(tester, purchased: true);
+      expect(find.text('Pro'), findsOneWidget);
+      expect(find.text('Standard'), findsNothing);
+
+      await tester.tap(find.text('Pro'));
+      await settle(tester);
+      expect(find.textContaining('unlock is active'), findsOneWidget);
+    } finally {
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('a founder who buys shows both — the designed upgrade path', (
+    tester,
+  ) async {
+    try {
+      await pumpSettings(tester, legacyFreeSince: '0.26.0', purchased: true);
+      // The state that a single-enum edition could not represent: it would
+      // have rendered as plain "Standard" for someone who both was early AND
+      // paid.
+      expect(find.text("Founder's Edition + Pro"), findsOneWidget);
+      expect(find.text("Founder's Edition"), findsNothing);
+      expect(find.text('Pro'), findsNothing);
+
+      await tester.tap(find.text("Founder's Edition + Pro"));
+      await settle(tester);
+      // The Pro fact dominates: the person who paid is told their unlock works.
+      expect(find.textContaining('unlock is active'), findsOneWidget);
     } finally {
       await unmountApp(tester);
     }

@@ -1000,6 +1000,7 @@ class NoTanksView extends ConsumerWidget {
         store: store,
         state: ref.read(cloudSyncStateProvider),
         file: newest,
+        entitlement: ref.read(proEntitlementStoreProvider),
         enableSync: () => AppSettings(db).setSyncGdriveAccount(account.email),
       );
       messenger.showSnackBar(
@@ -1085,6 +1086,7 @@ class NoTanksView extends ConsumerWidget {
         store: store,
         state: ref.read(cloudSyncStateProvider),
         file: newest,
+        entitlement: ref.read(proEntitlementStoreProvider),
         enableSync: () => AppSettings(db).setSyncIcloudEnabled(true),
       );
       messenger.showSnackBar(

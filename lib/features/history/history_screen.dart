@@ -268,14 +268,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   /// Opens the dose calculator on this parameter — Pro-gated with the same
   /// teaser dialog as the Dosing tab's calculator tile.
   void _openCalculator({required bool correction}) {
-    if (ref.read(proFeatureProvider(ProFeature.doseCalculator))) {
-      final mode = correction ? '&mode=correction' : '';
-      unawaited(
-        context.push('/dosing/calculator?element=${widget.paramKey}$mode'),
-      );
-    } else {
-      unawaited(showProFeatureDialog(context, ProFeature.doseCalculator));
-    }
+    final mode = correction ? '&mode=correction' : '';
+    unawaited(
+      runProGated(
+        context,
+        ref,
+        ProFeature.doseCalculator,
+        () =>
+            context.push('/dosing/calculator?element=${widget.paramKey}$mode'),
+      ),
+    );
   }
 
   /// Captures the chart's [RepaintBoundary] as a PNG and hands it to the OS
@@ -908,5 +910,4 @@ class _ReadingDialogState extends State<_ReadingDialog> {
       ],
     );
   }
-
 }

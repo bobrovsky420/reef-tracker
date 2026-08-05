@@ -62,13 +62,13 @@ class HannaDeviceSection extends ConsumerWidget {
   /// Starts a live measurement — the same Pro gate as the Measurements-tab
   /// menu entry (`hannaConnect`, the checker's own gate, not the LAN devices'
   /// `connectedDevices`).
-  Future<void> _startMeasurement(BuildContext context, WidgetRef ref) async {
-    if (!ref.read(proFeatureProvider(ProFeature.hannaConnect))) {
-      await showProFeatureDialog(context, ProFeature.hannaConnect);
-      return;
-    }
-    await context.push('/hanna/measure');
-  }
+  Future<void> _startMeasurement(BuildContext context, WidgetRef ref) =>
+      runProGated(
+        context,
+        ref,
+        ProFeature.hannaConnect,
+        () => context.push('/hanna/measure'),
+      );
 
   Future<void> _renameDevice(
     BuildContext context,
@@ -233,7 +233,9 @@ class _CheckerCard extends StatelessWidget {
             row(l.hannaSerialNumber, _serialOf(device)),
             row(
               l.hannaLastMeasurement,
-              seen == null ? '—' : formatDateTime(context, seen, weekday: false),
+              seen == null
+                  ? '—'
+                  : formatDateTime(context, seen, weekday: false),
             ),
             if (onMeasure != null) ...[
               const SizedBox(height: 10),

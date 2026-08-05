@@ -1,0 +1,6 @@
+• Die Aquarienliste zeigt Gesundheitswert und letzten Test; tippen zum Wechseln.
+• Neues Layout „Flach mit Graphen“: jede Karte zeigt die letzten zwei Wochen.
+• Parameter ausblenden, ohne Messwerte zu verlieren — mit Rückgängig.
+• iOS: iCloud-Backup, Wiederherstellung zwischen Geräten, iCloud in den Backups.
+• Diagnoseprotokoll teilen über Einstellungen → Über.
+• Korrekturen: Fauna-Marin-PO4 und ZIMS-KH-Import, Achsen, Verhältnis-Graphen.

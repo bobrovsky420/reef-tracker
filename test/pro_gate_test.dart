@@ -32,9 +32,12 @@ class _FakePathProvider extends PathProviderPlatform
 /// Widget tests for the Pro-gated surfaces (U19): the ICP import action on
 /// the Microelements screen and the dose calculator icon on the Dosing tab.
 /// Founder's Edition installs (grandfathered) pass straight through; a
-/// non-entitled install gets the Pro-feature dialog instead. The locked
-/// branch is unreachable in production until a Pro build ships (every
-/// install seeds the founder marker) — these tests are what exercise it.
+/// non-entitled install gets the Pro-feature dialog instead — and, because no
+/// product resolves in a build with no billing library, the *dialog* is what
+/// it gets rather than the paywall. The locked branch is unreachable in
+/// production until the tier is activated (every install seeds the founder
+/// marker, and every registry entry is grandfathered) — these tests are what
+/// exercise it.
 void main() {
   /// Bounded fake-time settle — NOT pumpAndSettle (see router_test.dart).
   Future<void> settle(WidgetTester tester) async {
@@ -300,8 +303,10 @@ void main() {
         );
         await settle(tester);
         // Nothing on this screen watches the settings map, so warm it up the
-        // way main.dart's pre-warm does — otherwise the guard's ref.read sees
-        // "loading" and falls back to founder (the never-flash-a-lock rule).
+        // way main.dart's pre-warm does. Without it the entitlement is still
+        // "loading" and the gate fails closed, so the block below would pass
+        // for the wrong reason — this test is about the tank CAP, not the
+        // loading default.
         // listen + settle, NOT `await ….future`: awaiting a drift stream
         // inside the test's fake-async zone hangs (see router_test.dart).
         final container = ProviderScope.containerOf(

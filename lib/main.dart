@@ -14,6 +14,7 @@ import 'app/theme.dart';
 import 'data/cloud_restore_flow.dart';
 import 'data/diagnostics_log.dart';
 import 'data/reminder_scheduler.dart';
+import 'features/settings/pro_test_rig.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/l10n_helpers.dart';
 import 'widgets/reef_background.dart';
@@ -22,6 +23,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final container = ProviderContainer(
     observers: [ProviderErrorObserver(showError: _warnDataLoadFailed)],
+    overrides: [
+      // The only place a purchase store other than [NoPurchaseStore] is ever
+      // installed, and only in a `REEF_PRO_TEST` build (P0-6). Phase 1 adds
+      // the plugin-backed store here on the same line.
+      if (kProTestRig)
+        purchaseStoreProvider.overrideWithValue(proTestPurchaseStore),
+    ],
   );
   // Route every FlutterError.reportError (the observer above included) and
   // every unhandled async error into the on-device diagnostics log (#107),
@@ -96,6 +104,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     // first frame so they never block startup.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _seedEdition();
+      _initEntitlement();
       _purgeDeletedTanks();
       _maybeBackUp();
       _initReminders();
@@ -181,8 +190,14 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   /// a platform-channel call (see the pre-warm note in [main]).
   void _seedEdition() {
     Future<void> run() async {
+      final settings = ref.read(settingsProvider);
+      // The rig's seeder-off switch (P0-6), so Standard and Pro can be reached
+      // on a device. Guarded by the compile-time constant, so a build without
+      // the define never even reads the key — production behaviour is
+      // bit-identical to before.
+      if (kProTestRig && await settings.readProSeederOff()) return;
       final info = await PackageInfo.fromPlatform();
-      await ref.read(settingsProvider).seedLegacyFreeSince(info.version);
+      await settings.seedLegacyFreeSince(info.version);
     }
 
     unawaited(
@@ -193,6 +208,36 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
             stack: s,
             library: 'edition',
             context: ErrorSummary('seeding the early-adopter marker'),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Brings up the Pro purchase listener and reconciles the cached unlock
+  /// (U19).
+  ///
+  /// The listener must be up at launch, not only when the paywall opens: the
+  /// app can be killed between paying and acknowledging, and both stores
+  /// re-deliver that transaction on the next start — iOS indefinitely, while
+  /// refusing a re-purchase of the same product until it is finished.
+  ///
+  /// **Inert in every build shipped so far.** The only store compiled in is
+  /// `NoPurchaseStore`: the stream is empty and `restoreAtStartup` returns
+  /// immediately because the store reports itself unavailable, which is also
+  /// the rule that stops a store that *cannot be asked* from clearing a real
+  /// unlock. Phase 1 changes the store, not this call.
+  void _initEntitlement() {
+    final service = ref.read(proEntitlementServiceProvider);
+    service.start();
+    unawaited(
+      service.restoreAtStartup().catchError((Object e, StackTrace s) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'entitlement',
+            context: ErrorSummary('reconciling the Pro unlock at startup'),
           ),
         );
       }),

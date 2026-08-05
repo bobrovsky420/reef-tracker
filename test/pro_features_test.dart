@@ -61,6 +61,68 @@ void main() {
     });
   });
 
+  group('dormancy invariant (U19 §10 A10)', () {
+    test('while the tier is dormant, every feature is grandfathered', () {
+      // THE PROPERTY THE WHOLE DORMANT-SHIP PLAN RESTS ON. The paywall is
+      // unreachable if and only if every registry entry is grandfathered —
+      // *not* "because everyone is a Founder". Founder status only passes the
+      // gate for grandfathered features, so one routine `grandfathered: false`
+      // entry would put a priceless, unbuyable paywall in front of every
+      // existing user in a production build.
+      //
+      // `grandfathered: false` is the DEFAULT for the U21–U27 roadmap block,
+      // and U22 (photo journal) is marked Pro and is next in line — so this is
+      // a live hazard, not a theoretical one.
+      //
+      // If this fails, the feature you just added either ships
+      // `grandfathered: true` or ships ungated until activation. Decide per
+      // feature — but never silently. Relax this test only in the activation
+      // commit itself (§10 B1), together with the sale switch.
+      expect(
+        ProFeature.values.where((f) => !kGrandfatheredFeatures.contains(f)),
+        isEmpty,
+        reason:
+            'a non-grandfathered feature makes the paywall reachable, and no '
+            'purchase mechanism exists to satisfy it',
+      );
+    });
+
+    test('the paid tier has not been activated', () {
+      // The other half of the same invariant: the activation version is what
+      // switches the marker from "presence is enough" to "must predate
+      // activation". Setting it is a deliberate release-day act (§10 B1), so
+      // an accidental value would silently strip Founder status from
+      // everyone.
+      expect(kActivationVersion, isNull);
+    });
+  });
+
+  group('marker integrity (U19 §10 A11)', () {
+    test('while dormant, any marker grants Founder', () {
+      expect(markerGrantsFounder('0.26.0'), isTrue);
+      expect(markerGrantsFounder('99.0.0'), isTrue);
+    });
+
+    test('no marker, no Founder', () {
+      expect(markerGrantsFounder(null), isFalse);
+      expect(markerGrantsFounder(''), isFalse);
+    });
+
+    test('version comparison orders the way activation will need it', () {
+      // The rule at activation is `marker < activation`. These are the cases
+      // that decide whether a rollback-minted marker (§10's one-way valve) can
+      // be told apart from a genuine early one.
+      expect(compareAppVersions('0.26.0', '1.2.0'), lessThan(0));
+      expect(compareAppVersions('1.2.0', '1.2.0'), 0);
+      expect(compareAppVersions('1.10.0', '1.9.0'), greaterThan(0));
+      expect(compareAppVersions('1.2', '1.2.0'), 0);
+      // A `+build` suffix is not part of the ordering.
+      expect(compareAppVersions('1.2.0+142', '1.2.0'), 0);
+      // Garbage degrades to "oldest possible" rather than throwing on launch.
+      expect(compareAppVersions('nonsense', '0.0.1'), lessThan(0));
+    });
+  });
+
   group('tank cap (U21)', () {
     test('unlimitedTanks entitlement lifts the cap entirely', () {
       for (final count in [0, kFreeTankLimit, 100]) {

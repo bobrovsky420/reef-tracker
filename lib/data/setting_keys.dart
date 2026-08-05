@@ -48,6 +48,11 @@ const kMicroAttentionOnlyKey = 'micro_attention_only';
 const kFreeAmmoniaHiddenKey = 'free_ammonia_hidden';
 const kDoseCalcSalinityAdjustKey = 'dose_calc_salinity_adjust';
 const kLegacyFreeSinceKey = 'legacy_free_since';
+// U19 Stage A0 test rig only (`--dart-define=REEF_PRO_TEST=1`): stops
+// `_seedEdition` re-minting the founder marker, so the Standard and Pro states
+// can be reached on a device instead of by editing main.dart. Read nowhere
+// else — a build without the define never looks at it.
+const kProSeederOffKey = 'pro_seeder_off';
 // Google Drive sync (U24). Deliberately NOT the removed U20 feature's
 // `cloud_sync_*` names: 0.25.0 devices in the wild carry inert orphan rows
 // under those keys, and reusing them could resurrect stale values. The

@@ -1248,6 +1248,56 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous utilisez l\'édition standard de ReefTracker.';
 
   @override
+  String get editionPro => 'Pro';
+
+  @override
+  String get editionFounderPro => 'Édition fondateur + Pro';
+
+  @override
+  String get proInfoBody =>
+      'Merci ! Votre déblocage Pro est actif sur cet appareil. Toutes les fonctionnalités Pro sont à vous.';
+
+  @override
+  String get paywallTitle => 'ReefTracker Pro';
+
+  @override
+  String get paywallIntro =>
+      'Un seul achat, sans abonnement ni compte — le déblocage reste lié au compte de la boutique de cet appareil.';
+
+  @override
+  String paywallBuy(Object price) {
+    return 'Débloquer Pro — $price';
+  }
+
+  @override
+  String get paywallRestore => 'Restaurer les achats';
+
+  @override
+  String get paywallWorking => 'Communication avec la boutique…';
+
+  @override
+  String get paywallPurchased => 'Pro débloqué. Merci !';
+
+  @override
+  String get paywallRestored => 'Votre déblocage Pro a été restauré.';
+
+  @override
+  String get paywallNothingToRestore =>
+      'Aucun achat antérieur trouvé pour ce compte de boutique.';
+
+  @override
+  String get paywallPending =>
+      'Votre paiement est en cours de confirmation. Pro se débloquera dès qu\'il sera validé.';
+
+  @override
+  String get paywallFailed =>
+      'La boutique n\'a pas pu terminer l\'opération. Veuillez réessayer.';
+
+  @override
+  String get paywallUnavailable =>
+      'Les achats intégrés ne sont pas disponibles sur cet appareil.';
+
+  @override
   String get proFeatureTitle => 'Fonctionnalité Pro';
 
   @override

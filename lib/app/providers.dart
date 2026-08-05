@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, listEquals, mapEquals;
 import 'package:flutter/widgets.dart';
@@ -13,6 +15,7 @@ import '../data/database.dart';
 import '../data/device_http.dart';
 import '../data/device_secrets.dart';
 import '../data/diagnostics_log.dart';
+import '../data/entitlement.dart';
 import '../data/environment_sources.dart';
 import '../data/hanna_meter_link.dart';
 import '../data/hanna_meter_link_ble.dart';
@@ -20,6 +23,7 @@ import '../data/icloud_backup_store.dart';
 import '../data/lan_discovery.dart';
 import '../data/notifications.dart';
 import '../data/os_device_name.dart';
+import '../data/purchases.dart';
 import '../data/rb_device_link.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/rf_device_link.dart';
@@ -746,19 +750,70 @@ final editionProvider = _setting(
   AppSettings.decodeEdition,
 );
 
-/// Whether this install may use [ProFeature] (U19): a purchased Pro unlock
-/// (no purchase mechanism exists yet — always false today) or a Founder's
-/// Edition install using a grandfathered feature. While the settings map is
-/// still loading (only possible before `main`'s pre-warm completes) the gate
-/// stays open — never flash a lock at a founder.
-final proFeatureProvider = Provider.family<bool, ProFeature>((ref, feature) {
-  final edition = ref.watch(editionProvider).value ?? AppEdition.founder;
-  return hasProFeature(
-    feature,
-    purchased: false,
-    legacyFree: edition == AppEdition.founder,
+/// Whether the `REEF_PRO_TEST` rig has switched the founder-marker seeder off.
+/// Read by the rig's own row and by `main.dart`'s seeder, nowhere else.
+final proSeederOffProvider = _setting(
+  SettingKey.proSeederOff,
+  (raw) => raw == 'true',
+);
+
+/// The store seam for the Pro unlock (U19 Stage A0).
+///
+/// [NoPurchaseStore] in every shipped build: no billing library is compiled
+/// in, so nothing above this line can grant anything. Phase 1 swaps in the
+/// plugin-backed store here — one override, which is the point of the seam.
+/// The `REEF_PRO_TEST` rig overrides it with a [FakePurchaseStore].
+final purchaseStoreProvider = Provider<PurchaseStore>(
+  (ref) => const NoPurchaseStore(),
+);
+
+/// The device-local Pro unlock flag — a backup-excluded file, not a settings
+/// row (see [ProEntitlementStore] for why the distinction is load-bearing).
+final proEntitlementStoreProvider = Provider<ProEntitlementStore>((ref) {
+  final store = ProEntitlementStore();
+  ref.onDispose(store.dispose);
+  return store;
+});
+
+/// Purchase lifecycle: acknowledgement, the cached unlock, the clearing
+/// policy. Started by the app shell so redelivered purchases are caught.
+final proEntitlementServiceProvider = Provider<ProEntitlementService>((ref) {
+  final service = ProEntitlementService(
+    store: ref.watch(purchaseStoreProvider),
+    entitlement: ref.watch(proEntitlementStoreProvider),
+  );
+  ref.onDispose(() => unawaited(service.dispose()));
+  return service;
+});
+
+/// Whether a Pro unlock is held on this device. False everywhere in Phase 0 —
+/// nothing can write it except the test rig.
+final proPurchasedProvider = StreamProvider<bool>(
+  (ref) => ref.watch(proEntitlementStoreProvider).watch(),
+);
+
+/// The two entitlement facts as one value (U19). Kept as a pair rather than a
+/// third [AppEdition] value because "Founder who bought Pro" is the designed
+/// upgrade path after activation, and an enum can't say that.
+final entitlementProvider = Provider<Entitlement>((ref) {
+  // Fails CLOSED while the settings map loads. It used to default to
+  // `founder` so a founder would never see a lock flash — correct while
+  // everyone is a founder, an entitlement bypass the moment Standard is a
+  // real tier. The flash it guarded against cannot happen anyway: `main`
+  // awaits `settingsMapProvider` before `runApp`, so no widget builds during
+  // the loading window.
+  final marker = ref.watch(editionProvider).value ?? AppEdition.standard;
+  return Entitlement(
+    marker: marker,
+    purchased: ref.watch(proPurchasedProvider).value ?? false,
   );
 });
+
+/// Whether this install may use [ProFeature] (U19): a Pro unlock bought on
+/// this device, or a Founder's Edition install using a grandfathered feature.
+final proFeatureProvider = Provider.family<bool, ProFeature>(
+  (ref, feature) => ref.watch(entitlementProvider).has(feature),
+);
 
 /// When the most recent automatic or manual backup completed, or null if none
 /// has run yet. Reacts to the stored timestamp, so it refreshes as soon as a

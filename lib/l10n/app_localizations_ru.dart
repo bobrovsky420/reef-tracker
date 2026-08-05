@@ -1251,6 +1251,56 @@ class AppLocalizationsRu extends AppLocalizations {
       'Вы используете стандартное издание ReefTracker.';
 
   @override
+  String get editionPro => 'Pro';
+
+  @override
+  String get editionFounderPro => 'Издание первых пользователей + Pro';
+
+  @override
+  String get proInfoBody =>
+      'Спасибо! Разблокировка Pro активна на этом устройстве. Все функции Pro доступны вам.';
+
+  @override
+  String get paywallTitle => 'ReefTracker Pro';
+
+  @override
+  String get paywallIntro =>
+      'Одна покупка, без подписки и без учётной записи — разблокировка остаётся за магазинным аккаунтом этого устройства.';
+
+  @override
+  String paywallBuy(Object price) {
+    return 'Разблокировать Pro — $price';
+  }
+
+  @override
+  String get paywallRestore => 'Восстановить покупки';
+
+  @override
+  String get paywallWorking => 'Связь с магазином…';
+
+  @override
+  String get paywallPurchased => 'Pro разблокирован. Спасибо!';
+
+  @override
+  String get paywallRestored => 'Ваша разблокировка Pro восстановлена.';
+
+  @override
+  String get paywallNothingToRestore =>
+      'Для этого магазинного аккаунта прежних покупок не найдено.';
+
+  @override
+  String get paywallPending =>
+      'Платёж ещё подтверждается. Pro откроется, как только он пройдёт.';
+
+  @override
+  String get paywallFailed =>
+      'Магазин не смог завершить операцию. Попробуйте ещё раз.';
+
+  @override
+  String get paywallUnavailable =>
+      'Встроенные покупки недоступны на этом устройстве.';
+
+  @override
   String get proFeatureTitle => 'Функция Pro';
 
   @override

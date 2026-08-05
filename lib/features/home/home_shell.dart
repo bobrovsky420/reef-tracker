@@ -373,16 +373,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                       tooltip: l.doseCalcTitle,
                       icon: Icons.calculate_outlined,
                       // Pro-gated (U19): founders (and, later, Pro purchasers) open
-                      // the calculator; anyone else gets the explanation dialog.
-                      onPressed:
-                          ref.watch(
-                            proFeatureProvider(ProFeature.doseCalculator),
-                          )
-                          ? () => context.push('/dosing/calculator')
-                          : () => showProFeatureDialog(
-                              context,
-                              ProFeature.doseCalculator,
-                            ),
+                      // the calculator; anyone else gets the gate — and lands on
+                      // the calculator anyway if they come back entitled.
+                      onPressed: () => runProGated(
+                        context,
+                        ref,
+                        ProFeature.doseCalculator,
+                        () => context.push('/dosing/calculator'),
+                      ),
                     ),
                   ),
                 // Parameter management is tank-scoped like everything else in
@@ -416,65 +414,56 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                       }
                       if (v == 'import-measurements') {
                         // Pro-gated (U19): founders (and, later, Pro purchasers)
-                        // import; anyone else gets the explanation dialog.
-                        if (ref.read(
-                          proFeatureProvider(ProFeature.hannaImport),
-                        )) {
-                          unawaited(runMeasurementImportFlow(context));
-                        } else {
-                          unawaited(
-                            showProFeatureDialog(
-                              context,
-                              ProFeature.hannaImport,
-                            ),
-                          );
-                        }
+                        // import; anyone else meets the gate and resumes here
+                        // if they come back entitled.
+                        unawaited(
+                          runProGated(
+                            context,
+                            ref,
+                            ProFeature.hannaImport,
+                            () => runMeasurementImportFlow(context),
+                          ),
+                        );
                       }
                       if (v == 'import-icp') {
                         // Same gate idiom, its own feature key (U17): a lab
                         // report is a measurement file like any other, so it
                         // belongs in this menu — not only on the micro panel,
                         // which is hidden when microelements are switched off.
-                        if (ref.read(
-                          proFeatureProvider(ProFeature.icpImport),
-                        )) {
-                          unawaited(runIcpImportFlow(context));
-                        } else {
-                          unawaited(
-                            showProFeatureDialog(context, ProFeature.icpImport),
-                          );
-                        }
+                        unawaited(
+                          runProGated(
+                            context,
+                            ref,
+                            ProFeature.icpImport,
+                            () => runIcpImportFlow(context),
+                          ),
+                        );
                       }
                       if (v == 'hanna-measure') {
                         // Hanna checker live measurement (U33, experimental),
                         // same gate idiom.
-                        if (ref.read(
-                          proFeatureProvider(ProFeature.hannaConnect),
-                        )) {
-                          unawaited(context.push('/hanna/measure'));
-                        } else {
-                          unawaited(
-                            showProFeatureDialog(
-                              context,
-                              ProFeature.hannaConnect,
-                            ),
-                          );
-                        }
+                        unawaited(
+                          runProGated(
+                            context,
+                            ref,
+                            ProFeature.hannaConnect,
+                            () => context.push('/hanna/measure'),
+                          ),
+                        );
                       }
                       if (v == 'hanna-scan') {
                         // Checker camera scan (U34): this menu entry is the
                         // *teaser* surface — it only shows for non-entitled
                         // installs (entitled ones get the scan FAB instead),
-                        // so the normal outcome is the Pro dialog.
-                        if (ref.read(
-                          proFeatureProvider(ProFeature.hannaScan),
-                        )) {
-                          unawaited(context.push('/hanna/scan'));
-                        } else {
-                          unawaited(
-                            showProFeatureDialog(context, ProFeature.hannaScan),
-                          );
-                        }
+                        // so the normal outcome is the gate.
+                        unawaited(
+                          runProGated(
+                            context,
+                            ref,
+                            ProFeature.hannaScan,
+                            () => context.push('/hanna/scan'),
+                          ),
+                        );
                       }
                     },
                     entries: [

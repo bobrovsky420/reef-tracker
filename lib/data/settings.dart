@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../domain/device_vendors.dart';
 import '../domain/hanna_meter.dart';
+import '../domain/pro_features.dart';
 import '../domain/reminders.dart';
 import '../domain/stability_score.dart';
 import '../domain/trend.dart';
@@ -231,6 +232,9 @@ enum SettingKey {
   // marker. Seeded by every pre-Pro version on launch (`seedLegacyFreeSince`);
   // the Pro build must delete the seeder and only read the key.
   legacyFreeSince(kLegacyFreeSinceKey, deviceLocal: false),
+  // Test rig only (U19 Stage A0 / P0-6). Device-local: it describes what this
+  // device is pretending to be, and must never travel with the aquarium data.
+  proSeederOff(kProSeederOffKey, deviceLocal: true),
   // Google Drive sync state (U24) — all device-local: sync identity is
   // per-device by nature (restoring another device's backup must not
   // silently start pushing to, or claim the push history of, that device's
@@ -639,10 +643,14 @@ class AppSettings {
   static String? decodeLegacyFreeSince(String? raw) =>
       (raw == null || raw.isEmpty) ? null : raw;
 
+  /// The marker's verdict. Not "is the value non-empty" any more: once the
+  /// paid tier activates, only a marker stamped by a *pre-activation* build
+  /// counts ([markerGrantsFounder] / [kActivationVersion]). Identical
+  /// behaviour while that constant is null, which is the whole dormant period.
   static AppEdition decodeEdition(String? raw) =>
-      decodeLegacyFreeSince(raw) == null
-      ? AppEdition.standard
-      : AppEdition.founder;
+      markerGrantsFounder(decodeLegacyFreeSince(raw))
+      ? AppEdition.founder
+      : AppEdition.standard;
 
   Stream<AppEdition> watchEdition() =>
       _watch(SettingKey.legacyFreeSince).map(decodeEdition);
@@ -659,6 +667,23 @@ class AppSettings {
       await _write(SettingKey.legacyFreeSince, version);
     }
   }
+
+  /// Removes the early-adopter marker. **Test rig only** (P0-6) — nothing in a
+  /// shipping build may call this: the marker is a promise, and the sticky
+  /// restore rule exists precisely so it cannot be lost.
+  /// (Nulls the value rather than deleting the row — [decodeLegacyFreeSince]
+  /// reads null and empty identically, and no code path distinguishes an
+  /// absent row from a null one.)
+  Future<void> clearLegacyFreeSince() =>
+      _write(SettingKey.legacyFreeSince, null);
+
+  /// Whether the rig has switched the founder-marker seeder off. Only ever
+  /// read by a `REEF_PRO_TEST` build.
+  Future<bool> readProSeederOff() async =>
+      await _read(SettingKey.proSeederOff) == 'true';
+
+  Future<void> setProSeederOff(bool off) =>
+      _write(SettingKey.proSeederOff, off.toString());
 
   // --- feature tour ----------------------------------------------------------
 

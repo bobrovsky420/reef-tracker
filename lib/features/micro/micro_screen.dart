@@ -98,10 +98,14 @@ class MicroScreen extends ConsumerWidget {
             icon: Icons.upload_file_outlined,
             tooltip: l.icpImportTitle,
             // Pro-gated (U19): founders (and, later, Pro purchasers) import;
-            // anyone else gets the explanation dialog instead of the picker.
-            onPressed: ref.watch(proFeatureProvider(ProFeature.icpImport))
-                ? () => unawaited(runIcpImportFlow(context))
-                : () => showProFeatureDialog(context, ProFeature.icpImport),
+            // anyone else meets the gate instead of the picker, and reaches
+            // the picker anyway if they come back entitled.
+            onPressed: () => runProGated(
+              context,
+              ref,
+              ProFeature.icpImport,
+              () => runIcpImportFlow(context),
+            ),
           ),
           // Setup-ish actions collapsed into the overflow so the (long, in
           // some languages) title keeps its room; import stays a visible
@@ -485,9 +489,7 @@ class _ElementRow extends StatelessWidget {
         decoration: isLast
             ? null
             : BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: tokens.surfaceBorder),
-                ),
+                border: Border(bottom: BorderSide(color: tokens.surfaceBorder)),
               ),
         child: Row(
           children: [

@@ -12,6 +12,7 @@ import 'package:reeftracker/data/cloud_backup_store.dart';
 import 'package:reeftracker/data/cloud_sync.dart';
 import 'package:reeftracker/data/cloud_sync.dart' as cloud;
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/entitlement.dart';
 import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 
@@ -82,11 +83,13 @@ Future<bool> completeWelcomeRestore(
   required CloudBackupStore store,
   required CloudBackupFile file,
   required String accountEmail,
+  ProEntitlementStore? entitlement,
 }) => cloud.completeWelcomeRestore(
   db,
   store: store,
   state: _gdrive(db),
   file: file,
+  entitlement: entitlement ?? ProEntitlementStore(),
   enableSync: () => AppSettings(db).setSyncGdriveAccount(accountEmail),
 );
 
@@ -1078,6 +1081,7 @@ void main() {
         store: store,
         state: icloud(db),
         file: newest!,
+        entitlement: ProEntitlementStore(),
         enableSync: () => settings.setSyncIcloudEnabled(true),
       );
       expect(synced, isTrue);

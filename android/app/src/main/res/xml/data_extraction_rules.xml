@@ -18,15 +18,24 @@
   documented as never leaving this phone, which only holds if neither the
   cloud backup nor the phone-to-phone transfer carries them (see
   lib/data/device_secrets.dart).
+  Both channels also exclude app_flutter/.pro_entitlement (U19): the Pro
+  unlock is bought per store account, not per aquarium, so it must not ride
+  the database to another phone or another Google account. It cannot be a
+  settings row for exactly that reason — the database is copied wholesale by
+  these channels and a single row cannot be excluded from it. Restoring the
+  purchase on the new device is what the stores' own "Restore purchases"
+  button is for (see lib/data/entitlement.dart).
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" path="app_flutter/backups"/>
         <exclude domain="root" path="app_flutter/.install_id"/>
         <exclude domain="root" path="app_flutter/.device_secrets"/>
+        <exclude domain="root" path="app_flutter/.pro_entitlement"/>
     </cloud-backup>
     <device-transfer>
         <exclude domain="root" path="app_flutter/.install_id"/>
         <exclude domain="root" path="app_flutter/.device_secrets"/>
+        <exclude domain="root" path="app_flutter/.pro_entitlement"/>
     </device-transfer>
 </data-extraction-rules>

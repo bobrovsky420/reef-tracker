@@ -149,7 +149,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `parameters.yaml` + `parameter_catalog.g.dart` | Same pattern for the parameter catalog: `parameters.yaml` (commented, hand-edited, **order = micro-panel row order**) is the source of truth; `dart run tool/gen_parameters.dart` validates it (unique keys/symbols; category ∈ core/major/trace/contaminant; microelements carry a symbol; `displayFactor`, `hobbyKit` and `defaultBounds` micro-only, `importance` core-only; `defaultBounds` required for microelements — ascending (non-decreasing, matching the bound editors' `orderOk`: equal neighbours express "no amber step on that side", see silicon), amber bounds green-paired, inside the plausible range; ordered bounds, plausible bounds paired) and generates the `part` file `parameter_catalog.g.dart` (`const kReefParameters`). The generator deliberately does **not** import the package (its output *is* part of it — must stay runnable right after build_runner deletes the file), unlike `gen_supplements`, which imports the parameter catalog and therefore runs after `gen_parameters`. |
 | `tank_presets.yaml` + `presets.g.dart` + `ratio.g.dart` | Same pattern for the setup-type presets: `tank_presets.yaml` (commented, hand-edited; per-setup sections whose **listing = default tracked set, order = seeding order**, each row a bounds quadruple + optional `target`) is the source of truth; `dart run tool/gen_tank_presets.dart` validates it (every `SetupType` name present and nothing else; keys are core parameters in `parameters.yaml`; greenLow/greenHigh required, bounds strictly ascending and inside the plausible range; `target` inside the green range) and generates the `part` file `presets.g.dart` (`const kPresets`/`kPresetTargets`). The file's `ratios` section (every `RatioKind` name, full strictly-ascending quadruples) generates the second `part` file `ratio.g.dart` (`const kRatioDefaultBounds`). Like `gen_micro_views`, the generator validates against `parameters.yaml` directly instead of importing the package. `test/presets_test.dart` re-checks the invariants on the generated data. |
 | `ro_defaults.yaml` + `ro.g.dart` | Same pattern for the RO unit's default stage set (kept apart from `tank_presets.yaml` because the RO unit is **device**-scoped): `ro_defaults.yaml` is the source of truth (listing order = seed order = the water path; `lifespanDays` in plain days, 30/month); `dart run tool/gen_ro_defaults.dart` validates it (every non-custom `RoStageType` exactly once — `custom` stages are user-created; lifespans ≥ 1 day) and generates the `part` file `ro.g.dart` (`const kRoDefaultLifespanDays`/`kRoDefaultStageOrder`). |
-| `pro_features.dart` + `pro_features.yaml` + `pro_features.g.dart` | Pro-tier feature gating (U19). `pro_features.yaml` is the source of truth for which features sit behind the future paid tier (`key` → `ProFeature` enum value) and which are **grandfathered** (existed at the monetization cutoff — free forever for Founder's Edition installs; entries are never removed, pinned by `test/pro_features_test.dart`); `dart run tool/gen_pro_features.dart` validates (unique camelCase keys, bool flags, non-empty list) and generates the `part` file (enum + `kGrandfatheredFeatures`). The handwritten file owns the single gate rule: `hasProFeature(f, purchased:, legacyFree:) = purchased ∥ (legacyFree ∧ grandfathered)`. UI never calls it directly — widgets watch `proFeatureProvider(feature)` (providers.dart), which feeds `purchased: false` (no IAP yet) and `legacyFree` from `editionProvider`; a gated action falls back to `showProFeatureDialog` (`widgets/pro_feature_dialog.dart`, the future paywall entry point; feature names localize via `L10nDomain.proFeatureName`, whose exhaustive switch won't compile without a name for a new feature). Gated surfaces: ICP report import (micro screen app-bar action; the `/micro/import` route needs no extra guard — it already redirects to `/micro` without a parsed-result `extra`, which only the gated action produces), the dose calculator (home app-bar action + the history screen's calculator icon and correction CTA), the tank cap (`canCreateTank`, U21), the stability score (U26 — the dashboard header's stability half renders a Pro marker instead of the ring for non-entitled installs), and the smart insights card (U28 — the dashboard Insights card renders a compact Pro teaser row instead of the insight list). Keys are never persisted — rename freely. |
+| `pro_features.dart` + `pro_features.yaml` + `pro_features.g.dart` | Pro-tier feature gating (U19). `pro_features.yaml` is the source of truth for which features sit behind the future paid tier (`key` → `ProFeature` enum value) and which are **grandfathered** (existed at the monetization cutoff — free forever for Founder's Edition installs; entries are never removed, pinned by `test/pro_features_test.dart`); `dart run tool/gen_pro_features.dart` validates (unique camelCase keys, bool flags, non-empty list) and generates the `part` file (enum + `kGrandfatheredFeatures`). The handwritten file owns the single gate rule: `hasProFeature(f, purchased:, legacyFree:) = purchased ∥ (legacyFree ∧ grandfathered)`. UI never calls it directly — widgets watch `proFeatureProvider(feature)` (providers.dart), which reads both facts from `entitlementProvider` (the device-local purchase flag + `editionProvider`'s marker); a gated action falls back to `showProFeatureDialog` (`widgets/pro_feature_dialog.dart` — the paywall entry point, which navigates to `/paywall` only when a product actually resolves and returns whether the caller may now proceed; feature names localize via `L10nDomain.proFeatureName`, whose exhaustive switch won't compile without a name for a new feature). Gated surfaces: ICP report import (micro screen app-bar action; the `/micro/import` route needs no extra guard — it already redirects to `/micro` without a parsed-result `extra`, which only the gated action produces), the dose calculator (home app-bar action + the history screen's calculator icon and correction CTA), the tank cap (`canCreateTank`, U21), the stability score (U26 — the dashboard header's stability half renders a Pro marker instead of the ring for non-entitled installs), and the smart insights card (U28 — the dashboard Insights card renders a compact Pro teaser row instead of the insight list). Keys are never persisted — rename freely. |
 
 ## Data layer (`lib/data/`)
 
@@ -3660,7 +3660,7 @@ calculator icon + the below-range correction CTA — both pass
 `?element=<key>`, the CTA additionally `?mode=correction`). **Pro-gated**
 (U19, grandfathered — see Editions): a
 non-entitled install gets the Pro-feature dialog instead of the screen
-(dormant until a Pro build ships; every current install is Founder's
+(dormant until the tier is activated; every current install is Founder's
 Edition). Two modes behind a `ReefSegmented` toggle, identical from every
 entry point. **Daily dose** (default) estimates an element's real daily
 consumption and proposes the
@@ -3868,10 +3868,94 @@ fed by `tanksOverviewProvider` (see the provider graph above):
 Covered by `test/tanks_overview_test.dart` (the three freshness states, the
 tap-activates-and-pops behaviour, the health-display-off branch).
 
+### Entitlements — the Pro tier's architecture (U19, dormant)
+
+Everything a paid Pro tier needs is built and shipping, and **nothing in it can
+grant, sell or reveal anything** (TODO §10 Stage A0). Two properties define
+that boundary and both are enforced, not merely intended:
+
+1. **The artifact is billing-free.** No `in_app_purchase` dependency, so no
+   billing AAR, so no `com.android.vending.BILLING` permission, no
+   `billingclient.version` meta-data, no `<queries>`, no `ProxyBillingActivity`
+   in the merged manifest. The store seam (`data/purchases.dart`) has exactly
+   one shipping implementation, `NoPurchaseStore`: never available, resolves no
+   product, throws if asked to buy. Phase 1 adds a plugin-backed
+   implementation plus the Gradle machinery to strip billing from dormant
+   builds; until then there is nothing to strip.
+2. **The paywall is unreachable.** Not "because everyone is a Founder" — that
+   was the wrong reason. Founder status passes the gate only for
+   *grandfathered* features, so unreachability holds exactly while **every**
+   `pro_features.yaml` entry is `grandfathered: true`. That is an enforced
+   invariant (`test/pro_features_test.dart`), not an accident of the current
+   registry: a routine `grandfathered: false` commit would otherwise put a
+   priceless, unbuyable paywall in front of every existing user.
+
+**The two entitlement facts.** `Entitlement` (`data/entitlement.dart`) pairs
+the early-adopter *marker* with a *purchase*, deliberately instead of growing
+`AppEdition` a third value: "Founder who bought Pro" is the designed upgrade
+path after activation (the founder promise covers only pre-cutoff features),
+and one enum cannot express it. `entitlementProvider` combines them;
+`proFeatureProvider(feature)` is the single gate widgets read. It **fails
+closed** while settings load — `main()` awaits `settingsMapProvider` before
+`runApp`, so no widget builds during that window anyway.
+
+**Where the purchase lives, and why not in the database.** `pro_purchased` is
+a file, `.pro_entitlement`, beside `.install_id` and `.device_secrets` — not a
+settings key. "Device-local" in `SettingKey` is an *app-JSON-backup* concept;
+the settings kv lives in the SQLite database, which Android Auto Backup and
+device-to-device transfer copy **wholesale**, and a row cannot be excluded from
+that. Stored as a key, one paid unlock would follow the database to every
+phone on the account. The file is excluded in `backup_rules.xml`, in both
+sections of `data_extraction_rules.xml`, and via `NSURLIsExcludedFromBackupKey`
+on iOS. A transferred install therefore arrives unentitled, and **Restore
+purchases** — which both stores require to be visible anyway — is what brings
+it back from the account that actually paid.
+
+**Acknowledgement and the clearing policy** (`ProEntitlementService`) are the
+two places real money is at stake:
+
+- Every event carrying `pendingComplete` is acknowledged **before** the
+  entitlement flips — purchased, restored and startup-redelivered alike. Play
+  auto-refunds and revokes anything unacknowledged (3 days; **3 minutes** for
+  license testers), and iOS re-delivers unfinished transactions forever while
+  refusing a re-purchase. `PurchaseState.pending` is a real state (deferred
+  payment methods) and never entitles.
+- A restore may clear the cached unlock **only** when it completed
+  successfully and returned nothing. Never clearing would make a self-service
+  refund a permanent free unlock; clearing on any empty-looking result would
+  downgrade an offline user, a user on another store account, or one who hit a
+  transient store error. A thrown restore keeps the cached value.
+
+**The paywall** (`features/paywall/paywall_screen.dart`, `/paywall`) fetches
+its price from the store — never hardcoded, the consoles own pricing — and
+follows the **no-product rule**: if nothing resolves, no buy button is
+rendered. `showProFeatureDialog` applies the same rule one level up, navigating
+to the paywall only when a product actually resolves and otherwise showing the
+informational dialog. It returns `Future<bool>`, and `runProGated` makes
+"a successful unlock resumes what you were doing" a property of the gate rather
+than of every call site.
+
+**Marker integrity.** `kActivationVersion` (`domain/pro_features.dart`) is null
+throughout dormancy, so `markerGrantsFounder` behaves exactly as presence-only.
+Set at activation, it honours only markers stamped by pre-activation builds —
+which blunts forgery (the marker is one settings row, it rides backups by
+design, and an unchecksummed backup is accepted) to "claim you were early", and
+makes the seeder-rollback valve reversible instead of one-way.
+
+**Test rig.** `--dart-define=REEF_PRO_TEST=1` (not `kDebugMode`, which would be
+compiled out of the release artifacts that can actually transact) adds a
+Settings section that puts the device into any of the four states by writing
+the **real** marker and entitlement file — so every reader sees it, including
+the non-Riverpod `completeWelcomeRestore` — plus a seeder-off switch and a
+`FakePurchaseStore`. Such artifacts go only to internal testing / TestFlight,
+never to a store submission. Tests: `test/entitlement_test.dart`,
+`test/pro_features_test.dart`, `test/edition_test.dart`,
+`test/pro_gate_test.dart`.
+
 ### Editions & the early-adopter marker (U19 phase 0)
 
-Groundwork for a future paid Pro tier (see TODO U19; no purchase code exists
-yet). Every launch of a **pre-Pro** build seeds the Settings-kv key
+Groundwork for the paid Pro tier above. Every launch of a **pre-activation**
+build seeds the Settings-kv key
 `legacy_free_since` with the current app version if absent (`_seedEdition` in
 `main.dart`, post-first-frame — `PackageInfo` is a platform-channel call;
 `AppSettings.seedLegacyFreeSince` never overwrites an existing stamp). Presence
@@ -3882,10 +3966,13 @@ manipulation once seeding stops shipping; **the Pro build must delete the
 seeder and only read the key.** The marker is deliberately **not**
 device-local (it rides backups — the app's only cross-device continuity path)
 and is additionally *sticky* on restore (`stickySettingKeys`, see Backup
-above). Settings shows an **Edition** row ("Founder's Edition" / "Standard" +
-info dialog); until a Pro build exists every install seeds, so the Standard
-branch is dormant future-proofing. Tests: `test/edition_test.dart`, plus
-seed/sticky coverage in `test/settings_test.dart` / `test/backup_test.dart`.
+above). Settings shows an **Edition** row with four renders — Standard /
+Founder's Edition / Pro / Founder's Edition + Pro — plus an info dialog in
+which the Pro fact dominates. Until activation every install seeds and nothing
+can write the unlock, so three of the four renders are dormant
+future-proofing, reachable on a device only through the `REEF_PRO_TEST` rig.
+Tests: `test/edition_test.dart`, plus seed/sticky coverage in
+`test/settings_test.dart` / `test/backup_test.dart`.
 
 Feature gating on top of the marker lives in the domain layer
 (`pro_features.yaml` → generated `ProFeature`/`kGrandfatheredFeatures`, gate
@@ -3893,7 +3980,7 @@ rule in `domain/pro_features.dart` — see the Domain table) and is consumed via
 `proFeatureProvider(feature)`; the gated surfaces are **ICP report import**,
 the **dose calculator**, and the **tank cap** (all grandfathered: founders
 keep them free forever; a non-entitled install gets `showProFeatureDialog`
-instead of the feature — dormant until a Pro build ships, exercised by
+instead of the feature — dormant until activation, exercised by
 `test/pro_gate_test.dart`).
 
 **One gate per capability, not per vendor.** Every LAN device integration —
@@ -3918,8 +4005,8 @@ editable; data is never locked away. Enforced twice in
 `tanks_screen.dart`: cosmetically on the tanks-list FAB (swaps the push for
 `showProFeatureDialog` with the cap-specific `tankLimitBody` message) and
 authoritatively in `_save()` before `createTankWithPreset` (deep links and
-restored routes bypass the FAB). While providers are still loading the gate
-stays open (same never-flash-a-lock rule as `proFeatureProvider`). The
+restored routes bypass the FAB). A still-loading tank list counts as zero
+tanks, so the button stays enabled; `_save()` is where the count is real. The
 delete-undo flow is deliberately not gated: restoring your own just-deleted
 tank must never be blocked, even if a concurrent create pushed the count past
 the cap.
