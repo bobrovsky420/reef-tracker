@@ -70,14 +70,23 @@ void main() {
       // entry would put a priceless, unbuyable paywall in front of every
       // existing user in a production build.
       //
-      // `grandfathered: false` is the DEFAULT for the U21–U27 roadmap block,
-      // and U22 (photo journal) is marked Pro and is next in line — so this is
-      // a live hazard, not a theoretical one.
+      // `grandfathered: false` is the DEFAULT wording for the U21–U27 roadmap
+      // block, and U22 (photo journal) is marked Pro and is next in line — so
+      // this is a live hazard, not a theoretical one. The 2026-08-05 decision
+      // overrides that default for everything shipped before activation.
       //
-      // If this fails, the feature you just added either ships
-      // `grandfathered: true` or ships ungated until activation. Decide per
-      // feature — but never silently. Relax this test only in the activation
-      // commit itself (§10 B1), together with the sale switch.
+      // DECIDED 2026-08-05: every Pro feature delivered before activation
+      // ships `grandfathered: true`, so if this fails, add the flag — there is
+      // no per-feature deliberation left to have.
+      //
+      // This test is NOT relaxed at activation. It stays green afterwards and
+      // becomes the permanent guard that a new key doesn't quietly take
+      // something away from Founders. It costs the paid tier nothing: a
+      // Standard install (every install created after activation) gets no
+      // benefit from a grandfathered flag and meets the paywall on every key.
+      // Only a capability invented after activation that even Founders should
+      // pay for would ever justify `grandfathered: false` — and changing this
+      // test is exactly the moment to prove that case was made deliberately.
       expect(
         ProFeature.values.where((f) => !kGrandfatheredFeatures.contains(f)),
         isEmpty,

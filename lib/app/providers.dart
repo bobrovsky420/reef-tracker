@@ -770,7 +770,7 @@ final purchaseStoreProvider = Provider<PurchaseStore>(
 /// The device-local Pro unlock flag — a backup-excluded file, not a settings
 /// row (see [ProEntitlementStore] for why the distinction is load-bearing).
 final proEntitlementStoreProvider = Provider<ProEntitlementStore>((ref) {
-  final store = ProEntitlementStore();
+  final store = FileProEntitlementStore();
   ref.onDispose(store.dispose);
   return store;
 });

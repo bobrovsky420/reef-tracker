@@ -16,6 +16,23 @@
 #                  false = built after the cutoff; paid for everyone once the
 #                          Pro tier exists.
 #
+# DECIDED 2026-08-05 — every Pro feature delivered BEFORE the paid tier is
+# switched on ships `grandfathered: true`. No per-feature deliberation.
+#
+# This does not cost the tier anything, which is easy to get backwards: the
+# gate is `purchased || (legacyFree && grandfathered)`, so grandfathering only
+# ever helps a *Founder*. A Standard install — every install created after
+# activation — gets nothing from it and meets the paywall on every key here.
+# `grandfathered: false` is reserved for capabilities invented AFTER
+# activation that even Founders should pay for; it is a deliberate decision
+# each time, never a default.
+#
+# Same decision, second half: **same capability for another brand joins the
+# existing key** (new ICP labs -> `icpImport`, new hardware vendors ->
+# `connectedDevices`). Another lab or another pump is the capability the
+# Founder was already promised; charging for it would be retrading the promise
+# on a technicality. A genuinely new capability gets its own key.
+#
 # Retiering a feature (free -> Pro) = adding an entry here + gating its UI
 # surfaces with `proFeatureProvider`; git history is the audit trail.
 

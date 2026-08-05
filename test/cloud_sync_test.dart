@@ -89,7 +89,7 @@ Future<bool> completeWelcomeRestore(
   store: store,
   state: _gdrive(db),
   file: file,
-  entitlement: entitlement ?? ProEntitlementStore(),
+  entitlement: entitlement ?? MemoryProEntitlementStore(),
   enableSync: () => AppSettings(db).setSyncGdriveAccount(accountEmail),
 );
 
@@ -1081,7 +1081,7 @@ void main() {
         store: store,
         state: icloud(db),
         file: newest!,
-        entitlement: ProEntitlementStore(),
+        entitlement: MemoryProEntitlementStore(),
         enableSync: () => settings.setSyncIcloudEnabled(true),
       );
       expect(synced, isTrue);
