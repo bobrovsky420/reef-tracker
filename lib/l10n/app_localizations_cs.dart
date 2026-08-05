@@ -1242,6 +1242,55 @@ class AppLocalizationsCs extends AppLocalizations {
       'Používáte standardní edici aplikace ReefTracker.';
 
   @override
+  String get editionPro => 'Pro';
+
+  @override
+  String get editionFounderPro => 'Edice zakladatelů + Pro';
+
+  @override
+  String get proInfoBody =>
+      'Děkujeme! Odemčení Pro je na tomto zařízení aktivní. Všechny funkce Pro máte k dispozici.';
+
+  @override
+  String get paywallTitle => 'ReefTracker Pro';
+
+  @override
+  String get paywallIntro =>
+      'Jednorázový nákup, žádné předplatné a žádný účet — odemčení zůstává u obchodního účtu tohoto zařízení.';
+
+  @override
+  String paywallBuy(Object price) {
+    return 'Odemknout Pro — $price';
+  }
+
+  @override
+  String get paywallRestore => 'Obnovit nákupy';
+
+  @override
+  String get paywallWorking => 'Komunikace s obchodem…';
+
+  @override
+  String get paywallPurchased => 'Pro je odemčeno. Děkujeme!';
+
+  @override
+  String get paywallRestored => 'Vaše odemčení Pro bylo obnoveno.';
+
+  @override
+  String get paywallNothingToRestore =>
+      'Pro tento obchodní účet nebyl nalezen žádný dřívější nákup.';
+
+  @override
+  String get paywallPending =>
+      'Platba se stále potvrzuje. Pro se odemkne, jakmile proběhne.';
+
+  @override
+  String get paywallFailed => 'Obchod akci nedokončil. Zkuste to prosím znovu.';
+
+  @override
+  String get paywallUnavailable =>
+      'Nákupy v aplikaci nejsou na tomto zařízení dostupné.';
+
+  @override
   String get proFeatureTitle => 'Funkce Pro';
 
   @override

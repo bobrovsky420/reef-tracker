@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../data/database.dart';
 import '../domain/hanna_import.dart';
 import '../domain/icp_import.dart';
+import '../domain/pro_features.dart';
 import '../domain/ratio.dart';
 import '../domain/supplement_catalog.dart';
 import '../features/actions/schedule_screen.dart';
@@ -28,6 +29,7 @@ import '../features/micro/icp_import_screen.dart';
 import '../features/micro/micro_add_screen.dart';
 import '../features/micro/micro_configure_screen.dart';
 import '../features/micro/micro_screen.dart';
+import '../features/paywall/paywall_screen.dart';
 import '../features/ratio/ratio_edit_screen.dart';
 import '../features/ratio/ratio_screen.dart';
 import '../features/ro/ro_screen.dart';
@@ -84,7 +86,9 @@ final appRouter = GoRouter(
       path: '/parameters/:id/edit',
       builder: (context, state) {
         final param = state.extra;
-        if (param is ResolvedParameter) return ParameterEditScreen(param: param);
+        if (param is ResolvedParameter) {
+          return ParameterEditScreen(param: param);
+        }
         return _ResolveById<ResolvedParameter>(
           id: int.tryParse(state.pathParameters['id'] ?? ''),
           listenable: trackedParametersProvider,
@@ -168,6 +172,16 @@ final appRouter = GoRouter(
       builder: (context, state) => const MaintenanceScheduleScreen(),
     ),
     GoRoute(path: '/ro', builder: (context, state) => const RoScreen()),
+    // The paywall (U19). No route guard and none needed: the only navigation
+    // here is `showProFeatureDialog`, which comes only when a product actually
+    // resolves — and nothing resolves in a build with no billing library. A
+    // deep link would land on a screen with no buy button, which is the
+    // correct rendering of "nothing is for sale".
+    GoRoute(
+      path: '/paywall',
+      builder: (context, state) =>
+          PaywallScreen(feature: state.extra as ProFeature?),
+    ),
     // One route for every connected device (U41). It replaced `/reeffactory`,
     // `/reefbeat`, `/apex` and the Settings inventory at `/settings/devices` —
     // the vendor selector on the page does what those four routes used to.

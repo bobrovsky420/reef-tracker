@@ -1010,15 +1010,22 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     if (kind == kDeviceKindHanna) {
       // There is no add sheet: the checker records itself on first connect,
       // so "adding" one is running a measurement.
-      if (!ref.read(proFeatureProvider(ProFeature.hannaConnect))) {
-        await showProFeatureDialog(context, ProFeature.hannaConnect);
-        return;
-      }
-      await context.push('/hanna/measure');
+      await runProGated(
+        context,
+        ref,
+        ProFeature.hannaConnect,
+        () => context.push('/hanna/measure'),
+      );
       return;
     }
     if (!ref.read(proFeatureProvider(ProFeature.connectedDevices))) {
-      await showProFeatureDialog(context, ProFeature.connectedDevices);
+      // Not `runProGated`: what follows is a whole switch over vendors, and
+      // re-entering `_addDevice` after a successful unlock replays the vendor
+      // pick cleanly rather than resuming into a half-built branch.
+      if (await showProFeatureDialog(context, ProFeature.connectedDevices) &&
+          mounted) {
+        await _addDevice(kind);
+      }
       return;
     }
     switch (kind) {

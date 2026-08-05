@@ -2195,6 +2195,90 @@ abstract class AppLocalizations {
   /// **'You\'re using the standard edition of ReefTracker.'**
   String get standardInfoBody;
 
+  /// Edition name for an install holding a Pro unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro'**
+  String get editionPro;
+
+  /// Edition name for an early adopter who also bought the Pro unlock — the designed upgrade path, not an edge case.
+  ///
+  /// In en, this message translates to:
+  /// **'Founder\'s Edition + Pro'**
+  String get editionFounderPro;
+
+  /// Dialog body shown to an install holding the Pro unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you! Your Pro unlock is active on this device. Every Pro feature is yours to use.'**
+  String get proInfoBody;
+
+  /// Title of the paywall screen.
+  ///
+  /// In en, this message translates to:
+  /// **'ReefTracker Pro'**
+  String get paywallTitle;
+
+  /// Paywall lead paragraph explaining the purchase model.
+  ///
+  /// In en, this message translates to:
+  /// **'One purchase, no subscription and no account — the unlock stays with this device\'s store account.'**
+  String get paywallIntro;
+
+  /// Paywall buy button. price is already formatted in the user's currency BY THE STORE, never by the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Pro — {price}'**
+  String paywallBuy(Object price);
+
+  /// Paywall button that re-checks the store account for an existing unlock. Apple requires this to be visible.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get paywallRestore;
+
+  /// Paywall busy line shown while a purchase or restore is in flight.
+  ///
+  /// In en, this message translates to:
+  /// **'Talking to the store…'**
+  String get paywallWorking;
+
+  /// Paywall success message after a purchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro unlocked. Thank you!'**
+  String get paywallPurchased;
+
+  /// Paywall success message after a restore found an existing purchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Pro unlock has been restored.'**
+  String get paywallRestored;
+
+  /// Paywall message when a restore completed successfully but the account owns nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous purchase was found for this store account.'**
+  String get paywallNothingToRestore;
+
+  /// Paywall message for a deferred payment method (cash, bank transfer, carrier billing) — not a purchase yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment is still being confirmed. Pro unlocks as soon as it goes through.'**
+  String get paywallPending;
+
+  /// Paywall message for a failed purchase or restore.
+  ///
+  /// In en, this message translates to:
+  /// **'The store could not complete that. Please try again.'**
+  String get paywallFailed;
+
+  /// Paywall message when the store itself cannot be reached (no store services, restricted profile).
+  ///
+  /// In en, this message translates to:
+  /// **'In-app purchases aren\'t available on this device.'**
+  String get paywallUnavailable;
+
   /// Title of the dialog shown when a non-entitled install taps a Pro-gated feature.
   ///
   /// In en, this message translates to:

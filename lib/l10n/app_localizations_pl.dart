@@ -1254,6 +1254,56 @@ class AppLocalizationsPl extends AppLocalizations {
       'Korzystasz ze standardowej edycji aplikacji ReefTracker.';
 
   @override
+  String get editionPro => 'Pro';
+
+  @override
+  String get editionFounderPro => 'Edycja założycielska + Pro';
+
+  @override
+  String get proInfoBody =>
+      'Dziękujemy! Odblokowanie Pro jest aktywne na tym urządzeniu. Wszystkie funkcje Pro są do Twojej dyspozycji.';
+
+  @override
+  String get paywallTitle => 'ReefTracker Pro';
+
+  @override
+  String get paywallIntro =>
+      'Jednorazowy zakup, bez subskrypcji i bez konta — odblokowanie zostaje przy koncie sklepu na tym urządzeniu.';
+
+  @override
+  String paywallBuy(Object price) {
+    return 'Odblokuj Pro — $price';
+  }
+
+  @override
+  String get paywallRestore => 'Przywróć zakupy';
+
+  @override
+  String get paywallWorking => 'Łączenie ze sklepem…';
+
+  @override
+  String get paywallPurchased => 'Pro odblokowane. Dziękujemy!';
+
+  @override
+  String get paywallRestored => 'Twoje odblokowanie Pro zostało przywrócone.';
+
+  @override
+  String get paywallNothingToRestore =>
+      'Nie znaleziono wcześniejszego zakupu dla tego konta sklepu.';
+
+  @override
+  String get paywallPending =>
+      'Płatność jest wciąż potwierdzana. Pro odblokuje się, gdy tylko przejdzie.';
+
+  @override
+  String get paywallFailed =>
+      'Sklep nie mógł tego dokończyć. Spróbuj ponownie.';
+
+  @override
+  String get paywallUnavailable =>
+      'Zakupy w aplikacji nie są dostępne na tym urządzeniu.';
+
+  @override
   String get proFeatureTitle => 'Funkcja Pro';
 
   @override

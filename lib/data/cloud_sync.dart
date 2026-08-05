@@ -8,6 +8,7 @@ import 'backup.dart';
 import 'cloud_auth.dart';
 import 'cloud_backup_store.dart';
 import 'database.dart';
+import 'entitlement.dart';
 import 'settings.dart';
 
 /// Cloud backup sync engine — Google Drive on Android (U24), iCloud Drive on
@@ -505,22 +506,25 @@ Future<CloudBackupFile?> fetchNewestCloudBackup(CloudBackupStore store) async {
 /// Standard install gets its data and nothing else — the ungated action is
 /// the one-shot pull, ongoing sync stays the gated feature). Returns whether
 /// sync was turned on, so the UI can word its confirmation.
+///
+/// [entitlement] is the device-local purchase flag. It is a parameter, not a
+/// hardwired false, because this path runs **outside Riverpod** — and a paying
+/// user who reinstalls and restores from the welcome screen would otherwise
+/// come out with cloud sync switched off, which is the one feature they bought
+/// (§10 A3).
 Future<bool> completeWelcomeRestore(
   AppDatabase db, {
   required CloudBackupStore store,
   required CloudSyncState state,
   required CloudBackupFile file,
+  required ProEntitlementStore entitlement,
   required Future<void> Function() enableSync,
 }) async {
   await restoreCloudBackup(db, store: store, state: state, file: file);
-  final edition = AppSettings.decodeEdition(
-    await db.getSetting(kLegacyFreeSinceKey),
-  );
-  final entitled = hasProFeature(
-    ProFeature.cloudSync,
-    purchased: false,
-    legacyFree: edition == AppEdition.founder,
-  );
+  final entitled = (await readEntitlement(
+    db,
+    entitlement: entitlement,
+  )).has(ProFeature.cloudSync);
   if (entitled) await enableSync();
   return entitled;
 }

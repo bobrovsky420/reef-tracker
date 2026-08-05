@@ -16,6 +16,7 @@ import '../../data/cloud_backup_store.dart';
 import '../../data/cloud_sync.dart';
 import '../../data/csv_export.dart';
 import '../../data/database.dart';
+import '../../data/entitlement.dart';
 import '../../data/export_share.dart';
 import '../../domain/pro_features.dart';
 import '../../domain/stability_score.dart';
@@ -26,6 +27,7 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_segmented.dart';
 import '../../widgets/reef_settings.dart';
+import 'pro_test_rig.dart';
 import 'sync_device_name_dialog.dart';
 
 /// Selectable forecast-horizon values (days), within
@@ -477,10 +479,12 @@ class SettingsBody extends ConsumerWidget {
                   icon: Icons.add_to_drive,
                   title: l.syncGdriveTitle,
                   description: l.syncGdriveSubtitle,
-                  onTap: ref.watch(proFeatureProvider(ProFeature.cloudSync))
-                      ? () => _connectGdrive(context, ref, l)
-                      : () =>
-                            showProFeatureDialog(context, ProFeature.cloudSync),
+                  onTap: () => runProGated(
+                    context,
+                    ref,
+                    ProFeature.cloudSync,
+                    () => _connectGdrive(context, ref, l),
+                  ),
                 ),
               // Same loud-persistent-warning idiom as the local backup
               // (#22): non-null means the latest push attempt failed
@@ -524,10 +528,12 @@ class SettingsBody extends ConsumerWidget {
                   icon: Icons.cloud_outlined,
                   title: l.syncIcloudTitle,
                   description: l.syncIcloudSubtitle,
-                  onTap: ref.watch(proFeatureProvider(ProFeature.cloudSync))
-                      ? () => _enableIcloud(context, ref, l)
-                      : () =>
-                            showProFeatureDialog(context, ProFeature.cloudSync),
+                  onTap: () => runProGated(
+                    context,
+                    ref,
+                    ProFeature.cloudSync,
+                    () => _enableIcloud(context, ref, l),
+                  ),
                 ),
               if (ref.watch(syncIcloudLastErrorAtProvider).value
                   case final syncErrorAt?)
@@ -597,9 +603,10 @@ class SettingsBody extends ConsumerWidget {
               trailing: const ReefSettingsValue(),
               onTap: () => _openWebsite(context, l, 'privacy-policy.html'),
             ),
-            _EditionRow(
-              edition: ref.watch(editionProvider).value ?? AppEdition.standard,
-            ),
+            _EditionRow(entitlement: ref.watch(entitlementProvider)),
+            // Compiled out of every build without `--dart-define=REEF_PRO_TEST=1`,
+            // which is every build that reaches a store.
+            if (kProTestRig) const ProTestRigSection(),
             ReefSettingsRow(
               icon: Icons.info_outline,
               title: l.aboutAppName,
@@ -974,19 +981,38 @@ class SettingsBody extends ConsumerWidget {
   }
 }
 
-/// The Edition row (U19 phase 0): shows whether this install is recognized as
-/// an early adopter ("Founder's Edition") or the standard edition; tapping
-/// opens a short explanation. Until a Pro build exists every install is
-/// seeded as Founder, so the standard branch is dormant future-proofing.
+/// The Edition row (U19): what this install is entitled to, and why.
+///
+/// **Four renders, not two.** The early-adopter marker and a bought Pro unlock
+/// are orthogonal facts, so "Founder's Edition + Pro" is a real state — and
+/// the designed upgrade path once the paid tier activates, since a founder's
+/// free-forever promise covers only the features that existed at the cutoff.
+/// Collapsing the pair into one value would render that state as plain
+/// "Standard", which is both wrong and insulting to the person who paid.
+///
+/// Until activation every install seeds the marker and nothing can write the
+/// unlock, so the two Pro renders are dormant future-proofing — reachable on a
+/// device only through the `REEF_PRO_TEST` rig.
 class _EditionRow extends StatelessWidget {
-  const _EditionRow({required this.edition});
-  final AppEdition edition;
+  const _EditionRow({required this.entitlement});
+  final Entitlement entitlement;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final founder = edition == AppEdition.founder;
-    final name = founder ? l.editionFounder : l.editionStandard;
+    final founder = entitlement.founder;
+    final pro = entitlement.purchased;
+    final name = switch ((founder, pro)) {
+      (true, true) => l.editionFounderPro,
+      (true, false) => l.editionFounder,
+      (false, true) => l.editionPro,
+      (false, false) => l.editionStandard,
+    };
+    // The Pro fact dominates the explanation: someone who paid is told their
+    // unlock is active, whether or not they were also early.
+    final body = pro
+        ? l.proInfoBody
+        : (founder ? l.founderInfoBody : l.standardInfoBody);
     return ReefSettingsRow(
       icon: Icons.workspace_premium_outlined,
       title: l.editionLabel,
@@ -995,7 +1021,7 @@ class _EditionRow extends StatelessWidget {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(name),
-          content: Text(founder ? l.founderInfoBody : l.standardInfoBody),
+          content: Text(body),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

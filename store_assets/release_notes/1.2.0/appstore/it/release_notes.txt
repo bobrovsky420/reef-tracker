@@ -1,0 +1,6 @@
+• L'elenco delle vasche mostra il punteggio di salute e l'ultimo test; tocca per cambiare.
+• Nuovo layout "Piatto con grafici": ogni riquadro porta le ultime due settimane.
+• Smetti di seguire un parametro senza perdere misure — con annulla e storico.
+• iOS: backup su iCloud, ripristino tra dispositivi, sezione iCloud nei backup.
+• Condivisione del registro diagnostico da Impostazioni → Info.
+• Correzioni: import PO4 Fauna Marin e KH da ZIMS, assi e grafici dei rapporti.

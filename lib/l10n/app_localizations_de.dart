@@ -1246,6 +1246,57 @@ class AppLocalizationsDe extends AppLocalizations {
       'Du verwendest die Standard-Edition von ReefTracker.';
 
   @override
+  String get editionPro => 'Pro';
+
+  @override
+  String get editionFounderPro => 'Gründer-Edition + Pro';
+
+  @override
+  String get proInfoBody =>
+      'Danke! Deine Pro-Freischaltung ist auf diesem Gerät aktiv. Alle Pro-Funktionen stehen dir zur Verfügung.';
+
+  @override
+  String get paywallTitle => 'ReefTracker Pro';
+
+  @override
+  String get paywallIntro =>
+      'Einmal kaufen, kein Abo und kein Konto — die Freischaltung bleibt beim Store-Konto dieses Geräts.';
+
+  @override
+  String paywallBuy(Object price) {
+    return 'Pro freischalten — $price';
+  }
+
+  @override
+  String get paywallRestore => 'Käufe wiederherstellen';
+
+  @override
+  String get paywallWorking => 'Verbindung zum Store…';
+
+  @override
+  String get paywallPurchased => 'Pro ist freigeschaltet. Vielen Dank!';
+
+  @override
+  String get paywallRestored =>
+      'Deine Pro-Freischaltung wurde wiederhergestellt.';
+
+  @override
+  String get paywallNothingToRestore =>
+      'Für dieses Store-Konto wurde kein früherer Kauf gefunden.';
+
+  @override
+  String get paywallPending =>
+      'Deine Zahlung wird noch bestätigt. Pro wird freigeschaltet, sobald sie durch ist.';
+
+  @override
+  String get paywallFailed =>
+      'Der Store konnte das nicht abschließen. Bitte versuche es erneut.';
+
+  @override
+  String get paywallUnavailable =>
+      'In-App-Käufe sind auf diesem Gerät nicht verfügbar.';
+
+  @override
   String get proFeatureTitle => 'Pro-Funktion';
 
   @override

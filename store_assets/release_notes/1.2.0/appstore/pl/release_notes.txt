@@ -1,0 +1,6 @@
+• Lista akwariów pokazuje ocenę kondycji i ostatni test; dotknij, aby przełączyć.
+• Nowy układ „Płaski z wykresami”: każda karta niesie ostatnie dwa tygodnie.
+• Zaprzestanie śledzenia parametru bez utraty pomiarów — z cofnięciem.
+• iOS: kopie w iCloud, przywracanie między urządzeniami, sekcja iCloud.
+• Udostępnianie dziennika diagnostycznego z Ustawienia → Informacje.
+• Poprawki: import PO4 Fauna Marin i KH z ZIMS, osie i wykresy proporcji.

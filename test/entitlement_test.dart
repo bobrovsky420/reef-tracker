@@ -1,0 +1,264 @@
+import 'dart:io';
+
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/entitlement.dart';
+import 'package:reeftracker/data/purchases.dart';
+import 'package:reeftracker/data/settings.dart';
+import 'package:reeftracker/domain/pro_features.dart';
+
+/// The Pro entitlement (U19 Stage A0): where the purchase is stored, when it
+/// is acknowledged, and — the part with real money behind it — when a cached
+/// unlock may be cleared.
+void main() {
+  late Directory dir;
+  late ProEntitlementStore entitlement;
+
+  setUp(() async {
+    dir = await Directory.systemTemp.createTemp('reeftracker-entitlement-');
+    entitlement = ProEntitlementStore(directory: () async => dir);
+  });
+  tearDown(() async {
+    entitlement.dispose();
+    if (await dir.exists()) await dir.delete(recursive: true);
+  });
+
+  group('ProEntitlementStore', () {
+    test('a fresh install holds no unlock', () async {
+      expect(await entitlement.read(), isFalse);
+      expect(
+        await File('${dir.path}/$kProEntitlementFileName').exists(),
+        isFalse,
+        reason: 'nothing written until there is something to record',
+      );
+    });
+
+    test('the unlock round-trips through a new instance', () async {
+      await entitlement.write(true);
+      final reread = ProEntitlementStore(directory: () async => dir);
+      addTearDown(reread.dispose);
+      expect(await reread.read(), isTrue);
+    });
+
+    test('watch emits the current value, then every change', () async {
+      final seen = <bool>[];
+      final sub = entitlement.watch().listen(seen.add);
+      addTearDown(sub.cancel);
+      await pumpEventQueue();
+      await entitlement.write(true);
+      await pumpEventQueue();
+      await entitlement.write(false);
+      await pumpEventQueue();
+      expect(seen, [false, true, false]);
+    });
+
+    test('a garbled file reads as not entitled, never as a crash', () async {
+      await File('${dir.path}/$kProEntitlementFileName').writeAsString('yes');
+      expect(await entitlement.read(), isFalse);
+    });
+  });
+
+  group('readEntitlement', () {
+    late AppDatabase db;
+    setUp(() {
+      db = AppDatabase(NativeDatabase.memory());
+    });
+    tearDown(() => db.close());
+
+    test('combines the marker and the purchase', () async {
+      expect(
+        (await readEntitlement(
+          db,
+          entitlement: entitlement,
+        )).has(ProFeature.icpImport),
+        isFalse,
+        reason: 'no marker, no purchase',
+      );
+
+      await db.setSetting(kLegacyFreeSinceKey, '0.26.0');
+      final founder = await readEntitlement(db, entitlement: entitlement);
+      expect(founder.founder, isTrue);
+      expect(founder.has(ProFeature.icpImport), isTrue);
+
+      await entitlement.write(true);
+      final both = await readEntitlement(db, entitlement: entitlement);
+      expect(both.founder, isTrue);
+      expect(both.purchased, isTrue);
+    });
+
+    test('a purchase alone entitles everything', () async {
+      await entitlement.write(true);
+      final e = await readEntitlement(db, entitlement: entitlement);
+      expect(e.founder, isFalse);
+      for (final f in ProFeature.values) {
+        expect(e.has(f), isTrue, reason: '$f must be unlocked by a purchase');
+      }
+    });
+  });
+
+  group('ProEntitlementService — acknowledgement', () {
+    late FakePurchaseStore store;
+    late ProEntitlementService service;
+
+    setUp(() {
+      store = FakePurchaseStore();
+      service = ProEntitlementService(store: store, entitlement: entitlement);
+      service.start();
+    });
+    tearDown(() async {
+      await service.dispose();
+      store.dispose();
+    });
+
+    test('a purchase is acknowledged and grants the unlock', () async {
+      store.emitPurchased();
+      await pumpEventQueue();
+      expect(store.completed, hasLength(1));
+      expect(store.completed.single.state, PurchaseState.purchased);
+      expect(await entitlement.read(), isTrue);
+    });
+
+    test('a RESTORED event is acknowledged too — Play revokes anything '
+        'unacknowledged, restores included', () async {
+      store.emit(
+        const PurchaseUpdate(
+          productId: kProUnlockProductId,
+          state: PurchaseState.restored,
+          pendingComplete: true,
+        ),
+      );
+      await pumpEventQueue();
+      expect(store.completed, hasLength(1));
+      expect(await entitlement.read(), isTrue);
+    });
+
+    test('a purchase REDELIVERED at startup is acknowledged — the app can be '
+        'killed between paying and acknowledging', () async {
+      // The event arrives on the stream with no buy() call in this process.
+      store.emitPurchased();
+      await pumpEventQueue();
+      expect(store.completed, hasLength(1));
+      expect(await entitlement.read(), isTrue);
+    });
+
+    test('PENDING is not a purchase', () async {
+      store.emit(
+        const PurchaseUpdate(
+          productId: kProUnlockProductId,
+          state: PurchaseState.pending,
+        ),
+      );
+      await pumpEventQueue();
+      expect(await entitlement.read(), isFalse);
+    });
+
+    test('canceled and error do not entitle', () async {
+      for (final state in [PurchaseState.canceled, PurchaseState.error]) {
+        store.emit(
+          PurchaseUpdate(productId: kProUnlockProductId, state: state),
+        );
+      }
+      await pumpEventQueue();
+      expect(await entitlement.read(), isFalse);
+    });
+
+    test('buy reports the outcome and acknowledges exactly once', () async {
+      final outcome = await service.buy(store.products.single);
+      expect(outcome, PurchaseOutcome.purchased);
+      expect(await entitlement.read(), isTrue);
+      expect(
+        store.completed,
+        hasLength(1),
+        reason: 'the background listener must not acknowledge it a second time',
+      );
+    });
+  });
+
+  group('ProEntitlementService — the clearing policy', () {
+    late FakePurchaseStore store;
+    late ProEntitlementService service;
+
+    setUp(() {
+      store = FakePurchaseStore();
+      service = ProEntitlementService(store: store, entitlement: entitlement);
+    });
+    tearDown(() async {
+      await service.dispose();
+      store.dispose();
+    });
+
+    test(
+      'a restore that finds a purchase grants and acknowledges it',
+      () async {
+        store.owned = const [
+          PurchaseUpdate(
+            productId: kProUnlockProductId,
+            state: PurchaseState.restored,
+            pendingComplete: true,
+          ),
+        ];
+        expect(await service.restore(), PurchaseOutcome.restored);
+        expect(await entitlement.read(), isTrue);
+        expect(store.completed, hasLength(1));
+      },
+    );
+
+    test('a CLEAN EMPTY restore clears the cached unlock — otherwise a '
+        'self-service refund is a permanent free unlock', () async {
+      await entitlement.write(true);
+      expect(await service.restore(), PurchaseOutcome.nothingToRestore);
+      expect(await entitlement.read(), isFalse);
+    });
+
+    test('a THROWN restore keeps the cached unlock — offline, wrong store '
+        'account and a store blip must not downgrade a paying user', () async {
+      await entitlement.write(true);
+      store.restoreThrows = true;
+      expect(await service.restore(), PurchaseOutcome.failed);
+      expect(
+        await entitlement.read(),
+        isTrue,
+        reason: 'the two failure shapes are NOT interchangeable',
+      );
+    });
+
+    test(
+      'startup reconciliation never asks a store that is not there',
+      () async {
+        await entitlement.write(true);
+        store.available = false;
+        store.restoreThrows = true; // would clear if it were consulted
+        await service.restoreAtStartup();
+        expect(await entitlement.read(), isTrue);
+      },
+    );
+
+    test(
+      'startup reconciliation skips the query when nothing is cached',
+      () async {
+        store.owned = const [];
+        await service.restoreAtStartup();
+        expect(await entitlement.read(), isFalse);
+      },
+    );
+  });
+
+  group('NoPurchaseStore — what every shipped build contains', () {
+    const store = NoPurchaseStore();
+
+    test('is never available and resolves no product', () async {
+      expect(await store.isAvailable(), isFalse);
+      expect(await store.queryProducts({kProUnlockProductId}), isEmpty);
+    });
+
+    test('cannot buy', () async {
+      expect(
+        () => store.buy(
+          const ProProduct(id: kProUnlockProductId, title: 'x', price: 'y'),
+        ),
+        throwsStateError,
+      );
+    });
+  });
+}

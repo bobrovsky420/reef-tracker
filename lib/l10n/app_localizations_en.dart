@@ -1235,6 +1235,56 @@ class AppLocalizationsEn extends AppLocalizations {
       'You\'re using the standard edition of ReefTracker.';
 
   @override
+  String get editionPro => 'Pro';
+
+  @override
+  String get editionFounderPro => 'Founder\'s Edition + Pro';
+
+  @override
+  String get proInfoBody =>
+      'Thank you! Your Pro unlock is active on this device. Every Pro feature is yours to use.';
+
+  @override
+  String get paywallTitle => 'ReefTracker Pro';
+
+  @override
+  String get paywallIntro =>
+      'One purchase, no subscription and no account — the unlock stays with this device\'s store account.';
+
+  @override
+  String paywallBuy(Object price) {
+    return 'Unlock Pro — $price';
+  }
+
+  @override
+  String get paywallRestore => 'Restore purchases';
+
+  @override
+  String get paywallWorking => 'Talking to the store…';
+
+  @override
+  String get paywallPurchased => 'Pro unlocked. Thank you!';
+
+  @override
+  String get paywallRestored => 'Your Pro unlock has been restored.';
+
+  @override
+  String get paywallNothingToRestore =>
+      'No previous purchase was found for this store account.';
+
+  @override
+  String get paywallPending =>
+      'Your payment is still being confirmed. Pro unlocks as soon as it goes through.';
+
+  @override
+  String get paywallFailed =>
+      'The store could not complete that. Please try again.';
+
+  @override
+  String get paywallUnavailable =>
+      'In-app purchases aren\'t available on this device.';
+
+  @override
   String get proFeatureTitle => 'Pro feature';
 
   @override

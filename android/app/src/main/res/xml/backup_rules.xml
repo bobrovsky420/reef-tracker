@@ -17,9 +17,16 @@
     phone, and this file is the only place they exist — the database, which
     IS backed up, deliberately has no column for them (see
     lib/data/device_secrets.dart).
+  - app_flutter/.pro_entitlement (U19): the Pro unlock is bought per store
+    account, not per aquarium, so it must not ride the database to another
+    phone or another Google account. It cannot live in the settings table for
+    exactly that reason — this channel copies the database wholesale and a
+    single row cannot be excluded from it. "Restore purchases" is how the
+    unlock reaches a new device (see lib/data/entitlement.dart).
 -->
 <full-backup-content>
     <exclude domain="root" path="app_flutter/backups"/>
     <exclude domain="root" path="app_flutter/.install_id"/>
     <exclude domain="root" path="app_flutter/.device_secrets"/>
+    <exclude domain="root" path="app_flutter/.pro_entitlement"/>
 </full-backup-content>
