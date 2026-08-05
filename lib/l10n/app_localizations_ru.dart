@@ -2280,7 +2280,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hannaStartMeasurements => 'Начать измерения';
 
   @override
-  String get hannaFollowMeter => 'Следуйте инструкциям на приборе.';
+  String get hannaFollowMeter => 'Следуйте инструкциям на приборе';
 
   @override
   String hannaStepN(int step) {

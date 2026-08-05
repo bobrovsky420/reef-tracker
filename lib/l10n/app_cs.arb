@@ -650,7 +650,7 @@
   "hannaAllMethods": "Všechny metody",
   "hannaMethodLowRange": "{name} (nízký rozsah)",
   "hannaStartMeasurements": "Spustit měření",
-  "hannaFollowMeter": "Postupujte podle pokynů na přístroji.",
+  "hannaFollowMeter": "Postupujte podle pokynů na přístroji",
   "hannaStepN": "krok {step}",
   "hannaStatusSkipped": "Přeskočeno",
   "hannaSkip": "Přeskočit",

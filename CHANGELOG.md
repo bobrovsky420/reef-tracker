@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   including tanks deliberately run at zero — the default range shows amber
   rather than red. The high side (diatom territory) is unchanged, and custom
   silicon ranges are unaffected.
+- While a Hanna checker measurement runs, the progress line reads "Follow the
+  instructions on the meter · step 1" instead of ending the sentence with a
+  full stop before the step.
 
 ### Fixed
 - Parameter graphs no longer draw overlapping value labels on the left axis
@@ -74,6 +77,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   point in between, pairing the new nitrate with the *previous* phosphate.
   Each day now plots the ratio of that day's final values, and the list under
   the graph matches.
+- A Fauna Marin ICP report no longer imports phosphate too low. The report
+  carries two phosphate figures — one calculated from the lab's phosphorus
+  measurement, one from its photometer — and the app used to always take the
+  photometric one, which on a real report read 0.02 ppm where the other said
+  0.10 ppm and the tank's own test kit said 0.11–0.13. It now takes the
+  higher of the two, which is also the figure the lab itself publishes as PO₄
+  in its ZIMS export, so the same analysis finally imports as the same
+  reading whichever of the two files you pick. Reports already imported keep
+  their old value; edit the reading if you want it corrected.
+- A ZIMS lab report now imports its alkalinity. The value sits in a
+  "Carbonate Hardness" row in different units (meq/L) and was landing in the
+  "not imported" list instead of on your dashboard; it is now converted to
+  dKH — the same number the lab's own Fauna Marin file gives.
 
 ## [1.1.1] - 2026-08-01
 

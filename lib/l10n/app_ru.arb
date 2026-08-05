@@ -650,7 +650,7 @@
   "hannaAllMethods": "Все методы",
   "hannaMethodLowRange": "{name} (низкий диапазон)",
   "hannaStartMeasurements": "Начать измерения",
-  "hannaFollowMeter": "Следуйте инструкциям на приборе.",
+  "hannaFollowMeter": "Следуйте инструкциям на приборе",
   "hannaStepN": "шаг {step}",
   "hannaStatusSkipped": "Пропущено",
   "hannaSkip": "Пропустить",

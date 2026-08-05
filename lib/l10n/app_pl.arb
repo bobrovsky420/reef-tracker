@@ -650,7 +650,7 @@
   "hannaAllMethods": "Wszystkie metody",
   "hannaMethodLowRange": "{name} (niski zakres)",
   "hannaStartMeasurements": "Rozpocznij pomiary",
-  "hannaFollowMeter": "Postępuj zgodnie z instrukcjami na mierniku.",
+  "hannaFollowMeter": "Postępuj zgodnie z instrukcjami na mierniku",
   "hannaStepN": "krok {step}",
   "hannaStatusSkipped": "Pominięto",
   "hannaSkip": "Pomiń",

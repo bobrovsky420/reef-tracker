@@ -2243,7 +2243,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hannaStartMeasurements => 'Start measurements';
 
   @override
-  String get hannaFollowMeter => 'Follow the instructions on the meter.';
+  String get hannaFollowMeter => 'Follow the instructions on the meter';
 
   @override
   String hannaStepN(int step) {

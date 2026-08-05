@@ -650,7 +650,7 @@
   "hannaAllMethods": "Toutes les méthodes",
   "hannaMethodLowRange": "{name} (gamme basse)",
   "hannaStartMeasurements": "Démarrer les mesures",
-  "hannaFollowMeter": "Suivez les instructions sur l'appareil.",
+  "hannaFollowMeter": "Suivez les instructions sur l'appareil",
   "hannaStepN": "étape {step}",
   "hannaStatusSkipped": "Ignorée",
   "hannaSkip": "Ignorer",

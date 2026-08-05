@@ -58,6 +58,56 @@ const _zimsCsv =
     '"2026-06-02","07:10:45","Silver (Ag)","0","micrograms per litre","FaunaMarin Lab"\n'
     '"2026-06-02","07:10:45","Zirconium (Zr)","0","micrograms per litre","FaunaMarin Lab"\n';
 
+/// A later analysis of the same tank, kept as a pair (Fauna Marin + ZIMS of
+/// one sample) because it is the only real export where the two phosphate
+/// columns disagree materially: `po4g` 0,021 vs `po4er` 0,0953526 (#118).
+const _faunaMarinCsvJuly =
+    'id;water_type;owner_type;ag;al;ar;as;b;ba;be;br;ca;cd;co;cr;cs;cu;fe;ga;'
+    'hf;hg;i;k;la;li;mg;mn;mo;na;nd;ni;p;pb;s;sb;sc;se;si;sn;sr;te;th;ti;tl;'
+    'u;v;w;zn;zr;fluoride;chloride;bromide;nitrate;nitrite;sulfate;'
+    'conductivity;pH;alkalinityDkH;salinity;sak254;sak410;sak436;npoc;tnb;'
+    'density;densityrel;po4g;po4er;smell;color;analysis_date;note;'
+    'aquarium_id;sample_id\n'
+    '315240;0;0;0;31,5;;0;5,56;20,4;0;67,9;413;0;0;0;;1,45;2,67;;;0;0,0628;'
+    '427;0;200;1391;0;43,2;11673;;4,69;0,0311;0;872;0;;0;0,085;0;6,56;;;0;;;'
+    '3,63;0;3,51;0;1,17;20208,43032456;;22,58;0,06;2612,512;54,7;8,07;8,6;'
+    '36,17675501;;;;;;1,02423272;1,02727344;0,021;0,0953526;0;0;'
+    '2026-07-27 19:06:33;;17003;21671326\n';
+
+/// The ZIMS side of the July pair. It carries **both** phosphate figures —
+/// "Phosphates" is the wide export's `po4g`, "Orthophosphate (PO4)" its
+/// `po4er` — with the photometric one listed *first*, so row order must not
+/// decide the import (#118). Alkalinity rides as "Carbonate Hardness" in
+/// meq/L: 3.0702 x 2.8 = the 8.6 dKH of the wide export.
+const _zimsCsvJuly =
+    '"Date","Time","Measurement","MeasurementValue","UnitofMeasure","MeasuredBy"\n'
+    '"2026-07-28","11:02:14","pH","8.07","pH","FaunaMarin Lab"\n'
+    '"2026-07-28","11:02:14","Carbonate Hardness","3.0702","milliequivalents per litre","FaunaMarin Lab"\n'
+    '"2026-07-28","11:02:14","Sodium (Na+)","11673","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-07-28","11:02:14","Calcium (Ca)","413","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-07-28","11:02:14","Magnesium (Mg2+)","1391","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-07-28","11:02:14","Nitrate (NO3-)","22.58","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-07-28","11:02:14","Phosphates","0.021","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-07-28","11:02:14","Phosphorus (P)","0.0311","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-07-28","11:02:14","Orthophosphate (PO4)","0.0953526","milligrams per litre","FaunaMarin Lab"\n';
+
+/// A third real export (ZIMS only) from the same tank a month earlier. It
+/// repeats the July pattern at a fifth of the concentration — P 0.01 x 3.066
+/// = the 0.03066 "Orthophosphate (PO4)" row, five times the 0.006
+/// "Phosphates" gauge — which is what makes the gap systematic rather than
+/// one bad analysis (#118).
+const _zimsCsvJune26 =
+    '"Date","Time","Measurement","MeasurementValue","UnitofMeasure","MeasuredBy"\n'
+    '"2026-06-26","12:32:12","Salinity","34.99284","parts per thousand","FaunaMarin Lab"\n'
+    '"2026-06-26","12:32:12","pH","7.98","pH","FaunaMarin Lab"\n'
+    '"2026-06-26","12:32:12","Carbonate Hardness","3.0345","milliequivalents per litre","FaunaMarin Lab"\n'
+    '"2026-06-26","12:32:12","Calcium (Ca)","414","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-06-26","12:32:12","Nitrate (NO3-)","23.28","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-06-26","12:32:12","Phosphates","0.006","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-06-26","12:32:12","Manganese (Mn)","0.722","micrograms per litre","FaunaMarin Lab"\n'
+    '"2026-06-26","12:32:12","Phosphorus (P)","0.01","milligrams per litre","FaunaMarin Lab"\n'
+    '"2026-06-26","12:32:12","Orthophosphate (PO4)","0.03066","milligrams per litre","FaunaMarin Lab"\n';
+
 void main() {
   group('Fauna Marin CSV', () {
     test('imports mg/L columns as canonical ppm', () {
@@ -94,23 +144,61 @@ void main() {
       expect(r.values['phosphate'], 0.044457);
     });
 
-    test('prefers po4g over po4er when both are present', () {
+    test('takes the higher of the two phosphate columns (#118)', () {
+      // Orthophosphate is a species of the total P the ICP measures, so the
+      // calculated po4er normally sits above the photometric po4g.
       const csv =
           'na;po4g;po4er;analysis_date;sample_id\n'
-          '11127;0,05;0,044457;2026-06-01 15:36:59;X1\n';
+          '11127;0,021;0,0953526;2026-06-01 15:36:59;X1\n';
+      final r = parseIcpCsv(csv, IcpImportFormat.faunaMarin);
+      expect(r.values['phosphate'], 0.0953526);
+    });
+
+    test('a below-detection ICP phosphorus never beats a real photometric '
+        'reading (#118)', () {
+      // The lab prints a hard 0 below the detection limit, which makes po4er
+      // 0 too — importing that over a measured 0,05 would show a tank with
+      // phosphate as a perfect zero.
+      const csv =
+          'na;p;po4g;po4er;analysis_date;sample_id\n'
+          '11127;0;0,05;0;2026-06-01 15:36:59;X1\n';
       final r = parseIcpCsv(csv, IcpImportFormat.faunaMarin);
       expect(r.values['phosphate'], 0.05);
     });
 
-    test('a non-numeric po4g falls through to po4er (#101)', () {
+    test('both below detection still imports a real 0 reading (#118)', () {
+      const csv =
+          'na;p;po4g;po4er;analysis_date;sample_id\n'
+          '11127;0;0;0;2026-06-01 15:36:59;X1\n';
+      final r = parseIcpCsv(csv, IcpImportFormat.faunaMarin);
+      expect(r.values['phosphate'], 0);
+    });
+
+    test('the two importers agree on phosphate for one analysis (#118)', () {
+      // Both files below are the real exports of the same July sample, where
+      // po4g (0,021) and po4er (0,0953526) differ by 4.5x. ZIMS publishes
+      // po4er as "Orthophosphate (PO4)"; importing po4g made the same report
+      // land as two different readings depending on the chosen format. (The
+      // two formats agree on every physically consistent report — only a
+      // po4g above its own total P, which ZIMS cannot see, parts them.)
+      final fm = parseIcpCsv(_faunaMarinCsvJuly, IcpImportFormat.faunaMarin);
+      final zims = parseIcpCsv(_zimsCsvJuly, IcpImportFormat.zims);
+      expect(fm.values['phosphate'], 0.0953526);
+      expect(zims.values['phosphate'], 0.0953526);
+      // Elemental P (0,0311) backs po4er at PO4 = P x 3.066 — the agreement
+      // is arithmetic, not a coincidence of this one file.
+      expect(fm.values['phosphate'], closeTo(0.0311 * 3.066, 1e-4));
+    });
+
+    test('a non-numeric po4er falls through to po4g (#101)', () {
       // Labs print `<0,01` at the detection limit — presence must not block
       // the fallback the way `??` on the raw cells did.
       const csv =
           'na;po4g;po4er;analysis_date;sample_id\n'
-          '11127;<0,01;0,044457;2026-06-01 15:36:59;X1\n';
+          '11127;0,044457;<0,01;2026-06-01 15:36:59;X1\n';
       final r = parseIcpCsv(csv, IcpImportFormat.faunaMarin);
       expect(r.values['phosphate'], 0.044457);
-      expect(r.skipped, isNot(contains('po4g')));
+      expect(r.skipped, isNot(contains('po4er')));
     });
 
     test('phosphate never silently disappears: unparseable po4 pair is '
@@ -120,7 +208,7 @@ void main() {
           '11127;<0,01;<0,01;2026-06-01 15:36:59;X1\n';
       final r = parseIcpCsv(csv, IcpImportFormat.faunaMarin);
       expect(r.values.containsKey('phosphate'), isFalse);
-      expect(r.skipped, contains('po4g'));
+      expect(r.skipped, contains('po4er'));
     });
 
     test('accepts dot decimals (non-German export locale)', () {
@@ -208,6 +296,38 @@ void main() {
       expect(r.sampleId, isNull);
     });
 
+    test('reconciles the two phosphate rows the same way as the wide '
+        'export, whatever their order (#118)', () {
+      // "Phosphates" (the po4g gauge) is listed *before* the calculated
+      // "Orthophosphate (PO4)" in the real file — last-row-wins would have
+      // been luck, not a rule.
+      final r = parseIcpCsv(_zimsCsvJuly, IcpImportFormat.zims);
+      expect(r.values['phosphate'], 0.0953526);
+      expect(r.skipped, isNot(contains('Phosphates')));
+      // ...and the same on the June report, where both figures are five
+      // times smaller but keep the same relation.
+      final june = parseIcpCsv(_zimsCsvJune26, IcpImportFormat.zims);
+      expect(june.values['phosphate'], 0.03066);
+    });
+
+    test('imports alkalinity from the meq/L Carbonate Hardness row (#118)', () {
+      // 1 meq/L = 2.8 dKH — the row the wide export prints as
+      // alkalinityDkH 8.6.
+      final zims = parseIcpCsv(_zimsCsvJuly, IcpImportFormat.zims);
+      expect(zims.values['alkalinity'], closeTo(8.6, 0.005));
+      expect(zims.skipped, isNot(contains('Carbonate Hardness')));
+      final fm = parseIcpCsv(_faunaMarinCsvJuly, IcpImportFormat.faunaMarin);
+      expect(fm.values['alkalinity'], 8.6);
+    });
+
+    test('a dKH-labeled alkalinity row is taken as dKH, not converted', () {
+      const csv =
+          '"Date","Measurement","MeasurementValue","UnitofMeasure"\n'
+          '"2026-06-26","Alkalinity","8.6","dKH"\n';
+      final r = parseIcpCsv(csv, IcpImportFormat.zims);
+      expect(r.values['alkalinity'], 8.6);
+    });
+
     test('skips rows with unrecognized units instead of guessing', () {
       const csv =
           '"Date","Time","Measurement","MeasurementValue","UnitofMeasure","MeasuredBy"\n'
@@ -273,8 +393,20 @@ void main() {
       expect(zimsMeasurementKey('Aluminum (Al)'), 'aluminium');
       expect(zimsMeasurementKey('Sulphur'), 'sulfur');
       expect(zimsMeasurementKey('Orthophosphate (PO4)'), 'phosphate');
+      // Fauna Marin's name for the photometric gauge (the wide export's
+      // po4g) — plural, and it must not fall through to "not imported".
+      expect(zimsMeasurementKey('Phosphates'), 'phosphate');
+      expect(zimsMeasurementKey('Carbonate Hardness'), 'alkalinity');
       expect(zimsMeasurementKey('Rubidium (Rb)'), isNull);
       expect(zimsMeasurementKey('Phosphorus (P)'), isNull);
+    });
+
+    test('alkalinity unit factors', () {
+      expect(zimsAlkalinityFactor('milliequivalents per litre'), 2.8);
+      expect(zimsAlkalinityFactor('meq/L'), 2.8);
+      // Anything else is taken as the app's own unit, dKH.
+      expect(zimsAlkalinityFactor('dKH'), 1);
+      expect(zimsAlkalinityFactor(''), 1);
     });
 
     test('unit factors', () {

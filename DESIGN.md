@@ -2258,14 +2258,24 @@ Parameters list/add-sheet and the health-score inputs to core).
     column→key map with **implicit units** (majors mg/L, traces µg/L —
     verified against the ZIMS export of the same analysis). Also imports the
     report's core-parameter extras (Ca/Mg, NO3/NO2, pH, dKH; phosphate =
-    `po4g` photometric, falling back to `po4er` calculated-from-P; elemental
-    `p` never — double-logging). `salinity` is deliberately skipped (ppt vs
-    canonical SG).
+    **max**(`po4er` calculated-from-P, `po4g` photometric); elemental `p`
+    never — double-logging). The max rests on the inequality between the two
+    columns: ICP phosphorus is total dissolved P and orthophosphate is a
+    species of it, so `po4er >= po4g` holds on a consistent sample. It
+    normally yields `po4er` — the number ZIMS publishes as "Orthophosphate
+    (PO4)", so both importers agree on one report — while refusing to import
+    a below-detection `p` (printed as a hard `0`) over a real photometric
+    reading (#118). `salinity` is deliberately skipped (ppt vs canonical SG).
   - **ZIMS** (long, quoted CSV, one measurement per row with an explicit unit
     column): two-tier name matching — parenthetical element symbol stripped
     of charges/digits ("Sr2+"→Sr, "I2"→I) against catalog symbols, then a
     lowercase name-alias map (en-US/GB spellings, Orthophosphate→phosphate);
-    unrecognized units are skipped per row, never guessed.
+    unrecognized units are skipped per row, never guessed. This format
+    carries the **same two phosphate figures** as the wide one — "Phosphates"
+    is `po4g`, "Orthophosphate (PO4)" is `po4er` — reconciled by the same max
+    rule in the row loop, so row order can't decide the import (#118).
+    Alkalinity arrives as "Carbonate Hardness" in **meq/L** (× 2.8 → dKH);
+    any other unit on an alkalinity row is taken as dKH.
   Unmapped-but-populated fields surface in a "not imported" footnote (data
   never silently disappears); below-detection zeros import as real 0 readings.
   The preview's date defaults to the file's analysis date but is user-edited
