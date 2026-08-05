@@ -1078,7 +1078,10 @@
     "placeholders": { "name": { "type": "String" } }
   },
   "hannaStartMeasurements": "Start measurements",
-  "hannaFollowMeter": "Follow the instructions on the meter.",
+  "hannaFollowMeter": "Follow the instructions on the meter",
+  "@hannaFollowMeter": {
+    "description": "Status line under a running measurement. No terminal punctuation: it is composed with ' · ' + hannaStepN once the meter reports a step."
+  },
   "hannaStepN": "step {step}",
   "@hannaStepN": {
     "description": "Progress suffix while a measurement runs; the meter reports numbered STATUS steps.",

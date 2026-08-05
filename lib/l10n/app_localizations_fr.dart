@@ -2264,7 +2264,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hannaStartMeasurements => 'Démarrer les mesures';
 
   @override
-  String get hannaFollowMeter => 'Suivez les instructions sur l\'appareil.';
+  String get hannaFollowMeter => 'Suivez les instructions sur l\'appareil';
 
   @override
   String hannaStepN(int step) {

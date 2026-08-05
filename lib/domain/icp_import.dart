@@ -210,18 +210,37 @@ IcpImportResult _parseFaunaMarin(String content) {
     }
     values[mgL ?? direct ?? ugL!] = ugL != null ? parsed / 1000 : parsed;
   }
-  // Orthophosphate (mg/L): prefer the photometric measurement (`po4g`), fall
-  // back to the value the lab calculates from ICP phosphorus (`po4er`).
-  // Precedence is by *parseability*, not presence — a present-but-non-numeric
-  // `po4g` (labs print `<0.01` at the detection limit) must not block the
-  // fallback (#101). If neither parses, the skipped list surfaces it.
+  // Phosphate (mg/L). The report carries two columns for it: `po4er`,
+  // calculated from the ICP phosphorus reading (PO4 = P × 3.066), and `po4g`,
+  // the lab's photometric gauge. ICP phosphorus is *total* dissolved P and
+  // orthophosphate is one species of it, so `po4er >= po4g` on any physically
+  // consistent sample — take the **higher** of the two (#118):
+  //   - Normally that is `po4er`, which is also the number the lab itself
+  //     publishes as "Orthophosphate (PO4)" in the ZIMS export of the same
+  //     analysis, so both importers land on one value for one report.
+  //   - When ICP phosphorus falls below the detection limit the lab prints a
+  //     hard `0` (as it does for every trace element), which would import a
+  //     tank with measurable phosphate as a perfect zero. A photometric
+  //     reading beats that.
+  //   - It is also the safe side of the unit ambiguity in `po4g`: every
+  //     plausible mis-scaling of it (PO4-P rather than PO4) is *downward*.
+  // Selection is over *parsed* values, not presence — a cell printed as
+  // `<0.01` at the detection limit must not block the other one (#101). If
+  // neither parses, the skipped list surfaces it.
   final po4g = cell('po4g');
   final po4er = cell('po4er');
-  final po4 = _parseCsvNumber(po4g ?? '') ?? _parseCsvNumber(po4er ?? '');
+  final po4gValue = _parseCsvNumber(po4g ?? '');
+  final po4erValue = _parseCsvNumber(po4er ?? '');
+  final double? po4;
+  if (po4erValue != null && po4gValue != null) {
+    po4 = po4erValue > po4gValue ? po4erValue : po4gValue;
+  } else {
+    po4 = po4erValue ?? po4gValue;
+  }
   if (po4 != null) {
     values['phosphate'] = po4;
   } else if (po4g != null || po4er != null) {
-    skipped.add(po4g != null ? 'po4g' : 'po4er');
+    skipped.add(po4er != null ? 'po4er' : 'po4g');
   }
   if (values.isEmpty) {
     throw const IcpImportException(IcpImportRejection.noValues);
@@ -256,8 +275,10 @@ final Map<String, String> _kSymbolToKey = {
 
 /// Lowercased measurement-name aliases, covering en-US/en-GB spelling
 /// variants and the species (I2/iodide) collapsing onto the tracked total.
-/// `phosphorus` (elemental P) is deliberately absent: PO4 is imported from
-/// the Orthophosphate row instead, never both.
+/// `phosphorus` (elemental P) is deliberately absent: it would double-log
+/// against the two phosphate rows (`phosphates` = the photometric gauge,
+/// `orthophosphate` = calculated from that very P), which are reconciled in
+/// the row loop below (#118).
 const Map<String, String> _kZimsNameToKey = {
   'sodium': 'sodium',
   'sulfur': 'sulfur',
@@ -299,8 +320,13 @@ const Map<String, String> _kZimsNameToKey = {
   'potassium': 'potassium',
   'orthophosphate': 'phosphate',
   'phosphate': 'phosphate',
+  'phosphates': 'phosphate',
   'nitrate': 'nitrate',
   'nitrite': 'nitrite',
+  // ZIMS' own name for alkalinity; the plain word covers other labs' exports.
+  'carbonate hardness': 'alkalinity',
+  'alkalinity': 'alkalinity',
+  'total alkalinity': 'alkalinity',
 };
 
 /// Resolves a ZIMS measurement label to a catalog key, or null when the app
@@ -318,6 +344,15 @@ String? zimsMeasurementKey(String label) {
   // Tier 2: the name before the parenthetical, against the alias map.
   final name = label.split('(').first.trim().toLowerCase();
   return _kZimsNameToKey[name];
+}
+
+/// Canonical-dKH factor for an alkalinity row. Labs state alkalinity either
+/// in dKH (already canonical) or in meq/L — Fauna Marin's ZIMS export uses
+/// "Carbonate Hardness" in "milliequivalents per litre", where 1 meq/L =
+/// 2.8 dKH. An unlabeled/unknown unit stays dKH, the app's own unit.
+double zimsAlkalinityFactor(String unit) {
+  final u = unit.trim().toLowerCase();
+  return u.contains('milliequivalent') || u.startsWith('meq') ? 2.8 : 1.0;
 }
 
 /// Canonical-ppm factor for a ZIMS unit label, or null when unrecognized
@@ -371,14 +406,26 @@ IcpImportResult _parseZims(String content) {
       continue;
     }
     final unit = row.length > unitIdx ? row[unitIdx] : '';
-    final factor = key == 'ph' || key == 'alkalinity'
-        ? 1.0
-        : zimsUnitFactor(unit);
+    final factor = switch (key) {
+      'ph' => 1.0,
+      'alkalinity' => zimsAlkalinityFactor(unit),
+      _ => zimsUnitFactor(unit),
+    };
     if (factor == null) {
       skipped.add('$label (${unit.trim()})');
       continue;
     }
-    values[key] = parsed * factor;
+    final value = parsed * factor;
+    // Fauna Marin's ZIMS export carries *both* phosphate figures: the
+    // photometric gauge as "Phosphates" and the one calculated from the ICP
+    // phosphorus as "Orthophosphate (PO4)" — the long-format twins of the
+    // wide export's `po4g`/`po4er`. Same physics, same rule as there: keep
+    // the higher of the two, so both importers land on one number for one
+    // report whichever row order the file uses (#118).
+    final prior = values[key];
+    values[key] = key == 'phosphate' && prior != null && prior > value
+        ? prior
+        : value;
     if (reportDate == null && dateIdx >= 0 && row.length > dateIdx) {
       final time = timeIdx >= 0 && row.length > timeIdx
           ? row[timeIdx].trim()

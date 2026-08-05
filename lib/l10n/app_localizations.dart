@@ -3837,10 +3837,10 @@ abstract class AppLocalizations {
   /// **'Start measurements'**
   String get hannaStartMeasurements;
 
-  /// No description provided for @hannaFollowMeter.
+  /// Status line under a running measurement. No terminal punctuation: it is composed with ' · ' + hannaStepN once the meter reports a step.
   ///
   /// In en, this message translates to:
-  /// **'Follow the instructions on the meter.'**
+  /// **'Follow the instructions on the meter'**
   String get hannaFollowMeter;
 
   /// Progress suffix while a measurement runs; the meter reports numbered STATUS steps.
