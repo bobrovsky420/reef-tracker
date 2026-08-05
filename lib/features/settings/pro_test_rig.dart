@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../data/entitlement.dart';
 import '../../data/purchases.dart';
 import '../../widgets/reef_settings.dart';
 import '../../widgets/section_header.dart';
@@ -20,12 +21,41 @@ import '../../widgets/section_header.dart';
 ///
 /// Hard rule that comes with it: an artifact built with this define goes to
 /// the internal / TestFlight tracks and **never** to a store submission.
-const bool kProTestRig = bool.fromEnvironment('REEF_PRO_TEST');
+///
+/// Accepts `=true` **and** `=1`, because `bool.fromEnvironment` recognises
+/// only the exact string `true` — `--dart-define=REEF_PRO_TEST=1` silently
+/// evaluates to false, and the only symptom is that the section below never
+/// appears, which reads as "the rig is broken" rather than "the flag spelling
+/// is wrong". Both spellings are const-folded, so a build without the define
+/// still tree-shakes this file's UI away.
+const bool kProTestRig =
+    bool.fromEnvironment('REEF_PRO_TEST') ||
+    String.fromEnvironment('REEF_PRO_TEST') == '1';
 
 /// The store the rig talks to: a [FakePurchaseStore] with a resolvable
 /// product, so the paywall's buy path can be exercised without a live console
 /// product. Wired in `main.dart` and only when [kProTestRig].
 final proTestPurchaseStore = FakePurchaseStore();
+
+/// Teaches the fake store what this device already owns, from the persisted
+/// entitlement, before the startup reconciliation runs.
+///
+/// A real store account remembers a purchase across restarts; a fresh
+/// [FakePurchaseStore] does not. Without this, the rig's own edition radio —
+/// which writes the entitlement directly rather than going through a buy —
+/// would be undone on the next launch: `restoreAtStartup` asks the store, gets
+/// a clean empty answer, and correctly applies the clearing rule. Correct
+/// behaviour, useless rig. Only ever called from a [kProTestRig] build.
+Future<void> seedProTestStoreFromDisk(ProEntitlementStore entitlement) async {
+  if (!await entitlement.read()) return;
+  proTestPurchaseStore.owned = const [
+    PurchaseUpdate(
+      productId: kProUnlockProductId,
+      state: PurchaseState.restored,
+      pendingComplete: false,
+    ),
+  ];
+}
 
 /// Settings section for driving the entitlement states on a real device
 /// (U19 Stage A0 / P0-6), replacing the "temp-disable `_seedEdition` and push

@@ -230,8 +230,18 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   void _initEntitlement() {
     final service = ref.read(proEntitlementServiceProvider);
     service.start();
+    Future<void> run() async {
+      // Rig only: a real store account remembers what it sold across
+      // restarts, so the fake has to be told before the reconciliation below
+      // asks it (see seedProTestStoreFromDisk).
+      if (kProTestRig) {
+        await seedProTestStoreFromDisk(ref.read(proEntitlementStoreProvider));
+      }
+      await service.restoreAtStartup();
+    }
+
     unawaited(
-      service.restoreAtStartup().catchError((Object e, StackTrace s) {
+      run().catchError((Object e, StackTrace s) {
         FlutterError.reportError(
           FlutterErrorDetails(
             exception: e,

@@ -3983,6 +3983,16 @@ keep them free forever; a non-entitled install gets `showProFeatureDialog`
 instead of the feature — dormant until activation, exercised by
 `test/pro_gate_test.dart`).
 
+**What Founders keep — decided 2026-08-05.** Every Pro feature delivered
+before the paid tier is switched on is `grandfathered: true`, and **the same
+capability for another brand joins the existing key** rather than earning a new
+one. Founders therefore keep every current feature, and every future ICP lab
+and hardware vendor, free forever. This costs the tier nothing: the gate is
+`purchased || (legacyFree && grandfathered)`, so a grandfathered flag only ever
+helps a Founder — a Standard install (every install created after activation)
+meets the paywall on every key in the registry regardless. `grandfathered:
+false` is reserved for capabilities invented *after* activation.
+
 **One gate per capability, not per vendor.** Every LAN device integration —
 ReefFactory meters (U36), Red Sea ReefBeat devices (U38), Neptune Apex
 controllers (U40) and whatever vendor comes next — sits behind the single

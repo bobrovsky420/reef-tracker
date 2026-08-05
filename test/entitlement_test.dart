@@ -12,19 +12,37 @@ import 'package:reeftracker/domain/pro_features.dart';
 /// is acknowledged, and — the part with real money behind it — when a cached
 /// unlock may be cleared.
 void main() {
+  // The file store re-applies the iOS backup-exclusion attribute through a
+  // MethodChannel, and reaching a channel at all needs a binding — without
+  // this the write path throws before it writes (same reason cloud_sync_test
+  // initializes it).
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late Directory dir;
+
+  /// The store under test in most groups. In-memory on purpose: the service's
+  /// rules are about *ordering* (acknowledge, then grant; clear only on a
+  /// clean empty restore), and running them against real disk I/O only adds a
+  /// race between the write completing and the assertion reading it back. The
+  /// file store's own behaviour is the first group's job.
   late ProEntitlementStore entitlement;
 
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('reeftracker-entitlement-');
-    entitlement = ProEntitlementStore(directory: () async => dir);
+    entitlement = MemoryProEntitlementStore();
   });
   tearDown(() async {
     entitlement.dispose();
     if (await dir.exists()) await dir.delete(recursive: true);
   });
 
-  group('ProEntitlementStore', () {
+  group('FileProEntitlementStore — the on-disk half', () {
+    late FileProEntitlementStore entitlement;
+    setUp(
+      () => entitlement = FileProEntitlementStore(directory: () async => dir),
+    );
+    tearDown(() => entitlement.dispose());
+
     test('a fresh install holds no unlock', () async {
       expect(await entitlement.read(), isFalse);
       expect(
@@ -36,7 +54,7 @@ void main() {
 
     test('the unlock round-trips through a new instance', () async {
       await entitlement.write(true);
-      final reread = ProEntitlementStore(directory: () async => dir);
+      final reread = FileProEntitlementStore(directory: () async => dir);
       addTearDown(reread.dispose);
       expect(await reread.read(), isTrue);
     });
@@ -151,6 +169,55 @@ void main() {
       );
       await pumpEventQueue();
       expect(await entitlement.read(), isFalse);
+    });
+
+    test('a PENDING purchase is never acknowledged, even if the adapter '
+        'wrongly flags it', () async {
+      // Both stores forbid this: Play requires waiting for PURCHASED, iOS
+      // forbids finishing a deferred transaction. Acknowledging early tells
+      // the store the goods were delivered for money that has not arrived,
+      // and destroys the event that would have delivered them for real. The
+      // flag is set here deliberately — the guard must not depend on the
+      // adapter getting it right.
+      store.emit(
+        const PurchaseUpdate(
+          productId: kProUnlockProductId,
+          state: PurchaseState.pending,
+          pendingComplete: true,
+        ),
+      );
+      await pumpEventQueue();
+      expect(store.completed, isEmpty);
+      expect(await entitlement.read(), isFalse);
+    });
+
+    test('an acknowledgement failure still grants the unlock, and the next '
+        'startup retries it', () async {
+      // Refusing the unlock because the ack call failed would punish the buyer
+      // for a network blip. The purchase stays unacknowledged, so the store
+      // hands it back — that redelivery is the retry, and it must land.
+      store.completeThrows = true;
+      store.emitPurchased();
+      await pumpEventQueue();
+      expect(await entitlement.read(), isTrue, reason: 'buyer is not punished');
+      expect(store.completed, isEmpty);
+
+      // Next launch: the store still reports it owned and still unacknowledged.
+      store.completeThrows = false;
+      store.owned = const [
+        PurchaseUpdate(
+          productId: kProUnlockProductId,
+          state: PurchaseState.restored,
+          pendingComplete: true,
+        ),
+      ];
+      await service.restoreAtStartup();
+      expect(
+        store.completed,
+        hasLength(1),
+        reason: 'or Play refunds it after 3 days and the unlock evaporates',
+      );
+      expect(await entitlement.read(), isTrue);
     });
 
     test('canceled and error do not entitle', () async {

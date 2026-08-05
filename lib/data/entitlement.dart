@@ -36,17 +36,39 @@ const String kProEntitlementFileName = '.pro_entitlement';
 ///
 /// Failure mode is deliberately "not entitled": an unreadable file reads as
 /// false, and Restore fixes it.
-class ProEntitlementStore {
+abstract interface class ProEntitlementStore {
+  /// Whether this device holds a Pro unlock.
+  Future<bool> read();
+
+  /// The current value followed by every later change, so a provider can watch
+  /// it without polling.
+  Stream<bool> watch();
+
+  /// Records (or clears) the unlock.
+  Future<void> write(bool purchased);
+
+  void dispose();
+}
+
+/// The real one: a backup-excluded file beside the database.
+///
+/// A seam rather than the only implementation for a mundane reason —
+/// **`testWidgets` runs in a fake-async zone where real `dart:io` futures
+/// never complete**, so a widget test that touches this class hangs rather
+/// than fails. Widget tests use [MemoryProEntitlementStore]; this class is
+/// covered by plain `test()` cases in `test/entitlement_test.dart`, where the
+/// real event loop runs.
+class FileProEntitlementStore implements ProEntitlementStore {
   /// [directory] is injectable so tests can point at a temp dir instead of the
   /// platform's documents directory.
-  ProEntitlementStore({Future<Directory> Function()? directory})
+  FileProEntitlementStore({Future<Directory> Function()? directory})
     : _directory = directory ?? getApplicationDocumentsDirectory;
 
   final Future<Directory> Function() _directory;
   final StreamController<bool> _changes = StreamController<bool>.broadcast();
   bool? _cache;
 
-  /// Whether this device holds a Pro unlock.
+  @override
   Future<bool> read() async {
     final cached = _cache;
     if (cached != null) return cached;
@@ -69,14 +91,13 @@ class ProEntitlementStore {
     return _cache = value;
   }
 
-  /// The current value followed by every later change, so a provider can watch
-  /// it without polling.
+  @override
   Stream<bool> watch() async* {
     yield await read();
     yield* _changes.stream;
   }
 
-  /// Records (or clears) the unlock.
+  @override
   Future<void> write(bool purchased) async {
     if (_cache == purchased) return;
     final file = await _file();
@@ -92,10 +113,45 @@ class ProEntitlementStore {
     if (!_changes.isClosed) _changes.add(purchased);
   }
 
+  @override
   void dispose() => unawaited(_changes.close());
 
   Future<File> _file() async =>
       File(p.join((await _directory()).path, kProEntitlementFileName));
+}
+
+/// In-memory [ProEntitlementStore] for widget tests and the `REEF_PRO_TEST`
+/// rig.
+///
+/// Exists because `testWidgets` runs the test body inside a fake-async zone
+/// where real `dart:io` futures never complete: a widget test that lets the
+/// file-backed store run doesn't fail, it **hangs**, and then fails to delete
+/// its own temp directory on Windows because a write is still in flight. The
+/// file store's own behaviour is covered by plain `test()` cases instead.
+class MemoryProEntitlementStore implements ProEntitlementStore {
+  MemoryProEntitlementStore({bool purchased = false}) : _value = purchased;
+
+  bool _value;
+  final StreamController<bool> _changes = StreamController<bool>.broadcast();
+
+  @override
+  Future<bool> read() async => _value;
+
+  @override
+  Stream<bool> watch() async* {
+    yield _value;
+    yield* _changes.stream;
+  }
+
+  @override
+  Future<void> write(bool purchased) async {
+    if (_value == purchased) return;
+    _value = purchased;
+    if (!_changes.isClosed) _changes.add(purchased);
+  }
+
+  @override
+  void dispose() => unawaited(_changes.close());
 }
 
 /// The two orthogonal facts that decide what an install may use.
@@ -215,12 +271,21 @@ class ProEntitlementService {
 
   Future<PurchaseOutcome> _apply(PurchaseUpdate update) async {
     // Acknowledge FIRST, for every event that asks for it — purchased,
-    // restored and redelivered alike. Play auto-refunds and revokes anything
-    // unacknowledged (3 days; 3 minutes for license testers) and iOS keeps
-    // re-delivering unfinished transactions and refuses a re-purchase. An
+    // restored and redelivered alike, and error too (iOS re-delivers an
+    // unfinished failed transaction forever). Play auto-refunds and revokes
+    // anything unacknowledged (3 days; 3 minutes for license testers) and iOS
+    // refuses a re-purchase until the old transaction is finished. An
     // entitlement flipped before this call is an entitlement that can silently
     // evaporate.
-    if (update.pendingComplete) {
+    //
+    // The one exception, and it is mandatory on both stores: **never
+    // acknowledge a PENDING purchase.** Play requires waiting until the state
+    // becomes PURCHASED, and iOS forbids finishing a deferred transaction.
+    // Doing it early tells the store the goods were delivered for money that
+    // has not arrived — and destroys the event that would have delivered them
+    // for real. Belt and braces with the adapter contract in `purchases.dart`:
+    // this must hold even if a future adapter sets the flag wrongly.
+    if (update.pendingComplete && update.state != PurchaseState.pending) {
       try {
         await store.complete(update);
       } on Object {
