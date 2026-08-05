@@ -77,6 +77,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   point in between, pairing the new nitrate with the *previous* phosphate.
   Each day now plots the ratio of that day's final values, and the list under
   the graph matches.
+- The measurement breakdown under a ratio graph now writes each value with the
+  same number of decimals the app uses for that parameter everywhere else, so
+  the column no longer mixes widths — phosphate reads "PO₄ 0.11", "PO₄ 0.12",
+  "PO₄ 0.05" instead of "0.114", "0.12" and "0.0500" in the same list.
 - A Fauna Marin ICP report no longer imports phosphate too low. The report
   carries two phosphate figures — one calculated from the lab's phosphorus
   measurement, one from its photometer — and the app used to always take the

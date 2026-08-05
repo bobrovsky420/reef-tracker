@@ -189,18 +189,6 @@ List<RatioPoint> computeRatioSeries(
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
-/// Formats a value with precision that scales with its magnitude, so both
-/// small (~0.01) and large (~1400) values read cleanly. Used for the raw
-/// measurements shown alongside the ratio.
-String formatRatio(double r) {
-  if (!r.isFinite) return '—';
-  if (r >= 100) return formatLocaleNumber(r, 0);
-  if (r >= 10) return formatLocaleNumber(r, 1);
-  if (r >= 1) return formatLocaleNumber(r, 2);
-  if (r >= 0.1) return formatLocaleNumber(r, 3);
-  return formatLocaleNumber(r, 4);
-}
-
 /// Formats just the `N` side of a `1 : N` / `N : 1` ratio (and chart labels).
 String formatRatioN(double n) {
   if (!n.isFinite) return '—';
@@ -280,6 +268,18 @@ double ratioRowOrder(RatioKind kind, RatioSettings? settings) =>
     (settings?.displayOrder ?? kind.defaultOrder).toDouble();
 
 /// A compact "Symbol value · Symbol value" breakdown of a ratio point's inputs.
-String ratioBreakdown(RatioKind kind, RatioPoint p) =>
-    '${kind.numeratorSymbol} ${formatRatio(p.numerator)}'
-    ' · ${kind.denominatorSymbol} ${formatRatio(p.denominator)}';
+///
+/// Each side is formatted with **its own parameter's** presentation, so a value
+/// reads here exactly as it does on the dashboard card and in the parameter's
+/// history — same unit, same fixed number of decimals. An earlier version
+/// derived the precision from the value's magnitude instead, which made the
+/// column ragged (PO₄ "0.114" beside "0.12" beside "0.1") and disagreed with
+/// the rest of the app.
+String ratioBreakdown(
+  RatioKind kind,
+  RatioPoint p, {
+  required ParamPresentation numerator,
+  required ParamPresentation denominator,
+}) =>
+    '${kind.numeratorSymbol} ${numerator.format(p.numerator)}'
+    ' · ${kind.denominatorSymbol} ${denominator.format(p.denominator)}';
