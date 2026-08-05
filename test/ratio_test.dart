@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/domain/ratio.dart';
+import 'package:reeftracker/domain/units.dart';
 import 'package:reeftracker/domain/zones.dart';
 
 RatioReading _r(double value, int msEpoch) =>
@@ -188,13 +189,51 @@ void main() {
     });
   });
 
-  group('formatRatio', () {
-    test('scales precision with magnitude', () {
-      expect(formatRatio(150), '150');
-      expect(formatRatio(12.3), '12.3');
-      expect(formatRatio(1.234), '1.23');
-      expect(formatRatio(0.123), '0.123');
-      expect(formatRatio(0.0123), '0.0123');
+  group('ratioBreakdown', () {
+    ParamPresentation pres(String key) =>
+        presentationForKey(key, 'ppm', const UnitPrefs());
+
+    String po4no3(double phosphate, double nitrate) => ratioBreakdown(
+      RatioKind.po4no3,
+      RatioPoint(
+        time: DateTime(2026, 8, 5),
+        ratio: phosphate / nitrate,
+        numerator: phosphate,
+        denominator: nitrate,
+      ),
+      numerator: pres(kPhosphateKey),
+      denominator: pres(kNitrateKey),
+    );
+
+    test('gives each side its own parameter decimals, not the magnitude', () {
+      // Every PO₄ row is 2 decimals and every NO₃ row is 1 — the same widths
+      // the dashboard and history screens use. The precision used to come from
+      // the value's magnitude, so one list mixed "0.114", "0.12" and "0.1".
+      expect(po4no3(0.114, 27.8), 'PO₄ 0.11 · NO₃ 27.8');
+      expect(po4no3(0.12, 14.5), 'PO₄ 0.12 · NO₃ 14.5');
+      expect(po4no3(0.1, 14.4), 'PO₄ 0.10 · NO₃ 14.4');
+      expect(po4no3(0.05, 10), 'PO₄ 0.05 · NO₃ 10.0');
+    });
+
+    test('does not pad small values to a wider bucket', () {
+      // The original report: values under 0.1 rendered as "0.0500"/"0.0600".
+      expect(po4no3(0.05, 5), startsWith('PO₄ 0.05 '));
+      expect(po4no3(0.06, 5), startsWith('PO₄ 0.06 '));
+    });
+
+    test('a decimal-display ratio formats both sides the same way', () {
+      final s = ratioBreakdown(
+        RatioKind.mgca,
+        RatioPoint(
+          time: DateTime(2026, 8, 5),
+          ratio: 1300 / 420,
+          numerator: 1300,
+          denominator: 420,
+        ),
+        numerator: pres(kMagnesiumKey),
+        denominator: pres(kCalciumKey),
+      );
+      expect(s, 'Mg 1300 · Ca 420');
     });
   });
 

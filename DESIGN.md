@@ -2008,8 +2008,12 @@ the last three shown as a single number = numerator/denominator to one decimal.
   newest reading of each.
 - `formatRatioValue(kind, ratio)` renders per the kind's `RatioDisplay`;
   `ratioChartY(kind, ratio)` maps a ratio to its plotted Y (PO₄ : NO₃ plots the
-  inverse N). `ratioBreakdown` shows the raw inputs. `formatRatio`/`formatRatioN`
-  scale precision to magnitude. Localized labels/titles via `ratioCardLabel` /
+  inverse N). `formatRatioN` scales precision to magnitude. `ratioBreakdown`
+  shows the raw inputs, formatting each side with **its own parameter's**
+  `ParamPresentation` (passed in by `RatioScreen`, resolved from the tracked
+  parameter or the catalog), so a measurement reads there exactly as it does on
+  its dashboard card and history screen — one fixed decimal count per column,
+  not one derived from each value's magnitude. Localized labels/titles via `ratioCardLabel` /
   `ratioScreenTitle` in `l10n_helpers.dart`. The single `RatioScreen` renders any
   kind.
 - **Health zones:** each `RatioKind` carries recommended red/amber/green

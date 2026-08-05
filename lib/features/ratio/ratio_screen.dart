@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../domain/parameter_catalog.dart';
 import '../../domain/ratio.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
@@ -59,6 +60,18 @@ class RatioScreen extends ConsumerWidget {
       kind,
       ref.watch(ratioSettingsProvider).value?[kind.name],
     );
+    // The breakdown under each ratio shows the two raw measurements, so they
+    // are formatted by their own parameter's presentation — identical to the
+    // dashboard card and history screen. Falls back to the catalog when the
+    // parameter isn't tracked (the readings can outlive an untracked one).
+    final prefs = ref.watch(unitPrefsProvider);
+    final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+    ParamPresentation presFor(String key) {
+      for (final t in tracked) {
+        if (t.paramKey == key) return presentationOf(t, prefs);
+      }
+      return presentationForKey(key, kParameterByKey[key]?.unit ?? '', prefs);
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(l.ratioScreenTitle(kind))),
@@ -132,7 +145,12 @@ class RatioScreen extends ConsumerWidget {
                                     20,
                                     12 + MediaQuery.paddingOf(context).bottom,
                                   ),
-                                  sliver: _pointsSliver(context, data),
+                                  sliver: _pointsSliver(
+                                    context,
+                                    data,
+                                    presFor(kind.numeratorKey),
+                                    presFor(kind.denominatorKey),
+                                  ),
                                 ),
                               ],
                             ),
@@ -147,7 +165,12 @@ class RatioScreen extends ConsumerWidget {
   /// The computed ratio points as one card of hairline-divided rows
   /// (REDESIGN #17 rider): value mono w700, component breakdown sub, date
   /// trailing. Rows have no tap/swipe behavior (derived data, unchanged).
-  Widget _pointsSliver(BuildContext context, List<RatioPoint> data) {
+  Widget _pointsSliver(
+    BuildContext context,
+    List<RatioPoint> data,
+    ParamPresentation numeratorPres,
+    ParamPresentation denominatorPres,
+  ) {
     final tokens = ReefTokens.of(context);
     return ReefSliverCard(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
@@ -180,7 +203,12 @@ class RatioScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        ratioBreakdown(kind, p),
+                        ratioBreakdown(
+                          kind,
+                          p,
+                          numerator: numeratorPres,
+                          denominator: denominatorPres,
+                        ),
                         style: TextStyle(fontSize: 12, color: tokens.textDim),
                       ),
                     ],
