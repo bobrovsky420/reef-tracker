@@ -2258,14 +2258,16 @@ Parameters list/add-sheet and the health-score inputs to core).
     column→key map with **implicit units** (majors mg/L, traces µg/L —
     verified against the ZIMS export of the same analysis). Also imports the
     report's core-parameter extras (Ca/Mg, NO3/NO2, pH, dKH; phosphate =
-    **max**(`po4er` calculated-from-P, `po4g` photometric); elemental `p`
-    never — double-logging). The max rests on the inequality between the two
-    columns: ICP phosphorus is total dissolved P and orthophosphate is a
-    species of it, so `po4er >= po4g` holds on a consistent sample. It
-    normally yields `po4er` — the number ZIMS publishes as "Orthophosphate
-    (PO4)", so both importers agree on one report — while refusing to import
-    a below-detection `p` (printed as a hard `0`) over a real photometric
-    reading (#118). `salinity` is deliberately skipped (ppt vs canonical SG).
+    **max**(`po4er`, `po4g`); elemental `p` never — double-logging). The lab's
+    web report names the trio: `p` = *Phosphor* (total dissolved P from the
+    ICP), `po4er` = *Gesamtphosphat* (that P × 3.066), `po4g` = *Orthophosphat*
+    (photometric), all mg/L as PO4. Orthophosphate is a species of the total,
+    so `po4er >= po4g` on a consistent sample and the max normally yields
+    `po4er` — while refusing to import a below-detection `p` (printed as a
+    hard `0`) over a real photometric reading (#118). **So an imported ICP
+    phosphate is total phosphate**, whereas manual and Hanna readings in the
+    same series are orthophosphate. `salinity` is deliberately skipped (ppt vs
+    canonical SG).
   - **ZIMS** (long, quoted CSV, one measurement per row with an explicit unit
     column): two-tier name matching — parenthetical element symbol stripped
     of charges/digits ("Sr2+"→Sr, "I2"→I) against catalog symbols, then a
@@ -2273,7 +2275,10 @@ Parameters list/add-sheet and the health-score inputs to core).
     unrecognized units are skipped per row, never guessed. This format
     carries the **same two phosphate figures** as the wide one — "Phosphates"
     is `po4g`, "Orthophosphate (PO4)" is `po4er` — reconciled by the same max
-    rule in the row loop, so row order can't decide the import (#118).
+    rule in the row loop, so row order can't decide the import (#118). Those
+    two ZIMS labels are **backwards** against the lab's own web report (its
+    "Orthophosphate (PO4)" is the portal's *Gesamtphosphat*); the max makes
+    the mislabeling harmless, so don't re-map the aliases to match the names.
     Alkalinity arrives as "Carbonate Hardness" in **meq/L** (× 2.8 → dKH);
     any other unit on an alkalinity row is taken as dKH.
   Unmapped-but-populated fields surface in a "not imported" footnote (data

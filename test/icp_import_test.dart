@@ -58,9 +58,12 @@ const _zimsCsv =
     '"2026-06-02","07:10:45","Silver (Ag)","0","micrograms per litre","FaunaMarin Lab"\n'
     '"2026-06-02","07:10:45","Zirconium (Zr)","0","micrograms per litre","FaunaMarin Lab"\n';
 
-/// A later analysis of the same tank, kept as a pair (Fauna Marin + ZIMS of
-/// one sample) because it is the only real export where the two phosphate
-/// columns disagree materially: `po4g` 0,021 vs `po4er` 0,0953526 (#118).
+/// A later analysis of the same tank (lab id 315240), kept as a pair (Fauna
+/// Marin + ZIMS of one sample) because it is the only real export where the
+/// two phosphate columns disagree materially: `po4g` 0,021 vs `po4er`
+/// 0,0953526 (#118). The lab's web report for this id names them
+/// "Orthophosphat" and "Gesamtphosphat" respectively — the identities the
+/// max rule is built on.
 const _faunaMarinCsvJuly =
     'id;water_type;owner_type;ag;al;ar;as;b;ba;be;br;ca;cd;co;cr;cs;cu;fe;ga;'
     'hf;hg;i;k;la;li;mg;mn;mo;na;nd;ni;p;pb;s;sb;sc;se;si;sn;sr;te;th;ti;tl;'
@@ -77,8 +80,10 @@ const _faunaMarinCsvJuly =
 /// The ZIMS side of the July pair. It carries **both** phosphate figures —
 /// "Phosphates" is the wide export's `po4g`, "Orthophosphate (PO4)" its
 /// `po4er` — with the photometric one listed *first*, so row order must not
-/// decide the import (#118). Alkalinity rides as "Carbonate Hardness" in
-/// meq/L: 3.0702 x 2.8 = the 8.6 dKH of the wide export.
+/// decide the import (#118). Note the ZIMS names are swapped against the
+/// lab's own web report, where 0.0953526 is *Gesamtphosphat* (total) and
+/// 0.021 is *Orthophosphat*. Alkalinity rides as "Carbonate Hardness" in
+/// meq/L: 3.0702 x 2.8 = the 8.6 dKH of the wide export and of the web page.
 const _zimsCsvJuly =
     '"Date","Time","Measurement","MeasurementValue","UnitofMeasure","MeasuredBy"\n'
     '"2026-07-28","11:02:14","pH","8.07","pH","FaunaMarin Lab"\n'
