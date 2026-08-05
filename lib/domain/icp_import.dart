@@ -210,20 +210,26 @@ IcpImportResult _parseFaunaMarin(String content) {
     }
     values[mgL ?? direct ?? ugL!] = ugL != null ? parsed / 1000 : parsed;
   }
-  // Phosphate (mg/L). The report carries two columns for it: `po4er`,
-  // calculated from the ICP phosphorus reading (PO4 = P × 3.066), and `po4g`,
-  // the lab's photometric gauge. ICP phosphorus is *total* dissolved P and
-  // orthophosphate is one species of it, so `po4er >= po4g` on any physically
-  // consistent sample — take the **higher** of the two (#118):
-  //   - Normally that is `po4er`, which is also the number the lab itself
-  //     publishes as "Orthophosphate (PO4)" in the ZIMS export of the same
-  //     analysis, so both importers land on one value for one report.
+  // Phosphate (mg/L). The report carries two columns for it, both in mg/L as
+  // PO4 — confirmed against the lab's own web report for analysis 315240,
+  // which prints all three of these side by side:
+  //   `p`     "Phosphor"        0,031  — total dissolved P, straight from ICP
+  //   `po4er` "Gesamtphosphat"  0,095  — that P expressed as PO4 (× 3.066)
+  //   `po4g`  "Orthophosphat"   0,021  — the photometric free-PO4 gauge
+  // Orthophosphate is one species of the total, so `po4er >= po4g` on any
+  // physically consistent sample — take the **higher** of the two (#118):
+  //   - Normally that is `po4er` (total phosphate). It is also what the ZIMS
+  //     export of the same analysis carries, so both importers land on one
+  //     value for one report — though ZIMS labels the pair **backwards**, see
+  //     the note on `_kZimsNameToKey` below.
   //   - When ICP phosphorus falls below the detection limit the lab prints a
   //     hard `0` (as it does for every trace element), which would import a
   //     tank with measurable phosphate as a perfect zero. A photometric
   //     reading beats that.
-  //   - It is also the safe side of the unit ambiguity in `po4g`: every
-  //     plausible mis-scaling of it (PO4-P rather than PO4) is *downward*.
+  // Note the consequence: an imported ICP phosphate is *total* phosphate,
+  // while a Hanna/test-kit reading in the same series is orthophosphate. On
+  // the tank this was verified against they sit close; on a tank holding much
+  // of its P in organics the ICP points would read visibly higher.
   // Selection is over *parsed* values, not presence — a cell printed as
   // `<0.01` at the detection limit must not block the other one (#101). If
   // neither parses, the skipped list surfaces it.
@@ -276,9 +282,16 @@ final Map<String, String> _kSymbolToKey = {
 /// Lowercased measurement-name aliases, covering en-US/en-GB spelling
 /// variants and the species (I2/iodide) collapsing onto the tracked total.
 /// `phosphorus` (elemental P) is deliberately absent: it would double-log
-/// against the two phosphate rows (`phosphates` = the photometric gauge,
-/// `orthophosphate` = calculated from that very P), which are reconciled in
-/// the row loop below (#118).
+/// against the two phosphate rows, which are reconciled in the row loop
+/// below (#118).
+///
+/// **Fauna Marin's ZIMS export labels those two rows backwards.** Checked
+/// against the lab's own web report for analysis 315240: the row it calls
+/// "Orthophosphate (PO4)" (0.0953526) is the portal's *Gesamtphosphat* —
+/// total phosphate, computed from the ICP phosphorus — while the row it
+/// calls "Phosphates" (0.021) is the portal's *Orthophosphat*. Both map to
+/// `phosphate` and the max rule sorts them out, so the mislabeling costs
+/// nothing here; don't "fix" the aliases by trusting the ZIMS names.
 const Map<String, String> _kZimsNameToKey = {
   'sodium': 'sodium',
   'sulfur': 'sulfur',
