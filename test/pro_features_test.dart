@@ -1,5 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/domain/pro_features.dart';
+
+/// Strips `//`/`///` line comments and `/* */` block comments so doc prose
+/// mentioning a feature can't count as a gate site (dashboard_screen once
+/// referenced a `ProFeature.driveSync` that no longer existed — in a comment).
+/// String literals are not parsed; a `//` inside a string only ever *removes*
+/// text from the scan, never invents a gate.
+String _stripComments(String source) => source
+    .replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '')
+    .replaceAll(RegExp(r'//.*'), '');
 
 void main() {
   group('hasProFeature gate (U19)', () {
@@ -129,6 +140,40 @@ void main() {
       expect(compareAppVersions('1.2.0+142', '1.2.0'), 0);
       // Garbage degrades to "oldest possible" rather than throwing on launch.
       expect(compareAppVersions('nonsense', '0.0.1'), lessThan(0));
+    });
+  });
+
+  group('gate call sites', () {
+    test('every ProFeature is gated somewhere in lib/', () {
+      // A registry entry nothing checks is a paid capability given away
+      // silently — the feature ships, the paywall never appears, and no test
+      // fails. Scan the real sources for the three gate idioms the codebase
+      // uses; comments are stripped first so doc prose doesn't count.
+      final source = Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'))
+          .map((f) => _stripComments(f.readAsStringSync()))
+          .join('\n');
+
+      for (final feature in ProFeature.values) {
+        final name = feature.name;
+        final gatePatterns = [
+          // ref.watch/read(proFeatureProvider(ProFeature.x))
+          RegExp('proFeatureProvider\\(\\s*ProFeature\\.$name\\b'),
+          // runProGated(context, ref, ProFeature.x, ...) — possibly multiline.
+          RegExp('runProGated\\([^;]*?ProFeature\\.$name\\b', dotAll: true),
+          // entitlement.has(ProFeature.x) — the non-Riverpod path.
+          RegExp('\\.has\\(\\s*ProFeature\\.$name\\b'),
+        ];
+        expect(
+          gatePatterns.any((p) => p.hasMatch(source)),
+          isTrue,
+          reason:
+              'ProFeature.$name has no real gate call site in lib/ — '
+              'the capability is given away to Standard installs',
+        );
+      }
     });
   });
 

@@ -112,6 +112,64 @@ void main() {
       expect(r.rows.single.takenAt, DateTime(2026, 7, 19, 10, 0, 0));
     });
 
+    test('date order is decided per FILE, not per row', () {
+      // A US-locale phone writes every row month-first. 07/23 used to
+      // self-disambiguate per row, but 07/04 (July 4) imported as April 7 —
+      // one file, some rows swapped and some not, up to 11 months apart.
+      // The 23 in any row proves the whole file is month-first.
+      const csv =
+          'Meter,HI97115\n'
+          'Reading,Unit,Method,Date,Status,Note\n'
+          '8.2,dKH,Alkalinity Marine,07/23/2026 10:00:00,,\n'
+          '8.3,pH,pH Marine,07/04/2026 09:00:00,,\n';
+      final r = parseHannaCsv(csv);
+      expect(r.rows.map((x) => x.takenAt), [
+        DateTime(2026, 7, 4, 9, 0, 0),
+        DateTime(2026, 7, 23, 10, 0, 0),
+      ]);
+    });
+
+    test('a day-first file keeps its ambiguous rows day-first', () {
+      const csv =
+          'Meter,HI97115\n'
+          'Reading,Unit,Method,Date,Status,Note\n'
+          '8.2,dKH,Alkalinity Marine,19/07/2026 10:00:00,,\n'
+          '8.3,pH,pH Marine,02/07/2026 09:00:00,,\n';
+      final r = parseHannaCsv(csv);
+      expect(r.rows.map((x) => x.takenAt), [
+        DateTime(2026, 7, 2, 9, 0, 0), // July 2nd, not February 7th
+        DateTime(2026, 7, 19, 10, 0, 0),
+      ]);
+    });
+
+    test('an all-ambiguous file defaults to the documented day-first '
+        'order', () {
+      const csv =
+          'Meter,HI97115\n'
+          'Reading,Unit,Method,Date,Status,Note\n'
+          '8.3,pH,pH Marine,02/07/2026 09:00:00,,\n';
+      final r = parseHannaCsv(csv);
+      expect(r.rows.single.takenAt, DateTime(2026, 7, 2, 9, 0, 0));
+    });
+
+    test('a CRLF export parses identically to the LF fixture', () {
+      // Every fixture here is bare-LF; real exports travel as CRLF. A \r
+      // regression would make every header lookup miss and every real file
+      // reject as wrongFormat while this suite stayed green.
+      final lf = parseHannaCsv(_hannaCsv);
+      final crlf = parseHannaCsv(_hannaCsv.replaceAll('\n', '\r\n'));
+      expect(crlf.meter, lf.meter);
+      expect(crlf.location, lf.location);
+      expect(
+        crlf.rows.map((r) => (r.paramKey, r.value, r.takenAt)),
+        lf.rows.map((r) => (r.paramKey, r.value, r.takenAt)),
+      );
+      expect(
+        crlf.skipped.map((s) => (s.label, s.reason)),
+        lf.skipped.map((s) => (s.label, s.reason)),
+      );
+    });
+
     test('rejects an impossible date row as badValue', () {
       const csv =
           'Meter,HI97115\n'
@@ -242,6 +300,29 @@ void main() {
       );
       expect(plan.newRows, hasLength(4));
       expect(plan.alreadyImported, 3); // 1 pre-watermark + 2 diff-matched
+    });
+
+    test('rewind after a full settings reset (null watermark) still diffs '
+        'against existing readings', () {
+      // With importedUpTo AND cutoff both null, a candidate row falls
+      // through both counting branches — it must still reach the existing-
+      // keys diff. A refactor that nests the diff under the watermark branch
+      // restores full duplication of every Hanna reading ever imported.
+      final plan = planHannaImport(
+        rows: rows,
+        rewound: true,
+        existingKeys: {
+          hannaReadingKey('ph', DateTime(2026, 7, 19, 13, 7, 38)),
+          hannaReadingKey('ammonia', DateTime(2025, 12, 10, 13, 37, 11)),
+        },
+      );
+      expect(plan.newRows, hasLength(rows.length - 2));
+      expect(plan.alreadyImported, 2);
+      expect(plan.beforeCutoff, 0);
+      expect(
+        plan.newRows.map((r) => r.paramKey),
+        isNot(anyElement(anyOf('ph', 'ammonia'))),
+      );
     });
 
     test('without the rewound flag existing keys are ignored', () {

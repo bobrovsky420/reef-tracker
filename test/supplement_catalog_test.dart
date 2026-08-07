@@ -65,6 +65,53 @@ void main() {
     }
   });
 
+  test('every product elementKey is offered by the dosing element picker', () {
+    // Forward containment only (kDosingElementKeys may offer more than the
+    // catalog assigns). Both dosing edit screens build their element dropdown
+    // from kDosingElementKeys and then assign the picked product's elementKey
+    // without a membership guard — an elementKey outside the list is a
+    // DropdownButton assertion in debug and a silently wrong field in
+    // release. This failed on the 12 Fauna Marin Elementals trace products
+    // until the trace elements joined the picker.
+    for (final p in allProducts()) {
+      if (p.elementKey != null) {
+        expect(
+          kDosingElementKeys,
+          contains(p.elementKey),
+          reason:
+              'product "${p.key}" targets "${p.elementKey}", which the '
+              'dosing element picker does not offer',
+        );
+      }
+    }
+  });
+
+  test('strength maps are positive, finite, and cover their own element', () {
+    for (final p in allProducts()) {
+      final strength = p.strength;
+      if (strength == null) continue;
+      strength.forEach((key, value) {
+        expect(
+          value.isFinite && value > 0,
+          isTrue,
+          reason:
+              'product "${p.key}" strength[$key] = $value — '
+              'correctDose() silently declines to compute on potency <= 0',
+        );
+      });
+      if (p.elementKey != null) {
+        expect(
+          strength,
+          contains(p.elementKey),
+          reason:
+              'product "${p.key}" has a strength map that omits its own '
+              'primary element "${p.elementKey}" — the calculator would '
+              'find the product but no potency for the element it targets',
+        );
+      }
+    }
+  });
+
   test('alt names are non-blank and unique case-insensitively', () {
     final seen = <String>{};
     final dupes = <String>[];

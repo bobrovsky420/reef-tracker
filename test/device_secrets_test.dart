@@ -118,6 +118,36 @@ void main() {
     },
   );
 
+  test('the queue survives a failed write — later reads and writes still '
+      'run', () async {
+    // _serialized keeps the chain alive with a one-line onError; dropping it
+    // leaves `_queue` permanently rejected after the first failure, and every
+    // later credential read/write fails until app restart.
+    var fail = false;
+    final store = DeviceSecrets(
+      directory: () async {
+        if (fail) throw const FileSystemException('disk unavailable');
+        return docsDir;
+      },
+    );
+
+    // Prime the cache so the failure lands in the write phase itself.
+    expect(await store.read('AC5:1'), isNull);
+
+    fail = true;
+    await expectLater(
+      store.write('AC5:1', 'hunter2'),
+      throwsA(isA<FileSystemException>()),
+    );
+
+    // The failed write reported its error to the caller — and the queue must
+    // still serve everything that comes after.
+    fail = false;
+    await store.write('AC5:1', 'hunter2');
+    expect(await store.read('AC5:1'), 'hunter2');
+    expect(await newStore().read('AC5:1'), 'hunter2');
+  });
+
   test('concurrent writes do not lose one another', () async {
     final store = newStore();
 

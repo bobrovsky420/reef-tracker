@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/domain/parameter_catalog.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 import 'package:reeftracker/l10n/l10n_helpers.dart';
 
@@ -7,6 +8,49 @@ import 'support/pump.dart';
 
 void main() {
   final initial = DateTime(2026, 6, 1, 10, 30);
+
+  group('paramName ↔ parameter catalog', () {
+    test('every catalog key resolves to a real name in every locale', () {
+      // paramName is a hand-written switch over the generated catalog with
+      // `default: return key` — a parameter added to parameters.yaml without
+      // a switch case (or without its ARB keys) ships its raw key as the
+      // display name, in every language, silently.
+      for (final locale in AppLocalizations.supportedLocales) {
+        final l = lookupAppLocalizations(locale);
+        for (final def in kReefParameters) {
+          final name = l.paramName(def.key);
+          expect(
+            name,
+            isNot(def.key),
+            reason:
+                'paramName("${def.key}") fell through to the raw key '
+                '($locale) — switch case or ARB key missing',
+          );
+          expect(name.trim(), isNotEmpty);
+        }
+      }
+    });
+
+    test('symbol-carrying parameters keep the "(Symbol)" convention '
+        'in every locale', () {
+      // Micro rows match an ICP report by their element symbol, and
+      // paramShortName extracts the dial label from the parenthetical — a
+      // translation that drops or localizes the symbol breaks both.
+      for (final locale in AppLocalizations.supportedLocales) {
+        final l = lookupAppLocalizations(locale);
+        for (final def in kReefParameters) {
+          final symbol = def.symbol;
+          if (symbol == null) continue;
+          expect(
+            l.paramName(def.key),
+            contains('($symbol)'),
+            reason: '"${def.key}" must carry "($symbol)" ($locale)',
+          );
+          expect(l.paramShortName(def.key), symbol);
+        }
+      }
+    });
+  });
 
   group('paramShortName (REDESIGN #7 dial labels)', () {
     test('a dedicated short name wins in every locale (alkalinity → KH)', () {
