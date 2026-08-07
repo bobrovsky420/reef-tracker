@@ -604,6 +604,9 @@ class SettingsBody extends ConsumerWidget {
               onTap: () => _openWebsite(context, l, 'privacy-policy.html'),
             ),
             _EditionRow(entitlement: ref.watch(entitlementProvider)),
+            // Dead code until `kActivationVersion` is set; appears by itself at
+            // activation, so the flip owes it nothing.
+            if (kProSaleLive) const _RestorePurchasesRow(),
             // Compiled out of every build without `--dart-define=REEF_PRO_TEST=1`,
             // which is every build that reaches a store.
             if (kProTestRig) const ProTestRigSection(),
@@ -1013,23 +1016,95 @@ class _EditionRow extends StatelessWidget {
     final body = pro
         ? l.proInfoBody
         : (founder ? l.founderInfoBody : l.standardInfoBody);
+    // The upgrade path, dead until activation: once the tier is live, someone
+    // who has not bought yet can reach the paywall from here. Without it the
+    // Edition dialog is a dead end for exactly the people who might pay.
+    final canUpgrade = kProSaleLive && !pro;
     return ReefSettingsRow(
       icon: Icons.workspace_premium_outlined,
       title: l.editionLabel,
       description: name,
       onTap: () => showDialog<void>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           title: Text(name),
           content: Text(body),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(MaterialLocalizations.of(context).okButtonLabel),
             ),
+            if (canUpgrade)
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  unawaited(context.push<bool>('/paywall'));
+                },
+                child: Text(l.editionUpgrade),
+              ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// "Restore purchases" in Settings — **only once the tier is live**, and the
+/// reason it exists at all is that the paywall is not a reliable way to find
+/// it.
+///
+/// After activation, someone who paid and then reinstalls (or switches phone)
+/// comes back as Standard: the unlock is device-local by design and does not
+/// ride any backup. Their only route to the paywall's Restore button would be
+/// to go hunting for a gated feature and trip it. Both stores expect a
+/// discoverable restore control, and Apple's review looks for one.
+class _RestorePurchasesRow extends ConsumerStatefulWidget {
+  const _RestorePurchasesRow();
+
+  @override
+  ConsumerState<_RestorePurchasesRow> createState() =>
+      _RestorePurchasesRowState();
+}
+
+class _RestorePurchasesRowState extends ConsumerState<_RestorePurchasesRow> {
+  bool _busy = false;
+
+  Future<void> _restore() async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    final outcome = await ref.read(proEntitlementServiceProvider).restore();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(switch (outcome) {
+          PurchaseOutcome.restored ||
+          PurchaseOutcome.purchased => l.paywallRestored,
+          PurchaseOutcome.nothingToRestore => l.paywallNothingToRestore,
+          PurchaseOutcome.pending => l.paywallPending,
+          // A restore that could not be run must not read as "you own
+          // nothing" — the clearing policy makes the same distinction.
+          PurchaseOutcome.canceled || PurchaseOutcome.failed => l.paywallFailed,
+        }),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return ReefSettingsRow(
+      icon: Icons.restore,
+      title: l.paywallRestore,
+      trailing: _busy
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : null,
+      onTap: _busy ? null : () => unawaited(_restore()),
     );
   }
 }

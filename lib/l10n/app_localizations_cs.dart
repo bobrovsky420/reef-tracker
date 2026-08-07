@@ -1239,7 +1239,10 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Používáte standardní edici aplikace ReefTracker.';
+      'Používáte standardní edici aplikace ReefTracker. Vše, co jste dosud zaznamenali, zůstává vaše; ReefTracker Pro odemyká pokročilé funkce.';
+
+  @override
+  String get editionUpgrade => 'Odemknout Pro';
 
   @override
   String get editionPro => 'Pro';

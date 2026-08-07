@@ -73,8 +73,9 @@ GrayImage renderLcd(
     if (mask & 0x08 != 0) {
       fill(cx + t + gap, top + dh - t, cx + dw - t - gap, top + dh);
     }
-    if (mask & 0x20 != 0)
+    if (mask & 0x20 != 0) {
       fill(cx, top + t + gap, cx + t, top + mid - t ~/ 2 - gap);
+    }
     if (mask & 0x02 != 0) {
       fill(cx + dw - t, top + t + gap, cx + dw, top + mid - t ~/ 2 - gap);
     }

@@ -107,6 +107,37 @@ void main() {
       );
     });
 
+    test('the sale flag is derived, so a half-flip cannot exist', () {
+      // The three facts that make up activation — sale live, seeder stopped,
+      // marker boundary honoured — all hang off one constant. The state that
+      // used to be reachable by hand (sale ON while the seeder still mints
+      // Founders, so every new install is entitled and nobody ever pays) is
+      // now unrepresentable.
+      expect(kProSaleLive, kActivationVersion != null);
+      expect(
+        shouldSeedFounderMarker(activationVersion: kActivationVersion),
+        !kProSaleLive,
+        reason: 'seeding and selling must never be on at the same time',
+      );
+    });
+
+    test('the ACTIVATED behaviour is proven now, not on activation day', () {
+      // `shouldSeedFounderMarker` takes the version as a parameter precisely
+      // so the post-flip branch is exercised while it is still a value. On
+      // activation day the constant changes and this behaviour is already
+      // covered — no new test to write under pressure.
+      expect(
+        shouldSeedFounderMarker(activationVersion: null),
+        isTrue,
+        reason: 'dormant: every launch seeds',
+      );
+      expect(
+        shouldSeedFounderMarker(activationVersion: '1.3.0'),
+        isFalse,
+        reason: 'activated: nothing is stamped, fresh installs are Standard',
+      );
+    });
+
     test('the paid tier has not been activated', () {
       // The other half of the same invariant: the activation version is what
       // switches the marker from "presence is enough" to "must predate
