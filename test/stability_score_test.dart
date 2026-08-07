@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:reeftracker/domain/dose_calculator.dart' show DosePoint;
 import 'package:reeftracker/domain/stability_score.dart';
+import 'package:reeftracker/domain/trend.dart';
 import 'package:reeftracker/domain/zones.dart';
 
 void main() {
@@ -206,6 +206,90 @@ void main() {
       final b = computeTankStability(inputs, now: now);
       expect(a, b);
       expect(a.hashCode, b.hashCode);
+    });
+
+    test('input order does not matter — the domain sorts', () {
+      // The stability provider feeds points newest-first and relies on this
+      // sort; removing it as "redundant" would make the span guard see a
+      // negative span and every parameter report "not enough data".
+      final oldestFirst = series([7.6, 8.4, 7.8, 8.2, 8.0]);
+      final newestFirst = oldestFirst.reversed.toList();
+      final shuffled = [
+        oldestFirst[2],
+        oldestFirst[4],
+        oldestFirst[0],
+        oldestFirst[3],
+        oldestFirst[1],
+      ];
+
+      final canonical = computeTankStability([input(oldestFirst)], now: now);
+      expect(canonical.hasData, isTrue);
+      for (final variant in [newestFirst, shuffled]) {
+        final r = computeTankStability([input(variant)], now: now);
+        expect(r, canonical);
+        expect(r.parameters.single.includedInScore, isTrue);
+      }
+    });
+  });
+
+  group('trend ↔ stability swing-threshold agreement', () {
+    // kTrendOscillationRelative (0.37) is documented as "the relative
+    // oscillation at which the stability score drops a sub-score below 70",
+    // so the TrendChip's "swinging" verdict and the stability sheet's
+    // "variable" list agree about which parameters swing noticeably. The
+    // stability constants (_kDeadband/_kFullScale) are private, so the
+    // agreement is probed behaviourally, just above and just below the
+    // threshold. Strictly above/below only: at exactly 0.37 the two already
+    // differ (trend's >= vs stability's < 70), which is accepted.
+    //
+    // Both aggregates run over the identical point set (trend window == full
+    // series, no widening at 3-day spacing) and share linearFit and the
+    // n-2-df residual RMS, so their sigma — and therefore the relative
+    // swing — is the same number.
+    TrendResult? trendFor(List<DosePoint> pts) =>
+        computeTrend(points: pts, bounds: bounds, window: pts.length);
+
+    List<DosePoint> alternating(double amplitude) => series([
+      for (var i = 0; i < 6; i++) 8 + (i.isEven ? amplitude : -amplitude),
+    ]);
+
+    test(
+      'just above the threshold: trend says oscillating, stability says variable',
+      () {
+        final pts = alternating(0.34);
+        final trend = trendFor(pts)!;
+        final stability = computeTankStability([input(pts)], now: now);
+        final param = stability.parameters.single;
+
+        // Same sigma from both aggregates — the shared definition of the swing.
+        expect(param.sigma, isNotNull);
+        expect(trend.sigma, closeTo(param.sigma!, 1e-9));
+        // Self-check the probe actually landed just above the threshold.
+        expect(trend.relativeSwing, greaterThan(kTrendOscillationRelative));
+        expect(trend.relativeSwing, lessThan(kTrendOscillationRelative + 0.08));
+
+        expect(trend.slopeSignificant, isFalse);
+        expect(trend.oscillating, isTrue);
+        expect(param.subScore, lessThan(70)); // "variable" in the breakdown
+        expect(stability.mostVariable.single.paramKey, 'alkalinity');
+      },
+    );
+
+    test('just below the threshold: neither feature calls it swinging', () {
+      final pts = alternating(0.28);
+      final trend = trendFor(pts)!;
+      final stability = computeTankStability([input(pts)], now: now);
+      final param = stability.parameters.single;
+
+      expect(trend.relativeSwing, lessThan(kTrendOscillationRelative));
+      expect(
+        trend.relativeSwing,
+        greaterThan(kTrendOscillationRelative - 0.08),
+      );
+
+      expect(trend.oscillating, isFalse);
+      expect(param.subScore, greaterThanOrEqualTo(70));
+      expect(stability.steady.single.paramKey, 'alkalinity');
     });
   });
 }

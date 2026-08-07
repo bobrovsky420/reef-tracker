@@ -63,12 +63,18 @@ GrayImage renderLcd(
     const mid = dh ~/ 2;
     if (mask & 0x01 != 0) fill(cx + t + gap, top, cx + dw - t - gap, top + t);
     if (mask & 0x40 != 0) {
-      fill(cx + t + gap, top + mid - t ~/ 2, cx + dw - t - gap, top + mid + t ~/ 2);
+      fill(
+        cx + t + gap,
+        top + mid - t ~/ 2,
+        cx + dw - t - gap,
+        top + mid + t ~/ 2,
+      );
     }
     if (mask & 0x08 != 0) {
       fill(cx + t + gap, top + dh - t, cx + dw - t - gap, top + dh);
     }
-    if (mask & 0x20 != 0) fill(cx, top + t + gap, cx + t, top + mid - t ~/ 2 - gap);
+    if (mask & 0x20 != 0)
+      fill(cx, top + t + gap, cx + t, top + mid - t ~/ 2 - gap);
     if (mask & 0x02 != 0) {
       fill(cx + dw - t, top + t + gap, cx + dw, top + mid - t ~/ 2 - gap);
     }
@@ -203,6 +209,30 @@ void main() {
       expect(decodeSevenSegment(renderLcd('.30')), isNull);
       // Trailing dot: rendered "30." ends with the dot slice.
       expect(decodeSevenSegment(renderLcd('30.')), isNull);
+    });
+
+    test('rejects two decimal points in one readout', () {
+      // No checker ever shows two dots; a second dot-shaped blob means
+      // glare or residue, and picking either dot would be a guess with a
+      // ten-fold error either way.
+      expect(decodeSevenSegment(renderLcd('0.3.0')), isNull);
+      expect(decodeSevenSegment(renderLcd('1.2.5')), isNull);
+    });
+
+    test('rejects a dot sitting inside a glyph\'s own columns', () {
+      // A glare blob with exactly a decimal point's size and depth, but
+      // inside the '7' glyph's column span (bottom-left, where 7 draws no
+      // segments). Accepting it would read "7.3" — and multi-frame voting
+      // cannot filter it, because glare is static across frames.
+      final img = renderLcd('73');
+      expect(decodeSevenSegment(img)?.text, '73'); // clean render is fine
+      final blobbed = renderLcd('73');
+      for (var y = 112; y < 124; y++) {
+        for (var x = 44; x < 56; x++) {
+          blobbed.pixels[y * blobbed.width + x] = 60;
+        }
+      }
+      expect(decodeSevenSegment(blobbed), isNull);
     });
   });
 

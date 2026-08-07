@@ -208,6 +208,87 @@ void main() {
         throwsA(isA<InvalidBackupException>()),
       );
     });
+
+    test(
+      'stays total over a malformed settings section (#93 failure shape)',
+      () {
+        // The dirty gate and the echo-suppression path hash bytes this app did
+        // not necessarily write — downloaded cloud files, hand-edited or
+        // ancient documents. A throw here would make every later comparison
+        // fail, and the divergence would be silent and permanent.
+        final noSection = doc()..remove('settings');
+
+        // A section that isn't a list hashes as if absent, never throws.
+        final notAList = doc()..['settings'] = {'key': 'temp_unit'};
+        final scalar = doc()..['settings'] = 42;
+        expect(
+          backupContentHash(jsonEncode(notAList)),
+          backupContentHash(jsonEncode(noSection)),
+        );
+        expect(
+          backupContentHash(jsonEncode(scalar)),
+          backupContentHash(jsonEncode(noSection)),
+        );
+
+        // Malformed rows inside an otherwise valid list are dropped, so the
+        // hash equals the same document with only its well-formed rows.
+        final junkRows = doc()
+          ..['settings'] = [
+            42,
+            'not a row',
+            {'no_key': true},
+            {'key': 7},
+            {'key': 'temp_unit', 'value': 'f'},
+          ];
+        final onlyValidRow = doc()
+          ..['settings'] = [
+            {'key': 'temp_unit', 'value': 'f'},
+          ];
+        expect(
+          backupContentHash(jsonEncode(junkRows)),
+          backupContentHash(jsonEncode(onlyValidRow)),
+        );
+      },
+    );
+  });
+
+  group('cloudBackupFileName', () {
+    // The whole "lexical == chronological" ordering model — the cloud prune,
+    // the newest-file pick, the U35 restore prompt — rests on this one
+    // function's stamp shape.
+    test('zero-pads every field (the exact stamp shape)', () {
+      expect(
+        cloudBackupFileName(DateTime.utc(2026, 1, 2, 3, 4, 5, 6)),
+        '${kAutoBackupPrefix}20260102-030405-006.json',
+      );
+    });
+
+    test('lexical order is chronological across padding boundaries', () {
+      final pairs = [
+        (DateTime.utc(2026, 9, 30, 23, 59, 59, 999), DateTime.utc(2026, 10, 1)),
+        (DateTime.utc(2026, 1, 9), DateTime.utc(2026, 1, 10)),
+        (DateTime.utc(2026, 1, 2, 3, 4, 5), DateTime.utc(2026, 1, 2, 13)),
+        (
+          DateTime.utc(2026, 1, 2, 3, 4, 5, 99),
+          DateTime.utc(2026, 1, 2, 3, 4, 5, 100),
+        ),
+      ];
+      for (final (earlier, later) in pairs) {
+        expect(
+          cloudBackupFileName(earlier).compareTo(cloudBackupFileName(later)),
+          lessThan(0),
+          reason: '$earlier must sort before $later',
+        );
+      }
+    });
+
+    test('a local timestamp stamps its UTC instant', () {
+      // Callers pass DateTime.now() (local). The name must be the same for
+      // the same instant however it is represented, or two devices in
+      // different zones would interleave their rotations wrongly.
+      final local = DateTime(2026, 7, 15, 12, 30, 45, 123);
+      expect(cloudBackupFileName(local), cloudBackupFileName(local.toUtc()));
+    });
   });
 
   group('runGDriveSyncIfDirty', () {

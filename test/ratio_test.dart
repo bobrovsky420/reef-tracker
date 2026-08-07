@@ -7,10 +7,8 @@ RatioReading _r(double value, int msEpoch) =>
     (takenAt: DateTime.fromMillisecondsSinceEpoch(msEpoch), value: value);
 
 /// A reading on a real (local) calendar day, for the same-day collapsing tests.
-RatioReading _at(double value, int day, int hour, int minute) => (
-  takenAt: DateTime(2026, 8, day, hour, minute),
-  value: value,
-);
+RatioReading _at(double value, int day, int hour, int minute) =>
+    (takenAt: DateTime(2026, 8, day, hour, minute), value: value);
 
 void main() {
   group('latestRatio (numerator, denominator; newest-first input)', () {
@@ -300,6 +298,59 @@ void main() {
       expect(ratioZone(RatioKind.mgca, b, 3.1), Zone.green);
       expect(ratioZone(RatioKind.mgca, b, 2.7), Zone.amber);
       expect(ratioZone(RatioKind.mgca, b, 2.4), Zone.red);
+    });
+
+    test('Ca : Alk classifies natural-seawater chemistry green', () {
+      // Ca 420 ppm at 8 dKH → 52.5, comfortably inside the recommended band.
+      final b = RatioKind.caalk.defaultBounds;
+      expect(ratioZone(RatioKind.caalk, b, 420 / 8), Zone.green);
+      // Depleted calcium against high alk drifts amber, then red.
+      expect(ratioZone(RatioKind.caalk, b, 340 / 8), Zone.amber);
+      expect(ratioZone(RatioKind.caalk, b, 300 / 8), Zone.red);
+    });
+
+    test('Mg : Alk classifies natural-seawater chemistry green', () {
+      // Mg 1350 ppm at 8 dKH → ~169, inside the recommended band.
+      final b = RatioKind.mgalk.defaultBounds;
+      expect(ratioZone(RatioKind.mgalk, b, 1350 / 8), Zone.green);
+      expect(ratioZone(RatioKind.mgalk, b, 1150 / 8), Zone.amber);
+      expect(ratioZone(RatioKind.mgalk, b, 1000 / 8), Zone.red);
+    });
+  });
+
+  group('kRatioDefaultBounds integrity', () {
+    test('every kind has generated defaults (defaultBounds cannot throw)', () {
+      // `defaultBounds` dereferences kRatioDefaultBounds[this]! — a RatioKind
+      // added without regenerating ratio.g.dart (or a key dropped by the
+      // generator) throws on first dashboard build. Touch every kind.
+      for (final kind in RatioKind.values) {
+        expect(
+          kRatioDefaultBounds.containsKey(kind),
+          isTrue,
+          reason: '${kind.name} missing from generated kRatioDefaultBounds',
+        );
+        expect(kind.defaultBounds, isNotNull);
+      }
+    });
+
+    test('every default is fully banded, valid and strictly ordered', () {
+      for (final kind in RatioKind.values) {
+        final b = kind.defaultBounds;
+        expect(b.isValid, isTrue, reason: '${kind.name} bounds invalid');
+        // All four bounds present and strictly increasing: each kind renders
+        // a full red/amber/green/amber/red track, with no empty amber tier.
+        expect(b.amberLow, isNotNull, reason: '${kind.name} amberLow');
+        expect(b.greenLow, isNotNull, reason: '${kind.name} greenLow');
+        expect(b.greenHigh, isNotNull, reason: '${kind.name} greenHigh');
+        expect(b.amberHigh, isNotNull, reason: '${kind.name} amberHigh');
+        expect(
+          b.amberLow! < b.greenLow! &&
+              b.greenLow! < b.greenHigh! &&
+              b.greenHigh! < b.amberHigh!,
+          isTrue,
+          reason: '${kind.name} bounds not strictly ordered',
+        );
+      }
     });
   });
 

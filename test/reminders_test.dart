@@ -625,6 +625,51 @@ void main() {
         isEmpty,
       );
     });
+
+    test('everyNDays phase jump equals a brute-force day walk '
+        '(property: n 1–7 × 5 anchors)', () {
+      // The #61 shortcut jumps `difference().inDays ~/ n` whole cadences to
+      // the window instead of stepping day by day. An overshoot by even one
+      // cadence silently skips the first dose reminder of every window. The
+      // property is zone-independent by construction: both sides use
+      // DateTime(y, m, d + n) stepping, so DST-length days normalize
+      // identically.
+      final windowFrom = DateTime(2026, 3, 10, 8);
+      final windowUntil = DateTime(2026, 3, 24, 22);
+      final anchors = [
+        DateTime(2026, 3, 15, 9, 30), // inside the window
+        DateTime(2026, 3, 9, 23, 30), // the evening before it opens
+        DateTime(2026, 2, 1, 6), // weeks before
+        DateTime(2025, 3, 29, 12), // about a year back
+        DateTime(2016, 7, 4, 18), // a restored backup's decade-old anchor
+      ];
+      for (var n = 1; n <= 7; n++) {
+        for (final anchor in anchors) {
+          final jumped = doseOccurrences(
+            frequency: 'everyNDays',
+            intervalDays: n,
+            doseTime: '09:00',
+            startedAt: anchor,
+            from: windowFrom,
+            until: windowUntil,
+          );
+          // Reference: naive n-day stepping from the anchor day, with the
+          // same window/start-clamp rules.
+          final expected = <DateTime>[];
+          final start = windowFrom.isAfter(anchor) ? windowFrom : anchor;
+          var day = DateTime(anchor.year, anchor.month, anchor.day);
+          while (!day.isAfter(windowUntil)) {
+            final t = DateTime(day.year, day.month, day.day, 9, 0);
+            if (!t.isBefore(start) && !t.isAfter(windowUntil)) {
+              expected.add(t);
+            }
+            day = DateTime(day.year, day.month, day.day + n);
+          }
+          expect(jumped, expected, reason: 'n=$n anchor=$anchor');
+          expect(expected, isNotEmpty, reason: 'vacuous case: n=$n $anchor');
+        }
+      }
+    });
   });
 
   group('coalesceReminders', () {
@@ -711,6 +756,51 @@ void main() {
 
     test('empty in, empty out', () {
       expect(coalesceReminders(const []), isEmpty);
+    });
+
+    test('null-tank (RO) reminders never merge with a tank\'s and sort '
+        'deterministically', () {
+      // U16's RO unit is the only tankId == null producer and shares
+      // ReminderKind.maintenance with tank maintenance. A merge would give
+      // the notification the wrong title AND the wrong deep link (a tank's
+      // maintenance route instead of the RO screen).
+      final at = DateTime(2026, 8, 7, 9);
+      final items = <ReminderItem>[
+        (
+          tankId: 1,
+          kind: ReminderKind.maintenance,
+          fireAt: at,
+          label: 'Water change',
+        ),
+        (
+          tankId: null,
+          kind: ReminderKind.maintenance,
+          fireAt: at.add(const Duration(hours: 1)),
+          label: 'RO membrane',
+        ),
+        (
+          tankId: null,
+          kind: ReminderKind.maintenance,
+          fireAt: at,
+          label: 'RO sediment filter',
+        ),
+      ];
+      final planned = coalesceReminders(items);
+      expect(planned, hasLength(2));
+
+      final ro = planned.singleWhere((p) => p.tankId == null);
+      expect(ro.labels, ['RO membrane', 'RO sediment filter']);
+      expect(ro.fireAt, at); // earliest member of the RO group
+      final tank = planned.singleWhere((p) => p.tankId == 1);
+      expect(tank.labels, ['Water change']);
+
+      // Same instant → the device-scoped group sorts first, and the order
+      // is stable however the items arrive.
+      expect(planned.first.tankId, isNull);
+      expect(
+        coalesceReminders(items.reversed).map((p) => (p.tankId, p.fireAt)),
+        planned.map((p) => (p.tankId, p.fireAt)),
+      );
     });
   });
 }

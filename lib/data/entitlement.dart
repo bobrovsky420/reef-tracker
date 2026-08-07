@@ -77,16 +77,22 @@ class FileProEntitlementStore implements ProEntitlementStore {
       final file = await _file();
       if (await file.exists()) {
         value = (await file.readAsString()).trim() == '1';
-        // Re-applied opportunistically, like `.install_id`: heals installs
-        // written before the attribute took (no-op on Android, where the XML
-        // rules cover it).
-        await excludeFromDeviceBackup(file.path);
+        try {
+          // Re-applied opportunistically, like `.install_id`: heals installs
+          // written before the attribute took (no-op on Android, where the
+          // XML rules cover it). Best-effort — the value itself was read.
+          await excludeFromDeviceBackup(file.path);
+        } on Object {
+          // Fails open, matching excludeFromDeviceBackup's own policy.
+        }
       }
     } on Object {
-      // Fail closed, for any reason at all — a missing documents directory, a
-      // read error, no platform channel under `flutter test`. A purchase that
-      // can't be read is one visible Restore away; a thrown provider is a
-      // broken app.
+      // Fail closed for THIS call — a missing documents directory, a read
+      // error — but never cache the failure: one launch-time hiccup would
+      // otherwise unentitle a paying user for the whole process, and
+      // restoreAtStartup would skip its self-heal because "nothing is
+      // cached". The next read retries the file instead.
+      return false;
     }
     return _cache = value;
   }
@@ -295,7 +301,17 @@ class ProEntitlementService {
       }
     }
     if (update.entitling) {
-      await entitlement.write(true);
+      try {
+        await entitlement.write(true);
+      } on Object {
+        // A write that failed is an unlock that will not survive the process:
+        // report failure (so the paywall doesn't celebrate) instead of
+        // throwing — on the background-stream path (`start`'s unawaited
+        // apply) a throw here would surface as an unhandled zone error. The
+        // purchase was acknowledged above; the store's redelivery on the
+        // next launch is the retry.
+        return PurchaseOutcome.failed;
+      }
       return update.state == PurchaseState.restored
           ? PurchaseOutcome.restored
           : PurchaseOutcome.purchased;
@@ -328,13 +344,18 @@ class ProEntitlementService {
     } on Object {
       return PurchaseOutcome.failed;
     }
-    final entitling = owned.where((u) => u.entitling).toList();
-    if (entitling.isEmpty) {
-      await entitlement.write(false);
-      return PurchaseOutcome.nothingToRestore;
-    }
+    // Apply every owned update BEFORE deciding the outcome — including when
+    // nothing entitles: iOS re-delivers an unfinished failed transaction
+    // forever and refuses a re-purchase until it is finished, and the old
+    // `entitling.isEmpty` short-circuit left exactly that transaction
+    // unacknowledged. (_apply never finishes a pending one, and a
+    // non-entitling update never writes the unlock.)
     for (final update in owned) {
       await _apply(update);
+    }
+    if (owned.every((u) => !u.entitling)) {
+      await entitlement.write(false);
+      return PurchaseOutcome.nothingToRestore;
     }
     return PurchaseOutcome.restored;
   }

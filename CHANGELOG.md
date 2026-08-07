@@ -65,6 +65,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - While a Hanna checker measurement runs, the progress line reads "Follow the
   instructions on the meter · step 1" instead of ending the sentence with a
   full stop before the step.
+- The dosing target-element picker now lists the trace elements (barium,
+  chromium, cobalt, copper, lithium, manganese, molybdenum, nickel, selenium,
+  sulfur, vanadium, zinc) after the familiar majors and nutrients, so a
+  single-element trace supplement — the Fauna Marin Elementals line — lands
+  on the element it actually doses. Picking such a product previously broke
+  the element selector.
 
 ### Fixed
 - Parameter graphs no longer draw overlapping value labels on the left axis
@@ -99,6 +105,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Carbonate Hardness" row in different units (meq/L) and was landing in the
   "not imported" list instead of on your dashboard; it is now converted to
   dKH — the same number the lab's own Fauna Marin file gives.
+- A lab report stating alkalinity in a unit the app doesn't recognize (a US
+  lab's "ppm CaCO3", for example) is no longer imported as if it were dKH —
+  roughly 18× too high. The row now appears in the "not imported" list so
+  nothing lands wrong silently.
+- Lab and Hanna CSV imports no longer lose data when a field contains a
+  stray quote character (a note like `new 5" return line`): the rest of that
+  row — and in a Hanna export, every later row — was silently swallowed,
+  which among other things disarmed the warning against importing the same
+  Fauna Marin report twice.
+- ZIMS lab exports that write µg/L with the Greek letter mu (some macOS and
+  lab systems do) now import their trace elements instead of listing all of
+  them as "not imported".
+- Hanna Lab imports from a phone set to US date format no longer place some
+  readings months off: whether dates read day-first or month-first is now
+  decided once for the whole file instead of row by row, so July 4th can no
+  longer import as April 7th while July 23rd imported correctly.
+- Groundwork fixes to the (not yet active) Pro purchase plumbing: a storage
+  hiccup while checking the unlock at launch no longer hides it until the
+  app is restarted, restoring purchases also clears a stuck failed
+  transaction (which iOS would otherwise re-deliver forever, blocking a
+  re-purchase), and a failed save of a fresh purchase is reported instead of
+  failing silently in the background.
 
 ## [1.1.1] - 2026-08-01
 

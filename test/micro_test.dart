@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:reeftracker/domain/micro.dart';
@@ -53,6 +55,53 @@ void main() {
         } else {
           expect(p.unit, 'mg/L', reason: p.key);
         }
+      }
+    });
+
+    test('default bounds are representable at the display precision, and '
+        'every amber band spans at least one display step', () {
+      // The bound editors and the entry form work in display units at the
+      // catalog's `decimals`. A default bound the user cannot type back is a
+      // value they can never restore after editing; an amber band narrower
+      // than one display step is an unreachable warning tier — the element
+      // jumps green→red with no amber in between.
+      for (final p in kMicroParameters) {
+        final b = p.defaultBounds;
+        if (b == null || b.isEmpty) continue;
+        final step = 1 / math.pow(10, p.decimals);
+
+        for (final bound in [
+          b.amberLow,
+          b.greenLow,
+          b.greenHigh,
+          b.amberHigh,
+        ]) {
+          if (bound == null) continue;
+          final display = bound * p.displayFactor;
+          final typed = double.parse(display.toStringAsFixed(p.decimals));
+          expect(
+            typed,
+            closeTo(display, display.abs() * 1e-9 + 1e-12),
+            reason:
+                '${p.key}: bound $display ${p.unit} is not representable '
+                'at ${p.decimals} decimals',
+          );
+        }
+
+        void amberStep(double? inner, double? outer, String side) {
+          if (inner == null || outer == null) return;
+          final gap = (outer - inner).abs() * p.displayFactor;
+          expect(
+            gap,
+            greaterThanOrEqualTo(step * (1 - 1e-9)),
+            reason:
+                '${p.key}: $side amber band ($gap ${p.unit}) is narrower '
+                'than one display step ($step)',
+          );
+        }
+
+        amberStep(b.greenLow, b.amberLow, 'low');
+        amberStep(b.greenHigh, b.amberHigh, 'high');
       }
     });
 

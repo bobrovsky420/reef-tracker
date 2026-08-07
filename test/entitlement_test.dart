@@ -1,12 +1,35 @@
 import 'dart:io';
 
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/entitlement.dart';
 import 'package:reeftracker/data/purchases.dart';
 import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/pro_features.dart';
+
+/// Delegates to a [MemoryProEntitlementStore] but can be told to fail writes —
+/// the disk-full / IO-error shape the service's grant paths must contain.
+class _WriteFailingStore implements ProEntitlementStore {
+  final MemoryProEntitlementStore _inner = MemoryProEntitlementStore();
+  bool writeThrows = false;
+
+  @override
+  Future<bool> read() => _inner.read();
+
+  @override
+  Stream<bool> watch() => _inner.watch();
+
+  @override
+  Future<void> write(bool purchased) {
+    if (writeThrows) throw const FileSystemException('disk full');
+    return _inner.write(purchased);
+  }
+
+  @override
+  void dispose() => _inner.dispose();
+}
 
 /// The Pro entitlement (U19 Stage A0): where the purchase is stored, when it
 /// is acknowledged, and — the part with real money behind it — when a cached
@@ -74,6 +97,66 @@ void main() {
     test('a garbled file reads as not entitled, never as a crash', () async {
       await File('${dir.path}/$kProEntitlementFileName').writeAsString('yes');
       expect(await entitlement.read(), isFalse);
+    });
+
+    test('a failed read is not cached — the next read retries', () async {
+      // The unlock is on disk, but the first read hits a documents-dir
+      // hiccup. It must fail closed for THAT call only: caching the false
+      // would unentitle a paying user for the whole process, and make
+      // restoreAtStartup skip its self-heal because "nothing is cached".
+      var fail = true;
+      final store = FileProEntitlementStore(
+        directory: () async {
+          if (fail) throw const FileSystemException('documents unavailable');
+          return dir;
+        },
+      );
+      addTearDown(store.dispose);
+      await File('${dir.path}/$kProEntitlementFileName').writeAsString('1');
+
+      expect(await store.read(), isFalse, reason: 'fails closed per call');
+      fail = false;
+      expect(await store.read(), isTrue, reason: 'the hiccup was not cached');
+    });
+
+    test('successful reads are cached — including "no file yet"', () async {
+      // The counterpart guard: a genuine answer (file present or absent) IS
+      // cached, so the dashboard's gate doesn't re-read the disk per frame.
+      var directoryCalls = 0;
+      final store = FileProEntitlementStore(
+        directory: () async {
+          directoryCalls++;
+          return dir;
+        },
+      );
+      addTearDown(store.dispose);
+      expect(await store.read(), isFalse);
+      expect(await store.read(), isFalse);
+      expect(directoryCalls, 1);
+    });
+
+    test('the iOS backup-exclusion attribute lands on the final path, '
+        'never the .tmp', () async {
+      // The attribute belongs to the inode: applied to the .tmp before the
+      // rename it would evaporate with it, and the one thing keeping a paid
+      // unlock from riding an iCloud restore onto every device on the
+      // account would silently not be set.
+      final excluded = <String>[];
+      const channel = MethodChannel('cz.reeftracker/file_backup');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'exclude') {
+          excluded.add((call.arguments as Map)['path'] as String);
+        }
+        return null;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+      await entitlement.write(true);
+      expect(excluded, isNotEmpty);
+      expect(excluded, everyElement(endsWith(kProEntitlementFileName)));
+      expect(excluded, everyElement(isNot(endsWith('.tmp'))));
     });
   });
 
@@ -242,6 +325,50 @@ void main() {
     });
   });
 
+  group('ProEntitlementService — a failing entitlement write', () {
+    late FakePurchaseStore store;
+    late _WriteFailingStore failing;
+    late ProEntitlementService service;
+
+    setUp(() {
+      store = FakePurchaseStore();
+      failing = _WriteFailingStore();
+      service = ProEntitlementService(store: store, entitlement: failing);
+      service.start();
+    });
+    tearDown(() async {
+      await service.dispose();
+      store.dispose();
+      failing.dispose();
+    });
+
+    test('buy reports failed, never a silent grant', () async {
+      failing.writeThrows = true;
+      expect(await service.buy(store.products.single), PurchaseOutcome.failed);
+      expect(await failing.read(), isFalse);
+      // Acknowledge-first still held: the purchase was completed before the
+      // write was attempted, so the store's redelivery is the retry.
+      expect(store.completed, hasLength(1));
+    });
+
+    test('on the background stream it is contained, not thrown into the '
+        'zone — and the redelivery lands', () async {
+      // `start()`'s listener applies updates via an unawaited future: a
+      // throwing entitlement write there used to surface as an unhandled
+      // async error (which is exactly what this test would fail with).
+      failing.writeThrows = true;
+      store.emitPurchased();
+      await pumpEventQueue();
+      expect(await failing.read(), isFalse);
+
+      // The purchase stays owned by the account; the next delivery grants.
+      failing.writeThrows = false;
+      store.emitPurchased();
+      await pumpEventQueue();
+      expect(await failing.read(), isTrue);
+    });
+  });
+
   group('ProEntitlementService — the clearing policy', () {
     late FakePurchaseStore store;
     late ProEntitlementService service;
@@ -276,6 +403,32 @@ void main() {
       await entitlement.write(true);
       expect(await service.restore(), PurchaseOutcome.nothingToRestore);
       expect(await entitlement.read(), isFalse);
+    });
+
+    test('an empty restore still finishes unfinished non-entitling '
+        'transactions', () async {
+      // iOS re-delivers an unfinished failed transaction forever and refuses
+      // a re-purchase until it is finished. restore() used to short-circuit
+      // on "nothing entitles" and never finish it — the exact state a user
+      // whose payment failed is stuck in when they try to buy again.
+      store.owned = const [
+        PurchaseUpdate(
+          productId: kProUnlockProductId,
+          state: PurchaseState.error,
+          pendingComplete: true,
+        ),
+        // A deferred payment must still never be finished (both stores
+        // forbid it), even on this path.
+        PurchaseUpdate(
+          productId: kProUnlockProductId,
+          state: PurchaseState.pending,
+          pendingComplete: true,
+        ),
+      ];
+      expect(await service.restore(), PurchaseOutcome.nothingToRestore);
+      expect(store.completed, hasLength(1));
+      expect(store.completed.single.state, PurchaseState.error);
+      expect(await entitlement.read(), isFalse, reason: 'nothing entitles');
     });
 
     test('a THROWN restore keeps the cached unlock — offline, wrong store '

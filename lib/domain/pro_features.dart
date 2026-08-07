@@ -46,6 +46,16 @@ bool hasProFeature(
 /// so the entire post-activation Standard population would become
 /// free-forever with no path back. With this set, a rollback-minted marker
 /// carries a version >= activation and is simply not honoured.
+///
+/// **How to actually roll back** (§10 D4; contingency, not a planned step —
+/// and note neither store lets you re-publish an older version, so a rollback
+/// is a *new* release that behaves like the old one): ship a patch that
+/// re-enables `_seedEdition` **and raises this constant above that patch's own
+/// version**. Everyone from the sale window then satisfies
+/// `markerVersion < kActivationVersion` and is a Founder again on next launch
+/// — including anyone who paid, so a refund cannot cost them access. Doing
+/// only the first half is the trap: the markers it mints are worthless, and
+/// nothing changes.
 const String? kActivationVersion = null;
 
 /// Whether a `legacy_free_since` marker stamped by [markerVersion] grants
