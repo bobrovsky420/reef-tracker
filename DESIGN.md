@@ -2792,6 +2792,22 @@ entry points for one page were four ways to say the same thing).
   with the content rather than pinning — the app paints a gradient behind the
   scaffold, so a pinned bar would need an opaque strip of a colour that doesn't
   exist here.
+- **A horizontal swipe steps the selection one chip** (`_stepVendor`), because
+  the bar not pinning means a chip can only be tapped from near the top of the
+  page. `All` is a stop like any other at the left end; running off either end
+  does nothing, wrapping being more disorienting than a dead end over three or
+  four stops. Nothing follows the finger — the step happens on release, on a
+  flick or a drag across a fifth of the width — so it is one selection change
+  per gesture: exactly one auto-read and one persisted filter, the same as a
+  tap, with no way to fling through vendors spraying LAN reads behind you. The
+  page then **scrolls back to the top**, which is the feedback rather than
+  housekeeping: there is no page transition and the FABs may look identical, so
+  without it a swipe made deep in a list would silently swap the cards at an
+  offset that means nothing in the vendor it moved to, with the bar still off
+  screen. The scroll is scheduled post-frame, after shorter content has settled
+  its extent — a scroll correction during layout would strand an animation
+  already in flight. Gestures starting on the bar itself pan the chips, its own
+  scroller winning the arena as a descendant.
 - **Vendor order** (`domain/device_vendors.dart`, `orderDeviceVendors`) is
   user-arrangeable through the vendor bar's "Reorder brands" sheet and persists in
   `SettingKey.deviceVendorOrder` as comma-joined kinds. The parser is tolerant by
