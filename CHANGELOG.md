@@ -47,6 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   log of its internal errors (size-capped, never sent anywhere by itself)
   and can share it as a text file — so a problem that only happens on your
   device can be attached to a support message instead of being unfindable.
+- Devices: swipe left or right anywhere on the page to move to the next or
+  previous brand, without scrolling back up to the chips — swiping left goes
+  one brand to the right, All being the first stop. The page scrolls back to
+  the top so you can see which brand you landed on, and a brand you have
+  already looked at shows what it last reported instead of being read again.
 
 ### Changed
 - The default strontium range now matches natural seawater: green is
