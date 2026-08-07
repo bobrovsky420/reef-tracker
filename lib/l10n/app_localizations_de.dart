@@ -1243,7 +1243,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Du verwendest die Standard-Edition von ReefTracker.';
+      'Du verwendest die Standard-Edition von ReefTracker. Alles, was du bereits erfasst hast, bleibt dir; ReefTracker Pro schaltet die erweiterten Funktionen frei.';
+
+  @override
+  String get editionUpgrade => 'Pro freischalten';
 
   @override
   String get editionPro => 'Pro';

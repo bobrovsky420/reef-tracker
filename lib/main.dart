@@ -14,6 +14,7 @@ import 'app/theme.dart';
 import 'data/cloud_restore_flow.dart';
 import 'data/diagnostics_log.dart';
 import 'data/reminder_scheduler.dart';
+import 'domain/pro_features.dart';
 import 'features/settings/pro_test_rig.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/l10n_helpers.dart';
@@ -182,14 +183,22 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     );
   }
 
-  /// Seeds the early-adopter marker (U19 phase 0): every launch of a pre-Pro
+  /// Seeds the early-adopter marker (U19): every launch of a pre-activation
   /// build stamps `legacy_free_since` with the current app version unless it
   /// is already set — these installs keep today's features free forever once
-  /// the paid tier ships. The Pro build must remove this call (it only reads
-  /// the marker). After the first frame because [PackageInfo.fromPlatform] is
-  /// a platform-channel call (see the pre-warm note in [main]).
+  /// the paid tier ships. After the first frame because
+  /// [PackageInfo.fromPlatform] is a platform-channel call (see the pre-warm
+  /// note in [main]).
+  ///
+  /// **This method is not deleted at activation** — it stops by itself, via
+  /// [shouldSeedFounderMarker], the moment `kActivationVersion` is set. That
+  /// keeps the activation edit to a single constant and makes the dangerous
+  /// half-state (sale live, seeder still minting Founders) unrepresentable.
   void _seedEdition() {
     Future<void> run() async {
+      if (!shouldSeedFounderMarker(activationVersion: kActivationVersion)) {
+        return;
+      }
       final settings = ref.read(settingsProvider);
       // The rig's seeder-off switch (P0-6), so Standard and Pro can be reached
       // on a device. Guarded by the compile-time constant, so a build without

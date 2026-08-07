@@ -3960,7 +3960,22 @@ informational dialog. It returns `Future<bool>`, and `runProGated` makes
 "a successful unlock resumes what you were doing" a property of the gate rather
 than of every call site.
 
-**Marker integrity.** `kActivationVersion` (`domain/pro_features.dart`) is null
+**One constant is the whole switch.** `kActivationVersion`
+(`domain/pro_features.dart`) is the single activation control, and everything
+else derives from it: `kProSaleLive`, whether the founder marker is still
+seeded (`shouldSeedFounderMarker`, so `_seedEdition` stops by itself rather
+than being deleted), the marker boundary, the Settings "Restore purchases" row,
+the Edition dialog's upgrade action, and — via `scripts/build-release.ps1`
+parsing the constant — the Gradle `reeftracker.proSale` property behind the
+Android manifest strip. This exists because the alternative had a silent
+failure mode: three independent edits meant a half-flip was possible, and "sale
+live while the seeder still mints Founders" makes every new install entitled,
+so nobody ever pays and the only symptom is revenue that never arrives. Derived,
+that state is unrepresentable. `shouldSeedFounderMarker` takes the version as a
+parameter so the post-activation branch is tested now rather than first running
+on activation day.
+
+**Marker integrity.** `kActivationVersion` is null
 throughout dormancy, so `markerGrantsFounder` behaves exactly as presence-only.
 Set at activation, it honours only markers stamped by pre-activation builds —
 which blunts forgery (the marker is one settings row, it rides backups by

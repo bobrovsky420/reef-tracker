@@ -1248,7 +1248,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Вы используете стандартное издание ReefTracker.';
+      'Вы используете стандартное издание ReefTracker. Всё, что вы уже записали, остаётся с вами; ReefTracker Pro открывает расширенные возможности.';
+
+  @override
+  String get editionUpgrade => 'Разблокировать Pro';
 
   @override
   String get editionPro => 'Pro';

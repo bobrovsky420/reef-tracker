@@ -2189,11 +2189,17 @@ abstract class AppLocalizations {
   /// **'You\'ve been with ReefTracker since its early days. As a thank-you, every feature available today stays free for you — forever.'**
   String get founderInfoBody;
 
-  /// Dialog body for the standard edition (dormant until a paid tier exists).
+  /// Dialog body for the standard edition. Unreachable until the paid tier activates (every install is seeded as Founder until then). Must never suggest existing data is locked away.
   ///
   /// In en, this message translates to:
-  /// **'You\'re using the standard edition of ReefTracker.'**
+  /// **'You\'re using the standard edition of ReefTracker. Everything you\'ve already recorded stays yours; ReefTracker Pro unlocks the advanced features.'**
   String get standardInfoBody;
+
+  /// Action on the Edition dialog that opens the paywall. Only shown once the paid tier is live and the install has not bought.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Pro'**
+  String get editionUpgrade;
 
   /// Edition name for an install holding a Pro unlock.
   ///
