@@ -403,6 +403,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// extent first: a scroll correction during layout replaces the activity of an
   /// animation already in flight, which would strand the page mid-way.
   void _stepVendor(int delta) {
+    // With a single vendor the bar isn't rendered at all, and All and that
+    // vendor show the same one section — stepping between them would change
+    // the header and the disclaimer with nothing on screen to explain why.
+    if (_present.length < 2) return;
     final stops = <String?>[null, ..._present];
     // Same fallback as the build's `selected`: a stored vendor with no chip
     // left is All, so a swipe from it goes somewhere sensible.
@@ -958,11 +962,13 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     // A horizontal swipe steps the vendor bar one chip along, so the selection
     // can be changed from anywhere on the page — the bar scrolls away with the
     // content, and reaching a chip otherwise means scrolling back up for it.
-    // Only where there is a bar to step: a single vendor has no chips. Nothing
-    // follows the finger; the step happens when it lifts. The bar's own
+    // Nothing follows the finger; the step happens when it lifts. The bar's own
     // horizontal scroller wins the arena against this for gestures that start
     // on the chips, which is the right way round — that strip pans the chips.
-    if (present.length < 2) return list;
+    //
+    // Wrapped unconditionally, with [_stepVendor] declining when there is no
+    // bar to step: making the wrapper itself conditional would re-root the list
+    // whenever the vendor count crossed one, throwing away its scroll position.
     final width = MediaQuery.sizeOf(context).width;
     return GestureDetector(
       onHorizontalDragStart: (_) => _dragDx = 0,
@@ -1339,7 +1345,7 @@ class _Scope {
 
 /// The vendor selector: one chip per vendor that has a device, in the user's
 /// order, preceded by All.
-class _VendorBar extends StatelessWidget {
+class _VendorBar extends StatefulWidget {
   const _VendorBar({
     required this.vendors,
     required this.selected,
@@ -1358,8 +1364,57 @@ class _VendorBar extends StatelessWidget {
   final VoidCallback onReorder;
 
   @override
+  State<_VendorBar> createState() => _VendorBarState();
+}
+
+class _VendorBarState extends State<_VendorBar> {
+  /// One key per stop (`null` = All), kept across builds so the selected chip
+  /// can be found and scrolled to.
+  final Map<String?, GlobalKey> _chipKeys = {};
+
+  GlobalKey _chipKey(String? vendor) =>
+      _chipKeys.putIfAbsent(vendor, () => GlobalKey());
+
+  @override
+  void initState() {
+    super.initState();
+    // A restored selection can be off-screen on the very first build, exactly
+    // as a swiped-to one can.
+    _revealSelected();
+  }
+
+  @override
+  void didUpdateWidget(covariant _VendorBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected != widget.selected) _revealSelected();
+  }
+
+  /// Centres the selected chip in the strip. Tapping can only ever select a
+  /// chip already in view, but **swiping can land on one the strip has scrolled
+  /// past** — and a bar showing four unselected chips answers the one question
+  /// the swipe leaves open. Centring rather than merely revealing also keeps
+  /// the neighbouring brands visible, which is where the next swipe goes.
+  void _revealSelected() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final chipContext = _chipKeys[widget.selected]?.currentContext;
+      if (chipContext == null) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          chipContext,
+          alignment: 0.5,
+          duration: _kVendorSwipeScrollBack,
+          curve: Curves.easeOut,
+        ),
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final vendors = widget.vendors;
+    final selected = widget.selected;
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 10, 4, 10),
       child: Row(
@@ -1371,16 +1426,20 @@ class _VendorBar extends StatelessWidget {
               child: Row(
                 children: [
                   ChoiceChip(
+                    key: _chipKey(null),
                     label: Text(l.devicesAll),
                     selected: selected == null,
-                    onSelected: (_) => onSelected(null),
+                    onSelected: (_) => widget.onSelected(null),
                   ),
                   for (final v in vendors) ...[
                     const SizedBox(width: 8),
                     ChoiceChip(
-                      label: Text('${l.deviceVendorName(v)}  ${countOf(v)}'),
+                      key: _chipKey(v),
+                      label: Text(
+                        '${l.deviceVendorName(v)}  ${widget.countOf(v)}',
+                      ),
                       selected: selected == v,
-                      onSelected: (_) => onSelected(v),
+                      onSelected: (_) => widget.onSelected(v),
                     ),
                   ],
                 ],
@@ -1390,7 +1449,7 @@ class _VendorBar extends StatelessWidget {
           IconButton(
             tooltip: l.devicesReorderBrands,
             icon: const Icon(Icons.swap_vert),
-            onPressed: onReorder,
+            onPressed: widget.onReorder,
           ),
         ],
       ),

@@ -226,4 +226,112 @@ void main() {
     expectSelected('All');
     await unmountApp(tester);
   });
+
+  testWidgets('swiping to a vendor whose chip has scrolled out of the bar '
+      'brings that chip back into view', (tester) async {
+    // The hole the reveal fills: a tap can only ever select a chip already on
+    // screen, but a swipe can land on one the strip has scrolled past — and the
+    // bar would then show every chip unselected, which is exactly the question
+    // the swipe leaves open.
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    await db.upsertReefFactoryDevice(
+      identifier: 'RF-1',
+      model: kRfTempControllerModel,
+      address: '10.0.0.1',
+      name: 'RF controller',
+      tankId: tankId,
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'RSDOSE4-1',
+      model: 'RSDOSE4',
+      address: '10.0.0.3',
+      name: 'ReefDose 4',
+      tankId: tankId,
+    );
+    await db.upsertApexDevice(
+      identifier: 'AC5:1',
+      model: 'Apex',
+      address: '10.0.0.2',
+      username: 'admin',
+      name: 'Apex',
+      tankId: tankId,
+    );
+    await db.ensureHannaDevice(identifier: 'HI97115 0001', model: 'HI97115');
+    final all = await db.getAllDevices();
+    List<DeviceRecord> ofKind(String kind) => [
+      for (final d in all)
+        if (d.kind == kind) d,
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dbProvider.overrideWithValue(db),
+          deviceSecretsProvider.overrideWithValue(FakeDeviceSecrets({})),
+          reefFactoryDevicesProvider.overrideWith(
+            (ref) => Stream.value(ofKind(kDeviceKindReefFactory)),
+          ),
+          reefBeatDevicesProvider.overrideWith(
+            (ref) => Stream.value(ofKind(kDeviceKindReefBeat)),
+          ),
+          apexDevicesProvider.overrideWith(
+            (ref) => Stream.value(ofKind(kDeviceKindApex)),
+          ),
+          hannaDevicesProvider.overrideWith(
+            (ref) => Stream.value(ofKind(kDeviceKindHanna)),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const DevicesScreen(),
+        ),
+      ),
+    );
+    await settle(tester);
+
+    // The bar is the page's only horizontal scroller.
+    ScrollableState bar() => tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(SingleChildScrollView),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    // Five stops on an 800 px surface: the last chips are off the end, which is
+    // the precondition the whole test rests on.
+    expect(
+      bar().position.maxScrollExtent,
+      greaterThan(0),
+      reason: 'the chips must overflow for this test to mean anything',
+    );
+    expect(bar().position.pixels, 0);
+
+    // All → ReefFactory → Red Sea → Neptune Apex → Hanna, the far end.
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(find.byType(CustomScrollView), const Offset(-300, 0));
+      await settle(tester);
+    }
+    final hannaChip = find.byWidgetPredicate(
+      (w) => w is ChoiceChip && ((w.label as Text).data ?? '').startsWith('Han'),
+    );
+    expect(tester.widget<ChoiceChip>(hannaChip).selected, isTrue);
+    expect(bar().position.pixels, greaterThan(0));
+    // Visible, not merely scrolled towards: the chip sits inside the surface.
+    final chipRect = tester.getRect(hannaChip);
+    expect(chipRect.left, greaterThanOrEqualTo(0));
+    expect(chipRect.right, lessThanOrEqualTo(800));
+
+    // And back: All is at the other end, so the strip returns to its start.
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(find.byType(CustomScrollView), const Offset(300, 0));
+      await settle(tester);
+    }
+    expect(bar().position.pixels, 0);
+    await unmountApp(tester);
+  });
 }
