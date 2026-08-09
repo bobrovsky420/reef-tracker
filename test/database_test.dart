@@ -872,6 +872,342 @@ void main() {
     });
   });
 
+  group('watchLatestReadingPerParamAllTanks (U7)', () {
+    test('is the newest row of every (tank, parameter) pair — never another '
+        "tank's", () async {
+      final nano = await db.createTankWithPreset(
+        name: 'Nano',
+        type: SetupType.mixed,
+      );
+      final display = await db.createTankWithPreset(
+        name: 'Display',
+        type: SetupType.sps,
+      );
+      // Same parameter in both tanks, and the *older* nano value is the one a
+      // tank-blind partition would hide behind the display tank's newer row.
+      await db.insertReading(
+        tankId: nano,
+        paramKey: 'alkalinity',
+        value: 7.4,
+        takenAt: DateTime(2026, 1, 5),
+      );
+      await db.insertReading(
+        tankId: nano,
+        paramKey: 'alkalinity',
+        value: 7.6,
+        takenAt: DateTime(2026, 1, 10),
+      );
+      await db.insertReading(
+        tankId: display,
+        paramKey: 'alkalinity',
+        value: 8.9,
+        takenAt: DateTime(2026, 2, 1),
+      );
+      await db.insertReading(
+        tankId: nano,
+        paramKey: 'calcium',
+        value: 415,
+        takenAt: DateTime(2026, 1, 9),
+      );
+
+      final rows = await db.watchLatestReadingPerParamAllTanks().first;
+
+      expect(
+        rows.map((r) => (r.tankId, r.paramKey, r.value)),
+        [
+          (nano, 'alkalinity', 7.6),
+          (nano, 'calcium', 415.0),
+          (display, 'alkalinity', 8.9),
+        ],
+        reason: 'one head per (tank, param); the nano keeps its own alkalinity',
+      );
+    });
+
+    test('breaks a same-second tie by id, per tank', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+      final t = DateTime(2026, 3, 1, 9, 30);
+      for (final tank in [a, b]) {
+        await db.insertReading(
+          tankId: tank,
+          paramKey: 'ph',
+          value: 8.0,
+          takenAt: t,
+        );
+        await db.insertReading(
+          tankId: tank,
+          paramKey: 'ph',
+          value: 8.3,
+          takenAt: t,
+        );
+      }
+
+      final rows = await db.watchLatestReadingPerParamAllTanks().first;
+      expect(rows, hasLength(2));
+      // The later insert (higher id) wins in each tank — deterministic, not
+      // whichever row the scan happens to reach first.
+      expect(rows.every((r) => r.value == 8.3), isTrue);
+      expect(rows.map((r) => r.tankId), [a, b]);
+    });
+
+    test('soft-deleted tanks ride along (the caller drops them)', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      await db.insertReading(
+        tankId: a,
+        paramKey: 'ph',
+        value: 8.1,
+        takenAt: DateTime(2026, 1, 1),
+      );
+      await db.softDeleteTank(a);
+      expect(await db.watchLatestReadingPerParamAllTanks().first, hasLength(1));
+    });
+  });
+
+  group('dashboard order (measurements + ratio cards share one space)', () {
+    test('applyDashboardOrder updates tracked parameters and both ratio '
+        'branches (insert + update)', () async {
+      final tank = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.sps,
+      );
+      final params = await db.getTrackedParameters(tank);
+      // caalk already has a row (the user hid it); mgca has none yet, so it
+      // takes the insert branch.
+      await db.setRatioVisible(tank, 'caalk', false);
+
+      await db.applyDashboardOrder(
+        tank,
+        paramOrders: [
+          (id: params[1].id, order: 0),
+          (id: params[0].id, order: 1),
+        ],
+        ratioOrders: [(key: 'caalk', order: 2), (key: 'mgca', order: 3)],
+      );
+
+      final after = await db.getTrackedParameters(tank);
+      expect(after.first.id, params[1].id);
+      expect(after.first.displayOrder, 0);
+      expect(after[1].displayOrder, 1);
+      // Parameters not listed keep their seeded positions.
+      expect(
+        after.firstWhere((p) => p.id == params[2].id).displayOrder,
+        params[2].displayOrder,
+      );
+
+      final ratios = {
+        for (final r in await db.watchRatioVisibilities(tank).first)
+          r.ratioKey: r,
+      };
+      expect(ratios.keys, unorderedEquals(['caalk', 'mgca']));
+      expect(ratios['caalk']!.displayOrder, 2);
+      expect(
+        ratios['caalk']!.visible,
+        isFalse,
+        reason: 'the update branch writes only displayOrder',
+      );
+      expect(ratios['mgca']!.displayOrder, 3);
+      expect(
+        ratios['mgca']!.visible,
+        isTrue,
+        reason: 'a row created by the insert branch starts visible',
+      );
+    });
+
+    test('is idempotent and tank-scoped', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.sps);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.sps);
+      await db.setRatioVisible(b, 'caalk', false);
+      final bBefore = (await db.watchRatioVisibilities(b).first).single;
+
+      final paramA = (await db.getTrackedParameters(a)).first;
+      for (var i = 0; i < 2; i++) {
+        await db.applyDashboardOrder(
+          a,
+          paramOrders: [(id: paramA.id, order: 5)],
+          ratioOrders: [(key: 'caalk', order: 6)],
+        );
+      }
+
+      // Running it twice must not duplicate the ratio row or drift the order.
+      final rowsA = await db.watchRatioVisibilities(a).first;
+      expect(rowsA, hasLength(1));
+      expect(rowsA.single.displayOrder, 6);
+      expect(
+        (await db.getTrackedParameters(
+          a,
+        )).firstWhere((p) => p.id == paramA.id).displayOrder,
+        5,
+      );
+      // The other tank's row with the same key is untouched.
+      expect((await db.watchRatioVisibilities(b).first).single, bBefore);
+    });
+
+    test('a reorder never clobbers hidden state or hand-set ratio bounds, '
+        'and neither setter clobbers the other (#10)', () async {
+      final tank = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.sps,
+      );
+      await db.setRatioVisible(tank, 'caalk', false);
+      await db.setRatioBounds(
+        tank,
+        'caalk',
+        amberLow: 15,
+        greenLow: 18,
+        greenHigh: 22,
+        amberHigh: 25,
+      );
+      // Bounds are a partial companion: visibility survives them.
+      var row = (await db.watchRatioVisibilities(tank).first).single;
+      expect(row.visible, isFalse);
+      expect(row.greenLow, 18);
+
+      await db.applyDashboardOrder(
+        tank,
+        paramOrders: const [],
+        ratioOrders: [(key: 'caalk', order: 4)],
+      );
+
+      row = (await db.watchRatioVisibilities(tank).first).single;
+      expect(row.displayOrder, 4);
+      expect(
+        row.visible,
+        isFalse,
+        reason: 'drag-to-reorder must not un-hide a card',
+      );
+      expect(
+        (row.amberLow, row.greenLow, row.greenHigh, row.amberHigh),
+        (15.0, 18.0, 22.0, 25.0),
+        reason: 'nor reset the bands the user typed',
+      );
+
+      // And the visibility toggle keeps the bounds and the new order.
+      await db.setRatioVisible(tank, 'caalk', true);
+      row = (await db.watchRatioVisibilities(tank).first).single;
+      expect(row.visible, isTrue);
+      expect(row.greenLow, 18);
+      expect(row.displayOrder, 4);
+
+      // Clearing back to the defaults writes nulls without disturbing them.
+      await db.setRatioBounds(
+        tank,
+        'caalk',
+        amberLow: null,
+        greenLow: null,
+        greenHigh: null,
+        amberHigh: null,
+      );
+      row = (await db.watchRatioVisibilities(tank).first).single;
+      expect(row.greenLow, isNull);
+      expect(row.visible, isTrue);
+      expect(row.displayOrder, 4);
+    });
+  });
+
+  group('microelement views (U17)', () {
+    test(
+      'insert assigns max(displayOrder)+1 after a middle delete (#9/#21)',
+      () async {
+        final tank = await db.createTankWithPreset(
+          name: 'A',
+          type: SetupType.mixed,
+        );
+        final a = await db.insertMicroView(
+          tankId: tank,
+          name: 'Trace',
+          paramKeys: ['iodine'],
+        );
+        final b = await db.insertMicroView(
+          tankId: tank,
+          name: 'Metals',
+          paramKeys: ['iron', 'manganese'],
+        );
+        final c = await db.insertMicroView(
+          tankId: tank,
+          name: 'Contaminants',
+          paramKeys: ['copper'],
+        );
+        var rows = await db.watchMicroViews(tank).first;
+        expect(rows.map((v) => v.id), [a, b, c]);
+        expect(rows.map((v) => v.displayOrder), [0, 1, 2]);
+
+        await db.deleteMicroView(b);
+        final d = await db.insertMicroView(
+          tankId: tank,
+          name: 'Halogens',
+          paramKeys: ['bromine'],
+        );
+        rows = await db.watchMicroViews(tank).first;
+        expect(rows.map((v) => v.id), [a, c, d]);
+        expect(
+          rows.last.displayOrder,
+          3,
+          reason:
+              'max+1, not the row count (2) — a collision would let the '
+              'chip row reorder itself on the next launch',
+        );
+        expect(
+          rows.map((v) => v.displayOrder).toSet(),
+          hasLength(3),
+          reason: 'orders stay unique',
+        );
+      },
+    );
+
+    test('the order sequence is per tank', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+      await db.insertMicroView(tankId: a, name: 'X', paramKeys: ['iodine']);
+      await db.insertMicroView(tankId: a, name: 'Y', paramKeys: ['iron']);
+      await db.insertMicroView(tankId: b, name: 'Z', paramKeys: ['copper']);
+      expect((await db.watchMicroViews(b).first).single.displayOrder, 0);
+    });
+
+    test('update replaces the name and the whole key set', () async {
+      final tank = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      final id = await db.insertMicroView(
+        tankId: tank,
+        name: 'Trace',
+        paramKeys: ['iodine', 'iron'],
+      );
+      await db.updateMicroView(
+        id,
+        name: 'Trace v2',
+        paramKeys: ['copper', 'zinc', 'nickel'],
+      );
+      final row = (await db.watchMicroViews(tank).first).single;
+      expect(row.name, 'Trace v2');
+      expect(row.keys, [
+        'copper',
+        'zinc',
+        'nickel',
+      ], reason: 'keys are replaced wholesale, not merged');
+      expect(row.displayOrder, 0, reason: 'the chip keeps its position');
+    });
+
+    test('deleting a tank cascades to its views', () async {
+      final tank = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      final other = await db.createTankWithPreset(
+        name: 'B',
+        type: SetupType.mixed,
+      );
+      await db.insertMicroView(tankId: tank, name: 'X', paramKeys: ['iodine']);
+      await db.insertMicroView(tankId: other, name: 'Y', paramKeys: ['iron']);
+
+      await db.softDeleteTank(tank);
+      await db.hardDeleteTank(tank);
+
+      expect(await db.watchMicroViews(tank).first, isEmpty);
+      expect(await db.watchMicroViews(other).first, hasLength(1));
+    });
+  });
+
   group('settings', () {
     test('round-trips values and reports null for unset keys', () async {
       expect(await db.getSetting('locale'), isNull);

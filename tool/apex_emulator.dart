@@ -88,6 +88,7 @@ class ApexEmulator {
     this.username = 'admin',
     this.password = '1234',
     this.trident = true,
+    this.rejectSessionLogin = false,
     this.verbose = true,
     Random? random,
   }) : _random = random ?? Random(serial.hashCode);
@@ -102,6 +103,14 @@ class ApexEmulator {
   /// Whether to include a Trident's alk/Ca/Mg inputs — they ride the same
   /// input list as the analog probes on a real controller.
   final bool trident;
+
+  /// Answer `POST /rest/login` with **401** even for the right credentials —
+  /// the third rung of the app's auth ladder. Builds exist that route the
+  /// `/rest` tree but refuse a *session* login while still honouring HTTP Basic
+  /// auth on the legacy path, and a 401 there must therefore mean "try Basic",
+  /// not "wrong password". Only meaningful with [EmuFirmware.aos5] (a Classic
+  /// controller 404s that route instead).
+  final bool rejectSessionLogin;
 
   final bool verbose;
   final Random _random;
@@ -206,6 +215,14 @@ class ApexEmulator {
     if (firmware == EmuFirmware.classic) {
       return _send(request, HttpStatus.notFound, 'not found');
     }
+    if (rejectSessionLogin) {
+      // Drained first: the client is still writing the body, and a response
+      // sent before the request is read can reset the connection.
+      await utf8.decoder.bind(request).join();
+      return _sendJson(request, {
+        'error': 'Unauthorized',
+      }, status: HttpStatus.unauthorized);
+    }
     final body = await utf8.decoder.bind(request).join();
     Map<String, Object?> decoded;
     try {
@@ -269,6 +286,12 @@ class ApexEmulator {
   /// the real document is enormous. `iconf[].extra.range` is the authoritative
   /// statement of the controller's temperature unit, and Neptune's own
   /// spelling of it really is "Celcius".
+  ///
+  /// `oconf[].prog` carries each output's **program text**, which nothing in
+  /// the app reads but which is what makes this — not `/rest/status` — the
+  /// largest document an Apex serves. It is reproduced (in miniature: a real
+  /// controller's programs run to pages) so that the size ordering the response
+  /// ceiling meets in the field is the one the fake presents.
   Future<void> _handleRestConfig(HttpRequest request) async {
     if (firmware == EmuFirmware.classic) {
       return _send(request, HttpStatus.notFound, 'not found');
@@ -292,10 +315,30 @@ class ApexEmulator {
       ],
       'oconf': [
         for (final o in _outlets)
-          {'did': o.did, 'name': o.name, 'ctype': 'Advanced', 'prog': 'Set ON'},
+          {
+            'did': o.did,
+            'name': o.name,
+            'ctype': 'Advanced',
+            'prog': _program(o),
+          },
       ],
     });
   }
+
+  /// A plausible Apex program for [o] — the statement soup a keeper actually
+  /// writes, in the multi-line form the controller stores it in.
+  static String _program(_Outlet o) => [
+    'Fallback OFF',
+    'Set ${o.state.endsWith('N') ? 'ON' : 'OFF'}',
+    'If Tmp > 26.4 Then OFF',
+    'If Tmp < 25.2 Then ON',
+    'If FeedA 000 Then OFF',
+    'If FeedB 000 Then OFF',
+    'If Power Apex Off 000 Then OFF',
+    'Defer 001:00 Then ON',
+    'Min Time 010:00 Then ON',
+    '// ${o.name} — edited from Fusion',
+  ].join('\n');
 
   /// `GET /cgi-bin/status.json` behind Basic auth — the Classic path. Note the
   /// `istat` wrapper and the identity fields sitting at that level rather than

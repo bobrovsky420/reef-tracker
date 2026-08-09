@@ -52,6 +52,30 @@ void main() {
       expect(id.modelName, isNull);
     });
 
+    test('a serial too short to be one is refused, so two such hosts can '
+        'never collapse into one device', () async {
+      // The serial *is* the discovery dedupe key and the `Devices.identifier`
+      // primary key. A device that answers the config handshake with an empty
+      // or truncated serial (a factory-blank unit, a half-flashed one, a
+      // truncated frame) would otherwise be reported with an identifier that
+      // hides the next such host behind it — and that can never match a
+      // rediscovery either, so its row can never be updated. Found-but-
+      // unsupported (an unknown 16-char prefix, tested above) stays a *report*;
+      // this is the one shape that has to be refused outright.
+      for (final serial in ['', 'RF', 'RFSG0']) {
+        final emu = await emulator(serial: serial);
+        await expectLater(
+          link.identify(host(emu)),
+          throwsA(
+            isA<RfLinkException>()
+                .having((e) => e.error, 'error', RfLinkError.protocol)
+                .having((e) => e.detail, 'detail', contains('serial')),
+          ),
+          reason: 'serial "$serial"',
+        );
+      }
+    });
+
     test('nothing listening on the port maps to unreachable', () async {
       await expectLater(
         impatient.identify('127.0.0.1:1'),

@@ -10,7 +10,9 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/presets.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/domain/zones.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
 /// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so
@@ -166,5 +168,135 @@ void main() {
     expect(find.text('Not tested in 45 d'), findsOneWidget);
 
     await unmountApp(tester);
+  });
+
+  // The list's ring and the dashboard's ring are two code paths computing the
+  // same number from different queries (all-tanks joins vs the active tank's
+  // bounded feeds), with nothing tying them together: green in the list, red
+  // one tap later.
+  group('tanksOverviewProvider ↔ tankHealthProvider parity', () {
+    /// Pumps the event loop until [cond] holds (or fails after ~1 s).
+    Future<void> pumpUntil(bool Function() cond) async {
+      for (var i = 0; i < 200 && !cond(); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      expect(cond(), isTrue, reason: 'condition not reached within the timeout');
+    }
+
+    test('the list row scores the active tank exactly like the dashboard, '
+        'overrides included, and micro readings never date its freshness '
+        'line', () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final container = ProviderContainer(
+        overrides: [dbProvider.overrideWithValue(db)],
+      );
+      addTearDown(container.dispose);
+
+      final tuned = await db.createTankWithPreset(
+        name: 'Tuned',
+        type: SetupType.mixed,
+      );
+      // A second tank with its own (untuned) alkalinity keeps the all-tanks
+      // queries honest — neither its rows nor its overrides may bleed across.
+      final other = await db.createTankWithPreset(
+        name: 'Other',
+        type: SetupType.mixed,
+      );
+      await db.setActiveTank(tuned);
+
+      // A low-alkalinity tank running its own band: 6.6 dKH is outside the
+      // mixed preset's green range but inside this tank's.
+      const ownBounds = ZoneBounds(
+        amberLow: 6.0,
+        greenLow: 6.4,
+        greenHigh: 7.2,
+        amberHigh: 7.6,
+      );
+      expect(
+        defaultBoundsFor(SetupType.mixed, 'alkalinity').classify(6.6),
+        isNot(Zone.green),
+        reason: 'the override must actually change the verdict',
+      );
+      await db.setParameterOverride(tuned, 'alkalinity', ownBounds);
+
+      // Drift stores timestamps at whole-second resolution.
+      final nowSec = DateTime.fromMillisecondsSinceEpoch(
+        (DateTime.now().millisecondsSinceEpoch ~/ 1000) * 1000,
+      );
+      final coreAt = nowSec.subtract(const Duration(days: 2));
+      await db.insertReading(
+        tankId: tuned,
+        paramKey: 'alkalinity',
+        value: 6.6,
+        takenAt: coreAt,
+      );
+      await db.insertReading(
+        tankId: other,
+        paramKey: 'alkalinity',
+        value: 6.6,
+        takenAt: nowSec,
+      );
+      // A tracked microelement measured *after* every core parameter: it must
+      // be excluded from both the score and the "last tested" line (ICP runs
+      // on a cadence of months — counting it would report a stale tank fresh).
+      await db.addTrackedParameter(tuned, 'iodine');
+      await db.insertReading(
+        tankId: tuned,
+        paramKey: 'iodine',
+        value: 0.06,
+        takenAt: nowSec,
+      );
+
+      final overviewSub = container.listen(tanksOverviewProvider, (_, _) {});
+      final healthSub = container.listen(tankHealthProvider, (_, _) {});
+      final trackedSub = container.listen(trackedParametersProvider, (_, _) {});
+      final readingsSub = container.listen(recentReadingsProvider, (_, _) {});
+      addTearDown(overviewSub.close);
+      addTearDown(healthSub.close);
+      addTearDown(trackedSub.close);
+      addTearDown(readingsSub.close);
+
+      await pumpUntil(
+        () =>
+            container.read(tanksOverviewProvider).hasValue &&
+            container.read(tankHealthProvider).hasData &&
+            (container.read(recentReadingsProvider).value ?? const [])
+                .isNotEmpty,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      final rows = container.read(tanksOverviewProvider).value!;
+      final row = rows.firstWhere((r) => r.tank.id == tuned);
+      final dashboard = container.read(tankHealthProvider);
+
+      // The whole point: same score, same band, same per-parameter breakdown.
+      expect(row.health, dashboard);
+      expect(
+        row.health.parameters
+            .firstWhere((p) => p.paramKey == 'alkalinity')
+            .zone,
+        Zone.green,
+        reason: "the list must resolve the tank's own bounds, not the preset's",
+      );
+      expect(row.health.band, Zone.green);
+
+      // Freshness comes from the core reading, not the newer ICP one.
+      expect(row.lastTestedAt, coreAt);
+      expect(
+        row.health.parameters.map((p) => p.paramKey),
+        isNot(contains('iodine')),
+      );
+
+      // The untuned tank scores against the preset on the same value, so the
+      // override really was applied per tank rather than globally.
+      final otherRow = rows.firstWhere((r) => r.tank.id == other);
+      expect(
+        otherRow.health.parameters
+            .firstWhere((p) => p.paramKey == 'alkalinity')
+            .zone,
+        isNot(Zone.green),
+      );
+    });
   });
 }

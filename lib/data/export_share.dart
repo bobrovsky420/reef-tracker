@@ -17,6 +17,25 @@ const String kChartExportPrefix = 'reeftracker-chart-';
 /// Filename prefix of diagnostics-log exports (#107, Settings → About).
 const String kDiagnosticsExportPrefix = 'reeftracker-diagnostics-';
 
+/// Timestamp for an export/backup **filename**: `yyyyMMdd-HHmmss`, plus
+/// milliseconds when [millis] is set (the auto-backup rotation needs them to
+/// keep two writes in the same second apart, #13).
+///
+/// Built by hand rather than with `DateFormat` on purpose, for the same reason
+/// `csv_export`'s cell timestamps are: `DateFormat` renders digits in
+/// `Intl.defaultLocale`'s numbering system, so under a non-Latin-digit app
+/// language (Bengali, Persian, `ar_EG`, …) the stamp would come out as
+/// `২০২৬০৮০৯-…`. `listAutoBackups` sorts these names lexically to mean "newest
+/// first", so such names would rotate the wrong files out — and the exported
+/// filenames would no longer sort chronologically in a file manager either.
+/// `int.toString()` is locale-independent.
+String exportFileStamp(DateTime t, {bool millis = false}) {
+  String pad(int n, [int width = 2]) => n.toString().padLeft(width, '0');
+  return '${pad(t.year, 4)}${pad(t.month)}${pad(t.day)}-'
+      '${pad(t.hour)}${pad(t.minute)}${pad(t.second)}'
+      '${millis ? '-${pad(t.millisecond, 3)}' : ''}';
+}
+
 /// Whether [name] matches one of our export naming patterns. Only such files
 /// are ever swept — foreign files in the shared temp/cache dirs are untouched.
 bool _isOurExport(String name) =>

@@ -1,4 +1,6 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/ro.dart';
 import 'package:reeftracker/domain/zones.dart';
 
@@ -103,6 +105,113 @@ void main() {
     test('unknown for an invalid lifespan (#8)', () {
       expect(roStageZone(daysLeft: 5, lifespanDays: 0), Zone.unknown);
     });
+  });
+
+  group('RO stage store (U16)', () {
+    late AppDatabase db;
+    setUp(() => db = AppDatabase(NativeDatabase.memory()));
+    tearDown(() => db.close());
+
+    test('latestRoReplacementTimes takes the MAX per stage, whatever order '
+        'the log was written in', () async {
+      final sediment = await db.insertRoStage(
+        stageType: RoStageType.sediment.name,
+        lifespanDays: 90,
+      );
+      final membrane = await db.insertRoStage(
+        stageType: RoStageType.membrane.name,
+        lifespanDays: 720,
+      );
+      final di = await db.insertRoStage(
+        stageType: RoStageType.diResin.name,
+        lifespanDays: 180,
+      );
+
+      // Newest first, then an older backfill: MIN, FIRST or a missing groupBy
+      // would all anchor the reminder on the wrong date.
+      await db.insertRoReplacement(
+        stageId: sediment,
+        replacedAt: DateTime(2026, 6, 1, 9),
+      );
+      await db.insertRoReplacement(
+        stageId: sediment,
+        replacedAt: DateTime(2026, 1, 15, 8),
+      );
+      await db.insertRoReplacement(
+        stageId: sediment,
+        replacedAt: DateTime(2026, 3, 20, 17),
+      );
+      await db.insertRoReplacement(
+        stageId: membrane,
+        replacedAt: DateTime(2025, 11, 2, 12),
+      );
+
+      expect(await db.latestRoReplacementTimes(), {
+        sediment: DateTime(2026, 6, 1, 9),
+        membrane: DateTime(2025, 11, 2, 12),
+      });
+      // A stage that was never replaced carries no anchor at all — it must not
+      // appear with a null or an epoch date (a "never due" stage, per
+      // roStageDue).
+      expect((await db.latestRoReplacementTimes()).containsKey(di), isFalse);
+    });
+
+    test('an undone replacement re-anchors on the previous one', () async {
+      final stage = await db.insertRoStage(
+        stageType: RoStageType.carbonBlock.name,
+        lifespanDays: 180,
+      );
+      await db.insertRoReplacement(
+        stageId: stage,
+        replacedAt: DateTime(2026, 2, 1),
+      );
+      final undoable = await db.insertRoReplacement(
+        stageId: stage,
+        replacedAt: DateTime(2026, 7, 1),
+      );
+      expect(await db.latestRoReplacementTimes(), {
+        stage: DateTime(2026, 7, 1),
+      });
+
+      await db.deleteRoReplacement(undoable);
+      expect(await db.latestRoReplacementTimes(), {
+        stage: DateTime(2026, 2, 1),
+      });
+    });
+
+    test(
+      'deleteRoStage cascades its replacement log, and only its own',
+      () async {
+        final a = await db.insertRoStage(
+          stageType: RoStageType.sediment.name,
+          lifespanDays: 90,
+        );
+        final b = await db.insertRoStage(
+          stageType: RoStageType.membrane.name,
+          lifespanDays: 720,
+        );
+        await db.insertRoReplacement(
+          stageId: a,
+          replacedAt: DateTime(2026, 5, 1),
+        );
+        await db.insertRoReplacement(
+          stageId: a,
+          replacedAt: DateTime(2026, 6, 1),
+        );
+        await db.insertRoReplacement(
+          stageId: b,
+          replacedAt: DateTime(2026, 4, 1),
+        );
+        expect(await db.watchRoReplacements().first, hasLength(3));
+
+        await db.deleteRoStage(a);
+
+        expect((await db.getRoStages()).map((s) => s.id), [b]);
+        final log = await db.watchRoReplacements().first;
+        expect(log.map((r) => r.stageId), [b]);
+        expect(await db.latestRoReplacementTimes(), {b: DateTime(2026, 4, 1)});
+      },
+    );
   });
 
   test('default stage set covers the typical 4-stage unit, in water order', () {

@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/entitlement.dart';
 import 'package:reeftracker/data/purchases.dart';
@@ -195,6 +198,118 @@ void main() {
       for (final f in ProFeature.values) {
         expect(e.has(f), isTrue, reason: '$f must be unlocked by a purchase');
       }
+    });
+  });
+
+  group('entitlementProvider — the gate while its sources load', () {
+    // Both of the gate's inputs are async, and both are read through a
+    // `?? <default>`. `main()` awaits `settingsMapProvider` before `runApp`,
+    // but that wait is bounded by a 3 s timeout (flutter#72872), so on a
+    // wedged device the app really does build with the map still loading —
+    // and the purchase stream has no pre-warm at all. Whatever the gate
+    // answers in that window must be the LOCKED answer: the provider used to
+    // default the marker to `founder`, which is a free unlock for every
+    // Standard install the moment the paid tier is real.
+    late StreamController<Map<String, String?>> settingsMap;
+    late MemoryProEntitlementStore purchases;
+    late ProviderContainer container;
+
+    /// Riverpod 3 disposes an unlistened provider the moment the `read`
+    /// returns, which would re-subscribe (and re-load) both source streams on
+    /// every assertion. The app holds these through widgets; the listener
+    /// below is the test's stand-in for that.
+    void keepAlive(ProviderContainer c) {
+      final sub = c.listen(entitlementProvider, (_, _) {});
+      addTearDown(sub.close);
+    }
+
+    void build({bool purchased = false}) {
+      settingsMap = StreamController<Map<String, String?>>();
+      purchases = MemoryProEntitlementStore(purchased: purchased);
+      container = ProviderContainer(
+        overrides: [
+          settingsMapProvider.overrideWith((ref) => settingsMap.stream),
+          proEntitlementStoreProvider.overrideWithValue(purchases),
+        ],
+      );
+      addTearDown(() async {
+        container.dispose();
+        purchases.dispose();
+        await settingsMap.close();
+      });
+      keepAlive(container);
+    }
+
+    test('a founder install reads as Standard until the settings map '
+        'arrives, then upgrades', () async {
+      build();
+      expect(
+        container.read(settingsMapProvider).isLoading,
+        isTrue,
+        reason: 'the window under test must actually be open',
+      );
+
+      final loading = container.read(entitlementProvider);
+      expect(loading.founder, isFalse);
+      expect(loading.purchased, isFalse);
+      for (final feature in ProFeature.values) {
+        expect(
+          container.read(proFeatureProvider(feature)),
+          isFalse,
+          reason: '$feature must stay locked while entitlement is unknown',
+        );
+      }
+
+      // The marker lands: the very same install is now a Founder, and every
+      // grandfathered feature opens.
+      settingsMap.add({kLegacyFreeSinceKey: '0.26.0'});
+      await pumpEventQueue();
+      expect(container.read(entitlementProvider).founder, isTrue);
+      for (final feature in kGrandfatheredFeatures) {
+        expect(container.read(proFeatureProvider(feature)), isTrue);
+      }
+    });
+
+    test('an install with no marker at all stays Standard once the map '
+        'arrives', () async {
+      build();
+      settingsMap.add(const {});
+      await pumpEventQueue();
+      final e = container.read(entitlementProvider);
+      expect(e.founder, isFalse);
+      expect(e.purchased, isFalse);
+      expect(container.read(proFeatureProvider(ProFeature.cloudSync)), isFalse);
+    });
+
+    test('a held purchase is not granted before the purchase stream '
+        'delivers it', () async {
+      // The other half of the same rule: `purchased` also fails closed. A
+      // paying user sees the lock for one microtask, which is the correct
+      // trade against every Standard install seeing an unlock.
+      build(purchased: true);
+      settingsMap.add(const {});
+      await pumpEventQueue();
+      // Force the not-yet-delivered state: the map has landed, the purchase
+      // stream is what the gate is still waiting on.
+      expect(container.read(proPurchasedProvider).hasValue, isTrue);
+      expect(container.read(entitlementProvider).purchased, isTrue);
+
+      // And in a container where nothing has been pumped yet, the same store
+      // reads closed.
+      final fresh = ProviderContainer(
+        overrides: [
+          settingsMapProvider.overrideWith(
+            (ref) => Stream.value(const <String, String?>{}),
+          ),
+          proEntitlementStoreProvider.overrideWithValue(purchases),
+        ],
+      );
+      addTearDown(fresh.dispose);
+      keepAlive(fresh);
+      expect(fresh.read(proPurchasedProvider).isLoading, isTrue);
+      expect(fresh.read(entitlementProvider).purchased, isFalse);
+      await pumpEventQueue();
+      expect(fresh.read(entitlementProvider).purchased, isTrue);
     });
   });
 

@@ -3,15 +3,17 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/database.dart';
-import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/supplement_catalog.dart';
+import 'package:reeftracker/domain/zones.dart';
 
 /// Routes path_provider (used by [importBackup]'s rehearsal restore) to a temp
 /// folder so it works under `flutter test`.
@@ -23,6 +25,15 @@ class _FakePathProvider extends PathProviderPlatform
   Future<String?> getTemporaryPath() async => root;
   @override
   Future<String?> getApplicationDocumentsPath() async => root;
+}
+
+/// Pumps the event loop until [cond] holds (or fails the test after ~1 s) —
+/// the drift query streams behind the providers settle asynchronously.
+Future<void> pumpUntil(bool Function() cond) async {
+  for (var i = 0; i < 200 && !cond(); i++) {
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+  }
+  expect(cond(), isTrue, reason: 'condition not reached within the timeout');
 }
 
 void main() {
@@ -1676,11 +1687,22 @@ void main() {
 
     AppDatabase newDb() => AppDatabase(NativeDatabase.memory());
 
-    /// Seeds a database with a representative spread of data across tables.
+    /// Seeds a database with a representative row in **every backed-up table**,
+    /// with **every nullable column filled**.
+    ///
+    /// Both properties are load-bearing for the whole-row round-trip test
+    /// below: a table with no row, or a nullable column left null on both
+    /// sides, round-trips vacuously — exactly the blind spot that lets a new
+    /// column ship without its `_xToJson` half.
     Future<int> seed(AppDatabase db) async {
       final id = await db.createTankWithPreset(
         name: 'Reef',
         type: SetupType.mixed,
+        volumeLiters: 320,
+        startDate: DateTime(2024, 5, 17),
+        notes: 'Mixed reef, 4 years running.\nSump in the basement.',
+        vendor: 'Red Sea',
+        model: 'Reefer 350 G2',
       );
       await db.insertReadingGroup(
         tankId: id,
@@ -1695,11 +1717,13 @@ void main() {
         tankId: id,
         changedAt: DateTime(2026, 1, 2),
         amountLiters: 25,
+        note: 'Red Sea Coral Pro',
       );
       await db.insertCarbonChange(
         tankId: id,
         changedAt: DateTime(2026, 1, 3),
         grams: 200,
+        note: 'ROWAcarbon',
       );
       await db.insertEquipmentCleaning(
         tankId: id,
@@ -1710,10 +1734,61 @@ void main() {
         ManualDosesCompanion(
           tankId: Value(id),
           dosedAt: Value(DateTime(2026, 1, 6, 14, 30)),
+          productKey: const Value('rs-foundation-b'),
+          vendor: const Value('Red Sea'),
+          program: const Value('Reef Foundation'),
           product: const Value('Reef Foundation B (KH/Alk)'),
           elementKey: const Value('alkalinity'),
           amount: const Value(12.5),
           amountUnit: const Value('ml'),
+          note: const Value('after the water change'),
+        ),
+      );
+      // Two dosing segments (the effective-dated chain): a superseded one
+      // carrying `endedAt`, and the current active one.
+      await db.insertDosingEntry(
+        DosingEntriesCompanion(
+          tankId: Value(id),
+          productKey: const Value('rs-foundation-a'),
+          vendor: const Value('Red Sea'),
+          program: const Value('Reef Foundation'),
+          product: const Value('Reef Foundation A (Ca)'),
+          elementKey: const Value('calcium'),
+          amount: const Value(8),
+          amountUnit: const Value('ml'),
+          basis: const Value('perDay'),
+          frequency: const Value('everyNDays'),
+          intervalDays: const Value(2),
+          weekdays: const Value('1,3,5'),
+          doseTime: const Value('21:30'),
+          remindEnabled: const Value(true),
+          note: const Value('raised after the January ICP'),
+          createdAt: Value(DateTime(2025, 11, 1, 9)),
+          startedAt: Value(DateTime(2025, 11, 1, 9)),
+          endedAt: Value(DateTime(2026, 1, 7, 9)),
+          state: const Value('ended'),
+        ),
+      );
+      await db.insertDosingEntry(
+        DosingEntriesCompanion(
+          tankId: Value(id),
+          productKey: const Value('rs-foundation-a'),
+          vendor: const Value('Red Sea'),
+          program: const Value('Reef Foundation'),
+          product: const Value('Reef Foundation A (Ca)'),
+          elementKey: const Value('calcium'),
+          amount: const Value(11),
+          amountUnit: const Value('ml'),
+          basis: const Value('perDay'),
+          frequency: const Value('daily'),
+          intervalDays: const Value(1),
+          weekdays: const Value('1,2,3,4,5,6,7'),
+          doseTime: const Value('21:30'),
+          remindEnabled: const Value(true),
+          note: const Value('current segment'),
+          createdAt: Value(DateTime(2026, 1, 7, 9)),
+          startedAt: Value(DateTime(2026, 1, 7, 9)),
+          state: const Value('active'),
         ),
       );
       await db.setRatioBounds(
@@ -1724,22 +1799,54 @@ void main() {
         greenHigh: 3.3,
         amberHigh: 3.6,
       );
+      // A per-tank zone/target override (schema v28) — the row's presence is
+      // what makes the tank "customised", so it has to ride the backup.
+      await db.setParameterOverride(
+        id,
+        'alkalinity',
+        const ZoneBounds(
+          amberLow: 7.0,
+          greenLow: 7.8,
+          greenHigh: 8.6,
+          amberHigh: 9.4,
+        ),
+        target: 8.2,
+      );
       await db.insertReadingTemplate(
         tankId: id,
         name: 'Weekly big test',
         paramKeys: ['alkalinity', 'calcium'],
       );
-      await db.insertMaintenanceSchedule(
+      // A custom microelement view (U17).
+      await db.insertMicroView(
+        tankId: id,
+        name: 'My lab panel',
+        paramKeys: ['iodine', 'iron'],
+      );
+      final scheduleId = await db.insertMaintenanceSchedule(
         tankId: id,
         actionType: 'waterChange',
+        title: 'Water change (20 %)',
         cadenceDays: 14,
+        cadenceUnit: 'days',
+        weekdays: '6',
+        monthDay: 15,
+        scheduledAt: DateTime(2026, 1, 10, 10),
+        note: 'brine mixed the night before',
       );
+      await db.markMaintenanceDone(scheduleId, DateTime(2026, 1, 10, 11));
       await db.setTestCadence((await db.getTrackedParameters(id)).first.id, 7);
       await db.setSetting('temp_unit', 'fahrenheit');
+      await db.setSetting('ro_stages_seeded', 'true');
+      // A key whose value is null — the settings `value` column is nullable and
+      // a null must survive as a null, not collapse into "unset".
+      await db.setSetting('device_vendor_order', null);
       // The device-scoped RO unit (U16).
       final stageId = await db.insertRoStage(
         stageType: 'diResin',
+        title: 'DI resin (colour-changing)',
         lifespanDays: 120,
+        note: 'refilled from the 5 l bag',
       );
       await db.insertRoReplacement(
         stageId: stageId,
@@ -1762,6 +1869,16 @@ void main() {
         model: 'RFPM01',
         address: '192.168.1.50',
         name: 'Sump pH meter',
+        tankId: id,
+      );
+      // An Apex controller (U40) — the only device kind that fills `username`
+      // (its password deliberately never enters a backup, #68).
+      await db.upsertApexDevice(
+        identifier: 'APEX-0001',
+        model: 'Apex EL',
+        address: '192.168.1.60',
+        username: 'reefkeeper',
+        name: 'Apex',
         tankId: id,
       );
       return id;
@@ -1832,16 +1949,206 @@ void main() {
       expect(restoredSource.rewound, isFalse);
       // The connected meter (U36) arrives on the fresh device, tank link and
       // network address included — only the local row id is minted anew.
-      final restoredDevice = (await dst.getAllDevices()).single;
+      final restoredDevices = {
+        for (final d in await dst.getAllDevices()) d.identifier: d,
+      };
+      final restoredDevice = restoredDevices['RFPM011234']!;
       expect(restoredDevice.kind, 'reeffactory');
-      expect(restoredDevice.identifier, 'RFPM011234');
       expect(restoredDevice.name, 'Sump pH meter');
       expect(restoredDevice.model, 'RFPM01');
       expect(restoredDevice.address, '192.168.1.50');
       expect(restoredDevice.tankId, id);
+      // The Apex keeps its login name; its password was never in the document
+      // (#68) and is re-entered on the new phone.
+      expect(restoredDevices['APEX-0001']!.username, 'reefkeeper');
       // temp_unit is a device-local preference: the backup's value must NOT be
       // imported (#18). dst had none, so it stays unset after restore.
       expect(await dst.getSetting('temp_unit'), isNull);
+    });
+
+    test('every backed-up table round-trips whole rows, column for '
+        'column', () async {
+      // The count/spot-check assertions above prove the *sections* survive.
+      // This one proves every *column* does: drift data classes have value
+      // equality, so comparing the restored rows to the source rows fails the
+      // moment a column is added to a table and forgotten in its `_xToJson` /
+      // `_xFromJson` pair — the failure mode that otherwise stays invisible
+      // until someone restores onto a new phone. `seed` is what gives it
+      // teeth: one row per table, every nullable column non-null.
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src);
+
+      final data = decodeBackup(await encodeBackupFromDb(src));
+      final dst = newDb();
+      addTearDown(dst.close);
+      await importBackup(dst, data);
+
+      Future<void> sameRows<T>(
+        String table,
+        Future<List<T>> Function(AppDatabase) read,
+      ) async {
+        final before = await read(src);
+        expect(
+          before,
+          isNotEmpty,
+          reason: '$table is not seeded — the round-trip would pass vacuously',
+        );
+        expect(
+          await read(dst),
+          unorderedEquals(before),
+          reason: '$table lost or changed a column across the backup',
+        );
+      }
+
+      await sameRows('tanks', (d) => d.getAllTanks());
+      await sameRows('trackedParameters', (d) => d.getAllTrackedParameters());
+      await sameRows('parameterOverrides', (d) => d.getAllParameterOverrides());
+      await sameRows('readings', (d) => d.getAllReadings());
+      await sameRows('waterChanges', (d) => d.getAllWaterChanges());
+      await sameRows('carbonChanges', (d) => d.getAllCarbonChanges());
+      await sameRows('equipmentCleanings', (d) => d.getAllEquipmentCleanings());
+      await sameRows('ratioVisibilities', (d) => d.getAllRatioVisibilities());
+      await sameRows('dosingEntries', (d) => d.getAllDosingEntries());
+      await sameRows('manualDoses', (d) => d.getAllManualDoses());
+      await sameRows('readingTemplates', (d) => d.getAllReadingTemplates());
+      await sameRows('microViews', (d) => d.getAllMicroViews());
+      await sameRows(
+        'maintenanceSchedules',
+        (d) => d.getAllMaintenanceSchedules(),
+      );
+      await sameRows('roStages', (d) => d.getAllRoStages());
+      await sameRows(
+        'roStageReplacements',
+        (d) => d.getAllRoStageReplacements(),
+      );
+      await sameRows('importSources', (d) => d.getAllImportSources());
+
+      // Devices carry no id in the document (U36: they merge into a local
+      // inventory, so a preserved id could collide) — normalize it away and
+      // every other column must still match, `username` included.
+      DeviceRecord withoutId(DeviceRecord d) => d.copyWith(id: 0);
+      final srcDevices = await src.getAllDevices();
+      expect(srcDevices, isNotEmpty);
+      expect(
+        (await dst.getAllDevices()).map(withoutId),
+        unorderedEquals(srcDevices.map(withoutId).toList()),
+      );
+
+      // Settings round-trip minus the device-local keys the document
+      // deliberately drops (#69) — including a row whose value is null.
+      final travelling = [
+        for (final s in await src.getAllSettings())
+          if (!SettingKey.deviceLocalKeys.contains(s.key)) s,
+      ];
+      expect(travelling.any((s) => s.value == null), isTrue);
+      expect(await dst.getAllSettings(), unorderedEquals(travelling));
+    });
+
+    test('a restore into a populated database leaves no orphans in the '
+        'device-scoped tables', () async {
+      // The tank-scoped tables are wiped by the FK cascade behind the tank
+      // delete, but `roStages`, `roStageReplacements` and `settings` hang off
+      // no tank — nothing would remove a stale row of theirs if the restore
+      // forgot to. A leftover RO stage is a filter the user does not own,
+      // reminding them to replace it forever; a leftover setting silently
+      // outranks the restored one.
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src);
+      final data = decodeBackup(await encodeBackupFromDb(src));
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      // A phone with its own history: a different tank, its own (larger) RO
+      // unit with logged replacements, and its own settings.
+      await dst.createTankWithPreset(name: 'Old', type: SetupType.sps);
+      for (final type in ['sediment', 'carbonBlock', 'membrane']) {
+        final stage = await dst.insertRoStage(
+          stageType: type,
+          lifespanDays: 180,
+        );
+        await dst.insertRoReplacement(
+          stageId: stage,
+          replacedAt: DateTime(2025, 6, 1),
+        );
+      }
+      await dst.setSetting('ro_stages_seeded', 'true');
+      await dst.setSetting('hanna_method_sets', 'local-only');
+      // …and one device-local preference, which must be the *only* survivor.
+      await dst.setSetting('temp_unit', 'celsius');
+
+      await importBackup(dst, data);
+
+      expect(
+        await dst.getAllRoStages(),
+        unorderedEquals(await src.getAllRoStages()),
+        reason: "this phone's own RO stages must not outlive the restore",
+      );
+      expect(
+        await dst.getAllRoStageReplacements(),
+        unorderedEquals(await src.getAllRoStageReplacements()),
+      );
+      final restoredKeys = {for (final s in await dst.getAllSettings()) s.key};
+      expect(
+        restoredKeys,
+        isNot(contains('hanna_method_sets')),
+        reason: 'a settings key absent from the backup must not survive it',
+      );
+      expect(await dst.getSetting('temp_unit'), 'celsius');
+    });
+
+    test('a preserved active_tank_id naming no restored tank still resolves '
+        'to a real tank', () async {
+      // `active_tank_id` is device-local (#18), so it survives a restore
+      // untouched — and the restored tanks are different data with different
+      // ids, so it routinely ends up naming a tank that no longer exists.
+      // Every tank-scoped provider family re-keys on whatever
+      // `activeTankProvider` resolves to, so a null here would empty the whole
+      // app until the user picked a tank by hand.
+      final src = newDb();
+      addTearDown(src.close);
+      await seed(src); // one tank, id 1
+
+      final data = decodeBackup(await encodeBackupFromDb(src));
+
+      final dst = newDb();
+      addTearDown(dst.close);
+      // Three local tanks; the third is selected, so the surviving id names no
+      // tank in the single-tank backup.
+      await dst.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      await dst.createTankWithPreset(name: 'B', type: SetupType.mixed);
+      final third = await dst.createTankWithPreset(
+        name: 'C',
+        type: SetupType.mixed,
+      );
+      await dst.setActiveTank(third);
+
+      final container = ProviderContainer(
+        overrides: [dbProvider.overrideWithValue(dst)],
+      );
+      addTearDown(container.dispose);
+      final sub = container.listen(activeTankProvider, (_, _) {});
+      addTearDown(sub.close);
+
+      await importBackup(dst, data);
+
+      // The stale selection really did survive — this is the setup for the
+      // assertion, not an accident of the test.
+      expect(await dst.getActiveTankId(), third);
+      expect(
+        (await dst.getAllTanks()).map((t) => t.id),
+        isNot(contains(third)),
+      );
+
+      await pumpUntil(() => container.read(activeTankProvider) != null);
+      final active = container.read(activeTankProvider)!;
+      expect(
+        active.name,
+        'Reef',
+        reason: 'the dangling id must fall back to a restored tank',
+      );
+      expect((await dst.getAllTanks()).map((t) => t.id), contains(active.id));
     });
 
     test('encode racing concurrent multi-table writes always yields an '
