@@ -17,6 +17,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/device_http.dart';
 import 'package:reeftracker/data/rb_device_link.dart';
+import 'package:reeftracker/data/rb_protocol.dart';
 
 /// A live RSATO+'s identity, as `rb_protocol_test.dart` captured it.
 const _deviceInfo = {
@@ -264,7 +265,10 @@ void main() {
   test('the probe ceiling is far above a real identity payload', () async {
     // The point of the number: /device-info is a few hundred bytes, so the
     // discovery instance's 64 KB is headroom, not a limit anyone can hit.
-    expect(jsonEncode(_deviceInfo).length, lessThan(kDeviceProbeMaxBytes ~/ 50));
+    expect(
+      jsonEncode(_deviceInfo).length,
+      lessThan(kDeviceProbeMaxBytes ~/ 50),
+    );
     final link = RbHttpLink(
       timeout: const Duration(seconds: 5),
       maxResponseBytes: kDeviceProbeMaxBytes,
@@ -281,22 +285,25 @@ void main() {
 
     RbHttpLink link() => RbHttpLink(timeout: const Duration(seconds: 5));
 
-    test('is read from /mode and /auto, and never asks for /dashboard', () async {
-      final snapshot = await link().readOnce(host);
+    test(
+      'is read from /mode and /auto, and never asks for /dashboard',
+      () async {
+        final snapshot = await link().readOnce(host);
 
-      expect(requested, ['/device-info', '/mode', '/auto']);
-      expect(requested, isNot(contains('/dashboard')));
-      final wave = snapshot.wave;
-      expect(wave, isNotNull);
-      expect(snapshot.dose, isNull);
-      expect(snapshot.ato, isNull);
-      expect(wave!.mode, 'auto');
-      expect(wave.scheduleApplies, isTrue);
-      // The schedule is the only place a wave pump's output appears at all.
-      expect(wave.intervals, hasLength(3));
-      expect(wave.forwardPercentAt(12 * 60), 80);
-      expect(snapshot.modelDisplayName, 'ReefWave 25');
-    });
+        expect(requested, ['/device-info', '/mode', '/auto']);
+        expect(requested, isNot(contains('/dashboard')));
+        final wave = snapshot.wave;
+        expect(wave, isNotNull);
+        expect(snapshot.dose, isNull);
+        expect(snapshot.ato, isNull);
+        expect(wave!.mode, 'auto');
+        expect(wave.scheduleApplies, isTrue);
+        // The schedule is the only place a wave pump's output appears at all.
+        expect(wave.intervals, hasLength(3));
+        expect(wave.forwardPercentAt(12 * 60), 80);
+        expect(snapshot.modelDisplayName, 'ReefWave 25');
+      },
+    );
 
     test('/mode is required: without it there is no snapshot', () async {
       missing.add('/mode');
@@ -379,6 +386,56 @@ void main() {
       expect(heads.map((h) => h.shortName), ['KH', null]);
       expect(snapshot.dose!.headForShortName('NPX'), isNull);
       expect(snapshot.dose!.headForShortName('KH')?.number, 1);
+    });
+
+    test('the cap is above anything Red Sea ships, so a real pump fans out '
+        'in full', () async {
+      // The point of the number: the biggest ReefDose has 4 heads, so the
+      // bound below can only ever fire on a payload no pump produced.
+      expect(
+        (_doseDashboard['heads']! as Map).length,
+        lessThan(kRbMaxDoseHeads),
+      );
+      await link().readOnce(host);
+      expect(requested.where((p) => p.startsWith('/head/')), hasLength(2));
+    });
+
+    test('a dashboard advertising hundreds of heads is capped at '
+        'kRbMaxDoseHeads settings requests', () async {
+      // The hostile case the bound exists for: an unauthenticated LAN host (or
+      // a re-used DHCP address) answering on the pump's IP. Unbounded, this is
+      // 300 sequential GETs, each with a 6 s timeout, behind a spinner that
+      // cannot be cancelled. Numbered high-to-low so the test also proves the
+      // cap keeps the *lowest* heads (the sorted ones a real pump reports),
+      // not whichever the firmware happened to serialize first.
+      dashboard = {
+        'battery_level': 'high',
+        'time_error': false,
+        'heads': {
+          for (var n = 300; n >= 1; n--)
+            '$n': (_doseDashboard['heads']! as Map)['1'],
+        },
+      };
+
+      final snapshot = await link().readOnce(host);
+
+      final headRequests = requested
+          .where((p) => p.startsWith('/head/'))
+          .toList();
+      expect(headRequests, hasLength(kRbMaxDoseHeads));
+      expect(requested, hasLength(2 + kRbMaxDoseHeads));
+      expect(headRequests, [
+        for (var n = 1; n <= kRbMaxDoseHeads; n++) '/head/$n/settings',
+      ]);
+
+      // The parse is unaffected — only the fan-out is bounded — so the heads
+      // past the cap still get their `/dashboard` row, just no abbreviation.
+      final heads = snapshot.dose!.heads;
+      expect(heads, hasLength(300));
+      expect(heads.first.number, 1);
+      expect(heads.first.shortName, 'KH');
+      expect(heads[kRbMaxDoseHeads].shortName, isNull);
+      expect(heads.last.shortName, isNull);
     });
   });
 

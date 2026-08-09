@@ -484,6 +484,72 @@ void main() {
     });
   });
 
+  group('ProEntitlementService — a store that fails mid-flight', () {
+    late FakePurchaseStore store;
+    late ProEntitlementService service;
+
+    setUp(() {
+      store = FakePurchaseStore();
+      service = ProEntitlementService(store: store, entitlement: entitlement);
+      service.start();
+    });
+    tearDown(() async {
+      await service.dispose();
+      store.dispose();
+    });
+
+    test('a rejected buy reports failed, grants nothing, and leaves the '
+        'background listener armed', () async {
+      // `_buying` makes the listener drop every event while a buy is in
+      // flight. If a throwing buy left it stuck true, the app would stop
+      // acknowledging purchases for the rest of the process — and Play
+      // auto-refunds anything unacknowledged after three days.
+      store.buyThrows = true;
+      expect(await service.buy(store.products.single), PurchaseOutcome.failed);
+      expect(await entitlement.read(), isFalse, reason: 'nothing was bought');
+      expect(store.completed, isEmpty);
+
+      // The redelivery/retry that follows must be seen by the listener again.
+      store.buyThrows = false;
+      store.emitPurchased();
+      await pumpEventQueue();
+      expect(
+        store.completed,
+        hasLength(1),
+        reason: 'the listener was left deaf by the failed buy',
+      );
+      expect(await entitlement.read(), isTrue);
+    });
+
+    test(
+      'an error on the purchase stream does not deafen the listener',
+      () async {
+        // `cancelOnError` defaults to false, so the subscription survives — but
+        // only because `start()` supplies an onError at all: without one the
+        // error becomes an unhandled zone error at launch (which is how this
+        // test would fail).
+        store.emitError(StateError('billing connection lost'));
+        await pumpEventQueue();
+        expect(await entitlement.read(), isFalse);
+
+        store.emitPurchased();
+        await pumpEventQueue();
+        expect(
+          store.completed,
+          hasLength(1),
+          reason: 'the stream error unsubscribed the background listener',
+        );
+        expect(await entitlement.read(), isTrue);
+
+        // Still alive after a second error, and a later restore is unaffected.
+        store.emitError(StateError('again'));
+        await pumpEventQueue();
+        store.owned = const [];
+        expect(await service.restore(), PurchaseOutcome.nothingToRestore);
+      },
+    );
+  });
+
   group('ProEntitlementService — the clearing policy', () {
     late FakePurchaseStore store;
     late ProEntitlementService service;

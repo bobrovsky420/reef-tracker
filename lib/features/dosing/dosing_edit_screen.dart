@@ -83,7 +83,15 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
       _productCtrl.text = e.product;
     }
     _elementKey = e.elementKey;
-    if (e.amount != null) _amountCtrl.text = formatDoseAmount(e.amount!);
+    // Seeded at edit precision, not display precision: the field is re-parsed
+    // on save, so a one-decimal round trip would silently turn a 0.25 ml trace
+    // dose into 0.3 ml — and, being "changed", fork a history segment.
+    if (e.amount != null) {
+      _amountCtrl.text = formatDoseAmount(
+        e.amount!,
+        decimals: kDoseEditDecimals,
+      );
+    }
     _unit = DoseUnit.fromName(e.amountUnit);
     _basis = DoseBasis.fromName(e.basis) ?? DoseBasis.perDay;
     _frequency = DoseFrequency.fromName(e.frequency);
@@ -214,15 +222,17 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
       final existing = widget.entry;
       if (existing == null) {
         await db.insertDosingEntry(companion);
-      } else if (_doseAffectingChanged(existing, companion)) {
+      } else if (doseAffectingChanged(existing, companion)) {
         // A dose change: retain the old dose as history and start a new
         // segment.
         await db.supersedeDosingEntry(existing, companion);
       } else {
-        // Cosmetic-only edit (display name, note, time, reminder): update in
-        // place.
+        // Cosmetic-only edit (vendor, display name, note, time, reminder):
+        // update in place. Every field excluded from [doseAffectingChanged]
+        // must be listed here, or the edit is dropped without an error.
         await db.updateDosingEntry(
           existing.copyWith(
+            vendor: companion.vendor,
             product: _productName,
             doseTime: companion.doseTime,
             remindEnabled: companion.remindEnabled.value,
@@ -235,19 +245,6 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
       if (mounted) setState(() => _saving = false);
     }
   }
-
-  /// Whether the edit changed any field that alters the dosed amount (and thus
-  /// the dose-calculator boundary), requiring a new history segment. Cosmetic
-  /// fields (display name, note, time) are excluded.
-  bool _doseAffectingChanged(DosingEntry old, DosingEntriesCompanion next) =>
-      old.productKey != next.productKey.value ||
-      old.elementKey != next.elementKey.value ||
-      old.amount != next.amount.value ||
-      old.amountUnit != next.amountUnit.value ||
-      old.basis != next.basis.value ||
-      old.frequency != next.frequency.value ||
-      old.intervalDays != next.intervalDays.value ||
-      old.weekdays != next.weekdays.value;
 
   // --- Build ------------------------------------------------------------------
 
@@ -328,9 +325,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
         DropdownButtonFormField<String>(
           initialValue: _vendorSel,
           isExpanded: true,
-          decoration: InputDecoration(
-            labelText: l.dosingVendor,
-          ),
+          decoration: InputDecoration(labelText: l.dosingVendor),
           items: [
             for (final v in kSupplementVendors)
               DropdownMenuItem(value: v.key, child: Text(v.name)),
@@ -342,9 +337,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _vendorCtrl,
-            decoration: InputDecoration(
-              labelText: l.dosingVendorName,
-            ),
+            decoration: InputDecoration(labelText: l.dosingVendorName),
             onChanged: (_) => setState(() {}),
           ),
         ],
@@ -361,9 +354,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           DropdownButtonFormField<String>(
             initialValue: _productSel,
             isExpanded: true,
-            decoration: InputDecoration(
-              labelText: l.dosingProduct,
-            ),
+            decoration: InputDecoration(labelText: l.dosingProduct),
             items: [
               for (final p in vendor.allProducts)
                 DropdownMenuItem(value: p.key, child: Text(p.name)),
@@ -375,9 +366,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
           if (vendor != null) const SizedBox(height: 12),
           TextField(
             controller: _productCtrl,
-            decoration: InputDecoration(
-              labelText: l.dosingProductName,
-            ),
+            decoration: InputDecoration(labelText: l.dosingProductName),
             onChanged: (_) => setState(() {}),
           ),
         ],
@@ -389,12 +378,13 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     return DropdownButtonFormField<String?>(
       initialValue: _elementKey,
       isExpanded: true,
-      decoration: InputDecoration(
-        labelText: l.dosingElement,
-      ),
+      decoration: InputDecoration(labelText: l.dosingElement),
       items: [
         DropdownMenuItem(value: null, child: Text(l.dosingElementNone)),
-        for (final key in kDosingElementKeys)
+        // Not [kDosingElementKeys] directly: the current value may be an
+        // element the list does not offer (see [dosingElementChoices]), and a
+        // value without an item asserts the dropdown out of existence.
+        for (final key in dosingElementChoices(_elementKey))
           DropdownMenuItem(value: key, child: Text(l.paramName(key))),
       ],
       onChanged: (v) => setState(() => _elementKey = v),
@@ -431,9 +421,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
             Expanded(
               child: DropdownButtonFormField<DoseUnit>(
                 initialValue: _unit,
-                decoration: InputDecoration(
-                  labelText: l.dosingUnit,
-                ),
+                decoration: InputDecoration(labelText: l.dosingUnit),
                 items: [
                   for (final u in DoseUnit.values)
                     DropdownMenuItem(value: u, child: Text(u.symbol)),
@@ -446,9 +434,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
         const SizedBox(height: 12),
         DropdownButtonFormField<DoseBasis>(
           initialValue: _basis,
-          decoration: InputDecoration(
-            labelText: l.dosingBasis,
-          ),
+          decoration: InputDecoration(labelText: l.dosingBasis),
           items: [
             DropdownMenuItem(
               value: DoseBasis.perDay,
@@ -472,9 +458,7 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
         DropdownButtonFormField<DoseFrequency?>(
           initialValue: _frequency,
           isExpanded: true,
-          decoration: InputDecoration(
-            labelText: l.dosingFrequency,
-          ),
+          decoration: InputDecoration(labelText: l.dosingFrequency),
           items: [
             DropdownMenuItem(value: null, child: Text(l.dosingFreqNone)),
             DropdownMenuItem(
@@ -579,3 +563,17 @@ class _DosingEditScreenState extends ConsumerState<DosingEditScreen> {
     ).narrowWeekdays[base.add(Duration(days: weekday - 1)).weekday % 7];
   }
 }
+
+/// Whether the edit changed any field that alters the dosed amount (and thus
+/// the dose-calculator boundary), requiring a new history segment. Cosmetic
+/// fields (display name, vendor name, note, time, reminder) are excluded — they
+/// are saved in place onto the current segment.
+bool doseAffectingChanged(DosingEntry old, DosingEntriesCompanion next) =>
+    old.productKey != next.productKey.value ||
+    old.elementKey != next.elementKey.value ||
+    old.amount != next.amount.value ||
+    old.amountUnit != next.amountUnit.value ||
+    old.basis != next.basis.value ||
+    old.frequency != next.frequency.value ||
+    old.intervalDays != next.intervalDays.value ||
+    old.weekdays != next.weekdays.value;

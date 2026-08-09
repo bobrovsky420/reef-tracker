@@ -174,6 +174,7 @@ forever, even on a new device.</p>
   <tr><td>Early-warning forecast – projects when a drifting value will leave its safe range ("amber in ~5 d"), before it happens</td><td class="ed"><span class="std">STANDARD</span></td></tr>
   <tr><td>Recovery detection – a value moving back toward its safe range is recognized as improving, not flagged as a problem</td><td class="ed"><span class="std">STANDARD</span></td></tr>
   <tr><td>Swing detection – a parameter that bounces around instead of drifting is reported as swinging, with the size of the typical swing, rather than given a forecast its readings cannot support</td><td class="ed"><span class="std">STANDARD</span></td></tr>
+  <tr><td>Forecasts that know when to stay quiet – no prediction is made from readings more than a month old, and a nutrient falling toward zero (a tank finishing its cycle) is not warned about for approaching the bottom of the scale</td><td class="ed"><span class="std">STANDARD</span></td></tr>
   <tr><td>Share any graph as an image</td><td class="ed"><span class="std">STANDARD</span></td></tr>
   <tr><td>Edit or delete past readings, including whole test sessions, with Undo</td><td class="ed"><span class="std">STANDARD</span></td></tr>
 </table>

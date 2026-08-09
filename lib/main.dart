@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'app/app_builder.dart';
 import 'app/cloud_restore_dialog.dart';
 import 'app/provider_errors.dart';
 import 'app/providers.dart';
@@ -18,7 +18,6 @@ import 'domain/pro_features.dart';
 import 'features/settings/pro_test_rig.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/l10n_helpers.dart';
-import 'widgets/reef_background.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -392,14 +391,9 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      // Keep intl date/number formatting in sync with the resolved app locale
-      // so DateFormat(...) renders dates in the selected language. The
-      // ReefBackground gradient sits here, behind the Navigator, so every
-      // screen (scaffolds are transparent) shares one background.
-      builder: (context, child) {
-        Intl.defaultLocale = Localizations.localeOf(context).toLanguageTag();
-        return ReefBackground(child: child ?? const SizedBox.shrink());
-      },
+      // Locale→intl wiring and the shared ReefBackground; named so a test can
+      // exercise it through the real app (see [reefAppBuilder]).
+      builder: reefAppBuilder,
       theme: buildReefTheme(Brightness.light, defaultTargetPlatform),
       darkTheme: buildReefTheme(Brightness.dark, defaultTargetPlatform),
       themeMode: themeMode,

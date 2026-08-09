@@ -90,7 +90,8 @@ The codebase is organized into four layers:
 lib/
   domain/    Pure Dart business rules — no Flutter, no DB. Static app data.
   data/      Drift database, backup encode/decode, CSV export. The only persistence layer.
-  app/       Riverpod providers (state graph) + go_router route table + theme.
+  app/       Riverpod providers (state graph) + go_router route table + theme
+             + the shared MaterialApp builder (`app_builder.dart`).
   features/  One folder per screen/feature, wired to providers.
   l10n/      ARB source strings + generated AppLocalizations + domain-label helpers.
   widgets/   Small shared widgets.
@@ -1243,8 +1244,13 @@ lifecycle wiring that are easy to miss:
   never silently swallowed.
 - **`Intl.defaultLocale` is set inside MaterialApp's `builder`**, not in
   `initState`: the builder runs after Flutter has resolved the effective locale
-  (and re-runs when it changes), so `DateFormat` immediately renders dates in a
-  newly selected language without an app restart.
+  (and re-runs when it changes), so `DateFormat` and `formatLocaleNumber`
+  immediately render in a newly selected language without an app restart. The
+  builder body is **`reefAppBuilder` in `lib/app/app_builder.dart`** — named and
+  lifted out of `main.dart` so `test/l10n_locale_wiring_test.dart` can pump the
+  real `ReefTrackerApp` and assert the wiring end to end (a cs/de/fr dose
+  renders `8,5`, not `8.5`); a harness `MaterialApp` would have to re-declare
+  the builder and would then only prove itself right.
 - **Early-adopter marker seeding** (`_seedEdition`, post-first-frame,
   fire-and-forget): stamps `legacy_free_since` with the current app version if
   absent — see Features → Editions (U19 phase 0). The Pro build must remove
@@ -1276,7 +1282,8 @@ data layer Flutter-free); `main.dart` maps it onto `MaterialApp.themeMode`.
 **Background gradient (`widgets/reef_background.dart`).** The app background
 is a vertical gradient fading `scaffoldTop`→`scaffoldBody` within the top 14%
 of the screen, flat below — a subtle glow behind the status-bar area.
-`ReefBackground` is mounted **once**, in `MaterialApp.builder` behind the
+`ReefBackground` is mounted **once**, in `reefAppBuilder`
+(`lib/app/app_builder.dart`, installed as `MaterialApp.builder`) behind the
 Navigator; `scaffoldBackgroundColor` and the app bar are transparent over it
 (so every pushed screen shares the one background — never per-screen copies),
 with `scrolledUnderElevation: 0` (the M3 default would flash
@@ -1989,6 +1996,29 @@ rate", which would imply a rate worth trusting) and the chip renders nothing.
 In both cases `_trendIcon` drops the direction arrow (flat, or the swap
 arrows), so the icon never points where the text says the value isn't going;
 the measured per-day rate is still printed, only the *claim* is withdrawn.
+
+A **stale** series gets no forecast at all. `computeTrend` takes the same
+optional `now:` the other domain aggregates take (`computeTankHealth` /
+`computeTankStability` / `computeInsights`) and applies the health score's own
+freshness rule to it: once the newest reading is older than
+`kHealthFreshnessDays` (30), `daysToAmber` / `daysToRed` / `daysToGreen` are all
+null. The fit is still reported — slope, direction, σ, `recovering`, the
+significance verdict — because it honestly summarizes the readings that exist;
+what is withdrawn is the projection onto *today*, which a January series cannot
+make. This also keeps the two aggregates consistent: a parameter the health
+score has already dropped as stale can no longer be issuing crossing forecasts
+on the dashboard. `collectTankSummary` passes its own clock through; the
+providers use the wall clock.
+
+A **floor is not a bound.** The keep-low nutrients ship `greenLow: 0` — the
+bottom of the measuring scale, not a healthy lower limit — so callers pass the
+parameter's physical floor (`floor:`, the catalog's `minValue` via
+`kParameterByKey`) and any *low* bound equal to it is skipped when projecting.
+Without it, a cycling tank whose ammonia is falling toward zero (the outcome the
+keeper is waiting for) got a `TrendChip` and an `InsightKind.forecast` warning
+that it was about to leave its healthy range. High bounds are always reachable
+and are never skipped; a `greenLow` above the floor (alkalinity's 7.5, floor 0)
+is unaffected.
 
 Enable/disable, the window size, and the alert horizon live in **Settings →
 Trends**; both widgets disappear when the feature is off (the provider returns
@@ -4168,8 +4198,10 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 - Domain labels (parameter names/help, setup types, zones) are localized through
   `extension L10nDomain` in `lib/l10n/l10n_helpers.dart` (e.g. `volumeWithUnit`,
   `litersSuffix`/`gallonsSuffix`).
-- `main.dart` sets `Intl.defaultLocale` from the resolved locale so `DateFormat`
-  renders dates in the selected language. Locale stored in `Settings` (`locale`:
+- `reefAppBuilder` (`lib/app/app_builder.dart`, installed as
+  `MaterialApp.builder`) sets `Intl.defaultLocale` from the resolved locale,
+  which is what makes both dates *and decimal separators* follow the selected
+  language. Locale stored in `Settings` (`locale`:
   `system`/`en`/`cs`/…). Adding a language = drop in another `app_xx.arb`.
 - After editing ARBs, run `flutter gen-l10n` (or build) and re-analyze.
 

@@ -188,6 +188,9 @@ Future<CloudSyncOutcome> runCloudSyncIfDirty(
   return _syncInFlight = run;
 }
 
+/// Clears the in-flight slot so tests can run the sync repeatedly.
+void resetCloudSyncInFlightForTest() => _syncInFlight = null;
+
 Future<CloudSyncOutcome> _runCloudSyncIfDirty(
   AppDatabase db,
   CloudBackupStore store,

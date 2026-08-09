@@ -71,6 +71,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   single-element trace supplement — the Fauna Marin Elementals line — lands
   on the element it actually doses. Picking such a product previously broke
   the element selector.
+- Trend forecasts now pause when a parameter has gone untested for more than a
+  month: an abandoned series no longer keeps predicting "reaches the attention
+  zone in ~5 days" from readings taken months ago. The measured per-day rate is
+  still shown – only the projection waits for a fresh test.
+- Nutrients that belong at zero (ammonia, nitrite, nitrate, phosphate) no
+  longer warn that they are heading out of range while they fall toward zero.
+  Zero is the bottom of the scale, not a limit to cross, so a tank finishing
+  its cycle no longer gets a trend chip or an observation about its falling
+  ammonia.
 
 ### Fixed
 - Parameter graphs no longer draw overlapping value labels on the left axis
@@ -145,6 +154,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A ReefFactory unit that reports no usable serial number is now skipped by
   the network scan instead of being listed. Two such units used to collapse
   into a single entry, and neither could be recognised again later.
+- Editing a supplement in the dosing plan no longer rounds its dose. A plan
+  dosed at 0.25 ml was re-saved as 0.3 ml – a 20 % higher dose – and the
+  rounded value also ended the current dosing-history segment and started a
+  new one. Fractional doses are now kept exactly as entered. Logging or
+  editing a one-off dose no longer rounds the amount the same way. Doses
+  already rounded by an earlier edit are not corrected automatically –
+  re-enter the amount on the plan and delete the extra entry in Dosing
+  history.
+- Renaming a custom vendor on a dosing plan is now saved instead of being
+  silently discarded.
+- Opening a dosing plan or a logged dose whose target element is not in the
+  app's dosing element list – for example after restoring a backup written by
+  a newer version – no longer breaks the edit form. The element is shown and
+  kept as it was.
+- Opening a parameter's range editor moments after launch – from the
+  Microelements screen, or from a notification tap – no longer bounces back
+  to the dashboard before the parameter list has finished loading.
 
 ## [1.1.1] - 2026-08-01
 
