@@ -326,6 +326,12 @@ class LanDiscoveryService {
       );
     } on RbLinkException {
       // Not a ReefBeat device — fall through to the ReefFactory handshake.
+    } catch (_) {
+      // #85's shape, one level up. The links map everything they anticipate
+      // onto their own exception, but anything they don't — a TypeError on an
+      // unforeseen payload, an error out of a plugin — would escape into the
+      // `Future.wait` driving this batch and kill the whole scan stream, losing
+      // every device already found. One odd host costs itself and nothing more.
     }
     try {
       final id = await reefFactoryProbe.identify(ip);
@@ -338,6 +344,8 @@ class LanDiscoveryService {
         supported: id.supported,
       );
     } on RfLinkException {
+      return null;
+    } catch (_) {
       return null;
     }
   }

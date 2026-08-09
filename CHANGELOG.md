@@ -127,6 +127,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transaction (which iOS would otherwise re-deliver forever, blocking a
   re-purchase), and a failed save of a fresh purchase is reported instead of
   failing silently in the background.
+- Cloud backup sync no longer deletes the copy it has just uploaded. If the
+  cloud folder already held as many backups as your rotation keeps and they
+  were named with a later date – which happens when a second device's clock
+  runs ahead, or when a file was copied into the folder by hand – the fresh
+  upload was the one trimmed away, seconds after it landed, while Settings
+  went on reporting the data as backed up. The upload a sync just made is now
+  always kept, and it still counts towards the number of copies you asked to
+  keep.
+- Backup and export filenames now always use plain (ASCII) digits whatever
+  language the app is set to, so the automatic backup rotation keeps trimming
+  the oldest copy first and exported files keep sorting by date. No effect in
+  the languages shipped today – it would have started mis-sorting the first
+  time a language with its own digits was added.
+- Scanning the network for devices no longer stops when a single device
+  answers strangely – everything already found stays in the list.
+- A ReefFactory unit that reports no usable serial number is now skipped by
+  the network scan instead of being listed. Two such units used to collapse
+  into a single entry, and neither could be recognised again later.
 
 ## [1.1.1] - 2026-08-01
 

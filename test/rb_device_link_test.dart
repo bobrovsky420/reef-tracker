@@ -26,6 +26,118 @@ const _deviceInfo = {
   'hwid': '8813bf641cd8',
 };
 
+/// A live RSDOSE4's identity (the golden vector of `rb_protocol_test.dart`).
+const _doseDeviceInfo = {
+  'hw_type': 'reef-dosing',
+  'hw_model': 'RSDOSE4',
+  'name': 'RSDOSE4-1752835676',
+  'status': 'unpaired',
+  'hwid': 'cc7b5c267a68',
+};
+
+/// The same pump's `/dashboard`, abridged to two of its four heads — enough to
+/// prove the settings fan-out visits each head that was reported, and only
+/// those. Head numbers 1 and 4 on purpose: the loop must follow the reported
+/// numbers, not a 1..n count.
+const _doseDashboard = {
+  'battery_level': 'high',
+  'time_error': false,
+  'heads': {
+    '1': {
+      'supplement': 'Balling light KH',
+      'state': 'on',
+      'auto_dosed_today': 26.7,
+      'manual_dosed_today': 0,
+      'doses_today': 4,
+      'daily_dose': 40,
+      'remaining_days': 117,
+      'stock_level': 'high',
+      'daily_doses': 6,
+    },
+    '4': {
+      'supplement': 'NO3PO4-X',
+      'state': 'on',
+      'auto_dosed_today': 6,
+      'manual_dosed_today': 0,
+      'doses_today': 1,
+      'daily_dose': 6,
+      'remaining_days': 48,
+      'stock_level': 'high',
+      'daily_doses': 1,
+    },
+  },
+};
+
+/// `GET /head/<n>/settings` — the only endpoint carrying a head's supplement
+/// *abbreviation*, which is the sole link between a queued dose and a head.
+Map<String, Object?> _headSettings(int head) => {
+  'state': 'on',
+  'container_volume': 4654.109,
+  'vps': 0.059848,
+  'supplement': {
+    'uid': '19c1c766-407f-47e3-a4ea-71cecd4c0d31',
+    'name': head == 1 ? 'Balling light KH' : 'NO3PO4-X',
+    'display_name': head == 1 ? 'KH' : 'NPX',
+    'short_name': head == 1 ? 'KH' : 'NPX',
+    'brand_name': 'Fauna Marine',
+  },
+  'schedule': {
+    'type': 'custom',
+    'dd': 40,
+    'days': [1, 2, 3, 4, 5, 6, 7],
+  },
+};
+
+/// A live RSWAVE25's identity. The wave is the one family that serves **no**
+/// `/dashboard` at all.
+const _waveDeviceInfo = {
+  'name': 'RSWAVE25-1234567890',
+  'hw_type': 'reef-wave',
+  'hw_model': 'RSWAVE25',
+  'hwid': 'e868e7eb7a28',
+};
+
+/// Its `GET /mode` and `GET /auto` (the 2026-07-25 golden vectors).
+const _waveMode = {'mode': 'auto'};
+const _waveAuto = {
+  'uid': '587543e6-1c55-499d-8839-6f0084154aaa',
+  'intervals': [
+    {
+      'wave_uid': '0f0bdf17-92d2-4e38-bbb0-4eb7f640a57d',
+      'type': 're',
+      'name': 'Regular Night',
+      'frt': 10,
+      'rrt': 2,
+      'fti': 30,
+      'rti': 60,
+      'st': 0,
+      'direction': 'alt',
+    },
+    {
+      'wave_uid': '01bff951-dc93-4655-8349-405b82e20025',
+      'type': 'ra',
+      'name': 'Random Day',
+      'frt': 10,
+      'rrt': 2,
+      'fti': 80,
+      'rti': 60,
+      'st': 360,
+      'direction': 'alt',
+    },
+    {
+      'wave_uid': '0f0bdf17-92d2-4e38-bbb0-4eb7f640a57d',
+      'type': 're',
+      'name': 'Regular Night',
+      'frt': 10,
+      'rrt': 2,
+      'fti': 30,
+      'rti': 60,
+      'st': 1320,
+      'direction': 'alt',
+    },
+  ],
+};
+
 /// The same unit's `/dashboard`, abridged to the fields the card reads.
 const _dashboard = {
   'mode': 'auto',
@@ -49,26 +161,65 @@ void main() {
   late HttpServer server;
   late String host;
 
-  /// Serves the two real endpoints; `/flood` and friends stand in for whatever
+  /// What this test's device answers `/device-info` and `/dashboard` with —
+  /// set in the test body to play a different family. Defaults to the RSATO+.
+  late Map<String, Object?> deviceInfo;
+  late Map<String, Object?> dashboard;
+
+  /// Paths this device does **not** serve (404) — a firmware that lacks an
+  /// endpoint, or a head that will not answer.
+  late Set<String> missing;
+
+  /// Every path the link asked for, in order. The point of several tests below
+  /// is the request set itself, not the decoded snapshot.
+  late List<String> requested;
+
+  /// Serves the real endpoints; `/flood` and friends stand in for whatever
   /// else answers on port 80 across a household LAN.
   Future<void> start() async {
+    deviceInfo = Map.of(_deviceInfo);
+    dashboard = Map.of(_dashboard);
+    missing = <String>{};
+    requested = <String>[];
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     host = '127.0.0.1:${server.port}';
     server.listen((request) async {
       final response = request.response;
+      requested.add(request.uri.path);
       // Match the *first* segment: the link builds its own paths, so a hostile
       // route is reached by passing `127.0.0.1:port/flood` as the host and
       // letting it append `/dosing-queue`.
-      final route = request.uri.pathSegments.isEmpty
-          ? ''
-          : '/${request.uri.pathSegments.first}';
+      final segments = request.uri.pathSegments;
+      final route = segments.isEmpty ? '' : '/${segments.first}';
+      if (missing.contains(request.uri.path)) {
+        response.statusCode = HttpStatus.notFound;
+        await response.close();
+        return;
+      }
       switch (route) {
         case '/device-info':
           response.headers.contentType = ContentType.json;
-          response.write(jsonEncode(_deviceInfo));
+          response.write(jsonEncode(deviceInfo));
         case '/dashboard':
           response.headers.contentType = ContentType.json;
-          response.write(jsonEncode(_dashboard));
+          response.write(jsonEncode(dashboard));
+        case '/mode':
+          response.headers.contentType = ContentType.json;
+          response.write(jsonEncode(_waveMode));
+        case '/auto':
+          response.headers.contentType = ContentType.json;
+          response.write(jsonEncode(_waveAuto));
+        case '/head':
+          // `/head/<n>/settings`
+          final n = segments.length == 3 && segments.last == 'settings'
+              ? int.tryParse(segments[1])
+              : null;
+          if (n == null) {
+            response.statusCode = HttpStatus.notFound;
+          } else {
+            response.headers.contentType = ContentType.json;
+            response.write(jsonEncode(_headSettings(n)));
+          }
         case '/flood':
           // Chunked (no Content-Length, so the up-front check can't fire):
           // 4 MB in 64 KB pieces, the shape of a media server streaming a file.
@@ -119,6 +270,116 @@ void main() {
       maxResponseBytes: kDeviceProbeMaxBytes,
     );
     expect((await link.identify(host)).hwid, '8813bf641cd8');
+  });
+
+  group('ReefWave', () {
+    // The one family with no `/dashboard` and a two-endpoint read. Its wiring
+    // in `readOnce` shares no path with the five families the rest of the suite
+    // covers, so nothing else would notice if it were pointed at the wrong
+    // endpoints.
+    setUp(() => deviceInfo = Map.of(_waveDeviceInfo));
+
+    RbHttpLink link() => RbHttpLink(timeout: const Duration(seconds: 5));
+
+    test('is read from /mode and /auto, and never asks for /dashboard', () async {
+      final snapshot = await link().readOnce(host);
+
+      expect(requested, ['/device-info', '/mode', '/auto']);
+      expect(requested, isNot(contains('/dashboard')));
+      final wave = snapshot.wave;
+      expect(wave, isNotNull);
+      expect(snapshot.dose, isNull);
+      expect(snapshot.ato, isNull);
+      expect(wave!.mode, 'auto');
+      expect(wave.scheduleApplies, isTrue);
+      // The schedule is the only place a wave pump's output appears at all.
+      expect(wave.intervals, hasLength(3));
+      expect(wave.forwardPercentAt(12 * 60), 80);
+      expect(snapshot.modelDisplayName, 'ReefWave 25');
+    });
+
+    test('/mode is required: without it there is no snapshot', () async {
+      missing.add('/mode');
+      await expectLater(
+        link().readOnce(host),
+        throwsA(
+          isA<RbLinkException>().having(
+            (e) => e.error,
+            'error',
+            RbLinkError.protocol,
+          ),
+        ),
+      );
+      // And it gives up there — no /auto, and still no attempt at /dashboard.
+      expect(requested, ['/device-info', '/mode']);
+    });
+
+    test('/auto is optional: a pump that will not serve it still reads, '
+        'just without a schedule', () async {
+      missing.add('/auto');
+      final snapshot = await link().readOnce(host);
+
+      expect(requested, ['/device-info', '/mode', '/auto']);
+      expect(snapshot.wave!.mode, 'auto');
+      expect(snapshot.wave!.intervals, isEmpty);
+      expect(snapshot.wave!.forwardPercentAt(12 * 60), isNull);
+    });
+  });
+
+  group('ReefDose', () {
+    // The transport half only — `rb_protocol_test.dart` already pins what the
+    // parser does with the payloads.
+    setUp(() {
+      deviceInfo = Map.of(_doseDeviceInfo);
+      dashboard = Map.of(_doseDashboard);
+    });
+
+    RbHttpLink link() => RbHttpLink(timeout: const Duration(seconds: 5));
+
+    test('asks for the dashboard and then each reported head\'s settings, at '
+        'exactly those paths', () async {
+      final snapshot = await link().readOnce(host);
+
+      // The paths are load-bearing: a typo in `/head/${n}/settings` nulls every
+      // abbreviation without failing anything, because `_tryGetJson` swallows
+      // the 404 by design.
+      expect(requested, [
+        '/device-info',
+        '/dashboard',
+        '/head/1/settings',
+        '/head/4/settings',
+      ]);
+      // A refresh never touches the queue — that is a separate, on-demand read.
+      expect(requested, isNot(contains('/dosing-queue')));
+
+      final heads = snapshot.dose!.heads;
+      expect(heads.map((h) => h.number), [1, 4]);
+      expect(heads.map((h) => h.shortName), ['KH', 'NPX']);
+      // What the abbreviations are *for*: mapping a queued dose to a head.
+      expect(snapshot.dose!.headForShortName('NPX')?.supplement, 'NO3PO4-X');
+    });
+
+    test('a head whose settings do not answer costs that head its '
+        'abbreviation, not the refresh', () async {
+      missing.add('/head/4/settings');
+      final snapshot = await link().readOnce(host);
+
+      expect(requested, [
+        '/device-info',
+        '/dashboard',
+        '/head/1/settings',
+        '/head/4/settings',
+      ]);
+      final heads = snapshot.dose!.heads;
+      // Both heads still have a full row from `/dashboard`…
+      expect(heads.map((h) => h.number), [1, 4]);
+      expect(heads.last.supplement, 'NO3PO4-X');
+      expect(heads.last.dailyDose, 6);
+      // …and only the queue mapping is lost, which is the whole visible cost.
+      expect(heads.map((h) => h.shortName), ['KH', null]);
+      expect(snapshot.dose!.headForShortName('NPX'), isNull);
+      expect(snapshot.dose!.headForShortName('KH')?.number, 1);
+    });
   });
 
   group('the #72 cap', () {

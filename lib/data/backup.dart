@@ -5,7 +5,6 @@ import 'dart:isolate';
 import 'package:crypto/crypto.dart';
 import 'package:drift/native.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -1144,7 +1143,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
 /// from lingering.
 Future<void> exportBackup(AppDatabase db) async {
   final json = await encodeBackupFromDb(db);
-  final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
+  final stamp = exportFileStamp(DateTime.now());
   await shareExportFile(
     fileName: '$kBackupExportPrefix$stamp.json',
     content: json,

@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/setup_type.dart';
 
 void main() {
   late AppDatabase db;
@@ -158,6 +159,112 @@ void main() {
       0,
       reason: 'each dashboard has its own sequence starting at 0',
     );
+  });
+
+  group('a tank delete nulls Devices.tankId and keeps the row', () {
+    test('hard delete leaves the whole hardware inventory intact', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+
+      await db.upsertReefFactoryDevice(
+        identifier: 'RFPM012204210108',
+        model: 'RFPM01',
+        address: '192.168.1.15',
+        name: 'Sump pH',
+        tankId: a,
+      );
+      await db.upsertApexDevice(
+        identifier: 'APEX-0001',
+        model: 'Apex',
+        address: '192.168.1.20',
+        username: 'reefer',
+        name: 'Controller',
+        tankId: a,
+      );
+      await db.ensureHannaDevice(
+        identifier: 'HANNA-AB12',
+        model: 'HI981',
+        name: 'Checker',
+        tankId: b,
+      );
+
+      await db.softDeleteTank(a);
+      await db.hardDeleteTank(a);
+
+      // Devices.tankId is the one non-cascading FK in the schema: the rows
+      // survive the tank, they are not deleted with it.
+      final rf = (await db.watchDevicesOfKind('reeffactory').first).single;
+      expect(rf.tankId, isNull);
+      expect(rf.identifier, 'RFPM012204210108');
+      expect(rf.address, '192.168.1.15');
+      expect(rf.name, 'Sump pH');
+      expect(rf.model, 'RFPM01');
+
+      final apex = (await db.watchDevicesOfKind('apex').first).single;
+      expect(apex.tankId, isNull);
+      expect(apex.username, 'reefer', reason: 'the login name survives too');
+      expect(apex.address, '192.168.1.20');
+
+      // A device on another tank is untouched by that tank's delete.
+      final hanna = (await db.watchDevicesOfKind('hanna').first).single;
+      expect(hanna.tankId, b);
+    });
+
+    test('the purge sweep nulls tankId just the same', () async {
+      final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+      await db.upsertReefBeatDevice(
+        identifier: 'cc7b5c267a68',
+        model: 'RSDOSE4',
+        address: '192.168.1.3',
+        name: 'ReefDose 4',
+        tankId: a,
+      );
+
+      await db.softDeleteTank(a);
+      await db.purgeDeletedTanks();
+
+      final rb = (await db.watchDevicesOfKind('reefbeat').first).single;
+      expect(rb.tankId, isNull);
+      expect(rb.identifier, 'cc7b5c267a68');
+      expect(rb.address, '192.168.1.3');
+      expect(rb.name, 'ReefDose 4');
+    });
+  });
+
+  test('reorderDevices renumbers only the ids it is given — a tank-filtered '
+      'subset leaves the hidden rows in place', () async {
+    final a = await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+    final b = await db.createTankWithPreset(name: 'B', type: SetupType.mixed);
+    for (final (n, tank) in [('A', a), ('B', b), ('C', a), ('D', b)]) {
+      await db.upsertReefFactoryDevice(
+        identifier: 'RFPM$n',
+        model: 'RFPM01',
+        address: '192.168.1.1',
+        name: n,
+        tankId: tank,
+      );
+    }
+    final before = await db.watchDevicesOfKind('reeffactory').first;
+    expect(before.map((d) => d.displayOrder), [0, 1, 2, 3]);
+
+    // The real caller (the tank-filtered dashboard) hands over only the cards
+    // it shows: tank A's two devices, C dragged in front of A.
+    final shown = before.where((d) => d.tankId == a).toList();
+    await db.reorderDevices([shown[1].id, shown[0].id]);
+
+    final after = {
+      for (final d in await db.watchDevicesOfKind('reeffactory').first)
+        deviceDisplayName(d): d.displayOrder,
+    };
+    expect(after['C'], 0);
+    expect(after['A'], 1);
+    // The unlisted rows keep the positions they had — the write must not
+    // renumber, drop or reshuffle anything outside the given list.
+    expect(after['B'], 1);
+    expect(after['D'], 3);
+    // So a duplicate displayOrder across the two filters is a normal steady
+    // state, not a corruption to be "fixed".
+    expect(after['A'], after['B']);
   });
 
   test('watchDevicesOfKind filters, deleteDevice removes', () async {

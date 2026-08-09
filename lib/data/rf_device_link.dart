@@ -97,6 +97,19 @@ class RfWebSocketLink implements RfDeviceLink, RfIdentityProbe {
         final frame = RfFrame.decode(data);
         if (frame.command != 'refresh' || frame.subcommand != 'config') return;
         final serial = readCString(frame.payload);
+        // The serial is the discovery dedupe key *and* `Devices.identifier`,
+        // the row's primary key. Anything shorter than a model prefix is not
+        // an identity: it would hide the next such host behind the first, and
+        // could never match a rediscovery of either. An *unknown* 16-character
+        // prefix is a different matter and is still reported (unsupported).
+        if (serial.length < 6) {
+          if (!result.isCompleted) {
+            result.completeError(
+              const RfLinkException(RfLinkError.protocol, 'no usable serial'),
+            );
+          }
+          return;
+        }
         final spec = rfModelForSerial(serial);
         if (!result.isCompleted) {
           result.complete(

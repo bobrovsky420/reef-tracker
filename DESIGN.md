@@ -627,7 +627,14 @@ Two layers, **no new dependencies and no runtime permissions**:
    **UTC with millisecond precision** (`yyyyMMdd-HHmmss-SSS`): UTC keeps the
    lexical sort chronological across DST fall-back, milliseconds keep two
    near-simultaneous writes from colliding on one name (filenames are never
-   shown as dates — the UI formats the file's mtime). The **Manage backups**
+   shown as dates — the UI formats the file's mtime). All three filename
+   builders (`writeAutoBackup`, `exportBackup`, `exportReadingsCsv`) share
+   **`exportFileStamp` in `export_share.dart`**, which pads the digits by hand
+   rather than going through `DateFormat` — `DateFormat` follows
+   `Intl.defaultLocale`, so in a language with non-Latin digits it would emit
+   stamps that no longer sort lexically, and the lexical filename sort is
+   exactly what `listAutoBackups` means by "newest first".
+   The **Manage backups**
    screen (`features/settings/backups_screen.dart`, route `/settings/backups`)
    lists them and offers restore (reuses `decodeBackup` + `importBackup`),
    share, and delete. `backupNow(db)` powers the **Back up now** action in
@@ -677,7 +684,13 @@ the current database state as one more timestamped document
 app-owned **visible folder** — a "ReefTracker" folder in the user's My Drive,
 or the app's iCloud Drive container shown as a ReefTracker folder in the
 Files app — and prunes
-the folder to `auto_backup_keep` newest. No folder picker anywhere — the U20
+the folder to `auto_backup_keep` newest, **never counting the upload the run
+just made as a prune candidate**: the folder can already hold that many files
+sorting newer than anything this device can mint (a second device with a fast
+clock, a hand-copied file), and since the push record is stamped before the
+prune (#63) a self-deleting push would leave the dirty gate clean and Settings
+reporting "backed up" forever over a folder holding none of this device's
+data. No folder picker anywhere — the U20
 lesson — because the `drive.file` scope (non-sensitive, no OAuth verification
 review) sees exactly the files the app created, and the iCloud container is
 app-owned by construction.
@@ -3483,7 +3496,13 @@ sweep, just with more probing. Nothing treats an empty mDNS result as an error.
   concurrently (~2 s, so it is free). Phase 2 folds in the mDNS identities.
   Phase 3 probes only the unexplained open hosts, ReefBeat first (a cheap HTTP
   GET) then ReefFactory (the WebSocket handshake). Results are keyed by
-  identifier, so the same device seen twice is reported once.
+  identifier, so the same device seen twice is reported once — which is also
+  why a ReefFactory host answering the config handshake with a serial shorter
+  than a model prefix (6 chars) is **refused** by `RfWebSocketLink.identify`
+  rather than reported: an empty identifier would hide the next such host
+  behind the first and could never match a rediscovery. `_identify` isolates
+  failures per host (any exception, not only the links' own), so one odd LAN
+  host can never kill the scan stream and the devices already found with it.
 - **Subnet assumption**: `NetworkInterface` exposes no netmask, so a **/24 is
   assumed** off each RFC-1918 address (169.254/16 link-local, 127/8 and
   100.64/10 carrier-grade NAT are excluded — sweeping a carrier's network would

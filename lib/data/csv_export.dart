@@ -1,7 +1,5 @@
 import 'dart:isolate';
 
-import 'package:intl/intl.dart';
-
 import '../domain/parameter_catalog.dart';
 import '../domain/units.dart';
 import 'database.dart';
@@ -76,7 +74,7 @@ Future<bool> exportReadingsCsv(
     () => encodeReadingsCsv(readings: readings, params: params, prefs: prefs),
   );
 
-  final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
+  final stamp = exportFileStamp(DateTime.now());
   final slug = _fileSlug(tankName);
   await shareExportFile(
     fileName: '$kCsvExportPrefix$stamp${slug.isEmpty ? '' : '-$slug'}.csv',
@@ -106,7 +104,8 @@ String _csvField(String s) {
 }
 
 /// Local timestamp as `yyyy-MM-dd HH:mm:ss`, locale-independent (no
-/// [DateFormat], whose digits/symbols follow the app locale).
+/// `DateFormat`, whose digits/symbols follow the app locale — the same reason
+/// [exportFileStamp] builds filenames by hand).
 String _timestamp(DateTime t) {
   String two(int n) => n.toString().padLeft(2, '0');
   return '${t.year.toString().padLeft(4, '0')}-${two(t.month)}-${two(t.day)} '
