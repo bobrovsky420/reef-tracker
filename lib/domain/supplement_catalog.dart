@@ -269,6 +269,23 @@ const List<String> kDosingElementKeys = [
   'zinc',
 ];
 
+/// The element keys the dosing element picker must offer while [selected] is
+/// its current value: [kDosingElementKeys], plus [selected] itself when the
+/// list does not (or no longer) contains it.
+///
+/// A stored `elementKey` is not always one the picker knows: a backup restored
+/// from a build with a longer list, a cloud-synced row, or an element retired
+/// from the list all put a stranger in the field. Feeding that to a
+/// `DropdownButtonFormField` asserts on the spot in debug ("There should be
+/// exactly one item with [DropdownButton]'s value") and, in release, shows the
+/// wrong element while the stranger is what gets saved. Offering it as an extra
+/// item keeps the form open and the user's element intact — an unknown key
+/// falls back to its raw name via `AppLocalizations.paramName`.
+List<String> dosingElementChoices(String? selected) =>
+    selected == null || kDosingElementKeys.contains(selected)
+    ? kDosingElementKeys
+    : [...kDosingElementKeys, selected];
+
 /// Maximum safe *rise per day* for a correction dose, in the element's
 /// canonical unit (dKH or ppm per day) — the catalog's per-parameter
 /// `maxDailyRise` (edited in `parameters.yaml`). When a computed correction

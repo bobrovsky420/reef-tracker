@@ -161,10 +161,14 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
         // (rather than once at add time) is what keeps the mapping right after
         // the keeper reassigns a supplement in the ReefBeat app. Tolerant: a
         // head whose settings don't answer just keeps no abbreviation.
+        // Bounded at [kRbMaxDoseHeads]: the fan-out is driven by a payload that
+        // hasn't been trusted yet, so it gets the same treatment as the
+        // response size (#72) — heads are already sorted, so the cap keeps the
+        // low-numbered ones a real pump would report.
         final headSettings = <int, Map<String, Object?>>{};
         for (final head in _decode(
           () => RbDoseStatus.fromJson(dashboard),
-        ).heads) {
+        ).heads.take(kRbMaxDoseHeads)) {
           final settings = await _tryGetJson(
             h,
             '/head/${head.number}/settings',

@@ -100,6 +100,9 @@ void main() {
   setUp(() async {
     docsDir = await Directory.systemTemp.createTemp('reeftracker-cloudsync-');
     PathProviderPlatform.instance = _FakePathProvider(docsDir.path);
+    // The in-flight guard is module-global: a run still pending when a test
+    // ends would otherwise be handed to the next test's first caller.
+    resetCloudSyncInFlightForTest();
   });
   tearDown(() async {
     if (await docsDir.exists()) await docsDir.delete(recursive: true);
@@ -377,6 +380,64 @@ void main() {
       expect(store.files, hasLength(2));
     });
 
+    test('two concurrent runs share one upload, and the slot clears '
+        'afterwards', () async {
+      // `_syncInFlight` is module-global and shared by four callers: the
+      // launch post-frame, the `resumed` handler, "Sync now" and the
+      // post-rename push. Two of them really do fire near-simultaneously, so
+      // the guard has to collapse them into one upload — and then release the
+      // slot. A leaked slot is the nasty half: every later call returns the
+      // finished run's outcome, so sync keeps reporting "pushed" while
+      // uploading nothing for the rest of the process.
+      await connectAndSeed();
+
+      final first = runGDriveSyncIfDirty(db, store: store);
+      final second = runGDriveSyncIfDirty(db, store: store);
+      final outcomes = await Future.wait([first, second]);
+
+      expect(outcomes, [CloudSyncOutcome.pushed, CloudSyncOutcome.pushed]);
+      expect(store.writeCalls, 1, reason: 'one run, two callers');
+      expect(
+        store.ensureFolderCalls,
+        1,
+        reason: 'the second caller must not start a run of its own',
+      );
+      expect(store.files, hasLength(1));
+
+      // The slot released: a later data change pushes for real.
+      await db.insertReadingGroup(
+        tankId: 1,
+        takenAt: DateTime(2026, 7, 16, 8),
+        note: null,
+        values: const [(paramKey: 'ph', value: 8.3)],
+      );
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      expect(store.writeCalls, 2);
+    });
+
+    test('a failed run releases the slot too', () async {
+      // The release lives in a `whenComplete`, so it must survive the error
+      // path as well — otherwise one provider hiccup at launch wedges sync
+      // until the app is killed.
+      await connectAndSeed();
+      store.failWrites = true;
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.failed,
+      );
+
+      store.failWrites = false;
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+        reason: 'a wedged slot would replay the failed run forever',
+      );
+      expect(store.writeCalls, 1);
+    });
+
     test('pushed document round-trips through decodeBackup', () async {
       await connectAndSeed();
       await runGDriveSyncIfDirty(db, store: store);
@@ -564,46 +625,43 @@ void main() {
       );
     });
 
-    test(
-      'the prune never deletes the upload this run just made',
-      () async {
-        // Names order the rotation, and nothing guarantees the folder only ever
-        // holds names this device minted: a second device whose clock runs
-        // ahead, or a file copied in by hand, sorts newer than anything this
-        // device can write. If those fill the keep quota, the prune that
-        // follows the push deletes the push — while `last_pushed_*` has already
-        // been stamped, so Settings claims "backed up" over a folder that holds
-        // none of this device's data, permanently (the dirty gate is clean, so
-        // no later run re-uploads it either).
-        await connectAndSeed();
-        await db.setSetting(kAutoBackupKeepKey, '2');
-        store.files['reeftracker-auto-29991231-235959-998.json'] = [1];
-        store.files['reeftracker-auto-29991231-235959-999.json'] = [2];
+    test('the prune never deletes the upload this run just made', () async {
+      // Names order the rotation, and nothing guarantees the folder only ever
+      // holds names this device minted: a second device whose clock runs
+      // ahead, or a file copied in by hand, sorts newer than anything this
+      // device can write. If those fill the keep quota, the prune that
+      // follows the push deletes the push — while `last_pushed_*` has already
+      // been stamped, so Settings claims "backed up" over a folder that holds
+      // none of this device's data, permanently (the dirty gate is clean, so
+      // no later run re-uploads it either).
+      await connectAndSeed();
+      await db.setSetting(kAutoBackupKeepKey, '2');
+      store.files['reeftracker-auto-29991231-235959-998.json'] = [1];
+      store.files['reeftracker-auto-29991231-235959-999.json'] = [2];
 
-        expect(
-          await runGDriveSyncIfDirty(db, store: store),
-          CloudSyncOutcome.pushed,
-        );
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
 
-        final pushed = await settings.readSyncGdriveLastPushedName();
-        expect(pushed, isNotNull);
-        expect(
-          store.files.keys,
-          contains(pushed),
-          reason:
-              'the run recorded $pushed as this device\'s backup — the folder '
-              'must actually still hold it',
-        );
-        // The exemption must not inflate the rotation: the upload takes one of
-        // the two slots, so exactly one of the pre-existing files survives, and
-        // it is the newer one.
-        expect(store.files.keys, hasLength(2));
-        expect(
-          store.files.keys,
-          contains('reeftracker-auto-29991231-235959-999.json'),
-        );
-      },
-    );
+      final pushed = await settings.readSyncGdriveLastPushedName();
+      expect(pushed, isNotNull);
+      expect(
+        store.files.keys,
+        contains(pushed),
+        reason:
+            'the run recorded $pushed as this device\'s backup — the folder '
+            'must actually still hold it',
+      );
+      // The exemption must not inflate the rotation: the upload takes one of
+      // the two slots, so exactly one of the pre-existing files survives, and
+      // it is the newer one.
+      expect(store.files.keys, hasLength(2));
+      expect(
+        store.files.keys,
+        contains('reeftracker-auto-29991231-235959-999.json'),
+      );
+    });
 
     test('a prune-only failure after a confirmed upload still records the '
         'push (#63)', () async {

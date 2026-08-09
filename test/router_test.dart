@@ -9,6 +9,8 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/domain/hanna_import.dart';
+import 'package:reeftracker/domain/icp_import.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/actions/schedule_screen.dart';
 import 'package:reeftracker/features/add_reading/add_reading_screen.dart';
@@ -20,7 +22,10 @@ import 'package:reeftracker/features/dosing/dosing_edit_screen.dart';
 import 'package:reeftracker/features/dosing/dosing_history_screen.dart';
 import 'package:reeftracker/features/history/history_screen.dart';
 import 'package:reeftracker/features/home/home_shell.dart';
+import 'package:reeftracker/features/import/hanna_import_screen.dart';
 import 'package:reeftracker/features/manage_parameters/manage_parameters_screen.dart';
+import 'package:reeftracker/features/micro/icp_import_screen.dart';
+import 'package:reeftracker/features/micro/micro_screen.dart';
 import 'package:reeftracker/features/ratio/ratio_edit_screen.dart';
 import 'package:reeftracker/features/ratio/ratio_screen.dart';
 import 'package:reeftracker/features/settings/backups_screen.dart';
@@ -78,18 +83,24 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
-  /// Boots the real [appRouter] against an in-memory database and returns the
-  /// database for seeding.
-  Future<AppDatabase> pumpRouterApp(
-    WidgetTester tester, {
-    Locale? locale,
-  }) async {
+  /// A fresh in-memory database, ready to seed before the app is pumped.
+  Future<AppDatabase> newDb() async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     // These tests exercise routing, not the first-run feature tour. Left
     // unseen, the tour fires once a tank exists and its delayed showcase
     // overlay insertions land after navigation/teardown, failing the test.
     await AppSettings(db).setTourSeen(true);
+    return db;
+  }
+
+  /// Boots the real [appRouter] over [db] **without settling** — the caller
+  /// decides how much time passes, which is what the cold-start test needs.
+  Future<void> pumpRouterAppWith(
+    WidgetTester tester,
+    AppDatabase db, {
+    Locale? locale,
+  }) async {
     // The router singleton keeps its location across tests; park it at home
     // so the next test starts from a known state.
     addTearDown(() => appRouter.go('/'));
@@ -104,6 +115,16 @@ void main() {
         ),
       ),
     );
+  }
+
+  /// Boots the real [appRouter] against an in-memory database and returns the
+  /// database for seeding.
+  Future<AppDatabase> pumpRouterApp(
+    WidgetTester tester, {
+    Locale? locale,
+  }) async {
+    final db = await newDb();
+    await pumpRouterAppWith(tester, db, locale: locale);
     await settle(tester);
     return db;
   }
@@ -159,6 +180,45 @@ void main() {
       await unmountApp(tester);
     },
   );
+
+  // Seam S4. The in-app case above navigates from a settled app, so it can
+  // never see the load window; this one starts *in* it. `trackedParameters`
+  // used to synthesise `data([])` while the tank list was still loading, and
+  // `_ResolveById` reads a landed empty list as "no such id" — so the very
+  // first frame scheduled a `context.go('/')` and the screen the user asked
+  // for never appeared. Reachable from a notification/deep link on a cold
+  // start and, in-app, from the microelement bounds editor
+  // (`micro_configure_screen.dart`), which pushes this route by id right
+  // after creating the tracked row.
+  testWidgets('/parameters/:id/edit survives a cold start: no bounce home '
+      'before the tracked list lands', (tester) async {
+    final db = await newDb();
+    final tankId = await db.createTankWithPreset(
+      name: 'A',
+      type: SetupType.mixed,
+    );
+    final params = await db.getTrackedParameters(tankId);
+    expect(params, isNotEmpty, reason: 'preset must track parameters');
+
+    // Point the router at the deep link BEFORE the app is pumped, so the
+    // route builds against providers that have never emitted.
+    appRouter.go('/parameters/${params.first.id}/edit');
+    await pumpRouterAppWith(tester, db);
+
+    // First frame: nothing has loaded, so the resolver must wait rather than
+    // conclude the id is unknown.
+    expect(find.byType(HomeShell), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+
+    await settle(tester);
+    expect(find.byType(ParameterEditScreen), findsOneWidget);
+    expect(
+      find.byType(HomeShell),
+      findsNothing,
+      reason: 'the load window must never wipe the requested screen',
+    );
+    await unmountApp(tester);
+  });
 
   testWidgets('/tanks/:id/edit without extra opens the edit form, not create', (
     tester,
@@ -222,6 +282,99 @@ void main() {
     appRouter.go('/ratio/po4no3');
     await settle(tester);
     expect(find.byType(RatioScreen), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  // The two import previews are the only routes whose builder downcasts
+  // `state.extra` onto a *non-nullable* type, so the redirect above them is
+  // the entire guard — `/dosing/edit` and `/paywall` cast to nullables and
+  // survive a bare link on their own. The identical ratio-route guard is
+  // tested right above; this is the missing half of that pattern.
+  testWidgets('the import previews redirect without a parsed report in tow '
+      '(T8)', (tester) async {
+    final db = await pumpRouterApp(tester);
+    await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+    Future<void> expectBounced(
+      String location, {
+      Object? extra,
+      required Type landsOn,
+    }) async {
+      appRouter.go(location, extra: extra);
+      await settle(tester);
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: '$location with extra=$extra',
+      );
+      expect(find.byType(landsOn), findsOneWidget, reason: location);
+    }
+
+    // A bare deep link (notification, restored URL, mistyped link): nothing to
+    // preview, so /micro/import falls back to the Microelements screen.
+    await expectBounced('/micro/import', landsOn: MicroScreen);
+    // A wrong-typed extra is the same case, and the one a refactor produces:
+    // pushing the route with the *other* importer's result, or with a raw
+    // path string.
+    await expectBounced(
+      '/micro/import',
+      extra: 'C:/reports/icp.csv',
+      landsOn: MicroScreen,
+    );
+    await expectBounced(
+      '/micro/import',
+      extra: const HannaImportResult(
+        meter: 'HI97115',
+        location: null,
+        rows: [],
+        skipped: [],
+      ),
+      landsOn: MicroScreen,
+    );
+
+    // The Hanna preview has no list screen of its own, so it goes home.
+    await expectBounced('/import/hanna', landsOn: HomeShell);
+    await expectBounced('/import/hanna', extra: 42, landsOn: HomeShell);
+    await expectBounced(
+      '/import/hanna',
+      extra: const IcpImportResult(
+        format: IcpImportFormat.faunaMarin,
+        values: {},
+        skipped: [],
+      ),
+      landsOn: HomeShell,
+    );
+
+    // Positive control: with the right payload both routes open, so the
+    // assertions above are about the guard and not about a broken route.
+    appRouter.go(
+      '/micro/import',
+      extra: const IcpImportResult(
+        format: IcpImportFormat.faunaMarin,
+        values: {'zinc': 0.005},
+        skipped: [],
+      ),
+    );
+    await settle(tester);
+    expect(find.byType(IcpImportScreen), findsOneWidget);
+
+    appRouter.go(
+      '/import/hanna',
+      extra: HannaImportResult(
+        meter: 'HI97115',
+        location: 'Reef',
+        rows: [
+          HannaReading(
+            paramKey: 'alkalinity',
+            value: 8.2,
+            takenAt: DateTime(2026, 7, 1, 9),
+          ),
+        ],
+        skipped: const [],
+      ),
+    );
+    await settle(tester);
+    expect(find.byType(HannaImportScreen), findsOneWidget);
     await unmountApp(tester);
   });
 

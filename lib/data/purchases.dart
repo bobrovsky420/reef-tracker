@@ -249,6 +249,12 @@ class FakePurchaseStore implements PurchaseStore {
   /// never clear a cached entitlement.
   bool restoreThrows;
 
+  /// Makes [buy] throw *without* emitting anything — the store refusing to
+  /// even start its flow (no Play Services mid-session, a billing connection
+  /// that dropped). The buy must report failure, grant nothing, and leave the
+  /// background listener armed for the next event.
+  bool buyThrows = false;
+
   /// Makes [complete] throw, so the acknowledgement-retry path can be tested:
   /// the unlock must still be granted, and the next startup must re-try.
   bool completeThrows = false;
@@ -262,6 +268,11 @@ class FakePurchaseStore implements PurchaseStore {
 
   /// Pushes an event as the store would.
   void emit(PurchaseUpdate update) => _controller.add(update);
+
+  /// Errors the purchase stream itself, the way a plugin surfaces a billing
+  /// connection failure. Distinct from a [PurchaseState.error] *event*: this
+  /// is the stream failing, which must not deafen the listener.
+  void emitError(Object error) => _controller.addError(error);
 
   /// The common case: a successful purchase that still needs acknowledging.
   void emitPurchased() => emit(
@@ -294,6 +305,7 @@ class FakePurchaseStore implements PurchaseStore {
   /// answer. Recorded as already acknowledged, since the buy path just did.
   @override
   Future<void> buy(ProProduct product) async {
+    if (buyThrows) throw StateError('billing unavailable');
     owned = [
       ...owned,
       PurchaseUpdate(

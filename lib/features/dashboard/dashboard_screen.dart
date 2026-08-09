@@ -947,7 +947,7 @@ class NoTanksView extends ConsumerWidget {
   /// backup in the app's Drive folder → confirm → the shared
   /// [restoreCloudBackup] path. Afterwards the account is kept connected
   /// (push sync on) only when the restored data entitles this install to
-  /// [ProFeature.driveSync] — the founder marker rides the backup, so a
+  /// [ProFeature.cloudSync] — the founder marker rides the backup, so a
   /// founder's second device comes out fully synced; a Standard install gets
   /// its data and nothing else. No device-name dialog here: a successful
   /// restore unmounts this view (tanks arrived), so the name is set later

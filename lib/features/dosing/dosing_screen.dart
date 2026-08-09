@@ -323,7 +323,19 @@ String dosingDetailLine(
 
 /// Formats a dose amount without a trailing zero fraction, using the active
 /// locale's decimal separator (e.g. `5`, `2.5`, cs/de `2,5`).
-String formatDoseAmount(double v) => formatLocaleNumberTrim(v);
+///
+/// [decimals] is the *display* precision by default. Callers that seed the
+/// value back into an editable field must widen it (see
+/// [kDoseEditDecimals]) — the one-decimal display rounding is otherwise
+/// re-parsed on save and silently rewrites the plan.
+String formatDoseAmount(double v, {int decimals = 1}) =>
+    formatLocaleNumberTrim(v, decimals: decimals);
+
+/// Precision used when a stored dose amount is seeded into an **edit** field.
+/// Trace supplements are dosed in fractions of a millilitre, so the display
+/// format (one decimal) would turn 0.25 ml into 0.3 ml the moment the user
+/// opened the form and saved it again.
+const int kDoseEditDecimals = 3;
 
 /// Parses the stored comma-separated weekday list (1=Mon … 7=Sun).
 List<int> parseWeekdays(String? raw) {
@@ -373,9 +385,7 @@ class _ElementTag extends StatelessWidget {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: zone == Zone.unknown
-              ? tokens.textDim
-              : zone.colorOf(context),
+          color: zone == Zone.unknown ? tokens.textDim : zone.colorOf(context),
         ),
       ),
     );

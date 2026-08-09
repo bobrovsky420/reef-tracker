@@ -177,6 +177,8 @@ Future<TankSummaryData?> collectTankSummary(
         points: pts,
         bounds: bounds[p.paramKey]!,
         window: trendWindow,
+        now: clock,
+        floor: kParameterByKey[p.paramKey]?.minValue,
       );
       if (t != null) trends[p.paramKey] = t;
     }
