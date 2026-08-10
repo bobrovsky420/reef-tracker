@@ -36,9 +36,35 @@ enum RoStageType {
   }
 }
 
-// The default stage set (`kRoDefaultLifespanDays`, `kRoDefaultStageOrder`)
+/// How intensively the household uses the RO unit — a coarse
+/// litres-per-month bracket (described in the RO screen's usage picker)
+/// that selects the typical stage lifespans in [kRoLifespanDaysByUsage].
+/// Purely a preset selector: picking a level rewrites the standard stages'
+/// lifespans once, it is not a live multiplier, so hand-edited lifespans
+/// stay exactly what the user typed until the next explicit pick.
+enum RoUsageLevel {
+  light,
+  moderate,
+  heavy;
+
+  /// Parses a stored setting value, defaulting to [moderate] (the level the
+  /// original single-value defaults described) when missing/unknown.
+  static RoUsageLevel fromName(String? name) {
+    for (final v in values) {
+      if (v.name == name) return v;
+    }
+    return RoUsageLevel.moderate;
+  }
+}
+
+// The default stage set (`kRoLifespanDaysByUsage`, `kRoDefaultStageOrder`)
 // is GENERATED from `ro_defaults.yaml` into `ro.g.dart` — edit the YAML,
 // then run `dart run tool/gen_ro_defaults.dart`.
+
+/// The typical lifespans for [level] — the generated per-level table with
+/// the lookup made non-null (every level is guaranteed present).
+Map<RoStageType, int> roLifespansFor(RoUsageLevel level) =>
+    kRoLifespanDaysByUsage[level]!;
 
 /// Remaining-life warning window: a stage turns amber within the last
 /// [kRoAmberFraction] of its lifespan, floored at [kRoAmberMinDays] (a pure

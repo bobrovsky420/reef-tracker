@@ -726,6 +726,14 @@ final roUnitEnabledProvider = _setting(
   AppSettings.decodeRoUnitEnabled,
 );
 
+/// How intensively the RO unit is used (default moderate) — selects the
+/// typical-lifespan preset the RO screen's usage picker applies and the
+/// defaults its stage edit sheet offers.
+final roUsageLevelProvider = _setting(
+  SettingKey.roUsageLevel,
+  AppSettings.decodeRoUsageLevel,
+);
+
 /// Whether the microelements panel is surfaced at all (U17, default on):
 /// gates the dashboard summary tile (and, in the scheduler, micro test
 /// reminders). Off only hides — measurements stay stored and reappear when

@@ -3152,6 +3152,37 @@ class AppLocalizationsCs extends AppLocalizations {
   String get roAllOk => 'Všechny stupně v pořádku';
 
   @override
+  String get roUsageTitle => 'Intenzita používání';
+
+  @override
+  String get roUsageDialogBody =>
+      'Kolik vody vaše jednotka vyrobí. Volba úrovně nastaví standardním stupňům běžné intervaly výměny — každý stupeň pak můžete doladit ručně.';
+
+  @override
+  String get roUsageLight => 'Nízká';
+
+  @override
+  String get roUsageModerate => 'Střední';
+
+  @override
+  String get roUsageHeavy => 'Vysoká';
+
+  @override
+  String get roUsageLightHint =>
+      'Do ~300 l (80 gal) měsíčně — dolévání a malé výměny vody';
+
+  @override
+  String get roUsageModerateHint =>
+      'Zhruba 300–1000 l (80–260 gal) měsíčně — běžné jedno akvárium';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Přes ~1000 l (260 gal) měsíčně — velké nebo více akvárií';
+
+  @override
+  String get roUsageApplied => 'Intervaly výměny upraveny';
+
+  @override
   String get notifRoTitle => 'Vyměňte filtry reverzní osmózy';
 
   @override

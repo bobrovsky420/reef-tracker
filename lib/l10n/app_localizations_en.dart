@@ -3129,6 +3129,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roAllOk => 'All parts OK';
 
   @override
+  String get roUsageTitle => 'Usage intensity';
+
+  @override
+  String get roUsageDialogBody =>
+      'How much water your unit makes. Picking a level sets typical replacement intervals for the standard stages — you can still fine-tune each part afterwards.';
+
+  @override
+  String get roUsageLight => 'Light';
+
+  @override
+  String get roUsageModerate => 'Moderate';
+
+  @override
+  String get roUsageHeavy => 'Heavy';
+
+  @override
+  String get roUsageLightHint =>
+      'Under ~300 L (80 gal) a month — top-offs and small water changes';
+
+  @override
+  String get roUsageModerateHint =>
+      'About 300–1000 L (80–260 gal) a month — a typical single reef';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Over ~1000 L (260 gal) a month — large or multiple tanks';
+
+  @override
+  String get roUsageApplied => 'Replacement intervals updated';
+
+  @override
   String get notifRoTitle => 'Replace RO filters';
 
   @override

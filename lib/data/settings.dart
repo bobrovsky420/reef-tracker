@@ -4,6 +4,7 @@ import '../domain/device_vendors.dart';
 import '../domain/hanna_meter.dart';
 import '../domain/pro_features.dart';
 import '../domain/reminders.dart';
+import '../domain/ro.dart';
 import '../domain/stability_score.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
@@ -194,6 +195,10 @@ enum SettingKey {
   // The RO-unit feature switch (U16) is an ordinary display preference like
   // trendEnabled: device-local, default on.
   roUnitEnabled(kRoUnitEnabledKey, deviceLocal: true),
+  // NOT device-local: the usage level describes the household's RO unit (how
+  // much water it makes), not this phone, so it rides backups with the RO
+  // stages whose lifespans it selected.
+  roUsageLevel(kRoUsageLevelKey, deviceLocal: false),
   // The Devices screen's vendor order (U41). Deliberately NOT device-local,
   // unlike the other display preferences: it decides which device wins when two
   // report the same parameter on Save all, so it shapes what gets stored as a
@@ -478,6 +483,14 @@ class AppSettings {
       decodeRoUnitEnabled(await _read(SettingKey.roUnitEnabled));
   Future<void> setRoUnitEnabled(bool enabled) =>
       _write(SettingKey.roUnitEnabled, enabled.toString());
+
+  /// How intensively the RO unit is used (default moderate). Read-side only:
+  /// the write goes through [AppDatabase.setRoUsageLevel], which applies the
+  /// level's lifespan preset to the standard stages in the same transaction.
+  static RoUsageLevel decodeRoUsageLevel(String? raw) =>
+      RoUsageLevel.fromName(raw);
+  Stream<RoUsageLevel> watchRoUsageLevel() =>
+      _watch(SettingKey.roUsageLevel).map(decodeRoUsageLevel);
 
   static bool decodeMicroEnabled(String? raw) => raw == null || raw == 'true';
 

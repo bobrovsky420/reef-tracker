@@ -3196,6 +3196,37 @@ class AppLocalizationsRu extends AppLocalizations {
   String get roAllOk => 'Все ступени в порядке';
 
   @override
+  String get roUsageTitle => 'Интенсивность использования';
+
+  @override
+  String get roUsageDialogBody =>
+      'Сколько воды производит ваша установка. Выбор уровня задаст стандартным ступеням типичные интервалы замены — каждую ступень затем можно настроить вручную.';
+
+  @override
+  String get roUsageLight => 'Низкая';
+
+  @override
+  String get roUsageModerate => 'Средняя';
+
+  @override
+  String get roUsageHeavy => 'Высокая';
+
+  @override
+  String get roUsageLightHint =>
+      'До ~300 л (80 гал) в месяц — долив и небольшие подмены воды';
+
+  @override
+  String get roUsageModerateHint =>
+      'Примерно 300–1000 л (80–260 гал) в месяц — один обычный аквариум';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Более ~1000 л (260 гал) в месяц — большой аквариум или несколько';
+
+  @override
+  String get roUsageApplied => 'Интервалы замены обновлены';
+
+  @override
   String get notifRoTitle => 'Замените фильтры обратного осмоса';
 
   @override

@@ -5211,6 +5211,60 @@ abstract class AppLocalizations {
   /// **'All parts OK'**
   String get roAllOk;
 
+  /// RO screen: title of the usage-level card and its picker dialog. Picking a level (light/moderate/heavy) applies typical replacement intervals to the standard stages.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage intensity'**
+  String get roUsageTitle;
+
+  /// No description provided for @roUsageDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'How much water your unit makes. Picking a level sets typical replacement intervals for the standard stages — you can still fine-tune each part afterwards.'**
+  String get roUsageDialogBody;
+
+  /// RO usage level: little water produced per month.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get roUsageLight;
+
+  /// RO usage level: the typical middle bracket (the default).
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get roUsageModerate;
+
+  /// RO usage level: a lot of water produced per month.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy'**
+  String get roUsageHeavy;
+
+  /// No description provided for @roUsageLightHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Under ~300 L (80 gal) a month — top-offs and small water changes'**
+  String get roUsageLightHint;
+
+  /// No description provided for @roUsageModerateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'About 300–1000 L (80–260 gal) a month — a typical single reef'**
+  String get roUsageModerateHint;
+
+  /// No description provided for @roUsageHeavyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Over ~1000 L (260 gal) a month — large or multiple tanks'**
+  String get roUsageHeavyHint;
+
+  /// SnackBar after picking a usage level: the standard stages' lifespans were set to the level's typical values.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacement intervals updated'**
+  String get roUsageApplied;
+
   /// No description provided for @notifRoTitle.
   ///
   /// In en, this message translates to:
