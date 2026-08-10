@@ -64,7 +64,7 @@
 <p class="crumb"><a href="./">← ReefTracker home</a></p>
 
 <h1>ReefTracker Support</h1>
-<p class="updated">Last updated: 3 August 2026</p>
+<p class="updated">Last updated: 10 August 2026</p>
 
 <p>ReefTracker is an offline reef-aquarium tracking app for Android and iOS.
 This page covers how to get help, report a problem, or ask a question.</p>
@@ -79,7 +79,11 @@ from your first aquarium to dosing calculators, ICP imports and backups.</p>
 <a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a>. Please include
 your device model, OS version, and app version (found in
 <strong>Settings → About</strong>), and steps to reproduce if you're
-reporting a bug.</p>
+reporting a bug. If something went wrong inside the app,
+<strong>Settings → About → Share diagnostics</strong> hands you a small text
+file of the errors it recorded on your device – attaching it makes a problem
+far easier to track down. Nothing is sent anywhere unless you share it
+yourself.</p>
 
 <h2>Frequently asked questions</h2>
 
@@ -92,18 +96,29 @@ are stored locally on your device only. See the
 <p>The core of the app is free to use with up to two aquariums. ReefTracker
 Pro adds unlimited tanks and the power features marked
 <strong>PRO</strong> in the <a href="features.html">feature overview</a> –
-dosing calculators, smart insights, ICP and Hanna imports, Google Drive
-backup and more. If you installed the app before the Pro tier existed, every
-feature that existed at that point stays free for you forever.</p>
+dosing calculators, smart insights, ICP and Hanna imports, cloud backup –
+Google Drive on Android, iCloud Drive on iOS (the automatic upload is the Pro
+part; the first restore onto a new device never is) – and more. If you
+installed the app before the Pro tier existed, every feature that existed at
+that point stays free for you forever.</p>
 
 <h3>How do I back up or move my data to a new device?</h3>
 <p>Use <strong>Settings → Backup &amp; Restore</strong> to export a backup file (via the
-share sheet) and import it again on the same or a new device. On Android,
-the same section also offers optional Google Drive backup.</p>
+share sheet) and import it again on the same or a new device. The same
+section also offers optional automatic cloud backup – Google Drive on
+Android, iCloud Drive on iOS.</p>
 
-<h3>Is Google Drive backup available on iOS?</h3>
-<p>Not yet – Google Drive backup is currently Android-only. On iOS, use the
-manual export/import backup described above to move data between devices.</p>
+<h3>Is cloud backup available on iOS? Can I use Google Drive on my iPhone?</h3>
+<p>On iPhone, ReefTracker backs up to iCloud Drive instead of Google
+Drive. Switch it on in the same <strong>Settings → Backup &amp; Restore</strong>
+section and the app's automatic backups are uploaded to a visible "ReefTracker"
+folder in your iCloud Drive, which you can browse in the Files app – an upload
+is skipped when nothing has changed since the last one, and a backup you export
+yourself through the share sheet is never uploaded. There is no account to set
+up in the app – your device's Apple ID is used. When another of your devices has
+uploaded a newer backup, the app offers to restore it at launch, and on a fresh
+install you can pull everything back from iCloud straight from the welcome
+screen – no Pro needed for that first restore.</p>
 
 <h3>I imported an ICP report and the values look wrong. What formats are supported?</h3>
 <p>The microelements import supports Fauna Marin and ATI (ZIMS) ICP report

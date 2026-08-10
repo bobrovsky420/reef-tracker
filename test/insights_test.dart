@@ -189,19 +189,22 @@ void main() {
       relativeSwing: 0.6,
     );
 
-    test('an in-range swinging value is reported as swinging, not forecast', () {
-      final insights = computeInsights(
-        health: healthWith([fresh('alkalinity', 8)]),
-        trends: const {'alkalinity': swinging},
-        bounds: const {'alkalinity': alkBounds},
-        now: now,
-      );
-      final i = insights.single;
-      expect(i.kind, InsightKind.oscillating);
-      expect(i.severity, InsightSeverity.notice);
-      expect(i.days, isNull); // no crossing estimate is honest here
-      expect(i.isLow, isNull);
-    });
+    test(
+      'an in-range swinging value is reported as swinging, not forecast',
+      () {
+        final insights = computeInsights(
+          health: healthWith([fresh('alkalinity', 8)]),
+          trends: const {'alkalinity': swinging},
+          bounds: const {'alkalinity': alkBounds},
+          now: now,
+        );
+        final i = insights.single;
+        expect(i.kind, InsightKind.oscillating);
+        expect(i.severity, InsightSeverity.notice);
+        expect(i.days, isNull); // no crossing estimate is honest here
+        expect(i.isLow, isNull);
+      },
+    );
 
     test('scatter below the threshold says nothing at all', () {
       const quiet = TrendResult(

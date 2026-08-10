@@ -32,11 +32,24 @@ void main() {
     test('value equality — what decides "still the defaults?" (v28)', () {
       // The bound editor stores an override only when the submitted values
       // differ from the resolved defaults; that comparison is this operator.
-      const a = ZoneBounds(amberLow: 7, greenLow: 7.5, greenHigh: 8.5, amberHigh: 9);
-      const b = ZoneBounds(amberLow: 7, greenLow: 7.5, greenHigh: 8.5, amberHigh: 9);
+      const a = ZoneBounds(
+        amberLow: 7,
+        greenLow: 7.5,
+        greenHigh: 8.5,
+        amberHigh: 9,
+      );
+      const b = ZoneBounds(
+        amberLow: 7,
+        greenLow: 7.5,
+        greenHigh: 8.5,
+        amberHigh: 9,
+      );
       expect(a, b);
       expect(a.hashCode, b.hashCode);
-      expect(a, isNot(const ZoneBounds(amberLow: 7, greenLow: 7.5, greenHigh: 8.5)));
+      expect(
+        a,
+        isNot(const ZoneBounds(amberLow: 7, greenLow: 7.5, greenHigh: 8.5)),
+      );
       // A null bound is not the same as an absent-but-equal one.
       expect(const ZoneBounds(greenHigh: 1), isNot(const ZoneBounds()));
       expect(const ZoneBounds(), const ZoneBounds());
@@ -183,6 +196,63 @@ void main() {
       final axis = gaugeAxis(b, fallbackLow: 0, fallbackHigh: 100)!;
       expect(axis.min, closeTo(6.8, 1e-9));
       expect(axis.max, closeTo(9.2, 1e-9));
+    });
+  });
+
+  group('oscillationScale', () {
+    // The shared "how big is a big swing" divisor for both the stability
+    // sub-scores and the trend's oscillating verdict — each branch directly,
+    // since retuning any of them silently rescales two features at once.
+
+    test('two-sided green band: half the green width', () {
+      const b = ZoneBounds(
+        amberLow: 6,
+        greenLow: 7,
+        greenHigh: 9,
+        amberHigh: 10,
+      );
+      expect(oscillationScale(b), 1.0);
+    });
+
+    test('one-sided high (keep-low nutrient): the green→amber gap', () {
+      const b = ZoneBounds(greenHigh: 0.05, amberHigh: 0.2);
+      expect(oscillationScale(b), closeTo(0.15, 1e-12));
+    });
+
+    test('one-sided low: the amber→green gap', () {
+      const b = ZoneBounds(amberLow: 350, greenLow: 400);
+      expect(oscillationScale(b), 50.0);
+    });
+
+    test(
+      'degenerate greenLow == greenHigh falls through to the amber gaps',
+      () {
+        // A pinpoint green band has zero half-width; the gh > gl guard rejects
+        // it and the high-side amber gap takes over instead of returning 0
+        // (which would divide every swing into infinity).
+        const high = ZoneBounds(greenLow: 8, greenHigh: 8, amberHigh: 9);
+        expect(oscillationScale(high), 1.0);
+        // ...and with no high-side gap either, the low-side gap.
+        const low = ZoneBounds(amberLow: 7, greenLow: 8, greenHigh: 8);
+        expect(oscillationScale(low), 1.0);
+      },
+    );
+
+    test('no usable scale: null', () {
+      expect(oscillationScale(const ZoneBounds()), isNull);
+      // A lone green bound has no gap to measure against.
+      expect(oscillationScale(const ZoneBounds(greenHigh: 10)), isNull);
+      // Amber-only bounds have no green bound to span from.
+      expect(
+        oscillationScale(const ZoneBounds(amberLow: 6, amberHigh: 10)),
+        isNull,
+      );
+    });
+
+    test('invalid (inverted) bounds: null, matching classify()', () {
+      const inverted = ZoneBounds(greenLow: 9, greenHigh: 7, amberHigh: 10);
+      expect(inverted.isValid, isFalse);
+      expect(oscillationScale(inverted), isNull);
     });
   });
 

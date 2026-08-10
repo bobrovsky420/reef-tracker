@@ -175,6 +175,35 @@ void main() {
       expect(await settings.watchStabilityWindow().first, 90);
     });
 
+    test('trend window clamps hand-edited values into the dropdown range', () {
+      // The Settings dropdown only offers kTrendMinWindow..kTrendMaxWindow;
+      // an unclamped stored value would crash the dropdown build, and a huge
+      // one could silently starve computeTrend of points (T1 caps the feed).
+      expect(AppSettings.decodeTrendWindow(null), kTrendDefaultWindow);
+      expect(AppSettings.decodeTrendWindow('garbage'), kTrendDefaultWindow);
+      // In-range values pass through, including both boundaries.
+      expect(
+        AppSettings.decodeTrendWindow('$kTrendMinWindow'),
+        kTrendMinWindow,
+      );
+      expect(AppSettings.decodeTrendWindow('7'), 7);
+      expect(
+        AppSettings.decodeTrendWindow('$kTrendMaxWindow'),
+        kTrendMaxWindow,
+      );
+      // One past each boundary clamps, never crashes.
+      expect(
+        AppSettings.decodeTrendWindow('${kTrendMinWindow - 1}'),
+        kTrendMinWindow,
+      );
+      expect(
+        AppSettings.decodeTrendWindow('${kTrendMaxWindow + 1}'),
+        kTrendMaxWindow,
+      );
+      expect(AppSettings.decodeTrendWindow('-3'), kTrendMinWindow);
+      expect(AppSettings.decodeTrendWindow('999'), kTrendMaxWindow);
+    });
+
     test('theme mode defaults to system and round-trips (#16)', () async {
       // Unset / unknown → follow the system, never a hard light/dark flip.
       expect(AppSettings.decodeThemeMode(null), AppThemeMode.system);
@@ -230,6 +259,7 @@ void main() {
       expect(SettingKey.deviceLocalKeys, {
         for (final k in SettingKey.values)
           if (k != SettingKey.roSeeded &&
+              k != SettingKey.roUsageLevel &&
               k != SettingKey.legacyFreeSince &&
               k != SettingKey.hannaMethodSets &&
               k != SettingKey.hannaAttachEnvironment &&
@@ -237,6 +267,9 @@ void main() {
             k.storageKey,
       });
       expect(SettingKey.roSeeded.deviceLocal, isFalse);
+      // The usage level describes the household's RO unit, like the stages
+      // whose lifespans it selected — it rides backups with them.
+      expect(SettingKey.roUsageLevel.deviceLocal, isFalse);
       expect(SettingKey.legacyFreeSince.deviceLocal, isFalse);
       expect(SettingKey.hannaMethodSets.deviceLocal, isFalse);
       expect(SettingKey.hannaAttachEnvironment.deviceLocal, isFalse);

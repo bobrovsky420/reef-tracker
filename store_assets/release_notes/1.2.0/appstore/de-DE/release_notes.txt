@@ -1,6 +1,7 @@
-• Die Aquarienliste zeigt Gesundheitswert und letzten Test; tippen zum Wechseln.
-• Neues Layout „Flach mit Graphen“: jede Karte zeigt die letzten zwei Wochen.
-• Parameter ausblenden, ohne Messwerte zu verlieren — mit Rückgängig.
-• iOS: iCloud-Backup, Wiederherstellung zwischen Geräten, iCloud in den Backups.
-• Diagnoseprotokoll teilen über Einstellungen → Über.
-• Korrekturen: Fauna-Marin-PO4 und ZIMS-KH-Import, Achsen, Verhältnis-Graphen.
+• Aquarienliste zeigt Gesundheitswert und letzten Test.
+• Neues Layout „Flach mit Diagrammen“: jede Karte zeigt zwei Wochen.
+• Parameter nicht mehr verfolgen, ohne Messwerte zu verlieren – mit Rückgängig.
+• Osmoseanlage: Nutzungsintensität gering, mittel oder hoch setzt die Wechselintervalle.
+• Geräte: seitlich wischen wechselt die Marke.
+• iCloud-Backup, Wiederherstellung zwischen Geräten, iCloud-Bereich.
+• Korrekturen: Dosierungen nicht mehr gerundet, ICP- und Hanna-Import, Diagramme.

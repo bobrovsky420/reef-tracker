@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'app/app_builder.dart';
 import 'app/cloud_restore_dialog.dart';
 import 'app/provider_errors.dart';
 import 'app/providers.dart';
@@ -14,10 +14,10 @@ import 'app/theme.dart';
 import 'data/cloud_restore_flow.dart';
 import 'data/diagnostics_log.dart';
 import 'data/reminder_scheduler.dart';
+import 'domain/pro_features.dart';
 import 'features/settings/pro_test_rig.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/l10n_helpers.dart';
-import 'widgets/reef_background.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -182,14 +182,22 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     );
   }
 
-  /// Seeds the early-adopter marker (U19 phase 0): every launch of a pre-Pro
+  /// Seeds the early-adopter marker (U19): every launch of a pre-activation
   /// build stamps `legacy_free_since` with the current app version unless it
   /// is already set — these installs keep today's features free forever once
-  /// the paid tier ships. The Pro build must remove this call (it only reads
-  /// the marker). After the first frame because [PackageInfo.fromPlatform] is
-  /// a platform-channel call (see the pre-warm note in [main]).
+  /// the paid tier ships. After the first frame because
+  /// [PackageInfo.fromPlatform] is a platform-channel call (see the pre-warm
+  /// note in [main]).
+  ///
+  /// **This method is not deleted at activation** — it stops by itself, via
+  /// [shouldSeedFounderMarker], the moment `kActivationVersion` is set. That
+  /// keeps the activation edit to a single constant and makes the dangerous
+  /// half-state (sale live, seeder still minting Founders) unrepresentable.
   void _seedEdition() {
     Future<void> run() async {
+      if (!shouldSeedFounderMarker(activationVersion: kActivationVersion)) {
+        return;
+      }
       final settings = ref.read(settingsProvider);
       // The rig's seeder-off switch (P0-6), so Standard and Pro can be reached
       // on a device. Guarded by the compile-time constant, so a build without
@@ -230,8 +238,18 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   void _initEntitlement() {
     final service = ref.read(proEntitlementServiceProvider);
     service.start();
+    Future<void> run() async {
+      // Rig only: a real store account remembers what it sold across
+      // restarts, so the fake has to be told before the reconciliation below
+      // asks it (see seedProTestStoreFromDisk).
+      if (kProTestRig) {
+        await seedProTestStoreFromDisk(ref.read(proEntitlementStoreProvider));
+      }
+      await service.restoreAtStartup();
+    }
+
     unawaited(
-      service.restoreAtStartup().catchError((Object e, StackTrace s) {
+      run().catchError((Object e, StackTrace s) {
         FlutterError.reportError(
           FlutterErrorDetails(
             exception: e,
@@ -373,14 +391,9 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      // Keep intl date/number formatting in sync with the resolved app locale
-      // so DateFormat(...) renders dates in the selected language. The
-      // ReefBackground gradient sits here, behind the Navigator, so every
-      // screen (scaffolds are transparent) shares one background.
-      builder: (context, child) {
-        Intl.defaultLocale = Localizations.localeOf(context).toLanguageTag();
-        return ReefBackground(child: child ?? const SizedBox.shrink());
-      },
+      // Locale→intl wiring and the shared ReefBackground; named so a test can
+      // exercise it through the real app (see [reefAppBuilder]).
+      builder: reefAppBuilder,
       theme: buildReefTheme(Brightness.light, defaultTargetPlatform),
       darkTheme: buildReefTheme(Brightness.dark, defaultTargetPlatform),
       themeMode: themeMode,

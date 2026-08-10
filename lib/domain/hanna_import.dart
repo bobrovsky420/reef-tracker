@@ -171,6 +171,13 @@ HannaImportResult parseHannaCsv(String content) {
   final dateIdx = header.indexOf('Date');
   final statusIdx = header.indexOf('Status');
 
+  // The file's date field order, decided once over every data row's date
+  // cell (including flagged/unmapped rows — same phone, same clock).
+  final monthFirst = _monthFirstDates([
+    for (final row in rows.skip(headerIdx + 1))
+      if (dateIdx >= 0 && row.length > dateIdx) row[dateIdx],
+  ]);
+
   final seen = <String>{};
   final imported = <HannaReading>[];
   final skipped = <HannaSkippedRow>[];
@@ -199,7 +206,7 @@ HannaImportResult parseHannaCsv(String content) {
     final key = mapping.paramKey;
 
     final value = _parseNumber(row[readingIdx]);
-    final takenAt = _parseHannaDate(row[dateIdx]);
+    final takenAt = _parseHannaDate(row[dateIdx], monthFirst: monthFirst);
     if (value == null || takenAt == null) {
       skipped.add(HannaSkippedRow(method, HannaSkipReason.badValue));
       continue;
@@ -251,24 +258,49 @@ HannaCsvMethod? _csvMethodFor(String method) {
 bool _unitMatches(HannaCsvMethod mapping, String unit) =>
     unit.toLowerCase().startsWith(mapping.unitPrefix);
 
-/// Parses `dd/MM/yyyy HH:mm:ss` as local wall-clock time. Day-first per the
-/// format; a US-locale export (month-first) self-disambiguates when the
-/// day field exceeds 12 — full histories always contain such dates.
-DateTime? _parseHannaDate(String raw) {
-  final m = RegExp(
-    r'^(\d{1,2})/(\d{1,2})/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$',
-  ).firstMatch(raw.trim());
+final RegExp _hannaDateRe = RegExp(
+  r'^(\d{1,2})/(\d{1,2})/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$',
+);
+
+/// Whether a file's dates are month-first (a US-locale phone) rather than the
+/// format's documented day-first order — decided over ALL of the file's date
+/// cells, never per row. Per-row disambiguation swapped only the rows whose
+/// day exceeded 12, so one US export imported some readings correctly and
+/// others up to 11 months off. One phone wrote the whole file with one
+/// locale; a single unambiguous date decides for every row. Ties (an
+/// all-ambiguous short history) stay day-first, the documented order.
+bool _monthFirstDates(Iterable<String> rawDates) {
+  var dayFirst = 0;
+  var monthFirst = 0;
+  for (final raw in rawDates) {
+    final m = _hannaDateRe.firstMatch(raw.trim());
+    if (m == null) continue;
+    final first = int.parse(m.group(1)!);
+    final second = int.parse(m.group(2)!);
+    if (first > 12 && second <= 12) dayFirst++;
+    if (second > 12 && first <= 12) monthFirst++;
+  }
+  return monthFirst > dayFirst;
+}
+
+/// Parses `dd/MM/yyyy HH:mm:ss` (or, when [monthFirst], `MM/dd/yyyy …`) as
+/// local wall-clock time. The field order comes from [_monthFirstDates] over
+/// the whole file; a row impossible under that order (month > 12) is rejected
+/// as a bad value rather than reinterpreted.
+DateTime? _parseHannaDate(String raw, {bool monthFirst = false}) {
+  final m = _hannaDateRe.firstMatch(raw.trim());
   if (m == null) return null;
-  var day = int.parse(m.group(1)!);
-  var month = int.parse(m.group(2)!);
-  if (month > 12 && day <= 12) (day, month) = (month, day);
+  final first = int.parse(m.group(1)!);
+  final second = int.parse(m.group(2)!);
+  final day = monthFirst ? second : first;
+  final month = monthFirst ? first : second;
   final year = int.parse(m.group(3)!);
   final hour = int.parse(m.group(4)!);
   final minute = int.parse(m.group(5)!);
-  final second = int.parse(m.group(6)!);
+  final sec = int.parse(m.group(6)!);
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  if (hour > 23 || minute > 59 || second > 59) return null;
-  final dt = DateTime(year, month, day, hour, minute, second);
+  if (hour > 23 || minute > 59 || sec > 59) return null;
+  final dt = DateTime(year, month, day, hour, minute, sec);
   // DateTime rolls over out-of-range days (31/04 → 01/05); reject those.
   return dt.day == day && dt.month == month ? dt : null;
 }

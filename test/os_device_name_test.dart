@@ -102,10 +102,7 @@ void main() {
         friendlyIosDeviceName(name: 'iPad', model: 'iPad', modelName: ''),
         'iPad',
       );
-      expect(
-        friendlyIosDeviceName(name: '', model: '', modelName: ''),
-        isNull,
-      );
+      expect(friendlyIosDeviceName(name: '', model: '', modelName: ''), isNull);
     });
   });
 }

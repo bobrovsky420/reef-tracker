@@ -52,13 +52,10 @@ class MicroConfigureScreen extends ConsumerWidget {
         children: [
           for (final (title, category) in sections) ...[
             SectionHeader(title),
-            _sectionCard(
-              [
-                for (final e in elements)
-                  if (e.def.category == category) e,
-              ],
-              prefs,
-            ),
+            _sectionCard([
+              for (final e in elements)
+                if (e.def.category == category) e,
+            ], prefs),
           ],
         ],
       ),

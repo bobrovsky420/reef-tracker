@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0]
+## [1.2.0] - 2026-08-10
 
 ### Added
 - The aquarium list now shows how each tank is doing: every row carries that
@@ -19,14 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   offered, and adding the parameter back later restores its full history.
 - New "Flat with graphs" dashboard layout (Settings → Dashboard): the flat
   card grid where every parameter and ratio card also shows a small graph of
-  its last two weeks of readings under the color-coded current value.
+  its last two weeks of readings above the color-coded current value.
 - iOS: iCloud backup sync — the iPhone counterpart of the Android Google
   Drive sync. Turn it on in Settings → Backup and every backup is uploaded
   to a visible "ReefTracker" folder in your iCloud Drive, where you can
   browse the files in the Files app; the folder is pruned to the same depth
   as the on-device rotation. No account setup inside the app — your
   device's Apple ID is used, so enabling it is a single tap (plus naming
-  the device, so you can tell your devices apart in Manage backups).
+  the device, so a restore offer on your other devices can say which
+  device the backup came from).
 - iOS: multi-device restore over iCloud, matching the Android behavior:
   when another of your devices has uploaded a newer backup, the app offers
   to restore it at launch — a plain offer when this device is unchanged, an
@@ -47,12 +48,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   log of its internal errors (size-capped, never sent anywhere by itself)
   and can share it as a text file — so a problem that only happens on your
   device can be attached to a support message instead of being unfindable.
+- Devices: swipe left or right anywhere on the page to move to the next or
+  previous brand, without scrolling back up to the chips — swiping left goes
+  one brand to the right, All being the first stop. The page scrolls back to
+  the top so you can see which brand you landed on, and a brand you have
+  already looked at shows what it last reported instead of being read again.
+- RO unit: tell the app how heavily your unit is used — Light (under
+  ~300 L a month, top-offs and small water changes), Moderate (~300–1000 L)
+  or Heavy (over ~1000 L, large or multiple tanks) — and the standard
+  parts' replacement intervals are set to typical values for that usage:
+  e.g. a sediment filter goes from every 6 months on Light to every 45 days
+  on Heavy. Picking a level replaces the intervals of all standard parts,
+  including ones you had set yourself; custom parts are left alone, every
+  part stays editable afterwards, and new setups start with the chosen
+  level's intervals.
 
 ### Changed
 - The default strontium range now matches natural seawater: green is
   7–10 mg/L (previously 6.5–8), so a tank sitting at the natural ~8.1 mg/L
-  reads green instead of slightly high. Tanks with a custom strontium range
-  keep their own settings.
+  reads green instead of slightly high. The alarm thresholds moved with it —
+  low strontium now reads red below 6.5 mg/L instead of below 2 mg/L, so a
+  tank sitting at 5 mg/L turns from amber to red without anything changing in
+  the tank, while the high alarm eased from above 10 to above 11 mg/L. Tanks
+  with a custom strontium range keep their own settings.
 - Low silicate is now a gentle nudge instead of an alarm: below 0.1 mg/L —
   including tanks deliberately run at zero — the default range shows amber
   rather than red. The high side (diatom territory) is unchanged, and custom
@@ -60,6 +78,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - While a Hanna checker measurement runs, the progress line reads "Follow the
   instructions on the meter · step 1" instead of ending the sentence with a
   full stop before the step.
+- The dosing target-element picker now lists the trace elements (barium,
+  chromium, cobalt, copper, lithium, manganese, molybdenum, nickel, selenium,
+  sulfur, vanadium, zinc) after the familiar majors and nutrients, so a
+  single-element trace supplement — the Fauna Marin Elementals line — lands
+  on the element it actually doses. Picking such a product previously broke
+  the element selector.
+- Trend forecasts now pause when a parameter has gone untested for more than a
+  month: an abandoned series no longer keeps predicting "reaches the attention
+  zone in ~5 days" from readings taken months ago. The measured per-day rate is
+  still shown – only the projection waits for a fresh test.
+- A nutrient limit that sits at zero is no longer treated as something to
+  cross: ammonia and nitrite falling toward zero — and nitrate or phosphate
+  wherever a limit of theirs is zero — no longer warn that they are heading
+  out of range. Zero is the bottom of the scale, so a tank finishing its
+  cycle no longer gets a trend chip or an observation about its falling
+  ammonia.
 
 ### Fixed
 - Parameter graphs no longer draw overlapping value labels on the left axis
@@ -94,6 +128,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Carbonate Hardness" row in different units (meq/L) and was landing in the
   "not imported" list instead of on your dashboard; it is now converted to
   dKH — the same number the lab's own Fauna Marin file gives.
+- A lab report stating alkalinity in a unit the app doesn't recognize (a US
+  lab's "ppm CaCO3", for example) is no longer imported as if it were dKH —
+  roughly 18× too high. The row now appears in the "not imported" list so
+  nothing lands wrong silently.
+- Lab and Hanna CSV imports no longer lose data when a field contains a
+  stray quote character (a note like `new 5" return line`): the rest of that
+  row — and in a Hanna export, every later row — was silently swallowed,
+  which among other things disarmed the warning against importing the same
+  Fauna Marin report twice.
+- ZIMS lab exports that write µg/L with the Greek letter mu (some macOS and
+  lab systems do) now import their trace elements instead of listing all of
+  them as "not imported".
+- Hanna Lab imports from a phone set to US date format no longer place some
+  readings months off: whether dates read day-first or month-first is now
+  decided once for the whole file instead of row by row, so July 4th can no
+  longer import as April 7th while July 23rd imported correctly.
+- Groundwork fixes to the (not yet active) Pro purchase plumbing: a storage
+  hiccup while checking the unlock at launch no longer hides it until the
+  app is restarted, restoring purchases also clears a stuck failed
+  transaction (which iOS would otherwise re-deliver forever, blocking a
+  re-purchase), and a failed save of a fresh purchase is reported instead of
+  failing silently in the background.
+- Cloud backup sync no longer deletes the copy it has just uploaded. If the
+  cloud folder already held as many backups as your rotation keeps and they
+  were named with a later date – which happens when a second device's clock
+  runs ahead, or when a file was copied into the folder by hand – the fresh
+  upload was the one trimmed away, seconds after it landed, while Settings
+  went on reporting the data as backed up. The upload a sync just made is now
+  always kept, and it still counts towards the number of copies you asked to
+  keep.
+- Backup and export filenames now always use plain (ASCII) digits whatever
+  language the app is set to, so the automatic backup rotation keeps trimming
+  the oldest copy first and exported files keep sorting by date. No effect in
+  the languages shipped today – it would have started mis-sorting the first
+  time a language with its own digits was added.
+- Scanning the network for devices no longer stops when a single device
+  answers strangely – everything already found stays in the list.
+- A ReefFactory unit that reports no usable serial number is now skipped by
+  the network scan instead of being listed. Two such units used to collapse
+  into a single entry, and neither could be recognised again later.
+- Editing a supplement in the dosing plan no longer rounds its dose. A plan
+  dosed at 0.25 ml was re-saved as 0.3 ml – a 20 % higher dose – and the
+  rounded value also ended the current dosing-history segment and started a
+  new one. Fractional doses are now kept exactly as entered. Logging or
+  editing a one-off dose no longer rounds the amount the same way. Doses
+  already rounded by an earlier edit are not corrected automatically –
+  re-enter the amount on the plan and delete the extra entry in Dosing
+  history.
+- Renaming a custom vendor on a dosing plan is now saved instead of being
+  silently discarded.
+- Opening a dosing plan or a logged dose whose target element is not in the
+  app's dosing element list – for example after restoring a backup written by
+  a newer version – no longer breaks the edit form. The element is shown and
+  kept as it was.
+- Opening a parameter's range editor moments after launch – from the
+  Microelements screen, or from a notification tap – no longer bounces back
+  to the dashboard before the parameter list has finished loading.
 
 ## [1.1.1] - 2026-08-01
 

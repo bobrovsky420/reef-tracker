@@ -177,20 +177,8 @@ void main() {
     });
   });
 
-  group('formatParamValue', () {
-    test('uses the parameter precision', () {
-      // pH -> 2 decimals, calcium -> 0, salinity -> 3.
-      expect(formatParamValue('ph', 8.234), '8.23');
-      expect(formatParamValue('calcium', 419.6), '420');
-      expect(formatParamValue('salinity', 1.0264), '1.026');
-    });
-
-    test('rounds half away following toStringAsFixed', () {
-      expect(formatParamValue('temperature', 25.05), '25.1');
-    });
-
-    test('falls back to 2 decimals for an unknown key', () {
-      expect(formatParamValue('does-not-exist', 1.2345), '1.23');
-    });
-  });
+  // `formatParamValue` was deleted rather than covered: it had zero call sites
+  // in `lib/`, and its tests were the only thing making it look load-bearing.
+  // Values are formatted through `units.dart`'s `presentationFor`, which
+  // carries the unit conversion the raw helper silently skipped.
 }

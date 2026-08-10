@@ -24,11 +24,36 @@ try {
     flutter pub get
     if ($LASTEXITCODE -ne 0) { throw "flutter pub get failed" }
 
+    # 3b. Derive the Pro sale state from the ONE Dart constant (U19 §10).
+    #
+    # `kActivationVersion` in lib/domain/pro_features.dart is the single switch
+    # for the paid tier: null = dormant. `kProSaleLive` is derived from it in
+    # Dart, but Gradle cannot read a Dart const — and the Android manifest
+    # strip of the billing permission is a Gradle-side decision. Rather than
+    # keep a second hand-maintained flag that can silently disagree (a build
+    # with the sale live but billing stripped, or vice versa), parse the
+    # constant here and pass it down. Drift is then impossible by construction,
+    # which is why no const-vs-property consistency test is needed.
+    $proFeatures = Join-Path $script:RepoRoot 'lib\domain\pro_features.dart'
+    $activationLine = Select-String -Path $proFeatures `
+        -Pattern "^const\s+String\?\s+kActivationVersion\s*=\s*(.+);"
+    if (-not $activationLine) {
+        throw "Could not find kActivationVersion in $proFeatures - the release build refuses to guess whether the paid tier is live."
+    }
+    $activationRaw = $activationLine.Matches[0].Groups[1].Value.Trim()
+    $proSaleLive = ($activationRaw -ne 'null')
+    if ($proSaleLive) {
+        Write-Host ("`n  Pro sale: LIVE (kActivationVersion = {0})" -f $activationRaw) -ForegroundColor Yellow
+    } else {
+        Write-Host "`n  Pro sale: dormant (kActivationVersion = null)" -ForegroundColor Green
+    }
+
     # Obfuscated build (TODO T12); the split-debug-info symbols are the ONLY
     # way to symbolicate crash stacks from this build — archive them per
     # release below, never discard them.
     Write-Host "`n-- flutter build appbundle --release (obfuscated) --" -ForegroundColor Cyan
-    flutter build appbundle --release --obfuscate --split-debug-info=build\symbols
+    flutter build appbundle --release --obfuscate --split-debug-info=build\symbols `
+        "-Preeftracker.proSale=$($proSaleLive.ToString().ToLowerInvariant())"
     if ($LASTEXITCODE -ne 0) { throw "flutter build failed" }
 
     # 4. Report the artifact at its real (out-of-OneDrive) location.

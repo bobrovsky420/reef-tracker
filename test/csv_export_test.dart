@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -113,6 +114,29 @@ void main() {
       expect(imperial, contains(',temperature,77.0,°F,'));
       // Default salinity preference is ppt.
       expect(imperial, contains(',salinity,35.0,ppt,'));
+    });
+
+    test('values stay ASCII-dotted under comma-decimal app locales', () {
+      // Six of seven app languages use a comma decimal. The value column must
+      // ignore Intl.defaultLocale — a well-meaning switch to the app's own
+      // locale formatter would emit "8,25", which splits into two columns and
+      // shifts unit/note on every row of the export.
+      final previous = Intl.defaultLocale;
+      addTearDown(() => Intl.defaultLocale = previous);
+      for (final locale in ['cs', 'de']) {
+        Intl.defaultLocale = locale;
+        final csv = encodeReadingsCsv(
+          readings: [
+            reading('alkalinity', 8.4, at: DateTime(2026, 1, 2, 8, 5)),
+          ],
+          params: [param('alkalinity', 'dKH')],
+          prefs: const UnitPrefs(),
+        );
+        final row = csv.split('\r\n')[1];
+        expect(row, '2026-01-02 08:05:00,alkalinity,8.4,dKH,', reason: locale);
+        // Exactly five columns — a locale comma would make six.
+        expect(row.split(','), hasLength(5), reason: locale);
+      }
     });
 
     test('falls back to the catalog unit for readings without a tracked row', () {

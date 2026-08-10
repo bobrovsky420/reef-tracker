@@ -78,6 +78,20 @@ final appVersionProvider = FutureProvider<String>((ref) async {
   return '${info.version}+${info.buildNumber}';
 });
 
+/// The wall clock, as a provider.
+///
+/// Every time-dependent provider in this file reads "now" through this seam
+/// rather than calling [DateTime.now] inline, so a test can pin the clock and
+/// assert a date-window boundary exactly (due today vs one day overdue, the
+/// [kHealthFreshnessDays] edge, the stability window's cutoff) instead of
+/// hoping real time lands on the intended side of it. Mirrors the `now:`
+/// parameter the whole domain layer already takes (`lib/domain/clock.dart`).
+///
+/// Deliberately a *function*, not a `DateTime`: these providers recompute on
+/// every input emission, and a stored instant would freeze at whatever moment
+/// the provider was first read.
+final nowProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
 /// The on-device error log (#107). One instance per container: `main()`
 /// installs the global error hooks on it, and Settings → About shares its
 /// contents. Tests override with a temp-dir instance.
@@ -193,6 +207,19 @@ final parameterOverridesProvider =
 /// resolved values; see [ResolvedParameter].
 final trackedParametersProvider = Provider<AsyncValue<List<ResolvedParameter>>>(
   (ref) {
+    // "This tank tracks nothing" and "the tanks haven't loaded yet" are
+    // different answers, and only the first one is an empty list.
+    // [activeTankProvider] reports null for both (it reads `.value ?? const
+    // []`), so the tank list has to be asked directly. Consumers that treat a
+    // *landed* empty list as "the id you asked for does not exist" — the
+    // `/parameters/:id/edit` resolver ([_ResolveById]), reached on a cold
+    // start from a deep link or from the microelement bounds editor — would
+    // otherwise bounce home during the load window.
+    final tanks = ref.watch(tanksProvider);
+    if (tanks.hasError) {
+      return AsyncValue.error(tanks.error!, tanks.stackTrace!);
+    }
+    if (!tanks.hasValue) return const AsyncValue.loading();
     final tank = ref.watch(activeTankProvider);
     if (tank == null) return const AsyncValue.data([]);
     final rows = ref.watch(_trackedParametersFamily(tank.id));
@@ -340,7 +367,7 @@ final dosingElementZonesProvider = Provider<Map<String, Zone>>((ref) {
     latest.putIfAbsent(r.paramKey, () => r);
   }
 
-  final now = DateTime.now();
+  final now = ref.watch(nowProvider)();
   final zones = <String, Zone>{};
   for (final key in keys) {
     final reading = latest[key];
@@ -459,7 +486,7 @@ final maintenanceDueProvider = Provider<List<MaintenanceDue>>((ref) {
       ),
     ),
   };
-  final now = DateTime.now();
+  final now = ref.watch(nowProvider)();
   return [
     for (final s in schedules)
       if (nextMaintenanceDue(
@@ -518,7 +545,7 @@ final roStageStatusProvider = Provider<List<RoStageStatus>>((ref) {
   for (final r in replacements) {
     latest.putIfAbsent(r.stageId, () => r.replacedAt);
   }
-  final now = DateTime.now();
+  final now = ref.watch(nowProvider)();
   return [
     for (final s in stages)
       (
@@ -699,6 +726,14 @@ final roUnitEnabledProvider = _setting(
   AppSettings.decodeRoUnitEnabled,
 );
 
+/// How intensively the RO unit is used (default moderate) — selects the
+/// typical-lifespan preset the RO screen's usage picker applies and the
+/// defaults its stage edit sheet offers.
+final roUsageLevelProvider = _setting(
+  SettingKey.roUsageLevel,
+  AppSettings.decodeRoUsageLevel,
+);
+
 /// Whether the microelements panel is surfaced at all (U17, default on):
 /// gates the dashboard summary tile (and, in the scheduler, micro test
 /// reminders). Off only hides — measurements stay stored and reappear when
@@ -770,7 +805,7 @@ final purchaseStoreProvider = Provider<PurchaseStore>(
 /// The device-local Pro unlock flag — a backup-excluded file, not a settings
 /// row (see [ProEntitlementStore] for why the distinction is load-bearing).
 final proEntitlementStoreProvider = Provider<ProEntitlementStore>((ref) {
-  final store = ProEntitlementStore();
+  final store = FileProEntitlementStore();
   ref.onDispose(store.dispose);
   return store;
 });
@@ -1113,7 +1148,14 @@ final tankTrendsProvider = Provider<Map<String, TrendResult>>((ref) {
   for (final p in tracked) {
     final pts = byParam[p.paramKey];
     if (pts == null) continue;
-    final t = computeTrend(points: pts, bounds: p.bounds, window: window);
+    // The catalog floor keeps a keep-low nutrient's `greenLow: 0` from being
+    // forecast as a crossing the value could ever make (S2).
+    final t = computeTrend(
+      points: pts,
+      bounds: p.bounds,
+      window: window,
+      floor: kParameterByKey[p.paramKey]?.minValue,
+    );
     if (t != null) result[p.paramKey] = t;
   }
   return result;
@@ -1310,7 +1352,7 @@ final _stabilityReadingsFamily = StreamProvider.autoDispose
             .watch(dbProvider)
             .watchReadingsSince(
               key.tankId,
-              DateTime.now().subtract(Duration(days: key.days)),
+              ref.watch(nowProvider)().subtract(Duration(days: key.days)),
             ),
       ),
     );
@@ -1406,6 +1448,7 @@ final tankInsightsProvider = Provider<List<Insight>>((ref) {
         points: pts,
         bounds: bounds[p.paramKey]!,
         window: window,
+        floor: kParameterByKey[p.paramKey]?.minValue,
       );
       if (t != null) trends[p.paramKey] = t;
     }

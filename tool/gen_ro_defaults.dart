@@ -1,4 +1,4 @@
-// Generates `lib/domain/ro.g.dart` (the `kRoDefaultLifespanDays` /
+// Generates `lib/domain/ro.g.dart` (the `kRoLifespanDaysByUsage` /
 // `kRoDefaultStageOrder` consts) from the editable
 // `lib/domain/ro_defaults.yaml` source.
 //
@@ -7,8 +7,10 @@
 //
 // Validates the YAML before writing: every non-custom `RoStageType` name
 // must appear exactly once (custom stages are user-created and have no
-// default), and every lifespan must be a whole number of days >= 1. On any
-// error it prints the problems and writes nothing.
+// default), every stage must carry a lifespan for every `RoUsageLevel`
+// (whole days >= 1), and heavier usage must never get a longer lifespan
+// than a lighter one. On any error it prints the problems and writes
+// nothing.
 //
 // Deliberately does NOT import package:reeftracker — this generator's output
 // is a part of `ro.dart`, so the package doesn't compile while the output is
@@ -24,6 +26,9 @@ const _outPath = 'lib/domain/ro.g.dart';
 
 /// Mirrors the non-custom values of `RoStageType` in ro.dart, in enum order.
 const _stageTypes = ['sediment', 'carbonBlock', 'membrane', 'diResin'];
+
+/// Mirrors `RoUsageLevel` in ro.dart, lightest first.
+const _usageLevels = ['light', 'moderate', 'heavy'];
 
 void main() {
   final src = File(_srcPath);
@@ -41,14 +46,10 @@ void main() {
     ..writeln('/// the unit. Generated from `ro_defaults.yaml` (listing')
     ..writeln('/// order).')
     ..writeln('const List<RoStageType> kRoDefaultStageOrder = [');
-  final lifespanBuf = StringBuffer()
-    ..writeln('/// Typical replacement lifespans (days) used to seed the')
-    ..writeln('/// default stage set the first time the RO screen is opened,')
-    ..writeln('/// generated from `ro_defaults.yaml`. Deliberately')
-    ..writeln('/// conservative, mainstream values — the user edits them to')
-    ..writeln('/// match their water and unit. [RoStageType.custom] has no')
-    ..writeln('/// default: custom stages are user-created.')
-    ..writeln('const Map<RoStageType, int> kRoDefaultLifespanDays = {');
+  // Per-level lifespan maps, filled stage by stage, emitted level by level.
+  final lifespans = {
+    for (final level in _usageLevels) level: <String, int>{},
+  };
 
   final stages = doc['stages'] as YamlList;
   for (final s in stages) {
@@ -66,16 +67,71 @@ void main() {
         errors.add('$where: unknown field "$f"');
       }
     }
-    final lifespan = s['lifespanDays'];
-    if (lifespan is! int || lifespan < 1) {
-      errors.add('$where: lifespanDays must be a whole number of days >= 1');
+    final byLevel = s['lifespanDays'];
+    if (byLevel is! YamlMap) {
+      errors.add(
+        '$where: lifespanDays must be a map with one entry per usage '
+        'level (${_usageLevels.join('/')})',
+      );
       continue;
+    }
+    for (final level in byLevel.keys) {
+      if (!_usageLevels.contains(level)) {
+        errors.add('$where: unknown usage level "$level"');
+      }
+    }
+    var ok = true;
+    for (final level in _usageLevels) {
+      final lifespan = byLevel[level];
+      if (lifespan is! int || lifespan < 1) {
+        errors.add(
+          '$where: lifespanDays.$level must be a whole number of days >= 1',
+        );
+        ok = false;
+        continue;
+      }
+      lifespans[level]![type] = lifespan;
+    }
+    if (!ok) continue;
+    // Heavier usage wears a part faster, never slower.
+    for (var i = 1; i < _usageLevels.length; i++) {
+      final lighter = lifespans[_usageLevels[i - 1]]![type]!;
+      final heavier = lifespans[_usageLevels[i]]![type]!;
+      if (heavier > lighter) {
+        errors.add(
+          '$where: ${_usageLevels[i]} lifespan ($heavier) exceeds '
+          '${_usageLevels[i - 1]} ($lighter)',
+        );
+      }
     }
 
     orderBuf.writeln('  RoStageType.$type,');
-    lifespanBuf.writeln('  RoStageType.$type: $lifespan,');
   }
   orderBuf.writeln('];');
+
+  final lifespanBuf = StringBuffer()
+    ..writeln('/// Typical replacement lifespans (days) per usage level,')
+    ..writeln('/// generated from `ro_defaults.yaml`. Seeds the default')
+    ..writeln('/// stage set on first RO-screen open and re-applies when the')
+    ..writeln('/// user picks a usage level; `moderate` is the default.')
+    ..writeln('/// Deliberately conservative, mainstream values — the user')
+    ..writeln('/// edits them to match their water and unit.')
+    ..writeln('/// [RoStageType.custom] has no default: custom stages are')
+    ..writeln('/// user-created.')
+    ..writeln(
+      'const Map<RoUsageLevel, Map<RoStageType, int>> '
+      'kRoLifespanDaysByUsage = {',
+    );
+  for (final level in _usageLevels) {
+    lifespanBuf.writeln('  RoUsageLevel.$level: {');
+    // Emit in listing (water-path) order, like the order const.
+    for (final s in stages) {
+      final type = s['type'];
+      final days = lifespans[level]![type];
+      if (days != null) lifespanBuf.writeln('    RoStageType.$type: $days,');
+    }
+    lifespanBuf.writeln('  },');
+  }
   lifespanBuf.writeln('};');
 
   for (final type in _stageTypes) {

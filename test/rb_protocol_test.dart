@@ -615,8 +615,10 @@ void main() {
     test('the leak-sensor row only exists for an attached, enabled sensor', () {
       bool active(Object? leak) =>
           RbAtoStatus.fromJson({'leak_sensor': leak}).leakSensorActive;
-      expect(active({'connected': true, 'enabled': true, 'status': 'dry'}),
-          isTrue);
+      expect(
+        active({'connected': true, 'enabled': true, 'status': 'dry'}),
+        isTrue,
+      );
       expect(active({'connected': true, 'status': 'dry'}), isTrue);
       expect(active({'connected': false, 'enabled': true}), isFalse);
       expect(active({'connected': true, 'enabled': false}), isFalse);

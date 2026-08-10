@@ -2358,6 +2358,11 @@ class AppDatabase extends _$AppDatabase {
   Future<void> seedDefaultRoStages() async {
     await transaction(() async {
       if (await getSetting(kRoSeededKey) != null) return;
+      // Seed lifespans for the stored usage level — normally the moderate
+      // default, but a restore can bring the level without the seed flag.
+      final lifespans = roLifespansFor(
+        RoUsageLevel.fromName(await getSetting(kRoUsageLevelKey)),
+      );
       final existing = await (selectOnly(
         roStages,
       )..addColumns([roStages.id.count()])).getSingle();
@@ -2369,7 +2374,7 @@ class AppDatabase extends _$AppDatabase {
               roStages,
               RoStagesCompanion.insert(
                 stageType: type.name,
-                lifespanDays: kRoDefaultLifespanDays[type]!,
+                lifespanDays: lifespans[type]!,
                 displayOrder: Value(i),
               ),
             );
@@ -2377,6 +2382,22 @@ class AppDatabase extends _$AppDatabase {
         });
       }
       await setSetting(kRoSeededKey, 'true');
+    });
+  }
+
+  /// Stores the RO usage level and applies its typical-lifespan preset to
+  /// every **standard** (typed) stage in one transaction — disabled ones
+  /// included, they are still parts of the unit. Custom stages are left
+  /// untouched: no preset exists for a part the app doesn't know.
+  Future<void> setRoUsageLevel(RoUsageLevel level) async {
+    await transaction(() async {
+      await setSetting(kRoUsageLevelKey, level.name);
+      for (final MapEntry(key: type, value: days) in roLifespansFor(
+        level,
+      ).entries) {
+        await (update(roStages)..where((s) => s.stageType.equals(type.name)))
+            .write(RoStagesCompanion(lifespanDays: Value(days)));
+      }
     });
   }
 

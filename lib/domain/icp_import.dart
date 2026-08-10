@@ -359,19 +359,29 @@ String? zimsMeasurementKey(String label) {
   return _kZimsNameToKey[name];
 }
 
-/// Canonical-dKH factor for an alkalinity row. Labs state alkalinity either
-/// in dKH (already canonical) or in meq/L — Fauna Marin's ZIMS export uses
-/// "Carbonate Hardness" in "milliequivalents per litre", where 1 meq/L =
-/// 2.8 dKH. An unlabeled/unknown unit stays dKH, the app's own unit.
-double zimsAlkalinityFactor(String unit) {
+/// Canonical-dKH factor for an alkalinity row, or null when the unit is not
+/// recognized (the row is reported as skipped, like [zimsUnitFactor] rows —
+/// never guessed). Labs state alkalinity in dKH / °dH (already canonical) or
+/// in meq/L — Fauna Marin's ZIMS export uses "Carbonate Hardness" in
+/// "milliequivalents per litre", where 1 meq/L = 2.8 dKH.
+///
+/// Unknown units used to be *assumed* dKH, which imported a US lab's
+/// "ppm CaCO3" alkalinity (~17.9 ppm per dKH) roughly 18× high; the Hanna
+/// importer already refuses unknown units the same way this now does.
+double? zimsAlkalinityFactor(String unit) {
   final u = unit.trim().toLowerCase();
-  return u.contains('milliequivalent') || u.startsWith('meq') ? 2.8 : 1.0;
+  if (u.contains('milliequivalent') || u.startsWith('meq')) return 2.8;
+  if (u.contains('dkh') || u == 'dh' || u == '°dh') return 1.0;
+  return null;
 }
 
 /// Canonical-ppm factor for a ZIMS unit label, or null when unrecognized
 /// (such rows are reported as skipped, never guessed).
 double? zimsUnitFactor(String unit) {
-  final u = unit.trim().toLowerCase();
+  // GREEK SMALL LETTER MU (U+03BC) folds onto MICRO SIGN (U+00B5): the two
+  // are visually identical, and macOS/LIMS exports use the Greek letter —
+  // refusing it would silently drop all 20 trace elements of a report.
+  final u = unit.trim().toLowerCase().replaceAll('μ', 'µ');
   if (u.contains('microgram') ||
       u.startsWith('µg') ||
       u.startsWith('ug') ||
@@ -517,7 +527,12 @@ List<List<String>> _parseCsv(String text, String delimiter) {
       } else {
         field.write(c);
       }
-    } else if (c == '"') {
+    } else if (c == '"' && field.isEmpty) {
+      // Field-scope quoting (RFC 4180): a quote only opens a quoted section
+      // at the start of a field. Mid-field quotes (`new 5" return line` in a
+      // note) are literal characters — treating one as an opener swallowed
+      // every later cell of the row into the field, and on files with
+      // multi-row data every later row too.
       inQuotes = true;
     } else if (c == delimiter) {
       endField();

@@ -35,6 +35,10 @@ const kRemindersMaintenanceKey = 'reminders_maintenance';
 const kReminderTimeKey = 'reminder_time';
 const kRoSeededKey = 'ro_stages_seeded';
 const kRoUnitEnabledKey = 'ro_unit_enabled';
+// How intensively the RO unit is used (`RoUsageLevel.name`, default
+// moderate): selects the typical-lifespan preset applied to the standard
+// stages when seeding and when the user picks a level in the RO screen.
+const kRoUsageLevelKey = 'ro_usage_level';
 // The Devices screen's vendor order (U41): the kinds, comma-joined, in the
 // order the user dragged them into. Also decides which vendor wins a parameter
 // two devices both report — see `orderDeviceVendors`.

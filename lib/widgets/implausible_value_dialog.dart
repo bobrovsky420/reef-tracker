@@ -29,9 +29,8 @@ SuspectReason? deviceSuspectReason(String paramKey, double value) =>
     switch (checkParamValue(paramKey, value)) {
       ParamValueCheck.implausible => SuspectReason.implausible,
       ParamValueCheck.impossible => null,
-      ParamValueCheck.ok => isRailValue(paramKey, value)
-          ? SuspectReason.rail
-          : null,
+      ParamValueCheck.ok =>
+        isRailValue(paramKey, value) ? SuspectReason.rail : null,
     };
 
 /// One value put to the user before saving.
@@ -99,7 +98,8 @@ Future<SuspectChoice> showImplausibleValuesDialog(
   // A caller that supplies a presentation for every entry (the history editor,
   // whose parameter carries a per-tank unit) needs no preferences at all.
   ParamPresentation presOf(SuspectValue v, ParameterDef def) =>
-      v.pres ?? presentationForKey(def.key, def.unit, prefs ?? const UnitPrefs());
+      v.pres ??
+      presentationForKey(def.key, def.unit, prefs ?? const UnitPrefs());
 
   final choice = await showDialog<SuspectChoice>(
     context: context,
@@ -122,21 +122,18 @@ Future<SuspectChoice> showImplausibleValuesDialog(
                     final pres = presOf(v, def);
                     final value =
                         '${pres.format(v.canonical)} ${pres.unitLabel}';
-                    return Text(
-                      switch (v.reason) {
-                        SuspectReason.rail => l.implausibleRailLine(
-                          l.paramName(def.key),
-                          value,
-                        ),
-                        SuspectReason.implausible => l.implausibleValueLine(
-                          l.paramName(def.key),
-                          value,
-                          pres.format(def.plausibleMin!),
-                          '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
-                        ),
-                      },
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    );
+                    return Text(switch (v.reason) {
+                      SuspectReason.rail => l.implausibleRailLine(
+                        l.paramName(def.key),
+                        value,
+                      ),
+                      SuspectReason.implausible => l.implausibleValueLine(
+                        l.paramName(def.key),
+                        value,
+                        pres.format(def.plausibleMin!),
+                        '${pres.format(def.plausibleMax!)} ${pres.unitLabel}',
+                      ),
+                    }, style: const TextStyle(fontWeight: FontWeight.w500));
                   },
                 ),
               ),

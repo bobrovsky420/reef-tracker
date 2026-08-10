@@ -1251,7 +1251,10 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Korzystasz ze standardowej edycji aplikacji ReefTracker.';
+      'Korzystasz ze standardowej edycji aplikacji ReefTracker. Wszystko, co już zapisałeś, pozostaje Twoje; ReefTracker Pro odblokowuje zaawansowane funkcje.';
+
+  @override
+  String get editionUpgrade => 'Odblokuj Pro';
 
   @override
   String get editionPro => 'Pro';
@@ -3195,6 +3198,38 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get roAllOk => 'Wszystkie elementy w porządku';
+
+  @override
+  String get roUsageTitle => 'Intensywność użytkowania';
+
+  @override
+  String get roUsageDialogBody =>
+      'Ile wody produkuje twój zestaw. Wybór poziomu zastąpi okresy wymiany wszystkich standardowych elementów — także te ustawione przez ciebie — typowymi wartościami dla tego poziomu; własne elementy pozostaną bez zmian, a każdy element możesz potem dostroić ręcznie.';
+
+  @override
+  String get roUsageLight => 'Niska';
+
+  @override
+  String get roUsageModerate => 'Średnia';
+
+  @override
+  String get roUsageHeavy => 'Wysoka';
+
+  @override
+  String get roUsageLightHint =>
+      'Poniżej ~300 l (80 gal) miesięcznie — dolewki i małe podmiany wody';
+
+  @override
+  String get roUsageModerateHint =>
+      'Około 300–1000 l (80–260 gal) miesięcznie — typowe pojedyncze akwarium';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Ponad ~1000 l (260 gal) miesięcznie — duże akwarium lub kilka zbiorników';
+
+  @override
+  String get roUsageApplied =>
+      'Okresy wymiany standardowych elementów ustawione na nowo';
 
   @override
   String get notifRoTitle => 'Wymień wkłady filtra RO';

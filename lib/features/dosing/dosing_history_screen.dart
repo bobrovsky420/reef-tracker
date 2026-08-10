@@ -263,10 +263,7 @@ class _HistoryRow extends ConsumerWidget {
       lines: [
         if (source.isNotEmpty) ...[
           const SizedBox(height: 5),
-          Text(
-            source,
-            style: TextStyle(fontSize: 12.5, color: tokens.textDim),
-          ),
+          Text(source, style: TextStyle(fontSize: 12.5, color: tokens.textDim)),
         ],
         const SizedBox(height: 3),
         Text(
@@ -373,17 +370,13 @@ class _ManualDoseRow extends ConsumerWidget {
       icon: Icons.vaccines_outlined,
       title: names.product,
       tags: [
-        if (dose.elementKey != null)
-          _Tag(label: l.paramName(dose.elementKey!)),
+        if (dose.elementKey != null) _Tag(label: l.paramName(dose.elementKey!)),
         _Tag(label: l.dosingHistoryManual),
       ],
       lines: [
         if (source.isNotEmpty) ...[
           const SizedBox(height: 5),
-          Text(
-            source,
-            style: TextStyle(fontSize: 12.5, color: tokens.textDim),
-          ),
+          Text(source, style: TextStyle(fontSize: 12.5, color: tokens.textDim)),
         ],
         const SizedBox(height: 3),
         Text(

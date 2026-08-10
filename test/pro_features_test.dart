@@ -1,5 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/domain/pro_features.dart';
+
+/// Strips `//`/`///` line comments and `/* */` block comments so doc prose
+/// mentioning a feature can't count as a gate site (dashboard_screen once
+/// referenced a `ProFeature.driveSync` that no longer existed — in a comment).
+/// String literals are not parsed; a `//` inside a string only ever *removes*
+/// text from the scan, never invents a gate.
+String _stripComments(String source) => source
+    .replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '')
+    .replaceAll(RegExp(r'//.*'), '');
 
 void main() {
   group('hasProFeature gate (U19)', () {
@@ -70,20 +81,60 @@ void main() {
       // entry would put a priceless, unbuyable paywall in front of every
       // existing user in a production build.
       //
-      // `grandfathered: false` is the DEFAULT for the U21–U27 roadmap block,
-      // and U22 (photo journal) is marked Pro and is next in line — so this is
-      // a live hazard, not a theoretical one.
+      // `grandfathered: false` is the DEFAULT wording for the U21–U27 roadmap
+      // block, and U22 (photo journal) is marked Pro and is next in line — so
+      // this is a live hazard, not a theoretical one. The 2026-08-05 decision
+      // overrides that default for everything shipped before activation.
       //
-      // If this fails, the feature you just added either ships
-      // `grandfathered: true` or ships ungated until activation. Decide per
-      // feature — but never silently. Relax this test only in the activation
-      // commit itself (§10 B1), together with the sale switch.
+      // DECIDED 2026-08-05: every Pro feature delivered before activation
+      // ships `grandfathered: true`, so if this fails, add the flag — there is
+      // no per-feature deliberation left to have.
+      //
+      // This test is NOT relaxed at activation. It stays green afterwards and
+      // becomes the permanent guard that a new key doesn't quietly take
+      // something away from Founders. It costs the paid tier nothing: a
+      // Standard install (every install created after activation) gets no
+      // benefit from a grandfathered flag and meets the paywall on every key.
+      // Only a capability invented after activation that even Founders should
+      // pay for would ever justify `grandfathered: false` — and changing this
+      // test is exactly the moment to prove that case was made deliberately.
       expect(
         ProFeature.values.where((f) => !kGrandfatheredFeatures.contains(f)),
         isEmpty,
         reason:
             'a non-grandfathered feature makes the paywall reachable, and no '
             'purchase mechanism exists to satisfy it',
+      );
+    });
+
+    test('the sale flag is derived, so a half-flip cannot exist', () {
+      // The three facts that make up activation — sale live, seeder stopped,
+      // marker boundary honoured — all hang off one constant. The state that
+      // used to be reachable by hand (sale ON while the seeder still mints
+      // Founders, so every new install is entitled and nobody ever pays) is
+      // now unrepresentable.
+      expect(kProSaleLive, kActivationVersion != null);
+      expect(
+        shouldSeedFounderMarker(activationVersion: kActivationVersion),
+        !kProSaleLive,
+        reason: 'seeding and selling must never be on at the same time',
+      );
+    });
+
+    test('the ACTIVATED behaviour is proven now, not on activation day', () {
+      // `shouldSeedFounderMarker` takes the version as a parameter precisely
+      // so the post-flip branch is exercised while it is still a value. On
+      // activation day the constant changes and this behaviour is already
+      // covered — no new test to write under pressure.
+      expect(
+        shouldSeedFounderMarker(activationVersion: null),
+        isTrue,
+        reason: 'dormant: every launch seeds',
+      );
+      expect(
+        shouldSeedFounderMarker(activationVersion: '1.3.0'),
+        isFalse,
+        reason: 'activated: nothing is stamped, fresh installs are Standard',
       );
     });
 
@@ -120,6 +171,40 @@ void main() {
       expect(compareAppVersions('1.2.0+142', '1.2.0'), 0);
       // Garbage degrades to "oldest possible" rather than throwing on launch.
       expect(compareAppVersions('nonsense', '0.0.1'), lessThan(0));
+    });
+  });
+
+  group('gate call sites', () {
+    test('every ProFeature is gated somewhere in lib/', () {
+      // A registry entry nothing checks is a paid capability given away
+      // silently — the feature ships, the paywall never appears, and no test
+      // fails. Scan the real sources for the three gate idioms the codebase
+      // uses; comments are stripped first so doc prose doesn't count.
+      final source = Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'))
+          .map((f) => _stripComments(f.readAsStringSync()))
+          .join('\n');
+
+      for (final feature in ProFeature.values) {
+        final name = feature.name;
+        final gatePatterns = [
+          // ref.watch/read(proFeatureProvider(ProFeature.x))
+          RegExp('proFeatureProvider\\(\\s*ProFeature\\.$name\\b'),
+          // runProGated(context, ref, ProFeature.x, ...) — possibly multiline.
+          RegExp('runProGated\\([^;]*?ProFeature\\.$name\\b', dotAll: true),
+          // entitlement.has(ProFeature.x) — the non-Riverpod path.
+          RegExp('\\.has\\(\\s*ProFeature\\.$name\\b'),
+        ];
+        expect(
+          gatePatterns.any((p) => p.hasMatch(source)),
+          isTrue,
+          reason:
+              'ProFeature.$name has no real gate call site in lib/ — '
+              'the capability is given away to Standard installs',
+        );
+      }
     });
   });
 

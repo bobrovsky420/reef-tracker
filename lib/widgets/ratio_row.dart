@@ -157,9 +157,11 @@ class _RatioTrack extends StatelessWidget {
     final tokens = ReefTokens.of(context);
     // Reuse zoneBands for the green segment (one-sided ranges extend to the
     // track edge), like the gauge dial does.
-    final green = zoneBands(bounds, axis.min, axis.max)
-        .where((b) => b.zone == Zone.green)
-        .toList();
+    final green = zoneBands(
+      bounds,
+      axis.min,
+      axis.max,
+    ).where((b) => b.zone == Zone.green).toList();
 
     double fraction(double v) =>
         ((v - axis.min) / (axis.max - axis.min)).clamp(0.0, 1.0);

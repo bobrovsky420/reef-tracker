@@ -18,7 +18,16 @@ part 'hanna_checker.g.dart';
 /// bodies; several models share a family (both alkalinity checkers are
 /// blue, the whole phosphate family is green), so a family narrows the
 /// candidates — the readout's display format does the rest.
-enum CheckerColor { red, orange, yellow, green, blue, lavender, graphite, white }
+enum CheckerColor {
+  red,
+  orange,
+  yellow,
+  green,
+  blue,
+  lavender,
+  graphite,
+  white,
+}
 
 /// One pocket-checker model the scan supports. The table itself
 /// ([kHannaCheckers]) is generated from `hanna_methods.yaml` — edit the

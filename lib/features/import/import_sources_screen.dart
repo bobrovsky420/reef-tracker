@@ -104,7 +104,9 @@ class ImportSourcesScreen extends ConsumerWidget {
             tankId: s.tankId,
             source: s.source,
             location: Value(s.location),
-            importedUpTo: Value(DateTime(picked.year, picked.month, picked.day)),
+            importedUpTo: Value(
+              DateTime(picked.year, picked.month, picked.day),
+            ),
             rewound: const Value(true),
           ),
         );

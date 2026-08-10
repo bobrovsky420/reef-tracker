@@ -36,7 +36,8 @@ class RfLinkException implements Exception {
   final RfLinkError error;
   final String? detail;
   @override
-  String toString() => 'RfLinkException($error${detail == null ? '' : ': $detail'})';
+  String toString() =>
+      'RfLinkException($error${detail == null ? '' : ': $detail'})';
 }
 
 abstract class RfDeviceLink {
@@ -97,6 +98,19 @@ class RfWebSocketLink implements RfDeviceLink, RfIdentityProbe {
         final frame = RfFrame.decode(data);
         if (frame.command != 'refresh' || frame.subcommand != 'config') return;
         final serial = readCString(frame.payload);
+        // The serial is the discovery dedupe key *and* `Devices.identifier`,
+        // the row's primary key. Anything shorter than a model prefix is not
+        // an identity: it would hide the next such host behind the first, and
+        // could never match a rediscovery of either. An *unknown* 16-character
+        // prefix is a different matter and is still reported (unsupported).
+        if (serial.length < 6) {
+          if (!result.isCompleted) {
+            result.completeError(
+              const RfLinkException(RfLinkError.protocol, 'no usable serial'),
+            );
+          }
+          return;
+        }
         final spec = rfModelForSerial(serial);
         if (!result.isCompleted) {
           result.complete(
@@ -230,7 +244,9 @@ class RfWebSocketLink implements RfDeviceLink, RfIdentityProbe {
       },
       onError: (Object e) {
         if (!result.isCompleted) {
-          result.completeError(RfLinkException(RfLinkError.protocol, e.toString()));
+          result.completeError(
+            RfLinkException(RfLinkError.protocol, e.toString()),
+          );
         }
       },
       onDone: () {

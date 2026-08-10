@@ -147,7 +147,11 @@ typedef GaugeAxis = ({double min, double max});
 /// or an empty span — so callers render their non-gauge fallback (the flat
 /// tile / a bar-less row) instead of a wrong arc. Values are positioned with
 /// `(v - min) / (max - min)` clamped into the axis.
-GaugeAxis? gaugeAxis(ZoneBounds b, {double? fallbackLow, double? fallbackHigh}) {
+GaugeAxis? gaugeAxis(
+  ZoneBounds b, {
+  double? fallbackLow,
+  double? fallbackHigh,
+}) {
   if (!b.isValid) return null;
   final lo = b.amberLow ?? fallbackLow;
   final hi = b.amberHigh ?? fallbackHigh;

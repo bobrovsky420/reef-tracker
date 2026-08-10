@@ -26,6 +26,6 @@ Voir l'ensemble
 - Les analyses intelligentes font ressortir les quelques points qui méritent vraiment votre attention cette semaine
 
 Confidentiel par conception
-Tout est stocké localement sur votre appareil par défaut, avec une sauvegarde facultative sur votre propre Google Drive (Android). Aucun compte requis, pas d'inscription, pas de publicité - vos données sont les vôtres. Les connexions au matériel d'aquarium restent sur votre réseau. Sauvegardez et restaurez à tout moment via le menu de partage.
+Tout est stocké localement sur votre appareil par défaut, avec une sauvegarde facultative sur votre propre Google Drive ou iCloud Drive. Aucun compte requis, pas d'inscription, pas de publicité - vos données sont les vôtres. Les connexions au matériel d'aquarium restent sur votre réseau. Sauvegardez et restaurez à tout moment via le menu de partage.
 
 Bac de poissons, coraux mous, LPS, SPS ou récifal mixte : ReefTracker adapte ses paramètres et ses cibles par défaut au type d'aquarium que vous tenez.

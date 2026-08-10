@@ -90,7 +90,8 @@ The codebase is organized into four layers:
 lib/
   domain/    Pure Dart business rules — no Flutter, no DB. Static app data.
   data/      Drift database, backup encode/decode, CSV export. The only persistence layer.
-  app/       Riverpod providers (state graph) + go_router route table + theme.
+  app/       Riverpod providers (state graph) + go_router route table + theme
+             + the shared MaterialApp builder (`app_builder.dart`).
   features/  One folder per screen/feature, wired to providers.
   l10n/      ARB source strings + generated AppLocalizations + domain-label helpers.
   widgets/   Small shared widgets.
@@ -142,13 +143,13 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `stability_score.dart` | Pure, testable tank-stability scoring (U26, Pro) — health's second axis: *"how much have the values been swinging?"* vs health's *"where do they sit now?"*. `computeTankStability(inputs)` → `TankStability` (optional 0–100 `score`, `Zone` band via the health thresholds green ≥ 70 / amber ≥ 40 / red below, coarse `StabilityGrade` rockSolid ≥ 85 / steady ≥ 70 / variable ≥ 40 / unstable, per-parameter breakdown with the residual σ). Per parameter, readings inside the stability window (the `stability_window` setting — `kStabilityWindowChoices` 30/60/90 d, default `kStabilityWindowDays`=30; ≥ `kStabilityMinReadings`=3 of them spanning ≥ `kStabilityMinSpanHours`=48 — a same-evening burst measures kit repeatability, not the tank) are **detrended** with `linearFit` (a steady drift is a *trend*, `trend.dart`'s job — without detrending an alk consumer would read unstable for consuming) and the residual RMS (n−2 dof) is normalized by the **green half-width** (`zones.oscillationScale`, shared with `trend.dart` so the two features can't disagree about what a big swing is; one-sided ranges fall back to their green→amber gap; no usable scale = unmeasurable), so pH swings of 0.2 and Ca swings of 20 ppm compare fairly. Sub-score: 100 within the 0.1 relative deadband (kit noise), falling linearly to 0 at full-scale (swing = the half-band). Aggregate = importance-weighted mean (**same weights as health**, via the shared `importanceWeightFor`); any sub-score < 40 caps the aggregate at 69 — one band softer than health's worst-zone ceiling, since a single noisy series is often the test kit, not the tank. Core parameters only (micro's ICP cadence can't fill a 30-day window). |
 | `insights.dart` | Pure, rule-based tank insights (U28, Pro) — turns signals the domain already computes into a short prioritized list of typed observations; **deterministic rules, no LLM/network**. `computeInsights(health, trends, bounds, horizonDays)` → `List<Insight>`, where each `Insight` is a **typed value** (`InsightKind` + `InsightSeverity` + paramKey + numeric payload, never text — the widget layer maps kinds to ARB messages, one key per message shape via `L10nDomain.insightLabel`). Five rules: **outOfRange** (fresh value in amber/red and not recovering; critical for red, warning for amber; `worsening` set when the trend still points away from green **and survives the significance test** — "still falling" about a merely bouncing series is the same false claim #31 suppressed the forecast for; low/high side from `lowSideOf`), **forecast** (in-range but the trend's `soonestCrossing` ≤ the horizon — warning when the *red* bound is inside the horizon, else notice; the same gate as the dashboard trend chips), **oscillating** (#31 — in-range and `TrendResult.oscillating`: a notice with no `days`, since the whole point is that no crossing estimate would be honest; in-range only, because an amber/red value already has a louder message), **recovering** (`TrendResult.recovering` surfaced positively — the U15 idea — with the `daysToGreen` re-entry estimate; suppresses the outOfRange insight for that parameter), and **staleTest** (has a reading but older than the health freshness window; a never-tested parameter is deliberately *not* flagged — a newly tracked one would nag from day one). Ordering: severity (critical → warning → notice → positive, reassurance never outranks a problem), then the shared health importance weight, then input order. Day estimates round like the trend chips (never below "~1 d"). |
 | `reminders.dart` | Pure due-date math for reminders & schedules (U1/U2/U12). `ReminderKind` (testing/dosing/maintenance — one notification channel + master switch each), `MaintenanceActionType` (the three logged action types; null stored type = custom task), `DueStatus` (`{dueAt, daysLeft}` — signed, negative = overdue; a **calendar-date** difference, so a midnight-stamped due date never reads "due today" the afternoon before nor "overdue" on its own day). Two anchoring models, deliberately different: **elastic** for testing/maintenance (`nextElasticDue`: due = last done + cadence; logging resets the timer; never-done → `scheduledAt` seed or due now; a `scheduledAt` later than the computed due **floors** it — typed plans anchor on their action log, which predates the plan, and the user's explicit first-due date must not read as already overdue; one-off = due at `scheduledAt`, retired once done; a stored cadence < 1 is *unknown*, not daily — the #8 rule) and **calendar** for dosing (`doseOccurrences` expands frequency/interval/weekdays/`doseTime` from the segment's `startedAt`; no/garbage dose time, empty weekly weekdays, or an invalid interval → no occurrences, never a guess). Maintenance plans route through `nextMaintenanceDue`, which layers the **repeat modes** over the elastic core (field priority weekdays > monthDay > cadence): every N days/weeks/months (`MaintenanceCadenceUnit`, elastic — month steps clamp the day, Jan 31 + 1 mo = Feb 28), fixed weekdays ("every Monday") and fixed day-of-month ("every 1st", 31 clamps to short months) — both calendar anchored on the *next matching date strictly after last done* (never done → first match on/after the `scheduledAt` seed, else today — no phantom overdue; a seed after last done floors these modes too), carrying a neutral noon stamp (due math is day-granular). Unknown units, garbage weekday lists and out-of-range month days → null (#8 again). `coalesceReminders` merges items into one notification per (tank, kind, day) — earliest fire time, deduped labels. `parseDoseTime`/`parseWeekdays` are the shared strict parsers. |
-| `ro.dart` | Pure logic for the shared reverse-osmosis unit (U16) — **device-scoped, not tank-scoped** (one RO unit serves every aquarium; nothing here carries a tank id). `RoStageType` (sediment/carbonBlock/membrane/diResin/custom, strict `fromName`), the default 4-stage seed set (`kRoDefaultStageOrder` + `kRoDefaultLifespanDays`, stored in plain days — 30/month, lifespans are approximate by nature; **generated from `ro_defaults.yaml`** into `ro.g.dart` by `dart run tool/gen_ro_defaults.dart`, which requires every non-custom stage type exactly once — listing order = seed order), and the due math: `roStageDue` is elastic (`nextElasticDue` on the latest logged replacement) but **a stage with no logged replacement is never due** — the filter's age is unknown, and guessing "due now" would greet a fresh setup with a wall of overdue warnings (#8 applied to anchors). `roRemainingFraction` (0..1, drives the overview progress bar) and `roStageZone` (red overdue / amber inside `roAmberWindowDays` — 10 % of the lifespan, floored at 14 d, capped at half the lifespan so short-lived stages can still read green / green otherwise) reuse the app-wide `Zone` semantics. |
+| `ro.dart` | Pure logic for the shared reverse-osmosis unit (U16) — **device-scoped, not tank-scoped** (one RO unit serves every aquarium; nothing here carries a tank id). `RoStageType` (sediment/carbonBlock/membrane/diResin/custom, strict `fromName`), `RoUsageLevel` (light/moderate/heavy — how much water the unit makes; tolerant `fromName` defaulting to moderate, the level the original single-value defaults described), the default 4-stage seed set (`kRoDefaultStageOrder` + `kRoLifespanDaysByUsage`, one typical lifespan per stage **per usage level** via `roLifespansFor`, stored in plain days — 30/month, lifespans are approximate by nature; **generated from `ro_defaults.yaml`** into `ro.g.dart` by `dart run tool/gen_ro_defaults.dart`, which requires every non-custom stage type exactly once — listing order = seed order), and the due math: `roStageDue` is elastic (`nextElasticDue` on the latest logged replacement) but **a stage with no logged replacement is never due** — the filter's age is unknown, and guessing "due now" would greet a fresh setup with a wall of overdue warnings (#8 applied to anchors). `roRemainingFraction` (0..1, drives the overview progress bar) and `roStageZone` (red overdue / amber inside `roAmberWindowDays` — 10 % of the lifespan, floored at 14 d, capped at half the lifespan so short-lived stages can still read green / green otherwise) reuse the app-wide `Zone` semantics. |
 | `dose_calculator.dart` | Pure, testable math for the dose calculator (no Flutter/DB): `linearFit` (least-squares slope/day + fitted value at the last timestamp; `slopePerDay` is its slope-only wrapper), `potencyFromReference` (vendor reference dose → potency per unit per litre), `dailyEquivalentDose` (a dosing plan's average daily amount from its `DoseSchedule` record — amount + frequency/interval/weekdays, mapped from the `DosingEntry` row via `DosingEntry.schedule`; the stored basis is deliberately not an input since both bases mean "amount per active day"; a stored every-N-days interval ≤ 0 — possible only in pre-validation rows — counts as an *unknown* cadence contributing 0, not as daily), and `computeDoseCalc` → `DoseCalcResult` (consumption/day + maintenance-dose recommendation + `DoseCalcStatus`). Sign convention: `consumption = dosingInput − slope`, so a falling element (negative slope) means consumption exceeds the dose. Statuses: `consumption ≤ 0` reports `overdosing` when something is dosed, `noDoseNeeded` when nothing is (there is nothing to "reduce or pause"); with consumption but no current dose the result is always `increase` (never "keep your current dose" of nothing); otherwise `stable` when \|suggested − current\| ≤ max(5% of the current dose (`stableFraction`), 0.1 ml/g (`stableThreshold`)) — relative, so "stable" means the same chemical mismatch regardless of product potency — else `increase`/`decrease`. Water changes ignored. Also `computeCorrectionDose` → `CorrectionResult` (the calculator's **correction mode**): the one-off dose `(target − current) × volume / potency` raising an element to a target, split evenly over `ceil(rise / maxDailyRise)` days when the rise exceeds the element's safe daily limit (a relative 1e-9 epsilon keeps a rise at exactly the limit a single dose despite float noise); statuses missingInputs / needsPotency / atOrAboveTarget / singleDose / splitDose — lowering is deliberately out of scope (that's water changes). See Features. |
-| `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Product `key`s are **never reused or repurposed** — stored entries (and the future dose log) resolve display names and potency through them. `strength` is recorded **only when verified against the vendor's own dosing chart**; an unverified potency would silently corrupt consumption estimates (e.g. Triton Core7 carries none because the vendor publishes no concentrations). Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker. `kMaxDailyRiseByElement` = the maximum safe correction **rise per day** in canonical units (derived from the catalog's per-parameter `maxDailyRise`, edited in `parameters.yaml`: alk 1.4 dKH, Ca 50 ppm, Mg 100 ppm; elements without an entry are never split) — consumed by `computeCorrectionDose`. **The data (`kSupplementVendors`) is generated** — see below. |
+| `supplement_catalog.dart` | Model + lookups for the dosing **vendors → programs → products** catalog + `DoseUnit` (ml/g), `DoseBasis` (per day/dose), `DoseFrequency` (daily/everyNDays/weekly) enums. Each `SupplementProduct` has a stable `key` (persisted on dosing entries), a target `elementKey` (a real param key), a default unit, and an optional `strength` potency map reserved for the future consumption calculator. Product `key`s are **never reused or repurposed** — stored entries (and the future dose log) resolve display names and potency through them. `strength` is recorded **only when verified against the vendor's own dosing chart**; an unverified potency would silently corrupt consumption estimates (e.g. Triton Core7 carries none because the vendor publishes no concentrations). Brand/product names are proper nouns — **not** localized. `kDosingElementKeys` = the param keys offered in the dosing element picker: the commonly dosed elements first, then the trace elements alphabetically. **Invariant (decided 2026-08-07, pinned in `supplement_catalog_test.dart`): every catalog `elementKey` is a member** — both dosing edit screens feed a picked product's element into a dropdown built from this list, so a product targeting an unlisted element is a `DropdownButton` crash. When the 12 single-element Fauna Marin Elementals trace products surfaced this, the picker was **extended** (rather than stripping `element:` from the products): the traces are real tracked parameters, and dropping the key would orphan trace dosing plans from their element. `kMaxDailyRiseByElement` = the maximum safe correction **rise per day** in canonical units (derived from the catalog's per-parameter `maxDailyRise`, edited in `parameters.yaml`: alk 1.4 dKH, Ca 50 ppm, Mg 100 ppm; elements without an entry are never split) — consumed by `computeCorrectionDose`. **The data (`kSupplementVendors`) is generated** — see below. |
 | `supplements.yaml` + `supplement_catalog.g.dart` | `supplements.yaml` (commented, hand-edited) is the **source of truth** for the catalog data; `dart run tool/gen_supplements.dart` validates it (unique product keys; every `element`/`strength` key is a real param key; `unit` ∈ ml/g) and generates the `part` file `supplement_catalog.g.dart` (`const kSupplementVendors`). Edit the YAML, never the `.g.dart`. `test/supplement_catalog_test.dart` re-checks the same invariants on the generated catalog. |
 | `parameters.yaml` + `parameter_catalog.g.dart` | Same pattern for the parameter catalog: `parameters.yaml` (commented, hand-edited, **order = micro-panel row order**) is the source of truth; `dart run tool/gen_parameters.dart` validates it (unique keys/symbols; category ∈ core/major/trace/contaminant; microelements carry a symbol; `displayFactor`, `hobbyKit` and `defaultBounds` micro-only, `importance` core-only; `defaultBounds` required for microelements — ascending (non-decreasing, matching the bound editors' `orderOk`: equal neighbours express "no amber step on that side", see silicon), amber bounds green-paired, inside the plausible range; ordered bounds, plausible bounds paired) and generates the `part` file `parameter_catalog.g.dart` (`const kReefParameters`). The generator deliberately does **not** import the package (its output *is* part of it — must stay runnable right after build_runner deletes the file), unlike `gen_supplements`, which imports the parameter catalog and therefore runs after `gen_parameters`. |
 | `tank_presets.yaml` + `presets.g.dart` + `ratio.g.dart` | Same pattern for the setup-type presets: `tank_presets.yaml` (commented, hand-edited; per-setup sections whose **listing = default tracked set, order = seeding order**, each row a bounds quadruple + optional `target`) is the source of truth; `dart run tool/gen_tank_presets.dart` validates it (every `SetupType` name present and nothing else; keys are core parameters in `parameters.yaml`; greenLow/greenHigh required, bounds strictly ascending and inside the plausible range; `target` inside the green range) and generates the `part` file `presets.g.dart` (`const kPresets`/`kPresetTargets`). The file's `ratios` section (every `RatioKind` name, full strictly-ascending quadruples) generates the second `part` file `ratio.g.dart` (`const kRatioDefaultBounds`). Like `gen_micro_views`, the generator validates against `parameters.yaml` directly instead of importing the package. `test/presets_test.dart` re-checks the invariants on the generated data. |
-| `ro_defaults.yaml` + `ro.g.dart` | Same pattern for the RO unit's default stage set (kept apart from `tank_presets.yaml` because the RO unit is **device**-scoped): `ro_defaults.yaml` is the source of truth (listing order = seed order = the water path; `lifespanDays` in plain days, 30/month); `dart run tool/gen_ro_defaults.dart` validates it (every non-custom `RoStageType` exactly once — `custom` stages are user-created; lifespans ≥ 1 day) and generates the `part` file `ro.g.dart` (`const kRoDefaultLifespanDays`/`kRoDefaultStageOrder`). |
+| `ro_defaults.yaml` + `ro.g.dart` | Same pattern for the RO unit's default stage set (kept apart from `tank_presets.yaml` because the RO unit is **device**-scoped): `ro_defaults.yaml` is the source of truth (listing order = seed order = the water path; `lifespanDays` in plain days, 30/month, one value per `RoUsageLevel` — light/moderate/heavy); `dart run tool/gen_ro_defaults.dart` validates it (every non-custom `RoStageType` exactly once — `custom` stages are user-created; every usage level present per stage, lifespans ≥ 1 day, and heavier usage never gets a *longer* lifespan than a lighter one) and generates the `part` file `ro.g.dart` (`const kRoLifespanDaysByUsage`/`kRoDefaultStageOrder`). |
 | `pro_features.dart` + `pro_features.yaml` + `pro_features.g.dart` | Pro-tier feature gating (U19). `pro_features.yaml` is the source of truth for which features sit behind the future paid tier (`key` → `ProFeature` enum value) and which are **grandfathered** (existed at the monetization cutoff — free forever for Founder's Edition installs; entries are never removed, pinned by `test/pro_features_test.dart`); `dart run tool/gen_pro_features.dart` validates (unique camelCase keys, bool flags, non-empty list) and generates the `part` file (enum + `kGrandfatheredFeatures`). The handwritten file owns the single gate rule: `hasProFeature(f, purchased:, legacyFree:) = purchased ∥ (legacyFree ∧ grandfathered)`. UI never calls it directly — widgets watch `proFeatureProvider(feature)` (providers.dart), which reads both facts from `entitlementProvider` (the device-local purchase flag + `editionProvider`'s marker); a gated action falls back to `showProFeatureDialog` (`widgets/pro_feature_dialog.dart` — the paywall entry point, which navigates to `/paywall` only when a product actually resolves and returns whether the caller may now proceed; feature names localize via `L10nDomain.proFeatureName`, whose exhaustive switch won't compile without a name for a new feature). Gated surfaces: ICP report import (micro screen app-bar action; the `/micro/import` route needs no extra guard — it already redirects to `/micro` without a parsed-result `extra`, which only the gated action produces), the dose calculator (home app-bar action + the history screen's calculator icon and correction CTA), the tank cap (`canCreateTank`, U21), the stability score (U26 — the dashboard header's stability half renders a Pro marker instead of the ring for non-entitled installs), and the smart insights card (U28 — the dashboard Insights card renders a compact Pro teaser row instead of the insight list). Keys are never persisted — rename freely. |
 
 ## Data layer (`lib/data/`)
@@ -207,6 +208,10 @@ notification master switches, all default off — opt-in), `reminder_time`
 `ro_stages_seeded` (the RO default-stage seed guard, U16),
 `ro_unit_enabled` (the RO feature switch, default on — off hides the
 Actions-tab summary row and silences RO reminders while keeping the data),
+`ro_usage_level` (how intensively the RO unit is used — `RoUsageLevel.name`
+light/moderate/heavy, default moderate: selects the typical-lifespan preset
+seeding uses and the RO screen's usage picker applies to the standard
+stages),
 `micro_enabled` (the microelements feature switch, U17 — same shape:
 off hides the dashboard tile and silences micro test reminders; the stored
 measurements are untouched and reappear when re-enabled), and `micro_view`
@@ -231,10 +236,11 @@ touched), and
 default off — most users don't own a pocket checker, so the FAB space is
 opt-in; without it the scan stays reachable via the overflow menu). The
 reminder keys are device-local: notification preferences must not ride a
-backup onto another device. `ro_stages_seeded` is the one **non**-device-local
-key: it describes domain data and travels with the RO rows it guards, so a
-restore brings stages + flag together (or clears both, re-seeding on the next
-RO-screen visit).
+backup onto another device. `ro_stages_seeded` and `ro_usage_level` are the
+**non**-device-local keys here: they describe domain data (the household's RO
+unit) and travel with the RO rows, so a restore brings stages + seed flag +
+usage level together (or clears them, re-seeding on the next RO-screen
+visit — with the restored level's lifespans if only the level survived).
 
 All settings access goes through the typed **`AppSettings` facade**
 (`data/settings.dart`, exposed as `settingsProvider`) — the single source of
@@ -627,7 +633,14 @@ Two layers, **no new dependencies and no runtime permissions**:
    **UTC with millisecond precision** (`yyyyMMdd-HHmmss-SSS`): UTC keeps the
    lexical sort chronological across DST fall-back, milliseconds keep two
    near-simultaneous writes from colliding on one name (filenames are never
-   shown as dates — the UI formats the file's mtime). The **Manage backups**
+   shown as dates — the UI formats the file's mtime). All three filename
+   builders (`writeAutoBackup`, `exportBackup`, `exportReadingsCsv`) share
+   **`exportFileStamp` in `export_share.dart`**, which pads the digits by hand
+   rather than going through `DateFormat` — `DateFormat` follows
+   `Intl.defaultLocale`, so in a language with non-Latin digits it would emit
+   stamps that no longer sort lexically, and the lexical filename sort is
+   exactly what `listAutoBackups` means by "newest first".
+   The **Manage backups**
    screen (`features/settings/backups_screen.dart`, route `/settings/backups`)
    lists them and offers restore (reuses `decodeBackup` + `importBackup`),
    share, and delete. `backupNow(db)` powers the **Back up now** action in
@@ -677,7 +690,13 @@ the current database state as one more timestamped document
 app-owned **visible folder** — a "ReefTracker" folder in the user's My Drive,
 or the app's iCloud Drive container shown as a ReefTracker folder in the
 Files app — and prunes
-the folder to `auto_backup_keep` newest. No folder picker anywhere — the U20
+the folder to `auto_backup_keep` newest, **never counting the upload the run
+just made as a prune candidate**: the folder can already hold that many files
+sorting newer than anything this device can mint (a second device with a fast
+clock, a hand-copied file), and since the push record is stamped before the
+prune (#63) a self-deleting push would leave the dirty gate clean and Settings
+reporting "backed up" forever over a folder holding none of this device's
+data. No folder picker anywhere — the U20
 lesson — because the `drive.file` scope (non-sensitive, no OAuth verification
 review) sees exactly the files the app created, and the iCloud container is
 app-owned by construction.
@@ -1230,8 +1249,13 @@ lifecycle wiring that are easy to miss:
   never silently swallowed.
 - **`Intl.defaultLocale` is set inside MaterialApp's `builder`**, not in
   `initState`: the builder runs after Flutter has resolved the effective locale
-  (and re-runs when it changes), so `DateFormat` immediately renders dates in a
-  newly selected language without an app restart.
+  (and re-runs when it changes), so `DateFormat` and `formatLocaleNumber`
+  immediately render in a newly selected language without an app restart. The
+  builder body is **`reefAppBuilder` in `lib/app/app_builder.dart`** — named and
+  lifted out of `main.dart` so `test/l10n_locale_wiring_test.dart` can pump the
+  real `ReefTrackerApp` and assert the wiring end to end (a cs/de/fr dose
+  renders `8,5`, not `8.5`); a harness `MaterialApp` would have to re-declare
+  the builder and would then only prove itself right.
 - **Early-adopter marker seeding** (`_seedEdition`, post-first-frame,
   fire-and-forget): stamps `legacy_free_since` with the current app version if
   absent — see Features → Editions (U19 phase 0). The Pro build must remove
@@ -1263,7 +1287,8 @@ data layer Flutter-free); `main.dart` maps it onto `MaterialApp.themeMode`.
 **Background gradient (`widgets/reef_background.dart`).** The app background
 is a vertical gradient fading `scaffoldTop`→`scaffoldBody` within the top 14%
 of the screen, flat below — a subtle glow behind the status-bar area.
-`ReefBackground` is mounted **once**, in `MaterialApp.builder` behind the
+`ReefBackground` is mounted **once**, in `reefAppBuilder`
+(`lib/app/app_builder.dart`, installed as `MaterialApp.builder`) behind the
 Navigator; `scaffoldBackgroundColor` and the app bar are transparent over it
 (so every pushed screen shares the one background — never per-screen copies),
 with `scrolledUnderElevation: 0` (the M3 default would flash
@@ -1977,6 +2002,29 @@ In both cases `_trendIcon` drops the direction arrow (flat, or the swap
 arrows), so the icon never points where the text says the value isn't going;
 the measured per-day rate is still printed, only the *claim* is withdrawn.
 
+A **stale** series gets no forecast at all. `computeTrend` takes the same
+optional `now:` the other domain aggregates take (`computeTankHealth` /
+`computeTankStability` / `computeInsights`) and applies the health score's own
+freshness rule to it: once the newest reading is older than
+`kHealthFreshnessDays` (30), `daysToAmber` / `daysToRed` / `daysToGreen` are all
+null. The fit is still reported — slope, direction, σ, `recovering`, the
+significance verdict — because it honestly summarizes the readings that exist;
+what is withdrawn is the projection onto *today*, which a January series cannot
+make. This also keeps the two aggregates consistent: a parameter the health
+score has already dropped as stale can no longer be issuing crossing forecasts
+on the dashboard. `collectTankSummary` passes its own clock through; the
+providers use the wall clock.
+
+A **floor is not a bound.** The keep-low nutrients ship `greenLow: 0` — the
+bottom of the measuring scale, not a healthy lower limit — so callers pass the
+parameter's physical floor (`floor:`, the catalog's `minValue` via
+`kParameterByKey`) and any *low* bound equal to it is skipped when projecting.
+Without it, a cycling tank whose ammonia is falling toward zero (the outcome the
+keeper is waiting for) got a `TrendChip` and an `InsightKind.forecast` warning
+that it was about to leave its healthy range. High bounds are always reachable
+and are never skipped; a `greenLow` above the floor (alkalinity's 7.5, floor 0)
+is unaffected.
+
 Enable/disable, the window size, and the alert horizon live in **Settings →
 Trends**; both widgets disappear when the feature is off (the provider returns
 an empty map).
@@ -2171,9 +2219,19 @@ default on) hides the row and silences RO reminders for users without an RO
 unit — a pure visibility preference, the stages and history stay stored.
 
 - **Overview (`ro_screen.dart`).** First visit seeds the typical 4-stage set
-  (sediment 3 mo, carbon block 6 mo, membrane 24 mo, DI resin 4 mo — see
-  `domain/ro.dart`), guarded by the `ro_stages_seeded` flag so deleting every
-  stage sticks. The enabled stages render as **one `ReefCard` of
+  for the stored usage level (moderate: sediment 3 mo, carbon block 6 mo,
+  membrane 24 mo, DI resin 4 mo — see `domain/ro.dart`), guarded by the
+  `ro_stages_seeded` flag so deleting every stage sticks. A **usage-intensity
+  card** above the stage list shows the current `RoUsageLevel` with its
+  litres-per-month bracket; tapping opens a picker (each level described:
+  light < ~300 L/mo, moderate ~300–1000, heavy > ~1000) and picking a *new*
+  level stores `ro_usage_level` and rewrites the **standard** stages'
+  lifespans to that level's typical values in one transaction
+  (`setRoUsageLevel` — disabled stages included, custom stages untouched: no
+  preset exists for a part the app doesn't know; re-picking the current level
+  is a no-op so it can't silently undo hand-tuned lifespans, which remain
+  fully editable per stage). The level also pre-fills the add-stage sheet's
+  lifespan default. The enabled stages render as **one `ReefCard` of
   hairline-divided sections** (REDESIGN #12), each: an icon chip + localized
   name (custom stages show their title), a "lifespan · last replaced" sub
   line ("Every 6 months" — stored plain days, decomposed to the largest whole
@@ -2792,6 +2850,31 @@ entry points for one page were four ways to say the same thing).
   with the content rather than pinning — the app paints a gradient behind the
   scaffold, so a pinned bar would need an opaque strip of a colour that doesn't
   exist here.
+- **A horizontal swipe steps the selection one chip** (`_stepVendor`), because
+  the bar not pinning means a chip can only be tapped from near the top of the
+  page. `All` is a stop like any other at the left end; running off either end
+  does nothing, wrapping being more disorienting than a dead end over three or
+  four stops. Nothing follows the finger — the step happens on release, on a
+  flick or a drag across a fifth of the width — so it is one selection change
+  per gesture: exactly one auto-read and one persisted filter, the same as a
+  tap, with no way to fling through vendors spraying LAN reads behind you. The
+  page then **scrolls back to the top**, which is the feedback rather than
+  housekeeping: there is no page transition and the FABs may look identical, so
+  without it a swipe made deep in a list would silently swap the cards at an
+  offset that means nothing in the vendor it moved to, with the bar still off
+  screen. The scroll is scheduled post-frame, after shorter content has settled
+  its extent — a scroll correction during layout would strand an animation
+  already in flight. Gestures starting on the bar itself pan the chips, its own
+  scroller winning the arena as a descendant.
+- **The bar centres its selected chip** whenever the selection changes
+  (`_VendorBarState._revealSelected`, via `Scrollable.ensureVisible`), which the
+  swipe makes necessary: a tap can only ever select a chip already on screen,
+  but a swipe can land on one the strip has scrolled past — with four vendors
+  the far chips are off the end of a phone-width bar — and the bar would then
+  show every chip unselected, answering nothing. Centring rather than merely
+  revealing keeps the neighbouring brands in view, which is where the next swipe
+  goes. It runs on first build too: a restored selection can be off-screen
+  exactly as a swiped-to one can.
 - **Vendor order** (`domain/device_vendors.dart`, `orderDeviceVendors`) is
   user-arrangeable through the vendor bar's "Reorder brands" sheet and persists in
   `SettingKey.deviceVendorOrder` as comma-joined kinds. The parser is tolerant by
@@ -3458,7 +3541,13 @@ sweep, just with more probing. Nothing treats an empty mDNS result as an error.
   concurrently (~2 s, so it is free). Phase 2 folds in the mDNS identities.
   Phase 3 probes only the unexplained open hosts, ReefBeat first (a cheap HTTP
   GET) then ReefFactory (the WebSocket handshake). Results are keyed by
-  identifier, so the same device seen twice is reported once.
+  identifier, so the same device seen twice is reported once — which is also
+  why a ReefFactory host answering the config handshake with a serial shorter
+  than a model prefix (6 chars) is **refused** by `RfWebSocketLink.identify`
+  rather than reported: an empty identifier would hide the next such host
+  behind the first and could never match a rediscovery. `_identify` isolates
+  failures per host (any exception, not only the links' own), so one odd LAN
+  host can never kill the scan stream and the devices already found with it.
 - **Subnet assumption**: `NetworkInterface` exposes no netmask, so a **/24 is
   assumed** off each RFC-1918 address (169.254/16 link-local, 127/8 and
   100.64/10 carrier-grade NAT are excluded — sweeping a carrier's network would
@@ -3935,7 +4024,22 @@ informational dialog. It returns `Future<bool>`, and `runProGated` makes
 "a successful unlock resumes what you were doing" a property of the gate rather
 than of every call site.
 
-**Marker integrity.** `kActivationVersion` (`domain/pro_features.dart`) is null
+**One constant is the whole switch.** `kActivationVersion`
+(`domain/pro_features.dart`) is the single activation control, and everything
+else derives from it: `kProSaleLive`, whether the founder marker is still
+seeded (`shouldSeedFounderMarker`, so `_seedEdition` stops by itself rather
+than being deleted), the marker boundary, the Settings "Restore purchases" row,
+the Edition dialog's upgrade action, and — via `scripts/build-release.ps1`
+parsing the constant — the Gradle `reeftracker.proSale` property behind the
+Android manifest strip. This exists because the alternative had a silent
+failure mode: three independent edits meant a half-flip was possible, and "sale
+live while the seeder still mints Founders" makes every new install entitled,
+so nobody ever pays and the only symptom is revenue that never arrives. Derived,
+that state is unrepresentable. `shouldSeedFounderMarker` takes the version as a
+parameter so the post-activation branch is tested now rather than first running
+on activation day.
+
+**Marker integrity.** `kActivationVersion` is null
 throughout dormancy, so `markerGrantsFounder` behaves exactly as presence-only.
 Set at activation, it honours only markers stamped by pre-activation builds —
 which blunts forgery (the marker is one settings row, it rides backups by
@@ -3982,6 +4086,16 @@ the **dose calculator**, and the **tank cap** (all grandfathered: founders
 keep them free forever; a non-entitled install gets `showProFeatureDialog`
 instead of the feature — dormant until activation, exercised by
 `test/pro_gate_test.dart`).
+
+**What Founders keep — decided 2026-08-05.** Every Pro feature delivered
+before the paid tier is switched on is `grandfathered: true`, and **the same
+capability for another brand joins the existing key** rather than earning a new
+one. Founders therefore keep every current feature, and every future ICP lab
+and hardware vendor, free forever. This costs the tier nothing: the gate is
+`purchased || (legacyFree && grandfathered)`, so a grandfathered flag only ever
+helps a Founder — a Standard install (every install created after activation)
+meets the paywall on every key in the registry regardless. `grandfathered:
+false` is reserved for capabilities invented *after* activation.
 
 **One gate per capability, not per vendor.** Every LAN device integration —
 ReefFactory meters (U36), Red Sea ReefBeat devices (U38), Neptune Apex
@@ -4099,8 +4213,10 @@ The app is **fully localized — no user-facing string is hardcoded.** See
 - Domain labels (parameter names/help, setup types, zones) are localized through
   `extension L10nDomain` in `lib/l10n/l10n_helpers.dart` (e.g. `volumeWithUnit`,
   `litersSuffix`/`gallonsSuffix`).
-- `main.dart` sets `Intl.defaultLocale` from the resolved locale so `DateFormat`
-  renders dates in the selected language. Locale stored in `Settings` (`locale`:
+- `reefAppBuilder` (`lib/app/app_builder.dart`, installed as
+  `MaterialApp.builder`) sets `Intl.defaultLocale` from the resolved locale,
+  which is what makes both dates *and decimal separators* follow the selected
+  language. Locale stored in `Settings` (`locale`:
   `system`/`en`/`cs`/…). Adding a language = drop in another `app_xx.arb`.
 - After editing ARBs, run `flutter gen-l10n` (or build) and re-analyze.
 

@@ -46,7 +46,48 @@ bool hasProFeature(
 /// so the entire post-activation Standard population would become
 /// free-forever with no path back. With this set, a rollback-minted marker
 /// carries a version >= activation and is simply not honoured.
+///
+/// **How to actually roll back** (§10 D4; contingency, not a planned step —
+/// and note neither store lets you re-publish an older version, so a rollback
+/// is a *new* release that behaves like the old one): ship a patch that
+/// re-enables `_seedEdition` **and raises this constant above that patch's own
+/// version**. Everyone from the sale window then satisfies
+/// `markerVersion < kActivationVersion` and is a Founder again on next launch
+/// — including anyone who paid, so a refund cannot cost them access. Doing
+/// only the first half is the trap: the markers it mints are worthless, and
+/// nothing changes.
 const String? kActivationVersion = null;
+
+/// Whether the paid tier is live: the store is talked to, and the paywall can
+/// be reached.
+///
+/// **Derived, never set by hand.** Activation used to require three edits that
+/// had to land together — set [kActivationVersion], stop seeding the founder
+/// marker, turn the sale on — with nothing enforcing it. A half-flip was
+/// possible and silently catastrophic: turn the sale on but leave the seeder
+/// running and every new install still mints a Founder marker, so nobody ever
+/// pays and the only symptom is revenue that never arrives.
+///
+/// Deriving all three from one constant makes that state unrepresentable.
+/// Setting [kActivationVersion] simultaneously turns the sale on, stops the
+/// seeder ([shouldSeedFounderMarker]) and starts honouring the marker
+/// boundary ([markerGrantsFounder]).
+const bool kProSaleLive = kActivationVersion != null;
+
+/// Whether a pre-activation build should stamp the early-adopter marker on
+/// this launch.
+///
+/// [activationVersion] is a parameter rather than a direct read of
+/// [kActivationVersion] so both branches are testable *now*: the activated
+/// behaviour is proven while it is still a value, instead of becoming
+/// untested code that first runs on activation day.
+///
+/// The rule is simply "seed until the tier goes live". Before activation every
+/// launch seeds (idempotently — `seedLegacyFreeSince` never overwrites), so
+/// every install that ever ran a free build is a Founder. From the activation
+/// release on, nothing is stamped and fresh installs are Standard.
+bool shouldSeedFounderMarker({required String? activationVersion}) =>
+    activationVersion == null;
 
 /// Whether a `legacy_free_since` marker stamped by [markerVersion] grants
 /// Founder's Edition. Null/empty means no marker at all.

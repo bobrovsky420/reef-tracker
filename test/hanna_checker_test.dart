@@ -34,7 +34,10 @@ void main() {
       expect(green.map((c) => c.model).take(2), ['HI774', 'HI713']);
       expect(green.length, greaterThan(2)); // non-family matches follow
       final plain = candidateCheckersFor(reading);
-      expect(plain.map((c) => c.model).toSet(), green.map((c) => c.model).toSet());
+      expect(
+        plain.map((c) => c.model).toSet(),
+        green.map((c) => c.model).toSet(),
+      );
     });
 
     test('integer readouts resolve by family', () {

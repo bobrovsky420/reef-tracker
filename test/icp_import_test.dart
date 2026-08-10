@@ -240,6 +240,21 @@ void main() {
       expect(r.values.containsKey('salinity'), isFalse);
     });
 
+    test('a quote mid-field does not open a quoted section', () {
+      // RFC 4180 quoting is *field-scope*: a quote is only special at the
+      // start of a field. A note like `new 5" return line` used to open an
+      // unterminated quote that swallowed every later cell of the row —
+      // including sample_id, silently disarming the re-import duplicate
+      // guard (and on a Hanna export, every later row of the file).
+      const csv =
+          'na;note;analysis_date;sample_id\n'
+          '11127;new 5" return line;2026-06-01 15:36:59;01337792\n';
+      final r = parseIcpCsv(csv, IcpImportFormat.faunaMarin);
+      expect(r.values['sodium'], 11127);
+      expect(r.sampleId, '01337792');
+      expect(r.reportDate, DateTime(2026, 6, 1, 15, 36, 59));
+    });
+
     test('values come back in catalog order', () {
       final r = parseIcpCsv(_faunaMarinCsv, IcpImportFormat.faunaMarin);
       final keys = r.values.keys.toList();
@@ -344,6 +359,28 @@ void main() {
       expect(r.values['iron'], closeTo(0.000905, 1e-9));
     });
 
+    test('an alkalinity row in an unrecognized unit is skipped, never '
+        'assumed dKH', () {
+      // 143 ppm CaCO₃ is 8 dKH; assuming dKH would store 143 dKH.
+      const csv =
+          '"Date","Measurement","MeasurementValue","UnitofMeasure"\n'
+          '"2026-06-26","Alkalinity","143","ppm CaCO3"\n'
+          '"2026-06-26","Calcium (Ca)","414","milligrams per litre"\n';
+      final r = parseIcpCsv(csv, IcpImportFormat.zims);
+      expect(r.values.containsKey('alkalinity'), isFalse);
+      expect(r.skipped, contains('Alkalinity (ppm CaCO3)'));
+      expect(r.values['calcium'], 414);
+    });
+
+    test('a Greek-mu μg/L row imports its trace element', () {
+      const csv =
+          '"Date","Measurement","MeasurementValue","UnitofMeasure"\n'
+          '"2026-06-26","Zinc (Zn)","2.03","μg/L"\n';
+      final r = parseIcpCsv(csv, IcpImportFormat.zims);
+      expect(r.values['zinc'], closeTo(0.00203, 1e-9));
+      expect(r.skipped, isEmpty);
+    });
+
     test('rejects a Fauna Marin file chosen as ZIMS', () {
       expect(
         () => parseIcpCsv(_faunaMarinCsv, IcpImportFormat.zims),
@@ -406,12 +443,27 @@ void main() {
       expect(zimsMeasurementKey('Phosphorus (P)'), isNull);
     });
 
-    test('alkalinity unit factors', () {
+    test('alkalinity unit factors: dKH and meq/L, unknown units refused', () {
       expect(zimsAlkalinityFactor('milliequivalents per litre'), 2.8);
       expect(zimsAlkalinityFactor('meq/L'), 2.8);
-      // Anything else is taken as the app's own unit, dKH.
       expect(zimsAlkalinityFactor('dKH'), 1);
-      expect(zimsAlkalinityFactor(''), 1);
+      expect(zimsAlkalinityFactor('°dH'), 1);
+      // A US lab states alkalinity in ppm CaCO₃ (~17.9 ppm per dKH); the old
+      // "anything else is dKH" assumption imported it ~18× high. Unknown
+      // units — including a blank one — are refused so the row surfaces in
+      // the skipped list, exactly like zimsUnitFactor (and the Hanna
+      // importer, which refuses the same way).
+      expect(zimsAlkalinityFactor('ppm CaCO3'), isNull);
+      expect(zimsAlkalinityFactor('milligrams per litre'), isNull);
+      expect(zimsAlkalinityFactor(''), isNull);
+    });
+
+    test('Greek-mu μg/L is micrograms (U+03BC vs U+00B5)', () {
+      // macOS keyboards and some LIMS emit GREEK SMALL LETTER MU, which is
+      // visually identical to MICRO SIGN. Refusing it silently drops all 20
+      // trace elements of a report — undiagnosable from a bug report.
+      expect(zimsUnitFactor('μg/L'), 0.001);
+      expect(zimsUnitFactor('µg/L'), 0.001);
     });
 
     test('unit factors', () {
@@ -423,6 +475,55 @@ void main() {
       expect(zimsUnitFactor('ug/l'), 0.001);
       expect(zimsUnitFactor('ppb'), 0.001);
       expect(zimsUnitFactor('parts per trillion'), isNull);
+    });
+  });
+
+  group('parseDelimitedCsv', () {
+    // The shared tokenizer under both ICP formats and the Hanna importer.
+    // Every fixture above is bare-LF; real exports are CRLF — a `\r`
+    // regression makes every header lookup miss and every real file reject
+    // as wrongFormat, while the whole suite stays green.
+    test('CRLF row breaks parse identically to LF', () {
+      expect(parseDelimitedCsv('a,b\r\nc,d\r\n', ','), [
+        ['a', 'b'],
+        ['c', 'd'],
+      ]);
+      expect(
+        parseDelimitedCsv('a,b\r\nc,d\r\n', ','),
+        parseDelimitedCsv('a,b\nc,d\n', ','),
+      );
+    });
+
+    test('a lone CR is a row break too (classic Mac / mixed exports)', () {
+      expect(parseDelimitedCsv('a,b\rc,d', ','), [
+        ['a', 'b'],
+        ['c', 'd'],
+      ]);
+    });
+
+    test('"" inside a quoted field is a literal quote', () {
+      expect(parseDelimitedCsv('"say ""hi""",x', ','), [
+        ['say "hi"', 'x'],
+      ]);
+    });
+
+    test('delimiter and newlines inside quotes stay in the field', () {
+      expect(parseDelimitedCsv('"a,b","line1\nline2",c', ','), [
+        ['a,b', 'line1\nline2', 'c'],
+      ]);
+      // CRLF inside a quoted field is content, not a row break.
+      expect(parseDelimitedCsv('"line1\r\nline2",c', ','), [
+        ['line1\r\nline2', 'c'],
+      ]);
+    });
+
+    test('empty input and blank lines yield no rows', () {
+      expect(parseDelimitedCsv('', ','), isEmpty);
+      expect(parseDelimitedCsv('\r\n\r\n', ','), isEmpty);
+      expect(parseDelimitedCsv('a,b\n\n \nc,d\n', ','), [
+        ['a', 'b'],
+        ['c', 'd'],
+      ]);
     });
   });
 }

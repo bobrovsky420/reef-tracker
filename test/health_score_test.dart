@@ -292,6 +292,50 @@ void main() {
     expect(a, isNot(equals(c)));
   });
 
+  group('computeTankHealth — ideal-zero (keep-low) nutrient shape', () {
+    // The shape every shipped nutrient preset actually uses: greenLow 0, so
+    // "none detectable" sits on the *edge* of green, not at its centre. The
+    // green sub-score interpolates by centredness, which makes the ideal
+    // reading score the green floor.
+    //
+    // Characterization, decided deliberately: this is the current behaviour,
+    // and any future change must be scoped to keep-low nutrients only (zero
+    // nitrate is genuinely undesirable in a fed reef tank, so a blanket
+    // "greenLow == 0 means zero is perfect" rule would be wrong for it).
+    const keepLow = ZoneBounds(greenLow: 0, greenHigh: 0.02, amberHigh: 0.1);
+
+    test('0.00 ppm scores the green floor (70) while mid-band scores 100', () {
+      final atZero = computeTankHealth([
+        input('ammonia', keepLow, value: 0.0),
+      ], now: now);
+      expect(atZero.band, Zone.green);
+      expect(atZero.score, 70);
+
+      final atCentre = computeTankHealth([
+        input('ammonia', keepLow, value: 0.01),
+      ], now: now);
+      expect(atCentre.score, 100);
+      expect(atZero.score!, lessThan(atCentre.score!));
+    });
+
+    test('two weight-3 zero nutrients drop a perfect tank below excellent', () {
+      // Alkalinity centred (100, weight 3) plus ammonia and nitrite both at
+      // the ideal 0.00 (70 each, weight 3): (300 + 210 + 210) / 9 = 80.
+      final h = computeTankHealth([
+        input('alkalinity', alkBounds, value: 8.0),
+        input('ammonia', keepLow, value: 0.0),
+        input(
+          'nitrite',
+          const ZoneBounds(greenLow: 0, greenHigh: 0.005, amberHigh: 0.02),
+          value: 0.0,
+        ),
+      ], now: now);
+      expect(h.band, Zone.green);
+      expect(h.score, 80);
+      expect(h.grade, HealthGrade.good); // not excellent, despite ideal values
+    });
+  });
+
   test('importance weighting lets a heavy param dominate a light one', () {
     // salinity (weight 3) sits centred green (100); a default-weight (1)
     // parameter sits at an amber edge. With the amber ceiling removed by using

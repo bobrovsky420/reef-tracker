@@ -15,7 +15,10 @@ String _fmtFree(double ppm) => formatLocaleNumber(ppm, 3);
 
 /// The two shared display strings for a computed [FreeAmmonia]: the temperature
 /// and salinity used, in the user's units.
-({String temp, String salinity}) _inputStrings(FreeAmmonia fa, UnitPrefs prefs) {
+({String temp, String salinity}) _inputStrings(
+  FreeAmmonia fa,
+  UnitPrefs prefs,
+) {
   final tempPres = presentationForKey('temperature', '°C', prefs);
   final salPres = presentationForKey('salinity', 'SG', prefs);
   return (
@@ -58,7 +61,9 @@ class FreeAmmoniaRow extends StatelessWidget {
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
-        onTap: fa == null ? null : () => showFreeAmmoniaInfo(context, fa, prefs),
+        onTap: fa == null
+            ? null
+            : () => showFreeAmmoniaInfo(context, fa, prefs),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
           child: Column(
@@ -216,9 +221,11 @@ class _FreeAmmoniaTrack extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = ReefTokens.of(context);
     const axis = kFreeAmmoniaAxis;
-    final green = zoneBands(kFreeAmmoniaBounds, axis.min, axis.max)
-        .where((b) => b.zone == Zone.green)
-        .toList();
+    final green = zoneBands(
+      kFreeAmmoniaBounds,
+      axis.min,
+      axis.max,
+    ).where((b) => b.zone == Zone.green).toList();
 
     double fraction(double v) =>
         ((v - axis.min) / (axis.max - axis.min)).clamp(0.0, 1.0);

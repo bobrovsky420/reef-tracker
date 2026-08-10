@@ -1248,7 +1248,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Вы используете стандартное издание ReefTracker.';
+      'Вы используете стандартное издание ReefTracker. Всё, что вы уже записали, остаётся с вами; ReefTracker Pro открывает расширенные возможности.';
+
+  @override
+  String get editionUpgrade => 'Разблокировать Pro';
 
   @override
   String get editionPro => 'Pro';
@@ -3191,6 +3194,38 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get roAllOk => 'Все ступени в порядке';
+
+  @override
+  String get roUsageTitle => 'Интенсивность использования';
+
+  @override
+  String get roUsageDialogBody =>
+      'Сколько воды производит ваша установка. Выбор интенсивности задаст всем стандартным ступеням типичные для этого уровня интервалы замены, перезаписав в том числе те, что вы настроили сами; добавленные вами ступени останутся без изменений, а каждую ступень затем можно будет изменить вручную.';
+
+  @override
+  String get roUsageLight => 'Низкая';
+
+  @override
+  String get roUsageModerate => 'Средняя';
+
+  @override
+  String get roUsageHeavy => 'Высокая';
+
+  @override
+  String get roUsageLightHint =>
+      'До ~300 л (80 гал) в месяц — долив и небольшие подмены воды';
+
+  @override
+  String get roUsageModerateHint =>
+      'Примерно 300–1000 л (80–260 гал) в месяц — один обычный аквариум';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Более ~1000 л (260 гал) в месяц — большой аквариум или несколько';
+
+  @override
+  String get roUsageApplied =>
+      'Интервалы замены стандартных ступеней заданы заново';
 
   @override
   String get notifRoTitle => 'Замените фильтры обратного осмоса';

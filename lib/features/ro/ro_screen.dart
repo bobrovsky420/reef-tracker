@@ -69,6 +69,8 @@ class _RoScreenState extends ConsumerState<RoScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
               children: [
+                const _UsageCard(),
+                const SizedBox(height: 12),
                 // One card, stages as hairline-divided sections (REDESIGN
                 // #12). Sections place their own InkWells, rippling on the
                 // card's Material.
@@ -119,6 +121,149 @@ class _RoScreenState extends ConsumerState<RoScreen> {
             ),
     );
   }
+}
+
+/// Localized name of a usage level.
+String roUsageName(AppLocalizations l, RoUsageLevel level) => switch (level) {
+  RoUsageLevel.light => l.roUsageLight,
+  RoUsageLevel.moderate => l.roUsageModerate,
+  RoUsageLevel.heavy => l.roUsageHeavy,
+};
+
+/// Localized description of a usage level — the litres-per-month bracket
+/// that tells the user which level is theirs.
+String roUsageHint(AppLocalizations l, RoUsageLevel level) => switch (level) {
+  RoUsageLevel.light => l.roUsageLightHint,
+  RoUsageLevel.moderate => l.roUsageModerateHint,
+  RoUsageLevel.heavy => l.roUsageHeavyHint,
+};
+
+/// The usage-intensity card above the stage list: shows the current level
+/// and its litres-per-month bracket; tapping opens the level picker, which
+/// applies the picked level's typical lifespans to the standard stages.
+class _UsageCard extends ConsumerWidget {
+  const _UsageCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final tokens = ReefTokens.of(context);
+    final level =
+        ref.watch(roUsageLevelProvider).value ?? RoUsageLevel.moderate;
+    return ReefCard(
+      onTap: () => _showUsageDialog(context, ref),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: tokens.track,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.speed, size: 16, color: tokens.text),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${l.roUsageTitle} · ${roUsageName(l, level)}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.text,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  roUsageHint(l, level),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: tokens.textDim),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: tokens.textDim),
+        ],
+      ),
+    );
+  }
+}
+
+/// Level picker: each option carries its litres bracket; picking a new level
+/// stores it and rewrites the standard stages' lifespans to that level's
+/// typical values (custom stages keep theirs). Re-picking the current level
+/// is a no-op — it must not silently undo hand-tuned lifespans.
+Future<void> _showUsageDialog(BuildContext context, WidgetRef ref) async {
+  final l = AppLocalizations.of(context);
+  final current = ref.read(roUsageLevelProvider).value ?? RoUsageLevel.moderate;
+  final picked = await showDialog<RoUsageLevel>(
+    context: context,
+    builder: (ctx) {
+      final tokens = ReefTokens.of(ctx);
+      return SimpleDialog(
+        title: Text(l.roUsageTitle),
+        contentPadding: const EdgeInsets.fromLTRB(0, 12, 0, 16),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            child: Text(
+              l.roUsageDialogBody,
+              style: TextStyle(fontSize: 13, color: tokens.textDim),
+            ),
+          ),
+          for (final level in RoUsageLevel.values)
+            SimpleDialogOption(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              onPressed: () => Navigator.pop(ctx, level),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    level == current
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    size: 20,
+                    color: level == current ? tokens.primary : tokens.textDim,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          roUsageName(l, level),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.text,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          roUsageHint(l, level),
+                          style: TextStyle(fontSize: 12, color: tokens.textDim),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      );
+    },
+  );
+  if (picked == null || picked == current) return;
+  await ref.read(dbProvider).setRoUsageLevel(picked);
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..clearSnackBars()
+    ..showSnackBar(SnackBar(content: Text(l.roUsageApplied)));
 }
 
 /// Icon for a stage row: one glyph per typed stage, a generic part glyph for
@@ -430,13 +575,17 @@ Future<void> _showStageSheet(
   final l = AppLocalizations.of(context);
   final db = ref.read(dbProvider);
 
+  // New stages default to the current usage level's typical lifespans.
+  final defaults = roLifespansFor(
+    ref.read(roUsageLevelProvider).value ?? RoUsageLevel.moderate,
+  );
   final outcome = await showModalBottomSheet<_StageOutcome>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-      child: _StageSheet(stage: stage),
+      child: _StageSheet(stage: stage, defaults: defaults),
     ),
   );
   if (outcome == null) return;
@@ -493,9 +642,13 @@ Future<void> _showStageSheet(
 }
 
 class _StageSheet extends StatefulWidget {
-  const _StageSheet({this.stage});
+  const _StageSheet({this.stage, required this.defaults});
 
   final RoStage? stage;
+
+  /// Typical lifespans for the current usage level — the default the
+  /// lifespan field is pre-filled with for a new stage.
+  final Map<RoStageType, int> defaults;
 
   @override
   State<_StageSheet> createState() => _StageSheetState();
@@ -527,7 +680,7 @@ class _StageSheetState extends State<_StageSheet> {
         ? RoStageType.sediment
         : (RoStageType.fromName(s.stageType) ?? RoStageType.custom);
     final (unit, value) = _decompose(
-      s?.lifespanDays ?? kRoDefaultLifespanDays[_type]!,
+      s?.lifespanDays ?? widget.defaults[_type]!,
     );
     _unit = unit;
     _title = TextEditingController(text: s?.title ?? '');
@@ -595,15 +748,15 @@ class _StageSheetState extends State<_StageSheet> {
                   // Adding a stage: re-seed the lifespan with the new type's
                   // typical value while the user hasn't typed their own.
                   final (oldUnit, oldValue) = _decompose(
-                    kRoDefaultLifespanDays[_type] ??
-                        kRoDefaultLifespanDays[RoStageType.diResin]!,
+                    widget.defaults[_type] ??
+                        widget.defaults[RoStageType.diResin]!,
                   );
                   if (!editing &&
                       _unit == oldUnit &&
                       _value.text.trim() == '$oldValue') {
                     final (unit, value) = _decompose(
-                      kRoDefaultLifespanDays[t] ??
-                          kRoDefaultLifespanDays[RoStageType.diResin]!,
+                      widget.defaults[t] ??
+                          widget.defaults[RoStageType.diResin]!,
                     );
                     _unit = unit;
                     _value.text = '$value';

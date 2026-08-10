@@ -114,7 +114,7 @@ void main() {
     await pumpDevices(tester, db);
 
     // Two vendors present → chips appear, the checker's included (its chip
-    // reads "Hanna  1"; the card title "HI97115" can't match this).
+    // reads "Hanna · 1"; the card title "HI97115" can't match this).
     expect(find.widgetWithText(ChoiceChip, 'All'), findsOneWidget);
     expect(find.textContaining('Hanna'), findsWidgets);
     // Both sections render under the All view.

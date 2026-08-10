@@ -89,7 +89,7 @@ Future<bool> completeWelcomeRestore(
   store: store,
   state: _gdrive(db),
   file: file,
-  entitlement: entitlement ?? ProEntitlementStore(),
+  entitlement: entitlement ?? MemoryProEntitlementStore(),
   enableSync: () => AppSettings(db).setSyncGdriveAccount(accountEmail),
 );
 
@@ -100,6 +100,9 @@ void main() {
   setUp(() async {
     docsDir = await Directory.systemTemp.createTemp('reeftracker-cloudsync-');
     PathProviderPlatform.instance = _FakePathProvider(docsDir.path);
+    // The in-flight guard is module-global: a run still pending when a test
+    // ends would otherwise be handed to the next test's first caller.
+    resetCloudSyncInFlightForTest();
   });
   tearDown(() async {
     if (await docsDir.exists()) await docsDir.delete(recursive: true);
@@ -208,6 +211,87 @@ void main() {
         throwsA(isA<InvalidBackupException>()),
       );
     });
+
+    test(
+      'stays total over a malformed settings section (#93 failure shape)',
+      () {
+        // The dirty gate and the echo-suppression path hash bytes this app did
+        // not necessarily write — downloaded cloud files, hand-edited or
+        // ancient documents. A throw here would make every later comparison
+        // fail, and the divergence would be silent and permanent.
+        final noSection = doc()..remove('settings');
+
+        // A section that isn't a list hashes as if absent, never throws.
+        final notAList = doc()..['settings'] = {'key': 'temp_unit'};
+        final scalar = doc()..['settings'] = 42;
+        expect(
+          backupContentHash(jsonEncode(notAList)),
+          backupContentHash(jsonEncode(noSection)),
+        );
+        expect(
+          backupContentHash(jsonEncode(scalar)),
+          backupContentHash(jsonEncode(noSection)),
+        );
+
+        // Malformed rows inside an otherwise valid list are dropped, so the
+        // hash equals the same document with only its well-formed rows.
+        final junkRows = doc()
+          ..['settings'] = [
+            42,
+            'not a row',
+            {'no_key': true},
+            {'key': 7},
+            {'key': 'temp_unit', 'value': 'f'},
+          ];
+        final onlyValidRow = doc()
+          ..['settings'] = [
+            {'key': 'temp_unit', 'value': 'f'},
+          ];
+        expect(
+          backupContentHash(jsonEncode(junkRows)),
+          backupContentHash(jsonEncode(onlyValidRow)),
+        );
+      },
+    );
+  });
+
+  group('cloudBackupFileName', () {
+    // The whole "lexical == chronological" ordering model — the cloud prune,
+    // the newest-file pick, the U35 restore prompt — rests on this one
+    // function's stamp shape.
+    test('zero-pads every field (the exact stamp shape)', () {
+      expect(
+        cloudBackupFileName(DateTime.utc(2026, 1, 2, 3, 4, 5, 6)),
+        '${kAutoBackupPrefix}20260102-030405-006.json',
+      );
+    });
+
+    test('lexical order is chronological across padding boundaries', () {
+      final pairs = [
+        (DateTime.utc(2026, 9, 30, 23, 59, 59, 999), DateTime.utc(2026, 10, 1)),
+        (DateTime.utc(2026, 1, 9), DateTime.utc(2026, 1, 10)),
+        (DateTime.utc(2026, 1, 2, 3, 4, 5), DateTime.utc(2026, 1, 2, 13)),
+        (
+          DateTime.utc(2026, 1, 2, 3, 4, 5, 99),
+          DateTime.utc(2026, 1, 2, 3, 4, 5, 100),
+        ),
+      ];
+      for (final (earlier, later) in pairs) {
+        expect(
+          cloudBackupFileName(earlier).compareTo(cloudBackupFileName(later)),
+          lessThan(0),
+          reason: '$earlier must sort before $later',
+        );
+      }
+    });
+
+    test('a local timestamp stamps its UTC instant', () {
+      // Callers pass DateTime.now() (local). The name must be the same for
+      // the same instant however it is represented, or two devices in
+      // different zones would interleave their rotations wrongly.
+      final local = DateTime(2026, 7, 15, 12, 30, 45, 123);
+      expect(cloudBackupFileName(local), cloudBackupFileName(local.toUtc()));
+    });
   });
 
   group('runGDriveSyncIfDirty', () {
@@ -294,6 +378,64 @@ void main() {
         CloudSyncOutcome.pushed,
       );
       expect(store.files, hasLength(2));
+    });
+
+    test('two concurrent runs share one upload, and the slot clears '
+        'afterwards', () async {
+      // `_syncInFlight` is module-global and shared by four callers: the
+      // launch post-frame, the `resumed` handler, "Sync now" and the
+      // post-rename push. Two of them really do fire near-simultaneously, so
+      // the guard has to collapse them into one upload — and then release the
+      // slot. A leaked slot is the nasty half: every later call returns the
+      // finished run's outcome, so sync keeps reporting "pushed" while
+      // uploading nothing for the rest of the process.
+      await connectAndSeed();
+
+      final first = runGDriveSyncIfDirty(db, store: store);
+      final second = runGDriveSyncIfDirty(db, store: store);
+      final outcomes = await Future.wait([first, second]);
+
+      expect(outcomes, [CloudSyncOutcome.pushed, CloudSyncOutcome.pushed]);
+      expect(store.writeCalls, 1, reason: 'one run, two callers');
+      expect(
+        store.ensureFolderCalls,
+        1,
+        reason: 'the second caller must not start a run of its own',
+      );
+      expect(store.files, hasLength(1));
+
+      // The slot released: a later data change pushes for real.
+      await db.insertReadingGroup(
+        tankId: 1,
+        takenAt: DateTime(2026, 7, 16, 8),
+        note: null,
+        values: const [(paramKey: 'ph', value: 8.3)],
+      );
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      expect(store.writeCalls, 2);
+    });
+
+    test('a failed run releases the slot too', () async {
+      // The release lives in a `whenComplete`, so it must survive the error
+      // path as well — otherwise one provider hiccup at launch wedges sync
+      // until the app is killed.
+      await connectAndSeed();
+      store.failWrites = true;
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.failed,
+      );
+
+      store.failWrites = false;
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+        reason: 'a wedged slot would replay the failed run forever',
+      );
+      expect(store.writeCalls, 1);
     });
 
     test('pushed document round-trips through decodeBackup', () async {
@@ -480,6 +622,44 @@ void main() {
       expect(
         backups,
         isNot(contains('reeftracker-auto-20200101-000000-000.json')),
+      );
+    });
+
+    test('the prune never deletes the upload this run just made', () async {
+      // Names order the rotation, and nothing guarantees the folder only ever
+      // holds names this device minted: a second device whose clock runs
+      // ahead, or a file copied in by hand, sorts newer than anything this
+      // device can write. If those fill the keep quota, the prune that
+      // follows the push deletes the push — while `last_pushed_*` has already
+      // been stamped, so Settings claims "backed up" over a folder that holds
+      // none of this device's data, permanently (the dirty gate is clean, so
+      // no later run re-uploads it either).
+      await connectAndSeed();
+      await db.setSetting(kAutoBackupKeepKey, '2');
+      store.files['reeftracker-auto-29991231-235959-998.json'] = [1];
+      store.files['reeftracker-auto-29991231-235959-999.json'] = [2];
+
+      expect(
+        await runGDriveSyncIfDirty(db, store: store),
+        CloudSyncOutcome.pushed,
+      );
+
+      final pushed = await settings.readSyncGdriveLastPushedName();
+      expect(pushed, isNotNull);
+      expect(
+        store.files.keys,
+        contains(pushed),
+        reason:
+            'the run recorded $pushed as this device\'s backup — the folder '
+            'must actually still hold it',
+      );
+      // The exemption must not inflate the rotation: the upload takes one of
+      // the two slots, so exactly one of the pre-existing files survives, and
+      // it is the newer one.
+      expect(store.files.keys, hasLength(2));
+      expect(
+        store.files.keys,
+        contains('reeftracker-auto-29991231-235959-999.json'),
       );
     });
 
@@ -756,6 +936,50 @@ void main() {
       expect(proposal.deviceName, 'Aquarium phone');
     });
 
+    test('a stale cached folder id is re-resolved once, like the push '
+        'path', () async {
+      await seedAndPush();
+      final readerSettings = AppSettings(reader);
+      // The reader has synced before, so it holds a cached folder id…
+      final stale = await AppSettings(writer).readSyncGdriveFolderId();
+      await readerSettings.setSyncGdriveFolderId(stale);
+      // …and the user then deleted the app folder on drive.google.com.
+      store.invalidateFolder();
+      final ensureCallsBefore = store.ensureFolderCalls;
+
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+
+      // Without the retry the 404 hits the function's catch-all and reads as
+      // "nothing to propose" — indistinguishable from a quiet launch, and
+      // permanent, since the dead id stays cached.
+      expect(proposal, isNotNull);
+      expect(proposal!.file.name, store.files.keys.single);
+      expect(store.ensureFolderCalls, ensureCallsBefore + 1);
+      // The fresh id is written back, so the next launch takes the cheap path.
+      expect(await readerSettings.readSyncGdriveFolderId(), isNot(stale));
+    });
+
+    test(
+      'a non-404 provider error is not mistaken for a stale folder',
+      () async {
+        await seedAndPush();
+        await AppSettings(reader).setSyncGdriveFolderId(
+          await AppSettings(writer).readSyncGdriveFolderId(),
+        );
+        final ensureCallsBefore = store.ensureFolderCalls;
+        store.listError = const CloudApiException(500, 'server error');
+
+        expect(await checkCloudNewerBackup(reader, store: store), isNull);
+        expect(
+          store.ensureFolderCalls,
+          ensureCallsBefore,
+          reason:
+              'only a 404 means the folder is gone — a 5xx must not '
+              'recreate it',
+        );
+      },
+    );
+
     test('an own pre-name upload is recognized by hash and the filename '
         'backfilled', () async {
       await seedAndPush();
@@ -957,6 +1181,308 @@ void main() {
       expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
       expect(await AppSettings(reader).readSyncGdriveAccount(), isNull);
     });
+
+    test('a device-local PURCHASE with no founder marker anywhere still '
+        'turns sync on (§10 A3)', () async {
+      // The reinstall-and-restore path of a paying user: the backup is a
+      // marker-less Standard document (so the negative control above applies
+      // to the *data*), and the only thing entitling this install is the Pro
+      // unlock file sitting on the device. Hardwiring `purchased: false` here
+      // — the exact drift `readEntitlement` was extracted to prevent — leaves
+      // them with cloud sync switched off, which is the one feature they
+      // bought.
+      await seedAndPush();
+      final purchased = MemoryProEntitlementStore(purchased: true);
+      addTearDown(purchased.dispose);
+
+      final newest = await fetchNewestCloudBackup(store);
+      final synced = await completeWelcomeRestore(
+        reader,
+        store: store,
+        file: newest!,
+        accountEmail: 'reef@test.dev',
+        entitlement: purchased,
+      );
+
+      expect(synced, isTrue);
+      expect(
+        await AppSettings(reader).readSyncGdriveAccount(),
+        'reef@test.dev',
+      );
+      expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
+      // The entitlement came from the device, not from the restored data:
+      // nothing planted a founder marker on the way through.
+      expect(await reader.getSetting(kLegacyFreeSinceKey), isNull);
+      final resolved = await readEntitlement(reader, entitlement: purchased);
+      expect(resolved.founder, isFalse);
+      expect(resolved.purchased, isTrue);
+    });
+  });
+
+  group('echo suppression over a rich dataset (U35)', () {
+    late AppDatabase writer;
+    late AppDatabase reader;
+    late FakeCloudBackupStore store;
+
+    setUp(() async {
+      writer = AppDatabase(NativeDatabase.memory());
+      reader = AppDatabase(NativeDatabase.memory());
+      store = FakeCloudBackupStore();
+      await AppSettings(writer).setSyncGdriveAccount('reef@test.dev');
+      await AppSettings(writer).setSyncDeviceName('Aquarium phone');
+      await AppSettings(reader).setSyncGdriveAccount('reef@test.dev');
+    });
+    tearDown(() async {
+      await writer.close();
+      await reader.close();
+    });
+
+    /// A spread across the tables a restore actually has to rebuild — the
+    /// ones with their own id sequences, their own display ordering, or their
+    /// own encode/decode pair.
+    Future<int> seedRich(
+      AppDatabase db, {
+      required String tankName,
+      String? deviceIdentifier,
+    }) async {
+      final id = await db.createTankWithPreset(
+        name: tankName,
+        type: SetupType.mixed,
+      );
+      for (var day = 1; day <= 3; day++) {
+        await db.insertReadingGroup(
+          tankId: id,
+          takenAt: DateTime(2026, 1, day, 8),
+          note: 'day $day',
+          values: const [
+            (paramKey: 'ph', value: 8.1),
+            (paramKey: 'alkalinity', value: 8.5),
+            (paramKey: 'iodine', value: 0.06),
+          ],
+        );
+      }
+      await db.insertWaterChange(
+        tankId: id,
+        changedAt: DateTime(2026, 1, 2),
+        amountLiters: 25,
+      );
+      await db.insertCarbonChange(
+        tankId: id,
+        changedAt: DateTime(2026, 1, 3),
+        grams: 200,
+      );
+      await db.insertEquipmentCleaning(
+        tankId: id,
+        cleanedAt: DateTime(2026, 1, 4),
+        note: 'skimmer',
+      );
+      await db.insertManualDose(
+        ManualDosesCompanion(
+          tankId: Value(id),
+          dosedAt: Value(DateTime(2026, 1, 6, 14, 30)),
+          product: const Value('Reef Foundation B (KH/Alk)'),
+          elementKey: const Value('alkalinity'),
+          amount: const Value(12.5),
+          amountUnit: const Value('ml'),
+        ),
+      );
+      // Two dosing entries, so their displayOrder has something to be wrong
+      // about after a restore.
+      for (final product in ['Balling KH', 'Trace A']) {
+        await db.insertDosingEntry(
+          DosingEntriesCompanion(
+            tankId: Value(id),
+            product: Value(product),
+            vendor: const Value('Fauna Marin'),
+            amount: const Value(2.5),
+            amountUnit: const Value('ml'),
+          ),
+        );
+      }
+      // Micro views: the chip row's ordering rule (#9/#21).
+      await db.insertMicroView(
+        tankId: id,
+        name: 'Trace watch',
+        paramKeys: const ['iodine', 'iron'],
+      );
+      await db.insertMicroView(
+        tankId: id,
+        name: 'Contaminants',
+        paramKeys: const ['copper', 'aluminium'],
+      );
+      await db.insertReadingTemplate(
+        tankId: id,
+        name: 'Weekly big test',
+        paramKeys: const ['alkalinity', 'calcium'],
+      );
+      await db.insertMaintenanceSchedule(
+        tankId: id,
+        actionType: 'waterChange',
+        cadenceDays: 14,
+      );
+      await db.setRatioBounds(
+        id,
+        'mgca',
+        amberLow: 2.6,
+        greenLow: 2.9,
+        greenHigh: 3.3,
+        amberHigh: 3.6,
+      );
+      await db.setRatioVisible(id, 'caalk', false);
+      await db.setTestCadence((await db.getTrackedParameters(id)).first.id, 7);
+      // Non-tank-scoped: the RO unit and its replacement log.
+      final stageId = await db.insertRoStage(
+        stageType: 'diResin',
+        lifespanDays: 120,
+      );
+      await db.insertRoReplacement(
+        stageId: stageId,
+        replacedAt: DateTime(2026, 1, 5),
+        note: 'fresh resin',
+      );
+      await db.upsertImportSource(
+        ImportSourcesCompanion.insert(
+          tankId: id,
+          source: 'hannaLab',
+          location: const Value('200G2'),
+          importedUpTo: Value(DateTime(2026, 1, 1, 8)),
+        ),
+      );
+      if (deviceIdentifier != null) {
+        await db.upsertReefFactoryDevice(
+          identifier: deviceIdentifier,
+          model: 'RFPM01',
+          address: '192.168.1.50',
+          name: 'Sump pH meter $deviceIdentifier',
+          tankId: id,
+        );
+      }
+      await db.setSetting('hanna_method_sets', '{"alkalinity":"hi97115"}');
+      return id;
+    }
+
+    /// The comparable body of a backup document: everything
+    /// [backupContentHash] does not deliberately ignore.
+    Map<String, Object?> sections(String json) =>
+        Map<String, Object?>.from(jsonDecode(json) as Map)
+          ..remove('exportedAt')
+          ..remove('checksum')
+          ..remove('device');
+
+    test('a restored rich dataset re-encodes to the same hash as the '
+        'document it came from', () async {
+      await seedRich(writer, tankName: 'Reef', deviceIdentifier: 'RFPM011234');
+      expect(
+        await runGDriveSyncIfDirty(writer, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      final doc = utf8.decode(store.files.values.single);
+
+      // The reader holds its OWN rich dataset first, so every id sequence it
+      // owns is already advanced — a restore that renumbers rows rather than
+      // reproducing the document's ids shows up here and nowhere else.
+      await seedRich(reader, tankName: 'Nano');
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      expect(proposal, isNotNull);
+      expect(proposal!.diverged, isTrue);
+
+      await restoreCloudBackup(
+        reader,
+        store: store,
+        file: proposal.file,
+        contents: proposal.contents,
+      );
+
+      // THE identity echo suppression rests on: the hash stamped from the
+      // downloaded bytes must equal the hash of what the database now
+      // encodes. Section-by-section first, so a break names the table
+      // instead of just showing two hashes.
+      final restored = sections(await encodeBackupFromDb(reader));
+      final cloudDoc = sections(doc);
+      for (final key in {...cloudDoc.keys, ...restored.keys}) {
+        expect(
+          jsonEncode(restored[key]),
+          jsonEncode(cloudDoc[key]),
+          reason: 'the "$key" section did not survive the restore intact',
+        );
+      }
+      expect(
+        backupContentHash(await encodeBackupFromDb(reader)),
+        backupContentHash(doc),
+      );
+      expect(
+        await AppSettings(reader).readSyncGdriveLastPushedHash(),
+        backupContentHash(doc),
+      );
+
+      // …which is what makes every later launch quiet. Without it each one
+      // pushes a "changed" copy of unchanged data and the rotation of five
+      // fills with echoes.
+      for (var launch = 0; launch < 3; launch++) {
+        expect(
+          await runGDriveSyncIfDirty(reader, store: store),
+          CloudSyncOutcome.skippedClean,
+        );
+        expect(await checkCloudNewerBackup(reader, store: store), isNull);
+      }
+      expect(store.writeCalls, 1);
+      expect((await reader.getTanks()).map((t) => t.name), ['Reef']);
+    });
+
+    test('the merged device inventory is the one documented exception — it '
+        'costs exactly one push, never a loop', () async {
+      // `devices` is merge-restored on purpose (U36): a local row describes
+      // *this* phone's network, so it survives — with its tank link nulled by
+      // the FK, since the restored tanks are different data. The restoring
+      // device therefore encodes something the document it just pulled does
+      // not contain, and reads dirty once. That is acceptable only because it
+      // converges: assert the convergence, so a change that makes the two
+      // devices keep re-uploading each other's data fails here.
+      await seedRich(writer, tankName: 'Reef', deviceIdentifier: 'RFPM011234');
+      expect(
+        await runGDriveSyncIfDirty(writer, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      final doc = utf8.decode(store.files.values.single);
+
+      await seedRich(reader, tankName: 'Nano', deviceIdentifier: 'RFPM019999');
+      final proposal = await checkCloudNewerBackup(reader, store: store);
+      await restoreCloudBackup(
+        reader,
+        store: store,
+        file: proposal!.file,
+        contents: proposal.contents,
+      );
+
+      // Every other section round-tripped exactly; only `devices` differs.
+      final restored = sections(await encodeBackupFromDb(reader));
+      final cloudDoc = sections(doc);
+      for (final key in {...cloudDoc.keys, ...restored.keys}) {
+        if (key == 'devices') continue;
+        expect(
+          jsonEncode(restored[key]),
+          jsonEncode(cloudDoc[key]),
+          reason: 'only the merged device inventory may diverge, not "$key"',
+        );
+      }
+      expect(
+        jsonEncode(restored['devices']),
+        isNot(jsonEncode(cloudDoc['devices'])),
+      );
+
+      // One catch-up push, then silence — not an echo storm.
+      expect(
+        await runGDriveSyncIfDirty(reader, store: store),
+        CloudSyncOutcome.pushed,
+      );
+      for (var launch = 0; launch < 3; launch++) {
+        expect(
+          await runGDriveSyncIfDirty(reader, store: store),
+          CloudSyncOutcome.skippedClean,
+        );
+      }
+      expect(store.writeCalls, 2);
+    });
   });
 
   group('iCloud state pack (U44)', () {
@@ -1081,7 +1607,7 @@ void main() {
         store: store,
         state: icloud(db),
         file: newest!,
-        entitlement: ProEntitlementStore(),
+        entitlement: MemoryProEntitlementStore(),
         enableSync: () => settings.setSyncIcloudEnabled(true),
       );
       expect(synced, isTrue);

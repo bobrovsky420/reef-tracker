@@ -162,7 +162,8 @@ class _StickySectionLabel extends StatelessWidget {
       delegate: _StickySectionLabelDelegate(
         label: label,
         cupertino: cupertino,
-        extent: 22 + (cupertino ? 8 : 10) + scaler.scale(fontSize) * _lineHeight,
+        extent:
+            22 + (cupertino ? 8 : 10) + scaler.scale(fontSize) * _lineHeight,
       ),
     );
   }

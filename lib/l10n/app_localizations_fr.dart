@@ -1245,7 +1245,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Vous utilisez l\'édition standard de ReefTracker.';
+      'Vous utilisez l\'édition standard de ReefTracker. Tout ce que vous avez déjà enregistré reste à vous ; ReefTracker Pro débloque les fonctionnalités avancées.';
+
+  @override
+  String get editionUpgrade => 'Débloquer Pro';
 
   @override
   String get editionPro => 'Pro';
@@ -3156,6 +3159,38 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get roAllOk => 'Toutes les cartouches sont OK';
+
+  @override
+  String get roUsageTitle => 'Intensité d\'utilisation';
+
+  @override
+  String get roUsageDialogBody =>
+      'Quantité d\'eau produite par votre osmoseur. Choisir un niveau réinitialise les intervalles de remplacement de toutes les cartouches standard — y compris ceux que vous aviez réglés vous-même — aux valeurs typiques de ce niveau ; les cartouches personnalisées restent intactes, et vous pourrez ensuite ajuster chaque cartouche.';
+
+  @override
+  String get roUsageLight => 'Faible';
+
+  @override
+  String get roUsageModerate => 'Modérée';
+
+  @override
+  String get roUsageHeavy => 'Élevée';
+
+  @override
+  String get roUsageLightHint =>
+      'Moins de ~300 L (80 gal) par mois — appoints et petits changements d\'eau';
+
+  @override
+  String get roUsageModerateHint =>
+      'Environ 300–1000 L (80–260 gal) par mois — un bac récifal typique';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Plus de ~1000 L (260 gal) par mois — grand bac ou plusieurs bacs';
+
+  @override
+  String get roUsageApplied =>
+      'Intervalles de remplacement réinitialisés pour les cartouches standard';
 
   @override
   String get notifRoTitle => 'Remplacer les filtres de l\'osmoseur';

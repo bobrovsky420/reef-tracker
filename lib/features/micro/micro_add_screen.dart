@@ -180,17 +180,12 @@ class _MicroAddScreenState extends ConsumerState<MicroAddScreen> {
                 fontWeight: FontWeight.w600,
                 color: ReefTokens.of(context).text,
               ),
-              actions: [
-                ReefInlineButton(l.change, onPressed: _pickDateTime),
-              ],
+              actions: [ReefInlineButton(l.change, onPressed: _pickDateTime)],
             ),
           ),
           const SizedBox(height: 12),
           ReefSegmented<bool>(
-            options: [
-              (false, l.microChipHobby),
-              (true, l.microChipFullIcp),
-            ],
+            options: [(false, l.microChipHobby), (true, l.microChipFullIcp)],
             selected: _fullPanel,
             onChanged: (v) => setState(() => _fullPanel = v),
           ),

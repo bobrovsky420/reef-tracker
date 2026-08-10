@@ -70,38 +70,40 @@ void main() {
       expect(selectEnvironmentValues(const []), isEmpty);
     });
 
-    test('a dedicated device beats an incidental reading regardless of order',
-        () {
-      // The U36 temperature-source rule, generalized: the Temperature
-      // Controller's temperature wins over the Salinity Guardian's — in both
-      // arrival orders, and even though the Guardian's read is fresher.
-      final guardian = _result(
-        identifier: 'RFSG01AAAA',
-        displayName: 'Guardian',
-        primaryParams: {'salinity'},
-        takenAt: DateTime(2026, 7, 24, 10, 5),
-        readings: [
-          (paramKey: 'salinity', value: 1.0255),
-          (paramKey: 'temperature', value: 25.9),
-        ],
-      );
-      final controller = _result(
-        identifier: 'RFTC01BBBB',
-        displayName: 'Controller',
-        primaryParams: {'temperature'},
-        takenAt: DateTime(2026, 7, 24, 10),
-        readings: [(paramKey: 'temperature', value: 25.2)],
-      );
-      for (final order in [
-        [guardian, controller],
-        [controller, guardian],
-      ]) {
-        final picked = selectEnvironmentValues(order);
-        expect(picked['temperature']?.value, 25.2);
-        expect(picked['temperature']?.deviceName, 'Controller');
-        expect(picked['salinity']?.value, 1.0255);
-      }
-    });
+    test(
+      'a dedicated device beats an incidental reading regardless of order',
+      () {
+        // The U36 temperature-source rule, generalized: the Temperature
+        // Controller's temperature wins over the Salinity Guardian's — in both
+        // arrival orders, and even though the Guardian's read is fresher.
+        final guardian = _result(
+          identifier: 'RFSG01AAAA',
+          displayName: 'Guardian',
+          primaryParams: {'salinity'},
+          takenAt: DateTime(2026, 7, 24, 10, 5),
+          readings: [
+            (paramKey: 'salinity', value: 1.0255),
+            (paramKey: 'temperature', value: 25.9),
+          ],
+        );
+        final controller = _result(
+          identifier: 'RFTC01BBBB',
+          displayName: 'Controller',
+          primaryParams: {'temperature'},
+          takenAt: DateTime(2026, 7, 24, 10),
+          readings: [(paramKey: 'temperature', value: 25.2)],
+        );
+        for (final order in [
+          [guardian, controller],
+          [controller, guardian],
+        ]) {
+          final picked = selectEnvironmentValues(order);
+          expect(picked['temperature']?.value, 25.2);
+          expect(picked['temperature']?.deviceName, 'Controller');
+          expect(picked['salinity']?.value, 1.0255);
+        }
+      },
+    );
 
     test('among equals the fresher read wins', () {
       final picked = selectEnvironmentValues([

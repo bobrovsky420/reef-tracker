@@ -122,8 +122,9 @@ class MdnsRecord {
       continue;
     }
     if (pos + 1 + len > data.length) break;
-    parts.add(utf8.decode(data.sublist(pos + 1, pos + 1 + len),
-        allowMalformed: true));
+    parts.add(
+      utf8.decode(data.sublist(pos + 1, pos + 1 + len), allowMalformed: true),
+    );
     pos += 1 + len;
   }
   return (name: parts.join('.'), next: next >= 0 ? next : pos);
@@ -138,8 +139,10 @@ Map<String, String> _readTxt(Uint8List data, int start, int length) {
   while (pos < end && pos < data.length) {
     final len = data[pos];
     if (len == 0 || pos + 1 + len > data.length) break;
-    final item =
-        utf8.decode(data.sublist(pos + 1, pos + 1 + len), allowMalformed: true);
+    final item = utf8.decode(
+      data.sublist(pos + 1, pos + 1 + len),
+      allowMalformed: true,
+    );
     final eq = item.indexOf('=');
     if (eq > 0) {
       out[item.substring(0, eq)] = item.substring(eq + 1);
@@ -194,13 +197,15 @@ List<MdnsRecord> decodeMdnsMessage(Uint8List data) {
         txt = _readTxt(data, pos, rdLength);
         value = txt.entries.map((e) => '${e.key}=${e.value}').join(' ');
     }
-    out.add(MdnsRecord(
-      name: owner.name,
-      type: type,
-      value: value,
-      txt: txt,
-      port: port,
-    ));
+    out.add(
+      MdnsRecord(
+        name: owner.name,
+        type: type,
+        value: value,
+        txt: txt,
+        port: port,
+      ),
+    );
     pos += rdLength;
   }
   return out;

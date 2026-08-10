@@ -10,12 +10,17 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/entitlement.dart';
+import 'package:reeftracker/data/purchases.dart';
 import 'package:reeftracker/data/settings.dart';
+import 'package:reeftracker/domain/pro_features.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/dosing/dose_calculator_screen.dart';
 import 'package:reeftracker/features/micro/micro_screen.dart';
+import 'package:reeftracker/features/paywall/paywall_screen.dart';
 import 'package:reeftracker/features/tanks/tanks_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
+import 'package:reeftracker/widgets/pro_feature_dialog.dart';
 
 /// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so
 /// the full app shell can build under `flutter test` (see router_test.dart).
@@ -321,6 +326,214 @@ void main() {
 
         expect(find.text('Pro feature'), findsOneWidget);
         expect((await db.getTanks()).length, 2, reason: 'no tank created');
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+  });
+
+  /// `runProGated`'s **activation-day** half: the branch that only exists once
+  /// a store product resolves, so no shipped build has ever taken it (the only
+  /// `PurchaseStore` compiled in resolves nothing, which is why every test
+  /// above gets the informational dialog instead of the paywall). Overriding
+  /// `purchaseStoreProvider` with a resolving fake is what opens it.
+  ///
+  /// The contract is one sentence with three ways to get it wrong: the gated
+  /// action resumes **only** when the user comes back from the paywall having
+  /// unlocked Pro. A paywall dismissed with no result must read as `false` —
+  /// `showProFeatureDialog`'s `?? false` — and a purchase the store refused
+  /// must not resume anything either.
+  group('runProGated resumes after a paywall purchase (U19)', () {
+    // In-memory, not the file-backed store: real dart:io futures never
+    // complete inside `testWidgets`' fake-async zone (see paywall_test.dart).
+    late MemoryProEntitlementStore entitlement;
+    setUp(() => entitlement = MemoryProEntitlementStore());
+    tearDown(() => entitlement.dispose());
+
+    /// A single button whose `onPressed` is `runProGated`, plus the real
+    /// paywall on `/paywall` — the smallest thing that exercises the whole
+    /// push/return round trip rather than a stubbed route's return value.
+    /// Every run the action makes is appended to [ran].
+    Future<void> pumpGatedAction(
+      WidgetTester tester, {
+      required PurchaseStore store,
+      required List<String> ran,
+      String? legacyFreeSince,
+    }) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      if (legacyFreeSince != null) {
+        await db.setSetting(kLegacyFreeSinceKey, legacyFreeSince);
+      }
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => Scaffold(
+              body: Center(
+                child: Consumer(
+                  builder: (context, ref, _) => ElevatedButton(
+                    onPressed: () => runProGated(
+                      context,
+                      ref,
+                      ProFeature.icpImport,
+                      () => ran.add('action'),
+                    ),
+                    child: const Text('Gated action'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/paywall',
+            builder: (_, state) =>
+                PaywallScreen(feature: state.extra as ProFeature?),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            dbProvider.overrideWithValue(db),
+            purchaseStoreProvider.overrideWithValue(store),
+            proEntitlementStoreProvider.overrideWithValue(entitlement),
+          ],
+          child: MaterialApp.router(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await settle(tester);
+      // Nothing on this bare screen watches the settings map, so warm it the
+      // way main.dart's pre-warm does — otherwise the entitlement is still
+      // "loading" and every case below would pass on the fail-closed default
+      // instead of on the edition it means to test. listen + settle, NOT
+      // `await ….future` (see router_test.dart).
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('Gated action')),
+      );
+      container.listen(settingsMapProvider, (_, _) {});
+      await settle(tester);
+    }
+
+    testWidgets('buying on the paywall resumes the action the user was '
+        'reaching for', (tester) async {
+      final ran = <String>[];
+      final store = FakePurchaseStore();
+      addTearDown(store.dispose);
+      try {
+        await pumpGatedAction(tester, store: store, ran: ran);
+
+        await tester.tap(find.text('Gated action'));
+        await settle(tester);
+        // A resolving product means the PAYWALL, not the informational dialog.
+        expect(find.byType(PaywallScreen), findsOneWidget);
+        expect(find.text('Pro feature'), findsNothing);
+        expect(ran, isEmpty, reason: 'nothing runs while the gate is shut');
+
+        await tester.tap(find.textContaining('Unlock Pro'));
+        await settle(tester);
+        expect(find.text('Pro unlocked. Thank you!'), findsOneWidget);
+        expect(
+          ran,
+          isEmpty,
+          reason: 'the action waits for the user to come back',
+        );
+
+        await tester.tap(find.text('Continue'));
+        await settle(tester);
+        expect(find.byType(PaywallScreen), findsNothing);
+        expect(ran, ['action'], reason: 'resumed exactly once');
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+
+    testWidgets('backing out of the paywall with no result does NOT run the '
+        'action (the `?? false`)', (tester) async {
+      final ran = <String>[];
+      final store = FakePurchaseStore();
+      addTearDown(store.dispose);
+      try {
+        await pumpGatedAction(tester, store: store, ran: ran);
+
+        await tester.tap(find.text('Gated action'));
+        await settle(tester);
+        expect(find.byType(PaywallScreen), findsOneWidget);
+
+        // The system/AppBar back button pops with no value, so the awaited
+        // push completes as null. Reading that as "go ahead" would hand Pro
+        // to anyone who opened the paywall and changed their mind.
+        await tester.pageBack();
+        await settle(tester);
+
+        expect(find.byType(PaywallScreen), findsNothing);
+        expect(ran, isEmpty);
+        expect(await entitlement.read(), isFalse);
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+
+    testWidgets('a purchase the store refuses leaves the action unrun', (
+      tester,
+    ) async {
+      final ran = <String>[];
+      final store = FakePurchaseStore()..buyThrows = true;
+      addTearDown(store.dispose);
+      try {
+        await pumpGatedAction(tester, store: store, ran: ran);
+
+        await tester.tap(find.text('Gated action'));
+        await settle(tester);
+        await tester.tap(find.textContaining('Unlock Pro'));
+        await settle(tester);
+
+        expect(
+          find.text('The store could not complete that. Please try again.'),
+          findsOneWidget,
+        );
+        // No return path is offered, because nothing was unlocked.
+        expect(find.text('Continue'), findsNothing);
+        expect(find.textContaining('Unlock Pro'), findsOneWidget);
+        expect(await entitlement.read(), isFalse);
+
+        await tester.pageBack();
+        await settle(tester);
+        expect(ran, isEmpty);
+
+        // A refused buy leaves `ProEntitlementService.buy`'s 5-minute
+        // await-the-event timeout armed; drain it so the binding's pending
+        // timer check doesn't blame this test for the service's own guard.
+        await tester.pump(const Duration(minutes: 6));
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+
+    testWidgets('an entitled install runs the action immediately, with no '
+        'paywall at all', (tester) async {
+      final ran = <String>[];
+      final store = FakePurchaseStore();
+      addTearDown(store.dispose);
+      try {
+        await pumpGatedAction(
+          tester,
+          store: store,
+          ran: ran,
+          legacyFreeSince: '0.26.0',
+        );
+
+        await tester.tap(find.text('Gated action'));
+        await settle(tester);
+
+        expect(ran, ['action']);
+        expect(find.byType(PaywallScreen), findsNothing);
+        expect(find.text('Pro feature'), findsNothing);
       } finally {
         await unmountApp(tester);
       }

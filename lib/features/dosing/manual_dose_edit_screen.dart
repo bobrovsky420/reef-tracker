@@ -11,7 +11,7 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_value_row.dart';
 import '../../widgets/section_header.dart';
-import 'dosing_screen.dart' show formatDoseAmount;
+import 'dosing_screen.dart' show formatDoseAmount, kDoseEditDecimals;
 
 /// Sentinel for the "Other…" (custom free-text) choice, same convention as the
 /// plan edit form.
@@ -93,7 +93,9 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
       _vendorSel = kVendorKeyByProductKey[key];
     }
     _elementKey = d.elementKey;
-    _amountCtrl.text = formatDoseAmount(d.amount);
+    // Edit precision, not display precision — see [kDoseEditDecimals]: the
+    // field is re-parsed on save, so a 0.25 ml dose must not come back as 0.3.
+    _amountCtrl.text = formatDoseAmount(d.amount, decimals: kDoseEditDecimals);
     _unit = d.unit;
   }
 
@@ -113,7 +115,9 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
       _productCtrl.text = d.product;
     }
     _elementKey = d.elementKey;
-    _amountCtrl.text = formatDoseAmount(d.amount);
+    // Edit precision, not display precision — see [kDoseEditDecimals]: the
+    // field is re-parsed on save, so a 0.25 ml dose must not come back as 0.3.
+    _amountCtrl.text = formatDoseAmount(d.amount, decimals: kDoseEditDecimals);
     _unit = DoseUnit.fromName(d.amountUnit);
     _dosedAt = d.dosedAt;
     _noteCtrl.text = d.note ?? '';
@@ -353,7 +357,9 @@ class _ManualDoseEditScreenState extends ConsumerState<ManualDoseEditScreen> {
       decoration: InputDecoration(labelText: l.dosingElement),
       items: [
         DropdownMenuItem(value: null, child: Text(l.dosingElementNone)),
-        for (final key in kDosingElementKeys)
+        // Same guard as the plan form: the current value may be an element the
+        // list does not offer (see [dosingElementChoices]).
+        for (final key in dosingElementChoices(_elementKey))
           DropdownMenuItem(value: key, child: Text(l.paramName(key))),
       ],
       onChanged: (v) => setState(() => _elementKey = v),

@@ -1,14 +1,19 @@
 import 'dart:io';
 
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/auto_backup.dart';
 import 'package:reeftracker/data/backup.dart';
+import 'package:reeftracker/data/csv_export.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/domain/units.dart';
 
 /// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so the
 /// file-based auto-backup logic can run under `flutter test`.
@@ -325,6 +330,34 @@ void main() {
       expect(await listAutoBackups(), isEmpty);
     });
 
+    test('declines to write while every tank is soft-deleted (U10)', () async {
+      // A tank inside its delete-undo window is excluded from the encode, so
+      // the document would carry no aquarium at all. Writing it anyway would
+      // put an empty file at the head of the rotation — evicting a real
+      // backup, and (U24) pushing the emptiness to the cloud during the very
+      // window in which the user may still tap Undo. The guard therefore has
+      // to count *visible* tanks (`getTanks`), not every row (`getAllTanks`).
+      final db = newDb();
+      addTearDown(db.close);
+      final id = await db.createTankWithPreset(
+        name: 'A',
+        type: SetupType.mixed,
+      );
+      await db.softDeleteTank(id);
+      // The row is still there — only its visibility changed.
+      expect(await db.getAllTanks(), hasLength(1));
+      expect(await db.getTanks(), isEmpty);
+
+      expect(await runAutoBackupIfDue(db), isFalse);
+      expect(await listAutoBackups(), isEmpty);
+      expect(await db.getSetting(kLastAutoBackupAtKey), isNull);
+
+      // Undo puts the tank back, and the very next run writes normally.
+      await db.restoreTank(id);
+      expect(await runAutoBackupIfDue(db), isTrue);
+      expect(await listAutoBackups(), hasLength(1));
+    });
+
     test('writes the first backup and records the timestamp', () async {
       final db = newDb();
       addTearDown(db.close);
@@ -467,6 +500,104 @@ void main() {
 
       expect(await runAutoBackupIfDue(db), isFalse);
       expect(await listAutoBackups(), isEmpty);
+    });
+  });
+
+  group('filename stamps are ASCII digits in every app language', () {
+    // `DateFormat` renders digits in `Intl.defaultLocale`'s numbering system,
+    // and `main.dart` sets that from the app language. A Bengali (or Persian,
+    // or `ar_EG`) stamp would read `২০২৬০৮০৯-…`: `listAutoBackups` sorts
+    // filenames lexically to mean "newest first", so the rotation would evict
+    // the wrong files, and exported filenames would stop sorting
+    // chronologically for the user too. All three filename builders therefore
+    // format their stamp by hand ([exportFileStamp]).
+    //
+    // Latent while the app ships only Latin-digit languages — which is exactly
+    // why it needs a test rather than a bug report.
+    const nativeDigitLocale = 'bn';
+    // `\d` is ASCII-only in Dart's RegExp, so these patterns are the assertion.
+    final autoName = RegExp(r'^reeftracker-auto-\d{8}-\d{6}-\d{3}\.json$');
+    final exportName = RegExp(r'^reeftracker-backup-\d{8}-\d{6}\.json$');
+    final csvName = RegExp(r'^reeftracker-readings-\d{8}-\d{6}(-.*)?\.csv$');
+
+    /// The staged filenames handed to the OS share sheet. The share sheet is
+    /// unavailable under `flutter test` and the staging file is deleted the
+    /// moment the call returns, so the mock channel is the only place the
+    /// exported filename can be observed.
+    late List<String> sharedNames;
+
+    setUpAll(() async {
+      // What `flutter_localizations` does for the running app's locale; without
+      // it `DateFormat` would throw on `bn` instead of formatting it, and the
+      // pre-fix failure would be an exception rather than the wrong digits.
+      await initializeDateFormatting();
+    });
+
+    setUp(() {
+      sharedNames = [];
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      const channel = MethodChannel('dev.fluttercommunity.plus/share');
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        final paths = (call.arguments as Map)['paths'] as List;
+        sharedNames.addAll(paths.map((path) => p.basename(path as String)));
+        return null; // "share unavailable" — no result branch to exercise here
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+      Intl.defaultLocale = nativeDigitLocale;
+      addTearDown(() => Intl.defaultLocale = null);
+    });
+
+    test('writeAutoBackup', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      final file = await writeAutoBackup(db, keep: 3);
+
+      expect(p.basename(file.path), matches(autoName));
+      // …and the rotation still recognizes and orders it.
+      expect((await listAutoBackups()).map((f) => p.basename(f.path)), [
+        p.basename(file.path),
+      ]);
+    });
+
+    test('exportBackup', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      await db.createTankWithPreset(name: 'A', type: SetupType.mixed);
+
+      await exportBackup(db);
+
+      expect(sharedNames, hasLength(1));
+      expect(sharedNames.single, matches(exportName));
+    });
+
+    test('exportReadingsCsv', () async {
+      final db = newDb();
+      addTearDown(db.close);
+      final id = await db.createTankWithPreset(
+        name: 'Reef',
+        type: SetupType.mixed,
+      );
+      await db.insertReadingGroup(
+        tankId: id,
+        takenAt: DateTime(2026, 1, 1, 8),
+        values: const [(paramKey: 'alkalinity', value: 8.5)],
+      );
+
+      expect(
+        await exportReadingsCsv(
+          db,
+          tankId: id,
+          tankName: 'Reef',
+          prefs: const UnitPrefs(),
+        ),
+        isTrue,
+      );
+
+      expect(sharedNames, hasLength(1));
+      expect(sharedNames.single, matches(csvName));
     });
   });
 }

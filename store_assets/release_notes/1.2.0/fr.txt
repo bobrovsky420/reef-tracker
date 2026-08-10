@@ -1,6 +1,7 @@
-• La liste des aquariums affiche le score de santé et le dernier test ; touchez pour changer.
-• Nouvelle disposition « Plat avec graphiques » : chaque carte porte deux semaines.
-• Retirer un paramètre du suivi sans perdre de mesures — annulation possible.
-• iOS : sauvegarde iCloud, restauration multi-appareils, section iCloud.
-• Partage d'un journal de diagnostic depuis Réglages → À propos.
-• Corrections : imports PO4 Fauna Marin et KH ZIMS, axes et graphiques de rapports.
+• La liste des aquariums affiche le score de santé et le dernier test.
+• Nouvelle disposition « Plat avec graphiques » : deux semaines par carte.
+• Retirer un paramètre du suivi sans perdre de mesures – annulation possible.
+• Osmoseur : intensité faible, modérée ou élevée règle les intervalles.
+• Appareils : balayez de côté pour changer de marque.
+• Sauvegarde iCloud, restauration multi-appareils, section iCloud.
+• Corrections : doses non arrondies, imports ICP et Hanna, graphiques.

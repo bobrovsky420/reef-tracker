@@ -43,8 +43,7 @@ void main() {
     expect(ato.temperatureC, closeTo(25.715, 0.001));
   });
 
-  test('a forced RO/DI leak raises the alarm and survives a re-read',
-      () async {
+  test('a forced RO/DI leak raises the alarm and survives a re-read', () async {
     await startEmulator(EmuRbType.ato);
     await _control(emulator, '/emu/leak?status=rodi_water_leak');
 
@@ -57,8 +56,7 @@ void main() {
     expect(dried.leakAlarm, isFalse);
   });
 
-  test('reads the ReefRun, and a forced full cup pauses the skimmer',
-      () async {
+  test('reads the ReefRun, and a forced full cup pauses the skimmer', () async {
     await startEmulator(EmuRbType.run);
     final healthy = (await link.readOnce(host)).run!;
     expect(healthy.pumps, hasLength(2));
