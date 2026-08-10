@@ -1,56 +1,63 @@
 <en-GB>
-• The aquarium list shows each tank's health score and last test; tap to switch.
+• Aquarium list shows each tank's health score and last test; tap to switch.
 • New "Flat with graphs" dashboard: each card carries its last two weeks.
-• Untrack a parameter without losing readings — Undo included, history kept.
+• Untrack a parameter without losing readings – Undo included, history kept.
+• RO unit: pick Light, Moderate or Heavy use to set the filter intervals.
+• Devices: swipe sideways to switch brand.
 • iOS: iCloud backup sync, multi-device restore, iCloud section in backups.
-• Share a diagnostics log from Settings → About.
-• Fixes: Fauna Marin phosphate and ZIMS alkalinity imports, graph axes, ratios.
+• Fixes: dosing plans no longer round doses; ICP and Hanna imports; graphs.
 </en-GB>
 <cs-CZ>
 • Seznam akvárií ukazuje skóre zdraví a poslední měření; klepnutím přepnete.
 • Nové rozvržení „Ploché s grafy“: každá karta nese poslední dva týdny.
-• Přestat sledovat parametr bez ztráty měření — se zpětným vzetím i historií.
+• Přestat sledovat parametr bez ztráty měření – se zpětným vzetím i historií.
+• RO jednotka: zatížení lehké, střední či těžké nastaví intervaly výměn.
+• Zařízení: přejetím do stran přepnete značku.
 • iOS: záloha na iCloud, obnova mezi zařízeními, sekce iCloud v zálohách.
-• Sdílení diagnostiky z Nastavení → O aplikaci.
-• Opravy: import PO4 z Fauna Marin a KH ze ZIMS, osy grafů, grafy poměrů.
+• Opravy: dávky se už nezaokrouhlují, importy ICP a Hanna, grafy.
 </cs-CZ>
 <de-DE>
 • Die Aquarienliste zeigt Gesundheitswert und letzten Test; tippen zum Wechseln.
-• Neues Layout „Flach mit Graphen“: jede Karte zeigt die letzten zwei Wochen.
-• Parameter ausblenden, ohne Messwerte zu verlieren — mit Rückgängig.
-• iOS: iCloud-Backup, Wiederherstellung zwischen Geräten, iCloud in den Backups.
-• Diagnoseprotokoll teilen über Einstellungen → Über.
-• Korrekturen: Fauna-Marin-PO4 und ZIMS-KH-Import, Achsen, Verhältnis-Graphen.
+• Neues Layout „Flach mit Graphen“: jede Karte zeigt zwei Wochen.
+• Parameter ausblenden, ohne Messwerte zu verlieren – mit Rückgängig.
+• Osmoseanlage: Nutzung leicht, mittel oder stark setzt die Wechselintervalle.
+• Geräte: seitlich wischen wechselt die Marke.
+• iOS: iCloud-Backup, Wiederherstellung zwischen Geräten, iCloud-Bereich.
+• Korrekturen: Dosierungen werden nicht mehr gerundet, ICP- und Hanna-Import.
 </de-DE>
 <ru-RU>
 • Список аквариумов показывает оценку состояния и дату теста; нажмите для переключения.
 • Новый вид «Плоский с графиками»: на каждой карточке две последние недели.
-• Снятие параметра с отслеживания без потери измерений — с отменой.
+• Снятие параметра с отслеживания без потери измерений – с отменой.
+• Осмос: нагрузка лёгкая, средняя или тяжёлая задаёт интервалы замен.
+• Устройства: свайп вбок переключает бренд.
 • iOS: копии в iCloud, восстановление между устройствами, раздел iCloud.
-• Отправка журнала диагностики из «Настройки → О приложении».
-• Исправления: импорт PO4 Fauna Marin и KH из ZIMS, оси и графики соотношений.
+• Исправления: дозы больше не округляются, импорт ICP и Hanna, графики.
 </ru-RU>
 <pl-PL>
 • Lista akwariów pokazuje ocenę kondycji i ostatni test; dotknij, aby przełączyć.
 • Nowy układ „Płaski z wykresami”: każda karta niesie ostatnie dwa tygodnie.
-• Zaprzestanie śledzenia parametru bez utraty pomiarów — z cofnięciem.
+• Zaprzestanie śledzenia parametru bez utraty pomiarów – z cofnięciem.
+• RO: użycie lekkie, średnie lub ciężkie ustawia interwały wymiany wkładów.
+• Urządzenia: przesuń w bok, aby zmienić markę.
 • iOS: kopie w iCloud, przywracanie między urządzeniami, sekcja iCloud.
-• Udostępnianie dziennika diagnostycznego z Ustawienia → Informacje.
-• Poprawki: import PO4 Fauna Marin i KH z ZIMS, osie i wykresy proporcji.
+• Poprawki: dawki nie są już zaokrąglane, importy ICP i Hanna, wykresy.
 </pl-PL>
 <fr-FR>
-• La liste des aquariums affiche le score de santé et le dernier test ; touchez pour changer.
-• Nouvelle disposition « Plat avec graphiques » : chaque carte porte deux semaines.
-• Retirer un paramètre du suivi sans perdre de mesures — annulation possible.
+• La liste des aquariums affiche le score de santé et le dernier test.
+• Nouvelle disposition « Plat avec graphiques » : deux semaines par carte.
+• Retirer un paramètre du suivi sans perdre de mesures – annulation possible.
+• Osmoseur : usage léger, moyen ou intensif règle les intervalles.
+• Appareils : balayez de côté pour changer de marque.
 • iOS : sauvegarde iCloud, restauration multi-appareils, section iCloud.
-• Partage d'un journal de diagnostic depuis Réglages → À propos.
-• Corrections : imports PO4 Fauna Marin et KH ZIMS, axes et graphiques de rapports.
+• Corrections : doses non arrondies, imports ICP et Hanna, graphiques.
 </fr-FR>
 <it-IT>
-• L'elenco delle vasche mostra il punteggio di salute e l'ultimo test; tocca per cambiare.
-• Nuovo layout "Piatto con grafici": ogni riquadro porta le ultime due settimane.
-• Smetti di seguire un parametro senza perdere misure — con annulla e storico.
-• iOS: backup su iCloud, ripristino tra dispositivi, sezione iCloud nei backup.
-• Condivisione del registro diagnostico da Impostazioni → Info.
-• Correzioni: import PO4 Fauna Marin e KH da ZIMS, assi e grafici dei rapporti.
+• L'elenco delle vasche mostra il punteggio di salute e l'ultimo test.
+• Nuovo layout "Piatto con grafici": ogni riquadro porta due settimane.
+• Smetti di seguire un parametro senza perdere misure – con annulla.
+• Impianto RO: uso leggero, medio o intenso imposta gli intervalli di ricambio.
+• Dispositivi: scorri lateralmente per cambiare marca.
+• iOS: backup su iCloud, ripristino tra dispositivi, sezione iCloud.
+• Correzioni: dosi non più arrotondate, import ICP e Hanna, grafici.
 </it-IT>
