@@ -324,14 +324,17 @@ void main() {
         // .5 blows up in the ReefBeat probe; .9 gets past that one and blows
         // up in the ReefFactory handshake — both arms of `_identify`.
         reefBeatProbe: _FakeRbProbe({}, hostile: {'192.168.1.5'}),
-        reefFactoryProbe: _FakeRfProbe({
-          '192.168.1.7': const RfIdentity(
-            serial: 'RFSG012110010070',
-            modelPrefix: 'RFSG01',
-            modelName: 'salinity',
-            displayName: 'Salinity Guardian',
-          ),
-        }, hostile: {'192.168.1.9'}),
+        reefFactoryProbe: _FakeRfProbe(
+          {
+            '192.168.1.7': const RfIdentity(
+              serial: 'RFSG012110010070',
+              modelPrefix: 'RFSG01',
+              modelName: 'salinity',
+              displayName: 'Salinity Guardian',
+            ),
+          },
+          hostile: {'192.168.1.9'},
+        ),
       ),
     );
 

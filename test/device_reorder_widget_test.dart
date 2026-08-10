@@ -43,8 +43,9 @@ void main() {
 
   /// Device names in persisted card order.
   Future<List<String>> orderOf(AppDatabase db, String kind) async {
-    final rows = (await db.getAllDevices()).where((d) => d.kind == kind).toList()
-      ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+    final rows =
+        (await db.getAllDevices()).where((d) => d.kind == kind).toList()
+          ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
     return rows.map(deviceDisplayName).toList();
   }
 
@@ -170,7 +171,17 @@ void main() {
     expect(find.text('My pump'), findsOneWidget);
     expect(find.byType(ChoiceChip), findsNWidgets(3)); // All + two vendors
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'ReefFactory  1'));
+    // Matched on the vendor name rather than the whole localized chip label
+    // ("ReefFactory · 1"), so a change to the separator can't quietly break
+    // this. Only one chip starts with the brand, and `tap` would throw on
+    // more than one anyway.
+    await tester.tap(
+      find.byWidgetPredicate(
+        (w) =>
+            w is ChoiceChip &&
+            ((w.label as Text).data ?? '').startsWith('ReefFactory'),
+      ),
+    );
     await settle(tester);
 
     // Filtered: the other vendor's card is gone, the chips stay.

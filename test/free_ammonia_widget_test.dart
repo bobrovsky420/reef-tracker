@@ -136,7 +136,9 @@ void main() {
     final db = await pumpDashboard(tester);
     expect(find.byType(FreeAmmoniaRow), findsOneWidget);
 
-    await AppSettings(db).setFreeAmmoniaVisible((await db.getActiveTankId())!, false);
+    await AppSettings(
+      db,
+    ).setFreeAmmoniaVisible((await db.getActiveTankId())!, false);
     await settle(tester);
 
     expect(find.byType(FreeAmmoniaRow), findsNothing);

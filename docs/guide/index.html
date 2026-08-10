@@ -86,7 +86,7 @@
 <p class="crumb"><a href="../">← ReefTracker home</a></p>
 
 <h1>ReefTracker User Guide</h1>
-<p class="updated">Last updated: 31 July 2026</p>
+<p class="updated">Last updated: 10 August 2026</p>
 
 <p class="lead">ReefTracker is an offline reef-aquarium companion for Android and
 iOS. It keeps your water tests, dosing, maintenance and equipment in one place
@@ -159,7 +159,11 @@ currently active aquarium, shown in the top bar:</p>
 
 <h3>Multiple aquariums</h3>
 <p>Tap the aquarium name in the top bar to switch tanks or open the aquarium
-list. Each aquarium keeps its own parameters, safe ranges, history, dosing plan
+list. Every row there carries that tank's health score in its own color and a
+line saying when it was last tested – turning amber once the readings go
+stale – so you can see how all your tanks are doing side by side; tapping a
+row switches to that aquarium and takes you back where you came from. Each
+aquarium keeps its own parameters, safe ranges, history, dosing plan
 and maintenance schedule. The Standard edition includes up to
 <strong>2 aquariums</strong> (say, a display tank and a quarantine tank);
 unlimited aquariums are a <span class="pro">PRO</span> feature. Deleting an
@@ -182,9 +186,11 @@ and a <strong>Microelements</strong> summary card. Every value is colored by
 its health zone – green (ideal), amber (attention) or red (act now) – against
 your own safe ranges.</p>
 
-<p>Tap any card to open that parameter's history graph. If you prefer a single
-flat grid of cards in your own order, switch the layout to <em>Flat</em> in
-<strong>Settings → Dashboard</strong>.</p>
+<p>Tap any card to open that parameter's history graph. The layout in
+<strong>Settings → Dashboard</strong> offers three arrangements: the grouped
+sections above (<em>Grouped</em>), a single flat grid of cards in your own
+order (<em>Flat</em>), or that same grid with a small two-week graph above
+each value (<em>Flat with graphs</em>).</p>
 
 <h3>Tank health score</h3>
 <p>The card at the top condenses the whole dashboard into a
@@ -459,6 +465,17 @@ sensible lifespans (sediment 3 months, carbon block 6 months, membrane
 24 months, DI resin 4 months); add custom stages or disable ones your unit
 doesn't have.</p>
 
+<p>Tell the app how heavily the unit is used – <strong>Light</strong> (under
+~300 L a month, top-offs and small water changes), <strong>Moderate</strong>
+(~300–1000 L, the level the lifespans above assume) or <strong>Heavy</strong>
+(over ~1000 L, large or multiple tanks) – and the standard stages take the
+replacement intervals typical for that usage: a sediment filter lasts
+6 months on Light and 45 days on Heavy. Picking a level <strong>resets the
+interval of every standard stage</strong>, including any you had tuned
+yourself, so pick one before fine-tuning rather than after; custom stages you
+added are never touched, and every stage stays individually editable
+afterwards.</p>
+
 <p>Each stage shows a <strong>remaining-life bar</strong> with green/amber/red
 due status. Tap <strong>Mark replaced</strong> when you change a filter – the
 date can be backdated and every replacement is kept as history (with Undo).
@@ -541,7 +558,9 @@ your home Wi-Fi – no cloud account in between. Everything lives on one
 (Settings → Experimental). A row of brand buttons across the top switches
 between <em>All</em> – every device, grouped by brand – and one brand at a
 time; brands you don't own never appear, and with a single brand the buttons
-disappear entirely. Everything is strictly <strong>read-only</strong>:
+disappear entirely. You can also swipe sideways anywhere on the page to step
+to the next or previous brand without scrolling back up to the buttons.
+Everything is strictly <strong>read-only</strong>:
 ReefTracker never doses, never switches an outlet, never changes a schedule
 and never calibrates – settings and firmware stay in the vendor's own app.</p>
 
@@ -707,10 +726,19 @@ reached it.</p>
   <li><strong>Automatic backups</strong> are written locally on a schedule you
       choose, with a configurable number kept; manage them on the
       <em>Manage backups</em> screen.</li>
-  <li><strong>Google Drive sync</strong> <span class="pro">PRO</span>
-      (Android) – backups upload automatically to your own Google Drive and
-      restore on a new device. The app can only see its own backup folder,
-      nothing else in your Drive.</li>
+  <li><strong>Cloud backup sync</strong> <span class="pro">PRO</span> –
+      backups upload automatically to your own cloud storage and restore on
+      another device. On Android that is your Google Drive, where the app can
+      only see its own backup folder and nothing else; on iOS it is a visible
+      "ReefTracker" folder in your iCloud Drive that you can browse in the
+      Files app, with no account setup inside the app – your device's Apple ID
+      is used. When another of your devices has uploaded a newer backup, the
+      app offers to restore it at launch, and a fresh install can pull
+      everything back straight from the welcome screen (no Pro needed for
+      that first restore). Each device labels the backups it uploads; on
+      Android that label travels with the file, so <em>Manage backups</em>
+      tells you which device wrote which backup, while iCloud cannot carry
+      it – on iPhone the name reaches you in that launch offer instead.</li>
   <li><strong>Export measurements (CSV)</strong> – a spreadsheet-friendly file
       with stable column names that compare across app languages.</li>
 </ul>
@@ -741,8 +769,8 @@ are per-device and start fresh.</div>
   <li><strong>Units</strong> – °C/°F, ppt/SG for salinity, liters/gallons.
       Switching units never changes health colors: values are stored
       canonically and only displayed in your unit.</li>
-  <li><strong>Dashboard</strong> – grouped vs. flat layout, health-card
-      display, stability window.</li>
+  <li><strong>Dashboard</strong> – layout (Grouped, Flat, or Flat with
+      graphs), health-card display, stability window.</li>
   <li><strong>Trends</strong> – on/off, trend window, alert horizon.</li>
 </ul>
 
@@ -752,7 +780,10 @@ choose which parameters you track, drag to reorder them, and tap one to edit
 its <strong>safe ranges</strong> – the green/amber/red bounds every color in
 the app derives from – plus its target value and testing reminder. Ranges are
 per aquarium, so your SPS display and your quarantine tank can have different
-targets. Ratio cards and the free-ammonia row are managed here too.</p>
+targets. Swipe a parameter away – or use <em>Untrack</em> while editing it –
+to drop one you never test: its readings and any ranges you set are kept, an
+Undo is offered, and adding the parameter back later restores its full
+history. Ratio cards and the free-ammonia row are managed here too.</p>
 
 <p>A parameter you haven't customized shows <strong>Following the
 defaults</strong>: it reads the recommended range for your aquarium type (or
@@ -789,7 +820,7 @@ guide:</p>
   <tr><td>Hanna Lab import</td><td>CSV import from the Hanna Lab app</td></tr>
   <tr><td>Hanna checker connection &amp; scan</td><td>Live Bluetooth measurements and camera reading <em>(experimental)</em></td></tr>
   <tr><td>Connected devices</td><td>ReefFactory, Red Sea ReefBeat &amp; Neptune Apex live over your Wi-Fi – one entitlement covers all brands <em>(experimental)</em></td></tr>
-  <tr><td>Google Drive sync</td><td>Automatic cloud backups (Android)</td></tr>
+  <tr><td>Cloud backup sync</td><td>Automatic backups to your Google Drive (Android) or iCloud Drive (iOS)</td></tr>
 </table>
 
 <p><strong>Founder's Edition:</strong> if you installed ReefTracker before the
@@ -804,7 +835,11 @@ anything you created stays viewable, editable and exportable.</p>
 
 <p>Questions, bug reports and feature requests are welcome at
 <a href="mailto:bobrovsky@seznam.cz">bobrovsky@seznam.cz</a> – please include
-your device model, OS version and app version (Settings → About). See also the
+your device model, OS version and app version (Settings → About). If something
+goes wrong inside the app, <strong>Settings → About → Share diagnostics</strong>
+hands you a small text file of the errors the app recorded on your device –
+attach it and the problem is far easier to track down. Nothing is ever sent
+anywhere unless you share it yourself. See also the
 <a href="../support.html">support page</a> for frequently asked questions and
 the <a href="../privacy-policy.html">privacy policy</a>.</p>
 

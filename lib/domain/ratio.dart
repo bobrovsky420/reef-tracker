@@ -172,9 +172,7 @@ List<RatioPoint> computeRatioSeries(
     );
     // Later in the same day supersedes: by construction the last point of a day
     // pairs that day's final value of both parameters.
-    if (collapseSameDay &&
-        points.isNotEmpty &&
-        _sameDay(points.last.time, t)) {
+    if (collapseSameDay && points.isNotEmpty && _sameDay(points.last.time, t)) {
       points[points.length - 1] = point;
     } else {
       points.add(point);

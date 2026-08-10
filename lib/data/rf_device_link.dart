@@ -36,7 +36,8 @@ class RfLinkException implements Exception {
   final RfLinkError error;
   final String? detail;
   @override
-  String toString() => 'RfLinkException($error${detail == null ? '' : ': $detail'})';
+  String toString() =>
+      'RfLinkException($error${detail == null ? '' : ': $detail'})';
 }
 
 abstract class RfDeviceLink {
@@ -243,7 +244,9 @@ class RfWebSocketLink implements RfDeviceLink, RfIdentityProbe {
       },
       onError: (Object e) {
         if (!result.isCompleted) {
-          result.completeError(RfLinkException(RfLinkError.protocol, e.toString()));
+          result.completeError(
+            RfLinkException(RfLinkError.protocol, e.toString()),
+          );
         }
       },
       onDone: () {

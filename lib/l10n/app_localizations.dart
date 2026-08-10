@@ -5211,16 +5211,16 @@ abstract class AppLocalizations {
   /// **'All parts OK'**
   String get roAllOk;
 
-  /// RO screen: title of the usage-level card and its picker dialog. Picking a level (light/moderate/heavy) applies typical replacement intervals to the standard stages.
+  /// RO screen: title of the usage-level card and its picker dialog. Picking a level (light/moderate/heavy) applies typical replacement intervals to the standard parts.
   ///
   /// In en, this message translates to:
   /// **'Usage intensity'**
   String get roUsageTitle;
 
-  /// No description provided for @roUsageDialogBody.
+  /// RO usage dialog: body text above the three level options. Must warn before the tap that picking a level overwrites the replacement interval of every standard part (the built-in, typed ones) with the level's preset, hand-tuned intervals included; custom parts the user added are never touched and any part can still be edited afterwards. Use this file's own word for an RO part (see roCustomStage, roAddStage, roAllOk) on both sides of the standard-vs-custom contrast, and make sure the 'including any you set yourself' aside clearly attaches to the intervals, not to the parts.
   ///
   /// In en, this message translates to:
-  /// **'How much water your unit makes. Picking a level sets typical replacement intervals for the standard stages — you can still fine-tune each part afterwards.'**
+  /// **'How much water your unit makes. Picking a level resets the replacement intervals of all standard parts — including any you set yourself — to that level\'s typical values; custom parts are left alone, and you can fine-tune each part afterwards.'**
   String get roUsageDialogBody;
 
   /// RO usage level: little water produced per month.
@@ -5259,10 +5259,10 @@ abstract class AppLocalizations {
   /// **'Over ~1000 L (260 gal) a month — large or multiple tanks'**
   String get roUsageHeavyHint;
 
-  /// SnackBar after picking a usage level: the standard stages' lifespans were set to the level's typical values.
+  /// SnackBar after picking a usage level: the standard parts' replacement intervals were set to the level's typical values; custom parts were left unchanged. Use the same word for an RO part as roUsageDialogBody.
   ///
   /// In en, this message translates to:
-  /// **'Replacement intervals updated'**
+  /// **'Replacement intervals reset for the standard parts'**
   String get roUsageApplied;
 
   /// No description provided for @notifRoTitle.

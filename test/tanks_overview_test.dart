@@ -180,7 +180,11 @@ void main() {
       for (var i = 0; i < 200 && !cond(); i++) {
         await Future<void>.delayed(const Duration(milliseconds: 5));
       }
-      expect(cond(), isTrue, reason: 'condition not reached within the timeout');
+      expect(
+        cond(),
+        isTrue,
+        reason: 'condition not reached within the timeout',
+      );
     }
 
     test('the list row scores the active tank exactly like the dashboard, '

@@ -3204,7 +3204,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'Ile wody produkuje twój zestaw. Wybór poziomu ustawi standardowym elementom typowe okresy wymiany — każdy element możesz potem dostroić ręcznie.';
+      'Ile wody produkuje twój zestaw. Wybór poziomu zastąpi okresy wymiany wszystkich standardowych elementów — także te ustawione przez ciebie — typowymi wartościami dla tego poziomu; własne elementy pozostaną bez zmian, a każdy element możesz potem dostroić ręcznie.';
 
   @override
   String get roUsageLight => 'Niska';
@@ -3228,7 +3228,8 @@ class AppLocalizationsPl extends AppLocalizations {
       'Ponad ~1000 l (260 gal) miesięcznie — duże akwarium lub kilka zbiorników';
 
   @override
-  String get roUsageApplied => 'Okresy wymiany zaktualizowane';
+  String get roUsageApplied =>
+      'Okresy wymiany standardowych elementów ustawione na nowo';
 
   @override
   String get notifRoTitle => 'Wymień wkłady filtra RO';

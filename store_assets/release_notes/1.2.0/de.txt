@@ -1,7 +1,7 @@
-• Die Aquarienliste zeigt Gesundheitswert und letzten Test; tippen zum Wechseln.
-• Neues Layout „Flach mit Graphen“: jede Karte zeigt zwei Wochen.
-• Parameter ausblenden, ohne Messwerte zu verlieren – mit Rückgängig.
-• Osmoseanlage: Nutzung leicht, mittel oder stark setzt die Wechselintervalle.
+• Aquarienliste zeigt Gesundheitswert und letzten Test.
+• Neues Layout „Flach mit Diagrammen“: jede Karte zeigt zwei Wochen.
+• Parameter nicht mehr verfolgen, ohne Messwerte zu verlieren – mit Rückgängig.
+• Osmoseanlage: Nutzungsintensität gering, mittel oder hoch setzt die Wechselintervalle.
 • Geräte: seitlich wischen wechselt die Marke.
-• iOS: iCloud-Backup, Wiederherstellung zwischen Geräten, iCloud-Bereich.
-• Korrekturen: Dosierungen werden nicht mehr gerundet, ICP- und Hanna-Import.
+• iCloud-Backup, Wiederherstellung zwischen Geräten, iCloud-Bereich.
+• Korrekturen: Dosierungen nicht mehr gerundet, ICP- und Hanna-Import, Diagramme.

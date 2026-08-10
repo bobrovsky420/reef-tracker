@@ -32,9 +32,7 @@ const IconData _oscillatingIcon = Icons.swap_vert;
 /// is still printed beside it; only the claim of a direction is withdrawn.
 IconData _trendIcon(TrendResult t) => t.oscillating
     ? _oscillatingIcon
-    : _directionIcon(
-        t.slopeSignificant ? t.direction : TrendDirection.flat,
-      );
+    : _directionIcon(t.slopeSignificant ? t.direction : TrendDirection.flat);
 
 /// The typical swing as a signed-free magnitude in display units, e.g.
 /// "±0.11 pH". The conversion is affine, so a *delta* converts as
@@ -194,8 +192,7 @@ class TrendChip extends StatelessWidget {
       // an observation about the data, not a zone problem.
       text = l.trendChipOscillating;
       color = ReefTokens.of(context).textDim;
-    } else if (trend.daysToGreen != null &&
-        trend.daysToGreen! <= horizonDays) {
+    } else if (trend.daysToGreen != null && trend.daysToGreen! <= horizonDays) {
       text = l.trendChipRecovering(_days(trend.daysToGreen!));
       color = Zone.green.colorOf(context);
     } else if (trend.daysToAmber != null && trend.daysToAmber! <= horizonDays) {

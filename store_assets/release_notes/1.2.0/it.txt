@@ -1,7 +1,7 @@
 • L'elenco delle vasche mostra il punteggio di salute e l'ultimo test.
 • Nuovo layout "Piatto con grafici": ogni riquadro porta due settimane.
 • Smetti di seguire un parametro senza perdere misure – con annulla.
-• Impianto RO: uso leggero, medio o intenso imposta gli intervalli di ricambio.
+• Impianto RO: intensità bassa, media o alta imposta gli intervalli di ricambio.
 • Dispositivi: scorri lateralmente per cambiare marca.
-• iOS: backup su iCloud, ripristino tra dispositivi, sezione iCloud.
+• backup su iCloud, ripristino tra dispositivi, sezione iCloud.
 • Correzioni: dosi non più arrotondate, import ICP e Hanna, grafici.

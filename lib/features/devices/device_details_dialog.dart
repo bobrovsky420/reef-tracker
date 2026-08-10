@@ -59,10 +59,7 @@ Future<void> showDeviceDetailsDialog(
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(l.close),
-        ),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.close)),
       ],
     ),
   );

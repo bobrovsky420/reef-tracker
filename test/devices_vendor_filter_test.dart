@@ -317,7 +317,8 @@ void main() {
       await settle(tester);
     }
     final hannaChip = find.byWidgetPredicate(
-      (w) => w is ChoiceChip && ((w.label as Text).data ?? '').startsWith('Han'),
+      (w) =>
+          w is ChoiceChip && ((w.label as Text).data ?? '').startsWith('Han'),
     );
     expect(tester.widget<ChoiceChip>(hannaChip).selected, isTrue);
     expect(bar().position.pixels, greaterThan(0));

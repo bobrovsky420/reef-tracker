@@ -1436,7 +1436,10 @@ class _VendorBarState extends State<_VendorBar> {
                     ChoiceChip(
                       key: _chipKey(v),
                       label: Text(
-                        '${l.deviceVendorName(v)}  ${widget.countOf(v)}',
+                        l.devicesScopeVendor(
+                          l.deviceVendorName(v),
+                          widget.countOf(v),
+                        ),
                       ),
                       selected: selected == v,
                       onSelected: (_) => widget.onSelected(v),

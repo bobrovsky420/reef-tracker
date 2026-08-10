@@ -1,7 +1,7 @@
 • Lista akwariów pokazuje ocenę kondycji i ostatni test; dotknij, aby przełączyć.
 • Nowy układ „Płaski z wykresami”: każda karta niesie ostatnie dwa tygodnie.
 • Zaprzestanie śledzenia parametru bez utraty pomiarów – z cofnięciem.
-• RO: użycie lekkie, średnie lub ciężkie ustawia interwały wymiany wkładów.
+• RO: intensywność niska, średnia lub wysoka ustawia interwały wymiany wkładów.
 • Urządzenia: przesuń w bok, aby zmienić markę.
-• iOS: kopie w iCloud, przywracanie między urządzeniami, sekcja iCloud.
+• kopie w iCloud, przywracanie między urządzeniami, sekcja iCloud.
 • Poprawki: dawki nie są już zaokrąglane, importy ICP i Hanna, wykresy.

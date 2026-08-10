@@ -3160,7 +3160,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'Quanta acqua produce il tuo impianto. La scelta di un livello imposta per gli stadi standard intervalli di sostituzione tipici — potrai poi regolare ogni componente.';
+      'Quanta acqua produce il tuo impianto. La scelta di un livello reimposta gli intervalli di sostituzione di tutti i componenti standard ai valori tipici di quel livello, sovrascrivendo anche gli intervalli impostati da te; i componenti personalizzati restano invariati e potrai comunque regolare ogni componente.';
 
   @override
   String get roUsageLight => 'Bassa';
@@ -3184,7 +3184,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'Oltre ~1000 L (260 gal) al mese — vasche grandi o più vasche';
 
   @override
-  String get roUsageApplied => 'Intervalli di sostituzione aggiornati';
+  String get roUsageApplied =>
+      'Intervalli di sostituzione reimpostati per i componenti standard';
 
   @override
   String get notifRoTitle => 'Sostituisci i filtri dell\'osmosi';

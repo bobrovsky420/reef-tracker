@@ -197,9 +197,7 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
                             child: Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: tokens.surfaceBorder,
-                                ),
+                                border: Border.all(color: tokens.surfaceBorder),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               padding: const EdgeInsets.all(10),

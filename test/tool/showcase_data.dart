@@ -73,7 +73,20 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
   }
 
   // Calcium weekly.
-  const ca = <double>[420, 425, 430, 425, 420, 415, 420, 430, 435, 430, 425, 430];
+  const ca = <double>[
+    420,
+    425,
+    430,
+    425,
+    420,
+    415,
+    420,
+    430,
+    435,
+    430,
+    425,
+    430,
+  ];
   for (final (i, v) in ca.indexed) {
     await db.insertReading(
       tankId: tank,
@@ -110,7 +123,20 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
       note: no3Notes[i],
     );
   }
-  const po4 = [0.1, 0.09, 0.09, 0.08, 0.07, 0.07, 0.06, 0.06, 0.05, 0.05, 0.04, 0.05];
+  const po4 = [
+    0.1,
+    0.09,
+    0.09,
+    0.08,
+    0.07,
+    0.07,
+    0.06,
+    0.06,
+    0.05,
+    0.05,
+    0.04,
+    0.05,
+  ];
   for (final (i, v) in po4.indexed) {
     await db.insertReading(
       tankId: tank,
@@ -165,10 +191,18 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
 
   // --- Actions log ---------------------------------------------------------
   for (final d in [3, 17, 31, 45, 59, 73]) {
-    await db.insertWaterChange(tankId: tank, changedAt: at(d, 17), amountLiters: 40);
+    await db.insertWaterChange(
+      tankId: tank,
+      changedAt: at(d, 17),
+      amountLiters: 40,
+    );
   }
   for (final d in [12, 42, 72]) {
-    await db.insertCarbonChange(tankId: tank, changedAt: at(d, 17, 45), grams: 60);
+    await db.insertCarbonChange(
+      tankId: tank,
+      changedAt: at(d, 17, 45),
+      grams: 60,
+    );
   }
   for (final d in [2, 9, 16, 23]) {
     await db.insertEquipmentCleaning(
@@ -267,8 +301,9 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
       remindEnabled: const Value(true),
     ),
   );
-  await (db.update(db.dosingEntries)..where((d) => d.id.equals(newAlk)))
-      .write(DosingEntriesCompanion(startedAt: Value(at(21))));
+  await (db.update(db.dosingEntries)..where((d) => d.id.equals(newAlk))).write(
+    DosingEntriesCompanion(startedAt: Value(at(21))),
+  );
 
   // Calcium and magnesium: steady single segments.
   final caDose = await db.insertDosingEntry(
@@ -285,8 +320,9 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
       frequency: Value(DoseFrequency.daily.name),
     ),
   );
-  await (db.update(db.dosingEntries)..where((d) => d.id.equals(caDose)))
-      .write(DosingEntriesCompanion(startedAt: Value(at(90))));
+  await (db.update(db.dosingEntries)..where((d) => d.id.equals(caDose))).write(
+    DosingEntriesCompanion(startedAt: Value(at(90))),
+  );
   final mgDose = await db.insertDosingEntry(
     DosingEntriesCompanion(
       tankId: Value(tank),
@@ -301,8 +337,9 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
       frequency: Value(DoseFrequency.weekly.name),
     ),
   );
-  await (db.update(db.dosingEntries)..where((d) => d.id.equals(mgDose)))
-      .write(DosingEntriesCompanion(startedAt: Value(at(60))));
+  await (db.update(db.dosingEntries)..where((d) => d.id.equals(mgDose))).write(
+    DosingEntriesCompanion(startedAt: Value(at(60))),
+  );
 
   // One ended supplement so the dosing history has a closed chapter.
   final aminos = await db.insertDosingEntry(
@@ -315,8 +352,9 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
     ),
   );
   await db.stopDosingEntry(aminos);
-  await (db.update(db.dosingEntries)..where((d) => d.id.equals(aminos)))
-      .write(DosingEntriesCompanion(endedAt: Value(at(30))));
+  await (db.update(db.dosingEntries)..where((d) => d.id.equals(aminos))).write(
+    DosingEntriesCompanion(endedAt: Value(at(30))),
+  );
 
   // --- RO unit: default 4-stage set, all comfortably within lifespan -------
   await db.seedDefaultRoStages();

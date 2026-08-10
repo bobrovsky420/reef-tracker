@@ -3,5 +3,5 @@
 • Untrack a parameter without losing readings – Undo included, history kept.
 • RO unit: pick Light, Moderate or Heavy use to set the filter intervals.
 • Devices: swipe sideways to switch brand.
-• iOS: iCloud backup sync, multi-device restore, iCloud section in backups.
+• iCloud backup sync, multi-device restore, iCloud section in backups.
 • Fixes: dosing plans no longer round doses; ICP and Hanna imports; graphs.

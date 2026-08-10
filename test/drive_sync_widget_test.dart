@@ -125,10 +125,7 @@ void main() {
       await tester.tap(find.text('Save'));
       await settle(tester);
 
-      expect(
-        await AppSettings(db).readSyncDeviceName(),
-        'Living room tablet',
-      );
+      expect(await AppSettings(db).readSyncDeviceName(), 'Living room tablet');
       expect(find.textContaining('reef@test.dev'), findsWidgets);
     } finally {
       await unmountApp(tester);

@@ -1,7 +1,7 @@
 • La liste des aquariums affiche le score de santé et le dernier test.
 • Nouvelle disposition « Plat avec graphiques » : deux semaines par carte.
 • Retirer un paramètre du suivi sans perdre de mesures – annulation possible.
-• Osmoseur : usage léger, moyen ou intensif règle les intervalles.
+• Osmoseur : intensité faible, modérée ou élevée règle les intervalles.
 • Appareils : balayez de côté pour changer de marque.
-• iOS : sauvegarde iCloud, restauration multi-appareils, section iCloud.
+• sauvegarde iCloud, restauration multi-appareils, section iCloud.
 • Corrections : doses non arrondies, imports ICP et Hanna, graphiques.

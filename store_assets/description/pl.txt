@@ -26,6 +26,6 @@ Szerszy obraz
 - Inteligentne wskazówki pokazują tych kilka rzeczy, które naprawdę zasługują w tym tygodniu na Twoją uwagę
 
 Prywatność u podstaw
-Wszystko jest domyślnie przechowywane lokalnie na Twoim urządzeniu, z opcjonalną kopią zapasową na Twoim własnym Dysku Google (Android). Konto nie jest potrzebne, bez rejestracji, bez reklam - Twoje dane należą do Ciebie. Połączenia ze sprzętem akwarystycznym zostają w Twojej sieci. Kopię zapasową zrobisz i przywrócisz w każdej chwili przez systemowe udostępnianie.
+Wszystko jest domyślnie przechowywane lokalnie na Twoim urządzeniu, z opcjonalną kopią zapasową na Twoim własnym Dysku Google lub iCloud Drive. Konto nie jest potrzebne, bez rejestracji, bez reklam - Twoje dane należą do Ciebie. Połączenia ze sprzętem akwarystycznym zostają w Twojej sieci. Kopię zapasową zrobisz i przywrócisz w każdej chwili przez systemowe udostępnianie.
 
 Zbiornik rybny, miękkie koralowce, LPS, SPS czy mieszany - ReefTracker dopasowuje domyślne parametry i cele do rodzaju akwarium, które prowadzisz.

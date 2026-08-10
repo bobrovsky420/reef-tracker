@@ -454,17 +454,19 @@ void main() {
       await db.insertWaterChange(tankId: t, changedAt: DateTime(2026, 7, 8));
     }
 
-    test('titles, bodies and channel names follow the stored app language',
-        () async {
-      await seedWaterChange();
-      await settings.setLocaleCode('de');
+    test(
+      'titles, bodies and channel names follow the stored app language',
+      () async {
+        await seedWaterChange();
+        await settings.setLocaleCode('de');
 
-      final planned = await scheduler.plan(now: now);
-      expect(planned, hasLength(1));
-      expect(planned.single.title, 'Wartung fällig');
-      expect(planned.single.body, 'Wasserwechsel');
-      expect(planned.single.channelName, 'Wartungs-Erinnerungen');
-    });
+        final planned = await scheduler.plan(now: now);
+        expect(planned, hasLength(1));
+        expect(planned.single.title, 'Wartung fällig');
+        expect(planned.single.body, 'Wasserwechsel');
+        expect(planned.single.channelName, 'Wartungs-Erinnerungen');
+      },
+    );
 
     test('a stored locale outside the seven supported languages falls back to '
         'English instead of planning nothing', () async {
@@ -481,23 +483,25 @@ void main() {
       expect(planned.single.channelName, 'Maintenance reminders');
     });
 
-    test('every supported language renders a non-empty, localized title',
-        () async {
-      await seedWaterChange();
-      final titles = <String, String>{};
-      for (final code in ['en', 'cs', 'de', 'ru', 'pl', 'fr', 'it']) {
-        await settings.setLocaleCode(code);
-        final planned = await scheduler.plan(now: now);
-        expect(planned, hasLength(1), reason: 'nothing planned for $code');
-        expect(planned.single.title, isNotEmpty);
-        expect(planned.single.body, isNotEmpty);
-        expect(planned.single.channelName, isNotEmpty);
-        titles[code] = planned.single.title;
-      }
-      // Not the English string smeared across every locale.
-      expect(titles['de'], isNot(titles['en']));
-      expect(titles['cs'], isNot(titles['en']));
-    });
+    test(
+      'every supported language renders a non-empty, localized title',
+      () async {
+        await seedWaterChange();
+        final titles = <String, String>{};
+        for (final code in ['en', 'cs', 'de', 'ru', 'pl', 'fr', 'it']) {
+          await settings.setLocaleCode(code);
+          final planned = await scheduler.plan(now: now);
+          expect(planned, hasLength(1), reason: 'nothing planned for $code');
+          expect(planned.single.title, isNotEmpty);
+          expect(planned.single.body, isNotEmpty);
+          expect(planned.single.channelName, isNotEmpty);
+          titles[code] = planned.single.title;
+        }
+        // Not the English string smeared across every locale.
+        expect(titles['de'], isNot(titles['en']));
+        expect(titles['cs'], isNot(titles['en']));
+      },
+    );
   });
 
   test('multi-tank titles carry the tank name; soft-deleted tanks are '

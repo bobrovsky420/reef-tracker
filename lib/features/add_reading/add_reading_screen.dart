@@ -372,7 +372,11 @@ class _AddReadingScreenState extends ConsumerState<AddReadingScreen> {
     );
   }
 
-  Widget _paramRow(ResolvedParameter p, UnitPrefs prefs, {required bool isLast}) {
+  Widget _paramRow(
+    ResolvedParameter p,
+    UnitPrefs prefs, {
+    required bool isLast,
+  }) {
     final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
     final pres = presentationOf(p, prefs);

@@ -100,7 +100,11 @@ class MicroSummaryTile extends ConsumerWidget {
   }
 
   /// The pre-redesign vertical grid tile, unchanged (classic layout).
-  Widget _gridTile(BuildContext context, AppLocalizations l, MicroStatus status) {
+  Widget _gridTile(
+    BuildContext context,
+    AppLocalizations l,
+    MicroStatus status,
+  ) {
     final hint = Theme.of(context).hintColor;
     // Same as the other dashboard tiles: no margin, the grid owns all spacing.
     return ReefCard(

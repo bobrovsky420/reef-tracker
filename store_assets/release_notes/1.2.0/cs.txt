@@ -1,7 +1,7 @@
 • Seznam akvárií ukazuje skóre zdraví a poslední měření; klepnutím přepnete.
 • Nové rozvržení „Ploché s grafy“: každá karta nese poslední dva týdny.
 • Přestat sledovat parametr bez ztráty měření – se zpětným vzetím i historií.
-• RO jednotka: zatížení lehké, střední či těžké nastaví intervaly výměn.
+• RO jednotka: intenzita nízká, střední či vysoká nastaví intervaly výměn.
 • Zařízení: přejetím do stran přepnete značku.
-• iOS: záloha na iCloud, obnova mezi zařízeními, sekce iCloud v zálohách.
+• záloha na iCloud, obnova mezi zařízeními, sekce iCloud v zálohách.
 • Opravy: dávky se už nezaokrouhlují, importy ICP a Hanna, grafy.

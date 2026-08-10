@@ -19,14 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   offered, and adding the parameter back later restores its full history.
 - New "Flat with graphs" dashboard layout (Settings → Dashboard): the flat
   card grid where every parameter and ratio card also shows a small graph of
-  its last two weeks of readings under the color-coded current value.
+  its last two weeks of readings above the color-coded current value.
 - iOS: iCloud backup sync — the iPhone counterpart of the Android Google
   Drive sync. Turn it on in Settings → Backup and every backup is uploaded
   to a visible "ReefTracker" folder in your iCloud Drive, where you can
   browse the files in the Files app; the folder is pruned to the same depth
   as the on-device rotation. No account setup inside the app — your
   device's Apple ID is used, so enabling it is a single tap (plus naming
-  the device, so you can tell your devices apart in Manage backups).
+  the device, so a restore offer on your other devices can say which
+  device the backup came from).
 - iOS: multi-device restore over iCloud, matching the Android behavior:
   when another of your devices has uploaded a newer backup, the app offers
   to restore it at launch — a plain offer when this device is unchanged, an
@@ -55,16 +56,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RO unit: tell the app how heavily your unit is used — Light (under
   ~300 L a month, top-offs and small water changes), Moderate (~300–1000 L)
   or Heavy (over ~1000 L, large or multiple tanks) — and the standard
-  stages' replacement intervals are set to typical values for that usage:
+  parts' replacement intervals are set to typical values for that usage:
   e.g. a sediment filter goes from every 6 months on Light to every 45 days
-  on Heavy. Every part stays individually editable afterwards, custom parts
-  are never touched, and new setups start with the chosen level's intervals.
+  on Heavy. Picking a level replaces the intervals of all standard parts,
+  including ones you had set yourself; custom parts are left alone, every
+  part stays editable afterwards, and new setups start with the chosen
+  level's intervals.
 
 ### Changed
 - The default strontium range now matches natural seawater: green is
   7–10 mg/L (previously 6.5–8), so a tank sitting at the natural ~8.1 mg/L
-  reads green instead of slightly high. Tanks with a custom strontium range
-  keep their own settings.
+  reads green instead of slightly high. The alarm thresholds moved with it —
+  low strontium now reads red below 6.5 mg/L instead of below 2 mg/L, so a
+  tank sitting at 5 mg/L turns from amber to red without anything changing in
+  the tank, while the high alarm eased from above 10 to above 11 mg/L. Tanks
+  with a custom strontium range keep their own settings.
 - Low silicate is now a gentle nudge instead of an alarm: below 0.1 mg/L —
   including tanks deliberately run at zero — the default range shows amber
   rather than red. The high side (diatom territory) is unchanged, and custom
@@ -82,10 +88,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   month: an abandoned series no longer keeps predicting "reaches the attention
   zone in ~5 days" from readings taken months ago. The measured per-day rate is
   still shown – only the projection waits for a fresh test.
-- Nutrients that belong at zero (ammonia, nitrite, nitrate, phosphate) no
-  longer warn that they are heading out of range while they fall toward zero.
-  Zero is the bottom of the scale, not a limit to cross, so a tank finishing
-  its cycle no longer gets a trend chip or an observation about its falling
+- A nutrient limit that sits at zero is no longer treated as something to
+  cross: ammonia and nitrite falling toward zero — and nitrate or phosphate
+  wherever a limit of theirs is zero — no longer warn that they are heading
+  out of range. Zero is the bottom of the scale, so a tank finishing its
+  cycle no longer gets a trend chip or an observation about its falling
   ammonia.
 
 ### Fixed

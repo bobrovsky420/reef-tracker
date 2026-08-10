@@ -3165,7 +3165,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'Quantité d\'eau produite par votre osmoseur. Le choix d\'un niveau applique aux étages standard des intervalles de remplacement typiques — vous pourrez ensuite ajuster chaque cartouche.';
+      'Quantité d\'eau produite par votre osmoseur. Choisir un niveau réinitialise les intervalles de remplacement de toutes les cartouches standard — y compris ceux que vous aviez réglés vous-même — aux valeurs typiques de ce niveau ; les cartouches personnalisées restent intactes, et vous pourrez ensuite ajuster chaque cartouche.';
 
   @override
   String get roUsageLight => 'Faible';
@@ -3189,7 +3189,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Plus de ~1000 L (260 gal) par mois — grand bac ou plusieurs bacs';
 
   @override
-  String get roUsageApplied => 'Intervalles de remplacement mis à jour';
+  String get roUsageApplied =>
+      'Intervalles de remplacement réinitialisés pour les cartouches standard';
 
   @override
   String get notifRoTitle => 'Remplacer les filtres de l\'osmoseur';

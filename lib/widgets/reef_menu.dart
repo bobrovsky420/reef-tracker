@@ -266,9 +266,7 @@ class _ReefMenuButtonState<T> extends State<ReefMenuButton<T>>
             opacity: curved,
             child: ScaleTransition(
               scale: Tween<double>(begin: 0.94, end: 1).animate(curved),
-              alignment: rightAligned
-                  ? Alignment.topRight
-                  : Alignment.topLeft,
+              alignment: rightAligned ? Alignment.topRight : Alignment.topLeft,
               child: panel,
             ),
           ),
@@ -360,16 +358,12 @@ class _ReefMenuLayout extends SingleChildLayoutDelegate {
 
   @override
   Offset getPositionForChild(Size size, Size childSize) {
-    var x = rightAligned
-        ? anchorRect.right - childSize.width
-        : anchorRect.left;
+    var x = rightAligned ? anchorRect.right - childSize.width : anchorRect.left;
     x = x.clamp(_margin, size.width - childSize.width - _margin);
     var y = anchorRect.bottom + _gap;
     if (y + childSize.height > size.height - _margin) {
       final above = anchorRect.top - _gap - childSize.height;
-      y = above >= _margin
-          ? above
-          : size.height - _margin - childSize.height;
+      y = above >= _margin ? above : size.height - _margin - childSize.height;
     }
     return Offset(x, y);
   }
