@@ -52,6 +52,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   one brand to the right, All being the first stop. The page scrolls back to
   the top so you can see which brand you landed on, and a brand you have
   already looked at shows what it last reported instead of being read again.
+- RO unit: tell the app how heavily your unit is used — Light (under
+  ~300 L a month, top-offs and small water changes), Moderate (~300–1000 L)
+  or Heavy (over ~1000 L, large or multiple tanks) — and the standard
+  stages' replacement intervals are set to typical values for that usage:
+  e.g. a sediment filter goes from every 6 months on Light to every 45 days
+  on Heavy. Every part stays individually editable afterwards, custom parts
+  are never touched, and new setups start with the chosen level's intervals.
 
 ### Changed
 - The default strontium range now matches natural seawater: green is

@@ -3156,6 +3156,37 @@ class AppLocalizationsIt extends AppLocalizations {
   String get roAllOk => 'Tutti i componenti OK';
 
   @override
+  String get roUsageTitle => 'Intensità di utilizzo';
+
+  @override
+  String get roUsageDialogBody =>
+      'Quanta acqua produce il tuo impianto. La scelta di un livello imposta per gli stadi standard intervalli di sostituzione tipici — potrai poi regolare ogni componente.';
+
+  @override
+  String get roUsageLight => 'Bassa';
+
+  @override
+  String get roUsageModerate => 'Media';
+
+  @override
+  String get roUsageHeavy => 'Alta';
+
+  @override
+  String get roUsageLightHint =>
+      'Meno di ~300 L (80 gal) al mese — rabbocchi e piccoli cambi d\'acqua';
+
+  @override
+  String get roUsageModerateHint =>
+      'Circa 300–1000 L (80–260 gal) al mese — un tipico acquario singolo';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Oltre ~1000 L (260 gal) al mese — vasche grandi o più vasche';
+
+  @override
+  String get roUsageApplied => 'Intervalli di sostituzione aggiornati';
+
+  @override
   String get notifRoTitle => 'Sostituisci i filtri dell\'osmosi';
 
   @override

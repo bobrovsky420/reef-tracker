@@ -259,6 +259,7 @@ void main() {
       expect(SettingKey.deviceLocalKeys, {
         for (final k in SettingKey.values)
           if (k != SettingKey.roSeeded &&
+              k != SettingKey.roUsageLevel &&
               k != SettingKey.legacyFreeSince &&
               k != SettingKey.hannaMethodSets &&
               k != SettingKey.hannaAttachEnvironment &&
@@ -266,6 +267,9 @@ void main() {
             k.storageKey,
       });
       expect(SettingKey.roSeeded.deviceLocal, isFalse);
+      // The usage level describes the household's RO unit, like the stages
+      // whose lifespans it selected — it rides backups with them.
+      expect(SettingKey.roUsageLevel.deviceLocal, isFalse);
       expect(SettingKey.legacyFreeSince.deviceLocal, isFalse);
       expect(SettingKey.hannaMethodSets.deviceLocal, isFalse);
       expect(SettingKey.hannaAttachEnvironment.deviceLocal, isFalse);

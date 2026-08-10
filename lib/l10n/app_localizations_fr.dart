@@ -3161,6 +3161,37 @@ class AppLocalizationsFr extends AppLocalizations {
   String get roAllOk => 'Toutes les cartouches sont OK';
 
   @override
+  String get roUsageTitle => 'Intensité d\'utilisation';
+
+  @override
+  String get roUsageDialogBody =>
+      'Quantité d\'eau produite par votre osmoseur. Le choix d\'un niveau applique aux étages standard des intervalles de remplacement typiques — vous pourrez ensuite ajuster chaque cartouche.';
+
+  @override
+  String get roUsageLight => 'Faible';
+
+  @override
+  String get roUsageModerate => 'Modérée';
+
+  @override
+  String get roUsageHeavy => 'Élevée';
+
+  @override
+  String get roUsageLightHint =>
+      'Moins de ~300 L (80 gal) par mois — appoints et petits changements d\'eau';
+
+  @override
+  String get roUsageModerateHint =>
+      'Environ 300–1000 L (80–260 gal) par mois — un bac récifal typique';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Plus de ~1000 L (260 gal) par mois — grand bac ou plusieurs bacs';
+
+  @override
+  String get roUsageApplied => 'Intervalles de remplacement mis à jour';
+
+  @override
   String get notifRoTitle => 'Remplacer les filtres de l\'osmoseur';
 
   @override

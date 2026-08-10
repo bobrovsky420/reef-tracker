@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/ro.dart';
 import 'package:reeftracker/domain/zones.dart';
 
@@ -221,8 +222,98 @@ void main() {
       RoStageType.membrane,
       RoStageType.diResin,
     ]);
-    for (final t in kRoDefaultStageOrder) {
-      expect(kRoDefaultLifespanDays[t], greaterThanOrEqualTo(1));
+    for (final level in RoUsageLevel.values) {
+      for (final t in kRoDefaultStageOrder) {
+        expect(roLifespansFor(level)[t], greaterThanOrEqualTo(1));
+      }
     }
+  });
+
+  group('RoUsageLevel', () {
+    test('resolves every level by name, defaults to moderate otherwise', () {
+      for (final level in RoUsageLevel.values) {
+        expect(RoUsageLevel.fromName(level.name), level);
+      }
+      expect(RoUsageLevel.fromName('extreme'), RoUsageLevel.moderate);
+      expect(RoUsageLevel.fromName(null), RoUsageLevel.moderate);
+    });
+
+    test('heavier usage never gets a longer lifespan than lighter', () {
+      for (final t in kRoDefaultStageOrder) {
+        final light = roLifespansFor(RoUsageLevel.light)[t]!;
+        final moderate = roLifespansFor(RoUsageLevel.moderate)[t]!;
+        final heavy = roLifespansFor(RoUsageLevel.heavy)[t]!;
+        expect(heavy, lessThanOrEqualTo(moderate), reason: t.name);
+        expect(moderate, lessThanOrEqualTo(light), reason: t.name);
+      }
+    });
+  });
+
+  group('RO usage level store', () {
+    late AppDatabase db;
+    setUp(() => db = AppDatabase(NativeDatabase.memory()));
+    tearDown(() => db.close());
+
+    test('setRoUsageLevel stores the level and rewrites standard stages, '
+        'leaving custom stages alone', () async {
+      await db.seedDefaultRoStages();
+      final custom = await db.insertRoStage(
+        stageType: RoStageType.custom.name,
+        title: 'Second DI',
+        lifespanDays: 77,
+      );
+      // Hand-tuned lifespan: an explicit pick overwrites it by design.
+      final stages = await db.getRoStages();
+      final sediment = stages.firstWhere(
+        (s) => s.stageType == RoStageType.sediment.name,
+      );
+      await db.updateRoStage(sediment.copyWith(lifespanDays: 33));
+
+      await db.setRoUsageLevel(RoUsageLevel.heavy);
+
+      expect(await db.getSetting(kRoUsageLevelKey), 'heavy');
+      final after = await db.getRoStages();
+      final heavy = roLifespansFor(RoUsageLevel.heavy);
+      for (final s in after) {
+        final type = RoStageType.fromName(s.stageType)!;
+        if (type == RoStageType.custom) continue;
+        expect(s.lifespanDays, heavy[type], reason: s.stageType);
+      }
+      expect(
+        after.firstWhere((s) => s.id == custom).lifespanDays,
+        77,
+        reason: 'no preset exists for a part the app does not know',
+      );
+    });
+
+    test('setRoUsageLevel also updates disabled standard stages — they are '
+        'still parts of the unit', () async {
+      await db.seedDefaultRoStages();
+      final di = (await db.getRoStages()).firstWhere(
+        (s) => s.stageType == RoStageType.diResin.name,
+      );
+      await db.setRoStageEnabled(di.id, false);
+
+      await db.setRoUsageLevel(RoUsageLevel.light);
+
+      final after = (await db.getRoStages()).firstWhere(
+        (s) => s.id == di.id,
+      );
+      expect(after.enabled, isFalse);
+      expect(after.lifespanDays, roLifespansFor(RoUsageLevel.light)[RoStageType.diResin]);
+    });
+
+    test('seeding uses the stored usage level — a restore can bring the '
+        'level without the seed flag', () async {
+      await db.setSetting(kRoUsageLevelKey, RoUsageLevel.heavy.name);
+
+      await db.seedDefaultRoStages();
+
+      final heavy = roLifespansFor(RoUsageLevel.heavy);
+      for (final s in await db.getRoStages()) {
+        final type = RoStageType.fromName(s.stageType)!;
+        expect(s.lifespanDays, heavy[type], reason: s.stageType);
+      }
+    });
   });
 }

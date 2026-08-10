@@ -3200,6 +3200,37 @@ class AppLocalizationsPl extends AppLocalizations {
   String get roAllOk => 'Wszystkie elementy w porządku';
 
   @override
+  String get roUsageTitle => 'Intensywność użytkowania';
+
+  @override
+  String get roUsageDialogBody =>
+      'Ile wody produkuje twój zestaw. Wybór poziomu ustawi standardowym elementom typowe okresy wymiany — każdy element możesz potem dostroić ręcznie.';
+
+  @override
+  String get roUsageLight => 'Niska';
+
+  @override
+  String get roUsageModerate => 'Średnia';
+
+  @override
+  String get roUsageHeavy => 'Wysoka';
+
+  @override
+  String get roUsageLightHint =>
+      'Poniżej ~300 l (80 gal) miesięcznie — dolewki i małe podmiany wody';
+
+  @override
+  String get roUsageModerateHint =>
+      'Około 300–1000 l (80–260 gal) miesięcznie — typowe pojedyncze akwarium';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Ponad ~1000 l (260 gal) miesięcznie — duże akwarium lub kilka zbiorników';
+
+  @override
+  String get roUsageApplied => 'Okresy wymiany zaktualizowane';
+
+  @override
   String get notifRoTitle => 'Wymień wkłady filtra RO';
 
   @override

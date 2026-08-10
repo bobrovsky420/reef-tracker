@@ -3149,6 +3149,37 @@ class AppLocalizationsDe extends AppLocalizations {
   String get roAllOk => 'Alle Teile in Ordnung';
 
   @override
+  String get roUsageTitle => 'Nutzungsintensität';
+
+  @override
+  String get roUsageDialogBody =>
+      'Wie viel Wasser deine Anlage erzeugt. Die Auswahl setzt typische Wechselintervalle für die Standardstufen — jedes Teil kannst du danach weiter anpassen.';
+
+  @override
+  String get roUsageLight => 'Gering';
+
+  @override
+  String get roUsageModerate => 'Mittel';
+
+  @override
+  String get roUsageHeavy => 'Hoch';
+
+  @override
+  String get roUsageLightHint =>
+      'Unter ca. 300 l (80 gal) im Monat — Nachfüllen und kleine Wasserwechsel';
+
+  @override
+  String get roUsageModerateHint =>
+      'Etwa 300–1000 l (80–260 gal) im Monat — ein typisches einzelnes Becken';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Über ca. 1000 l (260 gal) im Monat — große oder mehrere Becken';
+
+  @override
+  String get roUsageApplied => 'Wechselintervalle aktualisiert';
+
+  @override
   String get notifRoTitle => 'Osmose-Filter wechseln';
 
   @override
