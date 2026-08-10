@@ -36,9 +36,15 @@ The mechanics on this machine (see also the toolchain notes in memory):
 
 The version lives in [pubspec.yaml](pubspec.yaml) as `major.minor.patch+build`.
 
-**Never bump the version as part of an ordinary change.** Feature work, fixes and refactors leave `pubspec.yaml` untouched — their changelog entries accumulate under `## [Unreleased]` (see below). Producing a local release build for testing is **not** a release and does not justify a bump.
+**Never bump the version as part of an ordinary change.** Feature work, fixes and refactors leave `pubspec.yaml` untouched — their changelog entries accumulate under `## [Unreleased]` (see below).
 
-Bump **only when the user explicitly says they are cutting a release** ("release this", "ready to release", "bump the version"). At that moment, pick the new number from what has accumulated under `## [Unreleased]`:
+**Always increment the `+build` number when asked to build a release package.** Any request to produce a release artifact — "build an AAB", "build a test aab", "make a release build", running [scripts/build-release.ps1](scripts/build-release.ps1), or triggering a Codemagic release workflow — bumps `+build` by 1 **before** the build starts, leaving `major.minor.patch` alone. Do this without being asked separately; it is part of building, not a separate decision.
+
+Two reasons it must happen before the build, not after: every artifact that leaves this machine needs a unique `versionCode`/`CFBundleVersion` (both stores reject a re-used one, and a test build often turns out to be the one worth uploading), and the obfuscation symbols are archived per version as `symbols/symbols-<version>-<build>.zip`. Rebuilding at the same build number makes that archive ambiguous — the script keeps the original and diverts the rebuild to a `-rebuild-<timestamp>.zip`, which is a warning that the number should have been bumped, not a normal outcome.
+
+A build-number-only bump is **not** a release: it needs no changelog entry, no release notes, and no tag. Leave `major.minor.patch` at the last released version unless the user is explicitly cutting a release.
+
+Bump `major.minor.patch` **only when the user explicitly says they are cutting a release** ("release this", "ready to release", "bump the version"). At that moment, pick the new number from what has accumulated under `## [Unreleased]`:
 
 - Contains any new feature → bump the **minor** version, reset patch to 0.
 - Only fixes / small improvements to existing features → bump the **patch** number.

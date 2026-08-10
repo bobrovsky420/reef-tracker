@@ -3,5 +3,5 @@
 • Retirer un paramètre du suivi sans perdre de mesures – annulation possible.
 • Osmoseur : intensité faible, modérée ou élevée règle les intervalles.
 • Appareils : balayez de côté pour changer de marque.
-• sauvegarde iCloud, restauration multi-appareils, section iCloud.
+• Sauvegarde iCloud, restauration multi-appareils, section iCloud.
 • Corrections : doses non arrondies, imports ICP et Hanna, graphiques.
