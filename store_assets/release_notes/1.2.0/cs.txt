@@ -3,5 +3,5 @@
 • Přestat sledovat parametr bez ztráty měření – se zpětným vzetím i historií.
 • RO jednotka: intenzita nízká, střední či vysoká nastaví intervaly výměn.
 • Zařízení: přejetím do stran přepnete značku.
-• záloha na iCloud, obnova mezi zařízeními, sekce iCloud v zálohách.
+• Záloha na iCloud, obnova mezi zařízeními, sekce iCloud v zálohách.
 • Opravy: dávky se už nezaokrouhlují, importy ICP a Hanna, grafy.

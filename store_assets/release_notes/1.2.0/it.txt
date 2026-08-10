@@ -3,5 +3,5 @@
 • Smetti di seguire un parametro senza perdere misure – con annulla.
 • Impianto RO: intensità bassa, media o alta imposta gli intervalli di ricambio.
 • Dispositivi: scorri lateralmente per cambiare marca.
-• backup su iCloud, ripristino tra dispositivi, sezione iCloud.
+• Backup su iCloud, ripristino tra dispositivi, sezione iCloud.
 • Correzioni: dosi non più arrotondate, import ICP e Hanna, grafici.

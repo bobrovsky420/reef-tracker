@@ -3,5 +3,5 @@
 • Zaprzestanie śledzenia parametru bez utraty pomiarów – z cofnięciem.
 • RO: intensywność niska, średnia lub wysoka ustawia interwały wymiany wkładów.
 • Urządzenia: przesuń w bok, aby zmienić markę.
-• kopie w iCloud, przywracanie między urządzeniami, sekcja iCloud.
+• Kopie w iCloud, przywracanie między urządzeniami, sekcja iCloud.
 • Poprawki: dawki nie są już zaokrąglane, importy ICP i Hanna, wykresy.
