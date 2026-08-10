@@ -1,6 +1,7 @@
-• L'elenco delle vasche mostra il punteggio di salute e l'ultimo test; tocca per cambiare.
-• Nuovo layout "Piatto con grafici": ogni riquadro porta le ultime due settimane.
-• Smetti di seguire un parametro senza perdere misure — con annulla e storico.
-• iOS: backup su iCloud, ripristino tra dispositivi, sezione iCloud nei backup.
-• Condivisione del registro diagnostico da Impostazioni → Info.
-• Correzioni: import PO4 Fauna Marin e KH da ZIMS, assi e grafici dei rapporti.
+• L'elenco delle vasche mostra il punteggio di salute e l'ultimo test.
+• Nuovo layout "Piatto con grafici": ogni riquadro porta due settimane.
+• Smetti di seguire un parametro senza perdere misure – con annulla.
+• Impianto RO: uso leggero, medio o intenso imposta gli intervalli di ricambio.
+• Dispositivi: scorri lateralmente per cambiare marca.
+• iOS: backup su iCloud, ripristino tra dispositivi, sezione iCloud.
+• Correzioni: dosi non più arrotondate, import ICP e Hanna, grafici.

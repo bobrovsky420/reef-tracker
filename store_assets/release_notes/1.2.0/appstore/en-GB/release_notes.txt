@@ -1,6 +1,7 @@
-• The aquarium list shows each tank's health score and last test; tap to switch.
+• Aquarium list shows each tank's health score and last test; tap to switch.
 • New "Flat with graphs" dashboard: each card carries its last two weeks.
-• Untrack a parameter without losing readings — Undo included, history kept.
+• Untrack a parameter without losing readings – Undo included, history kept.
+• RO unit: pick Light, Moderate or Heavy use to set the filter intervals.
+• Devices: swipe sideways to switch brand.
 • iOS: iCloud backup sync, multi-device restore, iCloud section in backups.
-• Share a diagnostics log from Settings → About.
-• Fixes: Fauna Marin phosphate and ZIMS alkalinity imports, graph axes, ratios.
+• Fixes: dosing plans no longer round doses; ICP and Hanna imports; graphs.
