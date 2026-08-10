@@ -85,11 +85,9 @@ String? friendlyIosDeviceName({
 
 /// Build.MANUFACTURER is frequently all-lowercase ("samsung", "xiaomi");
 /// capitalize those, but leave mixed-case brands ("OnePlus") untouched.
-String _capitalized(String s) => s == s.toLowerCase()
-    ? s[0].toUpperCase() + s.substring(1)
-    : s;
+String _capitalized(String s) =>
+    s == s.toLowerCase() ? s[0].toUpperCase() + s.substring(1) : s;
 
 /// The dialog's TextField caps input at 40 characters — hand it a prefill
 /// that already fits.
-String _clip(String s) =>
-    s.length <= 40 ? s : s.substring(0, 40).trimRight();
+String _clip(String s) => s.length <= 40 ? s : s.substring(0, 40).trimRight();

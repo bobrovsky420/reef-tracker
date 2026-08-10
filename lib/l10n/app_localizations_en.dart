@@ -3133,7 +3133,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'How much water your unit makes. Picking a level sets typical replacement intervals for the standard stages — you can still fine-tune each part afterwards.';
+      'How much water your unit makes. Picking a level resets the replacement intervals of all standard parts — including any you set yourself — to that level\'s typical values; custom parts are left alone, and you can fine-tune each part afterwards.';
 
   @override
   String get roUsageLight => 'Light';
@@ -3157,7 +3157,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Over ~1000 L (260 gal) a month — large or multiple tanks';
 
   @override
-  String get roUsageApplied => 'Replacement intervals updated';
+  String get roUsageApplied =>
+      'Replacement intervals reset for the standard parts';
 
   @override
   String get notifRoTitle => 'Replace RO filters';

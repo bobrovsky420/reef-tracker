@@ -245,11 +245,15 @@ void main() {
 
     test('inference separates the two plausible ranges', () {
       expect(
-        apInferTempUnit([const ApProbe(did: 'a', name: 'T', type: 'Temp', value: 26.0)]),
+        apInferTempUnit([
+          const ApProbe(did: 'a', name: 'T', type: 'Temp', value: 26.0),
+        ]),
         ApTempUnit.celsius,
       );
       expect(
-        apInferTempUnit([const ApProbe(did: 'a', name: 'T', type: 'Temp', value: 78.4)]),
+        apInferTempUnit([
+          const ApProbe(did: 'a', name: 'T', type: 'Temp', value: 78.4),
+        ]),
         ApTempUnit.fahrenheit,
       );
       // No temperature probe at all: the answer can't matter, and Celsius is
@@ -261,7 +265,12 @@ void main() {
   group('conductivity unit (#73)', () {
     ApStatus condStatus(num value) => ApStatus.fromRestJson({
       'inputs': [
-        {'did': 'base_Cond', 'type': 'Cond', 'name': 'Salinity', 'value': value},
+        {
+          'did': 'base_Cond',
+          'type': 'Cond',
+          'name': 'Salinity',
+          'value': value,
+        },
       ],
     });
 
@@ -342,7 +351,12 @@ void main() {
       // parameter twice in the same group.
       final status = ApStatus.fromRestJson({
         'inputs': [
-          {'did': 'base_Temp', 'type': 'Temp', 'name': 'Display', 'value': 25.4},
+          {
+            'did': 'base_Temp',
+            'type': 'Temp',
+            'name': 'Display',
+            'value': 25.4,
+          },
           {'did': 'sump_Temp', 'type': 'Temp', 'name': 'Sump', 'value': 25.9},
         ],
       });

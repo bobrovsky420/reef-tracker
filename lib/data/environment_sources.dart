@@ -113,7 +113,8 @@ class RfEnvironmentSource implements EnvironmentSource {
             value: r.paramKey == 'salinity' ? pptToSg(r.value) : r.value,
           ),
         ))
-          if (checkParamValue(r.paramKey, r.value) != ParamValueCheck.impossible)
+          if (checkParamValue(r.paramKey, r.value) !=
+              ParamValueCheck.impossible)
             r,
       ],
     );

@@ -12,27 +12,30 @@ import 'package:reeftracker/widgets/zone_bounds_editor.dart';
 /// checkbox accent gotcha.
 void main() {
   group('input decoration theme', () {
-    test('outlined from tokens: r12, surfaceBorder rest, 2 px primary focus', () {
-      final theme = buildReefTheme(Brightness.light, TargetPlatform.android);
-      const t = ReefTokens.light;
-      final deco = theme.inputDecorationTheme;
-      expect(deco.filled, isTrue);
-      expect(deco.fillColor, t.surface);
-      final enabled = deco.enabledBorder! as OutlineInputBorder;
-      expect(enabled.borderSide.color, t.surfaceBorder);
-      expect(enabled.borderSide.width, 1);
-      expect(
-        enabled.borderRadius,
-        const BorderRadius.all(Radius.circular(12)),
-      );
-      final focused = deco.focusedBorder! as OutlineInputBorder;
-      expect(focused.borderSide.color, t.primary);
-      expect(focused.borderSide.width, 2);
-      // Validation stays on the ColorScheme error slot (#1 rule), not on the
-      // critical status token.
-      final error = deco.errorBorder! as OutlineInputBorder;
-      expect(error.borderSide.color, theme.colorScheme.error);
-    });
+    test(
+      'outlined from tokens: r12, surfaceBorder rest, 2 px primary focus',
+      () {
+        final theme = buildReefTheme(Brightness.light, TargetPlatform.android);
+        const t = ReefTokens.light;
+        final deco = theme.inputDecorationTheme;
+        expect(deco.filled, isTrue);
+        expect(deco.fillColor, t.surface);
+        final enabled = deco.enabledBorder! as OutlineInputBorder;
+        expect(enabled.borderSide.color, t.surfaceBorder);
+        expect(enabled.borderSide.width, 1);
+        expect(
+          enabled.borderRadius,
+          const BorderRadius.all(Radius.circular(12)),
+        );
+        final focused = deco.focusedBorder! as OutlineInputBorder;
+        expect(focused.borderSide.color, t.primary);
+        expect(focused.borderSide.width, 2);
+        // Validation stays on the ColorScheme error slot (#1 rule), not on the
+        // critical status token.
+        final error = deco.errorBorder! as OutlineInputBorder;
+        expect(error.borderSide.color, theme.colorScheme.error);
+      },
+    );
 
     test('dark variant reads the dark tokens', () {
       final theme = buildReefTheme(Brightness.dark, TargetPlatform.android);
@@ -135,34 +138,31 @@ void main() {
   });
 
   group('adaptive checkboxes', () {
-    testWidgets(
-      'Cupertino dialect needs the widget-level token accent '
-      '(no CheckboxThemeData adaptation exists)',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: buildReefTheme(Brightness.light, TargetPlatform.iOS),
-            home: Scaffold(
-              body: CheckboxListTile.adaptive(
-                value: true,
-                onChanged: (_) {},
-                title: const Text('Alkalinity'),
-                activeColor: ReefTokens.light.primary,
-                checkColor: ReefTokens.light.onPrimary,
-              ),
+    testWidgets('Cupertino dialect needs the widget-level token accent '
+        '(no CheckboxThemeData adaptation exists)', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildReefTheme(Brightness.light, TargetPlatform.iOS),
+          home: Scaffold(
+            body: CheckboxListTile.adaptive(
+              value: true,
+              onChanged: (_) {},
+              title: const Text('Alkalinity'),
+              activeColor: ReefTokens.light.primary,
+              checkColor: ReefTokens.light.onPrimary,
             ),
           ),
-        );
-        // On iOS the adaptive constructor renders a CupertinoCheckbox, which
-        // ignores Material theming — without the explicit accent it would be
-        // iOS system blue. The call sites (test-set / micro-view sheets) pass
-        // the tokens exactly like this.
-        final cupertino = tester.widget<CupertinoCheckbox>(
-          find.byType(CupertinoCheckbox),
-        );
-        expect(cupertino.activeColor, ReefTokens.light.primary);
-        expect(cupertino.checkColor, ReefTokens.light.onPrimary);
-      },
-    );
+        ),
+      );
+      // On iOS the adaptive constructor renders a CupertinoCheckbox, which
+      // ignores Material theming — without the explicit accent it would be
+      // iOS system blue. The call sites (test-set / micro-view sheets) pass
+      // the tokens exactly like this.
+      final cupertino = tester.widget<CupertinoCheckbox>(
+        find.byType(CupertinoCheckbox),
+      );
+      expect(cupertino.activeColor, ReefTokens.light.primary);
+      expect(cupertino.checkColor, ReefTokens.light.onPrimary);
+    });
   });
 }

@@ -107,7 +107,10 @@ class ReefSegmented<T> extends StatelessWidget {
             InkWell(
               onTap: () => onChanged(value),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
                 color: value == selected ? tokens.healthySoft : null,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

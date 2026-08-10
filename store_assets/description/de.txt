@@ -26,6 +26,6 @@ Das große Ganze
 - Intelligente Hinweise zeigen die wenigen Dinge, die diese Woche wirklich deine Aufmerksamkeit verdienen
 
 Privat by design
-Alles bleibt standardmäßig lokal auf deinem Gerät, mit optionalem Backup in dein eigenes Google Drive (Android). Kein Konto nötig, keine Registrierung, keine Werbung - deine Daten gehören dir. Verbindungen zur Aquarientechnik bleiben in deinem Netzwerk. Sichern und Wiederherstellen jederzeit über die Teilen-Funktion.
+Alles bleibt standardmäßig lokal auf deinem Gerät, mit optionalem Backup in dein eigenes Google Drive oder iCloud Drive. Kein Konto nötig, keine Registrierung, keine Werbung - deine Daten gehören dir. Verbindungen zur Aquarientechnik bleiben in deinem Netzwerk. Sichern und Wiederherstellen jederzeit über die Teilen-Funktion.
 
 Ob Fischbecken, Weichkorallen, LPS, SPS oder Mischbecken: ReefTracker passt Standardparameter und Zielwerte an die Art deines Aquariums an.

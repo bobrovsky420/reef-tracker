@@ -909,7 +909,10 @@ class _DoseCalculatorScreenState extends ConsumerState<DoseCalculatorScreen> {
     final rows = <Widget>[];
     if (adjustedTarget != null) {
       rows.add(
-        _resultRow(l.doseCalcAdjustedTarget, '${_trim(adjustedTarget)} $unitStr'),
+        _resultRow(
+          l.doseCalcAdjustedTarget,
+          '${_trim(adjustedTarget)} $unitStr',
+        ),
       );
     }
     final rise = r.rise;

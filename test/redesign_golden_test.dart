@@ -225,7 +225,10 @@ void main() {
       ),
       const SizedBox(width: 10),
       // No readings: faint dot + muted dash.
-      SizedBox(width: 130, child: EnvPill(title: 'TEMP', pres: tempPres)),
+      SizedBox(
+        width: 130,
+        child: EnvPill(title: 'TEMP', pres: tempPres),
+      ),
     ],
   );
 

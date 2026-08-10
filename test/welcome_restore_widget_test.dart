@@ -113,10 +113,7 @@ void main() {
       await settle(tester);
 
       expect(find.text('Newer backup found'), findsNothing);
-      expect(
-        find.text('No backups in Google Drive yet'),
-        findsOneWidget,
-      );
+      expect(find.text('No backups in Google Drive yet'), findsOneWidget);
     } finally {
       await unmountApp(tester);
     }

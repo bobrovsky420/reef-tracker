@@ -26,6 +26,6 @@ Guarda il quadro d'insieme
 - Gli spunti intelligenti mettono in evidenza le poche cose che meritano davvero attenzione questa settimana
 
 Riservato per costruzione
-Tutto è memorizzato in locale sul tuo dispositivo per impostazione predefinita, con backup facoltativo sul tuo Google Drive (Android). Nessun account richiesto, nessuna registrazione, nessuna pubblicità - i tuoi dati sono tuoi. Le connessioni all'hardware dell'acquario restano sulla tua rete. Backup e ripristino quando vuoi tramite la funzione di condivisione.
+Tutto è memorizzato in locale sul tuo dispositivo per impostazione predefinita, con backup facoltativo sul tuo Google Drive o iCloud Drive. Nessun account richiesto, nessuna registrazione, nessuna pubblicità - i tuoi dati sono tuoi. Le connessioni all'hardware dell'acquario restano sulla tua rete. Backup e ripristino quando vuoi tramite la funzione di condivisione.
 
 Vasca di soli pesci, coralli molli, LPS, SPS o barriera mista: ReefTracker adatta parametri e obiettivi predefiniti al tipo di acquario che gestisci.

@@ -3153,7 +3153,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'Wie viel Wasser deine Anlage erzeugt. Die Auswahl setzt typische Wechselintervalle für die Standardstufen — jedes Teil kannst du danach weiter anpassen.';
+      'Wie viel Wasser deine Anlage erzeugt. Die Auswahl überschreibt die Wechselintervalle aller Standardteile — auch die, die du selbst eingestellt hast — mit den typischen Werten dieser Intensität; eigene Teile bleiben unverändert, und jedes Teil kannst du danach weiter anpassen.';
 
   @override
   String get roUsageLight => 'Gering';
@@ -3177,7 +3177,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Über ca. 1000 l (260 gal) im Monat — große oder mehrere Becken';
 
   @override
-  String get roUsageApplied => 'Wechselintervalle aktualisiert';
+  String get roUsageApplied =>
+      'Wechselintervalle der Standardteile neu gesetzt';
 
   @override
   String get notifRoTitle => 'Osmose-Filter wechseln';

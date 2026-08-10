@@ -2392,13 +2392,11 @@ class AppDatabase extends _$AppDatabase {
   Future<void> setRoUsageLevel(RoUsageLevel level) async {
     await transaction(() async {
       await setSetting(kRoUsageLevelKey, level.name);
-      for (final MapEntry(key: type, value: days)
-          in roLifespansFor(level).entries) {
-        await (update(
-          roStages,
-        )..where((s) => s.stageType.equals(type.name))).write(
-          RoStagesCompanion(lifespanDays: Value(days)),
-        );
+      for (final MapEntry(key: type, value: days) in roLifespansFor(
+        level,
+      ).entries) {
+        await (update(roStages)..where((s) => s.stageType.equals(type.name)))
+            .write(RoStagesCompanion(lifespanDays: Value(days)));
       }
     });
   }

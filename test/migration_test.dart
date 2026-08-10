@@ -572,7 +572,9 @@ void main() {
 
     // The columns are gone...
     final cols = await db
-        .customSelect("SELECT name FROM pragma_table_info('tracked_parameters')")
+        .customSelect(
+          "SELECT name FROM pragma_table_info('tracked_parameters')",
+        )
         .get();
     final names = cols.map((r) => r.read<String>('name')).toSet();
     expect(

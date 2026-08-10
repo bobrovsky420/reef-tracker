@@ -13,14 +13,17 @@ void main() {
   ];
 
   group('temperature source rule', () {
-    test('Salinity Guardian temperature is dropped when a controller exists', () {
-      final out = rfReadingsToSave(
-        deviceModel: 'RFSG01',
-        readings: sgReadings,
-        hasTempController: true,
-      );
-      expect(out.map((e) => e.paramKey), ['salinity']);
-    });
+    test(
+      'Salinity Guardian temperature is dropped when a controller exists',
+      () {
+        final out = rfReadingsToSave(
+          deviceModel: 'RFSG01',
+          readings: sgReadings,
+          hasTempController: true,
+        );
+        expect(out.map((e) => e.paramKey), ['salinity']);
+      },
+    );
 
     test('Salinity Guardian temperature is kept when no controller exists', () {
       final out = rfReadingsToSave(

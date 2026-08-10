@@ -4,60 +4,53 @@
 • Untrack a parameter without losing readings – Undo included, history kept.
 • RO unit: pick Light, Moderate or Heavy use to set the filter intervals.
 • Devices: swipe sideways to switch brand.
-• iOS: iCloud backup sync, multi-device restore, iCloud section in backups.
 • Fixes: dosing plans no longer round doses; ICP and Hanna imports; graphs.
 </en-GB>
 <cs-CZ>
 • Seznam akvárií ukazuje skóre zdraví a poslední měření; klepnutím přepnete.
 • Nové rozvržení „Ploché s grafy“: každá karta nese poslední dva týdny.
 • Přestat sledovat parametr bez ztráty měření – se zpětným vzetím i historií.
-• RO jednotka: zatížení lehké, střední či těžké nastaví intervaly výměn.
+• RO jednotka: intenzita nízká, střední či vysoká nastaví intervaly výměn.
 • Zařízení: přejetím do stran přepnete značku.
-• iOS: záloha na iCloud, obnova mezi zařízeními, sekce iCloud v zálohách.
 • Opravy: dávky se už nezaokrouhlují, importy ICP a Hanna, grafy.
 </cs-CZ>
 <de-DE>
-• Die Aquarienliste zeigt Gesundheitswert und letzten Test; tippen zum Wechseln.
-• Neues Layout „Flach mit Graphen“: jede Karte zeigt zwei Wochen.
-• Parameter ausblenden, ohne Messwerte zu verlieren – mit Rückgängig.
-• Osmoseanlage: Nutzung leicht, mittel oder stark setzt die Wechselintervalle.
+• Aquarienliste zeigt Gesundheitswert und letzten Test.
+• Neues Layout „Flach mit Diagrammen“: jede Karte zeigt zwei Wochen.
+• Parameter nicht mehr verfolgen, ohne Messwerte zu verlieren – mit Rückgängig.
+• Osmoseanlage: Nutzungsintensität gering, mittel oder hoch setzt die Wechselintervalle.
 • Geräte: seitlich wischen wechselt die Marke.
-• iOS: iCloud-Backup, Wiederherstellung zwischen Geräten, iCloud-Bereich.
-• Korrekturen: Dosierungen werden nicht mehr gerundet, ICP- und Hanna-Import.
+• Korrekturen: Dosierungen nicht mehr gerundet, ICP- und Hanna-Import, Diagramme.
 </de-DE>
 <ru-RU>
 • Список аквариумов показывает оценку состояния и дату теста; нажмите для переключения.
 • Новый вид «Плоский с графиками»: на каждой карточке две последние недели.
 • Снятие параметра с отслеживания без потери измерений – с отменой.
-• Осмос: нагрузка лёгкая, средняя или тяжёлая задаёт интервалы замен.
+• Осмос: интенсивность низкая, средняя или высокая задаёт интервалы замен.
 • Устройства: свайп вбок переключает бренд.
-• iOS: копии в iCloud, восстановление между устройствами, раздел iCloud.
 • Исправления: дозы больше не округляются, импорт ICP и Hanna, графики.
 </ru-RU>
 <pl-PL>
 • Lista akwariów pokazuje ocenę kondycji i ostatni test; dotknij, aby przełączyć.
 • Nowy układ „Płaski z wykresami”: każda karta niesie ostatnie dwa tygodnie.
 • Zaprzestanie śledzenia parametru bez utraty pomiarów – z cofnięciem.
-• RO: użycie lekkie, średnie lub ciężkie ustawia interwały wymiany wkładów.
+• RO: intensywność niska, średnia lub wysoka ustawia interwały wymiany wkładów.
 • Urządzenia: przesuń w bok, aby zmienić markę.
-• iOS: kopie w iCloud, przywracanie między urządzeniami, sekcja iCloud.
 • Poprawki: dawki nie są już zaokrąglane, importy ICP i Hanna, wykresy.
 </pl-PL>
 <fr-FR>
 • La liste des aquariums affiche le score de santé et le dernier test.
 • Nouvelle disposition « Plat avec graphiques » : deux semaines par carte.
 • Retirer un paramètre du suivi sans perdre de mesures – annulation possible.
-• Osmoseur : usage léger, moyen ou intensif règle les intervalles.
+• Osmoseur : intensité faible, modérée ou élevée règle les intervalles.
 • Appareils : balayez de côté pour changer de marque.
-• iOS : sauvegarde iCloud, restauration multi-appareils, section iCloud.
 • Corrections : doses non arrondies, imports ICP et Hanna, graphiques.
 </fr-FR>
 <it-IT>
 • L'elenco delle vasche mostra il punteggio di salute e l'ultimo test.
 • Nuovo layout "Piatto con grafici": ogni riquadro porta due settimane.
 • Smetti di seguire un parametro senza perdere misure – con annulla.
-• Impianto RO: uso leggero, medio o intenso imposta gli intervalli di ricambio.
+• Impianto RO: intensità bassa, media o alta imposta gli intervalli di ricambio.
 • Dispositivi: scorri lateralmente per cambiare marca.
-• iOS: backup su iCloud, ripristino tra dispositivi, sezione iCloud.
 • Correzioni: dosi non più arrotondate, import ICP e Hanna, grafici.
 </it-IT>

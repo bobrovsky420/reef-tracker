@@ -200,8 +200,7 @@ class _UsageCard extends ConsumerWidget {
 /// is a no-op — it must not silently undo hand-tuned lifespans.
 Future<void> _showUsageDialog(BuildContext context, WidgetRef ref) async {
   final l = AppLocalizations.of(context);
-  final current =
-      ref.read(roUsageLevelProvider).value ?? RoUsageLevel.moderate;
+  final current = ref.read(roUsageLevelProvider).value ?? RoUsageLevel.moderate;
   final picked = await showDialog<RoUsageLevel>(
     context: context,
     builder: (ctx) {
@@ -219,10 +218,7 @@ Future<void> _showUsageDialog(BuildContext context, WidgetRef ref) async {
           ),
           for (final level in RoUsageLevel.values)
             SimpleDialogOption(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               onPressed: () => Navigator.pop(ctx, level),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,10 +246,7 @@ Future<void> _showUsageDialog(BuildContext context, WidgetRef ref) async {
                         const SizedBox(height: 2),
                         Text(
                           roUsageHint(l, level),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: tokens.textDim,
-                          ),
+                          style: TextStyle(fontSize: 12, color: tokens.textDim),
                         ),
                       ],
                     ),

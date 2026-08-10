@@ -259,9 +259,11 @@ class _GaugeDial extends StatelessWidget {
     // The band is the green zone's slice of the axis; zoneBands already
     // handles one-sided green ranges (band to the gauge edge) and amber-only
     // bounds, so reuse it and keep the fallback logic in one tested place.
-    final green = zoneBands(bounds, axis.min, axis.max)
-        .where((b) => b.zone == Zone.green)
-        .toList();
+    final green = zoneBands(
+      bounds,
+      axis.min,
+      axis.max,
+    ).where((b) => b.zone == Zone.green).toList();
 
     double fraction(double v) =>
         ((v - axis.min) / (axis.max - axis.min)).clamp(0.0, 1.0);

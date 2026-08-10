@@ -5,8 +5,12 @@ import 'package:reeftracker/data/rf_protocol.dart';
 
 /// Parses a space-separated hex string into bytes, e.g. "00 07 fe e0".
 Uint8List _hex(String s) => Uint8List.fromList(
-      s.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).map((t) => int.parse(t, radix: 16)).toList(),
-    );
+  s
+      .split(RegExp(r'\s+'))
+      .where((t) => t.isNotEmpty)
+      .map((t) => int.parse(t, radix: 16))
+      .toList(),
+);
 
 void main() {
   group('frame codec', () {
@@ -44,9 +48,15 @@ void main() {
     });
 
     test('exposes vendor product names as displayName', () {
-      expect(rfModelForSerial('RFSG012110010070')?.displayName, 'Salinity Guardian');
+      expect(
+        rfModelForSerial('RFSG012110010070')?.displayName,
+        'Salinity Guardian',
+      );
       expect(rfModelForSerial('RFPM012204210108')?.displayName, 'pH Monitor');
-      expect(rfModelForSerial('RFTC012202100087')?.displayName, 'Temperature Controller');
+      expect(
+        rfModelForSerial('RFTC012202100087')?.displayName,
+        'Temperature Controller',
+      );
     });
   });
 
@@ -118,17 +128,17 @@ void main() {
     /// A full 25-byte settings payload: 25.2 °C, °C units, alarms/setpoints,
     /// with the two output bytes (13 heating, 22 cooling) parameterised.
     Uint8List tc({required int heat, required int cool}) => Uint8List.fromList([
-          0x00, 0x00, 0x62, 0x70, // 0–3   current temperature 25.200
-          0x00, //                   4     unit byte: °C
-          0x00, 0x00, 0x5d, 0xc0, // 5–8   alarm low 24.000
-          0x00, 0x00, 0x61, 0xa8, // 9–12  heating setpoint 25.000
-          heat, //                   13    heating output
-          0x00, 0x00, 0x6a, 0xc8, // 14–17 alarm high 27.400
-          0x00, 0x00, 0x66, 0xa8, // 18–21 cooling setpoint 26.280
-          cool, //                   22    cooling output
-          0x00, //                   23    reserved
-          0x00, //                   24    sound / light flags
-        ]);
+      0x00, 0x00, 0x62, 0x70, // 0–3   current temperature 25.200
+      0x00, //                   4     unit byte: °C
+      0x00, 0x00, 0x5d, 0xc0, // 5–8   alarm low 24.000
+      0x00, 0x00, 0x61, 0xa8, // 9–12  heating setpoint 25.000
+      heat, //                   13    heating output
+      0x00, 0x00, 0x6a, 0xc8, // 14–17 alarm high 27.400
+      0x00, 0x00, 0x66, 0xa8, // 18–21 cooling setpoint 26.280
+      cool, //                   22    cooling output
+      0x00, //                   23    reserved
+      0x00, //                   24    sound / light flags
+    ]);
 
     RfThermalState? state(Uint8List p) => kRfModels['RFTC01']!.parseThermal!(p);
 
@@ -153,10 +163,13 @@ void main() {
       expect(readings.single.value, closeTo(25.2, 0.001));
     });
 
-    test('a payload too short for the output bytes yields null, not a guess', () {
-      expect(state(_hex('00 00 62 70 00 00 00 00 00 00')), isNull);
-      expect(state(Uint8List(22)), isNull);
-    });
+    test(
+      'a payload too short for the output bytes yields null, not a guess',
+      () {
+        expect(state(_hex('00 00 62 70 00 00 00 00 00 00')), isNull);
+        expect(state(Uint8List(22)), isNull);
+      },
+    );
 
     test('live-hardware frame: idle at 25.2 °C between its setpoints', () {
       // Captured from the Temperature Controller at 192.168.1.6. 29 bytes —

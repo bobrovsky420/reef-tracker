@@ -202,9 +202,7 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
                 fontWeight: FontWeight.w600,
                 color: ReefTokens.of(context).text,
               ),
-              actions: [
-                ReefInlineButton(l.change, onPressed: _pickDateTime),
-              ],
+              actions: [ReefInlineButton(l.change, onPressed: _pickDateTime)],
             ),
           ),
           Padding(

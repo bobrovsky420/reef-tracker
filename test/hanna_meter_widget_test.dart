@@ -180,7 +180,10 @@ void main() {
 
       // ↻ on the calcium row only.
       final calciumRow = find
-          .ancestor(of: find.text('Calcium (Ca)'), matching: find.byType(InkWell))
+          .ancestor(
+            of: find.text('Calcium (Ca)'),
+            matching: find.byType(InkWell),
+          )
           .first;
       await tester.tap(
         find.descendant(
@@ -196,8 +199,10 @@ void main() {
       await tester.tap(find.text('Measure 1 again'));
       await settle(tester);
       // The runner lists the pass, not the whole session.
-      expect(find.text('Measuring the selected parameters again.'),
-          findsOneWidget);
+      expect(
+        find.text('Measuring the selected parameters again.'),
+        findsOneWidget,
+      );
       expect(find.text('Calcium (Ca)'), findsOneWidget);
       expect(find.text('Alkalinity'), findsNothing);
 

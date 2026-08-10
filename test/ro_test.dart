@@ -296,11 +296,12 @@ void main() {
 
       await db.setRoUsageLevel(RoUsageLevel.light);
 
-      final after = (await db.getRoStages()).firstWhere(
-        (s) => s.id == di.id,
-      );
+      final after = (await db.getRoStages()).firstWhere((s) => s.id == di.id);
       expect(after.enabled, isFalse);
-      expect(after.lifespanDays, roLifespansFor(RoUsageLevel.light)[RoStageType.diResin]);
+      expect(
+        after.lifespanDays,
+        roLifespansFor(RoUsageLevel.light)[RoStageType.diResin],
+      );
     });
 
     test('seeding uses the stored usage level — a restore can bring the '
