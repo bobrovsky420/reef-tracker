@@ -1,6 +1,8 @@
 name: CI
 
-# Every push and PR to master runs, in one job: format check, a
+# Every push (any branch — release work happens on version branches like
+# v1.2, and a master-only trigger would protect nothing for weeks at a
+# time) and every PR to master runs, in one job: format check, a
 # regenerate-and-diff guard for all committed generated sources, analyze, and
 # tests with coverage (lcov uploaded as an artifact). A second job builds a
 # debug APK so the Android platform layer (Gradle/AGP/Kotlin config, manifest,
@@ -10,7 +12,7 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: ['**']
   pull_request:
     branches: [master]
 

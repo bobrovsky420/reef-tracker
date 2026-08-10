@@ -39,8 +39,8 @@ The full user-facing overview (one row per feature, marked Standard or Pro) is
   elastic maintenance schedules, testing/dosing reminders as local
   notifications; RO/DI unit stage tracking with replacement reminders.
 - **Backup & export** — integrity-checked backup/restore, automatic local
-  backups, Google Drive sync (Android, Pro), CSV export, and an "Ask your AI"
-  tank summary export.
+  backups, cloud backup sync (Google Drive on Android, iCloud on iOS, Pro),
+  CSV export, and an "Ask your AI" tank summary export.
 - **Experience** — 7 languages (en, cs, de, fr, it, pl, ru), light/dark
   themes, unit preferences (°C/°F, ppt/SG, L/gal) over canonical storage.
 
@@ -48,7 +48,8 @@ The full user-facing overview (one row per feature, marked Standard or Pro) is
 
 Flutter (Material 3) • Riverpod 3 • Drift (SQLite) • fl_chart • go_router •
 gen-l10n + intl • flutter_local_notifications • share_plus + file_picker
-(backup I/O) • google_sign_in (Drive sync) • flutter_blue_plus 1.x (Hanna BLE)
+(backup I/O) • google_sign_in (Drive sync) • iCloud method channel (iOS backup
+sync) • flutter_blue_plus 1.x (Hanna BLE)
 • camera (checker scan)
 
 > ⚠️ Several plugins are pinned to exact versions for toolchain/licensing
@@ -115,11 +116,13 @@ scripts\build-release.ps1   # signed release AAB (heals junctions first)
 ### iOS
 
 iOS cannot be built on Windows; release builds run on Codemagic
-([codemagic.yaml](codemagic.yaml)) — a manually triggered workflow that
-builds a signed IPA and uploads it to TestFlight. The app is iPhone-only.
+([codemagic.yaml](codemagic.yaml)) — manually triggered workflows that build
+a signed IPA and upload it to TestFlight: `ios-release` for ordinary test
+builds, `ios-store-release` when cutting a release, which also pushes the
+localized "What's New" to App Store Connect. The app is iPhone-only.
 
 ### CI
 
-Every push/PR to `master` runs GitHub Actions: format check, a
-regenerate-and-diff guard over all committed generated sources, `flutter
-analyze`, `flutter test --coverage`, and a debug APK build.
+Every push (any branch) and every PR to `master` runs GitHub Actions: format
+check, a regenerate-and-diff guard over all committed generated sources,
+`flutter analyze`, `flutter test --coverage`, and a debug APK build.

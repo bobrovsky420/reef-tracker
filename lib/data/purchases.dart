@@ -21,12 +21,17 @@ import 'dart:async';
 /// The one product id, shared verbatim by both stores (both accept the same
 /// string).
 ///
-/// Defining it here costs nothing; **creating it in either console is the
-/// irreversible step** — Play product ids can never be changed or reused, so
-/// the one-time-unlock vs subscription decision (§10 open decision 1) must be
-/// settled before anyone types this into a console. The name says "unlock",
-/// which reads wrong for a subscription — treat that as a deliberate speed
-/// bump.
+/// **A one-time, permanent, non-consumable unlock** — decided 2026-08-05. Not
+/// a subscription, and there is no second product: the paywall copy shipped in
+/// all seven languages promises "one purchase, no subscription and no account".
+///
+/// Defining the string here costs nothing; **creating it in either console is
+/// the irreversible step**, since Play product ids can never be changed or
+/// reused. That burns this id's *type*, not the business model — a
+/// subscription could still ship later as a separate id, and both stores allow
+/// the two side by side. What actually blocks that is architectural: a
+/// subscription can lapse, and this app has no receipt validation and no
+/// server, so it would have no way to notice.
 const String kProUnlockProductId = 'pro_unlock';
 
 /// A purchasable product as the store describes it.
@@ -145,6 +150,42 @@ abstract interface class PurchaseStore {
   Future<void> complete(PurchaseUpdate purchase);
 }
 
+/// ## Contract for the Phase-1 plugin adapter
+///
+/// Everything above is a shape; these are the rules that make it *correct*.
+/// The whole acknowledgement story is only as good as this mapping, and every
+/// item here has a way of failing silently in production while passing a
+/// three-minute manual test.
+///
+/// 1. **`pendingComplete` maps from `PurchaseDetails.pendingCompletePurchase`,
+///    and `complete()` calls `InAppPurchase.instance.completePurchase(details)`.**
+///    Inverting the flag is a one-character bug that Play punishes by
+///    auto-refunding every sale after three days (three *minutes* on a
+///    license-tester account, where it reads as "restore is broken").
+/// 2. **Never set `pendingComplete` on a [PurchaseState.pending] event.** Play
+///    requires waiting for PURCHASED; iOS forbids finishing a deferred
+///    transaction. [ProEntitlementService] guards this too, but the adapter
+///    must not rely on that.
+/// 3. **`PurchaseStatus.error` still needs completing.** iOS re-delivers an
+///    unfinished failed transaction on every launch forever. Map it to
+///    [PurchaseState.error] with `pendingComplete` as the plugin reports it —
+///    do not "helpfully" suppress it.
+/// 4. **[restore] must distinguish empty from failed.** The plugin's
+///    `restorePurchases()` returns `Future<void>` and pushes results onto its
+///    stream, so the adapter has to subscribe, await, collect, and return —
+///    with a bounded timeout. Returning `[]` when the query actually *failed*
+///    silently downgrades a paying customer at launch, because a clean empty
+///    result is the one thing allowed to clear the cached unlock.
+/// 5. **Verify the plugin re-delivers unacknowledged purchases on connect**
+///    without an explicit `restorePurchases()` call. [ProEntitlementService]'s
+///    startup path skips the query when nothing is cached, and relies on the
+///    stream for the "killed between paying and recording" case. If a given
+///    plugin version does not emit on connect, that skip has to go.
+/// 6. **Test the adapter against a fake plugin**, not only against a live
+///    store: the states that matter most (pending, error, redelivery, a
+///    failing `completePurchase`) are the ones a manual store test will not
+///    produce on demand.
+
 /// The store that isn't: no billing integration is compiled into this build.
 ///
 /// Every method answers the way a device with no store would, so the whole
@@ -208,6 +249,16 @@ class FakePurchaseStore implements PurchaseStore {
   /// never clear a cached entitlement.
   bool restoreThrows;
 
+  /// Makes [buy] throw *without* emitting anything — the store refusing to
+  /// even start its flow (no Play Services mid-session, a billing connection
+  /// that dropped). The buy must report failure, grant nothing, and leave the
+  /// background listener armed for the next event.
+  bool buyThrows = false;
+
+  /// Makes [complete] throw, so the acknowledgement-retry path can be tested:
+  /// the unlock must still be granted, and the next startup must re-try.
+  bool completeThrows = false;
+
   /// Every event [complete] was called for, so tests can assert the
   /// acknowledgement contract instead of trusting it.
   final List<PurchaseUpdate> completed = [];
@@ -217,6 +268,11 @@ class FakePurchaseStore implements PurchaseStore {
 
   /// Pushes an event as the store would.
   void emit(PurchaseUpdate update) => _controller.add(update);
+
+  /// Errors the purchase stream itself, the way a plugin surfaces a billing
+  /// connection failure. Distinct from a [PurchaseState.error] *event*: this
+  /// is the stream failing, which must not deafen the listener.
+  void emitError(Object error) => _controller.addError(error);
 
   /// The common case: a successful purchase that still needs acknowledging.
   void emitPurchased() => emit(
@@ -239,8 +295,27 @@ class FakePurchaseStore implements PurchaseStore {
   @override
   Stream<PurchaseUpdate> get purchases => _controller.stream;
 
+  /// Buys, **and remembers the sale** the way a real store does.
+  ///
+  /// Without recording it, the next launch's startup reconciliation asks
+  /// [restore], gets a clean empty result, and correctly applies the clearing
+  /// rule — so Pro silently evaporates on restart. That is right for the
+  /// entitlement code and wrong for a fake: it made the rig unusable for
+  /// exactly the "does my unlock survive a restart?" check it exists to
+  /// answer. Recorded as already acknowledged, since the buy path just did.
   @override
-  Future<void> buy(ProProduct product) async => emitPurchased();
+  Future<void> buy(ProProduct product) async {
+    if (buyThrows) throw StateError('billing unavailable');
+    owned = [
+      ...owned,
+      PurchaseUpdate(
+        productId: product.id,
+        state: PurchaseState.restored,
+        pendingComplete: false,
+      ),
+    ];
+    emitPurchased();
+  }
 
   @override
   Future<List<PurchaseUpdate>> restore() async {
@@ -249,6 +324,8 @@ class FakePurchaseStore implements PurchaseStore {
   }
 
   @override
-  Future<void> complete(PurchaseUpdate purchase) async =>
-      completed.add(purchase);
+  Future<void> complete(PurchaseUpdate purchase) async {
+    if (completeThrows) throw StateError('acknowledgement failed');
+    completed.add(purchase);
+  }
 }

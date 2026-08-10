@@ -288,7 +288,8 @@ class ReefTokens extends ThemeExtension<ReefTokens> {
       text: Color.lerp(text, other.text, t)!,
       textDim: Color.lerp(textDim, other.textDim, t)!,
       textFaint: Color.lerp(textFaint, other.textFaint, t)!,
-      cardShadow: BoxShadow.lerpList(cardShadow, other.cardShadow, t) ?? cardShadow,
+      cardShadow:
+          BoxShadow.lerpList(cardShadow, other.cardShadow, t) ?? cardShadow,
       markerRing: Color.lerp(markerRing, other.markerRing, t)!,
       tabBarBg: Color.lerp(tabBarBg, other.tabBarBg, t)!,
     );

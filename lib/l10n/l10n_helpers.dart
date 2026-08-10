@@ -39,8 +39,11 @@ String formatDate(DateTime t) => DateFormat.yMMMd().format(t);
 /// date past a week — the timestamp line of the dashboard tiles and the
 /// Microelements rows. `ageSince` clamps a future/clock-skewed timestamp to
 /// zero → "just now" instead of a negative "-N min ago".
-String relativeTimeLabel(AppLocalizations l, DateTime t) {
-  final d = ageSince(t);
+///
+/// [now] follows the `lib/domain/clock.dart` convention: it defaults to the
+/// wall clock and exists so the bucket boundaries are assertable.
+String relativeTimeLabel(AppLocalizations l, DateTime t, {DateTime? now}) {
+  final d = ageSince(t, now: now);
   if (d.inMinutes < 1) return l.timeJustNow;
   if (d.inMinutes < 60) return l.timeMinAgo(d.inMinutes);
   if (d.inHours < 24) return l.timeHoursAgo(d.inHours);

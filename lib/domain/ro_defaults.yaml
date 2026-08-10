@@ -14,15 +14,31 @@
 #  - The listing ORDER is the seed order — the water path through the unit.
 #  - `lifespanDays` = typical replacement lifespan in plain days (30/month —
 #    a month-based default should decompose back to whole months in the edit
-#    sheet). Deliberately conservative, mainstream values — the user edits
-#    them to match their water and unit.
+#    sheet), one value per `RoUsageLevel` (light/moderate/heavy usage — how
+#    much water the unit produces; the brackets are described in the RO
+#    screen's usage picker). `moderate` is the app default. Deliberately
+#    conservative, mainstream values — the user edits them to match their
+#    water and unit. Heavier usage must never get a LONGER lifespan than a
+#    lighter one (the generator enforces heavy <= moderate <= light).
 
 stages:
   - type: sediment
-    lifespanDays: 90
+    lifespanDays:
+      light: 180
+      moderate: 90
+      heavy: 45
   - type: carbonBlock
-    lifespanDays: 180
+    lifespanDays:
+      light: 360
+      moderate: 180
+      heavy: 90
   - type: membrane
-    lifespanDays: 720 # 24 months
+    lifespanDays:
+      light: 1080 # 36 months
+      moderate: 720 # 24 months
+      heavy: 360 # 12 months
   - type: diResin
-    lifespanDays: 120
+    lifespanDays:
+      light: 240
+      moderate: 120
+      heavy: 60

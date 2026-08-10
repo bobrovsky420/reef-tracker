@@ -1,6 +1,7 @@
 • Seznam akvárií ukazuje skóre zdraví a poslední měření; klepnutím přepnete.
 • Nové rozvržení „Ploché s grafy“: každá karta nese poslední dva týdny.
-• Přestat sledovat parametr bez ztráty měření — se zpětným vzetím i historií.
-• iOS: záloha na iCloud, obnova mezi zařízeními, sekce iCloud v zálohách.
-• Sdílení diagnostiky z Nastavení → O aplikaci.
-• Opravy: import PO4 z Fauna Marin a KH ze ZIMS, osy grafů, grafy poměrů.
+• Přestat sledovat parametr bez ztráty měření – se zpětným vzetím i historií.
+• RO jednotka: intenzita nízká, střední či vysoká nastaví intervaly výměn.
+• Zařízení: přejetím do stran přepnete značku.
+• Záloha na iCloud, obnova mezi zařízeními, sekce iCloud v zálohách.
+• Opravy: dávky se už nezaokrouhlují, importy ICP a Hanna, grafy.

@@ -32,8 +32,10 @@ GrayImage _grayFromFile(File file) {
     for (var x = 0; x < decoded.width; x++) {
       final p = decoded.getPixel(x, y);
       // Same luma weighting as the live BGRA path (scan_frame.dart).
-      pixels[i++] = ((p.r.toInt() + 2 * p.g.toInt() + p.b.toInt()) >> 2)
-          .clamp(0, 255);
+      pixels[i++] = ((p.r.toInt() + 2 * p.g.toInt() + p.b.toInt()) >> 2).clamp(
+        0,
+        255,
+      );
     }
   }
   return GrayImage(pixels, decoded.width, decoded.height);
@@ -47,12 +49,7 @@ GrayImage _cropFrac(GrayImage src, double l, double t, double r, double b) {
   final w = x1 - x0, h = y1 - y0;
   final pixels = Uint8List(w * h);
   for (var y = 0; y < h; y++) {
-    pixels.setRange(
-      y * w,
-      (y + 1) * w,
-      src.pixels,
-      (y0 + y) * src.width + x0,
-    );
+    pixels.setRange(y * w, (y + 1) * w, src.pixels, (y0 + y) * src.width + x0);
   }
   return GrayImage(pixels, w, h);
 }
@@ -61,11 +58,7 @@ GrayImage _cropFrac(GrayImage src, double l, double t, double r, double b) {
   final name = path.split(Platform.pathSeparator).last;
   final m = RegExp(r'^(hard_)?(HI\d+)_([\d.]+)\.(jpe?g|png)$').firstMatch(name);
   if (m == null) return null;
-  return (
-    model: m.group(2)!,
-    expected: m.group(3)!,
-    hard: m.group(1) != null,
-  );
+  return (model: m.group(2)!, expected: m.group(3)!, hard: m.group(1) != null);
 }
 
 void main() {

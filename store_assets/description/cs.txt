@@ -26,6 +26,6 @@ Vidět celek
 - Chytré tipy vypíchnou těch pár věcí, které si tento týden opravdu zaslouží vaši pozornost
 
 Soukromí od základu
-Všechno je ve výchozím nastavení uložené lokálně ve vašem zařízení, s volitelnou zálohou na váš vlastní Google Disk (Android). Účet není potřeba, žádná registrace, žádné reklamy - vaše data jsou vaše. Spojení s akvarijní technikou zůstává ve vaší síti. Zálohovat a obnovovat můžete kdykoli přes systémové sdílení.
+Všechno je ve výchozím nastavení uložené lokálně ve vašem zařízení, s volitelnou zálohou na váš vlastní Google Disk nebo iCloud Drive. Účet není potřeba, žádná registrace, žádné reklamy - vaše data jsou vaše. Spojení s akvarijní technikou zůstává ve vaší síti. Zálohovat a obnovovat můžete kdykoli přes systémové sdílení.
 
 ReefTracker je připravený pro akvária rybí, s měkkými korály, LPS, SPS i smíšená - výchozí parametry a cíle přizpůsobí tomu, jaké akvárium vedete.

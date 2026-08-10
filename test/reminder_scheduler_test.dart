@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/notifications.dart';
@@ -12,6 +15,43 @@ class _FakeSink implements ReminderSink {
   @override
   Future<void> syncPlanned(List<PlannedNotification> planned) async {
     syncs.add(planned);
+  }
+}
+
+/// Fails the first sync only — the shape of a transient platform hiccup.
+class _FlakySink implements ReminderSink {
+  bool throwNext = false;
+  final List<List<PlannedNotification>> syncs = [];
+  @override
+  Future<void> syncPlanned(List<PlannedNotification> planned) async {
+    if (throwNext) {
+      throwNext = false;
+      throw StateError('notification plugin unavailable');
+    }
+    syncs.add(planned);
+  }
+}
+
+/// Holds the first sync open until [release] completes, so a write (and the
+/// resync it triggers) can land while a pass is genuinely in flight. Records
+/// how many passes ever overlapped.
+class _GatedSink implements ReminderSink {
+  final List<List<PlannedNotification>> syncs = [];
+  final Completer<void> firstEntered = Completer<void>();
+  final Completer<void> release = Completer<void>();
+  int inFlight = 0;
+  int maxInFlight = 0;
+
+  @override
+  Future<void> syncPlanned(List<PlannedNotification> planned) async {
+    inFlight++;
+    if (inFlight > maxInFlight) maxInFlight = inFlight;
+    syncs.add(planned);
+    if (!firstEntered.isCompleted) {
+      firstEntered.complete();
+      await release.future;
+    }
+    inFlight--;
   }
 }
 
@@ -349,6 +389,119 @@ void main() {
       // The remaining stages have no replacement logged → no guessed due.
       expect(await scheduler.plan(now: now), isEmpty);
     });
+
+    test('an RO stage and a tank plan falling due on the same day produce '
+        'two notifications, each with its own title and route', () async {
+      // Both are ReminderKind.maintenance on 21 Jul; only the null tankId
+      // keeps them apart in coalesceReminders (Phase 1's domain test asserts
+      // the merge never happens — this is its scheduler-level companion).
+      final t = await tank('Reef');
+      await settings.setRemindersMaintenance(true);
+      await db.insertMaintenanceSchedule(
+        tankId: t,
+        actionType: 'waterChange',
+        cadenceDays: 14,
+      );
+      await db.insertWaterChange(tankId: t, changedAt: DateTime(2026, 7, 7));
+      await db.seedDefaultRoStages();
+      final sediment = (await db.getRoStages()).firstWhere(
+        (s) => s.stageType == 'sediment',
+      );
+      await db.insertRoReplacement(
+        stageId: sediment.id,
+        replacedAt: DateTime(2026, 4, 22, 12),
+      );
+
+      final planned = await scheduler.plan(now: now);
+      expect(planned, hasLength(2));
+      expect(
+        planned.map((n) => n.fireAtLocal),
+        everyElement(DateTime(2026, 7, 21, 9)),
+      );
+      // Same kind and channel, deliberately not the same notification.
+      expect(
+        planned.map((n) => n.kind),
+        everyElement(ReminderKind.maintenance),
+      );
+      expect(
+        planned.map((n) => n.channelName),
+        everyElement('Maintenance reminders'),
+      );
+
+      // Device-scoped reminders sort first (tankId null → -1).
+      expect(planned[0].title, 'Replace RO filters');
+      expect(planned[0].body, 'Sediment filter');
+      expect(planned[0].payload, contains('/ro'));
+      expect(planned[0].payload, contains('"tankId":null'));
+
+      expect(planned[1].title, 'Maintenance due');
+      expect(planned[1].body, 'Water change');
+      expect(planned[1].payload, contains('tab=actions'));
+      expect(planned[1].payload, contains('"tankId":$t'));
+    });
+  });
+
+  group('notification language', () {
+    /// Seeds one maintenance reminder due 22 Jul, whatever the language.
+    Future<void> seedWaterChange() async {
+      final t = await tank('Reef');
+      await settings.setRemindersMaintenance(true);
+      await db.insertMaintenanceSchedule(
+        tankId: t,
+        actionType: 'waterChange',
+        cadenceDays: 14,
+      );
+      await db.insertWaterChange(tankId: t, changedAt: DateTime(2026, 7, 8));
+    }
+
+    test(
+      'titles, bodies and channel names follow the stored app language',
+      () async {
+        await seedWaterChange();
+        await settings.setLocaleCode('de');
+
+        final planned = await scheduler.plan(now: now);
+        expect(planned, hasLength(1));
+        expect(planned.single.title, 'Wartung fällig');
+        expect(planned.single.body, 'Wasserwechsel');
+        expect(planned.single.channelName, 'Wartungs-Erinnerungen');
+      },
+    );
+
+    test('a stored locale outside the seven supported languages falls back to '
+        'English instead of planning nothing', () async {
+      // lookupAppLocalizations throws a FlutterError for an unsupported
+      // locale; resync's catch-all would swallow it and the user would get
+      // zero reminders forever, with no symptom at all.
+      await seedWaterChange();
+      await settings.setLocaleCode('xx');
+
+      final planned = await scheduler.plan(now: now);
+      expect(planned, hasLength(1));
+      expect(planned.single.title, 'Maintenance due');
+      expect(planned.single.body, 'Water change');
+      expect(planned.single.channelName, 'Maintenance reminders');
+    });
+
+    test(
+      'every supported language renders a non-empty, localized title',
+      () async {
+        await seedWaterChange();
+        final titles = <String, String>{};
+        for (final code in ['en', 'cs', 'de', 'ru', 'pl', 'fr', 'it']) {
+          await settings.setLocaleCode(code);
+          final planned = await scheduler.plan(now: now);
+          expect(planned, hasLength(1), reason: 'nothing planned for $code');
+          expect(planned.single.title, isNotEmpty);
+          expect(planned.single.body, isNotEmpty);
+          expect(planned.single.channelName, isNotEmpty);
+          titles[code] = planned.single.title;
+        }
+        // Not the English string smeared across every locale.
+        expect(titles['de'], isNot(titles['en']));
+        expect(titles['cs'], isNot(titles['en']));
+      },
+    );
   });
 
   test('multi-tank titles carry the tank name; soft-deleted tanks are '
@@ -398,6 +551,99 @@ void main() {
     // concurrent overlap; at minimum one sync happened.
     expect(sink.syncs, isNotEmpty);
     expect(sink.syncs.last, hasLength(1));
+  });
+
+  test('a throwing sink releases the single-flight latch, so the next resync '
+      'still schedules', () async {
+    // Without `finally { _syncing = false; }` one transient sink failure
+    // disables every later reschedule until the process restarts.
+    final t = await tank('Reef');
+    await settings.setRemindersMaintenance(true);
+    await db.insertMaintenanceSchedule(
+      tankId: t,
+      actionType: 'waterChange',
+      cadenceDays: 7,
+    );
+    await db.insertWaterChange(
+      tankId: t,
+      changedAt: DateTime.now().subtract(const Duration(days: 4)),
+    );
+
+    final flaky = _FlakySink();
+    final s = ReminderScheduler(db, flaky);
+    addTearDown(s.dispose);
+
+    final reported = <FlutterErrorDetails>[];
+    final previousOnError = FlutterError.onError;
+    FlutterError.onError = reported.add;
+    addTearDown(() => FlutterError.onError = previousOnError);
+
+    flaky.throwNext = true;
+    await s.resync(); // must not rethrow — reminders never disrupt the app
+    expect(flaky.syncs, isEmpty);
+    expect(reported, hasLength(1));
+    expect(reported.single.library, 'reminders');
+    expect(reported.single.exception, isStateError);
+
+    await s.resync();
+    expect(
+      flaky.syncs,
+      hasLength(1),
+      reason: 'the latch must have been released by the failed pass',
+    );
+    expect(flaky.syncs.single.single.body, 'Water change');
+    expect(reported, hasLength(1), reason: 'the retry must not report again');
+  });
+
+  test('a write landing during an in-flight sync is re-planned by the dirty '
+      're-loop, and the two passes never overlap', () async {
+    final t = await tank('Reef');
+    await settings.setRemindersMaintenance(true);
+    await db.insertMaintenanceSchedule(
+      tankId: t,
+      actionType: 'waterChange',
+      cadenceDays: 7,
+    );
+    await db.insertWaterChange(
+      tankId: t,
+      changedAt: DateTime.now().subtract(const Duration(days: 4)),
+    );
+
+    final gated = _GatedSink();
+    final s = ReminderScheduler(db, gated);
+    addTearDown(s.dispose);
+
+    final first = s.resync();
+    await gated.firstEntered.future;
+    expect(gated.syncs.single.map((n) => n.body), ['Water change']);
+
+    // A new plan is created while the first pass is still handing its set to
+    // the sink — the stale-alarm window.
+    await db.insertMaintenanceSchedule(
+      tankId: t,
+      title: 'Clean skimmer',
+      scheduledAt: DateTime.now().add(const Duration(days: 5)),
+    );
+    await s.resync();
+    expect(
+      gated.syncs,
+      hasLength(1),
+      reason: 'the second call must ride the running sync, not start its own',
+    );
+
+    gated.release.complete();
+    await first;
+
+    expect(gated.syncs, hasLength(2));
+    expect(gated.syncs.last.map((n) => n.body), [
+      'Water change',
+      'Clean skimmer',
+    ]);
+    expect(
+      gated.maxInFlight,
+      1,
+      reason: 'two interleaved passes would wipe each other',
+    );
   });
 
   test('a relevant write triggers a debounced auto-resync', () async {

@@ -112,7 +112,8 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                 description: l.remindersDosingSubtitle,
                 trailing: Switch.adaptive(
                   value: dosing,
-                  onChanged: (v) => _setCategory(settings.setRemindersDosing, v),
+                  onChanged: (v) =>
+                      _setCategory(settings.setRemindersDosing, v),
                 ),
                 onTap: () => _setCategory(settings.setRemindersDosing, !dosing),
               ),

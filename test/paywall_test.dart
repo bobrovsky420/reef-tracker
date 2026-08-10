@@ -1,11 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/entitlement.dart';
 import 'package:reeftracker/data/purchases.dart';
@@ -13,34 +9,17 @@ import 'package:reeftracker/domain/pro_features.dart';
 import 'package:reeftracker/features/paywall/paywall_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
-/// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so
-/// the entitlement sidecar has somewhere to live (see router_test.dart).
-class _FakePathProvider extends PathProviderPlatform
-    with MockPlatformInterfaceMixin {
-  _FakePathProvider(this.root);
-  final String root;
-  @override
-  Future<String?> getApplicationDocumentsPath() async => root;
-  @override
-  Future<String?> getTemporaryPath() async => root;
-}
-
 /// The paywall (U19). Its states are all reachable in tests through the fake
 /// store; in a shipped build only the first one is, because the only store
 /// compiled in resolves nothing.
 void main() {
-  late Directory docsDir;
-  late ProEntitlementStore entitlement;
+  // In-memory, NOT the file-backed store: `testWidgets` runs in a fake-async
+  // zone where real dart:io futures never complete, so the real one hangs here
+  // instead of failing (and then can't delete its own temp dir on Windows).
+  late MemoryProEntitlementStore entitlement;
 
-  setUp(() async {
-    docsDir = await Directory.systemTemp.createTemp('reeftracker-paywall-');
-    PathProviderPlatform.instance = _FakePathProvider(docsDir.path);
-    entitlement = ProEntitlementStore(directory: () async => docsDir);
-  });
-  tearDown(() async {
-    entitlement.dispose();
-    if (await docsDir.exists()) await docsDir.delete(recursive: true);
-  });
+  setUp(() => entitlement = MemoryProEntitlementStore());
+  tearDown(() => entitlement.dispose());
 
   /// Bounded fake-time settle — NOT pumpAndSettle (see router_test.dart).
   Future<void> settle(WidgetTester tester) async {

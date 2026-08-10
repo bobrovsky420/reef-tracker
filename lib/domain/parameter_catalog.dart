@@ -204,9 +204,3 @@ final Map<String, ParameterDef> kParameterByKey = {
 final Map<String, int> kParameterIndexByKey = {
   for (var i = 0; i < kReefParameters.length; i++) kReefParameters[i].key: i,
 };
-
-/// Formats [value] using the parameter's configured precision.
-String formatParamValue(String paramKey, double value) {
-  final decimals = kParameterByKey[paramKey]?.decimals ?? 2;
-  return value.toStringAsFixed(decimals);
-}

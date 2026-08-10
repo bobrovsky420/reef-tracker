@@ -50,10 +50,7 @@ Future<bool> showSyncDeviceNameDialog(
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(l.cancel),
-        ),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.cancel)),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, controller.text),
           child: Text(l.save),

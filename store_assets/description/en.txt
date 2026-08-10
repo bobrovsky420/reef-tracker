@@ -26,6 +26,6 @@ See the big picture
 - Smart insights surface the handful of things that actually deserve your attention this week
 
 Private by design
-Everything is stored locally on your device by default, with an optional backup to your own Google Drive (Android). There's no account needed, no sign-up, and no ads - your data is yours. Connections to aquarium hardware stay on your own network. Back up and restore anytime via the share sheet.
+Everything is stored locally on your device by default, with an optional backup to your own Google Drive or iCloud Drive. There's no account needed, no sign-up, and no ads - your data is yours. Connections to aquarium hardware stay on your own network. Back up and restore anytime via the share sheet.
 
 Built for fish-only, soft coral, LPS, SPS, and mixed reef setups alike, ReefTracker adapts its default parameters and targets to the kind of tank you run.

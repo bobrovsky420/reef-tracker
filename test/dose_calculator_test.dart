@@ -594,6 +594,24 @@ void main() {
       expect(s.isAverage, isFalse);
       expect(s.measuredAt, now.subtract(const Duration(days: 40)));
     });
+
+    test('reports the raw ppt unclamped, while the target scaling clamps', () {
+      // Characterization of a real seam: SG 1.000 is inside the salinity
+      // field's plausible range (and one slipped digit away on the keyboard),
+      // and resolveTankSalinity reports it faithfully as 0 ppt. But
+      // adjustTargetForSalinity clamps to 20 ppt before scaling, so the
+      // correction target silently becomes 420 × 20/35 = 240 while the UI
+      // shows "0 ppt" — nothing on screen explains the mismatch. Pinned so
+      // any change to either half is a conscious decision.
+      final s = resolveTankSalinity([
+        (t: now.subtract(const Duration(days: 1)), value: 1.000),
+      ], now: now)!;
+      expect(s.ppt, closeTo(0, 1e-9)); // reported: unclamped
+      expect(
+        adjustTargetForSalinity(420, s.ppt),
+        closeTo(420 * 20 / 35, 1e-9), // used: clamped to 20 ppt -> Ca 240
+      );
+    });
   });
 
   group('adjustTargetForSalinity', () {

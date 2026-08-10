@@ -109,11 +109,7 @@ GrayImage rotateGrayCw(GrayImage src, int quarterTurns) {
 }
 
 /// Extracts a cropped luma image from a YUV420 Y plane (Android frames).
-GrayImage grayFromLumaPlane(
-  Uint8List yPlane,
-  int bytesPerRow,
-  CropRect crop,
-) {
+GrayImage grayFromLumaPlane(Uint8List yPlane, int bytesPerRow, CropRect crop) {
   final out = Uint8List(crop.w * crop.h);
   for (var y = 0; y < crop.h; y++) {
     final src = (crop.y + y) * bytesPerRow + crop.x;
@@ -187,11 +183,7 @@ RgbSample avgRgbBgra(
 }
 
 /// Extracts a cropped luma image from a BGRA8888 plane (iOS frames).
-GrayImage grayFromBgraPlane(
-  Uint8List plane,
-  int bytesPerRow,
-  CropRect crop,
-) {
+GrayImage grayFromBgraPlane(Uint8List plane, int bytesPerRow, CropRect crop) {
   final out = Uint8List(crop.w * crop.h);
   for (var y = 0; y < crop.h; y++) {
     var src = (crop.y + y) * bytesPerRow + crop.x * 4;

@@ -51,13 +51,18 @@ class _FakeScanner implements LanScanner {
 /// Scripted `/device-info`: an identity per address, [RbLinkError.unreachable]
 /// for anything else — what a router or a NAS looks like to this probe.
 class _FakeRbProbe implements RbIdentityProbe {
-  _FakeRbProbe(this.byAddress);
+  _FakeRbProbe(this.byAddress, {this.hostile = const {}});
   final Map<String, RbDeviceInfo> byAddress;
+
+  /// Hosts whose probe fails in a way the link contract does *not* describe —
+  /// the TypeError from a payload nobody foresaw, a plugin's StateError.
+  final Set<String> hostile;
   final List<String> calls = [];
 
   @override
   Future<RbDeviceInfo> identify(String host) async {
     calls.add(host);
+    if (hostile.contains(host)) throw StateError('unforeseen at $host');
     final info = byAddress[host];
     if (info == null) throw const RbLinkException(RbLinkError.unreachable);
     return info;
@@ -66,13 +71,15 @@ class _FakeRbProbe implements RbIdentityProbe {
 
 /// Scripted ReefFactory handshake.
 class _FakeRfProbe implements RfIdentityProbe {
-  _FakeRfProbe(this.byAddress);
+  _FakeRfProbe(this.byAddress, {this.hostile = const {}});
   final Map<String, RfIdentity> byAddress;
+  final Set<String> hostile;
   final List<String> calls = [];
 
   @override
   Future<RfIdentity> identify(String host) async {
     calls.add(host);
+    if (hostile.contains(host)) throw StateError('unforeseen at $host');
     final id = byAddress[host];
     if (id == null) throw const RfLinkException(RfLinkError.unreachable);
     return id;
@@ -297,6 +304,45 @@ void main() {
     for (final event in events) {
       expect(event.scanned, lessThanOrEqualTo(event.total));
     }
+  });
+
+  test('a probe that fails in an unforeseen way costs that host, never the '
+      'scan', () async {
+    // #85's shape, one level up: the links map everything they anticipate onto
+    // Rb/RfLinkException, but anything they don't — a TypeError on a firmware
+    // shape, an error out of a plugin — used to escape `_identify` into the
+    // `Future.wait` that drives the whole batch, killing the stream and losing
+    // every device already found (including the ones mDNS had explained for
+    // free). One odd host on the LAN must never be able to do that.
+    final scanner = _FakeScanner(
+      openHosts: {'192.168.1.5', '192.168.1.7', '192.168.1.9'},
+      mdns: {'192.168.1.3': _mdns('cc7b5c267a68', 'RSDOSE4', kRbDosingHwType)},
+    );
+    final result = await runScan(
+      LanDiscoveryService(
+        scanner: scanner,
+        // .5 blows up in the ReefBeat probe; .9 gets past that one and blows
+        // up in the ReefFactory handshake — both arms of `_identify`.
+        reefBeatProbe: _FakeRbProbe({}, hostile: {'192.168.1.5'}),
+        reefFactoryProbe: _FakeRfProbe(
+          {
+            '192.168.1.7': const RfIdentity(
+              serial: 'RFSG012110010070',
+              modelPrefix: 'RFSG01',
+              modelName: 'salinity',
+              displayName: 'Salinity Guardian',
+            ),
+          },
+          hostile: {'192.168.1.9'},
+        ),
+      ),
+    );
+
+    expect(result.phase, DiscoveryPhase.done);
+    expect(result.devices.map((d) => d.identifier), [
+      'cc7b5c267a68',
+      'RFSG012110010070',
+    ]);
   });
 
   test('a host that is neither vendor is dropped silently', () async {

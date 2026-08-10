@@ -146,9 +146,7 @@ class RfFrame {
     final command = readField();
     final subcommand = readField();
     final msgId = readField();
-    final payload = Uint8List.fromList(
-      data.sublist(math.min(i, data.length)),
-    );
+    final payload = Uint8List.fromList(data.sublist(math.min(i, data.length)));
     return RfFrame(serial, command, subcommand, msgId, payload);
   }
 }
@@ -171,13 +169,17 @@ int _i32(Uint8List p, int off) =>
 /// mS/cm and temperature [t] in °C, returning practical salinity (ppt), rounded
 /// to one decimal exactly as the meter's display does.
 double calculateSalinity(double c, double t) {
-  final rt = 0.6766097 +
+  final rt =
+      0.6766097 +
       t * (0.0200564 + t * (0.0001104259 + t * (1.0031e-9 * t - 6.9698e-7)));
   final r = math.sqrt(1e3 * c / 42914 / rt);
-  final s = 0.008 +
+  final s =
+      0.008 +
       r * (r * (25.3851 + r * (14.0941 + r * (2.7081 * r - 7.0261))) - 0.1692) +
       (5e-4 +
-              r * (r * (r * (r * (0.0636 + -0.0144 * r) - 0.0375) - 0.0066) - 0.0056)) *
+              r *
+                  (r * (r * (r * (0.0636 + -0.0144 * r) - 0.0375) - 0.0066) -
+                      0.0056)) *
           ((t - 15) / (1 + 0.0162 * (t - 15)));
   return (s * 10).round() / 10;
 }

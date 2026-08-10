@@ -1,11 +1,7 @@
-import 'dart:io';
-
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/entitlement.dart';
@@ -13,32 +9,11 @@ import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/features/settings/settings_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
-/// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so
-/// the entitlement sidecar has somewhere to live (see router_test.dart).
-class _FakePathProvider extends PathProviderPlatform
-    with MockPlatformInterfaceMixin {
-  _FakePathProvider(this.root);
-  final String root;
-  @override
-  Future<String?> getApplicationDocumentsPath() async => root;
-  @override
-  Future<String?> getTemporaryPath() async => root;
-}
-
 /// Widget tests for the Edition row in Settings (U19): the row states the two
 /// orthogonal entitlement facts — the early-adopter marker and a bought Pro
 /// unlock — in all four combinations, and tapping explains the one that
 /// matters.
 void main() {
-  late Directory docsDir;
-  setUp(() async {
-    docsDir = await Directory.systemTemp.createTemp('reeftracker-edition-');
-    PathProviderPlatform.instance = _FakePathProvider(docsDir.path);
-  });
-  tearDown(() async {
-    if (await docsDir.exists()) await docsDir.delete(recursive: true);
-  });
-
   /// Bounded fake-time settle — NOT pumpAndSettle (see router_test.dart).
   Future<void> settle(WidgetTester tester) async {
     for (var i = 0; i < 20; i++) {
@@ -70,9 +45,12 @@ void main() {
     if (legacyFreeSince != null) {
       await db.setSetting(kLegacyFreeSinceKey, legacyFreeSince);
     }
-    final entitlement = ProEntitlementStore();
+    // In-memory, NOT the file-backed store: `testWidgets` runs in a fake-async
+    // zone where real dart:io futures never complete, so the real one hangs
+    // here instead of failing. Its own behaviour is covered by plain `test()`
+    // cases in entitlement_test.dart.
+    final entitlement = MemoryProEntitlementStore(purchased: purchased);
     addTearDown(entitlement.dispose);
-    if (purchased) await entitlement.write(true);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

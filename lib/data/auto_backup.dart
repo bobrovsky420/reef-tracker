@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'backup.dart';
 import 'database.dart';
+import 'export_share.dart';
 import 'settings.dart';
 
 // The auto-backup settings keys, defaults, and the [AutoBackupInterval] enum now
@@ -72,10 +72,10 @@ Future<File> writeAutoBackup(
   final json = await encodeBackupFromDb(db);
   // UTC keeps lexical order == chronological order across DST fall-back, when
   // a local-time stamp would repeat an hour (#14); milliseconds keep two
-  // writes within the same second from colliding on one filename (#13).
-  final stamp = DateFormat(
-    'yyyyMMdd-HHmmss-SSS',
-  ).format(DateTime.now().toUtc());
+  // writes within the same second from colliding on one filename (#13). The
+  // digits are ASCII whatever the app language is ([exportFileStamp]) — the
+  // rotation's newest-first ordering is a lexical sort of these names.
+  final stamp = exportFileStamp(DateTime.now().toUtc(), millis: true);
   final dir = await autoBackupDir();
   final file = File(p.join(dir.path, '$kAutoBackupPrefix$stamp.json'));
   // Write to a tmp name and rename (atomic on the same filesystem) so a

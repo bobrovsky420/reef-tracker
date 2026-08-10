@@ -6,19 +6,19 @@ import 'package:reeftracker/domain/zones.dart';
 void main() {
   group('ammoniumPKa', () {
     test('freshwater 25 °C matches Emerson (1975) ≈ 9.246', () {
-      expect(
-        ammoniumPKa(tempC: 25, salinityPpt: 0),
-        closeTo(9.2464, 0.001),
-      );
+      expect(ammoniumPKa(tempC: 25, salinityPpt: 0), closeTo(9.2464, 0.001));
     });
 
-    test('seawater raises pKa slightly above freshwater (lower toxic share)', () {
-      final fresh = ammoniumPKa(tempC: 25, salinityPpt: 0);
-      final sea = ammoniumPKa(tempC: 25, salinityPpt: 35);
-      expect(sea, greaterThan(fresh));
-      // The salinity shift is minor (< ~0.05 pKa at reef salinity).
-      expect(sea - fresh, closeTo(0.035, 0.01));
-    });
+    test(
+      'seawater raises pKa slightly above freshwater (lower toxic share)',
+      () {
+        final fresh = ammoniumPKa(tempC: 25, salinityPpt: 0);
+        final sea = ammoniumPKa(tempC: 25, salinityPpt: 35);
+        expect(sea, greaterThan(fresh));
+        // The salinity shift is minor (< ~0.05 pKa at reef salinity).
+        expect(sea - fresh, closeTo(0.035, 0.01));
+      },
+    );
 
     test('pKa falls as temperature rises', () {
       expect(
@@ -76,7 +76,8 @@ void main() {
 
   group('computeFreeAmmonia', () {
     final t0 = DateTime(2026, 7, 18, 12);
-    AmmoniaInput at(DateTime when, double value) => (takenAt: when, value: value);
+    AmmoniaInput at(DateTime when, double value) =>
+        (takenAt: when, value: value);
 
     test('returns null when any of ammonia/pH/temperature is missing', () {
       expect(
@@ -140,23 +141,55 @@ void main() {
       expect(fa.freeNh3, 0);
     });
 
-    test('flags outdated inputs when pH/temp are far from the ammonia reading', () {
-      // pH measured 10 days before the ammonia reading → outdated.
-      final stale = computeFreeAmmonia(
-        ammonia: [at(t0, 0.5)],
-        ph: [at(t0.subtract(const Duration(days: 10)), 8.3)],
-        temperature: [at(t0, 25)],
-      )!;
-      expect(stale.inputsOutdated, isTrue);
+    test(
+      'flags outdated inputs when pH/temp are far from the ammonia reading',
+      () {
+        // pH measured 10 days before the ammonia reading → outdated.
+        final stale = computeFreeAmmonia(
+          ammonia: [at(t0, 0.5)],
+          ph: [at(t0.subtract(const Duration(days: 10)), 8.3)],
+          temperature: [at(t0, 25)],
+        )!;
+        expect(stale.inputsOutdated, isTrue);
 
-      // Everything within a couple of days → fresh.
-      final fresh = computeFreeAmmonia(
-        ammonia: [at(t0, 0.5)],
-        ph: [at(t0.subtract(const Duration(days: 2)), 8.3)],
-        temperature: [at(t0.subtract(const Duration(days: 1)), 25)],
-      )!;
-      expect(fresh.inputsOutdated, isFalse);
-    });
+        // Everything within a couple of days → fresh.
+        final fresh = computeFreeAmmonia(
+          ammonia: [at(t0, 0.5)],
+          ph: [at(t0.subtract(const Duration(days: 2)), 8.3)],
+          temperature: [at(t0.subtract(const Duration(days: 1)), 25)],
+        )!;
+        expect(fresh.inputsOutdated, isFalse);
+      },
+    );
+
+    test(
+      '`at` is the newest input used — retesting only pH re-dates the value',
+      () {
+        // Characterization of the documented contract: `at` is "the moment the
+        // value describes — the newest of the inputs used". A fresh pH against a
+        // 60-day-old ammonia reading therefore stamps the estimate "just now",
+        // even though the ammonia half of it is two months old (the staleness
+        // is still surfaced via inputsOutdated). Re-anchoring `at` on the
+        // ammonia reading instead is a separate design decision — do not
+        // "fix" this in passing.
+        final oldAmmonia = t0.subtract(const Duration(days: 60));
+        final fa = computeFreeAmmonia(
+          ammonia: [at(oldAmmonia, 0.5)],
+          ph: [at(t0, 8.3)],
+          temperature: [at(t0.subtract(const Duration(days: 1)), 25)],
+        )!;
+        expect(fa.at, t0); // max of the three timestamps — the fresh pH
+        expect(fa.inputsOutdated, isTrue);
+
+        // And symmetrically: the ammonia reading being newest anchors on it.
+        final fresh = computeFreeAmmonia(
+          ammonia: [at(t0, 0.5)],
+          ph: [at(t0.subtract(const Duration(days: 3)), 8.3)],
+          temperature: [at(t0.subtract(const Duration(days: 2)), 25)],
+        )!;
+        expect(fresh.at, t0);
+      },
+    );
 
     test('zone reflects the free NH₃ value against the toxicity bounds', () {
       // High pH + high total pushes the toxic value into the red.

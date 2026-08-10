@@ -28,11 +28,13 @@ void main() {
     EmuFirmware firmware = EmuFirmware.aos5,
     EmuTempUnit unit = EmuTempUnit.celsius,
     String serial = 'AC5:12345',
+    bool rejectSessionLogin = false,
   }) async {
     emulator = ApexEmulator(
       firmware: firmware,
       tempUnit: unit,
       serial: serial,
+      rejectSessionLogin: rejectSessionLogin,
       verbose: false,
     );
     await emulator.start(host: '127.0.0.1', port: 0);
@@ -91,6 +93,67 @@ void main() {
       },
     );
 
+    test('an over-cap /rest/config degrades to an inferred unit instead of '
+        'failing the read', () async {
+      await startEmulator(unit: EmuTempUnit.fahrenheit);
+      // Case B of the temperature-unit resolution (Case A — the config answers
+      // — is the test above). `/rest/config` carries every output's program
+      // text and is the largest document an Apex serves: ~4 KB here against
+      // ~2 KB of status, and pages of it on a real controller. A ceiling
+      // between the two therefore reproduces the field case exactly — status
+      // fits, config does not — and `_tryGetJson` swallows the refusal.
+      final capped = ApHttpLink(
+        timeout: const Duration(seconds: 5),
+        maxResponseBytes: 3 * 1024,
+      );
+      final status = await capped.readOnce(host, good);
+
+      // Deliberate and bounded: the card is complete, only the *authority* for
+      // the unit is gone. Nothing said "Faren" — the ~78 °F reading did.
+      expect(status.info.serial, 'AC5:12345');
+      expect(status.tempUnit, ApTempUnit.fahrenheit);
+      final temp = status.readings.firstWhere(
+        (r) => r.paramKey == 'temperature',
+      );
+      expect(temp.unit, '°C');
+      expect(temp.value, inInclusiveRange(24, 27));
+      expect(status.outlets, isNotEmpty);
+    });
+
+    test('the cost of that degradation: a °F controller at or below 45 °F is '
+        'read as Celsius', () async {
+      await startEmulator(unit: EmuTempUnit.fahrenheit);
+      // 5 °C ≈ 41 °F — a chiller stuck on, or a probe sitting in the air of an
+      // unheated garage. Under `apInferTempUnit`'s 45 threshold, so the range
+      // test cannot tell it from a Celsius number. This is the documented
+      // blind spot; it is pinned here so that widening the fallback (or
+      // narrowing the threshold) is a visible decision.
+      await _control(emulator, '/emu/probe?name=Tmp&value=5');
+      final capped = ApHttpLink(
+        timeout: const Duration(seconds: 5),
+        maxResponseBytes: 3 * 1024,
+      );
+
+      final degraded = await capped.readOnce(host, good);
+      expect(degraded.tempUnit, ApTempUnit.celsius);
+      expect(
+        degraded.readings.firstWhere((r) => r.paramKey == 'temperature').value,
+        41.0,
+      );
+
+      // The same controller, same probe, with the config within reach: the
+      // authoritative answer is right, so the blind spot is the price of the
+      // fallback and not of the parser.
+      final authoritative = await link.readOnce(host, good);
+      expect(authoritative.tempUnit, ApTempUnit.fahrenheit);
+      expect(
+        authoritative.readings
+            .firstWhere((r) => r.paramKey == 'temperature')
+            .value,
+        5.0,
+      );
+    });
+
     test('a wrong password is an auth error, not a protocol one', () async {
       await startEmulator();
       await expectLater(
@@ -143,6 +206,50 @@ void main() {
       // Classic firmware pads its numbers into strings — they still parse.
       expect(status.readings.map((r) => r.paramKey), contains('temperature'));
       expect(status.feed!.running, isFalse);
+    });
+
+    test('a 401 on /rest/login falls back to Basic auth and SUCCEEDS', () async {
+      // Rung 3 of the ladder in ap_device_link.dart's header: the controller
+      // routes /rest and rejects the *session* login, but still honours Basic
+      // auth on the legacy path. Every other test reaches this rung on its way
+      // to a failure, so the branch that has to keep working — a 401 means
+      // "try Basic", never "wrong credentials" — is only pinned here. Make
+      // `_login` throw on 401 and every such controller reports bad
+      // credentials forever, with correct credentials.
+      await startEmulator(rejectSessionLogin: true, serial: 'AC5:55555');
+      final status = await link.readOnce(host, good);
+
+      expect(status.info.serial, 'AC5:55555');
+      // The side effect, recorded rather than lamented: the read lands on the
+      // legacy document, so the controller is labelled by the API that
+      // answered, not by the firmware it is actually running…
+      expect(status.info.firmware, ApFirmware.classic);
+      expect(status.info.displayName, 'Apex Classic');
+      expect(status.readings.map((r) => r.paramKey), contains('temperature'));
+      // …and with no /rest/config in the picture the unit is inferred, exactly
+      // as for a real Classic.
+      expect(status.tempUnit, ApTempUnit.celsius);
+      expect(status.overriddenOutlets.map((o) => o.name), ['Wavemaker']);
+    });
+
+    test('a 401 login with credentials Basic also rejects is still an auth '
+        'error', () async {
+      // The negative control for the rung above: falling through a 401 must
+      // not turn a genuinely wrong password into anything but [auth].
+      await startEmulator(rejectSessionLogin: true);
+      await expectLater(
+        link.readOnce(
+          host,
+          const ApCredentials(username: 'admin', password: 'nope'),
+        ),
+        throwsA(
+          isA<ApLinkException>().having(
+            (e) => e.error,
+            'error',
+            ApLinkError.auth,
+          ),
+        ),
+      );
     });
 
     test('bad Basic credentials are an auth error', () async {

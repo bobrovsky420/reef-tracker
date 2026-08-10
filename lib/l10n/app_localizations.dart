@@ -2189,11 +2189,17 @@ abstract class AppLocalizations {
   /// **'You\'ve been with ReefTracker since its early days. As a thank-you, every feature available today stays free for you — forever.'**
   String get founderInfoBody;
 
-  /// Dialog body for the standard edition (dormant until a paid tier exists).
+  /// Dialog body for the standard edition. Unreachable until the paid tier activates (every install is seeded as Founder until then). Must never suggest existing data is locked away.
   ///
   /// In en, this message translates to:
-  /// **'You\'re using the standard edition of ReefTracker.'**
+  /// **'You\'re using the standard edition of ReefTracker. Everything you\'ve already recorded stays yours; ReefTracker Pro unlocks the advanced features.'**
   String get standardInfoBody;
+
+  /// Action on the Edition dialog that opens the paywall. Only shown once the paid tier is live and the install has not bought.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Pro'**
+  String get editionUpgrade;
 
   /// Edition name for an install holding a Pro unlock.
   ///
@@ -5204,6 +5210,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All parts OK'**
   String get roAllOk;
+
+  /// RO screen: title of the usage-level card and its picker dialog. Picking a level (light/moderate/heavy) applies typical replacement intervals to the standard parts.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage intensity'**
+  String get roUsageTitle;
+
+  /// RO usage dialog: body text above the three level options. Must warn before the tap that picking a level overwrites the replacement interval of every standard part (the built-in, typed ones) with the level's preset, hand-tuned intervals included; custom parts the user added are never touched and any part can still be edited afterwards. Use this file's own word for an RO part (see roCustomStage, roAddStage, roAllOk) on both sides of the standard-vs-custom contrast, and make sure the 'including any you set yourself' aside clearly attaches to the intervals, not to the parts.
+  ///
+  /// In en, this message translates to:
+  /// **'How much water your unit makes. Picking a level resets the replacement intervals of all standard parts — including any you set yourself — to that level\'s typical values; custom parts are left alone, and you can fine-tune each part afterwards.'**
+  String get roUsageDialogBody;
+
+  /// RO usage level: little water produced per month.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get roUsageLight;
+
+  /// RO usage level: the typical middle bracket (the default).
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get roUsageModerate;
+
+  /// RO usage level: a lot of water produced per month.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy'**
+  String get roUsageHeavy;
+
+  /// No description provided for @roUsageLightHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Under ~300 L (80 gal) a month — top-offs and small water changes'**
+  String get roUsageLightHint;
+
+  /// No description provided for @roUsageModerateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'About 300–1000 L (80–260 gal) a month — a typical single reef'**
+  String get roUsageModerateHint;
+
+  /// No description provided for @roUsageHeavyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Over ~1000 L (260 gal) a month — large or multiple tanks'**
+  String get roUsageHeavyHint;
+
+  /// SnackBar after picking a usage level: the standard parts' replacement intervals were set to the level's typical values; custom parts were left unchanged. Use the same word for an RO part as roUsageDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacement intervals reset for the standard parts'**
+  String get roUsageApplied;
 
   /// No description provided for @notifRoTitle.
   ///

@@ -180,6 +180,22 @@ void main() {
       expect(ca.toCanonical(420), 420);
       expect(ca.unitFollowsSettings, isFalse);
     });
+
+    test('nitrite displays in ppb both directions (×1000, catalog-fixed)', () {
+      // Nitrite is the only non-micro parameter on the displayFactor branch:
+      // it stores canonical ppm but displays ppb, mirroring the Hanna LR
+      // checker. Narrowing that branch's condition to `isMicro` would render
+      // the stored ppm number under a "ppb" label — 1000× low on a
+      // livestock-killer. The stored unit/decimals ('ppm', 2) are stale
+      // pre-catalog values and must be ignored.
+      final p = presentationFor('nitrite', 'ppm', 2, const UnitPrefs());
+      expect(p.unitLabel, 'ppb');
+      expect(p.unitFixed, isTrue);
+      expect(p.decimals, 0);
+      expect(p.toDisplay(0.005), closeTo(5, 1e-9)); // 0.005 ppm -> 5 ppb
+      expect(p.toCanonical(5), closeTo(0.005, 1e-12)); // and back
+      expect(p.format(0.005), '5');
+    });
   });
 
   group('formatChange', () {

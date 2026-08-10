@@ -71,6 +71,19 @@ const Set<String> kRbSupportedHwTypes = {
   kRbWaveHwType,
 };
 
+/// Ceiling on how many ReefDose heads one refresh will chase settings for —
+/// the request-*count* sibling of `device_http.dart`'s response-*size* caps
+/// (#72). A `/dashboard` is read before it is trusted, so a host that answers
+/// on the pump's address with hundreds of `heads` would otherwise turn one card
+/// refresh into hundreds of sequential 6 s-timeout GETs and wedge the spinner.
+///
+/// Eight and not four: the largest ReefDose Red Sea ships has 4 heads, so 4
+/// would already bound it — but a cap set exactly at today's hardware silently
+/// truncates the first pump with more, with no user-facing knob to raise it.
+/// Double leaves room for a future model while keeping the worst case a
+/// handful of requests instead of an unbounded fan-out.
+const int kRbMaxDoseHeads = 8;
+
 /// Supplement-stock warning thresholds for [RbStockSeverity], in days of
 /// remaining supplement. Below [kRbStockCriticalDays] the stock indicator is
 /// critical (red); below [kRbStockCautionDays] it is caution (amber);

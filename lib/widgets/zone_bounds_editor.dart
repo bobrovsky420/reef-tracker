@@ -133,7 +133,11 @@ class ZoneBoundsEditorState extends State<ZoneBoundsEditor> {
         style: ReefTokens.monoInputStyle,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(Icons.circle, color: zone.colorOf(context), size: 14),
+          prefixIcon: Icon(
+            Icons.circle,
+            color: zone.colorOf(context),
+            size: 14,
+          ),
           prefixIconConstraints: const BoxConstraints(
             minWidth: 36,
             minHeight: 0,

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/data/backup.dart';
@@ -38,6 +39,19 @@ class _ReadFailingStore extends FakeCloudBackupStore {
   }
 }
 
+/// One call to [CloudRestoreFlow.report] — the funnel `main.dart` wires to
+/// `FlutterError.reportError`. Recorded rather than failed for the cases where
+/// a report is the *expected* outcome (a local backup that could not be
+/// written must be reported and then survived).
+class _Report {
+  _Report(this.error, this.library, this.context);
+  final Object error;
+  final String library;
+  final String context;
+  @override
+  String toString() => '$library: $context: $error';
+}
+
 /// T17: the launch cloud-restore proposal flow — the only launch-time logic
 /// that replaces the whole database. Pins the choice switch (notNow /
 /// keepMine / restore and their exact side effects), the never-shown case,
@@ -60,18 +74,23 @@ void main() {
   /// A recording harness around [CloudRestoreFlow]: [answer] scripts the
   /// dialog, [prompts] and [notices] record what the flow did, and errors
   /// funneled to [report] fail the test (production sends them to
-  /// `FlutterError.reportError`).
+  /// `FlutterError.reportError`) — unless [reports] is supplied, in which case
+  /// they are recorded instead, for the paths whose whole point is that they
+  /// report a failure and carry on.
   CloudRestoreFlow flowWith({
     required Future<CloudRestoreChoice?> Function(CloudRestoreProposal) answer,
     required List<CloudRestoreProposal> prompts,
     required List<CloudRestoreNotice> notices,
+    List<_Report>? reports,
   }) => CloudRestoreFlow(
     prompt: (proposal) {
       prompts.add(proposal);
       return answer(proposal);
     },
     notify: notices.add,
-    report: (e, s, library, context) => fail('$library: $context: $e'),
+    report: (e, s, library, context) => reports == null
+        ? fail('$library: $context: $e')
+        : reports.add(_Report(e, library, context)),
   );
 
   /// Device A pushed a backup ("Reef" tank) into [store]; the returned
@@ -259,6 +278,106 @@ void main() {
       expect(notices, isEmpty);
     });
 
+    test('after "keep mine" the OTHER device gets a plain fast-forward '
+        '(diverged == false) and the two converge — no ping-pong', () async {
+      final store = FakeCloudBackupStore();
+
+      // Device A: holds "Reef" and pushed it, so its lineage stamps match the
+      // cloud exactly.
+      final deviceA = AppDatabase(NativeDatabase.memory());
+      addTearDown(deviceA.close);
+      await AppSettings(deviceA).setSyncGdriveAccount('reef@test.dev');
+      await AppSettings(deviceA).setSyncDeviceName('Phone A');
+      await deviceA.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      expect(
+        await runCloudSyncIfDirty(deviceA, store: store, state: state(deviceA)),
+        CloudSyncOutcome.pushed,
+      );
+
+      // Device B: same account, its own data, no sync lineage at all.
+      final deviceB = AppDatabase(NativeDatabase.memory());
+      addTearDown(deviceB.close);
+      await AppSettings(deviceB).setSyncGdriveAccount('reef@test.dev');
+      await AppSettings(deviceB).setSyncDeviceName('Phone B');
+      await deviceB.createTankWithPreset(name: 'Nano', type: SetupType.mixed);
+
+      // B is the diverged side: it has changes of its own, so the destructive
+      // choice is the one worth offering — and it keeps them.
+      final promptsB = <CloudRestoreProposal>[];
+      final flowB = flowWith(
+        answer: (_) async => CloudRestoreChoice.keepMine,
+        prompts: promptsB,
+        notices: [],
+      );
+      expect(
+        await flowB.maybePropose(deviceB, store: store, state: state(deviceB)),
+        isTrue,
+      );
+      await flowB.settled;
+      expect(promptsB.single.diverged, isTrue);
+      expect(promptsB.single.deviceName, 'Phone A');
+      final pushedByB = await AppSettings(
+        deviceB,
+      ).readSyncGdriveLastPushedName();
+      expect(pushedByB, isNotNull);
+
+      // A now finds B's push. Nothing changed on A since its own last push, so
+      // there is nothing of A's to keep: a plain fast-forward, NOT a conflict.
+      final proposalA = await checkCloudNewerBackup(
+        deviceA,
+        store: store,
+        state: state(deviceA),
+      );
+      expect(proposalA, isNotNull);
+      expect(proposalA!.file.name, pushedByB);
+      expect(proposalA.deviceName, 'Phone B');
+      expect(
+        proposalA.diverged,
+        isFalse,
+        reason: 'A holds no changes the cloud does not already have',
+      );
+
+      // Accepting the fast-forward converges the two devices…
+      final noticesA = <CloudRestoreNotice>[];
+      final flowA = flowWith(
+        answer: (_) async => CloudRestoreChoice.restore,
+        prompts: [],
+        notices: noticesA,
+      );
+      expect(
+        await flowA.maybePropose(deviceA, store: store, state: state(deviceA)),
+        isTrue,
+      );
+      await flowA.settled;
+      expect(noticesA, [isA<CloudRestoreRestored>()]);
+      expect((await deviceA.getTanks()).map((t) => t.name), ['Nano']);
+      expect((await deviceB.getTanks()).map((t) => t.name), ['Nano']);
+
+      // …and settles there: A adopts B's file as its own synced state, so it
+      // neither re-uploads the data it just downloaded nor re-proposes it, and
+      // B still sees its own push as the newest.
+      expect(
+        await runCloudSyncIfDirty(deviceA, store: store, state: state(deviceA)),
+        CloudSyncOutcome.skippedClean,
+      );
+      expect(
+        await checkCloudNewerBackup(
+          deviceA,
+          store: store,
+          state: state(deviceA),
+        ),
+        isNull,
+      );
+      expect(
+        await checkCloudNewerBackup(
+          deviceB,
+          store: store,
+          state: state(deviceB),
+        ),
+        isNull,
+      );
+    });
+
     test(
       'restore: cloud data replaces the local set, restored notice',
       () async {
@@ -357,6 +476,47 @@ void main() {
       );
 
       expect(store.writeCalls, 1);
+    });
+
+    test('a FAILING local auto-backup still pushes to the cloud — the cloud '
+        'copy matters most exactly when local storage misbehaves', () async {
+      final store = FakeCloudBackupStore();
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await AppSettings(db).setSyncGdriveAccount('reef@test.dev');
+      await db.createTankWithPreset(name: 'Solo', type: SetupType.mixed);
+      // Block the backups folder with a plain file, so every local write fails
+      // the way a full or read-only disk would (same trick as
+      // `auto_backup_test.dart`).
+      final blocker = File(p.join(docsDir.path, 'backups'));
+      await blocker.writeAsString('not a directory');
+
+      final reports = <_Report>[];
+      final flow = flowWith(
+        answer: (_) async => fail('empty cloud must not propose'),
+        prompts: [],
+        notices: [],
+        reports: reports,
+      );
+
+      await runLaunchBackupAndSync(
+        db,
+        store: store,
+        state: state(db),
+        flow: flow,
+      );
+
+      // The failure is reported (the user's local safety net is broken)…
+      expect(reports.map((r) => r.library), ['auto_backup']);
+      expect(reports.single.error, isA<FileSystemException>());
+      expect(await db.getSetting(kLastBackupErrorAtKey), isNotNull);
+      // …and it is NOT allowed to suppress the push.
+      expect(
+        store.writeCalls,
+        1,
+        reason: 'a broken local disk must not also cost the cloud copy',
+      );
+      expect(await AppSettings(db).readSyncGdriveLastPushedName(), isNotNull);
     });
 
     test('push stays PARKED while the proposal dialog is open; declining '

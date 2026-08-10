@@ -1232,7 +1232,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'You\'re using the standard edition of ReefTracker.';
+      'You\'re using the standard edition of ReefTracker. Everything you\'ve already recorded stays yours; ReefTracker Pro unlocks the advanced features.';
+
+  @override
+  String get editionUpgrade => 'Unlock Pro';
 
   @override
   String get editionPro => 'Pro';
@@ -3124,6 +3127,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get roAllOk => 'All parts OK';
+
+  @override
+  String get roUsageTitle => 'Usage intensity';
+
+  @override
+  String get roUsageDialogBody =>
+      'How much water your unit makes. Picking a level resets the replacement intervals of all standard parts — including any you set yourself — to that level\'s typical values; custom parts are left alone, and you can fine-tune each part afterwards.';
+
+  @override
+  String get roUsageLight => 'Light';
+
+  @override
+  String get roUsageModerate => 'Moderate';
+
+  @override
+  String get roUsageHeavy => 'Heavy';
+
+  @override
+  String get roUsageLightHint =>
+      'Under ~300 L (80 gal) a month — top-offs and small water changes';
+
+  @override
+  String get roUsageModerateHint =>
+      'About 300–1000 L (80–260 gal) a month — a typical single reef';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Over ~1000 L (260 gal) a month — large or multiple tanks';
+
+  @override
+  String get roUsageApplied =>
+      'Replacement intervals reset for the standard parts';
 
   @override
   String get notifRoTitle => 'Replace RO filters';

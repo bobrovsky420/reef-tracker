@@ -1243,7 +1243,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Du verwendest die Standard-Edition von ReefTracker.';
+      'Du verwendest die Standard-Edition von ReefTracker. Alles, was du bereits erfasst hast, bleibt dir; ReefTracker Pro schaltet die erweiterten Funktionen frei.';
+
+  @override
+  String get editionUpgrade => 'Pro freischalten';
 
   @override
   String get editionPro => 'Pro';
@@ -3144,6 +3147,38 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get roAllOk => 'Alle Teile in Ordnung';
+
+  @override
+  String get roUsageTitle => 'Nutzungsintensität';
+
+  @override
+  String get roUsageDialogBody =>
+      'Wie viel Wasser deine Anlage erzeugt. Die Auswahl überschreibt die Wechselintervalle aller Standardteile — auch die, die du selbst eingestellt hast — mit den typischen Werten dieser Intensität; eigene Teile bleiben unverändert, und jedes Teil kannst du danach weiter anpassen.';
+
+  @override
+  String get roUsageLight => 'Gering';
+
+  @override
+  String get roUsageModerate => 'Mittel';
+
+  @override
+  String get roUsageHeavy => 'Hoch';
+
+  @override
+  String get roUsageLightHint =>
+      'Unter ca. 300 l (80 gal) im Monat — Nachfüllen und kleine Wasserwechsel';
+
+  @override
+  String get roUsageModerateHint =>
+      'Etwa 300–1000 l (80–260 gal) im Monat — ein typisches einzelnes Becken';
+
+  @override
+  String get roUsageHeavyHint =>
+      'Über ca. 1000 l (260 gal) im Monat — große oder mehrere Becken';
+
+  @override
+  String get roUsageApplied =>
+      'Wechselintervalle der Standardteile neu gesetzt';
 
   @override
   String get notifRoTitle => 'Osmose-Filter wechseln';

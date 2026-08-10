@@ -6,10 +6,15 @@ import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/ap_device_link.dart';
 import 'package:reeftracker/data/ap_protocol.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/rb_device_link.dart';
+import 'package:reeftracker/data/rb_protocol.dart';
 import 'package:reeftracker/data/rf_device_link.dart';
 import 'package:reeftracker/data/rf_protocol.dart';
 import 'package:reeftracker/domain/setup_type.dart';
+import 'package:reeftracker/features/apex/apex_screen.dart';
 import 'package:reeftracker/features/devices/devices_screen.dart';
+import 'package:reeftracker/features/reefbeat/reefbeat_screen.dart';
+import 'package:reeftracker/features/reeffactory/reeffactory_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
 import 'fakes/fake_device_secrets.dart';
@@ -141,7 +146,7 @@ void main() {
         tester,
         db,
         rf: _FakeRfLink.temperature([45]),
-        ap: const _FakeApLink(ph: 8.1),
+        ap: _FakeApLink(ph: 8.1),
       );
 
       await tapSaveAll(tester, 2);
@@ -240,6 +245,164 @@ void main() {
       await unmountApp(tester);
     });
   });
+
+  /// The other guard on the same page: which installs the page is allowed to
+  /// put on the LAN by itself.
+  ///
+  /// Opening Devices fires an automatic read of everything in the current
+  /// selection — traffic nobody asked for, aimed at hardware the app has no
+  /// licence to talk to on a Standard install. And a Standard install can
+  /// easily be carrying devices: restore *merges* device rows (they survive a
+  /// tank delete with `tankId` nulled, and a backup taken on a Founder's phone
+  /// restores onto any install), so "no entitlement" and "no devices" are
+  /// independent facts. One `entitled &&` is the whole guard, and it gates
+  /// three vendors at once.
+  group('the on-open read is gated (U19 / connectedDevices)', () {
+    /// A tank carrying one device of every pollable vendor — the shape a
+    /// restore onto a fresh phone produces. [pro] decides only whether the
+    /// install carries the grandfathering marker; the rows are identical.
+    Future<AppDatabase> seedFleet({required bool pro}) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      if (pro) await AppSettings(db).seedLegacyFreeSince('0.0.0-test');
+      final tankId = await db.createTankWithPreset(
+        name: 'Reef',
+        type: SetupType.mixed,
+      );
+      await db.upsertReefFactoryDevice(
+        identifier: 'RF-1',
+        model: kRfTempControllerModel,
+        address: '10.0.0.1',
+        name: 'RF meter',
+        tankId: tankId,
+      );
+      await db.upsertReefBeatDevice(
+        identifier: 'RB-1',
+        model: 'RSDOSE4',
+        address: '10.0.0.3',
+        name: 'ReefDose',
+        tankId: tankId,
+      );
+      await db.upsertApexDevice(
+        identifier: 'AC5:1',
+        model: 'Apex',
+        address: '10.0.0.2',
+        username: 'admin',
+        name: 'Apex',
+        tankId: tankId,
+      );
+      return db;
+    }
+
+    /// The three transports, each counting how often it was asked. Held per
+    /// test so the counts survive a re-pump of the body.
+    late _FakeRfLink rf;
+    late _CountingRbLink rb;
+    late _FakeApLink ap;
+
+    setUp(() {
+      rf = _FakeRfLink.temperature([25]);
+      rb = _CountingRbLink();
+      ap = _FakeApLink(ph: 8.1);
+    });
+
+    /// Pumps [DevicesBody] itself rather than [DevicesScreen]: `active` is a
+    /// body-level flag (the home shell keeps every tab built inside an
+    /// `IndexedStack`) and the standalone screen has no way to pass it.
+    Future<void> pumpBody(
+      WidgetTester tester,
+      AppDatabase db, {
+      bool active = true,
+    }) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            dbProvider.overrideWithValue(db),
+            deviceSecretsProvider.overrideWithValue(secrets),
+            rfDeviceLinkProvider.overrideWithValue(rf),
+            rbDeviceLinkProvider.overrideWithValue(rb),
+            apDeviceLinkProvider.overrideWithValue(ap),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: DevicesBody(active: active)),
+          ),
+        ),
+      );
+      await settle(tester);
+    }
+
+    /// Asserts every vendor's transport was asked exactly [n] times — one
+    /// matcher per vendor, because the guard covers all three and a rewrite
+    /// that gates only the one it was written against must fail here.
+    void expectReads(int n) {
+      expect(rf.reads, n, reason: 'ReefFactory');
+      expect(rb.reads, n, reason: 'ReefBeat');
+      expect(ap.reads, n, reason: 'Apex');
+    }
+
+    /// Every device's `lastSeenAt` — a successful read of any vendor bumps it
+    /// via `touchDeviceSeen`, so it is a second, DB-side witness of whether
+    /// anything actually went out on the wire.
+    Future<Map<String, DateTime?>> lastSeen(AppDatabase db) async => {
+      for (final d in await db.getAllDevices()) d.identifier: d.lastSeenAt,
+    };
+
+    testWidgets('a Standard install with a full fleet performs zero reads', (
+      tester,
+    ) async {
+      final db = await seedFleet(pro: false);
+      addTearDown(db.close);
+      final before = await lastSeen(db);
+      await pumpBody(tester, db);
+
+      expectReads(0);
+      expect(await lastSeen(db), before, reason: 'nothing was ever seen');
+      // Not vacuous: the page itself is ungated, so all three sections are on
+      // screen with their cards — the inventory a keeper must always be able
+      // to see. Zero reads is a decision, not an empty list.
+      expect(find.byType(RfDeviceSection), findsOneWidget);
+      expect(find.byType(RbDeviceSection), findsOneWidget);
+      expect(find.byType(ApDeviceSection), findsOneWidget);
+      await unmountApp(tester);
+    });
+
+    testWidgets('an entitled install reads every vendor exactly once', (
+      tester,
+    ) async {
+      final db = await seedFleet(pro: true);
+      addTearDown(db.close);
+      await pumpBody(tester, db);
+
+      // The positive control for the test above: same fleet, same fakes, same
+      // page — only the entitlement differs.
+      expectReads(1);
+      await unmountApp(tester);
+    });
+
+    testWidgets('a Devices tab nobody is looking at reads nothing until it '
+        'is', (tester) async {
+      final db = await seedFleet(pro: true);
+      addTearDown(db.close);
+      // The home shell builds every tab up front; without the `active` half of
+      // the guard, every app launch would poll the whole fleet for a page the
+      // keeper never opened.
+      await pumpBody(tester, db, active: false);
+      expectReads(0);
+
+      // Same widget, same position, so the state (and its `_autoRead` set)
+      // survives — exactly what switching to the tab does.
+      await pumpBody(tester, db);
+      expectReads(1);
+
+      // Switching away and back must not re-poll: the on-open read is once
+      // per device per session, and Refresh is what asks again.
+      await pumpBody(tester, db, active: false);
+      await pumpBody(tester, db);
+      expectReads(1);
+      await unmountApp(tester);
+    });
+  });
 }
 
 /// A ReefFactory meter that serves a scripted sequence of reads and then goes
@@ -288,22 +451,43 @@ class _FakeRfLink implements RfDeviceLink {
 }
 
 /// A controller with a single pH probe — a second parameter for the tank, so a
-/// declined temperature can be seen not to take it down with it.
+/// declined temperature can be seen not to take it down with it. Counts its
+/// reads for the on-open-read gate.
 class _FakeApLink implements ApDeviceLink {
-  const _FakeApLink({required this.ph});
+  _FakeApLink({required this.ph});
   final double ph;
+  int reads = 0;
 
   @override
-  Future<ApStatus> readOnce(String host, ApCredentials credentials) async =>
-      ApStatus(
-        info: const ApDeviceInfo(
-          serial: 'AC5:1',
-          hostname: 'apex',
-          software: '5.04_7A18',
-          hardware: '1.0',
-          firmware: ApFirmware.aos5,
-        ),
-        probes: [ApProbe(did: 'base_pH', name: 'pH', type: 'pH', value: ph)],
-        outlets: const [],
-      );
+  Future<ApStatus> readOnce(String host, ApCredentials credentials) async {
+    reads++;
+    return ApStatus(
+      info: const ApDeviceInfo(
+        serial: 'AC5:1',
+        hostname: 'apex',
+        software: '5.04_7A18',
+        hardware: '1.0',
+        firmware: ApFirmware.aos5,
+      ),
+      probes: [ApProbe(did: 'base_pH', name: 'pH', type: 'pH', value: ph)],
+      outlets: const [],
+    );
+  }
+}
+
+/// A ReefBeat pump that is simply not on the network — the on-open-read gate
+/// only cares *whether* the transport was reached, and a device that answers
+/// nothing keeps the fake free of a whole snapshot's worth of fixture.
+class _CountingRbLink implements RbDeviceLink {
+  int reads = 0;
+
+  @override
+  Future<RbSnapshot> readOnce(String host) async {
+    reads++;
+    throw const RbLinkException(RbLinkError.unreachable, 'off the LAN');
+  }
+
+  @override
+  Future<List<RbDoseQueueEntry>> readDosingQueue(String host) async =>
+      throw const RbLinkException(RbLinkError.unreachable, 'off the LAN');
 }

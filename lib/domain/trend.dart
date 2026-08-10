@@ -11,6 +11,24 @@
 /// enter the amber and red zones. A trend is only produced once at least
 /// `window` readings exist.
 ///
+/// A fit describes the readings it was given; a *forecast* additionally claims
+/// something about today. Those come apart once a series goes quiet: a tank
+/// last tested in January still has a perfectly good January slope, but
+/// projecting it onto today's date invents months of chemistry nobody
+/// measured. Forecasts are therefore suppressed once the newest reading is
+/// older than [kHealthFreshnessDays] — the same staleness rule the health
+/// score uses to drop a parameter from the aggregate — measured against the
+/// optional [computeTrend] `now`.
+///
+/// Nor is every bound somewhere the value can actually go. The keep-low
+/// nutrients ship `greenLow: 0` — not a healthy lower limit but the bottom of
+/// the scale, since nothing measures below zero ppm. Projecting a falling
+/// ammonia toward it warns a keeper that the tank is about to leave its
+/// healthy range exactly as the cycle finishes, which is the one thing they
+/// are hoping for. Callers therefore pass the parameter's physical floor
+/// ([computeTrend]'s `floor`, the catalog's `minValue`), and a low bound equal
+/// to it produces no crossing forecast.
+///
 /// A fitted slope is not automatically a *trend*, though: run a line through a
 /// parameter that merely oscillates and you get a confident-looking slope whose
 /// **sign flips with the window size**, and a forecast built on it warns about
@@ -23,7 +41,9 @@ library;
 
 import 'dart:math' as math;
 
+import 'clock.dart';
 import 'dose_calculator.dart' show DosePoint, linearFit;
+import 'health_score.dart' show kHealthFreshnessDays;
 import 'zones.dart';
 
 export 'dose_calculator.dart' show DosePoint;
@@ -115,7 +135,8 @@ class TrendResult {
   /// Projected days until the value first leaves the green zone (crosses
   /// `greenLow`/`greenHigh` into amber), or null when it isn't heading toward a
   /// green bound (flat, moving away, already past it, no bound on that side,
-  /// or [recovering]).
+  /// or [recovering]) — and always null once the series is stale (newest
+  /// reading older than [kHealthFreshnessDays]).
   final double? daysToAmber;
 
   /// Projected days until the value reaches the red zone (crosses
@@ -209,6 +230,19 @@ class TrendResult {
 /// [minSpanDays] days when the window alone spans less than that (frequent
 /// measurers, see [kTrendMinSpanDays]) — projecting toward [bounds].
 ///
+/// [now] is the clock the projection is anchored on (default: the wall clock),
+/// injectable for tests exactly like [computeTankHealth]'s. Once the newest
+/// reading is more than [freshnessDays] old measured from it, the fit is still
+/// reported but every day estimate is withheld: the slope describes readings
+/// that exist, a forecast would describe months that were never measured.
+///
+/// [floor] is the parameter's physical floor in canonical units — its catalog
+/// `minValue` (`kParameterByKey[key]?.minValue`), 0 ppm for a nutrient. A
+/// *low* bound that sits exactly on it is a floor wearing a bound's clothes,
+/// not somewhere the value can go: no low-side crossing is forecast toward it
+/// (see the library note on keep-low parameters). Null = the caller has no
+/// floor to declare and every bound is taken at face value.
+///
 /// Returns null when [window] < 2, fewer than [window] readings exist, or the
 /// readings share a single instant (no computable slope).
 TrendResult? computeTrend({
@@ -216,7 +250,11 @@ TrendResult? computeTrend({
   required ZoneBounds bounds,
   required int window,
   int minSpanDays = kTrendMinSpanDays,
+  DateTime? now,
+  int freshnessDays = kHealthFreshnessDays,
+  double? floor,
 }) {
+  final clock = now ?? DateTime.now();
   if (window < 2 || points.length < window) return null;
   var start = points.length - window;
   // Hybrid window: when the newest [window] readings span less than
@@ -260,8 +298,7 @@ TrendResult? computeTrend({
     slopeSignificant = true;
   } else {
     final se = sigma / math.sqrt(sxx);
-    slopeSignificant =
-        se == 0 || slope.abs() / se >= _tCriticalFor(n - 2);
+    slopeSignificant = se == 0 || slope.abs() / se >= _tCriticalFor(n - 2);
   }
 
   final scale = oscillationScale(bounds);
@@ -285,6 +322,14 @@ TrendResult? computeTrend({
   // Bounds violating the ordering invariant classify as unknown — don't
   // project toward them either.
   final b = bounds.isValid ? bounds : const ZoneBounds();
+
+  // A series nobody has added to in a month says nothing about today: the
+  // line is still the honest summary of those readings, but extrapolating it
+  // to "reaches red in ~4 days" would date the warning from the last test,
+  // not from now. Same freshness rule (and the same rounding) as the health
+  // score's, so a parameter the score has already dropped as stale cannot
+  // still be issuing forecasts on the dashboard.
+  final stale = daysSince(recent.last.t, now: clock) > freshnessDays;
 
   // A value already outside its green range but heading back toward it is
   // recovering, not at risk: the only bounds ahead of it are on the *far* side
@@ -311,13 +356,23 @@ TrendResult? computeTrend({
   double? daysTo(double? bound) {
     if (bound == null ||
         direction == TrendDirection.flat ||
-        !slopeSignificant) {
+        !slopeSignificant ||
+        stale) {
       return null;
     }
     final days = (bound - current) / slope;
     if (days.abs() < 1e-9) return 0;
     return days < 0 ? null : days;
   }
+
+  // A low bound sitting exactly on the parameter's physical [floor] is not a
+  // threshold the value can cross — it is the bottom of the scale. The
+  // keep-low nutrients ship precisely that shape (`greenLow: 0, greenHigh:
+  // 0.02`), so without this a cycling tank's ammonia falling toward zero — the
+  // outcome the keeper is waiting for — is forecast as "leaves the green range
+  // in ~1 d". Only *low* bounds qualify: a high bound is always reachable.
+  double? crossable(double? lowBound) =>
+      (floor != null && lowBound == floor) ? null : lowBound;
 
   double? toAmber;
   double? toRed;
@@ -326,7 +381,7 @@ TrendResult? computeTrend({
     // The near green bound the value is heading back across (U15). With
     // amber-only bounds (#30) green starts at the amber bound itself.
     toGreen = direction == TrendDirection.rising
-        ? daysTo(b.greenLow ?? b.amberLow)
+        ? daysTo(crossable(b.greenLow ?? b.amberLow))
         : daysTo(b.greenHigh ?? b.amberHigh);
   } else {
     switch (direction) {
@@ -334,8 +389,8 @@ TrendResult? computeTrend({
         toAmber = daysTo(b.greenHigh);
         toRed = daysTo(b.amberHigh);
       case TrendDirection.falling:
-        toAmber = daysTo(b.greenLow);
-        toRed = daysTo(b.amberLow);
+        toAmber = daysTo(crossable(b.greenLow));
+        toRed = daysTo(crossable(b.amberLow));
       case TrendDirection.flat:
         break;
     }

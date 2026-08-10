@@ -176,8 +176,7 @@ class MaintenanceScheduleScreen extends ConsumerWidget {
                     size: 18,
                     color: tokens.textDim,
                   ),
-                  onPressed: () =>
-                      markMaintenanceDoneWithUndo(context, ref, s),
+                  onPressed: () => markMaintenanceDoneWithUndo(context, ref, s),
                 ),
               ReorderableDragStartListener(
                 index: index,
@@ -540,9 +539,7 @@ class _TaskSheetState extends State<_TaskSheet> {
             const SizedBox(height: 16),
             DropdownButtonFormField<MaintenanceActionType?>(
               initialValue: _type,
-              decoration: InputDecoration(
-                labelText: l.taskTypeLabel,
-              ),
+              decoration: InputDecoration(labelText: l.taskTypeLabel),
               items: [
                 for (final t in MaintenanceActionType.values)
                   DropdownMenuItem(
@@ -562,9 +559,7 @@ class _TaskSheetState extends State<_TaskSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _title,
-                decoration: InputDecoration(
-                  labelText: l.taskTitleLabel,
-                ),
+                decoration: InputDecoration(labelText: l.taskTitleLabel),
                 validator: (v) =>
                     (v ?? '').trim().isEmpty ? l.taskTitleRequired : null,
               ),
@@ -579,9 +574,7 @@ class _TaskSheetState extends State<_TaskSheet> {
               const SizedBox(height: 12),
               DropdownButtonFormField<_RepeatMode>(
                 initialValue: _mode,
-                decoration: InputDecoration(
-                  labelText: l.repeatModeLabel,
-                ),
+                decoration: InputDecoration(labelText: l.repeatModeLabel),
                 items: [
                   for (final m in _RepeatMode.values)
                     DropdownMenuItem(
@@ -647,9 +640,7 @@ class _TaskSheetState extends State<_TaskSheet> {
                   controller: _monthDayCtrl,
                   style: ReefTokens.monoInputStyle,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: l.monthDayLabel,
-                  ),
+                  decoration: InputDecoration(labelText: l.monthDayLabel),
                   validator: (v) {
                     final parsed = int.tryParse((v ?? '').trim());
                     return (parsed == null || parsed < 1 || parsed > 31)
@@ -692,9 +683,7 @@ class _TaskSheetState extends State<_TaskSheet> {
             ),
             TextFormField(
               controller: _note,
-              decoration: InputDecoration(
-                labelText: l.noteOptional,
-              ),
+              decoration: InputDecoration(labelText: l.noteOptional),
             ),
             const SizedBox(height: 16),
             Row(
@@ -784,7 +773,9 @@ class _DueChip extends ConsumerWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () async {
-            final type = MaintenanceActionType.fromName(due.schedule.actionType);
+            final type = MaintenanceActionType.fromName(
+              due.schedule.actionType,
+            );
             if (type != null) {
               await showAddActionSheet(context, ref, preset: type);
             } else {

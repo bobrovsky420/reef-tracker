@@ -66,13 +66,16 @@ void main() {
       expect(r.takenAt, DateTime(2026, 7, 21, 10, 20, 41));
     });
 
-    test('comma decimal separator splits the value field — still one value', () {
-      final m = parseHannaMeasurementFrame(
-        'M,2002, ,8,104962,0,200G2,0,06150128,20260721102041,STATUS,11,Z,R',
-      );
-      expect((m as HannaMeasurement).value, closeTo(8.104962, 1e-9));
-      expect(m.tankName, '200G2');
-    });
+    test(
+      'comma decimal separator splits the value field — still one value',
+      () {
+        final m = parseHannaMeasurementFrame(
+          'M,2002, ,8,104962,0,200G2,0,06150128,20260721102041,STATUS,11,Z,R',
+        );
+        expect((m as HannaMeasurement).value, closeTo(8.104962, 1e-9));
+        expect(m.tankName, '200G2');
+      },
+    );
 
     test('ticks and placeholder M-frames are progress, not results', () {
       final t = parseHannaMeasurementFrame(kTickLine);

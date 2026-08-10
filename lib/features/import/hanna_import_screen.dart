@@ -543,7 +543,9 @@ class _HannaImportScreenState extends ConsumerState<HannaImportScreen> {
       // One group per session, every reading on its own file timestamp.
       final groupIds = <String>[];
       final rows =
-          <({String paramKey, double value, DateTime takenAt, String groupId})>[];
+          <
+            ({String paramKey, double value, DateTime takenAt, String groupId})
+          >[];
       for (final session in sessions) {
         final groupId = newReadingGroupId();
         groupIds.add(groupId);
@@ -644,5 +646,4 @@ class _HannaImportScreenState extends ConsumerState<HannaImportScreen> {
       ),
     );
   }
-
 }

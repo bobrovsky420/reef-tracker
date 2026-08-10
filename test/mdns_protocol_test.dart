@@ -191,6 +191,53 @@ void main() {
       expect(decodeMdnsMessage(Uint8List.fromList(const [0, 0, 1])), isEmpty);
     });
 
+    // The decoder runs on every UDP datagram any host on the LAN chooses to
+    // send while a scan is open — hostile shapes must terminate and yield
+    // whatever is readable, never hang or throw (a hung decode stalls the
+    // whole discovery stream).
+    test('a name pointing at itself terminates via the label budget', () {
+      final b = _MessageBuilder();
+      b.addRecord(
+        type: kDnsTypeA,
+        namePointer: b.offset, // the pointer's own position: a 1-step cycle
+        rdata: const [10, 0, 0, 1],
+      );
+      final records = decodeMdnsMessage(b.build());
+      expect(records, hasLength(1));
+      expect(records.single.name, isEmpty);
+      expect(records.single.value, '10.0.0.1');
+    });
+
+    test('a mutual pointer cycle (owner ↔ rdata) terminates', () {
+      // Owner name at 12 points at the rdata (offset 24), whose bytes point
+      // back at 12 — a two-step cycle reached from both the owner-name walk
+      // and the PTR-value walk.
+      final b = _MessageBuilder();
+      b.addRecord(type: kDnsTypePtr, namePointer: 24, rdata: const [0xc0, 12]);
+      final records = decodeMdnsMessage(b.build());
+      expect(records, hasLength(1));
+      expect(records.single.type, kDnsTypePtr);
+    });
+
+    test('inflated header record counts stop at the real data', () {
+      // The header is attacker-controlled; the walker must trust the bytes
+      // that exist, not the counts. Claim 65535 records in every section
+      // over a single real one.
+      final b = _MessageBuilder()
+        ..addRecord(
+          type: kDnsTypeA,
+          name: 'a.local',
+          rdata: const [10, 0, 0, 1],
+        );
+      final bytes = b.build();
+      for (final at in [6, 7, 8, 9, 10, 11]) {
+        bytes[at] = 0xff; // an/ns/ar counts all 0xffff
+      }
+      final records = decodeMdnsMessage(bytes);
+      expect(records, hasLength(1));
+      expect(records.single.value, '10.0.0.1');
+    });
+
     test('a TXT item without "=" becomes a valueless key', () {
       final b = _MessageBuilder()
         ..addRecord(

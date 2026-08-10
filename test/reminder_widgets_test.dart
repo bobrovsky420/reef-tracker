@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// `Override` is only exposed as a public type through misc.dart in riverpod 3.x.
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/notifications.dart';
 import 'package:reeftracker/data/setting_keys.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
@@ -29,7 +32,10 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
-  Future<(AppDatabase, int)> pumpApp(WidgetTester tester) async {
+  Future<(AppDatabase, int)> pumpApp(
+    WidgetTester tester, {
+    List<Override> overrides = const [],
+  }) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     await AppSettings(db).setTourSeen(true);
@@ -40,7 +46,7 @@ void main() {
     addTearDown(() => appRouter.go('/'));
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [dbProvider.overrideWithValue(db)],
+        overrides: [dbProvider.overrideWithValue(db), ...overrides],
         child: MaterialApp.router(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -179,6 +185,101 @@ void main() {
     await unmountApp(tester);
   });
 
+  // The permission half of the same screen. `ReminderNotifications` reads an
+  // *unknown* plugin answer as `true` on both methods (`?? true`) so a device
+  // with no runtime gate never gets a spurious warning — which also means a
+  // broken wiring (a method that stops being called, or a plugin that starts
+  // answering null) looks exactly like "permitted". Nothing then fires, and
+  // the screen still says everything is fine. These drive the screen against a
+  // platform that answers, so the warning row is pinned to a real denial.
+  group('Settings → Reminders: the OS permission warning (U1)', () {
+    Future<_FakeNotifications> openReminders(
+      WidgetTester tester, {
+      required bool permitted,
+    }) async {
+      final notifications = _FakeNotifications(permitted: permitted);
+      await pumpApp(
+        tester,
+        overrides: [
+          reminderNotificationsProvider.overrideWithValue(notifications),
+        ],
+      );
+      appRouter.go('/settings/reminders');
+      await settle(tester);
+      return notifications;
+    }
+
+    final warning = find.textContaining('Notifications are blocked');
+
+    testWidgets('enabling a category with the permission denied shows the '
+        'warning row', (tester) async {
+      final notifications = await openReminders(tester, permitted: false);
+
+      // Nothing is on yet, so a denial is not worth saying — the app has
+      // asked the OS for nothing.
+      expect(notifications.areEnabledCalls, 1, reason: 'the initState check');
+      expect(warning, findsNothing);
+
+      await tester.tap(find.text('Testing reminders'));
+      await settle(tester);
+
+      // Enabling is the moment the permission is requested (never at start),
+      // and a refusal has to be visible: the switch is on, but nothing will
+      // ever be delivered.
+      expect(notifications.requestCalls, 1);
+      expect(warning, findsOneWidget);
+      await unmountApp(tester);
+    });
+
+    testWidgets('a granted permission leaves the screen clean', (tester) async {
+      final notifications = await openReminders(tester, permitted: true);
+
+      await tester.tap(find.text('Testing reminders'));
+      await settle(tester);
+
+      expect(notifications.requestCalls, 1);
+      expect(warning, findsNothing);
+      await unmountApp(tester);
+    });
+
+    testWidgets('turning the last category off retires the warning and '
+        're-reads the permission', (tester) async {
+      final notifications = await openReminders(tester, permitted: false);
+
+      await tester.tap(find.text('Testing reminders'));
+      await settle(tester);
+      expect(warning, findsOneWidget);
+
+      await tester.tap(find.text('Testing reminders'));
+      await settle(tester);
+
+      // Off again: the denial is still true but no longer costs the keeper
+      // anything, so the row goes. Disabling re-reads rather than re-asking —
+      // the request dialog is a once-per-install affair.
+      expect(warning, findsNothing);
+      expect(notifications.requestCalls, 1, reason: 'never asked again');
+      expect(notifications.areEnabledCalls, 2);
+      await unmountApp(tester);
+    });
+
+    testWidgets('a permission granted in system settings clears the warning '
+        'on the next toggle', (tester) async {
+      final notifications = await openReminders(tester, permitted: false);
+      await tester.tap(find.text('Testing reminders'));
+      await settle(tester);
+      expect(warning, findsOneWidget);
+
+      // The keeper leaves for the system settings, allows notifications, and
+      // comes back to switch on a second category.
+      notifications.permitted = true;
+      await tester.tap(find.text('Dosing reminders'));
+      await settle(tester);
+
+      expect(warning, findsNothing);
+      await unmountApp(tester);
+    });
+  });
+
   testWidgets('parameter edit: cadence preset chip round-trips (U1)', (
     tester,
   ) async {
@@ -234,4 +335,38 @@ void main() {
     expect(find.text('Set a time of day to enable reminders'), findsOneWidget);
     await unmountApp(tester);
   });
+}
+
+/// A notification platform that actually answers — the seam §3 asked for, on
+/// [ReminderNotifications] rather than on the scheduler, because
+/// `requestPermission()` / `areEnabled()` live here.
+///
+/// It exists because the real methods cannot run under `flutter test` at all:
+/// they reach `resolvePlatformSpecificImplementation`, whose
+/// `FlutterLocalNotificationsPlatform.instance` is a `late` field only plugin
+/// registration initializes, so it throws — and both methods catch that and
+/// fall through to their `return true`. Every test would therefore see
+/// "permitted" no matter what the screen did with the answer.
+///
+/// [permitted] is settable so a test can play the keeper who steps out to
+/// system settings and comes back; the counters pin *which* method each path
+/// asks (enabling requests, disabling only re-reads).
+class _FakeNotifications extends ReminderNotifications {
+  _FakeNotifications({required this.permitted});
+
+  bool permitted;
+  int requestCalls = 0;
+  int areEnabledCalls = 0;
+
+  @override
+  Future<bool> requestPermission() async {
+    requestCalls++;
+    return permitted;
+  }
+
+  @override
+  Future<bool> areEnabled() async {
+    areEnabledCalls++;
+    return permitted;
+  }
 }

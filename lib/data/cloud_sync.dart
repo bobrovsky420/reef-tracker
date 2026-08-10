@@ -188,6 +188,9 @@ Future<CloudSyncOutcome> runCloudSyncIfDirty(
   return _syncInFlight = run;
 }
 
+/// Clears the in-flight slot so tests can run the sync repeatedly.
+void resetCloudSyncInFlightForTest() => _syncInFlight = null;
+
 Future<CloudSyncOutcome> _runCloudSyncIfDirty(
   AppDatabase db,
   CloudBackupStore store,
@@ -250,6 +253,7 @@ Future<CloudSyncOutcome> _runCloudSyncIfDirty(
         store,
         folderId,
         await state.settings.readAutoBackupKeep(),
+        justWritten: name,
       );
     } catch (_) {
       // Best-effort, like the local prune: at most one extra stale file is
@@ -286,11 +290,21 @@ String cloudBackupFileName(DateTime now) {
 /// Deletes the oldest backup files beyond [keep], newest-by-name kept
 /// (backup names are UTC-timestamped ⇒ lexical == chronological). Foreign
 /// files in the folder (a user could drop anything into it) are ignored.
+///
+/// [justWritten] is the name this run uploaded, and is never a deletion
+/// candidate: the folder can already hold [keep] files that sort *newer* than
+/// anything this device can mint — a second device with a fast clock, a
+/// hand-copied or future-dated file — in which case the fresh push is the
+/// first entry past the cut and would be deleted seconds after it landed.
+/// The push record is stamped before the prune (#63), so the dirty gate would
+/// then read clean and never re-upload: Settings reports "backed up" over a
+/// folder holding none of this device's data, indefinitely.
 Future<void> _pruneCloud(
   CloudBackupStore store,
   String folderId,
-  int keep,
-) async {
+  int keep, {
+  String? justWritten,
+}) async {
   if (keep < 0) keep = 0;
   final files =
       (await store.list(folderId))
@@ -301,7 +315,12 @@ Future<void> _pruneCloud(
           )
           .toList()
         ..sort((a, b) => b.name.compareTo(a.name));
-  for (final stale in files.skip(keep)) {
+  // The exempt file still occupies a slot of the keep budget, so the rotation
+  // depth the user chose is honoured either way.
+  final mine = files.where((f) => f.name == justWritten).length;
+  final others = files.where((f) => f.name != justWritten);
+  final budget = (keep - mine).clamp(0, keep);
+  for (final stale in others.skip(budget)) {
     try {
       await store.delete(stale.id);
     } catch (_) {
