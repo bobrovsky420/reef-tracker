@@ -964,6 +964,62 @@ final hannaAttachEnvironmentProvider = _setting(
   AppSettings.decodeHannaAttachEnvironment,
 );
 
+// --- Wall display mode (U49) — settings all device-local (this tablet's) ----
+
+/// Whether a cold start boots straight into the wall display (default off).
+/// Consumed by `main.dart`, which arms the router's once-per-process redirect
+/// before the first frame.
+final wallAutoStartProvider = _setting(
+  SettingKey.wallAutoStart,
+  AppSettings.decodeWallAutoStart,
+);
+
+/// The wall display's refresh interval (default 5 min) — the mode's one
+/// user-visible cadence knob (§12n).
+final wallRefreshIntervalProvider = _setting(
+  SettingKey.wallRefreshInterval,
+  AppSettings.decodeWallRefreshInterval,
+);
+
+/// Whether the wall dims itself at night (default on).
+final wallNightEnabledProvider = _setting(
+  SettingKey.wallNightEnabled,
+  AppSettings.decodeWallNightEnabled,
+);
+
+/// Night-window bounds, minutes since midnight (defaults 22:00 / 07:00).
+final wallNightFromProvider = _setting(
+  SettingKey.wallNightFrom,
+  AppSettings.decodeWallNightFrom,
+);
+final wallNightToProvider = _setting(
+  SettingKey.wallNightTo,
+  AppSettings.decodeWallNightTo,
+);
+
+/// Seconds per auto-rotated page when the wall grid paginates (default 15 s).
+final wallPageSecondsProvider = _setting(
+  SettingKey.wallPageSeconds,
+  AppSettings.decodeWallPageSeconds,
+);
+
+final _wallTileSettingsFamily = StreamProvider.autoDispose
+    .family<List<WallTileSetting>, int>(
+      (ref, tankId) =>
+          _dedup(ref.watch(dbProvider).watchWallTileSettings(tankId)),
+    );
+
+/// The stored wall-card layout rows for the active tank (U49 §12q) — sparse:
+/// a card without a row is visible and default-ordered, so an empty list is
+/// the stock arrangement.
+final wallTileSettingsProvider = Provider<AsyncValue<List<WallTileSetting>>>((
+  ref,
+) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_wallTileSettingsFamily(tank.id));
+});
+
 /// Factory for the Hanna checker transport (U33). A provider — same override
 /// story as [cloudAuthProvider] — so tests drive the session with a scripted
 /// fake instead of real BLE hardware; each measurement session constructs a

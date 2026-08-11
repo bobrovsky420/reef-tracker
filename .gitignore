@@ -52,6 +52,8 @@ app.*.map.json
 *.keystore
 key.properties
 
+# Local working documents
+ROADMAP.md
 TODO.md
 TEST_PLAN.md
 

@@ -68,6 +68,9 @@ void main() {
         ProFeature.hannaConnect,
         ProFeature.hannaScan,
         ProFeature.connectedDevices,
+        // U49 wall display (2026-08-11): added pre-activation, so
+        // grandfathered per the standing rule.
+        ProFeature.wallDisplay,
       });
     });
   });

@@ -208,6 +208,10 @@ String encodeBackup({
         .toList(),
     'importSources': importSources.map(_importSourceToJson).toList(),
     'devices': devices.map(_deviceToJson).toList(),
+    // The wall display's tables (U49) — `device_samples`, `wall_tile_settings`
+    // — are deliberately NOT sections. They are one tablet's ephemeral
+    // telemetry and layout; no backup contains them, so no backup can ever
+    // depend on the feature existing (§12o). Do not "complete" the list.
     // Device-local keys never enter the document (#69). The restore side
     // already refuses to *apply* them (`preserveSettingKeys`), but these files
     // are built to travel — the share sheet ("mail it to support"), a shared

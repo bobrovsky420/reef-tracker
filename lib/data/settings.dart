@@ -8,6 +8,7 @@ import '../domain/ro.dart';
 import '../domain/stability_score.dart';
 import '../domain/trend.dart';
 import '../domain/units.dart';
+import '../domain/wall_display.dart';
 import 'database.dart';
 import 'setting_keys.dart';
 
@@ -285,7 +286,17 @@ enum SettingKey {
   // Environment capture on Hanna save (U37): describes the household's
   // measuring workflow (its devices also ride backups), not this phone —
   // so it travels to a new phone like hannaMethodSets.
-  hannaAttachEnvironment(kHannaAttachEnvironmentKey, deviceLocal: false);
+  hannaAttachEnvironment(kHannaAttachEnvironmentKey, deviceLocal: false),
+  // Wall display mode (U49) — all deviceLocal, and that is the point rather
+  // than a default: they describe *this tablet* (whether it boots into the
+  // mode, how live its wall feels, when it dims), so a U35 multi-device
+  // restore must never teach the keeper's phone to boot into wall mode.
+  wallAutoStart(kWallAutoStartKey, deviceLocal: true),
+  wallRefreshInterval(kWallRefreshIntervalKey, deviceLocal: true),
+  wallNightEnabled(kWallNightEnabledKey, deviceLocal: true),
+  wallNightFrom(kWallNightFromKey, deviceLocal: true),
+  wallNightTo(kWallNightToKey, deviceLocal: true),
+  wallPageSeconds(kWallPageSecondsKey, deviceLocal: true);
 
   const SettingKey(this.storageKey, {required this.deviceLocal});
 
@@ -561,6 +572,69 @@ class AppSettings {
   ).map(decodeHannaAttachEnvironment);
   Future<void> setHannaAttachEnvironment(bool enabled) =>
       _write(SettingKey.hannaAttachEnvironment, enabled.toString());
+
+  // --- wall display mode (U49) -------------------------------------------------
+
+  /// Whether a cold start boots straight into the wall display (§12f) —
+  /// the setting that actually matters on a wall tablet, since the app cannot
+  /// replace the launcher. Default off.
+  static bool decodeWallAutoStart(String? raw) => raw == 'true';
+  Stream<bool> watchWallAutoStart() =>
+      _watch(SettingKey.wallAutoStart).map(decodeWallAutoStart);
+  Future<bool> readWallAutoStart() async =>
+      decodeWallAutoStart(await _read(SettingKey.wallAutoStart));
+  Future<void> setWallAutoStart(bool enabled) =>
+      _write(SettingKey.wallAutoStart, enabled.toString());
+
+  /// The wall display's refresh interval, stored as its second count.
+  /// Whitelisted to [kWallRefreshChoicesSeconds] like the other dropdown-fed
+  /// settings, defaulting to 5 min.
+  static Duration decodeWallRefreshInterval(String? raw) {
+    final v = int.tryParse(raw ?? '');
+    return Duration(
+      seconds: kWallRefreshChoicesSeconds.contains(v)
+          ? v!
+          : kWallDefaultRefreshSeconds,
+    );
+  }
+
+  Stream<Duration> watchWallRefreshInterval() =>
+      _watch(SettingKey.wallRefreshInterval).map(decodeWallRefreshInterval);
+  Future<void> setWallRefreshInterval(Duration interval) =>
+      _write(SettingKey.wallRefreshInterval, interval.inSeconds.toString());
+
+  /// Whether the wall display dims itself inside the night window (default
+  /// on — an always-lit panel next to a tank is what the window exists for).
+  static bool decodeWallNightEnabled(String? raw) =>
+      raw == null || raw == 'true';
+  Stream<bool> watchWallNightEnabled() =>
+      _watch(SettingKey.wallNightEnabled).map(decodeWallNightEnabled);
+  Future<void> setWallNightEnabled(bool enabled) =>
+      _write(SettingKey.wallNightEnabled, enabled.toString());
+
+  /// Night-window bounds as minutes since midnight (defaults 22:00 / 07:00).
+  /// Clamped into 0–1439 so a hand-edited value cannot break the window math;
+  /// the window may cross midnight (`inNightWindow` handles it).
+  static int decodeWallNightFrom(String? raw) =>
+      (int.tryParse(raw ?? '') ?? kWallDefaultNightFromMinutes).clamp(0, 1439);
+  static int decodeWallNightTo(String? raw) =>
+      (int.tryParse(raw ?? '') ?? kWallDefaultNightToMinutes).clamp(0, 1439);
+  Future<void> setWallNightFrom(int minutes) =>
+      _write(SettingKey.wallNightFrom, minutes.toString());
+  Future<void> setWallNightTo(int minutes) =>
+      _write(SettingKey.wallNightTo, minutes.toString());
+
+  /// Seconds per page when the grid paginates (§12c), whitelisted to
+  /// [kWallPageSecondsChoices], default 15 s.
+  static int decodeWallPageSeconds(String? raw) {
+    final v = int.tryParse(raw ?? '');
+    return kWallPageSecondsChoices.contains(v) ? v! : kWallDefaultPageSeconds;
+  }
+
+  Stream<int> watchWallPageSeconds() =>
+      _watch(SettingKey.wallPageSeconds).map(decodeWallPageSeconds);
+  Future<void> setWallPageSeconds(int seconds) =>
+      _write(SettingKey.wallPageSeconds, seconds.toString());
 
   // --- free ammonia visualization ---------------------------------------------
 

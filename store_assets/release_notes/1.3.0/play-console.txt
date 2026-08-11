@@ -1,0 +1,35 @@
+<en-GB>
+• Wall display mode (PRO): turn a wall-mounted tablet into an always-on board of your aquarium – big colour-coded values, live 24-hour graphs from your connected devices, status tiles and today's tasks.
+• Choose the cards, hide duplicates, drag your own order; auto-start on launch and night dimming included.
+• Fix: backups and reminders now also run on devices that stay open for weeks.
+</en-GB>
+<cs-CZ>
+• Nástěnný displej (PRO): proměňte tablet na zdi ve stále zapnutý přehled akvária – velké barevné hodnoty, živé 24hodinové grafy z připojených zařízení, stavové dlaždice a dnešní úkoly.
+• Vyberte si karty, skryjte duplicity a přetáhněte vlastní pořadí; spuštění při startu a noční ztmavení v ceně.
+• Oprava: zálohy a připomínky nyní běží i na zařízeních, která zůstávají zapnutá týdny.
+</cs-CZ>
+<de-DE>
+• Wanddisplay (PRO): Verwandeln Sie ein Wandtablet in eine dauerhaft aktive Übersicht Ihres Aquariums – große farbcodierte Werte, Live-24-Stunden-Diagramme Ihrer verbundenen Geräte, Status-Kacheln und heutige Aufgaben.
+• Karten wählen, Duplikate ausblenden, eigene Reihenfolge ziehen; Start beim Öffnen und Nachtabdunklung inklusive.
+• Fix: Backups und Erinnerungen laufen jetzt auch auf Geräten, die wochenlang eingeschaltet bleiben.
+</de-DE>
+<ru-RU>
+• Настенный дисплей (PRO): превратите планшет на стене в постоянно включённую панель аквариума – крупные цветные значения, живые 24-часовые графики с подключённых устройств, плитки состояния и задачи на сегодня.
+• Выбирайте карточки, скрывайте дубликаты, задавайте свой порядок; автозапуск и ночное затемнение в комплекте.
+• Исправление: резервные копии и напоминания теперь работают и на устройствах, включённых неделями.
+</ru-RU>
+<pl-PL>
+• Wyświetlacz ścienny (PRO): zamień tablet na ścianie w stale włączony panel akwarium – duże kolorowe wartości, żywe 24-godzinne wykresy z podłączonych urządzeń, kafelki stanu i dzisiejsze zadania.
+• Wybierz karty, ukryj duplikaty, przeciągnij własną kolejność; autostart i nocne przyciemnianie w zestawie.
+• Poprawka: kopie zapasowe i przypomnienia działają teraz także na urządzeniach włączonych tygodniami.
+</pl-PL>
+<fr-FR>
+• Affichage mural (PRO) : transformez une tablette murale en tableau toujours allumé de votre aquarium – grandes valeurs en couleur, graphiques 24 h en direct depuis vos appareils connectés, tuiles d'état et tâches du jour.
+• Choisissez les cartes, masquez les doublons, glissez votre ordre ; démarrage automatique et atténuation nocturne inclus.
+• Correctif : sauvegardes et rappels fonctionnent désormais aussi sur les appareils allumés des semaines durant.
+</fr-FR>
+<it-IT>
+• Display a parete (PRO): trasforma un tablet a muro in un pannello sempre acceso del tuo acquario – grandi valori colorati, grafici live delle ultime 24 ore dai dispositivi collegati, riquadri di stato e attività di oggi.
+• Scegli le schede, nascondi i duplicati, trascina il tuo ordine; avvio automatico e attenuazione notturna inclusi.
+• Correzione: backup e promemoria ora funzionano anche sui dispositivi accesi per settimane.
+</it-IT>

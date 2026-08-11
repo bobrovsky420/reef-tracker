@@ -47,9 +47,20 @@ Future<void> main() async {
   // (see `_documentsDir` in database.dart); the observer above already
   // surfaces database errors to the user.
   try {
-    await container
+    final settingsMap = await container
         .read(settingsMapProvider.future)
         .timeout(const Duration(seconds: 3));
+    // Wall-display auto-start (U49 §12f): arm the router's cold-start-only
+    // redirect so a rebooted wall tablet lands straight back in the mode.
+    // The stored flag is trusted as-is: enabling it is Pro-gated at the
+    // toggle and the wall screen re-checks the entitlement (degrading to its
+    // lock notice) — and, decisive here, verifying the purchase would need
+    // the entitlement store's pre-first-frame platform-channel read, exactly
+    // the call class that hangs before the first frame on some devices
+    // (flutter/flutter#72872, the pre-warm note above).
+    wallAutoStartRequested = AppSettings.decodeWallAutoStart(
+      settingsMap[SettingKey.wallAutoStart.storageKey],
+    );
   } catch (_) {}
   runApp(
     UncontrolledProviderScope(
@@ -96,6 +107,15 @@ class ReefTrackerApp extends ConsumerStatefulWidget {
 
 class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     with WidgetsBindingObserver {
+  /// Periodic housekeeping for a process that never backgrounds (#118): the
+  /// auto-backup check and the reminder resync used to hang exclusively off
+  /// `AppLifecycleState.resumed`, but a wall tablet (U49) never resumes — so
+  /// backups would run exactly once and the 14-day reminder horizon would
+  /// silently run out after two weeks of uptime. The tick runs the same
+  /// maintenance the resume path does; both are cheap no-ops when nothing is
+  /// due. Six-hourly bounds the drift well under the daily backup cadence.
+  Timer? _housekeeping;
+
   @override
   void initState() {
     super.initState();
@@ -108,11 +128,19 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
       _purgeDeletedTanks();
       _maybeBackUp();
       _initReminders();
+      _autoStartWallFallback();
+    });
+    _housekeeping = Timer.periodic(const Duration(hours: 6), (_) {
+      _maybeBackUp();
+      unawaited(
+        ref.read(reminderSchedulerProvider).resync().catchError((_) {}),
+      );
     });
   }
 
   @override
   void dispose() {
+    _housekeeping?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -256,6 +284,37 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
             stack: s,
             library: 'entitlement',
             context: ErrorSummary('reconciling the Pro unlock at startup'),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// The wall-display autostart's slow-boot fallback (U49 §12f). The primary
+  /// path is `main()`'s pre-frame arming of the router redirect, but that
+  /// rides the settings pre-warm's bounded wait — a cold start slow enough to
+  /// blow the 3 s cap would silently strand a wall tablet on the home screen
+  /// until someone walks over. This post-frame check re-reads the flag once
+  /// the database is warm and jumps only while the app is still sitting on
+  /// the initial route, so it can never fight navigation the user (or a
+  /// notification tap) has already performed.
+  void _autoStartWallFallback() {
+    if (wallAutoStartRequested) return; // The redirect already handled it.
+    Future<void> run() async {
+      final on = await ref.read(settingsProvider).readWallAutoStart();
+      if (!on || !mounted) return;
+      final location = appRouter.routerDelegate.currentConfiguration.uri.path;
+      if (location == '/') appRouter.go('/wall');
+    }
+
+    unawaited(
+      run().catchError((Object e, StackTrace s) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'wall',
+            context: ErrorSummary('arming the wall-display autostart'),
           ),
         );
       }),

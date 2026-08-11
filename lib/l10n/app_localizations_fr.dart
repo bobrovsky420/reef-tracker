@@ -4061,4 +4061,131 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Utilise les valeurs par défaut';
+
+  @override
+  String get wallDisplayTitle => 'Affichage mural';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Tableau toujours allumé des valeurs de votre aquarium';
+
+  @override
+  String get wallStartNow => 'Démarrer maintenant';
+
+  @override
+  String get wallStartNowSubtitle => 'Afficher le tableau mural sur cet écran';
+
+  @override
+  String get wallAutoStartTitle => 'Démarrer au lancement';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Ouvrir l\'affichage mural à chaque lancement de l\'application sur cet appareil';
+
+  @override
+  String get wallBehaviourSection => 'Comportement';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Actualiser toutes les';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Fréquence de lecture des appareils connectés';
+
+  @override
+  String get wallPageSecondsTitle => 'Rotation des pages';
+
+  @override
+  String get wallPageSecondsSubtitle => 'Durée d\'affichage de chaque page';
+
+  @override
+  String get wallNightTitle => 'Atténuation nocturne';
+
+  @override
+  String get wallNightSubtitle =>
+      'Atténuer l\'écran la nuit ; un appui le rallume pendant une minute';
+
+  @override
+  String get wallNightFromTitle => 'Atténuer à partir de';
+
+  @override
+  String get wallNightToTitle => 'Atténuer jusqu\'à';
+
+  @override
+  String get wallCardsSection => 'Cartes';
+
+  @override
+  String get wallCardsHint =>
+      'Chaque valeur signalée par un appareil a sa propre carte. Masquez les doublons inutiles et faites glisser le reste ; masquez toutes les cartes d\'un appareil et le tableau cesse de le contacter.';
+
+  @override
+  String get wallStoredCard => 'Mesures manuelles';
+
+  @override
+  String get wallDeviceNotContacted => 'non contacté';
+
+  @override
+  String get wallHideLastCardNote =>
+      'Masquer cette carte cessera de contacter l\'appareil';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Pas encore d\'aquarium. Ajoutez-en un, puis démarrez l\'affichage mural.';
+
+  @override
+  String get wallProLocked => 'L\'affichage mural est une fonction PRO.';
+
+  @override
+  String get wallExitHint => 'Maintenez appuyé n\'importe où pour quitter';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'mis à jour $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'À faire aujourd\'hui : $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return 'test $param';
+  }
+
+  @override
+  String get wallRoDue => 'Remplacement à faire';
+
+  @override
+  String get wallNoDevices => 'Aucun appareil';
+
+  @override
+  String get wallAllReachable => 'Tous les appareils joignables';
+
+  @override
+  String get wallSomeUnreachable => 'Un appareil est injoignable';
+
+  @override
+  String get wallNetworkDown => 'Aucun appareil joignable – vérifiez le réseau';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'mesuré $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 j';
 }

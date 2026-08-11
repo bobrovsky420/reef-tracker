@@ -125,6 +125,17 @@ class SettingsBody extends ConsumerWidget {
                 onChanged: settings.setThemeMode,
               ),
             ),
+            // Wall display mode (U49): its options live on a subpage — the
+            // mode is entered from there ("Start now") or via auto-start,
+            // deliberately not from the Devices tab (that host owns no menu,
+            // U41).
+            ReefSettingsRow(
+              icon: Icons.monitor_outlined,
+              title: l.wallDisplayTitle,
+              description: l.wallDisplaySubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => context.push('/settings/wall'),
+            ),
           ],
         ),
         ReefSettingsSection(

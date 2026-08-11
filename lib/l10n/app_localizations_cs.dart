@@ -4056,4 +4056,132 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Používá výchozí hodnoty';
+
+  @override
+  String get wallDisplayTitle => 'Nástěnný displej';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Stále zapnutý přehled hodnot vašeho akvária';
+
+  @override
+  String get wallStartNow => 'Spustit teď';
+
+  @override
+  String get wallStartNowSubtitle => 'Zobrazit nástěnku na této obrazovce';
+
+  @override
+  String get wallAutoStartTitle => 'Spustit při startu';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Po spuštění aplikace na tomto zařízení rovnou otevřít nástěnný displej';
+
+  @override
+  String get wallBehaviourSection => 'Chování';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Obnovovat každých';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Jak často se čtou připojená zařízení';
+
+  @override
+  String get wallPageSecondsTitle => 'Střídání stránek';
+
+  @override
+  String get wallPageSecondsSubtitle =>
+      'Jak dlouho zůstane každá stránka zobrazená';
+
+  @override
+  String get wallNightTitle => 'Noční ztmavení';
+
+  @override
+  String get wallNightSubtitle =>
+      'V noci ztmavit obrazovku; klepnutí ji na minutu rozsvítí';
+
+  @override
+  String get wallNightFromTitle => 'Ztmavit od';
+
+  @override
+  String get wallNightToTitle => 'Ztmavit do';
+
+  @override
+  String get wallCardsSection => 'Karty';
+
+  @override
+  String get wallCardsHint =>
+      'Každá hodnota, kterou zařízení hlásí, má vlastní kartu. Skryjte duplicity, které nechcete, a zbytek přetáhněte na místo; skryjete-li všechny karty zařízení, nástěnka ho přestane kontaktovat.';
+
+  @override
+  String get wallStoredCard => 'Ruční měření';
+
+  @override
+  String get wallDeviceNotContacted => 'nekontaktuje se';
+
+  @override
+  String get wallHideLastCardNote => 'Skrytím se zařízení přestane kontaktovat';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Zatím žádné akvárium. Přidejte ho a pak spusťte nástěnný displej.';
+
+  @override
+  String get wallProLocked => 'Nástěnný displej je funkce PRO.';
+
+  @override
+  String get wallExitHint => 'Podržením kdekoli ukončíte';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'aktualizováno $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Dnes na řadě: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return 'test – $param';
+  }
+
+  @override
+  String get wallRoDue => 'Čeká výměna';
+
+  @override
+  String get wallNoDevices => 'Žádná zařízení';
+
+  @override
+  String get wallAllReachable => 'Všechna zařízení dostupná';
+
+  @override
+  String get wallSomeUnreachable => 'Některé zařízení je nedostupné';
+
+  @override
+  String get wallNetworkDown =>
+      'Žádné zařízení není dostupné – zkontrolujte síť';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'změřeno $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 d';
 }

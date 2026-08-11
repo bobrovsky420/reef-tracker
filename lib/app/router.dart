@@ -38,6 +38,8 @@ import '../features/settings/backups_screen.dart';
 import '../features/settings/reminders_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/tanks/tanks_screen.dart';
+import '../features/wall/wall_screen.dart';
+import '../features/wall/wall_settings_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/reef_card.dart';
 import 'providers.dart';
@@ -47,8 +49,25 @@ import 'providers.dart';
 /// whatever screen is current.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Set by `main()` (before `runApp`) when the wall display's auto-start flag
+/// is on (U49 §12f): the router's first resolution — and only the first, see
+/// [_wallAutoStartConsumed] — then redirects the cold start onto `/wall`.
+/// A mutable top-level rather than a setting read here, because a router
+/// redirect has no async settings access and must never block navigation.
+bool wallAutoStartRequested = false;
+bool _wallAutoStartConsumed = false;
+
 final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
+  // Cold-start-only wall redirect (U49): consumed on the very first
+  // resolution this process performs, so it can never fight in-session
+  // navigation — a reminder-notification launch URL, or the user simply
+  // leaving the wall, navigates freely afterwards.
+  redirect: (context, state) {
+    if (_wallAutoStartConsumed) return null;
+    _wallAutoStartConsumed = true;
+    return wallAutoStartRequested ? '/wall' : null;
+  },
   routes: [
     GoRoute(
       path: '/',
@@ -167,6 +186,14 @@ final appRouter = GoRouter(
       path: '/settings/reminders',
       builder: (context, state) => const RemindersScreen(),
     ),
+    GoRoute(
+      path: '/settings/wall',
+      builder: (context, state) => const WallSettingsScreen(),
+    ),
+    // Wall display mode (U49): a pushed full-screen kiosk route with its own
+    // scaffold — deliberately not a bottom-nav destination (the bar is at its
+    // five-label limit, and this is a mode entered once per tablet boot).
+    GoRoute(path: '/wall', builder: (context, state) => const WallScreen()),
     GoRoute(
       path: '/schedule',
       builder: (context, state) => const MaintenanceScheduleScreen(),

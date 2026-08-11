@@ -6638,6 +6638,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Following the defaults'**
   String get followingDefaults;
+
+  /// Settings row + subpage title of the wall display mode (U49): a wall-mounted tablet showing the tank's current values.
+  ///
+  /// In en, this message translates to:
+  /// **'Wall display'**
+  String get wallDisplayTitle;
+
+  /// Settings row subtitle for the wall display.
+  ///
+  /// In en, this message translates to:
+  /// **'An always-on board of your aquarium\'s values'**
+  String get wallDisplaySubtitle;
+
+  /// Row on the wall-display settings page that enters the mode immediately.
+  ///
+  /// In en, this message translates to:
+  /// **'Start now'**
+  String get wallStartNow;
+
+  /// No description provided for @wallStartNowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the wall board on this screen'**
+  String get wallStartNowSubtitle;
+
+  /// Switch: boot straight into the wall display when the app starts.
+  ///
+  /// In en, this message translates to:
+  /// **'Start on launch'**
+  String get wallAutoStartTitle;
+
+  /// No description provided for @wallAutoStartSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the wall display whenever the app starts on this device'**
+  String get wallAutoStartSubtitle;
+
+  /// Section label grouping the wall display's cadence and night options.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour'**
+  String get wallBehaviourSection;
+
+  /// Dropdown row: how often the wall polls connected devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh every'**
+  String get wallRefreshIntervalTitle;
+
+  /// No description provided for @wallRefreshIntervalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How often connected devices are read'**
+  String get wallRefreshIntervalSubtitle;
+
+  /// Dropdown row: seconds each page stays when the grid paginates.
+  ///
+  /// In en, this message translates to:
+  /// **'Page rotation'**
+  String get wallPageSecondsTitle;
+
+  /// No description provided for @wallPageSecondsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How long each page stays before the next one'**
+  String get wallPageSecondsSubtitle;
+
+  /// Switch: dim the wall display during the night window.
+  ///
+  /// In en, this message translates to:
+  /// **'Night dim'**
+  String get wallNightTitle;
+
+  /// No description provided for @wallNightSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim the screen at night; a tap lifts it for a minute'**
+  String get wallNightSubtitle;
+
+  /// Time-picker row: start of the night-dim window.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim from'**
+  String get wallNightFromTitle;
+
+  /// Time-picker row: end of the night-dim window.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim until'**
+  String get wallNightToTitle;
+
+  /// Section label above the wall-card list (one card per device and parameter).
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get wallCardsSection;
+
+  /// Explainer above the wall-card list; the traffic consequence of hiding everything is deliberate and must be stated.
+  ///
+  /// In en, this message translates to:
+  /// **'Every value a device reports gets its own card. Hide the duplicates you don\'t want and drag the rest into place; hide all of a device\'s cards and the wall stops contacting it.'**
+  String get wallCardsHint;
+
+  /// Subtitle naming the source of a wall card fed by stored readings rather than a device.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual measurements'**
+  String get wallStoredCard;
+
+  /// Marker on card rows of a device whose cards are all hidden — the wall no longer polls it.
+  ///
+  /// In en, this message translates to:
+  /// **'not contacted'**
+  String get wallDeviceNotContacted;
+
+  /// Warning on the row whose toggle would hide a device's last visible card.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiding this stops contacting the device'**
+  String get wallHideLastCardNote;
+
+  /// Short seconds label in the interval dropdowns.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} s'**
+  String wallSecondsLabel(int n);
+
+  /// Short minutes label in the interval dropdowns.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} min'**
+  String wallMinutesLabel(int n);
+
+  /// Full-screen note when the wall display is opened with no tank.
+  ///
+  /// In en, this message translates to:
+  /// **'No aquarium yet. Add one, then start the wall display.'**
+  String get wallNoTank;
+
+  /// Full-screen note when the wall display is opened without the entitlement.
+  ///
+  /// In en, this message translates to:
+  /// **'The wall display is a PRO feature.'**
+  String get wallProLocked;
+
+  /// Transient hint teaching the wall display's 1.5-second exit hold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold anywhere to exit'**
+  String get wallExitHint;
+
+  /// Header stamp: when the wall last completed a poll cycle.
+  ///
+  /// In en, this message translates to:
+  /// **'updated {time}'**
+  String wallUpdatedAt(Object time);
+
+  /// Bottom strip listing today's due reminders as plain text.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today: {items}'**
+  String wallDueToday(Object items);
+
+  /// One due-today item: a parameter test that has reached its cadence.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} test'**
+  String wallTestDue(Object param);
+
+  /// Second line of the RO status tile when a stage has reached its lifespan.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacement due'**
+  String get wallRoDue;
+
+  /// Semantics label of the header connection dot with nothing to poll.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices'**
+  String get wallNoDevices;
+
+  /// Semantics label of the green header connection dot.
+  ///
+  /// In en, this message translates to:
+  /// **'All devices reachable'**
+  String get wallAllReachable;
+
+  /// Semantics label of the amber header connection dot (partial failures).
+  ///
+  /// In en, this message translates to:
+  /// **'A device is unreachable'**
+  String get wallSomeUnreachable;
+
+  /// Semantics label of the red header connection dot: every poll failing usually means the tablet lost the network, not four devices at once.
+  ///
+  /// In en, this message translates to:
+  /// **'No device reachable — check the network'**
+  String get wallNetworkDown;
+
+  /// Provenance line of a stored-readings card: the last hand measurement and its age.
+  ///
+  /// In en, this message translates to:
+  /// **'measured {ago}'**
+  String wallMeasuredAgo(Object ago);
+
+  /// Tile-footer label naming the 24-hour sample window of the graph.
+  ///
+  /// In en, this message translates to:
+  /// **'24 h'**
+  String get wallWindow24h;
+
+  /// Tile-footer label naming the 14-day readings window of the fallback graph.
+  ///
+  /// In en, this message translates to:
+  /// **'14 d'**
+  String get wallWindow14d;
 }
 
 class _AppLocalizationsDelegate

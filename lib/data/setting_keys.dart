@@ -102,3 +102,13 @@ const kHannaScanFabKey = 'hanna_scan_fab';
 // session also saves current environment readings from the tank's connected
 // devices. Off by default.
 const kHannaAttachEnvironmentKey = 'hanna_attach_environment';
+// Wall display mode (U49). All six describe *this tablet* — whether it boots
+// into the mode, how live its wall feels, when it dims — so every one is
+// `deviceLocal: true`; a U35 multi-device restore must never teach the
+// keeper's phone to boot into wall mode.
+const kWallAutoStartKey = 'wall_auto_start';
+const kWallRefreshIntervalKey = 'wall_refresh_interval';
+const kWallNightEnabledKey = 'wall_night_enabled';
+const kWallNightFromKey = 'wall_night_from';
+const kWallNightToKey = 'wall_night_to';
+const kWallPageSecondsKey = 'wall_page_seconds';

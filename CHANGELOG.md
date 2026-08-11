@@ -5,6 +5,56 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-08-11
+
+### Added
+- Wall display mode (U49 phase 1, PRO): turn a wall-mounted tablet into an
+  always-on board of the aquarium's current state. A full-screen grid of value
+  cards — one card per device *and* parameter, plus a card fed by your stored
+  readings for every tracked parameter no device reports — each with the
+  parameter name, the value large enough to read across the room, its
+  color-coded zone, a graph and a provenance line naming the source and the
+  value's age ("Apex · now", "measured 2 d ago"). Status tiles after the
+  values show the ATO reservoir and leak sensor, doses delivered today, the
+  fleece roll and the skimmer cup, plus the RO stage most due; an optional
+  bottom strip lists today's due maintenance and parameter tests.
+  - Each device card carries a live 24-hour graph built from the mode's own
+    polling (5-minute buckets with a min/max band, kept 48 h in a new
+    display-only sample table — never written into the measurement history),
+    with hand measurements drawn as markers; parameters without enough samples
+    fall back to the dashboard's 14-day line, and the tile footer names the
+    window.
+  - The grid never scrolls: it sizes tiles to the screen (fewer, bigger tiles
+    under a larger system font) and paginates with auto-rotation when the
+    cards don't fit one page.
+  - Polling is configurable (30 s to 15 min, default 5 min), polite
+    (sequential per vendor), and backs off automatically — doubling to a
+    30-minute ceiling for unreachable devices and for devices whose values
+    stopped changing.
+  - Always-on behaviors: keeps the screen awake while foregrounded, hides the
+    system bars, dims itself during a configurable night window (default
+    22:00–07:00; a tap lifts the dim for a minute), and drifts the grid a few
+    pixels every 10 minutes against OLED burn-in.
+  - Cards are managed under Settings → Wall display: hide duplicates you
+    don't want, drag the rest into your own order. Hiding all of a device's
+    cards stops the wall from contacting that device entirely — durably, so
+    an app update cannot quietly re-enable it.
+  - Auto-start on launch (optional): the app boots straight into the wall
+    display, so a rebooted tablet returns to the board by itself. Exit is a
+    deliberate 1.5-second hold with a progress ring, so a brushed-past panel
+    never navigates away.
+  - Note for this build: the wall display has been exercised against the
+    committed fake devices (Apex, ReefFactory, ReefBeat emulators), not
+    against real hardware, and its iOS behaviors (immersive-mode restore,
+    Guided Access interaction) have not been verified on a physical iPad.
+
+### Fixed
+- Auto-backup and reminder scheduling used to run only at launch and when the
+  app returned to the foreground, so a device left permanently open (a wall
+  tablet, or a phone that is simply never swiped away) would stop taking
+  backups and — after two weeks — stop firing reminders. Both now also run on
+  a periodic in-app tick.
+
 ## [1.2.0] - 2026-08-10
 
 ### Added
