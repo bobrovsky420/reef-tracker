@@ -843,9 +843,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get aboutSection => 'O aplikaci';
 
   @override
-  String get languageSection => 'Jazyk';
-
-  @override
   String get appearanceSection => 'Vzhled';
 
   @override

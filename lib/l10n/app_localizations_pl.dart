@@ -847,9 +847,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aboutSection => 'O aplikacji';
 
   @override
-  String get languageSection => 'Język';
-
-  @override
   String get appearanceSection => 'Wygląd';
 
   @override

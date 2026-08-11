@@ -82,7 +82,7 @@ class SettingsBody extends ConsumerWidget {
     return ReefSettingsList(
       sections: [
         ReefSettingsSection(
-          label: l.languageSection,
+          label: l.appearanceSection,
           children: [
             ReefSettingsRow(
               icon: Icons.translate,
@@ -104,13 +104,8 @@ class SettingsBody extends ConsumerWidget {
                 ],
               ),
             ),
-          ],
-        ),
-        // Theme mode (REDESIGN #16): the segmented System/Light/Dark choice
-        // replacing the mockups' navbar sun/moon toggle.
-        ReefSettingsSection(
-          label: l.appearanceSection,
-          children: [
+            // Theme mode (REDESIGN #16): the segmented System/Light/Dark
+            // choice replacing the mockups' navbar sun/moon toggle.
             ReefSettingsRow(
               icon: Icons.dark_mode_outlined,
               title: l.themeTitle,

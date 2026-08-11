@@ -57,6 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     against real hardware, and its iOS behaviors (immersive-mode restore,
     Guided Access interaction) have not been verified on a physical iPad.
 
+### Changed
+- Settings: the language selector moved into the Appearance group (as its
+  first row) instead of sitting in a section of its own.
+
 ### Fixed
 - Auto-backup and reminder scheduling used to run only at launch and when the
   app returned to the foreground, so a device left permanently open (a wall

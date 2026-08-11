@@ -1505,13 +1505,7 @@ abstract class AppLocalizations {
   /// **'About'**
   String get aboutSection;
 
-  /// No description provided for @languageSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get languageSection;
-
-  /// Settings section label for the theme-mode choice (REDESIGN #16).
+  /// Settings section label for the language, theme-mode and wall-display rows (REDESIGN #16).
   ///
   /// In en, this message translates to:
   /// **'Appearance'**
