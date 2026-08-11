@@ -40,10 +40,22 @@ void main() {
         title: 'ReefDose 4',
         tone: Zone.red,
         heads: [
-          WallDoseHeadData(label: 'KH', timeLeft: '5 days', tone: Zone.red),
-          WallDoseHeadData(label: 'Ca', timeLeft: '10 days', tone: Zone.amber),
-          WallDoseHeadData(label: 'Mg', timeLeft: '4 months', tone: Zone.green),
-          WallDoseHeadData(label: 'NPX', tone: Zone.unknown),
+          WallDoseHeadData(
+            label: 'Balling light KH',
+            timeLeft: '5 days',
+            tone: Zone.red,
+          ),
+          WallDoseHeadData(
+            label: 'Balling light Ca',
+            timeLeft: '10 days',
+            tone: Zone.amber,
+          ),
+          WallDoseHeadData(
+            label: 'Balling light Mg',
+            timeLeft: '4 months',
+            tone: Zone.green,
+          ),
+          WallDoseHeadData(label: 'NO3PO4-X', tone: Zone.unknown),
         ],
       ),
     );
@@ -59,7 +71,14 @@ void main() {
     expect(icons[3].color, Theme.of(context).colorScheme.onSurfaceVariant);
     expect(find.text('—'), findsOneWidget);
 
-    for (final label in ['KH', 'Ca', 'Mg', 'NPX']) {
+    // Full supplement names — a long one ellipsizes in its half-row rather
+    // than overflowing the 260-wide cell.
+    for (final label in [
+      'Balling light KH',
+      'Balling light Ca',
+      'Balling light Mg',
+      'NO3PO4-X',
+    ]) {
       expect(find.text(label), findsOneWidget);
     }
     expect(find.text('5 days'), findsOneWidget);
@@ -82,8 +101,16 @@ void main() {
       const WallDoseData(
         title: 'ReefDose 2',
         heads: [
-          WallDoseHeadData(label: 'KH', timeLeft: '68 days', tone: Zone.green),
-          WallDoseHeadData(label: 'NPX', timeLeft: '48 days', tone: Zone.green),
+          WallDoseHeadData(
+            label: 'Balling light KH',
+            timeLeft: '68 days',
+            tone: Zone.green,
+          ),
+          WallDoseHeadData(
+            label: 'NO3PO4-X',
+            timeLeft: '48 days',
+            tone: Zone.green,
+          ),
         ],
       ),
     );

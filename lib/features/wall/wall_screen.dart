@@ -1036,7 +1036,7 @@ class _WallScreenState extends ConsumerState<WallScreen>
         final heads = <WallDoseHeadData>[];
         var worst = Zone.unknown;
         for (final h in dose.heads) {
-          final label = h.shortName ?? h.supplement;
+          final label = h.supplement ?? h.shortName;
           if (label == null) continue;
           final days = h.switchedOff ? null : h.remainingDays;
           final tone = days == null
