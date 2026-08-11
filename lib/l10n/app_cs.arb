@@ -1168,5 +1168,7 @@
   "wallNetworkDown": "Žádné zařízení není dostupné – zkontrolujte síť",
   "wallMeasuredAgo": "změřeno {ago}",
   "wallWindow24h": "24 h",
-  "wallWindow14d": "14 d"
+  "wallWindow14d": "14 d",
+  "wallHeadDays": "{count, plural, one{1 den} few{{count} dny} other{{count} dní}}",
+  "wallHeadMonths": "{count, plural, one{1 měsíc} few{{count} měsíce} other{{count} měsíců}}"
 }

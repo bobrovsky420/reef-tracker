@@ -73,6 +73,43 @@ void main() {
     expect(paused.pumps[0].fullCup, isFalse);
     expect(paused.pumps[0].intensity, 80);
   });
+
+  test('reads the ReefDose: four heads with abbreviations resolved', () async {
+    await startEmulator(EmuRbType.dose);
+    final snap = await link.readOnce(host);
+
+    expect(snap.modelDisplayName, 'ReefDose 4');
+    final dose = snap.dose!;
+    expect(dose.heads, hasLength(4));
+    expect(dose.heads[0].supplement, 'Balling light KH');
+    // The abbreviation lives only in /head/<n>/settings — its presence proves
+    // the link chased all four settings reads against the fake.
+    expect(dose.heads.map((h) => h.shortName), ['KH', 'Ca', 'Mg', 'NPX']);
+    expect(dose.heads[0].dosedToday, 26.7);
+    expect(dose.heads[0].dailyDose, 40);
+    expect(dose.heads[3].planComplete, isTrue);
+    expect(dose.heads.every((h) => !h.switchedOff), isTrue);
+
+    // The queue parses; near midnight it may legitimately run empty, so only
+    // shape is asserted, not length.
+    final queue = await link.readDosingQueue(host);
+    for (final entry in queue) {
+      expect(['KH', 'Ca', 'Mg', 'NPX'], contains(entry.head));
+      expect(entry.volumeMl, isPositive);
+    }
+  });
+
+  test('a forced low stock survives a re-read', () async {
+    await startEmulator(EmuRbType.dose);
+    expect((await link.readOnce(host)).dose!.heads[3].remainingDays, 48);
+
+    await _control(emulator, '/emu/dose?head=4&days=5');
+    final low = (await link.readOnce(host)).dose!;
+    expect(low.heads[3].remainingDays, 5);
+    expect(low.heads[3].stockLevel, 'low');
+    // The other heads keep their stock.
+    expect(low.heads[0].remainingDays, 117);
+  });
 }
 
 /// Hits an `/emu/*` control endpoint (not part of the ReefBeat API).

@@ -1168,5 +1168,7 @@
   "wallNetworkDown": "Aucun appareil joignable – vérifiez le réseau",
   "wallMeasuredAgo": "mesuré {ago}",
   "wallWindow24h": "24 h",
-  "wallWindow14d": "14 j"
+  "wallWindow14d": "14 j",
+  "wallHeadDays": "{count, plural, one{1 jour} other{{count} jours}}",
+  "wallHeadMonths": "{count, plural, one{1 mois} other{{count} mois}}"
 }

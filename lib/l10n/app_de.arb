@@ -1168,5 +1168,7 @@
   "wallNetworkDown": "Kein Gerät erreichbar – Netzwerk prüfen",
   "wallMeasuredAgo": "gemessen {ago}",
   "wallWindow24h": "24 h",
-  "wallWindow14d": "14 T"
+  "wallWindow14d": "14 T",
+  "wallHeadDays": "{count, plural, one{1 Tag} other{{count} Tage}}",
+  "wallHeadMonths": "{count, plural, one{1 Monat} other{{count} Monate}}"
 }

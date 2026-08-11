@@ -4148,4 +4148,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wallWindow14d => '14 d';
+
+  @override
+  String wallHeadDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String wallHeadMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
 }

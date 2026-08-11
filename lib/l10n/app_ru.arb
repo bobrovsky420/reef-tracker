@@ -1168,5 +1168,7 @@
   "wallNetworkDown": "Устройства недоступны — проверьте сеть",
   "wallMeasuredAgo": "измерено {ago}",
   "wallWindow24h": "24 ч",
-  "wallWindow14d": "14 д"
+  "wallWindow14d": "14 д",
+  "wallHeadDays": "{count, plural, one{{count} день} few{{count} дня} many{{count} дней} other{{count} дня}}",
+  "wallHeadMonths": "{count, plural, one{{count} месяц} few{{count} месяца} many{{count} месяцев} other{{count} месяца}}"
 }
