@@ -154,7 +154,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 28**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 29**
 
 | Table | Key columns |
 |-------|-------------|
@@ -175,6 +175,8 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
 | `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
 | `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`\|`apex`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat/Apex; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt?, displayOrder — manual card order on the dashboards (v25; one sequence per `kind`, new devices take max+1, ties fall back to the display name `name ?? model ?? identifier` = `deviceDisplayName`), username? — the login name for an authenticated device API (v26; Apex only). The matching **password is deliberately not a column** (#68, v27 dropped the one v26 added): this table rides Android Auto Backup and device transfer inside the raw SQLite file, so it lives in the backup-excluded `.device_secrets` sidecar keyed by `identifier` (`device_secrets.dart`) — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows, the ReefBeat dashboard `reefbeat` rows and the Apex dashboard `apex` rows (add / refresh / reorder / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds, still ordered kind-then-oldest |
+| `DeviceSamples` | tankId + deviceIdentifier + paramKey + bucketStart (composite PK), value/minValue/maxValue — the wall display's **display-only sample buckets** (U49 §12m, v29): at most one row per (tank, device, parameter) per 5-minute bucket whatever the poll interval, holding the last value plus the min/max seen inside the bucket (what draws the tile's range band). Keyed by `Devices.identifier` so a card is one device's series by construction. These are unvalidated probe samples, **not measurements**: never in a backup (the `encodeBackup` section list excludes them by construction), never read by domain code (trend/stability/dosing/export read `Readings`), rail values dropped at write time, pruned by age (48 h retention, `pruneDeviceSamples`). Deliberately **no FKs** — nothing references the table and it references nothing, so the feature stays droppable (§12o) and a backup restore replacing every tank can't cascade the wall's overnight graph away; orphans age out. Index `(tankId, paramKey, bucketStart)` |
+| `WallTileSettings` | tankId + deviceIdentifier + paramKey (composite PK), displayOrder?, visible — per-tile wall-display layout (U49 §12q, v29): order and visibility of one wall card; `deviceIdentifier` is `''` (not NULL — NULLs are distinct in a unique key) for the stored-readings card of a parameter no device reports; `displayOrder` null = never explicitly ordered (default grouped order, after all explicit rows, so new cards append). **Sparse** (§12o rule 1): a missing row means the default, so deleting every row degrades to stock behaviour; no FK and no cascade, deliberately — orphan rows are invisible through the join; device-local and backup-excluded (one tablet's layout, not aquarium data) |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -234,7 +236,16 @@ preference — no per-feature rows); purely visibility, nothing stored is
 touched), and
 `hanna_scan_fab` (the opt-in camera-scan quick button above "Add reading",
 default off — most users don't own a pocket checker, so the FAB space is
-opt-in; without it the scan stays reachable via the overflow menu). The
+opt-in; without it the scan stays reachable via the overflow menu), and the
+wall display's six keys (U49, **all device-local — that is the point**: they
+describe *this tablet*, so a U35 multi-device restore must never teach the
+keeper's phone to boot into wall mode): `wall_auto_start` (cold-boot straight
+into `/wall`, default off), `wall_refresh_interval` (poll cadence in seconds,
+whitelisted 30/60/300/900, default 300), `wall_night_enabled` /
+`wall_night_from` / `wall_night_to` (the night-dim window as minutes since
+midnight, defaults on + 22:00–07:00, may cross midnight), and
+`wall_page_seconds` (grid auto-rotation, whitelisted 10/15/30/60, default
+15). The
 reminder keys are device-local: notification preferences must not ride a
 backup onto another device. `ro_stages_seeded` and `ro_usage_level` are the
 **non**-device-local keys here: they describe domain data (the household's RO
@@ -294,7 +305,9 @@ which **v27 drops again** (`dropColumn`, guarded by `_columnExists`): the raw
 database rides Android Auto Backup and device transfer, so a password stored
 there left the phone through a channel the app never sees, and it lives in the
 backup-excluded `.device_secrets` sidecar now (#68, see *Device credentials*
-below)
+below); v29 added the `DeviceSamples` + `WallTileSettings` tables
+(`createTable` ×2, guarded by `_tableExists`) and the sample index
+(`CREATE INDEX IF NOT EXISTS`) for the wall display (U49)
 into the column so existing dashboards keep their layout — idempotent, it only
 runs while every row still carries the `0` default.
 Foreign keys are enabled in
@@ -1521,6 +1534,22 @@ Body text stays the platform default (SF/Roboto).
 | `/hanna/scan` | Checker camera scan (U34, experimental): model picker → viewfinder → confirm in one route |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 | `/devices` | Standalone Devices page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers and (U43) the Hanna checker. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory. Since U42 the same body is the home shell's Devices tab and nothing pushes this route; it stays as a stable deep-link target, mirroring `/settings` |
+| `/settings/wall` | Wall display options (U49): Start now, auto-start, refresh interval, page rotation, night window, and the reorderable wall-card list |
+| `/wall` | Wall display mode (U49): the full-screen kiosk board — its own scaffold-less layout, deliberately **not** a sixth bottom-nav destination (the bar is at its five-label limit, and this is a mode entered once per tablet boot) |
+
+The router carries one top-level `redirect` — the wall display's
+**cold-start-only autostart** (U49 §12f): `main()` arms a mutable
+`wallAutoStartRequested` flag before `runApp` (from the settings pre-warm's
+map; the stored flag is trusted as-is because enabling it is Pro-gated at the
+toggle and the wall screen re-checks the entitlement — verifying the purchase
+here would need a pre-first-frame platform-channel read, the flutter#72872
+hang class), and the redirect consumes itself on the very first route
+resolution of the process, sending it to `/wall` when armed. Consumed-once
+means it can never fight in-session navigation (a reminder-notification
+launch URL, or simply leaving the wall). A post-frame fallback
+(`_autoStartWallFallback`) covers a cold start slow enough to blow the
+pre-warm's 3 s cap: it re-reads the flag once the database is warm and jumps
+only while the app still sits on `/`.
 
 The Actions log is no longer a standalone route — it is the second tab inside the
 home shell (see Features). `/` accepts a
@@ -3648,6 +3677,86 @@ Connected devices union (`/settings/devices`) was removed by U41 — the unified
 `/devices` page is the only surface over the `Devices` table. The Hanna
 checker still self-registers there via `ensureHannaDevice` on first connect
 (`hanna_meter_screen.dart`).
+
+### Wall display mode (U49 phase 1, Pro) — `features/wall/`, routes `/wall` + `/settings/wall`
+
+"The tablet on the wall": a full-screen kiosk board of the active tank's
+current state, refreshing itself. One app, not a companion app — the whole
+value is showing *this* keeper's devices, which live in this database.
+
+- **Shape** (`wall_screen.dart`): a pushed scaffold-less route — no app bar,
+  no nav, no FAB. A grid of value cards, **one card per device *and*
+  parameter** (§12q — no auto-resolved winner, no cross-device fallback; what
+  is on the wall is what the keeper chose), plus one stored-readings card per
+  tracked parameter no device reports. Every tile: dim parameter name, a
+  graph filling the middle, the value auto-fitted as large as the tile allows
+  (zone-coloured, soft zone fill, zone icon + `Semantics` label per #46), and
+  a provenance line naming the source and age ("Apex · now",
+  "measured 2 d ago", "no reading") — **never blank, never a spinner**.
+  Status tiles (ATO level + leak, doses today, fleece roll, skimmer cup, RO
+  stage due) come after the value cards; an optional bottom strip lists
+  today's due maintenance/tests. Header: tank name · clock (24-h preference
+  honoured) · one connection dot (green all-reachable / amber partial / red
+  all-failing ≈ "check the network", §12r) · "updated HH:MM".
+- **No scrolling, ever** (§12c): columns/rows are sized against a
+  *text-scale-scaled* minimum tile size (a larger system font yields fewer,
+  bigger tiles), and overflow paginates into an auto-rotating `PageView`
+  (dots, `wall_page_seconds` per page).
+- **The poll loop** (§12d/§12n) rides the shared `DeviceReadScope` walk
+  (`data/device_read_scope.dart`, extracted from the Devices body so U45
+  reuses it): one ticker at the display interval, each device carrying a
+  `WallPollSchedule` (`domain/wall_display.dart`) with a `nextDue` stamp —
+  error backoff and no-change backoff share one doubling mechanism up to a
+  30-min ceiling, over a per-kind `minPollIntervalOf` floor
+  (`domain/device_vendors.dart`, empty today — the Alkatronic-class seam).
+  On failure the tile keeps its last value and ages visibly. **The wall never
+  writes a `Reading`** — the load-bearing decision: the #31/#71 gate is a
+  dialog, and a modal on an unattended kiosk is a dead screen. It writes
+  display-only `DeviceSamples` buckets instead (visible cards only, rail
+  values silently dropped), prunes every 12th cycle + at mode start, and
+  draws each device card's 24 h line (with min/max band + hand-measurement
+  markers via the extended `widgets/sparkline.dart`) from them — falling back
+  to the dashboard's 14-day readings line below 2 in-window points, window
+  named in the tile footer.
+- **Always-on** (§12e): `wakelock_plus` held while mounted **and**
+  foregrounded (released on pause/dispose), `immersiveSticky` on enter /
+  `edgeToEdge` restored on exit, a night scrim (deliberately not screen
+  brightness — no new plugin) over a configurable window that may cross
+  midnight, lifted 60 s by a tap, and a burn-in lattice shifting the whole
+  board a few pixels every 10 min. Kiosk lock stays the OS's job.
+- **Entering/leaving** (§12f): Settings → Appearance → Wall display
+  (`wall_settings_screen.dart`) — options + "Start now" + the reorderable
+  card list (visibility toggle per row, Manage-parameters drag conventions).
+  Auto-start = `wall_auto_start` + the router's consumed-once cold-start
+  redirect. Exit is a raw-pointer **1.5 s hold** with a progress ring under
+  the finger (a `Listener`, so it never competes with the PageView's swipe
+  arena); a short tap only lifts the dim or shows the exit hint.
+- **Hiding = not measured at all** (§12q): a hidden card is neither shown nor
+  sampled; when a device's last visible card is hidden the device **leaves
+  the wall's poll rotation** entirely, durably — a device at zero visible
+  cards counts as *muted* and newly discovered cards from it default to
+  hidden (`isWallDeviceMuted`), so a firmware update can't quietly re-enable
+  it; un-hiding any card clears the mute. Discovered cards are persisted as
+  sparse `WallTileSettings` rows (`insertMissingWallTiles`) so the settings
+  list is complete across sessions. Hard boundary: none of this affects the
+  Devices page, the save funnel or U45 — a display preference must never
+  remove a device from the measurement history.
+- **Gating** (§12h): its own Pro key `wallDisplay` (grandfathered) — the mode
+  works with zero devices, so it deliberately does not ride
+  `connectedDevices`. Not experimental itself, but the LAN integrations are:
+  with the experimental master switch off the wall shows stored readings
+  only, no device tiles, no polling.
+- **#118** (found by this feature, fixed for everyone): auto-backup and the
+  reminder resync used to hang exclusively off `AppLifecycleState.resumed`; a
+  wall tablet never resumes, so `main.dart` now also runs the same
+  maintenance on a 6-hourly in-app tick.
+- Phase 1 exercised against the committed fakes (`tool/apex_emulator.dart`,
+  `tool/reeffactory_emulator.dart`, `tool/reefbeat_emulator.dart`), never
+  against real hardware; iOS immersive-restore and Guided Access interaction
+  unverified on a physical iPad. Deferred to later phases: address
+  re-resolution after repeated unreachable polls, multi-tank rotation,
+  out-of-range alerting, tap-for-history, follower-mode cloud restore
+  (§12s/§12t), and the multi-day soak.
 
 ### Dosing (`features/dosing/`) — Dosing tab
 

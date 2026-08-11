@@ -4112,4 +4112,132 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Используются значения по умолчанию';
+
+  @override
+  String get wallDisplayTitle => 'Настенный дисплей';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Постоянно включённая панель с показателями вашего аквариума';
+
+  @override
+  String get wallStartNow => 'Запустить сейчас';
+
+  @override
+  String get wallStartNowSubtitle => 'Показать настенную панель на этом экране';
+
+  @override
+  String get wallAutoStartTitle => 'Запускать при старте';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Открывать настенный дисплей при каждом запуске приложения на этом устройстве';
+
+  @override
+  String get wallBehaviourSection => 'Поведение';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Обновлять каждые';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Как часто опрашиваются подключённые устройства';
+
+  @override
+  String get wallPageSecondsTitle => 'Смена страниц';
+
+  @override
+  String get wallPageSecondsSubtitle =>
+      'Сколько времени показывается каждая страница';
+
+  @override
+  String get wallNightTitle => 'Ночное затемнение';
+
+  @override
+  String get wallNightSubtitle =>
+      'Затемнять экран ночью; касание снимает затемнение на минуту';
+
+  @override
+  String get wallNightFromTitle => 'Затемнять с';
+
+  @override
+  String get wallNightToTitle => 'Затемнять до';
+
+  @override
+  String get wallCardsSection => 'Карточки';
+
+  @override
+  String get wallCardsHint =>
+      'Каждое значение, которое сообщает устройство, получает свою карточку. Скройте ненужные дубликаты и расставьте остальные; если скрыть все карточки устройства, панель перестанет к нему обращаться.';
+
+  @override
+  String get wallStoredCard => 'Ручные измерения';
+
+  @override
+  String get wallDeviceNotContacted => 'не опрашивается';
+
+  @override
+  String get wallHideLastCardNote =>
+      'Если скрыть, устройство перестанет опрашиваться';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n с';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n мин';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Пока нет аквариума. Добавьте его, затем запустите настенный дисплей.';
+
+  @override
+  String get wallProLocked => 'Настенный дисплей — функция PRO.';
+
+  @override
+  String get wallExitHint => 'Удерживайте в любом месте, чтобы выйти';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'обновлено $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Сегодня: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return 'тест: $param';
+  }
+
+  @override
+  String get wallRoDue => 'Пора заменить';
+
+  @override
+  String get wallNoDevices => 'Нет устройств';
+
+  @override
+  String get wallAllReachable => 'Все устройства доступны';
+
+  @override
+  String get wallSomeUnreachable => 'Устройство недоступно';
+
+  @override
+  String get wallNetworkDown => 'Устройства недоступны — проверьте сеть';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'измерено $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 ч';
+
+  @override
+  String get wallWindow14d => '14 д';
 }

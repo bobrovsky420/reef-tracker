@@ -37,7 +37,7 @@ void main() {
     bool purchased = false,
   }) async {
     // Tall surface so the About section (bottom of the list) is on screen.
-    tester.view.physicalSize = const Size(800, 2800);
+    tester.view.physicalSize = const Size(800, 3000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
     final db = AppDatabase(NativeDatabase.memory());

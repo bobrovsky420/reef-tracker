@@ -46,6 +46,23 @@ bool deviceKindSaves(String kind) =>
 /// counted by the Refresh-all button either.
 bool deviceKindRefreshes(String kind) => kind != kDeviceKindHanna;
 
+/// Per-model minimum poll interval for the wall display's loop (U49 §12n):
+/// what the *device* is capable of, as opposed to how live the user wants the
+/// wall to feel (the one visible knob). A batch-measurement device that
+/// produces a new number every N minutes is floored here whatever the display
+/// interval says; continuous probes are absent and run at the display rate.
+///
+/// Empty today — every model the app integrates (ReefFactory probes, ReefBeat
+/// status, Apex probes) reports continuously. The seam exists so the first
+/// batch device (an Alkatronic-class titrator) is a one-line entry, not a
+/// design change.
+const Map<String, Duration> kDeviceModelPollFloor = {};
+
+/// The poll floor for a device of [kind] / [model], or null for continuous
+/// devices (no floor — the display interval applies unchanged).
+Duration? minPollIntervalOf(String kind, {String? model}) =>
+    model == null ? null : kDeviceModelPollFloor[model];
+
 /// The user's vendor order, resolved from the [stored] setting value against
 /// the vendors this build knows ([known], defaulting to [kDeviceVendors]).
 ///

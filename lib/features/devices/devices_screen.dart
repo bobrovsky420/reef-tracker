@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../data/device_read_scope.dart';
 import '../../domain/device_vendors.dart';
 import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
@@ -342,7 +343,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
 
   /// The scope the last build rendered — what the host's Refresh all / Save
   /// all FABs act on between builds, same reasoning as [_present].
-  _Scope _scope = const _Scope(order: [], byVendor: {});
+  DeviceScope _scope = const DeviceScope.empty();
 
   /// Drives the scroll back to the top after a swipe changes the vendor
   /// ([_stepVendor]). Owned rather than taken from the ambient
@@ -487,23 +488,12 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     _ => Future.value(),
   };
 
-  /// Reads everything refreshable in [scope]. Sequential **within** a vendor —
-  /// a meter is also serving the vendor's own cloud app, and one socket at a
-  /// time is gentle on it — but the vendors run concurrently, so a slow
-  /// controller doesn't hold up the meters.
-  Future<void> _refreshScope(_Scope scope) async {
-    Future<void> series(String kind) async {
-      for (final d in scope.of(kind)) {
-        if (!mounted) return;
-        await _refreshDevice(kind, d);
-      }
-    }
-
-    await Future.wait([
-      for (final kind in scope.order)
-        if (deviceKindRefreshes(kind)) series(kind),
-    ]);
-  }
+  /// Reads everything refreshable in [scope] through the shared walk
+  /// ([readDeviceScope], U49 §12d): sequential within a vendor, vendors
+  /// concurrent — the politeness rule lives there now, beside the wall
+  /// display's poll loop.
+  Future<void> _refreshScope(DeviceScope scope) =>
+      readDeviceScope(scope, _refreshDevice, keepGoing: () => mounted);
 
   // --- saving ------------------------------------------------------------
 
@@ -543,7 +533,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// A failed re-read is not fatal: the card shows the error, the held
   /// snapshot stays behind it, and the save goes ahead with those values on
   /// their own (older) read time — the save must never block on the LAN.
-  Future<void> _freshen(_Scope scope, DeviceRecord? only) async {
+  Future<void> _freshen(DeviceScope scope, DeviceRecord? only) async {
     final now = DateTime.now();
     final stale = <String, List<DeviceRecord>>{};
     for (final (kind, d) in scope.inPageOrder) {
@@ -564,7 +554,9 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     };
     // Through the ordinary read path, so the same one-socket-at-a-time
     // courtesy per vendor applies.
-    await _refreshScope(_Scope(order: stale.keys.toList(), byVendor: stale));
+    await _refreshScope(
+      DeviceScope(order: stale.keys.toList(), byVendor: stale),
+    );
     if (!mounted) return;
     setState(() {
       for (final e in heldRf.entries) {
@@ -584,7 +576,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// vendor list still rides along in [scope], because a ReefFactory meter's
   /// values depend on which *other* meters the tank has (the Temperature
   /// Controller rule).
-  Future<void> _saveOne(DeviceRecord device, _Scope scope) =>
+  Future<void> _saveOne(DeviceRecord device, DeviceScope scope) =>
       _save(scope, only: device);
 
   /// The values a save would persist for [d] right now: what its last read
@@ -598,7 +590,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   List<({String paramKey, double value})> _pendingValues(
     String kind,
     DeviceRecord d,
-    _Scope scope,
+    DeviceScope scope,
   ) {
     switch (kind) {
       case kDeviceKindReefFactory:
@@ -636,7 +628,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// suspicious-value confirmation on the way: this is the one path device
   /// readings take into the database, and it now applies the guards manual
   /// entry has always had (#71, #76).
-  Future<void> _save(_Scope scope, {DeviceRecord? only}) async {
+  Future<void> _save(DeviceScope scope, {DeviceRecord? only}) async {
     if (_saving) return;
     setState(() => _saving = true);
     try {
@@ -650,7 +642,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     }
   }
 
-  Future<void> _saveGuarded(_Scope scope, {DeviceRecord? only}) async {
+  Future<void> _saveGuarded(DeviceScope scope, {DeviceRecord? only}) async {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
@@ -838,7 +830,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     );
     final selected = present.contains(_vendor) ? _vendor : null;
     final inScope = selected == null ? present : [selected];
-    final scope = _Scope(
+    final scope = DeviceScope(
       order: inScope,
       byVendor: {for (final v in inScope) v: byVendor[v] ?? const []},
     );
@@ -850,7 +842,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     // kinds (the Hanna checker) are left out rather than marked read, so the
     // guards stay honest if one ever becomes refreshable.
     if (entitled && widget.active) {
-      final toRead = _Scope(
+      final toRead = DeviceScope(
         order: [
           for (final kind in scope.order)
             if (deviceKindRefreshes(kind)) kind,
@@ -982,7 +974,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// because the host may rebuild in response, and value-compared (via
   /// [DevicesFabStatus.==]) so a no-change build notifies no one — the
   /// post-frame callback itself must not schedule another frame forever.
-  void _publishFabStatus(bool entitled, _Scope scope) {
+  void _publishFabStatus(bool entitled, DeviceScope scope) {
     final notifier = widget.fabStatus;
     if (notifier == null) return;
     final status = DevicesFabStatus(
@@ -1008,11 +1000,13 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// The scope a per-card Save runs in: that card's vendor, with the rest of
   /// its section still present, since a device's savable values can depend on
   /// its neighbours (the ReefFactory temperature-source rule).
-  _Scope _vendorScope(
+  DeviceScope _vendorScope(
     String vendor,
     Map<String, List<DeviceRecord>> byVendor,
-  ) =>
-      _Scope(order: [vendor], byVendor: {vendor: byVendor[vendor] ?? const []});
+  ) => DeviceScope(
+    order: [vendor],
+    byVendor: {vendor: byVendor[vendor] ?? const []},
+  );
 
   Widget _sectionFor(String vendor, Map<String, List<DeviceRecord>> byVendor) =>
       switch (vendor) {
@@ -1073,7 +1067,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     _ => l.devicesDisclaimer,
   };
 
-  bool _busy(_Scope scope) => scope.inPageOrder.any(
+  bool _busy(DeviceScope scope) => scope.inPageOrder.any(
     (e) => switch (e.$1) {
       kDeviceKindReefFactory => _rfLive[e.$2.identifier]?.loading ?? false,
       kDeviceKindReefBeat => _rbLive[e.$2.identifier]?.loading ?? false,
@@ -1083,7 +1077,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   );
 
   /// How many devices in scope currently hold values a save would persist.
-  int _savableCount(_Scope scope) {
+  int _savableCount(DeviceScope scope) {
     var n = 0;
     for (final (kind, d) in scope.inPageOrder) {
       if (_pendingValues(kind, d, scope).isNotEmpty) n++;
@@ -1299,49 +1293,9 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   }
 }
 
-/// The devices in view — what Refresh all and Save all act on — **in the order
-/// the page renders them**: vendors in the user's brand order, devices in their
-/// own card order within each vendor.
-///
-/// The order is the point, not a convenience: Save all resolves a parameter two
-/// devices both report by "first displayed wins", so anything that walks this
-/// scope must walk [inPageOrder] rather than picking vendors out by hand.
-class _Scope {
-  const _Scope({required this.order, required this.byVendor});
-
-  /// The vendor kinds in view, in the user's own order.
-  final List<String> order;
-
-  /// Each vendor's devices, already scoped to the active tank and sorted by
-  /// the page.
-  final Map<String, List<DeviceRecord>> byVendor;
-
-  List<DeviceRecord> of(String kind) => byVendor[kind] ?? const [];
-
-  /// Every device in view, paired with its vendor kind, in page order.
-  Iterable<(String, DeviceRecord)> get inPageOrder sync* {
-    for (final kind in order) {
-      for (final d in of(kind)) {
-        yield (kind, d);
-      }
-    }
-  }
-
-  int get length => order.fold(0, (n, kind) => n + of(kind).length);
-
-  /// Devices of a meter-capable kind in view — zero hides Save all entirely.
-  /// Asks [deviceKindSaves] instead of naming vendors, so a future meter vendor
-  /// is counted without an edit here.
-  int get meters =>
-      order.where(deviceKindSaves).fold(0, (n, kind) => n + of(kind).length);
-
-  /// Devices a Refresh all would actually read — the button's count, and zero
-  /// hides it (a Hanna-only view has nothing to poll). Same open-ended idiom
-  /// as [meters], via [deviceKindRefreshes].
-  int get refreshables => order
-      .where(deviceKindRefreshes)
-      .fold(0, (n, kind) => n + of(kind).length);
-}
+// The scope type itself ([DeviceScope]) and the polite bulk-read walk moved to
+// `data/device_read_scope.dart` (U49 §12d) so the wall display and U45 share
+// them with this page instead of growing copies.
 
 /// The vendor selector: one chip per vendor that has a device, in the user's
 /// order, preceded by All.

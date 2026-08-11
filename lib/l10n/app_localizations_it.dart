@@ -4057,4 +4057,134 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Usa i valori predefiniti';
+
+  @override
+  String get wallDisplayTitle => 'Display a parete';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Pannello sempre acceso con i valori del tuo acquario';
+
+  @override
+  String get wallStartNow => 'Avvia ora';
+
+  @override
+  String get wallStartNowSubtitle =>
+      'Mostra il pannello a parete su questo schermo';
+
+  @override
+  String get wallAutoStartTitle => 'Avvia all\'apertura';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Apri il display a parete a ogni avvio dell\'app su questo dispositivo';
+
+  @override
+  String get wallBehaviourSection => 'Comportamento';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Aggiorna ogni';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Frequenza di lettura dei dispositivi collegati';
+
+  @override
+  String get wallPageSecondsTitle => 'Rotazione delle pagine';
+
+  @override
+  String get wallPageSecondsSubtitle =>
+      'Per quanto tempo resta visibile ogni pagina';
+
+  @override
+  String get wallNightTitle => 'Attenuazione notturna';
+
+  @override
+  String get wallNightSubtitle =>
+      'Attenua lo schermo di notte; un tocco lo riaccende per un minuto';
+
+  @override
+  String get wallNightFromTitle => 'Attenua dalle';
+
+  @override
+  String get wallNightToTitle => 'Attenua fino alle';
+
+  @override
+  String get wallCardsSection => 'Schede';
+
+  @override
+  String get wallCardsHint =>
+      'Ogni valore riportato da un dispositivo ha una propria scheda. Nascondi i duplicati che non vuoi e trascina il resto al suo posto; nascondendo tutte le schede di un dispositivo, il pannello smette di contattarlo.';
+
+  @override
+  String get wallStoredCard => 'Misurazioni manuali';
+
+  @override
+  String get wallDeviceNotContacted => 'non contattato';
+
+  @override
+  String get wallHideLastCardNote =>
+      'Nascondendo questa scheda il dispositivo non verrà più contattato';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Nessun acquario. Aggiungine uno, poi avvia il display a parete.';
+
+  @override
+  String get wallProLocked => 'Il display a parete è una funzione PRO.';
+
+  @override
+  String get wallExitHint => 'Tieni premuto ovunque per uscire';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'aggiornato $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Da fare oggi: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return 'test $param';
+  }
+
+  @override
+  String get wallRoDue => 'Sostituzione da fare';
+
+  @override
+  String get wallNoDevices => 'Nessun dispositivo';
+
+  @override
+  String get wallAllReachable => 'Tutti i dispositivi raggiungibili';
+
+  @override
+  String get wallSomeUnreachable => 'Un dispositivo non è raggiungibile';
+
+  @override
+  String get wallNetworkDown =>
+      'Nessun dispositivo raggiungibile – controlla la rete';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'misurato $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 g';
 }

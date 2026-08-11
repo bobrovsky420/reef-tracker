@@ -4048,4 +4048,132 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Nutzt die Standardwerte';
+
+  @override
+  String get wallDisplayTitle => 'Wanddisplay';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Dauerhaft eingeschaltete Übersicht der Werte Ihres Aquariums';
+
+  @override
+  String get wallStartNow => 'Jetzt starten';
+
+  @override
+  String get wallStartNowSubtitle =>
+      'Die Wandtafel auf diesem Bildschirm anzeigen';
+
+  @override
+  String get wallAutoStartTitle => 'Beim Start öffnen';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Beim Start der App auf diesem Gerät direkt das Wanddisplay öffnen';
+
+  @override
+  String get wallBehaviourSection => 'Verhalten';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Aktualisieren alle';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Wie oft verbundene Geräte gelesen werden';
+
+  @override
+  String get wallPageSecondsTitle => 'Seitenwechsel';
+
+  @override
+  String get wallPageSecondsSubtitle => 'Wie lange jede Seite angezeigt bleibt';
+
+  @override
+  String get wallNightTitle => 'Nachtabdunklung';
+
+  @override
+  String get wallNightSubtitle =>
+      'Bildschirm nachts abdunkeln; ein Tippen hebt es für eine Minute auf';
+
+  @override
+  String get wallNightFromTitle => 'Abdunkeln ab';
+
+  @override
+  String get wallNightToTitle => 'Abdunkeln bis';
+
+  @override
+  String get wallCardsSection => 'Karten';
+
+  @override
+  String get wallCardsHint =>
+      'Jeder Wert, den ein Gerät meldet, bekommt eine eigene Karte. Blenden Sie unerwünschte Duplikate aus und ziehen Sie den Rest an seinen Platz; werden alle Karten eines Geräts ausgeblendet, kontaktiert die Wandtafel es nicht mehr.';
+
+  @override
+  String get wallStoredCard => 'Manuelle Messungen';
+
+  @override
+  String get wallDeviceNotContacted => 'wird nicht kontaktiert';
+
+  @override
+  String get wallHideLastCardNote =>
+      'Beim Ausblenden wird das Gerät nicht mehr kontaktiert';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n Min.';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Noch kein Aquarium. Legen Sie eines an und starten Sie dann das Wanddisplay.';
+
+  @override
+  String get wallProLocked => 'Das Wanddisplay ist eine PRO-Funktion.';
+
+  @override
+  String get wallExitHint => 'Zum Beenden irgendwo gedrückt halten';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'aktualisiert $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Heute fällig: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return '$param-Test';
+  }
+
+  @override
+  String get wallRoDue => 'Wechsel fällig';
+
+  @override
+  String get wallNoDevices => 'Keine Geräte';
+
+  @override
+  String get wallAllReachable => 'Alle Geräte erreichbar';
+
+  @override
+  String get wallSomeUnreachable => 'Ein Gerät ist nicht erreichbar';
+
+  @override
+  String get wallNetworkDown => 'Kein Gerät erreichbar – Netzwerk prüfen';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'gemessen $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 T';
 }

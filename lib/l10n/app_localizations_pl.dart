@@ -4117,4 +4117,132 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Używa wartości domyślnych';
+
+  @override
+  String get wallDisplayTitle => 'Wyświetlacz ścienny';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Stale włączony panel z parametrami akwarium';
+
+  @override
+  String get wallStartNow => 'Uruchom teraz';
+
+  @override
+  String get wallStartNowSubtitle => 'Pokaż panel ścienny na tym ekranie';
+
+  @override
+  String get wallAutoStartTitle => 'Uruchamiaj przy starcie';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Otwieraj wyświetlacz ścienny przy każdym uruchomieniu aplikacji na tym urządzeniu';
+
+  @override
+  String get wallBehaviourSection => 'Zachowanie';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Odświeżaj co';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Jak często odczytywane są podłączone urządzenia';
+
+  @override
+  String get wallPageSecondsTitle => 'Zmiana stron';
+
+  @override
+  String get wallPageSecondsSubtitle => 'Jak długo widoczna jest każda strona';
+
+  @override
+  String get wallNightTitle => 'Przyciemnianie nocne';
+
+  @override
+  String get wallNightSubtitle =>
+      'Przyciemniaj ekran w nocy; dotknięcie rozjaśnia go na minutę';
+
+  @override
+  String get wallNightFromTitle => 'Przyciemniaj od';
+
+  @override
+  String get wallNightToTitle => 'Przyciemniaj do';
+
+  @override
+  String get wallCardsSection => 'Karty';
+
+  @override
+  String get wallCardsHint =>
+      'Każda wartość zgłaszana przez urządzenie ma własną kartę. Ukryj zbędne duplikaty, a resztę przeciągnij na miejsce; po ukryciu wszystkich kart urządzenia panel przestaje się z nim łączyć.';
+
+  @override
+  String get wallStoredCard => 'Pomiary ręczne';
+
+  @override
+  String get wallDeviceNotContacted => 'nie jest odpytywane';
+
+  @override
+  String get wallHideLastCardNote =>
+      'Ukrycie tej karty zakończy łączenie z urządzeniem';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Nie ma jeszcze akwarium. Dodaj je, a potem uruchom wyświetlacz ścienny.';
+
+  @override
+  String get wallProLocked => 'Wyświetlacz ścienny to funkcja PRO.';
+
+  @override
+  String get wallExitHint => 'Przytrzymaj w dowolnym miejscu, aby wyjść';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'zaktualizowano $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Na dziś: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return 'test: $param';
+  }
+
+  @override
+  String get wallRoDue => 'Wymiana do wykonania';
+
+  @override
+  String get wallNoDevices => 'Brak urządzeń';
+
+  @override
+  String get wallAllReachable => 'Wszystkie urządzenia osiągalne';
+
+  @override
+  String get wallSomeUnreachable => 'Urządzenie jest nieosiągalne';
+
+  @override
+  String get wallNetworkDown =>
+      'Żadne urządzenie nie jest osiągalne – sprawdź sieć';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'zmierzono $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 dni';
 }

@@ -585,6 +585,83 @@ class Devices extends Table {
 /// identifier. Also the tie-break sort key behind [Devices.displayOrder].
 String deviceDisplayName(DeviceRecord d) => d.name ?? d.model ?? d.identifier;
 
+/// One display-sample bucket from the wall display's poll loop (U49 §12m):
+/// the last value a device reported for a parameter inside a 5-minute bucket,
+/// plus the min/max seen in it (what lets a tile draw a range band). At most
+/// one row per (tank, device, parameter, bucket) whatever the poll interval —
+/// see `bucketStartFor` and [AppDatabase.upsertDeviceSample].
+///
+/// These are **unvalidated probe samples, not measurements** — four rules
+/// follow from that (§12m): never in a backup (`backup.dart` encodes an
+/// explicit section list; this table is not on it), never read by domain code
+/// (trend/stability/dosing/export all read [Readings] and must continue to),
+/// never shown as a measurement (the tile's provenance line names the device),
+/// and rail values are dropped at write time by the caller. Pruned by age
+/// ([AppDatabase.pruneDeviceSamples], 48 h retention).
+///
+/// Deliberately **no foreign keys** (§12o): nothing references this table and
+/// it references nothing, so the whole feature stays droppable — and a backup
+/// restore replacing every tank cannot cascade away the wall's overnight
+/// graph. Orphan rows (a deleted tank or device) simply stop matching any
+/// query and age out.
+@TableIndex(
+  name: 'idx_device_samples_tank_param',
+  columns: {#tankId, #paramKey, #bucketStart},
+)
+@DataClassName('DeviceSample')
+class DeviceSamples extends Table {
+  IntColumn get tankId => integer()();
+
+  /// The reporting device's [Devices.identifier] — stable across address
+  /// changes, and the key the wall's per-card series is drawn by (§12q: a
+  /// card is one device's series by construction, so a handover can never be
+  /// stitched into one line).
+  TextColumn get deviceIdentifier => text()();
+  TextColumn get paramKey => text()();
+  DateTimeColumn get bucketStart => dateTime()();
+
+  /// Last / lowest / highest canonical value seen inside the bucket.
+  RealColumn get value => real()();
+  RealColumn get minValue => real()();
+  RealColumn get maxValue => real()();
+
+  @override
+  Set<Column> get primaryKey => {
+    tankId,
+    deviceIdentifier,
+    paramKey,
+    bucketStart,
+  };
+}
+
+/// Per-tile wall-display layout (U49 §12q): order and visibility of one wall
+/// card, keyed by (tank, device identifier, parameter). `deviceIdentifier` is
+/// `''` for the no-device card of a parameter nothing reports — an empty
+/// string, not NULL, because SQLite treats NULLs as distinct in a unique key
+/// and a nullable column would silently admit duplicate rows.
+///
+/// Sparse by design (§12o rule 1): a missing row means the default (visible,
+/// default order), so deleting every row — or the whole table — degrades to
+/// stock behaviour. No FK and no cascade, deliberately: a row left behind by
+/// a deleted device is invisible through the join and harmless, and keeping
+/// the table free of references into [Devices] is what makes the feature
+/// droppable. Device-local and backup-excluded like everything else in U49 —
+/// it is one tablet's layout, not aquarium data.
+@DataClassName('WallTileSetting')
+class WallTileSettings extends Table {
+  IntColumn get tankId => integer()();
+  TextColumn get deviceIdentifier => text()();
+  TextColumn get paramKey => text()();
+
+  /// Explicit position, or null while the keeper has never reordered — the
+  /// default grouped-by-parameter order applies, after all explicit rows.
+  IntColumn get displayOrder => integer().nullable()();
+  BoolColumn get visible => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column> get primaryKey => {tankId, deviceIdentifier, paramKey};
+}
+
 /// Simple key/value store for app-wide settings (e.g. active tank).
 class Settings extends Table {
   TextColumn get key => text()();
@@ -613,6 +690,8 @@ class Settings extends Table {
     RoStageReplacements,
     ImportSources,
     Devices,
+    DeviceSamples,
+    WallTileSettings,
     Settings,
   ],
 )
@@ -620,7 +699,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 28;
+  int get schemaVersion => 29;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -909,6 +988,21 @@ class AppDatabase extends _$AppDatabase {
             await m.dropColumn(trackedParameters, col);
           }
         }
+      }
+      if (from < 29) {
+        // Wall display mode (U49): display-sample buckets + per-tile layout.
+        // Guarded like every createTable above; the index is created here for
+        // upgrades (fresh installs get it via createAll's @TableIndex).
+        if (!await _tableExists('device_samples')) {
+          await m.createTable(deviceSamples);
+        }
+        if (!await _tableExists('wall_tile_settings')) {
+          await m.createTable(wallTileSettings);
+        }
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_device_samples_tank_param '
+          'ON device_samples (tank_id, param_key, bucket_start)',
+        );
       }
     },
     beforeOpen: (details) async {
@@ -1702,6 +1796,179 @@ class AppDatabase extends _$AppDatabase {
           DevicesCompanion(displayOrder: Value(i)),
           where: (d) => d.id.equals(orderedIds[i]),
         );
+      }
+    });
+  }
+
+  // --- Wall display (U49) ---------------------------------------------------
+
+  /// Folds one polled value into its 5-minute [DeviceSamples] bucket: insert
+  /// on first sight, else keep the last value and widen the min/max (§12m).
+  /// The bucket key comes from the caller (`bucketStartFor`), so storage cost
+  /// is decoupled from the poll cadence — a 30 s interval costs exactly what a
+  /// 5 min one does.
+  Future<void> upsertDeviceSample({
+    required int tankId,
+    required String deviceIdentifier,
+    required String paramKey,
+    required DateTime bucketStart,
+    required double value,
+  }) async {
+    await transaction(() async {
+      final existing =
+          await (select(deviceSamples)..where(
+                (s) =>
+                    s.tankId.equals(tankId) &
+                    s.deviceIdentifier.equals(deviceIdentifier) &
+                    s.paramKey.equals(paramKey) &
+                    s.bucketStart.equals(bucketStart),
+              ))
+              .getSingleOrNull();
+      if (existing == null) {
+        await into(deviceSamples).insert(
+          DeviceSamplesCompanion.insert(
+            tankId: tankId,
+            deviceIdentifier: deviceIdentifier,
+            paramKey: paramKey,
+            bucketStart: bucketStart,
+            value: value,
+            minValue: value,
+            maxValue: value,
+          ),
+        );
+      } else {
+        await (update(deviceSamples)..where(
+              (s) =>
+                  s.tankId.equals(tankId) &
+                  s.deviceIdentifier.equals(deviceIdentifier) &
+                  s.paramKey.equals(paramKey) &
+                  s.bucketStart.equals(bucketStart),
+            ))
+            .write(
+              DeviceSamplesCompanion(
+                value: Value(value),
+                minValue: Value(min(existing.minValue, value)),
+                maxValue: Value(max(existing.maxValue, value)),
+              ),
+            );
+      }
+    });
+  }
+
+  /// Delete-by-age sweep over [DeviceSamples] (the 48 h retention). Batched by
+  /// the caller — every Nth poll cycle plus once at mode start — rather than
+  /// run on every write. All tanks at once: orphaned rows must age out too.
+  Future<int> pruneDeviceSamples(DateTime olderThan) => (delete(
+    deviceSamples,
+  )..where((s) => s.bucketStart.isSmallerThanValue(olderThan))).go();
+
+  /// The sample rows feeding a wall session's tile graphs: everything for
+  /// [tankId] since [since], oldest first. The screen groups them per
+  /// (device, parameter) card.
+  Future<List<DeviceSample>> getDeviceSamplesSince(
+    int tankId,
+    DateTime since,
+  ) =>
+      (select(deviceSamples)
+            ..where(
+              (s) =>
+                  s.tankId.equals(tankId) &
+                  s.bucketStart.isBiggerOrEqualValue(since),
+            )
+            ..orderBy([(s) => OrderingTerm(expression: s.bucketStart)]))
+          .get();
+
+  Stream<List<WallTileSetting>> watchWallTileSettings(int tankId) =>
+      (select(wallTileSettings)..where((w) => w.tankId.equals(tankId))).watch();
+
+  Future<List<WallTileSetting>> getWallTileSettings(int tankId) =>
+      (select(wallTileSettings)..where((w) => w.tankId.equals(tankId))).get();
+
+  /// Records newly discovered wall cards (§12q): inserts a row per id that has
+  /// none yet — with the caller-decided visibility, so a new card from a muted
+  /// device arrives hidden — and never touches existing rows. This is what
+  /// makes the Settings list complete across sessions without a live poll.
+  Future<void> insertMissingWallTiles(
+    int tankId,
+    List<({String deviceIdentifier, String paramKey, bool visible})> rows,
+  ) async {
+    if (rows.isEmpty) return;
+    await batch((b) {
+      for (final r in rows) {
+        b.insert(
+          wallTileSettings,
+          WallTileSettingsCompanion.insert(
+            tankId: tankId,
+            deviceIdentifier: r.deviceIdentifier,
+            paramKey: r.paramKey,
+            visible: Value(r.visible),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+    });
+  }
+
+  /// Shows or hides one wall card, preserving its stored order (upsert — the
+  /// row may not exist yet when the keeper hides a default-visible card).
+  Future<void> setWallTileVisible({
+    required int tankId,
+    required String deviceIdentifier,
+    required String paramKey,
+    required bool visible,
+  }) async {
+    await transaction(() async {
+      final updated =
+          await (update(wallTileSettings)..where(
+                (w) =>
+                    w.tankId.equals(tankId) &
+                    w.deviceIdentifier.equals(deviceIdentifier) &
+                    w.paramKey.equals(paramKey),
+              ))
+              .write(WallTileSettingsCompanion(visible: Value(visible)));
+      if (updated == 0) {
+        await into(wallTileSettings).insert(
+          WallTileSettingsCompanion.insert(
+            tankId: tankId,
+            deviceIdentifier: deviceIdentifier,
+            paramKey: paramKey,
+            visible: Value(visible),
+          ),
+        );
+      }
+    });
+  }
+
+  /// Persists an explicit wall card order: every listed id gets
+  /// `displayOrder = index`, creating rows for ids that had none (their
+  /// visibility defaults to true — reordering is only offered on the full,
+  /// already-resolved list). Unlisted rows keep their order and sort against
+  /// this sequence as before.
+  Future<void> setWallTileOrder(
+    int tankId,
+    List<({String deviceIdentifier, String paramKey})> orderedIds,
+  ) async {
+    await transaction(() async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        final id = orderedIds[i];
+        final updated =
+            await (update(wallTileSettings)..where(
+                  (w) =>
+                      w.tankId.equals(tankId) &
+                      w.deviceIdentifier.equals(id.deviceIdentifier) &
+                      w.paramKey.equals(id.paramKey),
+                ))
+                .write(WallTileSettingsCompanion(displayOrder: Value(i)));
+        if (updated == 0) {
+          await into(wallTileSettings).insert(
+            WallTileSettingsCompanion.insert(
+              tankId: tankId,
+              deviceIdentifier: id.deviceIdentifier,
+              paramKey: id.paramKey,
+              displayOrder: Value(i),
+            ),
+          );
+        }
       }
     });
   }

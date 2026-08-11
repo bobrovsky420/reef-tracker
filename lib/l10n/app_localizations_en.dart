@@ -4020,4 +4020,131 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Following the defaults';
+
+  @override
+  String get wallDisplayTitle => 'Wall display';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'An always-on board of your aquarium\'s values';
+
+  @override
+  String get wallStartNow => 'Start now';
+
+  @override
+  String get wallStartNowSubtitle => 'Show the wall board on this screen';
+
+  @override
+  String get wallAutoStartTitle => 'Start on launch';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Open the wall display whenever the app starts on this device';
+
+  @override
+  String get wallBehaviourSection => 'Behaviour';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Refresh every';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'How often connected devices are read';
+
+  @override
+  String get wallPageSecondsTitle => 'Page rotation';
+
+  @override
+  String get wallPageSecondsSubtitle =>
+      'How long each page stays before the next one';
+
+  @override
+  String get wallNightTitle => 'Night dim';
+
+  @override
+  String get wallNightSubtitle =>
+      'Dim the screen at night; a tap lifts it for a minute';
+
+  @override
+  String get wallNightFromTitle => 'Dim from';
+
+  @override
+  String get wallNightToTitle => 'Dim until';
+
+  @override
+  String get wallCardsSection => 'Cards';
+
+  @override
+  String get wallCardsHint =>
+      'Every value a device reports gets its own card. Hide the duplicates you don\'t want and drag the rest into place; hide all of a device\'s cards and the wall stops contacting it.';
+
+  @override
+  String get wallStoredCard => 'Manual measurements';
+
+  @override
+  String get wallDeviceNotContacted => 'not contacted';
+
+  @override
+  String get wallHideLastCardNote => 'Hiding this stops contacting the device';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get wallNoTank =>
+      'No aquarium yet. Add one, then start the wall display.';
+
+  @override
+  String get wallProLocked => 'The wall display is a PRO feature.';
+
+  @override
+  String get wallExitHint => 'Hold anywhere to exit';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'updated $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Due today: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return '$param test';
+  }
+
+  @override
+  String get wallRoDue => 'Replacement due';
+
+  @override
+  String get wallNoDevices => 'No devices';
+
+  @override
+  String get wallAllReachable => 'All devices reachable';
+
+  @override
+  String get wallSomeUnreachable => 'A device is unreachable';
+
+  @override
+  String get wallNetworkDown => 'No device reachable — check the network';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'measured $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 d';
 }
