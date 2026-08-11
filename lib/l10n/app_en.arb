@@ -369,10 +369,9 @@
   "unitsSection": "Units",
   "toolsSection": "Tools",
   "aboutSection": "About",
-  "languageSection": "Language",
   "appearanceSection": "Appearance",
   "@appearanceSection": {
-    "description": "Settings section label for the theme-mode choice (REDESIGN #16)."
+    "description": "Settings section label for the language, theme-mode and wall-display rows (REDESIGN #16)."
   },
   "themeTitle": "Theme",
   "@themeTitle": {

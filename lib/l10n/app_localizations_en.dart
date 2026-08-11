@@ -838,9 +838,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutSection => 'About';
 
   @override
-  String get languageSection => 'Language';
-
-  @override
   String get appearanceSection => 'Appearance';
 
   @override

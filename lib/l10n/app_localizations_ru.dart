@@ -847,9 +847,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aboutSection => 'О приложении';
 
   @override
-  String get languageSection => 'Язык';
-
-  @override
   String get appearanceSection => 'Внешний вид';
 
   @override
