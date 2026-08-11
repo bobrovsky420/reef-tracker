@@ -4066,6 +4066,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Pannello sempre acceso con i valori del tuo acquario';
 
   @override
+  String get wallSmallScreenNote =>
+      'Il display a parete è pensato per un tablet montato a muro. Funziona anche su questo schermo più piccolo – vedrai solo meno schede per pagina.';
+
+  @override
   String get wallStartNow => 'Avvia ora';
 
   @override

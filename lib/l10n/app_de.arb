@@ -1135,6 +1135,7 @@
   "followingDefaults": "Nutzt die Standardwerte",
   "wallDisplayTitle": "Wanddisplay",
   "wallDisplaySubtitle": "Dauerhaft eingeschaltete Übersicht der Werte Ihres Aquariums",
+  "wallSmallScreenNote": "Das Wanddisplay ist für ein an der Wand montiertes Tablet gedacht. Auf diesem kleineren Bildschirm funktioniert es trotzdem – Sie sehen nur weniger Karten pro Seite.",
   "wallStartNow": "Jetzt starten",
   "wallStartNowSubtitle": "Die Wandtafel auf diesem Bildschirm anzeigen",
   "wallAutoStartTitle": "Beim Start öffnen",

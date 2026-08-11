@@ -4057,6 +4057,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dauerhaft eingeschaltete Übersicht der Werte Ihres Aquariums';
 
   @override
+  String get wallSmallScreenNote =>
+      'Das Wanddisplay ist für ein an der Wand montiertes Tablet gedacht. Auf diesem kleineren Bildschirm funktioniert es trotzdem – Sie sehen nur weniger Karten pro Seite.';
+
+  @override
   String get wallStartNow => 'Jetzt starten';
 
   @override

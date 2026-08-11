@@ -3730,7 +3730,12 @@ value is showing *this* keeper's devices, which live in this database.
   Auto-start = `wall_auto_start` + the router's consumed-once cold-start
   redirect. Exit is a raw-pointer **1.5 s hold** with a progress ring under
   the finger (a `Listener`, so it never competes with the PageView's swipe
-  arena); a short tap only lifts the dim or shows the exit hint.
+  arena); a short tap only lifts the dim or shows the exit hint. On
+  phone-class screens (shortest side < `kWallPhoneClassShortestSide` = 600 dp
+  — physical inches are not knowable from Flutter) the subpage shows a purely
+  informational banner that the mode is designed for a wall-mounted tablet;
+  **nothing about the mode is gated by screen size** — a phone entering it is
+  a legitimate try-it-out path that degrades to fewer cards per page.
 - **Hiding = not measured at all** (§12q): a hidden card is neither shown nor
   sampled; when a device's last visible card is hidden the device **leaves
   the wall's poll rotation** entirely, durably — a device at zero visible

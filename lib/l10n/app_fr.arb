@@ -1135,6 +1135,7 @@
   "followingDefaults": "Utilise les valeurs par défaut",
   "wallDisplayTitle": "Affichage mural",
   "wallDisplaySubtitle": "Tableau toujours allumé des valeurs de votre aquarium",
+  "wallSmallScreenNote": "L'affichage mural est conçu pour une tablette fixée au mur. Il fonctionne aussi sur cet écran plus petit – vous verrez simplement moins de cartes par page.",
   "wallStartNow": "Démarrer maintenant",
   "wallStartNowSubtitle": "Afficher le tableau mural sur cet écran",
   "wallAutoStartTitle": "Démarrer au lancement",

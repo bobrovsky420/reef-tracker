@@ -1135,6 +1135,7 @@
   "followingDefaults": "Używa wartości domyślnych",
   "wallDisplayTitle": "Wyświetlacz ścienny",
   "wallDisplaySubtitle": "Stale włączony panel z parametrami akwarium",
+  "wallSmallScreenNote": "Wyświetlacz ścienny jest zaprojektowany dla tabletu zawieszonego na ścianie. Na tym mniejszym ekranie również działa – zobaczysz po prostu mniej kart na stronie.",
   "wallStartNow": "Uruchom teraz",
   "wallStartNowSubtitle": "Pokaż panel ścienny na tym ekranie",
   "wallAutoStartTitle": "Uruchamiaj przy starcie",

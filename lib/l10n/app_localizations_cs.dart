@@ -4065,6 +4065,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Stále zapnutý přehled hodnot vašeho akvária';
 
   @override
+  String get wallSmallScreenNote =>
+      'Nástěnný displej je navržen pro tablet na zdi. Na této menší obrazovce funguje také – jen uvidíte méně karet na stránku.';
+
+  @override
   String get wallStartNow => 'Spustit teď';
 
   @override

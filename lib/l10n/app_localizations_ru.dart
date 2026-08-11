@@ -4121,6 +4121,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Постоянно включённая панель с показателями вашего аквариума';
 
   @override
+  String get wallSmallScreenNote =>
+      'Настенный дисплей рассчитан на планшет, закреплённый на стене. На этом небольшом экране он тоже работает – просто на странице поместится меньше карточек.';
+
+  @override
   String get wallStartNow => 'Запустить сейчас';
 
   @override

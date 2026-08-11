@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2026-08-11
+## [1.3.0]
 
 ### Added
 - Wall display mode (U49 phase 1, PRO): turn a wall-mounted tablet into an
@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     don't want, drag the rest into your own order. Hiding all of a device's
     cards stops the wall from contacting that device entirely — durably, so
     an app update cannot quietly re-enable it.
+  - On phone-size screens the settings page notes that the mode is designed
+    for a wall-mounted tablet and still works with fewer cards per page —
+    purely informational, nothing is gated by screen size.
   - Auto-start on launch (optional): the app boots straight into the wall
     display, so a rebooted tablet returns to the board by itself. Exit is a
     deliberate 1.5-second hold with a progress ring, so a brushed-past panel
