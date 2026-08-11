@@ -1248,7 +1248,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Korzystasz ze standardowej edycji aplikacji ReefTracker. Wszystko, co już zapisałeś, pozostaje Twoje; ReefTracker Pro odblokowuje zaawansowane funkcje.';
+      'Korzystasz ze standardowej edycji aplikacji ReefTracker. Wszystko, co masz już zapisane, pozostaje Twoje; ReefTracker Pro odblokowuje zaawansowane funkcje.';
 
   @override
   String get editionUpgrade => 'Odblokuj Pro';
@@ -1536,7 +1536,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcCurrentValue => 'Obecna wartość';
 
   @override
-  String get doseCalcCurrentValueHelp => 'Puste = twój ostatni pomiar.';
+  String get doseCalcCurrentValueHelp => 'Puste = Twój ostatni pomiar.';
 
   @override
   String get doseCalcTargetValue => 'Wartość docelowa';
@@ -3156,7 +3156,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get roPartOfUnitHint =>
-      'Wyłącz, jeśli twój zestaw nie ma tego stopnia';
+      'Wyłącz, jeśli Twój zestaw nie ma tego stopnia';
 
   @override
   String get roHiddenStages => 'Nie ma w moim zestawie';
@@ -3201,7 +3201,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'Ile wody produkuje twój zestaw. Wybór poziomu zastąpi okresy wymiany wszystkich standardowych elementów — także te ustawione przez ciebie — typowymi wartościami dla tego poziomu; własne elementy pozostaną bez zmian, a każdy element możesz potem dostroić ręcznie.';
+      'Ile wody produkuje Twój zestaw. Wybór poziomu zastąpi okresy wymiany wszystkich standardowych elementów — także te ustawione przez Ciebie — typowymi wartościami dla tego poziomu; własne elementy pozostaną bez zmian, a każdy element możesz potem dostroić ręcznie.';
 
   @override
   String get roUsageLight => 'Niska';

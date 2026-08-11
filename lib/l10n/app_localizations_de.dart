@@ -4051,11 +4051,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get wallDisplaySubtitle =>
-      'Dauerhaft eingeschaltete Übersicht der Werte Ihres Aquariums';
+      'Dauerhaft eingeschaltete Übersicht der Werte deines Aquariums';
 
   @override
   String get wallSmallScreenNote =>
-      'Das Wanddisplay ist für ein an der Wand montiertes Tablet gedacht. Auf diesem kleineren Bildschirm funktioniert es trotzdem – Sie sehen nur weniger Karten pro Seite.';
+      'Das Wanddisplay ist für ein an der Wand montiertes Tablet gedacht. Auf diesem kleineren Bildschirm funktioniert es trotzdem – du siehst nur weniger Karten pro Seite.';
 
   @override
   String get wallStartNow => 'Jetzt starten';
@@ -4105,7 +4105,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get wallCardsHint =>
-      'Jeder Wert, den ein Gerät meldet, bekommt eine eigene Karte. Blenden Sie unerwünschte Duplikate aus und ziehen Sie den Rest an seinen Platz; werden alle Karten eines Geräts ausgeblendet, kontaktiert die Wandtafel es nicht mehr.';
+      'Jeder Wert, den ein Gerät meldet, bekommt eine eigene Karte. Blende unerwünschte Duplikate aus und ziehe den Rest an seinen Platz; werden alle Karten eines Geräts ausgeblendet, kontaktiert die Wandtafel es nicht mehr.';
 
   @override
   String get wallStoredCard => 'Manuelle Messungen';
@@ -4129,7 +4129,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get wallNoTank =>
-      'Noch kein Aquarium. Legen Sie eines an und starten Sie dann das Wanddisplay.';
+      'Noch kein Aquarium. Lege eines an und starte dann das Wanddisplay.';
 
   @override
   String get wallProLocked => 'Das Wanddisplay ist eine PRO-Funktion.';

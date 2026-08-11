@@ -62,6 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   first row) instead of sitting in a section of its own.
 
 ### Fixed
+- All translations now address the user consistently in the informal second
+  person singular: Czech (~105 strings), Russian (~128) and French (~143)
+  were converted from formal address, German's four remaining formal strings
+  were fixed, and Polish/Italian had their few gendered or inconsistent
+  forms neutralized. Gendered past-tense phrasings were restructured so no
+  string assumes the user's gender.
 - Auto-backup and reminder scheduling used to run only at launch and when the
   app returned to the foreground, so a device left permanently open (a wall
   tablet, or a phone that is simply never swiped away) would stop taking
