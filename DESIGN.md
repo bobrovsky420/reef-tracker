@@ -3746,6 +3746,13 @@ value is showing *this* keeper's devices, which live in this database.
   list is complete across sessions. Hard boundary: none of this affects the
   Devices page, the save funnel or U45 — a display preference must never
   remove a device from the measurement history.
+- **The selectable set is a catalogue**: `wall_parameters.yaml` →
+  `kWallParameterKeys` (`gen_wall_parameters.dart`, validated against
+  `parameters.yaml`). `buildWallCards` drops any key outside it before card
+  building, so an excluded key never gets a card, a stored row or a sample —
+  **microelements are excluded by design** (the generator rejects them):
+  the ICP panel moves on lab-report cadence and has no place on a
+  glance-across-the-room board, however many elements a tank tracks.
 - **Gating** (§12h): its own Pro key `wallDisplay` (grandfathered) — the mode
   works with zero devices, so it deliberately does not ride
   `connectedDevices`. Not experimental itself, but the LAN integrations are:
@@ -4359,6 +4366,10 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   `dart run tool/gen_hanna_methods.dart` (validates against
   `parameters.yaml` + writes `hanna_meter.g.dart`, `hanna_import.g.dart`
   and `hanna_checker.g.dart`).
+- Regenerate the wall parameter catalogue after editing
+  `lib/domain/wall_parameters.yaml`: `dart run tool/gen_wall_parameters.dart`
+  (validates against `parameters.yaml` — microelements are rejected — and
+  writes `wall_parameters.g.dart`).
 - Localization codegen: `flutter gen-l10n`.
 - Tests (`flutter test`): domain — `test/zones_test.dart`,
   `test/presets_test.dart`, `test/units_test.dart`, `test/ratio_test.dart`,
@@ -4396,13 +4407,14 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   (`flutter gen-l10n`, `dart run build_runner build`, then
   `dart run tool/gen_parameters.dart`, `dart run tool/gen_supplements.dart`,
   `dart run tool/gen_micro_views.dart`, `dart run tool/gen_pro_features.dart`,
-  `dart run tool/gen_tank_presets.dart`, `dart run tool/gen_ro_defaults.dart`
-  and `dart run tool/gen_hanna_methods.dart`
+  `dart run tool/gen_tank_presets.dart`, `dart run tool/gen_ro_defaults.dart`,
+  `dart run tool/gen_hanna_methods.dart` and
+  `dart run tool/gen_wall_parameters.dart`
   — build_runner deletes the catalog `.g.dart` files as unclaimed outputs, so
   the catalog generators must run after it, and gen_parameters before
   gen_supplements, which imports the parameter catalog; gen_micro_views,
-  gen_pro_features, gen_tank_presets, gen_ro_defaults and gen_hanna_methods
-  read only the YAML sources, so their position is free),
+  gen_pro_features, gen_tank_presets, gen_ro_defaults, gen_hanna_methods and
+  gen_wall_parameters read only the YAML sources, so their position is free),
   `flutter analyze`, and
   `flutter test --coverage` with the lcov file uploaded as an artifact. A
   second job builds a **debug** APK on JDK 21 (Temurin) to exercise the

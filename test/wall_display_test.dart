@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/domain/parameter_catalog.dart';
 import 'package:reeftracker/domain/wall_display.dart';
 
 void main() {
@@ -344,6 +345,48 @@ void main() {
         resolveWallTileValue(deviceCard: false).source,
         WallValueSource.none,
       );
+    });
+  });
+
+  group('wall parameter catalogue', () {
+    test('contains only known core parameters', () {
+      expect(kWallParameterKeys, isNotEmpty);
+      for (final key in kWallParameterKeys) {
+        expect(kParameterByKey, contains(key));
+        expect(
+          isCoreParam(key),
+          isTrue,
+          reason: '$key must not be a microelement',
+        );
+      }
+    });
+
+    test('excludes every microelement', () {
+      for (final p in kMicroParameters) {
+        expect(kWallParameterKeys, isNot(contains(p.key)));
+      }
+    });
+
+    test('tracked microelements never become cards', () {
+      final cards = buildWallCards(
+        trackedKeys: ['alkalinity', 'iodine'],
+        reportedByDevice: const {},
+        rows: const [],
+      );
+      expect(cards.map((c) => c.id.paramKey), ['alkalinity']);
+    });
+
+    test('device-reported keys outside the catalogue never become cards', () {
+      final cards = buildWallCards(
+        trackedKeys: const [],
+        reportedByDevice: {
+          'apex1': ['temperature', 'iodine'],
+        },
+        rows: const [],
+      );
+      expect(cards.map((c) => (c.id.deviceIdentifier, c.id.paramKey)), [
+        ('apex1', 'temperature'),
+      ]);
     });
   });
 }
