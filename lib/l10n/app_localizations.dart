@@ -6854,6 +6854,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'14 d'**
   String get wallWindow14d;
+
+  /// Doser-tile head entry: days of supplement left, compact (under 100 days)
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 day} other{{count} days}}'**
+  String wallHeadDays(int count);
+
+  /// Doser-tile head entry: months of supplement left, compact (100 days and up, rounded to 30-day months)
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 month} other{{count} months}}'**
+  String wallHeadMonths(int count);
 }
 
 class _AppLocalizationsDelegate

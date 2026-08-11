@@ -1930,5 +1930,9 @@
   "wallWindow24h": "24 h",
   "@wallWindow24h": {"description": "Tile-footer label naming the 24-hour sample window of the graph."},
   "wallWindow14d": "14 d",
-  "@wallWindow14d": {"description": "Tile-footer label naming the 14-day readings window of the fallback graph."}
+  "@wallWindow14d": {"description": "Tile-footer label naming the 14-day readings window of the fallback graph."},
+  "wallHeadDays": "{count, plural, one{1 day} other{{count} days}}",
+  "@wallHeadDays": { "description": "Doser-tile head entry: days of supplement left, compact (under 100 days)", "placeholders": { "count": { "type": "int" } } },
+  "wallHeadMonths": "{count, plural, one{1 month} other{{count} months}}",
+  "@wallHeadMonths": { "description": "Doser-tile head entry: months of supplement left, compact (100 days and up, rounded to 30-day months)", "placeholders": { "count": { "type": "int" } } }
 }

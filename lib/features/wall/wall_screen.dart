@@ -991,8 +991,8 @@ class _WallScreenState extends ConsumerState<WallScreen>
   }
 
   /// Status tiles (§12b): non-measurement facts from the same snapshots the
-  /// Devices cards render — reservoir, leak, doses today, fleece roll,
-  /// skimmer cup. Always after the value cards.
+  /// Devices cards render — reservoir, leak, per-head supplement stock,
+  /// fleece roll, skimmer cup. Always after the value cards.
   List<Widget> _statusTiles(AppLocalizations l, Tank tank) {
     final tiles = <Widget>[];
     for (final (kind, d) in _pageOrderDevices(tank)) {
@@ -1030,37 +1030,41 @@ class _WallScreenState extends ConsumerState<WallScreen>
       }
       final dose = snap.dose;
       if (dose != null && dose.heads.isNotEmpty) {
-        double dosed = 0, daily = 0;
-        int? minDays;
+        // One entry per configured head (§12b): unused sockets are skipped,
+        // switched-off heads render gray without a stock estimate (their
+        // "days at the current rate" is stale — the rate is zero).
+        final heads = <WallDoseHeadData>[];
+        var worst = Zone.unknown;
         for (final h in dose.heads) {
-          if (h.switchedOff) continue;
-          dosed += h.dosedToday;
-          daily += h.dailyDose ?? 0;
-          if (h.remainingDays != null &&
-              (minDays == null || h.remainingDays! < minDays)) {
-            minDays = h.remainingDays;
+          final label = h.shortName ?? h.supplement;
+          if (label == null) continue;
+          final days = h.switchedOff ? null : h.remainingDays;
+          final tone = days == null
+              ? Zone.unknown
+              : switch (rbStockSeverity(days)) {
+                  RbStockSeverity.critical => Zone.red,
+                  RbStockSeverity.caution => Zone.amber,
+                  RbStockSeverity.healthy => Zone.green,
+                };
+          if (tone == Zone.red ||
+              (tone == Zone.amber && worst != Zone.red)) {
+            worst = tone;
           }
-        }
-        tiles.add(
-          WallStatusTile(
-            data: WallStatusData(
-              icon: Icons.medication_liquid_outlined,
-              title: name,
-              line: daily > 0
-                  ? l.reefBeatDosedOfDaily(
-                      formatLocaleNumberTrim(dosed),
-                      formatLocaleNumberTrim(daily),
-                    )
-                  : l.reefBeatDosedNoDaily(formatLocaleNumberTrim(dosed)),
-              extra: minDays != null ? l.reefBeatDaysLeft(minDays) : null,
-              tone: minDays != null && minDays <= kRbStockCriticalDays
-                  ? Zone.red
-                  : (minDays != null && minDays <= kRbStockCautionDays
-                        ? Zone.amber
-                        : Zone.unknown),
+          heads.add(
+            WallDoseHeadData(
+              label: label,
+              timeLeft: days != null ? wallSupplementTimeLeft(l, days) : null,
+              tone: tone,
             ),
-          ),
-        );
+          );
+        }
+        if (heads.isNotEmpty) {
+          tiles.add(
+            WallDoseTile(
+              data: WallDoseData(title: name, heads: heads, tone: worst),
+            ),
+          );
+        }
       }
       final mat = snap.mat;
       if (mat != null) {

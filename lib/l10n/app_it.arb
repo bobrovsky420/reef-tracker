@@ -1168,5 +1168,7 @@
   "wallNetworkDown": "Nessun dispositivo raggiungibile – controlla la rete",
   "wallMeasuredAgo": "misurato {ago}",
   "wallWindow24h": "24 h",
-  "wallWindow14d": "14 g"
+  "wallWindow14d": "14 g",
+  "wallHeadDays": "{count, plural, one{1 giorno} other{{count} giorni}}",
+  "wallHeadMonths": "{count, plural, one{1 mese} other{{count} mesi}}"
 }

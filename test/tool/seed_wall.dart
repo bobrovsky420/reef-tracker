@@ -17,6 +17,7 @@ import 'package:reeftracker/domain/setup_type.dart';
 ///     dart run tool/reeffactory_emulator.dart --model ph --port 8082
 ///     dart run tool/reefbeat_emulator.dart --type ato --port 8090
 ///     dart run tool/reefbeat_emulator.dart --type run --port 8091
+///     dart run tool/reefbeat_emulator.dart --type dose --port 8092
 ///
 /// The history matters here: alkalinity/calcium/magnesium have readings but
 /// no reporting device (stored-readings cards with the 14-day line), while
@@ -116,6 +117,13 @@ void main() {
       model: 'RSRUN',
       address: '10.0.2.2:8091',
       name: 'ReefRun',
+      tankId: tank,
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'RSDOSE-EMU',
+      model: 'RSDOSE4',
+      address: '10.0.2.2:8092',
+      name: 'ReefDose 4',
       tankId: tank,
     );
     await db.upsertApexDevice(

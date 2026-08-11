@@ -1168,5 +1168,7 @@
   "wallNetworkDown": "Żadne urządzenie nie jest osiągalne – sprawdź sieć",
   "wallMeasuredAgo": "zmierzono {ago}",
   "wallWindow24h": "24 h",
-  "wallWindow14d": "14 dni"
+  "wallWindow14d": "14 dni",
+  "wallHeadDays": "{count, plural, one{1 dzień} few{{count} dni} many{{count} dni} other{{count} dnia}}",
+  "wallHeadMonths": "{count, plural, one{1 miesiąc} few{{count} miesiące} many{{count} miesięcy} other{{count} miesiąca}}"
 }

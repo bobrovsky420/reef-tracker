@@ -207,9 +207,170 @@ class WallValueTile extends StatelessWidget {
   }
 }
 
+/// The doser tile's compact duration: precise days while under 100 (every
+/// amber/red state lives there), rounded 30-day months beyond — "68 days",
+/// "4 months". The smallest months value is 3, so an ambiguous "1 month"
+/// can never appear.
+String wallSupplementTimeLeft(AppLocalizations l, int days) => days < 100
+    ? l.wallHeadDays(days)
+    : l.wallHeadMonths((days / 30).round());
+
+/// One head of the doser tile: the dosing icon tinted by how much supplement
+/// is left, the supplement's label and the time the container lasts.
+class WallDoseHeadData {
+  const WallDoseHeadData({
+    required this.label,
+    this.timeLeft,
+    this.tone = Zone.unknown,
+  });
+
+  /// The supplement's abbreviation as configured on the pump ("KH"), or its
+  /// full name when no abbreviation is set.
+  final String label;
+
+  /// Localized "68 days" / "4 months"; null when the pump reports no stock
+  /// estimate (rendered as a dash).
+  final String? timeLeft;
+
+  /// green/amber/red by stock level; [Zone.unknown] renders gray — a
+  /// switched-off head.
+  final Zone tone;
+}
+
+/// Everything the doser status tile needs to draw itself.
+class WallDoseData {
+  const WallDoseData({
+    required this.title,
+    required this.heads,
+    this.tone = Zone.unknown,
+  });
+
+  /// The pump's display name.
+  final String title;
+
+  /// Configured heads in head order — sockets without a supplement are
+  /// already skipped.
+  final List<WallDoseHeadData> heads;
+
+  /// The worst head's stock severity, tinting the card like every other wall
+  /// tile; [Zone.unknown] renders neutral.
+  final Zone tone;
+}
+
+/// The doser status tile (§12b): one entry per configured head — the dosing
+/// icon in the head's stock color (gray when the head is off), the
+/// supplement's abbreviation and how long its container lasts. Up to two
+/// entries per row, so a 4-head pump forms a 2×2 grid.
+class WallDoseTile extends StatelessWidget {
+  const WallDoseTile({super.key, required this.data});
+
+  final WallDoseData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final neutral = data.tone == Zone.unknown;
+    final fill = neutral
+        ? cs.surfaceContainerLow
+        : data.tone.softColorOf(context);
+    return Semantics(
+      label:
+          '${data.title}: '
+          '${data.heads.map((h) => '${h.label} ${h.timeLeft ?? '—'}').join(', ')}',
+      container: true,
+      child: ExcludeSemantics(
+        child: Container(
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                data.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (var i = 0; i < data.heads.length; i += 2)
+                      Row(
+                        children: [
+                          Expanded(child: _HeadEntry(data: data.heads[i])),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: i + 1 < data.heads.length
+                                ? _HeadEntry(data: data.heads[i + 1])
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeadEntry extends StatelessWidget {
+  const _HeadEntry({required this.data});
+
+  final WallDoseHeadData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final gray = data.tone == Zone.unknown;
+    final accent = gray ? cs.onSurfaceVariant : data.tone.colorOf(context);
+    return Row(
+      children: [
+        Icon(Icons.science_outlined, size: 22, color: accent),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                data.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: gray ? cs.onSurfaceVariant : cs.onSurface,
+                ),
+              ),
+              Text(
+                data.timeLeft ?? '—',
+                maxLines: 1,
+                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// One status tile (§12b): the things devices report that aren't measurements
-/// — reservoir level, skimmer cup, doses today, RO stage due. One line each,
-/// after the value cards.
+/// — reservoir level, skimmer cup, fleece roll. One line each, after the
+/// value cards.
 class WallStatusData {
   const WallStatusData({
     required this.icon,

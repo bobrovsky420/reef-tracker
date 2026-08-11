@@ -4246,4 +4246,30 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get wallWindow14d => '14 dni';
+
+  @override
+  String wallHeadDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dnia',
+      many: '$count dni',
+      few: '$count dni',
+      one: '1 dzień',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String wallHeadMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count miesiąca',
+      many: '$count miesięcy',
+      few: '$count miesiące',
+      one: '1 miesiąc',
+    );
+    return '$_temp0';
+  }
 }
