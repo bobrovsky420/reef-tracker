@@ -1162,7 +1162,6 @@
   "wallUpdatedAt": "mis à jour {time}",
   "wallDueToday": "À faire aujourd'hui : {items}",
   "wallTestDue": "test {param}",
-  "wallRoDue": "Remplacement à faire",
   "wallNoDevices": "Aucun appareil",
   "wallAllReachable": "Tous les appareils joignables",
   "wallSomeUnreachable": "Un appareil est injoignable",

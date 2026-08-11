@@ -4156,9 +4156,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get wallRoDue => 'Wechsel fällig';
-
-  @override
   String get wallNoDevices => 'Keine Geräte';
 
   @override

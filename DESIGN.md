@@ -3693,8 +3693,8 @@ value is showing *this* keeper's devices, which live in this database.
   (zone-coloured, soft zone fill, zone icon + `Semantics` label per #46), and
   a provenance line naming the source and age ("Apex · now",
   "measured 2 d ago", "no reading") — **never blank, never a spinner**.
-  Status tiles (ATO level + leak, doses today, fleece roll, skimmer cup, RO
-  stage due) come after the value cards; an optional bottom strip lists
+  Status tiles (ATO level + leak, doses today, fleece roll, skimmer cup)
+  come after the value cards; an optional bottom strip lists
   today's due maintenance/tests. Header: tank name · clock (24-h preference
   honoured) · one connection dot (green all-reachable / amber partial / red
   all-failing ≈ "check the network", §12r) · "updated HH:MM".

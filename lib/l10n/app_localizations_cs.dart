@@ -4163,9 +4163,6 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get wallRoDue => 'Čeká výměna';
-
-  @override
   String get wallNoDevices => 'Žádná zařízení';
 
   @override

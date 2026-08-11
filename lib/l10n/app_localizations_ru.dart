@@ -4220,9 +4220,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get wallRoDue => 'Пора заменить';
-
-  @override
   String get wallNoDevices => 'Нет устройств';
 
   @override

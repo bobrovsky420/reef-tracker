@@ -1917,8 +1917,6 @@
   "@wallDueToday": {"description": "Bottom strip listing today's due reminders as plain text.", "placeholders": {"items": {}}},
   "wallTestDue": "{param} test",
   "@wallTestDue": {"description": "One due-today item: a parameter test that has reached its cadence.", "placeholders": {"param": {}}},
-  "wallRoDue": "Replacement due",
-  "@wallRoDue": {"description": "Second line of the RO status tile when a stage has reached its lifespan."},
   "wallNoDevices": "No devices",
   "@wallNoDevices": {"description": "Semantics label of the header connection dot with nothing to poll."},
   "wallAllReachable": "All devices reachable",

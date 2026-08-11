@@ -6813,12 +6813,6 @@ abstract class AppLocalizations {
   /// **'{param} test'**
   String wallTestDue(Object param);
 
-  /// Second line of the RO status tile when a stage has reached its lifespan.
-  ///
-  /// In en, this message translates to:
-  /// **'Replacement due'**
-  String get wallRoDue;
-
   /// Semantics label of the header connection dot with nothing to poll.
   ///
   /// In en, this message translates to:

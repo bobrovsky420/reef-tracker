@@ -69,6 +69,17 @@ void main() {
     // iodine card may appear on the board or in the Settings card list.
     await db.addTrackedParameter(tank, 'iodine');
     await series('iodine', 0.05, 0.02);
+    // An RO stage well past its lifespan: the wall shows no RO tile (the RO
+    // unit was removed from the wall display), so nothing here may surface it
+    // however overdue it is — same prove-absence idea as the iodine series.
+    final roStage = await db.insertRoStage(
+      stageType: 'sediment',
+      lifespanDays: 90,
+    );
+    await db.insertRoReplacement(
+      stageId: roStage,
+      replacedAt: now.subtract(const Duration(days: 120)),
+    );
     // Recent hand tests inside the 24 h window — markers on the live lines.
     await db.insertReadingGroup(
       tankId: tank,
