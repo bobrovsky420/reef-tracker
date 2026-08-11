@@ -40,7 +40,7 @@
   "errorWith": "Errore: {message}",
   "saveFailed": "Salvataggio non riuscito: {error}",
 
-  "welcomeTitle": "Benvenuto in ReefTracker",
+  "welcomeTitle": "Ti diamo il benvenuto in ReefTracker",
   "welcomeBody": "Crea il tuo primo acquario per iniziare a monitorare i parametri dell'acqua.",
   "noParamsTracked": "Nessun parametro monitorato per questa vasca.",
   "noReadings": "Nessuna misurazione",

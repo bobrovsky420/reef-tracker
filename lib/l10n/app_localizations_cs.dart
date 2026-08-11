@@ -24,39 +24,38 @@ class AppLocalizationsCs extends AppLocalizations {
   String get moreOptions => 'Další možnosti';
 
   @override
-  String get tourTankTitle => 'Vaše akvária';
+  String get tourTankTitle => 'Tvoje akvária';
 
   @override
-  String get tourTankDesc =>
-      'Klepnutím přepnete mezi akvárii nebo přidáte nové.';
+  String get tourTankDesc => 'Klepnutím přepneš mezi akvárii nebo přidáš nové.';
 
   @override
   String get tourCompareTitle => 'Porovnání';
 
   @override
   String get tourCompareDesc =>
-      'Přepínejte mezi kartami parametrů a souhrnnými grafy.';
+      'Přepínej mezi kartami parametrů a souhrnnými grafy.';
 
   @override
   String get tourParamsTitle => 'Správa parametrů';
 
   @override
   String get tourParamsDesc =>
-      'Vyberte, které parametry vody sledovat, a nastavte jejich cílové rozsahy.';
+      'Vyber, které parametry vody sledovat, a nastav jejich cílové rozsahy.';
 
   @override
   String get tourDosingHistoryTitle => 'Historie dávkování';
 
   @override
   String get tourDosingHistoryDesc =>
-      'Prohlédněte si všechna minulá i současná období dávkování a odeberte omylem zadaný záznam.';
+      'Prohlédni si všechna minulá i současná období dávkování a odeber omylem zadaný záznam.';
 
   @override
   String get tourDoseCalcTitle => 'Kalkulačka dávkování';
 
   @override
   String get tourDoseCalcDesc =>
-      'Na kartě Dávkování otevřete kalkulačku pro odhad denní dávky, která udrží prvek stabilní.';
+      'Na kartě Dávkování otevři kalkulačku pro odhad denní dávky, která udrží prvek stabilní.';
 
   @override
   String get tourNext => 'Další';
@@ -129,11 +128,11 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get welcomeTitle => 'Vítejte v ReefTrackeru';
+  String get welcomeTitle => 'Vítej v ReefTrackeru';
 
   @override
   String get welcomeBody =>
-      'Vytvořte své první akvárium a začněte sledovat parametry vody.';
+      'Vytvoř své první akvárium a začni sledovat parametry vody.';
 
   @override
   String get noParamsTracked =>
@@ -199,7 +198,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get deleteTankBody =>
-      'Tímto trvale smažete akvárium i všechna jeho měření.';
+      'Tímto trvale smažeš akvárium i všechna jeho měření.';
 
   @override
   String tankDeleted(Object name) {
@@ -219,18 +218,18 @@ class AppLocalizationsCs extends AppLocalizations {
   String get nameHint => 'např. Útes v obýváku';
 
   @override
-  String get enterAName => 'Zadejte název';
+  String get enterAName => 'Zadej název';
 
   @override
   String get setupType => 'Typ nádrže';
 
   @override
   String get presetSeedNote =>
-      'Pro tento typ nádrže se nastaví výchozí parametry a hranice zón. Kdykoli je můžete doladit.';
+      'Pro tento typ nádrže se nastaví výchozí parametry a hranice zón. Kdykoli je můžeš doladit.';
 
   @override
   String get fishOnlyPresetNote =>
-      'Předvolba Pouze ryby nenastavuje žádné hranice pro alkalitu, vápník, hořčík ani fosforečnany – pokud tyto parametry sledujete, nebudou mít barevné zóny, dokud si nenastavíte vlastní hranice.';
+      'Předvolba Pouze ryby nenastavuje žádné hranice pro alkalitu, vápník, hořčík ani fosforečnany – pokud tyto parametry sleduješ, nebudou mít barevné zóny, dokud si nenastavíš vlastní hranice.';
 
   @override
   String get volumeOptional => 'Objem (nepovinné)';
@@ -335,7 +334,7 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get enterANumber => 'Zadejte číslo';
+  String get enterANumber => 'Zadej číslo';
 
   @override
   String get sectionSafeRanges => 'Bezpečná rozmezí';
@@ -363,13 +362,13 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get invalidVolume => 'Zadejte platný kladný objem.';
+  String get invalidVolume => 'Zadej platný kladný objem.';
 
   @override
-  String get invalidPositiveNumber => 'Zadejte kladné číslo.';
+  String get invalidPositiveNumber => 'Zadej kladné číslo.';
 
   @override
-  String get invalidIntervalDays => 'Zadejte celý počet dní (alespoň 1).';
+  String get invalidIntervalDays => 'Zadej celý počet dní (alespoň 1).';
 
   @override
   String impossibleValueFor(Object name) {
@@ -384,7 +383,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get implausibleIntro =>
-      'Následující hodnota je mimo obvyklý rozsah. Před uložením zkontrolujte překlepy.';
+      'Následující hodnota je mimo obvyklý rozsah. Před uložením zkontroluj překlepy.';
 
   @override
   String implausibleValueLine(
@@ -403,7 +402,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get implausibleIntroDevices =>
-      'Připojené zařízení hlásí hodnoty, které vypadají chybně. Před uložením zkontrolujte sondu.';
+      'Připojené zařízení hlásí hodnoty, které vypadají chybně. Před uložením zkontroluj sondu.';
 
   @override
   String get implausibleSkip => 'Přeskočit';
@@ -412,7 +411,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get saveAnyway => 'Přesto uložit';
 
   @override
-  String get enterAtLeastOneValue => 'Zadejte alespoň jednu hodnotu.';
+  String get enterAtLeastOneValue => 'Zadej alespoň jednu hodnotu.';
 
   @override
   String savedReadings(int count) {
@@ -445,7 +444,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get testSetNameHint => 'např. Velký týdenní test';
 
   @override
-  String get testSetNeedParam => 'Vyberte alespoň jeden parametr.';
+  String get testSetNeedParam => 'Vyber alespoň jeden parametr.';
 
   @override
   String deleteTestSetTitle(Object name) {
@@ -454,11 +453,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get deleteTestSetBody =>
-      'Testovací sada bude odstraněna. Vaše měření zůstanou zachována.';
+      'Testovací sada bude odstraněna. Tvoje měření zůstanou zachována.';
 
   @override
   String get testSetEmptyHint =>
-      'Tato sada neobsahuje žádné aktivní parametry. Upravte ji, nebo přepněte na Vše.';
+      'Tato sada neobsahuje žádné aktivní parametry. Uprav ji, nebo přepni na Vše.';
 
   @override
   String testSetParamCount(int count) {
@@ -474,7 +473,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get noTestSets =>
-      'Zatím žádné testovací sady. Sada umožní zaznamenat jen parametry, které testujete společně.';
+      'Zatím žádné testovací sady. Sada umožní zaznamenat jen parametry, které testuješ společně.';
 
   @override
   String get rangeWeek => '7 d';
@@ -571,7 +570,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String freeAmmoniaDialogFraction(Object percent, Object total) {
-    return '$percent % z vašich $total ppm celkového amoniaku je v toxické formě NH₃.';
+    return '$percent % z tvých $total ppm celkového amoniaku je v toxické formě NH₃.';
   }
 
   @override
@@ -626,8 +625,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get ratioMgAlkTitle => 'Poměr Mg : Alk';
 
   @override
-  String get ratioNoData =>
-      'Zaznamenejte oba parametry, abyste viděli jejich poměr.';
+  String get ratioNoData => 'Zaznamenej oba parametry a uvidíš jejich poměr.';
 
   @override
   String ratioBoundsNote(Object metric) {
@@ -698,7 +696,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get noDosingHint =>
-      'Přidejte přípravky, které do této nádrže dávkujete – výrobce, produkt a volitelně dávku a rozvrh.';
+      'Přidej přípravky, které do této nádrže dávkuješ – výrobce, produkt a volitelně dávku a rozvrh.';
 
   @override
   String get dosingNoDosage => 'Dávka nezadána';
@@ -730,7 +728,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get deleteDosingRecordBody =>
-      'Tímto trvale odstraníte tento záznam dávkování z historie i z výpočtu dávky. Akci nelze vrátit zpět.';
+      'Tímto trvale odstraníš tento záznam dávkování z historie i z výpočtu dávky. Akci nelze vrátit zpět.';
 
   @override
   String get deleteDosingRecordNotLatest =>
@@ -964,7 +962,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get dataLoadFailed =>
-      'Některá data se nepodařilo načíst. Pokud se to opakuje, restartujte aplikaci nebo obnovte zálohu.';
+      'Některá data se nepodařilo načíst. Pokud se to opakuje, restartuj aplikaci nebo obnov zálohu.';
 
   @override
   String get autoBackupTitle => 'Automatická záloha';
@@ -1007,7 +1005,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get backupDeleteConfirmBody =>
-      'Tímto trvale odstraníte tento záložní soubor ze zařízení.';
+      'Tímto trvale odstraníš tento záložní soubor ze zařízení.';
 
   @override
   String sizeBytes(Object size) {
@@ -1028,7 +1026,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get syncGdriveTitle => 'Synchronizace s Google Diskem';
 
   @override
-  String get syncGdriveSubtitle => 'Automaticky zálohovat na váš Google Disk';
+  String get syncGdriveSubtitle => 'Automaticky zálohovat na tvůj Google Disk';
 
   @override
   String syncGdriveLastPush(String when) {
@@ -1049,7 +1047,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String syncGdriveDialogBody(String email) {
-    return 'Zálohy se nahrávají do složky „ReefTracker“ na Google Disku účtu $email. Můžete si je prohlédnout a stáhnout na drive.google.com.';
+    return 'Zálohy se nahrávají do složky „ReefTracker“ na Google Disku účtu $email. Můžeš si je prohlédnout a stáhnout na drive.google.com.';
   }
 
   @override
@@ -1057,7 +1055,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get syncGdriveDisconnectedSnack =>
-      'Google Disk odpojen. Již nahrané zálohy zůstávají na vašem Disku.';
+      'Google Disk odpojen. Již nahrané zálohy zůstávají na tvém Disku.';
 
   @override
   String syncGdriveLastFailed(String when) {
@@ -1069,7 +1067,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get syncDeviceNameBody =>
-      'Zobrazuje se u záloh nahraných z tohoto zařízení, abyste svá zařízení od sebe rozlišili.';
+      'Zobrazuje se u záloh nahraných z tohoto zařízení, aby se tvá zařízení dala od sebe rozlišit.';
 
   @override
   String get syncDeviceNameHint => 'např. Můj telefon';
@@ -1082,12 +1080,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String syncRestoreBody(String device, String when) {
-    return 'Na vašem Google Disku je novější záloha ze zařízení „$device“ ($when). Obnovit ji do tohoto zařízení? Nastavení tohoto zařízení zůstanou zachována.';
+    return 'Na tvém Google Disku je novější záloha ze zařízení „$device“ ($when). Obnovit ji do tohoto zařízení? Nastavení tohoto zařízení zůstanou zachována.';
   }
 
   @override
   String syncRestoreDivergedBody(String device, String when) {
-    return 'Na vašem Google Disku je novější záloha ze zařízení „$device“ ($when), toto zařízení ale obsahuje i změny, které nebyly nahrány. Obnovením se data tohoto zařízení nahradí zálohou — nejdříve se uloží místní záložní kopie.';
+    return 'Na tvém Google Disku je novější záloha ze zařízení „$device“ ($when), toto zařízení ale obsahuje i změny, které nebyly nahrány. Obnovením se data tohoto zařízení nahradí zálohou — nejdříve se uloží místní záložní kopie.';
   }
 
   @override
@@ -1127,26 +1125,26 @@ class AppLocalizationsCs extends AppLocalizations {
   String get syncIcloudTitle => 'Zálohování na iCloud';
 
   @override
-  String get syncIcloudSubtitle => 'Automaticky zálohovat na váš iCloud Drive';
+  String get syncIcloudSubtitle => 'Automaticky zálohovat na tvůj iCloud Drive';
 
   @override
   String get syncIcloudDialogBody =>
-      'Zálohy se nahrávají do složky „ReefTracker“ ve vašem iCloud Drive. Můžete si je prohlédnout v aplikaci Soubory.';
+      'Zálohy se nahrávají do složky „ReefTracker“ ve tvém iCloud Drive. Můžeš si je prohlédnout v aplikaci Soubory.';
 
   @override
   String get syncIcloudDisable => 'Vypnout';
 
   @override
   String get syncIcloudEnabledSnack =>
-      'Zálohy se budou synchronizovat na váš iCloud Drive';
+      'Zálohy se budou synchronizovat na tvůj iCloud Drive';
 
   @override
   String get syncIcloudDisabledSnack =>
-      'Zálohování na iCloud vypnuto. Již nahrané zálohy zůstávají na vašem iCloud Drive.';
+      'Zálohování na iCloud vypnuto. Již nahrané zálohy zůstávají na tvém iCloud Drive.';
 
   @override
   String get syncIcloudUnavailable =>
-      'iCloud není k dispozici. Přihlaste se k iCloudu a zapněte iCloud Drive pro ReefTracker v Nastavení zařízení.';
+      'iCloud není k dispozici. Přihlas se k iCloudu a zapni iCloud Drive pro ReefTracker v Nastavení zařízení.';
 
   @override
   String syncIcloudLastFailed(Object when) {
@@ -1167,12 +1165,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String syncRestoreBodyIcloud(Object device, Object when) {
-    return 'Ve vašem iCloud Drive je novější záloha ze zařízení „$device“ ($when). Obnovit ji do tohoto zařízení? Nastavení tohoto zařízení zůstanou zachována.';
+    return 'Ve tvém iCloud Drive je novější záloha ze zařízení „$device“ ($when). Obnovit ji do tohoto zařízení? Nastavení tohoto zařízení zůstanou zachována.';
   }
 
   @override
   String syncRestoreDivergedBodyIcloud(Object device, Object when) {
-    return 'Ve vašem iCloud Drive je novější záloha ze zařízení „$device“ ($when), toto zařízení ale obsahuje i změny, které nebyly nahrány. Obnovením se data tohoto zařízení nahradí zálohou — nejdříve se uloží místní záložní kopie.';
+    return 'Ve tvém iCloud Drive je novější záloha ze zařízení „$device“ ($when), toto zařízení ale obsahuje i změny, které nebyly nahrány. Obnovením se data tohoto zařízení nahradí zálohou — nejdříve se uloží místní záložní kopie.';
   }
 
   @override
@@ -1200,7 +1198,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get aboutSupport => 'Podpora a časté dotazy';
 
   @override
-  String get aboutSupportSubtitle => 'Získejte pomoc nebo nahlaste problém';
+  String get aboutSupportSubtitle => 'Získej pomoc nebo nahlas problém';
 
   @override
   String get aboutPrivacyPolicy => 'Zásady ochrany soukromí';
@@ -1232,11 +1230,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get founderInfoBody =>
-      'Používáte ReefTracker od jeho začátků. Jako poděkování pro vás všechny dnes dostupné funkce zůstanou navždy zdarma.';
+      'Používáš ReefTracker od jeho začátků. Jako poděkování pro tebe všechny dnes dostupné funkce zůstanou navždy zdarma.';
 
   @override
   String get standardInfoBody =>
-      'Používáte standardní edici aplikace ReefTracker. Vše, co jste dosud zaznamenali, zůstává vaše; ReefTracker Pro odemyká pokročilé funkce.';
+      'Používáš standardní edici aplikace ReefTracker. Vše, co máš dosud zaznamenáno, zůstává tvoje; ReefTracker Pro odemyká pokročilé funkce.';
 
   @override
   String get editionUpgrade => 'Odemknout Pro';
@@ -1249,7 +1247,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get proInfoBody =>
-      'Děkujeme! Odemčení Pro je na tomto zařízení aktivní. Všechny funkce Pro máte k dispozici.';
+      'Děkujeme! Odemčení Pro je na tomto zařízení aktivní. Všechny funkce Pro máš k dispozici.';
 
   @override
   String get paywallTitle => 'ReefTracker Pro';
@@ -1273,7 +1271,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get paywallPurchased => 'Pro je odemčeno. Děkujeme!';
 
   @override
-  String get paywallRestored => 'Vaše odemčení Pro bylo obnoveno.';
+  String get paywallRestored => 'Tvoje odemčení Pro bylo obnoveno.';
 
   @override
   String get paywallNothingToRestore =>
@@ -1284,7 +1282,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Platba se stále potvrzuje. Pro se odemkne, jakmile proběhne.';
 
   @override
-  String get paywallFailed => 'Obchod akci nedokončil. Zkuste to prosím znovu.';
+  String get paywallFailed => 'Obchod akci nedokončil. Zkus to prosím znovu.';
 
   @override
   String get paywallUnavailable =>
@@ -1335,7 +1333,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Převod mezi praktickou salinitou (ppt) a specifickou hustotou (SG). Pište do kteréhokoli pole.';
+      'Převod mezi praktickou salinitou (ppt) a specifickou hustotou (SG). Piš do kteréhokoli pole.';
 
   @override
   String get specificGravity => 'Hustota (SG)';
@@ -1479,18 +1477,18 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get doseCalcStable =>
-      'Vaše dávka udržuje tento prvek stabilní – ponechte ji.';
+      'Tvoje dávka udržuje tento prvek stabilní – ponech ji.';
 
   @override
-  String get doseCalcIncrease => 'Zvyšte dávku, aby prvek zůstal stabilní.';
+  String get doseCalcIncrease => 'Zvyš dávku, aby prvek zůstal stabilní.';
 
   @override
   String get doseCalcDecrease =>
-      'Dávku můžete snížit a prvek přesto udržíte stabilní.';
+      'Dávku můžeš snížit a prvek přesto udržíš stabilní.';
 
   @override
   String get doseCalcOverdosing =>
-      'Tento prvek roste – snižte nebo pozastavte dávkování.';
+      'Tento prvek roste – sniž nebo pozastav dávkování.';
 
   @override
   String get doseCalcNoDoseNeeded =>
@@ -1498,11 +1496,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get doseCalcNeedsPotency =>
-      'Pro doporučení dávky zadejte sílu přípravku.';
+      'Pro doporučení dávky zadej sílu přípravku.';
 
   @override
   String get doseCalcInsufficient =>
-      'Pro výpočet přidejte alespoň dvě měření z různých dnů a objem nádrže.';
+      'Pro výpočet přidej alespoň dvě měření z různých dnů a objem nádrže.';
 
   @override
   String get doseCalcModeMaintenance => 'Denní dávka';
@@ -1512,13 +1510,13 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get doseCalcCorrIntro =>
-      'Spočítejte jednorázovou dávku, která zvedne prvek ze současné hodnoty na cílovou. Pokud by byl rychlý nárůst nebezpečný, dávka se rozloží do několika dnů.';
+      'Spočítej jednorázovou dávku, která zvedne prvek ze současné hodnoty na cílovou. Pokud by byl rychlý nárůst nebezpečný, dávka se rozloží do několika dnů.';
 
   @override
   String get doseCalcCurrentValue => 'Aktuální hodnota';
 
   @override
-  String get doseCalcCurrentValueHelp => 'Prázdné = vaše poslední měření.';
+  String get doseCalcCurrentValueHelp => 'Prázdné = tvoje poslední měření.';
 
   @override
   String get doseCalcTargetValue => 'Cílová hodnota';
@@ -1544,7 +1542,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get doseCalcCorrMissing =>
-      'Pro výpočet zadejte aktuální hodnotu, cíl a objem nádrže.';
+      'Pro výpočet zadej aktuální hodnotu, cíl a objem nádrže.';
 
   @override
   String get doseCalcCorrAtTarget =>
@@ -1555,7 +1553,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String doseCalcCorrSplit(Object limit, int days) {
-    return 'Zvyšovat rychleji než o $limit za den je riskantní – podejte korekci raději jako $days denních dávek.';
+    return 'Zvyšovat rychleji než o $limit za den je riskantní – podej korekci raději jako $days denních dávek.';
   }
 
   @override
@@ -1566,7 +1564,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get doseCalcSalinityAdjustHelp =>
-      'Cílové hodnoty předpokládají mořskou vodu 35 ppt (1,026). Po zapnutí se cíl přepočítá na naměřenou salinitu vaší nádrže.';
+      'Cílové hodnoty předpokládají mořskou vodu 35 ppt (1,026). Po zapnutí se cíl přepočítá na naměřenou salinitu tvé nádrže.';
 
   @override
   String doseCalcSalinityAdjustActive(
@@ -1864,7 +1862,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get microEmptyHint =>
-      'Sledujte stopové prvky z domácích testů nebo laboratorních ICP rozborů.';
+      'Sleduj stopové prvky z domácích testů nebo laboratorních ICP rozborů.';
 
   @override
   String get microAllOk => 'Vše v rozmezí';
@@ -1928,13 +1926,13 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get microViewNone =>
-      'Zatím žádné vlastní pohledy. Pohled zobrazuje jen prvky, které vaše laboratoř měří.';
+      'Zatím žádné vlastní pohledy. Pohled zobrazuje jen prvky, které tvoje laboratoř měří.';
 
   @override
   String get microViewNameHint => 'např. Panel mé laboratoře';
 
   @override
-  String get microViewNeedElement => 'Vyberte alespoň jeden prvek.';
+  String get microViewNeedElement => 'Vyber alespoň jeden prvek.';
 
   @override
   String microViewElementCount(int count) {
@@ -1972,7 +1970,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get icpImportTitle => 'Import ICP analýzy';
 
   @override
-  String get icpImportFormatHint => 'Zvolte formát exportovaného souboru.';
+  String get icpImportFormatHint => 'Zvol formát exportovaného souboru.';
 
   @override
   String get icpImportFormatFaunaMarinHint =>
@@ -1996,7 +1994,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get icpImportSampleDateHint =>
-      'Předvyplněno datem analýzy z reportu. Změňte je na den, kdy jste odebrali vzorek vody.';
+      'Předvyplněno datem analýzy z reportu. Změň je na den odběru vzorku vody.';
 
   @override
   String get icpImportSectionCore => 'Základní parametry';
@@ -2042,7 +2040,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get measurementImportSourceHint =>
-      'Zvolte aplikaci nebo přístroj, ze kterého soubor pochází.';
+      'Zvol aplikaci nebo přístroj, ze kterého soubor pochází.';
 
   @override
   String get measurementImportHannaHint =>
@@ -2062,7 +2060,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get hannaImportFirstFromHint =>
-      'První import do tohoto akvária: zvolte, odkud historii importovat. Starší měření budou trvale ignorována — hodí se, pokud jste je už zapsali ručně.';
+      'První import do tohoto akvária: zvol, odkud historii importovat. Starší měření budou trvale ignorována — hodí se, pokud je už máš zapsaná ručně.';
 
   @override
   String hannaImportNewCount(int count) {
@@ -2171,16 +2169,16 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get hannaScanPickHint =>
-      'Přečte hodnotu přímo z displeje checkeru. Nejprve vyberte model — číslo HI je vytištěno na přední straně checkeru.';
+      'Přečte hodnotu přímo z displeje checkeru. Nejprve vyber model — číslo HI je vytištěno na přední straně checkeru.';
 
   @override
   String get hannaScanPickTitle => 'Model checkeru';
 
   @override
-  String get hannaScanGuide => 'Umístěte displej do rámečku';
+  String get hannaScanGuide => 'Umísti displej do rámečku';
 
   @override
-  String get hannaScanGlareHint => 'mírným nakloněním se vyhnete odleskům';
+  String get hannaScanGlareHint => 'mírným nakloněním se vyhneš odleskům';
 
   @override
   String get hannaScanZoomHint => 'přiblížení dvěma prsty';
@@ -2193,18 +2191,18 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get hannaScanCameraDenied =>
-      'Přístup k fotoaparátu byl odepřen. Pro skenování displeje povolte fotoaparát v nastavení systému.';
+      'Přístup k fotoaparátu byl odepřen. Pro skenování displeje povol fotoaparát v nastavení systému.';
 
   @override
   String get hannaScanCameraFailed => 'Fotoaparát se nepodařilo spustit.';
 
   @override
   String get hannaScanImpossibleNote =>
-      'Tato hodnota je pro tento parametr nemožná a nelze ji uložit. Skenujte znovu, nebo zkontrolujte, zda je vybrán správný model.';
+      'Tato hodnota je pro tento parametr nemožná a nelze ji uložit. Skenuj znovu, nebo zkontroluj, zda je vybrán správný model.';
 
   @override
   String get hannaScanImplausibleNote =>
-      'Tato hodnota je mimo věrohodný rozsah — před uložením ji zkontrolujte.';
+      'Tato hodnota je mimo věrohodný rozsah — před uložením ji zkontroluj.';
 
   @override
   String get experimentalBadge => 'Experimentální';
@@ -2217,7 +2215,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get experimentalToggleSubtitle =>
-      'Vyzkoušejte funkce ve fázi testování: připojení Hanna checkeru přes Bluetooth a skenování displeje';
+      'Vyzkoušej funkce ve fázi testování: připojení Hanna checkeru přes Bluetooth a skenování displeje';
 
   @override
   String get hannaScanFabTitle => 'Tlačítko skenování kamerou';
@@ -2232,13 +2230,13 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get hannaMeasureOnlyNote =>
-      'Podporováno je pouze měření. Ke změně nastavení přístroje nebo aktualizaci jeho firmwaru použijte aplikaci Hanna Lab od výrobce.';
+      'Podporováno je pouze měření. Ke změně nastavení přístroje nebo aktualizaci jeho firmwaru použij aplikaci Hanna Lab od výrobce.';
 
   @override
   String get hannaScanning => 'Hledám přístroj…';
 
   @override
-  String get hannaScanHint => 'Zapněte přístroj a mějte ho blízko telefonu.';
+  String get hannaScanHint => 'Zapni přístroj a měj ho blízko telefonu.';
 
   @override
   String get hannaReadingSetup => 'Připojeno — načítám nastavení přístroje…';
@@ -2249,11 +2247,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get hannaErrBluetoothOff =>
-      'Bluetooth je vypnuté. Zapněte ho a zkuste to znovu.';
+      'Bluetooth je vypnuté. Zapni ho a zkus to znovu.';
 
   @override
   String get hannaErrNotFound =>
-      'Přístroj nenalezen. Zkontrolujte, že je zapnutý a v dosahu.';
+      'Přístroj nenalezen. Zkontroluj, že je zapnutý a v dosahu.';
 
   @override
   String get hannaErrConnectionFailed => 'Připojení k přístroji se nezdařilo.';
@@ -2308,7 +2306,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get hannaStartMeasurements => 'Spustit měření';
 
   @override
-  String get hannaFollowMeter => 'Postupujte podle pokynů na přístroji';
+  String get hannaFollowMeter => 'Postupuj podle pokynů na přístroji';
 
   @override
   String hannaStepN(int step) {
@@ -2345,7 +2343,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get hannaTimerDoneBody =>
-      'Čas vypršel — pokračujte v měření na přístroji.';
+      'Čas vypršel — pokračuj v měření na přístroji.';
 
   @override
   String get hannaResultsTitle => 'Výsledky měření';
@@ -2487,7 +2485,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get helpAlkalinity =>
-      'Karbonátová tvrdost. Udržujte stabilní — vyhněte se výkyvům.';
+      'Karbonátová tvrdost. Udržuj stabilní — vyhni se výkyvům.';
 
   @override
   String get helpNitrate =>
@@ -2684,11 +2682,11 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get aiSummaryAction => 'Zeptejte se své AI';
+  String get aiSummaryAction => 'Zeptej se své AI';
 
   @override
   String get aiSummaryPrivacyNote =>
-      'Toto je připravený prompt s daty vaší nádrže. Vložte ho do ChatGPT, Claude, Gemini nebo jiného AI nástroje — vše se připraví ve vašem zařízení, nic se nikam neodesílá.';
+      'Toto je připravený prompt s daty tvé nádrže. Vlož ho do ChatGPT, Claude, Gemini nebo jiného AI nástroje — vše se připraví ve tvém zařízení, nic se nikam neodesílá.';
 
   @override
   String get aiSummaryPromptPreview => 'Náhled promptu';
@@ -2709,14 +2707,13 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get aiSummaryCopied => 'Zkopírováno — vložte do chatu s vaší AI.';
+  String get aiSummaryCopied => 'Zkopírováno — vlož do chatu se svou AI.';
 
   @override
   String get aiSummaryEmpty => 'Zatím žádná měření — není co shrnout.';
 
   @override
-  String get aiSummaryInsightsFooter =>
-      'Chcete hlubší rozbor? Zeptejte se své AI';
+  String get aiSummaryInsightsFooter => 'Chceš hlubší rozbor? Zeptej se své AI';
 
   @override
   String aiSummaryPreamble(int weeks) {
@@ -2936,7 +2933,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get remindMe => 'Připomínat';
 
   @override
-  String get remindMeNeedsTime => 'Pro připomínky nastavte čas dávkování';
+  String get remindMeNeedsTime => 'Pro připomínky nastav čas dávkování';
 
   @override
   String get maintenanceSchedule => 'Plán údržby';
@@ -2957,7 +2954,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get taskTitleLabel => 'Název';
 
   @override
-  String get taskTitleRequired => 'Zadejte název';
+  String get taskTitleRequired => 'Zadej název';
 
   @override
   String get repeatLabel => 'Opakování';
@@ -2969,7 +2966,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get dueDateLabel => 'Termín';
 
   @override
-  String get dueDateRequired => 'Vyberte termín';
+  String get dueDateRequired => 'Vyber termín';
 
   @override
   String get dueToday => 'Dnes';
@@ -2995,7 +2992,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get scheduleEmptyBody =>
-      'Zatím žádné úkoly údržby. Naplánujte výměny vody nebo vlastní úkoly a získáte štítky termínů a připomínky.';
+      'Zatím žádné úkoly údržby. Naplánuj výměny vody nebo vlastní úkoly a získáš štítky termínů a připomínky.';
 
   @override
   String get repeatModeLabel => 'Opakování';
@@ -3025,13 +3022,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get monthDayLabel => 'Den v měsíci (1–31)';
 
   @override
-  String get invalidInterval => 'Zadejte celé číslo (1 nebo více).';
+  String get invalidInterval => 'Zadej celé číslo (1 nebo více).';
 
   @override
-  String get invalidMonthDay => 'Zadejte den mezi 1 a 31.';
+  String get invalidMonthDay => 'Zadej den mezi 1 a 31.';
 
   @override
-  String get weekdaysRequired => 'Vyberte alespoň jeden den.';
+  String get weekdaysRequired => 'Vyber alespoň jeden den.';
 
   @override
   String everyWeeksN(int n) {
@@ -3108,7 +3105,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get roPartOfUnitHint =>
-      'Vypněte, pokud vaše jednotka tento stupeň nemá';
+      'Vypni, pokud tvoje jednotka tento stupeň nemá';
 
   @override
   String get roHiddenStages => 'Není na mé jednotce';
@@ -3136,10 +3133,10 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get roEmptyBody =>
-      'Žádné stupně. Přidejte filtry své RO jednotky tlačítkem +.';
+      'Žádné stupně. Přidej filtry své RO jednotky tlačítkem +.';
 
   @override
-  String get roSetupPrompt => 'Sledujte výměny filtrů a membrány';
+  String get roSetupPrompt => 'Sleduj výměny filtrů a membrány';
 
   @override
   String get roUnitToggleSubtitle =>
@@ -3153,7 +3150,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'Kolik vody vaše jednotka vyrobí. Volba úrovně přepíše u všech standardních stupňů intervaly výměny běžnými hodnotami pro danou úroveň — i ty, které jste si nastavili sami; vlastní stupně zůstanou beze změny a každý stupeň si pak můžete doladit.';
+      'Kolik vody tvoje jednotka vyrobí. Volba úrovně přepíše u všech standardních stupňů intervaly výměny běžnými hodnotami pro danou úroveň — i ty nastavené ručně; vlastní stupně zůstanou beze změny a každý stupeň si pak můžeš doladit.';
 
   @override
   String get roUsageLight => 'Nízká';
@@ -3181,7 +3178,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Intervaly výměny standardních stupňů znovu nastaveny';
 
   @override
-  String get notifRoTitle => 'Vyměňte filtry reverzní osmózy';
+  String get notifRoTitle => 'Vyměň filtry reverzní osmózy';
 
   @override
   String get reefFactoryTitle => 'Zařízení ReefFactory';
@@ -3191,7 +3188,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryDisclaimer =>
-      'Tato aplikace pouze čte živé hodnoty z vašich zařízení ReefFactory. Nemůže měnit nastavení, kalibrovat ani aktualizovat firmware – k tomu použijte aplikaci ReefFactory. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
+      'Tato aplikace pouze čte živé hodnoty z tvých zařízení ReefFactory. Nemůže měnit nastavení, kalibrovat ani aktualizovat firmware – k tomu použij aplikaci ReefFactory. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefFactoryAddDevice => 'Přidat zařízení';
@@ -3201,7 +3198,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryEmptyBody =>
-      'Přidejte měřicí zařízení ReefFactory podle jeho IP adresy nebo názvu hostitele a čtěte jeho živé hodnoty.';
+      'Přidej měřicí zařízení ReefFactory podle jeho IP adresy nebo názvu hostitele a čti jeho živé hodnoty.';
 
   @override
   String get reefFactoryRefresh => 'Obnovit';
@@ -3217,7 +3214,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryNothingToSave =>
-      'Zatím není co uložit – nejprve klepněte na Obnovit vše.';
+      'Zatím není co uložit – nejprve klepni na Obnovit vše.';
 
   @override
   String reefFactorySavedSnack(int count) {
@@ -3233,7 +3230,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryNotReadYet =>
-      'Klepnutím na Obnovit vše načtete aktuální hodnotu.';
+      'Klepnutím na Obnovit vše načteš aktuální hodnotu.';
 
   @override
   String get reefFactoryHeating => 'Ohřev';
@@ -3243,13 +3240,13 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryNoTank =>
-      'Nejprve přiřaďte nádrž, abyste mohli uložit hodnoty.';
+      'Nejprve přiřaď nádrž, aby šlo hodnoty uložit.';
 
   @override
   String get reefFactoryTankLabel => 'Nádrž';
 
   @override
-  String get reefFactorySelectTank => 'Vyberte nádrž';
+  String get reefFactorySelectTank => 'Vyber nádrž';
 
   @override
   String get reefFactoryMoveToTank => 'Přesunout do jiné nádrže';
@@ -3276,7 +3273,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryHostHelp =>
-      'Najdete ji v aplikaci ReefFactory nebo v routeru. Rezervace DHCP zajistí, že se nezmění. Telefon musí být ve stejné Wi-Fi síti jako zařízení.';
+      'Najdeš ji v aplikaci ReefFactory nebo v routeru. Rezervace DHCP zajistí, že se nezmění. Telefon musí být ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefFactoryCheck => 'Ověřit';
@@ -3288,7 +3285,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefFactoryErrUnreachable =>
-      'Na tuto adresu se nepodařilo připojit. Zkontrolujte, zda je zařízení zapnuté a ve stejné síti.';
+      'Na tuto adresu se nepodařilo připojit. Zkontroluj, zda je zařízení zapnuté a ve stejné síti.';
 
   @override
   String get reefFactoryErrTimeout =>
@@ -3313,7 +3310,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatDisclaimer =>
-      'Tato aplikace pouze čte stav z vašich zařízení Red Sea ReefBeat. Nemůže dávkovat, měnit plány ani kalibrovat – k tomu použijte aplikaci ReefBeat. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
+      'Tato aplikace pouze čte stav z tvých zařízení Red Sea ReefBeat. Nemůže dávkovat, měnit plány ani kalibrovat – k tomu použij aplikaci ReefBeat. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefBeatAddDevice => 'Přidat zařízení';
@@ -3323,20 +3320,20 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Prohledejte svou Wi-Fi síť a najděte zařízení Red Sea ReefBeat – dávkovače ReefDose, ReefATO, ReefMat, ReefRun, ReefLED a ReefWave – nebo přidejte zařízení podle jeho IP adresy.';
+      'Prohledej svou Wi-Fi síť a najdi zařízení Red Sea ReefBeat – dávkovače ReefDose, ReefATO, ReefMat, ReefRun, ReefLED a ReefWave – nebo přidej zařízení podle jeho IP adresy.';
 
   @override
   String get reefBeatRefreshAll => 'Obnovit vše';
 
   @override
   String get reefBeatNotReadYet =>
-      'Klepnutím na Obnovit vše načtete aktuální stav.';
+      'Klepnutím na Obnovit vše načteš aktuální stav.';
 
   @override
   String get reefBeatTankLabel => 'Nádrž';
 
   @override
-  String get reefBeatSelectTank => 'Vyberte nádrž';
+  String get reefBeatSelectTank => 'Vyber nádrž';
 
   @override
   String get reefBeatMoveToTank => 'Přesunout do jiné nádrže';
@@ -3363,7 +3360,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatHostHelp =>
-      'Najdete ji v seznamu klientů vašeho routeru. Rezervace DHCP zajistí, že se nezmění. Telefon musí být ve stejné Wi-Fi síti jako zařízení.';
+      'Najdeš ji v seznamu klientů svého routeru. Rezervace DHCP zajistí, že se nezmění. Telefon musí být ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefBeatCheck => 'Ověřit';
@@ -3375,7 +3372,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatErrUnreachable =>
-      'Na tuto adresu se nepodařilo připojit. Zkontrolujte, zda je zařízení zapnuté a ve stejné síti.';
+      'Na tuto adresu se nepodařilo připojit. Zkontroluj, zda je zařízení zapnuté a ve stejné síti.';
 
   @override
   String get reefBeatErrTimeout => 'Připojeno, ale nedorazila žádná odpověď.';
@@ -3556,7 +3553,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatMatRollLow => 'Role se blíží ke konci';
 
   @override
-  String get reefBeatMatCleanSensor => 'Vyčistěte senzor';
+  String get reefBeatMatCleanSensor => 'Vyčisti senzor';
 
   @override
   String get reefBeatMatAutoAdvanceOff => 'Automatické posouvání vypnuto';
@@ -3684,7 +3681,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get apexDisclaimer =>
-      'Tato aplikace váš Apex pouze čte. Nemůže přepínat zásuvky, spouštět krmení ani měnit programy – k tomu použijte Fusion nebo webovou stránku Apexu. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako řídicí jednotka.';
+      'Tato aplikace tvůj Apex pouze čte. Nemůže přepínat zásuvky, spouštět krmení ani měnit programy – k tomu použij Fusion nebo webovou stránku Apexu. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako řídicí jednotka.';
 
   @override
   String get apexAddDevice => 'Přidat jednotku';
@@ -3694,7 +3691,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get apexEmptyBody =>
-      'Přidejte svůj Apex podle jeho IP adresy a přihlašovacích údajů, které používáte na jeho webové stránce.';
+      'Přidej svůj Apex podle jeho IP adresy a přihlašovacích údajů, které používáš na jeho webové stránce.';
 
   @override
   String get apexRefreshAll => 'Obnovit vše';
@@ -3722,11 +3719,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get apexNoTank =>
-      'Přiřaďte tuto jednotku k akváriu, aby šlo ukládat její hodnoty.';
+      'Přiřaď tuto jednotku k akváriu, aby šlo ukládat její hodnoty.';
 
   @override
   String get apexNotReadYet =>
-      'Klepnutím na Obnovit vše načtete aktuální hodnoty.';
+      'Klepnutím na Obnovit vše načteš aktuální hodnoty.';
 
   @override
   String get apexNoProbes =>
@@ -3793,7 +3790,7 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get apexSelectTank => 'Vyberte akvárium';
+  String get apexSelectTank => 'Vyber akvárium';
 
   @override
   String get apexHostLabel => 'IP adresa nebo název hostitele';
@@ -3803,7 +3800,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get apexHostHelp =>
-      'Adresa, na které otevíráte webovou stránku Apexu. Najdete ji ve Fusion v Misc Setup nebo v routeru.';
+      'Adresa, na které otevíráš webovou stránku Apexu. Najdeš ji ve Fusion v Misc Setup nebo v routeru.';
 
   @override
   String get apexUsernameLabel => 'Uživatelské jméno';
@@ -3824,7 +3821,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get apexErrUnreachable =>
-      'Na této adrese se nic neozvalo. Zkontrolujte, že je jednotka zapnutá a v této síti.';
+      'Na této adrese se nic neozvalo. Zkontroluj, že je jednotka zapnutá a v této síti.';
 
   @override
   String get apexErrTimeout => 'Připojeno, ale jednotka neodpověděla včas.';
@@ -3840,7 +3837,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get discoveryTitle => 'Prohledat síť';
 
   @override
-  String get discoverySweeping => 'Hledám zařízení ve vaší Wi-Fi…';
+  String get discoverySweeping => 'Hledám zařízení ve tvé Wi-Fi…';
 
   @override
   String get discoveryIdentifying => 'Ověřuji nalezená zařízení…';
@@ -3850,11 +3847,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get discoveryNoNetwork =>
-      'Telefon není připojen k Wi-Fi síti. Připojte se ke stejné Wi-Fi jako vaše zařízení a zkuste to znovu.';
+      'Telefon není připojen k Wi-Fi síti. Připoj se ke stejné Wi-Fi jako tvoje zařízení a zkus to znovu.';
 
   @override
   String get discoveryNothingFoundHelp =>
-      'Nenalezeno žádné zařízení. Zkontrolujte, že jsou zapnutá a připojená k této Wi-Fi síti. Některé sítě pro hosty brání zařízením ve vzájemné komunikaci. Zařízení můžete přidat i zadáním jeho IP adresy.';
+      'Nenalezeno žádné zařízení. Zkontroluj, že jsou zapnutá a připojená k této Wi-Fi síti. Některé sítě pro hosty brání zařízením ve vzájemné komunikaci. Zařízení můžeš přidat i zadáním jeho IP adresy.';
 
   @override
   String get discoveryAdd => 'Přidat';
@@ -3885,15 +3882,15 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get discoveryFailed =>
-      'Hledání skončilo neočekávanou chybou. Zkuste hledat znovu.';
+      'Hledání skončilo neočekávanou chybou. Zkus hledat znovu.';
 
   @override
   String get discoveryPermissionDenied =>
-      'ReefTracker nemá povolený přístup k místní síti, takže hledání ani ručně zadané adresy nemohou fungovat. Povolte ho v Nastavení → Soukromí a zabezpečení → Místní síť a pak hledejte znovu.';
+      'ReefTracker nemá povolený přístup k místní síti, takže hledání ani ručně zadané adresy nemohou fungovat. Povol ho v Nastavení → Soukromí a zabezpečení → Místní síť a pak hledej znovu.';
 
   @override
   String deviceAlreadyAdded(Object name) {
-    return '$name už je přidáno. Pro změnu adresy použijte Prohledat síť.';
+    return '$name už je přidáno. Pro změnu adresy použij Prohledat síť.';
   }
 
   @override
@@ -3927,21 +3924,21 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get devicesDisclaimer =>
-      'Aplikace vaše zařízení pouze čte. Nemůže měnit nastavení, dávkovat, spínat zásuvky ani kalibrovat — k tomu použijte aplikaci výrobce. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
+      'Aplikace tvoje zařízení pouze čte. Nemůže měnit nastavení, dávkovat, spínat zásuvky ani kalibrovat — k tomu použij aplikaci výrobce. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get devicesEmptyTitle => 'Zatím žádná zařízení';
 
   @override
   String get devicesEmptyBody =>
-      'Připojte měřič ReefFactory, zařízení Red Sea ReefBeat nebo řídicí jednotku Neptune Apex ve své síti — nebo změřte hodnoty Hanna checkerem přes Bluetooth — a uvidíte je zde.';
+      'Připoj měřič ReefFactory, zařízení Red Sea ReefBeat nebo řídicí jednotku Neptune Apex ve své síti — nebo změř hodnoty Hanna checkerem přes Bluetooth — a uvidíš je zde.';
 
   @override
   String get devicesAddDevice => 'Přidat zařízení';
 
   @override
   String get devicesHannaDisclaimer =>
-      'Hanna checker se připojuje přes Bluetooth jen během měření — spusťte ho z jeho karty. Dokončená měření se uloží mezi vaše záznamy.';
+      'Hanna checker se připojuje přes Bluetooth jen během měření — spusť ho z jeho karty. Dokončená měření se uloží mezi tvoje záznamy.';
 
   @override
   String get devicesAddPickBrand => 'Která značka?';
@@ -4039,7 +4036,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get resetParamDefaultsBody =>
-      'Každý parametr se vrátí k doporučeným hranicím pro tento typ akvária a mikroprvky k vestavěným výchozím hodnotám. Hranice, které jste nastavili sami, budou zahozeny. Naměřené hodnoty zůstanou zachovány.';
+      'Každý parametr se vrátí k doporučeným hranicím pro tento typ akvária a mikroprvky k vestavěným výchozím hodnotám. Ručně nastavené hranice budou zahozeny. Naměřené hodnoty zůstanou zachovány.';
 
   @override
   String get paramDefaultsRestored => 'Parametry obnoveny na výchozí hodnoty.';
@@ -4059,11 +4056,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get wallDisplaySubtitle =>
-      'Stále zapnutý přehled hodnot vašeho akvária';
+      'Stále zapnutý přehled hodnot tvého akvária';
 
   @override
   String get wallSmallScreenNote =>
-      'Nástěnný displej je navržen pro tablet na zdi. Na této menší obrazovce funguje také – jen uvidíte méně karet na stránku.';
+      'Nástěnný displej je navržen pro tablet na zdi. Na této menší obrazovce funguje také – jen uvidíš méně karet na stránku.';
 
   @override
   String get wallStartNow => 'Spustit teď';
@@ -4113,7 +4110,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get wallCardsHint =>
-      'Každá hodnota, kterou zařízení hlásí, má vlastní kartu. Skryjte duplicity, které nechcete, a zbytek přetáhněte na místo; skryjete-li všechny karty zařízení, nástěnka ho přestane kontaktovat.';
+      'Každá hodnota, kterou zařízení hlásí, má vlastní kartu. Skryj duplicity, které nechceš, a zbytek přetáhni na místo; skryješ-li všechny karty zařízení, nástěnka ho přestane kontaktovat.';
 
   @override
   String get wallStoredCard => 'Ruční měření';
@@ -4136,13 +4133,13 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get wallNoTank =>
-      'Zatím žádné akvárium. Přidejte ho a pak spusťte nástěnný displej.';
+      'Zatím žádné akvárium. Přidej ho a pak spusť nástěnný displej.';
 
   @override
   String get wallProLocked => 'Nástěnný displej je funkce PRO.';
 
   @override
-  String get wallExitHint => 'Podržením kdekoli ukončíte';
+  String get wallExitHint => 'Podržením kdekoli ukončíš';
 
   @override
   String wallUpdatedAt(Object time) {
@@ -4169,8 +4166,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get wallSomeUnreachable => 'Některé zařízení je nedostupné';
 
   @override
-  String get wallNetworkDown =>
-      'Žádné zařízení není dostupné – zkontrolujte síť';
+  String get wallNetworkDown => 'Žádné zařízení není dostupné – zkontroluj síť';
 
   @override
   String wallMeasuredAgo(Object ago) {

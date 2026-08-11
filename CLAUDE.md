@@ -87,6 +87,7 @@ This app is fully localized. **Whenever you add or change any user-facing text, 
 - Config: [l10n.yaml](l10n.yaml).
 
 Rules:
+- **All translations address the user in the informal second person singular** — Czech ty/tykání, German du (lowercase), Russian ты, French tu, Polish ty (capitalized Twój/Ciebie), Italian tu. Never use formal address (vykání, Sie, вы, vous, Pan/Pani, Lei). Never let a string assume the user's gender: where informal address would force a gendered form (Slavic past tense, French/Italian participle agreement), restructure the sentence instead — imperative, present tense, passive, or noun phrase ("Границы, заданные вручную…", "Les limites définies manuellement…"). This applies to store release notes and all other user-facing text, not just the ARB files.
 - Never hardcode user-facing strings in widgets. Add a key to the template ARB and reference it via the generated localizations.
 - When you add a key, add it to **all** `app_*.arb` files with a proper translation (not just a copy of the English text).
 - When you change or remove a key, apply the same change across **all** `app_*.arb` files.

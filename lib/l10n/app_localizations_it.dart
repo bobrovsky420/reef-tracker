@@ -130,7 +130,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get welcomeTitle => 'Benvenuto in ReefTracker';
+  String get welcomeTitle => 'Ti diamo il benvenuto in ReefTracker';
 
   @override
   String get welcomeBody =>
