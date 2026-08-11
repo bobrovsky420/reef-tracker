@@ -224,8 +224,9 @@ class WallDoseHeadData {
     this.tone = Zone.unknown,
   });
 
-  /// The supplement's abbreviation as configured on the pump ("KH"), or its
-  /// full name when no abbreviation is set.
+  /// The supplement's name as configured on the pump ("Balling light KH" —
+  /// the same label the device card uses), or its abbreviation when no name
+  /// is set.
   final String label;
 
   /// Localized "68 days" / "4 months"; null when the pump reports no stock
@@ -259,8 +260,8 @@ class WallDoseData {
 
 /// The doser status tile (§12b): one entry per configured head — the dosing
 /// icon in the head's stock color (gray when the head is off), the
-/// supplement's abbreviation and how long its container lasts. Up to two
-/// entries per row, so a 4-head pump forms a 2×2 grid.
+/// supplement's name and how long its container lasts. Up to two entries per
+/// row, so a 4-head pump forms a 2×2 grid.
 class WallDoseTile extends StatelessWidget {
   const WallDoseTile({super.key, required this.data});
 
