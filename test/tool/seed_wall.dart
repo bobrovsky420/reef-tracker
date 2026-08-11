@@ -64,6 +64,11 @@ void main() {
     await series('calcium', 415, 10);
     await series('magnesium', 1290, 30);
     await series('nitrate', 8, -2);
+    // A tracked microelement with history: the wall must ignore it entirely
+    // (wall_parameters.yaml — microelements are excluded by design), so no
+    // iodine card may appear on the board or in the Settings card list.
+    await db.addTrackedParameter(tank, 'iodine');
+    await series('iodine', 0.05, 0.02);
     // Recent hand tests inside the 24 h window — markers on the live lines.
     await db.insertReadingGroup(
       tankId: tank,

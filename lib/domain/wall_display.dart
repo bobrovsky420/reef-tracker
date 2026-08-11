@@ -8,6 +8,8 @@ library;
 
 import 'package:meta/meta.dart';
 
+part 'wall_parameters.g.dart';
+
 // --- Configuration constants -------------------------------------------------
 
 /// The refresh intervals the settings subpage offers, in seconds. The value is
@@ -275,6 +277,10 @@ bool isWallDeviceMuted(String identifier, List<WallTileConfig> rows) {
 ///   the caller decides what it knows.
 /// - [rows]: the stored `wall_tile_settings` rows for this tank.
 ///
+/// Keys outside [kWallParameterKeys] (`wall_parameters.yaml`) — notably the
+/// ICP microelements — never become cards, whatever a tank tracks or a
+/// device claims to report.
+///
 /// Ordering: cards with a stored [WallTileConfig.displayOrder] first,
 /// ascending; everything else follows in the default order — grouped by
 /// parameter in tracked order (unknown parameters after, in first-seen order),
@@ -286,18 +292,33 @@ List<WallCard> buildWallCards({
   required Map<String, List<String>> reportedByDevice,
   required List<WallTileConfig> rows,
 }) {
+  // The catalogue gate: keys outside wall_parameters.yaml are dropped before
+  // anything else happens, so an excluded key never gets a card, a stored
+  // row, or a sample.
+  final tracked = [
+    for (final k in trackedKeys)
+      if (kWallParameterKeys.contains(k)) k,
+  ];
+  final byDevice = <String, List<String>>{
+    for (final e in reportedByDevice.entries)
+      e.key: [
+        for (final p in e.value)
+          if (kWallParameterKeys.contains(p)) p,
+      ],
+  };
+
   final rowById = <WallCardId, WallTileConfig>{for (final r in rows) r.id: r};
 
   // Every parameter any device reports, and the card ids in default order.
   final reportedParams = <String>{};
-  for (final params in reportedByDevice.values) {
+  for (final params in byDevice.values) {
     reportedParams.addAll(params);
   }
 
   // Default parameter order: tracked order first, then unknown-but-reported
   // parameters in first-seen device order.
-  final paramOrder = <String>[...trackedKeys];
-  for (final params in reportedByDevice.values) {
+  final paramOrder = <String>[...tracked];
+  for (final params in byDevice.values) {
     for (final p in params) {
       if (!paramOrder.contains(p)) paramOrder.add(p);
     }
@@ -306,10 +327,10 @@ List<WallCard> buildWallCards({
   final defaultOrder = <WallCardId>[
     for (final param in paramOrder) ...[
       // Device cards for this parameter, adjacent, in device page order.
-      for (final e in reportedByDevice.entries)
+      for (final e in byDevice.entries)
         if (e.value.contains(param)) (deviceIdentifier: e.key, paramKey: param),
       // The stored-readings card, only while no device covers the parameter.
-      if (trackedKeys.contains(param) && !reportedParams.contains(param))
+      if (tracked.contains(param) && !reportedParams.contains(param))
         (deviceIdentifier: kWallNoDevice, paramKey: param),
     ],
   ];

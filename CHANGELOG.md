@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     don't want, drag the rest into your own order. Hiding all of a device's
     cards stops the wall from contacting that device entirely — durably, so
     an app update cannot quietly re-enable it.
+  - Wall cards cover the standard water parameters only (temperature, pH,
+    salinity, alkalinity, calcium, magnesium, nutrients, ORP) — the ICP
+    microelement panel deliberately never appears on the wall, however many
+    elements a tank tracks.
   - On phone-size screens the settings page notes that the mode is designed
     for a wall-mounted tablet and still works with fewer cards per page —
     purely informational, nothing is gated by screen size.
