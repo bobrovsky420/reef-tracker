@@ -1162,7 +1162,6 @@
   "wallUpdatedAt": "обновлено {time}",
   "wallDueToday": "Сегодня: {items}",
   "wallTestDue": "тест: {param}",
-  "wallRoDue": "Пора заменить",
   "wallNoDevices": "Нет устройств",
   "wallAllReachable": "Все устройства доступны",
   "wallSomeUnreachable": "Устройство недоступно",

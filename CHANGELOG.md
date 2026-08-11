@@ -16,8 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   color-coded zone, a graph and a provenance line naming the source and the
   value's age ("Apex · now", "measured 2 d ago"). Status tiles after the
   values show the ATO reservoir and leak sensor, doses delivered today, the
-  fleece roll and the skimmer cup, plus the RO stage most due; an optional
-  bottom strip lists today's due maintenance and parameter tests.
+  fleece roll and the skimmer cup; an optional bottom strip lists today's
+  due maintenance and parameter tests.
   - Each device card carries a live 24-hour graph built from the mode's own
     polling (5-minute buckets with a min/max band, kept 48 h in a new
     display-only sample table — never written into the measurement history),

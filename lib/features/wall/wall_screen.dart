@@ -992,8 +992,7 @@ class _WallScreenState extends ConsumerState<WallScreen>
 
   /// Status tiles (§12b): non-measurement facts from the same snapshots the
   /// Devices cards render — reservoir, leak, doses today, fleece roll,
-  /// skimmer cup — plus the RO stage due, if any. Always after the value
-  /// cards.
+  /// skimmer cup. Always after the value cards.
   List<Widget> _statusTiles(AppLocalizations l, Tank tank) {
     final tiles = <Widget>[];
     for (final (kind, d) in _pageOrderDevices(tank)) {
@@ -1100,37 +1099,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
         }
       }
     }
-    // The RO stage most in need, when the feature is on and something is due.
-    if (ref.watch(roUnitEnabledProvider).value ?? true) {
-      final statuses = ref.watch(roStageStatusProvider);
-      RoStageDueLine? worst;
-      for (final s in statuses) {
-        final due = s.due;
-        if (!s.stage.enabled || !s.stage.remindEnabled || due == null) {
-          continue;
-        }
-        if (due.daysLeft > 0) continue;
-        if (worst == null || due.daysLeft < worst.daysLeft) {
-          worst = (
-            name: l.roStageName(s.stage.stageType, s.stage.title),
-            daysLeft: due.daysLeft,
-          );
-        }
-      }
-      if (worst != null) {
-        tiles.add(
-          WallStatusTile(
-            data: WallStatusData(
-              icon: Icons.water_outlined,
-              title: l.roUnitTitle,
-              line: worst.name,
-              extra: l.wallRoDue,
-              tone: worst.daysLeft < 0 ? Zone.red : Zone.amber,
-            ),
-          ),
-        );
-      }
-    }
     return tiles;
   }
 
@@ -1170,8 +1138,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
     ];
   }
 }
-
-typedef RoStageDueLine = ({String name, int daysLeft});
 
 class _CenteredNote extends StatelessWidget {
   const _CenteredNote({required this.text});

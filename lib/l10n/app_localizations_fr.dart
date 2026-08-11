@@ -4168,9 +4168,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get wallRoDue => 'Remplacement à faire';
-
-  @override
   String get wallNoDevices => 'Aucun appareil';
 
   @override

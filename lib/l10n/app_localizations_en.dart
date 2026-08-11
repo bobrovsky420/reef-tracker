@@ -4127,9 +4127,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get wallRoDue => 'Replacement due';
-
-  @override
   String get wallNoDevices => 'No devices';
 
   @override

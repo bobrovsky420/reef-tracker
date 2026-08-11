@@ -1162,7 +1162,6 @@
   "wallUpdatedAt": "aktualizováno {time}",
   "wallDueToday": "Dnes na řadě: {items}",
   "wallTestDue": "test – {param}",
-  "wallRoDue": "Čeká výměna",
   "wallNoDevices": "Žádná zařízení",
   "wallAllReachable": "Všechna zařízení dostupná",
   "wallSomeUnreachable": "Některé zařízení je nedostupné",
