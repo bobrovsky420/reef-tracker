@@ -1135,6 +1135,7 @@
   "followingDefaults": "Usa i valori predefiniti",
   "wallDisplayTitle": "Display a parete",
   "wallDisplaySubtitle": "Pannello sempre acceso con i valori del tuo acquario",
+  "wallSmallScreenNote": "Il display a parete è pensato per un tablet montato a muro. Funziona anche su questo schermo più piccolo – vedrai solo meno schede per pagina.",
   "wallStartNow": "Avvia ora",
   "wallStartNowSubtitle": "Mostra il pannello a parete su questo schermo",
   "wallAutoStartTitle": "Avvia all'apertura",

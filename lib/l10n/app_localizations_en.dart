@@ -4029,6 +4029,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'An always-on board of your aquarium\'s values';
 
   @override
+  String get wallSmallScreenNote =>
+      'The wall display is designed for a wall-mounted tablet. It still works on this smaller screen – you\'ll just see fewer cards per page.';
+
+  @override
   String get wallStartNow => 'Start now';
 
   @override

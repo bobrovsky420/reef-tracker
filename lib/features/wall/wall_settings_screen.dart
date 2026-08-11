@@ -45,123 +45,142 @@ class WallSettingsScreen extends ConsumerWidget {
         ? l.wallSecondsLabel(seconds)
         : l.wallMinutesLabel(seconds ~/ 60);
 
+    // Phone-class advisory: purely informational, above the fold so it is
+    // read before "Start now". Physical inches are not knowable, so 600 dp
+    // shortest-side is the proxy; nothing is gated — a phone entering the
+    // mode is a legitimate try-it-out path that degrades to fewer cards.
+    final phoneClass =
+        MediaQuery.sizeOf(context).shortestSide < kWallPhoneClassShortestSide;
+
+    final list = ReefSettingsList(
+      sections: [
+        ReefSettingsSection(
+          children: [
+            ReefSettingsRow(
+              icon: Icons.play_circle_outline,
+              title: l.wallStartNow,
+              description: l.wallStartNowSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => unawaited(
+                runProGated(
+                  context,
+                  ref,
+                  ProFeature.wallDisplay,
+                  () => context.push('/wall'),
+                ),
+              ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.restart_alt,
+              title: l.wallAutoStartTitle,
+              description: l.wallAutoStartSubtitle,
+              trailing: Switch.adaptive(
+                value: autoStart && entitled,
+                onChanged: (v) => unawaited(_setAutoStart(context, ref, v)),
+              ),
+              onTap: () => unawaited(_setAutoStart(context, ref, !autoStart)),
+            ),
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.wallBehaviourSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.update,
+              title: l.wallRefreshIntervalTitle,
+              description: l.wallRefreshIntervalSubtitle,
+              trailing: ReefSettingsDropdown<int>(
+                value: interval.inSeconds,
+                onChanged: (v) => unawaited(
+                  settings.setWallRefreshInterval(Duration(seconds: v)),
+                ),
+                items: [
+                  for (final s in kWallRefreshChoicesSeconds)
+                    (s, intervalLabel(s)),
+                ],
+              ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.auto_mode,
+              title: l.wallPageSecondsTitle,
+              description: l.wallPageSecondsSubtitle,
+              trailing: ReefSettingsDropdown<int>(
+                value: pageSeconds,
+                onChanged: (v) => unawaited(settings.setWallPageSeconds(v)),
+                items: [
+                  for (final s in kWallPageSecondsChoices)
+                    (s, l.wallSecondsLabel(s)),
+                ],
+              ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.nightlight_outlined,
+              title: l.wallNightTitle,
+              description: l.wallNightSubtitle,
+              trailing: Switch.adaptive(
+                value: nightEnabled,
+                onChanged: (v) => unawaited(settings.setWallNightEnabled(v)),
+              ),
+              onTap: () =>
+                  unawaited(settings.setWallNightEnabled(!nightEnabled)),
+            ),
+            if (nightEnabled) ...[
+              ReefSettingsRow(
+                icon: Icons.bedtime_outlined,
+                title: l.wallNightFromTitle,
+                trailing: ReefSettingsValue(
+                  value: _timeLabel(context, nightFrom),
+                  mono: true,
+                ),
+                onTap: () => unawaited(
+                  _pickTime(context, nightFrom, settings.setWallNightFrom),
+                ),
+              ),
+              ReefSettingsRow(
+                icon: Icons.wb_twilight,
+                title: l.wallNightToTitle,
+                trailing: ReefSettingsValue(
+                  value: _timeLabel(context, nightTo),
+                  mono: true,
+                ),
+                onTap: () => unawaited(
+                  _pickTime(context, nightTo, settings.setWallNightTo),
+                ),
+              ),
+            ],
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.wallCardsSection,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Text(
+                l.wallCardsHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const _WallCardList(),
+          ],
+        ),
+      ],
+    );
+
     return Scaffold(
       appBar: AppBar(title: Text(l.wallDisplayTitle)),
-      body: ReefSettingsList(
-        sections: [
-          ReefSettingsSection(
-            children: [
-              ReefSettingsRow(
-                icon: Icons.play_circle_outline,
-                title: l.wallStartNow,
-                description: l.wallStartNowSubtitle,
-                trailing: const ReefSettingsValue(),
-                onTap: () => unawaited(
-                  runProGated(
-                    context,
-                    ref,
-                    ProFeature.wallDisplay,
-                    () => context.push('/wall'),
-                  ),
+      body: !phoneClass
+          ? list
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: _SmallScreenNote(text: l.wallSmallScreenNote),
                 ),
-              ),
-              ReefSettingsRow(
-                icon: Icons.restart_alt,
-                title: l.wallAutoStartTitle,
-                description: l.wallAutoStartSubtitle,
-                trailing: Switch.adaptive(
-                  value: autoStart && entitled,
-                  onChanged: (v) => unawaited(_setAutoStart(context, ref, v)),
-                ),
-                onTap: () => unawaited(_setAutoStart(context, ref, !autoStart)),
-              ),
-            ],
-          ),
-          ReefSettingsSection(
-            label: l.wallBehaviourSection,
-            children: [
-              ReefSettingsRow(
-                icon: Icons.update,
-                title: l.wallRefreshIntervalTitle,
-                description: l.wallRefreshIntervalSubtitle,
-                trailing: ReefSettingsDropdown<int>(
-                  value: interval.inSeconds,
-                  onChanged: (v) => unawaited(
-                    settings.setWallRefreshInterval(Duration(seconds: v)),
-                  ),
-                  items: [
-                    for (final s in kWallRefreshChoicesSeconds)
-                      (s, intervalLabel(s)),
-                  ],
-                ),
-              ),
-              ReefSettingsRow(
-                icon: Icons.auto_mode,
-                title: l.wallPageSecondsTitle,
-                description: l.wallPageSecondsSubtitle,
-                trailing: ReefSettingsDropdown<int>(
-                  value: pageSeconds,
-                  onChanged: (v) => unawaited(settings.setWallPageSeconds(v)),
-                  items: [
-                    for (final s in kWallPageSecondsChoices)
-                      (s, l.wallSecondsLabel(s)),
-                  ],
-                ),
-              ),
-              ReefSettingsRow(
-                icon: Icons.nightlight_outlined,
-                title: l.wallNightTitle,
-                description: l.wallNightSubtitle,
-                trailing: Switch.adaptive(
-                  value: nightEnabled,
-                  onChanged: (v) => unawaited(settings.setWallNightEnabled(v)),
-                ),
-                onTap: () =>
-                    unawaited(settings.setWallNightEnabled(!nightEnabled)),
-              ),
-              if (nightEnabled) ...[
-                ReefSettingsRow(
-                  icon: Icons.bedtime_outlined,
-                  title: l.wallNightFromTitle,
-                  trailing: ReefSettingsValue(
-                    value: _timeLabel(context, nightFrom),
-                    mono: true,
-                  ),
-                  onTap: () => unawaited(
-                    _pickTime(context, nightFrom, settings.setWallNightFrom),
-                  ),
-                ),
-                ReefSettingsRow(
-                  icon: Icons.wb_twilight,
-                  title: l.wallNightToTitle,
-                  trailing: ReefSettingsValue(
-                    value: _timeLabel(context, nightTo),
-                    mono: true,
-                  ),
-                  onTap: () => unawaited(
-                    _pickTime(context, nightTo, settings.setWallNightTo),
-                  ),
-                ),
+                Expanded(child: list),
               ],
-            ],
-          ),
-          ReefSettingsSection(
-            label: l.wallCardsSection,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: Text(
-                  l.wallCardsHint,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              const _WallCardList(),
-            ],
-          ),
-        ],
-      ),
+            ),
     );
   }
 
@@ -199,6 +218,41 @@ class WallSettingsScreen extends ConsumerWidget {
     if (picked != null) {
       await write(picked.hour * 60 + picked.minute);
     }
+  }
+}
+
+/// The phone-class advisory banner (same visual idiom as the Devices page's
+/// read-only disclaimer): the theme's tertiary container, so it reads as
+/// informational rather than an error or a gate.
+class _SmallScreenNote extends StatelessWidget {
+  const _SmallScreenNote({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.tertiaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 20, color: cs.onTertiaryContainer),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: cs.onTertiaryContainer),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

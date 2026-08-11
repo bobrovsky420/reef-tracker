@@ -4070,6 +4070,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Tableau toujours allumé des valeurs de votre aquarium';
 
   @override
+  String get wallSmallScreenNote =>
+      'L\'affichage mural est conçu pour une tablette fixée au mur. Il fonctionne aussi sur cet écran plus petit – vous verrez simplement moins de cartes par page.';
+
+  @override
   String get wallStartNow => 'Démarrer maintenant';
 
   @override

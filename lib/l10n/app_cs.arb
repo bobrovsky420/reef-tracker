@@ -1135,6 +1135,7 @@
   "followingDefaults": "Používá výchozí hodnoty",
   "wallDisplayTitle": "Nástěnný displej",
   "wallDisplaySubtitle": "Stále zapnutý přehled hodnot vašeho akvária",
+  "wallSmallScreenNote": "Nástěnný displej je navržen pro tablet na zdi. Na této menší obrazovce funguje také – jen uvidíte méně karet na stránku.",
   "wallStartNow": "Spustit teď",
   "wallStartNowSubtitle": "Zobrazit nástěnku na této obrazovce",
   "wallAutoStartTitle": "Spustit při startu",

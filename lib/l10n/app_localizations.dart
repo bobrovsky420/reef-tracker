@@ -6651,6 +6651,12 @@ abstract class AppLocalizations {
   /// **'An always-on board of your aquarium\'s values'**
   String get wallDisplaySubtitle;
 
+  /// Informational banner at the top of the wall-display settings page, shown only on phone-size screens (shortest side under 600 dp). Purely advisory — nothing is gated by screen size.
+  ///
+  /// In en, this message translates to:
+  /// **'The wall display is designed for a wall-mounted tablet. It still works on this smaller screen – you\'ll just see fewer cards per page.'**
+  String get wallSmallScreenNote;
+
   /// Row on the wall-display settings page that enters the mode immediately.
   ///
   /// In en, this message translates to:

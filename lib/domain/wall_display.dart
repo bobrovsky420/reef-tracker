@@ -80,6 +80,12 @@ const List<(double dx, double dy)> kWallBurnInOffsets = [
   (3, -2),
 ];
 
+/// Below this logical shortest-side (dp) the settings subpage shows the
+/// phone-class advisory. Physical inches are not knowable from Flutter, so the
+/// standard 600 dp tablet threshold is the honest proxy. Informational only —
+/// nothing about the mode is gated by screen size (§12c: the grid adapts).
+const double kWallPhoneClassShortestSide = 600;
+
 /// The `deviceIdentifier` value of the no-device cards (a tracked parameter no
 /// device reports, fed by the last stored reading). An empty string, not null:
 /// SQLite treats NULLs as distinct in a unique index, so a nullable key column

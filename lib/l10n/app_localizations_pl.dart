@@ -4126,6 +4126,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Stale włączony panel z parametrami akwarium';
 
   @override
+  String get wallSmallScreenNote =>
+      'Wyświetlacz ścienny jest zaprojektowany dla tabletu zawieszonego na ścianie. Na tym mniejszym ekranie również działa – zobaczysz po prostu mniej kart na stronie.';
+
+  @override
   String get wallStartNow => 'Uruchom teraz';
 
   @override

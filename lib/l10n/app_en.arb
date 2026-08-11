@@ -1868,6 +1868,8 @@
   "@wallDisplayTitle": {"description": "Settings row + subpage title of the wall display mode (U49): a wall-mounted tablet showing the tank's current values."},
   "wallDisplaySubtitle": "An always-on board of your aquarium's values",
   "@wallDisplaySubtitle": {"description": "Settings row subtitle for the wall display."},
+  "wallSmallScreenNote": "The wall display is designed for a wall-mounted tablet. It still works on this smaller screen – you'll just see fewer cards per page.",
+  "@wallSmallScreenNote": {"description": "Informational banner at the top of the wall-display settings page, shown only on phone-size screens (shortest side under 600 dp). Purely advisory — nothing is gated by screen size."},
   "wallStartNow": "Start now",
   "@wallStartNow": {"description": "Row on the wall-display settings page that enters the mode immediately."},
   "wallStartNowSubtitle": "Show the wall board on this screen",
