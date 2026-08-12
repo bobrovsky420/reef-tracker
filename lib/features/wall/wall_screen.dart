@@ -1010,15 +1010,16 @@ class _WallScreenState extends ConsumerState<WallScreen>
         final leak = ato.leakSensorActive && ato.leakAlarm;
         final levelLine = switch (ato.waterLevel) {
           RbAtoWaterLevel.ok => l.reefBeatAtoLevelOk,
-          RbAtoWaterLevel.low => l.reefBeatAtoLevelLow,
-          RbAtoWaterLevel.high => l.reefBeatAtoLevelHigh,
+          RbAtoWaterLevel.below => l.reefBeatAtoLevelLow,
+          RbAtoWaterLevel.above => l.reefBeatAtoLevelAbove,
           RbAtoWaterLevel.unknown => ato.waterLevelRaw ?? '—',
         };
         final levelTone = leak
             ? Zone.red
             : switch (ato.waterLevel) {
                 RbAtoWaterLevel.ok => Zone.green,
-                RbAtoWaterLevel.low || RbAtoWaterLevel.high => Zone.amber,
+                RbAtoWaterLevel.below ||
+                RbAtoWaterLevel.above => Zone.amber,
                 RbAtoWaterLevel.unknown => Zone.unknown,
               };
         final days = ato.daysTillEmpty;
@@ -1111,7 +1112,12 @@ class _WallScreenState extends ConsumerState<WallScreen>
               data: WallStatusData(
                 icon: Icons.bubble_chart_outlined,
                 title: p.name ?? name,
-                line: p.fullCup ? l.reefBeatRunFullCup : l.zoneOk,
+                line: p.fullCup
+                    ? l.reefBeatRunFullCup
+                    : (p.overSkimming ? l.reefBeatRunOverSkimming : l.zoneOk),
+                // Full cup stays red until someone empties it; over-skimming
+                // is a pause the skimmer recovers from on its own, so it
+                // warns amber like any other fault.
                 tone: p.fullCup
                     ? Zone.red
                     : (p.faulted ? Zone.amber : Zone.unknown),

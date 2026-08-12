@@ -28,11 +28,13 @@
 //     GET /emu/leak?status=rodi_water_leak    ATO: raise the leak alarm
 //     GET /emu/leak?status=dry                ATO: clear it
 //     GET /emu/pump?n=2&state=full_cup        RUN: pause the skimmer, cup full
+//     GET /emu/pump?n=2&state=over-skimming   RUN: pause it, over-skimming
 //     GET /emu/pump?n=2&state=operational     RUN: back to normal
 //     GET /emu/dose?head=4&days=5             DOSE: force a head's stock to
 //                                             5 days left (≤7 red, ≤14 amber)
-//     GET /emu/ato?level=low&days=5           ATO: force the water level
-//                                             (ok/low/high) and the reservoir
+//     GET /emu/ato?level=below&days=5         ATO: force the water level
+//                                             (ok/below/above — the firmware
+//                                             vocabulary) and the reservoir
 //                                             estimate (<7 red, <14 amber)
 //
 // The server class is deliberately importable: rb_emulator_test.dart drives a
@@ -132,8 +134,8 @@ class ReefBeatEmulator {
   }
 
   Map<String, Object?> _forceAto(Map<String, String> query) {
-    // "ok" maps to the real firmware string; "low"/"high" pass through — the
-    // app's parser matches them by substring.
+    // "ok" maps to a desired-level string; "below"/"above" ARE the firmware
+    // strings and pass through verbatim.
     final level = query['level'];
     if (level != null && level.isNotEmpty) {
       atoWaterLevel = level == 'ok' ? 'desired_level_2' : level;

@@ -3563,7 +3563,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatAtoLevelLow => 'Низкий';
 
   @override
-  String get reefBeatAtoLevelHigh => 'Высокий';
+  String get reefBeatAtoLevelAbove => 'Повышенный';
 
   @override
   String get reefBeatAtoTemperature => 'Температура';
@@ -3681,6 +3681,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatRunFullCup => 'Стакан полон';
+
+  @override
+  String get reefBeatRunOverSkimming => 'Чрезмерное вспенивание';
 
   @override
   String get reefBeatRunSensorOffline => 'Датчик уровня недоступен';

@@ -581,10 +581,17 @@ void main() {
     test('water-level strings map to coarse levels', () {
       RbAtoWaterLevel of(String? raw) =>
           RbAtoStatus(waterLevelRaw: raw).waterLevel;
+      // The firmware vocabulary: both desired levels are the same OK, the
+      // two deviations are warning states.
+      expect(of('desired_level_1'), RbAtoWaterLevel.ok);
       expect(of('desired_level_2'), RbAtoWaterLevel.ok);
-      expect(of('desired'), RbAtoWaterLevel.ok);
-      expect(of('low_level'), RbAtoWaterLevel.low);
-      expect(of('too_high'), RbAtoWaterLevel.high);
+      expect(of('below'), RbAtoWaterLevel.below);
+      expect(of('above'), RbAtoWaterLevel.above);
+      // Hypothetical variants: a deviation word beats the "desired"
+      // substring it may contain — "above_desired_level" must never read
+      // as OK.
+      expect(of('above_desired_level'), RbAtoWaterLevel.above);
+      expect(of('below_desired_level'), RbAtoWaterLevel.below);
       expect(of('something_else'), RbAtoWaterLevel.unknown);
       expect(of(null), RbAtoWaterLevel.unknown);
     });
@@ -975,6 +982,15 @@ void main() {
       expect(full.faulted, isTrue);
       expect(RbRunPump.fromJson(2, {'state': 'blocked'}).fullCup, isFalse);
       expect(RbRunPump.fromJson(2, const {}).fullCup, isFalse);
+    });
+
+    test('over-skimming is recognized among the fault states', () {
+      final over = RbRunPump.fromJson(2, {'state': 'over-skimming'});
+      expect(over.overSkimming, isTrue);
+      expect(over.faulted, isTrue);
+      expect(over.fullCup, isFalse);
+      expect(RbRunPump.fromJson(2, {'state': 'full_cup'}).overSkimming, isFalse);
+      expect(RbRunPump.fromJson(2, const {}).overSkimming, isFalse);
     });
 
     test('skips keys that are not pump sockets', () {

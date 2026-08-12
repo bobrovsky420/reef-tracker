@@ -562,13 +562,13 @@ class _AtoStatus extends ConsumerWidget {
 
     final levelText = switch (status.waterLevel) {
       RbAtoWaterLevel.ok => l.reefBeatAtoLevelOk,
-      RbAtoWaterLevel.low => l.reefBeatAtoLevelLow,
-      RbAtoWaterLevel.high => l.reefBeatAtoLevelHigh,
+      RbAtoWaterLevel.below => l.reefBeatAtoLevelLow,
+      RbAtoWaterLevel.above => l.reefBeatAtoLevelAbove,
       RbAtoWaterLevel.unknown => status.waterLevelRaw ?? '—',
     };
     final levelColor = switch (status.waterLevel) {
       RbAtoWaterLevel.ok => tokens.healthy,
-      RbAtoWaterLevel.low || RbAtoWaterLevel.high => tokens.caution,
+      RbAtoWaterLevel.below || RbAtoWaterLevel.above => tokens.caution,
       RbAtoWaterLevel.unknown => tokens.text,
     };
 
@@ -919,13 +919,15 @@ class _RunPumpRow extends ConsumerWidget {
           color: tokens.caution,
           softColor: tokens.cautionSoft,
         ),
-      // A full skimmer cup is the one non-operational state a keeper acts on
-      // routinely, so it gets its own plain label instead of the generic
-      // raw-state chip ("full_cup").
+      // A full cup and over-skimming are the non-operational states a keeper
+      // acts on routinely, so they get their own plain labels instead of the
+      // generic raw-state chip ("full_cup" / "over-skimming").
       if (pump.faulted && !pump.missingPump)
         _WarnChip(
           label: pump.fullCup
               ? l.reefBeatRunFullCup
+              : pump.overSkimming
+              ? l.reefBeatRunOverSkimming
               : l.reefBeatRunState(pump.state ?? ''),
           color: tokens.caution,
           softColor: tokens.cautionSoft,

@@ -74,6 +74,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lasts, colored green/amber/red as it runs low — alongside the water level,
   which shows green when OK. The card highlights amber or red on the
   worse of the two facts; a leak warning still takes over the level row.
+- ReefATO+ water level now covers the device's full vocabulary: both desired
+  levels read as a green "OK", and water below or above the desired level
+  shows as a localized, amber "Low"/"Above" — the "above" state previously
+  slipped through as raw untranslated firmware text with no warning color.
+- ReefRun skimmer: the "over-skimming" pause state is now recognized and shown
+  as a localized label — as an amber warning on the wall display's skimmer
+  tile and as a chip on the ReefRun card — instead of the raw firmware text.
 
 ### Fixed
 - All translations now address the user consistently in the informal second

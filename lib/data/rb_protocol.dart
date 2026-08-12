@@ -444,10 +444,12 @@ class RbDoseQueueEntry {
   }
 }
 
-/// Coarse water-level reading of the ATO's sump sensor, derived from the raw
-/// firmware string (`"desired_level_2"`, …). [unknown] keeps unrecognized
+/// Coarse water-level reading of the ATO's sump sensor. The firmware's
+/// `water_level` vocabulary is `"below"`, `"desired_level_1"`,
+/// `"desired_level_2"` and `"above"`; both desired levels are the same [ok],
+/// the two deviations are warning states. [unknown] keeps unrecognized
 /// firmware values displayable via [RbAtoStatus.waterLevelRaw].
-enum RbAtoWaterLevel { ok, low, high, unknown }
+enum RbAtoWaterLevel { ok, below, above, unknown }
 
 /// The decoded `/dashboard` of a ReefATO. All volumes are millilitres (the
 /// unit the firmware reports).
@@ -511,9 +513,12 @@ class RbAtoStatus {
   RbAtoWaterLevel get waterLevel {
     final raw = waterLevelRaw?.toLowerCase();
     if (raw == null || raw.isEmpty) return RbAtoWaterLevel.unknown;
+    // Substring matches keep hypothetical variants ("above_desired_level")
+    // parsing sensibly — which is why the deviation words are checked before
+    // the desired-level match they could contain.
+    if (raw.contains('above')) return RbAtoWaterLevel.above;
+    if (raw.contains('below')) return RbAtoWaterLevel.below;
     if (raw.contains('desired')) return RbAtoWaterLevel.ok;
-    if (raw.contains('low')) return RbAtoWaterLevel.low;
-    if (raw.contains('high')) return RbAtoWaterLevel.high;
     return RbAtoWaterLevel.unknown;
   }
 
@@ -781,6 +786,11 @@ class RbRunPump {
   /// (`state == "full_cup"`). Distinguished from the generic fault so the card
   /// can say "Full cup" instead of echoing the raw firmware string.
   bool get fullCup => state == 'full_cup';
+
+  /// The skimmer's sensor detected over-skimming (foam rising too fast) and
+  /// the pump has paused itself (`state == "over-skimming"`). Like [fullCup],
+  /// it gets its own plain label instead of the raw firmware string.
+  bool get overSkimming => state == 'over-skimming';
 
   /// Nothing to show a keeper — an empty socket rather than a real pump.
   bool get isEmptySocket =>

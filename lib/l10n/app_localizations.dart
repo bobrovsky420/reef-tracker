@@ -5775,23 +5775,23 @@ abstract class AppLocalizations {
   /// **'Water level'**
   String get reefBeatAtoWaterLevel;
 
-  /// No description provided for @reefBeatAtoLevelOk.
+  /// ATO water-level value: at the desired level (firmware "desired_level_1"/"desired_level_2")
   ///
   /// In en, this message translates to:
   /// **'OK'**
   String get reefBeatAtoLevelOk;
 
-  /// No description provided for @reefBeatAtoLevelLow.
+  /// ATO water-level value: water below the desired level (firmware "below") — a warning state shown amber
   ///
   /// In en, this message translates to:
   /// **'Low'**
   String get reefBeatAtoLevelLow;
 
-  /// No description provided for @reefBeatAtoLevelHigh.
+  /// ATO water-level value: water above the desired level (firmware "above") — a warning state shown amber
   ///
   /// In en, this message translates to:
-  /// **'High'**
-  String get reefBeatAtoLevelHigh;
+  /// **'Above'**
+  String get reefBeatAtoLevelAbove;
 
   /// No description provided for @reefBeatAtoTemperature.
   ///
@@ -5966,6 +5966,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full cup'**
   String get reefBeatRunFullCup;
+
+  /// Chip on a ReefRun skimmer pump that paused itself because its sensor detected over-skimming (firmware state "over-skimming")
+  ///
+  /// In en, this message translates to:
+  /// **'Over-skimming'**
+  String get reefBeatRunOverSkimming;
 
   /// No description provided for @reefBeatRunSensorOffline.
   ///
