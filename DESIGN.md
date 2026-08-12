@@ -3105,7 +3105,8 @@ on the device's Wi-Fi network.
   none: an always-present badge carries no information, and idle is where a
   healthy tank sits most of the day). Warm `caution` for heating and the
   actinic `primary` for cooling — both read as "running" without borrowing the
-  alarm red. The card carries a **Save**
+  alarm red. The wall display carries that same live badge on this device's
+  temperature tile (and likewise stays silent while idle). The card carries a **Save**
   (persist to the device's assigned tank via `insertReadingGroup` +
   `addTrackedParameter`, impossible values dropped); the common **Refresh
   all** / **Save all** actions over the visible devices live on the unified

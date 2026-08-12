@@ -67,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transport is covered by tests.)
 
 ### Changed
+- Wall display: a ReefFactory Temperature Controller's temperature card now
+  shows Heating or Cooling while that output is actually running.
 - Settings: the language selector moved into the Appearance group (as its
   first row) instead of sitting in a section of its own.
 - Wall display: the ReefATO+ tile shows the reservoir estimate as its own

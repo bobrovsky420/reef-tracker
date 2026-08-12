@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme.dart';
 import '../../domain/units.dart';
 import '../../domain/wall_display.dart';
 import '../../domain/zones.dart';
@@ -24,6 +25,7 @@ class WallTileData {
     this.markers = const [],
     this.window = kWallSampleWindow,
     this.isSampleWindow = true,
+    this.operatingState,
   });
 
   final WallCardId id;
@@ -49,7 +51,13 @@ class WallTileData {
   /// in the footer so two neighbouring tiles are never silently on different
   /// time scales (§12m).
   final bool isSampleWindow;
+
+  /// A live output state that qualifies the value (currently the ReefFactory
+  /// Temperature Controller's heating/cooling relay). Idle stays null.
+  final WallOperatingState? operatingState;
 }
+
+enum WallOperatingState { heating, cooling }
 
 /// One value card of the wall grid (§12b): parameter name, a graph filling
 /// the middle, the value as large as the tile allows, and a provenance line
@@ -75,6 +83,12 @@ class WallValueTile extends StatelessWidget {
         ? cs.onSurface
         : zone.colorOf(context);
     final dim = cs.onSurfaceVariant;
+    final state = data.operatingState;
+    final stateLabel = switch (state) {
+      WallOperatingState.heating => l.reefFactoryHeating,
+      WallOperatingState.cooling => l.reefFactoryCooling,
+      null => null,
+    };
 
     final provenance = switch (v.source) {
       WallValueSource.live || WallValueSource.sample =>
@@ -97,7 +111,8 @@ class WallValueTile extends StatelessWidget {
       label: v.value == null
           ? '${data.title}: ${l.noReadings}'
           : '${data.title}: ${data.pres.format(v.value!)} '
-                '${data.pres.unitLabel}, $zoneLabel',
+                '${data.pres.unitLabel}, $zoneLabel'
+                '${stateLabel == null ? '' : ', $stateLabel'}',
       container: true,
       child: ExcludeSemantics(
         child: Container(
@@ -109,16 +124,26 @@ class WallValueTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                data.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: dim,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.4,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      data.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: dim,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                  if (stateLabel != null) ...[
+                    const SizedBox(width: 8),
+                    _OperatingStateBadge(state: state!, label: stateLabel),
+                  ],
+                ],
               ),
               Expanded(
                 child: Row(
@@ -207,13 +232,46 @@ class WallValueTile extends StatelessWidget {
   }
 }
 
+class _OperatingStateBadge extends StatelessWidget {
+  const _OperatingStateBadge({required this.state, required this.label});
+
+  final WallOperatingState state;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ReefTokens.of(context);
+    final (color, fill) = switch (state) {
+      WallOperatingState.heating => (tokens.caution, tokens.cautionSoft),
+      WallOperatingState.cooling => (
+        tokens.primary,
+        tokens.primary.withValues(alpha: 0.14),
+      ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
 /// The doser tile's compact duration: precise days while under 100 (every
 /// amber/red state lives there), rounded 30-day months beyond — "68 days",
 /// "4 months". The smallest months value is 3, so an ambiguous "1 month"
 /// can never appear.
-String wallSupplementTimeLeft(AppLocalizations l, int days) => days < 100
-    ? l.wallHeadDays(days)
-    : l.wallHeadMonths((days / 30).round());
+String wallSupplementTimeLeft(AppLocalizations l, int days) =>
+    days < 100 ? l.wallHeadDays(days) : l.wallHeadMonths((days / 30).round());
 
 /// One head of the doser tile: the dosing icon tinted by how much supplement
 /// is left, the supplement's label and the time the container lasts.
