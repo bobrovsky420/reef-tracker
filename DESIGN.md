@@ -3745,8 +3745,9 @@ value is showing *this* keeper's devices, which live in this database.
   Status tiles (ATO level + reservoir + leak, per-head supplement stock,
   fleece roll, skimmer cup) come after the value cards; an optional bottom
   strip lists today's due maintenance/tests. The ATO tile (`WallAtoTile`)
-  shows two rows of the same form — the water level (green OK / amber
-  low-high, replaced by the red leak warning when the sensor alarms) and the
+  shows two rows of the same form — the water level (green at desired level /
+  amber below or above it, replaced by the red leak warning when the sensor
+  alarms) and the
   reservoir estimate (tank icon, days compacted by `wallSupplementTimeLeft`,
   colored by `rbStockSeverity`; a dash when the device reports none) — the
   card washed by the worse row via `wallWorstAlarmTone` (amber/red only;

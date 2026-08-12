@@ -3516,7 +3516,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatAtoLevelLow => 'Nízká';
 
   @override
-  String get reefBeatAtoLevelHigh => 'Vysoká';
+  String get reefBeatAtoLevelAbove => 'Zvýšená';
 
   @override
   String get reefBeatAtoTemperature => 'Teplota';
@@ -3632,6 +3632,9 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatRunFullCup => 'Plný kalíšek';
+
+  @override
+  String get reefBeatRunOverSkimming => 'Přepěňování';
 
   @override
   String get reefBeatRunSensorOffline => 'Hladinový senzor offline';

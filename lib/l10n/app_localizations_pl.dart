@@ -3571,7 +3571,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefBeatAtoLevelLow => 'Niski';
 
   @override
-  String get reefBeatAtoLevelHigh => 'Wysoki';
+  String get reefBeatAtoLevelAbove => 'Podwyższony';
 
   @override
   String get reefBeatAtoTemperature => 'Temperatura';
@@ -3689,6 +3689,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatRunFullCup => 'Pełny kubek';
+
+  @override
+  String get reefBeatRunOverSkimming => 'Nadmierne pienienie';
 
   @override
   String get reefBeatRunSensorOffline => 'Czujnik poziomu niedostępny';
