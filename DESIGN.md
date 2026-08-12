@@ -3742,9 +3742,15 @@ value is showing *this* keeper's devices, which live in this database.
   (zone-coloured, soft zone fill, zone icon + `Semantics` label per #46), and
   a provenance line naming the source and age ("Apex · now",
   "measured 2 d ago", "no reading") — **never blank, never a spinner**.
-  Status tiles (ATO level + leak, per-head supplement stock, fleece roll,
-  skimmer cup) come after the value cards; an optional bottom strip lists
-  today's due maintenance/tests. The doser tile (`WallDoseTile`) shows one
+  Status tiles (ATO level + reservoir + leak, per-head supplement stock,
+  fleece roll, skimmer cup) come after the value cards; an optional bottom
+  strip lists today's due maintenance/tests. The ATO tile (`WallAtoTile`)
+  shows two rows of the same form — the water level (green OK / amber
+  low-high, replaced by the red leak warning when the sensor alarms) and the
+  reservoir estimate (tank icon, days compacted by `wallSupplementTimeLeft`,
+  colored by `rbStockSeverity`; a dash when the device reports none) — the
+  card washed by the worse row via `wallWorstAlarmTone` (amber/red only;
+  green rows never wash a status tile). The doser tile (`WallDoseTile`) shows one
   entry per configured head — the dosing icon tinted by `rbStockSeverity`
   (gray for a switched-off head, which also shows no estimate: its
   "days at the current rate" is stale), the supplement's name
@@ -3752,8 +3758,8 @@ value is showing *this* keeper's devices, which live in this database.
   skipped) and the time the container lasts, compacted by
   `wallSupplementTimeLeft` (precise days under 100 — every amber/red state
   lives there — rounded 30-day months beyond);
-  the card is washed by the worst head, staying neutral while all heads are
-  healthy like the other status tiles. Header: tank name · clock (24-h preference
+  the card is washed by the worst head (`wallWorstAlarmTone` again), staying
+  neutral while all heads are healthy. Header: tank name · clock (24-h preference
   honoured) · one connection dot (green all-reachable / amber partial / red
   all-failing ≈ "check the network", §12r) · "updated HH:MM".
 - **No scrolling, ever** (§12c): columns/rows are sized against a

@@ -1,3 +1,4 @@
 • Wall display mode (PRO): turn a wall-mounted tablet into an always-on board of your aquarium – big colour-coded values, live 24-hour graphs from your connected devices, status tiles and today's tasks.
 • Choose the cards, hide duplicates, drag your own order; auto-start on launch and night dimming included.
+• The app now tells you when a newer version is available.
 • Fix: backups and reminders now also run on devices that stay open for weeks.

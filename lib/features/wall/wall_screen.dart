@@ -1002,6 +1002,11 @@ class _WallScreenState extends ConsumerState<WallScreen>
       final name = deviceDisplayName(d);
       final ato = snap.ato;
       if (ato != null) {
+        // Two facts of equal rank (§12b): the water level (a leak alarm
+        // replaces it — the more urgent fact from the same sensor) and the
+        // reservoir estimate on the shared stock-severity scale. The card
+        // washes on the worse of the two, staying neutral while both are
+        // healthy like the other status tiles.
         final leak = ato.leakSensorActive && ato.leakAlarm;
         final levelLine = switch (ato.waterLevel) {
           RbAtoWaterLevel.ok => l.reefBeatAtoLevelOk,
@@ -1009,21 +1014,35 @@ class _WallScreenState extends ConsumerState<WallScreen>
           RbAtoWaterLevel.high => l.reefBeatAtoLevelHigh,
           RbAtoWaterLevel.unknown => ato.waterLevelRaw ?? '—',
         };
+        final levelTone = leak
+            ? Zone.red
+            : switch (ato.waterLevel) {
+                RbAtoWaterLevel.ok => Zone.green,
+                RbAtoWaterLevel.low || RbAtoWaterLevel.high => Zone.amber,
+                RbAtoWaterLevel.unknown => Zone.unknown,
+              };
+        final days = ato.daysTillEmpty;
+        final reservoirTone = days == null
+            ? Zone.unknown
+            : switch (rbStockSeverity(days)) {
+                RbStockSeverity.critical => Zone.red,
+                RbStockSeverity.caution => Zone.amber,
+                RbStockSeverity.healthy => Zone.green,
+              };
         tiles.add(
-          WallStatusTile(
-            data: WallStatusData(
-              icon: leak ? Icons.water_damage_outlined : Icons.waves_outlined,
+          WallAtoTile(
+            data: WallAtoData(
               title: name,
-              line: leak ? l.reefBeatAtoLeak : levelLine,
-              extra: ato.daysTillEmpty != null
-                  ? '${l.reefBeatAtoReservoir} · '
-                        '${l.reefBeatDaysLeft(ato.daysTillEmpty!)}'
+              levelIcon: leak
+                  ? Icons.water_damage_outlined
+                  : Icons.waves_outlined,
+              levelText: leak ? l.reefBeatAtoLeak : levelLine,
+              levelTone: levelTone,
+              reservoirText: days != null
+                  ? wallSupplementTimeLeft(l, days)
                   : null,
-              tone: leak
-                  ? Zone.red
-                  : (ato.waterLevel == RbAtoWaterLevel.ok
-                        ? Zone.unknown
-                        : Zone.amber),
+              reservoirTone: reservoirTone,
+              tone: wallWorstAlarmTone([levelTone, reservoirTone]),
             ),
           ),
         );
@@ -1034,7 +1053,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
         // switched-off heads render gray without a stock estimate (their
         // "days at the current rate" is stale — the rate is zero).
         final heads = <WallDoseHeadData>[];
-        var worst = Zone.unknown;
         for (final h in dose.heads) {
           final label = h.supplement ?? h.shortName;
           if (label == null) continue;
@@ -1046,10 +1064,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
                   RbStockSeverity.caution => Zone.amber,
                   RbStockSeverity.healthy => Zone.green,
                 };
-          if (tone == Zone.red ||
-              (tone == Zone.amber && worst != Zone.red)) {
-            worst = tone;
-          }
           heads.add(
             WallDoseHeadData(
               label: label,
@@ -1061,7 +1075,11 @@ class _WallScreenState extends ConsumerState<WallScreen>
         if (heads.isNotEmpty) {
           tiles.add(
             WallDoseTile(
-              data: WallDoseData(title: name, heads: heads, tone: worst),
+              data: WallDoseData(
+                title: name,
+                heads: heads,
+                tone: wallWorstAlarmTone([for (final h in heads) h.tone]),
+              ),
             ),
           );
         }

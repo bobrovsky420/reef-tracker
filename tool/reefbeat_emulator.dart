@@ -31,6 +31,9 @@
 //     GET /emu/pump?n=2&state=operational     RUN: back to normal
 //     GET /emu/dose?head=4&days=5             DOSE: force a head's stock to
 //                                             5 days left (≤7 red, ≤14 amber)
+//     GET /emu/ato?level=low&days=5           ATO: force the water level
+//                                             (ok/low/high) and the reservoir
+//                                             estimate (<7 red, <14 amber)
 //
 // The server class is deliberately importable: rb_emulator_test.dart drives a
 // real RbHttpLink against it, so the transport and the parsers are covered end
@@ -51,6 +54,11 @@ class ReefBeatEmulator {
 
   /// ATO: the leak sensor's status string ("dry" alarms nothing).
   String leakStatus = 'dry';
+
+  /// ATO: the firmware water-level string and the reservoir's days-till-empty
+  /// estimate, forceable via /emu/ato.
+  String atoWaterLevel = 'desired_level_2';
+  int atoDaysTillEmpty = 8;
 
   /// RUN: firmware state per pump socket ("operational" / "full_cup" / …).
   final Map<int, String> pumpStates = {1: 'operational', 2: 'operational'};
@@ -89,6 +97,7 @@ class ReefBeatEmulator {
       '/emu/leak' => _forceLeak(request.uri.queryParameters['status']),
       '/emu/pump' => _forcePump(request.uri.queryParameters),
       '/emu/dose' => _forceDose(request.uri.queryParameters),
+      '/emu/ato' => _forceAto(request.uri.queryParameters),
       _ => null,
     };
     final response = request.response;
@@ -96,7 +105,8 @@ class ReefBeatEmulator {
       response.headers.contentType = ContentType.text;
       response.write(
         'reefbeat emulator: type=${type.name} hwid=$hwid '
-        'leak=$leakStatus pumps=$pumpStates doseDays=$doseRemainingDays\n',
+        'leak=$leakStatus level=$atoWaterLevel atoDays=$atoDaysTillEmpty '
+        'pumps=$pumpStates doseDays=$doseRemainingDays\n',
       );
     } else if (body == null) {
       response.statusCode = HttpStatus.notFound;
@@ -119,6 +129,18 @@ class ReefBeatEmulator {
     final state = query['state'];
     if (n != null && state != null && state.isNotEmpty) pumpStates[n] = state;
     return {'pump_states': pumpStates.map((k, v) => MapEntry('$k', v))};
+  }
+
+  Map<String, Object?> _forceAto(Map<String, String> query) {
+    // "ok" maps to the real firmware string; "low"/"high" pass through — the
+    // app's parser matches them by substring.
+    final level = query['level'];
+    if (level != null && level.isNotEmpty) {
+      atoWaterLevel = level == 'ok' ? 'desired_level_2' : level;
+    }
+    final days = int.tryParse(query['days'] ?? '');
+    if (days != null) atoDaysTillEmpty = days;
+    return {'water_level': atoWaterLevel, 'days_till_empty': atoDaysTillEmpty};
   }
 
   Map<String, Object?> _forceDose(Map<String, String> query) {
@@ -174,7 +196,7 @@ class ReefBeatEmulator {
       'check_sensor': false,
       's1_average': 450,
       's2_average': 386,
-      'water_level': 'desired_level_2',
+      'water_level': atoWaterLevel,
       'pump_state': 'off',
       'prev_pump_state': leaking ? 'pump_on' : 'off',
       'is_pump_on': false,
@@ -189,7 +211,7 @@ class ReefBeatEmulator {
       'daily_fills_average': 4.5,
       'daily_volume_average': 2969,
       'volume_left': 26000,
-      'days_till_empty': 8,
+      'days_till_empty': atoDaysTillEmpty,
       'leak_sensor': {
         'connected': true,
         'enabled': true,
