@@ -11,6 +11,78 @@ import '../domain/pro_features.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 
+/// A capability boundary for a whole route whose contents require [feature].
+///
+/// Gated buttons still use [runProGated] so an entitled user navigates straight
+/// through and a locked user sees the purchase entry point before navigation.
+/// This widget is the second, security-relevant line of defence: restored
+/// navigation, direct URLs and future callers cannot invoke [builder] unless
+/// the entitlement is currently held. Because the provider is watched, losing
+/// the entitlement while the route is open disposes the paid screen
+/// immediately (including any camera/BLE resources it owns).
+class ProFeatureRoute extends ConsumerWidget {
+  const ProFeatureRoute({
+    super.key,
+    required this.feature,
+    required this.builder,
+  });
+
+  final ProFeature feature;
+  final WidgetBuilder builder;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(proFeatureProvider(feature))) return builder(context);
+
+    final l = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l.proFeatureName(feature))),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.workspace_premium_outlined,
+                  size: 48,
+                  color: ReefTokens.of(context).primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l.proFeatureTitle,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l.proFeatureBody(l.proFeatureName(feature)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/');
+                    }
+                  },
+                  child: Text(
+                    MaterialLocalizations.of(context).backButtonTooltip,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The entry point for every Pro-gated action (U19) — **and the switch that
 /// decides whether a paywall exists at all on this device.**
 ///

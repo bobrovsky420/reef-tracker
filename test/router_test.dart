@@ -9,6 +9,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/hanna_import.dart';
 import 'package:reeftracker/domain/icp_import.dart';
 import 'package:reeftracker/domain/setup_type.dart';
@@ -91,6 +92,11 @@ void main() {
     // unseen, the tour fires once a tank exists and its delayed showcase
     // overlay insertions land after navigation/teardown, failing the test.
     await AppSettings(db).setTourSeen(true);
+    // Router coverage visits every screen, including grandfathered Pro
+    // routes. Use the Founder marker so this routing test exercises those
+    // screens; locked direct navigation has dedicated coverage in
+    // pro_gate_test.dart (#137).
+    await db.setSetting(kLegacyFreeSinceKey, '0.26.0');
     return db;
   }
 

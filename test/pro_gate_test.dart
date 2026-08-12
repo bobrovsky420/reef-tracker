@@ -16,8 +16,10 @@ import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/pro_features.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/dosing/dose_calculator_screen.dart';
+import 'package:reeftracker/features/hanna/hanna_meter_screen.dart';
 import 'package:reeftracker/features/micro/micro_screen.dart';
 import 'package:reeftracker/features/paywall/paywall_screen.dart';
+import 'package:reeftracker/features/scan/checker_scan_screen.dart';
 import 'package:reeftracker/features/tanks/tanks_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 import 'package:reeftracker/widgets/pro_feature_dialog.dart';
@@ -192,6 +194,132 @@ void main() {
 
         expect(find.byType(DoseCalculatorScreen), findsOneWidget);
         expect(find.text('Pro feature'), findsNothing);
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+  });
+
+  group('direct Pro routes enforce their capability boundary (#137)', () {
+    late Directory docsDir;
+    late MemoryProEntitlementStore entitlement;
+
+    setUp(() async {
+      docsDir = await Directory.systemTemp.createTemp('reeftracker-proroute-');
+      PathProviderPlatform.instance = _FakePathProvider(docsDir.path);
+      entitlement = MemoryProEntitlementStore();
+    });
+
+    tearDown(() async {
+      entitlement.dispose();
+      if (await docsDir.exists()) await docsDir.delete(recursive: true);
+    });
+
+    Future<void> pumpRoute(
+      WidgetTester tester, {
+      required String location,
+      String? legacyFreeSince,
+      bool purchased = false,
+    }) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      if (legacyFreeSince != null) {
+        await db.setSetting(kLegacyFreeSinceKey, legacyFreeSince);
+      }
+      if (purchased) await entitlement.write(true);
+      await AppSettings(db).setTourSeen(true);
+      await db.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+      addTearDown(() => appRouter.go('/'));
+      appRouter.go(location);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            dbProvider.overrideWithValue(db),
+            proEntitlementStoreProvider.overrideWithValue(entitlement),
+          ],
+          child: MaterialApp.router(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: appRouter,
+          ),
+        ),
+      );
+      await settle(tester);
+    }
+
+    testWidgets('Standard cannot construct any paid route directly', (
+      tester,
+    ) async {
+      try {
+        await pumpRoute(tester, location: '/dosing/calculator');
+
+        expect(find.text('Pro feature'), findsOneWidget);
+        expect(find.byType(DoseCalculatorScreen), findsNothing);
+
+        appRouter.go('/hanna/measure');
+        await settle(tester);
+        expect(find.text('Pro feature'), findsOneWidget);
+        expect(find.byType(HannaMeterScreen), findsNothing);
+
+        appRouter.go('/hanna/scan');
+        await settle(tester);
+        expect(find.text('Pro feature'), findsOneWidget);
+        expect(find.byType(CheckerScanScreen), findsNothing);
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+
+    testWidgets('Founder can construct a grandfathered route directly', (
+      tester,
+    ) async {
+      try {
+        await pumpRoute(
+          tester,
+          location: '/dosing/calculator',
+          legacyFreeSince: '0.26.0',
+        );
+
+        expect(find.byType(DoseCalculatorScreen), findsOneWidget);
+        expect(find.text('Pro feature'), findsNothing);
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+
+    testWidgets('purchased Pro can construct a paid route directly', (
+      tester,
+    ) async {
+      try {
+        await pumpRoute(
+          tester,
+          location: '/dosing/calculator',
+          purchased: true,
+        );
+
+        expect(find.byType(DoseCalculatorScreen), findsOneWidget);
+        expect(find.text('Pro feature'), findsNothing);
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+
+    testWidgets('entitlement loss disposes an open paid route immediately', (
+      tester,
+    ) async {
+      try {
+        await pumpRoute(
+          tester,
+          location: '/dosing/calculator',
+          purchased: true,
+        );
+        expect(find.byType(DoseCalculatorScreen), findsOneWidget);
+
+        await entitlement.write(false);
+        await settle(tester);
+
+        expect(find.byType(DoseCalculatorScreen), findsNothing);
+        expect(find.text('Pro feature'), findsOneWidget);
       } finally {
         await unmountApp(tester);
       }
