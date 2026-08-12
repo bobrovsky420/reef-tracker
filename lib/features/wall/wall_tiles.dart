@@ -369,9 +369,167 @@ class _HeadEntry extends StatelessWidget {
   }
 }
 
+/// The card wash for a multi-fact status tile: the worst *alarm* tone among
+/// [tones]. Only amber/red wash the card — green and unknown stay neutral, so
+/// an all-healthy tile looks like the other device cards and color means
+/// "look here".
+Zone wallWorstAlarmTone(Iterable<Zone> tones) {
+  var worst = Zone.unknown;
+  for (final tone in tones) {
+    if (tone == Zone.red || (tone == Zone.amber && worst != Zone.red)) {
+      worst = tone;
+    }
+  }
+  return worst;
+}
+
+/// Everything the ATO status tile needs to draw itself.
+class WallAtoData {
+  const WallAtoData({
+    required this.title,
+    required this.levelIcon,
+    required this.levelText,
+    this.levelTone = Zone.unknown,
+    this.reservoirText,
+    this.reservoirTone = Zone.unknown,
+    this.tone = Zone.unknown,
+  });
+
+  /// The device's display name.
+  final String title;
+
+  /// The level row's icon — waves normally, the water-damage glyph when the
+  /// leak sensor alarms.
+  final IconData levelIcon;
+
+  /// The level row's text: the water-level word ("OK"/"Low"/"High", or the
+  /// raw firmware string), replaced by the leak warning when it alarms.
+  final String levelText;
+
+  /// green (level OK) / amber (low/high) / red (leak); [Zone.unknown]
+  /// renders gray — an unrecognized firmware value.
+  final Zone levelTone;
+
+  /// Localized "12 days" / "4 months" via [wallSupplementTimeLeft]; null when
+  /// the device reports no reservoir estimate (rendered as a dash).
+  final String? reservoirText;
+
+  /// green/amber/red by the shared stock severity; [Zone.unknown] renders
+  /// gray — no estimate.
+  final Zone reservoirTone;
+
+  /// The card wash: the worst *alarm* of the two rows via
+  /// [wallWorstAlarmTone] — neutral unless a row is amber or red.
+  final Zone tone;
+}
+
+/// The ATO status tile (§12b): two rows of the same form — the water level
+/// behind the sensor's icon, and the reservoir estimate behind a tank icon
+/// with the days it lasts — each tinted by its own severity, the card washed
+/// only by an amber/red row.
+class WallAtoTile extends StatelessWidget {
+  const WallAtoTile({super.key, required this.data});
+
+  final WallAtoData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final neutral = data.tone == Zone.unknown;
+    final fill = neutral
+        ? cs.surfaceContainerLow
+        : data.tone.softColorOf(context);
+    return Semantics(
+      label:
+          '${data.title}: ${data.levelText}, '
+          '${l.reefBeatAtoReservoir}: ${data.reservoirText ?? '—'}',
+      container: true,
+      child: ExcludeSemantics(
+        child: Container(
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                data.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _AtoRow(
+                      icon: data.levelIcon,
+                      text: data.levelText,
+                      tone: data.levelTone,
+                    ),
+                    _AtoRow(
+                      icon: Icons.propane_tank_outlined,
+                      text: data.reservoirText ?? '—',
+                      tone: data.reservoirTone,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One fact row of the ATO tile, in the status tile's big-line form: the
+/// 26 px icon and the 24 px text, both carrying the row's severity color.
+class _AtoRow extends StatelessWidget {
+  const _AtoRow({required this.icon, required this.text, required this.tone});
+
+  final IconData icon;
+  final String text;
+  final Zone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final gray = tone == Zone.unknown;
+    final accent = gray ? cs.onSurfaceVariant : tone.colorOf(context);
+    return Row(
+      children: [
+        Icon(icon, size: 26, color: accent),
+        const SizedBox(width: 10),
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: gray ? cs.onSurface : accent,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// One status tile (§12b): the things devices report that aren't measurements
-/// — reservoir level, skimmer cup, fleece roll. One line each, after the
-/// value cards.
+/// — skimmer cup, fleece roll. One line each, after the value cards.
 class WallStatusData {
   const WallStatusData({
     required this.icon,

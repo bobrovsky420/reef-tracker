@@ -5,19 +5,6 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-- Update notice: the app now checks its store once per launch and tells you
-  when a newer version is out. On Android this uses Google Play's own in-app
-  update flow — accept, and the update downloads in place while you keep
-  using the app, with a restart prompt when it is ready. On iOS a notice
-  links to the App Store page. Polite by design: one notice per new version,
-  and offline or store-less installs skip the check silently. (The Play flow
-  has not yet been exercised against the real store — that needs a Play
-  internal-testing install; the iOS half is pure lookup + link and its
-  transport is covered by tests.)
-
 ## [1.3.0]
 
 ### Added
@@ -69,10 +56,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     committed fake devices (Apex, ReefFactory, ReefBeat emulators), not
     against real hardware, and its iOS behaviors (immersive-mode restore,
     Guided Access interaction) have not been verified on a physical iPad.
+- Update notice: the app now checks its store once per launch and tells you
+  when a newer version is out. On Android this uses Google Play's own in-app
+  update flow — accept, and the update downloads in place while you keep
+  using the app, with a restart prompt when it is ready. On iOS a notice
+  links to the App Store page. Polite by design: one notice per new version,
+  and offline or store-less installs skip the check silently. (The Play flow
+  has not yet been exercised against the real store — that needs a Play
+  internal-testing install; the iOS half is pure lookup + link and its
+  transport is covered by tests.)
 
 ### Changed
 - Settings: the language selector moved into the Appearance group (as its
   first row) instead of sitting in a section of its own.
+- Wall display: the ReefATO+ tile shows the reservoir estimate as its own
+  row — a tank icon with the days (or, when plentiful, months) the reservoir
+  lasts, colored green/amber/red as it runs low — alongside the water level,
+  which shows green when OK. The card highlights amber or red on the
+  worse of the two facts; a leak warning still takes over the level row.
 
 ### Fixed
 - All translations now address the user consistently in the informal second
