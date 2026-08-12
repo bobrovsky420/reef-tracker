@@ -1215,6 +1215,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diagnosticsShareFailed => 'Could not share the diagnostics';
 
   @override
+  String get updateAvailableSnack =>
+      'A new version of ReefTracker is available.';
+
+  @override
+  String get updateAction => 'Update';
+
+  @override
+  String get updateReadySnack => 'Update downloaded.';
+
+  @override
+  String get updateRestartAction => 'Restart';
+
+  @override
   String get editionLabel => 'Edition';
 
   @override

@@ -363,6 +363,11 @@
   "diagnosticsEmpty": "Nessun errore registrato",
   "diagnosticsShareFailed": "Impossibile condividere la diagnostica",
 
+  "updateAvailableSnack": "È disponibile una nuova versione di ReefTracker.",
+  "updateAction": "Aggiorna",
+  "updateReadySnack": "Aggiornamento scaricato.",
+  "updateRestartAction": "Riavvia",
+
   "editionLabel": "Edizione",
   "editionFounder": "Edizione Fondatore",
   "editionStandard": "Standard",

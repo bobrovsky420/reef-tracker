@@ -287,6 +287,10 @@ enum SettingKey {
   // measuring workflow (its devices also ride backups), not this phone —
   // so it travels to a new phone like hannaMethodSets.
   hannaAttachEnvironment(kHannaAttachEnvironmentKey, deviceLocal: false),
+  // Update-available prompt marker (U48). Device-local: it records what *this
+  // device* has already been nagged about — another phone restoring this
+  // backup must form its own opinion (it may well be up to date already).
+  updatePromptedVersion(kUpdatePromptedVersionKey, deviceLocal: true),
   // Wall display mode (U49) — all deviceLocal, and that is the point rather
   // than a default: they describe *this tablet* (whether it boots into the
   // mode, how live its wall feels, when it dims), so a U35 multi-device
@@ -1002,6 +1006,19 @@ class AppSettings {
       await _write(key, null);
     }
   }
+
+  // --- update-available check (U48) --------------------------------------------
+
+  /// The version marker of the last store update this device prompted about,
+  /// or null before the first prompt. Read/written only by `AppUpdateFlow` —
+  /// no stream, nothing in the UI watches it.
+  Future<String?> readUpdatePromptedVersion() async {
+    final raw = await _read(SettingKey.updatePromptedVersion);
+    return (raw == null || raw.isEmpty) ? null : raw;
+  }
+
+  Future<void> setUpdatePromptedVersion(String marker) =>
+      _write(SettingKey.updatePromptedVersion, marker);
 
   // --- install fingerprint (#62) -----------------------------------------------
 

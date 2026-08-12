@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'app/app_builder.dart';
 import 'app/cloud_restore_dialog.dart';
@@ -11,6 +12,7 @@ import 'app/provider_errors.dart';
 import 'app/providers.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'data/app_update.dart';
 import 'data/cloud_restore_flow.dart';
 import 'data/diagnostics_log.dart';
 import 'data/reminder_scheduler.dart';
@@ -29,6 +31,11 @@ Future<void> main() async {
       // the plugin-backed store here on the same line.
       if (kProTestRig)
         purchaseStoreProvider.overrideWithValue(proTestPurchaseStore),
+      // The U48 emulator rig: a store that always offers an update, so the
+      // notice SnackBar can be seen on a sideloaded build (a real Play check
+      // refuses those). Never in a store build — same rule as REEF_PRO_TEST.
+      if (kUpdateTestRig)
+        appUpdateCheckerProvider.overrideWithValue(FakeStoreUpdateChecker()),
     ],
   );
   // Route every FlutterError.reportError (the observer above included) and
@@ -129,6 +136,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
       _maybeBackUp();
       _initReminders();
       _autoStartWallFallback();
+      _checkAppUpdate();
     });
     _housekeeping = Timer.periodic(const Duration(hours: 6), (_) {
       _maybeBackUp();
@@ -318,6 +326,86 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
           ),
         );
       }),
+    );
+  }
+
+  /// The update-available check (U48) — launch only, never on resume or the
+  /// housekeeping tick: one glance at the store per app start is polite, and
+  /// the flow's own once-per-version marker already keeps repeat launches
+  /// quiet. Everything store-shaped lives behind [appUpdateCheckerProvider]
+  /// (Play in-app updates / iTunes lookup); this wiring only supplies the two
+  /// SnackBar notices. Both are duration-bounded (never `persist`): a launch
+  /// notice nobody asked for must not sit over the UI or dam the messenger
+  /// queue ahead of real feedback like "Backup done".
+  void _checkAppUpdate() {
+    final checker = ref.read(appUpdateCheckerProvider);
+    final flow = AppUpdateFlow(
+      checker: checker,
+      settings: ref.read(settingsProvider),
+      // iOS (and the rig): the store page is the only way to the update.
+      notifyStorePage: (storeUri) => _updateSnack(
+        (l) => l.updateAvailableSnack,
+        actionLabel: (l) => l.updateAction,
+        onAction: () => unawaited(
+          launchUrl(
+            storeUri,
+            mode: LaunchMode.externalApplication,
+          ).catchError((_) => false),
+        ),
+      ),
+      // Android: the flexible download is on the device; offer the restart
+      // that installs it. Declining costs nothing — the next launch's check
+      // finds the downloaded state and offers again.
+      notifyRestartReady: () => _updateSnack(
+        (l) => l.updateReadySnack,
+        actionLabel: (l) => l.updateRestartAction,
+        onAction: () => unawaited(checker.install()),
+      ),
+    );
+    Future<void> run() async {
+      // The notice races the stored-locale apply: this callback fires right
+      // after the first frame, and when the pre-warm in [main] hit its 3 s
+      // cap the tree is still in the system language — a SnackBar shown that
+      // early would keep the wrong language forever (its Text is built once).
+      // Wait for the settings map (which carries the locale) and one more
+      // frame for the rebuild, then check the store.
+      await ref.read(settingsMapProvider.future);
+      await WidgetsBinding.instance.endOfFrame;
+      await flow.run();
+    }
+
+    unawaited(
+      run().catchError((Object e, StackTrace s) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'app_update',
+            context: ErrorSummary('checking the store for a newer version'),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Localized update-notice SnackBar, tolerant of the app shutting down
+  /// while the store check ran (the [_restoreSnack] shape, plus an action).
+  void _updateSnack(
+    String Function(AppLocalizations l) message, {
+    required String Function(AppLocalizations l) actionLabel,
+    required VoidCallback onAction,
+  }) {
+    final messenger = _messengerKey.currentState;
+    final context = _messengerKey.currentContext;
+    if (messenger == null || context == null) return;
+    final l = AppLocalizations.of(context);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message(l)),
+        duration: const Duration(seconds: 10),
+        persist: false,
+        action: SnackBarAction(label: actionLabel(l), onPressed: onAction),
+      ),
     );
   }
 

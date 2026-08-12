@@ -1220,6 +1220,19 @@ class AppLocalizationsCs extends AppLocalizations {
   String get diagnosticsShareFailed => 'Diagnostiku se nepodařilo sdílet';
 
   @override
+  String get updateAvailableSnack =>
+      'Je k dispozici nová verze aplikace ReefTracker.';
+
+  @override
+  String get updateAction => 'Aktualizovat';
+
+  @override
+  String get updateReadySnack => 'Aktualizace stažena.';
+
+  @override
+  String get updateRestartAction => 'Restartovat';
+
+  @override
   String get editionLabel => 'Edice';
 
   @override

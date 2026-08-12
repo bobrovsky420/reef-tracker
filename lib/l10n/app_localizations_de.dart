@@ -1226,6 +1226,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get diagnosticsShareFailed => 'Diagnose konnte nicht geteilt werden';
 
   @override
+  String get updateAvailableSnack =>
+      'Eine neue Version von ReefTracker ist verfügbar.';
+
+  @override
+  String get updateAction => 'Aktualisieren';
+
+  @override
+  String get updateReadySnack => 'Update heruntergeladen.';
+
+  @override
+  String get updateRestartAction => 'Neu starten';
+
+  @override
   String get editionLabel => 'Edition';
 
   @override

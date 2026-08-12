@@ -961,6 +961,51 @@ application client whose id is embedded as `serverClientId`** in
 `cloud_auth_google.dart` (Credential Manager requires it on Android; it is a
 public identifier, not a secret). No schema change; no new backup sections.
 
+### Update-available check (U48) — `app_update.dart`
+
+Tells the user, once per new version, that a newer build is on their store.
+Direct store integration by decision (2026-08-01, no self-hosted version
+file):
+
+- **Seam:** `AppUpdateChecker` (`check()` / `download()` / `install()`),
+  chosen by `appUpdateCheckerProvider` — the `cloudBackupStoreProvider`
+  platform-branch idiom. `check()` never throws: staged/regional rollouts,
+  sideloaded builds, Play-less devices and plain offline all resolve to "no
+  update" (offline-first — an update notice is never worth an error surface).
+- **Android — `PlayUpdateChecker`:** the official Play In-App Updates API
+  (`in_app_update` plugin), **flexible flow only** (immediate is for
+  high-priority pushes this app never sets). The user-facing notice is Play's
+  own consent sheet, drawn by `startFlexibleUpdate()` (its future completes
+  after the accepted download); a SnackBar then offers the restart that
+  installs (`completeFlexibleUpdate()`). A download accepted in an earlier
+  session (`installStatus == downloaded`) re-offers its restart on every
+  launch until installed — finishing an accepted update is not a new nag.
+- **iOS — `AppStoreUpdateChecker`:** the official iTunes Lookup endpoint
+  (`itunes.apple.com/lookup?bundleId=…&country=<device storefront>`, no auth;
+  plain `dart:io HttpClient`, response capped via `readBoundedText`), a
+  conservative dotted-numeric version compare (`isNewerStoreVersion` —
+  anything unparseable is *not newer*), and a SnackBar whose action opens the
+  looked-up `trackViewUrl` via `url_launcher`.
+- **Politeness:** `AppUpdateFlow` (plain class with injected callbacks — the
+  `CloudRestoreFlow` shape; `test/app_update_test.dart` pins it and runs the
+  iTunes checker against a real loopback server) runs once per launch — never
+  on resume or the housekeeping tick — and prompts **once per version**: the
+  offered version's marker (Play `availableVersionCode` / App Store version
+  string) is stamped into `update_prompted_version` (device-local) *before*
+  the notice, the U35 dismissed-name idiom.
+- **Wiring** (`_checkAppUpdate` in `main.dart`): post-first-frame, after
+  awaiting the settings map plus one more frame — a SnackBar shown before the
+  stored locale is applied would keep the system language forever. Both
+  SnackBars are duration-bounded (`persist: false`), so an unrequested launch
+  notice cannot dam the messenger queue ahead of real feedback. Emulator rig:
+  `--dart-define=REEF_UPDATE_TEST=1` swaps in `FakeStoreUpdateChecker` (always
+  offers an update opening the app's Play page) — a real Play check refuses
+  sideloaded builds, so without the rig there is nothing to look at.
+- **Gradle:** the root `build.gradle.kts` pin of every module's Kotlin to JVM
+  17 cut the other way for this plugin (it declares Java *and* Kotlin at 1.8),
+  so a scoped `afterEvaluate` block raises `in_app_update`'s Java
+  `compileOptions` to 17 to match.
+
 ### Reminders & notification scheduling (`notifications.dart`, `reminder_scheduler.dart`)
 
 Local, opt-in reminder notifications (U1 testing, U2 dosing, U12 maintenance).
@@ -1279,6 +1324,10 @@ lifecycle wiring that are easy to miss:
   handler, starts the scheduler's table listener, plans the initial
   notification set, and replays a cold-start notification tap. Every resume
   also `resync()`s, refreshing the 14-day scheduling horizon.
+- **Update-available check** (`_checkAppUpdate`, post-first-frame, launch only
+  — never on resume or the housekeeping tick): asks this install's store for a
+  newer version and shows the once-per-version notice; see Data layer →
+  Update-available check (U48).
 
 ## Theming (`lib/app/theme.dart`)
 
