@@ -15,6 +15,7 @@ import 'package:reeftracker/domain/setup_type.dart';
 ///     dart run tool/apex_emulator.dart --port 8080
 ///     dart run tool/reeffactory_emulator.dart --model salinity --port 8081
 ///     dart run tool/reeffactory_emulator.dart --model ph --port 8082
+///     dart run tool/reeffactory_emulator.dart --model temperature --port 8083
 ///     dart run tool/reefbeat_emulator.dart --type ato --port 8090
 ///     dart run tool/reefbeat_emulator.dart --type run --port 8091
 ///     dart run tool/reefbeat_emulator.dart --type dose --port 8092
@@ -103,6 +104,13 @@ void main() {
       model: 'RFPM01',
       address: '10.0.2.2:8082',
       name: 'pH Monitor',
+      tankId: tank,
+    );
+    await db.upsertReefFactoryDevice(
+      identifier: 'RFTC01-EMU',
+      model: 'RFTC01',
+      address: '10.0.2.2:8083',
+      name: 'Temperature Controller',
       tankId: tank,
     );
     await db.upsertReefBeatDevice(

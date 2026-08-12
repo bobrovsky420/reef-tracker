@@ -12,6 +12,7 @@ import '../../data/database.dart';
 import '../../data/device_read_scope.dart';
 import '../../data/rb_device_link.dart';
 import '../../data/rb_protocol.dart';
+import '../../data/rf_protocol.dart';
 import '../../data/wall_sources.dart';
 import '../../domain/device_vendors.dart';
 import '../../domain/parameter_catalog.dart';
@@ -982,6 +983,13 @@ class _WallScreenState extends ConsumerState<WallScreen>
             : const [],
         window: useSamples ? kWallSampleWindow : kWallReadingsWindow,
         isSampleWindow: useSamples,
+        operatingState: id.paramKey == 'temperature' && deviceCard
+            ? switch (_rfLive[id.deviceIdentifier]?.snapshot?.thermal) {
+                RfThermalState.heating => WallOperatingState.heating,
+                RfThermalState.cooling => WallOperatingState.cooling,
+                _ => null,
+              }
+            : null,
       );
       tiles.add(WallValueTile(data: tileData, now: now));
     }
@@ -1018,8 +1026,7 @@ class _WallScreenState extends ConsumerState<WallScreen>
             ? Zone.red
             : switch (ato.waterLevel) {
                 RbAtoWaterLevel.ok => Zone.green,
-                RbAtoWaterLevel.below ||
-                RbAtoWaterLevel.above => Zone.amber,
+                RbAtoWaterLevel.below || RbAtoWaterLevel.above => Zone.amber,
                 RbAtoWaterLevel.unknown => Zone.unknown,
               };
         final days = ato.daysTillEmpty;
