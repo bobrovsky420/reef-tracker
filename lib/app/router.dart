@@ -41,6 +41,7 @@ import '../features/tanks/tanks_screen.dart';
 import '../features/wall/wall_screen.dart';
 import '../features/wall/wall_settings_screen.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/pro_feature_dialog.dart';
 import '../widgets/reef_card.dart';
 import 'providers.dart';
 
@@ -149,9 +150,15 @@ final appRouter = GoRouter(
       // are dropped rather than crashing on a garbage deep link (T8).
       builder: (context, state) {
         final element = state.uri.queryParameters['element'];
-        return DoseCalculatorScreen(
-          initialElement: kDosingElementKeys.contains(element) ? element : null,
-          startInCorrection: state.uri.queryParameters['mode'] == 'correction',
+        return ProFeatureRoute(
+          feature: ProFeature.doseCalculator,
+          builder: (context) => DoseCalculatorScreen(
+            initialElement: kDosingElementKeys.contains(element)
+                ? element
+                : null,
+            startInCorrection:
+                state.uri.queryParameters['mode'] == 'correction',
+          ),
         );
       },
     ),
@@ -252,14 +259,20 @@ final appRouter = GoRouter(
       // select → run → save, all inside one screen so the BLE session
       // survives every step.
       path: '/hanna/measure',
-      builder: (context, state) => const HannaMeterScreen(),
+      builder: (context, state) => ProFeatureRoute(
+        feature: ProFeature.hannaConnect,
+        builder: (context) => const HannaMeterScreen(),
+      ),
     ),
     GoRoute(
       // Checker camera scan (U34, experimental): model picker → viewfinder
       // → confirm, all inside one screen so the camera session survives
       // every step.
       path: '/hanna/scan',
-      builder: (context, state) => const CheckerScanScreen(),
+      builder: (context, state) => ProFeatureRoute(
+        feature: ProFeature.hannaScan,
+        builder: (context) => const CheckerScanScreen(),
+      ),
     ),
     GoRoute(
       path: '/calculator/salinity',
