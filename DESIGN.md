@@ -176,7 +176,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
 | `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`\|`apex`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat/Apex; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt?, displayOrder — manual card order on the dashboards (v25; one sequence per `kind`, new devices take max+1, ties fall back to the display name `name ?? model ?? identifier` = `deviceDisplayName`), username? — the login name for an authenticated device API (v26; Apex only). The matching **password is deliberately not a column** (#68, v27 dropped the one v26 added): this table rides Android Auto Backup and device transfer inside the raw SQLite file, so it lives in the backup-excluded `.device_secrets` sidecar keyed by `identifier` (`device_secrets.dart`) — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows, the ReefBeat dashboard `reefbeat` rows and the Apex dashboard `apex` rows (add / refresh / reorder / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds, still ordered kind-then-oldest |
 | `DeviceSamples` | tankId + deviceIdentifier + paramKey + bucketStart (composite PK), value/minValue/maxValue — the wall display's **display-only sample buckets** (U49 §12m, v29): at most one row per (tank, device, parameter) per 5-minute bucket whatever the poll interval, holding the last value plus the min/max seen inside the bucket (what draws the tile's range band). Keyed by `Devices.identifier` so a card is one device's series by construction. These are unvalidated probe samples, **not measurements**: never in a backup (the `encodeBackup` section list excludes them by construction), never read by domain code (trend/stability/dosing/export read `Readings`), rail values dropped at write time, pruned by age (48 h retention, `pruneDeviceSamples`). Deliberately **no FKs** — nothing references the table and it references nothing, so the feature stays droppable (§12o) and a backup restore replacing every tank can't cascade the wall's overnight graph away; orphans age out. Index `(tankId, paramKey, bucketStart)` |
-| `WallTileSettings` | tankId + deviceIdentifier + paramKey (composite PK), displayOrder?, visible — per-tile wall-display layout (U49 §12q, v29): order and visibility of one wall card; `deviceIdentifier` is `''` (not NULL — NULLs are distinct in a unique key) for the stored-readings card of a parameter no device reports; `displayOrder` null = never explicitly ordered (default grouped order, after all explicit rows, so new cards append). **Sparse** (§12o rule 1): a missing row means the default, so deleting every row degrades to stock behaviour; no FK and no cascade, deliberately — orphan rows are invisible through the join; device-local and backup-excluded (one tablet's layout, not aquarium data) |
+| `WallTileSettings` | tankId + deviceIdentifier + paramKey (composite PK), displayOrder?, visible — per-tile wall-display layout (U49 §12q, v29): order and visibility of one wall card; `deviceIdentifier` is `''` (not NULL — NULLs are distinct in a unique key) for the stored-readings card of a parameter no device reports; `displayOrder` null = never explicitly ordered (default grouped order, after all explicit rows, so new cards append). **Sparse** (§12o rule 1): a missing row means the default, so deleting every row degrades to stock behaviour; no FK and no cascade, deliberately — orphan rows are invisible through the join; device-local and backup-excluded (one tablet's layout, not aquarium data). Restored ReefFactory inventory does not need these local rows to appear: its stored model (with serial-prefix fallback for old rows) seeds the known card set (Temperature Controller → temperature, pH Monitor → pH, Salinity Guardian → salinity + temperature) before the tablet's first successful poll. An unassigned device belongs to the wall only when the database has exactly one aquarium, where the intended scope is unambiguous; this also makes devices affected by the pre-fix restore merge visible without another restore. |
 | `Settings` | key (PK), value? — generic kv store |
 
 **Secondary indexes** (declared as `@TableIndex` on the table classes, so
@@ -488,14 +488,16 @@ device-local and still rides.
 
 The `devices` section (U36) is the one exception to wipe-and-replace: the
 connected-device inventory is **merged**. Local rows always survive — their
-address/name/tank assignment describe *this* phone's network (the tank wipe
-clears surviving rows' tank links via the FK's set-null, so they never point
-into the restored tanks) — and a backup row is inserted only when no local
-device claims its identity: same `identifier` (serial / BLE id) or same
-kind + display name. The local autoincrement id never enters the format
-(identity is the unique `identifier`), so merged rows get fresh ids. Net
-effect: restoring on a new phone brings the meters along; restoring on a phone
-that already has them configured changes nothing.
+address, name, credentials and order describe *this* phone's connection — and
+a backup row is inserted only when no local device claims its identity: same
+`identifier` (serial / BLE id) or same kind + display name. The tank wipe first
+clears a surviving row's old FK via set-null; when that row matches a backup
+device, the merge then restores the backup's valid aquarium assignment while
+leaving those local connection fields untouched. The local autoincrement id
+never enters the format (identity is the unique `identifier`), so new merged
+rows get fresh ids. Net effect: restoring on a new phone brings the meters
+along; restoring on a phone that already has them configured keeps its network
+setup and reconnects them to the restored aquariums.
 
 **Importing is a three-stage safety pipeline** (`importBackup`), so a bad file
 never wipes live data:

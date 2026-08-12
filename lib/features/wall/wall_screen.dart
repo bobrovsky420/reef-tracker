@@ -209,7 +209,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
     if (!ref.read(proFeatureProvider(ProFeature.wallDisplay))) return;
-    if (!_devicesEnabled) return;
     _polling = true;
     try {
       final scope = _dueScope(tank);
@@ -230,12 +229,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
     }
     if (mounted) setState(() => _updatedAt = DateTime.now());
   }
-
-  /// The wall is not experimental (§12h), but the LAN integrations it reads
-  /// are (U36/U38/U40): with the master switch off the mode degrades honestly
-  /// — no device tiles, no polling, stored readings only.
-  bool get _devicesEnabled =>
-      ref.read(experimentalEnabledProvider).value ?? false;
 
   /// The devices this cycle contacts: the active tank's, in vendor + card
   /// order, minus muted devices (§12q — a device whose known cards are all
@@ -262,9 +255,14 @@ class _WallScreenState extends ConsumerState<WallScreen>
     ], _cards(tank));
     final now = DateTime.now();
     final base = _baseInterval;
+    final tankCount = ref.read(tanksProvider).value?.length ?? 0;
     List<DeviceRecord> due(String kind) => _sorted([
       for (final d in byKind[kind] ?? const <DeviceRecord>[])
-        if (d.tankId == tank.id &&
+        if (deviceInWallTank(
+              d.tankId,
+              activeTankId: tank.id,
+              tankCount: tankCount,
+            ) &&
             polled.contains(d.identifier) &&
             _scheduleOf(kind, d).isDue(now))
           d,
@@ -455,6 +453,12 @@ class _WallScreenState extends ConsumerState<WallScreen>
     }
 
     for (final (kind, d) in _pageOrderDevices(tank)) {
+      if (kind == kDeviceKindReefFactory) {
+        report(
+          d.identifier,
+          wallKnownRfParams(model: d.model, identifier: d.identifier),
+        );
+      }
       final live = switch (kind) {
         kDeviceKindReefFactory => switch (_rfLive[d.identifier]?.snapshot) {
           final s? => wallRfReadings(s).map((r) => r.paramKey),
@@ -483,8 +487,8 @@ class _WallScreenState extends ConsumerState<WallScreen>
   }
 
   Iterable<(String, DeviceRecord)> _pageOrderDevices(Tank tank) sync* {
-    if (!_devicesEnabled) return;
     final order = ref.read(deviceVendorOrderProvider).value ?? kDeviceVendors;
+    final tankCount = ref.read(tanksProvider).value?.length ?? 0;
     final byKind = {
       kDeviceKindReefFactory:
           ref.read(reefFactoryDevicesProvider).value ?? const <DeviceRecord>[],
@@ -497,7 +501,12 @@ class _WallScreenState extends ConsumerState<WallScreen>
       if (!deviceKindRefreshes(kind)) continue;
       for (final d in _sorted([
         for (final d in byKind[kind] ?? const <DeviceRecord>[])
-          if (d.tankId == tank.id) d,
+          if (deviceInWallTank(
+            d.tankId,
+            activeTankId: tank.id,
+            tankCount: tankCount,
+          ))
+            d,
       ])) {
         yield (kind, d);
       }
@@ -592,7 +601,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
     ref.watch(wallNightFromProvider);
     ref.watch(wallNightToProvider);
     ref.watch(wallTileSettingsProvider);
-    ref.watch(experimentalEnabledProvider);
     _ensureTimers(interval, pageSeconds);
 
     final now = DateTime.now();
