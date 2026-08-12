@@ -604,6 +604,15 @@
   "diagnosticsShareFailed": "Could not share the diagnostics",
   "@diagnosticsShareFailed": { "description": "SnackBar shown when handing the diagnostics file to the OS share sheet fails." },
 
+  "updateAvailableSnack": "A new version of ReefTracker is available.",
+  "@updateAvailableSnack": { "description": "Launch SnackBar (U48) shown when the store reports a newer app version; its action opens the store page. Seen on iOS — on Android, Play shows its own update sheet instead." },
+  "updateAction": "Update",
+  "@updateAction": { "description": "Action of the update-available SnackBar — opens the app's store page." },
+  "updateReadySnack": "Update downloaded.",
+  "@updateReadySnack": { "description": "SnackBar (U48, Android) shown when Play's flexible update finished downloading; its action restarts the app to install it." },
+  "updateRestartAction": "Restart",
+  "@updateRestartAction": { "description": "Action of the update-downloaded SnackBar — restarts the app to install the downloaded update." },
+
   "editionLabel": "Edition",
   "@editionLabel": { "description": "Settings row label showing which edition of the app this install is entitled to." },
   "editionFounder": "Founder's Edition",

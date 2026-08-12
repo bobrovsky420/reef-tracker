@@ -102,6 +102,11 @@ const kHannaScanFabKey = 'hanna_scan_fab';
 // session also saves current environment readings from the tank's connected
 // devices. Off by default.
 const kHannaAttachEnvironmentKey = 'hanna_attach_environment';
+// Update-available check (U48): the version marker of the last store update
+// this device prompted about — the once-per-version politeness gate (the U35
+// dismissed-name idiom). Play's availableVersionCode or the App Store's
+// version string; opaque, only compared for equality.
+const kUpdatePromptedVersionKey = 'update_prompted_version';
 // Wall display mode (U49). All six describe *this tablet* — whether it boots
 // into the mode, how live its wall feels, when it dims — so every one is
 // `deviceLocal: true`; a U35 multi-device restore must never teach the

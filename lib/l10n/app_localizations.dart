@@ -2159,6 +2159,30 @@ abstract class AppLocalizations {
   /// **'Could not share the diagnostics'**
   String get diagnosticsShareFailed;
 
+  /// Launch SnackBar (U48) shown when the store reports a newer app version; its action opens the store page. Seen on iOS — on Android, Play shows its own update sheet instead.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of ReefTracker is available.'**
+  String get updateAvailableSnack;
+
+  /// Action of the update-available SnackBar — opens the app's store page.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateAction;
+
+  /// SnackBar (U48, Android) shown when Play's flexible update finished downloading; its action restarts the app to install it.
+  ///
+  /// In en, this message translates to:
+  /// **'Update downloaded.'**
+  String get updateReadySnack;
+
+  /// Action of the update-downloaded SnackBar — restarts the app to install the downloaded update.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get updateRestartAction;
+
   /// Settings row label showing which edition of the app this install is entitled to.
   ///
   /// In en, this message translates to:

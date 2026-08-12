@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Update notice: the app now checks its store once per launch and tells you
+  when a newer version is out. On Android this uses Google Play's own in-app
+  update flow — accept, and the update downloads in place while you keep
+  using the app, with a restart prompt when it is ready. On iOS a notice
+  links to the App Store page. Polite by design: one notice per new version,
+  and offline or store-less installs skip the check silently. (The Play flow
+  has not yet been exercised against the real store — that needs a Play
+  internal-testing install; the iOS half is pure lookup + link and its
+  transport is covered by tests.)
+
 ## [1.3.0]
 
 ### Added

@@ -363,6 +363,11 @@
   "diagnosticsEmpty": "Žádné chyby nebyly zaznamenány",
   "diagnosticsShareFailed": "Diagnostiku se nepodařilo sdílet",
 
+  "updateAvailableSnack": "Je k dispozici nová verze aplikace ReefTracker.",
+  "updateAction": "Aktualizovat",
+  "updateReadySnack": "Aktualizace stažena.",
+  "updateRestartAction": "Restartovat",
+
   "editionLabel": "Edice",
   "editionFounder": "Zakladatelská edice",
   "editionStandard": "Standardní",

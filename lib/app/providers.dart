@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../data/ap_device_link.dart';
+import '../data/app_update.dart';
 import '../data/cloud_auth.dart';
 import '../data/cloud_auth_google.dart';
 import '../data/cloud_backup_store.dart';
@@ -889,6 +890,18 @@ final cloudSyncStateProvider = Provider<CloudSyncState>(
   (ref) => defaultTargetPlatform == TargetPlatform.iOS
       ? ICloudSyncState(ref.watch(settingsProvider))
       : GDriveSyncState(ref.watch(settingsProvider)),
+);
+
+/// The store this install checks for a newer app version (U48): Play in-app
+/// updates on Android, the iTunes lookup on iOS — the [cloudBackupStoreProvider]
+/// platform-branch idiom. Overridden with [FakeStoreUpdateChecker] by the
+/// `REEF_UPDATE_TEST` rig (main.dart) and with fakes in tests. On platforms
+/// with neither store (tests on desktop hosts), the Play checker's own
+/// catch-all resolves every check to "no update".
+final appUpdateCheckerProvider = Provider<AppUpdateChecker>(
+  (ref) => defaultTargetPlatform == TargetPlatform.iOS
+      ? AppStoreUpdateChecker()
+      : PlayUpdateChecker(),
 );
 
 /// Whether iCloud backup sync is on (U44, iOS) — the toggle that is the

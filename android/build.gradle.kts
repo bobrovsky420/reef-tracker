@@ -31,6 +31,26 @@ subprojects {
     }
 }
 
+// The Kotlin pin above cuts the other way for in_app_update (U48): the plugin
+// declares Java *and* Kotlin at 1.8, so forcing only its Kotlin to 17 recreates
+// the same mismatch from the Java side. Raise that one module's Java
+// compileOptions to 17 to match. In `afterEvaluate` deliberately: registered
+// from here (root evaluation) it runs after the plugin's own `android { 1.8 }`
+// block but before AGP's own afterEvaluate creates the compile tasks, so 17 is
+// what the tasks are born with — configuring the tasks directly is too late.
+subprojects {
+    if (name == "in_app_update") {
+        afterEvaluate {
+            extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+            }
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

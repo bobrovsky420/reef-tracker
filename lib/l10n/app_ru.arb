@@ -363,6 +363,11 @@
   "diagnosticsEmpty": "Ошибок не зафиксировано",
   "diagnosticsShareFailed": "Не удалось поделиться диагностикой",
 
+  "updateAvailableSnack": "Доступна новая версия ReefTracker.",
+  "updateAction": "Обновить",
+  "updateReadySnack": "Обновление загружено.",
+  "updateRestartAction": "Перезапустить",
+
   "editionLabel": "Издание",
   "editionFounder": "Версия основателя",
   "editionStandard": "Стандартное",
