@@ -24,6 +24,29 @@ import 'rf_protocol.dart';
 
 typedef WallReading = ({String paramKey, double value});
 
+/// Whether an inventory device belongs on this wall. A sole aquarium is the
+/// unambiguous home for an unassigned device; this also self-heals the visible
+/// effect of restores made before the restore merge retained tank links.
+bool deviceInWallTank(
+  int? deviceTankId, {
+  required int activeTankId,
+  required int tankCount,
+}) => deviceTankId == activeTankId || (deviceTankId == null && tankCount == 1);
+
+/// The readings a registered ReefFactory meter is known to expose before its
+/// first successful wall poll. The stored model is authoritative; the serial
+/// prefix remains a fallback for older inventory rows without a model.
+List<String> wallKnownRfParams({String? model, required String identifier}) {
+  final spec =
+      (model == null ? null : kRfModels[model]) ?? rfModelForSerial(identifier);
+  return switch (spec?.name) {
+    'salinity' => const ['salinity', 'temperature'],
+    'pH' => const ['ph'],
+    'temperature' => const ['temperature'],
+    _ => const [],
+  };
+}
+
 List<WallReading> _canonical(Iterable<WallReading> raw) => [
   for (final r in raw.map(
     (r) => (

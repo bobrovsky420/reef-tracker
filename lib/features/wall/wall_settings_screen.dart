@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../data/wall_sources.dart';
 import '../../domain/device_vendors.dart';
 import '../../domain/pro_features.dart';
 import '../../domain/wall_display.dart';
@@ -268,6 +269,7 @@ class _WallCardList extends ConsumerWidget {
     final tank = ref.watch(activeTankProvider);
     if (tank == null) return const SizedBox.shrink();
     final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+    final tankCount = ref.watch(tanksProvider).value?.length ?? 0;
     final rows = [
       for (final r
           in ref.watch(wallTileSettingsProvider).value ??
@@ -300,7 +302,12 @@ class _WallCardList extends ConsumerWidget {
       final devices =
           [
             for (final d in byKind[kind] ?? const <DeviceRecord>[])
-              if (d.tankId == tank.id) d,
+              if (deviceInWallTank(
+                d.tankId,
+                activeTankId: tank.id,
+                tankCount: tankCount,
+              ))
+                d,
           ]..sort((a, b) {
             final byOrder = a.displayOrder.compareTo(b.displayOrder);
             if (byOrder != 0) return byOrder;
@@ -309,10 +316,17 @@ class _WallCardList extends ConsumerWidget {
             ).toLowerCase().compareTo(deviceDisplayName(b).toLowerCase());
           });
       for (final d in devices) {
+        final known = wallKnownRfParams(
+          model: d.model,
+          identifier: d.identifier,
+        );
         deviceNames[d.identifier] = deviceDisplayName(d);
         reported[d.identifier] = [
+          if (kind == kDeviceKindReefFactory) ...known,
           for (final r in rows)
-            if (r.deviceIdentifier == d.identifier) r.paramKey,
+            if (r.deviceIdentifier == d.identifier &&
+                !known.contains(r.paramKey))
+              r.paramKey,
         ];
       }
     }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/data/wall_sources.dart';
 import 'package:reeftracker/domain/parameter_catalog.dart';
 import 'package:reeftracker/domain/wall_display.dart';
 
@@ -349,6 +350,33 @@ void main() {
   });
 
   group('wall parameter catalogue', () {
+    test('restored ReefFactory inventory exposes its cards before polling', () {
+      // Real restored rows carry the model separately; their identifier need
+      // not resemble the emulator's convenient model-prefixed id.
+      expect(wallKnownRfParams(model: 'RFTC01', identifier: 'opaque-id'), [
+        'temperature',
+      ]);
+      expect(wallKnownRfParams(model: 'RFPM01', identifier: 'opaque-id'), [
+        'ph',
+      ]);
+      expect(wallKnownRfParams(model: 'RFSG01', identifier: 'opaque-id'), [
+        'salinity',
+        'temperature',
+      ]);
+      // Older rows without model metadata still use their serial prefix.
+      expect(wallKnownRfParams(model: null, identifier: 'RFTC012202100087'), [
+        'temperature',
+      ]);
+      expect(wallKnownRfParams(model: null, identifier: 'UNKNOWN'), isEmpty);
+    });
+
+    test('a sole tank safely adopts unassigned restored inventory', () {
+      expect(deviceInWallTank(null, activeTankId: 7, tankCount: 1), isTrue);
+      expect(deviceInWallTank(null, activeTankId: 7, tankCount: 2), isFalse);
+      expect(deviceInWallTank(7, activeTankId: 7, tankCount: 2), isTrue);
+      expect(deviceInWallTank(8, activeTankId: 7, tankCount: 1), isFalse);
+    });
+
     test('contains only known core parameters', () {
       expect(kWallParameterKeys, isNotEmpty);
       for (final key in kWallParameterKeys) {

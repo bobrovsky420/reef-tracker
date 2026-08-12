@@ -85,6 +85,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tile and as a chip on the ReefRun card — instead of the raw firmware text.
 
 ### Fixed
+- Restored connected devices keep their aquarium assignment, so their
+  parameters appear on Wall display immediately after moving to a new tablet.
+  Existing unassigned devices also appear automatically when there is only one
+  aquarium, and device polling no longer depends on the unrelated experimental
+  features switch.
 - All translations now address the user consistently in the informal second
   person singular: Czech (~105 strings), Russian (~128) and French (~143)
   were converted from formal address, German's four remaining formal strings

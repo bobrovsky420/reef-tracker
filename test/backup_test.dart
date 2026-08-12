@@ -2496,9 +2496,9 @@ void main() {
       // Local RF-AAA won: the backup's address/name did not clobber it.
       expect(byId['RF-AAA']!.address, '192.168.1.20');
       expect(byId['RF-AAA']!.name, 'Sump pH');
-      // Its tank assignment was cleared by the tank wipe (FK set-null) —
-      // never left pointing into the restored tanks.
-      expect(byId['RF-AAA']!.tankId, isNull);
+      // Its tablet-local connection details won, but the backup's aquarium
+      // relationship was recovered after the tank wipe cleared the old FK.
+      expect(byId['RF-AAA']!.tankId, srcTank);
       // The name-collision row kept its local serial and address.
       expect(byId['RF-ZZZ']!.address, '192.168.1.21');
       // RF-CCC was new on this phone — inserted from the backup.

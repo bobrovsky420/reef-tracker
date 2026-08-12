@@ -2946,11 +2946,13 @@ class AppDatabase extends _$AppDatabase {
   ///
   /// [deviceRows] (U36) are the one exception to wipe-and-replace: the
   /// connected-device inventory is *merged*. Local rows always survive (their
-  /// address/name/tank assignment describe *this* phone's network), and a
-  /// backup row is only inserted when no local device claims its identity —
-  /// same identifier (serial / BLE id), or same kind + display name. That way
+  /// address/name/credentials describe *this* phone's network), while their
+  /// aquarium assignment is restored from a matching backup row. A backup row
+  /// is inserted only when no local device claims its identity — same
+  /// identifier (serial / BLE id), or same kind + display name. That way
   /// restoring on a fresh phone brings the meters along, while restoring on a
-  /// phone that already has them configured changes nothing.
+  /// phone that already has them configured keeps its connection details and
+  /// reconnects the inventory to the restored aquariums.
   Future<void> restoreFromBackup({
     required List<TanksCompanion> tankRows,
     required List<TrackedParametersCompanion> paramRows,
@@ -3039,26 +3041,43 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(importSources, importSourceRows);
         b.insertAll(settings, incomingSettings);
       });
-      // Merge the connected-device inventory (U36). Note the tank wipe above
-      // already cleared surviving local rows' tank assignments via the FK's
-      // set-null — the restored tanks are different data, so a stale link must
-      // not silently point into them.
+      // Merge the connected-device inventory (U36). The tank wipe above clears
+      // surviving local rows' links via FK set-null. A matching backup row now
+      // supplies the valid link into the just-restored tank set; tablet-local
+      // address/name/credentials/order remain untouched.
       if (deviceRows.isNotEmpty) {
         final localDevices = await select(devices).get();
-        final localIdentifiers = {for (final d in localDevices) d.identifier};
-        final localNames = {
-          for (final d in localDevices)
-            if (d.name != null) (d.kind, d.name!),
+        final localByIdentifier = {
+          for (final d in localDevices) d.identifier: d.id,
         };
+        final localByName = {
+          for (final d in localDevices)
+            if (d.name != null) (d.kind, d.name!): d.id,
+        };
+        Future<void> restoreTank(int id, DevicesCompanion row) async {
+          if (!row.tankId.present) return;
+          await (update(devices)..where((d) => d.id.equals(id))).write(
+            DevicesCompanion(tankId: row.tankId),
+          );
+        }
+
         for (final row in deviceRows) {
-          if (localIdentifiers.contains(row.identifier.value)) continue;
-          final name = row.name.present ? row.name.value : null;
-          if (name != null && localNames.contains((row.kind.value, name))) {
+          final identifier = row.identifier.value;
+          final byIdentifier = localByIdentifier[identifier];
+          if (byIdentifier != null) {
+            await restoreTank(byIdentifier, row);
             continue;
           }
-          await into(devices).insert(row);
-          localIdentifiers.add(row.identifier.value);
-          if (name != null) localNames.add((row.kind.value, name));
+          final name = row.name.present ? row.name.value : null;
+          final nameKey = name == null ? null : (row.kind.value, name);
+          final byName = nameKey == null ? null : localByName[nameKey];
+          if (byName != null) {
+            await restoreTank(byName, row);
+            continue;
+          }
+          final id = await into(devices).insert(row);
+          localByIdentifier[identifier] = id;
+          if (nameKey != null) localByName[nameKey] = id;
         }
       }
       // Sticky keys: the pre-restore local value overrides the backup's.
