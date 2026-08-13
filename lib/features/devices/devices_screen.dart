@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../data/device_read_scope.dart';
+import '../../data/rb_measurements.dart';
 import '../../domain/device_vendors.dart';
 import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
@@ -247,8 +248,8 @@ class DevicesActionFabs extends StatelessWidget {
 ///   vendor's own order; filtering changes nothing about a card's neighbours.
 /// - **Refresh all / Save all act on the current selection only**, and the
 ///   scope line above the list says what that is. Save all is *hidden* — not
-///   disabled — when the selection holds no meter-capable device, because for
-///   a Red Sea filter there is nothing to save and never will be.
+///   disabled — when the selection holds no meter-capable device. A Red Sea
+///   selection counts ReefControl but not its status-only device families.
 /// - Live snapshots live **here**, not in the sections, so switching the filter
 ///   never throws away values the user just refreshed.
 ///
@@ -332,7 +333,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// possible [_freshen] round of LAN traffic before its DB writes, and
   /// `insertReadingGroup` is a blind insert — a second tap during that window
   /// would write a full duplicate group. One flag guards every save surface
-  /// (Save all and both vendors' per-card buttons all funnel through [_save]).
+  /// (Save all and every vendor's per-card buttons all funnel through [_save]).
   bool _saving = false;
 
   /// The vendors that had a chip on the last build. Kept so [addDevice] — which
@@ -548,6 +549,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
       for (final d in stale[kDeviceKindReefFactory] ?? const <DeviceRecord>[])
         d.identifier: _rfLive[d.identifier]?.snapshot,
     };
+    final heldRb = {
+      for (final d in stale[kDeviceKindReefBeat] ?? const <DeviceRecord>[])
+        d.identifier: _rbLive[d.identifier]?.snapshot,
+    };
     final heldAp = {
       for (final d in stale[kDeviceKindApex] ?? const <DeviceRecord>[])
         d.identifier: _apLive[d.identifier]?.status,
@@ -563,6 +568,11 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
         final snap = e.value;
         if (snap == null || _rfLive[e.key]?.snapshot != null) continue;
         _rfLive[e.key] = RfLive(snapshot: snap, error: _rfLive[e.key]?.error);
+      }
+      for (final e in heldRb.entries) {
+        final snap = e.value;
+        if (snap == null || _rbLive[e.key]?.snapshot != null) continue;
+        _rbLive[e.key] = RbLive(snapshot: snap, error: _rbLive[e.key]?.error);
       }
       for (final e in heldAp.entries) {
         final status = e.value;
@@ -597,16 +607,20 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
         final snap = _rfLive[d.identifier]?.snapshot;
         if (snap == null) return const [];
         return rfValuesToSave(d, snap, scope.of(kind));
+      case kDeviceKindReefBeat:
+        final status = _rbLive[d.identifier]?.snapshot?.control;
+        if (status == null) return const [];
+        return rbControlMeasurements(status);
       case kDeviceKindApex:
         final status = _apLive[d.identifier]?.status;
         if (status == null) return const [];
         return apReadingsToSave(status.readings);
       default:
-        // Every meter-capable kind must have a branch above, or Save all would
-        // count its devices (via [deviceKindSaves]) and then save nothing.
+        // Every meter-capable model must have a branch above, or Save all
+        // would count it (via [deviceModelSaves]) and then save nothing.
         assert(
-          !deviceKindSaves(kind),
-          'meter-capable vendor "$kind" has no save mapping',
+          !deviceModelSaves(kind, d.model),
+          'meter-capable device "$kind/${d.model}" has no save mapping',
         );
         return const [];
     }
@@ -1029,6 +1043,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
         kDeviceKindReefBeat => RbDeviceSection(
           devices: byVendor[vendor]!,
           live: _rbLive,
+          onSave: _saving
+              ? null
+              : (d, _) =>
+                    unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
           onRemoved: (id) => setState(() {
             _rbLive.remove(id);
             _autoRead.remove(id);

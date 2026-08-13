@@ -11,6 +11,7 @@ import '../../data/lan_discovery.dart';
 import '../../data/rb_device_link.dart';
 import '../../data/rb_protocol.dart';
 import '../../domain/units.dart';
+import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
@@ -88,22 +89,94 @@ String rbErrorText(AppLocalizations l, RbLinkError e) => switch (e) {
   RbLinkError.protocol => l.reefBeatErrProtocol,
 };
 
+/// Classifies a ReefControl's primary water reading against ReefTracker's
+/// effective bounds for the active aquarium. Firmware `level` fields are
+/// deliberately irrelevant: every screen must agree with the ranges the
+/// keeper configured in this app.
+@visibleForTesting
+Zone reefControlProbeZone(
+  RbControlProbe probe,
+  Map<String, ZoneBounds> boundsByParam,
+) {
+  final paramKey = switch (probe.type) {
+    'ec' => 'salinity',
+    'ph' => 'ph',
+    'orp' => 'orp',
+    _ => null,
+  };
+  if (paramKey == null) return Zone.unknown;
+
+  final rawValue = probe.type == 'ec' ? probe.salinityPpt : probe.value;
+  if (rawValue == null) return Zone.unknown;
+  final canonicalValue = paramKey == 'salinity' ? pptToSg(rawValue) : rawValue;
+  return (boundsByParam[paramKey] ?? const ZoneBounds()).classify(
+    canonicalValue,
+  );
+}
+
+/// ReefTracker-zone classification for a combined probe's temperature sensor.
+/// Like [reefControlProbeZone], this intentionally ignores the firmware's
+/// `temp_level` label.
+@visibleForTesting
+Zone reefControlProbeTemperatureZone(
+  RbControlProbe probe,
+  Map<String, ZoneBounds> boundsByParam,
+) {
+  final value = probe.temperatureC;
+  if (value == null) return Zone.unknown;
+  return (boundsByParam['temperature'] ?? const ZoneBounds()).classify(value);
+}
+
+/// Formats a ReefControl probe's primary value. Salinity arrives in ppt but
+/// goes through canonical SG so the app's salinity preference controls both
+/// its unit and precision.
+@visibleForTesting
+String formatReefControlProbeValue(RbControlProbe probe, UnitPrefs prefs) {
+  if (probe.type == 'ec') {
+    final ppt = probe.salinityPpt;
+    if (ppt == null) return '—';
+    final presentation = presentationFor('salinity', 'SG', 3, prefs);
+    return '${presentation.format(pptToSg(ppt))} '
+        '${presentation.unitLabel}';
+  }
+
+  final value = probe.value;
+  if (value == null) return '—';
+  final unit = switch (probe.type) {
+    'orp' => probe.measurementUnit ?? 'mV',
+    _ => probe.measurementUnit ?? '',
+  };
+  final formatted = formatDeviceValue(value);
+  return unit.isEmpty ? formatted : '$formatted $unit';
+}
+
+/// Test seam for the complete ReefControl status body without making the
+/// implementation widget part of the app's public UI surface.
+@visibleForTesting
+Widget reefControlStatusForTesting(RbControlStatus status) =>
+    _ControlStatus(status: status);
+
 /// The Red Sea section of the Devices screen (U41): status cards for the
 /// ReefDose pumps, ReefATO units, ReefMat filters, ReefRun controllers, ReefLED
-/// fixtures and (grouped) ReefWave pumps. Purely informational — these devices
-/// report what they are doing, never a measurement, so no card here carries a
-/// Save button.
+/// fixtures, (grouped) ReefWave pumps and ReefControl probe controllers.
+/// ReefControl is the measuring device in this otherwise status-only vendor,
+/// so its card alone carries Save; the other ReefBeat cards remain read-only.
 class RbDeviceSection extends ConsumerWidget {
   const RbDeviceSection({
     super.key,
     required this.devices,
     required this.live,
+    required this.onSave,
     required this.onRemoved,
   });
 
   /// Already filtered to the active tank and sorted by the parent.
   final List<DeviceRecord> devices;
   final Map<String, RbLive> live;
+
+  /// Null while the parent has a save in flight — the ReefControl card's Save
+  /// button disables for the duration. Status-only Red Sea models ignore it.
+  final void Function(DeviceRecord device, RbSnapshot snap)? onSave;
   final void Function(String identifier) onRemoved;
 
   @override
@@ -154,9 +227,13 @@ class RbDeviceSection extends ConsumerWidget {
           device: d,
           index: i,
           canReorder: canReorder,
+          tank: _tankFor(d.tankId, tanks),
           live: live[d.identifier] ?? const RbLive(),
           errorTextOf: (e) => rbErrorText(l, e),
           onRename: () => _renameDevice(context, ref, d),
+          onSave: rbIsControlModel(d.model) && onSave != null
+              ? (snap) => onSave!(d, snap)
+              : null,
           // No other tank to move to → no menu item.
           onMove: tanks.any((t) => t.id != d.tankId)
               ? () => _moveDevice(context, ref, d)
@@ -168,6 +245,14 @@ class RbDeviceSection extends ConsumerWidget {
         );
       },
     );
+  }
+
+  static Tank? _tankFor(int? id, List<Tank> tanks) {
+    if (id == null) return null;
+    for (final tank in tanks) {
+      if (tank.id == id) return tank;
+    }
+    return null;
   }
 
   /// Renames [d]. The card header carries nothing but the name now, and a
@@ -372,9 +457,11 @@ class _DeviceCard extends StatelessWidget {
     required this.device,
     required this.index,
     required this.canReorder,
+    required this.tank,
     required this.live,
     required this.errorTextOf,
     required this.onRename,
+    required this.onSave,
     required this.onMove,
     required this.onShowQueue,
     required this.onRemove,
@@ -387,9 +474,13 @@ class _DeviceCard extends StatelessWidget {
 
   /// False for a one-card list — nothing to drag against, so no handle.
   final bool canReorder;
+  final Tank? tank;
   final RbLive live;
   final String Function(RbLinkError) errorTextOf;
   final VoidCallback onRename;
+
+  /// Non-null only for ReefControl, and null while a save is in flight.
+  final void Function(RbSnapshot snap)? onSave;
 
   /// Null when there is no other tank to move to (the item is hidden).
   final VoidCallback? onMove;
@@ -434,6 +525,12 @@ class _DeviceCard extends StatelessWidget {
                   ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
+                    if (v == 'save' &&
+                        snap?.control != null &&
+                        tank != null &&
+                        onSave != null) {
+                      onSave!(snap!);
+                    }
                     if (v == 'rename') onRename();
                     if (v == 'move') onMove?.call();
                     if (v == 'queue') onShowQueue?.call();
@@ -443,6 +540,12 @@ class _DeviceCard extends StatelessWidget {
                     if (v == 'remove') onRemove();
                   },
                   itemBuilder: (_) => [
+                    if (snap?.control != null)
+                      PopupMenuItem(
+                        value: 'save',
+                        enabled: tank != null && onSave != null,
+                        child: Text(l.save),
+                      ),
                     PopupMenuItem(value: 'rename', child: Text(l.edit)),
                     if (onMove != null)
                       PopupMenuItem(
@@ -488,14 +591,119 @@ class _DeviceCard extends StatelessWidget {
               _RunStatus(status: snap!.run!)
             else if (snap?.light != null)
               _LightStatus(status: snap!.light!)
+            else if (snap?.control != null)
+              _ControlStatus(status: snap!.control!)
             else
               Text(
                 l.reefBeatNotReadYet,
                 style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
+            // Only ReefControl saves measurements; other Red Sea models do
+            // not need a tank merely to display their operational status.
+            if (rbIsControlModel(device.model) && tank == null) ...[
+              const SizedBox(height: 10),
+              Text(
+                l.reefFactoryNoTank,
+                style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A ReefControl Lite/Pro card keeps every attached probe together. Each probe
+/// gets one parameter row; a combined probe's temperature sensor gets its own
+/// labelled row immediately beneath it, and an attached leak detector gets the
+/// same green-dry/red-leak row as ReefATO. Numeric values use the app's
+/// configured units and ranges, never the controller's presentation metadata.
+class _ControlStatus extends ConsumerWidget {
+  const _ControlStatus({required this.status});
+
+  final RbControlStatus status;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final prefs = ref.watch(unitPrefsProvider);
+    final tokens = ReefTokens.of(context);
+    final boundsByParam = {
+      for (final parameter
+          in ref.watch(trackedParametersProvider).value ??
+              const <ResolvedParameter>[])
+        parameter.paramKey: parameter.bounds,
+    };
+
+    Color? colorFor(RbControlProbe probe) =>
+        switch (reefControlProbeZone(probe, boundsByParam)) {
+          Zone.green => tokens.healthy,
+          Zone.amber => tokens.caution,
+          Zone.red => tokens.critical,
+          Zone.unknown => null,
+        };
+
+    Color? temperatureColorFor(RbControlProbe probe) =>
+        switch (reefControlProbeTemperatureZone(probe, boundsByParam)) {
+          Zone.green => tokens.healthy,
+          Zone.amber => tokens.caution,
+          Zone.red => tokens.critical,
+          Zone.unknown => null,
+        };
+
+    String labelFor(RbControlProbe probe) => switch (probe.type) {
+      'ec' => l.paramName('salinity'),
+      'ph' => l.paramName('ph'),
+      'orp' => l.paramName('orp'),
+      _ => probe.type.toUpperCase(),
+    };
+
+    final probes = status.waterProbes.toList(growable: false);
+    final leakProbe = status.leakProbe;
+    if (probes.isEmpty && leakProbe == null) {
+      return Text(
+        l.reefBeatNotReadYet,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: tokens.textDim),
+      );
+    }
+
+    return Column(
+      children: [
+        for (final (index, probe) in probes.indexed) ...[
+          if (index > 0) const Divider(height: 18),
+          _StatusRow(
+            label: labelFor(probe),
+            value: formatReefControlProbeValue(probe, prefs),
+            valueColor: colorFor(probe),
+            labelFontWeight: Theme.of(context).textTheme.titleSmall?.fontWeight,
+          ),
+          if (probe.temperatureC case final temperature?)
+            _StatusRow(
+              label: l.paramName('temperature'),
+              value: formatDeviceTempC(temperature, prefs),
+              valueColor: temperatureColorFor(probe),
+            ),
+        ],
+        if (leakProbe != null) ...[
+          if (probes.isNotEmpty) const Divider(height: 18),
+          _StatusRow(
+            label: l.reefBeatAtoLeakSensor,
+            value: switch (leakProbe.detected) {
+              true => l.reefBeatAtoLeak,
+              false => l.reefBeatAtoLeakDry,
+              null => '—',
+            },
+            valueColor: switch (leakProbe.detected) {
+              true => tokens.critical,
+              false => tokens.healthy,
+              null => null,
+            },
+          ),
+        ],
+      ],
     );
   }
 }
@@ -1333,11 +1541,17 @@ class _WavePumpRow extends StatelessWidget {
 
 /// One label–value line of a status card: dim label left, mono value right.
 class _StatusRow extends StatelessWidget {
-  const _StatusRow({required this.label, required this.value, this.valueColor});
+  const _StatusRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.labelFontWeight,
+  });
 
   final String label;
   final String value;
   final Color? valueColor;
+  final FontWeight? labelFontWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -1354,6 +1568,7 @@ class _StatusRow extends StatelessWidget {
               label,
               style: t.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: labelFontWeight,
               ),
             ),
           ),

@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/data/rb_device_link.dart';
+import 'package:reeftracker/data/rb_protocol.dart';
 import 'package:reeftracker/data/wall_sources.dart';
 import 'package:reeftracker/domain/parameter_catalog.dart';
+import 'package:reeftracker/domain/units.dart';
 import 'package:reeftracker/domain/wall_display.dart';
 
 void main() {
@@ -350,6 +353,37 @@ void main() {
   });
 
   group('wall parameter catalogue', () {
+    test('ReefControl contributes one card per primary attached probe', () {
+      final readings = wallRbReadings(
+        RbSnapshot(
+          info: const RbDeviceInfo(
+            hwType: kRbControlHwType,
+            hwModel: 'RSCONTROLPRO',
+            hwid: 'control-1',
+          ),
+          control: const RbControlStatus(
+            probes: [
+              RbControlProbe(
+                type: 'ec',
+                ppt: 35.8,
+                sg: 1.027,
+                ec: 54.2,
+                temperatureC: 25.6,
+              ),
+              RbControlProbe(type: 'orp', value: 81),
+              RbControlProbe(type: 'ph', value: 8.06, temperatureC: 25.8),
+            ],
+          ),
+        ),
+      );
+
+      expect(readings.map((r) => r.paramKey), ['salinity', 'orp', 'ph']);
+      expect(readings[0].value, closeTo(pptToSg(35.8), 0.000001));
+      expect(readings[1].value, 81);
+      expect(readings[2].value, 8.06);
+      expect(readings.map((r) => r.paramKey), isNot(contains('temperature')));
+    });
+
     test('restored ReefFactory inventory exposes its cards before polling', () {
       // Real restored rows carry the model separately; their identifier need
       // not resemble the emulator's convenient model-prefixed id.

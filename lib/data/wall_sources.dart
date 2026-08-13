@@ -20,6 +20,7 @@ import '../domain/parameter_catalog.dart';
 import '../domain/units.dart';
 import 'ap_protocol.dart';
 import 'rb_device_link.dart';
+import 'rb_protocol.dart';
 import 'rf_protocol.dart';
 
 typedef WallReading = ({String paramKey, double value});
@@ -69,9 +70,34 @@ List<WallReading> wallApReadings(ApStatus status) => _canonical([
   for (final r in status.readings) (paramKey: r.paramKey, value: r.value),
 ]);
 
-/// A ReefBeat device's wall readings. Red Sea gear reports what it is doing
-/// rather than measurements — the one exception is the ReefATO+'s level
-/// sensor, which carries a temperature probe.
-List<WallReading> wallRbReadings(RbSnapshot snap) => _canonical([
-  if (snap.ato?.temperatureC case final t?) (paramKey: 'temperature', value: t),
-]);
+/// A ReefBeat device's wall readings. Most Red Sea gear reports what it is
+/// doing rather than measurements; ReefATO+ contributes its level-sensor
+/// temperature and ReefControl contributes one primary value per attached
+/// water probe. A ReefControl's two compensation temperatures stay visible on
+/// its Devices card but do not become one ambiguous wall temperature card.
+List<WallReading> wallRbReadings(RbSnapshot snap) {
+  final raw = <WallReading>[
+    if (snap.ato?.temperatureC case final t?)
+      (paramKey: 'temperature', value: t),
+  ];
+  for (final probe in snap.control?.probes ?? const <RbControlProbe>[]) {
+    switch (probe.type) {
+      case 'ec':
+        if (probe.salinityPpt case final value?) {
+          raw.add((paramKey: 'salinity', value: value));
+        }
+        break;
+      case 'ph':
+        if (probe.value case final value?) {
+          raw.add((paramKey: 'ph', value: value));
+        }
+        break;
+      case 'orp':
+        if (probe.value case final value?) {
+          raw.add((paramKey: 'orp', value: value));
+        }
+        break;
+    }
+  }
+  return _canonical(raw);
+}

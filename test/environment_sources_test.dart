@@ -2,14 +2,22 @@
 // one-value-per-parameter selection algorithm behind the Hanna results step's
 // Environment card.
 
+import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/environment_sources.dart';
+import 'package:reeftracker/data/rb_device_link.dart';
+import 'package:reeftracker/data/rb_protocol.dart';
 import 'package:reeftracker/data/rf_device_link.dart';
 import 'package:reeftracker/data/rf_protocol.dart';
+import 'package:reeftracker/domain/pro_features.dart';
+import 'package:reeftracker/domain/setup_type.dart';
 
 DeviceRecord _device({
   int id = 1,
+  String kind = 'reeffactory',
   String identifier = 'RFSG01AAAA',
   String? name,
   String? model = 'RFSG01',
@@ -17,7 +25,7 @@ DeviceRecord _device({
   int? tankId = 1,
 }) => DeviceRecord(
   id: id,
-  kind: 'reeffactory',
+  kind: kind,
   identifier: identifier,
   name: name,
   model: model,
@@ -55,6 +63,33 @@ class _FakeRfLink implements RfDeviceLink {
     return snap;
   }
 }
+
+/// Scripted [RbDeviceLink]: one ReefControl snapshot (or error) per address.
+class _FakeRbLink implements RbDeviceLink {
+  _FakeRbLink(this.snapshots);
+  final Map<String, RbSnapshot> snapshots;
+
+  @override
+  Future<RbSnapshot> readOnce(String host) async {
+    final snap = snapshots[host];
+    if (snap == null) {
+      throw const RbLinkException(RbLinkError.unreachable);
+    }
+    return snap;
+  }
+
+  @override
+  Future<List<RbDoseQueueEntry>> readDosingQueue(String host) async => const [];
+}
+
+RbSnapshot _rbSnapshot(List<RbControlProbe> probes) => RbSnapshot(
+  info: const RbDeviceInfo(
+    hwType: kRbControlHwType,
+    hwModel: 'RSCONTROLPRO',
+    hwid: 'RB-CONTROL-1',
+  ),
+  control: RbControlStatus(probes: probes),
+);
 
 RfSnapshot _snapshot(List<RfReading> readings) => RfSnapshot(
   serial: 'RFSG01AAAA',
@@ -156,6 +191,7 @@ void main() {
   group('environmentSourcesForTank', () {
     test('filters by tank assignment and usable address', () {
       final link = _FakeRfLink(const {});
+      final rbLink = _FakeRbLink(const {});
       final sources = environmentSourcesForTank(
         tankId: 1,
         rfDevices: [
@@ -165,8 +201,28 @@ void main() {
           _device(id: 4, identifier: 'RFTC01DDDD', tankId: null),
         ],
         rfLink: link,
+        rbDevices: [
+          _device(
+            id: 5,
+            kind: 'reefbeat',
+            identifier: 'RB-CONTROL-1',
+            model: 'RSCONTROLPRO',
+            address: '10.0.0.20',
+          ),
+          _device(
+            id: 6,
+            kind: 'reefbeat',
+            identifier: 'RB-DOSE-1',
+            model: 'RSDOSE4',
+            address: '10.0.0.21',
+          ),
+        ],
+        rbLink: rbLink,
       );
-      expect([for (final s in sources) s.identifier], ['RFSG01AAAA']);
+      expect(
+        [for (final s in sources) s.identifier],
+        ['RFSG01AAAA', 'RB-CONTROL-1'],
+      );
     });
   });
 
@@ -235,4 +291,114 @@ void main() {
       );
     });
   });
+
+  group('RbEnvironmentSource', () {
+    DeviceRecord device({String? address = '10.0.0.20'}) => _device(
+      kind: 'reefbeat',
+      identifier: 'RB-CONTROL-1',
+      name: 'ReefControl',
+      model: 'RSCONTROLPRO',
+      address: address,
+    );
+
+    test('declares probe primaries but treats temperature as incidental', () {
+      final source = RbEnvironmentSource(device(), _FakeRbLink(const {}));
+      expect(source.primaryParams, {'salinity', 'ph', 'orp'});
+    });
+
+    test(
+      'offers all probe values and the first probe temperature to Hanna',
+      () async {
+        final source = RbEnvironmentSource(
+          device(),
+          _FakeRbLink({
+            '10.0.0.20': _rbSnapshot(const [
+              RbControlProbe(type: 'ec', ppt: 35, temperatureC: 25.1),
+              RbControlProbe(type: 'orp', value: 410),
+              RbControlProbe(type: 'ph', value: 8.2, temperatureC: 26.4),
+            ]),
+          }),
+        );
+
+        final result = await source.read();
+        expect(result.readings.map((r) => r.paramKey), [
+          'salinity',
+          'temperature',
+          'orp',
+          'ph',
+        ]);
+        expect(
+          result.readings.firstWhere((r) => r.paramKey == 'temperature').value,
+          25.1,
+        );
+      },
+    );
+
+    test('read throws unreachable when the device has no address', () {
+      expect(
+        RbEnvironmentSource(
+          device(address: null),
+          _FakeRbLink(const {}),
+        ).read(),
+        throwsA(isA<RbLinkException>()),
+      );
+    });
+  });
+
+  test(
+    'Hanna environment provider includes assigned ReefControl values',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final tankId = await db.createTankWithPreset(
+        name: 'Reef',
+        type: SetupType.mixed,
+      );
+      await db.upsertReefBeatDevice(
+        identifier: 'RB-CONTROL-1',
+        model: 'RSCONTROLPRO',
+        address: '10.0.0.20',
+        name: 'ReefControl',
+        tankId: tankId,
+      );
+      final rbLink = _FakeRbLink({
+        '10.0.0.20': _rbSnapshot(const [
+          RbControlProbe(type: 'ec', ppt: 35, temperatureC: 25.1),
+          RbControlProbe(type: 'orp', value: 410),
+          RbControlProbe(type: 'ph', value: 8.2, temperatureC: 26.4),
+        ]),
+      });
+      final container = ProviderContainer(
+        overrides: [
+          dbProvider.overrideWithValue(db),
+          rbDeviceLinkProvider.overrideWithValue(rbLink),
+          rfDeviceLinkProvider.overrideWithValue(_FakeRfLink(const {})),
+          proFeatureProvider(
+            ProFeature.connectedDevices,
+          ).overrideWithValue(true),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(
+        environmentSourcesProvider(tankId),
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      for (
+        var i = 0;
+        i < 200 && container.read(environmentSourcesProvider(tankId)).isEmpty;
+        i++
+      ) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      final sources = container.read(environmentSourcesProvider(tankId));
+      expect(sources.map((s) => s.identifier), ['RB-CONTROL-1']);
+
+      final selected = selectEnvironmentValues([await sources.single.read()]);
+      expect(selected.keys, {'salinity', 'temperature', 'orp', 'ph'});
+      expect(selected['temperature']?.value, 25.1);
+    },
+  );
 }

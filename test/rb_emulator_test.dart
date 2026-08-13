@@ -110,6 +110,30 @@ void main() {
     // The other heads keep their stock.
     expect(low.heads[0].remainingDays, 117);
   });
+
+  test(
+    'reads ReefControl probes and forced values survive a re-read',
+    () async {
+      await startEmulator(EmuRbType.control);
+      final snap = await link.readOnce(host);
+
+      expect(snap.info.hwType, 'reef-control');
+      expect(snap.modelDisplayName, 'ReefControl Pro');
+      final control = snap.control!;
+      expect(control.probeOf('ec')!.salinityPpt, 35.8);
+      expect(control.probeOf('ph')!.value, 8.06);
+      expect(control.probeOf('orp')!.value, 81);
+      expect(control.leakProbe!.detected, isFalse);
+
+      await _control(emulator, '/emu/probes?salinity=36.1&ph=7.7&orp=320');
+      await _control(emulator, '/emu/leak?status=reef_water_leak');
+      final changed = (await link.readOnce(host)).control!;
+      expect(changed.probeOf('ec')!.salinityPpt, 36.1);
+      expect(changed.probeOf('ph')!.value, 7.7);
+      expect(changed.probeOf('orp')!.value, 320);
+      expect(changed.leakProbe!.detected, isTrue);
+    },
+  );
 }
 
 /// Hits an `/emu/*` control endpoint (not part of the ReefBeat API).

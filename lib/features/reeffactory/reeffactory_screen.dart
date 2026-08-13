@@ -14,7 +14,6 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
-import '../../widgets/reef_icon_button.dart';
 import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
@@ -334,7 +333,7 @@ Future<void> showRfManualSheet(
   );
 }
 
-/// One meter's card: name + menu, then the live value line with its own Save.
+/// One meter's card: name + menu, then full-width live values.
 class _DeviceCard extends ConsumerWidget {
   const _DeviceCard({
     super.key,
@@ -424,6 +423,12 @@ class _DeviceCard extends ConsumerWidget {
                   ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
+                    if (v == 'save' &&
+                        snap != null &&
+                        tank != null &&
+                        onSave != null) {
+                      onSave!(snap);
+                    }
                     if (v == 'rename') onRename();
                     if (v == 'move') onMove?.call();
                     if (v == 'details') {
@@ -432,6 +437,12 @@ class _DeviceCard extends ConsumerWidget {
                     if (v == 'remove') onRemove();
                   },
                   itemBuilder: (_) => [
+                    if (snap != null)
+                      PopupMenuItem(
+                        value: 'save',
+                        enabled: tank != null && onSave != null,
+                        child: Text(l.reefFactorySave),
+                      ),
                     PopupMenuItem(value: 'rename', child: Text(l.edit)),
                     if (onMove != null)
                       PopupMenuItem(
@@ -463,52 +474,32 @@ class _DeviceCard extends ConsumerWidget {
                 style: t.bodyMedium?.copyWith(color: cs.error),
               )
             else if (snap != null)
-              // Save rides the value line rather than owning a row below it:
-              // the readings it would persist are right there next to it, and
-              // a card of one temperature doesn't need two rows to say so.
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                // The badge rides the value line rather than the card header:
+                // it qualifies the temperature ("34.0 °C — heating"), so it
+                // belongs next to the number it explains.
+                crossAxisAlignment: WrapCrossAlignment.end,
                 children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 16,
-                      runSpacing: 8,
-                      // The badge rides the value line rather than the card
-                      // header: it qualifies the temperature ("34.0 °C —
-                      // heating"), so it belongs next to the number it
-                      // explains.
-                      crossAxisAlignment: WrapCrossAlignment.end,
-                      children: [
-                        for (final r in snap.readings)
-                          _ReadingChip(
-                            paramKey: r.paramKey,
-                            label: l.paramName(r.paramKey),
-                            value: r.value,
-                            unit: r.unit,
-                          ),
-                        if (badge != null)
-                          Padding(
-                            // Nudges the pill off the value's descender line
-                            // so its centre lands on the digits, not below
-                            // them.
-                            padding: const EdgeInsets.only(bottom: 5),
-                            child: _StateBadge(
-                              label: badge.label,
-                              color: badge.color,
-                              softColor: badge.soft,
-                            ),
-                          ),
-                      ],
+                  for (final r in snap.readings)
+                    _ReadingChip(
+                      paramKey: r.paramKey,
+                      label: l.paramName(r.paramKey),
+                      value: r.value,
+                      unit: r.unit,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  ReefFilledIconButton(
-                    icon: Icons.save_outlined,
-                    tooltip: l.reefFactorySave,
-                    onPressed: tank != null && onSave != null
-                        ? () => onSave!(snap)
-                        : null,
-                  ),
+                  if (badge != null)
+                    Padding(
+                      // Nudges the pill off the value's descender line so its
+                      // centre lands on the digits, not below them.
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: _StateBadge(
+                        label: badge.label,
+                        color: badge.color,
+                        softColor: badge.soft,
+                      ),
+                    ),
                 ],
               )
             else

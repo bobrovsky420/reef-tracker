@@ -3296,11 +3296,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Live status from Red Sea ReefBeat devices';
+      'Live data from Red Sea ReefBeat devices';
 
   @override
   String get reefBeatDisclaimer =>
-      'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.';
+      'This app only reads live data from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.';
 
   @override
   String get reefBeatAddDevice => 'Add device';
@@ -3310,7 +3310,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose pumps, ReefATO, ReefMat, ReefRun, ReefLED and ReefWave — or add one by its IP address.';
+      'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave and ReefControl — or add one by its IP address.';
 
   @override
   String get reefBeatRefreshAll => 'Refresh all';

@@ -15,10 +15,11 @@ import 'package:reeftracker/domain/setup_type.dart';
 /// The Apex row points at `10.0.2.2:8080` — the host's `tool/apex_emulator.dart`
 /// as seen from the Android emulator — so one card reads real live values; its
 /// password is written to a sibling `.device_secrets`, which has to be pushed
-/// alongside the database (see [DeviceSecrets]). Two ReefBeat rows point at
+/// alongside the database (see [DeviceSecrets]). Three ReefBeat rows point at
 /// `tool/reefbeat_emulator.dart` the same way (`--type ato` on :8090, `--type
-/// run` on :8091), so the ATO's leak-sensor row and the ReefRun's full-cup
-/// state can be forced and looked at. The ReefFactory rows and the third
+/// run` on :8091, `--type control` on :8093), so the ATO's leak-sensor row,
+/// ReefRun's full-cup state and ReefControl's probe/save card can be forced and
+/// looked at. The ReefFactory rows and the fourth
 /// ReefBeat row carry unreachable addresses on purpose: their cards render the
 /// offline path, which is just as much a state worth looking at. A Hanna
 /// checker row (U43) rounds out the vendor set — it has no address to reach.
@@ -81,6 +82,13 @@ void main() {
       model: 'RSRUN',
       address: '10.0.2.2:8091',
       name: 'ReefRun',
+      tankId: tank,
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'RSCONTROL-EMU',
+      model: 'RSCONTROLPRO',
+      address: '10.0.2.2:8093',
+      name: 'ReefControl Pro',
       tankId: tank,
     );
     await db.ensureHannaDevice(

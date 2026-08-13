@@ -36,6 +36,55 @@ const _doseDeviceInfo = {
   'hwid': 'cc7b5c267a68',
 };
 
+/// The ReefControl Pro discovered at 192.168.1.183 (2026-08-13).
+const _controlDeviceInfo = {
+  'name': 'RSCONTROLPRO-674461898',
+  'hw_type': 'reef-control',
+  'hw_model': 'RSCONTROLPRO',
+  'hw_revision': 'v1.3_26A',
+  'hwid': '704bca783328',
+};
+
+const _controlDashboard = {
+  'mode': 'auto',
+  'is_internet_connected': true,
+  'cable_connected': false,
+  'probes': [
+    {
+      'type': 'ec',
+      'uid': '0x005AA',
+      'measurement_unit': 'ppt',
+      'value': 35.8,
+      'name': 'Salinity 5AA',
+      'status': 'auto',
+      'ec': 54.2,
+      'ppt': 35.8,
+      'sg': 1.027,
+      'level': 'acceptable',
+      'temp_value': 25.6,
+      'temp_level': 'desired',
+    },
+    {
+      'type': 'orp',
+      'uid': '0x0007C',
+      'name': 'ORP 7C',
+      'status': 'auto',
+      'value': 81,
+      'level': 'danger',
+    },
+    {
+      'type': 'ph',
+      'uid': '0x00579',
+      'name': 'pH 579',
+      'status': 'auto',
+      'value': 8.06,
+      'level': 'desired',
+      'temp_value': 25.8,
+      'temp_level': 'desired',
+    },
+  ],
+};
+
 /// The same pump's `/dashboard`, abridged to two of its four heads — enough to
 /// prove the settings fan-out visits each head that was reported, and only
 /// those. Head numbers 1 and 4 on purpose: the loop must follow the reported
@@ -274,6 +323,25 @@ void main() {
       maxResponseBytes: kDeviceProbeMaxBytes,
     );
     expect((await link.identify(host)).hwid, '8813bf641cd8');
+  });
+
+  test('reads ReefControl probes from one dashboard request', () async {
+    deviceInfo = Map.of(_controlDeviceInfo);
+    dashboard = Map.of(_controlDashboard);
+
+    final snapshot = await RbHttpLink(
+      timeout: const Duration(seconds: 5),
+    ).readOnce(host);
+
+    expect(requested, ['/device-info', '/dashboard']);
+    expect(snapshot.modelDisplayName, 'ReefControl Pro');
+    expect(snapshot.control?.probes, hasLength(3));
+    expect(snapshot.control?.probeOf('ec')?.salinityPpt, 35.8);
+    expect(snapshot.control?.probeOf('ph')?.value, 8.06);
+    expect(snapshot.control?.probeOf('orp')?.value, 81);
+    expect(snapshot.dose, isNull);
+    expect(snapshot.ato, isNull);
+    expect(snapshot.wave, isNull);
   });
 
   group('ReefWave', () {
