@@ -67,8 +67,7 @@ import 'app_localizations_ru.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -76,8 +75,7 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate =
-      _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -89,13 +87,12 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
-      <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
@@ -105,7 +102,7 @@ abstract class AppLocalizations {
     Locale('fr'),
     Locale('it'),
     Locale('pl'),
-    Locale('ru'),
+    Locale('ru')
   ];
 
   /// No description provided for @appTitle.
@@ -592,13 +589,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'OK {greenLow}–{greenHigh} {unit}  •  red <{amberLow} / >{amberHigh}'**
-  String boundsSummary(
-    Object greenLow,
-    Object greenHigh,
-    Object unit,
-    Object amberLow,
-    Object amberHigh,
-  );
+  String boundsSummary(Object greenLow, Object greenHigh, Object unit, Object amberLow, Object amberHigh);
 
   /// No description provided for @editZones.
   ///
@@ -772,12 +763,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{name}: {value} (typical {min}–{max})'**
-  String implausibleValueLine(
-    Object name,
-    Object value,
-    Object min,
-    Object max,
-  );
+  String implausibleValueLine(Object name, Object value, Object min, Object max);
 
   /// Line in the confirmation dialog for a device value sitting exactly on the parameter's floor (0 dKH, no salt at all) — the reading a probe gives when it has lost its signal. value includes the unit label.
   ///
@@ -2751,11 +2737,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'At {salinity}: target {adjusted} instead of {original}.'**
-  String doseCalcSalinityAdjustActive(
-    Object salinity,
-    Object adjusted,
-    Object original,
-  );
+  String doseCalcSalinityAdjustActive(Object salinity, Object adjusted, Object original);
 
   /// Switch subtitle while disabled because the tank has no stored salinity reading.
   ///
@@ -5496,13 +5478,13 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatSettingsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Live status from Red Sea ReefBeat devices'**
+  /// **'Live data from Red Sea ReefBeat devices'**
   String get reefBeatSettingsSubtitle;
 
   /// No description provided for @reefBeatDisclaimer.
   ///
   /// In en, this message translates to:
-  /// **'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.'**
+  /// **'This app only reads live data from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.'**
   String get reefBeatDisclaimer;
 
   /// No description provided for @reefBeatAddDevice.
@@ -5520,7 +5502,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose pumps, ReefATO, ReefMat, ReefRun, ReefLED and ReefWave — or add one by its IP address.'**
+  /// **'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave and ReefControl — or add one by its IP address.'**
   String get reefBeatEmptyBody;
 
   /// No description provided for @reefBeatRefreshAll.
@@ -5829,7 +5811,7 @@ abstract class AppLocalizations {
   /// **'Reservoir'**
   String get reefBeatAtoReservoir;
 
-  /// Row label on the ReefATO card for the attached leak-detection sensor's status
+  /// Row label on ReefATO and ReefControl cards for an attached leak-detection sensor's status
   ///
   /// In en, this message translates to:
   /// **'Leak sensor'**
@@ -6892,8 +6874,7 @@ abstract class AppLocalizations {
   String wallHeadMonths(int count);
 }
 
-class _AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -6902,43 +6883,30 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) => <String>[
-    'cs',
-    'de',
-    'en',
-    'fr',
-    'it',
-    'pl',
-    'ru',
-  ].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['cs', 'de', 'en', 'fr', 'it', 'pl', 'ru'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'cs':
-      return AppLocalizationsCs();
-    case 'de':
-      return AppLocalizationsDe();
-    case 'en':
-      return AppLocalizationsEn();
-    case 'fr':
-      return AppLocalizationsFr();
-    case 'it':
-      return AppLocalizationsIt();
-    case 'pl':
-      return AppLocalizationsPl();
-    case 'ru':
-      return AppLocalizationsRu();
+    case 'cs': return AppLocalizationsCs();
+    case 'de': return AppLocalizationsDe();
+    case 'en': return AppLocalizationsEn();
+    case 'fr': return AppLocalizationsFr();
+    case 'it': return AppLocalizationsIt();
+    case 'pl': return AppLocalizationsPl();
+    case 'ru': return AppLocalizationsRu();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
+    'that was used.'
   );
 }

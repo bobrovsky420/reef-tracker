@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0]
 
 ### Added
+- Red Sea ReefControl Lite/Pro support (experimental, PRO): the Connected
+  devices page identifies a controller on the local network and keeps every
+  attached ReefSense probe together on one live card. The captured setup shows
+  salinity once in the app's selected ppt or SG unit, ORP in mV,
+  pH, each combined probe's temperature on its own labelled row in the
+  selected °C/°F unit, and an attached leak detector as green Dry or red Leak
+  detected; Wall display creates a separate
+  live card and 24-hour sample line for each primary parameter (salinity, pH
+  and ORP). Value colors on both surfaces use the aquarium's ReefTracker
+  ranges, not ReefControl's own level labels. The controller card can save
+  salinity, ORP, pH and the first probe temperature (alone or with Save all),
+  and its salinity, ORP, pH and temperature are offered as environment values when
+  saving a Hanna checker session. Control remains read-only — rules,
+  calibration and notifications stay in ReefBeat.
 - Wall display mode (U49 phase 1, PRO): turn a wall-mounted tablet into an
   always-on board of the aquarium's current state. A full-screen grid of value
   cards — one card per device *and* parameter, plus a card fed by your stored
@@ -53,9 +67,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     deliberate 1.5-second hold with a progress ring, so a brushed-past panel
     never navigates away.
   - Note for this build: the wall display has been exercised against the
-    committed fake devices (Apex, ReefFactory, ReefBeat emulators), not
-    against real hardware, and its iOS behaviors (immersive-mode restore,
-    Guided Access interaction) have not been verified on a physical iPad.
+    committed fake devices (Apex, ReefFactory, ReefBeat emulators) and a real
+    ReefControl Pro; the other integrations have not been checked on real
+    hardware. Its iOS behaviors (immersive-mode restore, Guided Access
+    interaction) have not been verified on a physical iPad.
 - Update notice: the app now checks its store once per launch and tells you
   when a newer version is out. On Android this uses Google Play's own in-app
   update flow — accept, and the update downloads in place while you keep
@@ -67,6 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transport is covered by tests.)
 
 ### Changed
+- Connected devices: ReefFactory meters, ReefControl and Apex now keep Save in
+  each card's overflow menu, leaving the header and measured values uncluttered.
 - Wall display: a ReefFactory Temperature Controller's temperature card now
   shows Heating or Cooling while that output is actually running.
 - Settings: the language selector moved into the Appearance group (as its

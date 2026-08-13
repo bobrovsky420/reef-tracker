@@ -14,7 +14,6 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
-import '../../widgets/reef_icon_button.dart';
 import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 
@@ -410,6 +409,13 @@ class _ControllerCardState extends State<_ControllerCard> {
                   ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
+                    if (v == 'save' &&
+                        status != null &&
+                        status.readings.isNotEmpty &&
+                        widget.tank != null &&
+                        widget.onSave != null) {
+                      widget.onSave!(status);
+                    }
                     if (v == 'rename') widget.onRename();
                     if (v == 'credentials') widget.onCredentials();
                     if (v == 'move') widget.onMove?.call();
@@ -421,6 +427,12 @@ class _ControllerCardState extends State<_ControllerCard> {
                     if (v == 'remove') widget.onRemove();
                   },
                   itemBuilder: (_) => [
+                    if (status != null && status.readings.isNotEmpty)
+                      PopupMenuItem(
+                        value: 'save',
+                        enabled: widget.tank != null && widget.onSave != null,
+                        child: Text(l.apexSave),
+                      ),
                     PopupMenuItem(value: 'rename', child: Text(l.edit)),
                     PopupMenuItem(
                       value: 'credentials',
@@ -470,35 +482,17 @@ class _ControllerCardState extends State<_ControllerCard> {
                   style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 )
               else
-                // Save rides the probe line rather than owning a row of its
-                // own at the foot of the card — below the outlet list it was
-                // both an extra row and far from the values it persists.
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
                   children: [
-                    Expanded(
-                      child: Wrap(
-                        spacing: 16,
-                        runSpacing: 8,
-                        children: [
-                          for (final r in status.readings)
-                            _ReadingChip(
-                              paramKey: r.paramKey,
-                              label: l.paramName(r.paramKey),
-                              value: r.value,
-                              unit: r.unit,
-                            ),
-                        ],
+                    for (final r in status.readings)
+                      _ReadingChip(
+                        paramKey: r.paramKey,
+                        label: l.paramName(r.paramKey),
+                        value: r.value,
+                        unit: r.unit,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    ReefFilledIconButton(
-                      icon: Icons.save_outlined,
-                      tooltip: l.apexSave,
-                      onPressed: widget.tank != null && widget.onSave != null
-                          ? () => widget.onSave!(status)
-                          : null,
-                    ),
                   ],
                 ),
               // Status chips: a running feed cycle (pumps are paused right

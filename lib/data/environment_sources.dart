@@ -1,5 +1,5 @@
 // Environment sources (U37): device-agnostic access to *current* environment
-// readings — salinity, temperature, pH — from connected hardware, so a Hanna
+// readings — salinity, temperature, pH, ORP — from connected hardware, so a Hanna
 // BLE measurement session (U33) can save the tank's environment alongside its
 // own results.
 //
@@ -7,18 +7,21 @@
 // [environmentSourcesForTank] for the target tank's sources, reads each once,
 // and funnels the per-source results through [selectEnvironmentValues], which
 // picks exactly ONE value per parameter (a deterministic priority instead of
-// asking the user — see that function). Today the only implementation wraps
-// ReefFactory LAN meters (U36); a future device kind is one new
-// [EnvironmentSource] implementation here, with no change to the Hanna flow.
+// asking the user — see that function). Implementations wrap ReefFactory LAN
+// meters (U36) and Red Sea ReefControl probes; adding another device kind does
+// not change the Hanna flow.
 
 import '../domain/parameter_catalog.dart';
 import '../domain/units.dart';
 import 'database.dart';
+import 'rb_device_link.dart';
+import 'rb_measurements.dart';
+import 'rb_protocol.dart';
 import 'rf_device_link.dart';
 import 'rf_protocol.dart';
 
 /// The parameters environment capture deals in (canonical catalog keys).
-const Set<String> kEnvironmentParams = {'temperature', 'salinity', 'ph'};
+const Set<String> kEnvironmentParams = {'temperature', 'salinity', 'ph', 'orp'};
 
 /// One source's successful read: which device, when, and what it reported
 /// (values in canonical units, impossible values already dropped).
@@ -121,17 +124,72 @@ class RfEnvironmentSource implements EnvironmentSource {
   }
 }
 
+/// [EnvironmentSource] over a Red Sea ReefControl Lite/Pro.
+class RbEnvironmentSource implements EnvironmentSource {
+  RbEnvironmentSource(this._device, this._link);
+
+  final DeviceRecord _device;
+  final RbDeviceLink _link;
+
+  @override
+  String get identifier => _device.identifier;
+
+  /// Same fallback chain as the Red Sea device card title.
+  @override
+  String get displayName => _device.name ?? _device.model ?? _device.identifier;
+
+  /// Salinity, pH and ORP are the purposes of their attached water probes.
+  /// Temperature is compensation data from the first combined probe, so a
+  /// dedicated temperature controller still wins the cross-device selection.
+  @override
+  Set<String> get primaryParams => const {'salinity', 'ph', 'orp'};
+
+  @override
+  Future<EnvSourceReadings> read() async {
+    final address = _device.address;
+    if (address == null || address.isEmpty) {
+      throw const RbLinkException(RbLinkError.unreachable, 'no address');
+    }
+    final snap = await _link.readOnce(address);
+    final status = snap.control;
+    if (status == null) {
+      throw const RbLinkException(
+        RbLinkError.protocol,
+        'not a ReefControl snapshot',
+      );
+    }
+    return (
+      identifier: identifier,
+      displayName: displayName,
+      primaryParams: primaryParams,
+      takenAt: DateTime.now(),
+      readings: [
+        for (final r in rbControlMeasurements(status))
+          if (kEnvironmentParams.contains(r.paramKey)) r,
+      ],
+    );
+  }
+}
+
 /// The environment sources for [tankId]: every registered device assigned to
-/// that tank that can report environment readings. Today: ReefFactory meters
-/// with a usable address.
+/// that tank that can report environment readings: ReefFactory meters and Red
+/// Sea ReefControl devices with a usable address.
 List<EnvironmentSource> environmentSourcesForTank({
   required int tankId,
   required List<DeviceRecord> rfDevices,
   required RfDeviceLink rfLink,
+  required List<DeviceRecord> rbDevices,
+  required RbDeviceLink rbLink,
 }) => [
   for (final d in rfDevices)
     if (d.tankId == tankId && d.address != null && d.address!.isNotEmpty)
       RfEnvironmentSource(d, rfLink),
+  for (final d in rbDevices)
+    if (d.tankId == tankId &&
+        d.address != null &&
+        d.address!.isNotEmpty &&
+        rbIsControlModel(d.model))
+      RbEnvironmentSource(d, rbLink),
 ];
 
 /// Picks exactly one value per environment parameter from the per-source

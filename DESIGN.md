@@ -130,12 +130,12 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 |------|----------------|
 | `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** (How a zone *renders* — its color/icon — is the `ZoneVisuals` extension in `widgets/zone_visuals.dart`, keeping this file Flutter-free; #53.) Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. `classify` deliberately tests **red before green**, so a beyond-amber value can't short-circuit to "green" through an open (null) green side. Bounds violating the ordering invariant (`isValid` = present bounds non-decreasing; violations are possible only via restored/hand-edited backups, the editors validate) are treated as **unusable**: `classify` returns `unknown` and `zoneBands` paints nothing, instead of labeling every value amber. Amber-only bounds (both greens null) classify — and paint — the region between the ambers as green, keeping tile color and chart bands in agreement. |
 | `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). Rounding (not truncating) avoids under-counting: a reading 18 h into its 7th day reads as 7 days, not 6 — which matters right at the 30-day health-freshness cutoff. |
-| `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse) — including the fixed catalog presentation for micro elements (U17): canonical storage stays ppm, display units mirror the ICP report — mg/L (identity) for the majors/halogens, µg/L (×`displayFactor` 1000) for traces/contaminants — and the stored per-tank unit label is **ignored** in favor of the catalog's (`unitFixed`, so rows seeded under an earlier catalog — 'ppm', or 'µg/L' for iodine/silicon before they moved to mg/L — can't mislabel a value). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. Display formatting is the mirror image: `formatLocaleNumber`/`formatLocaleNumberTrim` render with the locale's decimal separator (grouping deliberately off — grouped output with decimals would mix separators, which the parser rejects, and formatted values are seeded back into edit fields); all user-facing number formatting routes through them (`ParamPresentation.format`, volumes, dose amounts, ratios, chart axes) — including live device values, via `widgets/device_values.dart` (#102): reading chips, ReefBeat status rows and dosing volumes format locale-aware there, and **every displayed temperature follows the TempUnit preference** — deliberately including equipment temperatures (ReefRun motors, ReefLED heatsinks), so a °F keeper never reads °C; non-temperature device readings keep the unit the device reported (a salinity probe's ppt converts to canonical SG only on save). |
+| `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse) — including the fixed catalog presentation for micro elements (U17): canonical storage stays ppm, display units mirror the ICP report — mg/L (identity) for the majors/halogens, µg/L (×`displayFactor` 1000) for traces/contaminants — and the stored per-tank unit label is **ignored** in favor of the catalog's (`unitFixed`, so rows seeded under an earlier catalog — 'ppm', or 'µg/L' for iodine/silicon before they moved to mg/L — can't mislabel a value). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. Display formatting is the mirror image: `formatLocaleNumber`/`formatLocaleNumberTrim` render with the locale's decimal separator (grouping deliberately off — grouped output with decimals would mix separators, which the parser rejects, and formatted values are seeded back into edit fields); all user-facing number formatting routes through them (`ParamPresentation.format`, volumes, dose amounts, ratios, chart axes) — including live device values, via `widgets/device_values.dart` (#102): reading chips, ReefBeat status rows and dosing volumes format locale-aware there, and **every displayed temperature follows the TempUnit preference** — deliberately including equipment temperatures (ReefRun motors, ReefLED heatsinks), so a °F keeper never reads °C; non-temperature device readings keep the unit the device reported (a salinity probe's ppt converts to canonical SG when it enters a save/sample path). |
 | `parameter_catalog.dart` | `kReefParameters` — the master list: the **core** dashboard set (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP) plus the 33-element ICP **micro panel** (U17). The data is **generated from `parameters.yaml`** (see the row below); this file owns the `ParameterDef` model + lookups. Each `ParameterDef` carries a `ParamCategory` (core / major / trace / contaminant — `isCoreParam` and `kMicroParameters` are the surface filters), an element `symbol` for micro elements, and a fixed display unit matching the ICP report (mg/L for Na/K/S/B/Br/Sr/I/Si, µg/L via `displayFactor` 1000 for traces/contaminants — over canonical-ppm storage in both cases). Sr/I/Fe predate the panel and were recategorized to `trace`, K later to `major` (keys and stored ppm values unchanged; iron additionally displays in µg/L — presentation-only). Plus `kParameterByKey` lookup and `formatParamValue`. Each `ParameterDef` also carries **value-sanity limits in canonical units**: `minValue` = hard physical floor (0 for concentrations, 1.0 for SG; ORP has none — legitimately negative) and a deliberately generous `plausibleMin`/`plausibleMax` pair (e.g. Mg 800–2000, SG 1.0–1.05). `checkParamValue(paramKey, canonicalValue)` → `ParamValueCheck` (ok / impossible / implausible): **impossible** values are rejected by the reading inputs outright; **implausible** ones require an explicit "Save anyway" confirmation that echoes the value as parsed next to the typical range — the backstop that turns a locale decimal-separator mis-parse (`1,300` → 1.3) into a visible prompt instead of silent data corruption, while keeping extreme-but-real crash readings recordable. Enforced on the canonical value (after °F/ppt conversion) by **every** write path through one shared dialog, `widgets/implausible_value_dialog.dart#showImplausibleValuesDialog` (Add Reading, the history value-edit dialog, the micro and ICP forms, both Hanna paths, the checker scan, and — since #71 — the Devices save funnel); it takes `SuspectValue`s and returns save / skip / cancel, so no screen re-implements the wording or the "typical min–max" line. `isRailValue(paramKey, value)` is its companion for **device** data: a value sitting exactly on a floor that is also the plausible minimum (0 dKH, SG 1.0 = no salt) is a legal reading `checkParamValue` must call `ok`, but from a probe it is the "no signal" rail, so the device paths question it (`deviceSuspectReason`).  Each `ParameterDef` further carries the per-parameter domain facts that used to be hardcoded next to their consumers: `defaultBounds` (micro default zone bounds — required for microelements, forbidden for core, whose defaults are the setup-type presets), `hobbyKit`, `maxDailyRise` and `importance` — the derived views (`kMicroDefaultBounds`/`kMicroHobbyKitKeys`, `kMaxDailyRiseByElement`, `importanceWeightFor`) stay in `micro.dart`/`supplement_catalog.dart`/`health_score.dart` so call sites are unchanged. |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type (in listing order). `presetBounds`, `defaultTrackedKeys`. Also `kPresetTargets`/`presetTarget` — default **correction targets** (canonical units) per setup type, defined only where the sensible target is *not* the green-zone midpoint (currently alkalinity: soft/LPS 8.5, SPS 8.0, mixed 8.3 dKH); seeded into `TrackedParameters.targetValue`, editable per tank. **The data (`kPresets`/`kPresetTargets`) is generated from `tank_presets.yaml`** (see below); this file owns the lookups. |
 | `micro.dart` | Microelements (U17) domain rules. `kMicroDefaultBounds` — default zone bounds per element in canonical ppm (derived from the catalog's per-element `defaultBounds`, edited in `parameters.yaml`), anchored on natural seawater / ICP-lab target ranges — Fe, Si, Zn, V, Cu, Ni, Mo, Li, Al, Sb, Sn, Ag, W, La, Ti, As, Cd, Hg and Pb follow the **Fauna Marin lab reference bands** read off that lab's report gauges (where it publishes a bare reference range and no gauge, the range end is `greenHigh` and `amberHigh` is +10%, the ratio its gauged elements use). Sr deliberately follows that report's *prose* recommendation (green 7–10 mg/L) rather than its gauge (6.5–8.0), whose green band sits below natural seawater (~8.1 mg/L) and would amber-flag an NSW-matching tank — the NSW-is-green invariant is pinned in `micro_test.dart` (TODO.md #81 comment 4). Contaminants stay **one-sided** (green up to a ceiling — no "too little lead") even where that lab states a lower reference bound. Silicon is the one element with a green *floor*, and its low side is deliberately **soft**: `amberLow` is 0, so the whole 0–0.1 mg/L range — including the zero many reefkeepers run on purpose — classifies amber, never red (`zones.dart` only reds beyond a *defined* amber bound, and nothing sits below 0). The FM gauge's red-at-zero shape was rejected as an alarm generator on healthy tanks (TODO.md #81 comment 6); zero-Si-reads-amber is pinned in `micro_test.dart`. Used as the fallback when a tank has no `TrackedParameters` row for an element and as the seed when one is created. `kMicroHobbyKitKeys` (the catalog's `hobbyKit`-flagged elements, in catalog order — Sr/I/Fe, the elements home test kits exist for), and `computeMicroStatus(inputs)` → `MicroStatus` (measured / out-of-range counts, worst zone, newest sample date) — the panel's own summary, deliberately **outside** the tank health score: micro is measured on an ICP cadence (months), which the 30-day core freshness rule would permanently read as stale. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
-| `device_vendors.dart` | The vendor model behind the unified Devices screen (U41) — pure, so the ordering rules are unit-tested directly. The device `kind` constants, `kDeviceVendors` (the vendors in **registration order**, which is the default order and the append position for anything a stored order doesn't mention), `deviceKindSaves` (whether a kind can report values a Save persists — a property of the *kind*, so a controller-only card never shows a Save button at all rather than a permanently disabled one), and `orderDeviceVendors(stored, known)`, which resolves the user's arrangement from `SettingKey.deviceVendorOrder`. That parser is deliberately tolerant: the stored value outlives app versions, so unknown kinds are dropped, duplicates collapse, missing ones append, and null/garbage yields exactly `known`. Vendor order is not cosmetic — the Devices screen resolves a duplicated parameter by "first displayed wins", so this list also decides whose reading survives a Save all. Since U43 the Hanna checker **is** a vendor (its card is inventory + a measure entry point), but the odd one out: `deviceKindRefreshes` is false for it — a Bluetooth test kit connected only during a measurement session has nothing to poll, so the refresh actions and their counts skip it — and `deviceKindSaves` is false too (its readings save through its own flow). |
+| `device_vendors.dart` | The vendor model behind the unified Devices screen (U41) — pure, so the ordering rules are unit-tested directly. The device `kind` constants, `kDeviceVendors` (the vendors in **registration order**, which is the default order and the append position for anything a stored order doesn't mention), `deviceKindSaves` (whether a vendor contains a model whose values Save can persist), model-aware `deviceModelSaves` (ReefControl saves while the other ReefBeat families stay status-only), and `orderDeviceVendors(stored, known)`, which resolves the user's arrangement from `SettingKey.deviceVendorOrder`. That parser is deliberately tolerant: the stored value outlives app versions, so unknown kinds are dropped, duplicates collapse, missing ones append, and null/garbage yields exactly `known`. Vendor order is not cosmetic — the Devices screen resolves a duplicated parameter by "first displayed wins", so this list also decides whose reading survives a Save all. Since U43 the Hanna checker **is** a vendor (its card is inventory + a measure entry point), but the odd one out: `deviceKindRefreshes` is false for it — a Bluetooth test kit connected only during a measurement session has nothing to poll, so the refresh actions and their counts skip it — and `deviceModelSaves` is false too (its readings save through its own flow). |
 | `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. Pure (no DB): consumes plain `RatioReading` (`{takenAt, value}`) records and `RatioSettings` (`{visible, displayOrder, bounds}`) instead of drift rows — `database.dart` hosts the thin row→record mappers (#52). The recommended per-kind zone bounds (`kRatioDefaultBounds`, backing `RatioKind.defaultBounds`) are **generated from the `ratios` section of `tank_presets.yaml`** into `ratio.g.dart` — the YAML also documents the chemistry (NSW anchors) behind each range. |
 | `ammonia_toxicity.dart` | Free (toxic) un-ionized ammonia (NH₃) math — pure, DB-free, like `ratio.dart`. A total-ammonia test measures TAN (NH₄⁺ + NH₃); only NH₃ is toxic and its share climbs with pH and temperature (and, mildly, falls with salinity), so a reef converts far more of the same total to the toxic form than a low-pH tank. `freeAmmoniaFraction(pH, tempC, salinityPpt)` = `1 / (1 + 10^(pKa − pH))` with `pKa = 0.09018 + 2729.92/T_K` (**Emerson 1975**) plus a salinity/ionic-strength term (**US EPA 1989** Eq. 5 `I = 19.9273·S/(1000 − 1.005109·S)` + NH₃ salting-out); validated against reef-chemistry reference values (~9–10 % NH₃ at pH 8.3 / 25 °C / 35 ppt, +13 % at 27 °C). `computeFreeAmmonia({ammonia, ph, temperature, salinity})` → `FreeAmmonia?` (total, `freeNh3`, `fraction`, inputs used, `salinityMeasured`, `inputsOutdated`) from each input's latest reading (newest-first records mapped from `Reading`); null until ammonia + pH + temperature all exist; salinity is optional (falls back to `kDefaultSalinityPpt` 35, flagged). Fixed one-sided toxicity bounds `kFreeAmmoniaBounds` (green ≤ 0.02, amber ≤ 0.05 ppm NH₃, anchored on the EPA saltwater chronic criterion 0.035). `inputsOutdated` is set when pH/temp are more than `kAmmoniaInputMaxAge` (7 d) from the ammonia reading — the value still shows, flagged approximate. Basis decision: total ammonia is treated **as NH₃** (matching the `ammonia` parameter's canonical unit); presentation-only (does not feed the health score). See Features. |
 | `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.linearFit`, `TrendDirection`, projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward — and a `recovering` flag). Uses the most recent `window` readings and returns null until that many exist. The projection is **anchored on the fitted (regression) value at the last timestamp**, not the raw last reading, so one noisy endpoint can't swing the forecast. A value already *outside* its green range but moving back toward it is **recovering**: no crossing is forecast (the only bounds ahead are on the far side of green — forecasting them would warn about an improving parameter) and `recovering` is set so the UI could one day surface it positively (TODO U15). Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). Slopes with magnitude < 1e-9 (`_flatEpsilon`) classify as flat (no forecast), a bound projection is dropped when the bound lies opposite the direction of travel ("the bound is behind us"), and bounds failing `ZoneBounds.isValid` produce no forecast at all. **Significance gate (#31):** a fitted slope only forecasts when it is distinguishable from zero — `|slope| / SE(slope)` ≥ the two-sided 95% Student-t critical value for `n − 2` df (`_tCritical95`, table-driven because a flat `|t| ≥ 2` rule passes the very six-point fits this rejects; beyond df 20 the last entry is reused, erring toward suppression). Otherwise `slopeSignificant` is false and *every* projection collapses to null, `recovering` included — a line through noise has a sign that flips with the window size, so it can neither promise a recovery nor threaten a crossing. `sigma` (residual RMS, n−2 dof, null for a two-point fit which has nothing to test and keeps its historical forecasts) and `relativeSwing` (`sigma / oscillationScale(bounds)`) are reported alongside; a non-significant fit whose `relativeSwing` ≥ `kTrendOscillationRelative`=0.37 — the same relative swing at which `stability_score.dart` calls a parameter "variable" — sets **`oscillating`**, the UI's cue to say *swinging, not drifting* instead of a fabricated crossing. See Features. |
@@ -1394,14 +1394,6 @@ buttons (`widgets/reef_icon_button.dart`, `ReefIconButton`): a 32 px `surface`
 card with `surfaceBorder`, r9 squircle iOS / circle Android
 (`reefIconButtonShape` in the theme), 16 px `textDim` icon, 48 px hit target;
 the overflow `ReefMenuButton` shares the look via `reefIconButtonStyle`. The
-same file's `ReefFilledIconButton` is the *in-card* counterpart: a card's
-primary action reduced to an icon when a labelled button would cost a whole
-extra row (the device dashboards' inline **Save**) — filled `primary` on
-`onPrimary`, a true `CircleBorder` in both dialects rather than
-`reefPrimaryActionShape` (at 36 px square there is no label for a silhouette to
-agree with, and a circle reads unmistakably as one round icon target),
-36 px visual, 18 px icon, 48 px hit target, and a **required**
-`tooltip` carrying the label it no longer shows as its accessible name. The
 tank switcher title renders at 19 px w700 in the `text` token with a compact
 chevron. Widgets read
 tokens via `ReefTokens.of(context)` (falls back to the brightness-matched
@@ -2690,13 +2682,16 @@ Experimental) is turned on.
   rows, so unchecking a bad Hanna pH lets the tank's own device fill that
   parameter in instead of leaving a hole.
 - **Environment capture (U37):** the results step can also save the tank's
-  *current environment* (salinity, temperature, pH) read from its connected
+  *current environment* (salinity, temperature, pH, ORP) read from its connected
   devices, via the device-agnostic `data/environment_sources.dart`:
   `EnvironmentSource` (identifier, display name, *primary* parameters, one
   `read()`) is resolved per save-tank by `environmentSourcesProvider`
-  (today: ReefFactory meters wrapped in `RfEnvironmentSource`, gated on
+  (ReefFactory meters wrapped in `RfEnvironmentSource` plus ReefControl
+  Lite/Pro wrapped in `RbEnvironmentSource`, gated on
   `ProFeature.connectedDevices`; a future device kind is one new implementation —
-  the Hanna screen never names a vendor). `selectEnvironmentValues` picks
+  the Hanna screen never names a vendor). ReefControl offers salinity, pH, ORP
+  and the **first attached water probe carrying a temperature**.
+  `selectEnvironmentValues` picks
   exactly **one value per parameter**, never asking the user: dedicated
   device beats incidental reading (generalizing the U36 temperature-source
   rule), then fresher read, then identifier order (stable). An
@@ -2973,10 +2968,10 @@ entry points for one page were four ways to say the same thing).
   child never turns app launch into a LAN sweep. Both the refresh actions and
   their counts cover only refreshable kinds (`deviceKindRefreshes` — the Hanna
   checker is never polled), and Refresh all hides when nothing in view is.
-  Save all is **hidden** — not disabled — when the
-  selection holds no meter-capable device (`deviceKindSaves`): for a Red Sea
-  filter there is nothing to save and never will be, and a disabled button would
-  imply "read something first".
+  Save all is **hidden** — not disabled — when the selection holds no
+  meter-capable device (`deviceModelSaves`): a Red Sea selection with only
+  pumps/lights/ATO/filter has nothing to save, while one containing ReefControl
+  does. A disabled button in the former case would imply "read something first".
 - **Save precedence: first displayed wins.** When two devices report the same
   parameter for the same tank, the one higher on the page keeps it — vendor
   order first, then the user's drag order within that vendor. **Reordering a
@@ -2989,7 +2984,7 @@ entry points for one page were four ways to say the same thing).
   rule holds only because the merge walks the *same ordered list the page
   renders* (`_Scope.inPageOrder`, vendor order then card order) and turns a
   device into savable values through one `_pendingValues` switch — Save all, the
-  savable count and the button's own visibility (`deviceKindSaves`) all ask
+  savable count and the button's own visibility (`deviceModelSaves`) all ask
   there, so no vendor can be honoured by one and forgotten by another. This is
   also why
   `deviceVendorOrder` rides backups instead of staying device-local: it shapes
@@ -3113,13 +3108,10 @@ on the device's Wi-Fi network.
   `addTrackedParameter`, impossible values dropped); the common **Refresh
   all** / **Save all** actions over the visible devices live on the unified
   Devices screen (`devices_screen.dart`, since U41 — not in this vendor
-  file). Save is an icon-only
-  `ReefFilledIconButton` sitting *inline with the values* (trailing the reading
-  chips on the same line, bottom-aligned) rather than a labelled button on a row
-  of its own: it is the primary action of a card whose whole content is often a
-  single temperature, and a full row for one word made the card taller than what
-  it displayed. It therefore exists only while there are values to save — no
-  disabled placeholder before the first read — and stays disabled (with the
+  file). **Save** is the first item in the card's overflow menu, rather than a
+  button in the header or beside the values: the header and readings keep their
+  full width. It exists only while there are values to save — no disabled
+  placeholder before the first read — and stays disabled (with the
   card's "not assigned to a tank" note below) until the device has a tank. Reading is
   all-or-nothing — one Refresh all above the list, no per-card button, since
   the cards are read together on open anyway and a button per card only
@@ -3159,22 +3151,25 @@ on the device's Wi-Fi network.
 ### ReefBeat devices (U38, Pro, **experimental**) — `features/reefbeat/`, section of `/devices`
 
 A separate dashboard for **Red Sea ReefBeat** LAN devices — deliberately not
-merged into the ReefFactory screen, because the cards display operational
-status instead of values to save, so there is **no Save path** into
-`Readings`. Six device families are supported (`kRbSupportedHwTypes`): the
+merged into the ReefFactory screen. Most cards are read-only operational
+status; ReefControl is the vendor's first measuring device and has a **Save
+path** into `Readings`.
+Seven device families are supported (`kRbSupportedHwTypes`): the
 **ReefDose** dosing pumps (`RSDOSE2`/`RSDOSE4`, `reef-dosing`), the
 **ReefATO+** auto-top-off unit (`RSATO+`, `reef-ato`), the **ReefMat** roller
 filter (`RSMAT`, `reef-mat`), the **ReefRun** DC pump controller (`RSRUN`,
 `reef-run`), the **ReefLED** lights (`RSLED50`…`RSLED160`, `reef-lights`) and
-the **ReefWave** pumps (`RSWAVE25`/`RSWAVE45`, `reef-wave`). (The ATO's temperature
-probe is the one ReefBeat value that *could* feed `Readings` — a deliberate
-future decision, not part of this phase.) Read-only: the app never doses,
+the **ReefWave** pumps (`RSWAVE25`/`RSWAVE45`, `reef-wave`) and **ReefControl
+Lite/Pro** probe controllers (`RSCONTROLLITE`/`RSCONTROLPRO`, `reef-control`).
+(ATO values remain operational/display-only; ReefControl's water parameters
+can be saved and also feed display-only wall samples.) Device control remains
+read-only: the app never doses,
 edits schedules or calibrates — a persistent disclaimer points to the
 ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
 **same-network requirement** (LAN-only, no cloud relay).
 
 - **Protocol** (`data/rb_protocol.dart`, pure Dart, golden-vector tested
-  against a live RSDOSE4 and a live RSATO+): the devices expose an
+  against live RSDOSE4, RSATO+ and RSCONTROLPRO devices): the devices expose an
   unauthenticated JSON REST API on the LAN. `GET /device-info` yields identity
   (`hw_type` discriminates the family, `hw_model` the product, `hwid` —
   MAC-derived — is the stable unique `Devices.identifier`); `GET /dashboard`
@@ -3251,13 +3246,14 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   `RbLinkError.protocol` rather than crashing the refresh (or, in discovery,
   killing the whole scan stream).
   `rbModelDisplayName` maps `hw_model` → friendly name ("ReefDose 4",
-  "ReefATO+", "ReefMat 250", "ReefRun", "ReefLED 90", "ReefWave 25"), the
+  "ReefATO+", "ReefMat 250", "ReefRun", "ReefLED 90", "ReefWave 25",
+  "ReefControl Pro"), the
   default device name on add.
 - **Transport** (`data/rb_device_link.dart`): abstract `RbDeviceLink`
   (fake-able) + `RbHttpLink` over `dart:io` `HttpClient` (the
   `cloud_backup_store.dart` pattern, no new dependency). One `readOnce(host)`
   per manual refresh; the returned `RbSnapshot` carries the identity plus
-  exactly one of `dose`/`ato`/`mat`/`run`/`light`/`wave` per the device's
+  exactly one of `dose`/`ato`/`mat`/`run`/`light`/`wave`/`control` per the device's
   `hw_type`; typed `RbLinkError`
   (unreachable/timeout/unsupportedModel/protocol) drives specific messages.
   Most families are `/device-info` + `/dashboard`; a **mat** additionally makes
@@ -3272,6 +3268,20 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   add time is deliberate: it is what keeps the mapping right for devices added
   before the feature existed and after a supplement is reassigned in the
   ReefBeat app.
+  A **ReefControl** uses the ordinary `/device-info` + `/dashboard` pair.
+  `RbControlStatus` keeps the controller mode/connectivity and a tolerant list
+  of `RbControlProbe`s keyed by the firmware `type`: `ec` carries ppt, SG,
+  conductivity and a temperature; `ph` carries pH and its temperature; `orp`
+  carries mV; an attached `leak` probe carries boolean `detected`. The leak
+  probe renders as status on the Devices card but never enters measurement
+  saves or Wall display. Unknown future types stay decoded for forward
+  compatibility, while only the three supported numeric water-probe types
+  enter the wall-display source mapper.
+  `data/rb_measurements.dart` is the shared canonical extractor behind both
+  history saves and Hanna environment suggestions: salinity ppt becomes
+  stored SG, one value per parameter is kept in probe order, impossible values
+  are dropped, and temperature comes from the **first** water probe that
+  carries it. Firmware `level` fields never participate.
   `readDosingQueue(host)` is the one read *outside* a snapshot: a ReefDose's
   `GET /dosing-queue`, fetched on demand from the card menu rather than on every
   refresh. It is also the only endpoint answering with a JSON **array**, so the
@@ -3288,8 +3298,11 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   display-name order, name-only card headers, a single Refresh-all above the
   list, add-by-address probe sheet, Edit-rename / move-to-tank / remove menu,
   drag-handle card reordering via
-  `reorderDevices`, household-scoped `reefBeatDevicesProvider`) minus
-  everything save-related.
+  `reorderDevices`, household-scoped `reefBeatDevicesProvider`). Status-only
+  cards carry no Save affordance; a ReefControl card places **Save** first in
+  its overflow menu, leaving the header and every value row uncluttered. It is
+  disabled until the device has a tank assignment and while another save is in
+  flight.
   Each card renders one `_HeadRow` per head: the supplement name, a
   **horizontal schedule gauge** (`auto_dosed_today` ÷ `daily_dose`, `track`
   token under a `primary` fill, mono `26.7 / 40 ml` beside it) and a
@@ -3398,19 +3411,44 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   the one exception, printed under the name because the gauge otherwise shows a
   bare dash with no reason.
   (`_StatusRow`, the label–value line, is shared by all the status cards.)
+  A ReefControl card renders `_ControlStatus`: every attached supported
+  ReefSense water probe stays on the controller's one device card, in the
+  order the device reports it. Rows carry the parameter name only (firmware
+  probe names/UID suffixes are not user-facing). Salinity is converted from
+  the reported ppt through canonical SG and rendered once in the user's app
+  unit (ppt or SG); conductivity and alternate salinity representations are
+  not repeated. A salinity or pH probe's built-in temperature gets a separate,
+  explicitly labelled Temperature row immediately after its primary row, in
+  the user's °C/°F preference. ORP renders in mV. All values share the card's
+  right edge. When an actual `type: leak` probe is present (the top-level
+  `leak_detector` capability flag alone does not mean one is attached), a final
+  Leak sensor row mirrors ReefATO: green Dry for `detected: false`, red Leak
+  detected for true, and neutral dash for a malformed/missing state. Each
+  primary or temperature value is
+  classified against the active aquarium's effective ReefTracker bounds (the
+  tank override where present, otherwise its preset/default). The firmware's
+  `level` / `temp_level` labels are parsed as protocol facts but deliberately
+  ignored for presentation, so Connected Devices and Wall display cannot
+  disagree about whether the same value is healthy.
+  Saving writes salinity, ORP, pH and one temperature into the ordinary
+  reading history (the first reported water probe with temperature wins),
+  through the unified Devices save guards and Save-all precedence rules.
 - Entry point mirrors ReefFactory: the Devices screen's Red Sea chip (U41),
   with reads gated on `ProFeature.connectedDevices` (grandfathered). Devices are
   read once automatically on open; after that reads are manual.
 - **Development without hardware** (`tool/reefbeat_emulator.dart`): a fake
   ReefBeat device serving `/device-info` + `/dashboard` from the golden
-  vectors — one process per device, `--type ato` or `--type run` — with
+  vectors — one process per device, `--type ato`, `--type run`, `--type dose`
+  or `--type control` — with
   `/emu/*` endpoints to **force the states real hardware only shows when
   something is wrong**: `/emu/leak?status=rodi_water_leak` stands the ATO's
   leak sensor in water, `/emu/pump?n=2&state=full_cup` fills the skimmer cup.
+  `/emu/probes?salinity=36.1&ph=7.7&orp=320` forces the ReefControl's three
+  primary readings.
   Reached from the Android emulator at `10.0.2.2:<port>`; importable, so
   `rb_emulator_test.dart` drives the real `RbHttpLink` against it (the
-  `apex_emulator` pattern). `test/tool/seed_devices.dart` points two ReefBeat
-  rows at its default ports (:8090/:8091).
+  `apex_emulator` pattern). `test/tool/seed_devices.dart` points three ReefBeat
+  rows at the ATO/Run/Control fake ports (:8090/:8091/:8093).
 - **Future phases (deferred):** comparing/syncing head schedules against the
   tank's dosing plan (`DosingEntries`), and logging actually-delivered volumes
   for the dose calculator's consumption math.
@@ -3528,10 +3566,10 @@ out the same LAN-only requirement.
   reordering via `reorderDevices`, household-scoped `apexDevicesProvider`
   (the **Refresh all** / **Save all** pair lives on the unified Devices screen,
   `devices_screen.dart`, since U41) — plus
-  a card menu carrying **Sign in again** alongside Edit / Move / Remove. A card
-  shows its readings as the shared value chips — with the same inline icon-only
-  **Save** trailing them, which here also pulls the action up next to the probe
-  values instead of stranding it below the outlet list — then the status chips
+  a card menu carrying **Save** first when readings are available, followed by
+  **Sign in again** alongside Edit / Move / Remove. Keeping Save inside that
+  menu leaves the header and full content width to the reading chips; those are
+  followed by the status chips
   (running feed cycle in `healthy`, overridden-outlet count in `caution`), then
   the outlet list as state-dot pills — collapsed to `kApexOutletPreview` (8) behind
   "+N more", since a fully populated Apex drives thirty-odd outlets and a wall
@@ -3766,6 +3804,14 @@ value is showing *this* keeper's devices, which live in this database.
   neutral while all heads are healthy. Header: tank name · clock (24-h preference
   honoured) · one connection dot (green all-reachable / amber partial / red
   all-failing ≈ "check the network", §12r) · "updated HH:MM".
+  ReefControl contributes one value card for each attached probe's primary
+  water parameter (salinity, pH and ORP in the captured three-water-probe setup).
+  The combined probes' two temperature-compensation readings remain visible
+  on the single Devices card rather than being collapsed into one arbitrarily
+  sourced wall temperature card. The installed probe set is learned from a
+  live poll and remembered by the sparse wall-card rows; the stored controller
+  model alone cannot predict which of ReefControl's interchangeable ports are
+  populated.
 - **No scrolling, ever** (§12c): columns/rows are sized against a
   *text-scale-scaled* minimum tile size (a larger system font yields fewer,
   bigger tiles), and overflow paginates into an auto-rotating `PageView`

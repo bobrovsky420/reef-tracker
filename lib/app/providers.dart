@@ -1119,7 +1119,8 @@ final lanDiscoveryProvider = Provider<LanDiscoveryService>(
 );
 
 /// Environment sources (U37) for a tank: the registered devices assigned to it
-/// that can report current environment readings (salinity, temperature, pH) —
+/// that can report current environment readings (salinity, temperature, pH,
+/// ORP) —
 /// what the Hanna results step's Environment card reads. Gated once for every
 /// kind on [ProFeature.connectedDevices] (the single LAN-device gate), so a
 /// future device kind adds its own wrapped list here without touching either
@@ -1133,6 +1134,8 @@ final environmentSourcesProvider =
         tankId: tankId,
         rfDevices: ref.watch(reefFactoryDevicesProvider).value ?? const [],
         rfLink: ref.watch(rfDeviceLinkProvider),
+        rbDevices: ref.watch(reefBeatDevicesProvider).value ?? const [],
+        rbLink: ref.watch(rbDeviceLinkProvider),
       );
     });
 

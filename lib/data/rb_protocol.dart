@@ -3,8 +3,9 @@
 // transport lives in rb_device_link.dart).
 //
 // ReefBeat devices (ReefDose dosing pumps, ReefATO top-off units, ReefMat
-// roller filters, ReefRun pump controllers, ReefLED lights and ReefWave pumps)
-// expose an unauthenticated JSON REST API on the LAN. The endpoints used here:
+// roller filters, ReefRun pump controllers, ReefLED lights, ReefWave pumps and
+// ReefControl probe controllers) expose an unauthenticated JSON REST API on
+// the LAN. The endpoints used here:
 //
 //   GET /device-info   → identity: `hw_type` ("reef-dosing"/"reef-ato"/
 //                        "reef-mat"/"reef-run"/"reef-lights"/"reef-wave"),
@@ -59,6 +60,15 @@ const String kRbLightsHwType = 'reef-lights';
 /// payload than the rest — see the note at the top of this file.
 const String kRbWaveHwType = 'reef-wave';
 
+/// `hw_type` of the ReefControl Lite/Pro probe-controller family.
+const String kRbControlHwType = 'reef-control';
+
+/// ReefControl sensor types that currently expose numeric aquarium-water
+/// readings. The controller can include other accessories in `probes`; its
+/// leak detector gets a status row but remains outside this numeric water-probe
+/// set, while unknown future types stay parsed for forward compatibility.
+const Set<String> kRbControlWaterProbeTypes = {'ec', 'ph', 'orp'};
+
 /// Every `hw_type` this app can read. Anything else is reported as
 /// [RbLinkError.unsupportedModel] — and surfaced by LAN discovery as a
 /// found-but-unsupported device rather than being hidden.
@@ -69,6 +79,7 @@ const Set<String> kRbSupportedHwTypes = {
   kRbRunHwType,
   kRbLightsHwType,
   kRbWaveHwType,
+  kRbControlHwType,
 };
 
 /// Ceiling on how many ReefDose heads one refresh will chase settings for —
@@ -122,6 +133,8 @@ const Map<String, String> kRbModelDisplayNames = {
   'RSLED160': 'ReefLED 160',
   'RSWAVE25': 'ReefWave 25',
   'RSWAVE45': 'ReefWave 45',
+  'RSCONTROLLITE': 'ReefControl Lite',
+  'RSCONTROLPRO': 'ReefControl Pro',
 };
 
 String rbModelDisplayName(String hwModel) =>
@@ -140,6 +153,12 @@ bool rbIsWaveModel(String? hwModel) =>
 /// any read has landed. Prefix-matched like [rbIsWaveModel].
 bool rbIsDoseModel(String? hwModel) =>
     hwModel != null && hwModel.toUpperCase().startsWith('RSDOSE');
+
+/// Whether [hwModel] is a ReefControl Lite/Pro measuring device. Like the
+/// other card classifiers, this uses only the stored model and prefix-matches
+/// so the Save affordance exists before a live read and survives new variants.
+bool rbIsControlModel(String? hwModel) =>
+    hwModel != null && hwModel.toUpperCase().startsWith('RSCONTROL');
 
 double? _asDouble(Object? v) => switch (v) {
   final num n => n.toDouble(),
@@ -194,6 +213,140 @@ class RbDeviceInfo {
       hwid: hwid,
       name: _asString(json['name']),
       status: _asString(json['status']),
+    );
+  }
+}
+
+/// One digital ReefSense probe attached to a ReefControl Lite/Pro.
+///
+/// The probe's [type] is the stable discriminator (`ec`, `ph`, `orp`, `leak`,
+/// and potentially future sensor types). The local dashboard returns all three
+/// salinity representations for an EC probe plus its compensation
+/// temperature; pH probes likewise carry their own temperature. Fields stay
+/// nullable so one unplugged or newly introduced probe degrades its own row
+/// instead of invalidating the controller snapshot.
+class RbControlProbe {
+  const RbControlProbe({
+    required this.type,
+    this.uid,
+    this.name,
+    this.status,
+    this.measurementUnit,
+    this.value,
+    this.level,
+    this.ec,
+    this.ppt,
+    this.sg,
+    this.temperatureC,
+    this.temperatureLevel,
+    this.detected,
+  });
+
+  final String type;
+  final String? uid;
+  final String? name;
+  final String? status;
+  final String? measurementUnit;
+  final double? value;
+  final String? level;
+
+  /// Conductivity in mS/cm, as reported by the salinity probe.
+  final double? ec;
+
+  /// Practical salinity in ppt (PSU), as reported by the salinity probe.
+  final double? ppt;
+
+  /// Specific gravity, as reported by the salinity probe.
+  final double? sg;
+
+  /// The temperature sensor built into a combined probe, in canonical °C.
+  final double? temperatureC;
+  final String? temperatureLevel;
+
+  /// Whether a leak probe currently detects water. Null for water probes and
+  /// malformed/future leak payloads that do not expose a boolean state.
+  final bool? detected;
+
+  /// The salinity value in ppt, including firmware that only populates the
+  /// generic `value` + `measurement_unit` pair.
+  double? get salinityPpt {
+    if (ppt != null) return ppt;
+    final unit = measurementUnit?.toLowerCase();
+    return unit == 'ppt' || unit == 'psu' ? value : null;
+  }
+
+  static RbControlProbe? fromJson(Map<String, Object?> json) {
+    final type = _asString(json['type']);
+    if (type == null || type.isEmpty) return null;
+    return RbControlProbe(
+      type: type.toLowerCase(),
+      uid: _asString(json['uid']),
+      name: _asString(json['name']),
+      status: _asString(json['status']),
+      measurementUnit: _asString(json['measurement_unit']),
+      value: _asDouble(json['value']),
+      level: _asString(json['level']),
+      ec: _asDouble(json['ec']),
+      ppt: _asDouble(json['ppt']),
+      sg: _asDouble(json['sg']),
+      temperatureC: _asDouble(json['temp_value']),
+      temperatureLevel: _asString(json['temp_level']),
+      detected: switch (json['detected']) {
+        final bool detected => detected,
+        _ => null,
+      },
+    );
+  }
+}
+
+/// Live status from a ReefControl Lite/Pro `GET /dashboard`.
+class RbControlStatus {
+  const RbControlStatus({
+    this.mode,
+    this.isInternetConnected = false,
+    this.cableConnected = false,
+    this.probes = const [],
+  });
+
+  final String? mode;
+  final bool isInternetConnected;
+  final bool cableConnected;
+  final List<RbControlProbe> probes;
+
+  /// Attached salinity, pH and ORP probes supported by the current UI.
+  Iterable<RbControlProbe> get waterProbes =>
+      probes.where((probe) => kRbControlWaterProbeTypes.contains(probe.type));
+
+  /// The attached leak detector, if the dashboard reports its actual probe.
+  /// The separate top-level `leak_detector` capability flag is deliberately
+  /// insufficient: controllers report it even when no detector is attached.
+  RbControlProbe? get leakProbe => probeOf('leak');
+
+  Iterable<RbControlProbe> probesOf(String type) =>
+      probes.where((p) => p.type == type);
+
+  RbControlProbe? probeOf(String type) {
+    for (final probe in probes) {
+      if (probe.type == type) return probe;
+    }
+    return null;
+  }
+
+  static RbControlStatus fromJson(Map<String, Object?> json) {
+    final rawProbes = json['probes'];
+    final probes = <RbControlProbe>[];
+    if (rawProbes is List) {
+      for (final raw in rawProbes) {
+        if (raw is! Map<String, Object?>) continue;
+        final probe = RbControlProbe.fromJson(raw);
+        if (probe != null) probes.add(probe);
+      }
+    }
+    return RbControlStatus(
+      mode: _asString(json['mode']),
+      isInternetConnected: json['is_internet_connected'] == true,
+      cableConnected: json['cable_connected'] == true,
+      probes: List.unmodifiable(probes),
     );
   }
 }

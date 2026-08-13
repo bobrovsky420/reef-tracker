@@ -28,16 +28,29 @@ const List<String> kDeviceVendors = [
   kDeviceKindHanna,
 ];
 
-/// Whether devices of [kind] can report values that Save persists as readings.
+/// Whether [kind] contains devices that can report values Save persists.
 ///
-/// This is a property of the *kind*, not of the current snapshot: a card of a
-/// meter-capable kind always shows its Save button (disabled until a read
-/// actually produces a value), while a controller-only card never shows one at
-/// all — so a missing button reads as "nothing to save here", never as "not
-/// ready yet". ReefBeat devices dose, top off, roll fleece and push water; none
-/// of it is a measurement.
+/// ReefBeat is a mixed vendor: ReefControl is a measuring device, while its
+/// pumps, lights, ATO and filter report operational status only. Use
+/// [deviceModelSaves] for a particular card/count; this broader predicate is
+/// the exhaustiveness guard for vendor save mappings.
 bool deviceKindSaves(String kind) =>
-    kind == kDeviceKindReefFactory || kind == kDeviceKindApex;
+    kind == kDeviceKindReefFactory ||
+    kind == kDeviceKindReefBeat ||
+    kind == kDeviceKindApex;
+
+/// Whether one stored device model exposes measurements that can be saved.
+///
+/// ReefFactory and Apex are measurement-capable throughout their registered
+/// families. Red Sea becomes capable only for ReefControl Lite/Pro; prefix
+/// matching keeps a later ReefControl model working without teaching this
+/// domain layer every product suffix.
+bool deviceModelSaves(String kind, String? model) => switch (kind) {
+  kDeviceKindReefFactory || kDeviceKindApex => true,
+  kDeviceKindReefBeat =>
+    model != null && model.toUpperCase().startsWith('RSCONTROL'),
+  _ => false,
+};
 
 /// Whether devices of [kind] are read over the LAN by the page's refresh
 /// actions (on-open auto-read and Refresh all alike). The Hanna checker is

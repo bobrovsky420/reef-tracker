@@ -86,17 +86,22 @@ void main() {
   });
 
   group('deviceKindSaves (U41)', () {
-    test('meters and controllers with probes can save', () {
+    test('vendors containing measuring devices have a save mapping', () {
       expect(deviceKindSaves(kDeviceKindReefFactory), isTrue);
+      expect(deviceKindSaves(kDeviceKindReefBeat), isTrue);
       expect(deviceKindSaves(kDeviceKindApex), isTrue);
     });
 
-    test('ReefBeat devices report status, never a measurement', () {
-      expect(deviceKindSaves(kDeviceKindReefBeat), isFalse);
+    test('ReefControl saves while other ReefBeat models stay status-only', () {
+      expect(deviceModelSaves(kDeviceKindReefBeat, 'RSCONTROLPRO'), isTrue);
+      expect(deviceModelSaves(kDeviceKindReefBeat, 'rscontrollite'), isTrue);
+      expect(deviceModelSaves(kDeviceKindReefBeat, 'RSDOSE4'), isFalse);
+      expect(deviceModelSaves(kDeviceKindReefBeat, null), isFalse);
     });
 
     test('the Hanna checker saves through its own flow, not the page', () {
       expect(deviceKindSaves(kDeviceKindHanna), isFalse);
+      expect(deviceModelSaves(kDeviceKindHanna, 'HI98419'), isFalse);
     });
 
     test('an unknown kind is not assumed savable', () {

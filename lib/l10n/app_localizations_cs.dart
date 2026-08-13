@@ -3319,11 +3319,11 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Aktuální stav zařízení Red Sea ReefBeat';
+      'Aktuální data ze zařízení Red Sea ReefBeat';
 
   @override
   String get reefBeatDisclaimer =>
-      'Tato aplikace pouze čte stav z tvých zařízení Red Sea ReefBeat. Nemůže dávkovat, měnit plány ani kalibrovat – k tomu použij aplikaci ReefBeat. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
+      'Tato aplikace pouze čte živá data z tvých zařízení Red Sea ReefBeat. Nemůže dávkovat, měnit plány ani kalibrovat – k tomu použij aplikaci ReefBeat. Čtení funguje jen tehdy, když je telefon ve stejné Wi-Fi síti jako zařízení.';
 
   @override
   String get reefBeatAddDevice => 'Přidat zařízení';
@@ -3333,7 +3333,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Prohledej svou Wi-Fi síť a najdi zařízení Red Sea ReefBeat – dávkovače ReefDose, ReefATO, ReefMat, ReefRun, ReefLED a ReefWave – nebo přidej zařízení podle jeho IP adresy.';
+      'Prohledej svou Wi-Fi síť a najdi zařízení Red Sea ReefBeat – ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave a ReefControl – nebo přidej zařízení podle jeho IP adresy.';
 
   @override
   String get reefBeatRefreshAll => 'Obnovit vše';

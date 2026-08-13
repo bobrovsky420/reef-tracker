@@ -1,9 +1,8 @@
 // A fake Red Sea ReefBeat device, for developing and testing the U38
 // integration without owning the hardware.
 //
-// One process serves one device: a ReefATO+ or ReefRun controller — the two
-// families with alarm states worth forcing (a leak, a full skimmer cup) that
-// real hardware only shows when something is actually wrong — or an RSDOSE4
+// One process serves one device: a ReefATO+, ReefRun or ReefControl controller
+// — the families with live sensors/alarm states worth forcing — or an RSDOSE4
 // pump (four heads, forceable supplement stock). The payloads are the golden
 // vectors captured from live devices (rb_protocol_test.dart), so the parsers
 // see exactly the shapes real firmware serves.
@@ -11,6 +10,7 @@
 //     dart run tool/reefbeat_emulator.dart                  # ATO on :8090
 //     dart run tool/reefbeat_emulator.dart --type run --port 8091
 //     dart run tool/reefbeat_emulator.dart --type dose --port 8092
+//     dart run tool/reefbeat_emulator.dart --type control --port 8093
 //
 // ## Reaching it from the Android emulator
 //
@@ -25,8 +25,8 @@
 // ## Control endpoints (emulator-only, not part of the ReefBeat API)
 //
 //     GET /emu                            plain-text summary of current state
-//     GET /emu/leak?status=rodi_water_leak    ATO: raise the leak alarm
-//     GET /emu/leak?status=dry                ATO: clear it
+//     GET /emu/leak?status=rodi_water_leak    ATO/CONTROL: raise leak alarm
+//     GET /emu/leak?status=dry                ATO/CONTROL: clear it
 //     GET /emu/pump?n=2&state=full_cup        RUN: pause the skimmer, cup full
 //     GET /emu/pump?n=2&state=over-skimming   RUN: pause it, over-skimming
 //     GET /emu/pump?n=2&state=operational     RUN: back to normal
@@ -36,6 +36,8 @@
 //                                             (ok/below/above — the firmware
 //                                             vocabulary) and the reservoir
 //                                             estimate (<7 red, <14 amber)
+//     GET /emu/probes?salinity=36.1&ph=7.7&orp=320
+//                                             CONTROL: force primary readings
 //
 // The server class is deliberately importable: rb_emulator_test.dart drives a
 // real RbHttpLink against it, so the transport and the parsers are covered end
@@ -46,7 +48,7 @@ import 'dart:convert';
 import 'dart:io';
 
 /// Which device family the emulator presents.
-enum EmuRbType { ato, run, dose }
+enum EmuRbType { ato, run, dose, control }
 
 /// A fake ReefBeat device serving `/device-info` + `/dashboard`.
 class ReefBeatEmulator {
@@ -54,7 +56,7 @@ class ReefBeatEmulator {
 
   final EmuRbType type;
 
-  /// ATO: the leak sensor's status string ("dry" alarms nothing).
+  /// ATO/CONTROL: the leak sensor's status string ("dry" alarms nothing).
   String leakStatus = 'dry';
 
   /// ATO: the firmware water-level string and the reservoir's days-till-empty
@@ -67,6 +69,11 @@ class ReefBeatEmulator {
 
   /// DOSE: days of supplement left per head, forceable via /emu/dose.
   final Map<int, int> doseRemainingDays = {1: 117, 2: 96, 3: 210, 4: 48};
+
+  /// CONTROL: the three primary probe readings, forceable via /emu/probes.
+  double controlSalinityPpt = 35.8;
+  double controlPh = 8.06;
+  double controlOrpMv = 81;
 
   HttpServer? _server;
 
@@ -100,6 +107,7 @@ class ReefBeatEmulator {
       '/emu/pump' => _forcePump(request.uri.queryParameters),
       '/emu/dose' => _forceDose(request.uri.queryParameters),
       '/emu/ato' => _forceAto(request.uri.queryParameters),
+      '/emu/probes' => _forceProbes(request.uri.queryParameters),
       _ => null,
     };
     final response = request.response;
@@ -108,7 +116,8 @@ class ReefBeatEmulator {
       response.write(
         'reefbeat emulator: type=${type.name} hwid=$hwid '
         'leak=$leakStatus level=$atoWaterLevel atoDays=$atoDaysTillEmpty '
-        'pumps=$pumpStates doseDays=$doseRemainingDays\n',
+        'pumps=$pumpStates doseDays=$doseRemainingDays\n'
+        'probes=$controlSalinityPpt/$controlPh/$controlOrpMv\n',
       );
     } else if (body == null) {
       response.statusCode = HttpStatus.notFound;
@@ -156,6 +165,18 @@ class ReefBeatEmulator {
     };
   }
 
+  Map<String, Object?> _forceProbes(Map<String, String> query) {
+    controlSalinityPpt =
+        double.tryParse(query['salinity'] ?? '') ?? controlSalinityPpt;
+    controlPh = double.tryParse(query['ph'] ?? '') ?? controlPh;
+    controlOrpMv = double.tryParse(query['orp'] ?? '') ?? controlOrpMv;
+    return {
+      'salinity': controlSalinityPpt,
+      'ph': controlPh,
+      'orp': controlOrpMv,
+    };
+  }
+
   Map<String, Object?> _deviceInfo() => switch (type) {
     EmuRbType.ato => {
       'name': 'RSATO+$port',
@@ -179,12 +200,95 @@ class ReefBeatEmulator {
       'status': 'unpaired',
       'hwid': hwid,
     },
+    EmuRbType.control => {
+      'name': 'RSCONTROLPRO-$port',
+      'hw_type': 'reef-control',
+      'hw_model': 'RSCONTROLPRO',
+      'hw_revision': 'v1.3_26A',
+      'hwid': hwid,
+      'success': true,
+      'message': 'get device info successfully',
+    },
   };
 
   Map<String, Object?> _dashboard() => switch (type) {
     EmuRbType.ato => _atoDashboard(),
     EmuRbType.run => _runDashboard(),
     EmuRbType.dose => _doseDashboard(),
+    EmuRbType.control => _controlDashboard(),
+  };
+
+  /// The shape captured from a live ReefControl Pro on 2026-08-13. Its two
+  /// combined probes each report a compensation temperature in addition to
+  /// the primary salinity/pH value, and its leak probe reports a boolean.
+  Map<String, Object?> _controlDashboard() => {
+    'mode': 'auto',
+    'is_internet_connected': true,
+    'cable_connected': false,
+    'connected_device': null,
+    'probes': [
+      {
+        'type': 'ec',
+        'uid': '0x005AA',
+        'measurement_unit': 'ppt',
+        'value': controlSalinityPpt,
+        'name': 'Salinity 5AA',
+        'status': 'auto',
+        'ec': 54.2,
+        'ppt': controlSalinityPpt,
+        'sg': 1.027,
+        'level': 'acceptable',
+        'temp_value': 25.6,
+        'temp_level': 'desired',
+      },
+      {
+        'type': 'orp',
+        'uid': '0x0007C',
+        'name': 'ORP 7C',
+        'status': 'auto',
+        'value': controlOrpMv,
+        'level': controlOrpMv < 150 ? 'danger' : 'desired',
+      },
+      {
+        'type': 'ph',
+        'uid': '0x00579',
+        'name': 'pH 579',
+        'status': 'auto',
+        'value': controlPh,
+        'level': controlPh < 7.8 || controlPh > 8.6 ? 'danger' : 'desired',
+        'temp_value': 25.8,
+        'temp_level': 'desired',
+      },
+      {
+        'type': 'leak',
+        'uid': '0x0039E',
+        'name': 'Leak 39E',
+        'status': 'auto',
+        'detected': leakStatus != 'dry',
+      },
+    ],
+    'ports': [
+      {
+        'number': 0,
+        'name': 'S1',
+        'mode': 'setup',
+        'type': 'unknown',
+        'state': 'unknown',
+        'user_config_mode': 'setup',
+        'consumption': 0,
+      },
+      {
+        'number': 1,
+        'name': 'S2',
+        'mode': 'setup',
+        'type': 'unknown',
+        'state': 'unknown',
+        'user_config_mode': 'setup',
+        'consumption': 0,
+      },
+    ],
+    'buzzer': {'active': false, 'cause': 'none', 'dismissed': false},
+    'leak_detector': true,
   };
 
   /// The 2026-08-01 leak-mode capture from a live RSATO+ (the leak_sensor and
@@ -279,10 +383,42 @@ class ReefBeatEmulator {
   /// capture: supplement, abbreviation, ml delivered today by schedule,
   /// today's scheduled total, doses delivered and doses planned.
   static const _doseHeads = [
-    (n: 1, name: 'Balling light KH', short: 'KH', dosed: 26.7, daily: 40.0, done: 4, plan: 6),
-    (n: 2, name: 'Balling light Ca', short: 'Ca', dosed: 23.3, daily: 35.0, done: 4, plan: 6),
-    (n: 3, name: 'Balling light Mg', short: 'Mg', dosed: 8.0, daily: 12.0, done: 2, plan: 3),
-    (n: 4, name: 'NO3PO4-X', short: 'NPX', dosed: 6.0, daily: 6.0, done: 1, plan: 1),
+    (
+      n: 1,
+      name: 'Balling light KH',
+      short: 'KH',
+      dosed: 26.7,
+      daily: 40.0,
+      done: 4,
+      plan: 6,
+    ),
+    (
+      n: 2,
+      name: 'Balling light Ca',
+      short: 'Ca',
+      dosed: 23.3,
+      daily: 35.0,
+      done: 4,
+      plan: 6,
+    ),
+    (
+      n: 3,
+      name: 'Balling light Mg',
+      short: 'Mg',
+      dosed: 8.0,
+      daily: 12.0,
+      done: 2,
+      plan: 3,
+    ),
+    (
+      n: 4,
+      name: 'NO3PO4-X',
+      short: 'NPX',
+      dosed: 6.0,
+      daily: 6.0,
+      done: 1,
+      plan: 1,
+    ),
   ];
 
   Map<String, Object?> _doseDashboard() => {

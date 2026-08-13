@@ -6,6 +6,8 @@ import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/ap_device_link.dart';
 import 'package:reeftracker/data/ap_protocol.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/rb_device_link.dart';
+import 'package:reeftracker/data/rb_protocol.dart';
 import 'package:reeftracker/data/rf_device_link.dart';
 import 'package:reeftracker/data/rf_protocol.dart';
 import 'package:reeftracker/domain/device_vendors.dart';
@@ -75,6 +77,7 @@ void main() {
           dbProvider.overrideWithValue(db),
           deviceSecretsProvider.overrideWithValue(secrets),
           rfDeviceLinkProvider.overrideWithValue(const _FakeRfLink(25)),
+          rbDeviceLinkProvider.overrideWithValue(const _FakeRbLink()),
           apDeviceLinkProvider.overrideWithValue(const _FakeApLink(26)),
         ],
         child: MaterialApp(
@@ -95,8 +98,25 @@ void main() {
 
   Future<void> tapSaveAll(WidgetTester tester) async {
     // Both devices hold a value, so the FAB reads "Save all (2)" — the
-    // per-card Save buttons carry no such label.
+    // per-card Save menu actions carry no such count.
     await tester.tap(find.widgetWithText(FloatingActionButton, 'Save all (2)'));
+    await settle(tester);
+  }
+
+  Finder cardMenu(String deviceName) => find.descendant(
+    of: find.ancestor(of: find.text(deviceName), matching: find.byType(Card)),
+    matching: find.byIcon(Icons.more_vert),
+  );
+
+  Future<void> tapCardSave(WidgetTester tester, String deviceName) async {
+    await tester.ensureVisible(find.text(deviceName));
+    await settle(tester);
+    expect(find.byTooltip('Save'), findsNothing);
+    expect(cardMenu(deviceName), findsOneWidget);
+    await tester.tap(cardMenu(deviceName));
+    await settle(tester);
+    expect(find.text('Save'), findsOneWidget);
+    await tester.tap(find.text('Save'));
     await settle(tester);
   }
 
@@ -139,6 +159,71 @@ void main() {
     expect(await savedTemperatures(db), [26.0]);
     await unmountApp(tester);
   });
+
+  testWidgets('ReefFactory card saves from its overflow menu', (tester) async {
+    final db = await seed();
+    addTearDown(db.close);
+
+    await pumpDevices(tester, db);
+    await tapCardSave(tester, 'RF controller');
+
+    expect(await savedTemperatures(db), [25.0]);
+    await unmountApp(tester);
+  });
+
+  testWidgets('Apex card saves from its overflow menu', (tester) async {
+    final db = await seed();
+    addTearDown(db.close);
+
+    await pumpDevices(tester, db);
+    await tapCardSave(tester, 'Apex');
+
+    expect(await savedTemperatures(db), [26.0]);
+    await unmountApp(tester);
+  });
+
+  testWidgets('ReefControl card and Save all expose its probe measurements', (
+    tester,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await AppSettings(db).seedLegacyFreeSince('0.0.0-test');
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    await db.upsertReefBeatDevice(
+      identifier: 'RB-CONTROL-1',
+      model: 'RSCONTROLPRO',
+      address: '10.0.0.3',
+      name: 'ReefControl',
+      tankId: tankId,
+    );
+
+    await pumpDevices(tester, db);
+
+    // ReefControl is the one meter inside the mixed ReefBeat vendor. Its card
+    // gets Save in the overflow menu, and the bulk action counts it; a
+    // ReefDose/ReefWave would do neither.
+    expect(
+      find.widgetWithText(FloatingActionButton, 'Save all (1)'),
+      findsOneWidget,
+    );
+    await tapCardSave(tester, 'ReefControl');
+
+    final readings = await db.getAllReadings();
+    expect(readings.map((r) => r.paramKey).toSet(), {
+      'salinity',
+      'temperature',
+      'orp',
+      'ph',
+    });
+    expect(
+      readings.singleWhere((r) => r.paramKey == 'temperature').value,
+      25.1,
+    );
+    await unmountApp(tester);
+  });
 }
 
 /// A meter that always reports [celsius], with no socket involved.
@@ -176,4 +261,27 @@ class _FakeApLink implements ApDeviceLink {
         ],
         outlets: const [],
       );
+}
+
+class _FakeRbLink implements RbDeviceLink {
+  const _FakeRbLink();
+
+  @override
+  Future<RbSnapshot> readOnce(String host) async => const RbSnapshot(
+    info: RbDeviceInfo(
+      hwType: kRbControlHwType,
+      hwModel: 'RSCONTROLPRO',
+      hwid: 'RB-CONTROL-1',
+    ),
+    control: RbControlStatus(
+      probes: [
+        RbControlProbe(type: 'ec', ppt: 35, temperatureC: 25.1),
+        RbControlProbe(type: 'orp', value: 410),
+        RbControlProbe(type: 'ph', value: 8.2, temperatureC: 26.3),
+      ],
+    ),
+  );
+
+  @override
+  Future<List<RbDoseQueueEntry>> readDosingQueue(String host) async => const [];
 }

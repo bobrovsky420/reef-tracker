@@ -25,8 +25,7 @@ enum RbLinkError {
   /// Reached it, but a response didn't arrive in time.
   timeout,
 
-  /// It answered, but it isn't a ReefBeat device type we support (only
-  /// ReefDose pumps, ReefATO units and ReefMat filters so far).
+  /// It answered, but it isn't a ReefBeat device type we support.
   unsupportedModel,
 
   /// The responses arrived but didn't decode to the expected shape.
@@ -44,7 +43,7 @@ class RbLinkException implements Exception {
 
 /// The decoded result of one manual refresh: identity + the live status
 /// matching the device family — exactly one of [dose]/[ato]/[mat]/[run]/
-/// [light]/[wave] is set.
+/// [light]/[wave]/[control] is set.
 class RbSnapshot {
   const RbSnapshot({
     required this.info,
@@ -54,6 +53,7 @@ class RbSnapshot {
     this.run,
     this.light,
     this.wave,
+    this.control,
   });
 
   final RbDeviceInfo info;
@@ -63,6 +63,7 @@ class RbSnapshot {
   final RbRunStatus? run;
   final RbLightStatus? light;
   final RbWaveStatus? wave;
+  final RbControlStatus? control;
 
   /// The most precise model code known — a mat's `/configuration` reports the
   /// width ("RSMAT250") that `/device-info` omits; everything else uses its
@@ -219,6 +220,12 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
         return RbSnapshot(
           info: info,
           wave: _decode(() => RbWaveStatus.fromJson(mode, auto: auto)),
+        );
+      case kRbControlHwType:
+        final dashboard = await _getJson(h, '/dashboard');
+        return RbSnapshot(
+          info: info,
+          control: _decode(() => RbControlStatus.fromJson(dashboard)),
         );
       default:
         throw RbLinkException(RbLinkError.unsupportedModel, info.hwType);

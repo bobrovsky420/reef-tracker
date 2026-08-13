@@ -43,11 +43,13 @@ class DeviceScope {
 
   int get length => order.fold(0, (n, kind) => n + of(kind).length);
 
-  /// Devices of a meter-capable kind in view — zero hides Save all entirely.
-  /// Asks [deviceKindSaves] instead of naming vendors, so a future meter
-  /// vendor is counted without an edit here.
-  int get meters =>
-      order.where(deviceKindSaves).fold(0, (n, kind) => n + of(kind).length);
+  /// Meter-capable devices in view — zero hides Save all entirely. This is
+  /// model-aware because one vendor can contain both measuring devices
+  /// (ReefControl) and status-only devices (the rest of ReefBeat).
+  int get meters => inPageOrder.where((e) {
+    final (kind, device) = e;
+    return deviceModelSaves(kind, device.model);
+  }).length;
 
   /// Devices a Refresh all would actually read — the button's count, and zero
   /// hides it (a Hanna-only view has nothing to poll). Same open-ended idiom

@@ -171,6 +171,77 @@ const _atoLeakDashboardJson = '''
 }
 ''';
 
+/// Golden vectors: the ReefControl Pro at 192.168.1.183, captured 2026-08-13.
+/// Four ReefSense probes were attached: salinity/temperature, ORP,
+/// pH/temperature and a leak detector.
+const _controlDeviceInfoJson = '''
+{
+  "name": "RSCONTROLPRO-674461898",
+  "hw_type": "reef-control",
+  "hw_model": "RSCONTROLPRO",
+  "hw_revision": "v1.3_26A",
+  "hwid": "704bca783328",
+  "success": true,
+  "message": "get device info successfully"
+}
+''';
+
+const _controlDashboardJson = '''
+{
+  "mode": "auto",
+  "is_internet_connected": true,
+  "cable_connected": false,
+  "connected_device": null,
+  "probes": [
+    {
+      "type": "ec",
+      "uid": "0x005AA",
+      "measurement_unit": "ppt",
+      "value": 35.8,
+      "name": "Salinity 5AA",
+      "status": "auto",
+      "ec": 54.2,
+      "ppt": 35.8,
+      "sg": 1.027,
+      "level": "acceptable",
+      "temp_value": 25.6,
+      "temp_level": "desired"
+    },
+    {
+      "type": "orp",
+      "uid": "0x0007C",
+      "name": "ORP 7C",
+      "status": "auto",
+      "value": 81,
+      "level": "danger"
+    },
+    {
+      "type": "ph",
+      "uid": "0x00579",
+      "name": "pH 579",
+      "status": "auto",
+      "value": 8.06,
+      "level": "desired",
+      "temp_value": 25.8,
+      "temp_level": "desired"
+    },
+    {
+      "type": "leak",
+      "uid": "0x0039E",
+      "name": "Leak 39E",
+      "status": "auto",
+      "detected": false
+    }
+  ],
+  "ports": [
+    {"number": 0, "name": "S1", "mode": "setup", "type": "unknown"},
+    {"number": 1, "name": "S2", "mode": "setup", "type": "unknown"}
+  ],
+  "buzzer": {"active": false, "cause": "none", "dismissed": false},
+  "leak_detector": true
+}
+''';
+
 /// Golden vector: a live RSMAT250's `GET /device-info` (2026-07-25). Mats
 /// report only "RSMAT" as the model — the width lives in `/configuration`,
 /// which the app doesn't read.
@@ -313,6 +384,74 @@ void main() {
         }),
         isNull,
       );
+    });
+  });
+
+  group('RbControlStatus.fromJson', () {
+    test('identifies the live ReefControl Pro and its four probes', () {
+      final info = RbDeviceInfo.fromJson(_decode(_controlDeviceInfoJson))!;
+      expect(info.hwType, kRbControlHwType);
+      expect(info.hwModel, 'RSCONTROLPRO');
+      expect(info.hwid, '704bca783328');
+      expect(rbModelDisplayName(info.hwModel), 'ReefControl Pro');
+
+      final status = RbControlStatus.fromJson(_decode(_controlDashboardJson));
+      expect(status.mode, 'auto');
+      expect(status.isInternetConnected, isTrue);
+      expect(status.cableConnected, isFalse);
+      expect(status.probes.map((p) => p.type), ['ec', 'orp', 'ph', 'leak']);
+      expect(status.waterProbes.map((p) => p.type), ['ec', 'orp', 'ph']);
+
+      final salinity = status.probeOf('ec')!;
+      expect(salinity.uid, '0x005AA');
+      expect(salinity.name, 'Salinity 5AA');
+      expect(salinity.salinityPpt, 35.8);
+      expect(salinity.ec, 54.2);
+      expect(salinity.sg, 1.027);
+      expect(salinity.temperatureC, 25.6);
+      expect(salinity.level, 'acceptable');
+
+      final orp = status.probeOf('orp')!;
+      expect(orp.uid, '0x0007C');
+      expect(orp.value, 81);
+      expect(orp.level, 'danger');
+
+      final ph = status.probeOf('ph')!;
+      expect(ph.uid, '0x00579');
+      expect(ph.value, 8.06);
+      expect(ph.temperatureC, 25.8);
+      expect(ph.level, 'desired');
+
+      final leak = status.leakProbe!;
+      expect(leak.uid, '0x0039E');
+      expect(leak.name, 'Leak 39E');
+      expect(leak.detected, isFalse);
+    });
+
+    test('drops malformed probes but keeps unknown future sensor types', () {
+      final status = RbControlStatus.fromJson(const {
+        'probes': [
+          {'type': 7, 'value': 1},
+          {'type': 'oxygen', 'value': 6.8, 'name': 'Oxygen'},
+          {'type': 'leak', 'detected': false, 'name': 'Leak detector'},
+          {'type': 'ph', 'value': 8.1, 'name': 'pH'},
+        ],
+      });
+      expect(status.probes, hasLength(3));
+      expect(status.probes.first.type, 'oxygen');
+      expect(status.probes.first.value, 6.8);
+      expect(status.waterProbes.map((probe) => probe.type), ['ph']);
+      expect(status.leakProbe?.detected, isFalse);
+    });
+
+    test('falls back to generic value for a ppt salinity payload', () {
+      final probe = RbControlProbe.fromJson(const {
+        'type': 'EC',
+        'measurement_unit': 'PPT',
+        'value': 34.9,
+      })!;
+      expect(probe.type, 'ec');
+      expect(probe.salinityPpt, 34.9);
     });
   });
 
@@ -989,7 +1128,10 @@ void main() {
       expect(over.overSkimming, isTrue);
       expect(over.faulted, isTrue);
       expect(over.fullCup, isFalse);
-      expect(RbRunPump.fromJson(2, {'state': 'full_cup'}).overSkimming, isFalse);
+      expect(
+        RbRunPump.fromJson(2, {'state': 'full_cup'}).overSkimming,
+        isFalse,
+      );
       expect(RbRunPump.fromJson(2, const {}).overSkimming, isFalse);
     });
 
@@ -1204,6 +1346,7 @@ void main() {
         kRbRunHwType,
         kRbLightsHwType,
         kRbWaveHwType,
+        kRbControlHwType,
       });
       expect(kRbSupportedHwTypes.contains('reef-something-new'), isFalse);
     });
