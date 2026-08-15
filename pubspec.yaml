@@ -51,7 +51,7 @@ dependencies:
   crypto: ^3.0.6
   # For @immutable in the pure domain layer (lib/domain/), which must not
   # import Flutter (#53). The version is pinned by the Flutter SDK.
-  meta: ^1.18.0
+  meta: ^1.19.0
   # These three are pinned to exact, known-good versions: newer releases fail to
   # build against this project's modern Android toolchain (Kotlin 2.3.20 / AGP 9
   # / Gradle 9.1). share_plus 11/12 fail `:share_plus:compileReleaseKotlin`;
