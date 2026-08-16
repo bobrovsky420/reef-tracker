@@ -14,6 +14,7 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
+import '../devices/device_card_reorder.dart';
 import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
@@ -134,24 +135,32 @@ class RfDeviceSection extends ConsumerWidget {
         ids.insert(newIndex, ids.removeAt(oldIndex));
         unawaited(ref.read(dbProvider).reorderDevices(ids));
       },
+      proxyDecorator: (child, index, animation) => deviceCardDragProxyDecorator(
+        context,
+        child,
+        index,
+        animation,
+        semanticLabel: l.reorder,
+      ),
       itemBuilder: (context, i) {
         final d = devices[i];
-        return _DeviceCard(
+        return ReorderableDelayedDragStartListener(
           key: ValueKey(d.id),
-          device: d,
           index: i,
-          // A single card has nothing to reorder against.
-          canReorder: devices.length > 1,
-          tank: _tankFor(d.tankId, tanks),
-          live: live[d.identifier] ?? const RfLive(),
-          errorTextOf: (e) => rfErrorText(l, e),
-          onRename: () => _renameDevice(context, ref, d),
-          onSave: onSave == null ? null : (snap) => onSave!(d, snap),
-          // No other tank to move to → no menu item.
-          onMove: tanks.any((t) => t.id != d.tankId)
-              ? () => _moveDevice(context, ref, d)
-              : null,
-          onRemove: () => _confirmRemove(context, ref, d),
+          enabled: devices.length > 1,
+          child: _DeviceCard(
+            device: d,
+            tank: _tankFor(d.tankId, tanks),
+            live: live[d.identifier] ?? const RfLive(),
+            errorTextOf: (e) => rfErrorText(l, e),
+            onRename: () => _renameDevice(context, ref, d),
+            onSave: onSave == null ? null : (snap) => onSave!(d, snap),
+            // No other tank to move to → no menu item.
+            onMove: tanks.any((t) => t.id != d.tankId)
+                ? () => _moveDevice(context, ref, d)
+                : null,
+            onRemove: () => _confirmRemove(context, ref, d),
+          ),
         );
       },
     );
@@ -336,10 +345,7 @@ Future<void> showRfManualSheet(
 /// One meter's card: name + menu, then full-width live values.
 class _DeviceCard extends ConsumerWidget {
   const _DeviceCard({
-    super.key,
     required this.device,
-    required this.index,
-    required this.canReorder,
     required this.tank,
     required this.live,
     required this.errorTextOf,
@@ -350,12 +356,6 @@ class _DeviceCard extends ConsumerWidget {
   });
 
   final DeviceRecord device;
-
-  /// Position in the reorderable list (what the drag handle reports).
-  final int index;
-
-  /// False for a one-card list — nothing to drag against, so no handle.
-  final bool canReorder;
   final Tank? tank;
   final RfLive live;
   final String Function(RfLinkError) errorTextOf;
@@ -406,21 +406,6 @@ class _DeviceCard extends ConsumerWidget {
                 Expanded(
                   child: Text(deviceDisplayName(device), style: t.titleMedium),
                 ),
-                if (canReorder)
-                  ReorderableDragStartListener(
-                    index: index,
-                    // The padding keeps the 18 px glyph draggable with a
-                    // finger (the schedule-list convention).
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 18,
-                        color: ReefTokens.of(context).textFaint,
-                        semanticLabel: l.reorder,
-                      ),
-                    ),
-                  ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
                     if (v == 'save' &&

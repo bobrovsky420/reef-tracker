@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/features/devices/device_card_reorder.dart';
 import 'package:reeftracker/features/devices/devices_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
@@ -49,9 +50,42 @@ void main() {
     return rows.map(deviceDisplayName).toList();
   }
 
-  /// Drags [handle] down past the card below it and lets the reorder settle.
-  Future<void> dragDown(WidgetTester tester, Finder handle) async {
-    final gesture = await tester.startGesture(tester.getCenter(handle));
+  /// Holds [target] until its card lifts, then drags it past the card below.
+  Future<void> longPressDragDown(
+    WidgetTester tester,
+    Finder target, {
+    bool inspectIndicator = false,
+  }) async {
+    final card = find.ancestor(of: target, matching: find.byType(Card)).first;
+    final restingCardRect = tester.getRect(card);
+    final gesture = await tester.startGesture(tester.getCenter(target));
+    await tester.pump(const Duration(milliseconds: 600));
+
+    final indicator = find.byKey(deviceCardDragIndicatorKey);
+    expect(indicator, findsOneWidget);
+    if (inspectIndicator) {
+      // The only visible reorder affordance is the active drag badge: a 40 dp
+      // circle centered across, and centered vertically on, the card's top
+      // edge. Allow a little movement for the proxy's lift/scale animation.
+      expect(tester.getSize(indicator), const Size.square(40));
+      expect(
+        tester.getCenter(indicator).dx,
+        moreOrLessEquals(restingCardRect.center.dx, epsilon: 1),
+      );
+      expect(
+        tester.getCenter(indicator).dy,
+        moreOrLessEquals(restingCardRect.top, epsilon: 4),
+      );
+      final badge = tester.widget<Material>(indicator);
+      expect(badge.shape, isA<CircleBorder>());
+      final iconFinder = find.descendant(
+        of: indicator,
+        matching: find.byIcon(Icons.drag_handle),
+      );
+      expect(iconFinder, findsOneWidget);
+      expect(tester.widget<Icon>(iconFinder).semanticLabel, 'Reorder');
+    }
+
     // Move in steps: the reorderable list tracks the pointer per frame.
     for (var i = 0; i < 8; i++) {
       await gesture.moveBy(const Offset(0, 40));
@@ -77,10 +111,14 @@ void main() {
 
     await pumpDevices(tester, db);
     expect(await orderOf(db, 'reeffactory'), ['A meter', 'B meter']);
-    // One handle per card, and only because there are two cards.
-    expect(find.byIcon(Icons.drag_handle), findsNWidgets(2));
+    // Resting cards have no permanent reorder affordance.
+    expect(find.byIcon(Icons.drag_handle), findsNothing);
 
-    await dragDown(tester, find.byIcon(Icons.drag_handle).first);
+    await longPressDragDown(
+      tester,
+      find.text('A meter'),
+      inspectIndicator: true,
+    );
 
     expect(await orderOf(db, 'reeffactory'), ['B meter', 'A meter']);
     await unmountApp(tester);
@@ -103,13 +141,13 @@ void main() {
     await pumpDevices(tester, db);
     expect(await orderOf(db, 'reefbeat'), ['A pump', 'B pump']);
 
-    await dragDown(tester, find.byIcon(Icons.drag_handle).first);
+    await longPressDragDown(tester, find.text('A pump'));
 
     expect(await orderOf(db, 'reefbeat'), ['B pump', 'A pump']);
     await unmountApp(tester);
   });
 
-  testWidgets('a single device gets no drag handle', (tester) async {
+  testWidgets('a single device has no active drag listener', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     await db.upsertReefBeatDevice(
@@ -123,6 +161,10 @@ void main() {
 
     expect(find.text('Only pump'), findsOneWidget);
     expect(find.byIcon(Icons.drag_handle), findsNothing);
+    final listener = tester.widget<ReorderableDelayedDragStartListener>(
+      find.byType(ReorderableDelayedDragStartListener),
+    );
+    expect(listener.enabled, isFalse);
     await unmountApp(tester);
   });
 

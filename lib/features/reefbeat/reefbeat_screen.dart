@@ -15,6 +15,7 @@ import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
+import '../devices/device_card_reorder.dart';
 import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
@@ -203,45 +204,56 @@ class RbDeviceSection extends ConsumerWidget {
           ]),
         );
       },
+      proxyDecorator: (child, index, animation) => deviceCardDragProxyDecorator(
+        context,
+        child,
+        index,
+        animation,
+        semanticLabel: l.reorder,
+      ),
       itemBuilder: (context, i) {
         final entry = entries[i];
         final canReorder = entries.length > 1;
         if (entry.isWaveGroup) {
-          return _WaveGroup(
+          return ReorderableDelayedDragStartListener(
             key: ValueKey('waves-${entry.devices.first.id}'),
-            devices: entry.devices,
             index: i,
-            canReorder: canReorder,
-            liveOf: (d) => live[d.identifier] ?? const RbLive(),
-            errorTextOf: (e) => rbErrorText(l, e),
-            onRename: (d) => _renameDevice(context, ref, d),
-            onMove: (d) => tanks.any((t) => t.id != d.tankId)
-                ? () => _moveDevice(context, ref, d)
-                : null,
-            onRemove: (d) => _confirmRemove(context, ref, d),
+            enabled: canReorder,
+            child: _WaveGroup(
+              devices: entry.devices,
+              liveOf: (d) => live[d.identifier] ?? const RbLive(),
+              errorTextOf: (e) => rbErrorText(l, e),
+              onRename: (d) => _renameDevice(context, ref, d),
+              onMove: (d) => tanks.any((t) => t.id != d.tankId)
+                  ? () => _moveDevice(context, ref, d)
+                  : null,
+              onRemove: (d) => _confirmRemove(context, ref, d),
+            ),
           );
         }
         final d = entry.devices.single;
-        return _DeviceCard(
+        return ReorderableDelayedDragStartListener(
           key: ValueKey(d.id),
-          device: d,
           index: i,
-          canReorder: canReorder,
-          tank: _tankFor(d.tankId, tanks),
-          live: live[d.identifier] ?? const RbLive(),
-          errorTextOf: (e) => rbErrorText(l, e),
-          onRename: () => _renameDevice(context, ref, d),
-          onSave: rbIsControlModel(d.model) && onSave != null
-              ? (snap) => onSave!(d, snap)
-              : null,
-          // No other tank to move to → no menu item.
-          onMove: tanks.any((t) => t.id != d.tankId)
-              ? () => _moveDevice(context, ref, d)
-              : null,
-          onShowQueue: rbIsDoseModel(d.model)
-              ? () => _showDosingQueue(context, ref, d)
-              : null,
-          onRemove: () => _confirmRemove(context, ref, d),
+          enabled: canReorder,
+          child: _DeviceCard(
+            device: d,
+            tank: _tankFor(d.tankId, tanks),
+            live: live[d.identifier] ?? const RbLive(),
+            errorTextOf: (e) => rbErrorText(l, e),
+            onRename: () => _renameDevice(context, ref, d),
+            onSave: rbIsControlModel(d.model) && onSave != null
+                ? (snap) => onSave!(d, snap)
+                : null,
+            // No other tank to move to → no menu item.
+            onMove: tanks.any((t) => t.id != d.tankId)
+                ? () => _moveDevice(context, ref, d)
+                : null,
+            onShowQueue: rbIsDoseModel(d.model)
+                ? () => _showDosingQueue(context, ref, d)
+                : null,
+            onRemove: () => _confirmRemove(context, ref, d),
+          ),
         );
       },
     );
@@ -453,10 +465,7 @@ Future<void> showRbManualSheet(
 
 class _DeviceCard extends StatelessWidget {
   const _DeviceCard({
-    super.key,
     required this.device,
-    required this.index,
-    required this.canReorder,
     required this.tank,
     required this.live,
     required this.errorTextOf,
@@ -468,12 +477,6 @@ class _DeviceCard extends StatelessWidget {
   });
 
   final DeviceRecord device;
-
-  /// Position in the reorderable list (what the drag handle reports).
-  final int index;
-
-  /// False for a one-card list — nothing to drag against, so no handle.
-  final bool canReorder;
   final Tank? tank;
   final RbLive live;
   final String Function(RbLinkError) errorTextOf;
@@ -508,21 +511,6 @@ class _DeviceCard extends StatelessWidget {
                 Expanded(
                   child: Text(deviceDisplayName(device), style: t.titleMedium),
                 ),
-                if (canReorder)
-                  ReorderableDragStartListener(
-                    index: index,
-                    // The padding keeps the 18 px glyph draggable with a
-                    // finger (the schedule-list convention).
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 18,
-                        color: ReefTokens.of(context).textFaint,
-                        semanticLabel: l.reorder,
-                      ),
-                    ),
-                  ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
                     if (v == 'save' &&
@@ -1368,10 +1356,7 @@ class _ChannelBar extends StatelessWidget {
 /// worth showing — a full card apiece pushed everything else off the screen.
 class _WaveGroup extends StatelessWidget {
   const _WaveGroup({
-    super.key,
     required this.devices,
-    required this.index,
-    required this.canReorder,
     required this.liveOf,
     required this.errorTextOf,
     required this.onRename,
@@ -1380,8 +1365,6 @@ class _WaveGroup extends StatelessWidget {
   });
 
   final List<DeviceRecord> devices;
-  final int index;
-  final bool canReorder;
   final RbLive Function(DeviceRecord) liveOf;
   final String Function(RbLinkError) errorTextOf;
   final void Function(DeviceRecord) onRename;
@@ -1405,19 +1388,6 @@ class _WaveGroup extends StatelessWidget {
                 Expanded(
                   child: Text(l.reefBeatWaveGroup, style: t.titleMedium),
                 ),
-                if (canReorder)
-                  ReorderableDragStartListener(
-                    index: index,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 18,
-                        color: ReefTokens.of(context).textFaint,
-                        semanticLabel: l.reorder,
-                      ),
-                    ),
-                  ),
               ],
             ),
             const SizedBox(height: 10),

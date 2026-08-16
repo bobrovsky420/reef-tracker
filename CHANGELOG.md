@@ -82,6 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transport is covered by tests.)
 
 ### Changed
+- Connected devices: card ordering now starts by pressing and holding the card
+  itself, so headers no longer reserve space for permanent drag handles. While
+  a card is moving, it lifts, gains a highlighted outline and shows a circular
+  reorder badge centered on its top edge. The interaction was exercised on
+  Android with seeded device cards; ordering is local and does not contact the
+  physical hardware.
 - Connected devices: ReefFactory meters, ReefControl and Apex now keep Save in
   each card's overflow menu, leaving the header and measured values uncluttered.
 - Wall display: a ReefFactory Temperature Controller's temperature card now
