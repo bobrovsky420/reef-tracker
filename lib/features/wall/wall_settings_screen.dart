@@ -260,11 +260,19 @@ class _SmallScreenNote extends StatelessWidget {
 /// The reorderable wall-card list: what is known to the wall — remembered
 /// device cards (sparse `wall_tile_settings` rows) plus the tracked
 /// parameters' stored-readings cards — in the wall's own order.
-class _WallCardList extends ConsumerWidget {
+class _WallCardList extends ConsumerStatefulWidget {
   const _WallCardList();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_WallCardList> createState() => _WallCardListState();
+}
+
+class _WallCardListState extends ConsumerState<_WallCardList> {
+  int? _optimisticTankId;
+  List<WallCardId>? _optimisticOrder;
+
+  @override
+  Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final tank = ref.watch(activeTankProvider);
     if (tank == null) return const SizedBox.shrink();
@@ -331,7 +339,7 @@ class _WallCardList extends ConsumerWidget {
       }
     }
 
-    final cards = buildWallCards(
+    var cards = buildWallCards(
       trackedKeys: [
         for (final p in tracked)
           if (p.enabled) p.paramKey,
@@ -339,6 +347,7 @@ class _WallCardList extends ConsumerWidget {
       reportedByDevice: reported,
       rows: rows,
     );
+    cards = _applyOptimisticOrder(tank.id, cards);
     if (cards.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16),
@@ -365,6 +374,13 @@ class _WallCardList extends ConsumerWidget {
       onReorderItem: (oldIndex, newIndex) {
         final ids = [for (final c in cards) c.id];
         ids.insert(newIndex, ids.removeAt(oldIndex));
+        // ReorderableListView expects its owner to publish the new order in
+        // this callback. Waiting for SQLite and the watched query made the
+        // dropped row snap back on a real device while the write completed.
+        setState(() {
+          _optimisticTankId = tank.id;
+          _optimisticOrder = ids;
+        });
         unawaited(
           db.setWallTileOrder(tank.id, [
             for (final id in ids)
@@ -429,5 +445,50 @@ class _WallCardList extends ConsumerWidget {
         );
       },
     );
+  }
+
+  List<WallCard> _applyOptimisticOrder(int tankId, List<WallCard> stored) {
+    final optimistic = _optimisticOrder;
+    if (optimistic == null || _optimisticTankId != tankId) return stored;
+
+    final byId = <WallCardId, WallCard>{
+      for (final card in stored) card.id: card,
+    };
+    final reordered = <WallCard>[];
+    for (final id in optimistic) {
+      if (byId.remove(id) case final card?) reordered.add(card);
+    }
+    // A newly discovered card can arrive while an order write is pending.
+    // Keep it in the database-resolved append position instead of losing it.
+    for (final card in stored) {
+      if (byId.remove(card.id) case final remaining?) {
+        reordered.add(remaining);
+      }
+    }
+
+    if (_sameOrder(stored, reordered)) {
+      // The watched SQLite rows have caught up. Clear only this exact pending
+      // order after build so a later drag cannot be cleared by an old frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted ||
+            _optimisticTankId != tankId ||
+            !identical(_optimisticOrder, optimistic)) {
+          return;
+        }
+        setState(() {
+          _optimisticTankId = null;
+          _optimisticOrder = null;
+        });
+      });
+    }
+    return reordered;
+  }
+
+  bool _sameOrder(List<WallCard> a, List<WallCard> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+    }
+    return true;
   }
 }
