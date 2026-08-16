@@ -102,6 +102,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tile and as a chip on the ReefRun card — instead of the raw firmware text.
 
 ### Fixed
+- Wall display card reordering now updates immediately when a drag handle is
+  dropped, instead of snapping back while the saved order was still being
+  written.
 - Direct links and restored navigation can no longer bypass Pro access checks
   for the dose calculator, Hanna checker measurement, or checker camera scan;
   an open screen also locks immediately if its Pro entitlement is lost.

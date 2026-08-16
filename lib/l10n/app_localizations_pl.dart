@@ -27,31 +27,36 @@ class AppLocalizationsPl extends AppLocalizations {
   String get tourTankTitle => 'Twoje akwaria';
 
   @override
-  String get tourTankDesc => 'Dotknij tutaj, aby przełączać akwaria lub dodać nowe.';
+  String get tourTankDesc =>
+      'Dotknij tutaj, aby przełączać akwaria lub dodać nowe.';
 
   @override
   String get tourCompareTitle => 'Porównanie';
 
   @override
-  String get tourCompareDesc => 'Przełączaj między kartami parametrów a zbiorczymi wykresami.';
+  String get tourCompareDesc =>
+      'Przełączaj między kartami parametrów a zbiorczymi wykresami.';
 
   @override
   String get tourParamsTitle => 'Zarządzanie parametrami';
 
   @override
-  String get tourParamsDesc => 'Wybierz, które parametry wody śledzić, i ustaw ich docelowe zakresy.';
+  String get tourParamsDesc =>
+      'Wybierz, które parametry wody śledzić, i ustaw ich docelowe zakresy.';
 
   @override
   String get tourDosingHistoryTitle => 'Historia dozowania';
 
   @override
-  String get tourDosingHistoryDesc => 'Przejrzyj wszystkie dawne i bieżące okresy dozowania oraz usuń wpis dodany przez pomyłkę.';
+  String get tourDosingHistoryDesc =>
+      'Przejrzyj wszystkie dawne i bieżące okresy dozowania oraz usuń wpis dodany przez pomyłkę.';
 
   @override
   String get tourDoseCalcTitle => 'Kalkulator dozowania';
 
   @override
-  String get tourDoseCalcDesc => 'Na karcie Dozowanie otwórz kalkulator, aby oszacować dzienną dawkę utrzymującą stabilny poziom pierwiastka.';
+  String get tourDoseCalcDesc =>
+      'Na karcie Dozowanie otwórz kalkulator, aby oszacować dzienną dawkę utrzymującą stabilny poziom pierwiastka.';
 
   @override
   String get tourNext => 'Dalej';
@@ -66,7 +71,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get replayTour => 'Powtórz przewodnik';
 
   @override
-  String get replayTourSubtitle => 'Pokaż ponownie wskazówki dotyczące górnego paska';
+  String get replayTourSubtitle =>
+      'Pokaż ponownie wskazówki dotyczące górnego paska';
 
   @override
   String get compareView => 'Porównaj wykresy';
@@ -127,10 +133,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get welcomeTitle => 'Witamy w ReefTracker';
 
   @override
-  String get welcomeBody => 'Utwórz swoje pierwsze akwarium, aby rozpocząć śledzenie parametrów wody.';
+  String get welcomeBody =>
+      'Utwórz swoje pierwsze akwarium, aby rozpocząć śledzenie parametrów wody.';
 
   @override
-  String get noParamsTracked => 'Dla tego akwarium nie są śledzone żadne parametry.';
+  String get noParamsTracked =>
+      'Dla tego akwarium nie są śledzone żadne parametry.';
 
   @override
   String get noReadings => 'Brak pomiarów';
@@ -191,7 +199,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get deleteTankBody => 'Spowoduje to trwałe usunięcie akwarium i wszystkich jego pomiarów.';
+  String get deleteTankBody =>
+      'Spowoduje to trwałe usunięcie akwarium i wszystkich jego pomiarów.';
 
   @override
   String tankDeleted(Object name) {
@@ -217,10 +226,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get setupType => 'Typ zbiornika';
 
   @override
-  String get presetSeedNote => 'Dla tego typu zbiornika zostaną ustawione domyślne parametry i granice stref. Możesz je dostroić w dowolnym momencie.';
+  String get presetSeedNote =>
+      'Dla tego typu zbiornika zostaną ustawione domyślne parametry i granice stref. Możesz je dostroić w dowolnym momencie.';
 
   @override
-  String get fishOnlyPresetNote => 'Profil Tylko ryby nie ustawia granic dla alkaliczności, wapnia, magnezu ani fosforanów – jeśli śledzisz te parametry, nie będą miały kolorów stref, dopóki nie ustawisz własnych granic.';
+  String get fishOnlyPresetNote =>
+      'Profil Tylko ryby nie ustawia granic dla alkaliczności, wapnia, magnezu ani fosforanów – jeśli śledzisz te parametry, nie będą miały kolorów stref, dopóki nie ustawisz własnych granic.';
 
   @override
   String get volumeOptional => 'Objętość (opcjonalnie)';
@@ -269,7 +280,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noBoundariesSet => 'Nie ustawiono granic';
 
   @override
-  String boundsSummary(Object greenLow, Object greenHigh, Object unit, Object amberLow, Object amberHigh) {
+  String boundsSummary(
+    Object greenLow,
+    Object greenHigh,
+    Object unit,
+    Object amberLow,
+    Object amberHigh,
+  ) {
     return 'OK $greenLow–$greenHigh $unit  •  czerwona <$amberLow / >$amberHigh';
   }
 
@@ -286,7 +303,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get untrackParameter => 'Przestań śledzić';
 
   @override
-  String get parameterUntracked => 'Parametr nie jest już śledzony – pomiary zostały zachowane';
+  String get parameterUntracked =>
+      'Parametr nie jest już śledzony – pomiary zostały zachowane';
 
   @override
   String unitWithValue(Object unit) {
@@ -294,7 +312,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get unitFromSettingsNote => 'Ustawiane w Ustawieniach. Poniższe granice używają tej jednostki.';
+  String get unitFromSettingsNote =>
+      'Ustawiane w Ustawieniach. Poniższe granice używają tej jednostki.';
 
   @override
   String get unit => 'Jednostka';
@@ -326,10 +345,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get sectionDose => 'Dawka';
 
   @override
-  String get boundsOrderError => 'Granice muszą rosnąć: pomarańczowa dolna ≤ zielona dolna ≤ zielona górna ≤ pomarańczowa górna.';
+  String get boundsOrderError =>
+      'Granice muszą rosnąć: pomarańczowa dolna ≤ zielona dolna ≤ zielona górna ≤ pomarańczowa górna.';
 
   @override
-  String get boundsPairError => 'Każda pomarańczowa granica wymaga odpowiadającej zielonej granicy po tej samej stronie.';
+  String get boundsPairError =>
+      'Każda pomarańczowa granica wymaga odpowiadającej zielonej granicy po tej samej stronie.';
 
   @override
   String get noteOptional => 'Notatka (opcjonalnie)';
@@ -349,7 +370,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get invalidPositiveNumber => 'Wpisz liczbę dodatnią.';
 
   @override
-  String get invalidIntervalDays => 'Wpisz całkowitą liczbę dni (co najmniej 1).';
+  String get invalidIntervalDays =>
+      'Wpisz całkowitą liczbę dni (co najmniej 1).';
 
   @override
   String impossibleValueFor(Object name) {
@@ -363,10 +385,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get implausibleTitle => 'Nietypowe wartości';
 
   @override
-  String get implausibleIntro => 'Poniższa wartość wykracza poza typowy zakres. Sprawdź, czy nie ma literówki, zanim zapiszesz.';
+  String get implausibleIntro =>
+      'Poniższa wartość wykracza poza typowy zakres. Sprawdź, czy nie ma literówki, zanim zapiszesz.';
 
   @override
-  String implausibleValueLine(Object name, Object value, Object min, Object max) {
+  String implausibleValueLine(
+    Object name,
+    Object value,
+    Object min,
+    Object max,
+  ) {
     return '$name: $value (typowo $min–$max)';
   }
 
@@ -376,7 +404,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get implausibleIntroDevices => 'Podłączone urządzenie zgłasza wartości, które wyglądają na błędne. Sprawdź sondę przed zapisaniem.';
+  String get implausibleIntroDevices =>
+      'Podłączone urządzenie zgłasza wartości, które wyglądają na błędne. Sprawdź sondę przed zapisaniem.';
 
   @override
   String get implausibleSkip => 'Pomiń';
@@ -427,10 +456,12 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get deleteTestSetBody => 'Zestaw testów zostanie usunięty. Twoje pomiary pozostaną.';
+  String get deleteTestSetBody =>
+      'Zestaw testów zostanie usunięty. Twoje pomiary pozostaną.';
 
   @override
-  String get testSetEmptyHint => 'Ten zestaw nie zawiera żadnych aktywnych parametrów. Edytuj go lub przełącz na Wszystkie.';
+  String get testSetEmptyHint =>
+      'Ten zestaw nie zawiera żadnych aktywnych parametrów. Edytuj go lub przełącz na Wszystkie.';
 
   @override
   String testSetParamCount(int count) {
@@ -446,7 +477,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get noTestSets => 'Brak zestawów testów. Zestaw pozwala zapisywać tylko te parametry, które testujesz razem.';
+  String get noTestSets =>
+      'Brak zestawów testów. Zestaw pozwala zapisywać tylko te parametry, które testujesz razem.';
 
   @override
   String get rangeWeek => '7 dni';
@@ -489,8 +521,10 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Ta wartość została wprowadzona razem z $count innymi pomiarami. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?',
-      one: 'Ta wartość została wprowadzona razem z 1 innym pomiarem. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?',
+      other:
+          'Ta wartość została wprowadzona razem z $count innymi pomiarami. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?',
+      one:
+          'Ta wartość została wprowadzona razem z 1 innym pomiarem. Usunąć tylko tę wartość, czy wszystkie wprowadzone razem?',
     );
     return '$_temp0';
   }
@@ -509,8 +543,10 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Ta wartość została wprowadzona razem z $count innymi pomiarami. Zmienić czas tylko dla tej wartości, czy dla wszystkich wprowadzonych razem?',
-      one: 'Ta wartość została wprowadzona razem z 1 innym pomiarem. Zmienić czas tylko dla tej wartości, czy dla wszystkich wprowadzonych razem?',
+      other:
+          'Ta wartość została wprowadzona razem z $count innymi pomiarami. Zmienić czas tylko dla tej wartości, czy dla wszystkich wprowadzonych razem?',
+      one:
+          'Ta wartość została wprowadzona razem z 1 innym pomiarem. Zmienić czas tylko dla tej wartości, czy dla wszystkich wprowadzonych razem?',
     );
     return '$_temp0';
   }
@@ -529,7 +565,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get freeAmmoniaExplain => 'Test amoniaku mierzy amoniak całkowity, ale toksyczna jest tylko część niezjonizowana (NH₃). Jej udział rośnie wraz z pH i temperaturą, więc akwarium rafowe zamienia w formę toksyczną więcej amoniaku niż zbiornik o niskim pH. Ta ocena dzieli ostatni pomiar amoniaku całkowitego na podstawie ostatniego pH, temperatury i zasolenia.';
+  String get freeAmmoniaExplain =>
+      'Test amoniaku mierzy amoniak całkowity, ale toksyczna jest tylko część niezjonizowana (NH₃). Jej udział rośnie wraz z pH i temperaturą, więc akwarium rafowe zamienia w formę toksyczną więcej amoniaku niż zbiornik o niskim pH. Ta ocena dzieli ostatni pomiar amoniaku całkowitego na podstawie ostatniego pH, temperatury i zasolenia.';
 
   @override
   String freeAmmoniaDialogFree(Object value) {
@@ -552,13 +589,15 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get freeAmmoniaOutdatedWarning => 'pH lub temperaturę zmierzono ostatnio ponad tydzień od tego pomiaru amoniaku, więc udział formy toksycznej może być niedokładny.';
+  String get freeAmmoniaOutdatedWarning =>
+      'pH lub temperaturę zmierzono ostatnio ponad tydzień od tego pomiaru amoniaku, więc udział formy toksycznej może być niedokładny.';
 
   @override
   String get freeAmmoniaShowTitle => 'Pokaż wolny amoniak (NH₃)';
 
   @override
-  String get freeAmmoniaShowSubtitle => 'Dodaje kartę szacującą toksyczną frakcję niezjonizowaną na podstawie pH, temperatury i zasolenia.';
+  String get freeAmmoniaShowSubtitle =>
+      'Dodaje kartę szacującą toksyczną frakcję niezjonizowaną na podstawie pH, temperatury i zasolenia.';
 
   @override
   String get freeAmmoniaNeedsAmmonia => 'Włącz amoniak, aby to pokazać.';
@@ -661,7 +700,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noDosing => 'Brak preparatów.';
 
   @override
-  String get noDosingHint => 'Dodaj preparaty dozowane do tego zbiornika — producenta, produkt oraz opcjonalnie dawkę i harmonogram.';
+  String get noDosingHint =>
+      'Dodaj preparaty dozowane do tego zbiornika — producenta, produkt oraz opcjonalnie dawkę i harmonogram.';
 
   @override
   String get dosingNoDosage => 'Brak dawki';
@@ -692,10 +732,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get deleteDosingRecordTitle => 'Usunąć ten wpis?';
 
   @override
-  String get deleteDosingRecordBody => 'Trwale usunie to ten wpis dozowania z historii i z obliczeń dawki. Nie można tego cofnąć.';
+  String get deleteDosingRecordBody =>
+      'Trwale usunie to ten wpis dozowania z historii i z obliczeń dawki. Nie można tego cofnąć.';
 
   @override
-  String get deleteDosingRecordNotLatest => 'To nie jest najnowszy wpis dla tego pierwiastka; jego usunięcie nie zmieni późniejszych wpisów.';
+  String get deleteDosingRecordNotLatest =>
+      'To nie jest najnowszy wpis dla tego pierwiastka; jego usunięcie nie zmieni późniejszych wpisów.';
 
   @override
   String get dosingHistoryManual => 'Ręczna';
@@ -710,7 +752,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get deleteManualDoseTitle => 'Usunąć dawkę ręczną?';
 
   @override
-  String get deleteManualDoseBody => 'Ta zapisana dawka zostanie trwale usunięta z historii i z obliczeń dozowania. Nie można tego cofnąć.';
+  String get deleteManualDoseBody =>
+      'Ta zapisana dawka zostanie trwale usunięta z historii i z obliczeń dozowania. Nie można tego cofnąć.';
 
   @override
   String get dosingNew => 'Dodaj preparat';
@@ -834,7 +877,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get salinityCalculator => 'Kalkulator zasolenia';
 
   @override
-  String get salinityCalculatorSubtitle => 'Przelicz ppt ↔ gęstość względna (SG)';
+  String get salinityCalculatorSubtitle =>
+      'Przelicz ppt ↔ gęstość względna (SG)';
 
   @override
   String get backupSection => 'Kopia zapasowa';
@@ -862,13 +906,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupExport => 'Eksportuj kopię';
 
   @override
-  String get backupExportSubtitle => 'Zapisz wszystkie akwaria i pomiary do pliku';
+  String get backupExportSubtitle =>
+      'Zapisz wszystkie akwaria i pomiary do pliku';
 
   @override
   String get csvExportTitle => 'Eksport pomiarów (CSV)';
 
   @override
-  String get csvExportSubtitle => 'Udostępnij pomiary aktywnego akwarium jako plik arkusza kalkulacyjnego';
+  String get csvExportSubtitle =>
+      'Udostępnij pomiary aktywnego akwarium jako plik arkusza kalkulacyjnego';
 
   @override
   String get csvExportNoData => 'Brak pomiarów do wyeksportowania';
@@ -880,13 +926,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupImport => 'Przywróć z kopii';
 
   @override
-  String get backupImportSubtitle => 'Zastąp wszystkie dane plikiem kopii zapasowej';
+  String get backupImportSubtitle =>
+      'Zastąp wszystkie dane plikiem kopii zapasowej';
 
   @override
   String get backupRestoreConfirmTitle => 'Przywrócić kopię zapasową?';
 
   @override
-  String get backupRestoreConfirmBody => 'Spowoduje to zastąpienie WSZYSTKICH danych akwariów — wszystkich akwariów, parametrów i pomiarów — zawartością pliku kopii zapasowej. Ustawienia na tym urządzeniu (język, jednostki i preferencje) zostaną zachowane. Tej operacji nie można cofnąć.';
+  String get backupRestoreConfirmBody =>
+      'Spowoduje to zastąpienie WSZYSTKICH danych akwariów — wszystkich akwariów, parametrów i pomiarów — zawartością pliku kopii zapasowej. Ustawienia na tym urządzeniu (język, jednostki i preferencje) zostaną zachowane. Tej operacji nie można cofnąć.';
 
   @override
   String get restore => 'Przywróć';
@@ -907,25 +955,31 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupImportFailed => 'Nie udało się przywrócić kopii';
 
   @override
-  String get backupInvalidFile => 'Ten plik nie jest prawidłową kopią zapasową ReefTracker';
+  String get backupInvalidFile =>
+      'Ten plik nie jest prawidłową kopią zapasową ReefTracker';
 
   @override
-  String get backupTooNew => 'Ta kopia zapasowa została utworzona przez nowszą wersję aplikacji i nie można jej tu przywrócić';
+  String get backupTooNew =>
+      'Ta kopia zapasowa została utworzona przez nowszą wersję aplikacji i nie można jej tu przywrócić';
 
   @override
-  String get backupCorrupted => 'Plik kopii zapasowej jest uszkodzony lub niekompletny';
+  String get backupCorrupted =>
+      'Plik kopii zapasowej jest uszkodzony lub niekompletny';
 
   @override
-  String get backupInconsistent => 'Kopia zapasowa jest niespójna i nie można jej przywrócić';
+  String get backupInconsistent =>
+      'Kopia zapasowa jest niespójna i nie można jej przywrócić';
 
   @override
-  String get dataLoadFailed => 'Nie udało się wczytać części danych. Jeśli problem się powtarza, uruchom aplikację ponownie lub przywróć kopię zapasową.';
+  String get dataLoadFailed =>
+      'Nie udało się wczytać części danych. Jeśli problem się powtarza, uruchom aplikację ponownie lub przywróć kopię zapasową.';
 
   @override
   String get autoBackupTitle => 'Automatyczna kopia zapasowa';
 
   @override
-  String get autoBackupSubtitle => 'Przechowuj najnowsze kopie danych na tym urządzeniu';
+  String get autoBackupSubtitle =>
+      'Przechowuj najnowsze kopie danych na tym urządzeniu';
 
   @override
   String get autoBackupFrequency => 'Częstotliwość';
@@ -940,7 +994,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get manageBackups => 'Zarządzaj kopiami';
 
   @override
-  String get manageBackupsSubtitle => 'Wyświetl, przywróć lub udostępnij automatyczne kopie';
+  String get manageBackupsSubtitle =>
+      'Wyświetl, przywróć lub udostępnij automatyczne kopie';
 
   @override
   String get backupsScreenTitle => 'Kopie automatyczne';
@@ -949,7 +1004,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noAutoBackups => 'Brak automatycznych kopii zapasowych';
 
   @override
-  String get noAutoBackupsHint => 'Kopia zapasowa jest zapisywana automatycznie podczas korzystania z aplikacji.';
+  String get noAutoBackupsHint =>
+      'Kopia zapasowa jest zapisywana automatycznie podczas korzystania z aplikacji.';
 
   @override
   String get share => 'Udostępnij';
@@ -958,7 +1014,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupDeleteConfirmTitle => 'Usunąć kopię zapasową?';
 
   @override
-  String get backupDeleteConfirmBody => 'Spowoduje to trwałe usunięcie tego pliku kopii zapasowej z urządzenia.';
+  String get backupDeleteConfirmBody =>
+      'Spowoduje to trwałe usunięcie tego pliku kopii zapasowej z urządzenia.';
 
   @override
   String sizeBytes(Object size) {
@@ -979,7 +1036,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get syncGdriveTitle => 'Synchronizacja z Dyskiem Google';
 
   @override
-  String get syncGdriveSubtitle => 'Automatycznie twórz kopie zapasowe na Twoim Dysku Google';
+  String get syncGdriveSubtitle =>
+      'Automatycznie twórz kopie zapasowe na Twoim Dysku Google';
 
   @override
   String syncGdriveLastPush(String when) {
@@ -995,7 +1053,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get syncGdriveConnectFailed => 'Nie udało się połączyć z Dyskiem Google';
+  String get syncGdriveConnectFailed =>
+      'Nie udało się połączyć z Dyskiem Google';
 
   @override
   String syncGdriveDialogBody(String email) {
@@ -1006,7 +1065,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get syncGdriveDisconnect => 'Odłącz';
 
   @override
-  String get syncGdriveDisconnectedSnack => 'Dysk Google odłączony. Przesłane już kopie zapasowe pozostaną na Twoim Dysku.';
+  String get syncGdriveDisconnectedSnack =>
+      'Dysk Google odłączony. Przesłane już kopie zapasowe pozostaną na Twoim Dysku.';
 
   @override
   String syncGdriveLastFailed(String when) {
@@ -1017,7 +1077,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get syncDeviceNameTitle => 'Nazwa urządzenia';
 
   @override
-  String get syncDeviceNameBody => 'Wyświetlana przy kopiach zapasowych przesyłanych z tego urządzenia, aby można było odróżnić swoje urządzenia.';
+  String get syncDeviceNameBody =>
+      'Wyświetlana przy kopiach zapasowych przesyłanych z tego urządzenia, aby można było odróżnić swoje urządzenia.';
 
   @override
   String get syncDeviceNameHint => 'np. Mój telefon';
@@ -1057,10 +1118,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupsDriveSection => 'Dysk Google';
 
   @override
-  String get backupsDriveEmpty => 'Na Dysku Google nie ma jeszcze kopii zapasowych';
+  String get backupsDriveEmpty =>
+      'Na Dysku Google nie ma jeszcze kopii zapasowych';
 
   @override
-  String get backupsDriveLoadFailed => 'Nie udało się wczytać kopii zapasowych z Dysku Google';
+  String get backupsDriveLoadFailed =>
+      'Nie udało się wczytać kopii zapasowych z Dysku Google';
 
   @override
   String backupsDriveTooLarge(Object size) {
@@ -1074,22 +1137,27 @@ class AppLocalizationsPl extends AppLocalizations {
   String get syncIcloudTitle => 'Kopia zapasowa iCloud';
 
   @override
-  String get syncIcloudSubtitle => 'Automatycznie twórz kopie zapasowe na Twoim iCloud Drive';
+  String get syncIcloudSubtitle =>
+      'Automatycznie twórz kopie zapasowe na Twoim iCloud Drive';
 
   @override
-  String get syncIcloudDialogBody => 'Kopie zapasowe są przesyłane do folderu „ReefTracker” na Twoim iCloud Drive. Możesz je przeglądać w aplikacji Pliki.';
+  String get syncIcloudDialogBody =>
+      'Kopie zapasowe są przesyłane do folderu „ReefTracker” na Twoim iCloud Drive. Możesz je przeglądać w aplikacji Pliki.';
 
   @override
   String get syncIcloudDisable => 'Wyłącz';
 
   @override
-  String get syncIcloudEnabledSnack => 'Kopie zapasowe będą synchronizowane z Twoim iCloud Drive';
+  String get syncIcloudEnabledSnack =>
+      'Kopie zapasowe będą synchronizowane z Twoim iCloud Drive';
 
   @override
-  String get syncIcloudDisabledSnack => 'Kopia zapasowa iCloud wyłączona. Przesłane już kopie zapasowe pozostaną na Twoim iCloud Drive.';
+  String get syncIcloudDisabledSnack =>
+      'Kopia zapasowa iCloud wyłączona. Przesłane już kopie zapasowe pozostaną na Twoim iCloud Drive.';
 
   @override
-  String get syncIcloudUnavailable => 'iCloud jest niedostępny. Zaloguj się do iCloud i włącz iCloud Drive dla ReefTracker w Ustawieniach urządzenia.';
+  String get syncIcloudUnavailable =>
+      'iCloud jest niedostępny. Zaloguj się do iCloud i włącz iCloud Drive dla ReefTracker w Ustawieniach urządzenia.';
 
   @override
   String syncIcloudLastFailed(Object when) {
@@ -1103,7 +1171,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupsIcloudEmpty => 'W iCloud nie ma jeszcze kopii zapasowych';
 
   @override
-  String get backupsIcloudLoadFailed => 'Nie udało się wczytać kopii zapasowych z iCloud';
+  String get backupsIcloudLoadFailed =>
+      'Nie udało się wczytać kopii zapasowych z iCloud';
 
   @override
   String get welcomeRestoreIcloud => 'Przywróć z iCloud';
@@ -1122,19 +1191,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String get backupsDeviceNameNudge => 'Ustaw nazwę urządzenia';
 
   @override
-  String get backupsDeviceNameNudgeHint => 'Oznacza kopie zapasowe przesyłane z tego urządzenia';
+  String get backupsDeviceNameNudgeHint =>
+      'Oznacza kopie zapasowe przesyłane z tego urządzenia';
 
   @override
   String get aboutAppName => 'O aplikacji ReefTracker';
 
   @override
-  String get aboutDescription => 'Działająca offline aplikacja do śledzenia parametrów akwarium morskiego — z historią pomiarów, wykresami w czasie i strefami zdrowia: zieloną, pomarańczową i czerwoną.';
+  String get aboutDescription =>
+      'Działająca offline aplikacja do śledzenia parametrów akwarium morskiego — z historią pomiarów, wykresami w czasie i strefami zdrowia: zieloną, pomarańczową i czerwoną.';
 
   @override
   String get aboutUserGuide => 'Podręcznik użytkownika';
 
   @override
-  String get aboutUserGuideSubtitle => 'Jak korzystać z każdej funkcji, ze zrzutami ekranu';
+  String get aboutUserGuideSubtitle =>
+      'Jak korzystać z każdej funkcji, ze zrzutami ekranu';
 
   @override
   String get aboutSupport => 'Pomoc i FAQ';
@@ -1152,7 +1224,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get shareDiagnostics => 'Udostępnij diagnostykę';
 
   @override
-  String get shareDiagnosticsSubtitle => 'Wyślij dziennik błędów aplikacji do pomocy technicznej';
+  String get shareDiagnosticsSubtitle =>
+      'Wyślij dziennik błędów aplikacji do pomocy technicznej';
 
   @override
   String get diagnosticsEmpty => 'Nie zarejestrowano żadnych błędów';
@@ -1161,7 +1234,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get diagnosticsShareFailed => 'Nie udało się udostępnić diagnostyki';
 
   @override
-  String get updateAvailableSnack => 'Dostępna jest nowa wersja aplikacji ReefTracker.';
+  String get updateAvailableSnack =>
+      'Dostępna jest nowa wersja aplikacji ReefTracker.';
 
   @override
   String get updateAction => 'Aktualizuj';
@@ -1182,10 +1256,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get editionStandard => 'Standardowa';
 
   @override
-  String get founderInfoBody => 'Korzystasz z ReefTrackera od samego początku. W podziękowaniu wszystkie dostępne dziś funkcje pozostaną dla Ciebie bezpłatne na zawsze.';
+  String get founderInfoBody =>
+      'Korzystasz z ReefTrackera od samego początku. W podziękowaniu wszystkie dostępne dziś funkcje pozostaną dla Ciebie bezpłatne na zawsze.';
 
   @override
-  String get standardInfoBody => 'Korzystasz ze standardowej edycji aplikacji ReefTracker. Wszystko, co masz już zapisane, pozostaje Twoje; ReefTracker Pro odblokowuje zaawansowane funkcje.';
+  String get standardInfoBody =>
+      'Korzystasz ze standardowej edycji aplikacji ReefTracker. Wszystko, co masz już zapisane, pozostaje Twoje; ReefTracker Pro odblokowuje zaawansowane funkcje.';
 
   @override
   String get editionUpgrade => 'Odblokuj Pro';
@@ -1197,13 +1273,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get editionFounderPro => 'Edycja założycielska + Pro';
 
   @override
-  String get proInfoBody => 'Dziękujemy! Odblokowanie Pro jest aktywne na tym urządzeniu. Wszystkie funkcje Pro są do Twojej dyspozycji.';
+  String get proInfoBody =>
+      'Dziękujemy! Odblokowanie Pro jest aktywne na tym urządzeniu. Wszystkie funkcje Pro są do Twojej dyspozycji.';
 
   @override
   String get paywallTitle => 'ReefTracker Pro';
 
   @override
-  String get paywallIntro => 'Jednorazowy zakup, bez subskrypcji i bez konta — odblokowanie zostaje przy koncie sklepu na tym urządzeniu.';
+  String get paywallIntro =>
+      'Jednorazowy zakup, bez subskrypcji i bez konta — odblokowanie zostaje przy koncie sklepu na tym urządzeniu.';
 
   @override
   String paywallBuy(Object price) {
@@ -1223,16 +1301,20 @@ class AppLocalizationsPl extends AppLocalizations {
   String get paywallRestored => 'Twoje odblokowanie Pro zostało przywrócone.';
 
   @override
-  String get paywallNothingToRestore => 'Nie znaleziono wcześniejszego zakupu dla tego konta sklepu.';
+  String get paywallNothingToRestore =>
+      'Nie znaleziono wcześniejszego zakupu dla tego konta sklepu.';
 
   @override
-  String get paywallPending => 'Płatność jest wciąż potwierdzana. Pro odblokuje się, gdy tylko przejdzie.';
+  String get paywallPending =>
+      'Płatność jest wciąż potwierdzana. Pro odblokuje się, gdy tylko przejdzie.';
 
   @override
-  String get paywallFailed => 'Sklep nie mógł tego dokończyć. Spróbuj ponownie.';
+  String get paywallFailed =>
+      'Sklep nie mógł tego dokończyć. Spróbuj ponownie.';
 
   @override
-  String get paywallUnavailable => 'Zakupy w aplikacji nie są dostępne na tym urządzeniu.';
+  String get paywallUnavailable =>
+      'Zakupy w aplikacji nie są dostępne na tym urządzeniu.';
 
   @override
   String get proFeatureTitle => 'Funkcja Pro';
@@ -1278,7 +1360,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get languageItalian => 'Italiano';
 
   @override
-  String get calculatorIntro => 'Przelicz między praktycznym zasoleniem (ppt) a gęstością względną (SG). Wpisuj w dowolne pole.';
+  String get calculatorIntro =>
+      'Przelicz między praktycznym zasoleniem (ppt) a gęstością względną (SG). Wpisuj w dowolne pole.';
 
   @override
   String get specificGravity => 'Gęstość względna';
@@ -1293,13 +1376,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get refReefTarget => '• Typowy cel dla rafy ≈ 35 ppt (1,025–1,027 SG)';
 
   @override
-  String get refFormulaNote => 'SG odniesione do 25 °C. Przeliczenie to przybliżenie liniowe: SG = 1 + ppt × 0,0264/35.';
+  String get refFormulaNote =>
+      'SG odniesione do 25 °C. Przeliczenie to przybliżenie liniowe: SG = 1 + ppt × 0,0264/35.';
 
   @override
   String get doseCalcTitle => 'Kalkulator dozowania';
 
   @override
-  String get doseCalcIntro => 'Szacuje, jak szybko zbiornik zużywa pierwiastek, oraz dawkę dzienną, która utrzyma go na stałym poziomie. Podmiany wody nie są uwzględniane.';
+  String get doseCalcIntro =>
+      'Szacuje, jak szybko zbiornik zużywa pierwiastek, oraz dawkę dzienną, która utrzyma go na stałym poziomie. Podmiany wody nie są uwzględniane.';
 
   @override
   String get doseCalcElement => 'Pierwiastek';
@@ -1335,7 +1420,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcManualDose => 'Dawka ręczna w oknie';
 
   @override
-  String get doseCalcManualDoseHelp => 'Opcjonalnie: suma jednorazowych lub dodatkowych dawek podanych w oknie pomiarowym. Gdy pole jest puste, używane są zapisane dawki ręczne.';
+  String get doseCalcManualDoseHelp =>
+      'Opcjonalnie: suma jednorazowych lub dodatkowych dawek podanych w oknie pomiarowym. Gdy pole jest puste, używane są zapisane dawki ręczne.';
 
   @override
   String get doseCalcManualInput => 'Dawki ręczne dodają';
@@ -1358,16 +1444,20 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count zapisanej dawki używa innej jednostki i nie jest uwzględnione.',
-      many: '$count zapisanych dawek używa innej jednostki i nie jest uwzględnionych.',
-      few: '$count zapisane dawki używają innej jednostki i nie są uwzględnione.',
+      other:
+          '$count zapisanej dawki używa innej jednostki i nie jest uwzględnione.',
+      many:
+          '$count zapisanych dawek używa innej jednostki i nie jest uwzględnionych.',
+      few:
+          '$count zapisane dawki używają innej jednostki i nie są uwzględnione.',
       one: '1 zapisana dawka używa innej jednostki i nie jest uwzględniona.',
     );
     return '$_temp0';
   }
 
   @override
-  String get doseCalcLoggedProductMismatch => 'Niektóre zapisane dawki to inny preparat — ich siła może różnić się od podanej powyżej.';
+  String get doseCalcLoggedProductMismatch =>
+      'Niektóre zapisane dawki to inny preparat — ich siła może różnić się od podanej powyżej.';
 
   @override
   String get doseCalcPerDay => 'dzień';
@@ -1376,7 +1466,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcPotencyTitle => 'Moc preparatu';
 
   @override
-  String get doseCalcPotencyFromCatalog => 'Używana jest moc tego produktu z katalogu.';
+  String get doseCalcPotencyFromCatalog =>
+      'Używana jest moc tego produktu z katalogu.';
 
   @override
   String get doseCalcEnterManually => 'Wpisz ręcznie';
@@ -1417,25 +1508,32 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcAdjustment => 'Korekta';
 
   @override
-  String get doseCalcStable => 'Twoja dawka utrzymuje ten pierwiastek na stałym poziomie — zostaw ją.';
+  String get doseCalcStable =>
+      'Twoja dawka utrzymuje ten pierwiastek na stałym poziomie — zostaw ją.';
 
   @override
-  String get doseCalcIncrease => 'Zwiększ dawkę, aby utrzymać ten pierwiastek na stałym poziomie.';
+  String get doseCalcIncrease =>
+      'Zwiększ dawkę, aby utrzymać ten pierwiastek na stałym poziomie.';
 
   @override
-  String get doseCalcDecrease => 'Możesz zmniejszyć dawkę i nadal utrzymać ten pierwiastek na stałym poziomie.';
+  String get doseCalcDecrease =>
+      'Możesz zmniejszyć dawkę i nadal utrzymać ten pierwiastek na stałym poziomie.';
 
   @override
-  String get doseCalcOverdosing => 'Ten pierwiastek rośnie — zmniejsz lub wstrzymaj dozowanie.';
+  String get doseCalcOverdosing =>
+      'Ten pierwiastek rośnie — zmniejsz lub wstrzymaj dozowanie.';
 
   @override
-  String get doseCalcNoDoseNeeded => 'Nic nie jest dozowane, a ten pierwiastek nie spada — dozowanie nie jest potrzebne.';
+  String get doseCalcNoDoseNeeded =>
+      'Nic nie jest dozowane, a ten pierwiastek nie spada — dozowanie nie jest potrzebne.';
 
   @override
-  String get doseCalcNeedsPotency => 'Podaj moc preparatu, aby otrzymać zalecenie dawki.';
+  String get doseCalcNeedsPotency =>
+      'Podaj moc preparatu, aby otrzymać zalecenie dawki.';
 
   @override
-  String get doseCalcInsufficient => 'Aby obliczyć, dodaj co najmniej dwa pomiary z różnych dni i objętość zbiornika.';
+  String get doseCalcInsufficient =>
+      'Aby obliczyć, dodaj co najmniej dwa pomiary z różnych dni i objętość zbiornika.';
 
   @override
   String get doseCalcModeMaintenance => 'Dawka dzienna';
@@ -1444,7 +1542,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcModeCorrection => 'Korekta';
 
   @override
-  String get doseCalcCorrIntro => 'Oblicz jednorazową dawkę, która podniesie pierwiastek z obecnej wartości do docelowej. Gdy szybki wzrost byłby niebezpieczny, dawka zostanie rozłożona na kilka dni.';
+  String get doseCalcCorrIntro =>
+      'Oblicz jednorazową dawkę, która podniesie pierwiastek z obecnej wartości do docelowej. Gdy szybki wzrost byłby niebezpieczny, dawka zostanie rozłożona na kilka dni.';
 
   @override
   String get doseCalcCurrentValue => 'Obecna wartość';
@@ -1456,7 +1555,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcTargetValue => 'Wartość docelowa';
 
   @override
-  String get doseCalcTargetValueHelp => 'Puste = cel korekty parametru lub środek jego bezpiecznego zakresu.';
+  String get doseCalcTargetValueHelp =>
+      'Puste = cel korekty parametru lub środek jego bezpiecznego zakresu.';
 
   @override
   String get doseCalcNeededRise => 'Wymagany wzrost';
@@ -1474,10 +1574,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcSpreadDays => 'Rozłożyć na dni';
 
   @override
-  String get doseCalcCorrMissing => 'Aby obliczyć, podaj obecną wartość, cel i objętość zbiornika.';
+  String get doseCalcCorrMissing =>
+      'Aby obliczyć, podaj obecną wartość, cel i objętość zbiornika.';
 
   @override
-  String get doseCalcCorrAtTarget => 'Wartość jest już na poziomie celu lub powyżej — nie ma czego dawkować.';
+  String get doseCalcCorrAtTarget =>
+      'Wartość jest już na poziomie celu lub powyżej — nie ma czego dawkować.';
 
   @override
   String get doseCalcCorrSingle => 'Można bezpiecznie podać jako jedną dawkę.';
@@ -1494,15 +1596,21 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcSalinityAdjust => 'Dostosuj cel do zasolenia zbiornika';
 
   @override
-  String get doseCalcSalinityAdjustHelp => 'Wartości docelowe zakładają wodę morską o zasoleniu 35 ppt (1,026). Włącz, aby przeliczyć cel na zmierzone zasolenie zbiornika.';
+  String get doseCalcSalinityAdjustHelp =>
+      'Wartości docelowe zakładają wodę morską o zasoleniu 35 ppt (1,026). Włącz, aby przeliczyć cel na zmierzone zasolenie zbiornika.';
 
   @override
-  String doseCalcSalinityAdjustActive(Object salinity, Object adjusted, Object original) {
+  String doseCalcSalinityAdjustActive(
+    Object salinity,
+    Object adjusted,
+    Object original,
+  ) {
     return 'Przy $salinity: cel $adjusted zamiast $original.';
   }
 
   @override
-  String get doseCalcSalinityNone => 'Dla tego zbiornika nie zmierzono jeszcze zasolenia.';
+  String get doseCalcSalinityNone =>
+      'Dla tego zbiornika nie zmierzono jeszcze zasolenia.';
 
   @override
   String doseCalcSalinityStale(int days) {
@@ -1527,7 +1635,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get targetValueLabel => 'Cel korekty';
 
   @override
-  String get targetValueHelp => 'Wstępnie wypełnia tryb korekty kalkulatora dawkowania. Puste = środek bezpiecznego zakresu.';
+  String get targetValueHelp =>
+      'Wstępnie wypełnia tryb korekty kalkulatora dawkowania. Puste = środek bezpiecznego zakresu.';
 
   @override
   String get trendSection => 'Trendy';
@@ -1536,7 +1645,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get trendShowTitle => 'Pokazuj trendy';
 
   @override
-  String get trendShowSubtitle => 'Przewiduje, dokąd zmierza każdy parametr i kiedy opuści swój zakres';
+  String get trendShowSubtitle =>
+      'Przewiduje, dokąd zmierza każdy parametr i kiedy opuści swój zakres';
 
   @override
   String get trendWindow => 'Użyte pomiary';
@@ -1600,7 +1710,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get trendHorizon => 'Horyzont alertu';
 
   @override
-  String get trendHorizonSubtitle => 'Oznaczaj parametr tylko, gdy opuści swój zakres w tym czasie';
+  String get trendHorizonSubtitle =>
+      'Oznaczaj parametr tylko, gdy opuści swój zakres w tym czasie';
 
   @override
   String trendHorizonDays(int days) {
@@ -1785,7 +1896,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get microNotMeasured => 'Nie zmierzono';
 
   @override
-  String get microEmptyHint => 'Śledź pierwiastki śladowe z testów domowych lub raportów ICP.';
+  String get microEmptyHint =>
+      'Śledź pierwiastki śladowe z testów domowych lub raportów ICP.';
 
   @override
   String get microAllOk => 'Wszystko w zakresie';
@@ -1819,16 +1931,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get microReminderTitle => 'Przypomnienie o teście mikroelementów';
 
   @override
-  String get microReminderHint => 'Dodaje do harmonogramu konserwacji zadanie przypominające o regularnym testowaniu mikroelementów.';
+  String get microReminderHint =>
+      'Dodaje do harmonogramu konserwacji zadanie przypominające o regularnym testowaniu mikroelementów.';
 
   @override
-  String get microReminderCreated => 'Przypomnienie dodano do harmonogramu konserwacji';
+  String get microReminderCreated =>
+      'Przypomnienie dodano do harmonogramu konserwacji';
 
   @override
   String get microIcpTaskTitle => 'Test mikroelementów (ICP)';
 
   @override
-  String get microToggleSubtitle => 'Pokazuj na karcie Pomiary, z przypomnieniami o testach. Ukrycie nie usuwa pomiarów.';
+  String get microToggleSubtitle =>
+      'Pokazuj na karcie Pomiary, z przypomnieniami o testach. Ukrycie nie usuwa pomiarów.';
 
   @override
   String get microViewFull => 'Pełna lista';
@@ -1846,7 +1961,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get microConfigureTitle => 'Ustawienia pierwiastków';
 
   @override
-  String get microViewNone => 'Brak własnych widoków. Widok pokazuje tylko pierwiastki raportowane przez Twoje laboratorium.';
+  String get microViewNone =>
+      'Brak własnych widoków. Widok pokazuje tylko pierwiastki raportowane przez Twoje laboratorium.';
 
   @override
   String get microViewNameHint => 'np. Panel mojego laboratorium';
@@ -1873,7 +1989,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get microViewDeleteBody => 'Usuwa tylko widok. Pomiary zostaną zachowane.';
+  String get microViewDeleteBody =>
+      'Usuwa tylko widok. Pomiary zostaną zachowane.';
 
   @override
   String get microHideUndetectable => 'Ukryj niewykrywalne (zero)';
@@ -1882,7 +1999,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get microAttentionOnly => 'Tylko pierwiastki wymagające uwagi';
 
   @override
-  String get microFilterAllHidden => 'Żadne pierwiastki nie pasują do bieżących filtrów.';
+  String get microFilterAllHidden =>
+      'Żadne pierwiastki nie pasują do bieżących filtrów.';
 
   @override
   String get icpImportTitle => 'Import raportu ICP';
@@ -1891,10 +2009,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get icpImportFormatHint => 'Wybierz format wyeksportowanego pliku.';
 
   @override
-  String get icpImportFormatFaunaMarinHint => 'Eksport CSV z portalu laboratorium Fauna Marin';
+  String get icpImportFormatFaunaMarinHint =>
+      'Eksport CSV z portalu laboratorium Fauna Marin';
 
   @override
-  String get icpImportFormatZimsHint => 'Uniwersalny CSV z pomiarami (data, pomiar, wartość, jednostka)';
+  String get icpImportFormatZimsHint =>
+      'Uniwersalny CSV z pomiarami (data, pomiar, wartość, jednostka)';
 
   @override
   String get icpImportUnreadable => 'Nie udało się odczytać pliku.';
@@ -1905,10 +2025,12 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get icpImportNoValues => 'Nie znaleziono w pliku wartości do zaimportowania.';
+  String get icpImportNoValues =>
+      'Nie znaleziono w pliku wartości do zaimportowania.';
 
   @override
-  String get icpImportSampleDateHint => 'Wstępnie wypełniono datą analizy z raportu. Zmień ją na dzień pobrania próbki wody.';
+  String get icpImportSampleDateHint =>
+      'Wstępnie wypełniono datą analizy z raportu. Zmień ją na dzień pobrania próbki wody.';
 
   @override
   String get icpImportSectionCore => 'Parametry podstawowe';
@@ -1954,10 +2076,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get measurementImportTitle => 'Import pomiarów';
 
   @override
-  String get measurementImportSourceHint => 'Wybierz aplikację lub miernik, z którego pochodzi plik.';
+  String get measurementImportSourceHint =>
+      'Wybierz aplikację lub miernik, z którego pochodzi plik.';
 
   @override
-  String get measurementImportHannaHint => 'Historia CSV udostępniona z aplikacji Hanna Lab';
+  String get measurementImportHannaHint =>
+      'Historia CSV udostępniona z aplikacji Hanna Lab';
 
   @override
   String get hannaImportTitle => 'Import z Hanna Lab';
@@ -1972,7 +2096,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaImportEverything => 'Wszystko';
 
   @override
-  String get hannaImportFirstFromHint => 'Pierwszy import do tego akwarium: wybierz, od kiedy importować. Starsze pomiary zostaną trwale pominięte — przydatne, jeśli wpisano je już ręcznie.';
+  String get hannaImportFirstFromHint =>
+      'Pierwszy import do tego akwarium: wybierz, od kiedy importować. Starsze pomiary zostaną trwale pominięte — przydatne, jeśli wpisano je już ręcznie.';
 
   @override
   String hannaImportNewCount(int count) {
@@ -2010,7 +2135,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaImportSkipValue => 'nieczytelna wartość';
 
   @override
-  String get hannaImportUpToDate => 'Wszystko z tego pliku zostało już zaimportowane.';
+  String get hannaImportUpToDate =>
+      'Wszystko z tego pliku zostało już zaimportowane.';
 
   @override
   String hannaImportButton(int count) {
@@ -2070,7 +2196,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaImportResetTitle => 'Zresetować import z Hanna Lab?';
 
   @override
-  String get hannaImportResetBody => 'Następny import ponownie zapyta, od której daty zacząć. Zaimportowane pomiary pozostają; przypisanie akwarium jest zapamiętane.';
+  String get hannaImportResetBody =>
+      'Następny import ponownie zapyta, od której daty zacząć. Zaimportowane pomiary pozostają; przypisanie akwarium jest zapamiętane.';
 
   @override
   String get hannaConnectTitle => 'Fotometr Hanna';
@@ -2082,7 +2209,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaScanTitle => 'Skanuj wyświetlacz checkera';
 
   @override
-  String get hannaScanPickHint => 'Odczytuje wartość bezpośrednio z wyświetlacza checkera. Najpierw wybierz model — numer HI jest nadrukowany z przodu checkera.';
+  String get hannaScanPickHint =>
+      'Odczytuje wartość bezpośrednio z wyświetlacza checkera. Najpierw wybierz model — numer HI jest nadrukowany z przodu checkera.';
 
   @override
   String get hannaScanPickTitle => 'Model checkera';
@@ -2103,16 +2231,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaScanNoCamera => 'To urządzenie nie ma aparatu.';
 
   @override
-  String get hannaScanCameraDenied => 'Odmówiono dostępu do aparatu. Zezwól na dostęp do aparatu w ustawieniach systemu, aby skanować wyświetlacz.';
+  String get hannaScanCameraDenied =>
+      'Odmówiono dostępu do aparatu. Zezwól na dostęp do aparatu w ustawieniach systemu, aby skanować wyświetlacz.';
 
   @override
   String get hannaScanCameraFailed => 'Nie udało się uruchomić aparatu.';
 
   @override
-  String get hannaScanImpossibleNote => 'Ta wartość jest niemożliwa dla tego parametru i nie może zostać zapisana. Zeskanuj ponownie lub sprawdź, czy wybrano właściwy model.';
+  String get hannaScanImpossibleNote =>
+      'Ta wartość jest niemożliwa dla tego parametru i nie może zostać zapisana. Zeskanuj ponownie lub sprawdź, czy wybrano właściwy model.';
 
   @override
-  String get hannaScanImplausibleNote => 'Ta wartość jest poza wiarygodnym zakresem — sprawdź ją przed zapisaniem.';
+  String get hannaScanImplausibleNote =>
+      'Ta wartość jest poza wiarygodnym zakresem — sprawdź ją przed zapisaniem.';
 
   @override
   String get experimentalBadge => 'Eksperymentalna';
@@ -2124,19 +2255,23 @@ class AppLocalizationsPl extends AppLocalizations {
   String get experimentalToggleTitle => 'Funkcje eksperymentalne';
 
   @override
-  String get experimentalToggleSubtitle => 'Wypróbuj funkcje w fazie testów: połączenie z checkerem Hanna przez Bluetooth i skanowanie wyświetlacza';
+  String get experimentalToggleSubtitle =>
+      'Wypróbuj funkcje w fazie testów: połączenie z checkerem Hanna przez Bluetooth i skanowanie wyświetlacza';
 
   @override
   String get hannaScanFabTitle => 'Przycisk skanowania aparatem';
 
   @override
-  String get hannaScanFabSubtitle => 'Pokaż przycisk szybkiego skanowania nad „Dodaj pomiar”';
+  String get hannaScanFabSubtitle =>
+      'Pokaż przycisk szybkiego skanowania nad „Dodaj pomiar”';
 
   @override
-  String get hannaExperimentalNote => 'Funkcja eksperymentalna: korzysta z nieoficjalnego protokołu Bluetooth i może przestać działać po aktualizacji oprogramowania miernika.';
+  String get hannaExperimentalNote =>
+      'Funkcja eksperymentalna: korzysta z nieoficjalnego protokołu Bluetooth i może przestać działać po aktualizacji oprogramowania miernika.';
 
   @override
-  String get hannaMeasureOnlyNote => 'Obsługiwane są wyłącznie pomiary. Aby zmienić ustawienia miernika lub zaktualizować jego oprogramowanie, użyj aplikacji producenta Hanna Lab.';
+  String get hannaMeasureOnlyNote =>
+      'Obsługiwane są wyłącznie pomiary. Aby zmienić ustawienia miernika lub zaktualizować jego oprogramowanie, użyj aplikacji producenta Hanna Lab.';
 
   @override
   String get hannaScanning => 'Szukanie miernika…';
@@ -2148,13 +2283,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaReadingSetup => 'Połączono — odczytywanie ustawień miernika…';
 
   @override
-  String get hannaErrUnsupported => 'Bluetooth LE nie jest dostępny na tym urządzeniu.';
+  String get hannaErrUnsupported =>
+      'Bluetooth LE nie jest dostępny na tym urządzeniu.';
 
   @override
-  String get hannaErrBluetoothOff => 'Bluetooth jest wyłączony. Włącz go i spróbuj ponownie.';
+  String get hannaErrBluetoothOff =>
+      'Bluetooth jest wyłączony. Włącz go i spróbuj ponownie.';
 
   @override
-  String get hannaErrNotFound => 'Nie znaleziono miernika. Upewnij się, że jest włączony i w zasięgu.';
+  String get hannaErrNotFound =>
+      'Nie znaleziono miernika. Upewnij się, że jest włączony i w zasięgu.';
 
   @override
   String get hannaErrConnectionFailed => 'Nie udało się połączyć z miernikiem.';
@@ -2252,7 +2390,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaResultsTitle => 'Wyniki pomiarów';
 
   @override
-  String get hannaResultsDisconnected => 'Połączenie zostało utracone — dotychczasowe wyniki pozostają.';
+  String get hannaResultsDisconnected =>
+      'Połączenie zostało utracone — dotychczasowe wyniki pozostają.';
 
   @override
   String get hannaNoResults => 'Nie zarejestrowano żadnych pomiarów.';
@@ -2303,7 +2442,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaIncludeInSave => 'Zapisz tę wartość';
 
   @override
-  String get hannaValueImpossible => 'Poza możliwym zakresem — nie zostanie zapisane';
+  String get hannaValueImpossible =>
+      'Poza możliwym zakresem — nie zostanie zapisane';
 
   @override
   String get hannaNothingSelected => 'Nie wybrano nic do zapisania';
@@ -2328,7 +2468,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaRemeasureQueued => 'Zostanie zmierzone ponownie';
 
   @override
-  String get hannaRemeasureKept => 'Nie zmierzono ponownie — zachowano poprzednią wartość';
+  String get hannaRemeasureKept =>
+      'Nie zmierzono ponownie — zachowano poprzednią wartość';
 
   @override
   String hannaPreviousValue(String value) {
@@ -2339,13 +2480,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get hannaMeasuringAgain => 'Trwa ponowny pomiar wybranych parametrów.';
 
   @override
-  String get hannaRemeasureFailed => 'Miernik nie odpowiedział — nic nie zostało zmierzone ponownie, wyniki pozostają bez zmian.';
+  String get hannaRemeasureFailed =>
+      'Miernik nie odpowiedział — nic nie zostało zmierzone ponownie, wyniki pozostają bez zmian.';
 
   @override
   String get environmentTitle => 'Środowisko';
 
   @override
-  String get environmentInclude => 'Zapisuj też odczyty środowiska z podłączonych urządzeń';
+  String get environmentInclude =>
+      'Zapisuj też odczyty środowiska z podłączonych urządzeń';
 
   @override
   String get environmentJustNow => 'odczytano przed chwilą';
@@ -2364,34 +2507,41 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get environmentUnreachable => 'Urządzenia niedostępne — pomiary zostaną zapisane bez odczytów środowiska.';
+  String get environmentUnreachable =>
+      'Urządzenia niedostępne — pomiary zostaną zapisane bez odczytów środowiska.';
 
   @override
-  String get environmentAllMeasured => 'Wszystkie wartości środowiska zostały już zmierzone w tej sesji.';
+  String get environmentAllMeasured =>
+      'Wszystkie wartości środowiska zostały już zmierzone w tej sesji.';
 
   @override
   String get hannaDiscardTitle => 'Odrzucić pomiary?';
 
   @override
-  String get hannaDiscardBody => 'Zarejestrowane wartości nie zostały zapisane i zostaną utracone.';
+  String get hannaDiscardBody =>
+      'Zarejestrowane wartości nie zostały zapisane i zostaną utracone.';
 
   @override
   String get hannaDiscard => 'Odrzuć';
 
   @override
-  String get helpTemperature => 'Temperatura wody. Stabilność jest ważniejsza niż dokładna wartość.';
+  String get helpTemperature =>
+      'Temperatura wody. Stabilność jest ważniejsza niż dokładna wartość.';
 
   @override
   String get helpSalinity => 'Gęstość względna. ~1,026 SG ≈ 35 ppt.';
 
   @override
-  String get helpAlkalinity => 'Alkaliczność (KH). Utrzymuj stabilną — unikaj wahań.';
+  String get helpAlkalinity =>
+      'Alkaliczność (KH). Utrzymuj stabilną — unikaj wahań.';
 
   @override
-  String get helpNitrate => 'Składnik odżywczy. Koralowce potrzebują go trochę; nadmiar sprzyja glonom.';
+  String get helpNitrate =>
+      'Składnik odżywczy. Koralowce potrzebują go trochę; nadmiar sprzyja glonom.';
 
   @override
-  String get helpAmmonia => 'Toksyczny. W dojrzałym akwarium powinien być praktycznie zerowy.';
+  String get helpAmmonia =>
+      'Toksyczny. W dojrzałym akwarium powinien być praktycznie zerowy.';
 
   @override
   String get healthTitle => 'Kondycja zbiornika';
@@ -2502,7 +2652,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get stabilityWindowTitle => 'Okno stabilności';
 
   @override
-  String get stabilityWindowSubtitle => 'Okres oceniany przez wskaźnik stabilności';
+  String get stabilityWindowSubtitle =>
+      'Okres oceniany przez wskaźnik stabilności';
 
   @override
   String get insightsTitle => 'Wskazówki';
@@ -2585,7 +2736,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiSummaryAction => 'Zapytaj swoją AI';
 
   @override
-  String get aiSummaryPrivacyNote => 'To gotowy prompt z danymi Twojego zbiornika. Wklej go do ChatGPT, Claude, Gemini lub innego narzędzia AI — wszystko powstaje na Twoim urządzeniu, nic nigdzie nie jest wysyłane.';
+  String get aiSummaryPrivacyNote =>
+      'To gotowy prompt z danymi Twojego zbiornika. Wklej go do ChatGPT, Claude, Gemini lub innego narzędzia AI — wszystko powstaje na Twoim urządzeniu, nic nigdzie nie jest wysyłane.';
 
   @override
   String get aiSummaryPromptPreview => 'Podgląd promptu';
@@ -2613,17 +2765,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiSummaryEmpty => 'Brak pomiarów — nie ma czego podsumować.';
 
   @override
-  String get aiSummaryInsightsFooter => 'Chcesz głębszej analizy? Zapytaj swoją AI';
+  String get aiSummaryInsightsFooter =>
+      'Chcesz głębszej analizy? Zapytaj swoją AI';
 
   @override
   String aiSummaryPreamble(int weeks) {
     String _temp0 = intl.Intl.pluralLogic(
       weeks,
       locale: localeName,
-      other: 'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodnia. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
-      many: 'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodni. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
-      few: 'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodni. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
-      one: 'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatniego tygodnia. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
+      other:
+          'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodnia. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
+      many:
+          'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodni. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
+      few:
+          'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatnich $weeks tygodni. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
+      one:
+          'Prowadzę morskie akwarium rafowe i zapisuję dane w aplikacji. Poniżej dane mojego zbiornika z ostatniego tygodnia. Przeanalizuj je, wskaż zagrożenia i trendy wymagające uwagi oraz podpowiedz, co sprawdzić lub skorygować.',
     );
     return '$_temp0';
   }
@@ -2657,7 +2814,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get aiSummaryObservationsLead => 'Obserwacje aplikacji (na podstawie reguł):';
+  String get aiSummaryObservationsLead =>
+      'Obserwacje aplikacji (na podstawie reguł):';
 
   @override
   String get aiSummaryParamsHeading => 'Parametry';
@@ -2717,7 +2875,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiSummaryActionsHeading => 'Konserwacja w tym okresie';
 
   @override
-  String get aiSummaryMicroHeading => 'Pierwiastki śladowe (ostatnie zmierzone wartości)';
+  String get aiSummaryMicroHeading =>
+      'Pierwiastki śladowe (ostatnie zmierzone wartości)';
 
   @override
   String get dashboardSection => 'Pulpit';
@@ -2726,7 +2885,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get dashboardLayoutTitle => 'Układ pulpitu';
 
   @override
-  String get dashboardLayoutSubtitle => 'Jak karty są ułożone na karcie Pomiary';
+  String get dashboardLayoutSubtitle =>
+      'Jak karty są ułożone na karcie Pomiary';
 
   @override
   String get dashboardLayoutGrouped => 'Grupowany';
@@ -2788,25 +2948,30 @@ class AppLocalizationsPl extends AppLocalizations {
   String get remindersTitle => 'Przypomnienia';
 
   @override
-  String get remindersSubtitle => 'Powiadomienia o testach, dozowaniu i konserwacji';
+  String get remindersSubtitle =>
+      'Powiadomienia o testach, dozowaniu i konserwacji';
 
   @override
-  String get remindersTestingSubtitle => 'Gdy zbliża się termin testu parametru';
+  String get remindersTestingSubtitle =>
+      'Gdy zbliża się termin testu parametru';
 
   @override
   String get remindersDosingSubtitle => 'O porze dozowania każdego preparatu';
 
   @override
-  String get remindersMaintenanceSubtitle => 'Gdy przypada zaplanowana konserwacja';
+  String get remindersMaintenanceSubtitle =>
+      'Gdy przypada zaplanowana konserwacja';
 
   @override
   String get reminderTimeTitle => 'Godzina przypomnień';
 
   @override
-  String get reminderTimeSubtitle => 'O której przychodzą przypomnienia o testach i konserwacji';
+  String get reminderTimeSubtitle =>
+      'O której przychodzą przypomnienia o testach i konserwacji';
 
   @override
-  String get remindersPermissionDenied => 'Powiadomienia są zablokowane w ustawieniach systemu — przypomnienia nie będą wyświetlane.';
+  String get remindersPermissionDenied =>
+      'Powiadomienia są zablokowane w ustawieniach systemu — przypomnienia nie będą wyświetlane.';
 
   @override
   String get remindToTest => 'Przypominaj o teście';
@@ -2829,7 +2994,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get remindMe => 'Przypominaj';
 
   @override
-  String get remindMeNeedsTime => 'Ustaw porę dozowania, aby włączyć przypomnienia';
+  String get remindMeNeedsTime =>
+      'Ustaw porę dozowania, aby włączyć przypomnienia';
 
   @override
   String get maintenanceSchedule => 'Harmonogram konserwacji';
@@ -2887,7 +3053,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get taskDeleted => 'Zadanie usunięte';
 
   @override
-  String get scheduleEmptyBody => 'Brak zadań konserwacji. Zaplanuj podmiany wody lub własne zadania, aby widzieć terminy i otrzymywać przypomnienia.';
+  String get scheduleEmptyBody =>
+      'Brak zadań konserwacji. Zaplanuj podmiany wody lub własne zadania, aby widzieć terminy i otrzymywać przypomnienia.';
 
   @override
   String get repeatModeLabel => 'Powtarzanie';
@@ -3001,7 +3168,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get roPartOfUnit => 'Część mojego zestawu';
 
   @override
-  String get roPartOfUnitHint => 'Wyłącz, jeśli Twój zestaw nie ma tego stopnia';
+  String get roPartOfUnitHint =>
+      'Wyłącz, jeśli Twój zestaw nie ma tego stopnia';
 
   @override
   String get roHiddenStages => 'Nie ma w moim zestawie';
@@ -3024,16 +3192,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get roDeleteStageTitle => 'Usunąć element?';
 
   @override
-  String get roDeleteStageBody => 'Usunie element wraz z historią wymian. Nie można tego cofnąć.';
+  String get roDeleteStageBody =>
+      'Usunie element wraz z historią wymian. Nie można tego cofnąć.';
 
   @override
-  String get roEmptyBody => 'Brak elementów. Dodaj filtry swojego zestawu RO przyciskiem +.';
+  String get roEmptyBody =>
+      'Brak elementów. Dodaj filtry swojego zestawu RO przyciskiem +.';
 
   @override
   String get roSetupPrompt => 'Śledź wymiany filtrów i membrany';
 
   @override
-  String get roUnitToggleSubtitle => 'Pokazuj na karcie Czynności, z przypomnieniami o wymianie filtrów';
+  String get roUnitToggleSubtitle =>
+      'Pokazuj na karcie Czynności, z przypomnieniami o wymianie filtrów';
 
   @override
   String get roAllOk => 'Wszystkie elementy w porządku';
@@ -3042,7 +3213,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get roUsageTitle => 'Intensywność użytkowania';
 
   @override
-  String get roUsageDialogBody => 'Ile wody produkuje Twój zestaw. Wybór poziomu zastąpi okresy wymiany wszystkich standardowych elementów — także te ustawione przez Ciebie — typowymi wartościami dla tego poziomu; własne elementy pozostaną bez zmian, a każdy element możesz potem dostroić ręcznie.';
+  String get roUsageDialogBody =>
+      'Ile wody produkuje Twój zestaw. Wybór poziomu zastąpi okresy wymiany wszystkich standardowych elementów — także te ustawione przez Ciebie — typowymi wartościami dla tego poziomu; własne elementy pozostaną bez zmian, a każdy element możesz potem dostroić ręcznie.';
 
   @override
   String get roUsageLight => 'Niska';
@@ -3054,16 +3226,20 @@ class AppLocalizationsPl extends AppLocalizations {
   String get roUsageHeavy => 'Wysoka';
 
   @override
-  String get roUsageLightHint => 'Poniżej ~300 l (80 gal) miesięcznie — dolewki i małe podmiany wody';
+  String get roUsageLightHint =>
+      'Poniżej ~300 l (80 gal) miesięcznie — dolewki i małe podmiany wody';
 
   @override
-  String get roUsageModerateHint => 'Około 300–1000 l (80–260 gal) miesięcznie — typowe pojedyncze akwarium';
+  String get roUsageModerateHint =>
+      'Około 300–1000 l (80–260 gal) miesięcznie — typowe pojedyncze akwarium';
 
   @override
-  String get roUsageHeavyHint => 'Ponad ~1000 l (260 gal) miesięcznie — duże akwarium lub kilka zbiorników';
+  String get roUsageHeavyHint =>
+      'Ponad ~1000 l (260 gal) miesięcznie — duże akwarium lub kilka zbiorników';
 
   @override
-  String get roUsageApplied => 'Okresy wymiany standardowych elementów ustawione na nowo';
+  String get roUsageApplied =>
+      'Okresy wymiany standardowych elementów ustawione na nowo';
 
   @override
   String get notifRoTitle => 'Wymień wkłady filtra RO';
@@ -3075,7 +3251,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefFactoryMenu => 'Urządzenia ReefFactory';
 
   @override
-  String get reefFactoryDisclaimer => 'Ta aplikacja tylko odczytuje bieżące wartości z urządzeń ReefFactory. Nie może zmieniać ustawień, kalibrować ani aktualizować oprogramowania — użyj do tego aplikacji ReefFactory. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
+  String get reefFactoryDisclaimer =>
+      'Ta aplikacja tylko odczytuje bieżące wartości z urządzeń ReefFactory. Nie może zmieniać ustawień, kalibrować ani aktualizować oprogramowania — użyj do tego aplikacji ReefFactory. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
 
   @override
   String get reefFactoryAddDevice => 'Dodaj urządzenie';
@@ -3084,7 +3261,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefFactoryEmptyTitle => 'Brak urządzeń';
 
   @override
-  String get reefFactoryEmptyBody => 'Dodaj miernik ReefFactory, podając adres IP lub nazwę hosta, aby odczytywać jego bieżące wartości.';
+  String get reefFactoryEmptyBody =>
+      'Dodaj miernik ReefFactory, podając adres IP lub nazwę hosta, aby odczytywać jego bieżące wartości.';
 
   @override
   String get reefFactoryRefresh => 'Odśwież';
@@ -3099,7 +3277,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefFactorySaveAll => 'Zapisz wszystkie';
 
   @override
-  String get reefFactoryNothingToSave => 'Nie ma jeszcze nic do zapisania — najpierw dotknij „Odśwież wszystkie”.';
+  String get reefFactoryNothingToSave =>
+      'Nie ma jeszcze nic do zapisania — najpierw dotknij „Odśwież wszystkie”.';
 
   @override
   String reefFactorySavedSnack(int count) {
@@ -3115,7 +3294,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get reefFactoryNotReadYet => 'Dotknij „Odśwież wszystkie”, aby odczytać bieżącą wartość.';
+  String get reefFactoryNotReadYet =>
+      'Dotknij „Odśwież wszystkie”, aby odczytać bieżącą wartość.';
 
   @override
   String get reefFactoryHeating => 'Grzanie';
@@ -3124,7 +3304,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefFactoryCooling => 'Chłodzenie';
 
   @override
-  String get reefFactoryNoTank => 'Najpierw przypisz zbiornik, aby zapisać odczyty.';
+  String get reefFactoryNoTank =>
+      'Najpierw przypisz zbiornik, aby zapisać odczyty.';
 
   @override
   String get reefFactoryTankLabel => 'Zbiornik';
@@ -3156,7 +3337,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefFactoryHostHint => 'np. 192.168.1.50';
 
   @override
-  String get reefFactoryHostHelp => 'Znajdziesz go w aplikacji ReefFactory lub w routerze. Rezerwacja DHCP zapobiega jego zmianie. Telefon musi być w tej samej sieci Wi-Fi co urządzenie.';
+  String get reefFactoryHostHelp =>
+      'Znajdziesz go w aplikacji ReefFactory lub w routerze. Rezerwacja DHCP zapobiega jego zmianie. Telefon musi być w tej samej sieci Wi-Fi co urządzenie.';
 
   @override
   String get reefFactoryCheck => 'Sprawdź';
@@ -3167,13 +3349,16 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get reefFactoryErrUnreachable => 'Nie można połączyć się z tym adresem. Sprawdź, czy urządzenie jest włączone i w tej samej sieci.';
+  String get reefFactoryErrUnreachable =>
+      'Nie można połączyć się z tym adresem. Sprawdź, czy urządzenie jest włączone i w tej samej sieci.';
 
   @override
-  String get reefFactoryErrTimeout => 'Połączono, ale nie nadszedł żaden odczyt.';
+  String get reefFactoryErrTimeout =>
+      'Połączono, ale nie nadszedł żaden odczyt.';
 
   @override
-  String get reefFactoryErrUnsupported => 'Ten model urządzenia nie jest jeszcze obsługiwany.';
+  String get reefFactoryErrUnsupported =>
+      'Ten model urządzenia nie jest jeszcze obsługiwany.';
 
   @override
   String get reefFactoryErrProtocol => 'Nie udało się odczytać urządzenia.';
@@ -3185,10 +3370,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefBeatMenu => 'Urządzenia ReefBeat';
 
   @override
-  String get reefBeatSettingsSubtitle => 'Dane na żywo z urządzeń Red Sea ReefBeat';
+  String get reefBeatSettingsSubtitle =>
+      'Dane na żywo z urządzeń Red Sea ReefBeat';
 
   @override
-  String get reefBeatDisclaimer => 'Ta aplikacja odczytuje tylko dane na żywo z urządzeń Red Sea ReefBeat. Nie może dozować, zmieniać harmonogramów ani kalibrować — użyj do tego aplikacji ReefBeat. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
+  String get reefBeatDisclaimer =>
+      'Ta aplikacja odczytuje tylko dane na żywo z urządzeń Red Sea ReefBeat. Nie może dozować, zmieniać harmonogramów ani kalibrować — użyj do tego aplikacji ReefBeat. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
 
   @override
   String get reefBeatAddDevice => 'Dodaj urządzenie';
@@ -3197,13 +3384,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefBeatEmptyTitle => 'Brak urządzeń';
 
   @override
-  String get reefBeatEmptyBody => 'Przeskanuj swoją sieć Wi-Fi, aby znaleźć urządzenia Red Sea ReefBeat — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave i ReefControl — albo dodaj urządzenie, podając adres IP.';
+  String get reefBeatEmptyBody =>
+      'Przeskanuj swoją sieć Wi-Fi, aby znaleźć urządzenia Red Sea ReefBeat — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave i ReefControl — albo dodaj urządzenie, podając adres IP.';
 
   @override
   String get reefBeatRefreshAll => 'Odśwież wszystkie';
 
   @override
-  String get reefBeatNotReadYet => 'Dotknij „Odśwież wszystkie”, aby odczytać bieżący status.';
+  String get reefBeatNotReadYet =>
+      'Dotknij „Odśwież wszystkie”, aby odczytać bieżący status.';
 
   @override
   String get reefBeatTankLabel => 'Zbiornik';
@@ -3235,7 +3424,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefBeatHostHint => 'np. 192.168.1.3';
 
   @override
-  String get reefBeatHostHelp => 'Znajdziesz go na liście klientów routera. Rezerwacja DHCP zapobiega jego zmianie. Telefon musi być w tej samej sieci Wi-Fi co urządzenie.';
+  String get reefBeatHostHelp =>
+      'Znajdziesz go na liście klientów routera. Rezerwacja DHCP zapobiega jego zmianie. Telefon musi być w tej samej sieci Wi-Fi co urządzenie.';
 
   @override
   String get reefBeatCheck => 'Sprawdź';
@@ -3246,13 +3436,16 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get reefBeatErrUnreachable => 'Nie można połączyć się z tym adresem. Sprawdź, czy urządzenie jest włączone i w tej samej sieci.';
+  String get reefBeatErrUnreachable =>
+      'Nie można połączyć się z tym adresem. Sprawdź, czy urządzenie jest włączone i w tej samej sieci.';
 
   @override
-  String get reefBeatErrTimeout => 'Połączono, ale nie nadeszła żadna odpowiedź.';
+  String get reefBeatErrTimeout =>
+      'Połączono, ale nie nadeszła żadna odpowiedź.';
 
   @override
-  String get reefBeatErrUnsupported => 'Ten typ urządzenia ReefBeat nie jest jeszcze obsługiwany.';
+  String get reefBeatErrUnsupported =>
+      'Ten typ urządzenia ReefBeat nie jest jeszcze obsługiwany.';
 
   @override
   String get reefBeatErrProtocol => 'Nie udało się odczytać urządzenia.';
@@ -3558,10 +3751,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get apexMenu => 'Neptune Apex';
 
   @override
-  String get apexSettingsSubtitle => 'Bieżące wartości sond i stan gniazd z Apeksa';
+  String get apexSettingsSubtitle =>
+      'Bieżące wartości sond i stan gniazd z Apeksa';
 
   @override
-  String get apexDisclaimer => 'Ta aplikacja tylko odczytuje Twojego Apeksa. Nie może przełączać gniazd, uruchamiać cykli karmienia ani zmieniać programów — użyj do tego Fusion lub strony WWW Apeksa. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co sterownik.';
+  String get apexDisclaimer =>
+      'Ta aplikacja tylko odczytuje Twojego Apeksa. Nie może przełączać gniazd, uruchamiać cykli karmienia ani zmieniać programów — użyj do tego Fusion lub strony WWW Apeksa. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co sterownik.';
 
   @override
   String get apexAddDevice => 'Dodaj sterownik';
@@ -3570,7 +3765,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get apexEmptyTitle => 'Brak sterowników';
 
   @override
-  String get apexEmptyBody => 'Dodaj Apeksa, podając jego adres IP oraz dane logowania używane na jego stronie WWW.';
+  String get apexEmptyBody =>
+      'Dodaj Apeksa, podając jego adres IP oraz dane logowania używane na jego stronie WWW.';
 
   @override
   String get apexRefreshAll => 'Odśwież wszystkie';
@@ -3598,13 +3794,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get apexNothingToSave => 'Nie ma jeszcze czego zapisać.';
 
   @override
-  String get apexNoTank => 'Przypisz ten sterownik do akwarium, aby zapisywać jego odczyty.';
+  String get apexNoTank =>
+      'Przypisz ten sterownik do akwarium, aby zapisywać jego odczyty.';
 
   @override
-  String get apexNotReadYet => 'Dotknij „Odśwież wszystkie”, aby odczytać bieżące wartości.';
+  String get apexNotReadYet =>
+      'Dotknij „Odśwież wszystkie”, aby odczytać bieżące wartości.';
 
   @override
-  String get apexNoProbes => 'Ten sterownik nie ma sond, których odczyty aplikacja mogłaby zapisać.';
+  String get apexNoProbes =>
+      'Ten sterownik nie ma sond, których odczyty aplikacja mogłaby zapisać.';
 
   @override
   String get apexOutlets => 'Gniazda';
@@ -3677,7 +3876,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get apexHostHint => '192.168.1.50';
 
   @override
-  String get apexHostHelp => 'Adres, pod którym otwierasz stronę WWW Apeksa. Znajdziesz go w Fusion w sekcji „Misc Setup” lub w routerze.';
+  String get apexHostHelp =>
+      'Adres, pod którym otwierasz stronę WWW Apeksa. Znajdziesz go w Fusion w sekcji „Misc Setup” lub w routerze.';
 
   @override
   String get apexUsernameLabel => 'Nazwa użytkownika';
@@ -3697,13 +3897,16 @@ class AppLocalizationsPl extends AppLocalizations {
   String get apexTankLabel => 'Akwarium';
 
   @override
-  String get apexErrUnreachable => 'Nie udało się połączyć z tym adresem. Sprawdź, czy sterownik jest włączony i w tej sieci.';
+  String get apexErrUnreachable =>
+      'Nie udało się połączyć z tym adresem. Sprawdź, czy sterownik jest włączony i w tej sieci.';
 
   @override
-  String get apexErrTimeout => 'Połączono, ale sterownik nie odpowiedział na czas.';
+  String get apexErrTimeout =>
+      'Połączono, ale sterownik nie odpowiedział na czas.';
 
   @override
-  String get apexErrAuth => 'Sterownik odrzucił tę nazwę użytkownika lub hasło.';
+  String get apexErrAuth =>
+      'Sterownik odrzucił tę nazwę użytkownika lub hasło.';
 
   @override
   String get apexErrProtocol => 'Ten adres odpowiedział, ale nie jak Apex.';
@@ -3721,10 +3924,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get discoveryDone => 'Skanowanie zakończone.';
 
   @override
-  String get discoveryNoNetwork => 'Telefon nie jest połączony z siecią Wi-Fi. Połącz się z tą samą siecią co urządzenia i spróbuj ponownie.';
+  String get discoveryNoNetwork =>
+      'Telefon nie jest połączony z siecią Wi-Fi. Połącz się z tą samą siecią co urządzenia i spróbuj ponownie.';
 
   @override
-  String get discoveryNothingFoundHelp => 'Nie znaleziono urządzeń. Sprawdź, czy są włączone i połączone z tą siecią Wi-Fi. Niektóre sieci gościnne blokują komunikację między urządzeniami. Urządzenie możesz nadal dodać, wpisując jego adres IP.';
+  String get discoveryNothingFoundHelp =>
+      'Nie znaleziono urządzeń. Sprawdź, czy są włączone i połączone z tą siecią Wi-Fi. Niektóre sieci gościnne blokują komunikację między urządzeniami. Urządzenie możesz nadal dodać, wpisując jego adres IP.';
 
   @override
   String get discoveryAdd => 'Dodaj';
@@ -3744,7 +3949,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get discoveryUnsupported => 'Nieobsługiwane';
 
   @override
-  String get discoveryUnsupportedHelp => 'Aplikacja nie potrafi jeszcze odczytać tego typu urządzenia.';
+  String get discoveryUnsupportedHelp =>
+      'Aplikacja nie potrafi jeszcze odczytać tego typu urządzenia.';
 
   @override
   String get discoveryRescan => 'Skanuj ponownie';
@@ -3753,10 +3959,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get discoveryManualEntry => 'Wpisz adres IP';
 
   @override
-  String get discoveryFailed => 'Skanowanie przerwał nieoczekiwany błąd. Spróbuj zeskanować ponownie.';
+  String get discoveryFailed =>
+      'Skanowanie przerwał nieoczekiwany błąd. Spróbuj zeskanować ponownie.';
 
   @override
-  String get discoveryPermissionDenied => 'ReefTracker nie ma dostępu do sieci lokalnej, więc ani skanowanie, ani ręcznie wpisane adresy nie zadziałają. Zezwól na dostęp w Ustawienia → Prywatność i ochrona → Sieć lokalna, a potem zeskanuj ponownie.';
+  String get discoveryPermissionDenied =>
+      'ReefTracker nie ma dostępu do sieci lokalnej, więc ani skanowanie, ani ręcznie wpisane adresy nie zadziałają. Zezwól na dostęp w Ustawienia → Prywatność i ochrona → Sieć lokalna, a potem zeskanuj ponownie.';
 
   @override
   String deviceAlreadyAdded(Object name) {
@@ -3793,19 +4001,22 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get devicesDisclaimer => 'Aplikacja tylko odczytuje urządzenia. Nie może zmieniać ustawień, dozować, przełączać gniazd ani kalibrować — użyj do tego aplikacji producenta. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
+  String get devicesDisclaimer =>
+      'Aplikacja tylko odczytuje urządzenia. Nie może zmieniać ustawień, dozować, przełączać gniazd ani kalibrować — użyj do tego aplikacji producenta. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
 
   @override
   String get devicesEmptyTitle => 'Brak urządzeń';
 
   @override
-  String get devicesEmptyBody => 'Podłącz miernik ReefFactory, urządzenie Red Sea ReefBeat lub sterownik Neptune Apex w swojej sieci — albo wykonaj pomiar fotometrem Hanna przez Bluetooth — aby zobaczyć je tutaj.';
+  String get devicesEmptyBody =>
+      'Podłącz miernik ReefFactory, urządzenie Red Sea ReefBeat lub sterownik Neptune Apex w swojej sieci — albo wykonaj pomiar fotometrem Hanna przez Bluetooth — aby zobaczyć je tutaj.';
 
   @override
   String get devicesAddDevice => 'Dodaj urządzenie';
 
   @override
-  String get devicesHannaDisclaimer => 'Fotometr łączy się przez Bluetooth tylko podczas pomiaru — rozpocznij go z jego karty. Ukończone pomiary są zapisywane w Twoim dzienniku.';
+  String get devicesHannaDisclaimer =>
+      'Fotometr łączy się przez Bluetooth tylko podczas pomiaru — rozpocznij go z jego karty. Ukończone pomiary są zapisywane w Twoim dzienniku.';
 
   @override
   String get devicesAddPickBrand => 'Która marka?';
@@ -3814,7 +4025,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get devicesReorderBrands => 'Zmień kolejność marek';
 
   @override
-  String get devicesReorderBrandsHint => 'Gdy dwa urządzenia podają ten sam odczyt, wygrywa marka wyżej na tej liście.';
+  String get devicesReorderBrandsHint =>
+      'Gdy dwa urządzenia podają ten sam odczyt, wygrywa marka wyżej na tej liście.';
 
   @override
   String devicesSourceNote(String param, String device) {
@@ -3822,7 +4034,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get devicesProLocked => 'Odczyt urządzeń na żywo jest częścią ReefTracker Pro.';
+  String get devicesProLocked =>
+      'Odczyt urządzeń na żywo jest częścią ReefTracker Pro.';
 
   @override
   String devicesCount(int count) {
@@ -3844,7 +4057,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefDevicesTitle => 'Podłączone urządzenia';
 
   @override
-  String get reefDevicesSubtitle => 'Mierniki ReefFactory, urządzenia ReefBeat, sterowniki Apex i checker Hanna';
+  String get reefDevicesSubtitle =>
+      'Mierniki ReefFactory, urządzenia ReefBeat, sterowniki Apex i checker Hanna';
 
   @override
   String get reefDevicesEmpty => 'Brak podłączonych urządzeń.';
@@ -3896,16 +4110,20 @@ class AppLocalizationsPl extends AppLocalizations {
   String get resetParamDefaults => 'Przywróć wartości domyślne';
 
   @override
-  String get resetParamDefaultsTitle => 'Przywrócić wartości domyślne wszystkich parametrów?';
+  String get resetParamDefaultsTitle =>
+      'Przywrócić wartości domyślne wszystkich parametrów?';
 
   @override
-  String get resetParamDefaultsBody => 'Każdy parametr wróci do zalecanych granic dla tego typu akwarium, a mikroelementy do wbudowanych wartości domyślnych. Granice ustawione samodzielnie zostaną odrzucone. Pomiary zostaną zachowane.';
+  String get resetParamDefaultsBody =>
+      'Każdy parametr wróci do zalecanych granic dla tego typu akwarium, a mikroelementy do wbudowanych wartości domyślnych. Granice ustawione samodzielnie zostaną odrzucone. Pomiary zostaną zachowane.';
 
   @override
-  String get paramDefaultsRestored => 'Przywrócono domyślne wartości parametrów.';
+  String get paramDefaultsRestored =>
+      'Przywrócono domyślne wartości parametrów.';
 
   @override
-  String get resetThisParamDefaults => 'Przywróć domyślne wartości tego parametru';
+  String get resetThisParamDefaults =>
+      'Przywróć domyślne wartości tego parametru';
 
   @override
   String get reset => 'Przywróć';
@@ -3917,10 +4135,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wallDisplayTitle => 'Wyświetlacz ścienny';
 
   @override
-  String get wallDisplaySubtitle => 'Stale włączony panel z parametrami akwarium';
+  String get wallDisplaySubtitle =>
+      'Stale włączony panel z parametrami akwarium';
 
   @override
-  String get wallSmallScreenNote => 'Wyświetlacz ścienny jest zaprojektowany dla tabletu zawieszonego na ścianie. Na tym mniejszym ekranie również działa – zobaczysz po prostu mniej kart na stronie.';
+  String get wallSmallScreenNote =>
+      'Wyświetlacz ścienny jest zaprojektowany dla tabletu zawieszonego na ścianie. Na tym mniejszym ekranie również działa – zobaczysz po prostu mniej kart na stronie.';
 
   @override
   String get wallStartNow => 'Uruchom teraz';
@@ -3932,7 +4152,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wallAutoStartTitle => 'Uruchamiaj przy starcie';
 
   @override
-  String get wallAutoStartSubtitle => 'Otwieraj wyświetlacz ścienny przy każdym uruchomieniu aplikacji na tym urządzeniu';
+  String get wallAutoStartSubtitle =>
+      'Otwieraj wyświetlacz ścienny przy każdym uruchomieniu aplikacji na tym urządzeniu';
 
   @override
   String get wallBehaviourSection => 'Zachowanie';
@@ -3941,7 +4162,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wallRefreshIntervalTitle => 'Odświeżaj co';
 
   @override
-  String get wallRefreshIntervalSubtitle => 'Jak często odczytywane są podłączone urządzenia';
+  String get wallRefreshIntervalSubtitle =>
+      'Jak często odczytywane są podłączone urządzenia';
 
   @override
   String get wallPageSecondsTitle => 'Zmiana stron';
@@ -3953,7 +4175,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wallNightTitle => 'Przyciemnianie nocne';
 
   @override
-  String get wallNightSubtitle => 'Przyciemniaj ekran w nocy; dotknięcie rozjaśnia go na minutę';
+  String get wallNightSubtitle =>
+      'Przyciemniaj ekran w nocy; dotknięcie rozjaśnia go na minutę';
 
   @override
   String get wallNightFromTitle => 'Przyciemniaj od';
@@ -3965,7 +4188,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wallCardsSection => 'Karty';
 
   @override
-  String get wallCardsHint => 'Każda wartość zgłaszana przez urządzenie ma własną kartę. Ukryj zbędne duplikaty, a resztę przeciągnij na miejsce; po ukryciu wszystkich kart urządzenia panel przestaje się z nim łączyć.';
+  String get wallCardsHint =>
+      'Każda wartość zgłaszana przez urządzenie ma własną kartę. Ukryj zbędne duplikaty, a resztę przeciągnij na miejsce; po ukryciu wszystkich kart urządzenia panel przestaje się z nim łączyć.';
 
   @override
   String get wallStoredCard => 'Pomiary ręczne';
@@ -3974,7 +4198,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wallDeviceNotContacted => 'nie jest odpytywane';
 
   @override
-  String get wallHideLastCardNote => 'Ukrycie tej karty zakończy łączenie z urządzeniem';
+  String get wallHideLastCardNote =>
+      'Ukrycie tej karty zakończy łączenie z urządzeniem';
 
   @override
   String wallSecondsLabel(int n) {
@@ -3987,7 +4212,8 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get wallNoTank => 'Nie ma jeszcze akwarium. Dodaj je, a potem uruchom wyświetlacz ścienny.';
+  String get wallNoTank =>
+      'Nie ma jeszcze akwarium. Dodaj je, a potem uruchom wyświetlacz ścienny.';
 
   @override
   String get wallProLocked => 'Wyświetlacz ścienny to funkcja PRO.';
@@ -4020,7 +4246,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wallSomeUnreachable => 'Urządzenie jest nieosiągalne';
 
   @override
-  String get wallNetworkDown => 'Żadne urządzenie nie jest osiągalne – sprawdź sieć';
+  String get wallNetworkDown =>
+      'Żadne urządzenie nie jest osiągalne – sprawdź sieć';
 
   @override
   String wallMeasuredAgo(Object ago) {
