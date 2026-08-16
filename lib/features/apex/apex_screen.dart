@@ -14,6 +14,7 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
+import '../devices/device_card_reorder.dart';
 import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 
@@ -136,23 +137,32 @@ class ApDeviceSection extends ConsumerWidget {
         ids.insert(newIndex, ids.removeAt(oldIndex));
         unawaited(ref.read(dbProvider).reorderDevices(ids));
       },
+      proxyDecorator: (child, index, animation) => deviceCardDragProxyDecorator(
+        context,
+        child,
+        index,
+        animation,
+        semanticLabel: l.reorder,
+      ),
       itemBuilder: (context, i) {
         final d = devices[i];
-        return _ControllerCard(
+        return ReorderableDelayedDragStartListener(
           key: ValueKey(d.id),
-          device: d,
           index: i,
-          canReorder: devices.length > 1,
-          tank: _tankFor(d.tankId, tanks),
-          live: live[d.identifier] ?? const ApLive(),
-          errorTextOf: (e) => apErrorText(l, e),
-          onRename: () => _renameDevice(context, ref, d),
-          onCredentials: () => _editCredentials(context, ref, d),
-          onSave: onSave == null ? null : (status) => onSave!(d, status),
-          onMove: tanks.any((t) => t.id != d.tankId)
-              ? () => _moveDevice(context, ref, d)
-              : null,
-          onRemove: () => _confirmRemove(context, ref, d),
+          enabled: devices.length > 1,
+          child: _ControllerCard(
+            device: d,
+            tank: _tankFor(d.tankId, tanks),
+            live: live[d.identifier] ?? const ApLive(),
+            errorTextOf: (e) => apErrorText(l, e),
+            onRename: () => _renameDevice(context, ref, d),
+            onCredentials: () => _editCredentials(context, ref, d),
+            onSave: onSave == null ? null : (status) => onSave!(d, status),
+            onMove: tanks.any((t) => t.id != d.tankId)
+                ? () => _moveDevice(context, ref, d)
+                : null,
+            onRemove: () => _confirmRemove(context, ref, d),
+          ),
         );
       },
     );
@@ -331,10 +341,7 @@ Future<void> showApAddFlow(
 
 class _ControllerCard extends StatefulWidget {
   const _ControllerCard({
-    super.key,
     required this.device,
-    required this.index,
-    required this.canReorder,
     required this.tank,
     required this.live,
     required this.errorTextOf,
@@ -346,8 +353,6 @@ class _ControllerCard extends StatefulWidget {
   });
 
   final DeviceRecord device;
-  final int index;
-  final bool canReorder;
   final Tank? tank;
   final ApLive live;
   final String Function(ApLinkError) errorTextOf;
@@ -394,19 +399,6 @@ class _ControllerCardState extends State<_ControllerCard> {
                     style: t.titleMedium,
                   ),
                 ),
-                if (widget.canReorder)
-                  ReorderableDragStartListener(
-                    index: widget.index,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 18,
-                        color: tokens.textFaint,
-                        semanticLabel: l.reorder,
-                      ),
-                    ),
-                  ),
                 PopupMenuButton<String>(
                   onSelected: (v) {
                     if (v == 'save' &&

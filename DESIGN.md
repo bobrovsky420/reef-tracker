@@ -2975,11 +2975,18 @@ entry points for one page were four ways to say the same thing).
 - **Save precedence: first displayed wins.** When two devices report the same
   parameter for the same tank, the one higher on the page keeps it — vendor
   order first, then the user's drag order within that vendor. **Reordering a
-  card is the preference UI**; there is no separate setting. Two consequences
-  are deliberate: ReefFactory's own model-aware rule still decides *within*
-  ReefFactory (a Temperature Controller beats a Salinity Guardian's incidental
-  temperature regardless of card order), and the winner is **named in the
-  confirmation** rather than chosen silently — a wrong probe quietly becoming
+  card is the preference UI**; there is no separate setting. Every vendor
+  section uses the same whole-card interaction: with multiple cards, each
+  `SliverReorderableList` item is wrapped in a
+  `ReorderableDelayedDragStartListener`, so a platform-standard press-and-hold
+  lifts it without a permanent handle or helper text on the resting card. The
+  shared `device_card_reorder.dart` proxy adds elevation, a primary outline and
+  a circular `drag_handle` badge centered across the card's top edge for the
+  duration of the drag; a one-card section leaves its listener disabled. Two
+  consequences are deliberate: ReefFactory's own model-aware rule still
+  decides *within* ReefFactory (a Temperature Controller beats a Salinity
+  Guardian's incidental temperature regardless of card order), and the winner
+  is **named in the confirmation** rather than chosen silently — a wrong probe quietly becoming
   the tank's history is exactly what this rule must not do. Structurally the
   rule holds only because the merge walks the *same ordered list the page
   renders* (`_Scope.inPageOrder`, vendor order then card order) and turns a
@@ -3124,9 +3131,8 @@ on the device's Wi-Fi network.
   to the model). **Card order** is
   drag-controlled: the header + cards live in a `CustomScrollView`
   (`SliverToBoxAdapter` for the banner/common actions, `SliverReorderableList`
-  for the cards), each card carrying a `ReorderableDragStartListener` handle
-  next to its menu (hidden for a one-card list) — the #13 list-reorder
-  convention applied to cards. A drop writes `reorderDevices` (sequential
+  for the cards), using the unified page's whole-card press-and-hold interaction.
+  A drop writes `reorderDevices` (sequential
   positions for the *shown* devices only, so a device hidden by the tank filter
   keeps its own position). The same structure is used by the ReefBeat
   dashboard. **Temperature
@@ -3297,7 +3303,7 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   structure (active tank's devices + unassigned in `displayOrder` then
   display-name order, name-only card headers, a single Refresh-all above the
   list, add-by-address probe sheet, Edit-rename / move-to-tank / remove menu,
-  drag-handle card reordering via
+  whole-card press-and-hold reordering via
   `reorderDevices`, household-scoped `reefBeatDevicesProvider`). Status-only
   cards carry no Save affordance; a ReefControl card places **Save** first in
   its overflow menu, leaving the header and every value row uncluttered. It is
@@ -3402,7 +3408,8 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   `RSWAVE`) rather than a snapshot's `hw_type`, because the list is built before
   any read lands and the layout must not reshuffle as refreshes arrive. The
   group is an **ordinary device card** — same `Card`, padding and title row as
-  every other, headed "ReefWave pumps" with the group's single drag handle —
+  every other, headed "ReefWave pumps" and moved by the same whole-card
+  press-and-hold gesture —
   holding one `_WavePumpRow` per pump laid out **exactly like a ReefRun
   socket**: a `_CircularGauge` of the forward output scheduled for **the current
   time of day** (resolved from `/auto` against `DateTime.now()`) on the left,
@@ -3562,7 +3569,7 @@ out the same LAN-only requirement.
   controllers.
 - **Dashboard** (`apex_screen.dart`): the ReefFactory structure — active tank's
   devices + unassigned in `displayOrder` then display-name order, name-only card
-  headers, drag-handle
+  headers, whole-card press-and-hold
   reordering via `reorderDevices`, household-scoped `apexDevicesProvider`
   (the **Refresh all** / **Save all** pair lives on the unified Devices screen,
   `devices_screen.dart`, since U41) — plus
