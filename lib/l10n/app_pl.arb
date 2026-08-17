@@ -1157,8 +1157,6 @@
   "wallCardsSection": "Karty",
   "wallCardsHint": "Każda wartość zgłaszana przez urządzenie ma własną kartę. Ukryj zbędne duplikaty, a resztę przeciągnij na miejsce; po ukryciu wszystkich kart urządzenia panel przestaje się z nim łączyć.",
   "wallStoredCard": "Pomiary ręczne",
-  "wallDeviceNotContacted": "nie jest odpytywane",
-  "wallHideLastCardNote": "Ukrycie tej karty zakończy łączenie z urządzeniem",
   "wallSecondsLabel": "{n} s",
   "wallMinutesLabel": "{n} min",
   "wallNoTank": "Nie ma jeszcze akwarium. Dodaj je, a potem uruchom wyświetlacz ścienny.",

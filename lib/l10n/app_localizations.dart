@@ -6777,18 +6777,6 @@ abstract class AppLocalizations {
   /// **'Manual measurements'**
   String get wallStoredCard;
 
-  /// Marker on card rows of a device whose cards are all hidden — the wall no longer polls it.
-  ///
-  /// In en, this message translates to:
-  /// **'not contacted'**
-  String get wallDeviceNotContacted;
-
-  /// Warning on the row whose toggle would hide a device's last visible card.
-  ///
-  /// In en, this message translates to:
-  /// **'Hiding this stops contacting the device'**
-  String get wallHideLastCardNote;
-
   /// Short seconds label in the interval dropdowns.
   ///
   /// In en, this message translates to:

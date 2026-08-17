@@ -117,4 +117,44 @@ void main() {
 
     await unmountApp(tester);
   });
+
+  testWidgets('wall device card subtitle contains only the device name', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(600, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    await db.upsertReefFactoryDevice(
+      identifier: 'RFPM012204210108',
+      model: 'RFPM01',
+      address: '192.168.1.15',
+      name: 'Sump probe',
+      tankId: tankId,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dbProvider.overrideWithValue(db)],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const WallSettingsScreen(),
+        ),
+      ),
+    );
+    await settle(tester);
+
+    expect(find.text('Sump probe'), findsOneWidget);
+    expect(find.textContaining('Hiding this stops'), findsNothing);
+
+    await unmountApp(tester);
+  });
 }

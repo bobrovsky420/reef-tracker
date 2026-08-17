@@ -1157,8 +1157,6 @@
   "wallCardsSection": "Karty",
   "wallCardsHint": "Každá hodnota, kterou zařízení hlásí, má vlastní kartu. Skryj duplicity, které nechceš, a zbytek přetáhni na místo; skryješ-li všechny karty zařízení, nástěnka ho přestane kontaktovat.",
   "wallStoredCard": "Ruční měření",
-  "wallDeviceNotContacted": "nekontaktuje se",
-  "wallHideLastCardNote": "Skrytím se zařízení přestane kontaktovat",
   "wallSecondsLabel": "{n} s",
   "wallMinutesLabel": "{n} min",
   "wallNoTank": "Zatím žádné akvárium. Přidej ho a pak spusť nástěnný displej.",

@@ -83,6 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transport is covered by tests.)
 
 ### Changed
+- Wall display card settings now keep each card subtitle focused on its device
+  name, without extra contact-status messages.
 - Connected devices and Wall display now keep each device's last successful
   values through a temporary refresh failure while still showing the failure;
   device reads, saves, cards and Wall facts now share one typed integration

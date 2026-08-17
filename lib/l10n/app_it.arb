@@ -1157,8 +1157,6 @@
   "wallCardsSection": "Schede",
   "wallCardsHint": "Ogni valore riportato da un dispositivo ha una propria scheda. Nascondi i duplicati che non vuoi e trascina il resto al suo posto; nascondendo tutte le schede di un dispositivo, il pannello smette di contattarlo.",
   "wallStoredCard": "Misurazioni manuali",
-  "wallDeviceNotContacted": "non contattato",
-  "wallHideLastCardNote": "Nascondendo questa scheda il dispositivo non verrà più contattato",
   "wallSecondsLabel": "{n} s",
   "wallMinutesLabel": "{n} min",
   "wallNoTank": "Nessun acquario. Aggiungine uno, poi avvia il display a parete.",

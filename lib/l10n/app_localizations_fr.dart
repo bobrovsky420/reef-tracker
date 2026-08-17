@@ -4136,13 +4136,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get wallStoredCard => 'Mesures manuelles';
 
   @override
-  String get wallDeviceNotContacted => 'non contacté';
-
-  @override
-  String get wallHideLastCardNote =>
-      'Masquer cette carte cessera de contacter l\'appareil';
-
-  @override
   String wallSecondsLabel(int n) {
     return '$n s';
   }
