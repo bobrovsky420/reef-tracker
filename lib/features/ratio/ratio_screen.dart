@@ -12,6 +12,7 @@ import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/ratio_presentation.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_segmented.dart';
 import '../../widgets/trend_chart.dart';
@@ -329,7 +330,7 @@ class _RatioChartState extends State<_RatioChart> {
         // the `N` of `1 : N` for oneToN kinds, the plain quotient otherwise.
         lineTouchData: chartLineTouchData(
           context,
-          formatValue: (s) => switch (kind.display) {
+          formatValue: (s) => switch (ratioDisplayOf(kind)) {
             RatioDisplay.oneToN => '1 : ${formatRatioN(s.y)}',
             RatioDisplay.decimal => formatLocaleNumber(s.y, 1),
           },

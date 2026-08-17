@@ -136,7 +136,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `micro.dart` | Microelements (U17) domain rules. `kMicroDefaultBounds` — default zone bounds per element in canonical ppm (derived from the catalog's per-element `defaultBounds`, edited in `parameters.yaml`), anchored on natural seawater / ICP-lab target ranges — Fe, Si, Zn, V, Cu, Ni, Mo, Li, Al, Sb, Sn, Ag, W, La, Ti, As, Cd, Hg and Pb follow the **Fauna Marin lab reference bands** read off that lab's report gauges (where it publishes a bare reference range and no gauge, the range end is `greenHigh` and `amberHigh` is +10%, the ratio its gauged elements use). Sr deliberately follows that report's *prose* recommendation (green 7–10 mg/L) rather than its gauge (6.5–8.0), whose green band sits below natural seawater (~8.1 mg/L) and would amber-flag an NSW-matching tank — the NSW-is-green invariant is pinned in `micro_test.dart` (TODO.md #81 comment 4). Contaminants stay **one-sided** (green up to a ceiling — no "too little lead") even where that lab states a lower reference bound. Silicon is the one element with a green *floor*, and its low side is deliberately **soft**: `amberLow` is 0, so the whole 0–0.1 mg/L range — including the zero many reefkeepers run on purpose — classifies amber, never red (`zones.dart` only reds beyond a *defined* amber bound, and nothing sits below 0). The FM gauge's red-at-zero shape was rejected as an alarm generator on healthy tanks (TODO.md #81 comment 6); zero-Si-reads-amber is pinned in `micro_test.dart`. Used as the fallback when a tank has no `TrackedParameters` row for an element and as the seed when one is created. `kMicroHobbyKitKeys` (the catalog's `hobbyKit`-flagged elements, in catalog order — Sr/I/Fe, the elements home test kits exist for), and `computeMicroStatus(inputs)` → `MicroStatus` (measured / out-of-range counts, worst zone, newest sample date) — the panel's own summary, deliberately **outside** the tank health score: micro is measured on an ICP cadence (months), which the 30-day core freshness rule would permanently read as stale. |
 | `setup_type.dart` | `SetupType` enum: fishOnly / soft / lps / sps / mixed. Stored as `.name`; `fromName` defaults to `mixed`. |
 | `device_vendors.dart` | The vendor model behind the unified Devices screen (U41) — pure, so the ordering rules are unit-tested directly. The device `kind` constants, `kDeviceVendors` (the vendors in **registration order**, which is the default order and the append position for anything a stored order doesn't mention), `deviceKindSaves` (whether a vendor contains a model whose values Save can persist), model-aware `deviceModelSaves` (ReefControl saves while the other ReefBeat families stay status-only), and `orderDeviceVendors(stored, known)`, which resolves the user's arrangement from `SettingKey.deviceVendorOrder`. That parser is deliberately tolerant: the stored value outlives app versions, so unknown kinds are dropped, duplicates collapse, missing ones append, and null/garbage yields exactly `known`. Vendor order is not cosmetic — the Devices screen resolves a duplicated parameter by "first displayed wins", so this list also decides whose reading survives a Save all. Since U43 the Hanna checker **is** a vendor (its card is inventory + a measure entry point), but the odd one out: `deviceKindRefreshes` is false for it — a Bluetooth test kit connected only during a measurement session has nothing to poll, so the refresh actions and their counts skip it — and `deviceModelSaves` is false too (its readings save through its own flow). |
-| `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. Pure (no DB): consumes plain `RatioReading` (`{takenAt, value}`) records and `RatioSettings` (`{visible, displayOrder, bounds}`) instead of drift rows — `database.dart` hosts the thin row→record mappers (#52). The recommended per-kind zone bounds (`kRatioDefaultBounds`, backing `RatioKind.defaultBounds`) are **generated from the `ratios` section of `tank_presets.yaml`** into `ratio.g.dart` — the YAML also documents the chemistry (NSW anchors) behind each range. |
+| `ratio.dart` | Parameter-ratio math + `RatioKind` enum (PO₄ : NO₃, Mg : Ca); see Features. Pure (no DB): consumes plain `RatioReading` (`{takenAt, value}`) records and `RatioSettings` (`{visible, displayOrder, bounds}`) instead of drift rows — `database.dart` hosts the thin row→record mappers (#52). Ratio display precision/labels live separately in `widgets/ratio_presentation.dart`, so Flutter presentation policy is not embedded in the chemistry enum. The recommended per-kind zone bounds (`kRatioDefaultBounds`, backing `RatioKind.defaultBounds`) are **generated from the `ratios` section of `tank_presets.yaml`** into `ratio.g.dart` — the YAML also documents the chemistry (NSW anchors) behind each range. |
 | `ammonia_toxicity.dart` | Free (toxic) un-ionized ammonia (NH₃) math — pure, DB-free, like `ratio.dart`. A total-ammonia test measures TAN (NH₄⁺ + NH₃); only NH₃ is toxic and its share climbs with pH and temperature (and, mildly, falls with salinity), so a reef converts far more of the same total to the toxic form than a low-pH tank. `freeAmmoniaFraction(pH, tempC, salinityPpt)` = `1 / (1 + 10^(pKa − pH))` with `pKa = 0.09018 + 2729.92/T_K` (**Emerson 1975**) plus a salinity/ionic-strength term (**US EPA 1989** Eq. 5 `I = 19.9273·S/(1000 − 1.005109·S)` + NH₃ salting-out); validated against reef-chemistry reference values (~9–10 % NH₃ at pH 8.3 / 25 °C / 35 ppt, +13 % at 27 °C). `computeFreeAmmonia({ammonia, ph, temperature, salinity})` → `FreeAmmonia?` (total, `freeNh3`, `fraction`, inputs used, `salinityMeasured`, `inputsOutdated`) from each input's latest reading (newest-first records mapped from `Reading`); null until ammonia + pH + temperature all exist; salinity is optional (falls back to `kDefaultSalinityPpt` 35, flagged). Fixed one-sided toxicity bounds `kFreeAmmoniaBounds` (green ≤ 0.02, amber ≤ 0.05 ppm NH₃, anchored on the EPA saltwater chronic criterion 0.035). `inputsOutdated` is set when pH/temp are more than `kAmmoniaInputMaxAge` (7 d) from the ammonia reading — the value still shows, flagged approximate. Basis decision: total ammonia is treated **as NH₃** (matching the `ammonia` parameter's canonical unit); presentation-only (does not feed the health score). See Features. |
 | `trend.dart` | Pure, testable drift/trend detection (no Flutter/DB). `computeTrend(points, bounds, window)` → `TrendResult?` (signed `slopePerDay` reusing `dose_calculator.linearFit`, `TrendDirection`, projected `daysToAmber`/`daysToRed` — when the value reaches the green→amber and amber→red bounds it is heading toward — and a `recovering` flag). Uses the most recent `window` readings and returns null until that many exist. The projection is **anchored on the fitted (regression) value at the last timestamp**, not the raw last reading, so one noisy endpoint can't swing the forecast. A value already *outside* its green range but moving back toward it is **recovering**: no crossing is forecast (the only bounds ahead are on the far side of green — forecasting them would warn about an improving parameter) and `recovering` is set so the UI could one day surface it positively (TODO U15). Tuning consts: `kTrendDefaultWindow`=5, `kTrendMinWindow`=3, `kTrendMaxWindow`=10, `kTrendDefaultEnabled`, plus the forecast-horizon bounds `kTrendDefaultHorizon`=14, `kTrendMinHorizon`=3, `kTrendMaxHorizon`=90 (UI gating only — not used by `computeTrend`). Slopes with magnitude < 1e-9 (`_flatEpsilon`) classify as flat (no forecast), a bound projection is dropped when the bound lies opposite the direction of travel ("the bound is behind us"), and bounds failing `ZoneBounds.isValid` produce no forecast at all. **Significance gate (#31):** a fitted slope only forecasts when it is distinguishable from zero — `|slope| / SE(slope)` ≥ the two-sided 95% Student-t critical value for `n − 2` df (`_tCritical95`, table-driven because a flat `|t| ≥ 2` rule passes the very six-point fits this rejects; beyond df 20 the last entry is reused, erring toward suppression). Otherwise `slopeSignificant` is false and *every* projection collapses to null, `recovering` included — a line through noise has a sign that flips with the window size, so it can neither promise a recovery nor threaten a crossing. `sigma` (residual RMS, n−2 dof, null for a two-point fit which has nothing to test and keeps its historical forecasts) and `relativeSwing` (`sigma / oscillationScale(bounds)`) are reported alongside; a non-significant fit whose `relativeSwing` ≥ `kTrendOscillationRelative`=0.37 — the same relative swing at which `stability_score.dart` calls a parameter "variable" — sets **`oscillating`**, the UI's cue to say *swinging, not drifting* instead of a fabricated crossing. See Features. |
 | `health_score.dart` | Pure, testable tank-health scoring (no Flutter/DB). `computeTankHealth(inputs)` → `TankHealth` (optional 0–100 `score`, worst-case `Zone` `band`, coarse `HealthGrade`, and per-parameter `ParameterHealth` breakdown). Each fresh, bounded parameter gets a 0–100 sub-score from its position in/beyond its bands (green 70–100, amber 40–69, red 0–39), interpolated linearly within the band: centred in green = 100, at a green bound = 70; amber runs 69→40 from the green toward the amber bound; red falls 39→0 with distance measured in *amber-band widths* past the amber bound (so a wide amber band forgives overshoot proportionally); one-sided/unmeasurable cases use flat 90 / 55 / 20. The aggregate is the importance-weighted mean — **weights** (the catalog's per-parameter `importance`, edited in `parameters.yaml`): 3 = temp, salinity, alk, NH₃/₄, NO₂ · 2.5 = pH · 2 = Ca, Mg, NO₃, PO₄ · 1 = everything else — then **capped to the worst zone's ceiling** (any red ⇒ ≤ 39, else any amber ⇒ ≤ 69) so one red can't be hidden behind greens. **Grade thresholds:** excellent ≥ 85, good ≥ 70, caution ≥ 40, critical < 40. Readings older than `kHealthFreshnessDays`=30 are excluded and surfaced separately; a value carrying no timestamp counts as stale too (freshness can't be verified), never as eternally fresh. See Features. |
@@ -1983,7 +1983,7 @@ after release — the ratio chart adopts it partly for that parity.
 Comparison-view charts stay non-zoomable — they must keep their shared aligned
 time window.
 **Action markers** (`markers` + `showMarkerLegend`): see
-`features/actions/action_markers.dart` under the Actions section.
+`features/maintenance/maintenance_markers.dart` under the Actions section.
 
 ### History graph (`history/history_screen.dart`)
 
@@ -2189,9 +2189,15 @@ in a low-pH tank. The domain math + sourcing live in `ammonia_toxicity.dart`
 A single combined log of tank maintenance actions for the active tank, newest
 first. Rendered as the **Actions tab** of the home shell.
 
-- `actions_screen.dart` — `ActionsBody` merges `waterChangesProvider` +
-  `carbonChangesProvider` + `equipmentCleaningsProvider` into one sorted list
-  (`_Entry` sealed type: `_WaterEntry` / `_CarbonEntry` / `_EquipmentEntry`).
+- `actions_screen.dart` — `ActionsBody` adapts `waterChangesProvider` +
+  `carbonChangesProvider` + `equipmentCleaningsProvider` through the shared
+  `maintenance/maintenance_events.dart` registry into one sorted list of
+  `MaintenanceEvent`s. That read-side model normalizes timestamp, title, icon,
+  summary, note, marker kind and supported edit/delete/undo actions without
+  changing the existing tables, IDs or repository write commands. The same
+  registry also adapts dosing-plan segments and manual doses; unknown record
+  types are explicitly skipped and invalid legacy dosing states are marked
+  corrupt rather than treated as active.
   The tab is one `CustomScrollView` (REDESIGN #11): the RO summary card, the
   maintenance due chips, then the whole log collapsed into a single
   `ReefSliverCard` of hairline-divided rows (a lazy `SliverList` behind the
@@ -2212,10 +2218,11 @@ first. Rendered as the **Actions tab** of the home shell.
     unit) + note (e.g. salt brand).
   - **Carbon change**: optional weight in grams + note (e.g. brand).
   - **Equipment cleaning**: date/time + optional note only (e.g. which gear).
-- `action_markers.dart` (U6) — all three action types are drawn as dashed
+- `maintenance/maintenance_markers.dart` (U6) — all three action types are drawn as dashed
   `VerticalLine`s on the parameter graphs (history + comparison view) via
   `extraLinesData`, so maintenance lines up visually with parameter movements.
-  `ActionMarker`/`actionMarkers(...)` flatten the three logs;
+  `ActionMarker`/`actionMarkers(...)` use the normalized adapter registry to
+  flatten the three logs;
   `actionMarkerLines(...)` builds the in-window lines. Each kind has a
   theme-derived color (water = tertiary, carbon = secondary, cleaning =
   outline) **and** a distinct dash pattern, so the types stay apart for
@@ -2519,11 +2526,20 @@ re-import; only what's new is added.
   candidates against existing readings (`planHannaImport` +
   `hannaReadingKey`) so the re-covered range can't duplicate. All the
   planning math is pure and unit-tested.
+- **Declarative source registry:**
+  `features/import/measurement_import_sources.dart` owns ordered source
+  descriptors for Hanna Lab, Fauna Marin ICP and ZIMS ICP. A descriptor owns
+  its label/icon, source group, persisted-settings identity, availability,
+  parser invocation, error mapping, preview route and optional settings rows.
+  Measurement and ICP source sheets, plus the import-settings screen, iterate
+  filtered views of this one registry; adding a source does not add another
+  switch to those parents. Shared delimiter/token parsing remains a utility —
+  the two ICP formats and Hanna parser keep their existing typed parsers rather
+  than introducing a speculative plugin/parser framework.
 - **Flow:** overflow-menu entry on the Measurements tab (`HomeShell`, next to
   the U27 AI summary; Pro-gated via the standard U19 pattern) →
-  source-picker sheet (`measurement_import.dart` — explicit format choice,
-  never sniffed; Hanna Lab is the only source today, future apps/meters join
-  the sheet) → file picker (reuses `pickIcpCsvContent`) → **preview screen**
+  descriptor-built source-picker sheet (explicit format choice, never sniffed)
+  → file picker (reuses `pickIcpCsvContent`) → **preview screen**
   (`hanna_import_screen.dart`): meter + location header; tank selector
   preselected from the remembered `Sample Location` → tank mapping (picking a
   differently-mapped tank gets a wrong-file confirmation); "N new readings"
@@ -2918,7 +2934,12 @@ entry points for one page were four ways to say the same thing).
 - **Full cards, not summaries.** Each vendor's section renders exactly the cards
   its own dashboard did: `RfDeviceSection` / `RbDeviceSection` /
   `ApDeviceSection`, each still living in its vendor's folder with that vendor's
-  wording, dialogs and add flow. What moved out of them is only the
+  wording, status bodies and add flow. The repeated title/menu/loading/error/
+  accessibility shell is `DeviceCardFrame`; family-specific status, controls
+  and grouping remain in their integration modules. `DeviceInventoryActions`
+  owns rename, tank reassignment, removal, database deletion and registered
+  post-delete cleanup, with family nouns and available operations supplied as
+  localized configuration. What moved out of the family sections is only the
   orchestration — integration reads and save conversion live behind the typed
   boundary described below, while the one screen owns UI lifecycle and held
   live state. That placement is the point: switching the filter no longer
@@ -2953,6 +2974,9 @@ entry points for one page were four ways to say the same thing).
   its icon, localized label/disclaimer, add route, and family section. The
   parent Devices screen selects descriptors and never switches on a vendor for
   refresh, save, add, cards, icons, copy, or cleanup.
+  Discovery-specific icon/upsert presentation is similarly isolated in
+  `device_discovery_presentations.dart`; it uses the same canonical
+  `DeviceKind`, not a parallel discovery enum.
 - **Vendor chips** in the user's own order, each with its device count. A vendor
   earns a chip only by having a device in view; with a single vendor the
   selector disappears entirely (a one-choice selector is noise). The bar scrolls
@@ -3714,8 +3738,11 @@ sweep, just with more probing. Nothing treats an empty mDNS result as an error.
   port 80 across the local /24 at 48-way concurrency with a 400 ms connect
   timeout (~2.5 s measured), skipping the phone's own addresses; mDNS runs
   concurrently (~2 s, so it is free). Phase 2 folds in the mDNS identities.
-  Phase 3 probes only the unexplained open hosts, ReefBeat first (a cheap HTTP
-  GET) then ReefFactory (the WebSocket handshake). Results are keyed by
+  Phase 3 probes only the unexplained open hosts through an explicitly ordered
+  list of `LanDeviceProbe` contributors: ReefBeat first (a cheap HTTP GET),
+  then ReefFactory (the WebSocket handshake). The composition root supplies
+  and validates that order, while mDNS is represented by its own contributor.
+  Results are keyed by
   identifier, so the same device seen twice is reported once — which is also
   why a ReefFactory host answering the config handshake with a serial shorter
   than a model prefix (6 chars) is **refused** by `RfWebSocketLink.identify`
@@ -3974,8 +4001,12 @@ Rendered as the **Dosing tab** of the home shell.
   a hard delete); drag the handle to reorder (explicit
   drag handles so swipe and drag don't clash, persisting the new order via
   `reorderDosingEntries`). New entries are appended with `max(displayOrder)+1`.
-  Helpers here also parse/format the stored weekday list and `HH:mm` time using
-  `MaterialLocalizations` (device 12/24-h + locale).
+  Shared dose/schedule formatting lives in
+  `features/dosing/dosing_presentation.dart`; stop-with-undo orchestration lives
+  in `dosing_actions.dart`, and the cross-route `ManualDoseDraft` lives in
+  `dosing_models.dart`, so sibling screens do not import one another. Stored
+  weekdays and `HH:mm` still format through `MaterialLocalizations` (device
+  12/24-h + locale).
 - `dosing_edit_screen.dart` — `DosingEditScreen` (route `/dosing/edit`, `extra` =
   `DosingEntry?`) is the add/edit form. It cascades **Vendor → Product → Element**
   off `kSupplementVendors`: picking a catalog product auto-fills its element and
@@ -4000,8 +4031,11 @@ Rendered as the **Dosing tab** of the home shell.
   `_index == 2`) is a timeline of **all** segments for the active tank
   (`watchDosingHistory` / `dosingHistoryProvider`, active + ended) **merged**
   with the logged manual doses (`manualDosesProvider`) into one date-sorted
-  list (newest first; segments key on `startedAt ?? createdAt`, manual doses on
-  `dosedAt`; a `_TimelineItem` sealed type). The timeline is one
+  list through the normalized `MaintenanceEvent` registry (newest first;
+  segments key on `startedAt ?? createdAt`, manual doses on `dosedAt`). The
+  registry supplies presentation fields and edit/delete action metadata; the
+  timeline has one event renderer and preserves the older-segment warning as a
+  local sibling-record comparison. The timeline is one
   `ReefSliverCard` of divided rows (REDESIGN #21); element and
   "Current"/"Manual" tags are deliberately **neutral** (`track`/`textDim` —
   lifecycle markers, not zone status). Segment rows reuse

@@ -4,6 +4,7 @@ import 'package:reeftracker/data/mdns_protocol.dart';
 import 'package:reeftracker/data/rb_device_link.dart';
 import 'package:reeftracker/data/rb_protocol.dart';
 import 'package:reeftracker/data/rf_device_link.dart';
+import 'package:reeftracker/domain/device_vendors.dart';
 
 /// A scripted network: which hosts answer on port 80, and what mDNS returns.
 class _FakeScanner implements LanScanner {
@@ -96,6 +97,20 @@ RbMdnsIdentity _mdns(String hwid, String model, String type) => RbMdnsIdentity(
 RbDeviceInfo _info(String hwid, String model, String type) =>
     RbDeviceInfo(hwType: type, hwModel: model, hwid: hwid);
 
+LanDiscoveryService _service({
+  required LanScanner scanner,
+  required RbIdentityProbe reefBeatProbe,
+  required RfIdentityProbe reefFactoryProbe,
+  int maxSubnets = 2,
+}) => LanDiscoveryService(
+  scanner: scanner,
+  probes: [
+    ReefBeatLanDeviceProbe(probe: reefBeatProbe),
+    ReefFactoryLanDeviceProbe(probe: reefFactoryProbe),
+  ],
+  maxSubnets: maxSubnets,
+);
+
 void main() {
   Future<DiscoveryProgress> runScan(LanDiscoveryService service) async =>
       (await service.scan().toList()).last;
@@ -111,11 +126,7 @@ void main() {
     final rb = _FakeRbProbe({});
     final rf = _FakeRfProbe({});
     final result = await runScan(
-      LanDiscoveryService(
-        scanner: scanner,
-        reefBeatProbe: rb,
-        reefFactoryProbe: rf,
-      ),
+      _service(scanner: scanner, reefBeatProbe: rb, reefFactoryProbe: rf),
     );
 
     expect(result.phase, DiscoveryPhase.done);
@@ -141,16 +152,12 @@ void main() {
         ),
       });
       final result = await runScan(
-        LanDiscoveryService(
-          scanner: scanner,
-          reefBeatProbe: rb,
-          reefFactoryProbe: rf,
-        ),
+        _service(scanner: scanner, reefBeatProbe: rb, reefFactoryProbe: rf),
       );
 
       expect(result.devices, hasLength(1));
       final device = result.devices.single;
-      expect(device.kind, DiscoveredKind.reeffactory);
+      expect(device.kind, DeviceKind.reefFactory);
       expect(device.identifier, 'RFSG012110010070');
       expect(device.modelDisplayName, 'Salinity Guardian');
       expect(device.supported, isTrue);
@@ -168,11 +175,7 @@ void main() {
     final rb = _FakeRbProbe({});
     final rf = _FakeRfProbe({});
     await runScan(
-      LanDiscoveryService(
-        scanner: scanner,
-        reefBeatProbe: rb,
-        reefFactoryProbe: rf,
-      ),
+      _service(scanner: scanner, reefBeatProbe: rb, reefFactoryProbe: rf),
     );
 
     expect(rb.calls, containsAll(['192.168.1.1', '192.168.1.16']));
@@ -185,7 +188,7 @@ void main() {
       mdns: {'192.168.1.4': _mdns('e868e7eb7a28', 'RSWAVE25', 'reef-future')},
     );
     final result = await runScan(
-      LanDiscoveryService(
+      _service(
         scanner: scanner,
         reefBeatProbe: _FakeRbProbe({}),
         reefFactoryProbe: _FakeRfProbe({}),
@@ -205,7 +208,7 @@ void main() {
         mdns: {'192.168.1.9': _mdns('aa', 'RSX', type)},
       );
       final result = await runScan(
-        LanDiscoveryService(
+        _service(
           scanner: scanner,
           reefBeatProbe: _FakeRbProbe({}),
           reefFactoryProbe: _FakeRfProbe({}),
@@ -223,7 +226,7 @@ void main() {
       mdns: {'192.168.1.3': _mdns('cc7b5c267a68', 'RSDOSE4', kRbDosingHwType)},
     );
     final result = await runScan(
-      LanDiscoveryService(
+      _service(
         scanner: scanner,
         reefBeatProbe: _FakeRbProbe({
           '192.168.1.3': _info('cc7b5c267a68', 'RSDOSE4', kRbDosingHwType),
@@ -238,7 +241,7 @@ void main() {
     'reports noNetwork rather than an empty result when there is no LAN',
     () async {
       final result = await runScan(
-        LanDiscoveryService(
+        _service(
           scanner: _FakeScanner(prefixes: const []),
           reefBeatProbe: _FakeRbProbe({}),
           reefFactoryProbe: _FakeRfProbe({}),
@@ -253,7 +256,7 @@ void main() {
   test('sweeps the whole /24 except the phone itself', () async {
     final scanner = _FakeScanner(mine: const {'192.168.1.100'});
     await runScan(
-      LanDiscoveryService(
+      _service(
         scanner: scanner,
         reefBeatProbe: _FakeRbProbe({}),
         reefFactoryProbe: _FakeRfProbe({}),
@@ -272,7 +275,7 @@ void main() {
       mine: const {},
     );
     await runScan(
-      LanDiscoveryService(
+      _service(
         scanner: scanner,
         reefBeatProbe: _FakeRbProbe({}),
         reefFactoryProbe: _FakeRfProbe({}),
@@ -284,7 +287,7 @@ void main() {
   });
 
   test('progress runs through sweeping then identifying to done', () async {
-    final events = await LanDiscoveryService(
+    final events = await _service(
       scanner: _FakeScanner(openHosts: {'192.168.1.7'}),
       reefBeatProbe: _FakeRbProbe({}),
       reefFactoryProbe: _FakeRfProbe({
@@ -319,7 +322,7 @@ void main() {
       mdns: {'192.168.1.3': _mdns('cc7b5c267a68', 'RSDOSE4', kRbDosingHwType)},
     );
     final result = await runScan(
-      LanDiscoveryService(
+      _service(
         scanner: scanner,
         // .5 blows up in the ReefBeat probe; .9 gets past that one and blows
         // up in the ReefFactory handshake — both arms of `_identify`.
@@ -347,7 +350,7 @@ void main() {
 
   test('a host that is neither vendor is dropped silently', () async {
     final result = await runScan(
-      LanDiscoveryService(
+      _service(
         scanner: _FakeScanner(openHosts: {'192.168.1.1', '192.168.1.16'}),
         reefBeatProbe: _FakeRbProbe({}),
         reefFactoryProbe: _FakeRfProbe({}),
@@ -364,7 +367,7 @@ void main() {
       // The iOS denied-Local-Network state: every connect fails immediately as
       // refused-by-policy, nothing opens, mDNS is equally blocked.
       final result = await runScan(
-        LanDiscoveryService(
+        _service(
           scanner: _FakeScanner(denyAll: true),
           reefBeatProbe: _FakeRbProbe({}),
           reefFactoryProbe: _FakeRfProbe({}),
@@ -378,7 +381,7 @@ void main() {
 
   test('scattered refusals never claim a permission problem', () async {
     final result = await runScan(
-      LanDiscoveryService(
+      _service(
         scanner: _FakeScanner(deniedHosts: {'192.168.1.5', '192.168.1.6'}),
         reefBeatProbe: _FakeRbProbe({}),
         reefFactoryProbe: _FakeRfProbe({}),
@@ -391,7 +394,7 @@ void main() {
     // Contradictory by construction (denied means multicast is blocked too),
     // but the honest reading of "a device was found" wins over the errnos.
     final result = await runScan(
-      LanDiscoveryService(
+      _service(
         scanner: _FakeScanner(
           denyAll: true,
           mdns: {

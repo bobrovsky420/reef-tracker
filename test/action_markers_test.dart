@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/data/database.dart';
-import 'package:reeftracker/features/actions/action_markers.dart';
+import 'package:reeftracker/features/maintenance/maintenance_markers.dart';
 
 void main() {
   final t0 = DateTime(2026, 6, 1, 12);
@@ -21,11 +21,11 @@ void main() {
       cleanings: [cleaning(3)],
     );
     expect(markers, hasLength(3));
-    expect(markers[0].kind, ActionMarkerKind.waterChange);
+    expect(markers[0].kind, MaintenanceMarkerKind.waterChange);
     expect(markers[0].time, day(1));
-    expect(markers[1].kind, ActionMarkerKind.carbonChange);
+    expect(markers[1].kind, MaintenanceMarkerKind.carbonChange);
     expect(markers[1].time, day(2));
-    expect(markers[2].kind, ActionMarkerKind.equipmentCleaning);
+    expect(markers[2].kind, MaintenanceMarkerKind.equipmentCleaning);
     expect(markers[2].time, day(3));
   });
 
@@ -45,16 +45,23 @@ void main() {
     // water(0) and cleaning(10) fall outside the window.
     expect(lines, hasLength(2));
     expect(lines[0].x, ms(day(5)));
-    expect(lines[0].dashArray, actionMarkerDash(ActionMarkerKind.waterChange));
+    expect(
+      lines[0].dashArray,
+      actionMarkerDash(MaintenanceMarkerKind.waterChange),
+    );
     expect(lines[1].x, ms(day(2)));
-    expect(lines[1].dashArray, actionMarkerDash(ActionMarkerKind.carbonChange));
+    expect(
+      lines[1].dashArray,
+      actionMarkerDash(MaintenanceMarkerKind.carbonChange),
+    );
   });
 
   test('dash patterns are pairwise distinct (color-blind separability)', () {
     final dashes = [
-      for (final k in ActionMarkerKind.values) actionMarkerDash(k).join(','),
+      for (final k in MaintenanceMarkerKind.values)
+        actionMarkerDash(k).join(','),
     ];
-    expect(dashes.toSet(), hasLength(ActionMarkerKind.values.length));
+    expect(dashes.toSet(), hasLength(MaintenanceMarkerKind.values.length));
   });
 
   test('actionMarkerKindsInWindow includes bounds and drops outsiders', () {
@@ -65,8 +72,8 @@ void main() {
     );
     final kinds = actionMarkerKindsInWindow(markers, ms(day(1)), ms(day(4)));
     expect(kinds, {
-      ActionMarkerKind.waterChange,
-      ActionMarkerKind.carbonChange,
+      MaintenanceMarkerKind.waterChange,
+      MaintenanceMarkerKind.carbonChange,
     });
     expect(
       actionMarkerKindsInWindow(markers, ms(day(20)), ms(day(30))),

@@ -11,9 +11,10 @@ import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/pro_feature_dialog.dart';
+import 'device_card_frame.dart';
 import 'device_card_reorder.dart';
 import 'device_details_dialog.dart';
-import 'device_rename_dialog.dart';
+import 'device_inventory_actions.dart';
 
 /// The Hanna section of the Devices screen (U43): one card per checker the
 /// measurement flow has ever connected to (`ensureHannaDevice` records it on
@@ -25,10 +26,15 @@ import 'device_rename_dialog.dart';
 /// `lastSeenAt` *is* the last-measurement time: the row is touched exactly
 /// when a measurement session connects.
 class HannaDeviceSection extends ConsumerWidget {
-  const HannaDeviceSection({super.key, required this.devices});
+  const HannaDeviceSection({
+    super.key,
+    required this.devices,
+    required this.onRemoved,
+  });
 
   /// Already filtered to the active tank and sorted by the parent.
   final List<DeviceRecord> devices;
+  final DeviceRemovedCallback onRemoved;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,6 +45,14 @@ class HannaDeviceSection extends ConsumerWidget {
     final measurable =
         (ref.watch(experimentalEnabledProvider).value ?? false) &&
         (ref.watch(hannaBleSupportedProvider).value ?? true);
+    final inventory = DeviceInventoryActions(ref: ref, onRemoved: onRemoved);
+    final labels = DeviceInventoryLabels(
+      renameTitle: l.hannaRenameDevice,
+      nameField: l.hannaDeviceNameLabel,
+      selectTankTitle: '',
+      removeTitle: l.hannaRemove,
+      removeConfirm: l.hannaRemoveConfirm,
+    );
     return SliverReorderableList(
       itemCount: devices.length,
       onReorderItem: (oldIndex, newIndex) {
@@ -64,8 +78,8 @@ class HannaDeviceSection extends ConsumerWidget {
             onMeasure: measurable
                 ? () => _startMeasurement(context, ref)
                 : null,
-            onRename: () => _renameDevice(context, ref, d),
-            onRemove: () => _confirmRemove(context, ref, d),
+            onRename: () => inventory.rename(context, d, labels),
+            onRemove: () => inventory.remove(context, d, labels),
           ),
         );
       },
@@ -82,56 +96,6 @@ class HannaDeviceSection extends ConsumerWidget {
         ProFeature.hannaConnect,
         () => context.push('/hanna/measure'),
       );
-
-  Future<void> _renameDevice(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final name = await showDeviceRenameDialog(
-      context,
-      title: l.hannaRenameDevice,
-      fieldLabel: l.hannaDeviceNameLabel,
-      initial: d.name ?? '',
-    );
-    if (name == null) return;
-    await ref
-        .read(dbProvider)
-        .updateDeviceNameTank(
-          d.id,
-          name: name.isEmpty ? null : name,
-          tankId: d.tankId,
-        );
-  }
-
-  Future<void> _confirmRemove(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.hannaRemove),
-        content: Text(l.hannaRemoveConfirm(deviceDisplayName(d))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.hannaRemove),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) {
-      await ref.read(dbProvider).deleteDevice(d.id);
-    }
-  }
 }
 
 class _CheckerCard extends StatelessWidget {
@@ -193,58 +157,40 @@ class _CheckerCard extends StatelessWidget {
       ),
     );
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(deviceDisplayName(device), style: t.titleMedium),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'rename') onRename();
-                    if (v == 'details') {
-                      unawaited(showDeviceDetailsDialog(context, device));
-                    }
-                    if (v == 'remove') onRemove();
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(value: 'rename', child: Text(l.edit)),
-                    PopupMenuItem(
-                      value: 'details',
-                      child: Text(l.devicesDetails),
-                    ),
-                    PopupMenuItem(value: 'remove', child: Text(l.hannaRemove)),
-                  ],
-                ),
-              ],
-            ),
+    return DeviceCardFrame(
+      title: deviceDisplayName(device),
+      onMenuSelected: (v) {
+        if (v == 'rename') onRename();
+        if (v == 'details') {
+          unawaited(showDeviceDetailsDialog(context, device));
+        }
+        if (v == 'remove') onRemove();
+      },
+      menuItems: [
+        PopupMenuItem(value: 'rename', child: Text(l.edit)),
+        PopupMenuItem(value: 'details', child: Text(l.devicesDetails)),
+        PopupMenuItem(value: 'remove', child: Text(l.hannaRemove)),
+      ],
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          row(l.hannaSerialNumber, _serialOf(device)),
+          row(
+            l.hannaLastMeasurement,
+            seen == null ? '—' : formatDateTime(context, seen, weekday: false),
+          ),
+          if (onMeasure != null) ...[
             const SizedBox(height: 10),
-            row(l.hannaSerialNumber, _serialOf(device)),
-            row(
-              l.hannaLastMeasurement,
-              seen == null
-                  ? '—'
-                  : formatDateTime(context, seen, weekday: false),
-            ),
-            if (onMeasure != null) ...[
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.tonalIcon(
-                  onPressed: onMeasure,
-                  icon: const Icon(Icons.bluetooth, size: 18),
-                  label: Text(l.hannaNewMeasurement),
-                ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.tonalIcon(
+                onPressed: onMeasure,
+                icon: const Icon(Icons.bluetooth, size: 18),
+                label: Text(l.hannaNewMeasurement),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

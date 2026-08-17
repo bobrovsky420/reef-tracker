@@ -5,11 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
-import '../../domain/supplement_catalog.dart';
 import '../../l10n/app_localizations.dart';
-import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
-import 'dosing_screen.dart' show dosingDetailLine, formatDoseAmount;
+import '../maintenance/maintenance_events.dart';
 
 /// Timeline of every dosing event for the active tank — plan segments (current
 /// and past) merged with logged one-off manual doses, newest first. Manual
@@ -30,12 +28,25 @@ class DosingHistoryScreen extends ConsumerWidget {
     final entries = ref.watch(dosingHistoryProvider).value ?? const [];
     final manual = ref.watch(manualDosesProvider).value ?? const [];
 
-    // One date-sorted timeline: segments key on when they began, manual doses
-    // on when they were given. Both source lists arrive newest-first.
-    final items = <_TimelineItem>[
-      for (final e in entries) _SegmentItem(e),
-      for (final d in manual) _ManualItem(d),
-    ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final items = maintenanceEventAdapters.adaptAll(
+      <Object>[...entries, ...manual],
+      MaintenanceEventContext(
+        context: context,
+        l: l,
+        units: ref.watch(unitPrefsProvider),
+      ),
+      actionsFor: (record) {
+        final actions = maintenancePersistenceActions(
+          ref.read(dbProvider),
+          record,
+        );
+        return record is ManualDose
+            ? actions.withEdit(
+                () => context.push('/dosing/manual', extra: record),
+              )
+            : actions;
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(l.dosingHistoryTitle)),
@@ -54,17 +65,12 @@ class DosingHistoryScreen extends ConsumerWidget {
                       itemCount: items.length,
                       itemBuilder: (context, i) {
                         final isLast = i == items.length - 1;
-                        return switch (items[i]) {
-                          _SegmentItem(entry: final e) => _HistoryRow(
-                            entry: e,
-                            all: entries,
-                            isLast: isLast,
-                          ),
-                          _ManualItem(dose: final d) => _ManualDoseRow(
-                            dose: d,
-                            isLast: isLast,
-                          ),
-                        };
+                        final event = items[i];
+                        return _DosingEventRow(
+                          event: event,
+                          allPlans: entries,
+                          isLast: isLast,
+                        );
                       },
                     ),
                   ),
@@ -78,25 +84,6 @@ class DosingHistoryScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// One row of the merged timeline, ordered by [timestamp] (newest first).
-sealed class _TimelineItem {
-  DateTime get timestamp;
-}
-
-class _SegmentItem extends _TimelineItem {
-  _SegmentItem(this.entry);
-  final DosingEntry entry;
-  @override
-  DateTime get timestamp => entry.startedAt ?? entry.createdAt;
-}
-
-class _ManualItem extends _TimelineItem {
-  _ManualItem(this.dose);
-  final ManualDose dose;
-  @override
-  DateTime get timestamp => dose.dosedAt;
 }
 
 class _EmptyState extends StatelessWidget {
@@ -220,210 +207,100 @@ class _TimelineRow extends StatelessWidget {
   }
 }
 
-class _HistoryRow extends ConsumerWidget {
-  const _HistoryRow({
-    required this.entry,
-    required this.all,
+/// A single history renderer consumes normalized maintenance events. The only
+/// record-specific check left here preserves the established warning when an
+/// older dosing-plan segment is deleted.
+class _DosingEventRow extends StatelessWidget {
+  const _DosingEventRow({
+    required this.event,
+    required this.allPlans,
     required this.isLast,
   });
 
-  final DosingEntry entry;
-
-  /// The full history list, used to decide whether this is the most recent
-  /// segment for its element (drives the delete warning).
-  final List<DosingEntry> all;
-
+  final MaintenanceEvent event;
+  final List<DosingEntry> allPlans;
   final bool isLast;
 
-  bool get _active => DosingState.fromName(entry.state) == DosingState.active;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context);
+  Widget build(BuildContext context) {
     final tokens = ReefTokens.of(context);
-    final names = resolveSupplementNames(
-      productKey: entry.productKey,
-      storedVendor: entry.vendor,
-      storedProgram: entry.program,
-      storedProduct: entry.product,
-    );
-    final source = [
-      names.vendor,
-      names.program,
-    ].where((s) => s != null && s.isNotEmpty).join(' · ');
-
     return _TimelineRow(
-      icon: _active ? Icons.play_circle_outline : Icons.history,
-      title: names.product,
-      tags: [
-        if (entry.elementKey != null)
-          _Tag(label: l.paramName(entry.elementKey!)),
-        if (_active) _Tag(label: l.dosingHistoryCurrent),
-      ],
+      icon: event.icon,
+      title: event.title,
+      tags: [for (final tag in event.tags) _Tag(label: tag)],
       lines: [
-        if (source.isNotEmpty) ...[
+        if (event.sourceLabel case final source? when source.isNotEmpty) ...[
           const SizedBox(height: 5),
           Text(source, style: TextStyle(fontSize: 12.5, color: tokens.textDim)),
         ],
         const SizedBox(height: 3),
         Text(
-          dosingDetailLine(context, l, entry),
+          event.summary,
           style: ReefTokens.monoTextStyle.copyWith(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: tokens.text,
           ),
         ),
-        const SizedBox(height: 3),
-        Text(
-          _period(context, l),
-          style: TextStyle(
-            fontSize: 12,
-            color: _active ? tokens.primary : tokens.textDim,
+        if (event.timelineDetail case final detail?) ...[
+          const SizedBox(height: 3),
+          Text(
+            detail,
+            style: TextStyle(
+              fontSize: 12,
+              color: event.detailHighlighted ? tokens.primary : tokens.textDim,
+            ),
           ),
-        ),
+        ],
+        if (event.note case final note? when note.isNotEmpty) ...[
+          const SizedBox(height: 3),
+          Text(note, style: TextStyle(fontSize: 12, color: tokens.textDim)),
+        ],
       ],
-      onDelete: () => _confirmDelete(context, ref, l),
+      onTap: event.actions.edit,
+      onDelete: () => _confirmDelete(context),
       isLast: isLast,
     );
   }
 
-  String _period(BuildContext context, AppLocalizations l) {
-    final loc = MaterialLocalizations.of(context);
-    final from = entry.startedAt ?? entry.createdAt;
-    final fromStr = loc.formatMediumDate(from);
-    if (_active || entry.endedAt == null) return l.dosingHistorySince(fromStr);
-    return l.dosingHistoryPeriod(fromStr, loc.formatMediumDate(entry.endedAt!));
-  }
-
-  /// Whether another segment for the same element started later than this one.
   bool get _notLatestForElement {
-    final key = entry.elementKey;
-    if (key == null) return false;
-    final mine = entry.startedAt ?? entry.createdAt;
-    return all.any(
-      (e) =>
-          e.id != entry.id &&
-          e.elementKey == key &&
-          (e.startedAt ?? e.createdAt).isAfter(mine),
+    final source = event.source;
+    if (source is! DosingEntry || source.elementKey == null) return false;
+    final mine = source.startedAt ?? source.createdAt;
+    return allPlans.any(
+      (entry) =>
+          entry.id != source.id &&
+          entry.elementKey == source.elementKey &&
+          (entry.startedAt ?? entry.createdAt).isAfter(mine),
     );
   }
 
-  Future<void> _confirmDelete(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l,
-  ) async {
+  Future<void> _confirmDelete(BuildContext context) async {
+    final action = event.actions.delete;
+    if (action == null) return;
+    final l = AppLocalizations.of(context);
+    final baseBody = event.deleteBody ?? '';
     final body = _notLatestForElement
-        ? '${l.deleteDosingRecordBody}\n\n${l.deleteDosingRecordNotLatest}'
-        : l.deleteDosingRecordBody;
+        ? '$baseBody\n\n${l.deleteDosingRecordNotLatest}'
+        : baseBody;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.deleteDosingRecordTitle),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(event.deleteTitle ?? l.delete),
         content: Text(body),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(l.cancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(l.delete),
           ),
         ],
       ),
     );
-    if (ok == true) await ref.read(dbProvider).deleteDosingEntry(entry.id);
-  }
-}
-
-/// Timeline row for a logged one-off manual dose. Tap to edit; the trailing
-/// icon permanently deletes (no soft-end — events don't chain like segments).
-class _ManualDoseRow extends ConsumerWidget {
-  const _ManualDoseRow({required this.dose, required this.isLast});
-
-  final ManualDose dose;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context);
-    final tokens = ReefTokens.of(context);
-    final loc = MaterialLocalizations.of(context);
-    final names = resolveSupplementNames(
-      productKey: dose.productKey,
-      storedVendor: dose.vendor,
-      storedProgram: dose.program,
-      storedProduct: dose.product,
-    );
-    final source = [
-      names.vendor,
-      names.program,
-    ].where((s) => s != null && s.isNotEmpty).join(' · ');
-    final unit = DoseUnit.fromName(dose.amountUnit);
-    final when =
-        '${loc.formatMediumDate(dose.dosedAt)} '
-        '${TimeOfDay.fromDateTime(dose.dosedAt).format(context)}';
-
-    return _TimelineRow(
-      icon: Icons.vaccines_outlined,
-      title: names.product,
-      tags: [
-        if (dose.elementKey != null) _Tag(label: l.paramName(dose.elementKey!)),
-        _Tag(label: l.dosingHistoryManual),
-      ],
-      lines: [
-        if (source.isNotEmpty) ...[
-          const SizedBox(height: 5),
-          Text(source, style: TextStyle(fontSize: 12.5, color: tokens.textDim)),
-        ],
-        const SizedBox(height: 3),
-        Text(
-          '${formatDoseAmount(dose.amount)} ${unit.symbol} · $when',
-          style: ReefTokens.monoTextStyle.copyWith(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: tokens.text,
-          ),
-        ),
-        if (dose.note != null && dose.note!.isNotEmpty) ...[
-          const SizedBox(height: 3),
-          Text(
-            dose.note!,
-            style: TextStyle(fontSize: 12, color: tokens.textDim),
-          ),
-        ],
-      ],
-      onTap: () => context.push('/dosing/manual', extra: dose),
-      onDelete: () => _confirmDelete(context, ref, l),
-      isLast: isLast,
-    );
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l,
-  ) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.deleteManualDoseTitle),
-        content: Text(l.deleteManualDoseBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.delete),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) await ref.read(dbProvider).deleteManualDose(dose.id);
+    if (ok == true) await action();
   }
 }
 

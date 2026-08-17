@@ -11,8 +11,9 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_sheet.dart';
 import '../../widgets/reef_value_row.dart';
+import '../maintenance/maintenance_due_chips.dart';
+import '../maintenance/maintenance_events.dart';
 import '../ro/ro_summary_tile.dart';
-import 'schedule_screen.dart';
 
 /// Combined log of tank actions (water changes and activated-carbon changes)
 /// for the active tank, newest first, with edit/delete. Hosted by `HomeShell`,
@@ -32,13 +33,19 @@ class ActionsBody extends ConsumerWidget {
     final water = ref.watch(waterChangesProvider).value ?? const [];
     final carbon = ref.watch(carbonChangesProvider).value ?? const [];
     final equipment = ref.watch(equipmentCleaningsProvider).value ?? const [];
-    final unit = ref.watch(unitPrefsProvider).volume;
-
-    final entries = <_Entry>[
-      ...water.map(_WaterEntry.new),
-      ...carbon.map(_CarbonEntry.new),
-      ...equipment.map(_EquipmentEntry.new),
-    ]..sort((a, b) => b.time.compareTo(a.time));
+    final db = ref.read(dbProvider);
+    final entries = maintenanceEventAdapters.adaptAll(
+      <Object>[...water, ...carbon, ...equipment],
+      MaintenanceEventContext(
+        context: context,
+        l: l,
+        units: ref.watch(unitPrefsProvider),
+      ),
+      actionsFor: (record) => maintenancePersistenceActions(
+        db,
+        record,
+      ).withEdit(() => _edit(context, ref, record)),
+    );
 
     // The shared RO unit's summary (U16) and the maintenance due chips (U12)
     // sit above the log; logging the matching action (or Mark done) resets a
@@ -46,7 +53,12 @@ class ActionsBody extends ConsumerWidget {
     return CustomScrollView(
       slivers: [
         const SliverToBoxAdapter(child: RoSummaryTile()),
-        const SliverToBoxAdapter(child: MaintenanceDueChips()),
+        SliverToBoxAdapter(
+          child: MaintenanceDueChips(
+            onTypedDue: (context, ref, type) =>
+                showAddActionSheet(context, ref, preset: type),
+          ),
+        ),
         if (entries.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
@@ -72,7 +84,6 @@ class ActionsBody extends ConsumerWidget {
                   ref,
                   l,
                   entries[i],
-                  unit,
                   isLast: i == entries.length - 1,
                 ),
               ),
@@ -86,42 +97,16 @@ class ActionsBody extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppLocalizations l,
-    _Entry e,
-    VolumeUnit unit, {
+    MaintenanceEvent event, {
     required bool isLast,
   }) {
-    final IconData icon;
-    final String title;
-    final String? value;
-    final String? note;
-    switch (e) {
-      case _WaterEntry(:final data):
-        icon = Icons.format_color_fill;
-        title = l.waterChange;
-        value = data.amountLiters != null
-            ? l.volumeWithUnit(data.amountLiters!, unit)
-            : l.amountNotRecorded;
-        note = data.note;
-      case _CarbonEntry(:final data):
-        icon = Icons.grain;
-        title = l.carbonChange;
-        value = data.grams != null
-            ? l.gramsSuffix(_formatGrams(data.grams!))
-            : l.weightNotRecorded;
-        note = data.note;
-      case _EquipmentEntry(:final data):
-        icon = Icons.cleaning_services_outlined;
-        title = l.equipmentCleaning;
-        value = null;
-        note = data.note;
-    }
-    final hasNote = note != null && note.isNotEmpty;
-    final date = formatDateTime(context, e.time);
-    final subtitle = value == null ? date : '$value · $date';
+    final hasNote = event.note != null && event.note!.isNotEmpty;
+    final date = formatDateTime(context, event.timestamp);
+    final subtitle = event.summary.isEmpty ? date : '${event.summary} · $date';
     final tokens = ReefTokens.of(context);
 
     return Dismissible(
-      key: ValueKey(e.key),
+      key: ValueKey(event.key),
       direction: DismissDirection.endToStart,
       background: Container(
         color: Theme.of(context).colorScheme.error,
@@ -129,14 +114,14 @@ class ActionsBody extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 16),
         child: Icon(Icons.delete, color: Theme.of(context).colorScheme.onError),
       ),
-      confirmDismiss: (_) => _deleteWithUndo(context, ref, l, e),
+      confirmDismiss: (_) => _deleteWithUndo(context, l, event),
       // The rows sit inside the sliver card, whose fill paints over the
       // scaffold Material — each row brings a transparent Material so its ink
       // ripples above the card.
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          onTap: () => _edit(context, ref, e),
+          onTap: event.actions.edit,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
             decoration: isLast
@@ -148,14 +133,14 @@ class ActionsBody extends ConsumerWidget {
                   ),
             child: Row(
               children: [
-                Icon(icon, size: 18, color: tokens.textDim),
+                Icon(event.icon, size: 18, color: tokens.textDim),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        event.title,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -164,7 +149,7 @@ class ActionsBody extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$subtitle${hasNote ? '\n$note' : ''}',
+                        '$subtitle${hasNote ? '\n${event.note}' : ''}',
                         style: TextStyle(fontSize: 12, color: tokens.textDim),
                       ),
                     ],
@@ -244,14 +229,16 @@ Future<void> showAddActionSheet(
   }
 }
 
-Future<void> _edit(BuildContext context, WidgetRef ref, _Entry e) {
-  switch (e) {
-    case _WaterEntry(:final data):
-      return _editWater(context, ref, data);
-    case _CarbonEntry(:final data):
-      return _editCarbon(context, ref, data);
-    case _EquipmentEntry(:final data):
-      return _editEquipment(context, ref, data);
+Future<void> _edit(BuildContext context, WidgetRef ref, Object record) {
+  switch (record) {
+    case final WaterChange change:
+      return _editWater(context, ref, change);
+    case final CarbonChange change:
+      return _editCarbon(context, ref, change);
+    case final EquipmentCleaning cleaning:
+      return _editEquipment(context, ref, cleaning);
+    default:
+      return Future.value();
   }
 }
 
@@ -281,7 +268,16 @@ Future<void> _editWater(
   if (outcome == null) return;
   if (outcome is _ActionDelete) {
     if (existing != null && context.mounted) {
-      await _deleteWithUndo(context, ref, l, _WaterEntry(existing));
+      final event = maintenanceEventAdapters.tryAdapt(
+        existing,
+        MaintenanceEventContext(
+          context: context,
+          l: l,
+          units: ref.read(unitPrefsProvider),
+        ),
+        actions: maintenancePersistenceActions(ref.read(dbProvider), existing),
+      );
+      if (event != null) await _deleteWithUndo(context, l, event);
     }
     return;
   }
@@ -333,7 +329,16 @@ Future<void> _editCarbon(
   if (outcome == null) return;
   if (outcome is _ActionDelete) {
     if (existing != null && context.mounted) {
-      await _deleteWithUndo(context, ref, l, _CarbonEntry(existing));
+      final event = maintenanceEventAdapters.tryAdapt(
+        existing,
+        MaintenanceEventContext(
+          context: context,
+          l: l,
+          units: ref.read(unitPrefsProvider),
+        ),
+        actions: maintenancePersistenceActions(ref.read(dbProvider), existing),
+      );
+      if (event != null) await _deleteWithUndo(context, l, event);
     }
     return;
   }
@@ -377,7 +382,16 @@ Future<void> _editEquipment(
   if (outcome == null) return;
   if (outcome is _ActionDelete) {
     if (existing != null && context.mounted) {
-      await _deleteWithUndo(context, ref, l, _EquipmentEntry(existing));
+      final event = maintenanceEventAdapters.tryAdapt(
+        existing,
+        MaintenanceEventContext(
+          context: context,
+          l: l,
+          units: ref.read(unitPrefsProvider),
+        ),
+        actions: maintenancePersistenceActions(ref.read(dbProvider), existing),
+      );
+      if (event != null) await _deleteWithUndo(context, l, event);
     }
     return;
   }
@@ -401,19 +415,10 @@ Future<void> _editEquipment(
 /// and safe against accidental swipes).
 Future<bool> _deleteWithUndo(
   BuildContext context,
-  WidgetRef ref,
   AppLocalizations l,
-  _Entry e,
+  MaintenanceEvent event,
 ) async {
-  final db = ref.read(dbProvider);
-  switch (e) {
-    case _WaterEntry(:final data):
-      await db.deleteWaterChange(data.id);
-    case _CarbonEntry(:final data):
-      await db.deleteCarbonChange(data.id);
-    case _EquipmentEntry(:final data):
-      await db.deleteEquipmentCleaning(data.id);
-  }
+  await event.actions.delete?.call();
   if (!context.mounted) return true;
   ScaffoldMessenger.of(context)
     ..clearSnackBars()
@@ -422,30 +427,7 @@ Future<bool> _deleteWithUndo(
         content: Text(l.itemDeleted),
         action: SnackBarAction(
           label: l.undo,
-          onPressed: () async {
-            switch (e) {
-              case _WaterEntry(:final data):
-                await db.insertWaterChange(
-                  tankId: data.tankId,
-                  changedAt: data.changedAt,
-                  amountLiters: data.amountLiters,
-                  note: data.note,
-                );
-              case _CarbonEntry(:final data):
-                await db.insertCarbonChange(
-                  tankId: data.tankId,
-                  changedAt: data.changedAt,
-                  grams: data.grams,
-                  note: data.note,
-                );
-              case _EquipmentEntry(:final data):
-                await db.insertEquipmentCleaning(
-                  tankId: data.tankId,
-                  cleanedAt: data.cleanedAt,
-                  note: data.note,
-                );
-            }
-          },
+          onPressed: () => event.actions.undo?.call(),
         ),
       ),
     );
@@ -455,38 +437,6 @@ Future<bool> _deleteWithUndo(
 String _formatGrams(double g) => formatLocaleNumberTrim(g);
 
 enum _Kind { water, carbon, equipment }
-
-sealed class _Entry {
-  DateTime get time;
-  String get key;
-}
-
-class _WaterEntry extends _Entry {
-  _WaterEntry(this.data);
-  final WaterChange data;
-  @override
-  DateTime get time => data.changedAt;
-  @override
-  String get key => 'w${data.id}';
-}
-
-class _CarbonEntry extends _Entry {
-  _CarbonEntry(this.data);
-  final CarbonChange data;
-  @override
-  DateTime get time => data.changedAt;
-  @override
-  String get key => 'c${data.id}';
-}
-
-class _EquipmentEntry extends _Entry {
-  _EquipmentEntry(this.data);
-  final EquipmentCleaning data;
-  @override
-  DateTime get time => data.cleanedAt;
-  @override
-  String get key => 'e${data.id}';
-}
 
 /// What the action dialog produced: a save payload or a delete request. The
 /// delete branch exists so screen-reader/switch-access users have a non-swipe

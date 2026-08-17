@@ -26,35 +26,24 @@ const String kMagnesiumKey = 'magnesium';
 const String kCalciumKey = 'calcium';
 const String kAlkalinityKey = 'alkalinity';
 
-/// How a ratio is rendered as text/chart values.
-enum RatioDisplay {
-  /// `1 : N`, where N = denominator/numerator (e.g. PO₄ : NO₃ ≈ 1 : 100).
-  oneToN,
-
-  /// A single number = numerator/denominator, to one decimal (e.g. Mg : Ca ≈ 3.1).
-  decimal,
-}
-
 /// A ratio between two tracked parameters that can be shown on the dashboard.
 enum RatioKind {
-  po4no3(kPhosphateKey, kNitrateKey, 'PO₄', 'NO₃', RatioDisplay.oneToN),
-  mgca(kMagnesiumKey, kCalciumKey, 'Mg', 'Ca', RatioDisplay.decimal),
-  caalk(kCalciumKey, kAlkalinityKey, 'Ca', 'Alk', RatioDisplay.decimal),
-  mgalk(kMagnesiumKey, kAlkalinityKey, 'Mg', 'Alk', RatioDisplay.decimal);
+  po4no3(kPhosphateKey, kNitrateKey, 'PO₄', 'NO₃'),
+  mgca(kMagnesiumKey, kCalciumKey, 'Mg', 'Ca'),
+  caalk(kCalciumKey, kAlkalinityKey, 'Ca', 'Alk'),
+  mgalk(kMagnesiumKey, kAlkalinityKey, 'Mg', 'Alk');
 
   const RatioKind(
     this.numeratorKey,
     this.denominatorKey,
     this.numeratorSymbol,
     this.denominatorSymbol,
-    this.display,
   );
 
   final String numeratorKey;
   final String denominatorKey;
   final String numeratorSymbol;
   final String denominatorSymbol;
-  final RatioDisplay display;
 }
 
 extension RatioKindZones on RatioKind {
@@ -187,57 +176,11 @@ List<RatioPoint> computeRatioSeries(
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
-/// Formats just the `N` side of a `1 : N` / `N : 1` ratio (and chart labels).
-String formatRatioN(double n) {
-  if (!n.isFinite) return '—';
-  if (n >= 10) return formatLocaleNumber(n, 0);
-  if (n >= 1) return formatLocaleNumber(n, 1);
-  return formatLocaleNumber(n, 2);
-}
-
-/// Formats a [ratio] (numerator/denominator) for display per [kind].
-String formatRatioValue(RatioKind kind, double ratio) {
-  switch (kind.display) {
-    case RatioDisplay.oneToN:
-      if (!ratio.isFinite || ratio <= 0) return '—';
-      return '1 : ${formatRatioN(1 / ratio)}';
-    case RatioDisplay.decimal:
-      if (!ratio.isFinite) return '—';
-      return formatLocaleNumber(ratio, 1);
-  }
-}
-
-/// A short, language-neutral label for the value the zones classify (the
-/// displayed metric): e.g. "NO₃ ÷ PO₄" for PO₄ : NO₃, "Mg ÷ Ca" for Mg : Ca.
-String ratioMetricLabel(RatioKind kind) {
-  switch (kind.display) {
-    case RatioDisplay.oneToN:
-      return '${kind.denominatorSymbol} ÷ ${kind.numeratorSymbol}';
-    case RatioDisplay.decimal:
-      return '${kind.numeratorSymbol} ÷ ${kind.denominatorSymbol}';
-  }
-}
-
-/// Formats a zone-bound value [v] (expressed in the displayed metric space,
-/// e.g. N for `1 : N`) the same way the ratio itself is shown.
-String formatRatioBound(RatioKind kind, double v) {
-  switch (kind.display) {
-    case RatioDisplay.oneToN:
-      return v == 0 ? '—' : formatRatioValue(kind, 1 / v);
-    case RatioDisplay.decimal:
-      return formatRatioValue(kind, v);
-  }
-}
-
 /// The value to plot on the chart for a [ratio] of [kind] (NaN if undefined).
-double ratioChartY(RatioKind kind, double ratio) {
-  switch (kind.display) {
-    case RatioDisplay.oneToN:
-      return ratio > 0 ? 1 / ratio : double.nan;
-    case RatioDisplay.decimal:
-      return ratio;
-  }
-}
+double ratioChartY(RatioKind kind, double ratio) => switch (kind) {
+  RatioKind.po4no3 => ratio > 0 ? 1 / ratio : double.nan,
+  RatioKind.mgca || RatioKind.caalk || RatioKind.mgalk => ratio,
+};
 
 /// The effective zone bounds for [kind] on a tank: the per-tank stored bounds
 /// when set, otherwise the kind's recommended defaults. (Settings with no

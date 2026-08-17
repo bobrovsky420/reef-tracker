@@ -25,6 +25,7 @@ import '../../widgets/env_pill.dart';
 import '../../widgets/free_ammonia_view.dart';
 import '../../widgets/insights_card.dart';
 import '../../widgets/param_gauge.dart';
+import '../../widgets/ratio_presentation.dart';
 import '../../widgets/ratio_row.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_menu.dart';

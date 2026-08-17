@@ -1160,12 +1160,20 @@ final rfIdentityProbeProvider = Provider<RfIdentityProbe>(
   (ref) => const RfWebSocketLink(timeout: Duration(seconds: 3)),
 );
 
+/// Ordered protocol contributors for discovery. HTTP ReefBeat identification
+/// intentionally precedes the slower ReefFactory WebSocket handshake.
+final lanDeviceProbesProvider = Provider<List<LanDeviceProbe>>(
+  (ref) => [
+    ReefBeatLanDeviceProbe(probe: ref.watch(rbIdentityProbeProvider)),
+    ReefFactoryLanDeviceProbe(probe: ref.watch(rfIdentityProbeProvider)),
+  ],
+);
+
 /// Finds ReefBeat and ReefFactory devices on the local network (U39).
 final lanDiscoveryProvider = Provider<LanDiscoveryService>(
   (ref) => LanDiscoveryService(
     scanner: ref.watch(lanScannerProvider),
-    reefBeatProbe: ref.watch(rbIdentityProbeProvider),
-    reefFactoryProbe: ref.watch(rfIdentityProbeProvider),
+    probes: ref.watch(lanDeviceProbesProvider),
   ),
 );
 

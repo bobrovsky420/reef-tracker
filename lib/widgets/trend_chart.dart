@@ -9,7 +9,7 @@ import '../data/database.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/units.dart';
 import '../domain/zones.dart';
-import '../features/actions/action_markers.dart';
+import '../features/maintenance/maintenance_markers.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 import 'reef_segmented.dart';

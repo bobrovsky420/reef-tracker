@@ -8,6 +8,7 @@ import '../../domain/ratio.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
+import '../../widgets/ratio_presentation.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/zone_bounds_editor.dart';

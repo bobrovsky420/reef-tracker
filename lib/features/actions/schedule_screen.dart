@@ -13,7 +13,8 @@ import '../../widgets/reef_card.dart';
 import '../../widgets/reef_segmented.dart';
 import '../../widgets/reef_sheet.dart';
 import '../../widgets/reef_value_row.dart';
-import 'actions_screen.dart';
+import '../maintenance/maintenance_due_chips.dart';
+import '../maintenance/maintenance_schedule_presentation.dart';
 
 /// The user-maintained maintenance schedule (U12), route `/schedule`: recurring
 /// or one-off plans for the three logged action types plus custom-titled
@@ -197,89 +198,6 @@ class MaintenanceScheduleScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// Whether a plan repeats at all (any of the three repeat fields set); a
-/// non-repeating plan is a one-off, retired once done.
-bool maintenanceRepeats(MaintenanceSchedule s) =>
-    s.cadenceDays != null ||
-    s.monthDay != null ||
-    parseWeekdays(s.weekdays).isNotEmpty;
-
-/// Human-readable repeat line for a plan row: "Every 2 weeks", "Every Mon,
-/// Thu", "Monthly on day 1", … or "One-off". Mirrors [nextMaintenanceDue]'s
-/// field priority (weekdays > monthDay > cadence).
-String maintenanceRepeatText(
-  BuildContext context,
-  AppLocalizations l,
-  MaintenanceSchedule s,
-) {
-  final days = parseWeekdays(s.weekdays);
-  if (days.isNotEmpty) return l.everyWeekdays(formatWeekdays(context, days));
-  if (s.monthDay != null) return l.monthlyOnDayN(s.monthDay!);
-  final n = s.cadenceDays;
-  if (n == null) return l.oneOff;
-  return switch (MaintenanceCadenceUnit.fromName(s.cadenceUnit)) {
-    MaintenanceCadenceUnit.weeks => l.everyWeeksN(n),
-    MaintenanceCadenceUnit.months => l.everyMonthsN(n),
-    _ => l.dosingEveryDaysN(n),
-  };
-}
-
-/// Icon for a plan row/chip: the action-log glyphs for typed plans, a generic
-/// task glyph for custom ones.
-IconData maintenanceIcon(MaintenanceSchedule s) =>
-    switch (MaintenanceActionType.fromName(s.actionType)) {
-      MaintenanceActionType.waterChange => Icons.format_color_fill,
-      MaintenanceActionType.carbonChange => Icons.grain,
-      MaintenanceActionType.equipmentCleaning =>
-        Icons.cleaning_services_outlined,
-      null => Icons.task_alt,
-    };
-
-/// Display name for a plan: the localized action name, or the custom title.
-String maintenanceName(AppLocalizations l, MaintenanceSchedule s) =>
-    switch (MaintenanceActionType.fromName(s.actionType)) {
-      MaintenanceActionType.waterChange => l.waterChange,
-      MaintenanceActionType.carbonChange => l.carbonChange,
-      MaintenanceActionType.equipmentCleaning => l.equipmentCleaning,
-      null => s.title ?? '',
-    };
-
-/// "Due today" / "Due in N d" / "N d overdue".
-String dueText(AppLocalizations l, DueStatus due) => due.daysLeft > 0
-    ? l.dueInDaysN(due.daysLeft)
-    : due.daysLeft == 0
-    ? l.dueToday
-    : l.overdueDaysN(-due.daysLeft);
-
-/// Completes a custom task: stamps it done (or, for a one-off, retires the
-/// row), with an Undo SnackBar restoring the captured row verbatim.
-Future<void> markMaintenanceDoneWithUndo(
-  BuildContext context,
-  WidgetRef ref,
-  MaintenanceSchedule task,
-) async {
-  final l = AppLocalizations.of(context);
-  final db = ref.read(dbProvider);
-  if (!maintenanceRepeats(task)) {
-    // A finished one-off has no next occurrence: retire the row.
-    await db.deleteMaintenanceSchedule(task.id);
-  } else {
-    await db.markMaintenanceDone(task.id, DateTime.now());
-  }
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context)
-    ..clearSnackBars()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(l.taskMarkedDone),
-        action: SnackBarAction(
-          label: l.undo,
-          onPressed: () => db.restoreMaintenanceSchedule(task),
-        ),
-      ),
-    );
 }
 
 /// Add/edit form for a maintenance plan. Editing offers Delete (immediate,
@@ -707,104 +625,6 @@ class _TaskSheetState extends State<_TaskSheet> {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Horizontally scrollable due chips shown above the Actions log: one chip per
-/// plan with a computable due date, ordered most-urgent first. Typed chips
-/// open the pre-selected add-action dialog (logging resets the timer); custom
-/// chips mark the task done.
-///
-/// Chip style per REDESIGN #11 (§A.6): a small surface card (r14, 1 px
-/// border) with a `primary`-colored icon; an overdue chip's icon and label
-/// switch to the `critical` token — a *status*, not a form error, so not
-/// colorScheme.error (REDESIGN #1 straggler audit).
-class MaintenanceDueChips extends ConsumerWidget {
-  const MaintenanceDueChips({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dues = [...ref.watch(maintenanceDueProvider)]
-      ..sort((a, b) => a.due.daysLeft.compareTo(b.due.daysLeft));
-    if (dues.isEmpty) return const SizedBox.shrink();
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: Row(
-        children: [
-          for (final d in dues)
-            Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: _DueChip(due: d),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DueChip extends ConsumerWidget {
-  const _DueChip({required this.due});
-
-  final MaintenanceDue due;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context);
-    final tokens = ReefTokens.of(context);
-    final overdue = due.due.daysLeft < 0;
-    final radius = BorderRadius.circular(14);
-    // Same layering as ReefCard: the multi-layer light shadow on an outer box,
-    // fill + border + ink on the Material.
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        boxShadow: tokens.cardShadow,
-      ),
-      child: Material(
-        color: tokens.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: radius,
-          side: BorderSide(color: tokens.surfaceBorder),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () async {
-            final type = MaintenanceActionType.fromName(
-              due.schedule.actionType,
-            );
-            if (type != null) {
-              await showAddActionSheet(context, ref, preset: type);
-            } else {
-              await markMaintenanceDoneWithUndo(context, ref, due.schedule);
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  maintenanceIcon(due.schedule),
-                  size: 14,
-                  color: overdue ? tokens.critical : tokens.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${maintenanceName(l, due.schedule)}'
-                  ' · ${dueText(l, due.due)}',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: overdue ? tokens.critical : tokens.text,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

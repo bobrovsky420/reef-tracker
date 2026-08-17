@@ -19,8 +19,9 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/lan_discovery.dart';
-import '../../data/rb_protocol.dart';
+import '../../domain/device_vendors.dart';
 import '../../l10n/app_localizations.dart';
+import 'device_discovery_presentations.dart';
 
 /// A found device paired with what the database already knows about it.
 enum _RowState { fresh, known, moved, unsupported }
@@ -29,19 +30,10 @@ class DeviceDiscoverySheet extends ConsumerStatefulWidget {
   const DeviceDiscoverySheet({
     super.key,
     required this.kind,
-    required this.onAdd,
-    required this.onUpdateAddress,
     required this.onManualEntry,
   });
 
-  final DiscoveredKind kind;
-
-  /// Registers a newly found device (the dashboard supplies the right upsert).
-  final Future<void> Function(DiscoveredDevice found) onAdd;
-
-  /// Points an already-registered device at its new address.
-  final Future<void> Function(DeviceRecord existing, DiscoveredDevice found)
-  onUpdateAddress;
+  final DeviceKind kind;
 
   /// Falls back to typing an IP by hand — kept for static-IP, VLAN and
   /// isolated-network setups that a sweep cannot reach.
@@ -122,13 +114,10 @@ class _DeviceDiscoverySheetState extends ConsumerState<DeviceDiscoverySheet> {
     final scanning = progress == null || progress.phase != DiscoveryPhase.done;
 
     final existing =
-        switch (widget.kind) {
-          DiscoveredKind.reefbeat => ref.watch(reefBeatDevicesProvider).value,
-          DiscoveredKind.reeffactory =>
-            ref.watch(reefFactoryDevicesProvider).value,
-        } ??
+        ref.watch(devicesOfKindProvider(widget.kind)).value ??
         const <DeviceRecord>[];
     final byIdentifier = {for (final d in existing) d.identifier: d};
+    final presentation = deviceDiscoveryPresentations.of(widget.kind);
 
     final devices = [
       for (final d in progress?.devices ?? const <DiscoveredDevice>[])
@@ -181,13 +170,25 @@ class _DeviceDiscoverySheetState extends ConsumerState<DeviceDiscoverySheet> {
                       device: device,
                       state: _stateOf(device, known),
                       busy: _busy.contains(device.identifier),
-                      onAdd: () =>
-                          _run(device.identifier, () => widget.onAdd(device)),
+                      icon: presentation.iconFor(device),
+                      onAdd: () => _run(
+                        device.identifier,
+                        () => presentation.add(
+                          ref.read(dbProvider),
+                          device,
+                          tankId: ref.read(activeTankProvider)?.id,
+                        ),
+                      ),
                       onUpdate: known == null
                           ? null
                           : () => _run(
                               device.identifier,
-                              () => widget.onUpdateAddress(known, device),
+                              () => ref
+                                  .read(dbProvider)
+                                  .updateDeviceAddress(
+                                    known.id,
+                                    device.address,
+                                  ),
                             ),
                     );
                   },
@@ -244,6 +245,7 @@ class _DeviceRow extends StatelessWidget {
     required this.device,
     required this.state,
     required this.busy,
+    required this.icon,
     required this.onAdd,
     required this.onUpdate,
   });
@@ -251,6 +253,7 @@ class _DeviceRow extends StatelessWidget {
   final DiscoveredDevice device;
   final _RowState state;
   final bool busy;
+  final IconData icon;
   final VoidCallback onAdd;
   final VoidCallback? onUpdate;
 
@@ -270,7 +273,7 @@ class _DeviceRow extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(
-        _iconFor(device),
+        icon,
         color: unsupported ? tokens.textFaint : tokens.primary,
       ),
       title: Text(
@@ -310,21 +313,6 @@ class _DeviceRow extends StatelessWidget {
               ),
             },
     );
-  }
-
-  /// A glyph per device family, so a list of six Red Sea devices is scannable
-  /// at a glance instead of six identical rows.
-  static IconData _iconFor(DiscoveredDevice device) {
-    if (device.kind == DiscoveredKind.reeffactory) return Icons.sensors;
-    return switch (device.hwType) {
-      kRbDosingHwType => Icons.science_outlined,
-      kRbAtoHwType => Icons.opacity,
-      kRbMatHwType => Icons.filter_alt_outlined,
-      kRbRunHwType => Icons.cyclone,
-      kRbLightsHwType => Icons.lightbulb_outline,
-      kRbWaveHwType => Icons.waves,
-      _ => Icons.device_unknown,
-    };
   }
 }
 

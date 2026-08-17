@@ -18,6 +18,7 @@ import '../features/devices/devices_screen.dart';
 import '../features/dosing/dose_calculator_screen.dart';
 import '../features/dosing/dosing_edit_screen.dart';
 import '../features/dosing/dosing_history_screen.dart';
+import '../features/dosing/dosing_models.dart';
 import '../features/dosing/manual_dose_edit_screen.dart';
 import '../features/hanna/hanna_meter_screen.dart';
 import '../features/history/history_screen.dart';

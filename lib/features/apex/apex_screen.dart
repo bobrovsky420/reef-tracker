@@ -12,9 +12,10 @@ import '../../data/database.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
+import '../devices/device_card_frame.dart';
 import '../devices/device_card_reorder.dart';
 import '../devices/device_details_dialog.dart';
-import '../devices/device_rename_dialog.dart';
+import '../devices/device_inventory_actions.dart';
 
 /// How many outlets a card lists before collapsing behind "+N more". A fully
 /// populated Apex drives thirty-odd outlets; the whole list is worth having,
@@ -57,6 +58,14 @@ class ApDeviceSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
+    final inventory = DeviceInventoryActions(ref: ref, onRemoved: onRemoved);
+    final labels = DeviceInventoryLabels(
+      renameTitle: l.apexRenameDevice,
+      nameField: l.apexDeviceNameLabel,
+      selectTankTitle: l.apexSelectTank,
+      removeTitle: l.apexRemove,
+      removeConfirm: l.apexRemoveConfirm,
+    );
     return SliverReorderableList(
       itemCount: devices.length,
       onReorderItem: (oldIndex, newIndex) {
@@ -79,50 +88,20 @@ class ApDeviceSection extends ConsumerWidget {
           enabled: devices.length > 1,
           child: _ControllerCard(
             device: d,
-            tank: _tankFor(d.tankId, tanks),
+            tank: inventory.tankFor(d.tankId, tanks),
             live: live[d.identifier] ?? const ApLive(),
             errorTextOf: (e) => apErrorText(l, e),
-            onRename: () => _renameDevice(context, ref, d),
+            onRename: () => inventory.rename(context, d, labels),
             onCredentials: () => _editCredentials(context, ref, d),
             onSave: onSave == null ? null : (status) => onSave!(d, status),
-            onMove: tanks.any((t) => t.id != d.tankId)
-                ? () => _moveDevice(context, ref, d)
+            onMove: inventory.canMove(d, tanks)
+                ? () => inventory.move(context, d, labels)
                 : null,
-            onRemove: () => _confirmRemove(context, ref, d),
+            onRemove: () => inventory.remove(context, d, labels),
           ),
         );
       },
     );
-  }
-
-  static Tank? _tankFor(int? id, List<Tank> tanks) {
-    if (id == null) return null;
-    for (final t in tanks) {
-      if (t.id == id) return t;
-    }
-    return null;
-  }
-
-  Future<void> _renameDevice(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final name = await showDeviceRenameDialog(
-      context,
-      title: l.apexRenameDevice,
-      fieldLabel: l.apexDeviceNameLabel,
-      initial: d.name ?? '',
-    );
-    if (name == null) return;
-    await ref
-        .read(dbProvider)
-        .updateDeviceNameTank(
-          d.id,
-          name: name.isEmpty ? null : name,
-          tankId: d.tankId,
-        );
   }
 
   /// Re-enters the controller's login. Needed after the password is changed on
@@ -155,63 +134,6 @@ class ApDeviceSection extends ConsumerWidget {
     // it so the retry uses the credentials just saved.
     final fresh = await ref.read(dbProvider).deviceByIdentifier(d.identifier);
     if (fresh != null) onRefreshRequested(fresh);
-  }
-
-  Future<void> _moveDevice(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
-    final tankId = await showDialog<int>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l.apexSelectTank),
-        children: [
-          for (final t in tanks)
-            if (t.id != d.tankId)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(ctx, t.id),
-                child: Text(t.name),
-              ),
-        ],
-      ),
-    );
-    if (tankId != null) {
-      await ref
-          .read(dbProvider)
-          .updateDeviceNameTank(d.id, name: d.name, tankId: tankId);
-    }
-  }
-
-  Future<void> _confirmRemove(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.apexRemove),
-        content: Text(l.apexRemoveConfirm(deviceDisplayName(d))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.apexRemove),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) {
-      await ref.read(dbProvider).deleteDevice(d.id);
-      await onRemoved(d);
-    }
   }
 }
 
@@ -308,182 +230,148 @@ class _ControllerCardState extends State<_ControllerCard> {
         ? outlets
         : outlets.take(kApexOutletPreview).toList();
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return DeviceCardFrame(
+      title: deviceDisplayName(widget.device),
+      loading: widget.live.loading,
+      errorContent: widget.live.error == null
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    deviceDisplayName(widget.device),
-                    style: t.titleMedium,
-                  ),
+                Text(
+                  widget.errorTextOf(widget.live.error!),
+                  style: t.bodyMedium?.copyWith(color: cs.error),
                 ),
-                PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'save' &&
-                        status != null &&
-                        status.readings.isNotEmpty &&
-                        widget.tank != null &&
-                        widget.onSave != null) {
-                      widget.onSave!(status);
-                    }
-                    if (v == 'rename') widget.onRename();
-                    if (v == 'credentials') widget.onCredentials();
-                    if (v == 'move') widget.onMove?.call();
-                    if (v == 'details') {
-                      unawaited(
-                        showDeviceDetailsDialog(context, widget.device),
-                      );
-                    }
-                    if (v == 'remove') widget.onRemove();
-                  },
-                  itemBuilder: (_) => [
-                    if (status != null && status.readings.isNotEmpty)
-                      PopupMenuItem(
-                        value: 'save',
-                        enabled: widget.tank != null && widget.onSave != null,
-                        child: Text(l.apexSave),
-                      ),
-                    PopupMenuItem(value: 'rename', child: Text(l.edit)),
-                    PopupMenuItem(
-                      value: 'credentials',
-                      child: Text(l.apexCredentialsMenu),
-                    ),
-                    if (widget.onMove != null)
-                      PopupMenuItem(
-                        value: 'move',
-                        child: Text(l.apexMoveToTank),
-                      ),
-                    PopupMenuItem(
-                      value: 'details',
-                      child: Text(l.devicesDetails),
-                    ),
-                    PopupMenuItem(value: 'remove', child: Text(l.apexRemove)),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (widget.live.loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
-              )
-            else if (widget.live.error != null) ...[
-              Text(
-                widget.errorTextOf(widget.live.error!),
-                style: t.bodyMedium?.copyWith(color: cs.error),
-              ),
-              // An auth failure is the one error the keeper can fix from here.
-              if (widget.live.error == ApLinkError.auth) ...[
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: OutlinedButton.icon(
+                if (widget.live.error == ApLinkError.auth) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
                     onPressed: widget.onCredentials,
                     icon: const Icon(Icons.key_outlined, size: 18),
                     label: Text(l.apexCredentialsMenu),
                   ),
-                ),
-              ],
-            ] else if (status != null) ...[
-              if (status.readings.isEmpty)
-                Text(
-                  l.apexNoProbes,
-                  style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                )
-              else
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 8,
-                  children: [
-                    for (final r in status.readings)
-                      _ReadingChip(
-                        paramKey: r.paramKey,
-                        label: l.paramName(r.paramKey),
-                        value: r.value,
-                        unit: r.unit,
-                      ),
-                  ],
-                ),
-              // Status chips: a running feed cycle (pumps are paused right
-              // now) and outlets a human has left overridden — the two facts
-              // that explain a tank behaving unlike its program.
-              if (status.feed?.running == true ||
-                  status.overriddenOutlets.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (status.feed?.letter case final letter?)
-                      _StateBadge(
-                        label: l.apexFeedRunning(letter),
-                        color: tokens.healthy,
-                        softColor: tokens.healthySoft,
-                      ),
-                    if (status.overriddenOutlets.isNotEmpty)
-                      _StateBadge(
-                        label: l.apexOverridden(
-                          status.overriddenOutlets.length,
-                        ),
-                        color: tokens.caution,
-                        softColor: tokens.cautionSoft,
-                      ),
-                  ],
-                ),
-              ],
-              if (outlets.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                Text(
-                  l.apexOutlets.toUpperCase(),
-                  style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [for (final o in shown) _OutletPill(outlet: o)],
-                ),
-                if (outlets.length > kApexOutletPreview) ...[
-                  const SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () =>
-                          setState(() => _allOutlets = !_allOutlets),
-                      child: Text(
-                        _allOutlets
-                            ? l.apexShowFewer
-                            : l.apexShowAll(
-                                outlets.length - kApexOutletPreview,
-                              ),
-                      ),
-                    ),
-                  ),
                 ],
               ],
-            ] else
+            ),
+      onMenuSelected: (v) {
+        if (v == 'save' &&
+            status != null &&
+            status.readings.isNotEmpty &&
+            widget.tank != null &&
+            widget.onSave != null) {
+          widget.onSave!(status);
+        }
+        if (v == 'rename') widget.onRename();
+        if (v == 'credentials') widget.onCredentials();
+        if (v == 'move') widget.onMove?.call();
+        if (v == 'details') {
+          unawaited(showDeviceDetailsDialog(context, widget.device));
+        }
+        if (v == 'remove') widget.onRemove();
+      },
+      menuItems: [
+        if (status != null && status.readings.isNotEmpty)
+          PopupMenuItem(
+            value: 'save',
+            enabled: widget.tank != null && widget.onSave != null,
+            child: Text(l.apexSave),
+          ),
+        PopupMenuItem(value: 'rename', child: Text(l.edit)),
+        PopupMenuItem(value: 'credentials', child: Text(l.apexCredentialsMenu)),
+        if (widget.onMove != null)
+          PopupMenuItem(value: 'move', child: Text(l.apexMoveToTank)),
+        PopupMenuItem(value: 'details', child: Text(l.devicesDetails)),
+        PopupMenuItem(value: 'remove', child: Text(l.apexRemove)),
+      ],
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (status != null) ...[
+            if (status.readings.isEmpty)
               Text(
-                l.apexNotReadYet,
+                l.apexNoProbes,
                 style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              )
+            else
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  for (final r in status.readings)
+                    _ReadingChip(
+                      paramKey: r.paramKey,
+                      label: l.paramName(r.paramKey),
+                      value: r.value,
+                      unit: r.unit,
+                    ),
+                ],
               ),
-            // A tank assignment is needed before Save can persist; assignment
-            // happens via the card menu ("Move to another tank").
-            if (widget.tank == null) ...[
-              const SizedBox(height: 10),
-              Text(
-                l.apexNoTank,
-                style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            // Status chips: a running feed cycle (pumps are paused right
+            // now) and outlets a human has left overridden — the two facts
+            // that explain a tank behaving unlike its program.
+            if (status.feed?.running == true ||
+                status.overriddenOutlets.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (status.feed?.letter case final letter?)
+                    _StateBadge(
+                      label: l.apexFeedRunning(letter),
+                      color: tokens.healthy,
+                      softColor: tokens.healthySoft,
+                    ),
+                  if (status.overriddenOutlets.isNotEmpty)
+                    _StateBadge(
+                      label: l.apexOverridden(status.overriddenOutlets.length),
+                      color: tokens.caution,
+                      softColor: tokens.cautionSoft,
+                    ),
+                ],
               ),
             ],
+            if (outlets.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text(
+                l.apexOutlets.toUpperCase(),
+                style: t.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [for (final o in shown) _OutletPill(outlet: o)],
+              ),
+              if (outlets.length > kApexOutletPreview) ...[
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => setState(() => _allOutlets = !_allOutlets),
+                    child: Text(
+                      _allOutlets
+                          ? l.apexShowFewer
+                          : l.apexShowAll(outlets.length - kApexOutletPreview),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ] else
+            Text(
+              l.apexNotReadYet,
+              style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
+          // A tank assignment is needed before Save can persist; assignment
+          // happens via the card menu ("Move to another tank").
+          if (widget.tank == null) ...[
+            const SizedBox(height: 10),
+            Text(
+              l.apexNoTank,
+              style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -13,34 +13,67 @@ Future<String?> showDeviceRenameDialog(
   required String title,
   required String fieldLabel,
   required String initial,
-}) async {
-  final l = AppLocalizations.of(context);
-  final controller = TextEditingController(text: initial);
-  try {
-    return await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: InputDecoration(labelText: fieldLabel),
-          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: Text(l.save),
-          ),
-        ],
+}) => showDialog<String>(
+  context: context,
+  builder: (context) => _DeviceRenameDialog(
+    title: title,
+    fieldLabel: fieldLabel,
+    initial: initial,
+  ),
+);
+
+class _DeviceRenameDialog extends StatefulWidget {
+  const _DeviceRenameDialog({
+    required this.title,
+    required this.fieldLabel,
+    required this.initial,
+  });
+
+  final String title;
+  final String fieldLabel;
+  final String initial;
+
+  @override
+  State<_DeviceRenameDialog> createState() => _DeviceRenameDialogState();
+}
+
+class _DeviceRenameDialogState extends State<_DeviceRenameDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initial);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(labelText: widget.fieldLabel),
+        onSubmitted: (value) => Navigator.pop(context, value.trim()),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: Text(l.save),
+        ),
+      ],
     );
-  } finally {
-    controller.dispose();
   }
 }

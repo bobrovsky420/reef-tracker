@@ -32,15 +32,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../domain/device_vendors.dart';
 import 'mdns_protocol.dart';
 import 'rb_device_link.dart';
 import 'rb_family_handlers.dart';
 import 'rb_protocol.dart';
 import 'rf_device_link.dart';
-
-/// Which integration a discovered device belongs to — the `kind` column of the
-/// devices table.
-enum DiscoveredKind { reefbeat, reeffactory }
 
 /// A device found on the network, before the user decides to add it.
 class DiscoveredDevice {
@@ -56,7 +53,8 @@ class DiscoveredDevice {
     this.viaMdns = false,
   });
 
-  final DiscoveredKind kind;
+  /// The canonical integration kind persisted in `Devices.kind`.
+  final DeviceKind kind;
 
   /// The stable unique id — a ReefBeat `hwid` or a ReefFactory serial. Matches
   /// `Devices.identifier`, so a rediscovered device updates its row rather than
@@ -154,22 +152,127 @@ abstract class LanScanner {
   Future<Map<String, RbMdnsIdentity>> mdnsSweep(Duration budget);
 }
 
+/// One ordered protocol contributor to LAN identification.
+///
+/// Discovery owns the subnet sweep; integrations own the smallest possible
+/// identity probe and conversion into a canonical [DiscoveredDevice]. A probe
+/// returns null when the host is not its device family. The registry order is
+/// meaningful because the ReefBeat HTTP request must stay ahead of the slower
+/// ReefFactory WebSocket handshake.
+abstract interface class LanDeviceProbe {
+  DeviceKind get kind;
+
+  Future<DiscoveredDevice?> identify(String address);
+}
+
+/// Optional mDNS fast path implemented by integrations whose advertisements
+/// contain a complete identity. ReefFactory intentionally does not implement
+/// this contract because its devices advertise nothing.
+abstract interface class MdnsLanDeviceProbe implements LanDeviceProbe {
+  DiscoveredDevice fromMdns(String address, RbMdnsIdentity identity);
+}
+
+class ReefBeatLanDeviceProbe implements MdnsLanDeviceProbe {
+  ReefBeatLanDeviceProbe({
+    required this.probe,
+    RbFamilyHandlerRegistry? families,
+  }) : families = families ?? rbFamilyHandlers;
+
+  final RbIdentityProbe probe;
+  final RbFamilyHandlerRegistry families;
+
+  @override
+  DeviceKind get kind => DeviceKind.reefBeat;
+
+  @override
+  DiscoveredDevice fromMdns(String address, RbMdnsIdentity identity) =>
+      DiscoveredDevice(
+        kind: kind,
+        identifier: identity.hwid,
+        address: address,
+        modelCode: identity.hwModel,
+        modelDisplayName: rbModelDisplayName(identity.hwModel),
+        supported: families.forHardwareType(identity.hwType) != null,
+        hwType: identity.hwType,
+        hostname: identity.hostname,
+        viaMdns: true,
+      );
+
+  @override
+  Future<DiscoveredDevice?> identify(String address) async {
+    try {
+      final info = await probe.identify(address);
+      return DiscoveredDevice(
+        kind: kind,
+        identifier: info.hwid,
+        address: address,
+        modelCode: info.hwModel,
+        modelDisplayName: rbModelDisplayName(info.hwModel),
+        supported: families.forHardwareType(info.hwType) != null,
+        hwType: info.hwType,
+      );
+    } on RbLinkException {
+      return null;
+    } catch (_) {
+      // An unforeseen payload or plugin error costs this host only; discovery
+      // must keep every device already found by the surrounding batch.
+      return null;
+    }
+  }
+}
+
+class ReefFactoryLanDeviceProbe implements LanDeviceProbe {
+  const ReefFactoryLanDeviceProbe({required this.probe});
+
+  final RfIdentityProbe probe;
+
+  @override
+  DeviceKind get kind => DeviceKind.reefFactory;
+
+  @override
+  Future<DiscoveredDevice?> identify(String address) async {
+    try {
+      final id = await probe.identify(address);
+      return DiscoveredDevice(
+        kind: kind,
+        identifier: id.serial,
+        address: address,
+        modelCode: id.modelPrefix,
+        modelDisplayName: id.displayName ?? id.modelPrefix,
+        supported: id.supported,
+      );
+    } on RfLinkException {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
 /// Finds ReefBeat and ReefFactory devices on the local network.
 class LanDiscoveryService {
   LanDiscoveryService({
     required this.scanner,
-    required this.reefBeatProbe,
-    required this.reefFactoryProbe,
+    required Iterable<LanDeviceProbe> probes,
     this.connectTimeout = const Duration(milliseconds: 400),
     this.mdnsBudget = const Duration(milliseconds: 2500),
     this.sweepConcurrency = 48,
     this.probeConcurrency = 8,
     this.maxSubnets = 2,
-  });
+  }) : probes = List.unmodifiable(probes) {
+    if (this.probes.isEmpty) {
+      throw ArgumentError('At least one LAN device probe is required');
+    }
+    final kinds = <DeviceKind>{};
+    for (final probe in this.probes) {
+      if (!kinds.add(probe.kind)) {
+        throw ArgumentError('Duplicate LAN probe: ${probe.kind}');
+      }
+    }
+  }
 
   final LanScanner scanner;
-  final RbIdentityProbe reefBeatProbe;
-  final RfIdentityProbe reefFactoryProbe;
+  final List<LanDeviceProbe> probes;
 
   /// Per-host TCP connect timeout for the sweep. Short on purpose: a device
   /// that is up answers a LAN SYN in single-digit milliseconds, and this
@@ -248,8 +351,10 @@ class LanDiscoveryService {
 
     // --- Phase 2: let mDNS explain the Red Sea hosts for free ------------
     final identities = await mdnsFuture;
+    final mdnsProbe = probes.whereType<MdnsLanDeviceProbe>().firstOrNull;
     for (final entry in identities.entries) {
-      final device = _fromMdns(entry.key, entry.value);
+      if (mdnsProbe == null) break;
+      final device = mdnsProbe.fromMdns(entry.key, entry.value);
       found[device.identifier] = device;
     }
 
@@ -297,58 +402,15 @@ class LanDiscoveryService {
     );
   }
 
-  static DiscoveredDevice _fromMdns(String ip, RbMdnsIdentity id) =>
-      DiscoveredDevice(
-        kind: DiscoveredKind.reefbeat,
-        identifier: id.hwid,
-        address: ip,
-        modelCode: id.hwModel,
-        modelDisplayName: rbModelDisplayName(id.hwModel),
-        supported: rbFamilyHandlers.forHardwareType(id.hwType) != null,
-        hwType: id.hwType,
-        hostname: id.hostname,
-        viaMdns: true,
-      );
-
   /// Identifies one open host: ReefBeat first (a plain HTTP GET, fast and
   /// cheap), then ReefFactory (a WebSocket handshake). Anything else — a
   /// router, a NAS, a smart plug — returns null.
   Future<DiscoveredDevice?> _identify(String ip) async {
-    try {
-      final info = await reefBeatProbe.identify(ip);
-      return DiscoveredDevice(
-        kind: DiscoveredKind.reefbeat,
-        identifier: info.hwid,
-        address: ip,
-        modelCode: info.hwModel,
-        modelDisplayName: rbModelDisplayName(info.hwModel),
-        supported: rbFamilyHandlers.forHardwareType(info.hwType) != null,
-        hwType: info.hwType,
-      );
-    } on RbLinkException {
-      // Not a ReefBeat device — fall through to the ReefFactory handshake.
-    } catch (_) {
-      // #85's shape, one level up. The links map everything they anticipate
-      // onto their own exception, but anything they don't — a TypeError on an
-      // unforeseen payload, an error out of a plugin — would escape into the
-      // `Future.wait` driving this batch and kill the whole scan stream, losing
-      // every device already found. One odd host costs itself and nothing more.
+    for (final probe in probes) {
+      final device = await probe.identify(ip);
+      if (device != null) return device;
     }
-    try {
-      final id = await reefFactoryProbe.identify(ip);
-      return DiscoveredDevice(
-        kind: DiscoveredKind.reeffactory,
-        identifier: id.serial,
-        address: ip,
-        modelCode: id.modelPrefix,
-        modelDisplayName: id.displayName ?? id.modelPrefix,
-        supported: id.supported,
-      );
-    } on RfLinkException {
-      return null;
-    } catch (_) {
-      return null;
-    }
+    return null;
   }
 }
 
