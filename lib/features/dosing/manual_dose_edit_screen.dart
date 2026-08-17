@@ -11,31 +11,12 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_value_row.dart';
 import '../../widgets/section_header.dart';
-import 'dosing_screen.dart' show formatDoseAmount, kDoseEditDecimals;
+import 'dosing_models.dart';
+import 'dosing_presentation.dart' show formatDoseAmount, kDoseEditDecimals;
 
 /// Sentinel for the "Other…" (custom free-text) choice, same convention as the
 /// plan edit form.
 const String _kCustom = '__custom__';
-
-/// Prefill payload for logging a dose computed elsewhere (the dose
-/// calculator's correction mode): pre-selects product, element, amount and
-/// unit but the record stays a *new* dose — unlike
-/// [ManualDoseEditScreen.dose], which edits an existing row.
-class ManualDoseDraft {
-  const ManualDoseDraft({
-    required this.elementKey,
-    required this.amount,
-    required this.unit,
-    this.productKey,
-  });
-
-  final String elementKey;
-  final double amount;
-  final DoseUnit unit;
-
-  /// Catalog product key, when the dose was computed with a known product.
-  final String? productKey;
-}
 
 /// Add/edit form for a logged one-off manual dose (supplement, vitamin or
 /// medicine given by hand): Vendor → Product → Element cascade, a required

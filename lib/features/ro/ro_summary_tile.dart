@@ -10,7 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/zone_visuals.dart';
-import '../actions/schedule_screen.dart' show dueText;
+import '../maintenance/maintenance_schedule_presentation.dart' show dueText;
 
 /// Summary card of the shared RO unit, shown on every tank's Actions tab
 /// (the unit serves all aquariums, so it is legitimately relevant on each) —

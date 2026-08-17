@@ -8,12 +8,13 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/supplement_catalog.dart';
-import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/zone_visuals.dart';
+import 'dosing_actions.dart';
+import 'dosing_presentation.dart';
 
 /// The Dosing tab body: the active tank's information-only supplement-dosing
 /// plan, newest/ordered first, with tap-to-edit and swipe-to-delete. Hosted by
@@ -249,116 +250,6 @@ class DosingBody extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// Stops the supplement immediately and shows an "Undo" SnackBar that writes
-/// the captured pre-stop row back (U10 — no confirm dialog: the stop is a
-/// soft state change and cheap to restore, so it follows the readings/actions
-/// undo pattern). Shared by the swipe gesture on the Dosing tab and the edit
-/// screen's Stop button — the latter is the accessible, non-swipe path (#45)
-/// and pops right after; `ScaffoldMessenger.of` resolves to the app-level
-/// messenger, so the SnackBar survives the pop. Returns true (the row should
-/// dismiss).
-Future<bool> stopDosingWithUndo(
-  BuildContext context,
-  WidgetRef ref,
-  DosingEntry e,
-) async {
-  final l = AppLocalizations.of(context);
-  final db = ref.read(dbProvider);
-  final messenger = ScaffoldMessenger.of(context);
-  await db.stopDosingEntry(e.id);
-  messenger
-    ..clearSnackBars()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(l.supplementStopped),
-        action: SnackBarAction(
-          label: l.undo,
-          onPressed: () => db.restoreDosingEntry(e),
-        ),
-      ),
-    );
-  return true;
-}
-
-/// Builds the localized "dosage • schedule" summary for an entry, falling back
-/// to "No dosage set" when neither dosage nor schedule is recorded.
-String dosingDetailLine(
-  BuildContext context,
-  AppLocalizations l,
-  DosingEntry e,
-) {
-  final parts = <String>[];
-
-  if (e.amount != null) {
-    final unit = DoseUnit.fromName(e.amountUnit);
-    var amount = '${formatDoseAmount(e.amount!)} ${unit.symbol}';
-    final basis = DoseBasis.fromName(e.basis);
-    if (basis == DoseBasis.perDay) amount = '$amount ${l.dosingPerDay}';
-    if (basis == DoseBasis.perDose) amount = '$amount ${l.dosingPerDose}';
-    parts.add(amount);
-  }
-
-  final freq = DoseFrequency.fromName(e.frequency);
-  switch (freq) {
-    case DoseFrequency.daily:
-      parts.add(l.dosingFreqDaily);
-    case DoseFrequency.everyNDays:
-      parts.add(l.dosingEveryDaysN(e.intervalDays ?? 0));
-    case DoseFrequency.weekly:
-      final days = parseWeekdays(e.weekdays);
-      if (days.isNotEmpty) parts.add(formatWeekdays(context, days));
-    case null:
-      break;
-  }
-
-  if (e.doseTime != null && e.doseTime!.isNotEmpty) {
-    parts.add(formatDoseTime(context, e.doseTime!));
-  }
-
-  if (parts.isEmpty) return l.dosingNoDosage;
-  return parts.join(' · ');
-}
-
-/// Formats a dose amount without a trailing zero fraction, using the active
-/// locale's decimal separator (e.g. `5`, `2.5`, cs/de `2,5`).
-///
-/// [decimals] is the *display* precision by default. Callers that seed the
-/// value back into an editable field must widen it (see
-/// [kDoseEditDecimals]) — the one-decimal display rounding is otherwise
-/// re-parsed on save and silently rewrites the plan.
-String formatDoseAmount(double v, {int decimals = 1}) =>
-    formatLocaleNumberTrim(v, decimals: decimals);
-
-/// Precision used when a stored dose amount is seeded into an **edit** field.
-/// Trace supplements are dosed in fractions of a millilitre, so the display
-/// format (one decimal) would turn 0.25 ml into 0.3 ml the moment the user
-/// opened the form and saved it again.
-const int kDoseEditDecimals = 3;
-
-/// Parses the stored comma-separated weekday list (1=Mon … 7=Sun).
-List<int> parseWeekdays(String? raw) {
-  if (raw == null || raw.isEmpty) return const [];
-  final days =
-      raw
-          .split(',')
-          .map((s) => int.tryParse(s.trim()))
-          .whereType<int>()
-          .where((d) => d >= 1 && d <= 7)
-          .toList()
-        ..sort();
-  return days;
-}
-
-/// Renders a stored `HH:mm` time using the device's 12/24-hour preference.
-String formatDoseTime(BuildContext context, String hhmm) {
-  final parts = hhmm.split(':');
-  final h = int.tryParse(parts.first) ?? 0;
-  final m = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
-  return MaterialLocalizations.of(
-    context,
-  ).formatTimeOfDay(TimeOfDay(hour: h, minute: m));
 }
 
 /// The element tag on a dosing row, colored by the element's live zone

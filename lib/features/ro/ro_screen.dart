@@ -13,7 +13,7 @@ import '../../widgets/reef_card.dart';
 import '../../widgets/reef_sheet.dart';
 import '../../widgets/reef_value_row.dart';
 import '../../widgets/zone_visuals.dart';
-import '../actions/schedule_screen.dart' show dueText;
+import '../maintenance/maintenance_schedule_presentation.dart' show dueText;
 
 /// The shared reverse-osmosis unit (U16), route `/ro` — the one screen in the
 /// app that is **not tank-scoped**: one RO unit serves every aquarium.

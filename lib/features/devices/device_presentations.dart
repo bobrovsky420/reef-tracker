@@ -264,7 +264,7 @@ class HannaDevicePresentation implements DevicePresentationDescriptor {
     required DeviceSaveCallback onSave,
     required DeviceRemovedCallback onRemoved,
     required DeviceRefreshCallback onRefresh,
-  }) => HannaDeviceSection(devices: devices);
+  }) => HannaDeviceSection(devices: devices, onRemoved: onRemoved);
 }
 
 class DevicePresentationRegistry {

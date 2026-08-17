@@ -128,6 +128,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tile and as a chip on the ReefRun card — instead of the raw firmware text.
 
 ### Fixed
+- Renaming a connected device now closes cleanly without an intermittent
+  text-field lifecycle error after saving the new name.
 - Connected devices with an unknown or damaged integration type are now shown
   as unsupported and are never polled, saved, or mistaken for an Apex
   controller.

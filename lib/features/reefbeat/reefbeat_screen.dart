@@ -8,18 +8,19 @@ import '../../app/device_live.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
-import '../../data/lan_discovery.dart';
 import '../../data/rb_device_link.dart';
 import '../../data/rb_family_handlers.dart';
 import '../../data/rb_protocol.dart';
+import '../../domain/device_vendors.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
+import '../devices/device_card_frame.dart';
 import '../devices/device_card_reorder.dart';
 import '../devices/device_details_dialog.dart';
-import '../devices/device_rename_dialog.dart';
+import '../devices/device_inventory_actions.dart';
 import '../devices/discovery_sheet.dart';
 
 /// One row of the dashboard list: either a single device, or every ReefWave
@@ -158,6 +159,14 @@ class RbDeviceSection extends ConsumerWidget {
     // Watched (not just read in _moveDevice) so the move-to-tank menu item's
     // visibility reacts to tanks being added/removed.
     final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
+    final inventory = DeviceInventoryActions(ref: ref, onRemoved: onRemoved);
+    final labels = DeviceInventoryLabels(
+      renameTitle: l.reefBeatRenameDevice,
+      nameField: l.reefBeatDeviceNameLabel,
+      selectTankTitle: l.reefBeatSelectTank,
+      removeTitle: l.reefBeatRemove,
+      removeConfirm: l.reefBeatRemoveConfirm,
+    );
     // Wave pumps are collapsed into a single entry (see [_entriesOf]) — a tank
     // often runs several and a full-width card each, for one number, wasted
     // the screen.
@@ -195,11 +204,11 @@ class RbDeviceSection extends ConsumerWidget {
               devices: entry.devices,
               liveOf: (d) => live[d.identifier] ?? const RbLive(),
               errorTextOf: (e) => rbErrorText(l, e),
-              onRename: (d) => _renameDevice(context, ref, d),
-              onMove: (d) => tanks.any((t) => t.id != d.tankId)
-                  ? () => _moveDevice(context, ref, d)
+              onRename: (d) => inventory.rename(context, d, labels),
+              onMove: (d) => inventory.canMove(d, tanks)
+                  ? () => inventory.move(context, d, labels)
                   : null,
-              onRemove: (d) => _confirmRemove(context, ref, d),
+              onRemove: (d) => inventory.remove(context, d, labels),
             ),
           );
         }
@@ -210,92 +219,27 @@ class RbDeviceSection extends ConsumerWidget {
           enabled: canReorder,
           child: _DeviceCard(
             device: d,
-            tank: _tankFor(d.tankId, tanks),
+            tank: inventory.tankFor(d.tankId, tanks),
             live: live[d.identifier] ?? const RbLive(),
             errorTextOf: (e) => rbErrorText(l, e),
-            onRename: () => _renameDevice(context, ref, d),
+            onRename: () => inventory.rename(context, d, labels),
             onSave:
                 rbFamilyHandlers.isModelFamily(d.model, RbFamily.control) &&
                     onSave != null
                 ? (snap) => onSave!(d, snap)
                 : null,
             // No other tank to move to → no menu item.
-            onMove: tanks.any((t) => t.id != d.tankId)
-                ? () => _moveDevice(context, ref, d)
+            onMove: inventory.canMove(d, tanks)
+                ? () => inventory.move(context, d, labels)
                 : null,
             onShowQueue: rbFamilyHandlers.isModelFamily(d.model, RbFamily.dose)
                 ? () => _showDosingQueue(context, ref, d)
                 : null,
-            onRemove: () => _confirmRemove(context, ref, d),
+            onRemove: () => inventory.remove(context, d, labels),
           ),
         );
       },
     );
-  }
-
-  static Tank? _tankFor(int? id, List<Tank> tanks) {
-    if (id == null) return null;
-    for (final tank in tanks) {
-      if (tank.id == id) return tank;
-    }
-    return null;
-  }
-
-  /// Renames [d]. The card header carries nothing but the name now, and a
-  /// device's own name is a serial-suffixed code ("RSDOSE4-1752835676"), so a
-  /// keeper-chosen one is what the list has to read by. An emptied field falls
-  /// back to the model, as an unnamed device already does.
-  Future<void> _renameDevice(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final name = await showDeviceRenameDialog(
-      context,
-      title: l.reefBeatRenameDevice,
-      fieldLabel: l.reefBeatDeviceNameLabel,
-      initial: d.name ?? '',
-    );
-    if (name == null) return;
-    await ref
-        .read(dbProvider)
-        .updateDeviceNameTank(
-          d.id,
-          name: name.isEmpty ? null : name,
-          tankId: d.tankId,
-        );
-  }
-
-  /// Reassigns [d] to a tank picked from a dialog (all tanks except its
-  /// current one). Also serves as the initial assignment for an unassigned
-  /// device.
-  Future<void> _moveDevice(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
-    final tankId = await showDialog<int>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l.reefBeatSelectTank),
-        children: [
-          for (final t in tanks)
-            if (t.id != d.tankId)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(ctx, t.id),
-                child: Text(t.name),
-              ),
-        ],
-      ),
-    );
-    if (tankId != null) {
-      await ref
-          .read(dbProvider)
-          .updateDeviceNameTank(d.id, name: d.name, tankId: tankId);
-    }
   }
 
   /// Shows what [d] still has scheduled for today (`/dosing-queue`). Read on
@@ -325,35 +269,6 @@ class RbDeviceSection extends ConsumerWidget {
       ),
     );
   }
-
-  Future<void> _confirmRemove(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.reefBeatRemove),
-        content: Text(l.reefBeatRemoveConfirm(deviceDisplayName(d))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.reefBeatRemove),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) {
-      await ref.read(dbProvider).deleteDevice(d.id);
-      await onRemoved(d);
-    }
-  }
 }
 
 /// The ReefBeat add path (U39): scan the network and pick from what answered.
@@ -367,24 +282,12 @@ Future<void> showRbAddFlow(
   required void Function(String identifier, RbSnapshot snap) onSeed,
   required VoidCallback onAdded,
 }) async {
-  final db = ref.read(dbProvider);
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     builder: (ctx) => DeviceDiscoverySheet(
-      kind: DiscoveredKind.reefbeat,
-      onAdd: (found) => db.upsertReefBeatDevice(
-        identifier: found.identifier,
-        model: found.modelCode,
-        address: found.address,
-        // The friendly product name, as the manual flow defaults to — the
-        // device's own name is a serial-suffixed code.
-        name: found.modelDisplayName,
-        tankId: ref.read(activeTankProvider)?.id,
-      ),
-      onUpdateAddress: (existing, found) =>
-          db.updateDeviceAddress(existing.id, found.address),
+      kind: DeviceKind.reefBeat,
       onManualEntry: () {
         Navigator.pop(ctx);
         unawaited(showRbManualSheet(context, ref, onSeed: onSeed));
@@ -476,108 +379,71 @@ class _DeviceCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final snap = live.snapshot;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(deviceDisplayName(device), style: t.titleMedium),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'save' &&
-                        snap is RbControlSnapshot &&
-                        tank != null &&
-                        onSave != null) {
-                      onSave!(snap);
-                    }
-                    if (v == 'rename') onRename();
-                    if (v == 'move') onMove?.call();
-                    if (v == 'queue') onShowQueue?.call();
-                    if (v == 'details') {
-                      unawaited(showDeviceDetailsDialog(context, device));
-                    }
-                    if (v == 'remove') onRemove();
-                  },
-                  itemBuilder: (_) => [
-                    if (snap is RbControlSnapshot)
-                      PopupMenuItem(
-                        value: 'save',
-                        enabled: tank != null && onSave != null,
-                        child: Text(l.save),
-                      ),
-                    PopupMenuItem(value: 'rename', child: Text(l.edit)),
-                    if (onMove != null)
-                      PopupMenuItem(
-                        value: 'move',
-                        child: Text(l.reefBeatMoveToTank),
-                      ),
-                    if (onShowQueue != null)
-                      PopupMenuItem(
-                        value: 'queue',
-                        child: Text(l.reefBeatDosingQueue),
-                      ),
-                    PopupMenuItem(
-                      value: 'details',
-                      child: Text(l.devicesDetails),
-                    ),
-                    PopupMenuItem(
-                      value: 'remove',
-                      child: Text(l.reefBeatRemove),
-                    ),
-                  ],
-                ),
-              ],
+    return DeviceCardFrame(
+      title: deviceDisplayName(device),
+      loading: live.loading,
+      errorText: live.error == null ? null : errorTextOf(live.error!),
+      onMenuSelected: (v) {
+        if (v == 'save' &&
+            snap is RbControlSnapshot &&
+            tank != null &&
+            onSave != null) {
+          onSave!(snap);
+        }
+        if (v == 'rename') onRename();
+        if (v == 'move') onMove?.call();
+        if (v == 'queue') onShowQueue?.call();
+        if (v == 'details') {
+          unawaited(showDeviceDetailsDialog(context, device));
+        }
+        if (v == 'remove') onRemove();
+      },
+      menuItems: [
+        if (snap is RbControlSnapshot)
+          PopupMenuItem(
+            value: 'save',
+            enabled: tank != null && onSave != null,
+            child: Text(l.save),
+          ),
+        PopupMenuItem(value: 'rename', child: Text(l.edit)),
+        if (onMove != null)
+          PopupMenuItem(value: 'move', child: Text(l.reefBeatMoveToTank)),
+        if (onShowQueue != null)
+          PopupMenuItem(value: 'queue', child: Text(l.reefBeatDosingQueue)),
+        PopupMenuItem(value: 'details', child: Text(l.devicesDetails)),
+        PopupMenuItem(value: 'remove', child: Text(l.reefBeatRemove)),
+      ],
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (snap != null)
+            switch (snap) {
+              RbDoseSnapshot(:final status) => _PumpStatus(status: status),
+              RbAtoSnapshot(:final status) => _AtoStatus(status: status),
+              RbMatSnapshot(:final status) => _MatStatus(status: status),
+              RbRunSnapshot(:final status) => _RunStatus(status: status),
+              RbLightSnapshot(:final status) => _LightStatus(status: status),
+              RbControlSnapshot(:final status) => _ControlStatus(
+                status: status,
+              ),
+              RbWaveSnapshot() => const SizedBox.shrink(),
+            }
+          else
+            Text(
+              l.reefBeatNotReadYet,
+              style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
+          // Only ReefControl saves measurements; other Red Sea models do
+          // not need a tank merely to display their operational status.
+          if (rbFamilyHandlers.isModelFamily(device.model, RbFamily.control) &&
+              tank == null) ...[
             const SizedBox(height: 10),
-            // Live status area.
-            if (live.loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
-              )
-            else if (live.error != null)
-              Text(
-                errorTextOf(live.error!),
-                style: t.bodyMedium?.copyWith(color: cs.error),
-              )
-            else if (snap != null)
-              switch (snap) {
-                RbDoseSnapshot(:final status) => _PumpStatus(status: status),
-                RbAtoSnapshot(:final status) => _AtoStatus(status: status),
-                RbMatSnapshot(:final status) => _MatStatus(status: status),
-                RbRunSnapshot(:final status) => _RunStatus(status: status),
-                RbLightSnapshot(:final status) => _LightStatus(status: status),
-                RbControlSnapshot(:final status) => _ControlStatus(
-                  status: status,
-                ),
-                RbWaveSnapshot() => const SizedBox.shrink(),
-              }
-            else
-              Text(
-                l.reefBeatNotReadYet,
-                style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            // Only ReefControl saves measurements; other Red Sea models do
-            // not need a tank merely to display their operational status.
-            if (rbFamilyHandlers.isModelFamily(
-                  device.model,
-                  RbFamily.control,
-                ) &&
-                tank == null) ...[
-              const SizedBox(height: 10),
-              Text(
-                l.reefFactoryNoTank,
-                style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            ],
+            Text(
+              l.reefFactoryNoTank,
+              style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

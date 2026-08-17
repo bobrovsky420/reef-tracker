@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../data/database.dart';
-import '../../domain/hanna_import.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_menu.dart';
 import '../../widgets/reef_settings.dart';
+import 'measurement_import_sources.dart';
 
 /// Settings surface of the measurement import (U32): per tank+source, the
 /// remembered location mapping and the dedupe watermark, with the two rewind
@@ -20,60 +20,56 @@ class ImportSourcesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final sources = ref.watch(importSourcesProvider).value ?? const [];
+    final storedSources = ref.watch(importSourcesProvider).value ?? const [];
     final tanks = ref.watch(tanksProvider).value ?? const [];
     final tankById = {for (final t in tanks) t.id: t};
-    final rows = [
-      for (final s in sources)
-        if (s.source == kHannaImportSource && tankById.containsKey(s.tankId)) s,
-    ];
 
     return Scaffold(
       appBar: AppBar(title: Text(l.measurementImportSettingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // One section per source format; only Hanna Lab exists today. The
-          // header is the product's proper noun, deliberately not localized.
-          ReefSettingsSection(
-            label: 'Hanna Lab',
-            children: [
-              for (final s in rows)
-                ReefSettingsRow(
-                  icon: Icons.science_outlined,
-                  title: tankById[s.tankId]!.name,
-                  description: [
-                    if (s.location != null) '“${s.location}”',
-                    if (s.importedUpTo case final upTo?)
-                      l.hannaImportImportedUpTo(
-                        formatDateTime(context, upTo, weekday: false),
-                      )
-                    else
-                      l.hannaImportNeverImported,
-                  ].join(' · '),
-                  trailing: ReefMenuButton<String>(
-                    icon: Icons.more_vert,
-                    onSelected: (v) => switch (v) {
-                      'change' => _changeDate(context, ref, l, s),
-                      _ => _reset(context, ref, l, s),
-                    },
-                    entries: [
-                      if (s.importedUpTo != null)
-                        ReefMenuItem(
-                          value: 'change',
-                          icon: Icons.edit_calendar_outlined,
-                          label: l.hannaImportChangeDate,
-                        ),
-                      ReefMenuItem(
-                        value: 'reset',
-                        icon: Icons.restart_alt,
-                        label: l.hannaImportReset,
+          for (final descriptor in measurementImportSources.settingsSources)
+            ReefSettingsSection(
+              label: descriptor.label(l),
+              children: [
+                for (final s in descriptor.settingsRows(storedSources))
+                  if (tankById.containsKey(s.tankId))
+                    ReefSettingsRow(
+                      icon: descriptor.icon,
+                      title: tankById[s.tankId]!.name,
+                      description: [
+                        if (s.location != null) '“${s.location}”',
+                        if (s.importedUpTo case final upTo?)
+                          l.hannaImportImportedUpTo(
+                            formatDateTime(context, upTo, weekday: false),
+                          )
+                        else
+                          l.hannaImportNeverImported,
+                      ].join(' · '),
+                      trailing: ReefMenuButton<String>(
+                        icon: Icons.more_vert,
+                        onSelected: (v) => switch (v) {
+                          'change' => _changeDate(context, ref, l, s),
+                          _ => _reset(context, ref, l, s),
+                        },
+                        entries: [
+                          if (s.importedUpTo != null)
+                            ReefMenuItem(
+                              value: 'change',
+                              icon: Icons.edit_calendar_outlined,
+                              label: l.hannaImportChangeDate,
+                            ),
+                          ReefMenuItem(
+                            value: 'reset',
+                            icon: Icons.restart_alt,
+                            label: l.hannaImportReset,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+                    ),
+              ],
+            ),
         ],
       ),
     );

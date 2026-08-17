@@ -18,8 +18,8 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_segmented.dart';
 import '../../widgets/trend_chart.dart';
-import 'dosing_screen.dart' show formatDoseAmount;
-import 'manual_dose_edit_screen.dart' show ManualDoseDraft;
+import 'dosing_models.dart';
+import 'dosing_presentation.dart' show formatDoseAmount;
 
 /// The calculator's two modes: the consumption-based daily-dose adjustment,
 /// and the one-off correction ("emergency") dose toward a target value.

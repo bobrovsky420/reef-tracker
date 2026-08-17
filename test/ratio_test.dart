@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/domain/ratio.dart';
 import 'package:reeftracker/domain/units.dart';
 import 'package:reeftracker/domain/zones.dart';
+import 'package:reeftracker/widgets/ratio_presentation.dart';
 
 RatioReading _r(double value, int msEpoch) =>
     (takenAt: DateTime.fromMillisecondsSinceEpoch(msEpoch), value: value);

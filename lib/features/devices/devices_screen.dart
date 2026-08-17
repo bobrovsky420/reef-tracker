@@ -1054,7 +1054,6 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   }
 
   Future<void> _onDeviceRemoved(DeviceRecord device) async {
-    await ref.read(deviceIntegrationRegistryProvider).cleanup(device);
     if (!mounted) return;
     setState(() {
       _live.remove(device.identifier);
