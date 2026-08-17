@@ -20,7 +20,7 @@ import '../domain/parameter_catalog.dart';
 import '../domain/units.dart';
 import 'ap_protocol.dart';
 import 'rb_device_link.dart';
-import 'rb_protocol.dart';
+import 'rb_measurements.dart';
 import 'rf_protocol.dart';
 
 typedef WallReading = ({String paramKey, double value});
@@ -73,31 +73,20 @@ List<WallReading> wallApReadings(ApStatus status) => _canonical([
 /// A ReefBeat device's wall readings. Most Red Sea gear reports what it is
 /// doing rather than measurements; ReefATO+ contributes its level-sensor
 /// temperature and ReefControl contributes one primary value per attached
-/// water probe. A ReefControl's two compensation temperatures stay visible on
-/// its Devices card but do not become one ambiguous wall temperature card.
+/// water probe plus the first valid combined-probe temperature, matching the
+/// controller's save and Hanna-environment rule.
 List<WallReading> wallRbReadings(RbSnapshot snap) {
-  final raw = <WallReading>[
+  final readings = <WallReading>[
     if (snap.ato?.temperatureC case final t?)
       (paramKey: 'temperature', value: t),
+    if (snap.control case final control?)
+      for (final r in rbControlMeasurements(control))
+        (paramKey: r.paramKey, value: r.value),
   ];
-  for (final probe in snap.control?.probes ?? const <RbControlProbe>[]) {
-    switch (probe.type) {
-      case 'ec':
-        if (probe.salinityPpt case final value?) {
-          raw.add((paramKey: 'salinity', value: value));
-        }
-        break;
-      case 'ph':
-        if (probe.value case final value?) {
-          raw.add((paramKey: 'ph', value: value));
-        }
-        break;
-      case 'orp':
-        if (probe.value case final value?) {
-          raw.add((paramKey: 'orp', value: value));
-        }
-        break;
-    }
-  }
-  return _canonical(raw);
+  // ReefControl values are already canonicalized by the shared save/Hanna
+  // extractor. ReefATO temperature needs only the same impossible-value guard.
+  return [
+    for (final r in readings)
+      if (checkParamValue(r.paramKey, r.value) != ParamValueCheck.impossible) r,
+  ];
 }

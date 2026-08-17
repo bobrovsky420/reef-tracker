@@ -12,6 +12,7 @@ import 'package:reeftracker/data/rb_device_link.dart';
 import 'package:reeftracker/data/rb_protocol.dart';
 import 'package:reeftracker/data/rf_device_link.dart';
 import 'package:reeftracker/data/rf_protocol.dart';
+import 'package:reeftracker/domain/device_vendors.dart';
 import 'package:reeftracker/domain/pro_features.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 
@@ -23,6 +24,7 @@ DeviceRecord _device({
   String? model = 'RFSG01',
   String? address = '10.0.0.10',
   int? tankId = 1,
+  int displayOrder = 0,
 }) => DeviceRecord(
   id: id,
   kind: kind,
@@ -32,19 +34,17 @@ DeviceRecord _device({
   address: address,
   tankId: tankId,
   firstSeenAt: DateTime(2026),
-  displayOrder: 0,
+  displayOrder: displayOrder,
 );
 
 EnvSourceReadings _result({
   required String identifier,
   String? displayName,
-  Set<String> primaryParams = const {},
   DateTime? takenAt,
   required List<({String paramKey, double value})> readings,
 }) => (
   identifier: identifier,
   displayName: displayName ?? identifier,
-  primaryParams: primaryParams,
   takenAt: takenAt ?? DateTime(2026, 7, 24, 10),
   readings: readings,
 );
@@ -105,73 +105,34 @@ void main() {
       expect(selectEnvironmentValues(const []), isEmpty);
     });
 
-    test(
-      'a dedicated device beats an incidental reading regardless of order',
-      () {
-        // The U36 temperature-source rule, generalized: the Temperature
-        // Controller's temperature wins over the Salinity Guardian's — in both
-        // arrival orders, and even though the Guardian's read is fresher.
-        final guardian = _result(
-          identifier: 'RFSG01AAAA',
-          displayName: 'Guardian',
-          primaryParams: {'salinity'},
-          takenAt: DateTime(2026, 7, 24, 10, 5),
-          readings: [
-            (paramKey: 'salinity', value: 1.0255),
-            (paramKey: 'temperature', value: 25.9),
-          ],
-        );
-        final controller = _result(
-          identifier: 'RFTC01BBBB',
-          displayName: 'Controller',
-          primaryParams: {'temperature'},
-          takenAt: DateTime(2026, 7, 24, 10),
-          readings: [(paramKey: 'temperature', value: 25.2)],
-        );
-        for (final order in [
-          [guardian, controller],
-          [controller, guardian],
-        ]) {
-          final picked = selectEnvironmentValues(order);
-          expect(picked['temperature']?.value, 25.2);
-          expect(picked['temperature']?.deviceName, 'Controller');
-          expect(picked['salinity']?.value, 1.0255);
-        }
-      },
-    );
-
-    test('among equals the fresher read wins', () {
+    test('the first source wins even when a later reading is fresher', () {
       final picked = selectEnvironmentValues([
         _result(
           identifier: 'A',
-          primaryParams: {'temperature'},
           takenAt: DateTime(2026, 7, 24, 10),
           readings: [(paramKey: 'temperature', value: 25.0)],
         ),
         _result(
           identifier: 'B',
-          primaryParams: {'temperature'},
           takenAt: DateTime(2026, 7, 24, 10, 1),
           readings: [(paramKey: 'temperature', value: 25.5)],
         ),
       ]);
-      expect(picked['temperature']?.value, 25.5);
+      expect(picked['temperature']?.value, 25.0);
+      expect(picked['temperature']?.deviceName, 'A');
     });
 
-    test('a full tie breaks on identifier, so the choice is stable', () {
-      final at = DateTime(2026, 7, 24, 10);
-      final a = _result(
-        identifier: 'AAA',
-        takenAt: at,
-        readings: [(paramKey: 'ph', value: 8.1)],
-      );
-      final b = _result(
-        identifier: 'BBB',
-        takenAt: at,
-        readings: [(paramKey: 'ph', value: 8.3)],
-      );
-      expect(selectEnvironmentValues([a, b])['ph']?.value, 8.1);
-      expect(selectEnvironmentValues([b, a])['ph']?.value, 8.1);
+    test('the first reading within one device wins', () {
+      final picked = selectEnvironmentValues([
+        _result(
+          identifier: 'control',
+          readings: [
+            (paramKey: 'temperature', value: 25.1),
+            (paramKey: 'temperature', value: 26.4),
+          ],
+        ),
+      ]);
+      expect(picked['temperature']?.value, 25.1);
     });
 
     test('non-environment parameters are ignored', () {
@@ -194,6 +155,7 @@ void main() {
       final rbLink = _FakeRbLink(const {});
       final sources = environmentSourcesForTank(
         tankId: 1,
+        vendorOrder: kDeviceVendors,
         rfDevices: [
           _device(id: 1, identifier: 'RFSG01AAAA', tankId: 1),
           _device(id: 2, identifier: 'RFPM01BBBB', tankId: 2),
@@ -224,29 +186,46 @@ void main() {
         ['RFSG01AAAA', 'RB-CONTROL-1'],
       );
     });
+
+    test('uses vendor order, then card order within each vendor', () {
+      final sources = environmentSourcesForTank(
+        tankId: 1,
+        vendorOrder: const [
+          kDeviceKindReefBeat,
+          kDeviceKindReefFactory,
+          kDeviceKindApex,
+          kDeviceKindHanna,
+        ],
+        rfDevices: [
+          _device(identifier: 'rf-later', displayOrder: 2),
+          _device(identifier: 'rf-first', displayOrder: 1),
+        ],
+        rfLink: _FakeRfLink(const {}),
+        rbDevices: [
+          _device(
+            kind: kDeviceKindReefBeat,
+            identifier: 'rb-later',
+            model: 'RSCONTROLPRO',
+            displayOrder: 3,
+          ),
+          _device(
+            kind: kDeviceKindReefBeat,
+            identifier: 'rb-first',
+            model: 'RSCONTROLLITE',
+            displayOrder: 0,
+          ),
+        ],
+        rbLink: _FakeRbLink(const {}),
+      );
+
+      expect(
+        [for (final source in sources) source.identifier],
+        ['rb-first', 'rb-later', 'rf-first', 'rf-later'],
+      );
+    });
   });
 
   group('RfEnvironmentSource', () {
-    test('declares the model-specific primary parameter', () {
-      final link = _FakeRfLink(const {});
-      expect(
-        RfEnvironmentSource(_device(model: 'RFSG01'), link).primaryParams,
-        {'salinity'},
-      );
-      expect(
-        RfEnvironmentSource(_device(model: 'RFPM01'), link).primaryParams,
-        {'ph'},
-      );
-      expect(
-        RfEnvironmentSource(_device(model: 'RFTC01'), link).primaryParams,
-        {'temperature'},
-      );
-      expect(
-        RfEnvironmentSource(_device(model: 'RFXX99'), link).primaryParams,
-        isEmpty,
-      );
-    });
-
     test('display name falls back name → model → identifier', () {
       final link = _FakeRfLink(const {});
       expect(
@@ -300,11 +279,6 @@ void main() {
       model: 'RSCONTROLPRO',
       address: address,
     );
-
-    test('declares probe primaries but treats temperature as incidental', () {
-      final source = RbEnvironmentSource(device(), _FakeRbLink(const {}));
-      expect(source.primaryParams, {'salinity', 'ph', 'orp'});
-    });
 
     test(
       'offers all probe values and the first probe temperature to Hanna',

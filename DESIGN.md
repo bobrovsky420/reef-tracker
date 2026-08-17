@@ -2684,7 +2684,7 @@ Experimental) is turned on.
 - **Environment capture (U37):** the results step can also save the tank's
   *current environment* (salinity, temperature, pH, ORP) read from its connected
   devices, via the device-agnostic `data/environment_sources.dart`:
-  `EnvironmentSource` (identifier, display name, *primary* parameters, one
+  `EnvironmentSource` (identifier, display name, one
   `read()`) is resolved per save-tank by `environmentSourcesProvider`
   (ReefFactory meters wrapped in `RfEnvironmentSource` plus ReefControl
   Lite/Pro wrapped in `RbEnvironmentSource`, gated on
@@ -2692,9 +2692,10 @@ Experimental) is turned on.
   the Hanna screen never names a vendor). ReefControl offers salinity, pH, ORP
   and the **first attached water probe carrying a temperature**.
   `selectEnvironmentValues` picks
-  exactly **one value per parameter**, never asking the user: dedicated
-  device beats incidental reading (generalizing the U36 temperature-source
-  rule), then fresher read, then identifier order (stable). An
+  exactly **one value per parameter**, never asking the user: the first
+  available reading wins in the Devices page's visible order — the user's vendor
+  order, then card order within that vendor, then the device's probe/payload
+  order. A failed source simply lets the next source supply that parameter. An
   **Environment card** on the results step hosts the persistent toggle (the
   `hanna_attach_environment` setting, default off, rides backups like
   `hanna_method_sets`; the card shows — collapsed — even while off, for
@@ -3812,10 +3813,11 @@ value is showing *this* keeper's devices, which live in this database.
   honoured) · one connection dot (green all-reachable / amber partial / red
   all-failing ≈ "check the network", §12r) · "updated HH:MM".
   ReefControl contributes one value card for each attached probe's primary
-  water parameter (salinity, pH and ORP in the captured three-water-probe setup).
-  The combined probes' two temperature-compensation readings remain visible
-  on the single Devices card rather than being collapsed into one arbitrarily
-  sourced wall temperature card. The installed probe set is learned from a
+  water parameter (salinity, pH and ORP in the captured three-water-probe setup)
+  plus one temperature card sourced from the first valid combined probe in the
+  controller's reported probe order, matching its history-save and Hanna
+  environment behavior. Both combined-probe temperatures remain visible on
+  the single Devices card. The installed probe set is learned from a
   live poll and remembered by the sparse wall-card rows; the stored controller
   model alone cannot predict which of ReefControl's interchangeable ports are
   populated.

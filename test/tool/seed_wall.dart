@@ -19,6 +19,7 @@ import 'package:reeftracker/domain/setup_type.dart';
 ///     dart run tool/reefbeat_emulator.dart --type ato --port 8090
 ///     dart run tool/reefbeat_emulator.dart --type run --port 8091
 ///     dart run tool/reefbeat_emulator.dart --type dose --port 8092
+///     dart run tool/reefbeat_emulator.dart --type control --port 8093
 ///
 /// The history matters here: alkalinity/calcium/magnesium have readings but
 /// no reporting device (stored-readings cards with the 14-day line), while
@@ -134,6 +135,13 @@ void main() {
       name: 'ReefDose 4',
       tankId: tank,
     );
+    await db.upsertReefBeatDevice(
+      identifier: 'RSCONTROL-EMU',
+      model: 'RSCONTROLPRO',
+      address: '10.0.2.2:8093',
+      name: 'ReefControl Pro',
+      tankId: tank,
+    );
     await db.upsertApexDevice(
       identifier: 'AC5:12345',
       model: 'Apex',
@@ -151,6 +159,7 @@ void main() {
     await settings.setTourSeen(true);
     await settings.setExperimentalEnabled(true);
     await settings.seedLegacyFreeSince('0.0.0-seed');
+    await settings.setWallAutoStart(true);
     // Fast cycles so the 24 h sample lines visibly build during verification.
     await settings.setWallRefreshInterval(const Duration(seconds: 30));
 
