@@ -94,7 +94,8 @@ class ParameterDef {
 
   /// Default zone bounds in the canonical unit — set for every microelement
   /// (U17; the fallback/seed bounds of the micro panel, see
-  /// `kMicroDefaultBounds` in micro.dart), null for core parameters, whose
+  /// `kMicroDefaultBounds` in micro.dart) and for optional core parameters
+  /// whose recommendation is setup-independent (currently ORP). Other core
   /// defaults are the per-setup-type presets in presets.dart.
   final ZoneBounds? defaultBounds;
 

@@ -7,7 +7,7 @@
 /// This file owns the lookups.
 library;
 
-import 'micro.dart';
+import 'parameter_catalog.dart';
 import 'setup_type.dart';
 import 'zones.dart';
 
@@ -37,18 +37,21 @@ List<String> defaultTrackedKeys(SetupType type) =>
 /// answer to "what should this parameter's zones be when the tank has not
 /// overridden them".
 ///
-/// Core parameters resolve to their setup-type preset, microelements to their
-/// catalog default (`parameters.yaml`). Empty when neither defines one — a
-/// real case, not a bug: fish-only tanks have no calcium or alkalinity preset,
-/// so tracking calcium there gives an uncoloured "No boundaries set" row until
-/// the user sets bounds by hand.
+/// Parameters resolve to their setup-type preset first, then to a catalog
+/// default (`parameters.yaml`). Catalog defaults cover every microelement and
+/// optional, setup-independent core parameters such as ORP. Empty when neither
+/// defines one — a real case, not a bug: fish-only tanks have no calcium or
+/// alkalinity preset, so tracking calcium there gives an uncoloured "No
+/// boundaries set" row until the user sets bounds by hand.
 ///
 /// Resolved on **read**, never stored. Changing a tank's setup type, or
 /// shipping a new catalog, therefore re-colours every parameter the tank has
 /// not overridden — with no migration and no re-apply step.
 ZoneBounds defaultBoundsFor(SetupType type, String paramKey) {
   final preset = presetBounds(type, paramKey);
-  return preset.isEmpty ? microDefaultBounds(paramKey) : preset;
+  return preset.isEmpty
+      ? kParameterByKey[paramKey]?.defaultBounds ?? const ZoneBounds()
+      : preset;
 }
 
 /// The default correction target for [paramKey] on a tank of [type]. Only the

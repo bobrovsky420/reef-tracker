@@ -39,9 +39,10 @@
 #  - `defaultBounds` = default zone bounds (amberLow/greenLow/greenHigh/
 #    amberHigh) in the CANONICAL unit — REQUIRED for microelements (the
 #    fallback when a tank has no TrackedParameters row for the element, and
-#    the seed when one is created), FORBIDDEN for core parameters (their
-#    defaults are per-setup-type presets in presets.dart). One-sided "keep
-#    low" elements omit the low pair (no "too little lead"); an amber bound
+#    the seed when one is created), and OPTIONAL for a core parameter whose
+#    recommended range does not vary by setup type (currently ORP). Core
+#    setup-specific defaults remain in presets.dart. One-sided "keep low"
+#    elements omit the low pair (no "too little lead"); an amber bound
 #    requires its green partner, present bounds must be ascending and inside
 #    the plausible range.
 
@@ -152,6 +153,10 @@ parameters:
     group: environment
     plausibleMin: -300
     plausibleMax: 700
+    # ORP is best treated as a broad trend rather than a set point. Neptune
+    # describes 250–400 mV as a normal settled range with no single right
+    # number; 450–500 mV is the commonly cited upper caution band for ozone.
+    defaultBounds: { amberLow: 200, greenLow: 250, greenHigh: 450, amberHigh: 500 }
 
   # --- Microelements (U17): the ICP panel ----------------------------------
   # Categories major/trace/contaminant surface on the Microelements screen,

@@ -25,6 +25,34 @@ void main() {
       }
     });
 
+    test(
+      'ORP has shared defaults without becoming a default dashboard card',
+      () {
+        for (final type in SetupType.values) {
+          expect(
+            defaultTrackedKeys(type),
+            isNot(contains('orp')),
+            reason: '$type',
+          );
+          final bounds = defaultBoundsFor(type, 'orp');
+          expect(bounds.amberLow, 200, reason: '$type');
+          expect(bounds.greenLow, 250, reason: '$type');
+          expect(bounds.greenHigh, 450, reason: '$type');
+          expect(bounds.amberHigh, 500, reason: '$type');
+          expect(bounds.classify(199), Zone.red, reason: '$type low red');
+          expect(bounds.classify(200), Zone.amber, reason: '$type low amber');
+          expect(bounds.classify(250), Zone.green, reason: '$type green floor');
+          expect(
+            bounds.classify(450),
+            Zone.green,
+            reason: '$type green ceiling',
+          );
+          expect(bounds.classify(500), Zone.amber, reason: '$type high amber');
+          expect(bounds.classify(501), Zone.red, reason: '$type high red');
+        }
+      },
+    );
+
     test('a tank at its preset centre classifies green on every ratio', () {
       // kPresets and kRatioDefaultBounds are generated from two blocks of the
       // same tank_presets.yaml and validated independently — nothing else ties
