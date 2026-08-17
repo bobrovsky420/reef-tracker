@@ -64,13 +64,13 @@ class _FakeRfLink implements RfDeviceLink {
 class _FakeRbLink implements RbDeviceLink {
   @override
   Future<RbSnapshot> readOnce(String host) async => switch (host) {
-    '192.168.1.31' => const RbSnapshot(
+    '192.168.1.31' => const RbDoseSnapshot(
       info: RbDeviceInfo(
         hwType: 'reef-dosing',
         hwModel: 'RSDOSE4',
         hwid: 'ec62609ab3f0',
       ),
-      dose: RbDoseStatus(
+      status: RbDoseStatus(
         batteryLevel: 'high',
         heads: [
           RbDoseHead(
@@ -109,13 +109,13 @@ class _FakeRbLink implements RbDeviceLink {
         ],
       ),
     ),
-    '192.168.1.32' => const RbSnapshot(
+    '192.168.1.32' => const RbAtoSnapshot(
       info: RbDeviceInfo(
         hwType: 'reef-ato',
         hwModel: 'RSATO+',
         hwid: 'ec626089c144',
       ),
-      ato: RbAtoStatus(
+      status: RbAtoStatus(
         waterLevelRaw: 'desired_level_2',
         todayFills: 4,
         todayVolumeMl: 620,

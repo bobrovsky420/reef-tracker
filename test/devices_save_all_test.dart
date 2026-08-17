@@ -267,13 +267,13 @@ class _FakeRbLink implements RbDeviceLink {
   const _FakeRbLink();
 
   @override
-  Future<RbSnapshot> readOnce(String host) async => const RbSnapshot(
+  Future<RbSnapshot> readOnce(String host) async => const RbControlSnapshot(
     info: RbDeviceInfo(
       hwType: kRbControlHwType,
       hwModel: 'RSCONTROLPRO',
       hwid: 'RB-CONTROL-1',
     ),
-    control: RbControlStatus(
+    status: RbControlStatus(
       probes: [
         RbControlProbe(type: 'ec', ppt: 35, temperatureC: 25.1),
         RbControlProbe(type: 'orp', value: 410),

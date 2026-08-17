@@ -30,6 +30,7 @@ import '../data/rb_device_link.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/rf_device_link.dart';
 import '../data/settings.dart';
+import '../data/wall_sources.dart';
 import '../domain/clock.dart';
 import '../domain/device_vendors.dart';
 import '../domain/health_score.dart';
@@ -1115,6 +1116,23 @@ final deviceIntegrationRegistryProvider = Provider<DeviceIntegrationRegistry>((
     ),
     const HannaDeviceIntegration(),
   ]);
+});
+
+/// One resolved, ordered device inventory for both Wall and Wall Settings.
+/// Unknown/future rows are carried separately and never enter the poll list.
+final wallDeviceInventoryProvider = Provider<WallDeviceInventory>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return const WallDeviceInventory();
+  return buildWallDeviceInventory(
+    activeTankId: tank.id,
+    tankCount: ref.watch(tanksProvider).value?.length ?? 0,
+    vendorOrder: ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors,
+    devicesByKind: {
+      for (final kind in kDeviceKinds)
+        kind: ref.watch(devicesOfKindProvider(kind)).value ?? const [],
+    },
+    unsupported: ref.watch(unsupportedDevicesProvider).value ?? const [],
+  );
 });
 
 // --- LAN device discovery (U39) -------------------------------------------

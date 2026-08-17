@@ -83,6 +83,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transport is covered by tests.)
 
 ### Changed
+- Connected devices and Wall display now keep each device's last successful
+  values through a temporary refresh failure while still showing the failure;
+  device reads, saves, cards and Wall facts now share one typed integration
+  path. This refactor was exercised with the committed fake ReefFactory, Apex,
+  and all seven ReefBeat-family servers, not with additional real hardware.
 - ORP readings now come with a recommended color range: red below 200 mV,
   amber from 200–250 mV, green from 250–450 mV, amber from 450–500 mV,
   and red above 500 mV. The defaults apply to every aquarium type and to

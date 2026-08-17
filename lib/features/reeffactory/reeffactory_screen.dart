@@ -47,7 +47,7 @@ class RfDeviceSection extends ConsumerWidget {
   final void Function(DeviceRecord device, RfSnapshot snap)? onSave;
 
   /// Lets the parent drop a removed device's live entry.
-  final void Function(String identifier) onRemoved;
+  final Future<void> Function(DeviceRecord device) onRemoved;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -179,8 +179,8 @@ class RfDeviceSection extends ConsumerWidget {
       ),
     );
     if (ok == true) {
-      onRemoved(d.identifier);
       await ref.read(dbProvider).deleteDevice(d.id);
+      await onRemoved(d);
     }
   }
 }

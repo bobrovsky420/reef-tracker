@@ -7,8 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
-import '../../data/wall_sources.dart';
-import '../../domain/device_vendors.dart';
 import '../../domain/pro_features.dart';
 import '../../domain/wall_display.dart';
 import '../../l10n/app_localizations.dart';
@@ -277,7 +275,6 @@ class _WallCardListState extends ConsumerState<_WallCardList> {
     final tank = ref.watch(activeTankProvider);
     if (tank == null) return const SizedBox.shrink();
     final tracked = ref.watch(trackedParametersProvider).value ?? const [];
-    final tankCount = ref.watch(tanksProvider).value?.length ?? 0;
     final rows = [
       for (final r
           in ref.watch(wallTileSettingsProvider).value ??
@@ -294,49 +291,20 @@ class _WallCardListState extends ConsumerState<_WallCardList> {
     // reads here: what a device reports is remembered in the rows the wall
     // wrote (`insertMissingWallTiles`) — a device never polled yet simply has
     // no cards to arrange until the wall has seen it once.
-    final order = ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors;
-    final byKind = {
-      kDeviceKindReefFactory:
-          ref.watch(reefFactoryDevicesProvider).value ?? const <DeviceRecord>[],
-      kDeviceKindReefBeat:
-          ref.watch(reefBeatDevicesProvider).value ?? const <DeviceRecord>[],
-      kDeviceKindApex:
-          ref.watch(apexDevicesProvider).value ?? const <DeviceRecord>[],
-    };
+    final inventory = ref.watch(wallDeviceInventoryProvider);
+    final integrations = ref.watch(deviceIntegrationRegistryProvider);
     final deviceNames = <String, String>{};
     final reported = <String, List<String>>{};
-    for (final kind in order) {
-      if (!deviceKindRefreshes(kind)) continue;
-      final devices =
-          [
-            for (final d in byKind[kind] ?? const <DeviceRecord>[])
-              if (deviceInWallTank(
-                d.tankId,
-                activeTankId: tank.id,
-                tankCount: tankCount,
-              ))
-                d,
-          ]..sort((a, b) {
-            final byOrder = a.displayOrder.compareTo(b.displayOrder);
-            if (byOrder != 0) return byOrder;
-            return deviceDisplayName(
-              a,
-            ).toLowerCase().compareTo(deviceDisplayName(b).toLowerCase());
-          });
-      for (final d in devices) {
-        final known = wallKnownRfParams(
-          model: d.model,
-          identifier: d.identifier,
-        );
-        deviceNames[d.identifier] = deviceDisplayName(d);
-        reported[d.identifier] = [
-          if (kind == kDeviceKindReefFactory) ...known,
-          for (final r in rows)
-            if (r.deviceIdentifier == d.identifier &&
-                !known.contains(r.paramKey))
-              r.paramKey,
-        ];
-      }
+    for (final entry in inventory.entries) {
+      final d = entry.device;
+      final known = integrations.knownWallParameters(d);
+      deviceNames[d.identifier] = deviceDisplayName(d);
+      reported[d.identifier] = [
+        ...known,
+        for (final r in rows)
+          if (r.deviceIdentifier == d.identifier && !known.contains(r.paramKey))
+            r.paramKey,
+      ];
     }
 
     var cards = buildWallCards(

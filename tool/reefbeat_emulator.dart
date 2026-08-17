@@ -1,16 +1,18 @@
 // A fake Red Sea ReefBeat device, for developing and testing the U38
 // integration without owning the hardware.
 //
-// One process serves one device: a ReefATO+, ReefRun or ReefControl controller
-// — the families with live sensors/alarm states worth forcing — or an RSDOSE4
-// pump (four heads, forceable supplement stock). The payloads are the golden
-// vectors captured from live devices (rb_protocol_test.dart), so the parsers
-// see exactly the shapes real firmware serves.
+// One process serves one device from any supported ReefBeat family. The
+// forceable ATO, Run, Dose and Control payloads preserve their captured live
+// vectors; Mat, Light and Wave provide stable protocol-valid development
+// fixtures so every sealed family can be exercised end to end.
 //
 //     dart run tool/reefbeat_emulator.dart                  # ATO on :8090
 //     dart run tool/reefbeat_emulator.dart --type run --port 8091
 //     dart run tool/reefbeat_emulator.dart --type dose --port 8092
 //     dart run tool/reefbeat_emulator.dart --type control --port 8093
+//     dart run tool/reefbeat_emulator.dart --type mat --port 8094
+//     dart run tool/reefbeat_emulator.dart --type light --port 8095
+//     dart run tool/reefbeat_emulator.dart --type wave --port 8096
 //
 // ## Reaching it from the Android emulator
 //
@@ -48,7 +50,7 @@ import 'dart:convert';
 import 'dart:io';
 
 /// Which device family the emulator presents.
-enum EmuRbType { ato, run, dose, control }
+enum EmuRbType { ato, run, dose, control, mat, light, wave }
 
 /// A fake ReefBeat device serving `/device-info` + `/dashboard`.
 class ReefBeatEmulator {
@@ -98,6 +100,12 @@ class ReefBeatEmulator {
     final Object? body = switch (path) {
       '/device-info' => _deviceInfo(),
       '/dashboard' => _dashboard(),
+      '/configuration' when type == EmuRbType.mat => const {
+        'auto_advance': true,
+        'model': 'RSMAT250',
+      },
+      '/mode' when type == EmuRbType.wave => const {'mode': 'auto'},
+      '/auto' when type == EmuRbType.wave => _waveSchedule(),
       '/dosing-queue' when type == EmuRbType.dose => _dosingQueue(),
       _ when headSettings != null && type == EmuRbType.dose => _headSettings(
         int.parse(headSettings[1]!),
@@ -209,13 +217,71 @@ class ReefBeatEmulator {
       'success': true,
       'message': 'get device info successfully',
     },
+    EmuRbType.mat => {
+      'name': 'RSMAT-$port',
+      'hw_type': 'reef-mat',
+      'hw_model': 'RSMAT',
+      'hwid': hwid,
+    },
+    EmuRbType.light => {
+      'name': 'RSLED90-$port',
+      'hw_type': 'reef-lights',
+      'hw_model': 'RSLED90',
+      'hwid': hwid,
+    },
+    EmuRbType.wave => {
+      'name': 'RSWAVE25-$port',
+      'hw_type': 'reef-wave',
+      'hw_model': 'RSWAVE25',
+      'hwid': hwid,
+    },
   };
 
-  Map<String, Object?> _dashboard() => switch (type) {
+  Map<String, Object?>? _dashboard() => switch (type) {
     EmuRbType.ato => _atoDashboard(),
     EmuRbType.run => _runDashboard(),
     EmuRbType.dose => _doseDashboard(),
     EmuRbType.control => _controlDashboard(),
+    EmuRbType.mat => _matDashboard(),
+    EmuRbType.light => _lightDashboard(),
+    EmuRbType.wave => null,
+  };
+
+  Map<String, Object?> _matDashboard() => {
+    'mode': 'auto',
+    'roll_level': 'running_low',
+    'days_till_end_of_roll': 6,
+    'remaining_length': 480,
+    'material': {'name': '32 Meter'},
+    'today_usage': 41,
+    'daily_average_usage': 84.1,
+    'auto_advance': true,
+    'is_advancing': false,
+    'unclean_sensor': false,
+    'setup_date': 1780746055,
+  };
+
+  Map<String, Object?> _lightDashboard() => {
+    'mode': 'auto',
+    'battery_level': 'high',
+    'time_error': false,
+    'tilt_switch': false,
+    'manual': {
+      'white': 20,
+      'blue': 80,
+      'moon': 0,
+      'fan': 100,
+      'temperature': 60.1,
+    },
+    'current_program': {'name': 'Reef Day-1769330261387'},
+  };
+
+  Map<String, Object?> _waveSchedule() => {
+    'intervals': [
+      {'st': 0, 'fti': 25, 'rti': 10, 'name': 'Night'},
+      {'st': 360, 'fti': 80, 'rti': 60, 'name': 'Day'},
+      {'st': 1320, 'fti': 10, 'rti': 2, 'name': 'Late'},
+    ],
   };
 
   /// The shape captured from a live ReefControl Pro on 2026-08-13. Its two
