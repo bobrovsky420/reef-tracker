@@ -108,6 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tile and as a chip on the ReefRun card — instead of the raw firmware text.
 
 ### Fixed
+- Wall display reorder handles now respond across their full 48 × 48 touch
+  target, rather than requiring a precise hit on the small painted icon.
 - Wall display card reordering now updates immediately when a drag handle is
   dropped, instead of snapping back while the saved order was still being
   written.

@@ -432,8 +432,11 @@ class _WallCardListState extends ConsumerState<_WallCardList> {
           ),
           trailing: ReorderableDragStartListener(
             index: i,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
+            child: Container(
+              width: kMinInteractiveDimension,
+              height: kMinInteractiveDimension,
+              color: Colors.transparent,
+              alignment: Alignment.center,
               child: Icon(
                 Icons.drag_handle,
                 size: 16,

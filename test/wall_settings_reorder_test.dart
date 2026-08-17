@@ -81,7 +81,18 @@ void main() {
     expect(handles, findsNWidgets(2));
     await tester.ensureVisible(handles.first);
     await settle(tester);
-    final gesture = await tester.startGesture(tester.getCenter(handles.first));
+    final firstDragListener = find.ancestor(
+      of: handles.first,
+      matching: find.byType(ReorderableDragStartListener),
+    );
+    final handleRect = tester.getRect(firstDragListener);
+    expect(handleRect.width, greaterThanOrEqualTo(kMinInteractiveDimension));
+    expect(handleRect.height, greaterThanOrEqualTo(kMinInteractiveDimension));
+    // Start beside the painted icon. The whole visible handle area must accept
+    // the drag, not just the icon's 16×16 glyph.
+    final gesture = await tester.startGesture(
+      Offset(handleRect.left + 4, handleRect.center.dy),
+    );
     for (var i = 0; i < 5; i++) {
       await gesture.moveBy(const Offset(0, 35));
       await tester.pump(const Duration(milliseconds: 16));
