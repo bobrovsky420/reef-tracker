@@ -8,6 +8,7 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../domain/device_vendors.dart';
 import '../domain/dose_calculator.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/presets.dart';
@@ -1583,6 +1584,17 @@ class AppDatabase extends _$AppDatabase {
             ]))
           .watch();
 
+  /// Rows whose persisted integration ID this build does not know. They stay
+  /// visible in inventory for diagnosis but are never routed to a transport.
+  Stream<List<DeviceRecord>> watchUnsupportedDevices() =>
+      (select(devices)
+            ..where((d) => d.kind.isNotIn(kKnownDeviceKindIds.toList()))
+            ..orderBy([
+              (d) => OrderingTerm(expression: d.displayOrder),
+              (d) => OrderingTerm(expression: d.firstSeenAt),
+            ]))
+          .watch();
+
   Future<DeviceRecord?> deviceByIdentifier(String identifier) => (select(
     devices,
   )..where((d) => d.identifier.equals(identifier))).getSingleOrNull();
@@ -1613,10 +1625,10 @@ class AppDatabase extends _$AppDatabase {
     // Read-then-insert in one transaction (#10) so concurrent adds can't be
     // assigned the same displayOrder. An update (the device-moved path) never
     // touches the order — the card keeps its place.
-    final order = await _nextDeviceOrder('reefbeat');
+    final order = await _nextDeviceOrder(DeviceKind.reefBeat.id);
     await into(devices).insert(
       DevicesCompanion.insert(
-        kind: 'reefbeat',
+        kind: DeviceKind.reefBeat.id,
         identifier: identifier,
         name: Value(name),
         model: Value(model),
@@ -1648,10 +1660,10 @@ class AppDatabase extends _$AppDatabase {
     String? name,
     int? tankId,
   }) => transaction(() async {
-    final order = await _nextDeviceOrder('reeffactory');
+    final order = await _nextDeviceOrder(DeviceKind.reefFactory.id);
     await into(devices).insert(
       DevicesCompanion.insert(
-        kind: 'reeffactory',
+        kind: DeviceKind.reefFactory.id,
         identifier: identifier,
         name: Value(name),
         model: Value(model),
@@ -1687,10 +1699,10 @@ class AppDatabase extends _$AppDatabase {
     String? name,
     int? tankId,
   }) => transaction(() async {
-    final order = await _nextDeviceOrder('apex');
+    final order = await _nextDeviceOrder(DeviceKind.apex.id);
     await into(devices).insert(
       DevicesCompanion.insert(
-        kind: 'apex',
+        kind: DeviceKind.apex.id,
         identifier: identifier,
         name: Value(name),
         model: Value(model),
@@ -1732,10 +1744,10 @@ class AppDatabase extends _$AppDatabase {
     int? tankId,
   }) async {
     await transaction(() async {
-      final order = await _nextDeviceOrder('hanna');
+      final order = await _nextDeviceOrder(DeviceKind.hanna.id);
       await into(devices).insert(
         DevicesCompanion.insert(
-          kind: 'hanna',
+          kind: DeviceKind.hanna.id,
           identifier: identifier,
           name: Value(name),
           model: Value(model),

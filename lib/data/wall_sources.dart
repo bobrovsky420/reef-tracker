@@ -21,9 +21,35 @@ import '../domain/units.dart';
 import 'ap_protocol.dart';
 import 'rb_device_link.dart';
 import 'rb_measurements.dart';
+import 'rb_protocol.dart';
 import 'rf_protocol.dart';
 
 typedef WallReading = ({String paramKey, double value});
+
+/// Stable presentation order for ReefBeat's non-measurement wall facts. The
+/// renderer consumes [wallRbStatusContributions], so this is a tested behavior
+/// contract rather than an incidental sequence of nullable-field checks.
+enum WallRbStatusKind { ato, dose, mat, skimmer }
+
+typedef WallRbStatusContribution = ({WallRbStatusKind kind, int pumpIndex});
+
+/// The status tiles [snapshot] contributes, in display order. Dosing pumps
+/// without a configured head label and empty/non-skimmer ReefRun sockets do
+/// not produce tiles, matching the visible renderer.
+List<WallRbStatusContribution> wallRbStatusContributions(RbSnapshot snapshot) =>
+    [
+      if (snapshot.ato != null) (kind: WallRbStatusKind.ato, pumpIndex: -1),
+      if (snapshot.dose?.heads.any(
+            (head) => head.supplement != null || head.shortName != null,
+          ) ==
+          true)
+        (kind: WallRbStatusKind.dose, pumpIndex: -1),
+      if (snapshot.mat != null) (kind: WallRbStatusKind.mat, pumpIndex: -1),
+      for (final (index, pump)
+          in (snapshot.run?.pumps ?? const <RbRunPump>[]).indexed)
+        if (!pump.isEmptySocket && pump.type == 'skimmer')
+          (kind: WallRbStatusKind.skimmer, pumpIndex: index),
+    ];
 
 /// Whether an inventory device belongs on this wall. A sole aquarium is the
 /// unambiguous home for an unassigned device; this also self-heals the visible

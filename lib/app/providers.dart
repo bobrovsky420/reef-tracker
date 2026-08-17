@@ -14,6 +14,7 @@ import '../data/cloud_backup_store.dart';
 import '../data/cloud_sync.dart';
 import '../data/database.dart';
 import '../data/device_http.dart';
+import '../data/device_integrations.dart';
 import '../data/device_secrets.dart';
 import '../data/diagnostics_log.dart';
 import '../data/entitlement.dart';
@@ -1051,11 +1052,16 @@ final rfDeviceLinkProvider = Provider<RfDeviceLink>(
   (ref) => const RfWebSocketLink(),
 );
 
-/// The registered ReefFactory devices (dashboard cards). Household-scoped, so a
-/// plain app-lifetime [StreamProvider] like [roStagesProvider], not a
-/// tank-family one.
-final reefFactoryDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reeffactory')),
+/// Registered devices of one canonical kind. Household-scoped; the typed
+/// family replaces four parallel query declarations while retaining the old
+/// named aliases below for feature-level overrides and gradual migration.
+final devicesOfKindProvider =
+    StreamProvider.family<List<DeviceRecord>, DeviceKind>(
+      (ref, kind) => _dedup(ref.watch(dbProvider).watchDevicesOfKind(kind.id)),
+    );
+
+final reefFactoryDevicesProvider = devicesOfKindProvider(
+  DeviceKind.reefFactory,
 );
 
 /// Transport used by the ReefBeat dashboard (U38) to read a device's REST
@@ -1064,9 +1070,7 @@ final rbDeviceLinkProvider = Provider<RbDeviceLink>((ref) => RbHttpLink());
 
 /// The registered Red Sea ReefBeat devices (U38 dashboard cards). Same scoping
 /// rationale as [reefFactoryDevicesProvider].
-final reefBeatDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reefbeat')),
-);
+final reefBeatDevicesProvider = devicesOfKindProvider(DeviceKind.reefBeat);
 
 /// Transport used by the Apex dashboard (U40) to read a controller's status.
 /// Overridden with a fake in widget tests.
@@ -1074,16 +1078,44 @@ final apDeviceLinkProvider = Provider<ApDeviceLink>((ref) => ApHttpLink());
 
 /// The registered Neptune Apex controllers (U40 dashboard cards). Same scoping
 /// rationale as [reefFactoryDevicesProvider].
-final apexDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('apex')),
-);
+final apexDevicesProvider = devicesOfKindProvider(DeviceKind.apex);
 
 /// The registered Hanna checkers — recorded by the measurement flow on first
 /// BLE connect (`ensureHannaDevice`), shown as their own Devices-page section
 /// (U43). Same scoping rationale as [reefFactoryDevicesProvider].
-final hannaDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('hanna')),
+final hannaDevicesProvider = devicesOfKindProvider(DeviceKind.hanna);
+
+/// Corrupt or future inventory rows remain visible for diagnosis, but are not
+/// part of the typed family and can never be passed to a vendor transport.
+final unsupportedDevicesProvider = StreamProvider<List<DeviceRecord>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchUnsupportedDevices()),
 );
+
+/// Composition root for device behavior. The registry itself is pure Dart;
+/// Riverpod supplies the live transports, database callbacks, and secret store
+/// so tests can replace any dependency without a feature screen knowing it.
+final deviceIntegrationRegistryProvider = Provider<DeviceIntegrationRegistry>((
+  ref,
+) {
+  final db = ref.watch(dbProvider);
+  return DeviceIntegrationRegistry([
+    RfDeviceIntegration(
+      link: ref.watch(rfDeviceLinkProvider),
+      touchSeen: db.touchDeviceSeen,
+    ),
+    RbDeviceIntegration(
+      link: ref.watch(rbDeviceLinkProvider),
+      touchSeen: db.touchDeviceSeen,
+      updateModel: db.updateDeviceModel,
+    ),
+    ApDeviceIntegration(
+      link: ref.watch(apDeviceLinkProvider),
+      secrets: ref.watch(deviceSecretsProvider),
+      touchSeen: db.touchDeviceSeen,
+    ),
+    const HannaDeviceIntegration(),
+  ]);
+});
 
 // --- LAN device discovery (U39) -------------------------------------------
 
@@ -1131,14 +1163,20 @@ final environmentSourcesProvider =
       if (!ref.watch(proFeatureProvider(ProFeature.connectedDevices))) {
         return const [];
       }
-      return environmentSourcesForTank(
+      final registry = ref.watch(deviceIntegrationRegistryProvider);
+      final order = <DeviceKind>[];
+      for (final id
+          in ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors) {
+        final kind = DeviceKind.tryParse(id);
+        if (kind != null) order.add(kind);
+      }
+      return registry.environmentSourcesForTank(
         tankId: tankId,
-        vendorOrder:
-            ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors,
-        rfDevices: ref.watch(reefFactoryDevicesProvider).value ?? const [],
-        rfLink: ref.watch(rfDeviceLinkProvider),
-        rbDevices: ref.watch(reefBeatDevicesProvider).value ?? const [],
-        rbLink: ref.watch(rbDeviceLinkProvider),
+        vendorOrder: order,
+        devicesByKind: {
+          for (final kind in registry.registeredKinds)
+            kind: ref.watch(devicesOfKindProvider(kind)).value ?? const [],
+        },
       );
     });
 
