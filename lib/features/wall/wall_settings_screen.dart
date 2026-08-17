@@ -323,16 +323,6 @@ class _WallCardListState extends ConsumerState<_WallCardList> {
       );
     }
 
-    final visibleCountByDevice = <String, int>{};
-    for (final c in cards) {
-      if (c.id.deviceIdentifier == kWallNoDevice || !c.visible) continue;
-      visibleCountByDevice.update(
-        c.id.deviceIdentifier,
-        (n) => n + 1,
-        ifAbsent: () => 1,
-      );
-    }
-
     final db = ref.read(dbProvider);
     return ReorderableListView.builder(
       shrinkWrap: true,
@@ -363,19 +353,6 @@ class _WallCardListState extends ConsumerState<_WallCardList> {
         final deviceName = deviceCard
             ? (deviceNames[id.deviceIdentifier] ?? id.deviceIdentifier)
             : l.wallStoredCard;
-        final muted =
-            deviceCard && isWallDeviceMuted(id.deviceIdentifier, rows);
-        // The row whose toggle would silence the device says so before it is
-        // flipped — the traffic consequence must not be folklore (§12q).
-        final lastVisible =
-            deviceCard &&
-            card.visible &&
-            visibleCountByDevice[id.deviceIdentifier] == 1;
-        final subtitle = [
-          deviceName,
-          if (muted) l.wallDeviceNotContacted,
-          if (lastVisible) l.wallHideLastCardNote,
-        ].join(' · ');
         return ListTile(
           key: ValueKey('${id.deviceIdentifier}|${id.paramKey}'),
           leading: Semantics(
@@ -394,7 +371,7 @@ class _WallCardListState extends ConsumerState<_WallCardList> {
           ),
           title: Text(l.paramName(id.paramKey)),
           subtitle: Text(
-            subtitle,
+            deviceName,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),

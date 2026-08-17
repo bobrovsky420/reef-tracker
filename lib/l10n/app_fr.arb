@@ -1157,8 +1157,6 @@
   "wallCardsSection": "Cartes",
   "wallCardsHint": "Chaque valeur signalée par un appareil a sa propre carte. Masque les doublons inutiles et fais glisser le reste ; masque toutes les cartes d'un appareil et le tableau cesse de le contacter.",
   "wallStoredCard": "Mesures manuelles",
-  "wallDeviceNotContacted": "non contacté",
-  "wallHideLastCardNote": "Masquer cette carte cessera de contacter l'appareil",
   "wallSecondsLabel": "{n} s",
   "wallMinutesLabel": "{n} min",
   "wallNoTank": "Pas encore d'aquarium. Ajoute-en un, puis démarre l'affichage mural.",

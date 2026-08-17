@@ -1157,8 +1157,6 @@
   "wallCardsSection": "Karten",
   "wallCardsHint": "Jeder Wert, den ein Gerät meldet, bekommt eine eigene Karte. Blende unerwünschte Duplikate aus und ziehe den Rest an seinen Platz; werden alle Karten eines Geräts ausgeblendet, kontaktiert die Wandtafel es nicht mehr.",
   "wallStoredCard": "Manuelle Messungen",
-  "wallDeviceNotContacted": "wird nicht kontaktiert",
-  "wallHideLastCardNote": "Beim Ausblenden wird das Gerät nicht mehr kontaktiert",
   "wallSecondsLabel": "{n} s",
   "wallMinutesLabel": "{n} Min.",
   "wallNoTank": "Noch kein Aquarium. Lege eines an und starte dann das Wanddisplay.",

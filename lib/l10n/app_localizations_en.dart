@@ -4099,12 +4099,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wallStoredCard => 'Manual measurements';
 
   @override
-  String get wallDeviceNotContacted => 'not contacted';
-
-  @override
-  String get wallHideLastCardNote => 'Hiding this stops contacting the device';
-
-  @override
   String wallSecondsLabel(int n) {
     return '$n s';
   }

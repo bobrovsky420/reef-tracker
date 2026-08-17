@@ -4189,13 +4189,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get wallStoredCard => 'Ручные измерения';
 
   @override
-  String get wallDeviceNotContacted => 'не опрашивается';
-
-  @override
-  String get wallHideLastCardNote =>
-      'Если скрыть, устройство перестанет опрашиваться';
-
-  @override
   String wallSecondsLabel(int n) {
     return '$n с';
   }

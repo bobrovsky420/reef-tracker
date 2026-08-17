@@ -4132,12 +4132,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get wallStoredCard => 'Ruční měření';
 
   @override
-  String get wallDeviceNotContacted => 'nekontaktuje se';
-
-  @override
-  String get wallHideLastCardNote => 'Skrytím se zařízení přestane kontaktovat';
-
-  @override
   String wallSecondsLabel(int n) {
     return '$n s';
   }

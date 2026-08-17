@@ -4195,13 +4195,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wallStoredCard => 'Pomiary ręczne';
 
   @override
-  String get wallDeviceNotContacted => 'nie jest odpytywane';
-
-  @override
-  String get wallHideLastCardNote =>
-      'Ukrycie tej karty zakończy łączenie z urządzeniem';
-
-  @override
   String wallSecondsLabel(int n) {
     return '$n s';
   }
