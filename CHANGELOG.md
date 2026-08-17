@@ -83,6 +83,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transport is covered by tests.)
 
 ### Changed
+- Connected devices: the Save all button now counts the distinct parameters
+  that will be saved instead of the devices supplying them. Supplementary
+  readings such as ReefControl probe temperature count, while duplicate
+  readings resolved by the first-device/probe rule do not.
 - Connected devices can now be refreshed by pulling down past the top of the
   dashboard. The gesture refreshes the same currently selected devices as the
   Refresh all button, including on short one-card dashboards. It was exercised

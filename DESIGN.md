@@ -3034,6 +3034,11 @@ entry points for one page were four ways to say the same thing).
   meter-capable device (`deviceModelSaves`): a Red Sea selection with only
   pumps/lights/ATO/filter has nothing to save, while one containing ReefControl
   does. A disabled button in the former case would imply "read something first".
+  The number on Save all is the number of distinct tank parameters the action
+  would persist, not the number of devices: it is calculated after each
+  integration's save filter and the first-displayed-wins merge, so supplementary
+  readings count but duplicate parameters (including temperatures from later
+  probes or devices) do not.
 - **Save precedence: first displayed wins.** When two devices report the same
   parameter for the same tank, the one higher on the page keeps it — vendor
   order first, then the user's drag order within that vendor. **Reordering a
