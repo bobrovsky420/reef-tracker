@@ -1,13 +1,118 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/rb_device_link.dart';
+import 'package:reeftracker/data/rb_family_handlers.dart';
 import 'package:reeftracker/data/rb_protocol.dart';
 import 'package:reeftracker/data/wall_sources.dart';
+import 'package:reeftracker/domain/device_vendors.dart';
 import 'package:reeftracker/domain/parameter_catalog.dart';
 import 'package:reeftracker/domain/units.dart';
 import 'package:reeftracker/domain/wall_display.dart';
 
 void main() {
-  group('ReefBeat status-tile order', () {
+  DeviceRecord device({
+    required int id,
+    required DeviceKind kind,
+    required String identifier,
+    int? tankId = 1,
+    int displayOrder = 0,
+  }) => DeviceRecord(
+    id: id,
+    kind: kind.id,
+    identifier: identifier,
+    tankId: tankId,
+    firstSeenAt: DateTime(2026),
+    displayOrder: displayOrder,
+  );
+
+  group('shared Wall inventory', () {
+    test('uses one vendor/card order and isolates unsupported rows', () {
+      final unknown = DeviceRecord(
+        id: 9,
+        kind: 'future-controller',
+        identifier: 'future',
+        tankId: 1,
+        firstSeenAt: DateTime(2026),
+        displayOrder: 0,
+      );
+      final inventory = buildWallDeviceInventory(
+        activeTankId: 1,
+        tankCount: 1,
+        vendorOrder: const ['reefbeat', 'reeffactory', 'apex', 'hanna'],
+        devicesByKind: {
+          DeviceKind.reefFactory: [
+            device(
+              id: 1,
+              kind: DeviceKind.reefFactory,
+              identifier: 'rf-later',
+              displayOrder: 2,
+            ),
+            device(
+              id: 2,
+              kind: DeviceKind.reefFactory,
+              identifier: 'rf-first',
+              displayOrder: 1,
+            ),
+          ],
+          DeviceKind.reefBeat: [
+            device(
+              id: 3,
+              kind: DeviceKind.reefBeat,
+              identifier: 'rb-unassigned',
+              tankId: null,
+            ),
+          ],
+          DeviceKind.apex: [
+            device(
+              id: 4,
+              kind: DeviceKind.apex,
+              identifier: 'ap-other-tank',
+              tankId: 2,
+            ),
+          ],
+          DeviceKind.hanna: [
+            device(id: 5, kind: DeviceKind.hanna, identifier: 'hanna'),
+          ],
+        },
+        unsupported: [unknown],
+      );
+
+      expect(inventory.entries.map((entry) => entry.device.identifier), [
+        'rb-unassigned',
+        'rf-first',
+        'rf-later',
+      ]);
+      expect(inventory.unsupported, [unknown]);
+      expect(
+        inventory.entries.any((entry) => entry.device.identifier == 'hanna'),
+        isFalse,
+      );
+    });
+
+    test(
+      'an unassigned device is excluded when multiple tanks make it ambiguous',
+      () {
+        final inventory = buildWallDeviceInventory(
+          activeTankId: 1,
+          tankCount: 2,
+          vendorOrder: kDeviceVendors,
+          devicesByKind: {
+            DeviceKind.reefFactory: [
+              device(
+                id: 1,
+                kind: DeviceKind.reefFactory,
+                identifier: 'unassigned',
+                tankId: null,
+              ),
+            ],
+          },
+        );
+        expect(inventory.entries, isEmpty);
+      },
+    );
+  });
+
+  group('normalized ReefBeat status-tile order', () {
     const info = RbDeviceInfo(
       hwType: kRbAtoHwType,
       hwModel: 'contract-fixture',
@@ -15,43 +120,63 @@ void main() {
     );
 
     test('ATO, dose, mat, then skimmers in socket order', () {
-      final contributions = wallRbStatusContributions(
-        const RbSnapshot(
-          info: info,
-          ato: RbAtoStatus(),
-          dose: RbDoseStatus(
-            heads: [RbDoseHead(number: 1, supplement: 'Alkalinity')],
-          ),
-          mat: RbMatStatus(),
-          run: RbRunStatus(
-            pumps: [
-              RbRunPump(number: 1, type: 'return'),
-              RbRunPump(number: 2, type: 'skimmer'),
-              RbRunPump(number: 3, type: 'skimmer', missingPump: true),
-              RbRunPump(number: 4, type: 'skimmer'),
-            ],
-          ),
-        ),
-      );
+      final facts = [
+        ...rbFamilyHandlers
+            .wallSnapshot(
+              const RbAtoSnapshot(info: info, status: RbAtoStatus()),
+            )
+            .statusFacts,
+        ...rbFamilyHandlers
+            .wallSnapshot(
+              const RbDoseSnapshot(
+                info: info,
+                status: RbDoseStatus(
+                  heads: [RbDoseHead(number: 1, supplement: 'Alkalinity')],
+                ),
+              ),
+            )
+            .statusFacts,
+        ...rbFamilyHandlers
+            .wallSnapshot(
+              const RbMatSnapshot(info: info, status: RbMatStatus()),
+            )
+            .statusFacts,
+        ...rbFamilyHandlers
+            .wallSnapshot(
+              const RbRunSnapshot(
+                info: info,
+                status: RbRunStatus(
+                  pumps: [
+                    RbRunPump(number: 1, type: 'return'),
+                    RbRunPump(number: 2, type: 'skimmer'),
+                    RbRunPump(number: 3, type: 'skimmer', missingPump: true),
+                    RbRunPump(number: 4, type: 'skimmer'),
+                  ],
+                ),
+              ),
+            )
+            .statusFacts,
+      ];
 
-      expect(contributions, [
-        (kind: WallRbStatusKind.ato, pumpIndex: -1),
-        (kind: WallRbStatusKind.dose, pumpIndex: -1),
-        (kind: WallRbStatusKind.mat, pumpIndex: -1),
-        (kind: WallRbStatusKind.skimmer, pumpIndex: 1),
-        (kind: WallRbStatusKind.skimmer, pumpIndex: 3),
+      expect(facts.map((fact) => fact.runtimeType), [
+        WallAtoFact,
+        WallDoseFact,
+        WallFilterRollFact,
+        WallSkimmerFact,
+        WallSkimmerFact,
       ]);
     });
 
     test('invisible dosing heads and non-skimmer pumps add no tile', () {
       expect(
-        wallRbStatusContributions(
-          const RbSnapshot(
-            info: info,
-            dose: RbDoseStatus(heads: [RbDoseHead(number: 1)]),
-            run: RbRunStatus(pumps: [RbRunPump(number: 1, type: 'return')]),
-          ),
-        ),
+        rbFamilyHandlers
+            .wallSnapshot(
+              const RbDoseSnapshot(
+                info: info,
+                status: RbDoseStatus(heads: [RbDoseHead(number: 1)]),
+              ),
+            )
+            .statusFacts,
         isEmpty,
       );
     });
@@ -405,13 +530,13 @@ void main() {
   group('wall parameter catalogue', () {
     test('ReefControl contributes primary probes and first temperature', () {
       final readings = wallRbReadings(
-        RbSnapshot(
+        RbControlSnapshot(
           info: const RbDeviceInfo(
             hwType: kRbControlHwType,
             hwModel: 'RSCONTROLPRO',
             hwid: 'control-1',
           ),
-          control: const RbControlStatus(
+          status: const RbControlStatus(
             probes: [
               RbControlProbe(
                 type: 'ec',

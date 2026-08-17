@@ -16,11 +16,11 @@ import 'device_measurements.dart';
 import 'device_secrets.dart';
 import 'environment_sources.dart';
 import 'rb_device_link.dart';
-import 'rb_measurements.dart';
-import 'rb_protocol.dart';
+import 'rb_family_handlers.dart';
 import 'rf_device_link.dart';
 import 'rf_measurements.dart';
 import 'rf_protocol.dart';
+import 'wall_sources.dart';
 
 typedef DeviceSeenRecorder = Future<void> Function(String identifier);
 typedef DeviceModelRecorder = Future<void> Function(int id, String model);
@@ -142,6 +142,8 @@ abstract interface class DeviceIntegration {
 
   DeviceCapabilities get capabilities => kind.capabilities;
 
+  bool savesModel(String? model);
+
   Future<DeviceReadResult> read(DeviceRecord device);
 
   List<DeviceMeasurement> valuesToSave(
@@ -151,6 +153,17 @@ abstract interface class DeviceIntegration {
   );
 
   EnvironmentSource? environmentSource(DeviceRecord device);
+
+  List<String> knownWallParameters(DeviceRecord device);
+
+  WallDeviceSnapshot? wallSnapshot(
+    DeviceRecord device,
+    DeviceReadResult result,
+  );
+
+  /// Removes integration-owned sidecars after an inventory row is deleted.
+  /// Most integrations own none; Apex uses this hook for its password.
+  Future<void> cleanup(DeviceRecord device);
 }
 
 class RfDeviceIntegration implements DeviceIntegration {
@@ -164,6 +177,9 @@ class RfDeviceIntegration implements DeviceIntegration {
 
   @override
   DeviceCapabilities get capabilities => kind.capabilities;
+
+  @override
+  bool savesModel(String? model) => true;
 
   @override
   Future<DeviceReadResult> read(DeviceRecord device) async {
@@ -204,24 +220,45 @@ class RfDeviceIntegration implements DeviceIntegration {
         ? null
         : RfEnvironmentSource(device, link);
   }
+
+  @override
+  List<String> knownWallParameters(DeviceRecord device) =>
+      wallKnownRfParams(model: device.model, identifier: device.identifier);
+
+  @override
+  WallDeviceSnapshot? wallSnapshot(
+    DeviceRecord device,
+    DeviceReadResult result,
+  ) {
+    final snapshot = result.payloadAs<RfReadPayload>()?.snapshot;
+    return snapshot == null ? null : wallRfSnapshot(snapshot);
+  }
+
+  @override
+  Future<void> cleanup(DeviceRecord device) async {}
 }
 
 class RbDeviceIntegration implements DeviceIntegration {
-  const RbDeviceIntegration({
+  RbDeviceIntegration({
     required this.link,
     required this.touchSeen,
     required this.updateModel,
-  });
+    RbFamilyHandlerRegistry? families,
+  }) : families = families ?? rbFamilyHandlers;
 
   final RbDeviceLink link;
   final DeviceSeenRecorder touchSeen;
   final DeviceModelRecorder updateModel;
+  final RbFamilyHandlerRegistry families;
 
   @override
   DeviceKind get kind => DeviceKind.reefBeat;
 
   @override
   DeviceCapabilities get capabilities => kind.capabilities;
+
+  @override
+  bool savesModel(String? model) => families.savesModel(model);
 
   @override
   Future<DeviceReadResult> read(DeviceRecord device) async {
@@ -253,18 +290,39 @@ class RbDeviceIntegration implements DeviceIntegration {
     DeviceReadResult result,
     Iterable<DeviceRecord> peerDevices,
   ) {
-    final control = result.payloadAs<RbReadPayload>()?.snapshot.control;
-    return control == null ? const [] : rbControlMeasurements(control);
+    final snapshot = result.payloadAs<RbReadPayload>()?.snapshot;
+    return snapshot == null ? const [] : families.saveCandidates(snapshot);
   }
 
   @override
   EnvironmentSource? environmentSource(DeviceRecord device) {
     final address = device.address;
-    if (!rbIsControlModel(device.model) || address == null || address.isEmpty) {
+    if (!(families
+                .forModel(device.model)
+                ?.capabilities
+                .contributesEnvironment ??
+            false) ||
+        address == null ||
+        address.isEmpty) {
       return null;
     }
-    return RbEnvironmentSource(device, link);
+    return RbEnvironmentSource(device, link, families: families);
   }
+
+  @override
+  List<String> knownWallParameters(DeviceRecord device) => const [];
+
+  @override
+  WallDeviceSnapshot? wallSnapshot(
+    DeviceRecord device,
+    DeviceReadResult result,
+  ) {
+    final snapshot = result.payloadAs<RbReadPayload>()?.snapshot;
+    return snapshot == null ? null : families.wallSnapshot(snapshot);
+  }
+
+  @override
+  Future<void> cleanup(DeviceRecord device) async {}
 }
 
 class ApDeviceIntegration implements DeviceIntegration {
@@ -283,6 +341,9 @@ class ApDeviceIntegration implements DeviceIntegration {
 
   @override
   DeviceCapabilities get capabilities => kind.capabilities;
+
+  @override
+  bool savesModel(String? model) => true;
 
   @override
   Future<DeviceReadResult> read(DeviceRecord device) async {
@@ -327,6 +388,22 @@ class ApDeviceIntegration implements DeviceIntegration {
 
   @override
   EnvironmentSource? environmentSource(DeviceRecord device) => null;
+
+  @override
+  List<String> knownWallParameters(DeviceRecord device) => const [];
+
+  @override
+  WallDeviceSnapshot? wallSnapshot(
+    DeviceRecord device,
+    DeviceReadResult result,
+  ) {
+    final status = result.payloadAs<ApReadPayload>()?.status;
+    return status == null ? null : wallApSnapshot(status);
+  }
+
+  @override
+  Future<void> cleanup(DeviceRecord device) =>
+      secrets.remove(device.identifier);
 }
 
 class HannaDeviceIntegration implements DeviceIntegration {
@@ -337,6 +414,9 @@ class HannaDeviceIntegration implements DeviceIntegration {
 
   @override
   DeviceCapabilities get capabilities => kind.capabilities;
+
+  @override
+  bool savesModel(String? model) => false;
 
   @override
   Future<DeviceReadResult> read(DeviceRecord device) async =>
@@ -354,6 +434,18 @@ class HannaDeviceIntegration implements DeviceIntegration {
 
   @override
   EnvironmentSource? environmentSource(DeviceRecord device) => null;
+
+  @override
+  List<String> knownWallParameters(DeviceRecord device) => const [];
+
+  @override
+  WallDeviceSnapshot? wallSnapshot(
+    DeviceRecord device,
+    DeviceReadResult result,
+  ) => null;
+
+  @override
+  Future<void> cleanup(DeviceRecord device) async {}
 }
 
 /// The credentials for a persisted Apex row. The username rides with the row;
@@ -404,6 +496,13 @@ class DeviceIntegrationRegistry {
     return kind == null ? null : _byKind[kind];
   }
 
+  bool savesModel(DeviceRecord device) =>
+      integrationForId(device.kind)?.savesModel(device.model) ?? false;
+
+  Future<void> cleanup(DeviceRecord device) async {
+    await integrationForId(device.kind)?.cleanup(device);
+  }
+
   Future<DeviceReadResult> read(DeviceRecord device) {
     final integration = integrationForId(device.kind);
     return integration == null
@@ -420,6 +519,14 @@ class DeviceIntegrationRegistry {
         device.kind,
       )?.valuesToSave(device, result, peerDevices) ??
       const [];
+
+  List<String> knownWallParameters(DeviceRecord device) =>
+      integrationForId(device.kind)?.knownWallParameters(device) ?? const [];
+
+  WallDeviceSnapshot? wallSnapshot(
+    DeviceRecord device,
+    DeviceReadResult result,
+  ) => integrationForId(device.kind)?.wallSnapshot(device, result);
 
   /// Environment contributors in the same vendor/card order as Devices.
   List<EnvironmentSource> environmentSourcesForTank({

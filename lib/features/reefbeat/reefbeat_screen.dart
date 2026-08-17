@@ -10,6 +10,7 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/lan_discovery.dart';
 import '../../data/rb_device_link.dart';
+import '../../data/rb_family_handlers.dart';
 import '../../data/rb_protocol.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
@@ -32,18 +33,18 @@ class _ListEntry {
 /// Collapses the ReefWaves into one entry, positioned where the first of them
 /// sat, and leaves every other device an entry of its own.
 ///
-/// Grouping is decided from the stored model ([rbIsWaveModel]) rather than a
+/// Grouping is decided from the stored model's family handler rather than a
 /// snapshot's `hw_type`, because the list is built before any device has been
 /// read — the layout must not reshuffle as refreshes land.
 List<_ListEntry> _entriesOf(List<DeviceRecord> devices) {
   final waves = [
     for (final d in devices)
-      if (rbIsWaveModel(d.model)) d,
+      if (rbFamilyHandlers.isModelFamily(d.model, RbFamily.wave)) d,
   ];
   final entries = <_ListEntry>[];
   var groupPlaced = false;
   for (final d in devices) {
-    if (rbIsWaveModel(d.model)) {
+    if (rbFamilyHandlers.isModelFamily(d.model, RbFamily.wave)) {
       if (groupPlaced) continue;
       groupPlaced = true;
       entries.add(_ListEntry(waves, isWaveGroup: true));
@@ -149,7 +150,7 @@ class RbDeviceSection extends ConsumerWidget {
   /// Null while the parent has a save in flight — the ReefControl card's Save
   /// button disables for the duration. Status-only Red Sea models ignore it.
   final void Function(DeviceRecord device, RbSnapshot snap)? onSave;
-  final void Function(String identifier) onRemoved;
+  final Future<void> Function(DeviceRecord device) onRemoved;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -213,14 +214,16 @@ class RbDeviceSection extends ConsumerWidget {
             live: live[d.identifier] ?? const RbLive(),
             errorTextOf: (e) => rbErrorText(l, e),
             onRename: () => _renameDevice(context, ref, d),
-            onSave: rbIsControlModel(d.model) && onSave != null
+            onSave:
+                rbFamilyHandlers.isModelFamily(d.model, RbFamily.control) &&
+                    onSave != null
                 ? (snap) => onSave!(d, snap)
                 : null,
             // No other tank to move to → no menu item.
             onMove: tanks.any((t) => t.id != d.tankId)
                 ? () => _moveDevice(context, ref, d)
                 : null,
-            onShowQueue: rbIsDoseModel(d.model)
+            onShowQueue: rbFamilyHandlers.isModelFamily(d.model, RbFamily.dose)
                 ? () => _showDosingQueue(context, ref, d)
                 : null,
             onRemove: () => _confirmRemove(context, ref, d),
@@ -313,7 +316,10 @@ class RbDeviceSection extends ConsumerWidget {
         title: deviceDisplayName(d),
         // The queue names heads by abbreviation only; the last refresh's heads
         // carry the abbreviation → supplement mapping (see [RbDoseHead]).
-        status: live[d.identifier]?.snapshot?.dose,
+        status: switch (live[d.identifier]?.snapshot) {
+          RbDoseSnapshot(:final status) => status,
+          _ => null,
+        },
         load: () => ref.read(rbDeviceLinkProvider).readDosingQueue(address),
         errorTextOf: (e) => rbErrorText(AppLocalizations.of(ctx), e),
       ),
@@ -344,8 +350,8 @@ class RbDeviceSection extends ConsumerWidget {
       ),
     );
     if (ok == true) {
-      onRemoved(d.identifier);
       await ref.read(dbProvider).deleteDevice(d.id);
+      await onRemoved(d);
     }
   }
 }
@@ -485,10 +491,10 @@ class _DeviceCard extends StatelessWidget {
                 PopupMenuButton<String>(
                   onSelected: (v) {
                     if (v == 'save' &&
-                        snap?.control != null &&
+                        snap is RbControlSnapshot &&
                         tank != null &&
                         onSave != null) {
-                      onSave!(snap!);
+                      onSave!(snap);
                     }
                     if (v == 'rename') onRename();
                     if (v == 'move') onMove?.call();
@@ -499,7 +505,7 @@ class _DeviceCard extends StatelessWidget {
                     if (v == 'remove') onRemove();
                   },
                   itemBuilder: (_) => [
-                    if (snap?.control != null)
+                    if (snap is RbControlSnapshot)
                       PopupMenuItem(
                         value: 'save',
                         enabled: tank != null && onSave != null,
@@ -540,18 +546,18 @@ class _DeviceCard extends StatelessWidget {
                 errorTextOf(live.error!),
                 style: t.bodyMedium?.copyWith(color: cs.error),
               )
-            else if (snap?.dose != null)
-              _PumpStatus(status: snap!.dose!)
-            else if (snap?.ato != null)
-              _AtoStatus(status: snap!.ato!)
-            else if (snap?.mat != null)
-              _MatStatus(status: snap!.mat!)
-            else if (snap?.run != null)
-              _RunStatus(status: snap!.run!)
-            else if (snap?.light != null)
-              _LightStatus(status: snap!.light!)
-            else if (snap?.control != null)
-              _ControlStatus(status: snap!.control!)
+            else if (snap != null)
+              switch (snap) {
+                RbDoseSnapshot(:final status) => _PumpStatus(status: status),
+                RbAtoSnapshot(:final status) => _AtoStatus(status: status),
+                RbMatSnapshot(:final status) => _MatStatus(status: status),
+                RbRunSnapshot(:final status) => _RunStatus(status: status),
+                RbLightSnapshot(:final status) => _LightStatus(status: status),
+                RbControlSnapshot(:final status) => _ControlStatus(
+                  status: status,
+                ),
+                RbWaveSnapshot() => const SizedBox.shrink(),
+              }
             else
               Text(
                 l.reefBeatNotReadYet,
@@ -559,7 +565,11 @@ class _DeviceCard extends StatelessWidget {
               ),
             // Only ReefControl saves measurements; other Red Sea models do
             // not need a tank merely to display their operational status.
-            if (rbIsControlModel(device.model) && tank == null) ...[
+            if (rbFamilyHandlers.isModelFamily(
+                  device.model,
+                  RbFamily.control,
+                ) &&
+                tank == null) ...[
               const SizedBox(height: 10),
               Text(
                 l.reefFactoryNoTank,
@@ -1413,7 +1423,10 @@ class _WavePumpRow extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).textTheme;
     final tokens = ReefTokens.of(context);
-    final status = live.snapshot?.wave;
+    final status = switch (live.snapshot) {
+      RbWaveSnapshot(:final status) => status,
+      _ => null,
+    };
     final scheduled = status?.scheduleApplies ?? true;
     final interval = status?.intervalAt(_minuteOfDay(DateTime.now()));
     final forward = interval?.forwardPercent;
@@ -2221,11 +2234,11 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              if (found.dose != null) ...[
+              if (found case RbDoseSnapshot(:final status)) ...[
                 const SizedBox(height: 4),
                 Text(
                   [
-                    for (final h in found.dose!.heads)
+                    for (final h in status.heads)
                       if (h.supplement?.trim().isNotEmpty == true)
                         h.supplement!,
                   ].join('   ·   '),

@@ -16,40 +16,103 @@
 /// and the keeper expresses preference by hiding cards, not by a merge rule.
 library;
 
+import '../domain/device_vendors.dart';
 import '../domain/parameter_catalog.dart';
 import '../domain/units.dart';
+import '../domain/wall_display.dart';
 import 'ap_protocol.dart';
-import 'rb_device_link.dart';
+import 'database.dart';
 import 'rb_measurements.dart';
-import 'rb_protocol.dart';
+import 'rb_snapshot.dart';
 import 'rf_protocol.dart';
 
 typedef WallReading = ({String paramKey, double value});
 
-/// Stable presentation order for ReefBeat's non-measurement wall facts. The
-/// renderer consumes [wallRbStatusContributions], so this is a tested behavior
-/// contract rather than an incidental sequence of nullable-field checks.
-enum WallRbStatusKind { ato, dose, mat, skimmer }
+enum WallSourceOperatingState { heating, cooling }
 
-typedef WallRbStatusContribution = ({WallRbStatusKind kind, int pumpIndex});
+enum WallLevelState { ok, below, above, unknown }
 
-/// The status tiles [snapshot] contributes, in display order. Dosing pumps
-/// without a configured head label and empty/non-skimmer ReefRun sockets do
-/// not produce tiles, matching the visible renderer.
-List<WallRbStatusContribution> wallRbStatusContributions(RbSnapshot snapshot) =>
-    [
-      if (snapshot.ato != null) (kind: WallRbStatusKind.ato, pumpIndex: -1),
-      if (snapshot.dose?.heads.any(
-            (head) => head.supplement != null || head.shortName != null,
-          ) ==
-          true)
-        (kind: WallRbStatusKind.dose, pumpIndex: -1),
-      if (snapshot.mat != null) (kind: WallRbStatusKind.mat, pumpIndex: -1),
-      for (final (index, pump)
-          in (snapshot.run?.pumps ?? const <RbRunPump>[]).indexed)
-        if (!pump.isEmptySocket && pump.type == 'skimmer')
-          (kind: WallRbStatusKind.skimmer, pumpIndex: index),
-    ];
+enum WallStockLevel { healthy, caution, critical, unknown }
+
+sealed class WallStatusFact {
+  const WallStatusFact();
+}
+
+class WallAtoFact extends WallStatusFact {
+  const WallAtoFact({
+    required this.level,
+    this.rawLevel,
+    required this.leakSensorActive,
+    required this.leakAlarm,
+    this.daysTillEmpty,
+    required this.stockLevel,
+  });
+
+  final WallLevelState level;
+  final String? rawLevel;
+  final bool leakSensorActive;
+  final bool leakAlarm;
+  final int? daysTillEmpty;
+  final WallStockLevel stockLevel;
+}
+
+class WallDoseHeadFact {
+  const WallDoseHeadFact({
+    required this.label,
+    required this.switchedOff,
+    this.remainingDays,
+    required this.stockLevel,
+  });
+
+  final String label;
+  final bool switchedOff;
+  final int? remainingDays;
+  final WallStockLevel stockLevel;
+}
+
+class WallDoseFact extends WallStatusFact {
+  const WallDoseFact(this.heads);
+
+  final List<WallDoseHeadFact> heads;
+}
+
+class WallFilterRollFact extends WallStatusFact {
+  const WallFilterRollFact({required this.empty, this.daysTillEndOfRoll});
+
+  final bool empty;
+  final int? daysTillEndOfRoll;
+}
+
+class WallSkimmerFact extends WallStatusFact {
+  const WallSkimmerFact({
+    this.name,
+    required this.fullCup,
+    required this.overSkimming,
+    required this.faulted,
+  });
+
+  final String? name;
+  final bool fullCup;
+  final bool overSkimming;
+  final bool faulted;
+}
+
+/// Everything Wall needs from one successful device payload. No vendor DTO
+/// crosses this boundary, so renderers and poll scheduling are integration
+/// agnostic.
+class WallDeviceSnapshot {
+  const WallDeviceSnapshot({
+    this.readings = const [],
+    this.statusFacts = const [],
+    this.operatingStates = const {},
+    required this.signature,
+  });
+
+  final List<WallReading> readings;
+  final List<WallStatusFact> statusFacts;
+  final Map<String, WallSourceOperatingState> operatingStates;
+  final String signature;
+}
 
 /// Whether an inventory device belongs on this wall. A sole aquarium is the
 /// unambiguous home for an unassigned device; this also self-heals the visible
@@ -59,6 +122,66 @@ bool deviceInWallTank(
   required int activeTankId,
   required int tankCount,
 }) => deviceTankId == activeTankId || (deviceTankId == null && tankCount == 1);
+
+class WallInventoryEntry {
+  const WallInventoryEntry({required this.kind, required this.device});
+
+  final DeviceKind kind;
+  final DeviceRecord device;
+}
+
+class WallDeviceInventory {
+  const WallDeviceInventory({
+    this.entries = const [],
+    this.unsupported = const [],
+  });
+
+  final List<WallInventoryEntry> entries;
+  final List<DeviceRecord> unsupported;
+}
+
+/// The single inventory/scoping rule consumed by Wall and Wall Settings.
+/// Unsupported persisted rows are retained explicitly for diagnostics but are
+/// never polled or rendered as another integration.
+WallDeviceInventory buildWallDeviceInventory({
+  required int activeTankId,
+  required int tankCount,
+  required List<String> vendorOrder,
+  required Map<DeviceKind, List<DeviceRecord>> devicesByKind,
+  List<DeviceRecord> unsupported = const [],
+}) {
+  List<DeviceRecord> scoped(Iterable<DeviceRecord> devices) =>
+      [
+        for (final device in devices)
+          if (deviceInWallTank(
+            device.tankId,
+            activeTankId: activeTankId,
+            tankCount: tankCount,
+          ))
+            device,
+      ]..sort((a, b) {
+        final byOrder = a.displayOrder.compareTo(b.displayOrder);
+        if (byOrder != 0) return byOrder;
+        return deviceDisplayName(
+          a,
+        ).toLowerCase().compareTo(deviceDisplayName(b).toLowerCase());
+      });
+
+  final entries = <WallInventoryEntry>[];
+  for (final kindId in orderDeviceVendors(
+    encodeDeviceVendorOrder(vendorOrder),
+  )) {
+    final kind = DeviceKind.tryParse(kindId);
+    if (kind == null || !kind.capabilities.refreshes) continue;
+    for (final device in scoped(devicesByKind[kind] ?? const [])) {
+      entries.add(WallInventoryEntry(kind: kind, device: device));
+    }
+  }
+  return WallDeviceInventory(
+    entries: entries,
+    unsupported: scoped(unsupported),
+  );
+}
 
 /// The readings a registered ReefFactory meter is known to expose before its
 /// first successful wall poll. The stored model is authoritative; the serial
@@ -90,11 +213,33 @@ List<WallReading> wallRfReadings(RfSnapshot snap) => _canonical([
   for (final r in snap.readings) (paramKey: r.paramKey, value: r.value),
 ]);
 
+WallDeviceSnapshot wallRfSnapshot(RfSnapshot snapshot) {
+  final readings = wallRfReadings(snapshot);
+  final operating = switch (snapshot.thermal) {
+    RfThermalState.heating => WallSourceOperatingState.heating,
+    RfThermalState.cooling => WallSourceOperatingState.cooling,
+    _ => null,
+  };
+  return WallDeviceSnapshot(
+    readings: readings,
+    operatingStates: {'temperature': ?operating},
+    signature: wallPayloadSignature(readings),
+  );
+}
+
 /// An Apex controller's wall readings ([ApStatus.readings] already resolves
 /// one probe per parameter and drops non-ppt conductivity).
 List<WallReading> wallApReadings(ApStatus status) => _canonical([
   for (final r in status.readings) (paramKey: r.paramKey, value: r.value),
 ]);
+
+WallDeviceSnapshot wallApSnapshot(ApStatus status) {
+  final readings = wallApReadings(status);
+  return WallDeviceSnapshot(
+    readings: readings,
+    signature: wallPayloadSignature(readings),
+  );
+}
 
 /// A ReefBeat device's wall readings. Most Red Sea gear reports what it is
 /// doing rather than measurements; ReefATO+ contributes its level-sensor
@@ -102,13 +247,21 @@ List<WallReading> wallApReadings(ApStatus status) => _canonical([
 /// water probe plus the first valid combined-probe temperature, matching the
 /// controller's save and Hanna-environment rule.
 List<WallReading> wallRbReadings(RbSnapshot snap) {
-  final readings = <WallReading>[
-    if (snap.ato?.temperatureC case final t?)
-      (paramKey: 'temperature', value: t),
-    if (snap.control case final control?)
-      for (final r in rbControlMeasurements(control))
+  final readings = switch (snap) {
+    RbAtoSnapshot(:final status) => <WallReading>[
+      if (status.temperatureC case final t?)
+        (paramKey: 'temperature', value: t),
+    ],
+    RbControlSnapshot(:final status) => <WallReading>[
+      for (final r in rbControlMeasurements(status))
         (paramKey: r.paramKey, value: r.value),
-  ];
+    ],
+    RbDoseSnapshot() ||
+    RbMatSnapshot() ||
+    RbRunSnapshot() ||
+    RbLightSnapshot() ||
+    RbWaveSnapshot() => <WallReading>[],
+  };
   // ReefControl values are already canonicalized by the shared save/Hanna
   // extractor. ReefATO temperature needs only the same impossible-value guard.
   return [

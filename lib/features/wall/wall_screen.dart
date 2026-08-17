@@ -11,9 +11,6 @@ import '../../app/device_live.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../data/device_read_scope.dart';
-import '../../data/rb_device_link.dart';
-import '../../data/rb_protocol.dart';
-import '../../data/rf_protocol.dart';
 import '../../data/wall_sources.dart';
 import '../../domain/device_vendors.dart';
 import '../../domain/parameter_catalog.dart';
@@ -47,10 +44,8 @@ class WallScreen extends ConsumerStatefulWidget {
 
 class _WallScreenState extends ConsumerState<WallScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
-  // --- live device state (same shape the Devices body holds) ---------------
-  final Map<String, RfLive> _rfLive = {};
-  final Map<String, RbLive> _rbLive = {};
-  final Map<String, ApLive> _apLive = {};
+  // --- live device state (same normalized shape as Devices) ----------------
+  final Map<String, DeviceLiveState> _live = {};
   final Map<String, DateTime> _readAt = {};
   final Map<String, WallPollSchedule> _schedules = {};
 
@@ -233,37 +228,22 @@ class _WallScreenState extends ConsumerState<WallScreen>
   /// hidden leaves the rotation entirely) and minus devices not yet due
   /// (backoff, per-kind floor).
   DeviceScope _dueScope(Tank tank) {
-    final order = [
-      for (final kind
-          in ref.read(deviceVendorOrderProvider).value ?? kDeviceVendors)
-        if (deviceKindRefreshes(kind)) kind,
-    ];
-    final byKind = {
-      kDeviceKindReefFactory:
-          ref.read(reefFactoryDevicesProvider).value ?? const <DeviceRecord>[],
-      kDeviceKindReefBeat:
-          ref.read(reefBeatDevicesProvider).value ?? const <DeviceRecord>[],
-      kDeviceKindApex:
-          ref.read(apexDevicesProvider).value ?? const <DeviceRecord>[],
-    };
+    final inventory = ref.read(wallDeviceInventoryProvider);
+    final order = <String>[];
+    final byKind = <String, List<DeviceRecord>>{};
+    for (final entry in inventory.entries) {
+      final kind = entry.kind.id;
+      if (!order.contains(kind)) order.add(kind);
+      (byKind[kind] ??= []).add(entry.device);
+    }
     final polled = wallPolledDevices([
-      for (final list in byKind.values)
-        for (final d in list)
-          if (d.tankId == tank.id) d.identifier,
+      for (final entry in inventory.entries) entry.device.identifier,
     ], _cards(tank));
     final now = DateTime.now();
     final base = _baseInterval;
-    final tankCount = ref.read(tanksProvider).value?.length ?? 0;
     List<DeviceRecord> due(String kind) => _sorted([
       for (final d in byKind[kind] ?? const <DeviceRecord>[])
-        if (deviceInWallTank(
-              d.tankId,
-              activeTankId: tank.id,
-              tankCount: tankCount,
-            ) &&
-            polled.contains(d.identifier) &&
-            _scheduleOf(kind, d).isDue(now))
-          d,
+        if (polled.contains(d.identifier) && _scheduleOf(kind, d).isDue(now)) d,
     ]);
     // A stored base-interval change mid-mode must re-arm, not wait out an old
     // long interval — schedules only apply it on their next success/failure,
@@ -300,64 +280,21 @@ class _WallScreenState extends ConsumerState<WallScreen>
   Future<void> _readDevice(String kind, DeviceRecord d, Tank tank) async {
     final schedule = _scheduleOf(kind, d);
     final now = DateTime.now();
-    List<WallReading>? readings;
-    String signature = '';
-    switch (kind) {
-      case kDeviceKindReefFactory:
-        final r = RfLive.fromResult(await readRegisteredDevice(ref, d));
-        if (!mounted) return;
-        // On failure the tile keeps its last snapshot and ages visibly — the
-        // error only drives the backoff and the header dot.
-        final snap = r.snapshot ?? _rfLive[d.identifier]?.snapshot;
-        _rfLive[d.identifier] = RfLive(snapshot: snap, error: r.error);
-        if (r.snapshot != null) {
-          readings = wallRfReadings(r.snapshot!);
-          signature = wallPayloadSignature(readings);
-        }
-      case kDeviceKindReefBeat:
-        final r = RbLive.fromResult(await readRegisteredDevice(ref, d));
-        if (!mounted) return;
-        final snap = r.snapshot ?? _rbLive[d.identifier]?.snapshot;
-        _rbLive[d.identifier] = RbLive(snapshot: snap, error: r.error);
-        if (r.snapshot != null) {
-          readings = wallRbReadings(r.snapshot!);
-          signature =
-              '${wallPayloadSignature(readings)}|'
-              '${_rbStatusSignature(r.snapshot!)}';
-        }
-      case kDeviceKindApex:
-        final r = ApLive.fromResult(await readRegisteredDevice(ref, d));
-        if (!mounted) return;
-        final status = r.status ?? _apLive[d.identifier]?.status;
-        _apLive[d.identifier] = ApLive(status: status, error: r.error);
-        if (r.status != null) {
-          readings = wallApReadings(r.status!);
-          signature = wallPayloadSignature(readings);
-        }
-      default:
-        return;
-    }
-    if (readings == null) {
+    final previous = _live[d.identifier];
+    final result = await readRegisteredDevice(ref, d);
+    if (!mounted) return;
+    _live[d.identifier] = DeviceLiveState.completed(result, previous: previous);
+    final wall = result.hasFreshPayload
+        ? ref.read(deviceIntegrationRegistryProvider).wallSnapshot(d, result)
+        : null;
+    if (wall == null) {
       schedule.onFailure(now, _baseInterval);
       return;
     }
     _readAt[d.identifier] = now;
-    schedule.onSuccess(now, _baseInterval, signature);
-    await _recordSamples(tank, d, readings);
+    schedule.onSuccess(now, _baseInterval, wall.signature);
+    await _recordSamples(tank, d, wall.readings);
   }
-
-  /// What of a ReefBeat status snapshot counts as "changed" for the no-change
-  /// backoff — the fields the status tiles actually show.
-  String _rbStatusSignature(RbSnapshot snap) => [
-    snap.ato?.waterLevelRaw,
-    snap.ato?.leakAlarm,
-    snap.ato?.todayVolumeMl,
-    snap.ato?.daysTillEmpty,
-    for (final h in snap.dose?.heads ?? const <RbDoseHead>[]) h.dosedToday,
-    snap.mat?.daysTillEndOfRoll,
-    snap.mat?.modeRaw,
-    for (final p in snap.run?.pumps ?? const <RbRunPump>[]) p.state,
-  ].join(';');
 
   /// Folds a successful read into the sample table: visible cards only (§12q
   /// — a hidden value is not sampled), rail values dropped at write time (the
@@ -450,29 +387,15 @@ class _WallScreenState extends ConsumerState<WallScreen>
       }
     }
 
-    for (final (kind, d) in _pageOrderDevices(tank)) {
-      if (kind == kDeviceKindReefFactory) {
-        report(
-          d.identifier,
-          wallKnownRfParams(model: d.model, identifier: d.identifier),
-        );
-      }
-      final live = switch (kind) {
-        kDeviceKindReefFactory => switch (_rfLive[d.identifier]?.snapshot) {
-          final s? => wallRfReadings(s).map((r) => r.paramKey),
-          null => const <String>[],
-        },
-        kDeviceKindReefBeat => switch (_rbLive[d.identifier]?.snapshot) {
-          final s? => wallRbReadings(s).map((r) => r.paramKey),
-          null => const <String>[],
-        },
-        kDeviceKindApex => switch (_apLive[d.identifier]?.status) {
-          final s? => wallApReadings(s).map((r) => r.paramKey),
-          null => const <String>[],
-        },
-        _ => const <String>[],
-      };
-      report(d.identifier, live);
+    final integrations = ref.read(deviceIntegrationRegistryProvider);
+    for (final (_, d) in _pageOrderDevices(tank)) {
+      report(d.identifier, integrations.knownWallParameters(d));
+      final result = _live[d.identifier]?.result;
+      final wall = result == null ? null : integrations.wallSnapshot(d, result);
+      report(
+        d.identifier,
+        wall?.readings.map((reading) => reading.paramKey) ?? const [],
+      );
       report(d.identifier, [
         for (final r in rows)
           if (r.deviceIdentifier == d.identifier) r.paramKey,
@@ -485,30 +408,9 @@ class _WallScreenState extends ConsumerState<WallScreen>
     return result;
   }
 
-  Iterable<(String, DeviceRecord)> _pageOrderDevices(Tank tank) sync* {
-    final order = ref.read(deviceVendorOrderProvider).value ?? kDeviceVendors;
-    final tankCount = ref.read(tanksProvider).value?.length ?? 0;
-    final byKind = {
-      kDeviceKindReefFactory:
-          ref.read(reefFactoryDevicesProvider).value ?? const <DeviceRecord>[],
-      kDeviceKindReefBeat:
-          ref.read(reefBeatDevicesProvider).value ?? const <DeviceRecord>[],
-      kDeviceKindApex:
-          ref.read(apexDevicesProvider).value ?? const <DeviceRecord>[],
-    };
-    for (final kind in order) {
-      if (!deviceKindRefreshes(kind)) continue;
-      for (final d in _sorted([
-        for (final d in byKind[kind] ?? const <DeviceRecord>[])
-          if (deviceInWallTank(
-            d.tankId,
-            activeTankId: tank.id,
-            tankCount: tankCount,
-          ))
-            d,
-      ])) {
-        yield (kind, d);
-      }
+  Iterable<(DeviceKind, DeviceRecord)> _pageOrderDevices(Tank tank) sync* {
+    for (final entry in ref.read(wallDeviceInventoryProvider).entries) {
+      yield (entry.kind, entry.device);
     }
   }
 
@@ -900,23 +802,14 @@ class _WallScreenState extends ConsumerState<WallScreen>
 
     final deviceNames = <String, String>{};
     final liveValues = <String, Map<String, double>>{};
-    for (final (kind, d) in _pageOrderDevices(tank)) {
+    final wallByDevice = <String, WallDeviceSnapshot>{};
+    final integrations = ref.read(deviceIntegrationRegistryProvider);
+    for (final (_, d) in _pageOrderDevices(tank)) {
       deviceNames[d.identifier] = deviceDisplayName(d);
-      final extracted = switch (kind) {
-        kDeviceKindReefFactory => switch (_rfLive[d.identifier]?.snapshot) {
-          final s? => wallRfReadings(s),
-          null => const <WallReading>[],
-        },
-        kDeviceKindReefBeat => switch (_rbLive[d.identifier]?.snapshot) {
-          final s? => wallRbReadings(s),
-          null => const <WallReading>[],
-        },
-        kDeviceKindApex => switch (_apLive[d.identifier]?.status) {
-          final s? => wallApReadings(s),
-          null => const <WallReading>[],
-        },
-        _ => const <WallReading>[],
-      };
+      final result = _live[d.identifier]?.result;
+      final wall = result == null ? null : integrations.wallSnapshot(d, result);
+      if (wall != null) wallByDevice[d.identifier] = wall;
+      final extracted = wall?.readings ?? const <WallReading>[];
       liveValues[d.identifier] = {
         for (final r in extracted) r.paramKey: r.value,
       };
@@ -991,13 +884,12 @@ class _WallScreenState extends ConsumerState<WallScreen>
             : const [],
         window: useSamples ? kWallSampleWindow : kWallReadingsWindow,
         isSampleWindow: useSamples,
-        operatingState: id.paramKey == 'temperature' && deviceCard
-            ? switch (_rfLive[id.deviceIdentifier]?.snapshot?.thermal) {
-                RfThermalState.heating => WallOperatingState.heating,
-                RfThermalState.cooling => WallOperatingState.cooling,
-                _ => null,
-              }
-            : null,
+        operatingState: switch (wallByDevice[id.deviceIdentifier]
+            ?.operatingStates[id.paramKey]) {
+          WallSourceOperatingState.heating => WallOperatingState.heating,
+          WallSourceOperatingState.cooling => WallOperatingState.cooling,
+          null => null,
+        },
       );
       tiles.add(WallValueTile(data: tileData, now: now));
     }
@@ -1011,139 +903,129 @@ class _WallScreenState extends ConsumerState<WallScreen>
   /// fleece roll, skimmer cup. Always after the value cards.
   List<Widget> _statusTiles(AppLocalizations l, Tank tank) {
     final tiles = <Widget>[];
-    for (final (kind, d) in _pageOrderDevices(tank)) {
-      if (kind != kDeviceKindReefBeat) continue;
-      final snap = _rbLive[d.identifier]?.snapshot;
-      if (snap == null) continue;
+    final integrations = ref.read(deviceIntegrationRegistryProvider);
+    for (final (_, d) in _pageOrderDevices(tank)) {
+      final result = _live[d.identifier]?.result;
+      final wall = result == null ? null : integrations.wallSnapshot(d, result);
+      if (wall == null) continue;
       final name = deviceDisplayName(d);
-      for (final contribution in wallRbStatusContributions(snap)) {
-        final ato = snap.ato;
-        if (contribution.kind == WallRbStatusKind.ato && ato != null) {
-          // Two facts of equal rank (§12b): the water level (a leak alarm
-          // replaces it — the more urgent fact from the same sensor) and the
-          // reservoir estimate on the shared stock-severity scale. The card
-          // washes on the worse of the two, staying neutral while both are
-          // healthy like the other status tiles.
-          final leak = ato.leakSensorActive && ato.leakAlarm;
-          final levelLine = switch (ato.waterLevel) {
-            RbAtoWaterLevel.ok => l.reefBeatAtoLevelOk,
-            RbAtoWaterLevel.below => l.reefBeatAtoLevelLow,
-            RbAtoWaterLevel.above => l.reefBeatAtoLevelAbove,
-            RbAtoWaterLevel.unknown => ato.waterLevelRaw ?? '—',
-          };
-          final levelTone = leak
-              ? Zone.red
-              : switch (ato.waterLevel) {
-                  RbAtoWaterLevel.ok => Zone.green,
-                  RbAtoWaterLevel.below || RbAtoWaterLevel.above => Zone.amber,
-                  RbAtoWaterLevel.unknown => Zone.unknown,
-                };
-          final days = ato.daysTillEmpty;
-          final reservoirTone = days == null
-              ? Zone.unknown
-              : switch (rbStockSeverity(days)) {
-                  RbStockSeverity.critical => Zone.red,
-                  RbStockSeverity.caution => Zone.amber,
-                  RbStockSeverity.healthy => Zone.green,
-                };
-          tiles.add(
-            WallAtoTile(
-              data: WallAtoData(
-                title: name,
-                levelIcon: leak
-                    ? Icons.water_damage_outlined
-                    : Icons.waves_outlined,
-                levelText: leak ? l.reefBeatAtoLeak : levelLine,
-                levelTone: levelTone,
-                reservoirText: days != null
-                    ? wallSupplementTimeLeft(l, days)
-                    : null,
-                reservoirTone: reservoirTone,
-                tone: wallWorstAlarmTone([levelTone, reservoirTone]),
-              ),
-            ),
-          );
-        }
-        final dose = snap.dose;
-        if (contribution.kind == WallRbStatusKind.dose && dose != null) {
-          // One entry per configured head (§12b): unused sockets are skipped,
-          // switched-off heads render gray without a stock estimate (their
-          // "days at the current rate" is stale — the rate is zero).
-          final heads = <WallDoseHeadData>[];
-          for (final h in dose.heads) {
-            final label = h.supplement ?? h.shortName;
-            if (label == null) continue;
-            final days = h.switchedOff ? null : h.remainingDays;
-            final tone = days == null
-                ? Zone.unknown
-                : switch (rbStockSeverity(days)) {
-                    RbStockSeverity.critical => Zone.red,
-                    RbStockSeverity.caution => Zone.amber,
-                    RbStockSeverity.healthy => Zone.green,
+      for (final fact in wall.statusFacts) {
+        switch (fact) {
+          case WallAtoFact():
+            // Two facts of equal rank (§12b): the water level (a leak alarm
+            // replaces it — the more urgent fact from the same sensor) and the
+            // reservoir estimate on the shared stock-severity scale. The card
+            // washes on the worse of the two, staying neutral while both are
+            // healthy like the other status tiles.
+            final leak = fact.leakSensorActive && fact.leakAlarm;
+            final levelLine = switch (fact.level) {
+              WallLevelState.ok => l.reefBeatAtoLevelOk,
+              WallLevelState.below => l.reefBeatAtoLevelLow,
+              WallLevelState.above => l.reefBeatAtoLevelAbove,
+              WallLevelState.unknown => fact.rawLevel ?? '—',
+            };
+            final levelTone = leak
+                ? Zone.red
+                : switch (fact.level) {
+                    WallLevelState.ok => Zone.green,
+                    WallLevelState.below || WallLevelState.above => Zone.amber,
+                    WallLevelState.unknown => Zone.unknown,
                   };
-            heads.add(
-              WallDoseHeadData(
-                label: label,
-                timeLeft: days != null ? wallSupplementTimeLeft(l, days) : null,
-                tone: tone,
-              ),
-            );
-          }
-          if (heads.isNotEmpty) {
+            final days = fact.daysTillEmpty;
+            final reservoirTone = _stockTone(fact.stockLevel);
             tiles.add(
-              WallDoseTile(
-                data: WallDoseData(
+              WallAtoTile(
+                data: WallAtoData(
                   title: name,
-                  heads: heads,
-                  tone: wallWorstAlarmTone([for (final h in heads) h.tone]),
+                  levelIcon: leak
+                      ? Icons.water_damage_outlined
+                      : Icons.waves_outlined,
+                  levelText: leak ? l.reefBeatAtoLeak : levelLine,
+                  levelTone: levelTone,
+                  reservoirText: days != null
+                      ? wallSupplementTimeLeft(l, days)
+                      : null,
+                  reservoirTone: reservoirTone,
+                  tone: wallWorstAlarmTone([levelTone, reservoirTone]),
                 ),
               ),
             );
-          }
-        }
-        final mat = snap.mat;
-        if (contribution.kind == WallRbStatusKind.mat && mat != null) {
-          final empty = mat.modeRaw == kRbMatEndOfRollMode;
-          tiles.add(
-            WallStatusTile(
-              data: WallStatusData(
-                icon: Icons.album_outlined,
-                title: name,
-                line: empty
-                    ? l.reefBeatMatRollEmpty
-                    : (mat.daysTillEndOfRoll != null
-                          ? l.reefBeatDaysLeft(mat.daysTillEndOfRoll!)
-                          : l.reefBeatMatRoll),
-                tone: empty ? Zone.red : Zone.unknown,
+          case WallDoseFact():
+            // One entry per configured head (§12b): unused sockets are skipped,
+            // switched-off heads render gray without a stock estimate (their
+            // "days at the current rate" is stale — the rate is zero).
+            final heads = <WallDoseHeadData>[];
+            for (final head in fact.heads) {
+              final days = head.switchedOff ? null : head.remainingDays;
+              final tone = _stockTone(head.stockLevel);
+              heads.add(
+                WallDoseHeadData(
+                  label: head.label,
+                  timeLeft: days != null
+                      ? wallSupplementTimeLeft(l, days)
+                      : null,
+                  tone: tone,
+                ),
+              );
+            }
+            if (heads.isNotEmpty) {
+              tiles.add(
+                WallDoseTile(
+                  data: WallDoseData(
+                    title: name,
+                    heads: heads,
+                    tone: wallWorstAlarmTone([for (final h in heads) h.tone]),
+                  ),
+                ),
+              );
+            }
+          case WallFilterRollFact():
+            tiles.add(
+              WallStatusTile(
+                data: WallStatusData(
+                  icon: Icons.album_outlined,
+                  title: name,
+                  line: fact.empty
+                      ? l.reefBeatMatRollEmpty
+                      : (fact.daysTillEndOfRoll != null
+                            ? l.reefBeatDaysLeft(fact.daysTillEndOfRoll!)
+                            : l.reefBeatMatRoll),
+                  tone: fact.empty ? Zone.red : Zone.unknown,
+                ),
               ),
-            ),
-          );
-        }
-        final run = snap.run;
-        if (contribution.kind == WallRbStatusKind.skimmer && run != null) {
-          final p = run.pumps[contribution.pumpIndex];
-          tiles.add(
-            WallStatusTile(
-              data: WallStatusData(
-                icon: Icons.bubble_chart_outlined,
-                title: p.name ?? name,
-                line: p.fullCup
-                    ? l.reefBeatRunFullCup
-                    : (p.overSkimming ? l.reefBeatRunOverSkimming : l.zoneOk),
-                // Full cup stays red until someone empties it; over-skimming
-                // is a pause the skimmer recovers from on its own, so it
-                // warns amber like any other fault.
-                tone: p.fullCup
-                    ? Zone.red
-                    : (p.faulted ? Zone.amber : Zone.unknown),
+            );
+          case WallSkimmerFact():
+            tiles.add(
+              WallStatusTile(
+                data: WallStatusData(
+                  icon: Icons.bubble_chart_outlined,
+                  title: fact.name ?? name,
+                  line: fact.fullCup
+                      ? l.reefBeatRunFullCup
+                      : (fact.overSkimming
+                            ? l.reefBeatRunOverSkimming
+                            : l.zoneOk),
+                  // Full cup stays red until someone empties it; over-skimming
+                  // is a pause the skimmer recovers from on its own, so it
+                  // warns amber like any other fault.
+                  tone: fact.fullCup
+                      ? Zone.red
+                      : (fact.faulted ? Zone.amber : Zone.unknown),
+                ),
               ),
-            ),
-          );
+            );
         }
       }
     }
     return tiles;
   }
+
+  Zone _stockTone(WallStockLevel level) => switch (level) {
+    WallStockLevel.critical => Zone.red,
+    WallStockLevel.caution => Zone.amber,
+    WallStockLevel.healthy => Zone.green,
+    WallStockLevel.unknown => Zone.unknown,
+  };
 
   /// The optional bottom strip (§12c): today's due maintenance plans and
   /// parameter tests, as plain text.

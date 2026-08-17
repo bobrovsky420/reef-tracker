@@ -82,13 +82,13 @@ class _FakeRbLink implements RbDeviceLink {
   Future<List<RbDoseQueueEntry>> readDosingQueue(String host) async => const [];
 }
 
-RbSnapshot _rbSnapshot(List<RbControlProbe> probes) => RbSnapshot(
+RbSnapshot _rbSnapshot(List<RbControlProbe> probes) => RbControlSnapshot(
   info: const RbDeviceInfo(
     hwType: kRbControlHwType,
     hwModel: 'RSCONTROLPRO',
     hwid: 'RB-CONTROL-1',
   ),
-  control: RbControlStatus(probes: probes),
+  status: RbControlStatus(probes: probes),
 );
 
 RfSnapshot _snapshot(List<RfReading> readings) => RfSnapshot(

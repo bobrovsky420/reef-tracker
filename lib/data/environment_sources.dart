@@ -16,8 +16,7 @@ import '../domain/parameter_catalog.dart';
 import '../domain/units.dart';
 import 'database.dart';
 import 'rb_device_link.dart';
-import 'rb_measurements.dart';
-import 'rb_protocol.dart';
+import 'rb_family_handlers.dart';
 import 'rf_device_link.dart';
 
 /// The parameters environment capture deals in (canonical catalog keys).
@@ -106,10 +105,15 @@ class RfEnvironmentSource implements EnvironmentSource {
 
 /// [EnvironmentSource] over a Red Sea ReefControl Lite/Pro.
 class RbEnvironmentSource implements EnvironmentSource {
-  RbEnvironmentSource(this._device, this._link);
+  RbEnvironmentSource(
+    this._device,
+    this._link, {
+    RbFamilyHandlerRegistry? families,
+  }) : _families = families ?? rbFamilyHandlers;
 
   final DeviceRecord _device;
   final RbDeviceLink _link;
+  final RbFamilyHandlerRegistry _families;
 
   @override
   String get identifier => _device.identifier;
@@ -125,8 +129,8 @@ class RbEnvironmentSource implements EnvironmentSource {
       throw const RbLinkException(RbLinkError.unreachable, 'no address');
     }
     final snap = await _link.readOnce(address);
-    final status = snap.control;
-    if (status == null) {
+    final handler = _families.forSnapshot(snap);
+    if (!handler.capabilities.contributesEnvironment) {
       throw const RbLinkException(
         RbLinkError.protocol,
         'not a ReefControl snapshot',
@@ -137,7 +141,7 @@ class RbEnvironmentSource implements EnvironmentSource {
       displayName: displayName,
       takenAt: DateTime.now(),
       readings: [
-        for (final r in rbControlMeasurements(status))
+        for (final r in handler.environmentCandidates(snap))
           if (kEnvironmentParams.contains(r.paramKey)) r,
       ],
     );
@@ -181,7 +185,12 @@ List<EnvironmentSource> environmentSourcesForTank({
     kDeviceKindReefBeat: [
       for (final d in eligible(
         rbDevices,
-        where: (d) => rbIsControlModel(d.model),
+        where: (d) =>
+            rbFamilyHandlers
+                .forModel(d.model)
+                ?.capabilities
+                .contributesEnvironment ??
+            false,
       ))
         RbEnvironmentSource(d, rbLink),
     ],

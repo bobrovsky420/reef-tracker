@@ -2936,18 +2936,23 @@ entry points for one page were four ways to say the same thing).
   refresh/save work. The same kind set drives backup validation, database
   writers, provider queries, and registry completeness checks.
   `devicesOfKindProvider(DeviceKind)` is the one household-scoped inventory
-  family; the old named providers are aliases while the feature screens migrate.
-  Each registered adapter owns its transport read, `lastSeenAt`/model-refinement
-  side effects, normalized save candidates, and optional `EnvironmentSource`.
+  family; the old named providers remain aliases for test overrides. Each
+  registered adapter owns its transport read, `lastSeenAt`/model-refinement
+  side effects, normalized save candidates, integration-specific cleanup
+  (Apex password removal), normalized Wall snapshot, and optional
+  `EnvironmentSource`.
   It returns a `DeviceReadResult`: a sealed vendor payload plus a common failure
   category, while retaining the native error enum for localized diagnostics. A
   failure may explicitly retain a matching last-good payload; loading and other
   widget lifecycle state never enter protocol DTOs or the registry.
-  `app/device_live.dart` currently holds the three compatibility live-state
-  wrappers used by Devices and Wall until T31 phase 2 replaces their parallel
-  maps. The boundary is pure Dart — no widgets, `BuildContext`, localization,
-  or navigation. Vendor widgets, icons, copy, add flows, and controls stay in
-  the feature layer.
+  `app/device_live.dart` supplies the single `DeviceLiveState` used by Devices
+  and Wall; vendor card views are derived adapters, not separately held maps.
+  The data boundary remains pure Dart — no widgets, `BuildContext`, localization,
+  or navigation. Those Flutter concerns are exhaustive in the separate
+  `features/devices/device_presentations.dart` registry: each descriptor owns
+  its icon, localized label/disclaimer, add route, and family section. The
+  parent Devices screen selects descriptors and never switches on a vendor for
+  refresh, save, add, cards, icons, copy, or cleanup.
 - **Vendor chips** in the user's own order, each with its device count. A vendor
   earns a chip only by having a device in view; with a single vendor the
   selector disappears entirely (a one-choice selector is noise). The bar scrolls
@@ -3284,17 +3289,28 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   "ReefATO+", "ReefMat 250", "ReefRun", "ReefLED 90", "ReefWave 25",
   "ReefControl Pro"), the
   default device name on add.
+- **Exhaustive family boundary** (`data/rb_snapshot.dart`,
+  `data/rb_family_handlers.dart`): `RbSnapshot` is sealed, with one concrete
+  subtype for each `RbFamily` (`RbDoseSnapshot`, `RbAtoSnapshot`,
+  `RbMatSnapshot`, `RbRunSnapshot`, `RbLightSnapshot`, `RbWaveSnapshot`, and
+  `RbControlSnapshot`). An instance therefore contains exactly one required
+  status object; the former seven nullable fields and their impossible zero- or
+  multi-family states do not exist. `RbFamilyHandlerRegistry` requires one
+  handler per family and hardware type. Each handler owns model-prefix aliases,
+  capabilities, endpoint selection/decoding, model refinement, save and
+  environment candidates, and normalized Wall readings/status facts/signature.
+  Family rendering uses exhaustive pattern matching at the ReefBeat boundary;
+  Devices and Wall never probe nullable family fields.
 - **Transport** (`data/rb_device_link.dart`): abstract `RbDeviceLink`
   (fake-able) + `RbHttpLink` over `dart:io` `HttpClient` (the
   `cloud_backup_store.dart` pattern, no new dependency). One `readOnce(host)`
-  per manual refresh; the returned `RbSnapshot` carries the identity plus
-  exactly one of `dose`/`ato`/`mat`/`run`/`light`/`wave`/`control` per the device's
-  `hw_type`; typed `RbLinkError`
+  per manual refresh; `RbHttpLink` selects the registered handler by `hw_type`
+  and returns its concrete sealed snapshot; typed `RbLinkError`
   (unreachable/timeout/unsupportedModel/protocol) drives specific messages.
   Most families are `/device-info` + `/dashboard`; a **mat** additionally makes
   a *tolerant* `/configuration` call purely to recover its sized model code
   (`RbMatStatus.modelCode` = "RSMAT250" — `/device-info` only ever says
-  "RSMAT"), and a **wave** reads `/mode` (required) + a tolerant `/wifi`. A
+  "RSMAT"), and a **wave** reads `/mode` (required) + a tolerant `/auto`. A
   failed tolerant call degrades the card, never the refresh.
   A **ReefDose** additionally reads `/head/<n>/settings` for each head the
   dashboard reported — tolerantly, one call per head — purely for
@@ -3868,7 +3884,16 @@ value is showing *this* keeper's devices, which live in this database.
   draws each device card's 24 h line (with min/max band + hand-measurement
   markers via the extended `widgets/sparkline.dart`) from them — falling back
   to the dashboard's 14-day readings line below 2 in-window points, window
-  named in the tile footer.
+   named in the tile footer.
+- **Integration-neutral Wall boundary** (`data/wall_sources.dart` plus each
+  `DeviceIntegration.wallSnapshot`): a successful vendor payload is converted
+  once into `WallDeviceSnapshot` — canonical readings, known parameters,
+  generic operating states, sealed status facts, and a stable signature. The
+  poll loop, value renderer, and `_statusTiles` consume only that model; they do
+  not import or inspect ReefFactory, ReefBeat, or Apex protocol DTOs. A single
+  `wallDeviceInventoryProvider` also resolves vendor/card order, active-tank
+  scope, the sole-tank unassigned rule, and unsupported rows for both Wall and
+  Wall Settings, preventing their device lists from drifting apart.
 - **Always-on** (§12e): `wakelock_plus` held while mounted **and**
   foregrounded (released on pause/dispose), `immersiveSticky` on enter /
   `edgeToEdge` restored on exit, a night scrim (deliberately not screen
@@ -3913,9 +3938,10 @@ value is showing *this* keeper's devices, which live in this database.
   reminder resync used to hang exclusively off `AppLifecycleState.resumed`; a
   wall tablet never resumes, so `main.dart` now also runs the same
   maintenance on a 6-hourly in-app tick.
-- Phase 1 exercised against the committed fakes (`tool/apex_emulator.dart`,
+- The current integration boundary was exercised against the committed fakes (`tool/apex_emulator.dart`,
   `tool/reeffactory_emulator.dart`, `tool/reefbeat_emulator.dart`), never
-  against real hardware; iOS immersive-restore and Guided Access interaction
+  against real hardware in this refactor; the ReefBeat fake now serves all
+  seven supported families. iOS immersive-restore and Guided Access interaction
   unverified on a physical iPad. Deferred to later phases: address
   re-resolution after repeated unreachable polls, multi-tank rotation,
   out-of-range alerting, tap-for-history, follower-mode cloud restore

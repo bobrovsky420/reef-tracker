@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/app/device_live.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/ap_device_link.dart';
 import 'package:reeftracker/data/ap_protocol.dart';
@@ -42,9 +43,9 @@ RfSnapshot _rfSnapshot({double temperature = 25}) => RfSnapshot(
   readings: [RfReading('temperature', temperature, '°C')],
 );
 
-RbSnapshot _rbSnapshot({String model = 'RSCONTROLPRO'}) => RbSnapshot(
+RbSnapshot _rbSnapshot({String model = 'RSCONTROLPRO'}) => RbControlSnapshot(
   info: RbDeviceInfo(hwType: kRbControlHwType, hwModel: model, hwid: 'RB-1'),
-  control: const RbControlStatus(
+  status: const RbControlStatus(
     probes: [RbControlProbe(type: 'ph', value: 8.2)],
   ),
 );
@@ -194,10 +195,7 @@ void main() {
         devicesOfKindProvider(DeviceKind.reefBeat),
       );
       expect(apexDevicesProvider, devicesOfKindProvider(DeviceKind.apex));
-      expect(
-        hannaDevicesProvider,
-        devicesOfKindProvider(DeviceKind.hanna),
-      );
+      expect(hannaDevicesProvider, devicesOfKindProvider(DeviceKind.hanna));
     });
   });
 
@@ -205,6 +203,7 @@ void main() {
     late _RfLink rf;
     late _RbLink rb;
     late _ApLink ap;
+    late FakeDeviceSecrets secrets;
     late List<String> seen;
     late List<(int, String)> models;
     late DeviceIntegrationRegistry registry;
@@ -213,6 +212,7 @@ void main() {
       rf = _RfLink(_rfSnapshot());
       rb = _RbLink(_rbSnapshot());
       ap = _ApLink(_apStatus());
+      secrets = FakeDeviceSecrets({'AP-1': 'hunter2'});
       seen = [];
       models = [];
       registry = DeviceIntegrationRegistry([
@@ -227,7 +227,7 @@ void main() {
         ),
         ApDeviceIntegration(
           link: ap,
-          secrets: FakeDeviceSecrets({'AP-1': 'hunter2'}),
+          secrets: secrets,
           touchSeen: (identifier) async => seen.add(identifier),
         ),
         const HannaDeviceIntegration(),
@@ -334,6 +334,51 @@ void main() {
       );
       expect(failed.hasFreshPayload, isFalse);
     });
+
+    test(
+      'normalized live state retains last-good payload through a failure',
+      () {
+        final previous = DeviceLiveState.completed(
+          DeviceReadResult.success(
+            DeviceKind.reefFactory,
+            RfReadPayload(_rfSnapshot(temperature: 24.8)),
+          ),
+        );
+        final loading = DeviceLiveState.loadingFrom(previous);
+        final completed = DeviceLiveState.completed(
+          DeviceReadResult.failed(
+            DeviceKind.reefFactory,
+            const DeviceReadFailure(
+              DeviceReadFailureKind.timeout,
+              cause: RfLinkError.timeout,
+            ),
+          ),
+          previous: loading,
+        );
+
+        expect(loading.loading, isTrue);
+        expect(completed.loading, isFalse);
+        expect(completed.rf.snapshot?.readings.single.value, 24.8);
+        expect(completed.rf.error, RfLinkError.timeout);
+      },
+    );
+
+    test(
+      'cleanup hooks remove Apex credentials and leave other kinds alone',
+      () async {
+        final apex = _device(
+          kind: kDeviceKindApex,
+          identifier: 'AP-1',
+          username: 'admin',
+        );
+        await registry.cleanup(apex);
+        expect(secrets.secrets, isEmpty);
+
+        secrets.secrets['AP-1'] = 'new-secret';
+        await registry.cleanup(_device(identifier: 'RF-1'));
+        expect(secrets.secrets, {'AP-1': 'new-secret'});
+      },
+    );
 
     test('ReefBeat read refines its persisted model', () async {
       final result = await registry.read(

@@ -34,6 +34,7 @@ import 'dart:typed_data';
 
 import 'mdns_protocol.dart';
 import 'rb_device_link.dart';
+import 'rb_family_handlers.dart';
 import 'rb_protocol.dart';
 import 'rf_device_link.dart';
 
@@ -303,7 +304,7 @@ class LanDiscoveryService {
         address: ip,
         modelCode: id.hwModel,
         modelDisplayName: rbModelDisplayName(id.hwModel),
-        supported: kRbSupportedHwTypes.contains(id.hwType),
+        supported: rbFamilyHandlers.forHardwareType(id.hwType) != null,
         hwType: id.hwType,
         hostname: id.hostname,
         viaMdns: true,
@@ -321,7 +322,7 @@ class LanDiscoveryService {
         address: ip,
         modelCode: info.hwModel,
         modelDisplayName: rbModelDisplayName(info.hwModel),
-        supported: kRbSupportedHwTypes.contains(info.hwType),
+        supported: rbFamilyHandlers.forHardwareType(info.hwType) != null,
         hwType: info.hwType,
       );
     } on RbLinkException {

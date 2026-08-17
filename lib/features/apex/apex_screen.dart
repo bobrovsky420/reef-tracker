@@ -47,7 +47,7 @@ class ApDeviceSection extends ConsumerWidget {
   /// Null while the parent has a save in flight — every card's Save button
   /// disables for the duration (#86).
   final void Function(DeviceRecord device, ApStatus status)? onSave;
-  final void Function(String identifier) onRemoved;
+  final Future<void> Function(DeviceRecord device) onRemoved;
 
   /// Re-read one controller — used after new credentials are entered, so the
   /// retry uses them immediately.
@@ -209,11 +209,8 @@ class ApDeviceSection extends ConsumerWidget {
       ),
     );
     if (ok == true) {
-      onRemoved(d.identifier);
       await ref.read(dbProvider).deleteDevice(d.id);
-      // The sidecar is keyed by identifier, not by row id, so it has to be
-      // told: a forgotten controller must not leave its password behind.
-      await ref.read(deviceSecretsProvider).remove(d.identifier);
+      await onRemoved(d);
     }
   }
 }
