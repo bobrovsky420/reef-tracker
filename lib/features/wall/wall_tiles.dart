@@ -207,8 +207,6 @@ class WallValueTile extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(zone.icon, size: 14, color: valueColor),
-                  const SizedBox(width: 5),
                   Expanded(
                     child: Text(
                       provenance,
