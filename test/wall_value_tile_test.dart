@@ -50,6 +50,7 @@ void main() {
     await pumpTile(tester, state: WallOperatingState.heating);
 
     expect(find.text('Heating'), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle), findsNothing);
     expect(
       tester.getSemantics(find.byType(WallValueTile)).label,
       'Temperature: 25.2 °C, OK, Heating',

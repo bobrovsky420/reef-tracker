@@ -83,6 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transport is covered by tests.)
 
 ### Changed
+- Wall display value cards now show device and measurement timing without a
+  duplicate green, amber or red status icon; the value color still indicates
+  the parameter's status.
 - Wall display card settings now keep each card subtitle focused on its device
   name, without extra contact-status messages.
 - Connected devices and Wall display now keep each device's last successful
