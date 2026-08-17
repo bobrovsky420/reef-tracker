@@ -97,9 +97,10 @@ void main() {
   ];
 
   Future<void> tapSaveAll(WidgetTester tester) async {
-    // Both devices hold a value, so the FAB reads "Save all (2)" — the
-    // per-card Save menu actions carry no such count.
-    await tester.tap(find.widgetWithText(FloatingActionButton, 'Save all (2)'));
+    // Both devices report the same tank parameter, so first-displayed-wins
+    // leaves one value for the FAB to count. Per-card Save actions carry no
+    // such count.
+    await tester.tap(find.widgetWithText(FloatingActionButton, 'Save all (1)'));
     await settle(tester);
   }
 
@@ -202,11 +203,12 @@ void main() {
 
     await pumpDevices(tester, db);
 
-    // ReefControl is the one meter inside the mixed ReefBeat vendor. Its card
-    // gets Save in the overflow menu, and the bulk action counts it; a
-    // ReefDose/ReefWave would do neither.
+    // ReefControl is the one meter inside the mixed ReefBeat vendor. Its three
+    // primary probe parameters and the first supplementary temperature are
+    // all counted; the second temperature is not because it would not save.
+    // A ReefDose/ReefWave would contribute no values and expose no Save.
     expect(
-      find.widgetWithText(FloatingActionButton, 'Save all (1)'),
+      find.widgetWithText(FloatingActionButton, 'Save all (4)'),
       findsOneWidget,
     );
     await tapCardSave(tester, 'ReefControl');

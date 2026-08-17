@@ -169,7 +169,8 @@ void main() {
       // sanity gate can see it; only the rail rule can.
       await pumpDevices(tester, db, rf: _FakeRfLink.guardian(salinityPpt: 0));
 
-      await tapSaveAll(tester, 1);
+      // Salinity plus its supplementary temperature are both going to save.
+      await tapSaveAll(tester, 2);
       expect(find.textContaining('reads as nothing at all'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(TextButton, 'Skip'));

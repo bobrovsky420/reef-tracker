@@ -120,7 +120,8 @@ class DevicesFabStatus {
   /// and is hidden rather than disabled, exactly as the action bar did.
   final int meters;
 
-  /// Devices in scope holding values right now (Save all's count).
+  /// Distinct tank parameters in scope that Save all would persist right now,
+  /// after each integration's filtering and the first-displayed-wins merge.
   final int savable;
 
   /// A save is already in flight — Save all disables for its duration (#86).
@@ -1044,13 +1045,23 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
         .length;
   }
 
-  /// How many devices in scope currently hold values a save would persist.
+  /// How many distinct tank parameters in scope a Save all would persist.
+  ///
+  /// This mirrors [_saveGuarded]'s first-displayed-wins merge: supplementary
+  /// readings count (for example, a ReefControl probe's temperature), while a
+  /// second probe or device reporting the same parameter for the same tank
+  /// does not. An unassigned device contributes nothing because the save would
+  /// skip it.
   int _savableCount(DeviceScope scope) {
-    var n = 0;
+    final parameters = <(int, String)>{};
     for (final (kind, d) in scope.inPageOrder) {
-      if (_pendingValues(kind, d, scope).isNotEmpty) n++;
+      final tankId = d.tankId;
+      if (tankId == null) continue;
+      for (final value in _pendingValues(kind, d, scope)) {
+        parameters.add((tankId, value.paramKey));
+      }
     }
-    return n;
+    return parameters.length;
   }
 
   Future<void> _onDeviceRemoved(DeviceRecord device) async {

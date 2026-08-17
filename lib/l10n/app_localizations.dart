@@ -6447,7 +6447,7 @@ abstract class AppLocalizations {
   /// **'Refresh all ({count})'**
   String devicesRefreshAll(int count);
 
-  /// Saves the readings of every meter in view. Count = devices holding values right now.
+  /// Saves the readings of every meter in view. Count = distinct tank parameters that will be saved after duplicate readings are resolved.
   ///
   /// In en, this message translates to:
   /// **'Save all ({count})'**

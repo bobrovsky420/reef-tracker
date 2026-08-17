@@ -1796,7 +1796,7 @@
   },
   "devicesSaveAll": "Save all ({count})",
   "@devicesSaveAll": {
-    "description": "Saves the readings of every meter in view. Count = devices holding values right now.",
+    "description": "Saves the readings of every meter in view. Count = distinct tank parameters that will be saved after duplicate readings are resolved.",
     "placeholders": {
       "count": { "type": "int" }
     }
