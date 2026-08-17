@@ -2994,7 +2994,11 @@ entry points for one page were four ways to say the same thing).
   vendor whose devices were all removed keeps its position, so adding one back
   puts it where the user left it. Deliberately **not** device-local: see below.
 - **Refresh all / Save all act on the current selection only**, with a scope
-  line above the list stating what that is and the counts on the FABs. Reads are
+  line above the list stating what that is and the counts on the FABs. Pulling
+  down past the top invokes that same scoped refresh; the scroll view is always
+  overscrollable when refresh is available, so the gesture also works on a
+  one-card dashboard, and it is hidden by construction when the scope has no
+  pollable device or the install is not entitled. Reads are
   sequential *within* a vendor (a meter also serves its vendor's cloud app) but
   the vendors run concurrently. The on-open auto-read follows the same scope,
   once per device per session — and only while the page is the tab actually on

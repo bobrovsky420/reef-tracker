@@ -818,8 +818,12 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     }
 
     if (present.isEmpty) return const _EmptyState();
+    final canRefresh = entitled && _refreshableCount(scope) > 0;
     final list = CustomScrollView(
       controller: _scrollCtrl,
+      // A one-card dashboard may not otherwise have enough content to
+      // overscroll. Pull-to-refresh must still be available from its top.
+      physics: canRefresh ? const AlwaysScrollableScrollPhysics() : null,
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -913,12 +917,18 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     // bar to step: making the wrapper itself conditional would re-root the list
     // whenever the vendor count crossed one, throwing away its scroll position.
     final width = MediaQuery.sizeOf(context).width;
-    return GestureDetector(
+    final page = GestureDetector(
       onHorizontalDragStart: (_) => _dragDx = 0,
       onHorizontalDragUpdate: (d) => _dragDx += d.delta.dx,
       onHorizontalDragEnd: (d) => _onSwipeEnd(d, width),
       child: list,
     );
+    // Pulling past the top is the touch-first twin of Refresh all: it uses the
+    // exact same selected-vendor scope and is absent when the scope contains
+    // nothing pollable (or live reads are not entitled).
+    return canRefresh
+        ? RefreshIndicator(onRefresh: refreshAll, child: page)
+        : page;
   }
 
   /// Publishes what the host's FABs need for the frame just built. Post-frame
@@ -943,7 +953,13 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
 
   /// Reads every refreshable device in the current selection — the host's
   /// Refresh all FAB.
-  Future<void> refreshAll() => _refreshScope(_scope);
+  Future<void> refreshAll() async {
+    // The FAB is disabled while a read is running; the pull gesture needs the
+    // same guard so dragging during the on-open read cannot start a duplicate
+    // request to every device.
+    if (_busy(_scope)) return;
+    await _refreshScope(_scope);
+  }
 
   /// Saves every meter in the current selection — the host's Save all FAB.
   Future<void> saveAll() => _save(_scope);
