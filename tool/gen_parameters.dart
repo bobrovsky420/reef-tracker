@@ -6,10 +6,10 @@
 //
 // Validates the YAML before writing: keys/symbols must be unique, category
 // must be a real `ParamCategory` name, microelements must carry a symbol and
-// defaultBounds (core parameters must not — their defaults are the setup-type
-// presets), bounds must be ordered, both plausible bounds must be defined or
-// neither, and defaultBounds must be ascending, green-paired and inside the
-// plausible range. On any error it prints the problems and writes nothing.
+// defaultBounds (core parameters may carry one setup-independent fallback),
+// bounds must be ordered, both plausible bounds must be defined or neither,
+// and defaultBounds must be ascending, green-paired and inside the plausible
+// range. On any error it prints the problems and writes nothing.
 //
 // Deliberately does NOT import package:reeftracker — this generator's output
 // is a part of `parameter_catalog.dart`, so the package doesn't compile while
@@ -142,14 +142,7 @@ void main() {
     }
 
     final boundsMap = p['defaultBounds'] as YamlMap?;
-    if (category == 'core') {
-      if (boundsMap != null) {
-        errors.add(
-          '"$key": defaultBounds is a microelement mechanism '
-          '(core defaults are the setup-type presets in presets.dart)',
-        );
-      }
-    } else if (boundsMap == null) {
+    if (category != 'core' && boundsMap == null) {
       errors.add('"$key": microelements must carry defaultBounds');
     }
     num? amberLow, greenLow, greenHigh, amberHigh;
