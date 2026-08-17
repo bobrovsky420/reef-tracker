@@ -16,9 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   selected °C/°F unit, and an attached leak detector as green Dry or red Leak
   detected; Wall display creates a separate
   live card and 24-hour sample line for each primary parameter (salinity, pH
-  and ORP). Value colors on both surfaces use the aquarium's ReefTracker
-  ranges, not ReefControl's own level labels. The controller card can save
-  salinity, ORP, pH and the first probe temperature (alone or with Save all),
+  and ORP) plus the first probe temperature. Value colors on both surfaces use
+  the aquarium's ReefTracker ranges, not ReefControl's own level labels. The
+  controller card can save salinity, ORP, pH and the first probe temperature
+  (alone or with Save all),
   and its salinity, ORP, pH and temperature are offered as environment values when
   saving a Hanna checker session. Control remains read-only — rules,
   calibration and notifications stay in ReefBeat.
@@ -108,6 +109,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tile and as a chip on the ReefRun card — instead of the raw firmware text.
 
 ### Fixed
+- ReefControl's first probe temperature now appears on the Wall display and is
+  available when a Hanna checker session captures environment values. When
+  several connected devices report the same environment parameter, the first
+  reading now wins according to the user's brand order, then card and probe
+  order within that brand.
 - Wall display reorder handles now respond across their full 48 × 48 touch
   target, rather than requiring a precise hit on the small painted icon.
 - Wall display card reordering now updates immediately when a drag handle is

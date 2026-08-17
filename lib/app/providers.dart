@@ -30,6 +30,7 @@ import '../data/reminder_scheduler.dart';
 import '../data/rf_device_link.dart';
 import '../data/settings.dart';
 import '../domain/clock.dart';
+import '../domain/device_vendors.dart';
 import '../domain/health_score.dart';
 import '../domain/insights.dart';
 import '../domain/micro.dart';
@@ -1132,6 +1133,8 @@ final environmentSourcesProvider =
       }
       return environmentSourcesForTank(
         tankId: tankId,
+        vendorOrder:
+            ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors,
         rfDevices: ref.watch(reefFactoryDevicesProvider).value ?? const [],
         rfLink: ref.watch(rfDeviceLinkProvider),
         rbDevices: ref.watch(reefBeatDevicesProvider).value ?? const [],

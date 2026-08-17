@@ -353,7 +353,7 @@ void main() {
   });
 
   group('wall parameter catalogue', () {
-    test('ReefControl contributes one card per primary attached probe', () {
+    test('ReefControl contributes primary probes and first temperature', () {
       final readings = wallRbReadings(
         RbSnapshot(
           info: const RbDeviceInfo(
@@ -377,11 +377,16 @@ void main() {
         ),
       );
 
-      expect(readings.map((r) => r.paramKey), ['salinity', 'orp', 'ph']);
+      expect(readings.map((r) => r.paramKey), [
+        'salinity',
+        'temperature',
+        'orp',
+        'ph',
+      ]);
       expect(readings[0].value, closeTo(pptToSg(35.8), 0.000001));
-      expect(readings[1].value, 81);
-      expect(readings[2].value, 8.06);
-      expect(readings.map((r) => r.paramKey), isNot(contains('temperature')));
+      expect(readings[1].value, 25.6);
+      expect(readings[2].value, 81);
+      expect(readings[3].value, 8.06);
     });
 
     test('restored ReefFactory inventory exposes its cards before polling', () {
