@@ -83,6 +83,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transport is covered by tests.)
 
 ### Changed
+- Connected devices can now be refreshed by pulling down past the top of the
+  dashboard. The gesture refreshes the same currently selected devices as the
+  Refresh all button, including on short one-card dashboards. It was exercised
+  on Android with the committed fake devices, not with additional real
+  hardware.
 - Wall display value cards now show device and measurement timing without a
   duplicate green, amber or red status icon; the value color still indicates
   the parameter's status.

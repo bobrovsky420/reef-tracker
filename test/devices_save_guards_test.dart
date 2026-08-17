@@ -380,6 +380,22 @@ void main() {
       await unmountApp(tester);
     });
 
+    testWidgets('pulling past the top refreshes every device in scope', (
+      tester,
+    ) async {
+      final db = await seedFleet(pro: true);
+      addTearDown(db.close);
+      await pumpBody(tester, db);
+      expectReads(1); // The ordinary on-open read.
+
+      expect(find.byType(RefreshIndicator), findsOneWidget);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, 400));
+      await settle(tester);
+
+      expectReads(2);
+      await unmountApp(tester);
+    });
+
     testWidgets('a Devices tab nobody is looking at reads nothing until it '
         'is', (tester) async {
       final db = await seedFleet(pro: true);
