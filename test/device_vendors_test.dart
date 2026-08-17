@@ -119,5 +119,9 @@ void main() {
     test('the Hanna checker is Bluetooth-only and never polled', () {
       expect(deviceKindRefreshes(kDeviceKindHanna), isFalse);
     });
+
+    test('an unknown persisted kind is never assumed to be a LAN device', () {
+      expect(deviceKindRefreshes('future-controller'), isFalse);
+    });
   });
 }

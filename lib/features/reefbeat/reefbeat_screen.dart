@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/device_live.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
@@ -51,36 +52,6 @@ List<_ListEntry> _entriesOf(List<DeviceRecord> devices) {
     }
   }
   return entries;
-}
-
-/// Transient per-device live state (not persisted): the last refresh result.
-/// Held by the unified Devices screen (U41), so switching the vendor filter
-/// doesn't discard snapshots the user just refreshed.
-class RbLive {
-  const RbLive({this.loading = false, this.snapshot, this.error});
-  final bool loading;
-  final RbSnapshot? snapshot;
-  final RbLinkError? error;
-}
-
-/// Reads one ReefBeat device, returning the outcome for the caller to store.
-/// Touches `lastSeenAt`, and persists a more precise model when the full read
-/// learns one — a mat only reveals its width in `/configuration`, so the card
-/// header stops saying the generic "RSMAT".
-Future<RbLive> rbReadDevice(WidgetRef ref, DeviceRecord device) async {
-  final address = device.address;
-  if (address == null || address.isEmpty) return const RbLive();
-  try {
-    final snap = await ref.read(rbDeviceLinkProvider).readOnce(address);
-    final db = ref.read(dbProvider);
-    await db.touchDeviceSeen(device.identifier);
-    if (snap.modelCode != device.model) {
-      await db.updateDeviceModel(device.id, snap.modelCode);
-    }
-    return RbLive(snapshot: snap);
-  } on RbLinkException catch (e) {
-    return RbLive(error: e.error);
-  }
 }
 
 String rbErrorText(AppLocalizations l, RbLinkError e) => switch (e) {

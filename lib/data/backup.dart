@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../domain/device_vendors.dart';
 import '../domain/reminders.dart';
 import '../domain/ro.dart';
 import '../domain/setup_type.dart';
@@ -129,16 +130,6 @@ class BackupData {
   final List<DevicesCompanion> devices;
   final List<SettingsCompanion> settings;
 }
-
-/// The [Devices.kind] values this app understands (#34 gate). Mirrors the
-/// writers in database.dart (`upsertReefFactoryDevice`, `ensureHannaDevice`,
-/// `upsertReefBeatDevice`, `upsertApexDevice`).
-const Set<String> _knownDeviceKinds = {
-  'reeffactory',
-  'hanna',
-  'reefbeat',
-  'apex',
-};
 
 /// Serializes the whole database to a compact JSON string.
 ///
@@ -774,7 +765,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   requireKnown(
     'devices.kind',
     data.devices.map((d) => d.kind.present ? d.kind.value : null),
-    _knownDeviceKinds,
+    kKnownDeviceKindIds,
   );
 
   // Recurring-interval day counts feed unguarded DateTime day-addition

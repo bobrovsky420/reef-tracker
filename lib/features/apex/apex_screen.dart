@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/device_live.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/ap_device_link.dart';
 import '../../data/ap_protocol.dart';
 import '../../data/database.dart';
-import '../../data/device_secrets.dart';
-import '../../domain/parameter_catalog.dart';
-import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
@@ -22,77 +20,6 @@ import '../devices/device_rename_dialog.dart';
 /// populated Apex drives thirty-odd outlets; the whole list is worth having,
 /// but not at the cost of burying every other card below it.
 const int kApexOutletPreview = 8;
-
-/// Filters a controller's live [readings] down to what should be persisted:
-/// values converted to the catalog's canonical unit (an Apex conductivity
-/// probe reports ppt, salinity is stored as specific gravity) and physically
-/// impossible ones dropped, so a save can't store noise from an unplugged
-/// probe. Pure, so it is unit-tested directly.
-///
-/// There is no cross-device precedence rule of the ReefFactory kind here: a
-/// controller already reports one value per parameter (see [ApStatus.readings]),
-/// and an Apex *is* the tank's instrumentation hub rather than one meter
-/// among several.
-List<({String paramKey, double value})> apReadingsToSave(
-  List<ApReading> readings,
-) {
-  return [
-    for (final r in readings.map(
-      (r) => (
-        paramKey: r.paramKey,
-        value: r.paramKey == 'salinity' ? pptToSg(r.value) : r.value,
-      ),
-    ))
-      if (checkParamValue(r.paramKey, r.value) != ParamValueCheck.impossible) r,
-  ];
-}
-
-/// Transient per-controller live state (not persisted). Held by the unified
-/// Devices screen (U41), so switching the vendor filter doesn't discard a
-/// status the user just refreshed.
-class ApLive {
-  const ApLive({this.loading = false, this.status, this.error});
-  final bool loading;
-  final ApStatus? status;
-  final ApLinkError? error;
-}
-
-/// The credentials for a device row: the login name travels with the row, the
-/// password comes from the backup-excluded sidecar (#68). Null when either
-/// half is missing — a row restored from a backup, or one that arrived with an
-/// OS-level restore or phone transfer, has no password on this device.
-Future<ApCredentials?> apCredentialsOf(
-  DeviceSecrets secrets,
-  DeviceRecord d,
-) async {
-  final username = d.username;
-  if (username == null) return null;
-  final password = await secrets.read(d.identifier);
-  if (password == null) return null;
-  return ApCredentials(username: username, password: password);
-}
-
-/// Reads one controller, returning the outcome for the caller to store. A row
-/// whose password didn't survive a backup restore resolves straight to an auth
-/// error rather than a pointless round trip.
-Future<ApLive> apReadDevice(WidgetRef ref, DeviceRecord device) async {
-  final address = device.address;
-  final credentials = await apCredentialsOf(
-    ref.read(deviceSecretsProvider),
-    device,
-  );
-  if (address == null || address.isEmpty) return const ApLive();
-  if (credentials == null) return const ApLive(error: ApLinkError.auth);
-  try {
-    final status = await ref
-        .read(apDeviceLinkProvider)
-        .readOnce(address, credentials);
-    await ref.read(dbProvider).touchDeviceSeen(device.identifier);
-    return ApLive(status: status);
-  } on ApLinkException catch (e) {
-    return ApLive(error: e.error);
-  }
-}
 
 String apErrorText(AppLocalizations l, ApLinkError e) => switch (e) {
   ApLinkError.unreachable => l.apexErrUnreachable,

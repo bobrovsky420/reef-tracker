@@ -3,14 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/device_live.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/lan_discovery.dart';
 import '../../data/rf_device_link.dart';
 import '../../data/rf_protocol.dart';
-import '../../domain/parameter_catalog.dart';
-import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
@@ -19,86 +18,12 @@ import '../devices/device_details_dialog.dart';
 import '../devices/device_rename_dialog.dart';
 import '../devices/discovery_sheet.dart';
 
-/// Filters a device's live [readings] down to what should be persisted, applying
-/// three rules (pure, so it is unit-tested directly):
-///  1. values are converted to the catalog's canonical unit — the Salinity
-///     Guardian reports ppt, but salinity is stored as specific gravity;
-///  2. physically impossible values are dropped (a save shouldn't store noise);
-///  3. **temperature source** — a non-Temperature-Controller device's
-///     temperature (i.e. the Salinity Guardian's) is dropped when a dedicated
-///     Temperature Controller (`RFTC01`) is present, so the controller is the
-///     single authoritative temperature source. With no controller, the
-///     Guardian's temperature is kept.
-List<({String paramKey, double value})> rfReadingsToSave({
-  required String? deviceModel,
-  required List<RfReading> readings,
-  required bool hasTempController,
-}) {
-  return [
-    for (final r in readings.map(
-      (r) => (
-        paramKey: r.paramKey,
-        value: r.paramKey == 'salinity' ? pptToSg(r.value) : r.value,
-      ),
-    ))
-      if (checkParamValue(r.paramKey, r.value) != ParamValueCheck.impossible &&
-          !(r.paramKey == 'temperature' &&
-              deviceModel != kRfTempControllerModel &&
-              hasTempController))
-        r,
-  ];
-}
-
-/// Transient per-device live state (not persisted): the last refresh result.
-/// Saving is a separate, explicit action.
-///
-/// Held by the unified Devices screen (U41), not here — one page now owns every
-/// vendor's snapshots, so switching the vendor filter doesn't throw away values
-/// the user just refreshed.
-class RfLive {
-  const RfLive({this.loading = false, this.snapshot, this.error});
-  final bool loading;
-  final RfSnapshot? snapshot;
-  final RfLinkError? error;
-}
-
-/// Reads one meter, returning the outcome as an [RfLive] for the caller to
-/// store. Touches `lastSeenAt` on success. The caller owns the loading state,
-/// so a refresh is: set loading → await this → store the result.
-Future<RfLive> rfReadDevice(WidgetRef ref, DeviceRecord device) async {
-  final address = device.address;
-  if (address == null || address.isEmpty) return const RfLive();
-  try {
-    final snap = await ref.read(rfDeviceLinkProvider).readOnce(address);
-    await ref.read(dbProvider).touchDeviceSeen(device.identifier);
-    return RfLive(snapshot: snap);
-  } on RfLinkException catch (e) {
-    return RfLive(error: e.error);
-  }
-}
-
 String rfErrorText(AppLocalizations l, RfLinkError e) => switch (e) {
   RfLinkError.unreachable => l.reefFactoryErrUnreachable,
   RfLinkError.timeout => l.reefFactoryErrTimeout,
   RfLinkError.unsupportedModel => l.reefFactoryErrUnsupported,
   RfLinkError.protocol => l.reefFactoryErrProtocol,
 };
-
-/// The values [snap] would persist for [device], given every ReefFactory device
-/// in view (needed for the temperature-source rule). Only a controller assigned
-/// to the *same tank* suppresses the Guardian's temperature — one tank's
-/// controller says nothing about another tank's water. See [rfReadingsToSave].
-List<({String paramKey, double value})> rfValuesToSave(
-  DeviceRecord device,
-  RfSnapshot snap,
-  List<DeviceRecord> devices,
-) => rfReadingsToSave(
-  deviceModel: device.model,
-  readings: snap.readings,
-  hasTempController: devices.any(
-    (d) => d.model == kRfTempControllerModel && d.tankId == device.tankId,
-  ),
-);
 
 /// The ReefFactory section of the Devices screen (U41): the meter cards, as one
 /// reorderable sliver. Stateless towards the live values — the parent screen

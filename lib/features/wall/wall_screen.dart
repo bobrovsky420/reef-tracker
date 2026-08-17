@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../app/device_live.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
 import '../../data/device_read_scope.dart';
@@ -25,9 +26,6 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/sparkline.dart';
 import '../../widgets/zone_visuals.dart';
-import '../apex/apex_screen.dart';
-import '../reefbeat/reefbeat_screen.dart';
-import '../reeffactory/reeffactory_screen.dart';
 import 'wall_tiles.dart';
 
 /// Wall display mode (U49) — "the tablet on the wall": a pushed full-screen
@@ -306,7 +304,7 @@ class _WallScreenState extends ConsumerState<WallScreen>
     String signature = '';
     switch (kind) {
       case kDeviceKindReefFactory:
-        final r = await rfReadDevice(ref, d);
+        final r = RfLive.fromResult(await readRegisteredDevice(ref, d));
         if (!mounted) return;
         // On failure the tile keeps its last snapshot and ages visibly — the
         // error only drives the backoff and the header dot.
@@ -317,7 +315,7 @@ class _WallScreenState extends ConsumerState<WallScreen>
           signature = wallPayloadSignature(readings);
         }
       case kDeviceKindReefBeat:
-        final r = await rbReadDevice(ref, d);
+        final r = RbLive.fromResult(await readRegisteredDevice(ref, d));
         if (!mounted) return;
         final snap = r.snapshot ?? _rbLive[d.identifier]?.snapshot;
         _rbLive[d.identifier] = RbLive(snapshot: snap, error: r.error);
@@ -328,7 +326,7 @@ class _WallScreenState extends ConsumerState<WallScreen>
               '${_rbStatusSignature(r.snapshot!)}';
         }
       case kDeviceKindApex:
-        final r = await apReadDevice(ref, d);
+        final r = ApLive.fromResult(await readRegisteredDevice(ref, d));
         if (!mounted) return;
         final status = r.status ?? _apLive[d.identifier]?.status;
         _apLive[d.identifier] = ApLive(status: status, error: r.error);
@@ -468,10 +466,11 @@ class _WallScreenState extends ConsumerState<WallScreen>
           final s? => wallRbReadings(s).map((r) => r.paramKey),
           null => const <String>[],
         },
-        _ => switch (_apLive[d.identifier]?.status) {
+        kDeviceKindApex => switch (_apLive[d.identifier]?.status) {
           final s? => wallApReadings(s).map((r) => r.paramKey),
           null => const <String>[],
         },
+        _ => const <String>[],
       };
       report(d.identifier, live);
       report(d.identifier, [
@@ -912,10 +911,11 @@ class _WallScreenState extends ConsumerState<WallScreen>
           final s? => wallRbReadings(s),
           null => const <WallReading>[],
         },
-        _ => switch (_apLive[d.identifier]?.status) {
+        kDeviceKindApex => switch (_apLive[d.identifier]?.status) {
           final s? => wallApReadings(s),
           null => const <WallReading>[],
         },
+        _ => const <WallReading>[],
       };
       liveValues[d.identifier] = {
         for (final r in extracted) r.paramKey: r.value,
@@ -1016,112 +1016,112 @@ class _WallScreenState extends ConsumerState<WallScreen>
       final snap = _rbLive[d.identifier]?.snapshot;
       if (snap == null) continue;
       final name = deviceDisplayName(d);
-      final ato = snap.ato;
-      if (ato != null) {
-        // Two facts of equal rank (§12b): the water level (a leak alarm
-        // replaces it — the more urgent fact from the same sensor) and the
-        // reservoir estimate on the shared stock-severity scale. The card
-        // washes on the worse of the two, staying neutral while both are
-        // healthy like the other status tiles.
-        final leak = ato.leakSensorActive && ato.leakAlarm;
-        final levelLine = switch (ato.waterLevel) {
-          RbAtoWaterLevel.ok => l.reefBeatAtoLevelOk,
-          RbAtoWaterLevel.below => l.reefBeatAtoLevelLow,
-          RbAtoWaterLevel.above => l.reefBeatAtoLevelAbove,
-          RbAtoWaterLevel.unknown => ato.waterLevelRaw ?? '—',
-        };
-        final levelTone = leak
-            ? Zone.red
-            : switch (ato.waterLevel) {
-                RbAtoWaterLevel.ok => Zone.green,
-                RbAtoWaterLevel.below || RbAtoWaterLevel.above => Zone.amber,
-                RbAtoWaterLevel.unknown => Zone.unknown,
-              };
-        final days = ato.daysTillEmpty;
-        final reservoirTone = days == null
-            ? Zone.unknown
-            : switch (rbStockSeverity(days)) {
-                RbStockSeverity.critical => Zone.red,
-                RbStockSeverity.caution => Zone.amber,
-                RbStockSeverity.healthy => Zone.green,
-              };
-        tiles.add(
-          WallAtoTile(
-            data: WallAtoData(
-              title: name,
-              levelIcon: leak
-                  ? Icons.water_damage_outlined
-                  : Icons.waves_outlined,
-              levelText: leak ? l.reefBeatAtoLeak : levelLine,
-              levelTone: levelTone,
-              reservoirText: days != null
-                  ? wallSupplementTimeLeft(l, days)
-                  : null,
-              reservoirTone: reservoirTone,
-              tone: wallWorstAlarmTone([levelTone, reservoirTone]),
-            ),
-          ),
-        );
-      }
-      final dose = snap.dose;
-      if (dose != null && dose.heads.isNotEmpty) {
-        // One entry per configured head (§12b): unused sockets are skipped,
-        // switched-off heads render gray without a stock estimate (their
-        // "days at the current rate" is stale — the rate is zero).
-        final heads = <WallDoseHeadData>[];
-        for (final h in dose.heads) {
-          final label = h.supplement ?? h.shortName;
-          if (label == null) continue;
-          final days = h.switchedOff ? null : h.remainingDays;
-          final tone = days == null
+      for (final contribution in wallRbStatusContributions(snap)) {
+        final ato = snap.ato;
+        if (contribution.kind == WallRbStatusKind.ato && ato != null) {
+          // Two facts of equal rank (§12b): the water level (a leak alarm
+          // replaces it — the more urgent fact from the same sensor) and the
+          // reservoir estimate on the shared stock-severity scale. The card
+          // washes on the worse of the two, staying neutral while both are
+          // healthy like the other status tiles.
+          final leak = ato.leakSensorActive && ato.leakAlarm;
+          final levelLine = switch (ato.waterLevel) {
+            RbAtoWaterLevel.ok => l.reefBeatAtoLevelOk,
+            RbAtoWaterLevel.below => l.reefBeatAtoLevelLow,
+            RbAtoWaterLevel.above => l.reefBeatAtoLevelAbove,
+            RbAtoWaterLevel.unknown => ato.waterLevelRaw ?? '—',
+          };
+          final levelTone = leak
+              ? Zone.red
+              : switch (ato.waterLevel) {
+                  RbAtoWaterLevel.ok => Zone.green,
+                  RbAtoWaterLevel.below || RbAtoWaterLevel.above => Zone.amber,
+                  RbAtoWaterLevel.unknown => Zone.unknown,
+                };
+          final days = ato.daysTillEmpty;
+          final reservoirTone = days == null
               ? Zone.unknown
               : switch (rbStockSeverity(days)) {
                   RbStockSeverity.critical => Zone.red,
                   RbStockSeverity.caution => Zone.amber,
                   RbStockSeverity.healthy => Zone.green,
                 };
-          heads.add(
-            WallDoseHeadData(
-              label: label,
-              timeLeft: days != null ? wallSupplementTimeLeft(l, days) : null,
-              tone: tone,
-            ),
-          );
-        }
-        if (heads.isNotEmpty) {
           tiles.add(
-            WallDoseTile(
-              data: WallDoseData(
+            WallAtoTile(
+              data: WallAtoData(
                 title: name,
-                heads: heads,
-                tone: wallWorstAlarmTone([for (final h in heads) h.tone]),
+                levelIcon: leak
+                    ? Icons.water_damage_outlined
+                    : Icons.waves_outlined,
+                levelText: leak ? l.reefBeatAtoLeak : levelLine,
+                levelTone: levelTone,
+                reservoirText: days != null
+                    ? wallSupplementTimeLeft(l, days)
+                    : null,
+                reservoirTone: reservoirTone,
+                tone: wallWorstAlarmTone([levelTone, reservoirTone]),
               ),
             ),
           );
         }
-      }
-      final mat = snap.mat;
-      if (mat != null) {
-        final empty = mat.modeRaw == kRbMatEndOfRollMode;
-        tiles.add(
-          WallStatusTile(
-            data: WallStatusData(
-              icon: Icons.album_outlined,
-              title: name,
-              line: empty
-                  ? l.reefBeatMatRollEmpty
-                  : (mat.daysTillEndOfRoll != null
-                        ? l.reefBeatDaysLeft(mat.daysTillEndOfRoll!)
-                        : l.reefBeatMatRoll),
-              tone: empty ? Zone.red : Zone.unknown,
+        final dose = snap.dose;
+        if (contribution.kind == WallRbStatusKind.dose && dose != null) {
+          // One entry per configured head (§12b): unused sockets are skipped,
+          // switched-off heads render gray without a stock estimate (their
+          // "days at the current rate" is stale — the rate is zero).
+          final heads = <WallDoseHeadData>[];
+          for (final h in dose.heads) {
+            final label = h.supplement ?? h.shortName;
+            if (label == null) continue;
+            final days = h.switchedOff ? null : h.remainingDays;
+            final tone = days == null
+                ? Zone.unknown
+                : switch (rbStockSeverity(days)) {
+                    RbStockSeverity.critical => Zone.red,
+                    RbStockSeverity.caution => Zone.amber,
+                    RbStockSeverity.healthy => Zone.green,
+                  };
+            heads.add(
+              WallDoseHeadData(
+                label: label,
+                timeLeft: days != null ? wallSupplementTimeLeft(l, days) : null,
+                tone: tone,
+              ),
+            );
+          }
+          if (heads.isNotEmpty) {
+            tiles.add(
+              WallDoseTile(
+                data: WallDoseData(
+                  title: name,
+                  heads: heads,
+                  tone: wallWorstAlarmTone([for (final h in heads) h.tone]),
+                ),
+              ),
+            );
+          }
+        }
+        final mat = snap.mat;
+        if (contribution.kind == WallRbStatusKind.mat && mat != null) {
+          final empty = mat.modeRaw == kRbMatEndOfRollMode;
+          tiles.add(
+            WallStatusTile(
+              data: WallStatusData(
+                icon: Icons.album_outlined,
+                title: name,
+                line: empty
+                    ? l.reefBeatMatRollEmpty
+                    : (mat.daysTillEndOfRoll != null
+                          ? l.reefBeatDaysLeft(mat.daysTillEndOfRoll!)
+                          : l.reefBeatMatRoll),
+                tone: empty ? Zone.red : Zone.unknown,
+              ),
             ),
-          ),
-        );
-      }
-      final run = snap.run;
-      if (run != null) {
-        for (final p in run.pumps) {
-          if (p.isEmptySocket || p.type != 'skimmer') continue;
+          );
+        }
+        final run = snap.run;
+        if (contribution.kind == WallRbStatusKind.skimmer && run != null) {
+          final p = run.pumps[contribution.pumpIndex];
           tiles.add(
             WallStatusTile(
               data: WallStatusData(

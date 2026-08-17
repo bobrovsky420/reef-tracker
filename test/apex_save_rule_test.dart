@@ -2,8 +2,8 @@
 // canonical units, and dropping values no probe could truthfully report.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reeftracker/data/ap_measurements.dart';
 import 'package:reeftracker/data/ap_protocol.dart';
-import 'package:reeftracker/features/apex/apex_screen.dart';
 
 void main() {
   test('conductivity in ppt is stored as specific gravity', () {

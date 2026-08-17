@@ -2685,11 +2685,13 @@ Experimental) is turned on.
   *current environment* (salinity, temperature, pH, ORP) read from its connected
   devices, via the device-agnostic `data/environment_sources.dart`:
   `EnvironmentSource` (identifier, display name, one
-  `read()`) is resolved per save-tank by `environmentSourcesProvider`
+  `read()`) is resolved per save-tank by `environmentSourcesProvider`, which
+  asks the typed device-integration registry for ordered contributors
   (ReefFactory meters wrapped in `RfEnvironmentSource` plus ReefControl
   Lite/Pro wrapped in `RbEnvironmentSource`, gated on
-  `ProFeature.connectedDevices`; a future device kind is one new implementation —
-  the Hanna screen never names a vendor). ReefControl offers salinity, pH, ORP
+  `ProFeature.connectedDevices`; a future device kind contributes from its own
+  registered adapter — neither the provider nor the Hanna screen names a
+  vendor). ReefControl offers salinity, pH, ORP
   and the **first attached water probe carrying a temperature**.
   `selectEnvironmentValues` picks
   exactly **one value per parameter**, never asking the user: the first
@@ -2917,9 +2919,35 @@ entry points for one page were four ways to say the same thing).
   its own dashboard did: `RfDeviceSection` / `RbDeviceSection` /
   `ApDeviceSection`, each still living in its vendor's folder with that vendor's
   wording, dialogs and add flow. What moved out of them is only the
-  orchestration — live snapshots, refresh and save — which the one screen now
-  owns. That placement is the point: switching the filter no longer discards
-  values the user just refreshed, which per-screen state could not avoid.
+  orchestration — integration reads and save conversion live behind the typed
+  boundary described below, while the one screen owns UI lifecycle and held
+  live state. That placement is the point: switching the filter no longer
+  discards values the user just refreshed, which per-screen state could not
+  avoid.
+- **Typed integration boundary** (`domain/device_vendors.dart`,
+  `data/device_integrations.dart`, composed by
+  `deviceIntegrationRegistryProvider`). `DeviceKind` is the canonical identity
+  for all four integrations and carries the exact persisted ID plus pure
+  capabilities (refresh, save-family, environment contribution,
+  authentication). The IDs are a permanent storage contract; parsing is exact
+  and nullable, so a corrupt or future kind becomes explicitly unsupported and
+  can never fall through to Apex. Such rows remain visible in the Devices
+  inventory under a presentation-only unsupported group, but contribute zero
+  refresh/save work. The same kind set drives backup validation, database
+  writers, provider queries, and registry completeness checks.
+  `devicesOfKindProvider(DeviceKind)` is the one household-scoped inventory
+  family; the old named providers are aliases while the feature screens migrate.
+  Each registered adapter owns its transport read, `lastSeenAt`/model-refinement
+  side effects, normalized save candidates, and optional `EnvironmentSource`.
+  It returns a `DeviceReadResult`: a sealed vendor payload plus a common failure
+  category, while retaining the native error enum for localized diagnostics. A
+  failure may explicitly retain a matching last-good payload; loading and other
+  widget lifecycle state never enter protocol DTOs or the registry.
+  `app/device_live.dart` currently holds the three compatibility live-state
+  wrappers used by Devices and Wall until T31 phase 2 replaces their parallel
+  maps. The boundary is pure Dart — no widgets, `BuildContext`, localization,
+  or navigation. Vendor widgets, icons, copy, add flows, and controls stay in
+  the feature layer.
 - **Vendor chips** in the user's own order, each with its device count. A vendor
   earns a chip only by having a device in view; with a single vendor the
   selector disappears entirely (a one-choice selector is noise). The bar scrolls
@@ -2990,11 +3018,11 @@ entry points for one page were four ways to say the same thing).
   is **named in the confirmation** rather than chosen silently — a wrong probe quietly becoming
   the tank's history is exactly what this rule must not do. Structurally the
   rule holds only because the merge walks the *same ordered list the page
-  renders* (`_Scope.inPageOrder`, vendor order then card order) and turns a
-  device into savable values through one `_pendingValues` switch — Save all, the
-  savable count and the button's own visibility (`deviceModelSaves`) all ask
-  there, so no vendor can be honoured by one and forgotten by another. This is
-  also why
+  renders* (`DeviceScope.inPageOrder`, vendor order then card order) and turns a
+  held payload into savable values through its registered integration — Save
+  all, the savable count and the button's own visibility (`deviceModelSaves`)
+  all ask the same `_pendingValues` funnel, so no vendor can be honoured by one
+  and forgotten by another. This is also why
   `deviceVendorOrder` rides backups instead of staying device-local: it shapes
   what gets stored, so it should follow the aquarium data onto a new phone.
 - **The device→database funnel** (`_save`, one method behind both Save all and

@@ -113,6 +113,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tile and as a chip on the ReefRun card — instead of the raw firmware text.
 
 ### Fixed
+- Connected devices with an unknown or damaged integration type are now shown
+  as unsupported and are never polled, saved, or mistaken for an Apex
+  controller.
 - ReefControl's first probe temperature now appears on the Wall display and is
   available when a Hanna checker session captures environment values. When
   several connected devices report the same environment parameter, the first

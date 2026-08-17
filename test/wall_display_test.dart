@@ -7,6 +7,56 @@ import 'package:reeftracker/domain/units.dart';
 import 'package:reeftracker/domain/wall_display.dart';
 
 void main() {
+  group('ReefBeat status-tile order', () {
+    const info = RbDeviceInfo(
+      hwType: kRbAtoHwType,
+      hwModel: 'contract-fixture',
+      hwid: 'RB-STATUS',
+    );
+
+    test('ATO, dose, mat, then skimmers in socket order', () {
+      final contributions = wallRbStatusContributions(
+        const RbSnapshot(
+          info: info,
+          ato: RbAtoStatus(),
+          dose: RbDoseStatus(
+            heads: [RbDoseHead(number: 1, supplement: 'Alkalinity')],
+          ),
+          mat: RbMatStatus(),
+          run: RbRunStatus(
+            pumps: [
+              RbRunPump(number: 1, type: 'return'),
+              RbRunPump(number: 2, type: 'skimmer'),
+              RbRunPump(number: 3, type: 'skimmer', missingPump: true),
+              RbRunPump(number: 4, type: 'skimmer'),
+            ],
+          ),
+        ),
+      );
+
+      expect(contributions, [
+        (kind: WallRbStatusKind.ato, pumpIndex: -1),
+        (kind: WallRbStatusKind.dose, pumpIndex: -1),
+        (kind: WallRbStatusKind.mat, pumpIndex: -1),
+        (kind: WallRbStatusKind.skimmer, pumpIndex: 1),
+        (kind: WallRbStatusKind.skimmer, pumpIndex: 3),
+      ]);
+    });
+
+    test('invisible dosing heads and non-skimmer pumps add no tile', () {
+      expect(
+        wallRbStatusContributions(
+          const RbSnapshot(
+            info: info,
+            dose: RbDoseStatus(heads: [RbDoseHead(number: 1)]),
+            run: RbRunStatus(pumps: [RbRunPump(number: 1, type: 'return')]),
+          ),
+        ),
+        isEmpty,
+      );
+    });
+  });
+
   group('inNightWindow', () {
     test('window crossing midnight covers both sides', () {
       const from = 22 * 60, to = 7 * 60; // 22:00–07:00

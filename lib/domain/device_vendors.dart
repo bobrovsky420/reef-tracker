@@ -11,6 +11,99 @@
 /// ([deviceKindSaves]), and it keeps its own Pro gate (`hannaConnect`).
 library;
 
+/// Pure capabilities shared by inventory, bulk actions, backup validation,
+/// and integration composition. Model-specific capability checks stay on
+/// [DeviceKind] because ReefBeat mixes measuring and status-only families.
+class DeviceCapabilities {
+  const DeviceCapabilities({
+    required this.refreshes,
+    required this.containsSavableModels,
+    required this.contributesEnvironment,
+    this.authenticated = false,
+  });
+
+  final bool refreshes;
+  final bool containsSavableModels;
+  final bool contributesEnvironment;
+  final bool authenticated;
+}
+
+/// The canonical device integration identity.
+///
+/// [id] is persisted in `Devices.kind`, backup documents, and settings. These
+/// values are a storage contract: never rename one. Parsing is deliberately
+/// exact and nullable so corrupt/future values become unsupported instead of
+/// being guessed as another integration.
+enum DeviceKind {
+  reefFactory(
+    'reeffactory',
+    DeviceCapabilities(
+      refreshes: true,
+      containsSavableModels: true,
+      contributesEnvironment: true,
+    ),
+  ),
+  reefBeat(
+    'reefbeat',
+    DeviceCapabilities(
+      refreshes: true,
+      containsSavableModels: true,
+      contributesEnvironment: true,
+    ),
+  ),
+  apex(
+    'apex',
+    DeviceCapabilities(
+      refreshes: true,
+      containsSavableModels: true,
+      contributesEnvironment: false,
+      authenticated: true,
+    ),
+  ),
+  hanna(
+    'hanna',
+    DeviceCapabilities(
+      refreshes: false,
+      containsSavableModels: false,
+      contributesEnvironment: false,
+    ),
+  );
+
+  const DeviceKind(this.id, this.capabilities);
+
+  final String id;
+  final DeviceCapabilities capabilities;
+
+  static DeviceKind? tryParse(String id) {
+    for (final kind in values) {
+      if (kind.id == id) return kind;
+    }
+    return null;
+  }
+
+  /// Whether one stored model exposes measurements the Devices page can save.
+  bool savesModel(String? model) => switch (this) {
+    DeviceKind.reefFactory || DeviceKind.apex => true,
+    DeviceKind.reefBeat =>
+      model != null && model.toUpperCase().startsWith('RSCONTROL'),
+    DeviceKind.hanna => false,
+  };
+}
+
+/// Registration order is also the default Devices-page vendor order.
+const List<DeviceKind> kDeviceKinds = DeviceKind.values;
+
+/// The complete allowlist for persisted and restored `Devices.kind` values.
+const Set<String> kKnownDeviceKindIds = {
+  'reeffactory',
+  'reefbeat',
+  'apex',
+  'hanna',
+};
+
+// Compatibility names for storage-facing code that still accepts strings.
+// New integration code should carry [DeviceKind] and convert only at the DB,
+// backup, or settings boundary.
 const String kDeviceKindReefFactory = 'reeffactory';
 const String kDeviceKindReefBeat = 'reefbeat';
 const String kDeviceKindApex = 'apex';
@@ -35,9 +128,7 @@ const List<String> kDeviceVendors = [
 /// [deviceModelSaves] for a particular card/count; this broader predicate is
 /// the exhaustiveness guard for vendor save mappings.
 bool deviceKindSaves(String kind) =>
-    kind == kDeviceKindReefFactory ||
-    kind == kDeviceKindReefBeat ||
-    kind == kDeviceKindApex;
+    DeviceKind.tryParse(kind)?.capabilities.containsSavableModels ?? false;
 
 /// Whether one stored device model exposes measurements that can be saved.
 ///
@@ -45,19 +136,16 @@ bool deviceKindSaves(String kind) =>
 /// families. Red Sea becomes capable only for ReefControl Lite/Pro; prefix
 /// matching keeps a later ReefControl model working without teaching this
 /// domain layer every product suffix.
-bool deviceModelSaves(String kind, String? model) => switch (kind) {
-  kDeviceKindReefFactory || kDeviceKindApex => true,
-  kDeviceKindReefBeat =>
-    model != null && model.toUpperCase().startsWith('RSCONTROL'),
-  _ => false,
-};
+bool deviceModelSaves(String kind, String? model) =>
+    DeviceKind.tryParse(kind)?.savesModel(model) ?? false;
 
 /// Whether devices of [kind] are read over the LAN by the page's refresh
 /// actions (on-open auto-read and Refresh all alike). The Hanna checker is
 /// not: it is connected over Bluetooth only for the duration of a measurement
 /// session its card starts, so there is nothing to poll — and it must not be
 /// counted by the Refresh-all button either.
-bool deviceKindRefreshes(String kind) => kind != kDeviceKindHanna;
+bool deviceKindRefreshes(String kind) =>
+    DeviceKind.tryParse(kind)?.capabilities.refreshes ?? false;
 
 /// Per-model minimum poll interval for the wall display's loop (U49 §12n):
 /// what the *device* is capable of, as opposed to how live the user wants the
