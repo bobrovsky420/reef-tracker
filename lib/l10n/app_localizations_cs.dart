@@ -3551,10 +3551,19 @@ class AppLocalizationsCs extends AppLocalizations {
   String get reefBeatAtoLeakSensor => 'Senzor úniku';
 
   @override
+  String get reefBeatAtoLeakNotConnected => 'Nepřipojen';
+
+  @override
+  String get reefBeatAtoLeakNotEnabled => 'Není povolený';
+
+  @override
   String get reefBeatAtoLeakDry => 'Sucho';
 
   @override
   String get reefBeatAtoLeakRodi => 'Únik RO/DI vody';
+
+  @override
+  String get reefBeatAtoLeakAquarium => 'Únik akvarijní vody';
 
   @override
   String get reefBeatMatRoll => 'Role';

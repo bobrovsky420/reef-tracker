@@ -3525,10 +3525,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reefBeatAtoLeakSensor => 'Leak sensor';
 
   @override
+  String get reefBeatAtoLeakNotConnected => 'Not connected';
+
+  @override
+  String get reefBeatAtoLeakNotEnabled => 'Not enabled';
+
+  @override
   String get reefBeatAtoLeakDry => 'Dry';
 
   @override
   String get reefBeatAtoLeakRodi => 'RO/DI water leak';
+
+  @override
+  String get reefBeatAtoLeakAquarium => 'Aquarium water leak';
 
   @override
   String get reefBeatMatRoll => 'Roll';

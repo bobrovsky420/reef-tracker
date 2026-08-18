@@ -57,6 +57,30 @@ void main() {
     expect(dried.leakAlarm, isFalse);
   });
 
+  test('ATO leak-sensor connection, enabled, and aquarium-leak states survive '
+      're-reads', () async {
+    await startEmulator(EmuRbType.ato);
+    await _control(
+      emulator,
+      '/emu/leak?status=aquarium_water_leak&connected=false',
+    );
+    final unplugged = (await link.readOnce(host) as RbAtoSnapshot).status;
+    expect(unplugged.leakSensorConnected, isFalse);
+    expect(unplugged.leakAlarm, isFalse);
+
+    await _control(emulator, '/emu/leak?connected=true&enabled=false');
+    final disabled = (await link.readOnce(host) as RbAtoSnapshot).status;
+    expect(disabled.leakSensorConnected, isTrue);
+    expect(disabled.leakSensorEnabled, isFalse);
+    expect(disabled.leakAlarm, isFalse);
+
+    await _control(emulator, '/emu/leak?enabled=true');
+    final leaking = (await link.readOnce(host) as RbAtoSnapshot).status;
+    expect(leaking.leakSensorActive, isTrue);
+    expect(leaking.leakStatusRaw, 'aquarium_water_leak');
+    expect(leaking.leakAlarm, isTrue);
+  });
+
   test('reads the ReefRun, and a forced full cup pauses the skimmer', () async {
     await startEmulator(EmuRbType.run);
     final healthy = (await link.readOnce(host) as RbRunSnapshot).status;

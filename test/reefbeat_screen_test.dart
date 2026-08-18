@@ -176,11 +176,11 @@ void main() {
       tester.widget<Text>(find.text('Dry')).style?.color,
       ReefTokens.of(scaffoldContext).healthy,
     );
-    for (final label in ['Salinity', 'ORP', 'pH']) {
+    for (final label in ['Salinity', 'ORP', 'pH', 'Leak sensor']) {
       expect(
-        tester.widget<Text>(find.text(label)).style?.fontWeight,
-        textTheme.titleSmall?.fontWeight,
-        reason: '$label matches an enabled ReefDose supplement name',
+        tester.widget<Text>(find.text(label)).style,
+        textTheme.titleSmall,
+        reason: '$label exactly matches a ReefRun pump name',
       );
     }
     for (final temperature in find.text('Temperature').evaluate()) {
@@ -205,5 +205,65 @@ void main() {
     for (final edge in rightEdges.skip(1)) {
       expect(edge, closeTo(rightEdges.first, 0.01));
     }
+  });
+
+  testWidgets('ATO card localizes every leak-sensor state with connection '
+      'precedence', (tester) async {
+    Future<void> pump(RbAtoStatus status) => tester.pumpWidget(
+      ProviderScope(
+        overrides: [unitPrefsProvider.overrideWithValue(const UnitPrefs())],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(width: 500, child: reefAtoStatusForTesting(status)),
+          ),
+        ),
+      ),
+    );
+
+    await pump(const RbAtoStatus());
+    expect(find.text('Leak sensor'), findsOneWidget);
+    expect(find.text('Not connected'), findsOneWidget);
+
+    await pump(
+      const RbAtoStatus(
+        leakSensorConnected: true,
+        leakStatusRaw: 'aquarium_water_leak',
+      ),
+    );
+    expect(find.text('Not enabled'), findsOneWidget);
+    expect(find.text('aquarium_water_leak'), findsNothing);
+
+    await pump(
+      const RbAtoStatus(
+        leakSensorConnected: true,
+        leakSensorEnabled: true,
+        leakStatusRaw: 'dry',
+      ),
+    );
+    expect(find.text('Dry'), findsOneWidget);
+
+    await pump(
+      const RbAtoStatus(
+        leakSensorConnected: true,
+        leakSensorEnabled: true,
+        leakStatusRaw: 'aquarium_water_leak',
+        leakAlarm: true,
+      ),
+    );
+    expect(find.text('Aquarium water leak'), findsOneWidget);
+    expect(find.text('aquarium_water_leak'), findsNothing);
+
+    await pump(
+      const RbAtoStatus(
+        leakSensorConnected: true,
+        leakSensorEnabled: true,
+        leakStatusRaw: 'rodi_water_leak',
+        leakAlarm: true,
+      ),
+    );
+    expect(find.text('RO/DI water leak'), findsOneWidget);
+    expect(find.text('rodi_water_leak'), findsNothing);
   });
 }

@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1]
+
+### Changed
+- The ReefATO+ device card now always reports its leak sensor: Not connected
+  when unplugged, Not enabled when switched off, Dry while standing guard, and
+  translated RO/DI-water or aquarium-water warning when it detects a leak.
+- ReefControl Lite/Pro probe names on the Devices dashboard are now bold,
+  matching ReefDose supplement names and ReefRun pump names.
+
 ## [1.3.0] - 2026-08-18
 
 ### Added

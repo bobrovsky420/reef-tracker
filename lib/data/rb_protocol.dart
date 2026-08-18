@@ -647,14 +647,15 @@ class RbAtoStatus {
   final bool leakAlarm;
 
   /// The leak-sensor block's own facts: whether a sensor is attached and
-  /// switched on, and its raw status string (`"dry"`, `"rodi_water_leak"`, …)
-  /// verbatim — the card's status row shows them, so a keeper sees the sensor
-  /// standing guard rather than only hearing from it when it alarms.
+  /// switched on, and its raw status string (`"dry"`, `"rodi_water_leak"`,
+  /// `"aquarium_water_leak"`, …) verbatim. The card always shows the sensor
+  /// row, with connection and enabled state taking precedence over this value.
   final bool leakSensorConnected;
   final bool leakSensorEnabled;
   final String? leakStatusRaw;
 
-  /// An attached, enabled leak sensor — what earns the card its status row.
+  /// An attached, enabled leak sensor. Wall display uses this to decide
+  /// whether a leak alarm can replace the ATO water-level fact.
   bool get leakSensorActive => leakSensorConnected && leakSensorEnabled;
 
   /// The level sensor is in error or not connected — top-off is unreliable.

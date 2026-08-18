@@ -130,6 +130,12 @@ String formatReefControlProbeValue(RbControlProbe probe, UnitPrefs prefs) {
 Widget reefControlStatusForTesting(RbControlStatus status) =>
     _ControlStatus(status: status);
 
+/// Test seam for the complete ReefATO status body without making the
+/// implementation widget part of the app's public UI surface.
+@visibleForTesting
+Widget reefAtoStatusForTesting(RbAtoStatus status) =>
+    _AtoStatus(status: status);
+
 /// The Red Sea section of the Devices screen (U41): status cards for the
 /// ReefDose pumps, ReefATO units, ReefMat filters, ReefRun controllers, ReefLED
 /// fixtures, (grouped) ReefWave pumps and ReefControl probe controllers.
@@ -513,7 +519,7 @@ class _ControlStatus extends ConsumerWidget {
             label: labelFor(probe),
             value: formatReefControlProbeValue(probe, prefs),
             valueColor: colorFor(probe),
-            labelFontWeight: Theme.of(context).textTheme.titleSmall?.fontWeight,
+            labelStyle: Theme.of(context).textTheme.titleSmall,
           ),
           if (probe.temperatureC case final temperature?)
             _StatusRow(
@@ -536,6 +542,7 @@ class _ControlStatus extends ConsumerWidget {
               false => tokens.healthy,
               null => null,
             },
+            labelStyle: Theme.of(context).textTheme.titleSmall,
           ),
         ],
       ],
@@ -679,21 +686,30 @@ class _AtoStatus extends ConsumerWidget {
               ref.watch(unitPrefsProvider),
             ),
           ),
-        // Only an attached, enabled sensor earns the row — an absent one would
-        // otherwise read as "dry", which is exactly the wrong reassurance.
-        // Known statuses are localized; an unrecognized one shows verbatim
-        // (the waterLevelRaw convention).
-        if (status.leakSensorActive)
-          _StatusRow(
-            label: l.reefBeatAtoLeakSensor,
-            value: switch (status.leakStatusRaw) {
-              'dry' => l.reefBeatAtoLeakDry,
-              'rodi_water_leak' => l.reefBeatAtoLeakRodi,
-              final String raw => raw,
-              null => '—',
-            },
-            valueColor: status.leakAlarm ? tokens.critical : tokens.healthy,
-          ),
+        // Connection and enabled state take precedence over the probe reading.
+        // Known firmware statuses are localized; an unrecognized one remains
+        // visible verbatim so firmware drift cannot hide a warning.
+        _StatusRow(
+          label: l.reefBeatAtoLeakSensor,
+          value: switch ((
+            status.leakSensorConnected,
+            status.leakSensorEnabled,
+            status.leakStatusRaw,
+          )) {
+            (false, _, _) => l.reefBeatAtoLeakNotConnected,
+            (true, false, _) => l.reefBeatAtoLeakNotEnabled,
+            (true, true, 'dry') => l.reefBeatAtoLeakDry,
+            (true, true, 'rodi_water_leak') => l.reefBeatAtoLeakRodi,
+            (true, true, 'aquarium_water_leak') => l.reefBeatAtoLeakAquarium,
+            (true, true, final String raw) => raw,
+            (true, true, null) => '—',
+          },
+          valueColor: !status.leakSensorActive || status.leakStatusRaw == null
+              ? tokens.text
+              : status.leakAlarm
+              ? tokens.critical
+              : tokens.healthy,
+        ),
         if (todayText.isNotEmpty)
           _StatusRow(label: l.reefBeatAtoToday, value: todayText),
         if (status.dailyVolumeAvgMl != null)
@@ -1365,13 +1381,13 @@ class _StatusRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.valueColor,
-    this.labelFontWeight,
+    this.labelStyle,
   });
 
   final String label;
   final String value;
   final Color? valueColor;
-  final FontWeight? labelFontWeight;
+  final TextStyle? labelStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -1386,10 +1402,11 @@ class _StatusRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: t.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontWeight: labelFontWeight,
-              ),
+              style:
+                  labelStyle ??
+                  t.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
           const SizedBox(width: 8),

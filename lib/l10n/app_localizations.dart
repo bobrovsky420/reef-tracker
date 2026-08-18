@@ -5829,11 +5829,23 @@ abstract class AppLocalizations {
   /// **'Reservoir'**
   String get reefBeatAtoReservoir;
 
-  /// Row label on ReefATO and ReefControl cards for an attached leak-detection sensor's status
+  /// Row label on ReefATO and ReefControl cards for a leak-detection sensor's status
   ///
   /// In en, this message translates to:
   /// **'Leak sensor'**
   String get reefBeatAtoLeakSensor;
+
+  /// ReefATO leak-sensor status: no sensor is attached
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get reefBeatAtoLeakNotConnected;
+
+  /// ReefATO leak-sensor status: a sensor is attached but not enabled in its settings
+  ///
+  /// In en, this message translates to:
+  /// **'Not enabled'**
+  String get reefBeatAtoLeakNotEnabled;
 
   /// Leak-sensor status value: no water detected
   ///
@@ -5846,6 +5858,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'RO/DI water leak'**
   String get reefBeatAtoLeakRodi;
+
+  /// Leak-sensor status value: the sensor detects aquarium water where it shouldn't be (firmware aquarium_water_leak)
+  ///
+  /// In en, this message translates to:
+  /// **'Aquarium water leak'**
+  String get reefBeatAtoLeakAquarium;
 
   /// No description provided for @reefBeatMatRoll.
   ///

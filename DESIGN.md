@@ -3257,7 +3257,8 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   only when connected + enabled + not "dry", and the block's own facts
   (`leakSensorConnected`/`leakSensorEnabled`/`leakStatusRaw`, with
   `leakSensorActive` combining the first two) are exposed so the card can show
-  the sensor standing guard rather than only hearing from it on alarm — and
+  the sensor's disconnected, not-enabled, dry, RO/DI-water-leak or
+  aquarium-water-leak state rather than only hearing from it on alarm — and
   the level-sensor block (error/
   disconnect warning, temperature probe in °C, suppressed when disabled or
   unplugged). For a mat (`RbMatStatus`): the roll (coarse `roll_level` string
@@ -3428,10 +3429,11 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   instead:
   warning chips (leak = critical, sensor trouble = caution, "filling now" =
   healthy) above label–value rows — water level (healthy/caution-colored),
-  probe temperature, the **leak sensor's standing status** (shown only while a
-  sensor is attached + enabled — an absent sensor must not read as a
-  reassuring "Dry"; "dry" and "rodi_water_leak" are localized, an
-  unrecognized status shows verbatim, colored healthy/critical), today's
+  probe temperature, the **leak sensor's standing status** (always shown;
+  connection state wins first as Not connected, then a connected but switched
+  off sensor reads Not enabled, otherwise `dry`, `rodi_water_leak`, and
+  `aquarium_water_leak` are localized; an unrecognized active status shows
+  verbatim, with active dry/leak states colored healthy/critical), today's
   fills · volume, evaporation (≈/day), and the
   reservoir (volume left · days left, colored by the same `rbStockSeverity`
   thresholds as supplement stock). Volumes render as millilitres below 1 L
@@ -3527,7 +3529,10 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   or `--type control` — with
   `/emu/*` endpoints to **force the states real hardware only shows when
   something is wrong**: `/emu/leak?status=rodi_water_leak` stands the ATO's
-  leak sensor in water, `/emu/pump?n=2&state=full_cup` fills the skimmer cup.
+  leak sensor in RO/DI water, `status=aquarium_water_leak` switches to the
+  aquarium-water reading, and the same endpoint's `connected` / `enabled`
+  booleans simulate an unplugged or disabled sensor;
+  `/emu/pump?n=2&state=full_cup` fills the skimmer cup.
   `/emu/probes?salinity=36.1&ph=7.7&orp=320` forces the ReefControl's three
   primary readings.
   Reached from the Android emulator at `10.0.2.2:<port>`; importable, so
