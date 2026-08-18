@@ -119,6 +119,12 @@ const List<ParameterDef> kReefParameters = [
     dashboardGroup: DashboardGroup.environment,
     plausibleMin: -300,
     plausibleMax: 700,
+    defaultBounds: ZoneBounds(
+      amberLow: 200,
+      greenLow: 250,
+      greenHigh: 450,
+      amberHigh: 500,
+    ),
   ),
   ParameterDef(
     key: 'strontium',

@@ -18,6 +18,7 @@ enum ProFeature {
   hannaConnect,
   hannaScan,
   connectedDevices,
+  wallDisplay,
 }
 
 /// Features that existed at the monetization cutoff: free
@@ -34,4 +35,5 @@ const Set<ProFeature> kGrandfatheredFeatures = {
   ProFeature.hannaConnect,
   ProFeature.hannaScan,
   ProFeature.connectedDevices,
+  ProFeature.wallDisplay,
 };

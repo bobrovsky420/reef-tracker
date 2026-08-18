@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../l10n/app_localizations.dart';
+import 'maintenance_events.dart';
 
-/// The maintenance-action types drawn as vertical marker lines on graphs (U6).
-enum ActionMarkerKind { waterChange, carbonChange, equipmentCleaning }
+export 'maintenance_events.dart' show MaintenanceMarkerKind;
 
 /// One logged action occurrence to mark on a chart's time axis.
 @immutable
@@ -14,49 +14,49 @@ class ActionMarker {
   const ActionMarker(this.time, this.kind);
 
   final DateTime time;
-  final ActionMarkerKind kind;
+  final MaintenanceMarkerKind kind;
 }
 
-/// Flattens the three action logs into one chart-marker list.
+/// Flattens event records through the same adapter registry as history lists.
 List<ActionMarker> actionMarkers({
   required List<WaterChange> waterChanges,
   required List<CarbonChange> carbonChanges,
   required List<EquipmentCleaning> cleanings,
 }) => [
-  for (final w in waterChanges)
-    ActionMarker(w.changedAt, ActionMarkerKind.waterChange),
-  for (final c in carbonChanges)
-    ActionMarker(c.changedAt, ActionMarkerKind.carbonChange),
-  for (final e in cleanings)
-    ActionMarker(e.cleanedAt, ActionMarkerKind.equipmentCleaning),
+  for (final marker in maintenanceEventAdapters.markers(<Object>[
+    ...waterChanges,
+    ...carbonChanges,
+    ...cleanings,
+  ]))
+    ActionMarker(marker.time, marker.kind),
 ];
 
 /// Dash pattern per kind — distinct patterns keep the marker types apart for
 /// color-blind users, not just by hue.
-List<int> actionMarkerDash(ActionMarkerKind kind) => switch (kind) {
-  ActionMarkerKind.waterChange => const [5, 4],
-  ActionMarkerKind.carbonChange => const [2, 3],
-  ActionMarkerKind.equipmentCleaning => const [10, 4],
+List<int> actionMarkerDash(MaintenanceMarkerKind kind) => switch (kind) {
+  MaintenanceMarkerKind.waterChange => const [5, 4],
+  MaintenanceMarkerKind.carbonChange => const [2, 3],
+  MaintenanceMarkerKind.equipmentCleaning => const [10, 4],
 };
 
 /// Theme-derived marker color per kind (#47: never fixed colors): water stays
 /// on tertiary, carbon on secondary, cleaning on the neutral outline — all
 /// distinct from the primary-colored series line on both brightnesses.
-Color actionMarkerColor(BuildContext context, ActionMarkerKind kind) {
+Color actionMarkerColor(BuildContext context, MaintenanceMarkerKind kind) {
   final scheme = Theme.of(context).colorScheme;
   return switch (kind) {
-    ActionMarkerKind.waterChange => scheme.tertiary,
-    ActionMarkerKind.carbonChange => scheme.secondary,
-    ActionMarkerKind.equipmentCleaning => scheme.outline,
+    MaintenanceMarkerKind.waterChange => scheme.tertiary,
+    MaintenanceMarkerKind.carbonChange => scheme.secondary,
+    MaintenanceMarkerKind.equipmentCleaning => scheme.outline,
   };
 }
 
 /// Localized marker name, reusing the action-log row titles.
-String actionMarkerLabel(AppLocalizations l, ActionMarkerKind kind) =>
+String actionMarkerLabel(AppLocalizations l, MaintenanceMarkerKind kind) =>
     switch (kind) {
-      ActionMarkerKind.waterChange => l.waterChange,
-      ActionMarkerKind.carbonChange => l.carbonChange,
-      ActionMarkerKind.equipmentCleaning => l.equipmentCleaning,
+      MaintenanceMarkerKind.waterChange => l.waterChange,
+      MaintenanceMarkerKind.carbonChange => l.carbonChange,
+      MaintenanceMarkerKind.equipmentCleaning => l.equipmentCleaning,
     };
 
 /// Builds the dashed vertical chart lines for every marker inside the visible
@@ -66,7 +66,7 @@ List<VerticalLine> actionMarkerLines({
   required List<ActionMarker> markers,
   required double minX,
   required double maxX,
-  required Color Function(ActionMarkerKind kind) color,
+  required Color Function(MaintenanceMarkerKind kind) color,
 }) {
   final lines = <VerticalLine>[];
   for (final m in markers) {
@@ -86,7 +86,7 @@ List<VerticalLine> actionMarkerLines({
 
 /// The kinds that fall within [minX]..[maxX] — drives the legend so it only
 /// names line styles actually visible on the chart above.
-Set<ActionMarkerKind> actionMarkerKindsInWindow(
+Set<MaintenanceMarkerKind> actionMarkerKindsInWindow(
   List<ActionMarker> markers,
   double minX,
   double maxX,
@@ -103,7 +103,7 @@ Set<ActionMarkerKind> actionMarkerKindsInWindow(
 class ActionMarkerLegend extends StatelessWidget {
   const ActionMarkerLegend({super.key, required this.kinds});
 
-  final Set<ActionMarkerKind> kinds;
+  final Set<MaintenanceMarkerKind> kinds;
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +124,7 @@ class ActionMarkerLegend extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           // Iterate the enum, not `kinds`, for a stable display order.
-          for (final k in ActionMarkerKind.values)
+          for (final k in MaintenanceMarkerKind.values)
             if (kinds.contains(k))
               Row(
                 mainAxisSize: MainAxisSize.min,

@@ -838,9 +838,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutSection => 'About';
 
   @override
-  String get languageSection => 'Language';
-
-  @override
   String get appearanceSection => 'Appearance';
 
   @override
@@ -1216,6 +1213,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get diagnosticsShareFailed => 'Could not share the diagnostics';
+
+  @override
+  String get updateAvailableSnack =>
+      'A new version of ReefTracker is available.';
+
+  @override
+  String get updateAction => 'Update';
+
+  @override
+  String get updateReadySnack => 'Update downloaded.';
+
+  @override
+  String get updateRestartAction => 'Restart';
 
   @override
   String get editionLabel => 'Edition';
@@ -3286,11 +3296,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Live status from Red Sea ReefBeat devices';
+      'Live data from Red Sea ReefBeat devices';
 
   @override
   String get reefBeatDisclaimer =>
-      'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.';
+      'This app only reads live data from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.';
 
   @override
   String get reefBeatAddDevice => 'Add device';
@@ -3300,7 +3310,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose pumps, ReefATO, ReefMat, ReefRun, ReefLED and ReefWave — or add one by its IP address.';
+      'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave and ReefControl — or add one by its IP address.';
 
   @override
   String get reefBeatRefreshAll => 'Refresh all';
@@ -3481,7 +3491,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reefBeatAtoLevelLow => 'Low';
 
   @override
-  String get reefBeatAtoLevelHigh => 'High';
+  String get reefBeatAtoLevelAbove => 'Above';
 
   @override
   String get reefBeatAtoTemperature => 'Temperature';
@@ -3595,6 +3605,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefBeatRunFullCup => 'Full cup';
+
+  @override
+  String get reefBeatRunOverSkimming => 'Over-skimming';
 
   @override
   String get reefBeatRunSensorOffline => 'Level sensor offline';
@@ -4020,4 +4033,148 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Following the defaults';
+
+  @override
+  String get wallDisplayTitle => 'Wall display';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'An always-on board of your aquarium\'s values';
+
+  @override
+  String get wallSmallScreenNote =>
+      'The wall display is designed for a wall-mounted tablet. It still works on this smaller screen – you\'ll just see fewer cards per page.';
+
+  @override
+  String get wallStartNow => 'Start now';
+
+  @override
+  String get wallStartNowSubtitle => 'Show the wall board on this screen';
+
+  @override
+  String get wallAutoStartTitle => 'Start on launch';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Open the wall display whenever the app starts on this device';
+
+  @override
+  String get wallBehaviourSection => 'Behaviour';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Refresh every';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'How often connected devices are read';
+
+  @override
+  String get wallPageSecondsTitle => 'Page rotation';
+
+  @override
+  String get wallPageSecondsSubtitle =>
+      'How long each page stays before the next one';
+
+  @override
+  String get wallNightTitle => 'Night dim';
+
+  @override
+  String get wallNightSubtitle =>
+      'Dim the screen at night; a tap lifts it for a minute';
+
+  @override
+  String get wallNightFromTitle => 'Dim from';
+
+  @override
+  String get wallNightToTitle => 'Dim until';
+
+  @override
+  String get wallCardsSection => 'Cards';
+
+  @override
+  String get wallCardsHint =>
+      'Every value a device reports gets its own card. Hide the duplicates you don\'t want and drag the rest into place; hide all of a device\'s cards and the wall stops contacting it.';
+
+  @override
+  String get wallStoredCard => 'Manual measurements';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get wallNoTank =>
+      'No aquarium yet. Add one, then start the wall display.';
+
+  @override
+  String get wallProLocked => 'The wall display is a PRO feature.';
+
+  @override
+  String get wallExitHint => 'Hold anywhere to exit';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'updated $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Due today: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return '$param test';
+  }
+
+  @override
+  String get wallNoDevices => 'No devices';
+
+  @override
+  String get wallAllReachable => 'All devices reachable';
+
+  @override
+  String get wallSomeUnreachable => 'A device is unreachable';
+
+  @override
+  String get wallNetworkDown => 'No device reachable — check the network';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'measured $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 d';
+
+  @override
+  String wallHeadDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String wallHeadMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
 }

@@ -1,0 +1,4 @@
+• Display a parete (PRO): trasforma un tablet a muro in un pannello sempre acceso del tuo acquario – grandi valori colorati, grafici live delle ultime 24 ore dai dispositivi collegati, riquadri di stato e attività di oggi.
+• Scegli le schede, nascondi i duplicati, trascina il tuo ordine; avvio automatico e attenuazione notturna inclusi.
+• L'app ti avvisa quando esce una nuova versione.
+• Correzione: backup e promemoria ora funzionano anche sui dispositivi accesi per settimane.

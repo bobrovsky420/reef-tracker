@@ -1505,13 +1505,7 @@ abstract class AppLocalizations {
   /// **'About'**
   String get aboutSection;
 
-  /// No description provided for @languageSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get languageSection;
-
-  /// Settings section label for the theme-mode choice (REDESIGN #16).
+  /// Settings section label for the language, theme-mode and wall-display rows (REDESIGN #16).
   ///
   /// In en, this message translates to:
   /// **'Appearance'**
@@ -2164,6 +2158,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not share the diagnostics'**
   String get diagnosticsShareFailed;
+
+  /// Launch SnackBar (U48) shown when the store reports a newer app version; its action opens the store page. Seen on iOS — on Android, Play shows its own update sheet instead.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of ReefTracker is available.'**
+  String get updateAvailableSnack;
+
+  /// Action of the update-available SnackBar — opens the app's store page.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateAction;
+
+  /// SnackBar (U48, Android) shown when Play's flexible update finished downloading; its action restarts the app to install it.
+  ///
+  /// In en, this message translates to:
+  /// **'Update downloaded.'**
+  String get updateReadySnack;
+
+  /// Action of the update-downloaded SnackBar — restarts the app to install the downloaded update.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get updateRestartAction;
 
   /// Settings row label showing which edition of the app this install is entitled to.
   ///
@@ -5478,13 +5496,13 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatSettingsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Live status from Red Sea ReefBeat devices'**
+  /// **'Live data from Red Sea ReefBeat devices'**
   String get reefBeatSettingsSubtitle;
 
   /// No description provided for @reefBeatDisclaimer.
   ///
   /// In en, this message translates to:
-  /// **'This app only reads status from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.'**
+  /// **'This app only reads live data from your Red Sea ReefBeat devices. It can\'t dose, change schedules or calibrate — use the ReefBeat app for that. Reading works only while your phone is on the same Wi-Fi network as the devices.'**
   String get reefBeatDisclaimer;
 
   /// No description provided for @reefBeatAddDevice.
@@ -5502,7 +5520,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefBeatEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose pumps, ReefATO, ReefMat, ReefRun, ReefLED and ReefWave — or add one by its IP address.'**
+  /// **'Scan your Wi-Fi network to find your Red Sea ReefBeat devices — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave and ReefControl — or add one by its IP address.'**
   String get reefBeatEmptyBody;
 
   /// No description provided for @reefBeatRefreshAll.
@@ -5757,23 +5775,23 @@ abstract class AppLocalizations {
   /// **'Water level'**
   String get reefBeatAtoWaterLevel;
 
-  /// No description provided for @reefBeatAtoLevelOk.
+  /// ATO water-level value: at the desired level (firmware "desired_level_1"/"desired_level_2")
   ///
   /// In en, this message translates to:
   /// **'OK'**
   String get reefBeatAtoLevelOk;
 
-  /// No description provided for @reefBeatAtoLevelLow.
+  /// ATO water-level value: water below the desired level (firmware "below") — a warning state shown amber
   ///
   /// In en, this message translates to:
   /// **'Low'**
   String get reefBeatAtoLevelLow;
 
-  /// No description provided for @reefBeatAtoLevelHigh.
+  /// ATO water-level value: water above the desired level (firmware "above") — a warning state shown amber
   ///
   /// In en, this message translates to:
-  /// **'High'**
-  String get reefBeatAtoLevelHigh;
+  /// **'Above'**
+  String get reefBeatAtoLevelAbove;
 
   /// No description provided for @reefBeatAtoTemperature.
   ///
@@ -5811,7 +5829,7 @@ abstract class AppLocalizations {
   /// **'Reservoir'**
   String get reefBeatAtoReservoir;
 
-  /// Row label on the ReefATO card for the attached leak-detection sensor's status
+  /// Row label on ReefATO and ReefControl cards for an attached leak-detection sensor's status
   ///
   /// In en, this message translates to:
   /// **'Leak sensor'**
@@ -5948,6 +5966,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full cup'**
   String get reefBeatRunFullCup;
+
+  /// Chip on a ReefRun skimmer pump that paused itself because its sensor detected over-skimming (firmware state "over-skimming")
+  ///
+  /// In en, this message translates to:
+  /// **'Over-skimming'**
+  String get reefBeatRunOverSkimming;
 
   /// No description provided for @reefBeatRunSensorOffline.
   ///
@@ -6423,7 +6447,7 @@ abstract class AppLocalizations {
   /// **'Refresh all ({count})'**
   String devicesRefreshAll(int count);
 
-  /// Saves the readings of every meter in view. Count = devices holding values right now.
+  /// Saves the readings of every meter in view. Count = distinct tank parameters that will be saved after duplicate readings are resolved.
   ///
   /// In en, this message translates to:
   /// **'Save all ({count})'**
@@ -6638,6 +6662,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Following the defaults'**
   String get followingDefaults;
+
+  /// Settings row + subpage title of the wall display mode (U49): a wall-mounted tablet showing the tank's current values.
+  ///
+  /// In en, this message translates to:
+  /// **'Wall display'**
+  String get wallDisplayTitle;
+
+  /// Settings row subtitle for the wall display.
+  ///
+  /// In en, this message translates to:
+  /// **'An always-on board of your aquarium\'s values'**
+  String get wallDisplaySubtitle;
+
+  /// Informational banner at the top of the wall-display settings page, shown only on phone-size screens (shortest side under 600 dp). Purely advisory — nothing is gated by screen size.
+  ///
+  /// In en, this message translates to:
+  /// **'The wall display is designed for a wall-mounted tablet. It still works on this smaller screen – you\'ll just see fewer cards per page.'**
+  String get wallSmallScreenNote;
+
+  /// Row on the wall-display settings page that enters the mode immediately.
+  ///
+  /// In en, this message translates to:
+  /// **'Start now'**
+  String get wallStartNow;
+
+  /// No description provided for @wallStartNowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the wall board on this screen'**
+  String get wallStartNowSubtitle;
+
+  /// Switch: boot straight into the wall display when the app starts.
+  ///
+  /// In en, this message translates to:
+  /// **'Start on launch'**
+  String get wallAutoStartTitle;
+
+  /// No description provided for @wallAutoStartSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the wall display whenever the app starts on this device'**
+  String get wallAutoStartSubtitle;
+
+  /// Section label grouping the wall display's cadence and night options.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour'**
+  String get wallBehaviourSection;
+
+  /// Dropdown row: how often the wall polls connected devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh every'**
+  String get wallRefreshIntervalTitle;
+
+  /// No description provided for @wallRefreshIntervalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How often connected devices are read'**
+  String get wallRefreshIntervalSubtitle;
+
+  /// Dropdown row: seconds each page stays when the grid paginates.
+  ///
+  /// In en, this message translates to:
+  /// **'Page rotation'**
+  String get wallPageSecondsTitle;
+
+  /// No description provided for @wallPageSecondsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How long each page stays before the next one'**
+  String get wallPageSecondsSubtitle;
+
+  /// Switch: dim the wall display during the night window.
+  ///
+  /// In en, this message translates to:
+  /// **'Night dim'**
+  String get wallNightTitle;
+
+  /// No description provided for @wallNightSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim the screen at night; a tap lifts it for a minute'**
+  String get wallNightSubtitle;
+
+  /// Time-picker row: start of the night-dim window.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim from'**
+  String get wallNightFromTitle;
+
+  /// Time-picker row: end of the night-dim window.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim until'**
+  String get wallNightToTitle;
+
+  /// Section label above the wall-card list (one card per device and parameter).
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get wallCardsSection;
+
+  /// Explainer above the wall-card list; the traffic consequence of hiding everything is deliberate and must be stated.
+  ///
+  /// In en, this message translates to:
+  /// **'Every value a device reports gets its own card. Hide the duplicates you don\'t want and drag the rest into place; hide all of a device\'s cards and the wall stops contacting it.'**
+  String get wallCardsHint;
+
+  /// Subtitle naming the source of a wall card fed by stored readings rather than a device.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual measurements'**
+  String get wallStoredCard;
+
+  /// Short seconds label in the interval dropdowns.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} s'**
+  String wallSecondsLabel(int n);
+
+  /// Short minutes label in the interval dropdowns.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} min'**
+  String wallMinutesLabel(int n);
+
+  /// Full-screen note when the wall display is opened with no tank.
+  ///
+  /// In en, this message translates to:
+  /// **'No aquarium yet. Add one, then start the wall display.'**
+  String get wallNoTank;
+
+  /// Full-screen note when the wall display is opened without the entitlement.
+  ///
+  /// In en, this message translates to:
+  /// **'The wall display is a PRO feature.'**
+  String get wallProLocked;
+
+  /// Transient hint teaching the wall display's 1.5-second exit hold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold anywhere to exit'**
+  String get wallExitHint;
+
+  /// Header stamp: when the wall last completed a poll cycle.
+  ///
+  /// In en, this message translates to:
+  /// **'updated {time}'**
+  String wallUpdatedAt(Object time);
+
+  /// Bottom strip listing today's due reminders as plain text.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today: {items}'**
+  String wallDueToday(Object items);
+
+  /// One due-today item: a parameter test that has reached its cadence.
+  ///
+  /// In en, this message translates to:
+  /// **'{param} test'**
+  String wallTestDue(Object param);
+
+  /// Semantics label of the header connection dot with nothing to poll.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices'**
+  String get wallNoDevices;
+
+  /// Semantics label of the green header connection dot.
+  ///
+  /// In en, this message translates to:
+  /// **'All devices reachable'**
+  String get wallAllReachable;
+
+  /// Semantics label of the amber header connection dot (partial failures).
+  ///
+  /// In en, this message translates to:
+  /// **'A device is unreachable'**
+  String get wallSomeUnreachable;
+
+  /// Semantics label of the red header connection dot: every poll failing usually means the tablet lost the network, not four devices at once.
+  ///
+  /// In en, this message translates to:
+  /// **'No device reachable — check the network'**
+  String get wallNetworkDown;
+
+  /// Provenance line of a stored-readings card: the last hand measurement and its age.
+  ///
+  /// In en, this message translates to:
+  /// **'measured {ago}'**
+  String wallMeasuredAgo(Object ago);
+
+  /// Tile-footer label naming the 24-hour sample window of the graph.
+  ///
+  /// In en, this message translates to:
+  /// **'24 h'**
+  String get wallWindow24h;
+
+  /// Tile-footer label naming the 14-day readings window of the fallback graph.
+  ///
+  /// In en, this message translates to:
+  /// **'14 d'**
+  String get wallWindow14d;
+
+  /// Doser-tile head entry: days of supplement left, compact (under 100 days)
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 day} other{{count} days}}'**
+  String wallHeadDays(int count);
+
+  /// Doser-tile head entry: months of supplement left, compact (100 days and up, rounded to 30-day months)
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 month} other{{count} months}}'**
+  String wallHeadMonths(int count);
 }
 
 class _AppLocalizationsDelegate

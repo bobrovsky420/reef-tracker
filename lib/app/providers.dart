@@ -7,12 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../data/ap_device_link.dart';
+import '../data/app_update.dart';
 import '../data/cloud_auth.dart';
 import '../data/cloud_auth_google.dart';
 import '../data/cloud_backup_store.dart';
 import '../data/cloud_sync.dart';
 import '../data/database.dart';
 import '../data/device_http.dart';
+import '../data/device_integrations.dart';
 import '../data/device_secrets.dart';
 import '../data/diagnostics_log.dart';
 import '../data/entitlement.dart';
@@ -28,7 +30,9 @@ import '../data/rb_device_link.dart';
 import '../data/reminder_scheduler.dart';
 import '../data/rf_device_link.dart';
 import '../data/settings.dart';
+import '../data/wall_sources.dart';
 import '../domain/clock.dart';
+import '../domain/device_vendors.dart';
 import '../domain/health_score.dart';
 import '../domain/insights.dart';
 import '../domain/micro.dart';
@@ -891,6 +895,18 @@ final cloudSyncStateProvider = Provider<CloudSyncState>(
       : GDriveSyncState(ref.watch(settingsProvider)),
 );
 
+/// The store this install checks for a newer app version (U48): Play in-app
+/// updates on Android, the iTunes lookup on iOS — the [cloudBackupStoreProvider]
+/// platform-branch idiom. Overridden with [FakeStoreUpdateChecker] by the
+/// `REEF_UPDATE_TEST` rig (main.dart) and with fakes in tests. On platforms
+/// with neither store (tests on desktop hosts), the Play checker's own
+/// catch-all resolves every check to "no update".
+final appUpdateCheckerProvider = Provider<AppUpdateChecker>(
+  (ref) => defaultTargetPlatform == TargetPlatform.iOS
+      ? AppStoreUpdateChecker()
+      : PlayUpdateChecker(),
+);
+
 /// Whether iCloud backup sync is on (U44, iOS) — the toggle that is the
 /// on-state where Drive uses the account's presence.
 final syncIcloudEnabledProvider = _setting(
@@ -964,6 +980,62 @@ final hannaAttachEnvironmentProvider = _setting(
   AppSettings.decodeHannaAttachEnvironment,
 );
 
+// --- Wall display mode (U49) — settings all device-local (this tablet's) ----
+
+/// Whether a cold start boots straight into the wall display (default off).
+/// Consumed by `main.dart`, which arms the router's once-per-process redirect
+/// before the first frame.
+final wallAutoStartProvider = _setting(
+  SettingKey.wallAutoStart,
+  AppSettings.decodeWallAutoStart,
+);
+
+/// The wall display's refresh interval (default 5 min) — the mode's one
+/// user-visible cadence knob (§12n).
+final wallRefreshIntervalProvider = _setting(
+  SettingKey.wallRefreshInterval,
+  AppSettings.decodeWallRefreshInterval,
+);
+
+/// Whether the wall dims itself at night (default on).
+final wallNightEnabledProvider = _setting(
+  SettingKey.wallNightEnabled,
+  AppSettings.decodeWallNightEnabled,
+);
+
+/// Night-window bounds, minutes since midnight (defaults 22:00 / 07:00).
+final wallNightFromProvider = _setting(
+  SettingKey.wallNightFrom,
+  AppSettings.decodeWallNightFrom,
+);
+final wallNightToProvider = _setting(
+  SettingKey.wallNightTo,
+  AppSettings.decodeWallNightTo,
+);
+
+/// Seconds per auto-rotated page when the wall grid paginates (default 15 s).
+final wallPageSecondsProvider = _setting(
+  SettingKey.wallPageSeconds,
+  AppSettings.decodeWallPageSeconds,
+);
+
+final _wallTileSettingsFamily = StreamProvider.autoDispose
+    .family<List<WallTileSetting>, int>(
+      (ref, tankId) =>
+          _dedup(ref.watch(dbProvider).watchWallTileSettings(tankId)),
+    );
+
+/// The stored wall-card layout rows for the active tank (U49 §12q) — sparse:
+/// a card without a row is visible and default-ordered, so an empty list is
+/// the stock arrangement.
+final wallTileSettingsProvider = Provider<AsyncValue<List<WallTileSetting>>>((
+  ref,
+) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return const AsyncValue.data([]);
+  return ref.watch(_wallTileSettingsFamily(tank.id));
+});
+
 /// Factory for the Hanna checker transport (U33). A provider — same override
 /// story as [cloudAuthProvider] — so tests drive the session with a scripted
 /// fake instead of real BLE hardware; each measurement session constructs a
@@ -981,11 +1053,16 @@ final rfDeviceLinkProvider = Provider<RfDeviceLink>(
   (ref) => const RfWebSocketLink(),
 );
 
-/// The registered ReefFactory devices (dashboard cards). Household-scoped, so a
-/// plain app-lifetime [StreamProvider] like [roStagesProvider], not a
-/// tank-family one.
-final reefFactoryDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reeffactory')),
+/// Registered devices of one canonical kind. Household-scoped; the typed
+/// family replaces four parallel query declarations while retaining the old
+/// named aliases below for feature-level overrides and gradual migration.
+final devicesOfKindProvider =
+    StreamProvider.family<List<DeviceRecord>, DeviceKind>(
+      (ref, kind) => _dedup(ref.watch(dbProvider).watchDevicesOfKind(kind.id)),
+    );
+
+final reefFactoryDevicesProvider = devicesOfKindProvider(
+  DeviceKind.reefFactory,
 );
 
 /// Transport used by the ReefBeat dashboard (U38) to read a device's REST
@@ -994,9 +1071,7 @@ final rbDeviceLinkProvider = Provider<RbDeviceLink>((ref) => RbHttpLink());
 
 /// The registered Red Sea ReefBeat devices (U38 dashboard cards). Same scoping
 /// rationale as [reefFactoryDevicesProvider].
-final reefBeatDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('reefbeat')),
-);
+final reefBeatDevicesProvider = devicesOfKindProvider(DeviceKind.reefBeat);
 
 /// Transport used by the Apex dashboard (U40) to read a controller's status.
 /// Overridden with a fake in widget tests.
@@ -1004,16 +1079,61 @@ final apDeviceLinkProvider = Provider<ApDeviceLink>((ref) => ApHttpLink());
 
 /// The registered Neptune Apex controllers (U40 dashboard cards). Same scoping
 /// rationale as [reefFactoryDevicesProvider].
-final apexDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('apex')),
-);
+final apexDevicesProvider = devicesOfKindProvider(DeviceKind.apex);
 
 /// The registered Hanna checkers — recorded by the measurement flow on first
 /// BLE connect (`ensureHannaDevice`), shown as their own Devices-page section
 /// (U43). Same scoping rationale as [reefFactoryDevicesProvider].
-final hannaDevicesProvider = StreamProvider<List<DeviceRecord>>(
-  (ref) => _dedup(ref.watch(dbProvider).watchDevicesOfKind('hanna')),
+final hannaDevicesProvider = devicesOfKindProvider(DeviceKind.hanna);
+
+/// Corrupt or future inventory rows remain visible for diagnosis, but are not
+/// part of the typed family and can never be passed to a vendor transport.
+final unsupportedDevicesProvider = StreamProvider<List<DeviceRecord>>(
+  (ref) => _dedup(ref.watch(dbProvider).watchUnsupportedDevices()),
 );
+
+/// Composition root for device behavior. The registry itself is pure Dart;
+/// Riverpod supplies the live transports, database callbacks, and secret store
+/// so tests can replace any dependency without a feature screen knowing it.
+final deviceIntegrationRegistryProvider = Provider<DeviceIntegrationRegistry>((
+  ref,
+) {
+  final db = ref.watch(dbProvider);
+  return DeviceIntegrationRegistry([
+    RfDeviceIntegration(
+      link: ref.watch(rfDeviceLinkProvider),
+      touchSeen: db.touchDeviceSeen,
+    ),
+    RbDeviceIntegration(
+      link: ref.watch(rbDeviceLinkProvider),
+      touchSeen: db.touchDeviceSeen,
+      updateModel: db.updateDeviceModel,
+    ),
+    ApDeviceIntegration(
+      link: ref.watch(apDeviceLinkProvider),
+      secrets: ref.watch(deviceSecretsProvider),
+      touchSeen: db.touchDeviceSeen,
+    ),
+    const HannaDeviceIntegration(),
+  ]);
+});
+
+/// One resolved, ordered device inventory for both Wall and Wall Settings.
+/// Unknown/future rows are carried separately and never enter the poll list.
+final wallDeviceInventoryProvider = Provider<WallDeviceInventory>((ref) {
+  final tank = ref.watch(activeTankProvider);
+  if (tank == null) return const WallDeviceInventory();
+  return buildWallDeviceInventory(
+    activeTankId: tank.id,
+    tankCount: ref.watch(tanksProvider).value?.length ?? 0,
+    vendorOrder: ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors,
+    devicesByKind: {
+      for (final kind in kDeviceKinds)
+        kind: ref.watch(devicesOfKindProvider(kind)).value ?? const [],
+    },
+    unsupported: ref.watch(unsupportedDevicesProvider).value ?? const [],
+  );
+});
 
 // --- LAN device discovery (U39) -------------------------------------------
 
@@ -1040,17 +1160,26 @@ final rfIdentityProbeProvider = Provider<RfIdentityProbe>(
   (ref) => const RfWebSocketLink(timeout: Duration(seconds: 3)),
 );
 
+/// Ordered protocol contributors for discovery. HTTP ReefBeat identification
+/// intentionally precedes the slower ReefFactory WebSocket handshake.
+final lanDeviceProbesProvider = Provider<List<LanDeviceProbe>>(
+  (ref) => [
+    ReefBeatLanDeviceProbe(probe: ref.watch(rbIdentityProbeProvider)),
+    ReefFactoryLanDeviceProbe(probe: ref.watch(rfIdentityProbeProvider)),
+  ],
+);
+
 /// Finds ReefBeat and ReefFactory devices on the local network (U39).
 final lanDiscoveryProvider = Provider<LanDiscoveryService>(
   (ref) => LanDiscoveryService(
     scanner: ref.watch(lanScannerProvider),
-    reefBeatProbe: ref.watch(rbIdentityProbeProvider),
-    reefFactoryProbe: ref.watch(rfIdentityProbeProvider),
+    probes: ref.watch(lanDeviceProbesProvider),
   ),
 );
 
 /// Environment sources (U37) for a tank: the registered devices assigned to it
-/// that can report current environment readings (salinity, temperature, pH) —
+/// that can report current environment readings (salinity, temperature, pH,
+/// ORP) —
 /// what the Hanna results step's Environment card reads. Gated once for every
 /// kind on [ProFeature.connectedDevices] (the single LAN-device gate), so a
 /// future device kind adds its own wrapped list here without touching either
@@ -1060,10 +1189,20 @@ final environmentSourcesProvider =
       if (!ref.watch(proFeatureProvider(ProFeature.connectedDevices))) {
         return const [];
       }
-      return environmentSourcesForTank(
+      final registry = ref.watch(deviceIntegrationRegistryProvider);
+      final order = <DeviceKind>[];
+      for (final id
+          in ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors) {
+        final kind = DeviceKind.tryParse(id);
+        if (kind != null) order.add(kind);
+      }
+      return registry.environmentSourcesForTank(
         tankId: tankId,
-        rfDevices: ref.watch(reefFactoryDevicesProvider).value ?? const [],
-        rfLink: ref.watch(rfDeviceLinkProvider),
+        vendorOrder: order,
+        devicesByKind: {
+          for (final kind in registry.registeredKinds)
+            kind: ref.watch(devicesOfKindProvider(kind)).value ?? const [],
+        },
       );
     });
 

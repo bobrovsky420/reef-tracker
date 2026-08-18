@@ -842,9 +842,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aboutSection => 'Über';
 
   @override
-  String get languageSection => 'Sprache';
-
-  @override
   String get appearanceSection => 'Darstellung';
 
   @override
@@ -1227,6 +1224,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get diagnosticsShareFailed => 'Diagnose konnte nicht geteilt werden';
+
+  @override
+  String get updateAvailableSnack =>
+      'Eine neue Version von ReefTracker ist verfügbar.';
+
+  @override
+  String get updateAction => 'Aktualisieren';
+
+  @override
+  String get updateReadySnack => 'Update heruntergeladen.';
+
+  @override
+  String get updateRestartAction => 'Neu starten';
 
   @override
   String get editionLabel => 'Edition';
@@ -3308,11 +3318,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Live-Status von Red-Sea-ReefBeat-Geräten';
+      'Live-Daten von Red-Sea-ReefBeat-Geräten';
 
   @override
   String get reefBeatDisclaimer =>
-      'Diese App liest nur den Status deiner Red-Sea-ReefBeat-Geräte. Sie kann nicht dosieren, Pläne ändern oder kalibrieren – nutze dafür die ReefBeat-App. Das Auslesen funktioniert nur, solange dein Telefon im selben WLAN wie die Geräte ist.';
+      'Diese App liest nur Live-Daten deiner Red-Sea-ReefBeat-Geräte. Sie kann nicht dosieren, Pläne ändern oder kalibrieren – nutze dafür die ReefBeat-App. Das Auslesen funktioniert nur, solange dein Telefon im selben WLAN wie die Geräte ist.';
 
   @override
   String get reefBeatAddDevice => 'Gerät hinzufügen';
@@ -3322,7 +3332,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Durchsuche dein WLAN nach deinen Red-Sea-ReefBeat-Geräten – ReefDose-Pumpen, ReefATO, ReefMat, ReefRun, ReefLED und ReefWave – oder füge ein Gerät über seine IP-Adresse hinzu.';
+      'Durchsuche dein WLAN nach deinen Red-Sea-ReefBeat-Geräten – ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave und ReefControl – oder füge ein Gerät über seine IP-Adresse hinzu.';
 
   @override
   String get reefBeatRefreshAll => 'Alle aktualisieren';
@@ -3503,7 +3513,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reefBeatAtoLevelLow => 'Niedrig';
 
   @override
-  String get reefBeatAtoLevelHigh => 'Hoch';
+  String get reefBeatAtoLevelAbove => 'Erhöht';
 
   @override
   String get reefBeatAtoTemperature => 'Temperatur';
@@ -3617,6 +3627,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefBeatRunFullCup => 'Becher voll';
+
+  @override
+  String get reefBeatRunOverSkimming => 'Überschäumen';
 
   @override
   String get reefBeatRunSensorOffline => 'Füllstandsensor offline';
@@ -4048,4 +4061,148 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Nutzt die Standardwerte';
+
+  @override
+  String get wallDisplayTitle => 'Wanddisplay';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Dauerhaft eingeschaltete Übersicht der Werte deines Aquariums';
+
+  @override
+  String get wallSmallScreenNote =>
+      'Das Wanddisplay ist für ein an der Wand montiertes Tablet gedacht. Auf diesem kleineren Bildschirm funktioniert es trotzdem – du siehst nur weniger Karten pro Seite.';
+
+  @override
+  String get wallStartNow => 'Jetzt starten';
+
+  @override
+  String get wallStartNowSubtitle =>
+      'Die Wandtafel auf diesem Bildschirm anzeigen';
+
+  @override
+  String get wallAutoStartTitle => 'Beim Start öffnen';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Beim Start der App auf diesem Gerät direkt das Wanddisplay öffnen';
+
+  @override
+  String get wallBehaviourSection => 'Verhalten';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Aktualisieren alle';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Wie oft verbundene Geräte gelesen werden';
+
+  @override
+  String get wallPageSecondsTitle => 'Seitenwechsel';
+
+  @override
+  String get wallPageSecondsSubtitle => 'Wie lange jede Seite angezeigt bleibt';
+
+  @override
+  String get wallNightTitle => 'Nachtabdunklung';
+
+  @override
+  String get wallNightSubtitle =>
+      'Bildschirm nachts abdunkeln; ein Tippen hebt es für eine Minute auf';
+
+  @override
+  String get wallNightFromTitle => 'Abdunkeln ab';
+
+  @override
+  String get wallNightToTitle => 'Abdunkeln bis';
+
+  @override
+  String get wallCardsSection => 'Karten';
+
+  @override
+  String get wallCardsHint =>
+      'Jeder Wert, den ein Gerät meldet, bekommt eine eigene Karte. Blende unerwünschte Duplikate aus und ziehe den Rest an seinen Platz; werden alle Karten eines Geräts ausgeblendet, kontaktiert die Wandtafel es nicht mehr.';
+
+  @override
+  String get wallStoredCard => 'Manuelle Messungen';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n Min.';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Noch kein Aquarium. Lege eines an und starte dann das Wanddisplay.';
+
+  @override
+  String get wallProLocked => 'Das Wanddisplay ist eine PRO-Funktion.';
+
+  @override
+  String get wallExitHint => 'Zum Beenden irgendwo gedrückt halten';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'aktualisiert $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Heute fällig: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return '$param-Test';
+  }
+
+  @override
+  String get wallNoDevices => 'Keine Geräte';
+
+  @override
+  String get wallAllReachable => 'Alle Geräte erreichbar';
+
+  @override
+  String get wallSomeUnreachable => 'Ein Gerät ist nicht erreichbar';
+
+  @override
+  String get wallNetworkDown => 'Kein Gerät erreichbar – Netzwerk prüfen';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'gemessen $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 T';
+
+  @override
+  String wallHeadDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Tage',
+      one: '1 Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String wallHeadMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Monate',
+      one: '1 Monat',
+    );
+    return '$_temp0';
+  }
 }

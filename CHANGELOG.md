@@ -5,6 +5,168 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0]
+
+### Added
+- Red Sea ReefControl Lite/Pro support (experimental, PRO): the Connected
+  devices page identifies a controller on the local network and keeps every
+  attached ReefSense probe together on one live card. The captured setup shows
+  salinity once in the app's selected ppt or SG unit, ORP in mV,
+  pH, each combined probe's temperature on its own labelled row in the
+  selected °C/°F unit, and an attached leak detector as green Dry or red Leak
+  detected; Wall display creates a separate
+  live card and 24-hour sample line for each primary parameter (salinity, pH
+  and ORP) plus the first probe temperature. Value colors on both surfaces use
+  the aquarium's ReefTracker ranges, not ReefControl's own level labels. The
+  controller card can save salinity, ORP, pH and the first probe temperature
+  (alone or with Save all),
+  and its salinity, ORP, pH and temperature are offered as environment values when
+  saving a Hanna checker session. Control remains read-only — rules,
+  calibration and notifications stay in ReefBeat.
+- Wall display mode (U49 phase 1, PRO): turn a wall-mounted tablet into an
+  always-on board of the aquarium's current state. A full-screen grid of value
+  cards — one card per device *and* parameter, plus a card fed by your stored
+  readings for every tracked parameter no device reports — each with the
+  parameter name, the value large enough to read across the room, its
+  color-coded zone, a graph and a provenance line naming the source and the
+  value's age ("Apex · now", "measured 2 d ago"). Status tiles after the
+  values show the ATO reservoir and leak sensor, each dosing head's remaining
+  supplement (its name with a green/amber/red icon and the days — or, when
+  plentiful, months — its container lasts; switched-off heads show gray),
+  the fleece roll and the skimmer cup; an optional bottom strip lists
+  today's due maintenance and parameter tests.
+  - Each device card carries a live 24-hour graph built from the mode's own
+    polling (5-minute buckets with a min/max band, kept 48 h in a new
+    display-only sample table — never written into the measurement history),
+    with hand measurements drawn as markers; parameters without enough samples
+    fall back to the dashboard's 14-day line, and the tile footer names the
+    window.
+  - The grid never scrolls: it sizes tiles to the screen (fewer, bigger tiles
+    under a larger system font) and paginates with auto-rotation when the
+    cards don't fit one page.
+  - Polling is configurable (30 s to 15 min, default 5 min), polite
+    (sequential per vendor), and backs off automatically — doubling to a
+    30-minute ceiling for unreachable devices and for devices whose values
+    stopped changing.
+  - Always-on behaviors: keeps the screen awake while foregrounded, hides the
+    system bars, dims itself during a configurable night window (default
+    22:00–07:00; a tap lifts the dim for a minute), and drifts the grid a few
+    pixels every 10 minutes against OLED burn-in.
+  - Cards are managed under Settings → Wall display: hide duplicates you
+    don't want, drag the rest into your own order. Hiding all of a device's
+    cards stops the wall from contacting that device entirely — durably, so
+    an app update cannot quietly re-enable it.
+  - Wall cards cover the standard water parameters only (temperature, pH,
+    salinity, alkalinity, calcium, magnesium, nutrients, ORP) — the ICP
+    microelement panel deliberately never appears on the wall, however many
+    elements a tank tracks.
+  - On phone-size screens the settings page notes that the mode is designed
+    for a wall-mounted tablet and still works with fewer cards per page —
+    purely informational, nothing is gated by screen size.
+  - Auto-start on launch (optional): the app boots straight into the wall
+    display, so a rebooted tablet returns to the board by itself. Exit is a
+    deliberate 1.5-second hold with a progress ring, so a brushed-past panel
+    never navigates away.
+  - Note for this build: the wall display has been exercised against the
+    committed fake devices (Apex, ReefFactory, ReefBeat emulators) and a real
+    ReefControl Pro; the other integrations have not been checked on real
+    hardware. Its iOS behaviors (immersive-mode restore, Guided Access
+    interaction) have not been verified on a physical iPad.
+- Update notice: the app now checks its store once per launch and tells you
+  when a newer version is out. On Android this uses Google Play's own in-app
+  update flow — accept, and the update downloads in place while you keep
+  using the app, with a restart prompt when it is ready. On iOS a notice
+  links to the App Store page. Polite by design: one notice per new version,
+  and offline or store-less installs skip the check silently. (The Play flow
+  has not yet been exercised against the real store — that needs a Play
+  internal-testing install; the iOS half is pure lookup + link and its
+  transport is covered by tests.)
+
+### Changed
+- Connected devices: the Save all button now counts the distinct parameters
+  that will be saved instead of the devices supplying them. Supplementary
+  readings such as ReefControl probe temperature count, while duplicate
+  readings resolved by the first-device/probe rule do not.
+- Connected devices can now be refreshed by pulling down past the top of the
+  dashboard. The gesture refreshes the same currently selected devices as the
+  Refresh all button, including on short one-card dashboards. It was exercised
+  on Android with the committed fake devices, not with additional real
+  hardware.
+- Wall display value cards now show device and measurement timing without a
+  duplicate green, amber or red status icon; the value color still indicates
+  the parameter's status.
+- Wall display card settings now keep each card subtitle focused on its device
+  name, without extra contact-status messages.
+- Connected devices and Wall display now keep each device's last successful
+  values through a temporary refresh failure while still showing the failure;
+  device reads, saves, cards and Wall facts now share one typed integration
+  path. This refactor was exercised with the committed fake ReefFactory, Apex,
+  and all seven ReefBeat-family servers, not with additional real hardware.
+- ORP readings now come with a recommended color range: red below 200 mV,
+  amber from 200–250 mV, green from 250–450 mV, amber from 450–500 mV,
+  and red above 500 mV. The defaults apply to every aquarium type and to
+  already-tracked ORP values; any range you customized stays unchanged.
+- Connected devices: card ordering now starts by pressing and holding the card
+  itself, so headers no longer reserve space for permanent drag handles. While
+  a card is moving, it lifts, gains a highlighted outline and shows a circular
+  reorder badge centered on its top edge. The interaction was exercised on
+  Android with seeded device cards; ordering is local and does not contact the
+  physical hardware.
+- Connected devices: ReefFactory meters, ReefControl and Apex now keep Save in
+  each card's overflow menu, leaving the header and measured values uncluttered.
+- Wall display: a ReefFactory Temperature Controller's temperature card now
+  shows Heating or Cooling while that output is actually running.
+- Settings: the language selector moved into the Appearance group (as its
+  first row) instead of sitting in a section of its own.
+- Wall display: the ReefATO+ tile shows the reservoir estimate as its own
+  row — a tank icon with the days (or, when plentiful, months) the reservoir
+  lasts, colored green/amber/red as it runs low — alongside the water level,
+  which shows green when OK. The card highlights amber or red on the
+  worse of the two facts; a leak warning still takes over the level row.
+- ReefATO+ water level now covers the device's full vocabulary: both desired
+  levels read as a green "OK", and water below or above the desired level
+  shows as a localized, amber "Low"/"Above" — the "above" state previously
+  slipped through as raw untranslated firmware text with no warning color.
+- ReefRun skimmer: the "over-skimming" pause state is now recognized and shown
+  as a localized label — as an amber warning on the wall display's skimmer
+  tile and as a chip on the ReefRun card — instead of the raw firmware text.
+
+### Fixed
+- Renaming a connected device now closes cleanly without an intermittent
+  text-field lifecycle error after saving the new name.
+- Connected devices with an unknown or damaged integration type are now shown
+  as unsupported and are never polled, saved, or mistaken for an Apex
+  controller.
+- ReefControl's first probe temperature now appears on the Wall display and is
+  available when a Hanna checker session captures environment values. When
+  several connected devices report the same environment parameter, the first
+  reading now wins according to the user's brand order, then card and probe
+  order within that brand.
+- Wall display reorder handles now respond across their full 48 × 48 touch
+  target, rather than requiring a precise hit on the small painted icon.
+- Wall display card reordering now updates immediately when a drag handle is
+  dropped, instead of snapping back while the saved order was still being
+  written.
+- Direct links and restored navigation can no longer bypass Pro access checks
+  for the dose calculator, Hanna checker measurement, or checker camera scan;
+  an open screen also locks immediately if its Pro entitlement is lost.
+- Restored connected devices keep their aquarium assignment, so their
+  parameters appear on Wall display immediately after moving to a new tablet.
+  Existing unassigned devices also appear automatically when there is only one
+  aquarium, and device polling no longer depends on the unrelated experimental
+  features switch.
+- All translations now address the user consistently in the informal second
+  person singular: Czech (~105 strings), Russian (~128) and French (~143)
+  were converted from formal address, German's four remaining formal strings
+  were fixed, and Polish/Italian had their few gendered or inconsistent
+  forms neutralized. Gendered past-tense phrasings were restructured so no
+  string assumes the user's gender.
+- Auto-backup and reminder scheduling used to run only at launch and when the
+  app returned to the foreground, so a device left permanently open (a wall
+  tablet, or a phone that is simply never swiped away) would stop taking
+  backups and — after two weeks — stop firing reminders. Both now also run on
+  a periodic in-app tick.
+
 ## [1.2.0] - 2026-08-10
 
 ### Added

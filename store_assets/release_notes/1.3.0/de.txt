@@ -1,0 +1,4 @@
+• Wanddisplay (PRO): Verwandle ein Wandtablet in eine dauerhaft aktive Übersicht deines Aquariums – große farbcodierte Werte, Live-24-Stunden-Diagramme deiner verbundenen Geräte, Status-Kacheln und heutige Aufgaben.
+• Karten wählen, Duplikate ausblenden, eigene Reihenfolge ziehen; Start beim Öffnen und Nachtabdunklung inklusive.
+• Die App sagt dir, wenn eine neuere Version verfügbar ist.
+• Fix: Backups und Erinnerungen laufen jetzt auch auf Geräten, die wochenlang eingeschaltet bleiben.

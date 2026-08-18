@@ -14,7 +14,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'device_http.dart';
+import 'rb_family_handlers.dart';
 import 'rb_protocol.dart';
+import 'rb_snapshot.dart';
+
+export 'rb_snapshot.dart';
 
 /// Why a refresh failed — surfaced to the UI for a specific message rather
 /// than a raw exception string.
@@ -25,8 +29,7 @@ enum RbLinkError {
   /// Reached it, but a response didn't arrive in time.
   timeout,
 
-  /// It answered, but it isn't a ReefBeat device type we support (only
-  /// ReefDose pumps, ReefATO units and ReefMat filters so far).
+  /// It answered, but it isn't a ReefBeat device type we support.
   unsupportedModel,
 
   /// The responses arrived but didn't decode to the expected shape.
@@ -40,37 +43,6 @@ class RbLinkException implements Exception {
   @override
   String toString() =>
       'RbLinkException($error${detail == null ? '' : ': $detail'})';
-}
-
-/// The decoded result of one manual refresh: identity + the live status
-/// matching the device family — exactly one of [dose]/[ato]/[mat]/[run]/
-/// [light]/[wave] is set.
-class RbSnapshot {
-  const RbSnapshot({
-    required this.info,
-    this.dose,
-    this.ato,
-    this.mat,
-    this.run,
-    this.light,
-    this.wave,
-  });
-
-  final RbDeviceInfo info;
-  final RbDoseStatus? dose;
-  final RbAtoStatus? ato;
-  final RbMatStatus? mat;
-  final RbRunStatus? run;
-  final RbLightStatus? light;
-  final RbWaveStatus? wave;
-
-  /// The most precise model code known — a mat's `/configuration` reports the
-  /// width ("RSMAT250") that `/device-info` omits; everything else uses its
-  /// `hw_model` as-is.
-  String get modelCode => mat?.modelCode ?? info.hwModel;
-
-  /// The friendly product name for [modelCode] ("ReefMat 250").
-  String get modelDisplayName => rbModelDisplayName(modelCode);
 }
 
 abstract class RbDeviceLink {
@@ -101,7 +73,9 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
     this.timeout = const Duration(seconds: 6),
     this.maxResponseBytes = kDeviceResponseMaxBytes,
     HttpClient Function()? clientFactory,
-  }) : _clientFactory = clientFactory ?? HttpClient.new;
+    RbFamilyHandlerRegistry? families,
+  }) : _clientFactory = clientFactory ?? HttpClient.new,
+       families = families ?? rbFamilyHandlers;
 
   final Duration timeout;
 
@@ -112,6 +86,8 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
   /// which is exactly right and needs no special-casing. Injectable so a test
   /// can shrink it.
   final int maxResponseBytes;
+
+  final RbFamilyHandlerRegistry families;
 
   final HttpClient Function() _clientFactory;
 
@@ -151,77 +127,20 @@ class RbHttpLink implements RbDeviceLink, RbIdentityProbe {
   Future<RbSnapshot> readOnce(String host) async {
     final h = _normalizeHost(host);
     final info = await identify(h);
-
-    switch (info.hwType) {
-      case kRbDosingHwType:
-        final dashboard = await _getJson(h, '/dashboard');
-        // The dosing queue labels each dose with the head's *short* supplement
-        // name ("Zin"), and only `/head/<n>/settings` carries it — so every
-        // head the dashboard reported is read too. Doing it on every refresh
-        // (rather than once at add time) is what keeps the mapping right after
-        // the keeper reassigns a supplement in the ReefBeat app. Tolerant: a
-        // head whose settings don't answer just keeps no abbreviation.
-        // Bounded at [kRbMaxDoseHeads]: the fan-out is driven by a payload that
-        // hasn't been trusted yet, so it gets the same treatment as the
-        // response size (#72) — heads are already sorted, so the cap keeps the
-        // low-numbered ones a real pump would report.
-        final headSettings = <int, Map<String, Object?>>{};
-        for (final head in _decode(
-          () => RbDoseStatus.fromJson(dashboard),
-        ).heads.take(kRbMaxDoseHeads)) {
-          final settings = await _tryGetJson(
-            h,
-            '/head/${head.number}/settings',
-          );
-          if (settings != null) headSettings[head.number] = settings;
-        }
-        return RbSnapshot(
+    final handler = families.forHardwareType(info.hwType);
+    if (handler == null) {
+      throw RbLinkException(RbLinkError.unsupportedModel, info.hwType);
+    }
+    try {
+      return await handler.read(
+        RbFamilyReadContext(
           info: info,
-          dose: _decode(
-            () => RbDoseStatus.fromJson(dashboard, headSettings: headSettings),
-          ),
-        );
-      case kRbAtoHwType:
-        final dashboard = await _getJson(h, '/dashboard');
-        return RbSnapshot(
-          info: info,
-          ato: _decode(() => RbAtoStatus.fromJson(dashboard)),
-        );
-      case kRbMatHwType:
-        final dashboard = await _getJson(h, '/dashboard');
-        // Only to recover the sized model code — a mat whose configuration is
-        // unreadable still gets a complete card, just a generic name.
-        final configuration = await _tryGetJson(h, '/configuration');
-        return RbSnapshot(
-          info: info,
-          mat: _decode(
-            () => RbMatStatus.fromJson(dashboard, configuration: configuration),
-          ),
-        );
-      case kRbRunHwType:
-        final dashboard = await _getJson(h, '/dashboard');
-        return RbSnapshot(
-          info: info,
-          run: _decode(() => RbRunStatus.fromJson(dashboard)),
-        );
-      case kRbLightsHwType:
-        final dashboard = await _getJson(h, '/dashboard');
-        return RbSnapshot(
-          info: info,
-          light: _decode(() => RbLightStatus.fromJson(dashboard)),
-        );
-      case kRbWaveHwType:
-        // The wave serves no /dashboard — see rb_protocol.dart. `/mode` is
-        // required; `/auto` (the day's wave schedule, the only way to know what
-        // output the pump is running) enriches it.
-        final mode = await _getJson(h, '/mode');
-        final auto = await _tryGetJson(h, '/auto');
-        return RbSnapshot(
-          info: info,
-          wave: _decode(() => RbWaveStatus.fromJson(mode, auto: auto)),
-        );
-      default:
-        throw RbLinkException(RbLinkError.unsupportedModel, info.hwType);
+          getJson: (path) => _getJson(h, path),
+          tryGetJson: (path) => _tryGetJson(h, path),
+        ),
+      );
+    } on Error catch (error) {
+      throw RbLinkException(RbLinkError.protocol, error.toString());
     }
   }
 

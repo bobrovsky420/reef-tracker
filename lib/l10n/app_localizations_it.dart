@@ -130,7 +130,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get welcomeTitle => 'Benvenuto in ReefTracker';
+  String get welcomeTitle => 'Ti diamo il benvenuto in ReefTracker';
 
   @override
   String get welcomeBody =>
@@ -841,9 +841,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get aboutSection => 'Informazioni';
 
   @override
-  String get languageSection => 'Lingua';
-
-  @override
   String get appearanceSection => 'Aspetto';
 
   @override
@@ -1226,6 +1223,19 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get diagnosticsShareFailed => 'Impossibile condividere la diagnostica';
+
+  @override
+  String get updateAvailableSnack =>
+      'È disponibile una nuova versione di ReefTracker.';
+
+  @override
+  String get updateAction => 'Aggiorna';
+
+  @override
+  String get updateReadySnack => 'Aggiornamento scaricato.';
+
+  @override
+  String get updateRestartAction => 'Riavvia';
 
   @override
   String get editionLabel => 'Edizione';
@@ -3315,11 +3325,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Stato in tempo reale dei dispositivi Red Sea ReefBeat';
+      'Dati in tempo reale dei dispositivi Red Sea ReefBeat';
 
   @override
   String get reefBeatDisclaimer =>
-      'Questa app legge solo lo stato dei tuoi dispositivi Red Sea ReefBeat. Non può dosare, modificare i programmi o calibrare: usa l\'app ReefBeat per questo. La lettura funziona solo se il telefono è sulla stessa rete Wi-Fi dei dispositivi.';
+      'Questa app legge solo i dati in tempo reale dei tuoi dispositivi Red Sea ReefBeat. Non può dosare, modificare i programmi o calibrare: usa l\'app ReefBeat per questo. La lettura funziona solo se il telefono è sulla stessa rete Wi-Fi dei dispositivi.';
 
   @override
   String get reefBeatAddDevice => 'Aggiungi dispositivo';
@@ -3329,7 +3339,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Scansiona la tua rete Wi-Fi per trovare i dispositivi Red Sea ReefBeat — pompe ReefDose, ReefATO, ReefMat, ReefRun, ReefLED e ReefWave — oppure aggiungi un dispositivo tramite il suo indirizzo IP.';
+      'Scansiona la tua rete Wi-Fi per trovare i dispositivi Red Sea ReefBeat — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave e ReefControl — oppure aggiungi un dispositivo tramite il suo indirizzo IP.';
 
   @override
   String get reefBeatRefreshAll => 'Aggiorna tutto';
@@ -3511,7 +3521,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reefBeatAtoLevelLow => 'Basso';
 
   @override
-  String get reefBeatAtoLevelHigh => 'Alto';
+  String get reefBeatAtoLevelAbove => 'Elevato';
 
   @override
   String get reefBeatAtoTemperature => 'Temperatura';
@@ -3625,6 +3635,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefBeatRunFullCup => 'Bicchiere pieno';
+
+  @override
+  String get reefBeatRunOverSkimming => 'Schiumazione eccessiva';
 
   @override
   String get reefBeatRunSensorOffline => 'Sensore di livello non raggiungibile';
@@ -4057,4 +4070,150 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Usa i valori predefiniti';
+
+  @override
+  String get wallDisplayTitle => 'Display a parete';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Pannello sempre acceso con i valori del tuo acquario';
+
+  @override
+  String get wallSmallScreenNote =>
+      'Il display a parete è pensato per un tablet montato a muro. Funziona anche su questo schermo più piccolo – vedrai solo meno schede per pagina.';
+
+  @override
+  String get wallStartNow => 'Avvia ora';
+
+  @override
+  String get wallStartNowSubtitle =>
+      'Mostra il pannello a parete su questo schermo';
+
+  @override
+  String get wallAutoStartTitle => 'Avvia all\'apertura';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Apri il display a parete a ogni avvio dell\'app su questo dispositivo';
+
+  @override
+  String get wallBehaviourSection => 'Comportamento';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Aggiorna ogni';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Frequenza di lettura dei dispositivi collegati';
+
+  @override
+  String get wallPageSecondsTitle => 'Rotazione delle pagine';
+
+  @override
+  String get wallPageSecondsSubtitle =>
+      'Per quanto tempo resta visibile ogni pagina';
+
+  @override
+  String get wallNightTitle => 'Attenuazione notturna';
+
+  @override
+  String get wallNightSubtitle =>
+      'Attenua lo schermo di notte; un tocco lo riaccende per un minuto';
+
+  @override
+  String get wallNightFromTitle => 'Attenua dalle';
+
+  @override
+  String get wallNightToTitle => 'Attenua fino alle';
+
+  @override
+  String get wallCardsSection => 'Schede';
+
+  @override
+  String get wallCardsHint =>
+      'Ogni valore riportato da un dispositivo ha una propria scheda. Nascondi i duplicati che non vuoi e trascina il resto al suo posto; nascondendo tutte le schede di un dispositivo, il pannello smette di contattarlo.';
+
+  @override
+  String get wallStoredCard => 'Misurazioni manuali';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Nessun acquario. Aggiungine uno, poi avvia il display a parete.';
+
+  @override
+  String get wallProLocked => 'Il display a parete è una funzione PRO.';
+
+  @override
+  String get wallExitHint => 'Tieni premuto ovunque per uscire';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'aggiornato $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Da fare oggi: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return 'test $param';
+  }
+
+  @override
+  String get wallNoDevices => 'Nessun dispositivo';
+
+  @override
+  String get wallAllReachable => 'Tutti i dispositivi raggiungibili';
+
+  @override
+  String get wallSomeUnreachable => 'Un dispositivo non è raggiungibile';
+
+  @override
+  String get wallNetworkDown =>
+      'Nessun dispositivo raggiungibile – controlla la rete';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'misurato $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 g';
+
+  @override
+  String wallHeadDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count giorni',
+      one: '1 giorno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String wallHeadMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mesi',
+      one: '1 mese',
+    );
+    return '$_temp0';
+  }
 }

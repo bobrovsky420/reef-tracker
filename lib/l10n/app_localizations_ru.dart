@@ -24,39 +24,39 @@ class AppLocalizationsRu extends AppLocalizations {
   String get moreOptions => 'Ещё';
 
   @override
-  String get tourTankTitle => 'Ваши аквариумы';
+  String get tourTankTitle => 'Твои аквариумы';
 
   @override
   String get tourTankDesc =>
-      'Нажмите здесь, чтобы переключаться между аквариумами или добавить новый.';
+      'Нажми здесь, чтобы переключаться между аквариумами или добавить новый.';
 
   @override
   String get tourCompareTitle => 'Сравнение';
 
   @override
   String get tourCompareDesc =>
-      'Переключайтесь между карточками параметров и совмещёнными графиками.';
+      'Переключайся между карточками параметров и совмещёнными графиками.';
 
   @override
   String get tourParamsTitle => 'Управление параметрами';
 
   @override
   String get tourParamsDesc =>
-      'Выберите, какие параметры воды отслеживать, и задайте их целевые диапазоны.';
+      'Выбери, какие параметры воды отслеживать, и задай их целевые диапазоны.';
 
   @override
   String get tourDosingHistoryTitle => 'История дозирования';
 
   @override
   String get tourDosingHistoryDesc =>
-      'Просматривайте все прошлые и текущие периоды дозирования и удаляйте запись, добавленную по ошибке.';
+      'Просматривай все прошлые и текущие периоды дозирования и удаляй запись, добавленную по ошибке.';
 
   @override
   String get tourDoseCalcTitle => 'Калькулятор дозировки';
 
   @override
   String get tourDoseCalcDesc =>
-      'На вкладке «Дозирование» откройте калькулятор, чтобы оценить суточную дозу, удерживающую элемент стабильным.';
+      'На вкладке «Дозирование» открой калькулятор, чтобы оценить суточную дозу, удерживающую элемент стабильным.';
 
   @override
   String get tourNext => 'Далее';
@@ -134,7 +134,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get welcomeBody =>
-      'Создайте свой первый аквариум, чтобы начать отслеживать параметры воды.';
+      'Создай свой первый аквариум, чтобы начать отслеживать параметры воды.';
 
   @override
   String get noParamsTracked =>
@@ -220,7 +220,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get nameHint => 'напр. Риф в гостиной';
 
   @override
-  String get enterAName => 'Введите название';
+  String get enterAName => 'Введи название';
 
   @override
   String get setupType => 'Тип аквариума';
@@ -231,7 +231,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get fishOnlyPresetNote =>
-      'Профиль «Только рыбы» не задаёт границы для щёлочности, кальция, магния и фосфатов – если вы отслеживаете эти параметры, у них не будет цветных зон, пока вы не зададите собственные границы.';
+      'Профиль «Только рыбы» не задаёт границы для щёлочности, кальция, магния и фосфатов – если ты отслеживаешь эти параметры, у них не будет цветных зон, пока ты не задашь собственные границы.';
 
   @override
   String get volumeOptional => 'Объём (необязательно)';
@@ -336,7 +336,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get enterANumber => 'Введите число';
+  String get enterANumber => 'Введи число';
 
   @override
   String get sectionSafeRanges => 'Безопасные диапазоны';
@@ -364,13 +364,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get invalidVolume => 'Введите корректный положительный объём.';
+  String get invalidVolume => 'Введи корректный положительный объём.';
 
   @override
-  String get invalidPositiveNumber => 'Введите положительное число.';
+  String get invalidPositiveNumber => 'Введи положительное число.';
 
   @override
-  String get invalidIntervalDays => 'Введите целое число дней (не менее 1).';
+  String get invalidIntervalDays => 'Введи целое число дней (не менее 1).';
 
   @override
   String impossibleValueFor(Object name) {
@@ -385,7 +385,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get implausibleIntro =>
-      'Следующее значение выходит за пределы обычного диапазона. Проверьте, нет ли опечатки, прежде чем сохранять.';
+      'Следующее значение выходит за пределы обычного диапазона. Проверь, нет ли опечатки, прежде чем сохранять.';
 
   @override
   String implausibleValueLine(
@@ -404,7 +404,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get implausibleIntroDevices =>
-      'Подключённое устройство сообщает значения, которые выглядят неверными. Проверьте датчик перед сохранением.';
+      'Подключённое устройство сообщает значения, которые выглядят неверными. Проверь датчик перед сохранением.';
 
   @override
   String get implausibleSkip => 'Пропустить';
@@ -413,7 +413,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get saveAnyway => 'Всё равно сохранить';
 
   @override
-  String get enterAtLeastOneValue => 'Введите хотя бы одно значение.';
+  String get enterAtLeastOneValue => 'Введи хотя бы одно значение.';
 
   @override
   String savedReadings(int count) {
@@ -447,7 +447,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get testSetNameHint => 'напр. Большой еженедельный тест';
 
   @override
-  String get testSetNeedParam => 'Выберите хотя бы один параметр.';
+  String get testSetNeedParam => 'Выбери хотя бы один параметр.';
 
   @override
   String deleteTestSetTitle(Object name) {
@@ -456,11 +456,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteTestSetBody =>
-      'Набор тестов будет удалён. Ваши измерения сохранятся.';
+      'Набор тестов будет удалён. Твои измерения сохранятся.';
 
   @override
   String get testSetEmptyHint =>
-      'В этом наборе нет активных параметров. Измените его или переключитесь на «Все».';
+      'В этом наборе нет активных параметров. Измени его или переключись на «Все».';
 
   @override
   String testSetParamCount(int count) {
@@ -477,7 +477,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noTestSets =>
-      'Наборов тестов пока нет. Набор позволяет записывать только те параметры, которые вы тестируете вместе.';
+      'Наборов тестов пока нет. Набор позволяет записывать только те параметры, которые ты тестируешь вместе.';
 
   @override
   String get rangeWeek => '7 дн.';
@@ -574,7 +574,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String freeAmmoniaDialogFraction(Object percent, Object total) {
-    return '$percent% из ваших $total ppm общего аммиака находится в токсичной форме NH₃.';
+    return '$percent% из твоих $total ppm общего аммиака находится в токсичной форме NH₃.';
   }
 
   @override
@@ -599,7 +599,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Добавляет карточку с оценкой токсичной неионизированной доли по pH, температуре и солёности.';
 
   @override
-  String get freeAmmoniaNeedsAmmonia => 'Включите аммиак, чтобы показать.';
+  String get freeAmmoniaNeedsAmmonia => 'Включи аммиак, чтобы показать.';
 
   @override
   String get close => 'Закрыть';
@@ -630,7 +630,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ratioNoData =>
-      'Запишите оба параметра, чтобы увидеть их соотношение.';
+      'Запиши оба параметра, чтобы увидеть их соотношение.';
 
   @override
   String ratioBoundsNote(Object metric) {
@@ -701,7 +701,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noDosingHint =>
-      'Добавьте добавки, которые вы дозируете в этот аквариум — производитель, продукт и при желании доза и расписание.';
+      'Добавь добавки, которые ты дозируешь в этот аквариум — производитель, продукт и при желании доза и расписание.';
 
   @override
   String get dosingNoDosage => 'Доза не указана';
@@ -847,9 +847,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aboutSection => 'О приложении';
 
   @override
-  String get languageSection => 'Язык';
-
-  @override
   String get appearanceSection => 'Внешний вид';
 
   @override
@@ -936,7 +933,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupRestoreConfirmBody =>
-      'ВСЕ данные ваших аквариумов — все аквариумы, параметры и измерения — будут заменены содержимым файла резервной копии. Настройки на этом устройстве (язык, единицы измерения и предпочтения) сохранятся. Это действие нельзя отменить.';
+      'ВСЕ данные твоих аквариумов — все аквариумы, параметры и измерения — будут заменены содержимым файла резервной копии. Настройки на этом устройстве (язык, единицы измерения и предпочтения) сохранятся. Это действие нельзя отменить.';
 
   @override
   String get restore => 'Восстановить';
@@ -973,7 +970,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dataLoadFailed =>
-      'Не удалось загрузить часть данных. Если это повторяется, перезапустите приложение или восстановите резервную копию.';
+      'Не удалось загрузить часть данных. Если это повторяется, перезапусти приложение или восстанови резервную копию.';
 
   @override
   String get autoBackupTitle => 'Автоматическое резервное копирование';
@@ -1038,7 +1035,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncGdriveSubtitle =>
-      'Автоматически сохранять резервные копии на ваш Google Диск';
+      'Автоматически сохранять резервные копии на твой Google Диск';
 
   @override
   String syncGdriveLastPush(String when) {
@@ -1067,7 +1064,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncGdriveDisconnectedSnack =>
-      'Google Диск отключён. Уже загруженные резервные копии останутся на вашем Диске.';
+      'Google Диск отключён. Уже загруженные резервные копии останутся на твоём Диске.';
 
   @override
   String syncGdriveLastFailed(String when) {
@@ -1079,7 +1076,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncDeviceNameBody =>
-      'Отображается у резервных копий, загруженных с этого устройства, чтобы различать ваши устройства.';
+      'Отображается у резервных копий, загруженных с этого устройства, чтобы различать твои устройства.';
 
   @override
   String get syncDeviceNameHint => 'например, Мой телефон';
@@ -1092,12 +1089,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String syncRestoreBody(String device, String when) {
-    return 'На вашем Google Диске есть более новая резервная копия с устройства «$device» ($when). Восстановить её на этом устройстве? Настройки этого устройства сохранятся.';
+    return 'На твоём Google Диске есть более новая резервная копия с устройства «$device» ($when). Восстановить её на этом устройстве? Настройки этого устройства сохранятся.';
   }
 
   @override
   String syncRestoreDivergedBody(String device, String when) {
-    return 'На вашем Google Диске есть более новая резервная копия с устройства «$device» ($when), но на этом устройстве тоже есть изменения, которые не были загружены. Восстановление заменит данные этого устройства резервной копией — сначала будет сохранена локальная резервная копия.';
+    return 'На твоём Google Диске есть более новая резервная копия с устройства «$device» ($when), но на этом устройстве тоже есть изменения, которые не были загружены. Восстановление заменит данные этого устройства резервной копией — сначала будет сохранена локальная резервная копия.';
   }
 
   @override
@@ -1138,26 +1135,26 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncIcloudSubtitle =>
-      'Автоматически сохранять резервные копии в ваш iCloud Drive';
+      'Автоматически сохранять резервные копии в твой iCloud Drive';
 
   @override
   String get syncIcloudDialogBody =>
-      'Резервные копии загружаются в папку «ReefTracker» в вашем iCloud Drive. Их можно просмотреть в приложении «Файлы».';
+      'Резервные копии загружаются в папку «ReefTracker» в твоём iCloud Drive. Их можно просмотреть в приложении «Файлы».';
 
   @override
   String get syncIcloudDisable => 'Выключить';
 
   @override
   String get syncIcloudEnabledSnack =>
-      'Резервные копии будут синхронизироваться с вашим iCloud Drive';
+      'Резервные копии будут синхронизироваться с твоим iCloud Drive';
 
   @override
   String get syncIcloudDisabledSnack =>
-      'Резервное копирование в iCloud выключено. Уже загруженные резервные копии останутся в вашем iCloud Drive.';
+      'Резервное копирование в iCloud выключено. Уже загруженные резервные копии останутся в твоём iCloud Drive.';
 
   @override
   String get syncIcloudUnavailable =>
-      'iCloud недоступен. Войдите в iCloud и включите iCloud Drive для ReefTracker в настройках устройства.';
+      'iCloud недоступен. Войди в iCloud и включи iCloud Drive для ReefTracker в настройках устройства.';
 
   @override
   String syncIcloudLastFailed(Object when) {
@@ -1179,12 +1176,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String syncRestoreBodyIcloud(Object device, Object when) {
-    return 'В вашем iCloud Drive есть более новая резервная копия с устройства «$device» ($when). Восстановить её на этом устройстве? Настройки этого устройства сохранятся.';
+    return 'В твоём iCloud Drive есть более новая резервная копия с устройства «$device» ($when). Восстановить её на этом устройстве? Настройки этого устройства сохранятся.';
   }
 
   @override
   String syncRestoreDivergedBodyIcloud(Object device, Object when) {
-    return 'В вашем iCloud Drive есть более новая резервная копия с устройства «$device» ($when), но на этом устройстве тоже есть изменения, которые не были загружены. Восстановление заменит данные этого устройства резервной копией — сначала будет сохранена локальная резервная копия.';
+    return 'В твоём iCloud Drive есть более новая резервная копия с устройства «$device» ($when), но на этом устройстве тоже есть изменения, которые не были загружены. Восстановление заменит данные этого устройства резервной копией — сначала будет сохранена локальная резервная копия.';
   }
 
   @override
@@ -1234,6 +1231,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diagnosticsShareFailed => 'Не удалось поделиться диагностикой';
 
   @override
+  String get updateAvailableSnack => 'Доступна новая версия ReefTracker.';
+
+  @override
+  String get updateAction => 'Обновить';
+
+  @override
+  String get updateReadySnack => 'Обновление загружено.';
+
+  @override
+  String get updateRestartAction => 'Перезапустить';
+
+  @override
   String get editionLabel => 'Издание';
 
   @override
@@ -1244,11 +1253,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get founderInfoBody =>
-      'Вы с ReefTracker с самых первых дней. В знак благодарности все доступные сегодня функции останутся для вас бесплатными навсегда.';
+      'Ты с ReefTracker с самых первых дней. В знак благодарности все доступные сегодня функции останутся для тебя бесплатными навсегда.';
 
   @override
   String get standardInfoBody =>
-      'Вы используете стандартное издание ReefTracker. Всё, что вы уже записали, остаётся с вами; ReefTracker Pro открывает расширенные возможности.';
+      'Ты используешь стандартное издание ReefTracker. Всё, что уже записано, остаётся с тобой; ReefTracker Pro открывает расширенные возможности.';
 
   @override
   String get editionUpgrade => 'Разблокировать Pro';
@@ -1261,7 +1270,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get proInfoBody =>
-      'Спасибо! Разблокировка Pro активна на этом устройстве. Все функции Pro доступны вам.';
+      'Спасибо! Разблокировка Pro активна на этом устройстве. Все функции Pro доступны тебе.';
 
   @override
   String get paywallTitle => 'ReefTracker Pro';
@@ -1285,7 +1294,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paywallPurchased => 'Pro разблокирован. Спасибо!';
 
   @override
-  String get paywallRestored => 'Ваша разблокировка Pro восстановлена.';
+  String get paywallRestored => 'Твоя разблокировка Pro восстановлена.';
 
   @override
   String get paywallNothingToRestore =>
@@ -1297,7 +1306,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get paywallFailed =>
-      'Магазин не смог завершить операцию. Попробуйте ещё раз.';
+      'Магазин не смог завершить операцию. Попробуй ещё раз.';
 
   @override
   String get paywallUnavailable =>
@@ -1348,7 +1357,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Перевод между практической солёностью (ppt) и плотностью (SG). Вводите в любое поле.';
+      'Перевод между практической солёностью (ppt) и плотностью (SG). Вводи в любое поле.';
 
   @override
   String get specificGravity => 'Плотность (SG)';
@@ -1493,11 +1502,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get doseCalcStable =>
-      'Текущая доза удерживает элемент стабильным — оставьте как есть.';
+      'Текущая доза удерживает элемент стабильным — оставь как есть.';
 
   @override
   String get doseCalcIncrease =>
-      'Увеличьте дозу, чтобы удержать элемент стабильным.';
+      'Увеличь дозу, чтобы удержать элемент стабильным.';
 
   @override
   String get doseCalcDecrease =>
@@ -1505,7 +1514,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get doseCalcOverdosing =>
-      'Элемент растёт — снизьте или приостановите дозирование.';
+      'Элемент растёт — снизь или приостанови дозирование.';
 
   @override
   String get doseCalcNoDoseNeeded =>
@@ -1513,11 +1522,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get doseCalcNeedsPotency =>
-      'Укажите концентрацию добавки, чтобы получить рекомендацию по дозе.';
+      'Укажи концентрацию добавки, чтобы получить рекомендацию по дозе.';
 
   @override
   String get doseCalcInsufficient =>
-      'Для расчёта добавьте не менее двух измерений в разные дни и объём аквариума.';
+      'Для расчёта добавь не менее двух измерений в разные дни и объём аквариума.';
 
   @override
   String get doseCalcModeMaintenance => 'Дневная доза';
@@ -1527,13 +1536,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get doseCalcCorrIntro =>
-      'Рассчитайте разовую дозу, которая поднимет элемент с текущего значения до целевого. Если быстрый рост опасен, доза будет разбита на несколько дней.';
+      'Рассчитай разовую дозу, которая поднимет элемент с текущего значения до целевого. Если быстрый рост опасен, доза будет разбита на несколько дней.';
 
   @override
   String get doseCalcCurrentValue => 'Текущее значение';
 
   @override
-  String get doseCalcCurrentValueHelp => 'Пусто = ваше последнее измерение.';
+  String get doseCalcCurrentValueHelp => 'Пусто = твоё последнее измерение.';
 
   @override
   String get doseCalcTargetValue => 'Целевое значение';
@@ -1559,7 +1568,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get doseCalcCorrMissing =>
-      'Для расчёта укажите текущее значение, цель и объём аквариума.';
+      'Для расчёта укажи текущее значение, цель и объём аквариума.';
 
   @override
   String get doseCalcCorrAtTarget =>
@@ -1570,7 +1579,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String doseCalcCorrSplit(Object limit, int days) {
-    return 'Поднимать быстрее чем на $limit в день рискованно — внесите коррекцию за $days дневных доз.';
+    return 'Поднимать быстрее чем на $limit в день рискованно — внеси коррекцию за $days дневных доз.';
   }
 
   @override
@@ -1582,7 +1591,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get doseCalcSalinityAdjustHelp =>
-      'Целевые значения рассчитаны на морскую воду 35 ppt (1,026). Включите, чтобы пересчитать цель под измеренную солёность вашего аквариума.';
+      'Целевые значения рассчитаны на морскую воду 35 ppt (1,026). Включи, чтобы пересчитать цель под измеренную солёность твоего аквариума.';
 
   @override
   String doseCalcSalinityAdjustActive(
@@ -1882,7 +1891,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get microEmptyHint =>
-      'Отслеживайте микроэлементы по капельным тестам или ICP-анализам.';
+      'Отслеживай микроэлементы по капельным тестам или ICP-анализам.';
 
   @override
   String get microAllOk => 'Всё в пределах диапазона';
@@ -1947,13 +1956,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get microViewNone =>
-      'Пока нет своих наборов. Набор показывает только те элементы, которые измеряет ваша лаборатория.';
+      'Пока нет своих наборов. Набор показывает только те элементы, которые измеряет твоя лаборатория.';
 
   @override
   String get microViewNameHint => 'напр. Панель моей лаборатории';
 
   @override
-  String get microViewNeedElement => 'Выберите хотя бы один элемент.';
+  String get microViewNeedElement => 'Выбери хотя бы один элемент.';
 
   @override
   String microViewElementCount(int count) {
@@ -1991,7 +2000,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get icpImportTitle => 'Импорт ICP-отчёта';
 
   @override
-  String get icpImportFormatHint => 'Выберите формат экспортированного файла.';
+  String get icpImportFormatHint => 'Выбери формат экспортированного файла.';
 
   @override
   String get icpImportFormatFaunaMarinHint =>
@@ -2014,7 +2023,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get icpImportSampleDateHint =>
-      'Заполнено датой анализа из отчёта. Измените на день, когда вы взяли пробу воды.';
+      'Заполнено датой анализа из отчёта. Измени на день отбора пробы воды.';
 
   @override
   String get icpImportSectionCore => 'Основные параметры';
@@ -2061,7 +2070,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get measurementImportSourceHint =>
-      'Выберите приложение или прибор, из которого получен файл.';
+      'Выбери приложение или прибор, из которого получен файл.';
 
   @override
   String get measurementImportHannaHint =>
@@ -2081,7 +2090,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hannaImportFirstFromHint =>
-      'Первый импорт в этот аквариум: выберите, с какой даты импортировать. Более старые измерения будут навсегда пропущены — удобно, если вы уже вводили их вручную.';
+      'Первый импорт в этот аквариум: выбери, с какой даты импортировать. Более старые измерения будут навсегда пропущены — удобно, если они уже введены вручную.';
 
   @override
   String hannaImportNewCount(int count) {
@@ -2193,16 +2202,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hannaScanPickHint =>
-      'Считывает значение прямо с дисплея чекера. Сначала выберите модель — номер HI напечатан на передней стороне чекера.';
+      'Считывает значение прямо с дисплея чекера. Сначала выбери модель — номер HI напечатан на передней стороне чекера.';
 
   @override
   String get hannaScanPickTitle => 'Модель чекера';
 
   @override
-  String get hannaScanGuide => 'Поместите дисплей в рамку';
+  String get hannaScanGuide => 'Помести дисплей в рамку';
 
   @override
-  String get hannaScanGlareHint => 'слегка наклоните, чтобы избежать бликов';
+  String get hannaScanGlareHint => 'слегка наклони, чтобы избежать бликов';
 
   @override
   String get hannaScanZoomHint =>
@@ -2216,18 +2225,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hannaScanCameraDenied =>
-      'Доступ к камере запрещён. Разрешите доступ к камере в настройках системы, чтобы сканировать дисплей.';
+      'Доступ к камере запрещён. Разреши доступ к камере в настройках системы, чтобы сканировать дисплей.';
 
   @override
   String get hannaScanCameraFailed => 'Не удалось запустить камеру.';
 
   @override
   String get hannaScanImpossibleNote =>
-      'Это значение невозможно для данного параметра, его нельзя сохранить. Отсканируйте снова или проверьте, выбрана ли правильная модель.';
+      'Это значение невозможно для данного параметра, его нельзя сохранить. Отсканируй снова или проверь, выбрана ли правильная модель.';
 
   @override
   String get hannaScanImplausibleNote =>
-      'Это значение вне правдоподобного диапазона — проверьте его перед сохранением.';
+      'Это значение вне правдоподобного диапазона — проверь его перед сохранением.';
 
   @override
   String get experimentalBadge => 'Экспериментально';
@@ -2240,7 +2249,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get experimentalToggleSubtitle =>
-      'Попробуйте функции на стадии тестирования: подключение Hanna checker по Bluetooth и сканирование дисплея';
+      'Попробуй функции на стадии тестирования: подключение Hanna checker по Bluetooth и сканирование дисплея';
 
   @override
   String get hannaScanFabTitle => 'Кнопка сканирования камерой';
@@ -2255,14 +2264,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hannaMeasureOnlyNote =>
-      'Поддерживаются только измерения. Для изменения настроек прибора или обновления его прошивки используйте фирменное приложение Hanna Lab.';
+      'Поддерживаются только измерения. Для изменения настроек прибора или обновления его прошивки используй фирменное приложение Hanna Lab.';
 
   @override
   String get hannaScanning => 'Поиск прибора…';
 
   @override
-  String get hannaScanHint =>
-      'Включите прибор и держите его рядом с телефоном.';
+  String get hannaScanHint => 'Включи прибор и держи его рядом с телефоном.';
 
   @override
   String get hannaReadingSetup => 'Подключено — чтение настроек прибора…';
@@ -2273,11 +2281,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hannaErrBluetoothOff =>
-      'Bluetooth выключен. Включите его и попробуйте снова.';
+      'Bluetooth выключен. Включи его и попробуй снова.';
 
   @override
   String get hannaErrNotFound =>
-      'Прибор не найден. Убедитесь, что он включён и находится рядом.';
+      'Прибор не найден. Убедись, что он включён и находится рядом.';
 
   @override
   String get hannaErrConnectionFailed => 'Не удалось подключиться к прибору.';
@@ -2333,7 +2341,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hannaStartMeasurements => 'Начать измерения';
 
   @override
-  String get hannaFollowMeter => 'Следуйте инструкциям на приборе';
+  String get hannaFollowMeter => 'Следуй инструкциям на приборе';
 
   @override
   String hannaStepN(int step) {
@@ -2370,7 +2378,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hannaTimerDoneBody =>
-      'Время вышло — продолжите измерение на приборе.';
+      'Время вышло — продолжи измерение на приборе.';
 
   @override
   String get hannaResultsTitle => 'Результаты измерений';
@@ -2519,7 +2527,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get helpAlkalinity =>
-      'Карбонатная жёсткость. Поддерживайте стабильной — избегайте скачков.';
+      'Карбонатная жёсткость. Поддерживай стабильной — избегай скачков.';
 
   @override
   String get helpNitrate =>
@@ -2720,11 +2728,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get aiSummaryAction => 'Спросите свой ИИ';
+  String get aiSummaryAction => 'Спроси свой ИИ';
 
   @override
   String get aiSummaryPrivacyNote =>
-      'Это готовый промпт с данными вашего аквариума. Вставьте его в ChatGPT, Claude, Gemini или другой ИИ-инструмент — всё готовится на вашем устройстве, никуда ничего не отправляется.';
+      'Это готовый промпт с данными твоего аквариума. Вставь его в ChatGPT, Claude, Gemini или другой ИИ-инструмент — всё готовится на твоём устройстве, никуда ничего не отправляется.';
 
   @override
   String get aiSummaryPromptPreview => 'Предпросмотр промпта';
@@ -2746,14 +2754,14 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get aiSummaryCopied => 'Скопировано — вставьте в чат с вашим ИИ.';
+  String get aiSummaryCopied => 'Скопировано — вставь в чат со своим ИИ.';
 
   @override
   String get aiSummaryEmpty => 'Пока нет измерений — нечего обобщать.';
 
   @override
   String get aiSummaryInsightsFooter =>
-      'Нужен более глубокий разбор? Спросите свой ИИ';
+      'Нужен более глубокий разбор? Спроси свой ИИ';
 
   @override
   String aiSummaryPreamble(int weeks) {
@@ -2981,7 +2989,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get remindMeNeedsTime =>
-      'Укажите время дозирования, чтобы включить напоминания';
+      'Укажи время дозирования, чтобы включить напоминания';
 
   @override
   String get maintenanceSchedule => 'План обслуживания';
@@ -3002,7 +3010,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taskTitleLabel => 'Название';
 
   @override
-  String get taskTitleRequired => 'Введите название';
+  String get taskTitleRequired => 'Введи название';
 
   @override
   String get repeatLabel => 'Повтор';
@@ -3014,7 +3022,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dueDateLabel => 'Срок';
 
   @override
-  String get dueDateRequired => 'Выберите срок';
+  String get dueDateRequired => 'Выбери срок';
 
   @override
   String get dueToday => 'Сегодня';
@@ -3040,7 +3048,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get scheduleEmptyBody =>
-      'Пока нет задач обслуживания. Запланируйте подмены воды или свои задачи, чтобы видеть сроки и получать напоминания.';
+      'Пока нет задач обслуживания. Запланируй подмены воды или свои задачи, чтобы видеть сроки и получать напоминания.';
 
   @override
   String get repeatModeLabel => 'Повтор';
@@ -3070,13 +3078,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get monthDayLabel => 'День месяца (1–31)';
 
   @override
-  String get invalidInterval => 'Введите целое число (не менее 1).';
+  String get invalidInterval => 'Введи целое число (не менее 1).';
 
   @override
-  String get invalidMonthDay => 'Введите день от 1 до 31.';
+  String get invalidMonthDay => 'Введи день от 1 до 31.';
 
   @override
-  String get weekdaysRequired => 'Выберите хотя бы один день.';
+  String get weekdaysRequired => 'Выбери хотя бы один день.';
 
   @override
   String everyWeeksN(int n) {
@@ -3155,7 +3163,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get roPartOfUnitHint =>
-      'Выключите, если в вашей установке нет этой ступени';
+      'Выключи, если в твоей установке нет этой ступени';
 
   @override
   String get roHiddenStages => 'Нет в моей установке';
@@ -3183,10 +3191,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get roEmptyBody =>
-      'Нет ступеней. Добавьте фильтры вашей установки кнопкой +.';
+      'Нет ступеней. Добавь фильтры своей установки кнопкой +.';
 
   @override
-  String get roSetupPrompt => 'Следите за заменой фильтров и мембраны';
+  String get roSetupPrompt => 'Следи за заменой фильтров и мембраны';
 
   @override
   String get roUnitToggleSubtitle =>
@@ -3200,7 +3208,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'Сколько воды производит ваша установка. Выбор интенсивности задаст всем стандартным ступеням типичные для этого уровня интервалы замены, перезаписав в том числе те, что вы настроили сами; добавленные вами ступени останутся без изменений, а каждую ступень затем можно будет изменить вручную.';
+      'Сколько воды производит твоя установка. Выбор интенсивности задаст всем стандартным ступеням типичные для этого уровня интервалы замены, перезаписав в том числе настроенные самостоятельно; собственные ступени останутся без изменений, а каждую ступень затем можно будет изменить вручную.';
 
   @override
   String get roUsageLight => 'Низкая';
@@ -3228,7 +3236,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Интервалы замены стандартных ступеней заданы заново';
 
   @override
-  String get notifRoTitle => 'Замените фильтры обратного осмоса';
+  String get notifRoTitle => 'Замени фильтры обратного осмоса';
 
   @override
   String get reefFactoryTitle => 'Устройства ReefFactory';
@@ -3238,7 +3246,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryDisclaimer =>
-      'Это приложение только считывает текущие значения с ваших устройств ReefFactory. Оно не может менять настройки, калибровать или обновлять прошивку — для этого используйте приложение ReefFactory. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
+      'Это приложение только считывает текущие значения с твоих устройств ReefFactory. Оно не может менять настройки, калибровать или обновлять прошивку — для этого используй приложение ReefFactory. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
 
   @override
   String get reefFactoryAddDevice => 'Добавить устройство';
@@ -3248,7 +3256,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryEmptyBody =>
-      'Добавьте измеритель ReefFactory по IP-адресу или имени хоста, чтобы считывать его текущие значения.';
+      'Добавь измеритель ReefFactory по IP-адресу или имени хоста, чтобы считывать его текущие значения.';
 
   @override
   String get reefFactoryRefresh => 'Обновить';
@@ -3264,7 +3272,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryNothingToSave =>
-      'Пока нечего сохранять — сначала нажмите «Обновить все».';
+      'Пока нечего сохранять — сначала нажми «Обновить все».';
 
   @override
   String reefFactorySavedSnack(int count) {
@@ -3281,7 +3289,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryNotReadYet =>
-      'Нажмите «Обновить все», чтобы считать текущее значение.';
+      'Нажми «Обновить все», чтобы считать текущее значение.';
 
   @override
   String get reefFactoryHeating => 'Нагрев';
@@ -3291,13 +3299,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryNoTank =>
-      'Сначала назначьте аквариум, чтобы сохранять показания.';
+      'Сначала назначь аквариум, чтобы сохранять показания.';
 
   @override
   String get reefFactoryTankLabel => 'Аквариум';
 
   @override
-  String get reefFactorySelectTank => 'Выберите аквариум';
+  String get reefFactorySelectTank => 'Выбери аквариум';
 
   @override
   String get reefFactoryMoveToTank => 'Переместить в другой аквариум';
@@ -3324,7 +3332,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryHostHelp =>
-      'Найдите его в приложении ReefFactory или в роутере. Резервирование DHCP не даст ему меняться. Телефон должен быть в той же сети Wi-Fi, что и устройство.';
+      'Найди его в приложении ReefFactory или в роутере. Резервирование DHCP не даст ему меняться. Телефон должен быть в той же сети Wi-Fi, что и устройство.';
 
   @override
   String get reefFactoryCheck => 'Проверить';
@@ -3336,7 +3344,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefFactoryErrUnreachable =>
-      'Не удалось подключиться по этому адресу. Убедитесь, что устройство включено и в той же сети.';
+      'Не удалось подключиться по этому адресу. Убедись, что устройство включено и в той же сети.';
 
   @override
   String get reefFactoryErrTimeout => 'Подключено, но значение не пришло.';
@@ -3356,11 +3364,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Текущий статус устройств Red Sea ReefBeat';
+      'Данные устройств Red Sea ReefBeat в реальном времени';
 
   @override
   String get reefBeatDisclaimer =>
-      'Это приложение только считывает статус ваших устройств Red Sea ReefBeat. Оно не может дозировать, менять расписания или калибровать — для этого используйте приложение ReefBeat. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
+      'Это приложение только считывает данные твоих устройств Red Sea ReefBeat в реальном времени. Оно не может дозировать, менять расписания или калибровать — для этого используй приложение ReefBeat. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
 
   @override
   String get reefBeatAddDevice => 'Добавить устройство';
@@ -3370,20 +3378,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Просканируйте вашу сеть Wi-Fi, чтобы найти устройства Red Sea ReefBeat — дозаторы ReefDose, ReefATO, ReefMat, ReefRun, ReefLED и ReefWave, — или добавьте устройство по IP-адресу.';
+      'Просканируй свою сеть Wi-Fi, чтобы найти устройства Red Sea ReefBeat — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave и ReefControl, — или добавь устройство по IP-адресу.';
 
   @override
   String get reefBeatRefreshAll => 'Обновить все';
 
   @override
   String get reefBeatNotReadYet =>
-      'Нажмите «Обновить все», чтобы считать текущий статус.';
+      'Нажми «Обновить все», чтобы считать текущий статус.';
 
   @override
   String get reefBeatTankLabel => 'Аквариум';
 
   @override
-  String get reefBeatSelectTank => 'Выберите аквариум';
+  String get reefBeatSelectTank => 'Выбери аквариум';
 
   @override
   String get reefBeatMoveToTank => 'Переместить в другой аквариум';
@@ -3410,7 +3418,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatHostHelp =>
-      'Найдите его в списке клиентов роутера. Резервирование DHCP не даст ему меняться. Телефон должен быть в той же сети Wi-Fi, что и устройство.';
+      'Найди его в списке клиентов роутера. Резервирование DHCP не даст ему меняться. Телефон должен быть в той же сети Wi-Fi, что и устройство.';
 
   @override
   String get reefBeatCheck => 'Проверить';
@@ -3422,7 +3430,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefBeatErrUnreachable =>
-      'Не удалось подключиться по этому адресу. Убедитесь, что устройство включено и в той же сети.';
+      'Не удалось подключиться по этому адресу. Убедись, что устройство включено и в той же сети.';
 
   @override
   String get reefBeatErrTimeout => 'Подключено, но ответ не пришёл.';
@@ -3555,7 +3563,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatAtoLevelLow => 'Низкий';
 
   @override
-  String get reefBeatAtoLevelHigh => 'Высокий';
+  String get reefBeatAtoLevelAbove => 'Повышенный';
 
   @override
   String get reefBeatAtoTemperature => 'Температура';
@@ -3606,7 +3614,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatMatRollLow => 'Рулон заканчивается';
 
   @override
-  String get reefBeatMatCleanSensor => 'Очистите датчик';
+  String get reefBeatMatCleanSensor => 'Очисти датчик';
 
   @override
   String get reefBeatMatAutoAdvanceOff => 'Автоподача выключена';
@@ -3675,6 +3683,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatRunFullCup => 'Стакан полон';
 
   @override
+  String get reefBeatRunOverSkimming => 'Чрезмерное вспенивание';
+
+  @override
   String get reefBeatRunSensorOffline => 'Датчик уровня недоступен';
 
   @override
@@ -3737,7 +3748,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apexDisclaimer =>
-      'Это приложение только считывает ваш Apex. Оно не может переключать розетки, запускать режим кормления или менять программы — для этого используйте Fusion или веб-страницу Apex. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и контроллер.';
+      'Это приложение только считывает твой Apex. Оно не может переключать розетки, запускать режим кормления или менять программы — для этого используй Fusion или веб-страницу Apex. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и контроллер.';
 
   @override
   String get apexAddDevice => 'Добавить контроллер';
@@ -3747,7 +3758,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apexEmptyBody =>
-      'Добавьте Apex по его IP-адресу и учётным данным, которые вы используете на его веб-странице.';
+      'Добавь Apex по его IP-адресу и учётным данным, которые ты используешь на его веб-странице.';
 
   @override
   String get apexRefreshAll => 'Обновить все';
@@ -3776,11 +3787,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apexNoTank =>
-      'Назначьте контроллер аквариуму, чтобы сохранять его показания.';
+      'Назначь контроллер аквариуму, чтобы сохранять его показания.';
 
   @override
   String get apexNotReadYet =>
-      'Нажмите «Обновить все», чтобы считать текущие значения.';
+      'Нажми «Обновить все», чтобы считать текущие значения.';
 
   @override
   String get apexNoProbes =>
@@ -3848,7 +3859,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get apexSelectTank => 'Выберите аквариум';
+  String get apexSelectTank => 'Выбери аквариум';
 
   @override
   String get apexHostLabel => 'IP-адрес или имя хоста';
@@ -3858,7 +3869,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apexHostHelp =>
-      'Адрес, по которому вы открываете веб-страницу Apex. Найдите его в Fusion в разделе «Misc Setup» или в роутере.';
+      'Адрес, по которому ты открываешь веб-страницу Apex. Найди его в Fusion в разделе «Misc Setup» или в роутере.';
 
   @override
   String get apexUsernameLabel => 'Имя пользователя';
@@ -3879,7 +3890,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apexErrUnreachable =>
-      'Не удалось связаться с этим адресом. Проверьте, что контроллер включён и находится в этой сети.';
+      'Не удалось связаться с этим адресом. Проверь, что контроллер включён и находится в этой сети.';
 
   @override
   String get apexErrTimeout =>
@@ -3897,7 +3908,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get discoveryTitle => 'Поиск в сети';
 
   @override
-  String get discoverySweeping => 'Ищем устройства в вашей сети Wi-Fi…';
+  String get discoverySweeping => 'Ищем устройства в твоей сети Wi-Fi…';
 
   @override
   String get discoveryIdentifying => 'Проверяем найденные устройства…';
@@ -3907,11 +3918,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discoveryNoNetwork =>
-      'Телефон не подключён к сети Wi-Fi. Подключитесь к той же сети, что и ваши устройства, и повторите поиск.';
+      'Телефон не подключён к сети Wi-Fi. Подключись к той же сети, что и твои устройства, и повтори поиск.';
 
   @override
   String get discoveryNothingFoundHelp =>
-      'Устройства не найдены. Убедитесь, что они включены и подключены к этой сети Wi-Fi. Некоторые гостевые сети запрещают устройствам видеть друг друга. Устройство всё ещё можно добавить по IP-адресу.';
+      'Устройства не найдены. Убедись, что они включены и подключены к этой сети Wi-Fi. Некоторые гостевые сети запрещают устройствам видеть друг друга. Устройство всё ещё можно добавить по IP-адресу.';
 
   @override
   String get discoveryAdd => 'Добавить';
@@ -3942,15 +3953,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discoveryFailed =>
-      'Поиск прервался из-за непредвиденной ошибки. Попробуйте выполнить поиск ещё раз.';
+      'Поиск прервался из-за непредвиденной ошибки. Попробуй выполнить поиск ещё раз.';
 
   @override
   String get discoveryPermissionDenied =>
-      'У ReefTracker нет доступа к локальной сети, поэтому ни поиск, ни ввод адреса вручную не сработают. Разрешите доступ в Настройки → Конфиденциальность и безопасность → Локальная сеть и повторите поиск.';
+      'У ReefTracker нет доступа к локальной сети, поэтому ни поиск, ни ввод адреса вручную не сработают. Разреши доступ в Настройки → Конфиденциальность и безопасность → Локальная сеть и повтори поиск.';
 
   @override
   String deviceAlreadyAdded(Object name) {
-    return 'Устройство $name уже добавлено. Чтобы указать новый адрес, используйте Поиск в сети.';
+    return 'Устройство $name уже добавлено. Чтобы указать новый адрес, используй Поиск в сети.';
   }
 
   @override
@@ -3984,21 +3995,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get devicesDisclaimer =>
-      'Приложение только считывает данные с устройств. Оно не может менять настройки, дозировать, переключать розетки или калибровать — для этого используйте приложение производителя. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
+      'Приложение только считывает данные с устройств. Оно не может менять настройки, дозировать, переключать розетки или калибровать — для этого используй приложение производителя. Чтение работает, только пока телефон находится в той же сети Wi-Fi, что и устройства.';
 
   @override
   String get devicesEmptyTitle => 'Устройств пока нет';
 
   @override
   String get devicesEmptyBody =>
-      'Подключите измеритель ReefFactory, устройство Red Sea ReefBeat или контроллер Neptune Apex в своей сети — или выполните измерение фотометром Hanna по Bluetooth — и они появятся здесь.';
+      'Подключи измеритель ReefFactory, устройство Red Sea ReefBeat или контроллер Neptune Apex в своей сети — или выполни измерение фотометром Hanna по Bluetooth — и они появятся здесь.';
 
   @override
   String get devicesAddDevice => 'Добавить устройство';
 
   @override
   String get devicesHannaDisclaimer =>
-      'Фотометр подключается по Bluetooth только на время измерения — запустите его с карточки устройства. Завершённые измерения сохраняются в ваш журнал.';
+      'Фотометр подключается по Bluetooth только на время измерения — запусти его с карточки устройства. Завершённые измерения сохраняются в твой журнал.';
 
   @override
   String get devicesAddPickBrand => 'Какой бренд?';
@@ -4097,7 +4108,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resetParamDefaultsBody =>
-      'Каждый параметр вернётся к рекомендованным границам для этого типа аквариума, а микроэлементы — к встроенным значениям. Границы, заданные вами, будут удалены. Измерения сохранятся.';
+      'Каждый параметр вернётся к рекомендованным границам для этого типа аквариума, а микроэлементы — к встроенным значениям. Границы, заданные вручную, будут удалены. Измерения сохранятся.';
 
   @override
   String get paramDefaultsRestored =>
@@ -4112,4 +4123,152 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Используются значения по умолчанию';
+
+  @override
+  String get wallDisplayTitle => 'Настенный дисплей';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Постоянно включённая панель с показателями твоего аквариума';
+
+  @override
+  String get wallSmallScreenNote =>
+      'Настенный дисплей рассчитан на планшет, закреплённый на стене. На этом небольшом экране он тоже работает – просто на странице поместится меньше карточек.';
+
+  @override
+  String get wallStartNow => 'Запустить сейчас';
+
+  @override
+  String get wallStartNowSubtitle => 'Показать настенную панель на этом экране';
+
+  @override
+  String get wallAutoStartTitle => 'Запускать при старте';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Открывать настенный дисплей при каждом запуске приложения на этом устройстве';
+
+  @override
+  String get wallBehaviourSection => 'Поведение';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Обновлять каждые';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Как часто опрашиваются подключённые устройства';
+
+  @override
+  String get wallPageSecondsTitle => 'Смена страниц';
+
+  @override
+  String get wallPageSecondsSubtitle =>
+      'Сколько времени показывается каждая страница';
+
+  @override
+  String get wallNightTitle => 'Ночное затемнение';
+
+  @override
+  String get wallNightSubtitle =>
+      'Затемнять экран ночью; касание снимает затемнение на минуту';
+
+  @override
+  String get wallNightFromTitle => 'Затемнять с';
+
+  @override
+  String get wallNightToTitle => 'Затемнять до';
+
+  @override
+  String get wallCardsSection => 'Карточки';
+
+  @override
+  String get wallCardsHint =>
+      'Каждое значение, которое сообщает устройство, получает свою карточку. Скрой ненужные дубликаты и расставь остальные; если скрыть все карточки устройства, панель перестанет к нему обращаться.';
+
+  @override
+  String get wallStoredCard => 'Ручные измерения';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n с';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n мин';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Пока нет аквариума. Добавь его, затем запусти настенный дисплей.';
+
+  @override
+  String get wallProLocked => 'Настенный дисплей — функция PRO.';
+
+  @override
+  String get wallExitHint => 'Удерживай в любом месте, чтобы выйти';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'обновлено $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Сегодня: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return 'тест: $param';
+  }
+
+  @override
+  String get wallNoDevices => 'Нет устройств';
+
+  @override
+  String get wallAllReachable => 'Все устройства доступны';
+
+  @override
+  String get wallSomeUnreachable => 'Устройство недоступно';
+
+  @override
+  String get wallNetworkDown => 'Устройства недоступны — проверь сеть';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'измерено $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 ч';
+
+  @override
+  String get wallWindow14d => '14 д';
+
+  @override
+  String wallHeadDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дня',
+      many: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String wallHeadMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count месяца',
+      many: '$count месяцев',
+      few: '$count месяца',
+      one: '$count месяц',
+    );
+    return '$_temp0';
+  }
 }

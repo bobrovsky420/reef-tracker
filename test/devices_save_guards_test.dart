@@ -169,7 +169,8 @@ void main() {
       // sanity gate can see it; only the rail rule can.
       await pumpDevices(tester, db, rf: _FakeRfLink.guardian(salinityPpt: 0));
 
-      await tapSaveAll(tester, 1);
+      // Salinity plus its supplementary temperature are both going to save.
+      await tapSaveAll(tester, 2);
       expect(find.textContaining('reads as nothing at all'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(TextButton, 'Skip'));
@@ -377,6 +378,22 @@ void main() {
       // The positive control for the test above: same fleet, same fakes, same
       // page — only the entitlement differs.
       expectReads(1);
+      await unmountApp(tester);
+    });
+
+    testWidgets('pulling past the top refreshes every device in scope', (
+      tester,
+    ) async {
+      final db = await seedFleet(pro: true);
+      addTearDown(db.close);
+      await pumpBody(tester, db);
+      expectReads(1); // The ordinary on-open read.
+
+      expect(find.byType(RefreshIndicator), findsOneWidget);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, 400));
+      await settle(tester);
+
+      expectReads(2);
       await unmountApp(tester);
     });
 

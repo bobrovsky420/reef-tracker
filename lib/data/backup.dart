@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../domain/device_vendors.dart';
 import '../domain/reminders.dart';
 import '../domain/ro.dart';
 import '../domain/setup_type.dart';
@@ -130,16 +131,6 @@ class BackupData {
   final List<SettingsCompanion> settings;
 }
 
-/// The [Devices.kind] values this app understands (#34 gate). Mirrors the
-/// writers in database.dart (`upsertReefFactoryDevice`, `ensureHannaDevice`,
-/// `upsertReefBeatDevice`, `upsertApexDevice`).
-const Set<String> _knownDeviceKinds = {
-  'reeffactory',
-  'hanna',
-  'reefbeat',
-  'apex',
-};
-
 /// Serializes the whole database to a compact JSON string.
 ///
 /// Deliberately *not* pretty-printed (T5): indentation roughly doubles both
@@ -208,6 +199,10 @@ String encodeBackup({
         .toList(),
     'importSources': importSources.map(_importSourceToJson).toList(),
     'devices': devices.map(_deviceToJson).toList(),
+    // The wall display's tables (U49) — `device_samples`, `wall_tile_settings`
+    // — are deliberately NOT sections. They are one tablet's ephemeral
+    // telemetry and layout; no backup contains them, so no backup can ever
+    // depend on the feature existing (§12o). Do not "complete" the list.
     // Device-local keys never enter the document (#69). The restore side
     // already refuses to *apply* them (`preserveSettingKeys`), but these files
     // are built to travel — the share sheet ("mail it to support"), a shared
@@ -770,7 +765,7 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   requireKnown(
     'devices.kind',
     data.devices.map((d) => d.kind.present ? d.kind.value : null),
-    _knownDeviceKinds,
+    kKnownDeviceKindIds,
   );
 
   // Recurring-interval day counts feed unguarded DateTime day-addition

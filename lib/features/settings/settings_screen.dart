@@ -82,7 +82,7 @@ class SettingsBody extends ConsumerWidget {
     return ReefSettingsList(
       sections: [
         ReefSettingsSection(
-          label: l.languageSection,
+          label: l.appearanceSection,
           children: [
             ReefSettingsRow(
               icon: Icons.translate,
@@ -104,13 +104,8 @@ class SettingsBody extends ConsumerWidget {
                 ],
               ),
             ),
-          ],
-        ),
-        // Theme mode (REDESIGN #16): the segmented System/Light/Dark choice
-        // replacing the mockups' navbar sun/moon toggle.
-        ReefSettingsSection(
-          label: l.appearanceSection,
-          children: [
+            // Theme mode (REDESIGN #16): the segmented System/Light/Dark
+            // choice replacing the mockups' navbar sun/moon toggle.
             ReefSettingsRow(
               icon: Icons.dark_mode_outlined,
               title: l.themeTitle,
@@ -124,6 +119,17 @@ class SettingsBody extends ConsumerWidget {
                     ref.watch(themeModeProvider).value ?? AppThemeMode.system,
                 onChanged: settings.setThemeMode,
               ),
+            ),
+            // Wall display mode (U49): its options live on a subpage — the
+            // mode is entered from there ("Start now") or via auto-start,
+            // deliberately not from the Devices tab (that host owns no menu,
+            // U41).
+            ReefSettingsRow(
+              icon: Icons.monitor_outlined,
+              title: l.wallDisplayTitle,
+              description: l.wallDisplaySubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => context.push('/settings/wall'),
             ),
           ],
         ),

@@ -1,0 +1,32 @@
+# Wall-display parameter catalogue — SOURCE OF TRUTH for which parameters may
+# appear on the wall board (U49): its cards, its sample recording and the
+# selectable card list under Settings → Wall display.
+#
+# After editing this file, regenerate the Dart catalogue with:
+#     dart run tool/gen_wall_parameters.dart
+# (the generator validates this file against parameters.yaml and writes
+# wall_parameters.g.dart).
+#
+# Rules:
+#  - Every key must exist in parameters.yaml.
+#  - MICROELEMENTS ARE EXCLUDED BY DESIGN: no key whose parameters.yaml entry
+#    has a category other than core may be listed here — the generator
+#    rejects it. The wall is a glance-across-the-room board of live water
+#    state; the ICP panel moves on lab-report cadence and has no place on it,
+#    however many elements a tank tracks.
+#  - Order is cosmetic — membership is what matters (card order comes from
+#    the tank's tracked order and the keeper's own arrangement). Keep
+#    parameters.yaml order for legibility.
+
+parameters:
+  - temperature
+  - ph
+  - salinity
+  - alkalinity
+  - calcium
+  - magnesium
+  - nitrate
+  - phosphate
+  - ammonia
+  - nitrite
+  - orp

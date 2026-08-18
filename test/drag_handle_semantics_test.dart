@@ -6,10 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 /// app carries a `semanticLabel`** (a `Tooltip` would fight the drag gesture,
 /// so the label on the icon is the only affordance a screen reader gets).
 ///
-/// This is a source scan rather than a widget test on purpose — there are ten
-/// reorderable lists across as many screens, and pumping each one to assert a
-/// label would cost far more than reading the files. #78 was exactly the case
-/// this catches: one list added later than the rest, silently missing the label.
+/// This is a source scan rather than a widget test on purpose — the remaining
+/// handle-driven lists span several screens, and pumping each one to assert a
+/// label would cost far more than reading the files. Device cards use
+/// whole-card delayed dragging instead, with their temporary badge covered by
+/// `device_reorder_widget_test.dart`. #78 was exactly the case this catches: a
+/// list added later than the rest, silently missing the label.
 void main() {
   /// Line comments are stripped before the paren scan below: a comment such as
   /// "draggable with a finger (the schedule-list convention)" would otherwise
@@ -98,6 +100,6 @@ void main() {
         )
         .fold<int>(0, (a, b) => a + b);
 
-    expect(count, greaterThanOrEqualTo(10));
+    expect(count, greaterThanOrEqualTo(7));
   });
 }

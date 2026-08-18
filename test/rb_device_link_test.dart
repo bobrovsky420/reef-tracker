@@ -36,6 +36,55 @@ const _doseDeviceInfo = {
   'hwid': 'cc7b5c267a68',
 };
 
+/// The ReefControl Pro discovered at 192.168.1.183 (2026-08-13).
+const _controlDeviceInfo = {
+  'name': 'RSCONTROLPRO-674461898',
+  'hw_type': 'reef-control',
+  'hw_model': 'RSCONTROLPRO',
+  'hw_revision': 'v1.3_26A',
+  'hwid': '704bca783328',
+};
+
+const _controlDashboard = {
+  'mode': 'auto',
+  'is_internet_connected': true,
+  'cable_connected': false,
+  'probes': [
+    {
+      'type': 'ec',
+      'uid': '0x005AA',
+      'measurement_unit': 'ppt',
+      'value': 35.8,
+      'name': 'Salinity 5AA',
+      'status': 'auto',
+      'ec': 54.2,
+      'ppt': 35.8,
+      'sg': 1.027,
+      'level': 'acceptable',
+      'temp_value': 25.6,
+      'temp_level': 'desired',
+    },
+    {
+      'type': 'orp',
+      'uid': '0x0007C',
+      'name': 'ORP 7C',
+      'status': 'auto',
+      'value': 81,
+      'level': 'danger',
+    },
+    {
+      'type': 'ph',
+      'uid': '0x00579',
+      'name': 'pH 579',
+      'status': 'auto',
+      'value': 8.06,
+      'level': 'desired',
+      'temp_value': 25.8,
+      'temp_level': 'desired',
+    },
+  ],
+};
+
 /// The same pump's `/dashboard`, abridged to two of its four heads — enough to
 /// prove the settings fan-out visits each head that was reported, and only
 /// those. Head numbers 1 and 4 on purpose: the loop must follow the reported
@@ -259,7 +308,7 @@ void main() {
     final snapshot = await link.readOnce(host);
     expect(snapshot.info.hwid, '8813bf641cd8');
     expect(snapshot.info.hwModel, 'RSATO+');
-    expect(snapshot.ato, isNotNull);
+    expect(snapshot, isA<RbAtoSnapshot>());
   });
 
   test('the probe ceiling is far above a real identity payload', () async {
@@ -274,6 +323,24 @@ void main() {
       maxResponseBytes: kDeviceProbeMaxBytes,
     );
     expect((await link.identify(host)).hwid, '8813bf641cd8');
+  });
+
+  test('reads ReefControl probes from one dashboard request', () async {
+    deviceInfo = Map.of(_controlDeviceInfo);
+    dashboard = Map.of(_controlDashboard);
+
+    final snapshot = await RbHttpLink(
+      timeout: const Duration(seconds: 5),
+    ).readOnce(host);
+
+    expect(requested, ['/device-info', '/dashboard']);
+    expect(snapshot.modelDisplayName, 'ReefControl Pro');
+    expect(snapshot, isA<RbControlSnapshot>());
+    final control = (snapshot as RbControlSnapshot).status;
+    expect(control.probes, hasLength(3));
+    expect(control.probeOf('ec')?.salinityPpt, 35.8);
+    expect(control.probeOf('ph')?.value, 8.06);
+    expect(control.probeOf('orp')?.value, 81);
   });
 
   group('ReefWave', () {
@@ -292,11 +359,9 @@ void main() {
 
         expect(requested, ['/device-info', '/mode', '/auto']);
         expect(requested, isNot(contains('/dashboard')));
-        final wave = snapshot.wave;
-        expect(wave, isNotNull);
-        expect(snapshot.dose, isNull);
-        expect(snapshot.ato, isNull);
-        expect(wave!.mode, 'auto');
+        expect(snapshot, isA<RbWaveSnapshot>());
+        final wave = (snapshot as RbWaveSnapshot).status;
+        expect(wave.mode, 'auto');
         expect(wave.scheduleApplies, isTrue);
         // The schedule is the only place a wave pump's output appears at all.
         expect(wave.intervals, hasLength(3));
@@ -325,11 +390,12 @@ void main() {
         'just without a schedule', () async {
       missing.add('/auto');
       final snapshot = await link().readOnce(host);
+      final wave = (snapshot as RbWaveSnapshot).status;
 
       expect(requested, ['/device-info', '/mode', '/auto']);
-      expect(snapshot.wave!.mode, 'auto');
-      expect(snapshot.wave!.intervals, isEmpty);
-      expect(snapshot.wave!.forwardPercentAt(12 * 60), isNull);
+      expect(wave.mode, 'auto');
+      expect(wave.intervals, isEmpty);
+      expect(wave.forwardPercentAt(12 * 60), isNull);
     });
   });
 
@@ -359,11 +425,12 @@ void main() {
       // A refresh never touches the queue — that is a separate, on-demand read.
       expect(requested, isNot(contains('/dosing-queue')));
 
-      final heads = snapshot.dose!.heads;
+      final dose = (snapshot as RbDoseSnapshot).status;
+      final heads = dose.heads;
       expect(heads.map((h) => h.number), [1, 4]);
       expect(heads.map((h) => h.shortName), ['KH', 'NPX']);
       // What the abbreviations are *for*: mapping a queued dose to a head.
-      expect(snapshot.dose!.headForShortName('NPX')?.supplement, 'NO3PO4-X');
+      expect(dose.headForShortName('NPX')?.supplement, 'NO3PO4-X');
     });
 
     test('a head whose settings do not answer costs that head its '
@@ -377,15 +444,16 @@ void main() {
         '/head/1/settings',
         '/head/4/settings',
       ]);
-      final heads = snapshot.dose!.heads;
+      final dose = (snapshot as RbDoseSnapshot).status;
+      final heads = dose.heads;
       // Both heads still have a full row from `/dashboard`…
       expect(heads.map((h) => h.number), [1, 4]);
       expect(heads.last.supplement, 'NO3PO4-X');
       expect(heads.last.dailyDose, 6);
       // …and only the queue mapping is lost, which is the whole visible cost.
       expect(heads.map((h) => h.shortName), ['KH', null]);
-      expect(snapshot.dose!.headForShortName('NPX'), isNull);
-      expect(snapshot.dose!.headForShortName('KH')?.number, 1);
+      expect(dose.headForShortName('NPX'), isNull);
+      expect(dose.headForShortName('KH')?.number, 1);
     });
 
     test('the cap is above anything Red Sea ships, so a real pump fans out '
@@ -430,7 +498,7 @@ void main() {
 
       // The parse is unaffected — only the fan-out is bounded — so the heads
       // past the cap still get their `/dashboard` row, just no abbreviation.
-      final heads = snapshot.dose!.heads;
+      final heads = (snapshot as RbDoseSnapshot).status.heads;
       expect(heads, hasLength(300));
       expect(heads.first.number, 1);
       expect(heads.first.shortName, 'KH');

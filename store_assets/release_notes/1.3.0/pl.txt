@@ -1,0 +1,4 @@
+• Wyświetlacz ścienny (PRO): zamień tablet na ścianie w stale włączony panel akwarium – duże kolorowe wartości, żywe 24-godzinne wykresy z podłączonych urządzeń, kafelki stanu i dzisiejsze zadania.
+• Wybierz karty, ukryj duplikaty, przeciągnij własną kolejność; autostart i nocne przyciemnianie w zestawie.
+• Aplikacja poinformuje Cię, gdy pojawi się nowsza wersja.
+• Poprawka: kopie zapasowe i przypomnienia działają teraz także na urządzeniach włączonych tygodniami.

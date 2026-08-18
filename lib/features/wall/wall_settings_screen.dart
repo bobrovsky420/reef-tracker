@@ -1,0 +1,442 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../app/providers.dart';
+import '../../app/theme.dart';
+import '../../data/database.dart';
+import '../../domain/pro_features.dart';
+import '../../domain/wall_display.dart';
+import '../../l10n/app_localizations.dart';
+import '../../l10n/l10n_helpers.dart';
+import '../../widgets/pro_feature_dialog.dart';
+import '../../widgets/reef_settings.dart';
+
+/// Settings → Wall display (U49 §12f/§12q): the mode's options, its "Start
+/// now" entry point, and the wall-card list — a reorderable list with a
+/// visibility toggle per row, following the Manage-parameters conventions
+/// (#48 drag handles). Deliberately **not** an edit mode on the wall itself:
+/// a long-press there is the exit gesture, and dragging tiles on a
+/// wall-mounted panel is the wrong ergonomics.
+class WallSettingsScreen extends ConsumerWidget {
+  const WallSettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final settings = ref.read(settingsProvider);
+    final entitled = ref.watch(proFeatureProvider(ProFeature.wallDisplay));
+    final autoStart = ref.watch(wallAutoStartProvider).value ?? false;
+    final interval =
+        ref.watch(wallRefreshIntervalProvider).value ??
+        const Duration(seconds: kWallDefaultRefreshSeconds);
+    final pageSeconds =
+        ref.watch(wallPageSecondsProvider).value ?? kWallDefaultPageSeconds;
+    final nightEnabled = ref.watch(wallNightEnabledProvider).value ?? true;
+    final nightFrom =
+        ref.watch(wallNightFromProvider).value ?? kWallDefaultNightFromMinutes;
+    final nightTo =
+        ref.watch(wallNightToProvider).value ?? kWallDefaultNightToMinutes;
+
+    String intervalLabel(int seconds) => seconds < 60
+        ? l.wallSecondsLabel(seconds)
+        : l.wallMinutesLabel(seconds ~/ 60);
+
+    // Phone-class advisory: purely informational, above the fold so it is
+    // read before "Start now". Physical inches are not knowable, so 600 dp
+    // shortest-side is the proxy; nothing is gated — a phone entering the
+    // mode is a legitimate try-it-out path that degrades to fewer cards.
+    final phoneClass =
+        MediaQuery.sizeOf(context).shortestSide < kWallPhoneClassShortestSide;
+
+    final list = ReefSettingsList(
+      sections: [
+        ReefSettingsSection(
+          children: [
+            ReefSettingsRow(
+              icon: Icons.play_circle_outline,
+              title: l.wallStartNow,
+              description: l.wallStartNowSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => unawaited(
+                runProGated(
+                  context,
+                  ref,
+                  ProFeature.wallDisplay,
+                  () => context.push('/wall'),
+                ),
+              ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.restart_alt,
+              title: l.wallAutoStartTitle,
+              description: l.wallAutoStartSubtitle,
+              trailing: Switch.adaptive(
+                value: autoStart && entitled,
+                onChanged: (v) => unawaited(_setAutoStart(context, ref, v)),
+              ),
+              onTap: () => unawaited(_setAutoStart(context, ref, !autoStart)),
+            ),
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.wallBehaviourSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.update,
+              title: l.wallRefreshIntervalTitle,
+              description: l.wallRefreshIntervalSubtitle,
+              trailing: ReefSettingsDropdown<int>(
+                value: interval.inSeconds,
+                onChanged: (v) => unawaited(
+                  settings.setWallRefreshInterval(Duration(seconds: v)),
+                ),
+                items: [
+                  for (final s in kWallRefreshChoicesSeconds)
+                    (s, intervalLabel(s)),
+                ],
+              ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.auto_mode,
+              title: l.wallPageSecondsTitle,
+              description: l.wallPageSecondsSubtitle,
+              trailing: ReefSettingsDropdown<int>(
+                value: pageSeconds,
+                onChanged: (v) => unawaited(settings.setWallPageSeconds(v)),
+                items: [
+                  for (final s in kWallPageSecondsChoices)
+                    (s, l.wallSecondsLabel(s)),
+                ],
+              ),
+            ),
+            ReefSettingsRow(
+              icon: Icons.nightlight_outlined,
+              title: l.wallNightTitle,
+              description: l.wallNightSubtitle,
+              trailing: Switch.adaptive(
+                value: nightEnabled,
+                onChanged: (v) => unawaited(settings.setWallNightEnabled(v)),
+              ),
+              onTap: () =>
+                  unawaited(settings.setWallNightEnabled(!nightEnabled)),
+            ),
+            if (nightEnabled) ...[
+              ReefSettingsRow(
+                icon: Icons.bedtime_outlined,
+                title: l.wallNightFromTitle,
+                trailing: ReefSettingsValue(
+                  value: _timeLabel(context, nightFrom),
+                  mono: true,
+                ),
+                onTap: () => unawaited(
+                  _pickTime(context, nightFrom, settings.setWallNightFrom),
+                ),
+              ),
+              ReefSettingsRow(
+                icon: Icons.wb_twilight,
+                title: l.wallNightToTitle,
+                trailing: ReefSettingsValue(
+                  value: _timeLabel(context, nightTo),
+                  mono: true,
+                ),
+                onTap: () => unawaited(
+                  _pickTime(context, nightTo, settings.setWallNightTo),
+                ),
+              ),
+            ],
+          ],
+        ),
+        ReefSettingsSection(
+          label: l.wallCardsSection,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Text(
+                l.wallCardsHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const _WallCardList(),
+          ],
+        ),
+      ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(title: Text(l.wallDisplayTitle)),
+      body: !phoneClass
+          ? list
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: _SmallScreenNote(text: l.wallSmallScreenNote),
+                ),
+                Expanded(child: list),
+              ],
+            ),
+    );
+  }
+
+  Future<void> _setAutoStart(
+    BuildContext context,
+    WidgetRef ref,
+    bool enabled,
+  ) async {
+    final settings = ref.read(settingsProvider);
+    if (!enabled) {
+      await settings.setWallAutoStart(false);
+      return;
+    }
+    // Enabling is the Pro action (§12h): a Standard install can look at the
+    // options but not arm the kiosk boot.
+    if (!ref.read(proFeatureProvider(ProFeature.wallDisplay))) {
+      await showProFeatureDialog(context, ProFeature.wallDisplay);
+      if (!ref.read(proFeatureProvider(ProFeature.wallDisplay))) return;
+    }
+    await settings.setWallAutoStart(true);
+  }
+
+  String _timeLabel(BuildContext context, int minutes) =>
+      TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60).format(context);
+
+  Future<void> _pickTime(
+    BuildContext context,
+    int minutes,
+    Future<void> Function(int) write,
+  ) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60),
+    );
+    if (picked != null) {
+      await write(picked.hour * 60 + picked.minute);
+    }
+  }
+}
+
+/// The phone-class advisory banner (same visual idiom as the Devices page's
+/// read-only disclaimer): the theme's tertiary container, so it reads as
+/// informational rather than an error or a gate.
+class _SmallScreenNote extends StatelessWidget {
+  const _SmallScreenNote({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.tertiaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 20, color: cs.onTertiaryContainer),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: cs.onTertiaryContainer),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The reorderable wall-card list: what is known to the wall — remembered
+/// device cards (sparse `wall_tile_settings` rows) plus the tracked
+/// parameters' stored-readings cards — in the wall's own order.
+class _WallCardList extends ConsumerStatefulWidget {
+  const _WallCardList();
+
+  @override
+  ConsumerState<_WallCardList> createState() => _WallCardListState();
+}
+
+class _WallCardListState extends ConsumerState<_WallCardList> {
+  int? _optimisticTankId;
+  List<WallCardId>? _optimisticOrder;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final tank = ref.watch(activeTankProvider);
+    if (tank == null) return const SizedBox.shrink();
+    final tracked = ref.watch(trackedParametersProvider).value ?? const [];
+    final rows = [
+      for (final r
+          in ref.watch(wallTileSettingsProvider).value ??
+              const <WallTileSetting>[])
+        WallTileConfig(
+          deviceIdentifier: r.deviceIdentifier,
+          paramKey: r.paramKey,
+          displayOrder: r.displayOrder,
+          visible: r.visible,
+        ),
+    ];
+
+    // Device names + page order, from the registered inventory. No live
+    // reads here: what a device reports is remembered in the rows the wall
+    // wrote (`insertMissingWallTiles`) — a device never polled yet simply has
+    // no cards to arrange until the wall has seen it once.
+    final inventory = ref.watch(wallDeviceInventoryProvider);
+    final integrations = ref.watch(deviceIntegrationRegistryProvider);
+    final deviceNames = <String, String>{};
+    final reported = <String, List<String>>{};
+    for (final entry in inventory.entries) {
+      final d = entry.device;
+      final known = integrations.knownWallParameters(d);
+      deviceNames[d.identifier] = deviceDisplayName(d);
+      reported[d.identifier] = [
+        ...known,
+        for (final r in rows)
+          if (r.deviceIdentifier == d.identifier && !known.contains(r.paramKey))
+            r.paramKey,
+      ];
+    }
+
+    var cards = buildWallCards(
+      trackedKeys: [
+        for (final p in tracked)
+          if (p.enabled) p.paramKey,
+      ],
+      reportedByDevice: reported,
+      rows: rows,
+    );
+    cards = _applyOptimisticOrder(tank.id, cards);
+    if (cards.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(l.noReadings, style: Theme.of(context).textTheme.bodySmall),
+      );
+    }
+
+    final db = ref.read(dbProvider);
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      buildDefaultDragHandles: false,
+      itemCount: cards.length,
+      onReorderItem: (oldIndex, newIndex) {
+        final ids = [for (final c in cards) c.id];
+        ids.insert(newIndex, ids.removeAt(oldIndex));
+        // ReorderableListView expects its owner to publish the new order in
+        // this callback. Waiting for SQLite and the watched query made the
+        // dropped row snap back on a real device while the write completed.
+        setState(() {
+          _optimisticTankId = tank.id;
+          _optimisticOrder = ids;
+        });
+        unawaited(
+          db.setWallTileOrder(tank.id, [
+            for (final id in ids)
+              (deviceIdentifier: id.deviceIdentifier, paramKey: id.paramKey),
+          ]),
+        );
+      },
+      itemBuilder: (context, i) {
+        final card = cards[i];
+        final id = card.id;
+        final deviceCard = id.deviceIdentifier != kWallNoDevice;
+        final deviceName = deviceCard
+            ? (deviceNames[id.deviceIdentifier] ?? id.deviceIdentifier)
+            : l.wallStoredCard;
+        return ListTile(
+          key: ValueKey('${id.deviceIdentifier}|${id.paramKey}'),
+          leading: Semantics(
+            label: '${l.paramName(id.paramKey)} · $deviceName',
+            child: Switch.adaptive(
+              value: card.visible,
+              onChanged: (v) => unawaited(
+                db.setWallTileVisible(
+                  tankId: tank.id,
+                  deviceIdentifier: id.deviceIdentifier,
+                  paramKey: id.paramKey,
+                  visible: v,
+                ),
+              ),
+            ),
+          ),
+          title: Text(l.paramName(id.paramKey)),
+          subtitle: Text(
+            deviceName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: ReorderableDragStartListener(
+            index: i,
+            child: Container(
+              width: kMinInteractiveDimension,
+              height: kMinInteractiveDimension,
+              color: Colors.transparent,
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.drag_handle,
+                size: 16,
+                color: ReefTokens.of(context).textFaint,
+                semanticLabel: l.reorder,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<WallCard> _applyOptimisticOrder(int tankId, List<WallCard> stored) {
+    final optimistic = _optimisticOrder;
+    if (optimistic == null || _optimisticTankId != tankId) return stored;
+
+    final byId = <WallCardId, WallCard>{
+      for (final card in stored) card.id: card,
+    };
+    final reordered = <WallCard>[];
+    for (final id in optimistic) {
+      if (byId.remove(id) case final card?) reordered.add(card);
+    }
+    // A newly discovered card can arrive while an order write is pending.
+    // Keep it in the database-resolved append position instead of losing it.
+    for (final card in stored) {
+      if (byId.remove(card.id) case final remaining?) {
+        reordered.add(remaining);
+      }
+    }
+
+    if (_sameOrder(stored, reordered)) {
+      // The watched SQLite rows have caught up. Clear only this exact pending
+      // order after build so a later drag cannot be cleared by an old frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted ||
+            _optimisticTankId != tankId ||
+            !identical(_optimisticOrder, optimistic)) {
+          return;
+        }
+        setState(() {
+          _optimisticTankId = null;
+          _optimisticOrder = null;
+        });
+      });
+    }
+    return reordered;
+  }
+
+  bool _sameOrder(List<WallCard> a, List<WallCard> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+    }
+    return true;
+  }
+}

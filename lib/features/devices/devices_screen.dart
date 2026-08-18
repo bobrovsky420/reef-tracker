@@ -3,20 +3,19 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../app/device_live.dart';
 import '../../app/providers.dart';
 import '../../data/database.dart';
+import '../../data/device_integrations.dart';
+import '../../data/device_read_scope.dart';
 import '../../domain/device_vendors.dart';
 import '../../domain/pro_features.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/implausible_value_dialog.dart';
 import '../../widgets/pro_feature_dialog.dart';
-import '../apex/apex_screen.dart';
-import '../reefbeat/reefbeat_screen.dart';
-import '../reeffactory/reeffactory_screen.dart';
-import 'hanna_device_section.dart';
+import 'device_presentations.dart';
 
 /// Standalone Devices route (`/devices`). With tanks present, Devices is the
 /// home shell's fourth bottom-nav tab (U42) and nothing pushes this route; it
@@ -121,7 +120,8 @@ class DevicesFabStatus {
   /// and is hidden rather than disabled, exactly as the action bar did.
   final int meters;
 
-  /// Devices in scope holding values right now (Save all's count).
+  /// Distinct tank parameters in scope that Save all would persist right now,
+  /// after each integration's filtering and the first-displayed-wins merge.
   final int savable;
 
   /// A save is already in flight — Save all disables for its duration (#86).
@@ -246,8 +246,8 @@ class DevicesActionFabs extends StatelessWidget {
 ///   vendor's own order; filtering changes nothing about a card's neighbours.
 /// - **Refresh all / Save all act on the current selection only**, and the
 ///   scope line above the list says what that is. Save all is *hidden* — not
-///   disabled — when the selection holds no meter-capable device, because for
-///   a Red Sea filter there is nothing to save and never will be.
+///   disabled — when the selection holds no meter-capable device. A Red Sea
+///   selection counts ReefControl but not its status-only device families.
 /// - Live snapshots live **here**, not in the sections, so switching the filter
 ///   never throws away values the user just refreshed.
 ///
@@ -299,17 +299,25 @@ const Duration kDeviceSnapshotStaleAfter = Duration(minutes: 2);
 const double _kVendorSwipeVelocity = 300;
 const double _kVendorSwipeFraction = 0.2;
 
+/// Presentation-only group for persisted kinds this build cannot parse. Never
+/// written to the database or the vendor-order setting.
+const String _kUnsupportedDeviceGroup = '__unsupported__';
+
+String _deviceVendorLabel(AppLocalizations l, String vendor) =>
+    vendor == _kUnsupportedDeviceGroup
+    ? l.discoveryUnsupported
+    : devicePresentationRegistry.forId(vendor)?.label(l) ??
+          l.discoveryUnsupported;
+
 /// How long the page takes to scroll back to the top after a swipe changed the
 /// vendor — see [DevicesBodyState._stepVendor], where that scroll is the
 /// feedback rather than housekeeping.
 const Duration _kVendorSwipeScrollBack = Duration(milliseconds: 250);
 
 class DevicesBodyState extends ConsumerState<DevicesBody> {
-  /// Live state per vendor, keyed by device identifier. Held at page level so
-  /// it survives filter switches.
-  final Map<String, RfLive> _rfLive = {};
-  final Map<String, RbLive> _rbLive = {};
-  final Map<String, ApLive> _apLive = {};
+  /// One normalized live-state map, keyed by device identifier. Family-owned
+  /// card sections receive typed presentation views from their descriptors.
+  final Map<String, DeviceLiveState> _live = {};
 
   /// Identifiers already auto-read this session. The on-open read covers the
   /// current selection only; switching to a vendor not yet read pulls it then,
@@ -331,7 +339,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// possible [_freshen] round of LAN traffic before its DB writes, and
   /// `insertReadingGroup` is a blind insert — a second tap during that window
   /// would write a full duplicate group. One flag guards every save surface
-  /// (Save all and both vendors' per-card buttons all funnel through [_save]).
+  /// (Save all and every vendor's per-card buttons all funnel through [_save]).
   bool _saving = false;
 
   /// The vendors that had a chip on the last build. Kept so [addDevice] — which
@@ -342,7 +350,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
 
   /// The scope the last build rendered — what the host's Refresh all / Save
   /// all FABs act on between builds, same reasoning as [_present].
-  _Scope _scope = const _Scope(order: [], byVendor: {});
+  DeviceScope _scope = const DeviceScope.empty();
 
   /// Drives the scroll back to the top after a swipe changes the vendor
   /// ([_stepVendor]). Owned rather than taken from the ambient
@@ -443,67 +451,37 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
 
   // --- reading -----------------------------------------------------------
 
-  Future<void> _refreshRf(DeviceRecord d) async {
-    if (!mounted) return;
-    setState(() => _rfLive[d.identifier] = const RfLive(loading: true));
-    final result = await rfReadDevice(ref, d);
-    if (!mounted) return;
-    setState(() {
-      _rfLive[d.identifier] = result;
-      if (result.snapshot != null) _readAt[d.identifier] = DateTime.now();
-    });
-  }
-
-  Future<void> _refreshRb(DeviceRecord d) async {
-    if (!mounted) return;
-    setState(() => _rbLive[d.identifier] = const RbLive(loading: true));
-    final result = await rbReadDevice(ref, d);
-    if (!mounted) return;
-    setState(() {
-      _rbLive[d.identifier] = result;
-      if (result.snapshot != null) _readAt[d.identifier] = DateTime.now();
-    });
-  }
-
-  Future<void> _refreshAp(DeviceRecord d) async {
-    if (!mounted) return;
-    setState(() => _apLive[d.identifier] = const ApLive(loading: true));
-    final result = await apReadDevice(ref, d);
-    if (!mounted) return;
-    setState(() {
-      _apLive[d.identifier] = result;
-      if (result.status != null) _readAt[d.identifier] = DateTime.now();
-    });
-  }
-
-  /// Reads one device of [kind] — the per-vendor read behind every bulk
-  /// action, so callers can work from a `(kind, device)` pair rather than
-  /// knowing which map holds which vendor.
-  Future<void> _refreshDevice(String kind, DeviceRecord d) => switch (kind) {
-    kDeviceKindReefFactory => _refreshRf(d),
-    kDeviceKindReefBeat => _refreshRb(d),
-    kDeviceKindApex => _refreshAp(d),
-    // The Hanna checker is not a polled device (see [deviceKindRefreshes]).
-    _ => Future.value(),
-  };
-
-  /// Reads everything refreshable in [scope]. Sequential **within** a vendor —
-  /// a meter is also serving the vendor's own cloud app, and one socket at a
-  /// time is gentle on it — but the vendors run concurrently, so a slow
-  /// controller doesn't hold up the meters.
-  Future<void> _refreshScope(_Scope scope) async {
-    Future<void> series(String kind) async {
-      for (final d in scope.of(kind)) {
-        if (!mounted) return;
-        await _refreshDevice(kind, d);
-      }
+  /// Reads one registered device. Dispatch, errors and payload typing stay in
+  /// the integration registry; the screen only owns lifecycle state.
+  Future<void> _refreshDevice(String kind, DeviceRecord d) async {
+    final registry = ref.read(deviceIntegrationRegistryProvider);
+    final integration = registry.integrationForId(kind);
+    if (!mounted ||
+        integration == null ||
+        !integration.capabilities.refreshes) {
+      return;
     }
-
-    await Future.wait([
-      for (final kind in scope.order)
-        if (deviceKindRefreshes(kind)) series(kind),
-    ]);
+    final previous = _live[d.identifier];
+    setState(() {
+      _live[d.identifier] = DeviceLiveState.loadingFrom(previous);
+    });
+    final result = await readRegisteredDevice(ref, d);
+    if (!mounted) return;
+    setState(() {
+      _live[d.identifier] = DeviceLiveState.completed(
+        result,
+        previous: previous,
+      );
+      if (result.hasFreshPayload) _readAt[d.identifier] = DateTime.now();
+    });
   }
+
+  /// Reads everything refreshable in [scope] through the shared walk
+  /// ([readDeviceScope], U49 §12d): sequential within a vendor, vendors
+  /// concurrent — the politeness rule lives there now, beside the wall
+  /// display's poll loop.
+  Future<void> _refreshScope(DeviceScope scope) =>
+      readDeviceScope(scope, _refreshDevice, keepGoing: () => mounted);
 
   // --- saving ------------------------------------------------------------
 
@@ -543,7 +521,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// A failed re-read is not fatal: the card shows the error, the held
   /// snapshot stays behind it, and the save goes ahead with those values on
   /// their own (older) read time — the save must never block on the LAN.
-  Future<void> _freshen(_Scope scope, DeviceRecord? only) async {
+  Future<void> _freshen(DeviceScope scope, DeviceRecord? only) async {
     final now = DateTime.now();
     final stale = <String, List<DeviceRecord>>{};
     for (final (kind, d) in scope.inPageOrder) {
@@ -554,37 +532,18 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
       (stale[kind] ??= []).add(d);
     }
     if (stale.isEmpty) return;
-    final heldRf = {
-      for (final d in stale[kDeviceKindReefFactory] ?? const <DeviceRecord>[])
-        d.identifier: _rfLive[d.identifier]?.snapshot,
-    };
-    final heldAp = {
-      for (final d in stale[kDeviceKindApex] ?? const <DeviceRecord>[])
-        d.identifier: _apLive[d.identifier]?.status,
-    };
     // Through the ordinary read path, so the same one-socket-at-a-time
     // courtesy per vendor applies.
-    await _refreshScope(_Scope(order: stale.keys.toList(), byVendor: stale));
-    if (!mounted) return;
-    setState(() {
-      for (final e in heldRf.entries) {
-        final snap = e.value;
-        if (snap == null || _rfLive[e.key]?.snapshot != null) continue;
-        _rfLive[e.key] = RfLive(snapshot: snap, error: _rfLive[e.key]?.error);
-      }
-      for (final e in heldAp.entries) {
-        final status = e.value;
-        if (status == null || _apLive[e.key]?.status != null) continue;
-        _apLive[e.key] = ApLive(status: status, error: _apLive[e.key]?.error);
-      }
-    });
+    await _refreshScope(
+      DeviceScope(order: stale.keys.toList(), byVendor: stale),
+    );
   }
 
   /// Saves one card's values — the per-card Save button. The device's own
   /// vendor list still rides along in [scope], because a ReefFactory meter's
   /// values depend on which *other* meters the tank has (the Temperature
   /// Controller rule).
-  Future<void> _saveOne(DeviceRecord device, _Scope scope) =>
+  Future<void> _saveOne(DeviceRecord device, DeviceScope scope) =>
       _save(scope, only: device);
 
   /// The values a save would persist for [d] right now: what its last read
@@ -592,32 +551,18 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// hasn't been read yet, holds nothing savable, or is of a kind that never
   /// reports measurements.
   ///
-  /// The one place a vendor's live map is turned into savable values — Save
-  /// all, the savable count and the Save-all button's own visibility all ask
-  /// here, so a vendor can't be honoured by one and forgotten by another.
+  /// The one place normalized live state is turned into savable values — Save
+  /// all, the savable count and per-card Save all ask the same integration.
   List<({String paramKey, double value})> _pendingValues(
     String kind,
     DeviceRecord d,
-    _Scope scope,
+    DeviceScope scope,
   ) {
-    switch (kind) {
-      case kDeviceKindReefFactory:
-        final snap = _rfLive[d.identifier]?.snapshot;
-        if (snap == null) return const [];
-        return rfValuesToSave(d, snap, scope.of(kind));
-      case kDeviceKindApex:
-        final status = _apLive[d.identifier]?.status;
-        if (status == null) return const [];
-        return apReadingsToSave(status.readings);
-      default:
-        // Every meter-capable kind must have a branch above, or Save all would
-        // count its devices (via [deviceKindSaves]) and then save nothing.
-        assert(
-          !deviceKindSaves(kind),
-          'meter-capable vendor "$kind" has no save mapping',
-        );
-        return const [];
-    }
+    final result = _live[d.identifier]?.result;
+    if (result == null) return const [];
+    return ref
+        .read(deviceIntegrationRegistryProvider)
+        .valuesToSave(d, result, scope.of(kind));
   }
 
   /// Saves every meter in [scope] at once ([only] narrows it to one card),
@@ -636,7 +581,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// suspicious-value confirmation on the way: this is the one path device
   /// readings take into the database, and it now applies the guards manual
   /// entry has always had (#71, #76).
-  Future<void> _save(_Scope scope, {DeviceRecord? only}) async {
+  Future<void> _save(DeviceScope scope, {DeviceRecord? only}) async {
     if (_saving) return;
     setState(() => _saving = true);
     try {
@@ -650,7 +595,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     }
   }
 
-  Future<void> _saveGuarded(_Scope scope, {DeviceRecord? only}) async {
+  Future<void> _saveGuarded(DeviceScope scope, {DeviceRecord? only}) async {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
@@ -803,24 +748,25 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     final entitled = ref.watch(proFeatureProvider(ProFeature.connectedDevices));
     final order = ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors;
 
-    final rfAsync = ref.watch(reefFactoryDevicesProvider);
-    final rbAsync = ref.watch(reefBeatDevicesProvider);
-    final apAsync = ref.watch(apexDevicesProvider);
-    final haAsync = ref.watch(hannaDevicesProvider);
-    final rf = _scoped(rfAsync.value ?? const [], tankId);
-    final rb = _scoped(rbAsync.value ?? const [], tankId);
-    final ap = _scoped(apAsync.value ?? const [], tankId);
-    final ha = _scoped(haAsync.value ?? const [], tankId);
-    final byVendor = {
-      kDeviceKindReefFactory: rf,
-      kDeviceKindReefBeat: rb,
-      kDeviceKindApex: ap,
-      kDeviceKindHanna: ha,
+    final inventory = {
+      for (final kind in kDeviceKinds)
+        kind: ref.watch(devicesOfKindProvider(kind)),
     };
+    final unsupportedAsync = ref.watch(unsupportedDevicesProvider);
+    final unsupported = _scoped(unsupportedAsync.value ?? const [], tankId);
+    final byVendor = {
+      for (final entry in inventory.entries)
+        entry.key.id: _scoped(entry.value.value ?? const [], tankId),
+      _kUnsupportedDeviceGroup: unsupported,
+    };
+    final displayOrder = [
+      ...order,
+      if (unsupported.isNotEmpty) _kUnsupportedDeviceGroup,
+    ];
 
     // A vendor earns a chip only by having a device in view.
     final present = [
-      for (final v in order)
+      for (final v in displayOrder)
         if ((byVendor[v] ?? const []).isNotEmpty) v,
     ];
     _present = present;
@@ -830,15 +776,13 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     _restoreSelection(
       present,
       devicesLoaded:
-          rfAsync.hasValue &&
-          rbAsync.hasValue &&
-          apAsync.hasValue &&
-          haAsync.hasValue,
+          inventory.values.every((value) => value.hasValue) &&
+          unsupportedAsync.hasValue,
       stored: ref.watch(deviceVendorFilterProvider).value,
     );
     final selected = present.contains(_vendor) ? _vendor : null;
     final inScope = selected == null ? present : [selected];
-    final scope = _Scope(
+    final scope = DeviceScope(
       order: inScope,
       byVendor: {for (final v in inScope) v: byVendor[v] ?? const []},
     );
@@ -850,14 +794,14 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     // kinds (the Hanna checker) are left out rather than marked read, so the
     // guards stay honest if one ever becomes refreshable.
     if (entitled && widget.active) {
-      final toRead = _Scope(
+      final toRead = DeviceScope(
         order: [
           for (final kind in scope.order)
-            if (deviceKindRefreshes(kind)) kind,
+            if (_kindRefreshes(kind)) kind,
         ],
         byVendor: {
           for (final kind in scope.order)
-            if (deviceKindRefreshes(kind))
+            if (_kindRefreshes(kind))
               kind: [
                 for (final d in scope.of(kind))
                   if (!_autoRead.contains(d.identifier)) d,
@@ -875,8 +819,12 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     }
 
     if (present.isEmpty) return const _EmptyState();
+    final canRefresh = entitled && _refreshableCount(scope) > 0;
     final list = CustomScrollView(
       controller: _scrollCtrl,
+      // A one-card dashboard may not otherwise have enough content to
+      // overscroll. Pull-to-refresh must still be available from its top.
+      physics: canRefresh ? const AlwaysScrollableScrollPhysics() : null,
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -912,7 +860,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
                     selected == null
                         ? l.devicesScopeAll(scope.length)
                         : l.devicesScopeVendor(
-                            l.deviceVendorName(selected),
+                            _deviceVendorLabel(l, selected),
                             scope.length,
                           ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -937,7 +885,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
               sliver: SliverToBoxAdapter(
                 child: Text(
-                  l.deviceVendorName(vendor).toUpperCase(),
+                  _deviceVendorLabel(l, vendor).toUpperCase(),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     letterSpacing: 0.8,
@@ -970,26 +918,32 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     // bar to step: making the wrapper itself conditional would re-root the list
     // whenever the vendor count crossed one, throwing away its scroll position.
     final width = MediaQuery.sizeOf(context).width;
-    return GestureDetector(
+    final page = GestureDetector(
       onHorizontalDragStart: (_) => _dragDx = 0,
       onHorizontalDragUpdate: (d) => _dragDx += d.delta.dx,
       onHorizontalDragEnd: (d) => _onSwipeEnd(d, width),
       child: list,
     );
+    // Pulling past the top is the touch-first twin of Refresh all: it uses the
+    // exact same selected-vendor scope and is absent when the scope contains
+    // nothing pollable (or live reads are not entitled).
+    return canRefresh
+        ? RefreshIndicator(onRefresh: refreshAll, child: page)
+        : page;
   }
 
   /// Publishes what the host's FABs need for the frame just built. Post-frame
   /// because the host may rebuild in response, and value-compared (via
   /// [DevicesFabStatus.==]) so a no-change build notifies no one — the
   /// post-frame callback itself must not schedule another frame forever.
-  void _publishFabStatus(bool entitled, _Scope scope) {
+  void _publishFabStatus(bool entitled, DeviceScope scope) {
     final notifier = widget.fabStatus;
     if (notifier == null) return;
     final status = DevicesFabStatus(
       entitled: entitled,
-      refreshable: scope.refreshables,
+      refreshable: _refreshableCount(scope),
       busy: _busy(scope),
-      meters: scope.meters,
+      meters: _meterCount(scope),
       savable: _savableCount(scope),
       saving: _saving,
     );
@@ -1000,7 +954,13 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
 
   /// Reads every refreshable device in the current selection — the host's
   /// Refresh all FAB.
-  Future<void> refreshAll() => _refreshScope(_scope);
+  Future<void> refreshAll() async {
+    // The FAB is disabled while a read is running; the pull gesture needs the
+    // same guard so dragging during the on-open read cannot start a duplicate
+    // request to every device.
+    if (_busy(_scope)) return;
+    await _refreshScope(_scope);
+  }
 
   /// Saves every meter in the current selection — the host's Save all FAB.
   Future<void> saveAll() => _save(_scope);
@@ -1008,87 +968,109 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// The scope a per-card Save runs in: that card's vendor, with the rest of
   /// its section still present, since a device's savable values can depend on
   /// its neighbours (the ReefFactory temperature-source rule).
-  _Scope _vendorScope(
+  DeviceScope _vendorScope(
     String vendor,
     Map<String, List<DeviceRecord>> byVendor,
-  ) =>
-      _Scope(order: [vendor], byVendor: {vendor: byVendor[vendor] ?? const []});
+  ) => DeviceScope(
+    order: [vendor],
+    byVendor: {vendor: byVendor[vendor] ?? const []},
+  );
 
-  Widget _sectionFor(String vendor, Map<String, List<DeviceRecord>> byVendor) =>
-      switch (vendor) {
-        kDeviceKindReefFactory => RfDeviceSection(
-          devices: byVendor[vendor]!,
-          live: _rfLive,
-          // The shown snapshot is deliberately ignored: the save funnel
-          // re-reads a stale one and re-derives the values from the live map,
-          // so both Save buttons write through exactly the same guards.
-          onSave: _saving
-              ? null
-              : (d, _) =>
-                    unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
-          onRemoved: (id) => setState(() {
-            _rfLive.remove(id);
-            _autoRead.remove(id);
-            _readAt.remove(id);
-          }),
-        ),
-        kDeviceKindReefBeat => RbDeviceSection(
-          devices: byVendor[vendor]!,
-          live: _rbLive,
-          onRemoved: (id) => setState(() {
-            _rbLive.remove(id);
-            _autoRead.remove(id);
-            _readAt.remove(id);
-          }),
-        ),
-        // No live map and no removal bookkeeping: the checker's card is
-        // inventory plus a measure button, nothing here holds its state.
-        kDeviceKindHanna => HannaDeviceSection(devices: byVendor[vendor]!),
-        _ => ApDeviceSection(
-          devices: byVendor[vendor]!,
-          live: _apLive,
-          onSave: _saving
-              ? null
-              : (d, _) =>
-                    unawaited(_saveOne(d, _vendorScope(vendor, byVendor))),
-          onRemoved: (id) => setState(() {
-            _apLive.remove(id);
-            _autoRead.remove(id);
-            _readAt.remove(id);
-          }),
-          onRefreshRequested: (d) => unawaited(_refreshAp(d)),
-        ),
-      };
+  Widget _sectionFor(String vendor, Map<String, List<DeviceRecord>> byVendor) {
+    final presentation = devicePresentationRegistry.forId(vendor);
+    if (presentation != null) {
+      return presentation.buildSection(
+        devices: byVendor[vendor]!,
+        live: _live,
+        saving: _saving,
+        // The shown family snapshot is deliberately ignored: the save funnel
+        // re-freshens and derives candidates from normalized live state.
+        onSave: (device) =>
+            unawaited(_saveOne(device, _vendorScope(vendor, byVendor))),
+        onRemoved: _onDeviceRemoved,
+        onRefresh: (device) => unawaited(_refreshDevice(vendor, device)),
+      );
+    }
+    return SliverToBoxAdapter(
+      child: Column(
+        children: [
+          for (final device in byVendor[vendor] ?? const <DeviceRecord>[])
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.device_unknown_outlined),
+                title: Text(deviceDisplayName(device)),
+                subtitle: Text(
+                  '${device.kind}\n'
+                  '${AppLocalizations.of(context).discoveryUnsupportedHelp}',
+                ),
+                isThreeLine: true,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   /// The read-only notice. Generic in All; in a vendor view it swaps to that
   /// vendor's own text, which can name the app to use instead (ReefBeat,
   /// the ReefFactory app, Fusion).
-  String _disclaimerFor(AppLocalizations l, String? vendor) => switch (vendor) {
-    kDeviceKindReefFactory => l.reefFactoryDisclaimer,
-    kDeviceKindReefBeat => l.reefBeatDisclaimer,
-    kDeviceKindApex => l.apexDisclaimer,
-    // Its own wording: the generic text promises Wi-Fi reads, and the checker
-    // is a Bluetooth device read only during a measurement session.
-    kDeviceKindHanna => l.devicesHannaDisclaimer,
-    _ => l.devicesDisclaimer,
-  };
+  String _disclaimerFor(AppLocalizations l, String? vendor) {
+    if (vendor == null) return l.devicesDisclaimer;
+    if (vendor == _kUnsupportedDeviceGroup) {
+      return l.discoveryUnsupportedHelp;
+    }
+    return devicePresentationRegistry.forId(vendor)?.disclaimer(l) ??
+        l.discoveryUnsupportedHelp;
+  }
 
-  bool _busy(_Scope scope) => scope.inPageOrder.any(
-    (e) => switch (e.$1) {
-      kDeviceKindReefFactory => _rfLive[e.$2.identifier]?.loading ?? false,
-      kDeviceKindReefBeat => _rbLive[e.$2.identifier]?.loading ?? false,
-      kDeviceKindApex => _apLive[e.$2.identifier]?.loading ?? false,
-      _ => false, // the Hanna checker has no in-page read to be busy with
-    },
+  bool _busy(DeviceScope scope) => scope.inPageOrder.any(
+    (entry) => _live[entry.$2.identifier]?.loading ?? false,
   );
 
-  /// How many devices in scope currently hold values a save would persist.
-  int _savableCount(_Scope scope) {
-    var n = 0;
+  bool _kindRefreshes(String kind) =>
+      ref
+          .read(deviceIntegrationRegistryProvider)
+          .integrationForId(kind)
+          ?.capabilities
+          .refreshes ??
+      false;
+
+  int _refreshableCount(DeviceScope scope) =>
+      scope.inPageOrder.where((entry) => _kindRefreshes(entry.$1)).length;
+
+  int _meterCount(DeviceScope scope) {
+    final registry = ref.read(deviceIntegrationRegistryProvider);
+    return scope.inPageOrder
+        .where((entry) => registry.savesModel(entry.$2))
+        .length;
+  }
+
+  /// How many distinct tank parameters in scope a Save all would persist.
+  ///
+  /// This mirrors [_saveGuarded]'s first-displayed-wins merge: supplementary
+  /// readings count (for example, a ReefControl probe's temperature), while a
+  /// second probe or device reporting the same parameter for the same tank
+  /// does not. An unassigned device contributes nothing because the save would
+  /// skip it.
+  int _savableCount(DeviceScope scope) {
+    final parameters = <(int, String)>{};
     for (final (kind, d) in scope.inPageOrder) {
-      if (_pendingValues(kind, d, scope).isNotEmpty) n++;
+      final tankId = d.tankId;
+      if (tankId == null) continue;
+      for (final value in _pendingValues(kind, d, scope)) {
+        parameters.add((tankId, value.paramKey));
+      }
     }
-    return n;
+    return parameters.length;
+  }
+
+  Future<void> _onDeviceRemoved(DeviceRecord device) async {
+    if (!mounted) return;
+    setState(() {
+      _live.remove(device.identifier);
+      _autoRead.remove(device.identifier);
+      _readAt.remove(device.identifier);
+    });
   }
 
   // --- actions -----------------------------------------------------------
@@ -1111,83 +1093,27 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// not tank hardware).
   Future<void> _addDevice(String? vendor) async {
     // In a vendor view the brand is already chosen; in All, ask.
-    final kind = vendor ?? await _pickVendor();
-    if (kind == null || !mounted) return;
-    if (kind == kDeviceKindHanna) {
-      // There is no add sheet: the checker records itself on first connect,
-      // so "adding" one is running a measurement.
-      await runProGated(
-        context,
-        ref,
-        ProFeature.hannaConnect,
-        () => context.push('/hanna/measure'),
-      );
-      return;
-    }
-    if (!ref.read(proFeatureProvider(ProFeature.connectedDevices))) {
-      // Not `runProGated`: what follows is a whole switch over vendors, and
-      // re-entering `_addDevice` after a successful unlock replays the vendor
-      // pick cleanly rather than resuming into a half-built branch.
-      if (await showProFeatureDialog(context, ProFeature.connectedDevices) &&
-          mounted) {
-        await _addDevice(kind);
-      }
-      return;
-    }
-    switch (kind) {
-      case kDeviceKindReefFactory:
-        await showRfAddFlow(
-          context,
-          ref,
-          onSeed: (id, snap) {
-            if (mounted) {
-              setState(() {
-                _rfLive[id] = RfLive(snapshot: snap);
-                _readAt[id] = DateTime.now();
-              });
-            }
-          },
-        );
-      case kDeviceKindReefBeat:
-        await showRbAddFlow(
-          context,
-          ref,
-          onSeed: (id, snap) {
-            if (mounted) {
-              setState(() {
-                _rbLive[id] = RbLive(snapshot: snap);
-                _readAt[id] = DateTime.now();
-              });
-            }
-          },
-          // Anything added or repointed by the discovery half has no live
-          // status yet; the next build's auto-read picks it up.
-          onAdded: () {},
-        );
-      default:
-        await showApAddFlow(
-          context,
-          ref,
-          onSeed: (id, status) {
-            if (mounted) {
-              setState(() {
-                _apLive[id] = ApLive(status: status);
-                _readAt[id] = DateTime.now();
-              });
-            }
-          },
-        );
-    }
+    final kindId = vendor ?? await _pickVendor();
+    if (kindId == null || !mounted) return;
+    final presentation = devicePresentationRegistry.forId(kindId);
+    if (presentation == null) return;
+    await presentation.add(
+      context,
+      ref,
+      onSeed: (identifier, payload) {
+        if (!mounted) return;
+        setState(() {
+          _live[identifier] = DeviceLiveState.completed(
+            DeviceReadResult.success(payload.kind, payload),
+          );
+          _readAt[identifier] = DateTime.now();
+        });
+      },
+    );
   }
 
   Future<String?> _pickVendor() {
     final l = AppLocalizations.of(context);
-    // The checker's entry points exist only behind the experimental opt-in
-    // and on hardware with a BLE stack at all — the same two gates as the
-    // Measurements-tab menu entry (U33).
-    final hannaAvailable =
-        (ref.read(experimentalEnabledProvider).value ?? false) &&
-        (ref.read(hannaBleSupportedProvider).value ?? true);
     return showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -1203,12 +1129,12 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
                 style: Theme.of(ctx).textTheme.titleMedium,
               ),
             ),
-            for (final v in kDeviceVendors)
-              if (v != kDeviceKindHanna || hannaAvailable)
+            for (final presentation in devicePresentationRegistry.values)
+              if (presentation.addAvailable(ref))
                 ListTile(
-                  leading: Icon(deviceVendorIcon(v)),
-                  title: Text(l.deviceVendorName(v)),
-                  onTap: () => Navigator.pop(ctx, v),
+                  leading: Icon(presentation.icon),
+                  title: Text(presentation.label(l)),
+                  onTap: () => Navigator.pop(ctx, presentation.kind.id),
                 ),
           ],
         ),
@@ -1261,7 +1187,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
                     return ListTile(
                       key: ValueKey(v),
                       leading: Icon(deviceVendorIcon(v)),
-                      title: Text(l.deviceVendorName(v)),
+                      title: Text(_deviceVendorLabel(l, v)),
                       subtitle: Text(l.devicesCount(count)),
                       // A real drag handle, like the device cards' — not a
                       // decorative glyph next to a long-press-only row.
@@ -1299,49 +1225,9 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   }
 }
 
-/// The devices in view — what Refresh all and Save all act on — **in the order
-/// the page renders them**: vendors in the user's brand order, devices in their
-/// own card order within each vendor.
-///
-/// The order is the point, not a convenience: Save all resolves a parameter two
-/// devices both report by "first displayed wins", so anything that walks this
-/// scope must walk [inPageOrder] rather than picking vendors out by hand.
-class _Scope {
-  const _Scope({required this.order, required this.byVendor});
-
-  /// The vendor kinds in view, in the user's own order.
-  final List<String> order;
-
-  /// Each vendor's devices, already scoped to the active tank and sorted by
-  /// the page.
-  final Map<String, List<DeviceRecord>> byVendor;
-
-  List<DeviceRecord> of(String kind) => byVendor[kind] ?? const [];
-
-  /// Every device in view, paired with its vendor kind, in page order.
-  Iterable<(String, DeviceRecord)> get inPageOrder sync* {
-    for (final kind in order) {
-      for (final d in of(kind)) {
-        yield (kind, d);
-      }
-    }
-  }
-
-  int get length => order.fold(0, (n, kind) => n + of(kind).length);
-
-  /// Devices of a meter-capable kind in view — zero hides Save all entirely.
-  /// Asks [deviceKindSaves] instead of naming vendors, so a future meter vendor
-  /// is counted without an edit here.
-  int get meters =>
-      order.where(deviceKindSaves).fold(0, (n, kind) => n + of(kind).length);
-
-  /// Devices a Refresh all would actually read — the button's count, and zero
-  /// hides it (a Hanna-only view has nothing to poll). Same open-ended idiom
-  /// as [meters], via [deviceKindRefreshes].
-  int get refreshables => order
-      .where(deviceKindRefreshes)
-      .fold(0, (n, kind) => n + of(kind).length);
-}
+// The scope type itself ([DeviceScope]) and the polite bulk-read walk moved to
+// `data/device_read_scope.dart` (U49 §12d) so the wall display and U45 share
+// them with this page instead of growing copies.
 
 /// The vendor selector: one chip per vendor that has a device, in the user's
 /// order, preceded by All.
@@ -1437,7 +1323,7 @@ class _VendorBarState extends State<_VendorBar> {
                       key: _chipKey(v),
                       label: Text(
                         l.devicesScopeVendor(
-                          l.deviceVendorName(v),
+                          _deviceVendorLabel(l, v),
                           widget.countOf(v),
                         ),
                       ),
@@ -1574,9 +1460,6 @@ class _EmptyState extends StatelessWidget {
 
 /// The icon standing for a vendor in the picker and the reorder sheet — the
 /// same glyphs the old per-vendor Settings rows used.
-IconData deviceVendorIcon(String kind) => switch (kind) {
-  kDeviceKindReefFactory => Icons.sensors,
-  kDeviceKindReefBeat => Icons.water_drop_outlined,
-  kDeviceKindHanna => Icons.bluetooth,
-  _ => Icons.hub_outlined,
-};
+IconData deviceVendorIcon(String kind) =>
+    devicePresentationRegistry.forId(kind)?.icon ??
+    Icons.device_unknown_outlined;

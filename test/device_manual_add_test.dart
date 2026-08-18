@@ -206,8 +206,9 @@ class _FakeRbLink implements RbDeviceLink {
   final String hwid;
 
   @override
-  Future<RbSnapshot> readOnce(String host) async => RbSnapshot(
+  Future<RbSnapshot> readOnce(String host) async => RbDoseSnapshot(
     info: RbDeviceInfo(hwType: kRbDosingHwType, hwModel: 'RSDOSE4', hwid: hwid),
+    status: const RbDoseStatus(),
   );
 
   @override

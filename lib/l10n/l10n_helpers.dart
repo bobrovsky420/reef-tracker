@@ -135,6 +135,7 @@ extension L10nDomain on AppLocalizations {
     // Apex), which share a single gate — the Pro dialog names the capability,
     // not whichever vendor's screen the user happened to tap.
     ProFeature.connectedDevices => reefDevicesTitle,
+    ProFeature.wallDisplay => wallDisplayTitle,
   };
 
   /// The brand name shown on a Devices-screen chip, section header and picker

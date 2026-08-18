@@ -11,7 +11,8 @@ import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_value_row.dart';
 import '../../widgets/section_header.dart';
-import 'dosing_screen.dart';
+import 'dosing_actions.dart';
+import 'dosing_presentation.dart';
 
 /// Sentinel value for the "Other…" (custom free-text) choice in the vendor and
 /// product dropdowns.

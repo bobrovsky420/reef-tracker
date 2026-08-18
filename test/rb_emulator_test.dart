@@ -36,7 +36,8 @@ void main() {
 
     expect(snap.info.hwType, 'reef-ato');
     expect(snap.modelDisplayName, 'ReefATO+');
-    final ato = snap.ato!;
+    expect(snap, isA<RbAtoSnapshot>());
+    final ato = (snap as RbAtoSnapshot).status;
     expect(ato.leakSensorActive, isTrue);
     expect(ato.leakStatusRaw, 'dry');
     expect(ato.leakAlarm, isFalse);
@@ -47,31 +48,133 @@ void main() {
     await startEmulator(EmuRbType.ato);
     await _control(emulator, '/emu/leak?status=rodi_water_leak');
 
-    final leaking = (await link.readOnce(host)).ato!;
+    final leaking = (await link.readOnce(host) as RbAtoSnapshot).status;
     expect(leaking.leakAlarm, isTrue);
     expect(leaking.leakStatusRaw, 'rodi_water_leak');
 
     await _control(emulator, '/emu/leak?status=dry');
-    final dried = (await link.readOnce(host)).ato!;
+    final dried = (await link.readOnce(host) as RbAtoSnapshot).status;
     expect(dried.leakAlarm, isFalse);
   });
 
   test('reads the ReefRun, and a forced full cup pauses the skimmer', () async {
     await startEmulator(EmuRbType.run);
-    final healthy = (await link.readOnce(host)).run!;
+    final healthy = (await link.readOnce(host) as RbRunSnapshot).status;
     expect(healthy.pumps, hasLength(2));
     expect(healthy.pumps[1].type, 'skimmer');
     expect(healthy.pumps[1].fullCup, isFalse);
     expect(healthy.pumps[1].intensity, 70);
 
     await _control(emulator, '/emu/pump?n=2&state=full_cup');
-    final paused = (await link.readOnce(host)).run!;
+    final paused = (await link.readOnce(host) as RbRunSnapshot).status;
     expect(paused.pumps[1].fullCup, isTrue);
     expect(paused.pumps[1].faulted, isTrue);
     expect(paused.pumps[1].intensity, 0);
     // The return pump is untouched by the skimmer's cup.
     expect(paused.pumps[0].fullCup, isFalse);
     expect(paused.pumps[0].intensity, 80);
+  });
+
+  test('reads the ReefDose: four heads with abbreviations resolved', () async {
+    await startEmulator(EmuRbType.dose);
+    final snap = await link.readOnce(host);
+
+    expect(snap.modelDisplayName, 'ReefDose 4');
+    expect(snap, isA<RbDoseSnapshot>());
+    final dose = (snap as RbDoseSnapshot).status;
+    expect(dose.heads, hasLength(4));
+    expect(dose.heads[0].supplement, 'Balling light KH');
+    // The abbreviation lives only in /head/<n>/settings — its presence proves
+    // the link chased all four settings reads against the fake.
+    expect(dose.heads.map((h) => h.shortName), ['KH', 'Ca', 'Mg', 'NPX']);
+    expect(dose.heads[0].dosedToday, 26.7);
+    expect(dose.heads[0].dailyDose, 40);
+    expect(dose.heads[3].planComplete, isTrue);
+    expect(dose.heads.every((h) => !h.switchedOff), isTrue);
+
+    // The queue parses; near midnight it may legitimately run empty, so only
+    // shape is asserted, not length.
+    final queue = await link.readDosingQueue(host);
+    for (final entry in queue) {
+      expect(['KH', 'Ca', 'Mg', 'NPX'], contains(entry.head));
+      expect(entry.volumeMl, isPositive);
+    }
+  });
+
+  test('a forced low stock survives a re-read', () async {
+    await startEmulator(EmuRbType.dose);
+    expect(
+      (await link.readOnce(host) as RbDoseSnapshot)
+          .status
+          .heads[3]
+          .remainingDays,
+      48,
+    );
+
+    await _control(emulator, '/emu/dose?head=4&days=5');
+    final low = (await link.readOnce(host) as RbDoseSnapshot).status;
+    expect(low.heads[3].remainingDays, 5);
+    expect(low.heads[3].stockLevel, 'low');
+    // The other heads keep their stock.
+    expect(low.heads[0].remainingDays, 117);
+  });
+
+  test(
+    'reads ReefControl probes and forced values survive a re-read',
+    () async {
+      await startEmulator(EmuRbType.control);
+      final snap = await link.readOnce(host);
+
+      expect(snap.info.hwType, 'reef-control');
+      expect(snap.modelDisplayName, 'ReefControl Pro');
+      expect(snap, isA<RbControlSnapshot>());
+      final control = (snap as RbControlSnapshot).status;
+      expect(control.probeOf('ec')!.salinityPpt, 35.8);
+      expect(control.probeOf('ph')!.value, 8.06);
+      expect(control.probeOf('orp')!.value, 81);
+      expect(control.leakProbe!.detected, isFalse);
+
+      await _control(emulator, '/emu/probes?salinity=36.1&ph=7.7&orp=320');
+      await _control(emulator, '/emu/leak?status=reef_water_leak');
+      final changed = (await link.readOnce(host) as RbControlSnapshot).status;
+      expect(changed.probeOf('ec')!.salinityPpt, 36.1);
+      expect(changed.probeOf('ph')!.value, 7.7);
+      expect(changed.probeOf('orp')!.value, 320);
+      expect(changed.leakProbe!.detected, isTrue);
+    },
+  );
+
+  test('reads ReefMat and refines its sized model', () async {
+    await startEmulator(EmuRbType.mat);
+    final snap = await link.readOnce(host);
+
+    expect(snap, isA<RbMatSnapshot>());
+    expect(snap.modelCode, 'RSMAT250');
+    final mat = (snap as RbMatSnapshot).status;
+    expect(mat.daysTillEndOfRoll, 6);
+    expect(mat.autoAdvance, isTrue);
+  });
+
+  test('reads ReefLED dashboard output', () async {
+    await startEmulator(EmuRbType.light);
+    final snap = await link.readOnce(host);
+
+    expect(snap, isA<RbLightSnapshot>());
+    final light = (snap as RbLightSnapshot).status;
+    expect(light.whitePercent, 20);
+    expect(light.bluePercent, 80);
+    expect(light.programName, 'Reef Day');
+  });
+
+  test('reads ReefWave from mode and schedule endpoints', () async {
+    await startEmulator(EmuRbType.wave);
+    final snap = await link.readOnce(host);
+
+    expect(snap, isA<RbWaveSnapshot>());
+    final wave = (snap as RbWaveSnapshot).status;
+    expect(wave.mode, 'auto');
+    expect(wave.intervals, hasLength(3));
+    expect(wave.forwardPercentAt(12 * 60), 80);
   });
 }
 

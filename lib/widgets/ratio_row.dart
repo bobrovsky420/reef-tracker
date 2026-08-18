@@ -5,6 +5,7 @@ import '../domain/ratio.dart';
 import '../domain/zones.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
+import 'ratio_presentation.dart';
 import 'zone_visuals.dart';
 
 /// One row of the grouped dashboard's Ratios card (REDESIGN #8, §A.4): label +

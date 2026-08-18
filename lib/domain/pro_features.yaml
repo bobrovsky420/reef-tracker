@@ -85,3 +85,10 @@ features:
   # own test kit, not a piece of tank hardware on the LAN.
   - key: connectedDevices
     grandfathered: true
+  # U49 wall display mode — its own key, not a connectedDevices rider: the
+  # mode works with zero devices (stored readings still make a useful wall
+  # board), so a hardware gate would charge the wrong people for the wrong
+  # reason. Grandfathered per the standing 2026-08-05 rule (shipped before
+  # activation).
+  - key: wallDisplay
+    grandfathered: true

@@ -847,9 +847,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aboutSection => 'O aplikacji';
 
   @override
-  String get languageSection => 'Język';
-
-  @override
   String get appearanceSection => 'Wygląd';
 
   @override
@@ -1237,6 +1234,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get diagnosticsShareFailed => 'Nie udało się udostępnić diagnostyki';
 
   @override
+  String get updateAvailableSnack =>
+      'Dostępna jest nowa wersja aplikacji ReefTracker.';
+
+  @override
+  String get updateAction => 'Aktualizuj';
+
+  @override
+  String get updateReadySnack => 'Aktualizacja pobrana.';
+
+  @override
+  String get updateRestartAction => 'Uruchom ponownie';
+
+  @override
   String get editionLabel => 'Edycja';
 
   @override
@@ -1251,7 +1261,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get standardInfoBody =>
-      'Korzystasz ze standardowej edycji aplikacji ReefTracker. Wszystko, co już zapisałeś, pozostaje Twoje; ReefTracker Pro odblokowuje zaawansowane funkcje.';
+      'Korzystasz ze standardowej edycji aplikacji ReefTracker. Wszystko, co masz już zapisane, pozostaje Twoje; ReefTracker Pro odblokowuje zaawansowane funkcje.';
 
   @override
   String get editionUpgrade => 'Odblokuj Pro';
@@ -1539,7 +1549,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get doseCalcCurrentValue => 'Obecna wartość';
 
   @override
-  String get doseCalcCurrentValueHelp => 'Puste = twój ostatni pomiar.';
+  String get doseCalcCurrentValueHelp => 'Puste = Twój ostatni pomiar.';
 
   @override
   String get doseCalcTargetValue => 'Wartość docelowa';
@@ -3159,7 +3169,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get roPartOfUnitHint =>
-      'Wyłącz, jeśli twój zestaw nie ma tego stopnia';
+      'Wyłącz, jeśli Twój zestaw nie ma tego stopnia';
 
   @override
   String get roHiddenStages => 'Nie ma w moim zestawie';
@@ -3204,7 +3214,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get roUsageDialogBody =>
-      'Ile wody produkuje twój zestaw. Wybór poziomu zastąpi okresy wymiany wszystkich standardowych elementów — także te ustawione przez ciebie — typowymi wartościami dla tego poziomu; własne elementy pozostaną bez zmian, a każdy element możesz potem dostroić ręcznie.';
+      'Ile wody produkuje Twój zestaw. Wybór poziomu zastąpi okresy wymiany wszystkich standardowych elementów — także te ustawione przez Ciebie — typowymi wartościami dla tego poziomu; własne elementy pozostaną bez zmian, a każdy element możesz potem dostroić ręcznie.';
 
   @override
   String get roUsageLight => 'Niska';
@@ -3361,11 +3371,11 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatSettingsSubtitle =>
-      'Bieżący status urządzeń Red Sea ReefBeat';
+      'Dane na żywo z urządzeń Red Sea ReefBeat';
 
   @override
   String get reefBeatDisclaimer =>
-      'Ta aplikacja tylko odczytuje status urządzeń Red Sea ReefBeat. Nie może dozować, zmieniać harmonogramów ani kalibrować — użyj do tego aplikacji ReefBeat. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
+      'Ta aplikacja odczytuje tylko dane na żywo z urządzeń Red Sea ReefBeat. Nie może dozować, zmieniać harmonogramów ani kalibrować — użyj do tego aplikacji ReefBeat. Odczyt działa tylko wtedy, gdy telefon jest w tej samej sieci Wi-Fi co urządzenia.';
 
   @override
   String get reefBeatAddDevice => 'Dodaj urządzenie';
@@ -3375,7 +3385,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatEmptyBody =>
-      'Przeskanuj swoją sieć Wi-Fi, aby znaleźć urządzenia Red Sea ReefBeat — dozowniki ReefDose, ReefATO, ReefMat, ReefRun, ReefLED i ReefWave — albo dodaj urządzenie, podając adres IP.';
+      'Przeskanuj swoją sieć Wi-Fi, aby znaleźć urządzenia Red Sea ReefBeat — ReefDose, ReefATO, ReefMat, ReefRun, ReefLED, ReefWave i ReefControl — albo dodaj urządzenie, podając adres IP.';
 
   @override
   String get reefBeatRefreshAll => 'Odśwież wszystkie';
@@ -3561,7 +3571,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get reefBeatAtoLevelLow => 'Niski';
 
   @override
-  String get reefBeatAtoLevelHigh => 'Wysoki';
+  String get reefBeatAtoLevelAbove => 'Podwyższony';
 
   @override
   String get reefBeatAtoTemperature => 'Temperatura';
@@ -3679,6 +3689,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefBeatRunFullCup => 'Pełny kubek';
+
+  @override
+  String get reefBeatRunOverSkimming => 'Nadmierne pienienie';
 
   @override
   String get reefBeatRunSensorOffline => 'Czujnik poziomu niedostępny';
@@ -4117,4 +4130,152 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get followingDefaults => 'Używa wartości domyślnych';
+
+  @override
+  String get wallDisplayTitle => 'Wyświetlacz ścienny';
+
+  @override
+  String get wallDisplaySubtitle =>
+      'Stale włączony panel z parametrami akwarium';
+
+  @override
+  String get wallSmallScreenNote =>
+      'Wyświetlacz ścienny jest zaprojektowany dla tabletu zawieszonego na ścianie. Na tym mniejszym ekranie również działa – zobaczysz po prostu mniej kart na stronie.';
+
+  @override
+  String get wallStartNow => 'Uruchom teraz';
+
+  @override
+  String get wallStartNowSubtitle => 'Pokaż panel ścienny na tym ekranie';
+
+  @override
+  String get wallAutoStartTitle => 'Uruchamiaj przy starcie';
+
+  @override
+  String get wallAutoStartSubtitle =>
+      'Otwieraj wyświetlacz ścienny przy każdym uruchomieniu aplikacji na tym urządzeniu';
+
+  @override
+  String get wallBehaviourSection => 'Zachowanie';
+
+  @override
+  String get wallRefreshIntervalTitle => 'Odświeżaj co';
+
+  @override
+  String get wallRefreshIntervalSubtitle =>
+      'Jak często odczytywane są podłączone urządzenia';
+
+  @override
+  String get wallPageSecondsTitle => 'Zmiana stron';
+
+  @override
+  String get wallPageSecondsSubtitle => 'Jak długo widoczna jest każda strona';
+
+  @override
+  String get wallNightTitle => 'Przyciemnianie nocne';
+
+  @override
+  String get wallNightSubtitle =>
+      'Przyciemniaj ekran w nocy; dotknięcie rozjaśnia go na minutę';
+
+  @override
+  String get wallNightFromTitle => 'Przyciemniaj od';
+
+  @override
+  String get wallNightToTitle => 'Przyciemniaj do';
+
+  @override
+  String get wallCardsSection => 'Karty';
+
+  @override
+  String get wallCardsHint =>
+      'Każda wartość zgłaszana przez urządzenie ma własną kartę. Ukryj zbędne duplikaty, a resztę przeciągnij na miejsce; po ukryciu wszystkich kart urządzenia panel przestaje się z nim łączyć.';
+
+  @override
+  String get wallStoredCard => 'Pomiary ręczne';
+
+  @override
+  String wallSecondsLabel(int n) {
+    return '$n s';
+  }
+
+  @override
+  String wallMinutesLabel(int n) {
+    return '$n min';
+  }
+
+  @override
+  String get wallNoTank =>
+      'Nie ma jeszcze akwarium. Dodaj je, a potem uruchom wyświetlacz ścienny.';
+
+  @override
+  String get wallProLocked => 'Wyświetlacz ścienny to funkcja PRO.';
+
+  @override
+  String get wallExitHint => 'Przytrzymaj w dowolnym miejscu, aby wyjść';
+
+  @override
+  String wallUpdatedAt(Object time) {
+    return 'zaktualizowano $time';
+  }
+
+  @override
+  String wallDueToday(Object items) {
+    return 'Na dziś: $items';
+  }
+
+  @override
+  String wallTestDue(Object param) {
+    return 'test: $param';
+  }
+
+  @override
+  String get wallNoDevices => 'Brak urządzeń';
+
+  @override
+  String get wallAllReachable => 'Wszystkie urządzenia osiągalne';
+
+  @override
+  String get wallSomeUnreachable => 'Urządzenie jest nieosiągalne';
+
+  @override
+  String get wallNetworkDown =>
+      'Żadne urządzenie nie jest osiągalne – sprawdź sieć';
+
+  @override
+  String wallMeasuredAgo(Object ago) {
+    return 'zmierzono $ago';
+  }
+
+  @override
+  String get wallWindow24h => '24 h';
+
+  @override
+  String get wallWindow14d => '14 dni';
+
+  @override
+  String wallHeadDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dnia',
+      many: '$count dni',
+      few: '$count dni',
+      one: '1 dzień',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String wallHeadMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count miesiąca',
+      many: '$count miesięcy',
+      few: '$count miesiące',
+      one: '1 miesiąc',
+    );
+    return '$_temp0';
+  }
 }

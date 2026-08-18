@@ -36,7 +36,7 @@ The mechanics on this machine (see also the toolchain notes in memory):
 
 The version lives in [pubspec.yaml](pubspec.yaml) as `major.minor.patch+build`.
 
-**Never bump the version as part of an ordinary change.** Feature work, fixes and refactors leave `pubspec.yaml` untouched — their changelog entries accumulate under `## [Unreleased]` (see below).
+**Never bump the version as part of an ordinary change.** Feature work, fixes and refactors leave `pubspec.yaml` untouched — their changelog entries accumulate under the latest unpublished version heading (see below).
 
 **Always increment the `+build` number when asked to build a release package.** Any request to produce a release artifact — "build an AAB", "build a test aab", "make a release build", running [scripts/build-release.ps1](scripts/build-release.ps1), or triggering a Codemagic release workflow — bumps `+build` by 1 **before** the build starts, leaving `major.minor.patch` alone. Do this without being asked separately; it is part of building, not a separate decision.
 
@@ -44,7 +44,7 @@ Two reasons it must happen before the build, not after: every artifact that leav
 
 A build-number-only bump is **not** a release: it needs no changelog entry, no release notes, and no tag. Leave `major.minor.patch` at the last released version unless the user is explicitly cutting a release.
 
-Bump `major.minor.patch` **only when the user explicitly says they are cutting a release** ("release this", "ready to release", "bump the version"). At that moment, pick the new number from what has accumulated under `## [Unreleased]`:
+Bump `major.minor.patch` **only when the user explicitly says they are cutting a release** ("release this", "ready to release", "bump the version"). At that moment, pick the new number from what has accumulated under the latest unpublished version heading:
 
 - Contains any new feature → bump the **minor** version, reset patch to 0.
 - Only fixes / small improvements to existing features → bump the **patch** number.
@@ -60,7 +60,7 @@ When the release itself is cut, bump `major.minor.patch` (+ build) as above, wri
 
 ## Changelog
 
-[CHANGELOG.md](CHANGELOG.md) follows [Keep a Changelog](https://keepachangelog.com/) format. **Update it with every change that affects users or behavior, in the same change.** Add entries under the appropriate version heading, grouped into `Added` / `Changed` / `Fixed` / `Removed` — always keep the groups within a version section in that order. Entries for unreleased work go under a `## [Unreleased]` heading at the top of the file, **with no date** — create it if it isn't there, and never write entries into an already-released version's section. When the user cuts a release, rename that heading to `## [<version>] - <YYYY-MM-DD>` with the release date. Don't leave an empty `## [Unreleased]` behind afterwards; the next change recreates it. Skip purely internal edits with no user-facing or behavioral effect (formatting, comments).
+[CHANGELOG.md](CHANGELOG.md) follows [Keep a Changelog](https://keepachangelog.com/) format. **Update it with every change that affects users or behavior, in the same change.** Add entries under the appropriate version heading, grouped into `Added` / `Changed` / `Fixed` / `Removed` — always keep the groups within a version section in that order. **A version heading without a publication date is unpublished:** always extend the latest such version for new unreleased work, even when it is already numbered (for example, `## [1.3.0]`). Never create a new `## [Unreleased]` section while an undated version heading exists, and never write entries into a dated, already-published version section. When the user publishes/cuts that version, add the release date so the heading becomes `## [<version>] - <YYYY-MM-DD>`. Skip purely internal edits with no user-facing or behavioral effect (formatting, comments).
 
 There is **one changelog for both platforms**: prefix an entry with `iOS:` or `Android:` when it applies to a single platform; untagged entries apply to both. Store release notes (Play "What's new", App Store "What's New") are curated, localized excerpts written per release — CHANGELOG.md stays the English master.
 
@@ -87,6 +87,7 @@ This app is fully localized. **Whenever you add or change any user-facing text, 
 - Config: [l10n.yaml](l10n.yaml).
 
 Rules:
+- **All translations address the user in the informal second person singular** — Czech ty/tykání, German du (lowercase), Russian ты, French tu, Polish ty (capitalized Twój/Ciebie), Italian tu. Never use formal address (vykání, Sie, вы, vous, Pan/Pani, Lei). Never let a string assume the user's gender: where informal address would force a gendered form (Slavic past tense, French/Italian participle agreement), restructure the sentence instead — imperative, present tense, passive, or noun phrase ("Границы, заданные вручную…", "Les limites définies manuellement…"). This applies to store release notes and all other user-facing text, not just the ARB files.
 - Never hardcode user-facing strings in widgets. Add a key to the template ARB and reference it via the generated localizations.
 - When you add a key, add it to **all** `app_*.arb` files with a proper translation (not just a copy of the English text).
 - When you change or remove a key, apply the same change across **all** `app_*.arb` files.

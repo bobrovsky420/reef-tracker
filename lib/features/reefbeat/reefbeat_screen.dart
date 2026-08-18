@@ -4,18 +4,23 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/device_live.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
-import '../../data/lan_discovery.dart';
 import '../../data/rb_device_link.dart';
+import '../../data/rb_family_handlers.dart';
 import '../../data/rb_protocol.dart';
+import '../../domain/device_vendors.dart';
 import '../../domain/units.dart';
+import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/device_values.dart';
+import '../devices/device_card_frame.dart';
+import '../devices/device_card_reorder.dart';
 import '../devices/device_details_dialog.dart';
-import '../devices/device_rename_dialog.dart';
+import '../devices/device_inventory_actions.dart';
 import '../devices/discovery_sheet.dart';
 
 /// One row of the dashboard list: either a single device, or every ReefWave
@@ -29,18 +34,18 @@ class _ListEntry {
 /// Collapses the ReefWaves into one entry, positioned where the first of them
 /// sat, and leaves every other device an entry of its own.
 ///
-/// Grouping is decided from the stored model ([rbIsWaveModel]) rather than a
+/// Grouping is decided from the stored model's family handler rather than a
 /// snapshot's `hw_type`, because the list is built before any device has been
 /// read — the layout must not reshuffle as refreshes land.
 List<_ListEntry> _entriesOf(List<DeviceRecord> devices) {
   final waves = [
     for (final d in devices)
-      if (rbIsWaveModel(d.model)) d,
+      if (rbFamilyHandlers.isModelFamily(d.model, RbFamily.wave)) d,
   ];
   final entries = <_ListEntry>[];
   var groupPlaced = false;
   for (final d in devices) {
-    if (rbIsWaveModel(d.model)) {
+    if (rbFamilyHandlers.isModelFamily(d.model, RbFamily.wave)) {
       if (groupPlaced) continue;
       groupPlaced = true;
       entries.add(_ListEntry(waves, isWaveGroup: true));
@@ -51,36 +56,6 @@ List<_ListEntry> _entriesOf(List<DeviceRecord> devices) {
   return entries;
 }
 
-/// Transient per-device live state (not persisted): the last refresh result.
-/// Held by the unified Devices screen (U41), so switching the vendor filter
-/// doesn't discard snapshots the user just refreshed.
-class RbLive {
-  const RbLive({this.loading = false, this.snapshot, this.error});
-  final bool loading;
-  final RbSnapshot? snapshot;
-  final RbLinkError? error;
-}
-
-/// Reads one ReefBeat device, returning the outcome for the caller to store.
-/// Touches `lastSeenAt`, and persists a more precise model when the full read
-/// learns one — a mat only reveals its width in `/configuration`, so the card
-/// header stops saying the generic "RSMAT".
-Future<RbLive> rbReadDevice(WidgetRef ref, DeviceRecord device) async {
-  final address = device.address;
-  if (address == null || address.isEmpty) return const RbLive();
-  try {
-    final snap = await ref.read(rbDeviceLinkProvider).readOnce(address);
-    final db = ref.read(dbProvider);
-    await db.touchDeviceSeen(device.identifier);
-    if (snap.modelCode != device.model) {
-      await db.updateDeviceModel(device.id, snap.modelCode);
-    }
-    return RbLive(snapshot: snap);
-  } on RbLinkException catch (e) {
-    return RbLive(error: e.error);
-  }
-}
-
 String rbErrorText(AppLocalizations l, RbLinkError e) => switch (e) {
   RbLinkError.unreachable => l.reefBeatErrUnreachable,
   RbLinkError.timeout => l.reefBeatErrTimeout,
@@ -88,23 +63,95 @@ String rbErrorText(AppLocalizations l, RbLinkError e) => switch (e) {
   RbLinkError.protocol => l.reefBeatErrProtocol,
 };
 
+/// Classifies a ReefControl's primary water reading against ReefTracker's
+/// effective bounds for the active aquarium. Firmware `level` fields are
+/// deliberately irrelevant: every screen must agree with the ranges the
+/// keeper configured in this app.
+@visibleForTesting
+Zone reefControlProbeZone(
+  RbControlProbe probe,
+  Map<String, ZoneBounds> boundsByParam,
+) {
+  final paramKey = switch (probe.type) {
+    'ec' => 'salinity',
+    'ph' => 'ph',
+    'orp' => 'orp',
+    _ => null,
+  };
+  if (paramKey == null) return Zone.unknown;
+
+  final rawValue = probe.type == 'ec' ? probe.salinityPpt : probe.value;
+  if (rawValue == null) return Zone.unknown;
+  final canonicalValue = paramKey == 'salinity' ? pptToSg(rawValue) : rawValue;
+  return (boundsByParam[paramKey] ?? const ZoneBounds()).classify(
+    canonicalValue,
+  );
+}
+
+/// ReefTracker-zone classification for a combined probe's temperature sensor.
+/// Like [reefControlProbeZone], this intentionally ignores the firmware's
+/// `temp_level` label.
+@visibleForTesting
+Zone reefControlProbeTemperatureZone(
+  RbControlProbe probe,
+  Map<String, ZoneBounds> boundsByParam,
+) {
+  final value = probe.temperatureC;
+  if (value == null) return Zone.unknown;
+  return (boundsByParam['temperature'] ?? const ZoneBounds()).classify(value);
+}
+
+/// Formats a ReefControl probe's primary value. Salinity arrives in ppt but
+/// goes through canonical SG so the app's salinity preference controls both
+/// its unit and precision.
+@visibleForTesting
+String formatReefControlProbeValue(RbControlProbe probe, UnitPrefs prefs) {
+  if (probe.type == 'ec') {
+    final ppt = probe.salinityPpt;
+    if (ppt == null) return '—';
+    final presentation = presentationFor('salinity', 'SG', 3, prefs);
+    return '${presentation.format(pptToSg(ppt))} '
+        '${presentation.unitLabel}';
+  }
+
+  final value = probe.value;
+  if (value == null) return '—';
+  final unit = switch (probe.type) {
+    'orp' => probe.measurementUnit ?? 'mV',
+    _ => probe.measurementUnit ?? '',
+  };
+  final formatted = formatDeviceValue(value);
+  return unit.isEmpty ? formatted : '$formatted $unit';
+}
+
+/// Test seam for the complete ReefControl status body without making the
+/// implementation widget part of the app's public UI surface.
+@visibleForTesting
+Widget reefControlStatusForTesting(RbControlStatus status) =>
+    _ControlStatus(status: status);
+
 /// The Red Sea section of the Devices screen (U41): status cards for the
 /// ReefDose pumps, ReefATO units, ReefMat filters, ReefRun controllers, ReefLED
-/// fixtures and (grouped) ReefWave pumps. Purely informational — these devices
-/// report what they are doing, never a measurement, so no card here carries a
-/// Save button.
+/// fixtures, (grouped) ReefWave pumps and ReefControl probe controllers.
+/// ReefControl is the measuring device in this otherwise status-only vendor,
+/// so its card alone carries Save; the other ReefBeat cards remain read-only.
 class RbDeviceSection extends ConsumerWidget {
   const RbDeviceSection({
     super.key,
     required this.devices,
     required this.live,
+    required this.onSave,
     required this.onRemoved,
   });
 
   /// Already filtered to the active tank and sorted by the parent.
   final List<DeviceRecord> devices;
   final Map<String, RbLive> live;
-  final void Function(String identifier) onRemoved;
+
+  /// Null while the parent has a save in flight — the ReefControl card's Save
+  /// button disables for the duration. Status-only Red Sea models ignore it.
+  final void Function(DeviceRecord device, RbSnapshot snap)? onSave;
+  final Future<void> Function(DeviceRecord device) onRemoved;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -112,6 +159,14 @@ class RbDeviceSection extends ConsumerWidget {
     // Watched (not just read in _moveDevice) so the move-to-tank menu item's
     // visibility reacts to tanks being added/removed.
     final tanks = ref.watch(tanksProvider).value ?? const <Tank>[];
+    final inventory = DeviceInventoryActions(ref: ref, onRemoved: onRemoved);
+    final labels = DeviceInventoryLabels(
+      renameTitle: l.reefBeatRenameDevice,
+      nameField: l.reefBeatDeviceNameLabel,
+      selectTankTitle: l.reefBeatSelectTank,
+      removeTitle: l.reefBeatRemove,
+      removeConfirm: l.reefBeatRemoveConfirm,
+    );
     // Wave pumps are collapsed into a single entry (see [_entriesOf]) — a tank
     // often runs several and a full-width card each, for one number, wasted
     // the screen.
@@ -130,101 +185,61 @@ class RbDeviceSection extends ConsumerWidget {
           ]),
         );
       },
+      proxyDecorator: (child, index, animation) => deviceCardDragProxyDecorator(
+        context,
+        child,
+        index,
+        animation,
+        semanticLabel: l.reorder,
+      ),
       itemBuilder: (context, i) {
         final entry = entries[i];
         final canReorder = entries.length > 1;
         if (entry.isWaveGroup) {
-          return _WaveGroup(
+          return ReorderableDelayedDragStartListener(
             key: ValueKey('waves-${entry.devices.first.id}'),
-            devices: entry.devices,
             index: i,
-            canReorder: canReorder,
-            liveOf: (d) => live[d.identifier] ?? const RbLive(),
-            errorTextOf: (e) => rbErrorText(l, e),
-            onRename: (d) => _renameDevice(context, ref, d),
-            onMove: (d) => tanks.any((t) => t.id != d.tankId)
-                ? () => _moveDevice(context, ref, d)
-                : null,
-            onRemove: (d) => _confirmRemove(context, ref, d),
+            enabled: canReorder,
+            child: _WaveGroup(
+              devices: entry.devices,
+              liveOf: (d) => live[d.identifier] ?? const RbLive(),
+              errorTextOf: (e) => rbErrorText(l, e),
+              onRename: (d) => inventory.rename(context, d, labels),
+              onMove: (d) => inventory.canMove(d, tanks)
+                  ? () => inventory.move(context, d, labels)
+                  : null,
+              onRemove: (d) => inventory.remove(context, d, labels),
+            ),
           );
         }
         final d = entry.devices.single;
-        return _DeviceCard(
+        return ReorderableDelayedDragStartListener(
           key: ValueKey(d.id),
-          device: d,
           index: i,
-          canReorder: canReorder,
-          live: live[d.identifier] ?? const RbLive(),
-          errorTextOf: (e) => rbErrorText(l, e),
-          onRename: () => _renameDevice(context, ref, d),
-          // No other tank to move to → no menu item.
-          onMove: tanks.any((t) => t.id != d.tankId)
-              ? () => _moveDevice(context, ref, d)
-              : null,
-          onShowQueue: rbIsDoseModel(d.model)
-              ? () => _showDosingQueue(context, ref, d)
-              : null,
-          onRemove: () => _confirmRemove(context, ref, d),
+          enabled: canReorder,
+          child: _DeviceCard(
+            device: d,
+            tank: inventory.tankFor(d.tankId, tanks),
+            live: live[d.identifier] ?? const RbLive(),
+            errorTextOf: (e) => rbErrorText(l, e),
+            onRename: () => inventory.rename(context, d, labels),
+            onSave:
+                rbFamilyHandlers.isModelFamily(d.model, RbFamily.control) &&
+                    onSave != null
+                ? (snap) => onSave!(d, snap)
+                : null,
+            // No other tank to move to → no menu item.
+            onMove: inventory.canMove(d, tanks)
+                ? () => inventory.move(context, d, labels)
+                : null,
+            onShowQueue: rbFamilyHandlers.isModelFamily(d.model, RbFamily.dose)
+                ? () => _showDosingQueue(context, ref, d)
+                : null,
+            onRemove: () => inventory.remove(context, d, labels),
+          ),
         );
       },
     );
-  }
-
-  /// Renames [d]. The card header carries nothing but the name now, and a
-  /// device's own name is a serial-suffixed code ("RSDOSE4-1752835676"), so a
-  /// keeper-chosen one is what the list has to read by. An emptied field falls
-  /// back to the model, as an unnamed device already does.
-  Future<void> _renameDevice(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final name = await showDeviceRenameDialog(
-      context,
-      title: l.reefBeatRenameDevice,
-      fieldLabel: l.reefBeatDeviceNameLabel,
-      initial: d.name ?? '',
-    );
-    if (name == null) return;
-    await ref
-        .read(dbProvider)
-        .updateDeviceNameTank(
-          d.id,
-          name: name.isEmpty ? null : name,
-          tankId: d.tankId,
-        );
-  }
-
-  /// Reassigns [d] to a tank picked from a dialog (all tanks except its
-  /// current one). Also serves as the initial assignment for an unassigned
-  /// device.
-  Future<void> _moveDevice(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
-    final tankId = await showDialog<int>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l.reefBeatSelectTank),
-        children: [
-          for (final t in tanks)
-            if (t.id != d.tankId)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(ctx, t.id),
-                child: Text(t.name),
-              ),
-        ],
-      ),
-    );
-    if (tankId != null) {
-      await ref
-          .read(dbProvider)
-          .updateDeviceNameTank(d.id, name: d.name, tankId: tankId);
-    }
   }
 
   /// Shows what [d] still has scheduled for today (`/dosing-queue`). Read on
@@ -245,40 +260,14 @@ class RbDeviceSection extends ConsumerWidget {
         title: deviceDisplayName(d),
         // The queue names heads by abbreviation only; the last refresh's heads
         // carry the abbreviation → supplement mapping (see [RbDoseHead]).
-        status: live[d.identifier]?.snapshot?.dose,
+        status: switch (live[d.identifier]?.snapshot) {
+          RbDoseSnapshot(:final status) => status,
+          _ => null,
+        },
         load: () => ref.read(rbDeviceLinkProvider).readDosingQueue(address),
         errorTextOf: (e) => rbErrorText(AppLocalizations.of(ctx), e),
       ),
     );
-  }
-
-  Future<void> _confirmRemove(
-    BuildContext context,
-    WidgetRef ref,
-    DeviceRecord d,
-  ) async {
-    final l = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.reefBeatRemove),
-        content: Text(l.reefBeatRemoveConfirm(deviceDisplayName(d))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.reefBeatRemove),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) {
-      onRemoved(d.identifier);
-      await ref.read(dbProvider).deleteDevice(d.id);
-    }
   }
 }
 
@@ -293,24 +282,12 @@ Future<void> showRbAddFlow(
   required void Function(String identifier, RbSnapshot snap) onSeed,
   required VoidCallback onAdded,
 }) async {
-  final db = ref.read(dbProvider);
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     builder: (ctx) => DeviceDiscoverySheet(
-      kind: DiscoveredKind.reefbeat,
-      onAdd: (found) => db.upsertReefBeatDevice(
-        identifier: found.identifier,
-        model: found.modelCode,
-        address: found.address,
-        // The friendly product name, as the manual flow defaults to — the
-        // device's own name is a serial-suffixed code.
-        name: found.modelDisplayName,
-        tankId: ref.read(activeTankProvider)?.id,
-      ),
-      onUpdateAddress: (existing, found) =>
-          db.updateDeviceAddress(existing.id, found.address),
+      kind: DeviceKind.reefBeat,
       onManualEntry: () {
         Navigator.pop(ctx);
         unawaited(showRbManualSheet(context, ref, onSeed: onSeed));
@@ -368,28 +345,25 @@ Future<void> showRbManualSheet(
 
 class _DeviceCard extends StatelessWidget {
   const _DeviceCard({
-    super.key,
     required this.device,
-    required this.index,
-    required this.canReorder,
+    required this.tank,
     required this.live,
     required this.errorTextOf,
     required this.onRename,
+    required this.onSave,
     required this.onMove,
     required this.onShowQueue,
     required this.onRemove,
   });
 
   final DeviceRecord device;
-
-  /// Position in the reorderable list (what the drag handle reports).
-  final int index;
-
-  /// False for a one-card list — nothing to drag against, so no handle.
-  final bool canReorder;
+  final Tank? tank;
   final RbLive live;
   final String Function(RbLinkError) errorTextOf;
   final VoidCallback onRename;
+
+  /// Non-null only for ReefControl, and null while a save is in flight.
+  final void Function(RbSnapshot snap)? onSave;
 
   /// Null when there is no other tank to move to (the item is hidden).
   final VoidCallback? onMove;
@@ -405,97 +379,166 @@ class _DeviceCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final snap = live.snapshot;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(deviceDisplayName(device), style: t.titleMedium),
-                ),
-                if (canReorder)
-                  ReorderableDragStartListener(
-                    index: index,
-                    // The padding keeps the 18 px glyph draggable with a
-                    // finger (the schedule-list convention).
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 18,
-                        color: ReefTokens.of(context).textFaint,
-                        semanticLabel: l.reorder,
-                      ),
-                    ),
-                  ),
-                PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'rename') onRename();
-                    if (v == 'move') onMove?.call();
-                    if (v == 'queue') onShowQueue?.call();
-                    if (v == 'details') {
-                      unawaited(showDeviceDetailsDialog(context, device));
-                    }
-                    if (v == 'remove') onRemove();
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(value: 'rename', child: Text(l.edit)),
-                    if (onMove != null)
-                      PopupMenuItem(
-                        value: 'move',
-                        child: Text(l.reefBeatMoveToTank),
-                      ),
-                    if (onShowQueue != null)
-                      PopupMenuItem(
-                        value: 'queue',
-                        child: Text(l.reefBeatDosingQueue),
-                      ),
-                    PopupMenuItem(
-                      value: 'details',
-                      child: Text(l.devicesDetails),
-                    ),
-                    PopupMenuItem(
-                      value: 'remove',
-                      child: Text(l.reefBeatRemove),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Live status area.
-            if (live.loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
-              )
-            else if (live.error != null)
-              Text(
-                errorTextOf(live.error!),
-                style: t.bodyMedium?.copyWith(color: cs.error),
-              )
-            else if (snap?.dose != null)
-              _PumpStatus(status: snap!.dose!)
-            else if (snap?.ato != null)
-              _AtoStatus(status: snap!.ato!)
-            else if (snap?.mat != null)
-              _MatStatus(status: snap!.mat!)
-            else if (snap?.run != null)
-              _RunStatus(status: snap!.run!)
-            else if (snap?.light != null)
-              _LightStatus(status: snap!.light!)
-            else
-              Text(
-                l.reefBeatNotReadYet,
-                style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+    return DeviceCardFrame(
+      title: deviceDisplayName(device),
+      loading: live.loading,
+      errorText: live.error == null ? null : errorTextOf(live.error!),
+      onMenuSelected: (v) {
+        if (v == 'save' &&
+            snap is RbControlSnapshot &&
+            tank != null &&
+            onSave != null) {
+          onSave!(snap);
+        }
+        if (v == 'rename') onRename();
+        if (v == 'move') onMove?.call();
+        if (v == 'queue') onShowQueue?.call();
+        if (v == 'details') {
+          unawaited(showDeviceDetailsDialog(context, device));
+        }
+        if (v == 'remove') onRemove();
+      },
+      menuItems: [
+        if (snap is RbControlSnapshot)
+          PopupMenuItem(
+            value: 'save',
+            enabled: tank != null && onSave != null,
+            child: Text(l.save),
+          ),
+        PopupMenuItem(value: 'rename', child: Text(l.edit)),
+        if (onMove != null)
+          PopupMenuItem(value: 'move', child: Text(l.reefBeatMoveToTank)),
+        if (onShowQueue != null)
+          PopupMenuItem(value: 'queue', child: Text(l.reefBeatDosingQueue)),
+        PopupMenuItem(value: 'details', child: Text(l.devicesDetails)),
+        PopupMenuItem(value: 'remove', child: Text(l.reefBeatRemove)),
+      ],
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (snap != null)
+            switch (snap) {
+              RbDoseSnapshot(:final status) => _PumpStatus(status: status),
+              RbAtoSnapshot(:final status) => _AtoStatus(status: status),
+              RbMatSnapshot(:final status) => _MatStatus(status: status),
+              RbRunSnapshot(:final status) => _RunStatus(status: status),
+              RbLightSnapshot(:final status) => _LightStatus(status: status),
+              RbControlSnapshot(:final status) => _ControlStatus(
+                status: status,
               ),
+              RbWaveSnapshot() => const SizedBox.shrink(),
+            }
+          else
+            Text(
+              l.reefBeatNotReadYet,
+              style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
+          // Only ReefControl saves measurements; other Red Sea models do
+          // not need a tank merely to display their operational status.
+          if (rbFamilyHandlers.isModelFamily(device.model, RbFamily.control) &&
+              tank == null) ...[
+            const SizedBox(height: 10),
+            Text(
+              l.reefFactoryNoTank,
+              style: t.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
           ],
-        ),
+        ],
       ),
+    );
+  }
+}
+
+/// A ReefControl Lite/Pro card keeps every attached probe together. Each probe
+/// gets one parameter row; a combined probe's temperature sensor gets its own
+/// labelled row immediately beneath it, and an attached leak detector gets the
+/// same green-dry/red-leak row as ReefATO. Numeric values use the app's
+/// configured units and ranges, never the controller's presentation metadata.
+class _ControlStatus extends ConsumerWidget {
+  const _ControlStatus({required this.status});
+
+  final RbControlStatus status;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final prefs = ref.watch(unitPrefsProvider);
+    final tokens = ReefTokens.of(context);
+    final boundsByParam = {
+      for (final parameter
+          in ref.watch(trackedParametersProvider).value ??
+              const <ResolvedParameter>[])
+        parameter.paramKey: parameter.bounds,
+    };
+
+    Color? colorFor(RbControlProbe probe) =>
+        switch (reefControlProbeZone(probe, boundsByParam)) {
+          Zone.green => tokens.healthy,
+          Zone.amber => tokens.caution,
+          Zone.red => tokens.critical,
+          Zone.unknown => null,
+        };
+
+    Color? temperatureColorFor(RbControlProbe probe) =>
+        switch (reefControlProbeTemperatureZone(probe, boundsByParam)) {
+          Zone.green => tokens.healthy,
+          Zone.amber => tokens.caution,
+          Zone.red => tokens.critical,
+          Zone.unknown => null,
+        };
+
+    String labelFor(RbControlProbe probe) => switch (probe.type) {
+      'ec' => l.paramName('salinity'),
+      'ph' => l.paramName('ph'),
+      'orp' => l.paramName('orp'),
+      _ => probe.type.toUpperCase(),
+    };
+
+    final probes = status.waterProbes.toList(growable: false);
+    final leakProbe = status.leakProbe;
+    if (probes.isEmpty && leakProbe == null) {
+      return Text(
+        l.reefBeatNotReadYet,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: tokens.textDim),
+      );
+    }
+
+    return Column(
+      children: [
+        for (final (index, probe) in probes.indexed) ...[
+          if (index > 0) const Divider(height: 18),
+          _StatusRow(
+            label: labelFor(probe),
+            value: formatReefControlProbeValue(probe, prefs),
+            valueColor: colorFor(probe),
+            labelFontWeight: Theme.of(context).textTheme.titleSmall?.fontWeight,
+          ),
+          if (probe.temperatureC case final temperature?)
+            _StatusRow(
+              label: l.paramName('temperature'),
+              value: formatDeviceTempC(temperature, prefs),
+              valueColor: temperatureColorFor(probe),
+            ),
+        ],
+        if (leakProbe != null) ...[
+          if (probes.isNotEmpty) const Divider(height: 18),
+          _StatusRow(
+            label: l.reefBeatAtoLeakSensor,
+            value: switch (leakProbe.detected) {
+              true => l.reefBeatAtoLeak,
+              false => l.reefBeatAtoLeakDry,
+              null => '—',
+            },
+            valueColor: switch (leakProbe.detected) {
+              true => tokens.critical,
+              false => tokens.healthy,
+              null => null,
+            },
+          ),
+        ],
+      ],
     );
   }
 }
@@ -562,13 +605,13 @@ class _AtoStatus extends ConsumerWidget {
 
     final levelText = switch (status.waterLevel) {
       RbAtoWaterLevel.ok => l.reefBeatAtoLevelOk,
-      RbAtoWaterLevel.low => l.reefBeatAtoLevelLow,
-      RbAtoWaterLevel.high => l.reefBeatAtoLevelHigh,
+      RbAtoWaterLevel.below => l.reefBeatAtoLevelLow,
+      RbAtoWaterLevel.above => l.reefBeatAtoLevelAbove,
       RbAtoWaterLevel.unknown => status.waterLevelRaw ?? '—',
     };
     final levelColor = switch (status.waterLevel) {
       RbAtoWaterLevel.ok => tokens.healthy,
-      RbAtoWaterLevel.low || RbAtoWaterLevel.high => tokens.caution,
+      RbAtoWaterLevel.below || RbAtoWaterLevel.above => tokens.caution,
       RbAtoWaterLevel.unknown => tokens.text,
     };
 
@@ -919,13 +962,15 @@ class _RunPumpRow extends ConsumerWidget {
           color: tokens.caution,
           softColor: tokens.cautionSoft,
         ),
-      // A full skimmer cup is the one non-operational state a keeper acts on
-      // routinely, so it gets its own plain label instead of the generic
-      // raw-state chip ("full_cup").
+      // A full cup and over-skimming are the non-operational states a keeper
+      // acts on routinely, so they get their own plain labels instead of the
+      // generic raw-state chip ("full_cup" / "over-skimming").
       if (pump.faulted && !pump.missingPump)
         _WarnChip(
           label: pump.fullCup
               ? l.reefBeatRunFullCup
+              : pump.overSkimming
+              ? l.reefBeatRunOverSkimming
               : l.reefBeatRunState(pump.state ?? ''),
           color: tokens.caution,
           softColor: tokens.cautionSoft,
@@ -1158,10 +1203,7 @@ class _ChannelBar extends StatelessWidget {
 /// worth showing — a full card apiece pushed everything else off the screen.
 class _WaveGroup extends StatelessWidget {
   const _WaveGroup({
-    super.key,
     required this.devices,
-    required this.index,
-    required this.canReorder,
     required this.liveOf,
     required this.errorTextOf,
     required this.onRename,
@@ -1170,8 +1212,6 @@ class _WaveGroup extends StatelessWidget {
   });
 
   final List<DeviceRecord> devices;
-  final int index;
-  final bool canReorder;
   final RbLive Function(DeviceRecord) liveOf;
   final String Function(RbLinkError) errorTextOf;
   final void Function(DeviceRecord) onRename;
@@ -1195,19 +1235,6 @@ class _WaveGroup extends StatelessWidget {
                 Expanded(
                   child: Text(l.reefBeatWaveGroup, style: t.titleMedium),
                 ),
-                if (canReorder)
-                  ReorderableDragStartListener(
-                    index: index,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 18,
-                        color: ReefTokens.of(context).textFaint,
-                        semanticLabel: l.reorder,
-                      ),
-                    ),
-                  ),
               ],
             ),
             const SizedBox(height: 10),
@@ -1262,7 +1289,10 @@ class _WavePumpRow extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).textTheme;
     final tokens = ReefTokens.of(context);
-    final status = live.snapshot?.wave;
+    final status = switch (live.snapshot) {
+      RbWaveSnapshot(:final status) => status,
+      _ => null,
+    };
     final scheduled = status?.scheduleApplies ?? true;
     final interval = status?.intervalAt(_minuteOfDay(DateTime.now()));
     final forward = interval?.forwardPercent;
@@ -1331,11 +1361,17 @@ class _WavePumpRow extends StatelessWidget {
 
 /// One label–value line of a status card: dim label left, mono value right.
 class _StatusRow extends StatelessWidget {
-  const _StatusRow({required this.label, required this.value, this.valueColor});
+  const _StatusRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.labelFontWeight,
+  });
 
   final String label;
   final String value;
   final Color? valueColor;
+  final FontWeight? labelFontWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -1352,6 +1388,7 @@ class _StatusRow extends StatelessWidget {
               label,
               style: t.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: labelFontWeight,
               ),
             ),
           ),
@@ -2063,11 +2100,11 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              if (found.dose != null) ...[
+              if (found case RbDoseSnapshot(:final status)) ...[
                 const SizedBox(height: 4),
                 Text(
                   [
-                    for (final h in found.dose!.heads)
+                    for (final h in status.heads)
                       if (h.supplement?.trim().isNotEmpty == true)
                         h.supplement!,
                   ].join('   ·   '),

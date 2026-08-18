@@ -8868,6 +8868,874 @@ class DevicesCompanion extends UpdateCompanion<DeviceRecord> {
   }
 }
 
+class $DeviceSamplesTable extends DeviceSamples
+    with TableInfo<$DeviceSamplesTable, DeviceSample> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DeviceSamplesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deviceIdentifierMeta = const VerificationMeta(
+    'deviceIdentifier',
+  );
+  @override
+  late final GeneratedColumn<String> deviceIdentifier = GeneratedColumn<String>(
+    'device_identifier',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _paramKeyMeta = const VerificationMeta(
+    'paramKey',
+  );
+  @override
+  late final GeneratedColumn<String> paramKey = GeneratedColumn<String>(
+    'param_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bucketStartMeta = const VerificationMeta(
+    'bucketStart',
+  );
+  @override
+  late final GeneratedColumn<DateTime> bucketStart = GeneratedColumn<DateTime>(
+    'bucket_start',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<double> value = GeneratedColumn<double>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _minValueMeta = const VerificationMeta(
+    'minValue',
+  );
+  @override
+  late final GeneratedColumn<double> minValue = GeneratedColumn<double>(
+    'min_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _maxValueMeta = const VerificationMeta(
+    'maxValue',
+  );
+  @override
+  late final GeneratedColumn<double> maxValue = GeneratedColumn<double>(
+    'max_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    tankId,
+    deviceIdentifier,
+    paramKey,
+    bucketStart,
+    value,
+    minValue,
+    maxValue,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'device_samples';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DeviceSample> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('device_identifier')) {
+      context.handle(
+        _deviceIdentifierMeta,
+        deviceIdentifier.isAcceptableOrUnknown(
+          data['device_identifier']!,
+          _deviceIdentifierMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdentifierMeta);
+    }
+    if (data.containsKey('param_key')) {
+      context.handle(
+        _paramKeyMeta,
+        paramKey.isAcceptableOrUnknown(data['param_key']!, _paramKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_paramKeyMeta);
+    }
+    if (data.containsKey('bucket_start')) {
+      context.handle(
+        _bucketStartMeta,
+        bucketStart.isAcceptableOrUnknown(
+          data['bucket_start']!,
+          _bucketStartMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_bucketStartMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('min_value')) {
+      context.handle(
+        _minValueMeta,
+        minValue.isAcceptableOrUnknown(data['min_value']!, _minValueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_minValueMeta);
+    }
+    if (data.containsKey('max_value')) {
+      context.handle(
+        _maxValueMeta,
+        maxValue.isAcceptableOrUnknown(data['max_value']!, _maxValueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_maxValueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {
+    tankId,
+    deviceIdentifier,
+    paramKey,
+    bucketStart,
+  };
+  @override
+  DeviceSample map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DeviceSample(
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      deviceIdentifier: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_identifier'],
+      )!,
+      paramKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}param_key'],
+      )!,
+      bucketStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}bucket_start'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}value'],
+      )!,
+      minValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}min_value'],
+      )!,
+      maxValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}max_value'],
+      )!,
+    );
+  }
+
+  @override
+  $DeviceSamplesTable createAlias(String alias) {
+    return $DeviceSamplesTable(attachedDatabase, alias);
+  }
+}
+
+class DeviceSample extends DataClass implements Insertable<DeviceSample> {
+  final int tankId;
+
+  /// The reporting device's [Devices.identifier] — stable across address
+  /// changes, and the key the wall's per-card series is drawn by (§12q: a
+  /// card is one device's series by construction, so a handover can never be
+  /// stitched into one line).
+  final String deviceIdentifier;
+  final String paramKey;
+  final DateTime bucketStart;
+
+  /// Last / lowest / highest canonical value seen inside the bucket.
+  final double value;
+  final double minValue;
+  final double maxValue;
+  const DeviceSample({
+    required this.tankId,
+    required this.deviceIdentifier,
+    required this.paramKey,
+    required this.bucketStart,
+    required this.value,
+    required this.minValue,
+    required this.maxValue,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['tank_id'] = Variable<int>(tankId);
+    map['device_identifier'] = Variable<String>(deviceIdentifier);
+    map['param_key'] = Variable<String>(paramKey);
+    map['bucket_start'] = Variable<DateTime>(bucketStart);
+    map['value'] = Variable<double>(value);
+    map['min_value'] = Variable<double>(minValue);
+    map['max_value'] = Variable<double>(maxValue);
+    return map;
+  }
+
+  DeviceSamplesCompanion toCompanion(bool nullToAbsent) {
+    return DeviceSamplesCompanion(
+      tankId: Value(tankId),
+      deviceIdentifier: Value(deviceIdentifier),
+      paramKey: Value(paramKey),
+      bucketStart: Value(bucketStart),
+      value: Value(value),
+      minValue: Value(minValue),
+      maxValue: Value(maxValue),
+    );
+  }
+
+  factory DeviceSample.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DeviceSample(
+      tankId: serializer.fromJson<int>(json['tankId']),
+      deviceIdentifier: serializer.fromJson<String>(json['deviceIdentifier']),
+      paramKey: serializer.fromJson<String>(json['paramKey']),
+      bucketStart: serializer.fromJson<DateTime>(json['bucketStart']),
+      value: serializer.fromJson<double>(json['value']),
+      minValue: serializer.fromJson<double>(json['minValue']),
+      maxValue: serializer.fromJson<double>(json['maxValue']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'tankId': serializer.toJson<int>(tankId),
+      'deviceIdentifier': serializer.toJson<String>(deviceIdentifier),
+      'paramKey': serializer.toJson<String>(paramKey),
+      'bucketStart': serializer.toJson<DateTime>(bucketStart),
+      'value': serializer.toJson<double>(value),
+      'minValue': serializer.toJson<double>(minValue),
+      'maxValue': serializer.toJson<double>(maxValue),
+    };
+  }
+
+  DeviceSample copyWith({
+    int? tankId,
+    String? deviceIdentifier,
+    String? paramKey,
+    DateTime? bucketStart,
+    double? value,
+    double? minValue,
+    double? maxValue,
+  }) => DeviceSample(
+    tankId: tankId ?? this.tankId,
+    deviceIdentifier: deviceIdentifier ?? this.deviceIdentifier,
+    paramKey: paramKey ?? this.paramKey,
+    bucketStart: bucketStart ?? this.bucketStart,
+    value: value ?? this.value,
+    minValue: minValue ?? this.minValue,
+    maxValue: maxValue ?? this.maxValue,
+  );
+  DeviceSample copyWithCompanion(DeviceSamplesCompanion data) {
+    return DeviceSample(
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      deviceIdentifier: data.deviceIdentifier.present
+          ? data.deviceIdentifier.value
+          : this.deviceIdentifier,
+      paramKey: data.paramKey.present ? data.paramKey.value : this.paramKey,
+      bucketStart: data.bucketStart.present
+          ? data.bucketStart.value
+          : this.bucketStart,
+      value: data.value.present ? data.value.value : this.value,
+      minValue: data.minValue.present ? data.minValue.value : this.minValue,
+      maxValue: data.maxValue.present ? data.maxValue.value : this.maxValue,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeviceSample(')
+          ..write('tankId: $tankId, ')
+          ..write('deviceIdentifier: $deviceIdentifier, ')
+          ..write('paramKey: $paramKey, ')
+          ..write('bucketStart: $bucketStart, ')
+          ..write('value: $value, ')
+          ..write('minValue: $minValue, ')
+          ..write('maxValue: $maxValue')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    tankId,
+    deviceIdentifier,
+    paramKey,
+    bucketStart,
+    value,
+    minValue,
+    maxValue,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DeviceSample &&
+          other.tankId == this.tankId &&
+          other.deviceIdentifier == this.deviceIdentifier &&
+          other.paramKey == this.paramKey &&
+          other.bucketStart == this.bucketStart &&
+          other.value == this.value &&
+          other.minValue == this.minValue &&
+          other.maxValue == this.maxValue);
+}
+
+class DeviceSamplesCompanion extends UpdateCompanion<DeviceSample> {
+  final Value<int> tankId;
+  final Value<String> deviceIdentifier;
+  final Value<String> paramKey;
+  final Value<DateTime> bucketStart;
+  final Value<double> value;
+  final Value<double> minValue;
+  final Value<double> maxValue;
+  final Value<int> rowid;
+  const DeviceSamplesCompanion({
+    this.tankId = const Value.absent(),
+    this.deviceIdentifier = const Value.absent(),
+    this.paramKey = const Value.absent(),
+    this.bucketStart = const Value.absent(),
+    this.value = const Value.absent(),
+    this.minValue = const Value.absent(),
+    this.maxValue = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DeviceSamplesCompanion.insert({
+    required int tankId,
+    required String deviceIdentifier,
+    required String paramKey,
+    required DateTime bucketStart,
+    required double value,
+    required double minValue,
+    required double maxValue,
+    this.rowid = const Value.absent(),
+  }) : tankId = Value(tankId),
+       deviceIdentifier = Value(deviceIdentifier),
+       paramKey = Value(paramKey),
+       bucketStart = Value(bucketStart),
+       value = Value(value),
+       minValue = Value(minValue),
+       maxValue = Value(maxValue);
+  static Insertable<DeviceSample> custom({
+    Expression<int>? tankId,
+    Expression<String>? deviceIdentifier,
+    Expression<String>? paramKey,
+    Expression<DateTime>? bucketStart,
+    Expression<double>? value,
+    Expression<double>? minValue,
+    Expression<double>? maxValue,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (tankId != null) 'tank_id': tankId,
+      if (deviceIdentifier != null) 'device_identifier': deviceIdentifier,
+      if (paramKey != null) 'param_key': paramKey,
+      if (bucketStart != null) 'bucket_start': bucketStart,
+      if (value != null) 'value': value,
+      if (minValue != null) 'min_value': minValue,
+      if (maxValue != null) 'max_value': maxValue,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DeviceSamplesCompanion copyWith({
+    Value<int>? tankId,
+    Value<String>? deviceIdentifier,
+    Value<String>? paramKey,
+    Value<DateTime>? bucketStart,
+    Value<double>? value,
+    Value<double>? minValue,
+    Value<double>? maxValue,
+    Value<int>? rowid,
+  }) {
+    return DeviceSamplesCompanion(
+      tankId: tankId ?? this.tankId,
+      deviceIdentifier: deviceIdentifier ?? this.deviceIdentifier,
+      paramKey: paramKey ?? this.paramKey,
+      bucketStart: bucketStart ?? this.bucketStart,
+      value: value ?? this.value,
+      minValue: minValue ?? this.minValue,
+      maxValue: maxValue ?? this.maxValue,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (deviceIdentifier.present) {
+      map['device_identifier'] = Variable<String>(deviceIdentifier.value);
+    }
+    if (paramKey.present) {
+      map['param_key'] = Variable<String>(paramKey.value);
+    }
+    if (bucketStart.present) {
+      map['bucket_start'] = Variable<DateTime>(bucketStart.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<double>(value.value);
+    }
+    if (minValue.present) {
+      map['min_value'] = Variable<double>(minValue.value);
+    }
+    if (maxValue.present) {
+      map['max_value'] = Variable<double>(maxValue.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeviceSamplesCompanion(')
+          ..write('tankId: $tankId, ')
+          ..write('deviceIdentifier: $deviceIdentifier, ')
+          ..write('paramKey: $paramKey, ')
+          ..write('bucketStart: $bucketStart, ')
+          ..write('value: $value, ')
+          ..write('minValue: $minValue, ')
+          ..write('maxValue: $maxValue, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WallTileSettingsTable extends WallTileSettings
+    with TableInfo<$WallTileSettingsTable, WallTileSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WallTileSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deviceIdentifierMeta = const VerificationMeta(
+    'deviceIdentifier',
+  );
+  @override
+  late final GeneratedColumn<String> deviceIdentifier = GeneratedColumn<String>(
+    'device_identifier',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _paramKeyMeta = const VerificationMeta(
+    'paramKey',
+  );
+  @override
+  late final GeneratedColumn<String> paramKey = GeneratedColumn<String>(
+    'param_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _visibleMeta = const VerificationMeta(
+    'visible',
+  );
+  @override
+  late final GeneratedColumn<bool> visible = GeneratedColumn<bool>(
+    'visible',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("visible" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    tankId,
+    deviceIdentifier,
+    paramKey,
+    displayOrder,
+    visible,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'wall_tile_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WallTileSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('device_identifier')) {
+      context.handle(
+        _deviceIdentifierMeta,
+        deviceIdentifier.isAcceptableOrUnknown(
+          data['device_identifier']!,
+          _deviceIdentifierMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdentifierMeta);
+    }
+    if (data.containsKey('param_key')) {
+      context.handle(
+        _paramKeyMeta,
+        paramKey.isAcceptableOrUnknown(data['param_key']!, _paramKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_paramKeyMeta);
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    }
+    if (data.containsKey('visible')) {
+      context.handle(
+        _visibleMeta,
+        visible.isAcceptableOrUnknown(data['visible']!, _visibleMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {tankId, deviceIdentifier, paramKey};
+  @override
+  WallTileSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WallTileSetting(
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      deviceIdentifier: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_identifier'],
+      )!,
+      paramKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}param_key'],
+      )!,
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      ),
+      visible: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}visible'],
+      )!,
+    );
+  }
+
+  @override
+  $WallTileSettingsTable createAlias(String alias) {
+    return $WallTileSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class WallTileSetting extends DataClass implements Insertable<WallTileSetting> {
+  final int tankId;
+  final String deviceIdentifier;
+  final String paramKey;
+
+  /// Explicit position, or null while the keeper has never reordered — the
+  /// default grouped-by-parameter order applies, after all explicit rows.
+  final int? displayOrder;
+  final bool visible;
+  const WallTileSetting({
+    required this.tankId,
+    required this.deviceIdentifier,
+    required this.paramKey,
+    this.displayOrder,
+    required this.visible,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['tank_id'] = Variable<int>(tankId);
+    map['device_identifier'] = Variable<String>(deviceIdentifier);
+    map['param_key'] = Variable<String>(paramKey);
+    if (!nullToAbsent || displayOrder != null) {
+      map['display_order'] = Variable<int>(displayOrder);
+    }
+    map['visible'] = Variable<bool>(visible);
+    return map;
+  }
+
+  WallTileSettingsCompanion toCompanion(bool nullToAbsent) {
+    return WallTileSettingsCompanion(
+      tankId: Value(tankId),
+      deviceIdentifier: Value(deviceIdentifier),
+      paramKey: Value(paramKey),
+      displayOrder: displayOrder == null && nullToAbsent
+          ? const Value.absent()
+          : Value(displayOrder),
+      visible: Value(visible),
+    );
+  }
+
+  factory WallTileSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WallTileSetting(
+      tankId: serializer.fromJson<int>(json['tankId']),
+      deviceIdentifier: serializer.fromJson<String>(json['deviceIdentifier']),
+      paramKey: serializer.fromJson<String>(json['paramKey']),
+      displayOrder: serializer.fromJson<int?>(json['displayOrder']),
+      visible: serializer.fromJson<bool>(json['visible']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'tankId': serializer.toJson<int>(tankId),
+      'deviceIdentifier': serializer.toJson<String>(deviceIdentifier),
+      'paramKey': serializer.toJson<String>(paramKey),
+      'displayOrder': serializer.toJson<int?>(displayOrder),
+      'visible': serializer.toJson<bool>(visible),
+    };
+  }
+
+  WallTileSetting copyWith({
+    int? tankId,
+    String? deviceIdentifier,
+    String? paramKey,
+    Value<int?> displayOrder = const Value.absent(),
+    bool? visible,
+  }) => WallTileSetting(
+    tankId: tankId ?? this.tankId,
+    deviceIdentifier: deviceIdentifier ?? this.deviceIdentifier,
+    paramKey: paramKey ?? this.paramKey,
+    displayOrder: displayOrder.present ? displayOrder.value : this.displayOrder,
+    visible: visible ?? this.visible,
+  );
+  WallTileSetting copyWithCompanion(WallTileSettingsCompanion data) {
+    return WallTileSetting(
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      deviceIdentifier: data.deviceIdentifier.present
+          ? data.deviceIdentifier.value
+          : this.deviceIdentifier,
+      paramKey: data.paramKey.present ? data.paramKey.value : this.paramKey,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
+      visible: data.visible.present ? data.visible.value : this.visible,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WallTileSetting(')
+          ..write('tankId: $tankId, ')
+          ..write('deviceIdentifier: $deviceIdentifier, ')
+          ..write('paramKey: $paramKey, ')
+          ..write('displayOrder: $displayOrder, ')
+          ..write('visible: $visible')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(tankId, deviceIdentifier, paramKey, displayOrder, visible);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WallTileSetting &&
+          other.tankId == this.tankId &&
+          other.deviceIdentifier == this.deviceIdentifier &&
+          other.paramKey == this.paramKey &&
+          other.displayOrder == this.displayOrder &&
+          other.visible == this.visible);
+}
+
+class WallTileSettingsCompanion extends UpdateCompanion<WallTileSetting> {
+  final Value<int> tankId;
+  final Value<String> deviceIdentifier;
+  final Value<String> paramKey;
+  final Value<int?> displayOrder;
+  final Value<bool> visible;
+  final Value<int> rowid;
+  const WallTileSettingsCompanion({
+    this.tankId = const Value.absent(),
+    this.deviceIdentifier = const Value.absent(),
+    this.paramKey = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+    this.visible = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WallTileSettingsCompanion.insert({
+    required int tankId,
+    required String deviceIdentifier,
+    required String paramKey,
+    this.displayOrder = const Value.absent(),
+    this.visible = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : tankId = Value(tankId),
+       deviceIdentifier = Value(deviceIdentifier),
+       paramKey = Value(paramKey);
+  static Insertable<WallTileSetting> custom({
+    Expression<int>? tankId,
+    Expression<String>? deviceIdentifier,
+    Expression<String>? paramKey,
+    Expression<int>? displayOrder,
+    Expression<bool>? visible,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (tankId != null) 'tank_id': tankId,
+      if (deviceIdentifier != null) 'device_identifier': deviceIdentifier,
+      if (paramKey != null) 'param_key': paramKey,
+      if (displayOrder != null) 'display_order': displayOrder,
+      if (visible != null) 'visible': visible,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WallTileSettingsCompanion copyWith({
+    Value<int>? tankId,
+    Value<String>? deviceIdentifier,
+    Value<String>? paramKey,
+    Value<int?>? displayOrder,
+    Value<bool>? visible,
+    Value<int>? rowid,
+  }) {
+    return WallTileSettingsCompanion(
+      tankId: tankId ?? this.tankId,
+      deviceIdentifier: deviceIdentifier ?? this.deviceIdentifier,
+      paramKey: paramKey ?? this.paramKey,
+      displayOrder: displayOrder ?? this.displayOrder,
+      visible: visible ?? this.visible,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (deviceIdentifier.present) {
+      map['device_identifier'] = Variable<String>(deviceIdentifier.value);
+    }
+    if (paramKey.present) {
+      map['param_key'] = Variable<String>(paramKey.value);
+    }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
+    if (visible.present) {
+      map['visible'] = Variable<bool>(visible.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WallTileSettingsCompanion(')
+          ..write('tankId: $tankId, ')
+          ..write('deviceIdentifier: $deviceIdentifier, ')
+          ..write('paramKey: $paramKey, ')
+          ..write('displayOrder: $displayOrder, ')
+          ..write('visible: $visible, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -9110,6 +9978,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $RoStageReplacementsTable(this);
   late final $ImportSourcesTable importSources = $ImportSourcesTable(this);
   late final $DevicesTable devices = $DevicesTable(this);
+  late final $DeviceSamplesTable deviceSamples = $DeviceSamplesTable(this);
+  late final $WallTileSettingsTable wallTileSettings = $WallTileSettingsTable(
+    this,
+  );
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index idxReadingsTankParamTaken = Index(
     'idx_readings_tank_param_taken',
@@ -9155,6 +10027,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_ro_replacements_stage',
     'CREATE INDEX idx_ro_replacements_stage ON ro_stage_replacements (stage_id)',
   );
+  late final Index idxDeviceSamplesTankParam = Index(
+    'idx_device_samples_tank_param',
+    'CREATE INDEX idx_device_samples_tank_param ON device_samples (tank_id, param_key, bucket_start)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9177,6 +10053,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     roStageReplacements,
     importSources,
     devices,
+    deviceSamples,
+    wallTileSettings,
     settings,
     idxReadingsTankParamTaken,
     idxReadingsTankTaken,
@@ -9189,6 +10067,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     idxMicroViewsTank,
     idxMaintenanceSchedulesTank,
     idxRoReplacementsStage,
+    idxDeviceSamplesTankParam,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -16971,6 +17850,458 @@ typedef $$DevicesTableProcessedTableManager =
       DeviceRecord,
       PrefetchHooks Function({bool tankId})
     >;
+typedef $$DeviceSamplesTableCreateCompanionBuilder =
+    DeviceSamplesCompanion Function({
+      required int tankId,
+      required String deviceIdentifier,
+      required String paramKey,
+      required DateTime bucketStart,
+      required double value,
+      required double minValue,
+      required double maxValue,
+      Value<int> rowid,
+    });
+typedef $$DeviceSamplesTableUpdateCompanionBuilder =
+    DeviceSamplesCompanion Function({
+      Value<int> tankId,
+      Value<String> deviceIdentifier,
+      Value<String> paramKey,
+      Value<DateTime> bucketStart,
+      Value<double> value,
+      Value<double> minValue,
+      Value<double> maxValue,
+      Value<int> rowid,
+    });
+
+class $$DeviceSamplesTableFilterComposer
+    extends Composer<_$AppDatabase, $DeviceSamplesTable> {
+  $$DeviceSamplesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get tankId => $composableBuilder(
+    column: $table.tankId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceIdentifier => $composableBuilder(
+    column: $table.deviceIdentifier,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paramKey => $composableBuilder(
+    column: $table.paramKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get bucketStart => $composableBuilder(
+    column: $table.bucketStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get minValue => $composableBuilder(
+    column: $table.minValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get maxValue => $composableBuilder(
+    column: $table.maxValue,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DeviceSamplesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DeviceSamplesTable> {
+  $$DeviceSamplesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get tankId => $composableBuilder(
+    column: $table.tankId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceIdentifier => $composableBuilder(
+    column: $table.deviceIdentifier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paramKey => $composableBuilder(
+    column: $table.paramKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get bucketStart => $composableBuilder(
+    column: $table.bucketStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get minValue => $composableBuilder(
+    column: $table.minValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get maxValue => $composableBuilder(
+    column: $table.maxValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DeviceSamplesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DeviceSamplesTable> {
+  $$DeviceSamplesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get tankId =>
+      $composableBuilder(column: $table.tankId, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceIdentifier => $composableBuilder(
+    column: $table.deviceIdentifier,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get paramKey =>
+      $composableBuilder(column: $table.paramKey, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get bucketStart => $composableBuilder(
+    column: $table.bucketStart,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<double> get minValue =>
+      $composableBuilder(column: $table.minValue, builder: (column) => column);
+
+  GeneratedColumn<double> get maxValue =>
+      $composableBuilder(column: $table.maxValue, builder: (column) => column);
+}
+
+class $$DeviceSamplesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DeviceSamplesTable,
+          DeviceSample,
+          $$DeviceSamplesTableFilterComposer,
+          $$DeviceSamplesTableOrderingComposer,
+          $$DeviceSamplesTableAnnotationComposer,
+          $$DeviceSamplesTableCreateCompanionBuilder,
+          $$DeviceSamplesTableUpdateCompanionBuilder,
+          (
+            DeviceSample,
+            BaseReferences<_$AppDatabase, $DeviceSamplesTable, DeviceSample>,
+          ),
+          DeviceSample,
+          PrefetchHooks Function()
+        > {
+  $$DeviceSamplesTableTableManager(_$AppDatabase db, $DeviceSamplesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DeviceSamplesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DeviceSamplesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DeviceSamplesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> tankId = const Value.absent(),
+                Value<String> deviceIdentifier = const Value.absent(),
+                Value<String> paramKey = const Value.absent(),
+                Value<DateTime> bucketStart = const Value.absent(),
+                Value<double> value = const Value.absent(),
+                Value<double> minValue = const Value.absent(),
+                Value<double> maxValue = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DeviceSamplesCompanion(
+                tankId: tankId,
+                deviceIdentifier: deviceIdentifier,
+                paramKey: paramKey,
+                bucketStart: bucketStart,
+                value: value,
+                minValue: minValue,
+                maxValue: maxValue,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int tankId,
+                required String deviceIdentifier,
+                required String paramKey,
+                required DateTime bucketStart,
+                required double value,
+                required double minValue,
+                required double maxValue,
+                Value<int> rowid = const Value.absent(),
+              }) => DeviceSamplesCompanion.insert(
+                tankId: tankId,
+                deviceIdentifier: deviceIdentifier,
+                paramKey: paramKey,
+                bucketStart: bucketStart,
+                value: value,
+                minValue: minValue,
+                maxValue: maxValue,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DeviceSamplesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DeviceSamplesTable,
+      DeviceSample,
+      $$DeviceSamplesTableFilterComposer,
+      $$DeviceSamplesTableOrderingComposer,
+      $$DeviceSamplesTableAnnotationComposer,
+      $$DeviceSamplesTableCreateCompanionBuilder,
+      $$DeviceSamplesTableUpdateCompanionBuilder,
+      (
+        DeviceSample,
+        BaseReferences<_$AppDatabase, $DeviceSamplesTable, DeviceSample>,
+      ),
+      DeviceSample,
+      PrefetchHooks Function()
+    >;
+typedef $$WallTileSettingsTableCreateCompanionBuilder =
+    WallTileSettingsCompanion Function({
+      required int tankId,
+      required String deviceIdentifier,
+      required String paramKey,
+      Value<int?> displayOrder,
+      Value<bool> visible,
+      Value<int> rowid,
+    });
+typedef $$WallTileSettingsTableUpdateCompanionBuilder =
+    WallTileSettingsCompanion Function({
+      Value<int> tankId,
+      Value<String> deviceIdentifier,
+      Value<String> paramKey,
+      Value<int?> displayOrder,
+      Value<bool> visible,
+      Value<int> rowid,
+    });
+
+class $$WallTileSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $WallTileSettingsTable> {
+  $$WallTileSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get tankId => $composableBuilder(
+    column: $table.tankId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceIdentifier => $composableBuilder(
+    column: $table.deviceIdentifier,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paramKey => $composableBuilder(
+    column: $table.paramKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get visible => $composableBuilder(
+    column: $table.visible,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WallTileSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WallTileSettingsTable> {
+  $$WallTileSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get tankId => $composableBuilder(
+    column: $table.tankId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceIdentifier => $composableBuilder(
+    column: $table.deviceIdentifier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paramKey => $composableBuilder(
+    column: $table.paramKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get visible => $composableBuilder(
+    column: $table.visible,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WallTileSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WallTileSettingsTable> {
+  $$WallTileSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get tankId =>
+      $composableBuilder(column: $table.tankId, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceIdentifier => $composableBuilder(
+    column: $table.deviceIdentifier,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get paramKey =>
+      $composableBuilder(column: $table.paramKey, builder: (column) => column);
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get visible =>
+      $composableBuilder(column: $table.visible, builder: (column) => column);
+}
+
+class $$WallTileSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WallTileSettingsTable,
+          WallTileSetting,
+          $$WallTileSettingsTableFilterComposer,
+          $$WallTileSettingsTableOrderingComposer,
+          $$WallTileSettingsTableAnnotationComposer,
+          $$WallTileSettingsTableCreateCompanionBuilder,
+          $$WallTileSettingsTableUpdateCompanionBuilder,
+          (
+            WallTileSetting,
+            BaseReferences<
+              _$AppDatabase,
+              $WallTileSettingsTable,
+              WallTileSetting
+            >,
+          ),
+          WallTileSetting,
+          PrefetchHooks Function()
+        > {
+  $$WallTileSettingsTableTableManager(
+    _$AppDatabase db,
+    $WallTileSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WallTileSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WallTileSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WallTileSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> tankId = const Value.absent(),
+                Value<String> deviceIdentifier = const Value.absent(),
+                Value<String> paramKey = const Value.absent(),
+                Value<int?> displayOrder = const Value.absent(),
+                Value<bool> visible = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WallTileSettingsCompanion(
+                tankId: tankId,
+                deviceIdentifier: deviceIdentifier,
+                paramKey: paramKey,
+                displayOrder: displayOrder,
+                visible: visible,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int tankId,
+                required String deviceIdentifier,
+                required String paramKey,
+                Value<int?> displayOrder = const Value.absent(),
+                Value<bool> visible = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WallTileSettingsCompanion.insert(
+                tankId: tankId,
+                deviceIdentifier: deviceIdentifier,
+                paramKey: paramKey,
+                displayOrder: displayOrder,
+                visible: visible,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WallTileSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WallTileSettingsTable,
+      WallTileSetting,
+      $$WallTileSettingsTableFilterComposer,
+      $$WallTileSettingsTableOrderingComposer,
+      $$WallTileSettingsTableAnnotationComposer,
+      $$WallTileSettingsTableCreateCompanionBuilder,
+      $$WallTileSettingsTableUpdateCompanionBuilder,
+      (
+        WallTileSetting,
+        BaseReferences<_$AppDatabase, $WallTileSettingsTable, WallTileSetting>,
+      ),
+      WallTileSetting,
+      PrefetchHooks Function()
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -17142,6 +18473,10 @@ class $AppDatabaseManager {
       $$ImportSourcesTableTableManager(_db, _db.importSources);
   $$DevicesTableTableManager get devices =>
       $$DevicesTableTableManager(_db, _db.devices);
+  $$DeviceSamplesTableTableManager get deviceSamples =>
+      $$DeviceSamplesTableTableManager(_db, _db.deviceSamples);
+  $$WallTileSettingsTableTableManager get wallTileSettings =>
+      $$WallTileSettingsTableTableManager(_db, _db.wallTileSettings);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }
