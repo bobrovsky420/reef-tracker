@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ReefTracker – User Guide</title>
+  <meta name="description" content="The illustrated ReefTracker 1.3.0 user guide for Android and iPhone: measurements, dosing, maintenance, connected devices, Wall display and backups.">
+  <meta name="theme-color" content="#087f8c">
+  <link rel="canonical" href="https://reeftracker.org/guide/">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪸</text></svg>">
   <link rel="preload" href="../fonts/BricolageGrotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
   <style>
     /* Bricolage Grotesque – SIL Open Font License, see ../fonts/OFL.txt */
@@ -66,6 +70,7 @@
     .shots { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center;
              margin: 20px 0; }
     figure.shot { margin: 0; width: 228px; text-align: center; }
+    figure.shot.wide { width: min(100%, 400px); }
     figure.shot img { width: 100%; height: auto; border: 1px solid var(--border);
                       border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
     figure.shot figcaption { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
@@ -86,12 +91,13 @@
 <p class="crumb"><a href="../">← ReefTracker home</a></p>
 
 <h1>ReefTracker User Guide</h1>
-<p class="updated">Last updated: 10 August 2026</p>
+<p class="updated">Last updated: 19 August 2026 · covers version 1.3.0</p>
 
-<p class="lead">ReefTracker is an offline reef-aquarium companion for Android and
+<p class="lead">ReefTracker is an offline-first reef-aquarium companion for Android and
 iOS. It keeps your water tests, dosing, maintenance and equipment in one place
-– stored entirely on your device, with no account, no cloud requirement and no
-ads. This guide walks through every part of the app.</p>
+– stored on your device unless you choose your own Google Drive or iCloud
+backup, with no account, no cloud requirement and no ads. This guide walks
+through every part of the app.</p>
 
 <p>Features marked <span class="pro">PRO</span> belong to the ReefTracker Pro
 tier. If you installed the app before the Pro tier existed, you have the
@@ -116,6 +122,7 @@ for you forever (see <a href="#pro">Editions</a>). Features marked
     <li><a href="#reminders">Reminders &amp; notifications</a></li>
     <li><a href="#import">Importing measurements &amp; Hanna checkers</a></li>
     <li><a href="#devices">Connected devices: ReefFactory, Red Sea &amp; Apex</a></li>
+    <li><a href="#wall">Wall display</a></li>
     <li><a href="#backup">Backup, export &amp; sync</a></li>
     <li><a href="#settings">Settings &amp; personalization</a></li>
     <li><a href="#pro">Editions: Standard, Pro &amp; Founder</a></li>
@@ -143,9 +150,10 @@ controls in the top bar. You can replay it any time from
     <figcaption>The aquarium list – tap a tank to make it active</figcaption></figure>
 </div>
 
-<h3>The four tabs</h3>
-<p>The app has four bottom tabs. Everything except Settings applies to the
-currently active aquarium, shown in the top bar:</p>
+<h3>The tabs</h3>
+<p>The app has four tabs that are always visible, plus a fifth
+<strong>Devices</strong> tab when experimental features are enabled. Everything
+except Settings applies to the currently active aquarium, shown in the top bar:</p>
 <ul>
   <li><strong>Measurements</strong> – the dashboard: your latest values, tank
       health, and the entry point to every graph.</li>
@@ -153,6 +161,9 @@ currently active aquarium, shown in the top bar:</p>
       changes, equipment cleaning, plus your maintenance schedule and RO unit.</li>
   <li><strong>Dosing</strong> – your supplement plan, dosing history and the
       dose calculator.</li>
+  <li><strong>Devices</strong> <span class="exp">EXPERIMENTAL</span> – live,
+      read-only cards for the Hanna checker and supported equipment on your
+      local network. Enable it under Settings → Experimental.</li>
   <li><strong>Settings</strong> – language, units, themes, reminders, backup and
       everything else.</li>
 </ul>
@@ -515,6 +526,11 @@ notifications – allow ReefTracker unrestricted background activity.</div>
 
 <h2 id="import">Importing measurements &amp; Hanna checkers</h2>
 
+<div class="shots">
+  <figure class="shot"><img src="../img/import-sources.png" alt="Measurement import source picker" loading="lazy">
+    <figcaption>Choose Hanna Lab history or an ICP report</figcaption></figure>
+</div>
+
 <h3>Hanna Lab file import <span class="pro">PRO</span></h3>
 <p>If you test with a Hanna HI97115 Marine Master photometer, export the test
 history CSV from Hanna's <em>Hanna Lab</em> app and import it via the
@@ -527,10 +543,15 @@ Every import can be undone with one tap.</p>
 <p>With experimental features enabled (Settings → Experimental), the ⋮ menu
 gains <strong>Hanna checker</strong>: connect to a HI97115C over Bluetooth and
 run measurements live – method by method or via your saved test sets – then
-save the confirmed results with the meter's own timestamps. Built-in reagent
-reaction timers (15 s / 30 s / 2 min) beep when the wait is over, and the
-screen stays awake while a test runs. Measurements only: meter settings and
-firmware updates stay in Hanna's own app.</p>
+save the confirmed results with the meter's own timestamps. Before saving,
+untick a value you do not trust or send it back to the checker for a re-test.
+The app can also offer the current salinity, temperature, pH and ORP from
+ReefFactory and ReefControl devices assigned to the same aquarium, so the
+environment joins the same test session without duplicate parameters. Built-in
+reagent reaction timers (15 s / 30 s / 2 min) beep when the wait is over, and
+the screen stays awake while a test runs. Once connected, the checker also has
+a card on the Devices tab. Measurements only: meter settings and firmware
+updates stay in Hanna's own app.</p>
 
 <h3>Checker display scan <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
 <p>For Hanna <em>pocket checkers</em> (the small single-parameter colorimeters
@@ -553,9 +574,9 @@ Experimental.</p>
 <p>If ReefFactory smart meters, Red Sea ReefBeat equipment or a Neptune Apex
 controller run on your aquarium, ReefTracker can talk to them directly over
 your home Wi-Fi – no cloud account in between. Everything lives on one
-<strong>Connected devices</strong> page, opened from the Measurements tab's
-<strong>⋮ menu</strong> once experimental features are enabled
-(Settings → Experimental). A row of brand buttons across the top switches
+<strong>Devices</strong> tab in the bottom navigation bar. The tab appears once
+experimental features are enabled (Settings → Experimental). A row of brand
+buttons across the top switches
 between <em>All</em> – every device, grouped by brand – and one brand at a
 time; brands you don't own never appear, and with a single brand the buttons
 disappear entirely. You can also swipe sideways anywhere on the page to step
@@ -573,7 +594,7 @@ cloud relay: reading works only while you are on the same network.</div>
 
 <h3>Adding devices – and finding them again</h3>
 
-<p>Tap <strong>Add</strong> and ReefTracker searches your Wi-Fi for
+<p>Tap <strong>+</strong> in the top bar and ReefTracker searches your Wi-Fi for
 ReefFactory meters and Red Sea ReefBeat devices, then lists what it found so
 you can add each one with a single tap – no hunting for IP addresses in your
 router's settings. Typing an IP address or hostname by hand remains available
@@ -602,8 +623,8 @@ last reached it.</p>
 <strong>pH Monitor</strong> and the <strong>Temperature Controller</strong>.
 The app identifies the model and names the card after the ReefFactory
 product. Each card shows the meter's current values with a
-<strong>Save</strong> button right beside them: the values are stored as
-ordinary readings for the tank the meter is assigned to, feeding your graphs,
+<strong>Save</strong> action in its ⋮ menu. Saved values become ordinary
+readings for the tank the meter is assigned to, feeding your graphs,
 trends and health score like any hand-entered test. The Temperature
 Controller's temperature carries a <em>Heating</em> or <em>Cooling</em> badge
 whenever the controller is actually running that output.</p>
@@ -613,10 +634,12 @@ whenever the controller is actually running that output.</p>
 <div class="shots">
   <figure class="shot"><img src="../img/reefbeat.png" alt="Red Sea ReefBeat dashboard" loading="lazy">
     <figcaption>ReefDose heads and ReefATO+ status at a glance</figcaption></figure>
+  <figure class="shot"><img src="../img/reefcontrol.png" alt="ReefControl Pro probe card" loading="lazy">
+    <figcaption>ReefControl probes use your ReefTracker ranges</figcaption></figure>
 </div>
 
 <p>The ReefBeat cards show <em>operational status</em> rather than values to
-save. Six device families are supported:</p>
+save, except ReefControl's probe card. Seven device families are supported:</p>
 
 <ul>
   <li><strong>ReefDose 2 / ReefDose 4</strong> dosing pumps – one row per
@@ -651,6 +674,12 @@ save. Six device families are supported:</p>
       each, showing the flow each is scheduled to run right now (the pumps
       don't report a live speed over the local network); a pump taken off
       auto is dimmed.</li>
+  <li><strong>ReefControl Lite / Pro</strong> – salinity, pH and ORP from every
+      attached ReefSense probe, plus each combined probe's temperature and an
+      attached leak detector. Values use the units and safe-range colors of
+      the assigned ReefTracker aquarium. Save salinity, pH, ORP and the first
+      available probe temperature from the card's ⋮ menu, or with Save all.
+      Rules, calibration and notifications stay in ReefBeat.</li>
 </ul>
 
 <h3>Neptune Apex controllers <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
@@ -673,19 +702,20 @@ again.</p>
 
 <h3>Refreshing &amp; saving <span class="pro">PRO</span> <span class="exp">EXPERIMENTAL</span></h3>
 
-<p>The page reads every device in view when it opens; after that,
-<strong>Refresh</strong> re-reads exactly the devices currently on screen –
+<p>The tab reads every device in view when it opens; after that, pull down past
+the top or tap <strong>Refresh</strong> to re-read exactly the devices currently on screen –
 and says how many that is – so filtering to one brand leaves the rest of your
 equipment alone. <strong>Save all</strong> stores the readings of every meter
-in view in one go and merges values taken moments apart into a single test
-session. Values older than a couple of minutes are re-read before saving, so
+in view in one go, counts the distinct parameters that will be stored, and
+merges values taken moments apart into a single test session. Values older than
+a couple of minutes are re-read before saving, so
 opening the page, getting distracted and saving an hour later never stamps
 hour-old probe values as a fresh measurement.</p>
 
 <p>When two devices report the same reading for the same aquarium, the one
 higher up the page wins, and the confirmation names the device the value came
-from. You set that preference simply by ordering: press the <strong>drag
-handle</strong> in a card's header to move it above its neighbours, or
+from. You set that preference simply by ordering: press and hold a card to move
+it above its neighbours, or
 reorder whole brands with <strong>Reorder brands</strong> in the page's menu.
 The order is remembered and travels with your backups.</p>
 
@@ -699,11 +729,47 @@ value and still save everything else the other devices reported.</p>
 <h3>Standard edition &amp; the device list</h3>
 
 <p>Live reading is a <span class="pro">PRO</span> feature – one entitlement
-covers all three brands. Whatever your edition, the Connected devices page
+covers all supported Wi-Fi equipment. Whatever your edition, the Devices tab
 still lists every device you've added – ReefFactory meters, Red Sea ReefBeat
 devices, your Apex and your Hanna checker – and each card's
 <strong>Details</strong> shows its model, address and when the app last
 reached it.</p>
+
+<h2 id="wall">Wall display <span class="pro">PRO</span></h2>
+
+<div class="shots">
+  <figure class="shot wide"><img src="../img/wall.png" alt="Light Wall display on an Android tablet with large aquarium values" loading="lazy">
+    <figcaption>Light Wall display on an Android tablet</figcaption></figure>
+  <figure class="shot wide"><img src="../img/wall-dark.png" alt="Dark Wall display on an Android tablet with large aquarium values" loading="lazy">
+    <figcaption>Dark Wall display for a dimly lit aquarium room</figcaption></figure>
+  <figure class="shot"><img src="../img/wall-settings.png" alt="Wall display settings" loading="lazy">
+    <figcaption>Start the board and choose its behavior and cards</figcaption></figure>
+</div>
+
+<p>Open <strong>Settings → Wall display</strong> to turn a wall-mounted tablet
+into an always-on aquarium board. Tap <strong>Start now</strong>, or enable
+auto-start so the app returns to the board after that tablet reboots. The board
+never scrolls: it sizes its cards to the screen, moves overflow onto rotating
+pages, keeps the screen awake, hides the system bars and gently shifts the grid
+to reduce OLED burn-in. Leaving takes a deliberate press-and-hold.</p>
+
+<p>Each water parameter gets a large, color-coded card. Connected devices add
+live values and a 24-hour min/max graph; hand tests appear as markers on the
+same line. Parameters without a device use your latest saved reading and a
+14-day graph. Those live graph samples are display-only, kept locally for
+48 hours, and never added to your measurement history. Status cards cover the
+ATO level and reservoir, leaks, dosing-head supply, fleece roll and skimmer
+cup, and an optional strip lists today's due tasks.</p>
+
+<p>Under <strong>Cards</strong>, hide duplicates and drag the rest into your
+preferred order. Hiding every card from a device also stops Wall display from
+polling that device. You can choose the refresh interval, page-change timing
+and night-dimming window. The board also works with no connected hardware at
+all, using only your stored readings.</p>
+
+<div class="tip"><strong>Platform note:</strong> Wall display adapts to a phone,
+but is designed for a tablet. The 1.3.0 App Store build targets iPhone; for a
+native tablet layout, use the Android version on a tablet.</div>
 
 <h2 id="backup">Backup, export &amp; sync</h2>
 
@@ -766,12 +832,18 @@ are per-device and start fresh.</div>
   <li><strong>Appearance</strong> – light, dark, or follow the system. The
       dark theme keeps the same health colors and works nicely next to a
       dimly lit tank.</li>
+  <li><strong>Wall display</strong> – launch and configure the always-on board,
+      including its cards, refresh rate, page timing and night dimming.</li>
   <li><strong>Units</strong> – °C/°F, ppt/SG for salinity, liters/gallons.
       Switching units never changes health colors: values are stored
       canonically and only displayed in your unit.</li>
   <li><strong>Dashboard</strong> – layout (Grouped, Flat, or Flat with
       graphs), health-card display, stability window.</li>
   <li><strong>Trends</strong> – on/off, trend window, alert horizon.</li>
+  <li><strong>Updates</strong> – once per launch, the app quietly checks whether
+      a newer version is on your store. Android can download it in place through
+      Google Play; on iPhone, one tap opens the App Store. Each version is shown
+      once, never as a repeated nag.</li>
 </ul>
 
 <h3>Managing parameters &amp; safe ranges</h3>
@@ -820,6 +892,7 @@ guide:</p>
   <tr><td>Hanna Lab import</td><td>CSV import from the Hanna Lab app</td></tr>
   <tr><td>Hanna checker connection &amp; scan</td><td>Live Bluetooth measurements and camera reading <em>(experimental)</em></td></tr>
   <tr><td>Connected devices</td><td>ReefFactory, Red Sea ReefBeat &amp; Neptune Apex live over your Wi-Fi – one entitlement covers all brands <em>(experimental)</em></td></tr>
+  <tr><td>Wall display</td><td>Always-on value graphs, equipment status and due tasks for a wall-mounted tablet</td></tr>
   <tr><td>Cloud backup sync</td><td>Automatic backups to your Google Drive (Android) or iCloud Drive (iOS)</td></tr>
 </table>
 
@@ -850,9 +923,10 @@ the <a href="../privacy-policy.html">privacy policy</a>.</p>
     <a href="../support.html">Support</a>
     <a href="../privacy-policy.html">Privacy policy</a>
   </nav>
-  <p>ReefTracker – an offline reef-aquarium companion for Android and iOS.<br>
-  Screenshots show the app with sample data; the exact layout can differ
-  slightly between versions and platforms.</p>
+  <p>ReefTracker – an offline-first reef-aquarium companion for Android and iOS.<br>
+  Screenshots were captured from version 1.3.0-compatible Android UI with
+  sample data. iPhone uses the same feature set with platform-native controls,
+  so some controls and spacing differ.</p>
 </footer>
 
 </body>

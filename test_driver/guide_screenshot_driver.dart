@@ -1,6 +1,6 @@
 // Host side of the guide screenshot harness. Writes each captured screenshot
 // to build/guide_shots/<name>.png (raw device resolution); the publish step
-// resizes them into docs/guide/img/.
+// resizes them into docs/img/.
 import 'dart:io';
 
 import 'package:integration_test/integration_test_driver_extended.dart';

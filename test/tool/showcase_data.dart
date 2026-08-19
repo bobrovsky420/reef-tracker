@@ -403,10 +403,31 @@ Future<void> seedShowcaseData(AppDatabase db, {DateTime? now}) async {
     name: 'ReefATO+',
     tankId: tank,
   );
+  await db.upsertReefBeatDevice(
+    identifier: 'ec6260control',
+    model: 'RSCONTROLPRO',
+    address: '192.168.1.33',
+    name: 'ReefControl Pro',
+    tankId: tank,
+  );
+
+  // A remembered Hanna Lab source makes the import-settings guide capture
+  // demonstrate its real purpose instead of showing an empty section.
+  await db.upsertImportSource(
+    ImportSourcesCompanion.insert(
+      tankId: tank,
+      source: 'hannaLab',
+      location: const Value('Reef Display'),
+      importedUpTo: Value(at(1, 8)),
+    ),
+  );
 
   // --- Maintenance schedule & reminders ------------------------------------
   final settings = AppSettings(db);
   await settings.setTourSeen(true);
+  // Keep screenshots on the complete, opted-in 1.3 navigation: the Devices
+  // destination is intentionally hidden until experimental features are on.
+  await settings.setExperimentalEnabled(true);
   await settings.setRemindersTesting(true);
   await settings.setRemindersDosing(true);
   await settings.setRemindersMaintenance(true);
