@@ -872,6 +872,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Convert ppt ↔ specific gravity (SG)';
 
   @override
+  String get reefUnitConverter => 'Reef unit converter';
+
+  @override
+  String get reefUnitConverterSubtitle => 'Alkalinity, temperature and volume';
+
+  @override
+  String get reefUnitConverterIntro =>
+      'Convert common reef units. Choose the source unit and enter a value.';
+
+  @override
+  String get converterSourceUnit => 'Source unit';
+
+  @override
+  String get converterValue => 'Value';
+
+  @override
+  String get converterEquivalent => 'Equivalent';
+
+  @override
+  String get alkalinity => 'Alkalinity';
+
+  @override
   String get backupSection => 'Backup';
 
   @override
@@ -1359,6 +1381,173 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get refFormulaNote =>
       'SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.';
+
+  @override
+  String get salinityToolConvert => 'Convert';
+
+  @override
+  String get salinityToolMix => 'Mix new water';
+
+  @override
+  String get salinityToolCorrect => 'Correct this tank';
+
+  @override
+  String get saltMixIntro =>
+      'Estimate the dry salt mix for a prepared batch. Use your product\'s label or a batch you measured yourself.';
+
+  @override
+  String get saltMixFinalVolume => 'Desired final volume';
+
+  @override
+  String get saltMixTarget => 'Target salinity';
+
+  @override
+  String get saltMixProfileTitle => 'Your salt mix';
+
+  @override
+  String get saltMixProductLabel => 'Salt mix';
+
+  @override
+  String get saltMixCustomProduct => 'Custom mix';
+
+  @override
+  String get saltMixCustomHelp =>
+      'Enter a label value or calibrate a batch you measured yourself.';
+
+  @override
+  String get saltMixCatalogManufacturer =>
+      'Manufacturer starting value. Measure a prepared batch to personalize it for this aquarium.';
+
+  @override
+  String get saltMixCatalogEstimate =>
+      'Manufacturer source-water estimate. Calibrate a measured final batch before relying on it.';
+
+  @override
+  String get saltMixMeasuredCalibration =>
+      'Using your measured calibration for this aquarium.';
+
+  @override
+  String get saltMixNameOptional => 'Salt name (optional)';
+
+  @override
+  String get saltMixFactor => 'Dry mix at reference salinity';
+
+  @override
+  String get saltMixFactorHelp =>
+      'Enter grams per litre of final prepared saltwater. A label stated per litre of source water is only an estimate until you calibrate a real batch.';
+
+  @override
+  String get saltMixReferenceSalinity => 'Reference salinity';
+
+  @override
+  String get saltMixCalibrateTitle => 'Calibrate from a measured batch';
+
+  @override
+  String get saltMixDryMass => 'Dry mix used';
+
+  @override
+  String get saltMixMeasuredVolume => 'Measured final volume';
+
+  @override
+  String get saltMixMeasuredSalinity => 'Measured salinity';
+
+  @override
+  String get saltMixUseCalibration => 'Use this calibration';
+
+  @override
+  String get saltMixCalculate => 'Calculate salt mix';
+
+  @override
+  String get salinityPlannerResult => 'Result';
+
+  @override
+  String get saltMixDrySalt => 'Estimated dry mix';
+
+  @override
+  String get saltMixResultHelp =>
+      'Start with less RO/DI water than the desired final volume. Mix outside the aquarium, follow the product\'s temperature, mixing and aeration directions, then verify with a calibrated salinity instrument and adjust salt and water to the final volume.';
+
+  @override
+  String get salinityCorrectionIntro =>
+      'Estimate an equal-volume water exchange that moves this tank from its current salinity to your target.';
+
+  @override
+  String get salinityCorrectionTankVolume => 'Net system-water volume';
+
+  @override
+  String get salinityCorrectionCurrent => 'Current salinity';
+
+  @override
+  String get salinityCorrectionTarget => 'Target salinity';
+
+  @override
+  String salinityPlannerLatestReading(Object date) {
+    return 'Prefilled from your reading on $date.';
+  }
+
+  @override
+  String get salinityCorrectionReplacement => 'Replacement-batch salinity';
+
+  @override
+  String get salinityCorrectionReplacementHelp =>
+      'It must be above the target. Prepare and measure this batch separately.';
+
+  @override
+  String get salinityCorrectionHighMethod =>
+      'Remove the calculated tank water and replace it with the same volume of 0-ppt RO/DI water.';
+
+  @override
+  String get salinityCorrectionHighResultHelp =>
+      'Treat this as a starting estimate. Make large changes in steps, circulate the tank between them, and remeasure after every step.';
+
+  @override
+  String get salinityCorrectionLowResultHelp =>
+      'Prepare the replacement water outside the aquarium. Follow the salt product\'s temperature, mixing and aeration directions, verify it with a calibrated salinity instrument, then change the water in steps, circulate, and remeasure.';
+
+  @override
+  String get salinityCorrectionLowMethod =>
+      'Remove the calculated tank water and replace it with the same volume of separately mixed, higher-salinity water.';
+
+  @override
+  String get salinityCorrectionCalculate => 'Calculate correction';
+
+  @override
+  String get salinityReplacementError =>
+      'Replacement salinity must be above the target.';
+
+  @override
+  String get salinityPlannerAssumptionsTitle => 'Before you correct';
+
+  @override
+  String get salinityPlannerAssumptions =>
+      'The estimate assumes the tank stays at the same volume, salt is conserved, and the water is fully mixed. If evaporation lowered the water level, restore the normal level with RO/DI and measure again first.';
+
+  @override
+  String get salinityPlannerSafety =>
+      'Never add dry salt mix to an aquarium containing animals. Make large changes in steps, circulate between them, and measure after every step. The calculator does not set a universally safe daily change or guarantee the endpoint.';
+
+  @override
+  String get salinityCorrectionNoChange =>
+      'The current salinity already matches the target. No exchange is needed.';
+
+  @override
+  String get salinityCorrectionExchange => 'Remove and replace';
+
+  @override
+  String get salinityCorrectionTankPercent => 'Of system water';
+
+  @override
+  String get salinityCorrectionBatchSalt => 'Dry mix for replacement batch';
+
+  @override
+  String get salinityCorrectionExtraEquivalent =>
+      'Total additional-salt equivalent';
+
+  @override
+  String get salinityCorrectionRecord => 'Record completed water change';
+
+  @override
+  String get salinityCorrectionLogNote => 'Salinity correction';
 
   @override
   String get doseCalcTitle => 'Dose calculator';
@@ -4096,6 +4285,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wallNightToTitle => 'Dim until';
+
+  @override
+  String get wallDataSection => 'Collected data';
+
+  @override
+  String get wallClearSamplesTitle => 'Clear collected measurements';
+
+  @override
+  String get wallClearSamplesSubtitle =>
+      'Delete online measurements used by wall graphs';
+
+  @override
+  String get wallClearSamplesDialogTitle => 'Clear collected measurements?';
+
+  @override
+  String get wallClearSamplesDialogBody =>
+      'Choose how much recent online history to keep. Manual measurements are not deleted.';
+
+  @override
+  String get wallClearSamplesAll => 'Delete everything';
+
+  @override
+  String get wallKeepSamples1h => 'Keep the last 1 hour';
+
+  @override
+  String get wallKeepSamples4h => 'Keep the last 4 hours';
+
+  @override
+  String get wallKeepSamples12h => 'Keep the last 12 hours';
+
+  @override
+  String get wallSamplesHistoryUpdated =>
+      'Collected measurement history updated';
 
   @override
   String get wallCardsSection => 'Cards';

@@ -139,6 +139,21 @@ void main() {
     });
   });
 
+  group('reef unit converter conversions', () {
+    test('alkalinity converts through dKH', () {
+      expect(dkhToMeq(8), closeTo(2.856, 1e-9));
+      expect(meqToDkh(2.856), closeTo(8, 1e-9));
+      expect(dkhToPpmCaco3(8), closeTo(142.784, 1e-9));
+      expect(ppmCaco3ToDkh(142.784), closeTo(8, 1e-9));
+    });
+
+    test('imperial gallons stay distinct from US gallons', () {
+      expect(litersToImperialGallons(4.54609), closeTo(1, 1e-9));
+      expect(imperialGallonsToLiters(1), closeTo(4.54609, 1e-9));
+      expect(litersToGallons(4.54609), isNot(closeTo(1, 1e-3)));
+    });
+  });
+
   group('presentationFor', () {
     test('temperature follows prefs and converts', () {
       final f = presentationFor(

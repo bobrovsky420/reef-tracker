@@ -7,7 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.1]
 
+### Added
+- A Standard salt-mix and salinity-correction planner now estimates dry salt
+  for prepared water and equal-volume RO/DI or higher-salinity exchanges using
+  the active aquarium's volume, latest salinity, target range, unit choices,
+  and a reusable measured salt calibration.
+- The salt-mix planner now includes 16 popular mixes from Red Sea, Instant
+  Ocean, Brightwell, Seachem, Nyos, Aquaforest, Tropic Marin, Fauna Marin and
+  D-D. Each manufacturer value seeds only the product's first selection for an
+  aquarium; a measured batch then becomes that aquarium/product's remembered
+  value, including after switching away and back.
+- A Standard reef-unit converter in Settings → Tools for alkalinity (dKH,
+  meq/L and ppm CaCO₃), temperature (°C/°F), and volume (litres, US gallons
+  and Imperial gallons).
+- Wall display settings can now clear the tablet's collected online graph
+  history completely or retain only the latest 1, 4, or 12 hours, without
+  deleting manually entered aquarium measurements.
+
 ### Changed
+- Wall display device graphs now scale independently and contain only that
+  device's online measurements; manually entered measurements remain on their
+  own cards instead of appearing as fallback lines or hollow markers.
 - The ReefATO+ device card now always reports its leak sensor: Not connected
   when unplugged, Not enabled when switched off, Dry while standing guard, and
   translated RO/DI-water or aquarium-water warning when it detects a leak.

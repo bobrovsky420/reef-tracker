@@ -874,6 +874,28 @@ class AppLocalizationsCs extends AppLocalizations {
   String get salinityCalculatorSubtitle => 'Převod ppt ↔ hustota (SG)';
 
   @override
+  String get reefUnitConverter => 'Převodník jednotek pro útes';
+
+  @override
+  String get reefUnitConverterSubtitle => 'Alkalinita, teplota a objem';
+
+  @override
+  String get reefUnitConverterIntro =>
+      'Převáděj běžné útesové jednotky. Vyber zdrojovou jednotku a zadej hodnotu.';
+
+  @override
+  String get converterSourceUnit => 'Zdrojová jednotka';
+
+  @override
+  String get converterValue => 'Hodnota';
+
+  @override
+  String get converterEquivalent => 'Přepočet';
+
+  @override
+  String get alkalinity => 'Alkalinita';
+
+  @override
   String get backupSection => 'Záloha';
 
   @override
@@ -1364,6 +1386,173 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get refFormulaNote =>
       'SG je vztaženo k 25 °C. Převod je lineární aproximace: SG = 1 + ppt × 0,0264/35.';
+
+  @override
+  String get salinityToolConvert => 'Převod';
+
+  @override
+  String get salinityToolMix => 'Namíchat novou vodu';
+
+  @override
+  String get salinityToolCorrect => 'Upravit akvárium';
+
+  @override
+  String get saltMixIntro =>
+      'Odhadni množství suché směsi pro připravenou dávku. Použij údaj z obalu nebo vlastní změřenou dávku.';
+
+  @override
+  String get saltMixFinalVolume => 'Požadovaný konečný objem';
+
+  @override
+  String get saltMixTarget => 'Cílová salinita';
+
+  @override
+  String get saltMixProfileTitle => 'Tvoje mořská sůl';
+
+  @override
+  String get saltMixProductLabel => 'Mořská sůl';
+
+  @override
+  String get saltMixCustomProduct => 'Vlastní směs';
+
+  @override
+  String get saltMixCustomHelp =>
+      'Zadej hodnotu z etikety nebo zkalibruj vlastní změřenou dávku.';
+
+  @override
+  String get saltMixCatalogManufacturer =>
+      'Výchozí hodnota výrobce. Změř připravenou dávku a přizpůsob ji tomuto akváriu.';
+
+  @override
+  String get saltMixCatalogEstimate =>
+      'Odhad výrobce pro zdrojovou vodu. Než se na něj spolehneš, zkalibruj změřený konečný objem.';
+
+  @override
+  String get saltMixMeasuredCalibration =>
+      'Používá se tvoje změřená kalibrace pro toto akvárium.';
+
+  @override
+  String get saltMixNameOptional => 'Název soli (volitelné)';
+
+  @override
+  String get saltMixFactor => 'Suchá směs při referenční salinitě';
+
+  @override
+  String get saltMixFactorHelp =>
+      'Zadej gramy na litr konečné připravené vody. Údaj z obalu na litr vstupní vody je jen odhad, dokud nezkalibruješ skutečnou dávku.';
+
+  @override
+  String get saltMixReferenceSalinity => 'Referenční salinita';
+
+  @override
+  String get saltMixCalibrateTitle => 'Kalibrovat podle změřené dávky';
+
+  @override
+  String get saltMixDryMass => 'Použitá suchá směs';
+
+  @override
+  String get saltMixMeasuredVolume => 'Změřený konečný objem';
+
+  @override
+  String get saltMixMeasuredSalinity => 'Změřená salinita';
+
+  @override
+  String get saltMixUseCalibration => 'Použít tuto kalibraci';
+
+  @override
+  String get saltMixCalculate => 'Vypočítat směs';
+
+  @override
+  String get salinityPlannerResult => 'Výsledek';
+
+  @override
+  String get saltMixDrySalt => 'Odhad suché směsi';
+
+  @override
+  String get saltMixResultHelp =>
+      'Začni s menším množstvím RO/DI vody, než je požadovaný konečný objem. Míchej mimo akvárium, dodrž pokyny výrobce k teplotě, míchání a provzdušnění, potom ověř salinitu kalibrovaným přístrojem a uprav množství soli a vody na konečný objem.';
+
+  @override
+  String get salinityCorrectionIntro =>
+      'Odhadni výměnu stejného objemu vody, která posune salinitu akvária ze současné hodnoty k cíli.';
+
+  @override
+  String get salinityCorrectionTankVolume => 'Čistý objem vody v systému';
+
+  @override
+  String get salinityCorrectionCurrent => 'Současná salinita';
+
+  @override
+  String get salinityCorrectionTarget => 'Cílová salinita';
+
+  @override
+  String salinityPlannerLatestReading(Object date) {
+    return 'Předvyplněno podle měření z $date.';
+  }
+
+  @override
+  String get salinityCorrectionReplacement => 'Salinita náhradní dávky';
+
+  @override
+  String get salinityCorrectionReplacementHelp =>
+      'Musí být vyšší než cíl. Připrav a změř tuto dávku zvlášť.';
+
+  @override
+  String get salinityCorrectionHighMethod =>
+      'Odeber vypočtené množství vody z akvária a nahraď je stejným objemem RO/DI vody s 0 ppt.';
+
+  @override
+  String get salinityCorrectionHighResultHelp =>
+      'Ber výsledek jako počáteční odhad. Velké změny rozděl do kroků, nech mezi nimi vodu cirkulovat a po každém kroku salinitu znovu změř.';
+
+  @override
+  String get salinityCorrectionLowResultHelp =>
+      'Náhradní vodu připrav mimo akvárium. Dodrž pokyny výrobce soli k teplotě, míchání a provzdušnění, ověř ji kalibrovaným přístrojem na salinitu, potom měň vodu po krocích, nech ji cirkulovat a znovu měř.';
+
+  @override
+  String get salinityCorrectionLowMethod =>
+      'Odeber vypočtené množství vody z akvária a nahraď je stejným objemem zvlášť namíchané vody s vyšší salinitou.';
+
+  @override
+  String get salinityCorrectionCalculate => 'Vypočítat úpravu';
+
+  @override
+  String get salinityReplacementError =>
+      'Salinita náhradní vody musí být vyšší než cíl.';
+
+  @override
+  String get salinityPlannerAssumptionsTitle => 'Před úpravou';
+
+  @override
+  String get salinityPlannerAssumptions =>
+      'Odhad předpokládá stejný objem akvária, zachování soli a úplné promíchání vody. Pokud odpařování snížilo hladinu, nejdřív doplň RO/DI na běžnou úroveň a znovu změř salinitu.';
+
+  @override
+  String get salinityPlannerSafety =>
+      'Nikdy nesyp suchou směs do akvária se živočichy. Velké změny rozděl na kroky, mezi nimi nech vodu cirkulovat a po každém kroku měř. Kalkulačka neurčuje univerzálně bezpečnou denní změnu ani nezaručuje výsledek.';
+
+  @override
+  String get salinityCorrectionNoChange =>
+      'Současná salinita už odpovídá cíli. Výměna není potřeba.';
+
+  @override
+  String get salinityCorrectionExchange => 'Odebrat a nahradit';
+
+  @override
+  String get salinityCorrectionTankPercent => 'Z vody v systému';
+
+  @override
+  String get salinityCorrectionBatchSalt => 'Suchá směs pro náhradní dávku';
+
+  @override
+  String get salinityCorrectionExtraEquivalent =>
+      'Celkový ekvivalent chybějící soli';
+
+  @override
+  String get salinityCorrectionRecord => 'Zapsat dokončenou výměnu vody';
+
+  @override
+  String get salinityCorrectionLogNote => 'Úprava salinity';
 
   @override
   String get doseCalcTitle => 'Kalkulačka dávkování';
@@ -4129,6 +4318,39 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get wallNightToTitle => 'Ztmavit do';
+
+  @override
+  String get wallDataSection => 'Shromážděná data';
+
+  @override
+  String get wallClearSamplesTitle => 'Vymazat shromážděná měření';
+
+  @override
+  String get wallClearSamplesSubtitle =>
+      'Smazat online měření používaná v grafech nástěnného displeje';
+
+  @override
+  String get wallClearSamplesDialogTitle => 'Vymazat shromážděná měření?';
+
+  @override
+  String get wallClearSamplesDialogBody =>
+      'Zvol, jak velkou část nedávné online historie chceš zachovat. Ručně zadaná měření se nesmažou.';
+
+  @override
+  String get wallClearSamplesAll => 'Smazat vše';
+
+  @override
+  String get wallKeepSamples1h => 'Zachovat poslední 1 hodinu';
+
+  @override
+  String get wallKeepSamples4h => 'Zachovat poslední 4 hodiny';
+
+  @override
+  String get wallKeepSamples12h => 'Zachovat posledních 12 hodin';
+
+  @override
+  String get wallSamplesHistoryUpdated =>
+      'Historie shromážděných měření byla upravena';
 
   @override
   String get wallCardsSection => 'Karty';

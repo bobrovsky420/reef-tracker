@@ -62,6 +62,7 @@ class BackupData {
   const BackupData({
     required this.schemaVersion,
     required this.tanks,
+    this.saltMixCalibrations = const [],
     required this.params,
     this.paramOverrides = const [],
     required this.readings,
@@ -86,6 +87,7 @@ class BackupData {
   final int schemaVersion;
 
   final List<TanksCompanion> tanks;
+  final List<SaltMixCalibrationsCompanion> saltMixCalibrations;
   final List<TrackedParametersCompanion> params;
 
   /// Per-tank zone-bound/target overrides (schema v28+). Absent in older
@@ -143,6 +145,7 @@ class BackupData {
 String encodeBackup({
   required int schemaVersion,
   required List<Tank> tanks,
+  List<StoredSaltMixCalibration> saltMixCalibrations = const [],
   required List<TrackedParameter> params,
   List<ParameterOverride> paramOverrides = const [],
   required List<Reading> readings,
@@ -177,6 +180,9 @@ String encodeBackup({
     // backup and re-encoding it here doesn't read as a data change.
     'device': ?deviceName,
     'tanks': tanks.map(_tankToJson).toList(),
+    'saltMixCalibrations': saltMixCalibrations
+        .map(_saltMixCalibrationToJson)
+        .toList(),
     'trackedParameters': params.map(_paramToJson).toList(),
     'parameterOverrides': paramOverrides.map(_paramOverrideToJson).toList(),
     'readings': readings.map(_readingToJson).toList(),
@@ -430,6 +436,11 @@ BackupData decodeBackup(String jsonString) {
   return BackupData(
     schemaVersion: schemaVersion,
     tanks: section('tanks', _tankFromJson),
+    saltMixCalibrations: section(
+      'saltMixCalibrations',
+      _saltMixCalibrationFromJson,
+      required: false,
+    ),
     params: section('trackedParameters', _paramFromJson),
     // Absent in every pre-v28 backup: those restore with all parameters on
     // their defaults, which is exactly what the v28 migration does too.
@@ -570,6 +581,31 @@ void validateBackup(BackupData data, {required int appSchemaVersion}) {
   }
 
   requireTank('trackedParameters', data.params.map((r) => r.tankId.value));
+  requireTank(
+    'saltMixCalibrations',
+    data.saltMixCalibrations.map((r) => r.tankId.value),
+  );
+  final saltMixKeys = <(int, String)>{};
+  for (final row in data.saltMixCalibrations) {
+    final key = (row.tankId.value, row.productKey.value);
+    if (row.productKey.value.isEmpty || !saltMixKeys.add(key)) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'duplicate or empty salt-mix calibration key $key',
+      );
+    }
+    final factor = row.gramsPerLiter.value;
+    final reference = row.referencePpt.value;
+    if (!factor.isFinite ||
+        factor <= 0 ||
+        !reference.isFinite ||
+        reference <= 0) {
+      throw InvalidBackupException(
+        BackupRejection.inconsistent,
+        'invalid salt-mix calibration $key',
+      );
+    }
+  }
   requireTank(
     'parameterOverrides',
     data.paramOverrides.map((r) => r.tankId.value),
@@ -928,6 +964,7 @@ Future<void> _deleteDbFiles(File db) async {
 Future<void> _applyRestore(AppDatabase db, BackupData data) =>
     db.restoreFromBackup(
       tankRows: data.tanks,
+      saltMixCalibrationRows: data.saltMixCalibrations,
       paramRows: data.params,
       paramOverrideRows: data.paramOverrides,
       readingRows: data.readings,
@@ -955,6 +992,7 @@ Future<void> _applyRestore(AppDatabase db, BackupData data) =>
 /// Everything [encodeBackupFromDb] reads, captured in one snapshot.
 typedef _BackupSnapshot = ({
   List<Tank> allTanks,
+  List<StoredSaltMixCalibration> saltMixCalibrations,
   List<TrackedParameter> params,
   List<ParameterOverride> paramOverrides,
   List<Reading> readings,
@@ -992,6 +1030,7 @@ typedef _BackupSnapshot = ({
 Future<_BackupSnapshot> _readBackupSnapshot(AppDatabase db) => db.transaction(
   () async => (
     allTanks: await db.getAllTanks(),
+    saltMixCalibrations: await db.getAllSaltMixCalibrations(),
     params: await db.getAllTrackedParameters(),
     paramOverrides: await db.getAllParameterOverrides(),
     readings: await db.getAllReadings(),
@@ -1033,6 +1072,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
   final schemaVersion = db.schemaVersion;
   final snap = await _readBackupSnapshot(db);
   final allTanks = snap.allTanks;
+  var saltMixCalibrations = snap.saltMixCalibrations;
   var params = snap.params;
   var paramOverrides = snap.paramOverrides;
   var readings = snap.readings;
@@ -1065,6 +1105,9 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
       if (t.deletedAt == null) t,
   ];
   if (hidden.isNotEmpty) {
+    saltMixCalibrations = saltMixCalibrations
+        .where((r) => !hidden.contains(r.tankId))
+        .toList();
     params = params.where((r) => !hidden.contains(r.tankId)).toList();
     paramOverrides = paramOverrides
         .where((r) => !hidden.contains(r.tankId))
@@ -1109,6 +1152,7 @@ Future<String> encodeBackupFromDb(AppDatabase db) async {
     () => encodeBackup(
       schemaVersion: schemaVersion,
       tanks: tanks,
+      saltMixCalibrations: saltMixCalibrations,
       params: params,
       paramOverrides: paramOverrides,
       readings: readings,
@@ -1207,6 +1251,10 @@ Map<String, dynamic> _tankToJson(Tank t) => {
   'name': t.name,
   'setupType': t.setupType,
   'volumeLiters': t.volumeLiters,
+  'saltMixName': t.saltMixName,
+  'saltMixGramsPerLiter': t.saltMixGramsPerLiter,
+  'saltMixReferencePpt': t.saltMixReferencePpt,
+  'saltMixProductKey': t.saltMixProductKey,
   'startDate': t.startDate?.millisecondsSinceEpoch,
   'notes': t.notes,
   'vendor': t.vendor,
@@ -1219,11 +1267,40 @@ TanksCompanion _tankFromJson(Map<String, dynamic> m) => TanksCompanion(
   name: Value(m['name'] as String),
   setupType: Value(m['setupType'] as String),
   volumeLiters: Value((m['volumeLiters'] as num?)?.toDouble()),
+  // Absent in backups written before the U50 salinity planner.
+  saltMixName: Value(m['saltMixName'] as String?),
+  saltMixGramsPerLiter: Value((m['saltMixGramsPerLiter'] as num?)?.toDouble()),
+  saltMixReferencePpt: Value((m['saltMixReferencePpt'] as num?)?.toDouble()),
+  saltMixProductKey: Value(m['saltMixProductKey'] as String?),
   startDate: Value(_dateOrNull(m['startDate'])),
   notes: Value(m['notes'] as String?),
   vendor: Value(m['vendor'] as String?),
   model: Value(m['model'] as String?),
   createdAt: Value(_date(m['createdAt'])),
+);
+
+Map<String, dynamic> _saltMixCalibrationToJson(
+  StoredSaltMixCalibration calibration,
+) => {
+  'tankId': calibration.tankId,
+  'productKey': calibration.productKey,
+  'displayName': calibration.displayName,
+  'gramsPerLiter': calibration.gramsPerLiter,
+  'referencePpt': calibration.referencePpt,
+  'measured': calibration.measured,
+  'updatedAt': calibration.updatedAt.millisecondsSinceEpoch,
+};
+
+SaltMixCalibrationsCompanion _saltMixCalibrationFromJson(
+  Map<String, dynamic> m,
+) => SaltMixCalibrationsCompanion(
+  tankId: Value(m['tankId'] as int),
+  productKey: Value(m['productKey'] as String),
+  displayName: Value(m['displayName'] as String),
+  gramsPerLiter: Value((m['gramsPerLiter'] as num).toDouble()),
+  referencePpt: Value((m['referencePpt'] as num).toDouble()),
+  measured: Value(m['measured'] as bool),
+  updatedAt: Value(_date(m['updatedAt'])),
 );
 
 Map<String, dynamic> _paramToJson(TrackedParameter t) => {

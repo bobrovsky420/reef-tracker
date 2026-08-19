@@ -15,6 +15,7 @@ import '../domain/presets.dart';
 import '../domain/ratio.dart';
 import '../domain/reminders.dart';
 import '../domain/ro.dart';
+import '../domain/salt_mix_catalog.dart';
 import '../domain/setup_type.dart';
 import '../domain/supplement_catalog.dart';
 import '../domain/units.dart';
@@ -36,6 +37,14 @@ class Tanks extends Table {
   TextColumn get setupType => text()();
   RealColumn get volumeLiters => real().nullable()();
 
+  /// Last salt-mix calibration used by this aquarium's salinity planner.
+  /// Nullable as a group: old tanks and keepers who have not calibrated a
+  /// product simply leave all three fields empty.
+  TextColumn get saltMixName => text().nullable()();
+  RealColumn get saltMixGramsPerLiter => real().nullable()();
+  RealColumn get saltMixReferencePpt => real().nullable()();
+  TextColumn get saltMixProductKey => text().nullable()();
+
   /// When the aquarium was set up/started (optional, user-editable).
   DateTimeColumn get startDate => dateTime().nullable()();
 
@@ -55,6 +64,26 @@ class Tanks extends Table {
   /// and cleared by [AppDatabase.restoreTank]. Non-null rows are finalized by
   /// [AppDatabase.hardDeleteTank] / [AppDatabase.purgeDeletedTanks].
   DateTimeColumn get deletedAt => dateTime().nullable()();
+}
+
+/// A remembered salt calibration for one aquarium and catalogue product.
+///
+/// Catalogue seeds are inserted on first use (`measured = false`). Once the
+/// keeper calibrates a real batch the same row is replaced with the measured
+/// factor and will always win over later catalogue changes.
+@DataClassName('StoredSaltMixCalibration')
+class SaltMixCalibrations extends Table {
+  IntColumn get tankId =>
+      integer().references(Tanks, #id, onDelete: KeyAction.cascade)();
+  TextColumn get productKey => text()();
+  TextColumn get displayName => text()();
+  RealColumn get gramsPerLiter => real()();
+  RealColumn get referencePpt => real()();
+  BoolColumn get measured => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {tankId, productKey};
 }
 
 /// A parameter the user tracks for a specific tank, plus its zone boundaries.
@@ -675,6 +704,7 @@ class Settings extends Table {
 @DriftDatabase(
   tables: [
     Tanks,
+    SaltMixCalibrations,
     TrackedParameters,
     ParameterOverrides,
     Readings,
@@ -700,7 +730,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 29;
+  int get schemaVersion => 31;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1005,6 +1035,47 @@ class AppDatabase extends _$AppDatabase {
           'ON device_samples (tank_id, param_key, bucket_start)',
         );
       }
+      if (from < 30) {
+        // U50 salt planner: one reusable custom commercial-mix calibration per
+        // tank. Guarded because the migration sweep is tested against a schema
+        // whose current table already contains all three columns.
+        for (final col in {
+          'salt_mix_name': tanks.saltMixName,
+          'salt_mix_grams_per_liter': tanks.saltMixGramsPerLiter,
+          'salt_mix_reference_ppt': tanks.saltMixReferencePpt,
+        }.entries) {
+          if (!await _columnExists('tanks', col.key)) {
+            await m.addColumn(tanks, col.value);
+          }
+        }
+      }
+      if (from < 31) {
+        // Salt catalogue: identify the active product and retain a separate
+        // calibration for every aquarium/product pair. Existing free-form U50
+        // calibrations become the aquarium's measured Custom mix.
+        if (!await _columnExists('tanks', 'salt_mix_product_key')) {
+          await m.addColumn(tanks, tanks.saltMixProductKey);
+        }
+        if (!await _tableExists('salt_mix_calibrations')) {
+          await m.createTable(saltMixCalibrations);
+        }
+        await customStatement(
+          "INSERT OR IGNORE INTO salt_mix_calibrations "
+          '(tank_id, product_key, display_name, grams_per_liter, '
+          'reference_ppt, measured, updated_at) '
+          "SELECT id, '$kCustomSaltMixKey', COALESCE(salt_mix_name, ''), "
+          'salt_mix_grams_per_liter, salt_mix_reference_ppt, 1, '
+          "strftime('%s','now') "
+          'FROM tanks WHERE salt_mix_grams_per_liter IS NOT NULL '
+          'AND salt_mix_reference_ppt IS NOT NULL',
+        );
+        await customStatement(
+          "UPDATE tanks SET salt_mix_product_key = '$kCustomSaltMixKey' "
+          'WHERE salt_mix_product_key IS NULL '
+          'AND salt_mix_grams_per_liter IS NOT NULL '
+          'AND salt_mix_reference_ppt IS NOT NULL',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -1120,6 +1191,48 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> updateTank(Tank tank) => update(tanks).replace(tank);
+
+  /// Remembers the active salt calibration and the per-product value.
+  ///
+  /// The default arguments preserve the pre-catalogue API: callers supplying
+  /// only a free-form name are storing a measured Custom mix.
+  Future<void> updateTankSaltCalibration({
+    required int tankId,
+    String? name,
+    required double gramsPerLiter,
+    required double referencePpt,
+    String productKey = kCustomSaltMixKey,
+    bool measured = true,
+  }) => transaction(() async {
+    await (update(tanks)..where((t) => t.id.equals(tankId))).write(
+      TanksCompanion(
+        saltMixName: Value(name),
+        saltMixGramsPerLiter: Value(gramsPerLiter),
+        saltMixReferencePpt: Value(referencePpt),
+        saltMixProductKey: Value(productKey),
+      ),
+    );
+    await into(saltMixCalibrations).insertOnConflictUpdate(
+      SaltMixCalibrationsCompanion.insert(
+        tankId: tankId,
+        productKey: productKey,
+        displayName: name ?? '',
+        gramsPerLiter: gramsPerLiter,
+        referencePpt: referencePpt,
+        measured: Value(measured),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  });
+
+  Future<StoredSaltMixCalibration?> getSaltMixCalibrationForProduct(
+    int tankId,
+    String productKey,
+  ) =>
+      (select(saltMixCalibrations)..where(
+            (c) => c.tankId.equals(tankId) & c.productKey.equals(productKey),
+          ))
+          .getSingleOrNull();
 
   /// Soft-deletes a tank (U10): stamps [Tanks.deletedAt], which hides it from
   /// every read path, and hands the active-tank slot to another visible tank.
@@ -1873,6 +1986,11 @@ class AppDatabase extends _$AppDatabase {
   Future<int> pruneDeviceSamples(DateTime olderThan) => (delete(
     deviceSamples,
   )..where((s) => s.bucketStart.isSmallerThanValue(olderThan))).go();
+
+  /// Removes every transient online sample collected for wall graphs on this
+  /// device. Manual [Readings] and the wall-card layout are separate tables
+  /// and are deliberately untouched.
+  Future<int> clearDeviceSamples() => delete(deviceSamples).go();
 
   /// The sample rows feeding a wall session's tile graphs: everything for
   /// [tankId] since [since], oldest first. The screen groups them per
@@ -2907,6 +3025,10 @@ class AppDatabase extends _$AppDatabase {
   Future<List<RatioVisibility>> getAllRatioVisibilities() =>
       select(ratioVisibilities).get();
 
+  /// Every remembered per-product salt calibration, across all tanks.
+  Future<List<StoredSaltMixCalibration>> getAllSaltMixCalibrations() =>
+      select(saltMixCalibrations).get();
+
   /// Every dosing-plan entry, across all tanks.
   Future<List<DosingEntry>> getAllDosingEntries() =>
       select(dosingEntries).get();
@@ -2967,6 +3089,7 @@ class AppDatabase extends _$AppDatabase {
   /// reconnects the inventory to the restored aquariums.
   Future<void> restoreFromBackup({
     required List<TanksCompanion> tankRows,
+    List<SaltMixCalibrationsCompanion> saltMixCalibrationRows = const [],
     required List<TrackedParametersCompanion> paramRows,
     // Optional with an empty default: pre-v28 backups carry no override
     // section, and restore then simply leaves every parameter on its defaults.
@@ -3008,6 +3131,7 @@ class AppDatabase extends _$AppDatabase {
         }
       }
       // Delete children before parents to satisfy foreign keys.
+      await delete(saltMixCalibrations).go();
       await delete(readings).go();
       await delete(waterChanges).go();
       await delete(carbonChanges).go();
@@ -3036,6 +3160,7 @@ class AppDatabase extends _$AppDatabase {
       // Insert parents before children, preserving ids.
       await batch((b) {
         b.insertAll(tanks, tankRows);
+        b.insertAll(saltMixCalibrations, saltMixCalibrationRows);
         b.insertAll(trackedParameters, paramRows);
         b.insertAll(parameterOverrides, paramOverrideRows);
         b.insertAll(readings, readingRows);
@@ -3053,6 +3178,25 @@ class AppDatabase extends _$AppDatabase {
         b.insertAll(importSources, importSourceRows);
         b.insertAll(settings, incomingSettings);
       });
+      // Backups written by U50 predate the per-product section. Preserve their
+      // one tank-level calibration as a measured Custom mix on restore.
+      await customStatement(
+        "INSERT OR IGNORE INTO salt_mix_calibrations "
+        '(tank_id, product_key, display_name, grams_per_liter, '
+        'reference_ppt, measured, updated_at) '
+        "SELECT id, '$kCustomSaltMixKey', COALESCE(salt_mix_name, ''), "
+        'salt_mix_grams_per_liter, salt_mix_reference_ppt, 1, '
+        "strftime('%s','now') FROM tanks "
+        "WHERE (salt_mix_product_key IS NULL OR salt_mix_product_key = "
+        "'$kCustomSaltMixKey') AND salt_mix_grams_per_liter IS NOT NULL "
+        'AND salt_mix_reference_ppt IS NOT NULL',
+      );
+      await customStatement(
+        "UPDATE tanks SET salt_mix_product_key = '$kCustomSaltMixKey' "
+        'WHERE salt_mix_product_key IS NULL '
+        'AND salt_mix_grams_per_liter IS NOT NULL '
+        'AND salt_mix_reference_ppt IS NOT NULL',
+      );
       // Merge the connected-device inventory (U36). The tank wipe above clears
       // surviving local rows' links via FK set-null. A matching backup row now
       // supplies the valid link into the just-restored tank set; tablet-local

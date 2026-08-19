@@ -846,10 +846,28 @@ class _WallScreenState extends ConsumerState<WallScreen>
               prefs,
             );
 
-      // The graph: ≥2 sample points in the window → the 24 h line with its
-      // min/max band and hand-measurement markers; otherwise the dashboard's
-      // 14-day readings sparkline, window named in the footer (§12m).
-      final useSamples = deviceCard && samples.length >= kWallMinSamplePoints;
+      // Device cards show only their own online telemetry, even with zero or
+      // one sample after a history wipe. Manual-only cards keep the 14-day
+      // readings line; hand measurements are never mixed into device graphs.
+      final graph = buildWallGraph(
+        deviceCard: deviceCard,
+        onlineLine: [
+          for (final s in samples)
+            (time: s.bucketStart, value: pres.toDisplay(s.value)),
+        ],
+        onlineBand: [
+          for (final s in samples)
+            (
+              time: s.bucketStart,
+              min: pres.toDisplay(s.minValue),
+              max: pres.toDisplay(s.maxValue),
+            ),
+        ],
+        manualLine: [
+          for (final p in series[id.paramKey] ?? const <SparkPoint>[])
+            (time: p.time, value: pres.toDisplay(p.value)),
+        ],
+      );
       final tileData = WallTileData(
         id: id,
         title: l.paramName(id.paramKey),
@@ -857,34 +875,10 @@ class _WallScreenState extends ConsumerState<WallScreen>
         value: value,
         zone: zone,
         pres: pres,
-        line: useSamples
-            ? [
-                for (final s in samples)
-                  (time: s.bucketStart, value: pres.toDisplay(s.value)),
-              ]
-            : [
-                for (final p in series[id.paramKey] ?? const <SparkPoint>[])
-                  (time: p.time, value: pres.toDisplay(p.value)),
-              ],
-        band: useSamples
-            ? [
-                for (final s in samples)
-                  (
-                    time: s.bucketStart,
-                    min: pres.toDisplay(s.minValue),
-                    max: pres.toDisplay(s.maxValue),
-                  ),
-              ]
-            : const [],
-        markers: useSamples
-            ? [
-                for (final p in series[id.paramKey] ?? const <SparkPoint>[])
-                  if (now.difference(p.time) <= kWallSampleWindow)
-                    (time: p.time, value: pres.toDisplay(p.value)),
-              ]
-            : const [],
-        window: useSamples ? kWallSampleWindow : kWallReadingsWindow,
-        isSampleWindow: useSamples,
+        line: graph.line,
+        band: graph.band,
+        window: graph.window,
+        isSampleWindow: graph.isSampleWindow,
         operatingState: switch (wallByDevice[id.deviceIdentifier]
             ?.operatingStates[id.paramKey]) {
           WallSourceOperatingState.heating => WallOperatingState.heating,

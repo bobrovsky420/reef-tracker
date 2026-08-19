@@ -165,6 +165,28 @@ const double litersPerUsGallon = 3.785411784; // US liquid gallon
 double litersToGallons(double l) => l / litersPerUsGallon;
 double gallonsToLiters(double g) => g * litersPerUsGallon;
 
+/// One Imperial gallon in litres. Kept distinct from the US liquid gallon:
+/// both occur on reef-product labels and treating them as interchangeable
+/// silently changes a dose or water-change volume by nearly 20%.
+const double litersPerImperialGallon = 4.54609;
+
+double litersToImperialGallons(double l) => l / litersPerImperialGallon;
+double imperialGallonsToLiters(double g) => g * litersPerImperialGallon;
+
+// --- Alkalinity (canonical for converter = dKH) ----------------------------
+//
+// German degrees of carbonate hardness are the common hobby unit. The two
+// equivalents below are the conventional reef/aquarium values: 1 dKH =
+// 0.357 meq/L = 17.848 ppm (mg/L) as CaCO₃.
+
+const double meqPerDkh = 0.357;
+const double ppmCaco3PerDkh = 17.848;
+
+double dkhToMeq(double dkh) => dkh * meqPerDkh;
+double meqToDkh(double meq) => meq / meqPerDkh;
+double dkhToPpmCaco3(double dkh) => dkh * ppmCaco3PerDkh;
+double ppmCaco3ToDkh(double ppm) => ppm / ppmCaco3PerDkh;
+
 /// Converts a canonical litre value into [unit] for display.
 double volumeToDisplay(double liters, VolumeUnit unit) =>
     unit == VolumeUnit.gallons ? litersToGallons(liters) : liters;

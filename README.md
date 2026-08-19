@@ -89,9 +89,9 @@ flutter test
 flutter run                          # on a connected device/emulator
 ```
 
-The domain catalogs (parameters, presets, supplements, micro views, Pro
-registry, Hanna methods, RO defaults) are edited as YAML in `lib/domain/` and
-regenerated with the `tool/gen_*.dart` scripts. **Order matters:**
+The domain catalogs (parameters, presets, supplements, salt mixes, micro views,
+Pro registry, Hanna methods, RO defaults) are edited as YAML in `lib/domain/`
+and regenerated with the `tool/gen_*.dart` scripts. **Order matters:**
 `build_runner` deletes the catalog `.g.dart` files as unclaimed outputs, so
 run the catalog generators after it — `gen_parameters` first, then
 `gen_supplements` (which imports the parameter catalog); the rest are

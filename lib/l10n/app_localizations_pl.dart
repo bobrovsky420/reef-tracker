@@ -881,6 +881,29 @@ class AppLocalizationsPl extends AppLocalizations {
       'Przelicz ppt ↔ gęstość względna (SG)';
 
   @override
+  String get reefUnitConverter => 'Przelicznik jednostek rafowych';
+
+  @override
+  String get reefUnitConverterSubtitle =>
+      'Alkaliczność, temperatura i objętość';
+
+  @override
+  String get reefUnitConverterIntro =>
+      'Przeliczaj typowe jednostki rafowe. Wybierz jednostkę źródłową i wpisz wartość.';
+
+  @override
+  String get converterSourceUnit => 'Jednostka źródłowa';
+
+  @override
+  String get converterValue => 'Wartość';
+
+  @override
+  String get converterEquivalent => 'Odpowiednik';
+
+  @override
+  String get alkalinity => 'Alkaliczność';
+
+  @override
   String get backupSection => 'Kopia zapasowa';
 
   @override
@@ -1378,6 +1401,174 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get refFormulaNote =>
       'SG odniesione do 25 °C. Przeliczenie to przybliżenie liniowe: SG = 1 + ppt × 0,0264/35.';
+
+  @override
+  String get salinityToolConvert => 'Przelicz';
+
+  @override
+  String get salinityToolMix => 'Przygotuj nową wodę';
+
+  @override
+  String get salinityToolCorrect => 'Skoryguj akwarium';
+
+  @override
+  String get saltMixIntro =>
+      'Oszacuj ilość suchej soli do gotowej partii. Użyj danych z opakowania albo własnej zmierzonej partii.';
+
+  @override
+  String get saltMixFinalVolume => 'Docelowa objętość końcowa';
+
+  @override
+  String get saltMixTarget => 'Docelowe zasolenie';
+
+  @override
+  String get saltMixProfileTitle => 'Twoja sól morska';
+
+  @override
+  String get saltMixProductLabel => 'Sól morska';
+
+  @override
+  String get saltMixCustomProduct => 'Własna mieszanka';
+
+  @override
+  String get saltMixCustomHelp =>
+      'Wpisz wartość z etykiety lub skalibruj samodzielnie zmierzoną partię.';
+
+  @override
+  String get saltMixCatalogManufacturer =>
+      'Wartość początkowa producenta. Zmierz przygotowaną partię, aby dopasować ją do tego akwarium.';
+
+  @override
+  String get saltMixCatalogEstimate =>
+      'Szacunek producenta dla wody źródłowej. Zanim na nim polegniesz, skalibruj zmierzoną objętość końcową.';
+
+  @override
+  String get saltMixMeasuredCalibration =>
+      'Używana jest Twoja zmierzona kalibracja dla tego akwarium.';
+
+  @override
+  String get saltMixNameOptional => 'Nazwa soli (opcjonalnie)';
+
+  @override
+  String get saltMixFactor => 'Sucha mieszanka przy zasoleniu odniesienia';
+
+  @override
+  String get saltMixFactorHelp =>
+      'Podaj gramy na litr gotowej słonej wody. Wartość z etykiety na litr wody źródłowej jest tylko szacunkiem, dopóki nie skalibrujesz rzeczywistej partii.';
+
+  @override
+  String get saltMixReferenceSalinity => 'Zasolenie odniesienia';
+
+  @override
+  String get saltMixCalibrateTitle => 'Kalibruj na podstawie zmierzonej partii';
+
+  @override
+  String get saltMixDryMass => 'Użyta sucha mieszanka';
+
+  @override
+  String get saltMixMeasuredVolume => 'Zmierzona objętość końcowa';
+
+  @override
+  String get saltMixMeasuredSalinity => 'Zmierzone zasolenie';
+
+  @override
+  String get saltMixUseCalibration => 'Użyj tej kalibracji';
+
+  @override
+  String get saltMixCalculate => 'Oblicz ilość soli';
+
+  @override
+  String get salinityPlannerResult => 'Wynik';
+
+  @override
+  String get saltMixDrySalt => 'Szacowana sucha mieszanka';
+
+  @override
+  String get saltMixResultHelp =>
+      'Zacznij od mniejszej ilości wody RO/DI niż docelowa objętość. Mieszaj poza akwarium, przestrzegaj zaleceń produktu dotyczących temperatury, mieszania i napowietrzania, następnie sprawdź zasolenie skalibrowanym przyrządem i uzupełnij sól oraz wodę do końcowej objętości.';
+
+  @override
+  String get salinityCorrectionIntro =>
+      'Oszacuj podmianę tej samej objętości, która przesunie obecne zasolenie akwarium do celu.';
+
+  @override
+  String get salinityCorrectionTankVolume => 'Objętość netto wody w systemie';
+
+  @override
+  String get salinityCorrectionCurrent => 'Obecne zasolenie';
+
+  @override
+  String get salinityCorrectionTarget => 'Docelowe zasolenie';
+
+  @override
+  String salinityPlannerLatestReading(Object date) {
+    return 'Wstępnie wpisano pomiar z $date.';
+  }
+
+  @override
+  String get salinityCorrectionReplacement => 'Zasolenie wody podmiennej';
+
+  @override
+  String get salinityCorrectionReplacementHelp =>
+      'Musi być wyższe od celu. Przygotuj i zmierz tę partię osobno.';
+
+  @override
+  String get salinityCorrectionHighMethod =>
+      'Usuń obliczoną ilość wody z akwarium i zastąp ją taką samą objętością wody RO/DI o zasoleniu 0 ppt.';
+
+  @override
+  String get salinityCorrectionHighResultHelp =>
+      'Traktuj wynik jako wartość początkową. Duże zmiany podziel na etapy, między nimi zapewnij cyrkulację i po każdym etapie ponownie zmierz zasolenie.';
+
+  @override
+  String get salinityCorrectionLowResultHelp =>
+      'Przygotuj wodę do podmiany poza akwarium. Przestrzegaj zaleceń producenta soli dotyczących temperatury, mieszania i napowietrzania, sprawdź ją skalibrowanym przyrządem, a potem wykonuj podmianę etapami z cyrkulacją i ponownymi pomiarami.';
+
+  @override
+  String get salinityCorrectionLowMethod =>
+      'Usuń obliczoną ilość wody z akwarium i zastąp ją taką samą objętością osobno przygotowanej wody o wyższym zasoleniu.';
+
+  @override
+  String get salinityCorrectionCalculate => 'Oblicz korektę';
+
+  @override
+  String get salinityReplacementError =>
+      'Zasolenie wody podmiennej musi być wyższe od celu.';
+
+  @override
+  String get salinityPlannerAssumptionsTitle => 'Przed korektą';
+
+  @override
+  String get salinityPlannerAssumptions =>
+      'Obliczenie zakłada stałą objętość akwarium, zachowanie soli i pełne wymieszanie wody. Jeśli parowanie obniżyło poziom, najpierw uzupełnij RO/DI do zwykłego poziomu i zmierz ponownie.';
+
+  @override
+  String get salinityPlannerSafety =>
+      'Nigdy nie wsypuj suchej mieszanki do akwarium ze zwierzętami. Duże zmiany podziel na etapy, zapewnij cyrkulację między nimi i mierz po każdym etapie. Kalkulator nie wyznacza uniwersalnie bezpiecznej zmiany dobowej ani nie gwarantuje wyniku.';
+
+  @override
+  String get salinityCorrectionNoChange =>
+      'Obecne zasolenie już odpowiada celowi. Podmiana nie jest potrzebna.';
+
+  @override
+  String get salinityCorrectionExchange => 'Usuń i zastąp';
+
+  @override
+  String get salinityCorrectionTankPercent => 'Wody w systemie';
+
+  @override
+  String get salinityCorrectionBatchSalt =>
+      'Sucha mieszanka do wody podmiennej';
+
+  @override
+  String get salinityCorrectionExtraEquivalent =>
+      'Łączny ekwiwalent brakującej soli';
+
+  @override
+  String get salinityCorrectionRecord => 'Zapisz wykonaną podmianę wody';
+
+  @override
+  String get salinityCorrectionLogNote => 'Korekta zasolenia';
 
   @override
   String get doseCalcTitle => 'Kalkulator dozowania';
@@ -4192,6 +4383,39 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get wallNightToTitle => 'Przyciemniaj do';
+
+  @override
+  String get wallDataSection => 'Zebrane dane';
+
+  @override
+  String get wallClearSamplesTitle => 'Wyczyść zebrane pomiary';
+
+  @override
+  String get wallClearSamplesSubtitle =>
+      'Usuń pomiary online używane na wykresach wyświetlacza ściennego';
+
+  @override
+  String get wallClearSamplesDialogTitle => 'Wyczyścić zebrane pomiary?';
+
+  @override
+  String get wallClearSamplesDialogBody =>
+      'Wybierz, ile ostatniej historii online zachować. Pomiary wprowadzone ręcznie nie zostaną usunięte.';
+
+  @override
+  String get wallClearSamplesAll => 'Usuń wszystko';
+
+  @override
+  String get wallKeepSamples1h => 'Zachowaj ostatnią godzinę';
+
+  @override
+  String get wallKeepSamples4h => 'Zachowaj ostatnie 4 godziny';
+
+  @override
+  String get wallKeepSamples12h => 'Zachowaj ostatnie 12 godzin';
+
+  @override
+  String get wallSamplesHistoryUpdated =>
+      'Historia zebranych pomiarów została zaktualizowana';
 
   @override
   String get wallCardsSection => 'Karty';

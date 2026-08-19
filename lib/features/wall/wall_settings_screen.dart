@@ -152,6 +152,18 @@ class WallSettingsScreen extends ConsumerWidget {
           ],
         ),
         ReefSettingsSection(
+          label: l.wallDataSection,
+          children: [
+            ReefSettingsRow(
+              icon: Icons.delete_sweep_outlined,
+              title: l.wallClearSamplesTitle,
+              description: l.wallClearSamplesSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => unawaited(_clearSamples(context, ref)),
+            ),
+          ],
+        ),
+        ReefSettingsSection(
           label: l.wallCardsSection,
           children: [
             Padding(
@@ -223,7 +235,71 @@ class WallSettingsScreen extends ConsumerWidget {
       await write(picked.hour * 60 + picked.minute);
     }
   }
+
+  Future<void> _clearSamples(BuildContext context, WidgetRef ref) async {
+    final l = AppLocalizations.of(context);
+    final choice = await showDialog<_WallSampleKeep>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(l.wallClearSamplesDialogTitle),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+            child: Text(l.wallClearSamplesDialogBody),
+          ),
+          SimpleDialogOption(
+            onPressed: () =>
+                Navigator.pop(dialogContext, _WallSampleKeep.nothing),
+            child: Text(
+              l.wallClearSamplesAll,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () =>
+                Navigator.pop(dialogContext, _WallSampleKeep.oneHour),
+            child: Text(l.wallKeepSamples1h),
+          ),
+          SimpleDialogOption(
+            onPressed: () =>
+                Navigator.pop(dialogContext, _WallSampleKeep.fourHours),
+            child: Text(l.wallKeepSamples4h),
+          ),
+          SimpleDialogOption(
+            onPressed: () =>
+                Navigator.pop(dialogContext, _WallSampleKeep.twelveHours),
+            child: Text(l.wallKeepSamples12h),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l.cancel),
+          ),
+        ],
+      ),
+    );
+    if (choice == null || !context.mounted) return;
+
+    final db = ref.read(dbProvider);
+    final keep = switch (choice) {
+      _WallSampleKeep.nothing => null,
+      _WallSampleKeep.oneHour => const Duration(hours: 1),
+      _WallSampleKeep.fourHours => const Duration(hours: 4),
+      _WallSampleKeep.twelveHours => const Duration(hours: 12),
+    };
+    if (keep == null) {
+      await db.clearDeviceSamples();
+    } else {
+      await db.pruneDeviceSamples(DateTime.now().subtract(keep));
+    }
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.wallSamplesHistoryUpdated)));
+    }
+  }
 }
+
+enum _WallSampleKeep { nothing, oneHour, fourHours, twelveHours }
 
 /// The phone-class advisory banner (same visual idiom as the Devices page's
 /// read-only disclaimer): the theme's tertiary container, so it reads as

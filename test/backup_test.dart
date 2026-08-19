@@ -44,6 +44,10 @@ void main() {
         name: 'Reef',
         setupType: 'mixed',
         volumeLiters: 200.5,
+        saltMixName: 'Measured reef salt',
+        saltMixGramsPerLiter: 38.2,
+        saltMixReferencePpt: 35,
+        saltMixProductKey: 'red-sea-coral-pro',
         startDate: DateTime.fromMillisecondsSinceEpoch(1000000000000),
         createdAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
       ),
@@ -54,6 +58,26 @@ void main() {
         volumeLiters: null,
         startDate: null,
         createdAt: DateTime.fromMillisecondsSinceEpoch(1700000111000),
+      ),
+    ];
+    final saltMixCalibrations = [
+      StoredSaltMixCalibration(
+        tankId: 1,
+        productKey: 'red-sea-coral-pro',
+        displayName: 'Red Sea — Coral Pro Salt',
+        gramsPerLiter: 38.2,
+        referencePpt: 35,
+        measured: true,
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(1700000123000),
+      ),
+      StoredSaltMixCalibration(
+        tankId: 1,
+        productKey: 'aquaforest-reef-salt',
+        displayName: 'Aquaforest — Reef Salt',
+        gramsPerLiter: 39,
+        referencePpt: 33,
+        measured: false,
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(1700000456000),
       ),
     ];
     final params = [
@@ -351,6 +375,7 @@ void main() {
       final json = encodeBackup(
         schemaVersion: 2,
         tanks: tanks,
+        saltMixCalibrations: saltMixCalibrations,
         params: params,
         readings: readings,
         waterChanges: waterChanges,
@@ -375,10 +400,25 @@ void main() {
       expect(t0.name.value, 'Reef');
       expect(t0.setupType.value, 'mixed');
       expect(t0.volumeLiters.value, 200.5);
+      expect(t0.saltMixName.value, 'Measured reef salt');
+      expect(t0.saltMixGramsPerLiter.value, 38.2);
+      expect(t0.saltMixReferencePpt.value, 35);
+      expect(t0.saltMixProductKey.value, 'red-sea-coral-pro');
       expect(t0.startDate.value, tanks[0].startDate);
       expect(t0.createdAt.value, tanks[0].createdAt);
       expect(data.tanks[1].volumeLiters.value, isNull);
+      expect(data.tanks[1].saltMixName.value, isNull);
+      expect(data.tanks[1].saltMixGramsPerLiter.value, isNull);
+      expect(data.tanks[1].saltMixReferencePpt.value, isNull);
+      expect(data.tanks[1].saltMixProductKey.value, isNull);
       expect(data.tanks[1].startDate.value, isNull);
+
+      expect(data.saltMixCalibrations, hasLength(2));
+      expect(data.saltMixCalibrations[0].productKey.value, 'red-sea-coral-pro');
+      expect(data.saltMixCalibrations[0].gramsPerLiter.value, 38.2);
+      expect(data.saltMixCalibrations[0].measured.value, isTrue);
+      expect(data.saltMixCalibrations[1].referencePpt.value, 33);
+      expect(data.saltMixCalibrations[1].measured.value, isFalse);
 
       final p0 = data.params[0];
       expect(p0.id.value, 5);
@@ -1704,6 +1744,22 @@ void main() {
         vendor: 'Red Sea',
         model: 'Reefer 350 G2',
       );
+      await db.updateTankSaltCalibration(
+        tankId: id,
+        name: 'Red Sea — Coral Pro Salt',
+        gramsPerLiter: 41,
+        referencePpt: 35,
+        productKey: 'red-sea-coral-pro',
+        measured: true,
+      );
+      await db.updateTankSaltCalibration(
+        tankId: id,
+        name: 'Aquaforest — Reef Salt',
+        gramsPerLiter: 39,
+        referencePpt: 33,
+        productKey: 'aquaforest-reef-salt',
+        measured: false,
+      );
       await db.insertReadingGroup(
         tankId: id,
         takenAt: DateTime(2026, 1, 1, 8),
@@ -1901,6 +1957,21 @@ void main() {
       expect(tanks.length, 1);
       expect(tanks.single.id, id);
       expect(tanks.single.name, 'Reef');
+      expect(tanks.single.saltMixProductKey, 'aquaforest-reef-salt');
+      final restoredSaltMixes = await dst.getAllSaltMixCalibrations();
+      expect(restoredSaltMixes, hasLength(2));
+      expect(
+        restoredSaltMixes
+            .singleWhere((c) => c.productKey == 'red-sea-coral-pro')
+            .measured,
+        isTrue,
+      );
+      expect(
+        restoredSaltMixes
+            .singleWhere((c) => c.productKey == 'aquaforest-reef-salt')
+            .measured,
+        isFalse,
+      );
 
       // Counts match the source across the data tables.
       expect(

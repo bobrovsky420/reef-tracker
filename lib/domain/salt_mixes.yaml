@@ -1,0 +1,168 @@
+# Salt-mix catalogue — SOURCE OF TRUTH for the salinity planner.
+#
+# After editing this file, regenerate the Dart catalogue with:
+#     dart run tool/gen_salt_mixes.dart
+# (the generator validates this file and writes salt_mix_catalog.g.dart).
+#
+# Rules:
+#  - Listing order is the picker order.
+#  - `key` is persisted in aquarium data and backups. Never rename, reuse, or
+#    repurpose it; add a new key when a formulation needs a distinct identity.
+#  - Brand and product names are proper nouns and are not localized.
+#  - `gramsPerLiter` is the manufacturer's weight ratio normalized to g/L.
+#  - `referenceSalinity.unit` is `ppt` or `sg`. SG references are converted by
+#    the app's existing 25 °C conversion when the generated catalogue loads.
+#  - `basis` controls the warning shown beside an untouched catalogue seed:
+#      finalPreparedWater  — weight explicitly makes a final prepared volume
+#      manufacturerRatio  — direct manufacturer g/L ratio
+#      sourceWaterEstimate — salt added per initial source-water volume
+#      batchBackedEstimate — range/ratio supported by batch analysis
+#  - Every value is only a first-selection seed. A keeper-measured calibration
+#    is stored per aquarium/product and always wins afterward.
+#  - `sourceUrl` must be the manufacturer evidence for the number, and
+#    `verifiedOn` records when that evidence was last checked (YYYY-MM-DD).
+
+products:
+  - key: red-sea-coral-pro
+    brand: Red Sea
+    name: Coral Pro Salt
+    gramsPerLiter: 40.6
+    referenceSalinity: { value: 35, unit: ppt }
+    basis: manufacturerRatio
+    sourceUrl: https://g1.redseafish.com/wp-content/uploads/2023/01/10116_Coral-Pro-Salt-manual-v23a_for-WEB.pdf
+    verifiedOn: "2026-08-19"
+
+  - key: red-sea-salt
+    brand: Red Sea
+    name: Salt
+    gramsPerLiter: 38.2
+    referenceSalinity: { value: 35, unit: ppt }
+    basis: manufacturerRatio
+    sourceUrl: https://g1.redseafish.com/wp-content/uploads/2020/11/10031-Red-Sea-Salt-manual-v20a_for-WEB.pdf
+    verifiedOn: "2026-08-19"
+
+  - key: instant-ocean-sea-salt
+    brand: Instant Ocean
+    name: Sea Salt
+    gramsPerLiter: 35.95
+    referenceSalinity: { value: 1.022, unit: sg }
+    basis: finalPreparedWater
+    sourceUrl: https://www.instantocean.com/products/sea-salt-mixes/sea-salt
+    verifiedOn: "2026-08-19"
+
+  - key: instant-ocean-reef-crystals
+    brand: Instant Ocean
+    name: Reef Crystals
+    gramsPerLiter: 33.55
+    referenceSalinity: { value: 1.021, unit: sg }
+    basis: finalPreparedWater
+    sourceUrl: https://www.instantocean.com/products/sea-salt-mixes/reef-crystals
+    verifiedOn: "2026-08-19"
+
+  - key: brightwell-neomarine
+    brand: Brightwell Aquatics
+    name: NeoMarine
+    gramsPerLiter: 35.53
+    referenceSalinity: { value: 1.025, unit: sg }
+    basis: finalPreparedWater
+    sourceUrl: https://brightwellaquatics.com/products/neo-marine.php
+    verifiedOn: "2026-08-19"
+
+  - key: seachem-vibrant-sea
+    brand: Seachem
+    name: Vibrant Sea
+    gramsPerLiter: 31
+    referenceSalinity: { value: 1.023, unit: sg }
+    basis: finalPreparedWater
+    sourceUrl: https://www.seachem.com/vibrant-sea.php
+    verifiedOn: "2026-08-19"
+
+  - key: nyos-pure
+    brand: Nyos
+    name: PURE Salt Mix
+    gramsPerLiter: 40
+    referenceSalinity: { value: 35, unit: ppt }
+    basis: manufacturerRatio
+    sourceUrl: https://www.nyos.info/en/waterchemistry/wasserpflege-salz-1/meersalz
+    verifiedOn: "2026-08-19"
+
+  - key: aquaforest-reef-salt
+    brand: Aquaforest
+    name: Reef Salt
+    gramsPerLiter: 39
+    referenceSalinity: { value: 33, unit: ppt }
+    basis: sourceWaterEstimate
+    sourceUrl: https://aquaforest.eu/en/products/seawater/marine-salts/reef-salt/
+    verifiedOn: "2026-08-19"
+
+  - key: aquaforest-reef-salt-plus
+    brand: Aquaforest
+    name: Reef Salt Plus
+    gramsPerLiter: 39
+    referenceSalinity: { value: 33, unit: ppt }
+    basis: sourceWaterEstimate
+    sourceUrl: https://aquaforest.eu/en/products/seawater/marine-salts/reef-salt-plus/
+    verifiedOn: "2026-08-19"
+
+  - key: aquaforest-hybrid-pro
+    brand: Aquaforest
+    name: Hybrid Pro Salt
+    gramsPerLiter: 39
+    referenceSalinity: { value: 33, unit: ppt }
+    basis: sourceWaterEstimate
+    sourceUrl: https://aquaforest.eu/en/products/seawater/marine-salts/hybrid-pro-salt/
+    verifiedOn: "2026-08-19"
+
+  - key: aquaforest-sea-salt
+    brand: Aquaforest
+    name: Sea Salt
+    gramsPerLiter: 34.5
+    referenceSalinity: { value: 30, unit: ppt }
+    basis: sourceWaterEstimate
+    sourceUrl: https://aquaforest.eu/en/products/seawater/marine-salts/sea-salt/
+    verifiedOn: "2026-08-19"
+
+  - key: tropic-marin-pro-reef
+    brand: Tropic Marin
+    name: Pro-Reef
+    gramsPerLiter: 39.6
+    referenceSalinity: { value: 35, unit: ppt }
+    basis: sourceWaterEstimate
+    sourceUrl: https://www.tropicmarin-usa.com/faqs.html
+    verifiedOn: "2026-08-19"
+
+  - key: tropic-marin-classic
+    brand: Tropic Marin
+    name: Classic
+    gramsPerLiter: 39.6
+    referenceSalinity: { value: 35, unit: ppt }
+    basis: sourceWaterEstimate
+    sourceUrl: https://www.tropicmarin-usa.com/faqs.html
+    verifiedOn: "2026-08-19"
+
+  - key: fauna-marin-professional
+    brand: Fauna Marin
+    name: Professional Sea Salt
+    gramsPerLiter: 39
+    referenceSalinity: { value: 35, unit: ppt }
+    basis: batchBackedEstimate
+    sourceUrl: https://www.faunamarin.de/en/professional-sea-salt/
+    verifiedOn: "2026-08-19"
+
+  - key: dd-h2ocean-classic
+    brand: D-D
+    name: H2Ocean Classic Formula
+    gramsPerLiter: 38.8
+    referenceSalinity: { value: 35, unit: ppt }
+    basis: sourceWaterEstimate
+    sourceUrl: https://www.theaquariumsolution.com/sites/default/files/downloads/D_D%20H2Ocean%20Salts%20Mixing%20Instructions.pdf
+    verifiedOn: "2026-08-19"
+
+  - key: dd-h2ocean-dosing
+    brand: D-D
+    name: H2Ocean Dosing Formula
+    gramsPerLiter: 38.8
+    referenceSalinity: { value: 35, unit: ppt }
+    basis: sourceWaterEstimate
+    sourceUrl: https://www.theaquariumsolution.com/sites/default/files/downloads/D_D%20H2Ocean%20Salts%20Mixing%20Instructions.pdf
+    verifiedOn: "2026-08-19"

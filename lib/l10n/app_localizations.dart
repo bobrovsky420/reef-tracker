@@ -1571,6 +1571,48 @@ abstract class AppLocalizations {
   /// **'Convert ppt ↔ specific gravity (SG)'**
   String get salinityCalculatorSubtitle;
 
+  /// No description provided for @reefUnitConverter.
+  ///
+  /// In en, this message translates to:
+  /// **'Reef unit converter'**
+  String get reefUnitConverter;
+
+  /// No description provided for @reefUnitConverterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alkalinity, temperature and volume'**
+  String get reefUnitConverterSubtitle;
+
+  /// No description provided for @reefUnitConverterIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert common reef units. Choose the source unit and enter a value.'**
+  String get reefUnitConverterIntro;
+
+  /// No description provided for @converterSourceUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Source unit'**
+  String get converterSourceUnit;
+
+  /// No description provided for @converterValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get converterValue;
+
+  /// No description provided for @converterEquivalent.
+  ///
+  /// In en, this message translates to:
+  /// **'Equivalent'**
+  String get converterEquivalent;
+
+  /// No description provided for @alkalinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Alkalinity'**
+  String get alkalinity;
+
   /// No description provided for @backupSection.
   ///
   /// In en, this message translates to:
@@ -2416,6 +2458,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.'**
   String get refFormulaNote;
+
+  /// No description provided for @salinityToolConvert.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert'**
+  String get salinityToolConvert;
+
+  /// No description provided for @salinityToolMix.
+  ///
+  /// In en, this message translates to:
+  /// **'Mix new water'**
+  String get salinityToolMix;
+
+  /// No description provided for @salinityToolCorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct this tank'**
+  String get salinityToolCorrect;
+
+  /// No description provided for @saltMixIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate the dry salt mix for a prepared batch. Use your product\'s label or a batch you measured yourself.'**
+  String get saltMixIntro;
+
+  /// No description provided for @saltMixFinalVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Desired final volume'**
+  String get saltMixFinalVolume;
+
+  /// No description provided for @saltMixTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target salinity'**
+  String get saltMixTarget;
+
+  /// No description provided for @saltMixProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your salt mix'**
+  String get saltMixProfileTitle;
+
+  /// No description provided for @saltMixProductLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Salt mix'**
+  String get saltMixProductLabel;
+
+  /// No description provided for @saltMixCustomProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom mix'**
+  String get saltMixCustomProduct;
+
+  /// No description provided for @saltMixCustomHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a label value or calibrate a batch you measured yourself.'**
+  String get saltMixCustomHelp;
+
+  /// No description provided for @saltMixCatalogManufacturer.
+  ///
+  /// In en, this message translates to:
+  /// **'Manufacturer starting value. Measure a prepared batch to personalize it for this aquarium.'**
+  String get saltMixCatalogManufacturer;
+
+  /// No description provided for @saltMixCatalogEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Manufacturer source-water estimate. Calibrate a measured final batch before relying on it.'**
+  String get saltMixCatalogEstimate;
+
+  /// No description provided for @saltMixMeasuredCalibration.
+  ///
+  /// In en, this message translates to:
+  /// **'Using your measured calibration for this aquarium.'**
+  String get saltMixMeasuredCalibration;
+
+  /// No description provided for @saltMixNameOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Salt name (optional)'**
+  String get saltMixNameOptional;
+
+  /// No description provided for @saltMixFactor.
+  ///
+  /// In en, this message translates to:
+  /// **'Dry mix at reference salinity'**
+  String get saltMixFactor;
+
+  /// No description provided for @saltMixFactorHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter grams per litre of final prepared saltwater. A label stated per litre of source water is only an estimate until you calibrate a real batch.'**
+  String get saltMixFactorHelp;
+
+  /// No description provided for @saltMixReferenceSalinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference salinity'**
+  String get saltMixReferenceSalinity;
+
+  /// No description provided for @saltMixCalibrateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calibrate from a measured batch'**
+  String get saltMixCalibrateTitle;
+
+  /// No description provided for @saltMixDryMass.
+  ///
+  /// In en, this message translates to:
+  /// **'Dry mix used'**
+  String get saltMixDryMass;
+
+  /// No description provided for @saltMixMeasuredVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured final volume'**
+  String get saltMixMeasuredVolume;
+
+  /// No description provided for @saltMixMeasuredSalinity.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured salinity'**
+  String get saltMixMeasuredSalinity;
+
+  /// No description provided for @saltMixUseCalibration.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this calibration'**
+  String get saltMixUseCalibration;
+
+  /// No description provided for @saltMixCalculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate salt mix'**
+  String get saltMixCalculate;
+
+  /// No description provided for @salinityPlannerResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get salinityPlannerResult;
+
+  /// No description provided for @saltMixDrySalt.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated dry mix'**
+  String get saltMixDrySalt;
+
+  /// No description provided for @saltMixResultHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with less RO/DI water than the desired final volume. Mix outside the aquarium, follow the product\'s temperature, mixing and aeration directions, then verify with a calibrated salinity instrument and adjust salt and water to the final volume.'**
+  String get saltMixResultHelp;
+
+  /// No description provided for @salinityCorrectionIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate an equal-volume water exchange that moves this tank from its current salinity to your target.'**
+  String get salinityCorrectionIntro;
+
+  /// No description provided for @salinityCorrectionTankVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Net system-water volume'**
+  String get salinityCorrectionTankVolume;
+
+  /// No description provided for @salinityCorrectionCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current salinity'**
+  String get salinityCorrectionCurrent;
+
+  /// No description provided for @salinityCorrectionTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target salinity'**
+  String get salinityCorrectionTarget;
+
+  /// No description provided for @salinityPlannerLatestReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefilled from your reading on {date}.'**
+  String salinityPlannerLatestReading(Object date);
+
+  /// No description provided for @salinityCorrectionReplacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacement-batch salinity'**
+  String get salinityCorrectionReplacement;
+
+  /// No description provided for @salinityCorrectionReplacementHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'It must be above the target. Prepare and measure this batch separately.'**
+  String get salinityCorrectionReplacementHelp;
+
+  /// No description provided for @salinityCorrectionHighMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the calculated tank water and replace it with the same volume of 0-ppt RO/DI water.'**
+  String get salinityCorrectionHighMethod;
+
+  /// No description provided for @salinityCorrectionHighResultHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Treat this as a starting estimate. Make large changes in steps, circulate the tank between them, and remeasure after every step.'**
+  String get salinityCorrectionHighResultHelp;
+
+  /// No description provided for @salinityCorrectionLowResultHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare the replacement water outside the aquarium. Follow the salt product\'s temperature, mixing and aeration directions, verify it with a calibrated salinity instrument, then change the water in steps, circulate, and remeasure.'**
+  String get salinityCorrectionLowResultHelp;
+
+  /// No description provided for @salinityCorrectionLowMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the calculated tank water and replace it with the same volume of separately mixed, higher-salinity water.'**
+  String get salinityCorrectionLowMethod;
+
+  /// No description provided for @salinityCorrectionCalculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate correction'**
+  String get salinityCorrectionCalculate;
+
+  /// No description provided for @salinityReplacementError.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacement salinity must be above the target.'**
+  String get salinityReplacementError;
+
+  /// No description provided for @salinityPlannerAssumptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you correct'**
+  String get salinityPlannerAssumptionsTitle;
+
+  /// No description provided for @salinityPlannerAssumptions.
+  ///
+  /// In en, this message translates to:
+  /// **'The estimate assumes the tank stays at the same volume, salt is conserved, and the water is fully mixed. If evaporation lowered the water level, restore the normal level with RO/DI and measure again first.'**
+  String get salinityPlannerAssumptions;
+
+  /// No description provided for @salinityPlannerSafety.
+  ///
+  /// In en, this message translates to:
+  /// **'Never add dry salt mix to an aquarium containing animals. Make large changes in steps, circulate between them, and measure after every step. The calculator does not set a universally safe daily change or guarantee the endpoint.'**
+  String get salinityPlannerSafety;
+
+  /// No description provided for @salinityCorrectionNoChange.
+  ///
+  /// In en, this message translates to:
+  /// **'The current salinity already matches the target. No exchange is needed.'**
+  String get salinityCorrectionNoChange;
+
+  /// No description provided for @salinityCorrectionExchange.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove and replace'**
+  String get salinityCorrectionExchange;
+
+  /// No description provided for @salinityCorrectionTankPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Of system water'**
+  String get salinityCorrectionTankPercent;
+
+  /// No description provided for @salinityCorrectionBatchSalt.
+  ///
+  /// In en, this message translates to:
+  /// **'Dry mix for replacement batch'**
+  String get salinityCorrectionBatchSalt;
+
+  /// No description provided for @salinityCorrectionExtraEquivalent.
+  ///
+  /// In en, this message translates to:
+  /// **'Total additional-salt equivalent'**
+  String get salinityCorrectionExtraEquivalent;
+
+  /// No description provided for @salinityCorrectionRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record completed water change'**
+  String get salinityCorrectionRecord;
+
+  /// No description provided for @salinityCorrectionLogNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Salinity correction'**
+  String get salinityCorrectionLogNote;
 
   /// No description provided for @doseCalcTitle.
   ///
@@ -6776,6 +7112,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dim until'**
   String get wallNightToTitle;
+
+  /// Section label for maintenance of the transient online measurements collected for wall-display graphs.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected data'**
+  String get wallDataSection;
+
+  /// Wall-display settings action that removes transient online device measurements used only by wall graphs.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear collected measurements'**
+  String get wallClearSamplesTitle;
+
+  /// No description provided for @wallClearSamplesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete online measurements used by wall graphs'**
+  String get wallClearSamplesSubtitle;
+
+  /// No description provided for @wallClearSamplesDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear collected measurements?'**
+  String get wallClearSamplesDialogTitle;
+
+  /// Explains the wall-history cleanup choices and distinguishes transient device samples from the keeper's manual measurements.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how much recent online history to keep. Manual measurements are not deleted.'**
+  String get wallClearSamplesDialogBody;
+
+  /// No description provided for @wallClearSamplesAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete everything'**
+  String get wallClearSamplesAll;
+
+  /// No description provided for @wallKeepSamples1h.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the last 1 hour'**
+  String get wallKeepSamples1h;
+
+  /// No description provided for @wallKeepSamples4h.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the last 4 hours'**
+  String get wallKeepSamples4h;
+
+  /// No description provided for @wallKeepSamples12h.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the last 12 hours'**
+  String get wallKeepSamples12h;
+
+  /// No description provided for @wallSamplesHistoryUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected measurement history updated'**
+  String get wallSamplesHistoryUpdated;
 
   /// Section label above the wall-card list (one card per device and parameter).
   ///

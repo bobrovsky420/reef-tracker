@@ -22,7 +22,6 @@ class WallTileData {
     required this.pres,
     this.line = const [],
     this.band = const [],
-    this.markers = const [],
     this.window = kWallSampleWindow,
     this.isSampleWindow = true,
     this.operatingState,
@@ -40,11 +39,10 @@ class WallTileData {
   final Zone zone;
   final ParamPresentation pres;
 
-  /// The tile graph: line points, optional min/max band (samples only) and
-  /// hand-measurement markers, over [window].
+  /// The tile graph over [window]: line points and an optional min/max band
+  /// for online samples. Wall cards deliberately have no marker overlay.
   final List<SparkPoint> line;
   final List<SparkBandPoint> band;
-  final List<SparkPoint> markers;
   final Duration window;
 
   /// True = the 24 h sample line, false = the 14-day readings fallback. Named
@@ -55,6 +53,42 @@ class WallTileData {
   /// A live output state that qualifies the value (currently the ReefFactory
   /// Temperature Controller's heating/cooling relay). Idle stays null.
   final WallOperatingState? operatingState;
+}
+
+/// Chooses the one data source a wall graph is allowed to show. Device cards
+/// contain only their transient online samples; manual-only cards contain only
+/// stored readings. Keeping the choice here makes it impossible for a device
+/// graph to regain the old manual fallback or hollow hand-test markers.
+WallGraphData buildWallGraph({
+  required bool deviceCard,
+  required List<SparkPoint> onlineLine,
+  required List<SparkBandPoint> onlineBand,
+  required List<SparkPoint> manualLine,
+}) => deviceCard
+    ? WallGraphData(
+        line: onlineLine,
+        band: onlineBand,
+        window: kWallSampleWindow,
+        isSampleWindow: true,
+      )
+    : WallGraphData(
+        line: manualLine,
+        window: kWallReadingsWindow,
+        isSampleWindow: false,
+      );
+
+class WallGraphData {
+  const WallGraphData({
+    required this.line,
+    this.band = const [],
+    required this.window,
+    required this.isSampleWindow,
+  });
+
+  final List<SparkPoint> line;
+  final List<SparkBandPoint> band;
+  final Duration window;
+  final bool isSampleWindow;
 }
 
 enum WallOperatingState { heating, cooling }
@@ -193,7 +227,6 @@ class WallValueTile extends StatelessWidget {
                             child: Sparkline(
                               points: data.line,
                               band: data.band,
-                              markers: data.markers,
                               window: data.window,
                               endAt: now,
                             ),

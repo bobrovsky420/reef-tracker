@@ -328,6 +328,13 @@ class SettingsBody extends ConsumerWidget {
               trailing: const ReefSettingsValue(),
               onTap: () => context.push('/calculator/salinity'),
             ),
+            ReefSettingsRow(
+              icon: Icons.straighten_outlined,
+              title: l.reefUnitConverter,
+              description: l.reefUnitConverterSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => context.push('/calculator/units'),
+            ),
           ],
         ),
         // Experimental features (U33/U34): the master switch (default off)

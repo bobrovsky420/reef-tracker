@@ -78,6 +78,8 @@ void main() {
     await settle(tester);
 
     final handles = find.byIcon(Icons.drag_handle);
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+    await settle(tester);
     expect(handles, findsNWidgets(2));
     await tester.ensureVisible(handles.first);
     await settle(tester);
@@ -152,8 +154,84 @@ void main() {
     );
     await settle(tester);
 
+    await tester.scrollUntilVisible(
+      find.text('Sump probe'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await settle(tester);
     expect(find.text('Sump probe'), findsOneWidget);
     expect(find.textContaining('Hiding this stops'), findsNothing);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('collected-data dialog can retain recent samples or clear all', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final tankId = await db.createTankWithPreset(
+      name: 'Reef',
+      type: SetupType.mixed,
+    );
+    final now = DateTime.now();
+    for (final (id, age) in [
+      ('old', const Duration(hours: 2)),
+      ('recent', const Duration(minutes: 30)),
+    ]) {
+      await db.upsertDeviceSample(
+        tankId: tankId,
+        deviceIdentifier: id,
+        paramKey: 'temperature',
+        bucketStart: bucketStartFor(now.subtract(age)),
+        value: 25,
+      );
+    }
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dbProvider.overrideWithValue(db)],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const WallSettingsScreen(),
+        ),
+      ),
+    );
+    await settle(tester);
+
+    final clearRow = find.text('Clear collected measurements');
+    await tester.ensureVisible(clearRow);
+    await tester.tap(clearRow);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete everything'), findsOneWidget);
+    expect(find.text('Keep the last 1 hour'), findsOneWidget);
+    expect(find.text('Keep the last 4 hours'), findsOneWidget);
+    expect(find.text('Keep the last 12 hours'), findsOneWidget);
+
+    await tester.tap(find.text('Keep the last 1 hour'));
+    await tester.pumpAndSettle();
+    var rows = await db.getDeviceSamplesSince(
+      tankId,
+      now.subtract(const Duration(days: 1)),
+    );
+    expect([for (final row in rows) row.deviceIdentifier], ['recent']);
+
+    await tester.tap(clearRow);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete everything'));
+    await tester.pumpAndSettle();
+    rows = await db.getDeviceSamplesSince(
+      tankId,
+      now.subtract(const Duration(days: 1)),
+    );
+    expect(rows, isEmpty);
 
     await unmountApp(tester);
   });

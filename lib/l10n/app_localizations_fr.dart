@@ -874,6 +874,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get salinityCalculatorSubtitle => 'Conversion ppt ↔ densité (SG)';
 
   @override
+  String get reefUnitConverter => 'Convertisseur d’unités récifales';
+
+  @override
+  String get reefUnitConverterSubtitle => 'Alcalinité, température et volume';
+
+  @override
+  String get reefUnitConverterIntro =>
+      'Convertis les unités récifales courantes. Choisis l’unité de départ et saisis une valeur.';
+
+  @override
+  String get converterSourceUnit => 'Unité de départ';
+
+  @override
+  String get converterValue => 'Valeur';
+
+  @override
+  String get converterEquivalent => 'Équivalent';
+
+  @override
+  String get alkalinity => 'Alcalinité';
+
+  @override
   String get backupSection => 'Sauvegarde';
 
   @override
@@ -1373,6 +1395,176 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get refFormulaNote =>
       'SG référencée à 25 °C. La conversion est une approximation linéaire : SG = 1 + ppt × 0,0264/35.';
+
+  @override
+  String get salinityToolConvert => 'Convertir';
+
+  @override
+  String get salinityToolMix => 'Préparer de l’eau neuve';
+
+  @override
+  String get salinityToolCorrect => 'Corriger ce bac';
+
+  @override
+  String get saltMixIntro =>
+      'Estime la quantité de sel sec pour un mélange préparé. Utilise l’étiquette du produit ou un mélange que tu as mesuré.';
+
+  @override
+  String get saltMixFinalVolume => 'Volume final souhaité';
+
+  @override
+  String get saltMixTarget => 'Salinité cible';
+
+  @override
+  String get saltMixProfileTitle => 'Ton sel marin';
+
+  @override
+  String get saltMixProductLabel => 'Sel marin';
+
+  @override
+  String get saltMixCustomProduct => 'Mélange personnalisé';
+
+  @override
+  String get saltMixCustomHelp =>
+      'Saisis une valeur de l’étiquette ou calibre une préparation que tu as mesurée.';
+
+  @override
+  String get saltMixCatalogManufacturer =>
+      'Valeur initiale du fabricant. Mesure une préparation pour l’adapter à cet aquarium.';
+
+  @override
+  String get saltMixCatalogEstimate =>
+      'Estimation du fabricant pour l’eau de départ. Calibre un volume final mesuré avant de t’y fier.';
+
+  @override
+  String get saltMixMeasuredCalibration =>
+      'Ta calibration mesurée pour cet aquarium est utilisée.';
+
+  @override
+  String get saltMixNameOptional => 'Nom du sel (facultatif)';
+
+  @override
+  String get saltMixFactor => 'Mélange sec à la salinité de référence';
+
+  @override
+  String get saltMixFactorHelp =>
+      'Indique les grammes par litre d’eau salée finale. Une valeur d’étiquette par litre d’eau de départ reste une estimation tant que tu n’as pas étalonné un vrai mélange.';
+
+  @override
+  String get saltMixReferenceSalinity => 'Salinité de référence';
+
+  @override
+  String get saltMixCalibrateTitle => 'Étalonner avec un mélange mesuré';
+
+  @override
+  String get saltMixDryMass => 'Mélange sec utilisé';
+
+  @override
+  String get saltMixMeasuredVolume => 'Volume final mesuré';
+
+  @override
+  String get saltMixMeasuredSalinity => 'Salinité mesurée';
+
+  @override
+  String get saltMixUseCalibration => 'Utiliser cet étalonnage';
+
+  @override
+  String get saltMixCalculate => 'Calculer le sel';
+
+  @override
+  String get salinityPlannerResult => 'Résultat';
+
+  @override
+  String get saltMixDrySalt => 'Mélange sec estimé';
+
+  @override
+  String get saltMixResultHelp =>
+      'Commence avec moins d’eau osmosée que le volume final souhaité. Mélange hors de l’aquarium, suis les consignes du produit pour la température, le brassage et l’aération, puis vérifie avec un appareil de salinité étalonné et ajuste le sel et l’eau au volume final.';
+
+  @override
+  String get salinityCorrectionIntro =>
+      'Estime un échange de même volume qui fait passer la salinité actuelle de ce bac vers ta cible.';
+
+  @override
+  String get salinityCorrectionTankVolume => 'Volume d’eau net du système';
+
+  @override
+  String get salinityCorrectionCurrent => 'Salinité actuelle';
+
+  @override
+  String get salinityCorrectionTarget => 'Salinité cible';
+
+  @override
+  String salinityPlannerLatestReading(Object date) {
+    return 'Prérempli avec ta mesure du $date.';
+  }
+
+  @override
+  String get salinityCorrectionReplacement =>
+      'Salinité de l’eau de remplacement';
+
+  @override
+  String get salinityCorrectionReplacementHelp =>
+      'Elle doit dépasser la cible. Prépare et mesure ce mélange séparément.';
+
+  @override
+  String get salinityCorrectionHighMethod =>
+      'Retire le volume calculé du bac et remplace-le par le même volume d’eau osmosée à 0 ppt.';
+
+  @override
+  String get salinityCorrectionHighResultHelp =>
+      'Considère le résultat comme une estimation de départ. Répartis les changements importants en étapes, laisse l’eau circuler entre elles et mesure de nouveau après chaque étape.';
+
+  @override
+  String get salinityCorrectionLowResultHelp =>
+      'Prépare l’eau de remplacement hors de l’aquarium. Suis les consignes du fabricant du sel pour la température, le brassage et l’aération, vérifie-la avec un appareil de salinité étalonné, puis procède par étapes avec circulation et nouvelles mesures.';
+
+  @override
+  String get salinityCorrectionLowMethod =>
+      'Retire le volume calculé du bac et remplace-le par le même volume d’eau à salinité plus élevée, préparée séparément.';
+
+  @override
+  String get salinityCorrectionCalculate => 'Calculer la correction';
+
+  @override
+  String get salinityReplacementError =>
+      'La salinité de remplacement doit dépasser la cible.';
+
+  @override
+  String get salinityPlannerAssumptionsTitle => 'Avant la correction';
+
+  @override
+  String get salinityPlannerAssumptions =>
+      'L’estimation suppose un volume constant, une quantité de sel conservée et une eau parfaitement mélangée. Si l’évaporation a baissé le niveau, complète d’abord avec de l’eau osmosée jusqu’au niveau normal, puis mesure à nouveau.';
+
+  @override
+  String get salinityPlannerSafety =>
+      'N’ajoute jamais de sel sec dans un aquarium contenant des animaux. Fractionne les grands changements, laisse circuler entre les étapes et mesure après chacune. Le calculateur ne fixe pas de variation quotidienne universellement sûre et ne garantit pas le résultat final.';
+
+  @override
+  String get salinityCorrectionNoChange =>
+      'La salinité actuelle correspond déjà à la cible. Aucun échange n’est nécessaire.';
+
+  @override
+  String get salinityCorrectionExchange => 'Retirer et remplacer';
+
+  @override
+  String get salinityCorrectionTankPercent => 'De l’eau du système';
+
+  @override
+  String get salinityCorrectionBatchSalt =>
+      'Sel sec pour l’eau de remplacement';
+
+  @override
+  String get salinityCorrectionExtraEquivalent =>
+      'Équivalent total de sel manquant';
+
+  @override
+  String get salinityCorrectionRecord =>
+      'Enregistrer le changement d’eau effectué';
+
+  @override
+  String get salinityCorrectionLogNote => 'Correction de salinité';
 
   @override
   String get doseCalcTitle => 'Calculateur de dose';
@@ -4133,6 +4325,39 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get wallNightToTitle => 'Atténuer jusqu\'à';
+
+  @override
+  String get wallDataSection => 'Données collectées';
+
+  @override
+  String get wallClearSamplesTitle => 'Effacer les mesures collectées';
+
+  @override
+  String get wallClearSamplesSubtitle =>
+      'Supprimer les mesures en ligne utilisées par les graphiques de l’affichage mural';
+
+  @override
+  String get wallClearSamplesDialogTitle => 'Effacer les mesures collectées ?';
+
+  @override
+  String get wallClearSamplesDialogBody =>
+      'Choisis la quantité d’historique en ligne récent à conserver. Les mesures saisies manuellement ne sont pas supprimées.';
+
+  @override
+  String get wallClearSamplesAll => 'Tout supprimer';
+
+  @override
+  String get wallKeepSamples1h => 'Conserver la dernière heure';
+
+  @override
+  String get wallKeepSamples4h => 'Conserver les 4 dernières heures';
+
+  @override
+  String get wallKeepSamples12h => 'Conserver les 12 dernières heures';
+
+  @override
+  String get wallSamplesHistoryUpdated =>
+      'L’historique des mesures collectées a été mis à jour';
 
   @override
   String get wallCardsSection => 'Cartes';
