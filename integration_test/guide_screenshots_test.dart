@@ -339,7 +339,7 @@ void main() {
     await settle();
     await shot('reefbeat');
     final reefControl = find.text('ReefControl Pro');
-    for (var swipe = 0; swipe < 3 && reefControl.evaluate().isEmpty; swipe++) {
+    for (var swipe = 0; swipe < 5 && reefControl.evaluate().isEmpty; swipe++) {
       await tester.drag(
         find.byType(CustomScrollView).first,
         const Offset(0, -700),
@@ -347,6 +347,7 @@ void main() {
       await settle();
     }
     expect(reefControl, findsWidgets);
+    await tester.ensureVisible(reefControl.first);
     await settle();
     await shot('reefcontrol');
 
