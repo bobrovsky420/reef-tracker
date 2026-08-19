@@ -27,7 +27,9 @@ class WallSettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final settings = ref.read(settingsProvider);
-    final entitled = ref.watch(proFeatureProvider(ProFeature.wallDisplay));
+    final entitled = ref.watch(
+      proCapabilityProvider(ProCapabilityBoundary.wallDisplayAutoStart),
+    );
     final autoStart = ref.watch(wallAutoStartProvider).value ?? false;
     final interval =
         ref.watch(wallRefreshIntervalProvider).value ??
@@ -61,10 +63,10 @@ class WallSettingsScreen extends ConsumerWidget {
               description: l.wallStartNowSubtitle,
               trailing: const ReefSettingsValue(),
               onTap: () => unawaited(
-                runProGated(
+                runProCapabilityGated(
                   context,
                   ref,
-                  ProFeature.wallDisplay,
+                  ProCapabilityBoundary.wallDisplayRoute,
                   () => context.push('/wall'),
                 ),
               ),
@@ -195,9 +197,12 @@ class WallSettingsScreen extends ConsumerWidget {
     }
     // Enabling is the Pro action (§12h): a Standard install can look at the
     // options but not arm the kiosk boot.
-    if (!ref.read(proFeatureProvider(ProFeature.wallDisplay))) {
-      await showProFeatureDialog(context, ProFeature.wallDisplay);
-      if (!ref.read(proFeatureProvider(ProFeature.wallDisplay))) return;
+    if (!await requestProCapability(
+      context,
+      ref,
+      ProCapabilityBoundary.wallDisplayAutoStart,
+    )) {
+      return;
     }
     await settings.setWallAutoStart(true);
   }

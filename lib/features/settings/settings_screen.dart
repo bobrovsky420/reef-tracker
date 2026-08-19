@@ -215,7 +215,11 @@ class SettingsBody extends ConsumerWidget {
             // Stability window (U26). Only shown to installs entitled to
             // the stability score — a knob for a locked feature would just
             // confuse.
-            if (ref.watch(proFeatureProvider(ProFeature.stabilityScore)))
+            if (ref.watch(
+              proCapabilityProvider(
+                ProCapabilityBoundary.stabilityScorePresentation,
+              ),
+            ))
               ReefSettingsRow(
                 icon: Icons.waves,
                 title: l.stabilityWindowTitle,
@@ -485,12 +489,7 @@ class SettingsBody extends ConsumerWidget {
                   icon: Icons.add_to_drive,
                   title: l.syncGdriveTitle,
                   description: l.syncGdriveSubtitle,
-                  onTap: () => runProGated(
-                    context,
-                    ref,
-                    ProFeature.cloudSync,
-                    () => _connectGdrive(context, ref, l),
-                  ),
+                  onTap: () => _connectGdrive(context, ref, l),
                 ),
               // Same loud-persistent-warning idiom as the local backup
               // (#22): non-null means the latest push attempt failed
@@ -534,12 +533,7 @@ class SettingsBody extends ConsumerWidget {
                   icon: Icons.cloud_outlined,
                   title: l.syncIcloudTitle,
                   description: l.syncIcloudSubtitle,
-                  onTap: () => runProGated(
-                    context,
-                    ref,
-                    ProFeature.cloudSync,
-                    () => _enableIcloud(context, ref, l),
-                  ),
+                  onTap: () => _enableIcloud(context, ref, l),
                 ),
               if (ref.watch(syncIcloudLastErrorAtProvider).value
                   case final syncErrorAt?)
@@ -709,6 +703,7 @@ class SettingsBody extends ConsumerWidget {
         db,
         store: ref.read(cloudBackupStoreProvider),
         state: ref.read(cloudSyncStateProvider),
+        authorizer: ref.read(proCapabilityAuthorizerProvider),
       ),
     );
   }
@@ -723,6 +718,14 @@ class SettingsBody extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l,
   ) async {
+    if (!await requestProCapability(
+          context,
+          ref,
+          ProCapabilityBoundary.cloudSyncEnable,
+        ) ||
+        !context.mounted) {
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final db = ref.read(dbProvider);
     try {
@@ -737,6 +740,7 @@ class SettingsBody extends ConsumerWidget {
           db,
           store: ref.read(cloudBackupStoreProvider),
           state: ref.read(cloudSyncStateProvider),
+          authorizer: ref.read(proCapabilityAuthorizerProvider),
         ),
       );
     } catch (_) {
@@ -787,6 +791,7 @@ class SettingsBody extends ConsumerWidget {
               db,
               store: ref.read(cloudBackupStoreProvider),
               state: ref.read(cloudSyncStateProvider),
+              authorizer: ref.read(proCapabilityAuthorizerProvider),
             ),
           );
         }
@@ -809,6 +814,14 @@ class SettingsBody extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l,
   ) async {
+    if (!await requestProCapability(
+          context,
+          ref,
+          ProCapabilityBoundary.cloudSyncEnable,
+        ) ||
+        !context.mounted) {
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final db = ref.read(dbProvider);
     final store = ref.read(cloudBackupStoreProvider);
@@ -829,6 +842,7 @@ class SettingsBody extends ConsumerWidget {
         db,
         store: store,
         state: ref.read(cloudSyncStateProvider),
+        authorizer: ref.read(proCapabilityAuthorizerProvider),
       ),
     );
   }
@@ -873,6 +887,7 @@ class SettingsBody extends ConsumerWidget {
               db,
               store: ref.read(cloudBackupStoreProvider),
               state: ref.read(cloudSyncStateProvider),
+              authorizer: ref.read(proCapabilityAuthorizerProvider),
             ),
           );
         }

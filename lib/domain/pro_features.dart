@@ -6,7 +6,7 @@
 /// one-line YAML decision; this file only owns the gate rule.
 ///
 /// Entitlement sources (see `Entitlement` in `data/entitlement.dart`, surfaced
-/// by `entitlementProvider` / `proFeatureProvider` in `app/providers.dart`):
+/// by `entitlementProvider` / `proCapabilityProvider` in `app/providers.dart`):
 /// - `purchased` — the Pro in-app purchase, held device-locally. The store
 ///   integration is built but dormant: the only [PurchaseStore] compiled in
 ///   resolves no product, so nothing outside the test rig can set this.
@@ -18,12 +18,42 @@ library;
 
 part 'pro_features.g.dart';
 
+/// How a Pro capability is enforced. Kept deliberately small: these describe
+/// the boundary's lifecycle, not its UI treatment.
+enum ProBoundaryKind { routeResource, command, presentation, configuration }
+
+/// Generated metadata for one authoritative authorization point.
+class ProCapabilityContract {
+  const ProCapabilityContract({required this.feature, required this.kind});
+
+  final ProFeature feature;
+  final ProBoundaryKind kind;
+}
+
+/// The contract for [boundary]. The generated map is exhaustive; the explicit
+/// failure makes a stale generated file fail closed instead of granting access.
+ProCapabilityContract proCapabilityContract(ProCapabilityBoundary boundary) =>
+    kProCapabilityContracts[boundary] ??
+    (throw StateError('No Pro capability contract for $boundary'));
+
 /// Whether an install with the given entitlements may use [feature].
 bool hasProFeature(
   ProFeature feature, {
   required bool purchased,
   required bool legacyFree,
 }) => purchased || (legacyFree && kGrandfatheredFeatures.contains(feature));
+
+/// Whether an install may cross [boundary]. All UI and service authorization
+/// goes through this mapping rather than naming a feature ad hoc.
+bool hasProCapability(
+  ProCapabilityBoundary boundary, {
+  required bool purchased,
+  required bool legacyFree,
+}) => hasProFeature(
+  proCapabilityContract(boundary).feature,
+  purchased: purchased,
+  legacyFree: legacyFree,
+);
 
 /// The app version whose release **activates** the paid tier — the release
 /// that stops seeding the founder marker and turns the paywall live.

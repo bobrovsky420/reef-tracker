@@ -33,7 +33,9 @@ class InsightsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
-    final unlocked = ref.watch(proFeatureProvider(ProFeature.smartInsights));
+    final unlocked = ref.watch(
+      proCapabilityProvider(ProCapabilityBoundary.smartInsightsPresentation),
+    );
 
     if (!unlocked) {
       // Teaser: same slim-card footprint as a one-row insights card, so the
@@ -44,8 +46,11 @@ class InsightsCard extends ConsumerWidget {
           button: true,
           label: '${l.insightsTitle}: ${l.proFeatureTitle}',
           child: InkWell(
-            onTap: () =>
-                showProFeatureDialog(context, ProFeature.smartInsights),
+            onTap: () => requestProCapability(
+              context,
+              ref,
+              ProCapabilityBoundary.smartInsightsPresentation,
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               child: Row(

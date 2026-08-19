@@ -21,8 +21,44 @@ import 'package:reeftracker/features/micro/micro_screen.dart';
 import 'package:reeftracker/features/paywall/paywall_screen.dart';
 import 'package:reeftracker/features/scan/checker_scan_screen.dart';
 import 'package:reeftracker/features/tanks/tanks_screen.dart';
+import 'package:reeftracker/features/wall/wall_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 import 'package:reeftracker/widgets/pro_feature_dialog.dart';
+
+class _CapabilityProbe extends ConsumerWidget {
+  const _CapabilityProbe({required this.boundary, required this.onRun});
+
+  final ProCapabilityBoundary boundary;
+  final VoidCallback onRun;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contract = proCapabilityContract(boundary);
+    switch (contract.kind) {
+      case ProBoundaryKind.routeResource:
+        return ProCapabilityRoute(
+          boundary: boundary,
+          builder: (_) => const Scaffold(body: Text('capability ran')),
+        );
+      case ProBoundaryKind.command || ProBoundaryKind.configuration:
+        return Scaffold(
+          body: ElevatedButton(
+            onPressed: () =>
+                runProCapabilityGated(context, ref, boundary, onRun),
+            child: const Text('run capability'),
+          ),
+        );
+      case ProBoundaryKind.presentation:
+        return Scaffold(
+          body: Text(
+            ref.watch(proCapabilityProvider(boundary))
+                ? 'capability ran'
+                : 'capability blocked',
+          ),
+        );
+    }
+  }
+}
 
 /// Routes `getApplicationDocumentsDirectory()` to a throwaway temp folder so
 /// the full app shell can build under `flutter test` (see router_test.dart).
@@ -59,6 +95,76 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
   }
+
+  group('generated capability behavior matrix (T29)', () {
+    Future<void> pumpProbe(
+      WidgetTester tester,
+      ProCapabilityBoundary boundary,
+      Entitlement entitlement,
+      VoidCallback onRun,
+    ) => tester.pumpWidget(
+      ProviderScope(
+        overrides: [entitlementProvider.overrideWithValue(entitlement)],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: _CapabilityProbe(boundary: boundary, onRun: onRun),
+        ),
+      ),
+    );
+
+    for (final boundary in ProCapabilityBoundary.values) {
+      final contract = proCapabilityContract(boundary);
+
+      testWidgets('${boundary.name}: Standard is behaviorally blocked', (
+        tester,
+      ) async {
+        var ran = false;
+        await pumpProbe(tester, boundary, Entitlement.none, () => ran = true);
+        await tester.pump();
+
+        if (contract.kind
+            case ProBoundaryKind.command || ProBoundaryKind.configuration) {
+          await tester.tap(find.text('run capability'));
+          await settle(tester);
+          expect(find.text('Pro feature'), findsOneWidget);
+        } else {
+          expect(find.text('capability ran'), findsNothing);
+        }
+        expect(ran, isFalse);
+      });
+
+      testWidgets('${boundary.name}: Founder/purchase follow the registry', (
+        tester,
+      ) async {
+        for (final entitlement in [
+          const Entitlement(marker: AppEdition.founder, purchased: false),
+          const Entitlement(marker: AppEdition.standard, purchased: true),
+        ]) {
+          var ran = false;
+          await pumpProbe(tester, boundary, entitlement, () => ran = true);
+          await tester.pump();
+          final expected = entitlement.allows(boundary);
+
+          if (contract.kind
+              case ProBoundaryKind.command || ProBoundaryKind.configuration) {
+            await tester.tap(find.text('run capability'));
+            await settle(tester);
+            expect(ran, expected);
+            if (!expected) {
+              await tester.tap(find.text('OK'));
+              await settle(tester);
+            }
+          } else {
+            expect(
+              find.text('capability ran'),
+              expected ? findsOneWidget : findsNothing,
+            );
+          }
+        }
+      });
+    }
+  });
 
   Future<AppDatabase> pumpMicro(
     WidgetTester tester, {
@@ -265,6 +371,11 @@ void main() {
         await settle(tester);
         expect(find.text('Pro feature'), findsOneWidget);
         expect(find.byType(CheckerScanScreen), findsNothing);
+
+        appRouter.go('/wall');
+        await settle(tester);
+        expect(find.text('Pro feature'), findsOneWidget);
+        expect(find.byType(WallScreen), findsNothing);
       } finally {
         await unmountApp(tester);
       }
@@ -460,7 +571,7 @@ void main() {
     });
   });
 
-  /// `runProGated`'s **activation-day** half: the branch that only exists once
+  /// `runProCapabilityGated`'s **activation-day** half: the branch that exists once
   /// a store product resolves, so no shipped build has ever taken it (the only
   /// `PurchaseStore` compiled in resolves nothing, which is why every test
   /// above gets the informational dialog instead of the paywall). Overriding
@@ -469,16 +580,16 @@ void main() {
   /// The contract is one sentence with three ways to get it wrong: the gated
   /// action resumes **only** when the user comes back from the paywall having
   /// unlocked Pro. A paywall dismissed with no result must read as `false` —
-  /// `showProFeatureDialog`'s `?? false` — and a purchase the store refused
+  /// `requestProCapability`'s persisted-entitlement recheck — and a refused purchase
   /// must not resume anything either.
-  group('runProGated resumes after a paywall purchase (U19)', () {
+  group('runProCapabilityGated resumes after a paywall purchase (U19)', () {
     // In-memory, not the file-backed store: real dart:io futures never
     // complete inside `testWidgets`' fake-async zone (see paywall_test.dart).
     late MemoryProEntitlementStore entitlement;
     setUp(() => entitlement = MemoryProEntitlementStore());
     tearDown(() => entitlement.dispose());
 
-    /// A single button whose `onPressed` is `runProGated`, plus the real
+    /// A single button whose `onPressed` is `runProCapabilityGated`, plus the real
     /// paywall on `/paywall` — the smallest thing that exercises the whole
     /// push/return round trip rather than a stubbed route's return value.
     /// Every run the action makes is appended to [ran].
@@ -501,10 +612,10 @@ void main() {
               body: Center(
                 child: Consumer(
                   builder: (context, ref, _) => ElevatedButton(
-                    onPressed: () => runProGated(
+                    onPressed: () => runProCapabilityGated(
                       context,
                       ref,
-                      ProFeature.icpImport,
+                      ProCapabilityBoundary.icpImportCommit,
                       () => ran.add('action'),
                     ),
                     child: const Text('Gated action'),

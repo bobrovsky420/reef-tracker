@@ -12,6 +12,7 @@ import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/cloud_backup_store.dart';
 import 'package:reeftracker/data/cloud_sync.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/entitlement.dart';
 import 'package:reeftracker/data/install_id.dart';
 
 /// The user's answer to the launch restore proposal.
@@ -54,7 +55,12 @@ class CloudRestoreFlow {
     required this.prompt,
     required this.notify,
     required this.report,
+    required this.authorizer,
   });
+
+  /// Live authorization used only for pushes. Pull/list/download/restore stay
+  /// available after entitlement loss so cloud data is never stranded.
+  final ProCapabilityAuthorizer authorizer;
 
   /// Shows the proposal dialog and resolves with the choice. Returning `null`
   /// means the dialog was never shown; a shown dialog always resolves to a
@@ -126,7 +132,12 @@ class CloudRestoreFlow {
         // newest cloud state (the other device gets the mirror proposal).
         // Never destructive — the declined file stays in the cloud rotation.
         await dismissCloudRestore(state, proposal.file.name);
-        await runCloudSyncIfDirty(db, store: store, state: state);
+        await runCloudSyncIfDirty(
+          db,
+          store: store,
+          state: state,
+          authorizer: authorizer,
+        );
       case CloudRestoreChoice.restore:
         try {
           await restoreCloudBackup(
@@ -181,6 +192,11 @@ Future<void> runLaunchBackupAndSync(
     wrote = true;
   }
   if (wrote && !proposalShown) {
-    await runCloudSyncIfDirty(db, store: store, state: state);
+    await runCloudSyncIfDirty(
+      db,
+      store: store,
+      state: state,
+      authorizer: flow.authorizer,
+    );
   }
 }

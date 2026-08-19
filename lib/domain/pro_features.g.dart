@@ -21,6 +21,81 @@ enum ProFeature {
   wallDisplay,
 }
 
+/// Every authoritative Pro authorization boundary, generated
+/// from `pro_features.yaml`.
+enum ProCapabilityBoundary {
+  icpImportCommit,
+  doseCalculatorRoute,
+  unlimitedTankCreate,
+  stabilityScorePresentation,
+  cloudSyncEnable,
+  cloudSyncPush,
+  smartInsightsPresentation,
+  hannaImportCommit,
+  hannaConnectRoute,
+  hannaScanRoute,
+  connectedDeviceLiveIo,
+  wallDisplayRoute,
+  wallDisplayAutoStart,
+}
+
+/// Feature and enforcement kind for each capability boundary.
+const Map<ProCapabilityBoundary, ProCapabilityContract>
+kProCapabilityContracts = {
+  ProCapabilityBoundary.icpImportCommit: ProCapabilityContract(
+    feature: ProFeature.icpImport,
+    kind: ProBoundaryKind.command,
+  ),
+  ProCapabilityBoundary.doseCalculatorRoute: ProCapabilityContract(
+    feature: ProFeature.doseCalculator,
+    kind: ProBoundaryKind.routeResource,
+  ),
+  ProCapabilityBoundary.unlimitedTankCreate: ProCapabilityContract(
+    feature: ProFeature.unlimitedTanks,
+    kind: ProBoundaryKind.command,
+  ),
+  ProCapabilityBoundary.stabilityScorePresentation: ProCapabilityContract(
+    feature: ProFeature.stabilityScore,
+    kind: ProBoundaryKind.presentation,
+  ),
+  ProCapabilityBoundary.cloudSyncEnable: ProCapabilityContract(
+    feature: ProFeature.cloudSync,
+    kind: ProBoundaryKind.command,
+  ),
+  ProCapabilityBoundary.cloudSyncPush: ProCapabilityContract(
+    feature: ProFeature.cloudSync,
+    kind: ProBoundaryKind.command,
+  ),
+  ProCapabilityBoundary.smartInsightsPresentation: ProCapabilityContract(
+    feature: ProFeature.smartInsights,
+    kind: ProBoundaryKind.presentation,
+  ),
+  ProCapabilityBoundary.hannaImportCommit: ProCapabilityContract(
+    feature: ProFeature.hannaImport,
+    kind: ProBoundaryKind.command,
+  ),
+  ProCapabilityBoundary.hannaConnectRoute: ProCapabilityContract(
+    feature: ProFeature.hannaConnect,
+    kind: ProBoundaryKind.routeResource,
+  ),
+  ProCapabilityBoundary.hannaScanRoute: ProCapabilityContract(
+    feature: ProFeature.hannaScan,
+    kind: ProBoundaryKind.routeResource,
+  ),
+  ProCapabilityBoundary.connectedDeviceLiveIo: ProCapabilityContract(
+    feature: ProFeature.connectedDevices,
+    kind: ProBoundaryKind.command,
+  ),
+  ProCapabilityBoundary.wallDisplayRoute: ProCapabilityContract(
+    feature: ProFeature.wallDisplay,
+    kind: ProBoundaryKind.routeResource,
+  ),
+  ProCapabilityBoundary.wallDisplayAutoStart: ProCapabilityContract(
+    feature: ProFeature.wallDisplay,
+    kind: ProBoundaryKind.configuration,
+  ),
+};
+
 /// Features that existed at the monetization cutoff: free
 /// FOREVER for Founder's Edition installs. Entries are never
 /// removed (see pro_features.yaml).

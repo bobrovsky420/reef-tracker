@@ -13,6 +13,7 @@ import 'package:reeftracker/app/router.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/hanna_import.dart';
+import 'package:reeftracker/domain/pro_features.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/import/hanna_import_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
@@ -60,7 +61,10 @@ void main() {
   group('preview screen', () {
     /// Hosts the preview behind a pushed route so its post-import
     /// `context.pop()` has somewhere to go.
-    Future<(AppDatabase, GoRouter)> pumpPreview(WidgetTester tester) async {
+    Future<(AppDatabase, GoRouter)> pumpPreview(
+      WidgetTester tester, {
+      bool entitled = true,
+    }) async {
       // The import button sits at the bottom of the lazy list — a phone-like
       // tall viewport keeps the whole preview on-screen without scrolling.
       tester.view.physicalSize = const Size(800, 1600);
@@ -83,7 +87,12 @@ void main() {
       );
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [dbProvider.overrideWithValue(db)],
+          overrides: [
+            dbProvider.overrideWithValue(db),
+            proCapabilityProvider(
+              ProCapabilityBoundary.hannaImportCommit,
+            ).overrideWithValue(entitled),
+          ],
           child: MaterialApp.router(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -143,6 +152,22 @@ void main() {
         expect(await db.getAllImportSources(), isEmpty);
         // The screen popped back home after the sheet closed.
         expect(find.text('home'), findsOneWidget);
+      } finally {
+        await unmountApp(tester);
+      }
+    });
+
+    testWidgets('a valid direct payload cannot commit for Standard', (
+      tester,
+    ) async {
+      try {
+        final (db, _) = await pumpPreview(tester, entitled: false);
+        await tester.tap(find.text('Import 5 readings'));
+        await settle(tester);
+
+        expect(find.text('Pro feature'), findsOneWidget);
+        expect(await db.getAllReadings(), isEmpty);
+        expect(await db.getAllImportSources(), isEmpty);
       } finally {
         await unmountApp(tester);
       }

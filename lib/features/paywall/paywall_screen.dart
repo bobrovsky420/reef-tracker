@@ -16,7 +16,7 @@ import '../../l10n/l10n_helpers.dart';
 /// the user was reaching for as `extra`.
 ///
 /// **Unreachable in every build shipped so far**, by two independent
-/// properties rather than by intent: `showProFeatureDialog` only navigates
+/// properties rather than by intent: `requestProCapability` only navigates
 /// here when a product actually resolves — and the only [PurchaseStore]
 /// compiled in is [NoPurchaseStore], which resolves nothing — while the
 /// dormancy invariant (`test/pro_features_test.dart`) keeps every registry
@@ -132,7 +132,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           else if (unlocked)
             FilledButton(
               // Returns true so the gated action the user was reaching for
-              // resumes — the reason `showProFeatureDialog` returns a bool.
+              // resumes — the reason `requestProCapability` returns a bool.
               onPressed: () => context.pop(true),
               child: Text(
                 MaterialLocalizations.of(context).continueButtonLabel,

@@ -15,6 +15,11 @@
 #                          promise (test/pro_features_test.dart pins the set).
 #                  false = built after the cutoff; paid for everyone once the
 #                          Pro tier exists.
+#   boundaries:    every authoritative enforcement point for the capability.
+#                  `id` is a globally unique camelCase Dart identifier;
+#                  `kind` is routeResource, command, presentation, or
+#                  configuration. Entry buttons reuse these IDs for the
+#                  paywall, but do not count as separate boundaries.
 #
 # DECIDED 2026-08-05 — every Pro feature delivered BEFORE the paid tier is
 # switched on ships `grandfathered: true`. No per-feature deliberation.
@@ -39,12 +44,24 @@
 features:
   - key: icpImport
     grandfathered: true
+    boundaries:
+      - id: icpImportCommit
+        kind: command
   - key: doseCalculator
     grandfathered: true
+    boundaries:
+      - id: doseCalculatorRoute
+        kind: routeResource
   - key: unlimitedTanks
     grandfathered: true
+    boundaries:
+      - id: unlimitedTankCreate
+        kind: command
   - key: stabilityScore
     grandfathered: true
+    boundaries:
+      - id: stabilityScorePresentation
+        kind: presentation
   # One gate for cloud backup sync on both platforms — Google Drive on
   # Android (U24), iCloud Drive on iOS (U44). Renamed from `driveSync`
   # 2026-08-01 when the iCloud half was built: keys are never persisted, and
@@ -53,23 +70,40 @@ features:
   # unchanged, so Founder installs get it free on either platform.
   - key: cloudSync
     grandfathered: true
+    boundaries:
+      - id: cloudSyncEnable
+        kind: command
+      - id: cloudSyncPush
+        kind: command
   - key: smartInsights
     grandfathered: true
+    boundaries:
+      - id: smartInsightsPresentation
+        kind: presentation
   # U32 Hanna Lab measurement import — grandfathered by explicit 2026-07-19
   # decision (same reasoning as driveSync/stabilityScore/smartInsights:
   # usable immediately, Founder installs keep it free forever).
   - key: hannaImport
     grandfathered: true
+    boundaries:
+      - id: hannaImportCommit
+        kind: command
   # U33 Hanna checker direct BLE connection (experimental) — grandfathered
   # per the 2026-07-21 decision, consistent with hannaImport (the same
   # meter's file-based sibling path).
   - key: hannaConnect
     grandfathered: true
+    boundaries:
+      - id: hannaConnectRoute
+        kind: routeResource
   # U34 checker camera scan (experimental) — grandfathered per the
   # 2026-07-21 decision, consistent with hannaConnect/hannaImport (the
   # third acquisition path for the same Hanna readings).
   - key: hannaScan
     grandfathered: true
+    boundaries:
+      - id: hannaScanRoute
+        kind: routeResource
   # Local-device integrations — ReefFactory meters (U36), Red Sea ReefBeat
   # devices (U38) and Neptune Apex controllers (U40) — behind ONE gate as of
   # the 2026-07-27 decision. They were three separate grandfathered keys
@@ -85,6 +119,9 @@ features:
   # own test kit, not a piece of tank hardware on the LAN.
   - key: connectedDevices
     grandfathered: true
+    boundaries:
+      - id: connectedDeviceLiveIo
+        kind: command
   # U49 wall display mode — its own key, not a connectedDevices rider: the
   # mode works with zero devices (stored readings still make a useful wall
   # board), so a hardware gate would charge the wrong people for the wrong
@@ -92,3 +129,8 @@ features:
   # activation).
   - key: wallDisplay
     grandfathered: true
+    boundaries:
+      - id: wallDisplayRoute
+        kind: routeResource
+      - id: wallDisplayAutoStart
+        kind: configuration

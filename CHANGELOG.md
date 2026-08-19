@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ReefControl Lite/Pro probe names on the Devices dashboard are now bold,
   matching ReefDose supplement names and ReefRun pump names.
 
+### Fixed
+- Pro capabilities are now authorized at their routes, final save actions, and
+  background-service boundaries. Direct/restored navigation can no longer
+  bypass import or Wall display checks, and entitlement loss stops new device
+  reads, cloud uploads, and Wall auto-start without hiding existing aquarium
+  data, device inventory, backups, restore, export, or disconnect controls.
+
 ## [1.3.0] - 2026-08-18
 
 ### Added

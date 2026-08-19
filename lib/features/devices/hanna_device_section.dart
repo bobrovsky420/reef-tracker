@@ -90,10 +90,10 @@ class HannaDeviceSection extends ConsumerWidget {
   /// menu entry (`hannaConnect`, the checker's own gate, not the LAN devices'
   /// `connectedDevices`).
   Future<void> _startMeasurement(BuildContext context, WidgetRef ref) =>
-      runProGated(
+      runProCapabilityGated(
         context,
         ref,
-        ProFeature.hannaConnect,
+        ProCapabilityBoundary.hannaConnectRoute,
         () => context.push('/hanna/measure'),
       );
 }

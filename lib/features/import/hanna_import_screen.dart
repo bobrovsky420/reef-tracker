@@ -9,10 +9,12 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/hanna_import.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/pro_features.dart';
 import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/implausible_value_dialog.dart';
+import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_settings.dart';
 import '../../widgets/reef_sheet.dart';
@@ -529,6 +531,17 @@ class _HannaImportScreenState extends ConsumerState<HannaImportScreen> {
         prefs: ref.read(unitPrefsProvider),
       );
       if (choice != SuspectChoice.save || !mounted) return;
+    }
+
+    // Authoritative commit boundary: a valid restored/internal route payload
+    // must not turn the preview route into an entitlement bypass.
+    if (!await requestProCapability(
+          context,
+          ref,
+          ProCapabilityBoundary.hannaImportCommit,
+        ) ||
+        !mounted) {
+      return;
     }
 
     setState(() => _saving = true);

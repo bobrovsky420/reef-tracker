@@ -14,10 +14,15 @@ import 'package:reeftracker/data/cloud_sync.dart' as cloud;
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/data/entitlement.dart';
 import 'package:reeftracker/data/settings.dart';
+import 'package:reeftracker/domain/pro_features.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 
 import 'fakes/fake_cloud_backup_store.dart';
 import 'sync_test_helpers.dart';
+
+const _allowAllCapabilities = EntitlementCapabilityAuthorizer(
+  Entitlement(marker: AppEdition.founder, purchased: false),
+);
 
 /// Routes path_provider to a throwaway temp folder — the U35 restore path
 /// writes a local safety backup and `importBackup` rehearses into a temp
@@ -45,7 +50,12 @@ GDriveSyncState _gdrive(AppDatabase db) => GDriveSyncState(AppSettings(db));
 Future<CloudSyncOutcome> runGDriveSyncIfDirty(
   AppDatabase db, {
   required CloudBackupStore store,
-}) => cloud.runCloudSyncIfDirty(db, store: store, state: _gdrive(db));
+}) => cloud.runCloudSyncIfDirty(
+  db,
+  store: store,
+  state: _gdrive(db),
+  authorizer: _allowAllCapabilities,
+);
 
 Future<CloudRestoreProposal?> checkCloudNewerBackup(
   AppDatabase db, {
@@ -1499,17 +1509,55 @@ void main() {
 
     ICloudSyncState icloud(AppDatabase d) => ICloudSyncState(AppSettings(d));
 
+    test('T29: Standard and mid-run revocation cannot upload', () async {
+      await settings.setSyncIcloudEnabled(true);
+      await db.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
+
+      expect(
+        await cloud.runCloudSyncIfDirty(
+          db,
+          store: store,
+          state: icloud(db),
+          authorizer: const EntitlementCapabilityAuthorizer(Entitlement.none),
+        ),
+        CloudSyncOutcome.skippedDisabled,
+      );
+      expect(store.writeCalls, 0);
+
+      resetCloudSyncInFlightForTest();
+      expect(
+        await cloud.runCloudSyncIfDirty(
+          db,
+          store: store,
+          state: icloud(db),
+          authorizer: _ScriptedAuthorizer([true, false]),
+        ),
+        CloudSyncOutcome.skippedDisabled,
+      );
+      expect(store.writeCalls, 0);
+    });
+
     test('the enabled toggle is the on-state; a push stamps only the '
         'sync_icloud_* keys', () async {
       await db.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
       expect(
-        await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db)),
+        await cloud.runCloudSyncIfDirty(
+          db,
+          store: store,
+          state: icloud(db),
+          authorizer: _allowAllCapabilities,
+        ),
         CloudSyncOutcome.skippedDisabled,
       );
 
       await settings.setSyncIcloudEnabled(true);
       expect(
-        await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db)),
+        await cloud.runCloudSyncIfDirty(
+          db,
+          store: store,
+          state: icloud(db),
+          authorizer: _allowAllCapabilities,
+        ),
         CloudSyncOutcome.pushed,
       );
       expect(store.files, hasLength(1));
@@ -1520,7 +1568,12 @@ void main() {
       expect(await settings.readSyncGdriveFolderId(), isNull);
 
       expect(
-        await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db)),
+        await cloud.runCloudSyncIfDirty(
+          db,
+          store: store,
+          state: icloud(db),
+          authorizer: _allowAllCapabilities,
+        ),
         CloudSyncOutcome.skippedClean,
       );
       expect(store.writeCalls, 1);
@@ -1529,11 +1582,21 @@ void main() {
     test('no cached folder id: ensureFolder is called on every run', () async {
       await settings.setSyncIcloudEnabled(true);
       await db.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
-      await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db));
+      await cloud.runCloudSyncIfDirty(
+        db,
+        store: store,
+        state: icloud(db),
+        authorizer: _allowAllCapabilities,
+      );
       final callsAfterFirst = store.ensureFolderCalls;
       expect(callsAfterFirst, greaterThan(0));
       await db.createTankWithPreset(name: 'Frag', type: SetupType.mixed);
-      await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db));
+      await cloud.runCloudSyncIfDirty(
+        db,
+        store: store,
+        state: icloud(db),
+        authorizer: _allowAllCapabilities,
+      );
       expect(store.ensureFolderCalls, greaterThan(callsAfterFirst));
     });
 
@@ -1552,6 +1615,7 @@ void main() {
           writer,
           store: store,
           state: icloud(writer),
+          authorizer: _allowAllCapabilities,
         ),
         CloudSyncOutcome.pushed,
       );
@@ -1578,7 +1642,12 @@ void main() {
       expect((await db.getTanks()).map((t) => t.name), ['Reef']);
       // Echo suppression landed in the iCloud keys.
       expect(
-        await cloud.runCloudSyncIfDirty(db, store: store, state: icloud(db)),
+        await cloud.runCloudSyncIfDirty(
+          db,
+          store: store,
+          state: icloud(db),
+          authorizer: _allowAllCapabilities,
+        ),
         CloudSyncOutcome.skippedClean,
       );
       expect(
@@ -1599,6 +1668,7 @@ void main() {
         writer,
         store: store,
         state: icloud(writer),
+        authorizer: _allowAllCapabilities,
       );
 
       final newest = await fetchNewestCloudBackup(store);
@@ -1620,4 +1690,16 @@ void main() {
 class _ThrowingDisconnectAuth extends FakeCloudAuth {
   @override
   Future<void> disconnect() async => throw Exception('offline');
+}
+
+class _ScriptedAuthorizer implements ProCapabilityAuthorizer {
+  _ScriptedAuthorizer(this.answers);
+
+  final List<bool> answers;
+
+  @override
+  Future<bool> allows(ProCapabilityBoundary boundary) async {
+    expect(boundary, ProCapabilityBoundary.cloudSyncPush);
+    return answers.removeAt(0);
+  }
 }

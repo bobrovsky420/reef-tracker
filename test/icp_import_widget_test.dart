@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
 import 'package:reeftracker/domain/icp_import.dart';
+import 'package:reeftracker/domain/pro_features.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/micro/icp_import_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
@@ -55,8 +56,9 @@ void main() {
   /// import of the same file can be driven through the same screen.
   Future<(AppDatabase, GoRouter, int)> pumpPreview(
     WidgetTester tester,
-    IcpImportResult result,
-  ) async {
+    IcpImportResult result, {
+    bool entitled = true,
+  }) async {
     // The import button sits at the bottom of the list — a phone-like tall
     // viewport keeps the whole preview on-screen without scrolling.
     tester.view.physicalSize = const Size(800, 1600);
@@ -82,7 +84,12 @@ void main() {
     );
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [dbProvider.overrideWithValue(db)],
+        overrides: [
+          dbProvider.overrideWithValue(db),
+          proCapabilityProvider(
+            ProCapabilityBoundary.icpImportCommit,
+          ).overrideWithValue(entitled),
+        ],
         child: MaterialApp.router(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -193,6 +200,22 @@ void main() {
       expect(find.text('Saved 3 readings.'), findsOneWidget);
       // The screen popped back after the save.
       expect(find.text('home'), findsOneWidget);
+    } finally {
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('a valid direct payload cannot commit for Standard', (
+    tester,
+  ) async {
+    try {
+      final (db, _, _) = await pumpPreview(tester, report(), entitled: false);
+
+      await tester.tap(find.text('Import 3 values'));
+      await settle(tester);
+
+      expect(find.text('Pro feature'), findsOneWidget);
+      expect(await db.getAllReadings(), isEmpty);
     } finally {
       await unmountApp(tester);
     }

@@ -451,12 +451,17 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
 
   // --- reading -----------------------------------------------------------
 
+  bool get _liveIoAuthorized => ref.read(
+    proCapabilityProvider(ProCapabilityBoundary.connectedDeviceLiveIo),
+  );
+
   /// Reads one registered device. Dispatch, errors and payload typing stay in
   /// the integration registry; the screen only owns lifecycle state.
   Future<void> _refreshDevice(String kind, DeviceRecord d) async {
     final registry = ref.read(deviceIntegrationRegistryProvider);
     final integration = registry.integrationForId(kind);
     if (!mounted ||
+        !_liveIoAuthorized ||
         integration == null ||
         !integration.capabilities.refreshes) {
       return;
@@ -466,7 +471,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
       _live[d.identifier] = DeviceLiveState.loadingFrom(previous);
     });
     final result = await readRegisteredDevice(ref, d);
-    if (!mounted) return;
+    if (!mounted || !_liveIoAuthorized) return;
     setState(() {
       _live[d.identifier] = DeviceLiveState.completed(
         result,
@@ -480,8 +485,26 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// ([readDeviceScope], U49 §12d): sequential within a vendor, vendors
   /// concurrent — the politeness rule lives there now, beside the wall
   /// display's poll loop.
-  Future<void> _refreshScope(DeviceScope scope) =>
-      readDeviceScope(scope, _refreshDevice, keepGoing: () => mounted);
+  Future<void> _refreshScope(DeviceScope scope) async {
+    if (!_liveIoAuthorized) return;
+    await readDeviceScope(
+      scope,
+      _refreshDevice,
+      keepGoing: () => mounted && _liveIoAuthorized,
+    );
+  }
+
+  Future<void> _refreshOneInteractive(String kind, DeviceRecord device) async {
+    if (!await requestProCapability(
+          context,
+          ref,
+          ProCapabilityBoundary.connectedDeviceLiveIo,
+        ) ||
+        !mounted) {
+      return;
+    }
+    await _refreshDevice(kind, device);
+  }
 
   // --- saving ------------------------------------------------------------
 
@@ -490,10 +513,13 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     List<({String paramKey, double value})> values,
     DateTime takenAt,
   ) async {
+    if (!_liveIoAuthorized) return;
     final db = ref.read(dbProvider);
     for (final key in {for (final v in values) v.paramKey}) {
       await db.addTrackedParameter(tank.id, key);
+      if (!_liveIoAuthorized) return;
     }
+    if (!_liveIoAuthorized) return;
     await db.insertReadingGroup(
       tankId: tank.id,
       takenAt: takenAt,
@@ -583,6 +609,14 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// entry has always had (#71, #76).
   Future<void> _save(DeviceScope scope, {DeviceRecord? only}) async {
     if (_saving) return;
+    if (!await requestProCapability(
+          context,
+          ref,
+          ProCapabilityBoundary.connectedDeviceLiveIo,
+        ) ||
+        !mounted) {
+      return;
+    }
     setState(() => _saving = true);
     try {
       await _saveGuarded(scope, only: only);
@@ -600,7 +634,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     final messenger = ScaffoldMessenger.of(context);
 
     await _freshen(scope, only);
-    if (!mounted) return;
+    if (!mounted || !_liveIoAuthorized) return;
     final tanks = ref.read(tanksProvider).value ?? const <Tank>[];
 
     final byTank = <int, Map<String, ({String paramKey, double value})>>{};
@@ -683,6 +717,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
       }
     }
 
+    // The confirmation above can stay open while a refund/restore changes the
+    // entitlement. Do not let its stale callback cross the commit boundary.
+    if (!_liveIoAuthorized) return;
+
     if (byTank.isEmpty) {
       messenger.showSnackBar(
         SnackBar(
@@ -745,7 +783,9 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     final l = AppLocalizations.of(context);
     final activeTank = ref.watch(activeTankProvider);
     final tankId = activeTank?.id;
-    final entitled = ref.watch(proFeatureProvider(ProFeature.connectedDevices));
+    final entitled = ref.watch(
+      proCapabilityProvider(ProCapabilityBoundary.connectedDeviceLiveIo),
+    );
     final order = ref.watch(deviceVendorOrderProvider).value ?? kDeviceVendors;
 
     final inventory = {
@@ -869,9 +909,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
                   )
                 : _ProNotice(
                     onTap: () => unawaited(
-                      showProFeatureDialog(
+                      requestProCapability(
                         context,
-                        ProFeature.connectedDevices,
+                        ref,
+                        ProCapabilityBoundary.connectedDeviceLiveIo,
                       ),
                     ),
                   ),
@@ -959,6 +1000,14 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     // same guard so dragging during the on-open read cannot start a duplicate
     // request to every device.
     if (_busy(_scope)) return;
+    if (!await requestProCapability(
+          context,
+          ref,
+          ProCapabilityBoundary.connectedDeviceLiveIo,
+        ) ||
+        !mounted) {
+      return;
+    }
     await _refreshScope(_scope);
   }
 
@@ -988,7 +1037,8 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
         onSave: (device) =>
             unawaited(_saveOne(device, _vendorScope(vendor, byVendor))),
         onRemoved: _onDeviceRemoved,
-        onRefresh: (device) => unawaited(_refreshDevice(vendor, device)),
+        onRefresh: (device) =>
+            unawaited(_refreshOneInteractive(vendor, device)),
       );
     }
     return SliverToBoxAdapter(

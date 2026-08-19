@@ -38,6 +38,34 @@ class _WriteFailingStore implements ProEntitlementStore {
 /// is acknowledged, and — the part with real money behind it — when a cached
 /// unlock may be cleared.
 void main() {
+  test('T29 revocation means held-to-lost, not fail-closed startup', () {
+    const purchased = Entitlement(marker: AppEdition.standard, purchased: true);
+    expect(
+      lostProCapability(
+        null,
+        Entitlement.none,
+        ProCapabilityBoundary.wallDisplayAutoStart,
+      ),
+      isFalse,
+    );
+    expect(
+      lostProCapability(
+        Entitlement.none,
+        purchased,
+        ProCapabilityBoundary.wallDisplayAutoStart,
+      ),
+      isFalse,
+    );
+    expect(
+      lostProCapability(
+        purchased,
+        Entitlement.none,
+        ProCapabilityBoundary.wallDisplayAutoStart,
+      ),
+      isTrue,
+    );
+  });
+
   // The file store re-applies the iOS backup-exclusion attribute through a
   // MethodChannel, and reaching a channel at all needs a binding — without
   // this the write path throws before it writes (same reason cloud_sync_test
@@ -259,6 +287,13 @@ void main() {
           reason: '$feature must stay locked while entitlement is unknown',
         );
       }
+      for (final boundary in ProCapabilityBoundary.values) {
+        expect(
+          container.read(proCapabilityProvider(boundary)),
+          isFalse,
+          reason: '$boundary must stay locked while entitlement is unknown',
+        );
+      }
 
       // The marker lands: the very same install is now a Founder, and every
       // grandfathered feature opens.
@@ -267,6 +302,14 @@ void main() {
       expect(container.read(entitlementProvider).founder, isTrue);
       for (final feature in kGrandfatheredFeatures) {
         expect(container.read(proFeatureProvider(feature)), isTrue);
+      }
+      for (final boundary in ProCapabilityBoundary.values) {
+        expect(
+          container.read(proCapabilityProvider(boundary)),
+          kGrandfatheredFeatures.contains(
+            proCapabilityContract(boundary).feature,
+          ),
+        );
       }
     });
 

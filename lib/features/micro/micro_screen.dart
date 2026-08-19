@@ -100,10 +100,10 @@ class MicroScreen extends ConsumerWidget {
             // Pro-gated (U19): founders (and, later, Pro purchasers) import;
             // anyone else meets the gate instead of the picker, and reaches
             // the picker anyway if they come back entitled.
-            onPressed: () => runProGated(
+            onPressed: () => runProCapabilityGated(
               context,
               ref,
-              ProFeature.icpImport,
+              ProCapabilityBoundary.icpImportCommit,
               () => runIcpImportFlow(context),
             ),
           ),

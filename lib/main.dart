@@ -15,6 +15,7 @@ import 'app/theme.dart';
 import 'data/app_update.dart';
 import 'data/cloud_restore_flow.dart';
 import 'data/diagnostics_log.dart';
+import 'data/entitlement.dart';
 import 'data/reminder_scheduler.dart';
 import 'domain/pro_features.dart';
 import 'features/settings/pro_test_rig.dart';
@@ -59,9 +60,10 @@ Future<void> main() async {
         .timeout(const Duration(seconds: 3));
     // Wall-display auto-start (U49 §12f): arm the router's cold-start-only
     // redirect so a rebooted wall tablet lands straight back in the mode.
-    // The stored flag is trusted as-is: enabling it is Pro-gated at the
-    // toggle and the wall screen re-checks the entitlement (degrading to its
-    // lock notice) — and, decisive here, verifying the purchase would need
+    // The stored flag is read before entitlement I/O: the `/wall` capability
+    // boundary prevents constructing the resource-owning screen while locked,
+    // and post-restore reconciliation clears a stale flag. Verifying
+    // the purchase here would need
     // the entitlement store's pre-first-frame platform-channel read, exactly
     // the call class that hangs before the first frame on some devices
     // (flutter/flutter#72872, the pre-warm note above).
@@ -127,6 +129,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _watchCapabilityRevocation();
     // Opportunistic housekeeping + backup: run once at launch, after the
     // first frame so they never block startup.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -282,6 +285,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
         await seedProTestStoreFromDisk(ref.read(proEntitlementStoreProvider));
       }
       await service.restoreAtStartup();
+      await _reconcileRevokedCapabilities();
     }
 
     unawaited(
@@ -298,6 +302,57 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     );
   }
 
+  /// Applies the small amount of persistent cleanup required when a live
+  /// entitlement disappears. User-owned data and cloud connections stay in
+  /// place for recovery/export; only an automation that would launch a paid
+  /// resource without an explicit action is disarmed.
+  void _watchCapabilityRevocation() {
+    ref.listenManual(entitlementProvider, (previous, next) {
+      if (!lostProCapability(
+        previous,
+        next,
+        ProCapabilityBoundary.wallDisplayAutoStart,
+      )) {
+        return;
+      }
+      _disarmWallAutoStart();
+    });
+  }
+
+  void _disarmWallAutoStart() {
+    unawaited(
+      ref.read(settingsProvider).setWallAutoStart(false).catchError((
+        Object e,
+        StackTrace s,
+      ) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'entitlement',
+            context: ErrorSummary(
+              'disarming Wall auto-start after entitlement loss',
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Startup has no trustworthy `previous` entitlement for the transition
+  /// listener above. Reconcile after the store/file check completes so a paid
+  /// user's flag is not cleared during the fail-closed loading window, while
+  /// a genuinely revoked install is still disarmed.
+  Future<void> _reconcileRevokedCapabilities() async {
+    final entitlement = await readEntitlement(
+      ref.read(dbProvider),
+      entitlement: ref.read(proEntitlementStoreProvider),
+    );
+    if (!entitlement.allows(ProCapabilityBoundary.wallDisplayAutoStart)) {
+      await ref.read(settingsProvider).setWallAutoStart(false);
+    }
+  }
+
   /// The wall-display autostart's slow-boot fallback (U49 §12f). The primary
   /// path is `main()`'s pre-frame arming of the router redirect, but that
   /// rides the settings pre-warm's bounded wait — a cold start slow enough to
@@ -310,7 +365,13 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
     if (wallAutoStartRequested) return; // The redirect already handled it.
     Future<void> run() async {
       final on = await ref.read(settingsProvider).readWallAutoStart();
-      if (!on || !mounted) return;
+      if (!on ||
+          !mounted ||
+          !ref.read(
+            proCapabilityProvider(ProCapabilityBoundary.wallDisplayAutoStart),
+          )) {
+        return;
+      }
       final location = appRouter.routerDelegate.currentConfiguration.uri.path;
       if (location == '/') appRouter.go('/wall');
     }
@@ -478,6 +539,7 @@ class _ReefTrackerAppState extends ConsumerState<ReefTrackerApp>
   /// and is pinned by `cloud_restore_flow_test.dart` (T17); this wiring only
   /// supplies the Flutter pieces.
   late final CloudRestoreFlow _restoreFlow = CloudRestoreFlow(
+    authorizer: ref.read(proCapabilityAuthorizerProvider),
     prompt: (proposal) async {
       final context = rootNavigatorKey.currentContext;
       // Never shown → null: the flow records nothing and the next launch

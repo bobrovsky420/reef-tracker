@@ -347,8 +347,8 @@ void main() {
           dbProvider.overrideWithValue(db),
           rbDeviceLinkProvider.overrideWithValue(rbLink),
           rfDeviceLinkProvider.overrideWithValue(_FakeRfLink(const {})),
-          proFeatureProvider(
-            ProFeature.connectedDevices,
+          proCapabilityProvider(
+            ProCapabilityBoundary.connectedDeviceLiveIo,
           ).overrideWithValue(true),
         ],
       );

@@ -7,11 +7,13 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../domain/icp_import.dart';
 import '../../domain/parameter_catalog.dart';
+import '../../domain/pro_features.dart';
 import '../../domain/units.dart';
 import '../../domain/zones.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/implausible_value_dialog.dart';
+import '../../widgets/pro_feature_dialog.dart';
 import '../../widgets/reef_card.dart';
 import '../../widgets/reef_value_row.dart';
 import '../../widgets/section_header.dart';
@@ -125,6 +127,17 @@ class _IcpImportScreenState extends ConsumerState<IcpImportScreen> {
         );
         if (proceed != true || !mounted) return;
       }
+    }
+
+    // Authoritative commit boundary: this screen can be reached with a valid
+    // `extra` without passing through either import entry button.
+    if (!await requestProCapability(
+          context,
+          ref,
+          ProCapabilityBoundary.icpImportCommit,
+        ) ||
+        !mounted) {
+      return;
     }
 
     setState(() => _saving = true);

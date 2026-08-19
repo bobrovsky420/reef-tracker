@@ -854,6 +854,22 @@ final proFeatureProvider = Provider.family<bool, ProFeature>(
   (ref, feature) => ref.watch(entitlementProvider).has(feature),
 );
 
+/// Whether the current entitlement may cross an authoritative Pro capability
+/// boundary. Feature surfaces use this provider; [proFeatureProvider] remains
+/// the lower-level rule probe used by entitlement tests.
+final proCapabilityProvider = Provider.family<bool, ProCapabilityBoundary>(
+  (ref, boundary) => ref.watch(entitlementProvider).allows(boundary),
+);
+
+/// Live authorizer for services that run outside widget/Riverpod reads while
+/// they await I/O. It re-reads both entitlement facts at each boundary.
+final proCapabilityAuthorizerProvider = Provider<ProCapabilityAuthorizer>(
+  (ref) => StoredProCapabilityAuthorizer(
+    db: ref.watch(dbProvider),
+    entitlement: ref.watch(proEntitlementStoreProvider),
+  ),
+);
+
 /// When the most recent automatic or manual backup completed, or null if none
 /// has run yet. Reacts to the stored timestamp, so it refreshes as soon as a
 /// backup is written.
@@ -1186,7 +1202,9 @@ final lanDiscoveryProvider = Provider<LanDiscoveryService>(
 /// the Hanna flow or the gating.
 final environmentSourcesProvider =
     Provider.family<List<EnvironmentSource>, int>((ref, tankId) {
-      if (!ref.watch(proFeatureProvider(ProFeature.connectedDevices))) {
+      if (!ref.watch(
+        proCapabilityProvider(ProCapabilityBoundary.connectedDeviceLiveIo),
+      )) {
         return const [];
       }
       final registry = ref.watch(deviceIntegrationRegistryProvider);

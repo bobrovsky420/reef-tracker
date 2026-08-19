@@ -375,10 +375,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                       // Pro-gated (U19): founders (and, later, Pro purchasers) open
                       // the calculator; anyone else gets the gate — and lands on
                       // the calculator anyway if they come back entitled.
-                      onPressed: () => runProGated(
+                      onPressed: () => runProCapabilityGated(
                         context,
                         ref,
-                        ProFeature.doseCalculator,
+                        ProCapabilityBoundary.doseCalculatorRoute,
                         () => context.push('/dosing/calculator'),
                       ),
                     ),
@@ -417,10 +417,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         // import; anyone else meets the gate and resumes here
                         // if they come back entitled.
                         unawaited(
-                          runProGated(
+                          runProCapabilityGated(
                             context,
                             ref,
-                            ProFeature.hannaImport,
+                            ProCapabilityBoundary.hannaImportCommit,
                             () => runMeasurementImportFlow(context),
                           ),
                         );
@@ -431,10 +431,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         // belongs in this menu — not only on the micro panel,
                         // which is hidden when microelements are switched off.
                         unawaited(
-                          runProGated(
+                          runProCapabilityGated(
                             context,
                             ref,
-                            ProFeature.icpImport,
+                            ProCapabilityBoundary.icpImportCommit,
                             () => runIcpImportFlow(context),
                           ),
                         );
@@ -443,10 +443,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         // Hanna checker live measurement (U33, experimental),
                         // same gate idiom.
                         unawaited(
-                          runProGated(
+                          runProCapabilityGated(
                             context,
                             ref,
-                            ProFeature.hannaConnect,
+                            ProCapabilityBoundary.hannaConnectRoute,
                             () => context.push('/hanna/measure'),
                           ),
                         );
@@ -457,10 +457,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                         // installs (entitled ones get the scan FAB instead),
                         // so the normal outcome is the gate.
                         unawaited(
-                          runProGated(
+                          runProCapabilityGated(
                             context,
                             ref,
-                            ProFeature.hannaScan,
+                            ProCapabilityBoundary.hannaScanRoute,
                             () => context.push('/hanna/scan'),
                           ),
                         );
@@ -502,7 +502,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                       if ((ref.watch(experimentalEnabledProvider).value ??
                               false) &&
                           !(ref.watch(
-                                proFeatureProvider(ProFeature.hannaScan),
+                                proCapabilityProvider(
+                                  ProCapabilityBoundary.hannaScanRoute,
+                                ),
                               ) &&
                               (ref.watch(hannaScanFabProvider).value ?? false)))
                         ReefMenuItem(
@@ -667,7 +669,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           final showScanFab =
               (ref.watch(experimentalEnabledProvider).value ?? false) &&
               (ref.watch(hannaScanFabProvider).value ?? false) &&
-              ref.watch(proFeatureProvider(ProFeature.hannaScan));
+              ref.watch(
+                proCapabilityProvider(ProCapabilityBoundary.hannaScanRoute),
+              );
           // Each button scales about itself (the Column keeps its layout box)
           // so the appear animation matches the single-FAB tabs exactly.
           return Column(

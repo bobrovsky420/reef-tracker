@@ -178,11 +178,12 @@ Future<CloudSyncOutcome> runCloudSyncIfDirty(
   AppDatabase db, {
   required CloudBackupStore store,
   required CloudSyncState state,
+  required ProCapabilityAuthorizer authorizer,
 }) {
   final existing = _syncInFlight;
   if (existing != null) return existing;
   late final Future<CloudSyncOutcome> run;
-  run = _runCloudSyncIfDirty(db, store, state).whenComplete(() {
+  run = _runCloudSyncIfDirty(db, store, state, authorizer).whenComplete(() {
     if (identical(_syncInFlight, run)) _syncInFlight = null;
   });
   return _syncInFlight = run;
@@ -195,12 +196,16 @@ Future<CloudSyncOutcome> _runCloudSyncIfDirty(
   AppDatabase db,
   CloudBackupStore store,
   CloudSyncState state,
+  ProCapabilityAuthorizer authorizer,
 ) async {
   // The whole body sits inside the try (#95): the pre-flight reads and the
   // encode can throw too (a failing DB, an isolate spawn error), and a throw
   // escaping here would break the "Never throws" contract the
   // fire-and-forget callers rely on, bypassing the error stamp.
   try {
+    if (!await authorizer.allows(ProCapabilityBoundary.cloudSyncPush)) {
+      return CloudSyncOutcome.skippedDisabled;
+    }
     if (!await state.isEnabled()) return CloudSyncOutcome.skippedDisabled;
     // Same "nothing to protect" rule as the local auto-backup: no visible
     // tanks means an empty document that would only evict a useful older file
@@ -227,6 +232,11 @@ Future<CloudSyncOutcome> _runCloudSyncIfDirty(
       kCloudMetaDevice: ?await state.settings.readSyncDeviceName(),
       kCloudMetaContentHash: hash,
     };
+    // Encoding and folder resolution can take long enough for a refund or a
+    // restore-with-no-ownership event to arrive. Re-check at the upload edge.
+    if (!await authorizer.allows(ProCapabilityBoundary.cloudSyncPush)) {
+      return CloudSyncOutcome.skippedDisabled;
+    }
     try {
       await store.write(folderId, name, utf8.encode(json), metadata: metadata);
     } on CloudApiException catch (e) {
@@ -543,7 +553,7 @@ Future<bool> completeWelcomeRestore(
   final entitled = (await readEntitlement(
     db,
     entitlement: entitlement,
-  )).has(ProFeature.cloudSync);
+  )).allows(ProCapabilityBoundary.cloudSyncEnable);
   if (entitled) await enableSync();
   return entitled;
 }
