@@ -3557,10 +3557,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get reefBeatAtoLeakSensor => 'Capteur de fuite';
 
   @override
+  String get reefBeatAtoLeakNotConnected => 'Non connecté';
+
+  @override
+  String get reefBeatAtoLeakNotEnabled => 'Non activé';
+
+  @override
   String get reefBeatAtoLeakDry => 'Sec';
 
   @override
   String get reefBeatAtoLeakRodi => 'Fuite d\'eau RO/DI';
+
+  @override
+  String get reefBeatAtoLeakAquarium => 'Fuite d\'eau de l\'aquarium';
 
   @override
   String get reefBeatMatRoll => 'Rouleau';

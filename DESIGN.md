@@ -150,7 +150,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `parameters.yaml` + `parameter_catalog.g.dart` | Same pattern for the parameter catalog: `parameters.yaml` (commented, hand-edited, **order = micro-panel row order**) is the source of truth; `dart run tool/gen_parameters.dart` validates it (unique keys/symbols; category ∈ core/major/trace/contaminant; microelements carry a symbol; `displayFactor` works for core nitrite and microelements, `hobbyKit` is micro-only, `importance` core-only; `defaultBounds` is required for microelements and optional as a setup-independent core fallback — ascending (non-decreasing, matching the bound editors' `orderOk`: equal neighbours express "no amber step on that side", see silicon), amber bounds green-paired, inside the plausible range; ordered bounds, plausible bounds paired) and generates the `part` file `parameter_catalog.g.dart` (`const kReefParameters`). The generator deliberately does **not** import the package (its output *is* part of it — must stay runnable right after build_runner deletes the file), unlike `gen_supplements`, which imports the parameter catalog and therefore runs after `gen_parameters`. |
 | `tank_presets.yaml` + `presets.g.dart` + `ratio.g.dart` | Same pattern for the setup-type presets: `tank_presets.yaml` (commented, hand-edited; per-setup sections whose **listing = default tracked set, order = seeding order**, each row a bounds quadruple + optional `target`) is the source of truth; `dart run tool/gen_tank_presets.dart` validates it (every `SetupType` name present and nothing else; keys are core parameters in `parameters.yaml`; greenLow/greenHigh required, bounds strictly ascending and inside the plausible range; `target` inside the green range) and generates the `part` file `presets.g.dart` (`const kPresets`/`kPresetTargets`). The file's `ratios` section (every `RatioKind` name, full strictly-ascending quadruples) generates the second `part` file `ratio.g.dart` (`const kRatioDefaultBounds`). Like `gen_micro_views`, the generator validates against `parameters.yaml` directly instead of importing the package. `test/presets_test.dart` re-checks the invariants on the generated data. |
 | `ro_defaults.yaml` + `ro.g.dart` | Same pattern for the RO unit's default stage set (kept apart from `tank_presets.yaml` because the RO unit is **device**-scoped): `ro_defaults.yaml` is the source of truth (listing order = seed order = the water path; `lifespanDays` in plain days, 30/month, one value per `RoUsageLevel` — light/moderate/heavy); `dart run tool/gen_ro_defaults.dart` validates it (every non-custom `RoStageType` exactly once — `custom` stages are user-created; every usage level present per stage, lifespans ≥ 1 day, and heavier usage never gets a *longer* lifespan than a lighter one) and generates the `part` file `ro.g.dart` (`const kRoLifespanDaysByUsage`/`kRoDefaultStageOrder`). |
-| `pro_features.dart` + `pro_features.yaml` + `pro_features.g.dart` | Pro-tier feature gating (U19). `pro_features.yaml` is the source of truth for which features sit behind the future paid tier (`key` → `ProFeature` enum value) and which are **grandfathered** (existed at the monetization cutoff — free forever for Founder's Edition installs; entries are never removed, pinned by `test/pro_features_test.dart`); `dart run tool/gen_pro_features.dart` validates (unique camelCase keys, bool flags, non-empty list) and generates the `part` file (enum + `kGrandfatheredFeatures`). The handwritten file owns the single gate rule: `hasProFeature(f, purchased:, legacyFree:) = purchased ∥ (legacyFree ∧ grandfathered)`. UI never calls it directly — widgets watch `proFeatureProvider(feature)` (providers.dart), which reads both facts from `entitlementProvider` (the device-local purchase flag + `editionProvider`'s marker); a gated action falls back to `showProFeatureDialog` (`widgets/pro_feature_dialog.dart` — the paywall entry point, which navigates to `/paywall` only when a product actually resolves and returns whether the caller may now proceed; feature names localize via `L10nDomain.proFeatureName`, whose exhaustive switch won't compile without a name for a new feature). Whole paid routes additionally use the reactive `ProFeatureRoute` capability boundary: it does not construct its camera/BLE/calculator child while locked and disposes that child immediately if entitlement is lost, so direct/restored navigation cannot bypass a gated button. Gated surfaces: ICP report import (micro screen app-bar action; the `/micro/import` route needs no extra guard — it already redirects to `/micro` without a parsed-result `extra`, which only the gated action produces), the dose calculator (home app-bar action + the history screen's calculator icon and correction CTA, plus `/dosing/calculator`), Hanna live measurement (`/hanna/measure`) and checker scan (`/hanna/scan`), the tank cap (`canCreateTank`, U21), the stability score (U26 — the dashboard header's stability half renders a Pro marker instead of the ring for non-entitled installs), and the smart insights card (U28 — the dashboard Insights card renders a compact Pro teaser row instead of the insight list). Keys are never persisted — rename freely. |
+| `pro_features.dart` + `pro_features.yaml` + `pro_features.g.dart` | Pro-tier capability authorization (U19/T29). `pro_features.yaml` is the source of truth for each paid feature, its permanent Founder grandfathering decision, and every authoritative boundary (`id` + `kind`: route/resource, command, presentation, or configuration). `dart run tool/gen_pro_features.dart` rejects missing/duplicate/invalid boundaries and generates `ProFeature`, `ProCapabilityBoundary`, the exhaustive `kProCapabilityContracts` map, and `kGrandfatheredFeatures`. The handwritten rule remains `purchased ∨ (legacyFree ∧ grandfathered)`; UI consumes it only through `proCapabilityProvider(boundary)`, route/resource screens through reactive `ProCapabilityRoute`, gated intents through `requestProCapability`/`runProCapabilityGated`, and non-Widget services through `ProCapabilityAuthorizer`. Entry buttons are paywall UX, never authorization. The final import commits, tank creation, live device I/O, cloud enable/upload, Wall route/auto-start, derived presentations, and all direct/restored paid routes re-check their typed boundary. Keys and boundary IDs are not persisted. |
 
 ## Data layer (`lib/data/`)
 
@@ -1239,8 +1239,9 @@ The graph:
   parameter's series into `computeTankStability` with the window from
   `stabilityWindowProvider` (`stability_window`, 30/60/90 d, default 30;
   decode whitelists to the offered choices). `TankStability` is value-equal
-  (T2). The Pro gate lives in the widget
-  (`proFeatureProvider(ProFeature.stabilityScore)`), not here — the provider
+  (T2). The Pro gate lives at the presentation boundary in the widget
+  (`proCapabilityProvider(ProCapabilityBoundary.stabilityScorePresentation)`),
+  not here — the provider
   computes regardless so the gate can never flash stale data on unlock.
 - Microelements (U17): `microElementsProvider` (per-element
   `{def, row?, latest?, effective bounds}` in catalog order — row bounds when
@@ -1570,29 +1571,30 @@ Body text stays the platform default (SF/Roboto).
 | `/micro` | Microelements (U17): the ICP element panel for the active tank |
 | `/micro/add` | Batch entry of microelement measurements (Hobby kit / Full ICP) |
 | `/micro/configure` | Element settings: all catalog elements, each row opens the zone-bounds editor |
-| `/micro/import` | ICP report CSV import preview (`extra` = `IcpImportResult`; redirects to `/micro` without one) |
-| `/import/hanna` | Hanna Lab measurement import preview (U32; `extra` = `HannaImportResult`; redirects to `/` without one) |
+| `/micro/import` | ICP report CSV import preview (`extra` = `IcpImportResult`; redirects to `/micro` without one); the final commit independently requires `icpImportCommit`, so a valid direct/restored payload is not authority |
+| `/import/hanna` | Hanna Lab measurement import preview (U32; `extra` = `HannaImportResult`; redirects to `/` without one); the final commit independently requires `hannaImportCommit` |
 | `/settings/import` | Measurement-import status per tank: watermark rewind (*Change date…*) / *Reset*. **No entry point in the UI** — the Settings row was removed; reachable by deep link only |
 | `/hanna/measure` | Hanna checker live BLE measurement (U33, Pro, experimental): connect → select → run → save in one route; a reactive route capability guard prevents construction without `hannaConnect` entitlement and disposes the session if entitlement is lost |
 | `/hanna/scan` | Checker camera scan (U34, Pro, experimental): model picker → viewfinder → confirm in one route; the same guard requires `hannaScan` and releases the camera on entitlement loss |
 | `/calculator/salinity` | Standalone ppt ↔ SG converter |
 | `/devices` | Standalone Devices page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers and (U43) the Hanna checker. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory. Since U42 the same body is the home shell's Devices tab and nothing pushes this route; it stays as a stable deep-link target, mirroring `/settings` |
 | `/settings/wall` | Wall display options (U49): Start now, auto-start, refresh interval, page rotation, night window, and the reorderable wall-card list |
-| `/wall` | Wall display mode (U49): the full-screen kiosk board — its own scaffold-less layout, deliberately **not** a sixth bottom-nav destination (the bar is at its five-label limit, and this is a mode entered once per tablet boot) |
+| `/wall` | Wall display mode (U49): the full-screen kiosk board — its own scaffold-less layout, deliberately **not** a sixth bottom-nav destination (the bar is at its five-label limit, and this is a mode entered once per tablet boot); `wallDisplayRoute` is checked before constructing `WallScreen`, so locked/restored navigation cannot acquire wakelock, timers, or device work |
 
 The router carries one top-level `redirect` — the wall display's
 **cold-start-only autostart** (U49 §12f): `main()` arms a mutable
 `wallAutoStartRequested` flag before `runApp` (from the settings pre-warm's
-map; the stored flag is trusted as-is because enabling it is Pro-gated at the
-toggle and the wall screen re-checks the entitlement — verifying the purchase
-here would need a pre-first-frame platform-channel read, the flutter#72872
-hang class), and the redirect consumes itself on the very first route
+map; the pre-frame read trusts the flag because verifying the purchase there
+would need a pre-first-frame platform-channel read, the flutter#72872 hang
+class, while the outer `wallDisplayRoute` boundary still prevents constructing
+the board if access is gone), and the redirect consumes itself on the first route
 resolution of the process, sending it to `/wall` when armed. Consumed-once
 means it can never fight in-session navigation (a reminder-notification
 launch URL, or simply leaving the wall). A post-frame fallback
 (`_autoStartWallFallback`) covers a cold start slow enough to blow the
-pre-warm's 3 s cap: it re-reads the flag once the database is warm and jumps
-only while the app still sits on `/`.
+pre-warm's 3 s cap: it re-reads both the flag and capability once the database
+is warm and jumps only while the app still sits on `/`. The live entitlement
+listener clears auto-start on revocation.
 
 The Actions log is no longer a standalone route — it is the second tab inside the
 home shell (see Features). `/` accepts a
@@ -1751,7 +1753,8 @@ behind a confirmation dialog**:
   parameters into most variable (worst first, each with its "±σ" typical swing
   in display units — converted as a *delta*, so the °F offset cancels) /
   holding steady / not enough data (with the window's test count); non-entitled
-  installs see a Pro marker there whose tap opens `showProFeatureDialog`. The
+  installs see a Pro marker there whose tap requests the generated
+  `stabilityScorePresentation` boundary. The
   card scrolls with the tiles. A compact `TankHealthBadgeCompact` (health only)
   also sits beside the tank name in `TankSelector`. `healthDisplayProvider`
   (Settings → Dashboard) chooses badge & card / badge only / off and governs
@@ -1767,7 +1770,7 @@ behind a confirmation dialog**:
   When there is nothing to say the card renders nothing at all — an
   all-green, fresh, steady tank gets no banner. Non-entitled installs see a
   compact Pro teaser row instead (same footprint, tap →
-  `showProFeatureDialog`); the provider computes regardless of entitlement
+  `smartInsightsPresentation` capability request); the provider computes regardless of entitlement
   (the U26 split — presentation-only gate). Rides the same
   `healthDisplayProvider` card visibility as the health header, since both
   are derived summaries of the same readings.
@@ -3257,7 +3260,8 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   only when connected + enabled + not "dry", and the block's own facts
   (`leakSensorConnected`/`leakSensorEnabled`/`leakStatusRaw`, with
   `leakSensorActive` combining the first two) are exposed so the card can show
-  the sensor standing guard rather than only hearing from it on alarm — and
+  the sensor's disconnected, not-enabled, dry, RO/DI-water-leak or
+  aquarium-water-leak state rather than only hearing from it on alarm — and
   the level-sensor block (error/
   disconnect warning, temperature probe in °C, suppressed when disabled or
   unplugged). For a mat (`RbMatStatus`): the roll (coarse `roll_level` string
@@ -3428,10 +3432,11 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   instead:
   warning chips (leak = critical, sensor trouble = caution, "filling now" =
   healthy) above label–value rows — water level (healthy/caution-colored),
-  probe temperature, the **leak sensor's standing status** (shown only while a
-  sensor is attached + enabled — an absent sensor must not read as a
-  reassuring "Dry"; "dry" and "rodi_water_leak" are localized, an
-  unrecognized status shows verbatim, colored healthy/critical), today's
+  probe temperature, the **leak sensor's standing status** (always shown;
+  connection state wins first as Not connected, then a connected but switched
+  off sensor reads Not enabled, otherwise `dry`, `rodi_water_leak`, and
+  `aquarium_water_leak` are localized; an unrecognized active status shows
+  verbatim, with active dry/leak states colored healthy/critical), today's
   fills · volume, evaporation (≈/day), and the
   reservoir (volume left · days left, colored by the same `rbStockSeverity`
   thresholds as supplement stock). Volumes render as millilitres below 1 L
@@ -3527,7 +3532,10 @@ ReefBeat app for that and, as on the ReefFactory dashboard, spells out the
   or `--type control` — with
   `/emu/*` endpoints to **force the states real hardware only shows when
   something is wrong**: `/emu/leak?status=rodi_water_leak` stands the ATO's
-  leak sensor in water, `/emu/pump?n=2&state=full_cup` fills the skimmer cup.
+  leak sensor in RO/DI water, `status=aquarium_water_leak` switches to the
+  aquarium-water reading, and the same endpoint's `connected` / `enabled`
+  booleans simulate an unplugged or disabled sensor;
+  `/emu/pump?n=2&state=full_cup` fills the skimmer cup.
   `/emu/probes?salinity=36.1&ph=7.7&orp=320` forces the ReefControl's three
   primary readings.
   Reached from the Android emulator at `10.0.2.2:<port>`; importable, so
@@ -4325,9 +4333,42 @@ the early-adopter *marker* with a *purchase*, deliberately instead of growing
 `AppEdition` a third value: "Founder who bought Pro" is the designed upgrade
 path after activation (the founder promise covers only pre-cutoff features),
 and one enum cannot express it. `entitlementProvider` combines them;
-`proFeatureProvider(feature)` is the single gate widgets read. It **fails
-closed** while settings load — `main()` awaits `settingsMapProvider` before
-`runApp`, so no widget builds during that window anyway.
+`proCapabilityProvider(boundary)` is the single authorization gate surfaces
+read, with the generated contract mapping that boundary back to its feature.
+`proFeatureProvider(feature)` remains only as a lower-level rule probe for
+tests. Both fail **closed** while settings load — `main()` awaits
+`settingsMapProvider` before `runApp`, so no widget builds during that window
+anyway.
+
+**Capability boundaries (T29).** `pro_features.yaml` declares every
+authoritative enforcement point, not only which feature is paid. The generator
+emits `ProCapabilityBoundary` plus an exhaustive feature/kind contract map and
+fails when a feature has no boundary or an ID is duplicated. Routes that own
+paid resources use `ProCapabilityRoute`, which does not construct the child
+while locked and disposes it reactively on revocation. Commands re-check at the
+commit/I/O edge: ICP and Hanna import previews cannot save from a directly
+supplied valid `extra`, device reads/saves cannot start from stale callbacks,
+and cloud sync checks before work and again immediately before upload. The
+Wall route is guarded outside `WallScreen`, so a locked visit never acquires
+wakelock or arms its timers; revocation also clears Wall auto-start.
+
+Entry controls still call `requestProCapability`/
+`runProCapabilityGated` so a successful purchase or restore resumes the
+original intent once. They are deliberately only UX. Non-widget/background
+work receives a live `ProCapabilityAuthorizer`, so an old persisted "enabled"
+setting cannot act as authority after a refund or restore-with-no-ownership.
+The generated matrix exercises Standard, Founder and purchased behavior for
+every boundary; direct routes additionally cover live revocation, and import/
+cloud tests assert absence of database/network effects.
+
+**Entitlement loss never strands data.** Existing tanks, readings, imported
+history, dosing records, connected-device inventory and backups stay visible
+and editable. Local export/share, backup list/download/restore,
+delete/disconnect, and turning paid automation off remain ungated. What stops
+is acquisition or production of new paid output: over-cap creation, import
+commit, device I/O/save, cloud upload, paid derived presentation and paid
+resource routes. Cloud pull/restore remains available even when new pushes are
+locked.
 
 **Where the purchase lives, and why not in the database.** `pro_purchased` is
 a file, `.pro_entitlement`, beside `.install_id` and `.device_secrets` — not a
@@ -4359,9 +4400,11 @@ two places real money is at stake:
 **The paywall** (`features/paywall/paywall_screen.dart`, `/paywall`) fetches
 its price from the store — never hardcoded, the consoles own pricing — and
 follows the **no-product rule**: if nothing resolves, no buy button is
-rendered. `showProFeatureDialog` applies the same rule one level up, navigating
+rendered. `requestProCapability` applies the same rule one level up, navigating
 to the paywall only when a product actually resolves and otherwise showing the
-informational dialog. It returns `Future<bool>`, and `runProGated` makes
+informational dialog. It returns `Future<bool>`, re-reading the persisted
+purchase after the paywall returns so provider notification timing cannot lose
+the intent; `runProCapabilityGated` makes
 "a successful unlock resumes what you were doing" a property of the gate rather
 than of every call site.
 
@@ -4420,11 +4463,12 @@ Tests: `test/edition_test.dart`, plus seed/sticky coverage in
 `test/settings_test.dart` / `test/backup_test.dart`.
 
 Feature gating on top of the marker lives in the domain layer
-(`pro_features.yaml` → generated `ProFeature`/`kGrandfatheredFeatures`, gate
-rule in `domain/pro_features.dart` — see the Domain table) and is consumed via
-`proFeatureProvider(feature)`; the gated surfaces are **ICP report import**,
+(`pro_features.yaml` → generated feature/boundary contracts and
+`kGrandfatheredFeatures`, gate rule in `domain/pro_features.dart` — see the
+Domain table) and is consumed via `proCapabilityProvider(boundary)`; the gated
+surfaces include **ICP report import**,
 the **dose calculator**, and the **tank cap** (all grandfathered: founders
-keep them free forever; a non-entitled install gets `showProFeatureDialog`
+keep them free forever; a non-entitled install gets a capability dialog
 instead of the feature — dormant until activation, exercised by
 `test/pro_gate_test.dart`).
 
@@ -4458,7 +4502,7 @@ quarantining) live tanks; `ProFeature.unlimitedTanks` lifts it. The rule
 beyond the cap (restored backup, lapsed entitlement) stay fully viewable and
 editable; data is never locked away. Enforced twice in
 `tanks_screen.dart`: cosmetically on the tanks-list FAB (swaps the push for
-`showProFeatureDialog` with the cap-specific `tankLimitBody` message) and
+`requestProCapability` with the cap-specific `tankLimitBody` message) and
 authoritatively in `_save()` before `createTankWithPreset` (deep links and
 restored routes bypass the FAB). A still-loading tank list counts as zero
 tanks, so the button stays enabled; `_save()` is where the count is real. The

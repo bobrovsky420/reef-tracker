@@ -272,7 +272,9 @@ class _StabilityHeaderPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final tokens = ReefTokens.of(context);
-    final unlocked = ref.watch(proFeatureProvider(ProFeature.stabilityScore));
+    final unlocked = ref.watch(
+      proCapabilityProvider(ProCapabilityBoundary.stabilityScorePresentation),
+    );
 
     final caption = TextStyle(fontSize: 12, color: tokens.textDim);
     const padding = EdgeInsets.fromLTRB(14, 16, 18, 16);
@@ -282,7 +284,11 @@ class _StabilityHeaderPanel extends ConsumerWidget {
         button: true,
         label: '${l.stabilityTitle}: ${l.proFeatureTitle}',
         child: InkWell(
-          onTap: () => showProFeatureDialog(context, ProFeature.stabilityScore),
+          onTap: () => requestProCapability(
+            context,
+            ref,
+            ProCapabilityBoundary.stabilityScorePresentation,
+          ),
           child: Padding(
             padding: padding,
             child: Column(

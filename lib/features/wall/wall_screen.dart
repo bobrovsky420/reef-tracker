@@ -201,7 +201,11 @@ class _WallScreenState extends ConsumerState<WallScreen>
     if (_polling || !mounted) return;
     final tank = ref.read(activeTankProvider);
     if (tank == null) return;
-    if (!ref.read(proFeatureProvider(ProFeature.wallDisplay))) return;
+    if (!ref.read(
+      proCapabilityProvider(ProCapabilityBoundary.wallDisplayRoute),
+    )) {
+      return;
+    }
     _polling = true;
     try {
       final scope = _dueScope(tank);
@@ -491,7 +495,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
     final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final tank = ref.watch(activeTankProvider);
-    final entitled = ref.watch(proFeatureProvider(ProFeature.wallDisplay));
     // Watched so a settings change mid-mode re-arms the timers and re-renders.
     final interval =
         ref.watch(wallRefreshIntervalProvider).value ??
@@ -508,8 +511,6 @@ class _WallScreenState extends ConsumerState<WallScreen>
     final Widget body;
     if (tank == null) {
       body = _CenteredNote(text: l.wallNoTank);
-    } else if (!entitled) {
-      body = _CenteredNote(text: l.wallProLocked);
     } else {
       body = _buildBoard(context, l, tank, now);
     }

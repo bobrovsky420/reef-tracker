@@ -5,7 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0]
+## [1.3.1]
+
+### Changed
+- The ReefATO+ device card now always reports its leak sensor: Not connected
+  when unplugged, Not enabled when switched off, Dry while standing guard, and
+  translated RO/DI-water or aquarium-water warning when it detects a leak.
+- ReefControl Lite/Pro probe names on the Devices dashboard are now bold,
+  matching ReefDose supplement names and ReefRun pump names.
+
+### Fixed
+- Pro capabilities are now authorized at their routes, final save actions, and
+  background-service boundaries. Direct/restored navigation can no longer
+  bypass import or Wall display checks, and entitlement loss stops new device
+  reads, cloud uploads, and Wall auto-start without hiding existing aquarium
+  data, device inventory, backups, restore, export, or disconnect controls.
+
+## [1.3.0] - 2026-08-18
 
 ### Added
 - Red Sea ReefControl Lite/Pro support (experimental, PRO): the Connected

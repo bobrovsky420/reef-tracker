@@ -11,28 +11,29 @@ import '../domain/pro_features.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_helpers.dart';
 
-/// A capability boundary for a whole route whose contents require [feature].
+/// A capability boundary for a whole route whose contents require [boundary].
 ///
-/// Gated buttons still use [runProGated] so an entitled user navigates straight
+/// Gated buttons still use [runProCapabilityGated] so an entitled user navigates straight
 /// through and a locked user sees the purchase entry point before navigation.
 /// This widget is the second, security-relevant line of defence: restored
 /// navigation, direct URLs and future callers cannot invoke [builder] unless
 /// the entitlement is currently held. Because the provider is watched, losing
 /// the entitlement while the route is open disposes the paid screen
 /// immediately (including any camera/BLE resources it owns).
-class ProFeatureRoute extends ConsumerWidget {
-  const ProFeatureRoute({
+class ProCapabilityRoute extends ConsumerWidget {
+  const ProCapabilityRoute({
     super.key,
-    required this.feature,
+    required this.boundary,
     required this.builder,
   });
 
-  final ProFeature feature;
+  final ProCapabilityBoundary boundary;
   final WidgetBuilder builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (ref.watch(proFeatureProvider(feature))) return builder(context);
+    final feature = proCapabilityContract(boundary).feature;
+    if (ref.watch(proCapabilityProvider(boundary))) return builder(context);
 
     final l = AppLocalizations.of(context);
     return Scaffold(
@@ -99,14 +100,29 @@ class ProFeatureRoute extends ConsumerWidget {
 ///
 /// [body] replaces the generic "… is part of ReefTracker Pro." line when the
 /// gate needs more context (e.g. the tank cap explains the limit).
-Future<bool> showProFeatureDialog(
+Future<bool> requestProCapability(
   BuildContext context,
-  ProFeature feature, {
+  WidgetRef ref,
+  ProCapabilityBoundary boundary, {
   String? body,
 }) async {
+  if (ref.read(proCapabilityProvider(boundary))) return true;
+  final feature = proCapabilityContract(boundary).feature;
   if (await _productResolves(context)) {
     if (!context.mounted) return false;
-    return await context.push<bool>('/paywall', extra: feature) ?? false;
+    await context.push<bool>('/paywall', extra: feature);
+    if (!context.mounted) return false;
+    // The route result is advisory. Re-read the persisted purchase because
+    // the paywall can pop in the microtask before the store's watch event has
+    // rebuilt `entitlementProvider`; the original intent must still resume
+    // exactly once after a successful purchase/restore.
+    final current = ref.read(entitlementProvider);
+    final purchased = await ref.read(proEntitlementStoreProvider).read();
+    return hasProCapability(
+      boundary,
+      purchased: purchased,
+      legacyFree: current.founder,
+    );
   }
   if (!context.mounted) return false;
   final l = AppLocalizations.of(context);
@@ -141,19 +157,17 @@ Future<bool> showProFeatureDialog(
 /// after a purchase, because the dialog reported nothing. One helper means
 /// "success resumes what you were doing" is a property of the gate rather than
 /// of seventeen call sites remembering to implement it.
-Future<void> runProGated(
+Future<void> runProCapabilityGated(
   BuildContext context,
   WidgetRef ref,
-  ProFeature feature,
+  ProCapabilityBoundary boundary,
   FutureOr<void> Function() action, {
   String? body,
 }) async {
-  if (ref.read(proFeatureProvider(feature))) {
+  if (await requestProCapability(context, ref, boundary, body: body) &&
+      context.mounted) {
     await action();
-    return;
   }
-  final unlocked = await showProFeatureDialog(context, feature, body: body);
-  if (unlocked && context.mounted) await action();
 }
 
 /// Whether the Pro unlock can actually be bought right now. Cheap and

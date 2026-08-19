@@ -3555,10 +3555,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get reefBeatAtoLeakSensor => 'Sensore perdite';
 
   @override
+  String get reefBeatAtoLeakNotConnected => 'Non connesso';
+
+  @override
+  String get reefBeatAtoLeakNotEnabled => 'Non abilitato';
+
+  @override
   String get reefBeatAtoLeakDry => 'Asciutto';
 
   @override
   String get reefBeatAtoLeakRodi => 'Perdita di acqua RO/DI';
+
+  @override
+  String get reefBeatAtoLeakAquarium => 'Perdita d\'acqua dell\'acquario';
 
   @override
   String get reefBeatMatRoll => 'Rotolo';

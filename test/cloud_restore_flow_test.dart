@@ -11,10 +11,15 @@ import 'package:reeftracker/data/backup.dart';
 import 'package:reeftracker/data/cloud_restore_flow.dart';
 import 'package:reeftracker/data/cloud_sync.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/entitlement.dart';
 import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/domain/setup_type.dart';
 
 import 'fakes/fake_cloud_backup_store.dart';
+
+const _allowAllCapabilities = EntitlementCapabilityAuthorizer(
+  Entitlement(marker: AppEdition.founder, purchased: false),
+);
 
 /// Routes path_provider to a throwaway temp folder — the restore path writes
 /// a local safety backup and the launch sequence runs the local auto-backup.
@@ -83,6 +88,7 @@ void main() {
     required List<CloudRestoreNotice> notices,
     List<_Report>? reports,
   }) => CloudRestoreFlow(
+    authorizer: _allowAllCapabilities,
     prompt: (proposal) {
       prompts.add(proposal);
       return answer(proposal);
@@ -102,7 +108,12 @@ void main() {
     await AppSettings(writer).setSyncDeviceName('Writer phone');
     await writer.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
     expect(
-      await runCloudSyncIfDirty(writer, store: store, state: state(writer)),
+      await runCloudSyncIfDirty(
+        writer,
+        store: store,
+        state: state(writer),
+        authorizer: _allowAllCapabilities,
+      ),
       CloudSyncOutcome.pushed,
     );
     final reader = AppDatabase(NativeDatabase.memory());
@@ -290,7 +301,12 @@ void main() {
       await AppSettings(deviceA).setSyncDeviceName('Phone A');
       await deviceA.createTankWithPreset(name: 'Reef', type: SetupType.mixed);
       expect(
-        await runCloudSyncIfDirty(deviceA, store: store, state: state(deviceA)),
+        await runCloudSyncIfDirty(
+          deviceA,
+          store: store,
+          state: state(deviceA),
+          authorizer: _allowAllCapabilities,
+        ),
         CloudSyncOutcome.pushed,
       );
 
@@ -357,7 +373,12 @@ void main() {
       // neither re-uploads the data it just downloaded nor re-proposes it, and
       // B still sees its own push as the newest.
       expect(
-        await runCloudSyncIfDirty(deviceA, store: store, state: state(deviceA)),
+        await runCloudSyncIfDirty(
+          deviceA,
+          store: store,
+          state: state(deviceA),
+          authorizer: _allowAllCapabilities,
+        ),
         CloudSyncOutcome.skippedClean,
       );
       expect(

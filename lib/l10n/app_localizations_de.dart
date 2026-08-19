@@ -3547,10 +3547,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reefBeatAtoLeakSensor => 'Lecksensor';
 
   @override
+  String get reefBeatAtoLeakNotConnected => 'Nicht verbunden';
+
+  @override
+  String get reefBeatAtoLeakNotEnabled => 'Nicht aktiviert';
+
+  @override
   String get reefBeatAtoLeakDry => 'Trocken';
 
   @override
   String get reefBeatAtoLeakRodi => 'RO/DI-Wasserleck';
+
+  @override
+  String get reefBeatAtoLeakAquarium => 'Aquarienwasserleck';
 
   @override
   String get reefBeatMatRoll => 'Rolle';

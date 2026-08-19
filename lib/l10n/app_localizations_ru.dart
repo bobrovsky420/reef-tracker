@@ -3599,10 +3599,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reefBeatAtoLeakSensor => 'Датчик протечки';
 
   @override
+  String get reefBeatAtoLeakNotConnected => 'Не подключён';
+
+  @override
+  String get reefBeatAtoLeakNotEnabled => 'Не включён';
+
+  @override
   String get reefBeatAtoLeakDry => 'Сухо';
 
   @override
   String get reefBeatAtoLeakRodi => 'Протечка воды RO/DI';
+
+  @override
+  String get reefBeatAtoLeakAquarium => 'Протечка аквариумной воды';
 
   @override
   String get reefBeatMatRoll => 'Рулон';

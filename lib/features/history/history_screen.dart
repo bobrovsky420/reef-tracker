@@ -270,10 +270,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   void _openCalculator({required bool correction}) {
     final mode = correction ? '&mode=correction' : '';
     unawaited(
-      runProGated(
+      runProCapabilityGated(
         context,
         ref,
-        ProFeature.doseCalculator,
+        ProCapabilityBoundary.doseCalculatorRoute,
         () =>
             context.push('/dosing/calculator?element=${widget.paramKey}$mode'),
       ),

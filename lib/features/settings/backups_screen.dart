@@ -253,7 +253,12 @@ class _DeviceNameNudgeRow extends ConsumerWidget {
     final store = ref.read(cloudBackupStoreProvider);
     final state = ref.read(cloudSyncStateProvider);
     if (!await showSyncDeviceNameDialog(context, ref)) return;
-    final outcome = await runCloudSyncIfDirty(db, store: store, state: state);
+    final outcome = await runCloudSyncIfDirty(
+      db,
+      store: store,
+      state: state,
+      authorizer: ref.read(proCapabilityAuthorizerProvider),
+    );
     // Only a confirmed upload changes the folder contents; offline/failed
     // outcomes are already surfaced by the Settings error row, and reloading
     // here would just repaint the same list.

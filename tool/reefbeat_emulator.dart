@@ -28,7 +28,12 @@
 //
 //     GET /emu                            plain-text summary of current state
 //     GET /emu/leak?status=rodi_water_leak    ATO/CONTROL: raise leak alarm
-//     GET /emu/leak?status=dry                ATO/CONTROL: clear it
+//     GET /emu/leak?status=aquarium_water_leak
+//                                             ATO/CONTROL: saltwater alarm
+//     GET /emu/leak?connected=false           ATO: unplug the leak sensor
+//     GET /emu/leak?connected=true&enabled=false
+//                                             ATO: attach but disable it
+//     GET /emu/leak?status=dry&enabled=true   ATO/CONTROL: clear/enable it
 //     GET /emu/pump?n=2&state=full_cup        RUN: pause the skimmer, cup full
 //     GET /emu/pump?n=2&state=over-skimming   RUN: pause it, over-skimming
 //     GET /emu/pump?n=2&state=operational     RUN: back to normal
@@ -60,6 +65,10 @@ class ReefBeatEmulator {
 
   /// ATO/CONTROL: the leak sensor's status string ("dry" alarms nothing).
   String leakStatus = 'dry';
+
+  /// ATO: connection and configuration facts exposed by `leak_sensor`.
+  bool leakSensorConnected = true;
+  bool leakSensorEnabled = true;
 
   /// ATO: the firmware water-level string and the reservoir's days-till-empty
   /// estimate, forceable via /emu/ato.
@@ -111,7 +120,7 @@ class ReefBeatEmulator {
         int.parse(headSettings[1]!),
       ),
       '/emu' => null, // handled below (plain text)
-      '/emu/leak' => _forceLeak(request.uri.queryParameters['status']),
+      '/emu/leak' => _forceLeak(request.uri.queryParameters),
       '/emu/pump' => _forcePump(request.uri.queryParameters),
       '/emu/dose' => _forceDose(request.uri.queryParameters),
       '/emu/ato' => _forceAto(request.uri.queryParameters),
@@ -123,7 +132,9 @@ class ReefBeatEmulator {
       response.headers.contentType = ContentType.text;
       response.write(
         'reefbeat emulator: type=${type.name} hwid=$hwid '
-        'leak=$leakStatus level=$atoWaterLevel atoDays=$atoDaysTillEmpty '
+        'leak=$leakStatus leakConnected=$leakSensorConnected '
+        'leakEnabled=$leakSensorEnabled level=$atoWaterLevel '
+        'atoDays=$atoDaysTillEmpty '
         'pumps=$pumpStates doseDays=$doseRemainingDays\n'
         'probes=$controlSalinityPpt/$controlPh/$controlOrpMv\n',
       );
@@ -138,9 +149,20 @@ class ReefBeatEmulator {
 
   static final _headSettingsPattern = RegExp(r'^/head/(\d+)/settings$');
 
-  Map<String, Object?> _forceLeak(String? status) {
+  Map<String, Object?> _forceLeak(Map<String, String> query) {
+    final status = query['status'];
     if (status != null && status.isNotEmpty) leakStatus = status;
-    return {'leak_status': leakStatus};
+    if (query['connected'] case final connected?) {
+      leakSensorConnected = connected.toLowerCase() == 'true';
+    }
+    if (query['enabled'] case final enabled?) {
+      leakSensorEnabled = enabled.toLowerCase() == 'true';
+    }
+    return {
+      'leak_status': leakStatus,
+      'connected': leakSensorConnected,
+      'enabled': leakSensorEnabled,
+    };
   }
 
   Map<String, Object?> _forcePump(Map<String, String> query) {
@@ -360,7 +382,8 @@ class ReefBeatEmulator {
   /// The 2026-08-01 leak-mode capture from a live RSATO+ (the leak_sensor and
   /// ato_sensor blocks verbatim), with the leak status swappable via /emu.
   Map<String, Object?> _atoDashboard() {
-    final leaking = leakStatus != 'dry';
+    final leaking =
+        leakSensorConnected && leakSensorEnabled && leakStatus != 'dry';
     return {
       'mode': leaking ? 'leak' : 'auto',
       'active_shortcut': 'no_shortcut',
@@ -385,11 +408,15 @@ class ReefBeatEmulator {
       'volume_left': 26000,
       'days_till_empty': atoDaysTillEmpty,
       'leak_sensor': {
-        'connected': true,
-        'enabled': true,
+        'connected': leakSensorConnected,
+        'enabled': leakSensorEnabled,
         'buzzer_enabled': true,
         'buzzer_on': leaking,
-        'current_read': leaking ? 5 : 0,
+        'current_read': switch (leakStatus) {
+          'aquarium_water_leak' => 65535,
+          'rodi_water_leak' => 5,
+          _ => 0,
+        },
         'status': leakStatus,
       },
       'ato_sensor': {

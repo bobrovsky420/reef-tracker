@@ -151,8 +151,8 @@ final appRouter = GoRouter(
       // are dropped rather than crashing on a garbage deep link (T8).
       builder: (context, state) {
         final element = state.uri.queryParameters['element'];
-        return ProFeatureRoute(
-          feature: ProFeature.doseCalculator,
+        return ProCapabilityRoute(
+          boundary: ProCapabilityBoundary.doseCalculatorRoute,
           builder: (context) => DoseCalculatorScreen(
             initialElement: kDosingElementKeys.contains(element)
                 ? element
@@ -201,14 +201,20 @@ final appRouter = GoRouter(
     // Wall display mode (U49): a pushed full-screen kiosk route with its own
     // scaffold — deliberately not a bottom-nav destination (the bar is at its
     // five-label limit, and this is a mode entered once per tablet boot).
-    GoRoute(path: '/wall', builder: (context, state) => const WallScreen()),
+    GoRoute(
+      path: '/wall',
+      builder: (context, state) => ProCapabilityRoute(
+        boundary: ProCapabilityBoundary.wallDisplayRoute,
+        builder: (context) => const WallScreen(),
+      ),
+    ),
     GoRoute(
       path: '/schedule',
       builder: (context, state) => const MaintenanceScheduleScreen(),
     ),
     GoRoute(path: '/ro', builder: (context, state) => const RoScreen()),
     // The paywall (U19). No route guard and none needed: the only navigation
-    // here is `showProFeatureDialog`, which comes only when a product actually
+    // here is `requestProCapability`, which comes only when a product actually
     // resolves — and nothing resolves in a build with no billing library. A
     // deep link would land on a screen with no buy button, which is the
     // correct rendering of "nothing is for sale".
@@ -260,8 +266,8 @@ final appRouter = GoRouter(
       // select → run → save, all inside one screen so the BLE session
       // survives every step.
       path: '/hanna/measure',
-      builder: (context, state) => ProFeatureRoute(
-        feature: ProFeature.hannaConnect,
+      builder: (context, state) => ProCapabilityRoute(
+        boundary: ProCapabilityBoundary.hannaConnectRoute,
         builder: (context) => const HannaMeterScreen(),
       ),
     ),
@@ -270,8 +276,8 @@ final appRouter = GoRouter(
       // → confirm, all inside one screen so the camera session survives
       // every step.
       path: '/hanna/scan',
-      builder: (context, state) => ProFeatureRoute(
-        feature: ProFeature.hannaScan,
+      builder: (context, state) => ProCapabilityRoute(
+        boundary: ProCapabilityBoundary.hannaScanRoute,
         builder: (context) => const CheckerScanScreen(),
       ),
     ),

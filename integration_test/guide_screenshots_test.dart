@@ -9,8 +9,6 @@
 //     --target=integration_test/guide_screenshots_test.dart -d <device>
 // Raw captures land in build/guide_shots/; resize into docs/img before
 // publishing via scripts/resize_guide_shots.ps1.
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -125,6 +123,49 @@ class _FakeRbLink implements RbDeviceLink {
         temperatureC: 25.6,
       ),
     ),
+    '192.168.1.33' => const RbControlSnapshot(
+      info: RbDeviceInfo(
+        hwType: 'reef-control',
+        hwModel: 'RSCONTROLPRO',
+        hwid: 'ec6260control',
+      ),
+      status: RbControlStatus(
+        mode: 'auto',
+        isInternetConnected: true,
+        cableConnected: true,
+        probes: [
+          RbControlProbe(
+            type: 'ec',
+            name: 'ReefSense EC',
+            status: 'ok',
+            ppt: 35.0,
+            sg: 1.0264,
+            temperatureC: 25.5,
+          ),
+          RbControlProbe(
+            type: 'ph',
+            name: 'ReefSense pH',
+            status: 'ok',
+            value: 8.18,
+            measurementUnit: 'pH',
+            temperatureC: 25.4,
+          ),
+          RbControlProbe(
+            type: 'orp',
+            name: 'ReefSense ORP',
+            status: 'ok',
+            value: 378,
+            measurementUnit: 'mV',
+          ),
+          RbControlProbe(
+            type: 'leak',
+            name: 'Leak detector',
+            status: 'ok',
+            detected: false,
+          ),
+        ],
+      ),
+    ),
     _ => throw const RbLinkException(RbLinkError.unreachable),
   };
 
@@ -187,20 +228,33 @@ void main() {
       await settle();
     }
 
-    // Push a route, capture it, pop back. Failures skip the shot rather than
-    // aborting the run.
-    Future<void> routeShot(String path, String name) async {
-      try {
-        debugPrint('guide: routing to $path');
-        unawaited(appRouter.push(path));
-        await settle();
-        await binding.takeScreenshot(name);
-        debugPrint('guide: captured $name');
-        appRouter.pop();
-        await settle();
-      } catch (e) {
-        debugPrint('guide shot $name failed: $e');
+    // Keep secondary screens on a real navigation stack so their back affordance
+    // matches the in-app path. Explicit target assertions and an extra stable
+    // frame prevent a raced push from leaving a stale shot of the parent tab.
+    Future<void> locationShot({
+      required String path,
+      required String name,
+      required String visibleText,
+      required String returnPath,
+    }) async {
+      debugPrint('guide: pushing $path');
+      final pushed = appRouter.push(path);
+      await tester.pump();
+      await settle();
+      await tester.pump(const Duration(seconds: 1));
+      await settle();
+      expect(find.text(visibleText), findsWidgets);
+      await binding.takeScreenshot(name);
+      debugPrint('guide: captured $name');
+      appRouter.pop();
+      await tester.pump();
+      await settle();
+      await pushed;
+      if (appRouter.routeInformationProvider.value.uri.toString() !=
+          returnPath) {
+        appRouter.go(returnPath);
       }
+      await settle();
     }
 
     // --- Measurements tab ---------------------------------------------------
@@ -222,36 +276,169 @@ void main() {
     await shot('compare');
     await tapIcon(Icons.grid_view); // back to the grid
 
-    await routeShot('/add-reading', 'add-reading');
-    await routeShot('/history/alkalinity', 'history');
-    await routeShot('/ratio/po4no3', 'ratio');
-    await routeShot('/micro', 'micro');
-    await routeShot('/micro/add', 'micro-add');
-    // One page for every vendor now (U41) — the per-vendor routes are gone.
-    await routeShot('/devices', 'devices');
-    await routeShot('/tanks', 'tanks');
-    await routeShot('/parameters', 'parameters');
+    await locationShot(
+      path: '/add-reading',
+      name: 'add-reading',
+      visibleText: 'Add reading',
+      returnPath: '/',
+    );
+    await locationShot(
+      path: '/history/alkalinity',
+      name: 'history',
+      visibleText: 'Alkalinity',
+      returnPath: '/',
+    );
+    await locationShot(
+      path: '/ratio/po4no3',
+      name: 'ratio',
+      visibleText: 'PO₄ : NO₃ ratio',
+      returnPath: '/',
+    );
+    await locationShot(
+      path: '/micro',
+      name: 'micro',
+      visibleText: 'Microelements',
+      returnPath: '/',
+    );
+    await locationShot(
+      path: '/micro/add',
+      name: 'micro-add',
+      visibleText: 'Microelement measurements',
+      returnPath: '/',
+    );
+    await locationShot(
+      path: '/tanks',
+      name: 'tanks',
+      visibleText: 'Aquariums',
+      returnPath: '/',
+    );
+    await locationShot(
+      path: '/parameters',
+      name: 'parameters',
+      visibleText: 'Parameters',
+      returnPath: '/',
+    );
+
+    // --- Devices tab -------------------------------------------------------
+    // Experimental is enabled by the showcase seed, so capture the real
+    // bottom-nav destination rather than the legacy pushed /devices route.
+    await tapIcon(Icons.settings_input_antenna);
+    await shot('devices');
+
+    await tester.tap(find.textContaining('ReefFactory').first);
+    await settle();
+    await shot('reeffactory');
+
+    await tester.tap(find.textContaining('Red Sea').first);
+    await settle();
+    await tester.fling(
+      find.byType(CustomScrollView).first,
+      const Offset(0, 1200),
+      1600,
+    );
+    await settle();
+    await shot('reefbeat');
+    final reefControl = find.text('ReefControl Pro');
+    for (var swipe = 0; swipe < 3 && reefControl.evaluate().isEmpty; swipe++) {
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(0, -700),
+      );
+      await settle();
+    }
+    expect(reefControl, findsWidgets);
+    await settle();
+    await shot('reefcontrol');
 
     // --- Actions tab --------------------------------------------------------
     await tapIcon(Icons.fact_check_outlined);
     await shot('actions');
-    await routeShot('/schedule', 'schedule');
-    await routeShot('/ro', 'ro');
+    await locationShot(
+      path: '/schedule',
+      name: 'schedule',
+      visibleText: 'Maintenance schedule',
+      returnPath: '/?tab=actions',
+    );
+    await locationShot(
+      path: '/ro',
+      name: 'ro',
+      visibleText: 'Reverse osmosis unit',
+      returnPath: '/?tab=actions',
+    );
 
     // --- Dosing tab ---------------------------------------------------------
     await tapIcon(Icons.science_outlined);
     await shot('dosing');
-    await routeShot('/dosing/history', 'dosing-history');
-    await routeShot('/dosing/calculator', 'dose-calculator');
-    await routeShot('/dosing/calculator?mode=correction', 'dose-correction');
-    await routeShot('/calculator/salinity', 'salinity');
+    await locationShot(
+      path: '/dosing/history',
+      name: 'dosing-history',
+      visibleText: 'Dosing history',
+      returnPath: '/?tab=dosing',
+    );
+    await locationShot(
+      path: '/dosing/calculator',
+      name: 'dose-calculator',
+      visibleText: 'Dose calculator',
+      returnPath: '/?tab=dosing',
+    );
+    await locationShot(
+      path: '/dosing/calculator?mode=correction',
+      name: 'dose-correction',
+      visibleText: 'Dose calculator',
+      returnPath: '/?tab=dosing',
+    );
+    await locationShot(
+      path: '/calculator/salinity',
+      name: 'salinity',
+      visibleText: 'Salinity calculator',
+      returnPath: '/?tab=dosing',
+    );
 
     // --- Settings tab -------------------------------------------------------
     await tapIcon(Icons.settings_outlined);
     await shot('settings');
-    await routeShot('/settings/backups', 'backups');
-    await routeShot('/settings/reminders', 'reminders');
-    await routeShot('/settings/import', 'import-sources');
+    await locationShot(
+      path: '/settings/wall',
+      name: 'wall-settings',
+      visibleText: 'Wall display',
+      returnPath: '/?tab=settings',
+    );
+    await settings.setThemeMode(AppThemeMode.light);
+    await settle();
+    await locationShot(
+      path: '/wall',
+      name: 'wall',
+      visibleText: 'Hold anywhere to exit',
+      returnPath: '/?tab=settings',
+    );
+    await settings.setThemeMode(AppThemeMode.dark);
+    await settle();
+    await locationShot(
+      path: '/wall',
+      name: 'wall-dark',
+      visibleText: 'Hold anywhere to exit',
+      returnPath: '/?tab=settings',
+    );
+    await settings.setThemeMode(AppThemeMode.system);
+    await settle();
+    await locationShot(
+      path: '/settings/backups',
+      name: 'backups',
+      visibleText: 'Automatic backups',
+      returnPath: '/?tab=settings',
+    );
+    await locationShot(
+      path: '/settings/reminders',
+      name: 'reminders',
+      visibleText: 'Reminders',
+      returnPath: '/?tab=settings',
+    );
+    await locationShot(
+      path: '/settings/import',
+      name: 'import-sources',
+      visibleText: 'Measurement import',
+      returnPath: '/?tab=settings',
+    );
 
     // Leave the app on the Measurements tab so the emulator is demo-ready.
     await tapIcon(Icons.speed_outlined);

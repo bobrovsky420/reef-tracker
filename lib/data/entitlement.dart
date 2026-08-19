@@ -185,6 +185,52 @@ class Entitlement {
 
   bool has(ProFeature feature) =>
       hasProFeature(feature, purchased: purchased, legacyFree: founder);
+
+  /// Whether this entitlement may cross an authoritative capability boundary.
+  bool allows(ProCapabilityBoundary boundary) =>
+      hasProCapability(boundary, purchased: purchased, legacyFree: founder);
+}
+
+/// Whether [boundary] was held and is now lost. Startup's fail-closed default
+/// is deliberately not a revocation; callers reconcile persisted automation
+/// only after the entitlement stores have completed their first read.
+bool lostProCapability(
+  Entitlement? previous,
+  Entitlement current,
+  ProCapabilityBoundary boundary,
+) => previous?.allows(boundary) == true && !current.allows(boundary);
+
+/// Authorization seam for work that runs outside Riverpod/widget context.
+/// Services ask about a generated boundary at the moment of the side effect,
+/// rather than trusting the setting or UI action that originally enabled it.
+abstract interface class ProCapabilityAuthorizer {
+  Future<bool> allows(ProCapabilityBoundary boundary);
+}
+
+/// Reads both live entitlement facts for every authorization decision.
+class StoredProCapabilityAuthorizer implements ProCapabilityAuthorizer {
+  const StoredProCapabilityAuthorizer({
+    required this.db,
+    required this.entitlement,
+  });
+
+  final AppDatabase db;
+  final ProEntitlementStore entitlement;
+
+  @override
+  Future<bool> allows(ProCapabilityBoundary boundary) async =>
+      (await readEntitlement(db, entitlement: entitlement)).allows(boundary);
+}
+
+/// Stable authorization for domain/service tests and deterministic callers.
+class EntitlementCapabilityAuthorizer implements ProCapabilityAuthorizer {
+  const EntitlementCapabilityAuthorizer(this.entitlement);
+
+  final Entitlement entitlement;
+
+  @override
+  Future<bool> allows(ProCapabilityBoundary boundary) async =>
+      entitlement.allows(boundary);
 }
 
 /// Reads both entitlement facts for [db].

@@ -55,10 +55,14 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
         // score, smart insights) must not leak into a Standard-tier export
         // that the in-app teasers hide.
         final withStability = ref.read(
-          proFeatureProvider(ProFeature.stabilityScore),
+          proCapabilityProvider(
+            ProCapabilityBoundary.stabilityScorePresentation,
+          ),
         );
         final withInsights = ref.read(
-          proFeatureProvider(ProFeature.smartInsights),
+          proCapabilityProvider(
+            ProCapabilityBoundary.smartInsightsPresentation,
+          ),
         );
         return collectTankSummary(db, tankId: tankId, weeks: weeks).then(
           (data) => data == null

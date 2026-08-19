@@ -91,17 +91,20 @@ class TanksScreen extends ConsumerWidget {
             canCreateTank(
               tanksAsync.value?.length ?? 0,
               unlimitedTanks: ref.watch(
-                proFeatureProvider(ProFeature.unlimitedTanks),
+                proCapabilityProvider(
+                  ProCapabilityBoundary.unlimitedTankCreate,
+                ),
               ),
             )
             ? () => context.push('/tanks/new')
-            // Not `runProGated`: the cap is a *count* check, not a plain gate,
+            // Not `runProCapabilityGated`: the cap is a *count* check, not a plain gate,
             // so entitlement alone doesn't decide this button. Unlocking lifts
             // the cap, so the form is where the user wanted to be either way.
             : () async {
-                if (await showProFeatureDialog(
+                if (await requestProCapability(
                       context,
-                      ProFeature.unlimitedTanks,
+                      ref,
+                      ProCapabilityBoundary.unlimitedTankCreate,
                       body: l.tankLimitBody(kFreeTankLimit),
                     ) &&
                     context.mounted) {
@@ -505,16 +508,17 @@ class _TankEditScreenState extends ConsumerState<TankEditScreen> {
         // Authoritative tank-cap check (U21). The FAB gate is only cosmetic —
         // deep links and restored routes reach this screen without it.
         final unlimited = ref.read(
-          proFeatureProvider(ProFeature.unlimitedTanks),
+          proCapabilityProvider(ProCapabilityBoundary.unlimitedTankCreate),
         );
         final tankCount = (await db.getTanks()).length;
         if (!canCreateTank(tankCount, unlimitedTanks: unlimited)) {
           if (!mounted) return;
           // Falls through to the create when the user unlocks from here —
           // otherwise they would have to retype the form they just filled in.
-          if (!await showProFeatureDialog(
+          if (!await requestProCapability(
             context,
-            ProFeature.unlimitedTanks,
+            ref,
+            ProCapabilityBoundary.unlimitedTankCreate,
             body: l.tankLimitBody(kFreeTankLimit),
           )) {
             return;

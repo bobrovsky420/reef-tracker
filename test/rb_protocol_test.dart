@@ -697,6 +697,8 @@ void main() {
       // The sensor is attached and switched on, standing dry — that is what
       // earns the card its quiet "Leak sensor: Dry" row.
       expect(status.leakSensorActive, isTrue);
+      expect(status.leakSensorConnected, isTrue);
+      expect(status.leakSensorEnabled, isTrue);
       expect(status.leakStatusRaw, 'dry');
       expect(status.sensorWarning, isFalse);
       expect(status.temperatureC, closeTo(24.965, 0.001));
@@ -756,9 +758,17 @@ void main() {
       );
       // Enabled flag absent stays tolerant — a connected wet sensor alarms.
       expect(alarm({'connected': true, 'status': 'wet'}), isTrue);
+      expect(
+        alarm({
+          'connected': true,
+          'enabled': true,
+          'status': 'aquarium_water_leak',
+        }),
+        isTrue,
+      );
     });
 
-    test('the leak-sensor row only exists for an attached, enabled sensor', () {
+    test('tracks whether the leak sensor is attached and enabled', () {
       bool active(Object? leak) =>
           RbAtoStatus.fromJson({'leak_sensor': leak}).leakSensorActive;
       expect(

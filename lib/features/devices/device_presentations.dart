@@ -74,12 +74,13 @@ abstract class _LanPresentation implements DevicePresentationDescriptor {
     WidgetRef ref, {
     required DeviceSeedCallback onSeed,
   }) async {
-    if (!ref.read(proFeatureProvider(ProFeature.connectedDevices))) {
-      final unlocked = await showProFeatureDialog(
-        context,
-        ProFeature.connectedDevices,
-      );
-      if (!unlocked || !context.mounted) return;
+    if (!await requestProCapability(
+          context,
+          ref,
+          ProCapabilityBoundary.connectedDeviceLiveIo,
+        ) ||
+        !context.mounted) {
+      return;
     }
     await addEntitled(context, ref, onSeed: onSeed);
   }
@@ -249,10 +250,10 @@ class HannaDevicePresentation implements DevicePresentationDescriptor {
     BuildContext context,
     WidgetRef ref, {
     required DeviceSeedCallback onSeed,
-  }) => runProGated(
+  }) => runProCapabilityGated(
     context,
     ref,
-    ProFeature.hannaConnect,
+    ProCapabilityBoundary.hannaConnectRoute,
     () => context.push('/hanna/measure'),
   );
 
