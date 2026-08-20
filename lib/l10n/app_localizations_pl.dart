@@ -878,7 +878,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get salinityCalculatorSubtitle =>
-      'Przelicz ppt ↔ gęstość względna (SG)';
+      'Przelicz ppt ⇄ SG ⇄ gęstość rzeczywista';
 
   @override
   String get reefUnitConverter => 'Przelicznik jednostek rafowych';
@@ -889,7 +889,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get reefUnitConverterIntro =>
-      'Przeliczaj typowe jednostki rafowe. Wybierz jednostkę źródłową i wpisz wartość.';
+      'Przeliczaj typowe jednostki rafowe. Wpisz wartość w dowolnym polu, aby automatycznie zaktualizować wszystkie równoważne jednostki.';
 
   @override
   String get converterSourceUnit => 'Jednostka źródłowa';
@@ -1384,23 +1384,38 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Przelicz między praktycznym zasoleniem (ppt) a gęstością względną (SG). Wpisuj w dowolne pole.';
+      'Przeliczaj praktyczne zasolenie (ppt), gęstość względną (SG) i odczyt areometru skalibrowanego w 25 °C. Podaj temperaturę wody i wpisuj wartość w dowolne pole.';
 
   @override
   String get specificGravity => 'Gęstość względna';
 
   @override
+  String get measurementTemperature => 'Temperatura pomiaru';
+
+  @override
+  String get densityTemperatureHelp =>
+      'Użyj temperatury wody w cylindrze pomiarowym.';
+
+  @override
+  String get hydrometerDensityReading => 'Odczyt gęstości areometru';
+
+  @override
+  String get densityHydrometerNote =>
+      'Europejskie areometry szklane, w tym modele ARKA i Tropic Marin, są zwykle kalibrowane w 25 °C. Korekta pomaga przy pomiarze przygotowanej słonej wody w temperaturze otoczenia.';
+
+  @override
   String get referencePoints => 'Punkty odniesienia';
 
   @override
-  String get refSeawater => '• Naturalna woda morska ≈ 35 ppt ≈ 1,0264 SG';
+  String get refSeawater =>
+      '• Naturalna woda morska ≈ 35 ppt ≈ 1,0264 SG ≈ 1,0233 g/cm³ w 25 °C';
 
   @override
   String get refReefTarget => '• Typowy cel dla rafy ≈ 35 ppt (1,025–1,027 SG)';
 
   @override
   String get refFormulaNote =>
-      'SG odniesione do 25 °C. Przeliczenie to przybliżenie liniowe: SG = 1 + ppt × 0,0264/35.';
+      'Poza 25 °C korekta używa standardowego równania gęstości wody morskiej i nominalnej rozszerzalności szkła (26 ppm/°C). Najdokładniejszy pomiar uzyskasz w 25 °C.';
 
   @override
   String get salinityToolConvert => 'Przelicz';

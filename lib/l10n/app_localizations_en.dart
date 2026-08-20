@@ -868,8 +868,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get salinityCalculator => 'Salinity calculator';
 
   @override
-  String get salinityCalculatorSubtitle =>
-      'Convert ppt ↔ specific gravity (SG)';
+  String get salinityCalculatorSubtitle => 'Convert ppt ⇄ SG ⇄ true density';
 
   @override
   String get reefUnitConverter => 'Reef unit converter';
@@ -879,7 +878,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reefUnitConverterIntro =>
-      'Convert common reef units. Choose the source unit and enter a value.';
+      'Convert common reef units. Enter a value in any field to update all equivalents.';
 
   @override
   String get converterSourceUnit => 'Source unit';
@@ -1364,23 +1363,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Convert between practical salinity (ppt) and specific gravity (SG). Type in either field.';
+      'Convert practical salinity (ppt), specific gravity (SG), and readings from a density hydrometer calibrated at 25 °C. Enter the water temperature and type in any value field.';
 
   @override
   String get specificGravity => 'Specific gravity';
 
   @override
+  String get measurementTemperature => 'Measurement temperature';
+
+  @override
+  String get densityTemperatureHelp =>
+      'Use the water temperature in the measuring cylinder.';
+
+  @override
+  String get hydrometerDensityReading => 'Hydrometer density reading';
+
+  @override
+  String get densityHydrometerNote =>
+      'European glass hydrometers (areometers), including ARKA and Tropic Marin models, are typically calibrated at 25 °C. Temperature correction helps with prepared saltwater measured near ambient temperature.';
+
+  @override
   String get referencePoints => 'Reference points';
 
   @override
-  String get refSeawater => '• Natural seawater ≈ 35 ppt ≈ 1.0264 SG';
+  String get refSeawater =>
+      '• Natural seawater ≈ 35 ppt ≈ 1.0264 SG ≈ 1.0233 g/cm³ at 25 °C';
 
   @override
   String get refReefTarget => '• Typical reef target ≈ 35 ppt (1.025–1.027 SG)';
 
   @override
   String get refFormulaNote =>
-      'SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.';
+      'Away from 25 °C, correction uses the standard seawater density equation and nominal hydrometer-glass expansion (26 ppm/°C). Measure at 25 °C for best accuracy.';
 
   @override
   String get salinityToolConvert => 'Convert';

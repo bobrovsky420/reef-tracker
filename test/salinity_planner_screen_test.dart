@@ -8,6 +8,7 @@ import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/domain/units.dart';
 import 'package:reeftracker/features/calculator/salinity_calculator_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
+import 'package:reeftracker/widgets/reef_segmented.dart';
 
 void main() {
   Future<void> settle(WidgetTester tester) async {
@@ -70,6 +71,25 @@ void main() {
     tester,
   ) async {
     final db = await pumpPlanner(tester);
+    expect(
+      find.byWidgetPredicate((widget) => widget is ReefSegmented),
+      findsOneWidget,
+    );
+    expect(find.byType(ChoiceChip), findsNothing);
+    final correctLabel = tester.widget<Text>(find.text('Correct this tank'));
+    expect(correctLabel.maxLines, 1);
+    expect(correctLabel.softWrap, isFalse);
+    final convertWidth = tester
+        .getSize(find.byKey(const Key('salinity-mode-convert')))
+        .width;
+    final mixWidth = tester
+        .getSize(find.byKey(const Key('salinity-mode-mix')))
+        .width;
+    final correctWidth = tester
+        .getSize(find.byKey(const Key('salinity-mode-correct')))
+        .width;
+    expect(mixWidth, greaterThan(convertWidth));
+    expect(correctWidth, greaterThan(mixWidth));
     await tester.tap(find.byKey(const Key('salinity-mode-mix')));
     await tester.pumpAndSettle();
 
@@ -84,6 +104,56 @@ void main() {
     expect(tank.saltMixName, 'Measured salt');
     expect(tank.saltMixGramsPerLiter, 38.2);
     expect(tank.saltMixReferencePpt, 35);
+    await unmountApp(tester);
+  });
+
+  testWidgets('converter synchronizes ppt, SG and true density at 25 C', (
+    tester,
+  ) async {
+    await pumpPlanner(tester);
+
+    TextField field(String key) =>
+        tester.widget<TextField>(find.byKey(Key(key)));
+
+    expect(field('salinity-converter-ppt').controller!.text, '35.0');
+    expect(field('salinity-converter-sg').controller!.text, '1.0264');
+    expect(field('salinity-converter-density').controller!.text, '1.0233');
+    expect(
+      field('salinity-converter-density-temperature').controller!.text,
+      '25.0',
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('salinity-converter-density-temperature')),
+      '20.0',
+    );
+    expect(field('salinity-converter-ppt').controller!.text, '35.0');
+    expect(field('salinity-converter-sg').controller!.text, '1.0264');
+    expect(
+      field('salinity-converter-density').controller!.text,
+      formatLocaleNumber(hydrometerReadingForSalinity(35, 20), 4),
+    );
+
+    final reading33At20 = formatLocaleNumber(
+      hydrometerReadingForSalinity(33, 20),
+      4,
+    );
+    await tester.enterText(
+      find.byKey(const Key('salinity-converter-density')),
+      reading33At20,
+    );
+    expect(field('salinity-converter-ppt').controller!.text, '33.0');
+    expect(field('salinity-converter-sg').controller!.text, '1.0249');
+
+    await tester.enterText(
+      find.byKey(const Key('salinity-converter-sg')),
+      '1.0264',
+    );
+    expect(
+      field('salinity-converter-density').controller!.text,
+      formatLocaleNumber(hydrometerReadingForSalinity(35, 20), 4),
+    );
+    expect(field('salinity-converter-ppt').controller!.text, '35.0');
     await unmountApp(tester);
   });
 

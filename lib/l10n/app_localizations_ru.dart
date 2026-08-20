@@ -877,7 +877,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get salinityCalculator => 'Калькулятор солёности';
 
   @override
-  String get salinityCalculatorSubtitle => 'Перевод ppt ↔ плотность (SG)';
+  String get salinityCalculatorSubtitle =>
+      'Перевод ppt ⇄ SG ⇄ истинная плотность';
 
   @override
   String get reefUnitConverter => 'Конвертер единиц рифа';
@@ -887,7 +888,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reefUnitConverterIntro =>
-      'Переводи обычные рифовые единицы. Выбери исходную единицу и введи значение.';
+      'Переводи обычные рифовые единицы. Введи значение в любое поле, чтобы автоматически обновить все эквивалентные единицы.';
 
   @override
   String get converterSourceUnit => 'Исходная единица';
@@ -1379,16 +1380,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Перевод между практической солёностью (ppt) и плотностью (SG). Вводи в любое поле.';
+      'Переводи практическую солёность (ppt), относительную плотность (SG) и показание ареометра, откалиброванного при 25 °C. Укажи температуру воды и вводи значение в любое поле.';
 
   @override
-  String get specificGravity => 'Плотность (SG)';
+  String get specificGravity => 'Относительная плотность (SG)';
+
+  @override
+  String get measurementTemperature => 'Температура измерения';
+
+  @override
+  String get densityTemperatureHelp =>
+      'Используй температуру воды в мерном цилиндре.';
+
+  @override
+  String get hydrometerDensityReading => 'Показание плотности ареометра';
+
+  @override
+  String get densityHydrometerNote =>
+      'Европейские стеклянные ареометры, в том числе модели ARKA и Tropic Marin, обычно калибруются при 25 °C. Поправка помогает измерять подготовленную морскую воду при температуре окружающей среды.';
 
   @override
   String get referencePoints => 'Опорные значения';
 
   @override
-  String get refSeawater => '• Природная морская вода ≈ 35 ppt ≈ 1,0264 SG';
+  String get refSeawater =>
+      '• Природная морская вода ≈ 35 ppt ≈ 1,0264 SG ≈ 1,0233 г/см³ при 25 °C';
 
   @override
   String get refReefTarget =>
@@ -1396,7 +1412,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get refFormulaNote =>
-      'SG приведён к 25 °C. Перевод — линейная аппроксимация: SG = 1 + ppt × 0,0264/35.';
+      'Вне 25 °C поправка использует стандартное уравнение плотности морской воды и номинальное расширение стекла (26 ppm/°C). Для наибольшей точности измеряй при 25 °C.';
 
   @override
   String get salinityToolConvert => 'Пересчёт';

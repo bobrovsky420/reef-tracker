@@ -122,9 +122,14 @@ converted only for display/input.**
 Volume is *not* a tracked parameter — it is a property of a tank
 (`volumeLiters`) and of a water change (`amountLiters`). The US gallon is
 `3.785411784 L`; one Imperial gallon is `4.54609 L`. Salinity ↔ SG is linear,
-anchored at 35 ppt = 1.0264 SG @ 25 °C. The standalone reef-unit converter
-uses dKH as its alkalinity canonical form: 1 dKH = 0.357 meq/L = 17.848 ppm
-CaCO₃.
+anchored at 35 ppt = 1.0264 SG @ 25 °C. The salinity converter additionally
+accepts a 25 °C-calibrated glass-hydrometer density reading and its sample
+temperature. It uses the atmospheric-pressure UNESCO 1983/EOS-80 standard
+seawater equation plus NIST's nominal hydrometer-glass expansion coefficient
+(26 ppm/°C) to infer practical salinity; 25 °C is the default and most accurate
+instrument path. Density remains converter-only, not a unit preference. The
+standalone reef-unit converter uses dKH as its alkalinity canonical form:
+1 dKH = 0.357 meq/L = 17.848 ppm CaCO₃.
 Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Domain layer (`lib/domain/`) — static, no DB migrations
@@ -1469,7 +1474,7 @@ iOS-shaped switch with a `healthy` on-track through an
 switches on iOS deliberately ignore the ambient `SwitchThemeData`);
 **segmented controls** — `widgets/reef_segmented.dart` (`ReefSegmented<T>`,
 `(value, label)` options) replaces `SegmentedButton` app-wide (Settings units,
-chart-range selectors, the schedule sheet's repeat toggle): a
+chart-range selectors, the schedule sheet's repeat toggle, salinity tools): a
 Cupertino-sliding-control look (options in a `track` well, active on a raised
 chip — opaque `surfaceContainerHighest` in dark, where the translucent
 `surface` would vanish) vs an M3 outlined pill (active = `healthySoft` fill +
@@ -1583,7 +1588,7 @@ Body text stays the platform default (SF/Roboto).
 | `/settings/import` | Measurement-import status per tank: watermark rewind (*Change date…*) / *Reset*. **No entry point in the UI** — the Settings row was removed; reachable by deep link only |
 | `/hanna/measure` | Hanna checker live BLE measurement (U33, Pro, experimental): connect → select → run → save in one route; a reactive route capability guard prevents construction without `hannaConnect` entitlement and disposes the session if entitlement is lost |
 | `/hanna/scan` | Checker camera scan (U34, Pro, experimental): model picker → viewfinder → confirm in one route; the same guard requires `hannaScan` and releases the camera on entitlement loss |
-| `/calculator/salinity` | Standard salinity tool: live ppt ↔ SG conversion, 16-product salt-mix catalogue plus custom/measured calibration, salt preparation, and active-tank salinity correction planning |
+| `/calculator/salinity` | Standard salinity tool: live ppt ↔ SG ↔ 25-°C-calibrated hydrometer-density conversion with optional sample-temperature correction, 16-product salt-mix catalogue plus custom/measured calibration, salt preparation, and active-tank salinity correction planning |
 | `/calculator/units` | Standalone reef-unit converter: alkalinity (dKH/meq/L/ppm CaCO₃), temperature (°C/°F), and volume (L/US/Imperial gal); it never reads or writes tank data |
 | `/devices` | Standalone Devices page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers and (U43) the Hanna checker. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory. Since U42 the same body is the home shell's Devices tab and nothing pushes this route; it stays as a stable deep-link target, mirroring `/settings` |
 | `/settings/wall` | Wall display options (U49): Start now, auto-start, refresh interval, page rotation, night window, and the reorderable wall-card list |
@@ -4597,8 +4602,16 @@ never a hardcoded string.
 
 ### Salinity calculator (`calculator/salinity_calculator_screen.dart`)
 
-One Standard tool with three modes. **Convert** preserves the standalone live
-ppt ↔ SG converter. **Mix new water** estimates dry commercial mix from a
+One Standard tool with three modes. **Convert** synchronizes editable ppt, SG
+and 25 °C-calibrated glass-hydrometer density fields. Its optional measurement
+temperature follows the °C/°F preference and corrects a batch measured away
+from 25 °C using the standard seawater density equation plus nominal glass
+expansion; source tracking keeps whichever value the keeper last edited fixed
+when temperature changes. The reference card explains that European
+areometers, including ARKA and Tropic Marin models, use this density scale and
+that measuring at their 25 °C calibration point remains most accurate.
+Density is converter-only and never changes the salinity unit preference.
+**Mix new water** estimates dry commercial mix from a
 required keeper-entered/calibrated g/L factor and a desired final volume; a
 measured batch can derive the factor, and the last valid salt name/factor/
 reference salinity is saved on the active tank. **Correct this tank** prefills
@@ -4615,9 +4628,10 @@ log row.
 ### Reef unit converter (`calculator/reef_unit_converter_screen.dart`)
 
 Standalone reference converter, independent of stored tank data. Each of its
-three cards has one explicit source unit and editable locale-aware value, then
-shows the other equivalent units read-only: alkalinity (dKH/meq/L/ppm CaCO₃),
-temperature (°C/°F), and volume (L/US/Imperial gallons).
+three cards exposes every supported unit as a locale-aware editable field.
+Editing any field immediately recalculates the others through the card's
+canonical unit: alkalinity (dKH/meq/L/ppm CaCO₃), temperature (°C/°F), and
+volume (L/US/Imperial gallons). The converter never reads or writes tank data.
 
 ## Internationalization
 

@@ -872,7 +872,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get salinityCalculator => 'Salinitäts-Rechner';
 
   @override
-  String get salinityCalculatorSubtitle => 'Umrechnung ppt ↔ Dichte (SG)';
+  String get salinityCalculatorSubtitle => 'Umrechnung ppt ⇄ SG ⇄ Dichte';
 
   @override
   String get reefUnitConverter => 'Riff-Einheitenrechner';
@@ -882,7 +882,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reefUnitConverterIntro =>
-      'Wandle gängige Riff-Einheiten um. Wähle die Ausgangseinheit und gib einen Wert ein.';
+      'Wandle gängige Riff-Einheiten um. Gib einen Wert in ein beliebiges Feld ein, um alle entsprechenden Einheiten automatisch zu aktualisieren.';
 
   @override
   String get converterSourceUnit => 'Ausgangseinheit';
@@ -1376,23 +1376,38 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Umrechnung zwischen praktischer Salinität (ppt) und Dichte (SG). Tippe in eines der Felder.';
+      'Rechne praktische Salinität (ppt), relative Dichte (SG) und den Wert eines bei 25 °C kalibrierten Dichte-Aräometers um. Gib die Wassertemperatur ein und tippe in ein beliebiges Wertefeld.';
 
   @override
-  String get specificGravity => 'Dichte (SG)';
+  String get specificGravity => 'Relative Dichte (SG)';
+
+  @override
+  String get measurementTemperature => 'Messtemperatur';
+
+  @override
+  String get densityTemperatureHelp =>
+      'Verwende die Wassertemperatur im Messzylinder.';
+
+  @override
+  String get hydrometerDensityReading => 'Dichtewert des Aräometers';
+
+  @override
+  String get densityHydrometerNote =>
+      'Europäische Glas-Aräometer, darunter Modelle von ARKA und Tropic Marin, sind üblicherweise bei 25 °C kalibriert. Die Temperaturkorrektur hilft bei vorbereitetem Meerwasser nahe der Umgebungstemperatur.';
 
   @override
   String get referencePoints => 'Referenzwerte';
 
   @override
-  String get refSeawater => '• Natürliches Meerwasser ≈ 35 ppt ≈ 1,0264 SG';
+  String get refSeawater =>
+      '• Natürliches Meerwasser ≈ 35 ppt ≈ 1,0264 SG ≈ 1,0233 g/cm³ bei 25 °C';
 
   @override
   String get refReefTarget => '• Typisches Riff-Ziel ≈ 35 ppt (1,025–1,027 SG)';
 
   @override
   String get refFormulaNote =>
-      'SG bezieht sich auf 25 °C. Die Umrechnung ist eine lineare Näherung: SG = 1 + ppt × 0,0264/35.';
+      'Abseits von 25 °C nutzt die Korrektur die Standardgleichung für Meerwasserdichte und die nominale Glasausdehnung des Aräometers (26 ppm/°C). Miss für höchste Genauigkeit bei 25 °C.';
 
   @override
   String get salinityToolConvert => 'Umrechnen';

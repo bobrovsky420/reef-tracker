@@ -103,6 +103,20 @@ void main() {
       expect(sgToPpt(pptToSg(33)), closeTo(33, 1e-6));
       expect(pptToSg(sgToPpt(1.025)), closeTo(1.025, 1e-9));
     });
+
+    test('UNESCO seawater density reference and inverse round trip', () {
+      expect(seawaterDensity(35, 25), closeTo(1.023343, 1e-6));
+      expect(
+        salinityFromSeawaterDensity(seawaterDensity(33.7, 18), 18),
+        closeTo(33.7, 1e-9),
+      );
+    });
+
+    test('25 C hydrometer reading corrects glass and seawater temperature', () {
+      final readingAt20 = hydrometerReadingForSalinity(35, 20);
+      expect(readingAt20, greaterThan(hydrometerReadingForSalinity(35, 25)));
+      expect(salinityFromHydrometerReading(readingAt20, 20), closeTo(35, 1e-9));
+    });
   });
 
   group('volume conversion', () {

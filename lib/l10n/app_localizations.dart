@@ -1568,7 +1568,7 @@ abstract class AppLocalizations {
   /// No description provided for @salinityCalculatorSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Convert ppt ↔ specific gravity (SG)'**
+  /// **'Convert ppt ⇄ SG ⇄ true density'**
   String get salinityCalculatorSubtitle;
 
   /// No description provided for @reefUnitConverter.
@@ -1586,7 +1586,7 @@ abstract class AppLocalizations {
   /// No description provided for @reefUnitConverterIntro.
   ///
   /// In en, this message translates to:
-  /// **'Convert common reef units. Choose the source unit and enter a value.'**
+  /// **'Convert common reef units. Enter a value in any field to update all equivalents.'**
   String get reefUnitConverterIntro;
 
   /// No description provided for @converterSourceUnit.
@@ -2426,7 +2426,7 @@ abstract class AppLocalizations {
   /// No description provided for @calculatorIntro.
   ///
   /// In en, this message translates to:
-  /// **'Convert between practical salinity (ppt) and specific gravity (SG). Type in either field.'**
+  /// **'Convert practical salinity (ppt), specific gravity (SG), and readings from a density hydrometer calibrated at 25 °C. Enter the water temperature and type in any value field.'**
   String get calculatorIntro;
 
   /// No description provided for @specificGravity.
@@ -2434,6 +2434,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Specific gravity'**
   String get specificGravity;
+
+  /// Temperature of the water sample while its density is measured
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement temperature'**
+  String get measurementTemperature;
+
+  /// Help for the salinity converter sample-temperature field
+  ///
+  /// In en, this message translates to:
+  /// **'Use the water temperature in the measuring cylinder.'**
+  String get densityTemperatureHelp;
+
+  /// Reading from a glass density hydrometer calibrated at 25 degrees Celsius
+  ///
+  /// In en, this message translates to:
+  /// **'Hydrometer density reading'**
+  String get hydrometerDensityReading;
+
+  /// Explains which common aquarium instruments report true rather than relative density
+  ///
+  /// In en, this message translates to:
+  /// **'European glass hydrometers (areometers), including ARKA and Tropic Marin models, are typically calibrated at 25 °C. Temperature correction helps with prepared saltwater measured near ambient temperature.'**
+  String get densityHydrometerNote;
 
   /// No description provided for @referencePoints.
   ///
@@ -2444,7 +2468,7 @@ abstract class AppLocalizations {
   /// No description provided for @refSeawater.
   ///
   /// In en, this message translates to:
-  /// **'• Natural seawater ≈ 35 ppt ≈ 1.0264 SG'**
+  /// **'• Natural seawater ≈ 35 ppt ≈ 1.0264 SG ≈ 1.0233 g/cm³ at 25 °C'**
   String get refSeawater;
 
   /// No description provided for @refReefTarget.
@@ -2456,7 +2480,7 @@ abstract class AppLocalizations {
   /// No description provided for @refFormulaNote.
   ///
   /// In en, this message translates to:
-  /// **'SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.'**
+  /// **'Away from 25 °C, correction uses the standard seawater density equation and nominal hydrometer-glass expansion (26 ppm/°C). Measure at 25 °C for best accuracy.'**
   String get refFormulaNote;
 
   /// No description provided for @salinityToolConvert.

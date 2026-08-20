@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.1]
 
 ### Added
+- The salinity converter now accepts density readings from 25 °C-calibrated
+  European glass hydrometers such as ARKA and Tropic Marin alongside ppt and
+  specific gravity. An optional water temperature corrects prepared saltwater
+  measured near ambient temperature back to the 25 °C reference.
 - A Standard salt-mix and salinity-correction planner now estimates dry salt
   for prepared water and equal-volume RO/DI or higher-salinity exchanges using
   the active aquarium's volume, latest salinity, target range, unit choices,
@@ -25,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deleting manually entered aquarium measurements.
 
 ### Changed
+- The reef-unit converter now shows every unit as an editable field on each
+  card, so entering any alkalinity, temperature, or volume value updates all
+  of its equivalents immediately without choosing a source unit first.
+- The salinity calculator's Convert, Mix new water and Correct this tank
+  options now share one segmented control, matching the dosing calculator.
+- The salinity converter subtitle now uses a plain text-style conversion arrow
+  instead of an emoji-style arrow tile on devices that rendered it that way.
 - Wall display device graphs now scale independently and contain only that
   device's online measurements; manually entered measurements remain on their
   own cards instead of appearing as fallback lines or hollow markers.

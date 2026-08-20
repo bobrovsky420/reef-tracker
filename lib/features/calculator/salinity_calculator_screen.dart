@@ -12,9 +12,12 @@ import '../../domain/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/l10n_helpers.dart';
 import '../../widgets/reef_card.dart';
+import '../../widgets/reef_segmented.dart';
 import '../actions/actions_screen.dart';
 
 enum _SalinityToolMode { convert, mix, correct }
+
+enum _ConverterSource { ppt, sg, density }
 
 class _MixResult {
   const _MixResult(this.massG);
@@ -60,7 +63,14 @@ class _SalinityCalculatorScreenState
   late final _sgCtrl = TextEditingController(
     text: formatLocaleNumber(pptToSg(_seedPpt), 4),
   );
+  late final _densityCtrl = TextEditingController(
+    text: formatLocaleNumber(hydrometerReadingForSalinity(_seedPpt, 25), 4),
+  );
+  final _densityTempCtrl = TextEditingController();
   bool _updatingConverter = false;
+  double _measurementTempC = 25;
+  TempUnit? _densityTempDisplayUnit;
+  _ConverterSource _converterSource = _ConverterSource.ppt;
 
   final _mixFormKey = GlobalKey<FormState>();
   final _correctionFormKey = GlobalKey<FormState>();
@@ -90,6 +100,8 @@ class _SalinityCalculatorScreenState
     for (final controller in [
       _pptCtrl,
       _sgCtrl,
+      _densityCtrl,
+      _densityTempCtrl,
       _mixVolumeCtrl,
       _mixTargetCtrl,
       _saltNameCtrl,
@@ -112,8 +124,14 @@ class _SalinityCalculatorScreenState
     if (_updatingConverter) return;
     final ppt = parseUserDouble(text);
     if (ppt == null) return;
+    _converterSource = _ConverterSource.ppt;
     _updatingConverter = true;
-    _sgCtrl.text = formatLocaleNumber(pptToSg(ppt), 4);
+    final sg = pptToSg(ppt);
+    _sgCtrl.text = formatLocaleNumber(sg, 4);
+    final density = hydrometerReadingForSalinity(ppt, _measurementTempC);
+    if (density.isFinite) {
+      _densityCtrl.text = formatLocaleNumber(density, 4);
+    }
     _updatingConverter = false;
   }
 
@@ -121,9 +139,51 @@ class _SalinityCalculatorScreenState
     if (_updatingConverter) return;
     final sg = parseUserDouble(text);
     if (sg == null) return;
+    _converterSource = _ConverterSource.sg;
     _updatingConverter = true;
-    _pptCtrl.text = formatLocaleNumber(sgToPpt(sg), 1);
+    final ppt = sgToPpt(sg);
+    _pptCtrl.text = formatLocaleNumber(ppt, 1);
+    final density = hydrometerReadingForSalinity(ppt, _measurementTempC);
+    if (density.isFinite) {
+      _densityCtrl.text = formatLocaleNumber(density, 4);
+    }
     _updatingConverter = false;
+  }
+
+  void _onDensityChanged(String text) {
+    if (_updatingConverter) return;
+    final density = parseUserDouble(text);
+    if (density == null) return;
+    _converterSource = _ConverterSource.density;
+    final ppt = salinityFromHydrometerReading(density, _measurementTempC);
+    if (ppt == null) return;
+    _updatingConverter = true;
+    _pptCtrl.text = formatLocaleNumber(ppt, 1);
+    _sgCtrl.text = formatLocaleNumber(pptToSg(ppt), 4);
+    _updatingConverter = false;
+  }
+
+  void _onMeasurementTempChanged(String text, TempUnit unit) {
+    if (_updatingConverter) return;
+    final displayTemp = parseUserDouble(text);
+    if (displayTemp == null) return;
+    final tempC = unit == TempUnit.fahrenheit
+        ? fToCelsius(displayTemp)
+        : displayTemp;
+    _measurementTempC = tempC;
+    if (tempC < -2 || tempC > 40) return;
+
+    switch (_converterSource) {
+      case _ConverterSource.ppt:
+        _onPptChanged(_pptCtrl.text);
+        break;
+      case _ConverterSource.sg:
+        _onSgChanged(_sgCtrl.text);
+        break;
+      case _ConverterSource.density:
+        _onDensityChanged(_densityCtrl.text);
+        break;
+    }
   }
 
   String _formatPptForInput(double ppt, SalinityUnit unit) =>
@@ -453,29 +513,24 @@ class _SalinityCalculatorScreenState
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ChoiceChip(
-                key: const Key('salinity-mode-convert'),
-                label: Text(l.salinityToolConvert),
-                selected: _mode == _SalinityToolMode.convert,
-                onSelected: (_) => _selectMode(_SalinityToolMode.convert),
+          Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ReefSegmented<_SalinityToolMode>(
+                options: [
+                  (_SalinityToolMode.convert, l.salinityToolConvert),
+                  (_SalinityToolMode.mix, l.salinityToolMix),
+                  (_SalinityToolMode.correct, l.salinityToolCorrect),
+                ],
+                selected: _mode,
+                onChanged: _selectMode,
+                optionKeys: const {
+                  _SalinityToolMode.convert: Key('salinity-mode-convert'),
+                  _SalinityToolMode.mix: Key('salinity-mode-mix'),
+                  _SalinityToolMode.correct: Key('salinity-mode-correct'),
+                },
               ),
-              ChoiceChip(
-                key: const Key('salinity-mode-mix'),
-                label: Text(l.salinityToolMix),
-                selected: _mode == _SalinityToolMode.mix,
-                onSelected: (_) => _selectMode(_SalinityToolMode.mix),
-              ),
-              ChoiceChip(
-                key: const Key('salinity-mode-correct'),
-                label: Text(l.salinityToolCorrect),
-                selected: _mode == _SalinityToolMode.correct,
-                onSelected: (_) => _selectMode(_SalinityToolMode.correct),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 20),
           switch (_mode) {
@@ -490,12 +545,21 @@ class _SalinityCalculatorScreenState
 
   Widget _converter(AppLocalizations l) {
     final tokens = ReefTokens.of(context);
+    final tempUnit = ref.watch(unitPrefsProvider).temp;
+    if (_densityTempDisplayUnit != tempUnit) {
+      _densityTempDisplayUnit = tempUnit;
+      final displayTemp = tempUnit == TempUnit.fahrenheit
+          ? celsiusToF(_measurementTempC)
+          : _measurementTempC;
+      _densityTempCtrl.text = formatLocaleNumber(displayTemp, 1);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(l.calculatorIntro, style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 24),
         TextField(
+          key: const Key('salinity-converter-ppt'),
           controller: _pptCtrl,
           style: ReefTokens.monoInputStyle,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -509,6 +573,7 @@ class _SalinityCalculatorScreenState
           ),
         ),
         TextField(
+          key: const Key('salinity-converter-sg'),
           controller: _sgCtrl,
           style: ReefTokens.monoInputStyle,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -517,6 +582,37 @@ class _SalinityCalculatorScreenState
             suffixText: 'SG',
           ),
           onChanged: _onSgChanged,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Center(
+            child: Icon(Icons.swap_vert, size: 28, color: tokens.textDim),
+          ),
+        ),
+        TextField(
+          key: const Key('salinity-converter-density-temperature'),
+          controller: _densityTempCtrl,
+          style: ReefTokens.monoInputStyle,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: l.measurementTemperature,
+            suffixText: tempUnit.symbol,
+            helperText: l.densityTemperatureHelp,
+            helperMaxLines: 2,
+          ),
+          onChanged: (text) => _onMeasurementTempChanged(text, tempUnit),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('salinity-converter-density'),
+          controller: _densityCtrl,
+          style: ReefTokens.monoInputStyle,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: l.hydrometerDensityReading,
+            suffixText: 'g/cm³',
+          ),
+          onChanged: _onDensityChanged,
         ),
         const SizedBox(height: 24),
         ReefCard(
@@ -535,6 +631,11 @@ class _SalinityCalculatorScreenState
               const SizedBox(height: 8),
               Text(l.refSeawater, style: TextStyle(color: tokens.textDim)),
               Text(l.refReefTarget, style: TextStyle(color: tokens.textDim)),
+              const SizedBox(height: 8),
+              Text(
+                l.densityHydrometerNote,
+                style: TextStyle(color: tokens.textDim),
+              ),
               const SizedBox(height: 8),
               Text(
                 l.refFormulaNote,

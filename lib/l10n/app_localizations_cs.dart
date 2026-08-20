@@ -871,7 +871,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get salinityCalculator => 'Kalkulačka salinity';
 
   @override
-  String get salinityCalculatorSubtitle => 'Převod ppt ↔ hustota (SG)';
+  String get salinityCalculatorSubtitle => 'Převod ppt ⇄ SG ⇄ skutečná hustota';
 
   @override
   String get reefUnitConverter => 'Převodník jednotek pro útes';
@@ -881,7 +881,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get reefUnitConverterIntro =>
-      'Převáděj běžné útesové jednotky. Vyber zdrojovou jednotku a zadej hodnotu.';
+      'Převáděj běžné útesové jednotky. Zadej hodnotu do libovolného pole a všechny odpovídající jednotky se automaticky přepočítají.';
 
   @override
   String get converterSourceUnit => 'Zdrojová jednotka';
@@ -1368,16 +1368,30 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Převod mezi praktickou salinitou (ppt) a specifickou hustotou (SG). Piš do kteréhokoli pole.';
+      'Převod mezi praktickou salinitou (ppt), relativní hustotou (SG) a údajem z hustoměru kalibrovaného při 25 °C. Zadej teplotu vody a piš do kteréhokoli pole s hodnotou.';
 
   @override
-  String get specificGravity => 'Hustota (SG)';
+  String get specificGravity => 'Relativní hustota (SG)';
+
+  @override
+  String get measurementTemperature => 'Teplota při měření';
+
+  @override
+  String get densityTemperatureHelp => 'Použij teplotu vody v odměrném válci.';
+
+  @override
+  String get hydrometerDensityReading => 'Údaj hustoměru';
+
+  @override
+  String get densityHydrometerNote =>
+      'Evropské skleněné hustoměry (areometry), včetně modelů ARKA a Tropic Marin, jsou obvykle kalibrovány při 25 °C. Teplotní korekce pomůže u připravené slané vody měřené při okolní teplotě.';
 
   @override
   String get referencePoints => 'Referenční hodnoty';
 
   @override
-  String get refSeawater => '• Přírodní mořská voda ≈ 35 ppt ≈ 1,0264 SG';
+  String get refSeawater =>
+      '• Přírodní mořská voda ≈ 35 ppt ≈ 1,0264 SG ≈ 1,0233 g/cm³ při 25 °C';
 
   @override
   String get refReefTarget =>
@@ -1385,7 +1399,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get refFormulaNote =>
-      'SG je vztaženo k 25 °C. Převod je lineární aproximace: SG = 1 + ppt × 0,0264/35.';
+      'Mimo 25 °C používá korekce standardní rovnici hustoty mořské vody a jmenovitou roztažnost skla hustoměru (26 ppm/°C). Nejpřesnější je měření při 25 °C.';
 
   @override
   String get salinityToolConvert => 'Převod';

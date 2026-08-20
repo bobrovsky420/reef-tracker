@@ -871,7 +871,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get salinityCalculator => 'Calcolatore di salinità';
 
   @override
-  String get salinityCalculatorSubtitle => 'Conversione ppt ↔ densità (SG)';
+  String get salinityCalculatorSubtitle =>
+      'Conversione ppt ⇄ SG ⇄ densità reale';
 
   @override
   String get reefUnitConverter => 'Convertitore di unità reef';
@@ -881,7 +882,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reefUnitConverterIntro =>
-      'Converti le comuni unità reef. Scegli l’unità di partenza e inserisci un valore.';
+      'Converti le comuni unità reef. Inserisci un valore in qualsiasi campo per aggiornare automaticamente tutte le unità equivalenti.';
 
   @override
   String get converterSourceUnit => 'Unità di partenza';
@@ -1374,16 +1375,31 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Conversione tra salinità pratica (ppt) e densità (SG). Scrivi in uno dei due campi.';
+      'Converti salinità pratica (ppt), densità relativa (SG) e il valore di un areometro tarato a 25 °C. Inserisci la temperatura dell’acqua e scrivi in un campo qualsiasi.';
 
   @override
-  String get specificGravity => 'Densità (SG)';
+  String get specificGravity => 'Densità relativa (SG)';
+
+  @override
+  String get measurementTemperature => 'Temperatura di misurazione';
+
+  @override
+  String get densityTemperatureHelp =>
+      'Usa la temperatura dell’acqua nel cilindro graduato.';
+
+  @override
+  String get hydrometerDensityReading => 'Valore dell’areometro';
+
+  @override
+  String get densityHydrometerNote =>
+      'Gli areometri europei in vetro, compresi i modelli ARKA e Tropic Marin, sono generalmente tarati a 25 °C. La correzione aiuta con l’acqua salata preparata misurata vicino alla temperatura ambiente.';
 
   @override
   String get referencePoints => 'Valori di riferimento';
 
   @override
-  String get refSeawater => '• Acqua marina naturale ≈ 35 ppt ≈ 1,0264 SG';
+  String get refSeawater =>
+      '• Acqua marina naturale ≈ 35 ppt ≈ 1,0264 SG ≈ 1,0233 g/cm³ a 25 °C';
 
   @override
   String get refReefTarget =>
@@ -1391,7 +1407,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get refFormulaNote =>
-      'SG riferita a 25 °C. La conversione è un\'approssimazione lineare: SG = 1 + ppt × 0,0264/35.';
+      'Lontano da 25 °C, la correzione usa l’equazione standard della densità marina e la dilatazione nominale del vetro (26 ppm/°C). Misura a 25 °C per la massima precisione.';
 
   @override
   String get salinityToolConvert => 'Converti';

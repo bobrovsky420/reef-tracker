@@ -25,14 +25,20 @@ class ReefUnitConverterScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _ConversionCard(
+            id: 'alkalinity',
             title: l.alkalinity,
-            sourceUnitLabel: l.converterSourceUnit,
-            valueLabel: l.converterValue,
-            equivalentLabel: l.converterEquivalent,
             units: [
-              _ConversionUnit('dKH', 8, (v) => v, (v) => v, 2),
-              _ConversionUnit('meq/L', 8 * meqPerDkh, meqToDkh, dkhToMeq, 3),
+              _ConversionUnit('dkh', 'dKH', 8, (v) => v, (v) => v, 2),
               _ConversionUnit(
+                'meq',
+                'meq/L',
+                8 * meqPerDkh,
+                meqToDkh,
+                dkhToMeq,
+                3,
+              ),
+              _ConversionUnit(
+                'ppm-caco3',
                 'ppm CaCO₃',
                 8 * ppmCaco3PerDkh,
                 ppmCaco3ToDkh,
@@ -43,24 +49,28 @@ class ReefUnitConverterScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _ConversionCard(
+            id: 'temperature',
             title: l.temperature,
-            sourceUnitLabel: l.converterSourceUnit,
-            valueLabel: l.converterValue,
-            equivalentLabel: l.converterEquivalent,
             units: [
-              _ConversionUnit('°C', 25, (v) => v, (v) => v, 1),
-              _ConversionUnit('°F', 77, fToCelsius, celsiusToF, 1),
+              _ConversionUnit('celsius', '°C', 25, (v) => v, (v) => v, 1),
+              _ConversionUnit(
+                'fahrenheit',
+                '°F',
+                77,
+                fToCelsius,
+                celsiusToF,
+                1,
+              ),
             ],
           ),
           const SizedBox(height: 16),
           _ConversionCard(
+            id: 'volume',
             title: l.volume,
-            sourceUnitLabel: l.converterSourceUnit,
-            valueLabel: l.converterValue,
-            equivalentLabel: l.converterEquivalent,
             units: [
-              _ConversionUnit('L', 100, (v) => v, (v) => v, 1),
+              _ConversionUnit('liters', 'L', 100, (v) => v, (v) => v, 1),
               _ConversionUnit(
+                'us-gallons',
                 'US gal',
                 100 / litersPerUsGallon,
                 gallonsToLiters,
@@ -68,6 +78,7 @@ class ReefUnitConverterScreen extends StatelessWidget {
                 2,
               ),
               _ConversionUnit(
+                'imperial-gallons',
                 'Imp gal',
                 100 / litersPerImperialGallon,
                 imperialGallonsToLiters,
@@ -84,6 +95,7 @@ class ReefUnitConverterScreen extends StatelessWidget {
 
 class _ConversionUnit {
   const _ConversionUnit(
+    this.id,
     this.label,
     this.seed,
     this.toCanonical,
@@ -91,33 +103,23 @@ class _ConversionUnit {
     this.decimals,
   );
 
+  final String id;
   final String label;
   final double seed;
   final double Function(double value) toCanonical;
   final double Function(double canonical) fromCanonical;
   final int decimals;
-
-  @override
-  bool operator ==(Object other) =>
-      other is _ConversionUnit && other.label == label;
-
-  @override
-  int get hashCode => label.hashCode;
 }
 
 class _ConversionCard extends StatefulWidget {
   const _ConversionCard({
+    required this.id,
     required this.title,
-    required this.sourceUnitLabel,
-    required this.valueLabel,
-    required this.equivalentLabel,
     required this.units,
   });
 
+  final String id;
   final String title;
-  final String sourceUnitLabel;
-  final String valueLabel;
-  final String equivalentLabel;
   final List<_ConversionUnit> units;
 
   @override
@@ -125,39 +127,44 @@ class _ConversionCard extends StatefulWidget {
 }
 
 class _ConversionCardState extends State<_ConversionCard> {
-  late _ConversionUnit _source = widget.units.first;
-  late final TextEditingController _controller = TextEditingController(
-    text: formatLocaleNumber(_source.seed, _source.decimals),
-  );
+  late final Map<String, TextEditingController> _controllers;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = {
+      for (final unit in widget.units)
+        unit.id: TextEditingController(
+          text: formatLocaleNumber(unit.seed, unit.decimals),
+        ),
+    };
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
-  void _changeSource(_ConversionUnit? unit) {
-    if (unit == null || unit == _source) return;
-    final value = parseUserDouble(_controller.text);
-    final canonical = value == null ? null : _source.toCanonical(value);
-    setState(() {
-      _source = unit;
-      _controller.text = canonical == null
+  void _onChanged(_ConversionUnit source, String text) {
+    final value = parseUserDouble(text);
+    final canonical = value == null ? null : source.toCanonical(value);
+
+    for (final unit in widget.units) {
+      if (unit.id == source.id) continue;
+      final converted = canonical == null || !canonical.isFinite
+          ? null
+          : unit.fromCanonical(canonical);
+      _controllers[unit.id]!.text = converted == null || !converted.isFinite
           ? ''
-          : formatLocaleNumber(
-              _source.fromCanonical(canonical),
-              _source.decimals,
-            );
-    });
+          : formatLocaleNumber(converted, unit.decimals);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final tokens = ReefTokens.of(context);
-    final sourceValue = parseUserDouble(_controller.text);
-    final canonical = sourceValue == null
-        ? null
-        : _source.toCanonical(sourceValue);
     return ReefCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -170,69 +177,30 @@ class _ConversionCardState extends State<_ConversionCard> {
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<_ConversionUnit>(
-            initialValue: _source,
-            decoration: InputDecoration(labelText: widget.sourceUnitLabel),
-            items: widget.units
-                .map(
-                  (unit) =>
-                      DropdownMenuItem(value: unit, child: Text(unit.label)),
-                )
-                .toList(),
-            onChanged: _changeSource,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _controller,
-            style: ReefTokens.monoInputStyle,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: widget.valueLabel,
-              suffixText: _source.label,
+          for (var index = 0; index < widget.units.length; index++) ...[
+            if (index > 0) const SizedBox(height: 12),
+            Builder(
+              builder: (context) {
+                final unit = widget.units[index];
+                return TextField(
+                  key: Key('reef-unit-${widget.id}-${unit.id}'),
+                  controller: _controllers[unit.id],
+                  style: ReefTokens.monoInputStyle,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  textInputAction: index == widget.units.length - 1
+                      ? TextInputAction.done
+                      : TextInputAction.next,
+                  decoration: InputDecoration(labelText: unit.label),
+                  onChanged: (text) => _onChanged(unit, text),
+                );
+              },
             ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            widget.equivalentLabel,
-            style: TextStyle(fontSize: 13, color: tokens.textDim),
-          ),
-          const SizedBox(height: 4),
-          for (final unit in widget.units.where((unit) => unit != _source))
-            _EquivalentRow(
-              value: canonical == null
-                  ? '—'
-                  : formatLocaleNumber(
-                      unit.fromCanonical(canonical),
-                      unit.decimals,
-                    ),
-              unit: unit.label,
-            ),
+          ],
         ],
       ),
     );
   }
-}
-
-class _EquivalentRow extends StatelessWidget {
-  const _EquivalentRow({required this.value, required this.unit});
-
-  final String value;
-  final String unit;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            value,
-            style: ReefTokens.monoInputStyle.copyWith(fontSize: 18),
-          ),
-        ),
-        Text(unit, style: Theme.of(context).textTheme.bodyMedium),
-      ],
-    ),
-  );
 }

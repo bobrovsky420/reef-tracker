@@ -394,10 +394,10 @@
   "volume": "Volume",
   "unitUsedAcrossApp": "Unit used across the app",
   "salinityCalculator": "Salinity calculator",
-  "salinityCalculatorSubtitle": "Convert ppt ↔ specific gravity (SG)",
+  "salinityCalculatorSubtitle": "Convert ppt ⇄ SG ⇄ true density",
   "reefUnitConverter": "Reef unit converter",
   "reefUnitConverterSubtitle": "Alkalinity, temperature and volume",
-  "reefUnitConverterIntro": "Convert common reef units. Choose the source unit and enter a value.",
+  "reefUnitConverterIntro": "Convert common reef units. Enter a value in any field to update all equivalents.",
   "converterSourceUnit": "Source unit",
   "converterValue": "Value",
   "converterEquivalent": "Equivalent",
@@ -678,12 +678,28 @@
   "languageFrench": "Français",
   "languageItalian": "Italiano",
 
-  "calculatorIntro": "Convert between practical salinity (ppt) and specific gravity (SG). Type in either field.",
+  "calculatorIntro": "Convert practical salinity (ppt), specific gravity (SG), and readings from a density hydrometer calibrated at 25 °C. Enter the water temperature and type in any value field.",
   "specificGravity": "Specific gravity",
+  "measurementTemperature": "Measurement temperature",
+  "@measurementTemperature": {
+    "description": "Temperature of the water sample while its density is measured"
+  },
+  "densityTemperatureHelp": "Use the water temperature in the measuring cylinder.",
+  "@densityTemperatureHelp": {
+    "description": "Help for the salinity converter sample-temperature field"
+  },
+  "hydrometerDensityReading": "Hydrometer density reading",
+  "@hydrometerDensityReading": {
+    "description": "Reading from a glass density hydrometer calibrated at 25 degrees Celsius"
+  },
+  "densityHydrometerNote": "European glass hydrometers (areometers), including ARKA and Tropic Marin models, are typically calibrated at 25 °C. Temperature correction helps with prepared saltwater measured near ambient temperature.",
+  "@densityHydrometerNote": {
+    "description": "Explains which common aquarium instruments report true rather than relative density"
+  },
   "referencePoints": "Reference points",
-  "refSeawater": "• Natural seawater ≈ 35 ppt ≈ 1.0264 SG",
+  "refSeawater": "• Natural seawater ≈ 35 ppt ≈ 1.0264 SG ≈ 1.0233 g/cm³ at 25 °C",
   "refReefTarget": "• Typical reef target ≈ 35 ppt (1.025–1.027 SG)",
-  "refFormulaNote": "SG is referenced at 25 °C. Conversion is a linear approximation: SG = 1 + ppt × 0.0264/35.",
+  "refFormulaNote": "Away from 25 °C, correction uses the standard seawater density equation and nominal hydrometer-glass expansion (26 ppm/°C). Measure at 25 °C for best accuracy.",
 
   "salinityToolConvert": "Convert",
   "salinityToolMix": "Mix new water",
