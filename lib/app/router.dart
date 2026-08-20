@@ -15,6 +15,7 @@ import '../features/actions/schedule_screen.dart';
 import '../features/add_reading/add_reading_screen.dart';
 import '../features/calculator/reef_unit_converter_screen.dart';
 import '../features/calculator/salinity_calculator_screen.dart';
+import '../features/calculator/water_change_planner_screen.dart';
 import '../features/devices/devices_screen.dart';
 import '../features/dosing/dose_calculator_screen.dart';
 import '../features/dosing/dosing_edit_screen.dart';
@@ -285,6 +286,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/calculator/salinity',
       builder: (context, state) => const SalinityCalculatorScreen(),
+    ),
+    GoRoute(
+      path: '/calculator/water-change',
+      builder: (context, state) => const WaterChangePlannerScreen(),
     ),
     GoRoute(
       path: '/calculator/units',

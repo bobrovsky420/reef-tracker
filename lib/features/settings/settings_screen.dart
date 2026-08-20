@@ -322,6 +322,13 @@ class SettingsBody extends ConsumerWidget {
           label: l.toolsSection,
           children: [
             ReefSettingsRow(
+              icon: Icons.water_drop_outlined,
+              title: l.waterChangePlannerTitle,
+              description: l.waterChangePlannerSubtitle,
+              trailing: const ReefSettingsValue(),
+              onTap: () => context.push('/calculator/water-change'),
+            ),
+            ReefSettingsRow(
               icon: Icons.calculate_outlined,
               title: l.salinityCalculator,
               description: l.salinityCalculatorSubtitle,

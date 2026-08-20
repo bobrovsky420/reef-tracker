@@ -875,6 +875,147 @@ class AppLocalizationsFr extends AppLocalizations {
       'Conversion ppt ⇄ SG ⇄ masse volumique';
 
   @override
+  String get waterChangePlannerTitle => 'Planificateur de changement d’eau';
+
+  @override
+  String get waterChangePlannerSubtitle =>
+      'Projeter les changements ponctuels ou automatiques';
+
+  @override
+  String get waterChangePlannerIntro =>
+      'Vois comment un ou plusieurs changements d’eau peuvent modifier un paramètre mesuré à partir du volume et de la dernière mesure de cet aquarium.';
+
+  @override
+  String get waterChangePlannerBatch => 'Changements ponctuels';
+
+  @override
+  String get waterChangePlannerAutomatic => 'Échange automatique';
+
+  @override
+  String get waterChangePlannerBatchHelp =>
+      'L’eau est retirée, remplacée, puis entièrement mélangée avant le changement suivant.';
+
+  @override
+  String get waterChangePlannerAutomaticHelp =>
+      'L’ancienne et la nouvelle eau circulent en même temps dans un aquarium mélangé en continu.';
+
+  @override
+  String get waterChangePlannerNoTank =>
+      'Ajoute un aquarium avant de planifier un changement d’eau.';
+
+  @override
+  String get waterChangePlannerNoParameters =>
+      'Suis un paramètre dissous avant d’utiliser ce planificateur.';
+
+  @override
+  String get waterChangePlannerParameter => 'Paramètre dissous';
+
+  @override
+  String waterChangePlannerTankVolume(Object unit) {
+    return 'Volume d’eau du système ($unit)';
+  }
+
+  @override
+  String waterChangePlannerChangeVolume(Object unit) {
+    return 'Eau changée à chaque fois ($unit)';
+  }
+
+  @override
+  String waterChangePlannerCurrent(Object unit) {
+    return 'Valeur actuelle ($unit)';
+  }
+
+  @override
+  String waterChangePlannerReplacement(Object unit) {
+    return 'Valeur de l’eau neuve ($unit)';
+  }
+
+  @override
+  String waterChangePlannerTarget(Object unit) {
+    return 'Valeur cible ($unit, facultatif)';
+  }
+
+  @override
+  String get waterChangePlannerPlannedChanges => 'Changements à projeter';
+
+  @override
+  String get waterChangePlannerCalculate => 'Calculer la projection';
+
+  @override
+  String get waterChangePlannerNonNegativeError =>
+      'Saisis zéro ou un nombre positif.';
+
+  @override
+  String get waterChangePlannerCountError =>
+      'Saisis un nombre entier de 1 à 10 000.';
+
+  @override
+  String get waterChangePlannerVolumeError =>
+      'Chaque changement doit rester inférieur ou égal au volume d’eau du système.';
+
+  @override
+  String waterChangePlannerReadingDate(Object date) {
+    return 'Dernière mesure du $date';
+  }
+
+  @override
+  String waterChangePlannerReadingStale(Object date) {
+    return 'La dernière mesure du $date date de plus de 30 jours — modifie-la ou mesure à nouveau.';
+  }
+
+  @override
+  String get waterChangePlannerProjection => 'Projection';
+
+  @override
+  String get waterChangePlannerAfterOne => 'Après un changement';
+
+  @override
+  String waterChangePlannerAfterPlanned(int count) {
+    return 'Après $count changements';
+  }
+
+  @override
+  String get waterChangePlannerEffectiveChanged => 'Changement cumulé effectif';
+
+  @override
+  String get waterChangePlannerTargetSchedule => 'Plan jusqu’à la cible';
+
+  @override
+  String get waterChangePlannerTargetOptional =>
+      'Saisis une cible pour calculer un plan.';
+
+  @override
+  String get waterChangePlannerAlreadyAtTarget =>
+      'La valeur actuelle correspond déjà à la cible.';
+
+  @override
+  String get waterChangePlannerTargetUnreachable =>
+      'Cette eau neuve ne permet pas d’atteindre la cible. Sa valeur doit dépasser la cible dans le sens souhaité.';
+
+  @override
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  ) {
+    return '$count changements · $total au total · $effective effectif';
+  }
+
+  @override
+  String waterChangePlannerScheduleOmitted(int count) {
+    return '… $count changements intermédiaires …';
+  }
+
+  @override
+  String waterChangePlannerStep(int number) {
+    return 'Changement $number';
+  }
+
+  @override
+  String get waterChangePlannerAssumption =>
+      'Estimation uniquement : elle suppose un volume d’eau constant, un mélange complet et aucune nouvelle production, consommation, dose, précipitation ou autre variation entre les changements d’eau. Mesure après chaque changement ; le résultat calculé n’est pas garanti.';
+
+  @override
   String get reefUnitConverter => 'Convertisseur d’unités récifales';
 
   @override

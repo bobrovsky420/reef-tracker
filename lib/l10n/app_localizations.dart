@@ -1571,6 +1571,214 @@ abstract class AppLocalizations {
   /// **'Convert ppt ⇄ SG ⇄ true density'**
   String get salinityCalculatorSubtitle;
 
+  /// No description provided for @waterChangePlannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Water-change planner'**
+  String get waterChangePlannerTitle;
+
+  /// No description provided for @waterChangePlannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Project batch or automatic water changes'**
+  String get waterChangePlannerSubtitle;
+
+  /// No description provided for @waterChangePlannerIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'See how one or repeated water changes may move a measured parameter, using this aquarium\'s volume and latest reading.'**
+  String get waterChangePlannerIntro;
+
+  /// No description provided for @waterChangePlannerBatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch changes'**
+  String get waterChangePlannerBatch;
+
+  /// No description provided for @waterChangePlannerAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic exchange'**
+  String get waterChangePlannerAutomatic;
+
+  /// No description provided for @waterChangePlannerBatchHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Water is removed, replaced, then fully mixed before the next change.'**
+  String get waterChangePlannerBatchHelp;
+
+  /// No description provided for @waterChangePlannerAutomaticHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Old and new water move at the same time through a continuously mixed aquarium.'**
+  String get waterChangePlannerAutomaticHelp;
+
+  /// No description provided for @waterChangePlannerNoTank.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an aquarium before planning a water change.'**
+  String get waterChangePlannerNoTank;
+
+  /// No description provided for @waterChangePlannerNoParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Track a dissolved water parameter before using this planner.'**
+  String get waterChangePlannerNoParameters;
+
+  /// No description provided for @waterChangePlannerParameter.
+  ///
+  /// In en, this message translates to:
+  /// **'Dissolved parameter'**
+  String get waterChangePlannerParameter;
+
+  /// No description provided for @waterChangePlannerTankVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'System-water volume ({unit})'**
+  String waterChangePlannerTankVolume(Object unit);
+
+  /// No description provided for @waterChangePlannerChangeVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Water changed each time ({unit})'**
+  String waterChangePlannerChangeVolume(Object unit);
+
+  /// No description provided for @waterChangePlannerCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current value ({unit})'**
+  String waterChangePlannerCurrent(Object unit);
+
+  /// No description provided for @waterChangePlannerReplacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacement-water value ({unit})'**
+  String waterChangePlannerReplacement(Object unit);
+
+  /// No description provided for @waterChangePlannerTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target value ({unit}, optional)'**
+  String waterChangePlannerTarget(Object unit);
+
+  /// No description provided for @waterChangePlannerPlannedChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes to project'**
+  String get waterChangePlannerPlannedChanges;
+
+  /// No description provided for @waterChangePlannerCalculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate projection'**
+  String get waterChangePlannerCalculate;
+
+  /// No description provided for @waterChangePlannerNonNegativeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter zero or a positive number.'**
+  String get waterChangePlannerNonNegativeError;
+
+  /// No description provided for @waterChangePlannerCountError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number from 1 to 10,000.'**
+  String get waterChangePlannerCountError;
+
+  /// No description provided for @waterChangePlannerVolumeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Each change must not exceed the system-water volume.'**
+  String get waterChangePlannerVolumeError;
+
+  /// No description provided for @waterChangePlannerReadingDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest reading from {date}'**
+  String waterChangePlannerReadingDate(Object date);
+
+  /// No description provided for @waterChangePlannerReadingStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest reading from {date} is over 30 days old — edit it or measure again.'**
+  String waterChangePlannerReadingStale(Object date);
+
+  /// No description provided for @waterChangePlannerProjection.
+  ///
+  /// In en, this message translates to:
+  /// **'Projection'**
+  String get waterChangePlannerProjection;
+
+  /// No description provided for @waterChangePlannerAfterOne.
+  ///
+  /// In en, this message translates to:
+  /// **'After one change'**
+  String get waterChangePlannerAfterOne;
+
+  /// No description provided for @waterChangePlannerAfterPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'After {count} changes'**
+  String waterChangePlannerAfterPlanned(int count);
+
+  /// No description provided for @waterChangePlannerEffectiveChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective cumulative change'**
+  String get waterChangePlannerEffectiveChanged;
+
+  /// No description provided for @waterChangePlannerTargetSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule to target'**
+  String get waterChangePlannerTargetSchedule;
+
+  /// No description provided for @waterChangePlannerTargetOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a target to calculate a schedule.'**
+  String get waterChangePlannerTargetOptional;
+
+  /// No description provided for @waterChangePlannerAlreadyAtTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'The current value is already at the target.'**
+  String get waterChangePlannerAlreadyAtTarget;
+
+  /// No description provided for @waterChangePlannerTargetUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'This replacement water cannot reach the target. Its value must lie beyond the target in the direction you want to move.'**
+  String get waterChangePlannerTargetUnreachable;
+
+  /// No description provided for @waterChangePlannerTargetSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 change} other{{count} changes}} · {total} total · {effective} effective'**
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  );
+
+  /// No description provided for @waterChangePlannerScheduleOmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'… {count, plural, one{1 intermediate change} other{{count} intermediate changes}} …'**
+  String waterChangePlannerScheduleOmitted(int count);
+
+  /// No description provided for @waterChangePlannerStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Change {number}'**
+  String waterChangePlannerStep(int number);
+
+  /// No description provided for @waterChangePlannerAssumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate only: this assumes constant water volume, complete mixing, and no new production, consumption, dosing, precipitation, or other change between water changes. Measure after each change; the calculated endpoint is not guaranteed.'**
+  String get waterChangePlannerAssumption;
+
   /// No description provided for @reefUnitConverter.
   ///
   /// In en, this message translates to:

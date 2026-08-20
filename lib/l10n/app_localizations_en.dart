@@ -871,6 +871,160 @@ class AppLocalizationsEn extends AppLocalizations {
   String get salinityCalculatorSubtitle => 'Convert ppt ⇄ SG ⇄ true density';
 
   @override
+  String get waterChangePlannerTitle => 'Water-change planner';
+
+  @override
+  String get waterChangePlannerSubtitle =>
+      'Project batch or automatic water changes';
+
+  @override
+  String get waterChangePlannerIntro =>
+      'See how one or repeated water changes may move a measured parameter, using this aquarium\'s volume and latest reading.';
+
+  @override
+  String get waterChangePlannerBatch => 'Batch changes';
+
+  @override
+  String get waterChangePlannerAutomatic => 'Automatic exchange';
+
+  @override
+  String get waterChangePlannerBatchHelp =>
+      'Water is removed, replaced, then fully mixed before the next change.';
+
+  @override
+  String get waterChangePlannerAutomaticHelp =>
+      'Old and new water move at the same time through a continuously mixed aquarium.';
+
+  @override
+  String get waterChangePlannerNoTank =>
+      'Add an aquarium before planning a water change.';
+
+  @override
+  String get waterChangePlannerNoParameters =>
+      'Track a dissolved water parameter before using this planner.';
+
+  @override
+  String get waterChangePlannerParameter => 'Dissolved parameter';
+
+  @override
+  String waterChangePlannerTankVolume(Object unit) {
+    return 'System-water volume ($unit)';
+  }
+
+  @override
+  String waterChangePlannerChangeVolume(Object unit) {
+    return 'Water changed each time ($unit)';
+  }
+
+  @override
+  String waterChangePlannerCurrent(Object unit) {
+    return 'Current value ($unit)';
+  }
+
+  @override
+  String waterChangePlannerReplacement(Object unit) {
+    return 'Replacement-water value ($unit)';
+  }
+
+  @override
+  String waterChangePlannerTarget(Object unit) {
+    return 'Target value ($unit, optional)';
+  }
+
+  @override
+  String get waterChangePlannerPlannedChanges => 'Changes to project';
+
+  @override
+  String get waterChangePlannerCalculate => 'Calculate projection';
+
+  @override
+  String get waterChangePlannerNonNegativeError =>
+      'Enter zero or a positive number.';
+
+  @override
+  String get waterChangePlannerCountError =>
+      'Enter a whole number from 1 to 10,000.';
+
+  @override
+  String get waterChangePlannerVolumeError =>
+      'Each change must not exceed the system-water volume.';
+
+  @override
+  String waterChangePlannerReadingDate(Object date) {
+    return 'Latest reading from $date';
+  }
+
+  @override
+  String waterChangePlannerReadingStale(Object date) {
+    return 'Latest reading from $date is over 30 days old — edit it or measure again.';
+  }
+
+  @override
+  String get waterChangePlannerProjection => 'Projection';
+
+  @override
+  String get waterChangePlannerAfterOne => 'After one change';
+
+  @override
+  String waterChangePlannerAfterPlanned(int count) {
+    return 'After $count changes';
+  }
+
+  @override
+  String get waterChangePlannerEffectiveChanged =>
+      'Effective cumulative change';
+
+  @override
+  String get waterChangePlannerTargetSchedule => 'Schedule to target';
+
+  @override
+  String get waterChangePlannerTargetOptional =>
+      'Enter a target to calculate a schedule.';
+
+  @override
+  String get waterChangePlannerAlreadyAtTarget =>
+      'The current value is already at the target.';
+
+  @override
+  String get waterChangePlannerTargetUnreachable =>
+      'This replacement water cannot reach the target. Its value must lie beyond the target in the direction you want to move.';
+
+  @override
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  ) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes',
+      one: '1 change',
+    );
+    return '$_temp0 · $total total · $effective effective';
+  }
+
+  @override
+  String waterChangePlannerScheduleOmitted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count intermediate changes',
+      one: '1 intermediate change',
+    );
+    return '… $_temp0 …';
+  }
+
+  @override
+  String waterChangePlannerStep(int number) {
+    return 'Change $number';
+  }
+
+  @override
+  String get waterChangePlannerAssumption =>
+      'Estimate only: this assumes constant water volume, complete mixing, and no new production, consumption, dosing, precipitation, or other change between water changes. Measure after each change; the calculated endpoint is not guaranteed.';
+
+  @override
   String get reefUnitConverter => 'Reef unit converter';
 
   @override

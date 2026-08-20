@@ -881,6 +881,149 @@ class AppLocalizationsRu extends AppLocalizations {
       'Перевод ppt ⇄ SG ⇄ истинная плотность';
 
   @override
+  String get waterChangePlannerTitle => 'Планировщик подмен воды';
+
+  @override
+  String get waterChangePlannerSubtitle =>
+      'Расчёт разовых и автоматических подмен';
+
+  @override
+  String get waterChangePlannerIntro =>
+      'Посмотри, как одна или несколько подмен воды могут изменить измеряемый параметр с учётом объёма и последнего измерения этого аквариума.';
+
+  @override
+  String get waterChangePlannerBatch => 'Разовые подмены';
+
+  @override
+  String get waterChangePlannerAutomatic => 'Автоматическая подмена';
+
+  @override
+  String get waterChangePlannerBatchHelp =>
+      'Вода удаляется, заменяется и полностью перемешивается перед следующей подменой.';
+
+  @override
+  String get waterChangePlannerAutomaticHelp =>
+      'Старая и новая вода одновременно проходят через постоянно перемешиваемый аквариум.';
+
+  @override
+  String get waterChangePlannerNoTank =>
+      'Добавь аквариум, прежде чем планировать подмену воды.';
+
+  @override
+  String get waterChangePlannerNoParameters =>
+      'Начни отслеживать растворённый параметр воды, прежде чем использовать этот планировщик.';
+
+  @override
+  String get waterChangePlannerParameter => 'Растворённый параметр';
+
+  @override
+  String waterChangePlannerTankVolume(Object unit) {
+    return 'Объём воды в системе ($unit)';
+  }
+
+  @override
+  String waterChangePlannerChangeVolume(Object unit) {
+    return 'Объём каждой подмены ($unit)';
+  }
+
+  @override
+  String waterChangePlannerCurrent(Object unit) {
+    return 'Текущее значение ($unit)';
+  }
+
+  @override
+  String waterChangePlannerReplacement(Object unit) {
+    return 'Значение новой воды ($unit)';
+  }
+
+  @override
+  String waterChangePlannerTarget(Object unit) {
+    return 'Целевое значение ($unit, необязательно)';
+  }
+
+  @override
+  String get waterChangePlannerPlannedChanges =>
+      'Количество подмен для расчёта';
+
+  @override
+  String get waterChangePlannerCalculate => 'Рассчитать прогноз';
+
+  @override
+  String get waterChangePlannerNonNegativeError =>
+      'Введи ноль или положительное число.';
+
+  @override
+  String get waterChangePlannerCountError =>
+      'Введи целое число от 1 до 10 000.';
+
+  @override
+  String get waterChangePlannerVolumeError =>
+      'Одна подмена не должна превышать объём воды в системе.';
+
+  @override
+  String waterChangePlannerReadingDate(Object date) {
+    return 'Последнее измерение от $date';
+  }
+
+  @override
+  String waterChangePlannerReadingStale(Object date) {
+    return 'Последнее измерение от $date старше 30 дней — измени его или измерь снова.';
+  }
+
+  @override
+  String get waterChangePlannerProjection => 'Прогноз';
+
+  @override
+  String get waterChangePlannerAfterOne => 'После одной подмены';
+
+  @override
+  String waterChangePlannerAfterPlanned(int count) {
+    return 'После $count подмен';
+  }
+
+  @override
+  String get waterChangePlannerEffectiveChanged =>
+      'Эффективная суммарная подмена';
+
+  @override
+  String get waterChangePlannerTargetSchedule => 'План до целевого значения';
+
+  @override
+  String get waterChangePlannerTargetOptional =>
+      'Введи целевое значение, чтобы рассчитать план.';
+
+  @override
+  String get waterChangePlannerAlreadyAtTarget =>
+      'Текущее значение уже равно целевому.';
+
+  @override
+  String get waterChangePlannerTargetUnreachable =>
+      'С этой новой водой нельзя достичь цели. Её значение должно находиться за целью в направлении нужного изменения.';
+
+  @override
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  ) {
+    return '$count подмен · всего $total · эффективно $effective';
+  }
+
+  @override
+  String waterChangePlannerScheduleOmitted(int count) {
+    return '… промежуточных подмен: $count …';
+  }
+
+  @override
+  String waterChangePlannerStep(int number) {
+    return 'Подмена $number';
+  }
+
+  @override
+  String get waterChangePlannerAssumption =>
+      'Это только оценка: предполагаются постоянный объём воды, полное перемешивание и отсутствие нового образования, потребления, дозирования, осаждения или других изменений между подменами. Измеряй после каждой подмены; рассчитанный результат не гарантирован.';
+
+  @override
   String get reefUnitConverter => 'Конвертер единиц рифа';
 
   @override

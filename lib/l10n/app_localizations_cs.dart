@@ -874,6 +874,146 @@ class AppLocalizationsCs extends AppLocalizations {
   String get salinityCalculatorSubtitle => 'Převod ppt ⇄ SG ⇄ skutečná hustota';
 
   @override
+  String get waterChangePlannerTitle => 'Plánovač výměny vody';
+
+  @override
+  String get waterChangePlannerSubtitle =>
+      'Projekce jednorázových i automatických výměn';
+
+  @override
+  String get waterChangePlannerIntro =>
+      'Podívej se, jak může jedna nebo více výměn vody ovlivnit naměřený parametr podle objemu tohoto akvária a posledního měření.';
+
+  @override
+  String get waterChangePlannerBatch => 'Jednorázové výměny';
+
+  @override
+  String get waterChangePlannerAutomatic => 'Automatická výměna';
+
+  @override
+  String get waterChangePlannerBatchHelp =>
+      'Voda se odebere, nahradí a před další výměnou se úplně promíchá.';
+
+  @override
+  String get waterChangePlannerAutomaticHelp =>
+      'Stará a nová voda proudí současně průběžně promíchávaným akváriem.';
+
+  @override
+  String get waterChangePlannerNoTank =>
+      'Před plánováním výměny vody přidej akvárium.';
+
+  @override
+  String get waterChangePlannerNoParameters =>
+      'Před použitím plánovače začni sledovat rozpuštěný parametr vody.';
+
+  @override
+  String get waterChangePlannerParameter => 'Rozpuštěný parametr';
+
+  @override
+  String waterChangePlannerTankVolume(Object unit) {
+    return 'Objem vody v systému ($unit)';
+  }
+
+  @override
+  String waterChangePlannerChangeVolume(Object unit) {
+    return 'Objem každé výměny ($unit)';
+  }
+
+  @override
+  String waterChangePlannerCurrent(Object unit) {
+    return 'Aktuální hodnota ($unit)';
+  }
+
+  @override
+  String waterChangePlannerReplacement(Object unit) {
+    return 'Hodnota nové vody ($unit)';
+  }
+
+  @override
+  String waterChangePlannerTarget(Object unit) {
+    return 'Cílová hodnota ($unit, volitelně)';
+  }
+
+  @override
+  String get waterChangePlannerPlannedChanges => 'Počet výměn k projekci';
+
+  @override
+  String get waterChangePlannerCalculate => 'Vypočítat projekci';
+
+  @override
+  String get waterChangePlannerNonNegativeError =>
+      'Zadej nulu nebo kladné číslo.';
+
+  @override
+  String get waterChangePlannerCountError => 'Zadej celé číslo od 1 do 10 000.';
+
+  @override
+  String get waterChangePlannerVolumeError =>
+      'Jedna výměna nesmí překročit objem vody v systému.';
+
+  @override
+  String waterChangePlannerReadingDate(Object date) {
+    return 'Poslední měření z $date';
+  }
+
+  @override
+  String waterChangePlannerReadingStale(Object date) {
+    return 'Poslední měření z $date je starší než 30 dní — uprav ho nebo změř znovu.';
+  }
+
+  @override
+  String get waterChangePlannerProjection => 'Projekce';
+
+  @override
+  String get waterChangePlannerAfterOne => 'Po jedné výměně';
+
+  @override
+  String waterChangePlannerAfterPlanned(int count) {
+    return 'Po $count výměnách';
+  }
+
+  @override
+  String get waterChangePlannerEffectiveChanged =>
+      'Efektivní kumulativní výměna';
+
+  @override
+  String get waterChangePlannerTargetSchedule => 'Plán k cíli';
+
+  @override
+  String get waterChangePlannerTargetOptional => 'Pro výpočet plánu zadej cíl.';
+
+  @override
+  String get waterChangePlannerAlreadyAtTarget =>
+      'Aktuální hodnota už odpovídá cíli.';
+
+  @override
+  String get waterChangePlannerTargetUnreachable =>
+      'S touto novou vodou nelze cíle dosáhnout. Její hodnota musí ležet za cílem ve směru požadované změny.';
+
+  @override
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  ) {
+    return '$count výměn · celkem $total · efektivně $effective';
+  }
+
+  @override
+  String waterChangePlannerScheduleOmitted(int count) {
+    return '… mezikroky: $count …';
+  }
+
+  @override
+  String waterChangePlannerStep(int number) {
+    return 'Výměna $number';
+  }
+
+  @override
+  String get waterChangePlannerAssumption =>
+      'Jde jen o odhad: předpokládá stálý objem vody, úplné promíchání a žádnou novou produkci, spotřebu, dávkování, srážení ani jinou změnu mezi výměnami. Po každé výměně změř hodnotu; vypočtený výsledek není zaručený.';
+
+  @override
   String get reefUnitConverter => 'Převodník jednotek pro útes';
 
   @override

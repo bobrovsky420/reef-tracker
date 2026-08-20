@@ -881,6 +881,147 @@ class AppLocalizationsPl extends AppLocalizations {
       'Przelicz ppt ⇄ SG ⇄ gęstość rzeczywista';
 
   @override
+  String get waterChangePlannerTitle => 'Planer podmiany wody';
+
+  @override
+  String get waterChangePlannerSubtitle =>
+      'Prognoza podmian jednorazowych i automatycznych';
+
+  @override
+  String get waterChangePlannerIntro =>
+      'Sprawdź, jak jedna lub kilka podmian wody może zmienić mierzony parametr na podstawie objętości i ostatniego pomiaru tego akwarium.';
+
+  @override
+  String get waterChangePlannerBatch => 'Podmiany jednorazowe';
+
+  @override
+  String get waterChangePlannerAutomatic => 'Podmiana automatyczna';
+
+  @override
+  String get waterChangePlannerBatchHelp =>
+      'Woda jest usuwana, zastępowana i całkowicie mieszana przed następną podmianą.';
+
+  @override
+  String get waterChangePlannerAutomaticHelp =>
+      'Stara i nowa woda przepływają jednocześnie przez stale mieszane akwarium.';
+
+  @override
+  String get waterChangePlannerNoTank =>
+      'Dodaj akwarium, zanim zaplanujesz podmianę wody.';
+
+  @override
+  String get waterChangePlannerNoParameters =>
+      'Zacznij śledzić rozpuszczony parametr wody, zanim użyjesz tego planera.';
+
+  @override
+  String get waterChangePlannerParameter => 'Rozpuszczony parametr';
+
+  @override
+  String waterChangePlannerTankVolume(Object unit) {
+    return 'Objętość wody w systemie ($unit)';
+  }
+
+  @override
+  String waterChangePlannerChangeVolume(Object unit) {
+    return 'Woda podmieniana za każdym razem ($unit)';
+  }
+
+  @override
+  String waterChangePlannerCurrent(Object unit) {
+    return 'Aktualna wartość ($unit)';
+  }
+
+  @override
+  String waterChangePlannerReplacement(Object unit) {
+    return 'Wartość nowej wody ($unit)';
+  }
+
+  @override
+  String waterChangePlannerTarget(Object unit) {
+    return 'Wartość docelowa ($unit, opcjonalnie)';
+  }
+
+  @override
+  String get waterChangePlannerPlannedChanges => 'Liczba podmian do prognozy';
+
+  @override
+  String get waterChangePlannerCalculate => 'Oblicz prognozę';
+
+  @override
+  String get waterChangePlannerNonNegativeError =>
+      'Wpisz zero lub liczbę dodatnią.';
+
+  @override
+  String get waterChangePlannerCountError =>
+      'Wpisz liczbę całkowitą od 1 do 10 000.';
+
+  @override
+  String get waterChangePlannerVolumeError =>
+      'Jedna podmiana nie może przekraczać objętości wody w systemie.';
+
+  @override
+  String waterChangePlannerReadingDate(Object date) {
+    return 'Ostatni pomiar z $date';
+  }
+
+  @override
+  String waterChangePlannerReadingStale(Object date) {
+    return 'Ostatni pomiar z $date ma ponad 30 dni — zmień go lub zmierz ponownie.';
+  }
+
+  @override
+  String get waterChangePlannerProjection => 'Prognoza';
+
+  @override
+  String get waterChangePlannerAfterOne => 'Po jednej podmianie';
+
+  @override
+  String waterChangePlannerAfterPlanned(int count) {
+    return 'Po $count podmianach';
+  }
+
+  @override
+  String get waterChangePlannerEffectiveChanged => 'Efektywna łączna podmiana';
+
+  @override
+  String get waterChangePlannerTargetSchedule => 'Plan dojścia do celu';
+
+  @override
+  String get waterChangePlannerTargetOptional =>
+      'Wpisz cel, aby obliczyć plan.';
+
+  @override
+  String get waterChangePlannerAlreadyAtTarget =>
+      'Aktualna wartość jest już równa docelowej.';
+
+  @override
+  String get waterChangePlannerTargetUnreachable =>
+      'Ta nowa woda nie pozwoli osiągnąć celu. Jej wartość musi leżeć za celem w kierunku planowanej zmiany.';
+
+  @override
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  ) {
+    return '$count podmian · łącznie $total · efektywnie $effective';
+  }
+
+  @override
+  String waterChangePlannerScheduleOmitted(int count) {
+    return '… $count pośrednich podmian …';
+  }
+
+  @override
+  String waterChangePlannerStep(int number) {
+    return 'Podmiana $number';
+  }
+
+  @override
+  String get waterChangePlannerAssumption =>
+      'To tylko szacunek: zakłada stałą objętość wody, pełne wymieszanie oraz brak nowej produkcji, zużycia, dozowania, wytrącania i innych zmian między podmianami. Mierz po każdej podmianie; obliczony wynik nie jest gwarantowany.';
+
+  @override
   String get reefUnitConverter => 'Przelicznik jednostek rafowych';
 
   @override

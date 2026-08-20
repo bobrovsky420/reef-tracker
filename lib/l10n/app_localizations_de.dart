@@ -875,6 +875,147 @@ class AppLocalizationsDe extends AppLocalizations {
   String get salinityCalculatorSubtitle => 'Umrechnung ppt ⇄ SG ⇄ Dichte';
 
   @override
+  String get waterChangePlannerTitle => 'Wasserwechsel-Planer';
+
+  @override
+  String get waterChangePlannerSubtitle =>
+      'Einzelne oder automatische Wechsel berechnen';
+
+  @override
+  String get waterChangePlannerIntro =>
+      'Sieh, wie ein oder mehrere Wasserwechsel einen Messwert verändern können – mit dem Volumen und dem letzten Messwert dieses Aquariums.';
+
+  @override
+  String get waterChangePlannerBatch => 'Einzelwechsel';
+
+  @override
+  String get waterChangePlannerAutomatic => 'Automatischer Wechsel';
+
+  @override
+  String get waterChangePlannerBatchHelp =>
+      'Wasser wird entnommen, ersetzt und vor dem nächsten Wechsel vollständig gemischt.';
+
+  @override
+  String get waterChangePlannerAutomaticHelp =>
+      'Altes und neues Wasser fließen gleichzeitig durch das ständig durchmischte Aquarium.';
+
+  @override
+  String get waterChangePlannerNoTank =>
+      'Füge ein Aquarium hinzu, bevor du einen Wasserwechsel planst.';
+
+  @override
+  String get waterChangePlannerNoParameters =>
+      'Erfasse einen gelösten Wasserwert, bevor du diesen Planer verwendest.';
+
+  @override
+  String get waterChangePlannerParameter => 'Gelöster Wasserwert';
+
+  @override
+  String waterChangePlannerTankVolume(Object unit) {
+    return 'Systemwasservolumen ($unit)';
+  }
+
+  @override
+  String waterChangePlannerChangeVolume(Object unit) {
+    return 'Wasser je Wechsel ($unit)';
+  }
+
+  @override
+  String waterChangePlannerCurrent(Object unit) {
+    return 'Aktueller Wert ($unit)';
+  }
+
+  @override
+  String waterChangePlannerReplacement(Object unit) {
+    return 'Wert des Wechselwassers ($unit)';
+  }
+
+  @override
+  String waterChangePlannerTarget(Object unit) {
+    return 'Zielwert ($unit, optional)';
+  }
+
+  @override
+  String get waterChangePlannerPlannedChanges => 'Zu berechnende Wechsel';
+
+  @override
+  String get waterChangePlannerCalculate => 'Projektion berechnen';
+
+  @override
+  String get waterChangePlannerNonNegativeError =>
+      'Gib null oder eine positive Zahl ein.';
+
+  @override
+  String get waterChangePlannerCountError =>
+      'Gib eine ganze Zahl von 1 bis 10.000 ein.';
+
+  @override
+  String get waterChangePlannerVolumeError =>
+      'Ein Wechsel darf das Systemwasservolumen nicht überschreiten.';
+
+  @override
+  String waterChangePlannerReadingDate(Object date) {
+    return 'Letzter Messwert vom $date';
+  }
+
+  @override
+  String waterChangePlannerReadingStale(Object date) {
+    return 'Der letzte Messwert vom $date ist älter als 30 Tage – bearbeite ihn oder miss erneut.';
+  }
+
+  @override
+  String get waterChangePlannerProjection => 'Projektion';
+
+  @override
+  String get waterChangePlannerAfterOne => 'Nach einem Wechsel';
+
+  @override
+  String waterChangePlannerAfterPlanned(int count) {
+    return 'Nach $count Wechseln';
+  }
+
+  @override
+  String get waterChangePlannerEffectiveChanged => 'Effektiver Gesamtwechsel';
+
+  @override
+  String get waterChangePlannerTargetSchedule => 'Plan bis zum Ziel';
+
+  @override
+  String get waterChangePlannerTargetOptional =>
+      'Gib ein Ziel ein, um einen Plan zu berechnen.';
+
+  @override
+  String get waterChangePlannerAlreadyAtTarget =>
+      'Der aktuelle Wert entspricht bereits dem Ziel.';
+
+  @override
+  String get waterChangePlannerTargetUnreachable =>
+      'Mit diesem Wechselwasser ist das Ziel nicht erreichbar. Sein Wert muss in der gewünschten Richtung hinter dem Ziel liegen.';
+
+  @override
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  ) {
+    return '$count Wechsel · $total gesamt · $effective effektiv';
+  }
+
+  @override
+  String waterChangePlannerScheduleOmitted(int count) {
+    return '… $count Zwischenschritte …';
+  }
+
+  @override
+  String waterChangePlannerStep(int number) {
+    return 'Wechsel $number';
+  }
+
+  @override
+  String get waterChangePlannerAssumption =>
+      'Nur eine Schätzung: Sie setzt ein konstantes Wasservolumen, vollständige Durchmischung und keine neue Produktion, keinen Verbrauch, keine Dosierung, Ausfällung oder andere Veränderung zwischen den Wasserwechseln voraus. Miss nach jedem Wechsel; der berechnete Endwert ist nicht garantiert.';
+
+  @override
   String get reefUnitConverter => 'Riff-Einheitenrechner';
 
   @override

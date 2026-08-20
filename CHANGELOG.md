@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.1]
 
 ### Added
+- A Standard water-change planner now projects a dissolved parameter after one
+  or repeated batch changes or continuous automatic exchange. It uses the
+  active aquarium's volume, latest reading, target, preferred units and last
+  logged change size, shows effective cumulative replacement and a schedule to
+  reach the target, and states its complete-mixing/no-new-production limits.
 - The salinity converter now accepts density readings from 25 °C-calibrated
   European glass hydrometers such as ARKA and Tropic Marin alongside ppt and
   specific gravity. An optional water temperature corrects prepared saltwater
