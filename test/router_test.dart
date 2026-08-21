@@ -16,6 +16,7 @@ import 'package:reeftracker/domain/setup_type.dart';
 import 'package:reeftracker/features/actions/schedule_screen.dart';
 import 'package:reeftracker/features/add_reading/add_reading_screen.dart';
 import 'package:reeftracker/features/calculator/salinity_calculator_screen.dart';
+import 'package:reeftracker/features/calculator/water_change_planner_screen.dart';
 import 'package:reeftracker/features/dashboard/dashboard_screen.dart';
 import 'package:reeftracker/features/devices/devices_screen.dart';
 import 'package:reeftracker/features/dosing/dose_calculator_screen.dart';
@@ -153,6 +154,7 @@ void main() {
     ('/settings/reminders', RemindersScreen),
     ('/schedule', MaintenanceScheduleScreen),
     ('/calculator/salinity', SalinityCalculatorScreen),
+    ('/calculator/water-change', WaterChangePlannerScreen),
     ('/', HomeShell),
   ];
 
@@ -533,7 +535,9 @@ void main() {
     // its own button that pushes `/settings` (backup restore must stay
     // reachable on a fresh install).
     expect(find.byType(NavigationBar), findsNothing);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
+    final settingsButton = find.byIcon(Icons.settings_outlined);
+    await tester.ensureVisible(settingsButton);
+    await tester.tap(settingsButton);
     await settle(tester);
     expect(find.byType(SettingsScreen), findsOneWidget);
     // The pushed route keeps a back affordance.

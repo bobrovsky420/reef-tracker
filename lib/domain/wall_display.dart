@@ -40,14 +40,8 @@ const Duration kWallSampleRetention = Duration(hours: 48);
 /// The tile graph's time window over `DeviceSamples`.
 const Duration kWallSampleWindow = Duration(hours: 24);
 
-/// Fallback tile-graph window over stored `Readings` when fewer than
-/// [kWallMinSamplePoints] samples exist — the dashboard card's 14-day line.
+/// Tile-graph window for manual-only cards over stored `Readings`.
 const Duration kWallReadingsWindow = Duration(days: 14);
-
-/// Minimum in-window sample points before the 24 h line is drawn; below it the
-/// tile falls back to the 14-day readings sparkline (an empty/one-point graph
-/// on half the grid would look broken, §12m).
-const int kWallMinSamplePoints = 2;
 
 /// Prune cadence: the delete-by-age sweep runs on every Nth poll cycle (plus
 /// once at mode start) rather than on every write.

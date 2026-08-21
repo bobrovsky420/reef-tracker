@@ -15,6 +15,7 @@ class ReefSegmented<T> extends StatelessWidget {
     required this.options,
     required this.selected,
     required this.onChanged,
+    this.optionKeys = const {},
   });
 
   /// `(value, label)` pairs in display order.
@@ -25,6 +26,10 @@ class ReefSegmented<T> extends StatelessWidget {
   /// Called with the tapped option's value (taps on the already-selected
   /// option repeat it — call sites treat writes as idempotent).
   final ValueChanged<T> onChanged;
+
+  /// Optional keys for individual options, useful when a feature needs stable
+  /// interaction targets in widget tests.
+  final Map<T, Key> optionKeys;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +61,7 @@ class ReefSegmented<T> extends StatelessWidget {
               button: true,
               selected: value == selected,
               child: GestureDetector(
+                key: optionKeys[value],
                 onTap: () => onChanged(value),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
@@ -79,6 +85,8 @@ class ReefSegmented<T> extends StatelessWidget {
                   ),
                   child: Text(
                     label,
+                    maxLines: 1,
+                    softWrap: false,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -105,6 +113,7 @@ class ReefSegmented<T> extends StatelessWidget {
         children: [
           for (final (value, label) in options)
             InkWell(
+              key: optionKeys[value],
               onTap: () => onChanged(value),
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -121,6 +130,8 @@ class ReefSegmented<T> extends StatelessWidget {
                     ],
                     Text(
                       label,
+                      maxLines: 1,
+                      softWrap: false,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

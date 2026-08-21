@@ -121,7 +121,15 @@ converted only for display/input.**
 
 Volume is *not* a tracked parameter — it is a property of a tank
 (`volumeLiters`) and of a water change (`amountLiters`). The US gallon is
-`3.785411784 L`. Salinity ↔ SG is linear, anchored at 35 ppt = 1.0264 SG @ 25 °C.
+`3.785411784 L`; one Imperial gallon is `4.54609 L`. Salinity ↔ SG is linear,
+anchored at 35 ppt = 1.0264 SG @ 25 °C. The salinity converter additionally
+accepts a 25 °C-calibrated glass-hydrometer density reading and its sample
+temperature. It uses the atmospheric-pressure UNESCO 1983/EOS-80 standard
+seawater equation plus NIST's nominal hydrometer-glass expansion coefficient
+(26 ppm/°C) to infer practical salinity; 25 °C is the default and most accurate
+instrument path. Density remains converter-only, not a unit preference. The
+standalone reef-unit converter uses dKH as its alkalinity canonical form:
+1 dKH = 0.357 meq/L = 17.848 ppm CaCO₃.
 Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 
 ## Domain layer (`lib/domain/`) — static, no DB migrations
@@ -131,6 +139,9 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `zones.dart` | `ZoneBounds{amberLow, greenLow, greenHigh, amberHigh}` + `classify(value) → Zone` (green/amber/red/unknown). **Single source of truth for zone color logic.** (How a zone *renders* — its color/icon — is the `ZoneVisuals` extension in `widgets/zone_visuals.dart`, keeping this file Flutter-free; #53.) Any bound may be null = unbounded on that side, **but an amber bound requires its matching green bound on the same side** (enforced by the bound editors' `_pairsOk()` check; amber-without-green is what produced the old chart-band overlap). Green = `[greenLow, greenHigh]`; amber = just outside green but within amber bounds; red = beyond an amber bound. `classify` deliberately tests **red before green**, so a beyond-amber value can't short-circuit to "green" through an open (null) green side. Bounds violating the ordering invariant (`isValid` = present bounds non-decreasing; violations are possible only via restored/hand-edited backups, the editors validate) are treated as **unusable**: `classify` returns `unknown` and `zoneBands` paints nothing, instead of labeling every value amber. Amber-only bounds (both greens null) classify — and paint — the region between the ambers as green, keeping tile color and chart bands in agreement. |
 | `clock.dart` | Wall-clock helpers, `now`-injectable/testable: `ageSince(t, {now})` (difference clamped to `>= 0`) and `daysSince(t, {now})` (whole days, **rounded** not truncated, `>= 0`). Used so a future or clock-skewed timestamp reads as "just now"/age 0 rather than a negative duration that would appear "fresh" or "-N days ago" (freshness, "time ago", "not tested for N days"). Rounding (not truncating) avoids under-counting: a reading 18 h into its 7th day reads as 7 days, not 6 — which matters right at the 30-day health-freshness cutoff. |
 | `units.dart` | Unit enums (`TempUnit`, `SalinityUnit`, `VolumeUnit`), conversions, `UnitPrefs`, and `ParamPresentation` (format/parse) — including the fixed catalog presentation for micro elements (U17): canonical storage stays ppm, display units mirror the ICP report — mg/L (identity) for the majors/halogens, µg/L (×`displayFactor` 1000) for traces/contaminants — and the stored per-tank unit label is **ignored** in favor of the catalog's (`unitFixed`, so rows seeded under an earlier catalog — 'ppm', or 'µg/L' for iodine/silicon before they moved to mg/L — can't mislabel a value). `parseUserDouble` is **locale-aware** (via `Intl.defaultLocale`): the locale's decimal separator is always a decimal, the opposite separator/space in strict thousands positions is grouping (`1,300` → 1300 in en, 1.3 in cs/de), a lone opposite separator that can't be grouping is a tolerant decimal (`2,5` on comma keyboards in an en app), and mixed-separator input is rejected. Display formatting is the mirror image: `formatLocaleNumber`/`formatLocaleNumberTrim` render with the locale's decimal separator (grouping deliberately off — grouped output with decimals would mix separators, which the parser rejects, and formatted values are seeded back into edit fields); all user-facing number formatting routes through them (`ParamPresentation.format`, volumes, dose amounts, ratios, chart axes) — including live device values, via `widgets/device_values.dart` (#102): reading chips, ReefBeat status rows and dosing volumes format locale-aware there, and **every displayed temperature follows the TempUnit preference** — deliberately including equipment temperatures (ReefRun motors, ReefLED heatsinks), so a °F keeper never reads °C; non-temperature device readings keep the unit the device reported (a salinity probe's ppt converts to canonical SG when it enters a save/sample path). |
+| `water_change_planner.dart` | Pure, DB-free U50 projection math for dissolved parameters. A discrete batch retains `(1 − changeVolume/systemVolume)^n` of the original water after `n` fully mixed changes; a simultaneous continuous automatic exchange retains `e^(−n·changeVolume/systemVolume)`. Both paths report the projected concentration and effective cumulative replacement (`1 − retained`). `waterChangesToReachTarget` returns the minimum whole changes that reach or pass a target only when replacement water lies strictly beyond that target; replacement equal to the target is correctly treated as an asymptote, not a finite promise. Inputs are unit-agnostic linear concentrations and canonical litres; salinity is converted SG→ppt at the UI boundary. The model assumes constant volume, complete mixing, and no production/consumption/dosing/precipitation between changes. |
+| `salinity_planner.dart` | Pure, DB-free U50 salt preparation and constant-volume correction math. `SaltMixCalibration` defines a keeper-measured commercial mix as grams per litre of **final prepared water** at a reference ppt; no product factor is guessed from salinity. `calibrateSaltMixGramsPerLiter` normalizes a measured batch, `saltMixMassGrams` scales final volume and target ppt, `salinityCorrectionExchangeLiters` applies `V × (target − current) / (replacement − current)` with replacement water strictly beyond the target, and `additionalSaltEquivalentGrams` reports the missing-salt equivalent for a low tank without presenting it as a direct dose. Every input is litres/ppt; SG and preferred-volume conversion stay at the UI boundary. |
+| `salt_mix_catalog.dart` | Model + lookups for U50's commercial-salt catalogue. The 16 launch products are keyed by stable product id and retain a manufacturer-backed normalized g/L seed, reference salinity, evidence basis (final prepared volume, manufacturer ratio, source-water estimate, or batch-backed estimate), source URL, and verification date. Catalogue values are **first-selection seeds**, never global truth: the planner persists the chosen seed for that aquarium/product immediately, visibly distinguishes source-water estimates, and a keeper-measured batch permanently overrides it for that aquarium/product even after switching products or updating the catalogue. Product names are trademarks and remain untranslated; all surrounding UI is localized. The data is generated from `salt_mixes.yaml` as described below. |
 | `parameter_catalog.dart` | `kReefParameters` — the master list: the **core** dashboard set (temp, pH, salinity, alk, Ca, Mg, NO₃, PO₄, NH₃/₄, NO₂, ORP) plus the 33-element ICP **micro panel** (U17). The data is **generated from `parameters.yaml`** (see the row below); this file owns the `ParameterDef` model + lookups. Each `ParameterDef` carries a `ParamCategory` (core / major / trace / contaminant — `isCoreParam` and `kMicroParameters` are the surface filters), an element `symbol` for micro elements, and a fixed display unit matching the ICP report (mg/L for Na/K/S/B/Br/Sr/I/Si, µg/L via `displayFactor` 1000 for traces/contaminants — over canonical-ppm storage in both cases). Sr/I/Fe predate the panel and were recategorized to `trace`, K later to `major` (keys and stored ppm values unchanged; iron additionally displays in µg/L — presentation-only). Plus `kParameterByKey` lookup and `formatParamValue`. Each `ParameterDef` also carries **value-sanity limits in canonical units**: `minValue` = hard physical floor (0 for concentrations, 1.0 for SG; ORP has none — legitimately negative) and a deliberately generous `plausibleMin`/`plausibleMax` pair (e.g. Mg 800–2000, SG 1.0–1.05). `checkParamValue(paramKey, canonicalValue)` → `ParamValueCheck` (ok / impossible / implausible): **impossible** values are rejected by the reading inputs outright; **implausible** ones require an explicit "Save anyway" confirmation that echoes the value as parsed next to the typical range — the backstop that turns a locale decimal-separator mis-parse (`1,300` → 1.3) into a visible prompt instead of silent data corruption, while keeping extreme-but-real crash readings recordable. Enforced on the canonical value (after °F/ppt conversion) by **every** write path through one shared dialog, `widgets/implausible_value_dialog.dart#showImplausibleValuesDialog` (Add Reading, the history value-edit dialog, the micro and ICP forms, both Hanna paths, the checker scan, and — since #71 — the Devices save funnel); it takes `SuspectValue`s and returns save / skip / cancel, so no screen re-implements the wording or the "typical min–max" line. `isRailValue(paramKey, value)` is its companion for **device** data: a value sitting exactly on a floor that is also the plausible minimum (0 dKH, SG 1.0 = no salt) is a legal reading `checkParamValue` must call `ok`, but from a probe it is the "no signal" rail, so the device paths question it (`deviceSuspectReason`). Each `ParameterDef` further carries the per-parameter domain facts that used to be hardcoded next to their consumers: `defaultBounds` (required for every microelement and available as a setup-independent fallback for optional core parameters — currently ORP; setup-specific core defaults remain in `tank_presets.yaml`), `hobbyKit`, `maxDailyRise` and `importance` — the derived views (`kMicroDefaultBounds`/`kMicroHobbyKitKeys`, `kMaxDailyRiseByElement`, `importanceWeightFor`) stay in `micro.dart`/`supplement_catalog.dart`/`health_score.dart` so call sites are unchanged. |
 | `presets.dart` | `kPresets[SetupType][paramKey] = ZoneBounds`. Which keys are present per setup type = the parameters tracked by default for that type (in listing order). `presetBounds`, `defaultTrackedKeys`. `defaultBoundsFor` resolves the setup preset first, then a catalog `defaultBounds` fallback; this lets optional ORP carry one shared 200 / 250 / 450 / 500 mV range without making it a default dashboard card. Also `kPresetTargets`/`presetTarget` — default **correction targets** (canonical units) per setup type, defined only where the sensible target is *not* the green-zone midpoint (currently alkalinity: soft/LPS 8.5, SPS 8.0, mixed 8.3 dKH); seeded into `TrackedParameters.targetValue`, editable per tank. **The data (`kPresets`/`kPresetTargets`) is generated from `tank_presets.yaml`** (see below); this file owns the lookups. |
 | `micro.dart` | Microelements (U17) domain rules. `kMicroDefaultBounds` — default zone bounds per element in canonical ppm (derived from the catalog's per-element `defaultBounds`, edited in `parameters.yaml`), anchored on natural seawater / ICP-lab target ranges — Fe, Si, Zn, V, Cu, Ni, Mo, Li, Al, Sb, Sn, Ag, W, La, Ti, As, Cd, Hg and Pb follow the **Fauna Marin lab reference bands** read off that lab's report gauges (where it publishes a bare reference range and no gauge, the range end is `greenHigh` and `amberHigh` is +10%, the ratio its gauged elements use). Sr deliberately follows that report's *prose* recommendation (green 7–10 mg/L) rather than its gauge (6.5–8.0), whose green band sits below natural seawater (~8.1 mg/L) and would amber-flag an NSW-matching tank — the NSW-is-green invariant is pinned in `micro_test.dart` (TODO.md #81 comment 4). Contaminants stay **one-sided** (green up to a ceiling — no "too little lead") even where that lab states a lower reference bound. Silicon is the one element with a green *floor*, and its low side is deliberately **soft**: `amberLow` is 0, so the whole 0–0.1 mg/L range — including the zero many reefkeepers run on purpose — classifies amber, never red (`zones.dart` only reds beyond a *defined* amber bound, and nothing sits below 0). The FM gauge's red-at-zero shape was rejected as an alarm generator on healthy tanks (TODO.md #81 comment 6); zero-Si-reads-amber is pinned in `micro_test.dart`. Used as the fallback when a tank has no `TrackedParameters` row for an element and as the seed when one is created. `kMicroHobbyKitKeys` (the catalog's `hobbyKit`-flagged elements, in catalog order — Sr/I/Fe, the elements home test kits exist for), and `computeMicroStatus(inputs)` → `MicroStatus` (measured / out-of-range counts, worst zone, newest sample date) — the panel's own summary, deliberately **outside** the tank health score: micro is measured on an ICP cadence (months), which the 30-day core freshness rule would permanently read as stale. |
@@ -150,15 +161,17 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `parameters.yaml` + `parameter_catalog.g.dart` | Same pattern for the parameter catalog: `parameters.yaml` (commented, hand-edited, **order = micro-panel row order**) is the source of truth; `dart run tool/gen_parameters.dart` validates it (unique keys/symbols; category ∈ core/major/trace/contaminant; microelements carry a symbol; `displayFactor` works for core nitrite and microelements, `hobbyKit` is micro-only, `importance` core-only; `defaultBounds` is required for microelements and optional as a setup-independent core fallback — ascending (non-decreasing, matching the bound editors' `orderOk`: equal neighbours express "no amber step on that side", see silicon), amber bounds green-paired, inside the plausible range; ordered bounds, plausible bounds paired) and generates the `part` file `parameter_catalog.g.dart` (`const kReefParameters`). The generator deliberately does **not** import the package (its output *is* part of it — must stay runnable right after build_runner deletes the file), unlike `gen_supplements`, which imports the parameter catalog and therefore runs after `gen_parameters`. |
 | `tank_presets.yaml` + `presets.g.dart` + `ratio.g.dart` | Same pattern for the setup-type presets: `tank_presets.yaml` (commented, hand-edited; per-setup sections whose **listing = default tracked set, order = seeding order**, each row a bounds quadruple + optional `target`) is the source of truth; `dart run tool/gen_tank_presets.dart` validates it (every `SetupType` name present and nothing else; keys are core parameters in `parameters.yaml`; greenLow/greenHigh required, bounds strictly ascending and inside the plausible range; `target` inside the green range) and generates the `part` file `presets.g.dart` (`const kPresets`/`kPresetTargets`). The file's `ratios` section (every `RatioKind` name, full strictly-ascending quadruples) generates the second `part` file `ratio.g.dart` (`const kRatioDefaultBounds`). Like `gen_micro_views`, the generator validates against `parameters.yaml` directly instead of importing the package. `test/presets_test.dart` re-checks the invariants on the generated data. |
 | `ro_defaults.yaml` + `ro.g.dart` | Same pattern for the RO unit's default stage set (kept apart from `tank_presets.yaml` because the RO unit is **device**-scoped): `ro_defaults.yaml` is the source of truth (listing order = seed order = the water path; `lifespanDays` in plain days, 30/month, one value per `RoUsageLevel` — light/moderate/heavy); `dart run tool/gen_ro_defaults.dart` validates it (every non-custom `RoStageType` exactly once — `custom` stages are user-created; every usage level present per stage, lifespans ≥ 1 day, and heavier usage never gets a *longer* lifespan than a lighter one) and generates the `part` file `ro.g.dart` (`const kRoLifespanDaysByUsage`/`kRoDefaultStageOrder`). |
+| `salt_mixes.yaml` + `salt_mix_catalog.g.dart` | Source of truth and generated data for the salt-mix catalogue. Listing order is picker order; `referenceSalinity` preserves whether the manufacturer stated ppt or SG, while the generated model exposes canonical ppt. `dart run tool/gen_salt_mixes.dart` rejects unknown fields, missing/duplicate/non-kebab stable keys (`custom` is reserved), blank names, non-positive strengths, invalid ppt/SG references, unknown evidence bases, non-HTTPS source URLs, and invalid verification dates before writing `kSaltMixProducts`. Edit the YAML, never the `.g.dart`; CI regenerates and diffs it. |
 | `pro_features.dart` + `pro_features.yaml` + `pro_features.g.dart` | Pro-tier capability authorization (U19/T29). `pro_features.yaml` is the source of truth for each paid feature, its permanent Founder grandfathering decision, and every authoritative boundary (`id` + `kind`: route/resource, command, presentation, or configuration). `dart run tool/gen_pro_features.dart` rejects missing/duplicate/invalid boundaries and generates `ProFeature`, `ProCapabilityBoundary`, the exhaustive `kProCapabilityContracts` map, and `kGrandfatheredFeatures`. The handwritten rule remains `purchased ∨ (legacyFree ∧ grandfathered)`; UI consumes it only through `proCapabilityProvider(boundary)`, route/resource screens through reactive `ProCapabilityRoute`, gated intents through `requestProCapability`/`runProCapabilityGated`, and non-Widget services through `ProCapabilityAuthorizer`. Entry buttons are paywall UX, never authorization. The final import commits, tank creation, live device I/O, cloud enable/upload, Wall route/auto-start, derived presentations, and all direct/restored paid routes re-check their typed boundary. Keys and boundary IDs are not persisted. |
 
 ## Data layer (`lib/data/`)
 
-### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 29**
+### Schema (`database.dart`, generated `database.g.dart`) — **schemaVersion 30**
 
 | Table | Key columns |
 |-------|-------------|
-| `Tanks` | id, name, setupType, volumeLiters?, startDate?, notes?, vendor?, model?, createdAt, deletedAt? — `deletedAt` is the soft-delete stamp (U10): non-null rows are hidden from every read path during the delete-undo window and finalized by `hardDeleteTank`/`purgeDeletedTanks` |
+| `Tanks` | id, name, setupType, volumeLiters?, saltMixName?/saltMixGramsPerLiter?/saltMixReferencePpt?/saltMixProductKey? (U50's currently selected salt profile; the stable product key is `custom` for a free-form mix), startDate?, notes?, vendor?, model?, createdAt, deletedAt? — `deletedAt` is the soft-delete stamp (U10): non-null rows are hidden from every read path during the delete-undo window and finalized by `hardDeleteTank`/`purgeDeletedTanks` |
+| `SaltMixCalibrations` | tankId + productKey (composite PK), displayName, gramsPerLiter, referencePpt, measured, updatedAt — one remembered U50 calibration per aquarium/product. A catalogue seed is stored with `measured=false` on first selection; calibrating a real final batch replaces that row with `measured=true`, which always wins over catalogue changes. The `custom` row preserves pre-catalogue U50 data through the v31 migration. Rows cascade with their aquarium and ride manual, automatic, and cloud backups. |
 | `TrackedParameters` | id, tankId (FK cascade), paramKey, unit, enabled, displayOrder, testCadenceDays? — "remind to test every N days" (U1), null = no reminder. Carries only per-tank **facts**; zone bounds and the correction target moved to `ParameterOverrides` in schema v28 |
 | `ParameterOverrides` | tankId + paramKey (composite PK), tankId FK cascade, amberLow?/greenLow?/greenHigh?/amberHigh?, targetValue? — a tank's **override** of a parameter's zones and correction target. The *presence of the row* is the signal: a row means the user chose these values, no row means "follow the defaults", which are resolved on read by `defaultBoundsFor`/`defaultTargetFor` (setup-type preset first, then the catalog fallback used by microelements and optional core ORP). Nulls *inside* a row keep their usual meaning — unbounded on that side — so one-sided ceilings stay expressible, and an all-null row is a legitimate "show this parameter with no zones at all". Keyed by paramKey rather than by `TrackedParameters.id` (like `RatioVisibilities`) so an override outlives untracking its parameter: removing a parameter and adding it back restores the user's settings |
 | `Readings` | id, tankId (FK cascade), paramKey, value (canonical), takenAt, note?, groupId? — `groupId` tags readings entered together as one add-reading batch (generated by `newReadingGroupId`, no uuid dependency); pre-v13 rows get a `legacy-` id backfilled from their old same-timestamp grouping (v19 migration + restore), a null means standalone |
@@ -175,7 +188,7 @@ Carbon-change weight is stored in **grams** (no unit preference, suffix `g`).
 | `RoStageReplacements` | id, stageId (FK cascade → RoStages), replacedAt, note? — the replacement log; the latest row per stage is the elastic due anchor. A log (not a `lastReplacedAt` column) so "mark replaced" gets the standard undo treatment and history stays visible |
 | `ImportSources` | tankId + source (composite PK; tankId FK cascade), location?, importedUpTo?, rewound — per-(tank, source) state of the measurement import (U32, v23): the remembered external location → tank mapping (Hanna's `Sample Location`), the dedupe **watermark** (newest imported reading timestamp; an import takes strictly newer rows; null = ask the first-import cutoff question), and the one-shot `rewound` flag set by the settings rewind/reset actions (the next import diffs candidates against existing readings instead of trusting the watermark). **Rides backups** — a restore must keep the watermark consistent with the restored readings, unlike the device-local sync-state settings |
 | `Devices` | id, kind (`reeffactory`\|`hanna`\|`reefbeat`\|`apex`), identifier (**unique** — serial / BLE id / hwid, so a device that changes DHCP address stays one row), name?, model?, address? (LAN host for ReefFactory/ReefBeat/Apex; null for Hanna), tankId? (FK setNull), firstSeenAt, lastSeenAt?, displayOrder — manual card order on the dashboards (v25; one sequence per `kind`, new devices take max+1, ties fall back to the display name `name ?? model ?? identifier` = `deviceDisplayName`), username? — the login name for an authenticated device API (v26; Apex only). The matching **password is deliberately not a column** (#68, v27 dropped the one v26 added): this table rides Android Auto Backup and device transfer inside the raw SQLite file, so it lives in the backup-excluded `.device_secrets` sidecar keyed by `identifier` (`device_secrets.dart`) — connected-device inventory (U36, v24). The ReefFactory dashboard owns `reeffactory` rows, the ReefBeat dashboard `reefbeat` rows and the Apex dashboard `apex` rows (add / refresh / reorder / remove); the Hanna flow records its checker on first connect; Settings → Connected devices is a read-only union of all kinds, still ordered kind-then-oldest |
-| `DeviceSamples` | tankId + deviceIdentifier + paramKey + bucketStart (composite PK), value/minValue/maxValue — the wall display's **display-only sample buckets** (U49 §12m, v29): at most one row per (tank, device, parameter) per 5-minute bucket whatever the poll interval, holding the last value plus the min/max seen inside the bucket (what draws the tile's range band). Keyed by `Devices.identifier` so a card is one device's series by construction. These are unvalidated probe samples, **not measurements**: never in a backup (the `encodeBackup` section list excludes them by construction), never read by domain code (trend/stability/dosing/export read `Readings`), rail values dropped at write time, pruned by age (48 h retention, `pruneDeviceSamples`). Deliberately **no FKs** — nothing references the table and it references nothing, so the feature stays droppable (§12o) and a backup restore replacing every tank can't cascade the wall's overnight graph away; orphans age out. Index `(tankId, paramKey, bucketStart)` |
+| `DeviceSamples` | tankId + deviceIdentifier + paramKey + bucketStart (composite PK), value/minValue/maxValue — the wall display's **display-only sample buckets** (U49 §12m, v29): at most one row per (tank, device, parameter) per 5-minute bucket whatever the poll interval, holding the last value plus the min/max seen inside the bucket (what draws the tile's range band). Keyed by `Devices.identifier` so a card is one device's series by construction. These are unvalidated probe samples, **not measurements**: never in a backup (the `encodeBackup` section list excludes them by construction), never read by domain code (trend/stability/dosing/export read `Readings`), rail values dropped at write time, pruned by age (48 h retention, `pruneDeviceSamples`). Wall settings can apply the same global delete to all rows (`clearDeviceSamples`) or prune them to the latest 1/4/12 h; neither operation touches `Readings` or `WallTileSettings`. Deliberately **no FKs** — nothing references the table and it references nothing, so the feature stays droppable (§12o) and a backup restore replacing every tank can't cascade the wall's overnight graph away; orphans age out. Index `(tankId, paramKey, bucketStart)` |
 | `WallTileSettings` | tankId + deviceIdentifier + paramKey (composite PK), displayOrder?, visible — per-tile wall-display layout (U49 §12q, v29): order and visibility of one wall card; `deviceIdentifier` is `''` (not NULL — NULLs are distinct in a unique key) for the stored-readings card of a parameter no device reports; `displayOrder` null = never explicitly ordered (default grouped order, after all explicit rows, so new cards append). **Sparse** (§12o rule 1): a missing row means the default, so deleting every row degrades to stock behaviour; no FK and no cascade, deliberately — orphan rows are invisible through the join; device-local and backup-excluded (one tablet's layout, not aquarium data). Restored ReefFactory inventory does not need these local rows to appear: its stored model (with serial-prefix fallback for old rows) seeds the known card set (Temperature Controller → temperature, pH Monitor → pH, Salinity Guardian → salinity + temperature) before the tablet's first successful poll. An unassigned device belongs to the wall only when the database has exactly one aquarium, where the intended scope is unambiguous; this also makes devices affected by the pre-fix restore merge visible without another restore. |
 | `Settings` | key (PK), value? — generic kv store |
 
@@ -1462,7 +1475,7 @@ iOS-shaped switch with a `healthy` on-track through an
 switches on iOS deliberately ignore the ambient `SwitchThemeData`);
 **segmented controls** — `widgets/reef_segmented.dart` (`ReefSegmented<T>`,
 `(value, label)` options) replaces `SegmentedButton` app-wide (Settings units,
-chart-range selectors, the schedule sheet's repeat toggle): a
+chart-range selectors, the schedule sheet's repeat toggle, salinity tools): a
 Cupertino-sliding-control look (options in a `track` well, active on a raised
 chip — opaque `surfaceContainerHighest` in dark, where the translucent
 `surface` would vanish) vs an M3 outlined pill (active = `healthySoft` fill +
@@ -1576,7 +1589,9 @@ Body text stays the platform default (SF/Roboto).
 | `/settings/import` | Measurement-import status per tank: watermark rewind (*Change date…*) / *Reset*. **No entry point in the UI** — the Settings row was removed; reachable by deep link only |
 | `/hanna/measure` | Hanna checker live BLE measurement (U33, Pro, experimental): connect → select → run → save in one route; a reactive route capability guard prevents construction without `hannaConnect` entitlement and disposes the session if entitlement is lost |
 | `/hanna/scan` | Checker camera scan (U34, Pro, experimental): model picker → viewfinder → confirm in one route; the same guard requires `hannaScan` and releases the camera on entitlement loss |
-| `/calculator/salinity` | Standalone ppt ↔ SG converter |
+| `/calculator/salinity` | Standard salinity tool: live ppt ↔ SG ↔ 25-°C-calibrated hydrometer-density conversion with optional sample-temperature correction, 16-product salt-mix catalogue plus custom/measured calibration, salt preparation, and active-tank salinity correction planning |
+| `/calculator/water-change` | Standard tank-aware water-change planner: batch and continuous automatic projections, effective cumulative replacement, and a target-reaching schedule for linear dissolved parameters |
+| `/calculator/units` | Standalone reef-unit converter: alkalinity (dKH/meq/L/ppm CaCO₃), temperature (°C/°F), and volume (L/US/Imperial gal); it never reads or writes tank data |
 | `/devices` | Standalone Devices page (U41, experimental), behind a vendor selector: ReefFactory meters, Red Sea ReefBeat devices, Neptune Apex controllers and (U43) the Hanna checker. Replaced `/reeffactory`, `/reefbeat`, `/apex` **and** the read-only `/settings/devices` inventory. Since U42 the same body is the home shell's Devices tab and nothing pushes this route; it stays as a stable deep-link target, mirroring `/settings` |
 | `/settings/wall` | Wall display options (U49): Start now, auto-start, refresh interval, page rotation, night window, and the reorderable wall-card list |
 | `/wall` | Wall display mode (U49): the full-screen kiosk board — its own scaffold-less layout, deliberately **not** a sixth bottom-nav destination (the bar is at its five-label limit, and this is a mode entered once per tablet boot); `wallDisplayRoute` is checked before constructing `WallScreen`, so locked/restored navigation cannot acquire wakelock, timers, or device work |
@@ -1911,9 +1926,10 @@ behind a confirmation dialog**:
   not inside the tile, so switching off removes the whole card (and, in the
   grouped layout, its header); the switch
   only hides (measurements stay stored).
-- Empty states: `NoTanksView` (first-run welcome: a language selector +
-  add-aquarium prompt — lets the user pick their language before creating a tank
-  without opening Settings — plus the **ungated cloud-restore** entry (U35):
+- Empty states: `NoTanksView` (first-run welcome: a language selector and
+  add-aquarium prompt, plus a subtle `experimental_enabled` master switch
+  (off by default, immediately below the Settings button, with a note that the
+  choice remains available there) and the **ungated cloud-restore** entry (U35):
   "Restore from Google Drive" on Android (account picker first) or "Restore
   from iCloud" on iOS (no picker — iCloud availability *is* the sign-in
   state, U44); then `fetchNewestCloudBackup` →
@@ -3027,12 +3043,17 @@ entry points for one page were four ways to say the same thing).
   one-card dashboard, and it is hidden by construction when the scope has no
   pollable device or the install is not entitled. Reads are
   sequential *within* a vendor (a meter also serves its vendor's cloud app) but
-  the vendors run concurrently. The on-open auto-read follows the same scope,
-  once per device per session — and only while the page is the tab actually on
-  screen (`DevicesBody.active`), so being a permanently-built `IndexedStack`
-  child never turns app launch into a LAN sweep. Both the refresh actions and
-  their counts cover only refreshable kinds (`deviceKindRefreshes` — the Hanna
-  checker is never polled), and Refresh all hides when nothing in view is.
+  the vendors run concurrently. The on-open auto-read follows the same scope
+  and only runs while the page is the tab actually on screen
+  (`DevicesBody.active`), so being a permanently-built `IndexedStack` child
+  never turns app launch into a LAN sweep. Each attempt is timestamped; after
+  the same two-minute stale window used by Save, the visible scope is read
+  again when the keeper returns to the tab, resumes the app on it, or switches
+  to a previously visited vendor. Failed attempts are timestamped too, so an
+  offline device is retried after the window rather than on every rebuild.
+  Both the refresh actions and their counts cover only refreshable kinds
+  (`deviceKindRefreshes` — the Hanna checker is never polled), and Refresh all
+  hides when nothing in view is.
   Save all is **hidden** — not disabled — when the selection holds no
   meter-capable device (`deviceModelSaves`): a Red Sea selection with only
   pumps/lights/ATO/filter has nothing to save, while one containing ReefControl
@@ -3925,10 +3946,13 @@ value is showing *this* keeper's devices, which live in this database.
   dialog, and a modal on an unattended kiosk is a dead screen. It writes
   display-only `DeviceSamples` buckets instead (visible cards only, rail
   values silently dropped), prunes every 12th cycle + at mode start, and
-  draws each device card's 24 h line (with min/max band + hand-measurement
-  markers via the extended `widgets/sparkline.dart`) from them — falling back
-  to the dashboard's 14-day readings line below 2 in-window points, window
-   named in the tile footer.
+  draws each device card's 24 h line with its min/max band. A device card
+  always uses only its own online samples — zero or one point after startup or
+  cleanup stays an empty/one-point 24 h graph; stored `Readings` never appear
+  there as a fallback line or hand-measurement marker. Parameters with no
+  reporting device retain their dedicated 14-day manual-measurements card.
+  Every card's `Sparkline` derives its own Y range from its visible line/band,
+  so an outlier changes only that card's scale.
 - **Integration-neutral Wall boundary** (`data/wall_sources.dart` plus each
   `DeviceIntegration.wallSnapshot`): a successful vendor payload is converted
   once into `WallDeviceSnapshot` — canonical readings, known parameters,
@@ -3945,8 +3969,11 @@ value is showing *this* keeper's devices, which live in this database.
   midnight, lifted 60 s by a tap, and a burn-in lattice shifting the whole
   board a few pixels every 10 min. Kiosk lock stays the OS's job.
 - **Entering/leaving** (§12f): Settings → Appearance → Wall display
-  (`wall_settings_screen.dart`) — options + "Start now" + the reorderable
-  card list (visibility toggle per row, Manage-parameters drag conventions).
+  (`wall_settings_screen.dart`) — options + "Start now" + a collected-data
+  action that deletes all transient online samples or keeps the latest 1, 4,
+  or 12 hours across this tablet (manual `Readings` and card layout untouched)
+  + the reorderable card list (visibility toggle per row, Manage-parameters
+  drag conventions).
   Auto-start = `wall_auto_start` + the router's consumed-once cold-start
   redirect. Exit is a raw-pointer **1.5 s hold** with a progress ring under
   the finger (a `Listener`, so it never competes with the PageView's swipe
@@ -4581,9 +4608,56 @@ SnackBar), an **Edition** row (see Editions above), and the About box, which
 shows the live app version via `appVersionProvider` (`package_info_plus`),
 never a hardcoded string.
 
+### Water-change planner (`calculator/water_change_planner_screen.dart`)
+
+Standard tool reached from Settings → Tools. It selects among the active
+aquarium's enabled, linearly mixable dissolved parameters (temperature, pH and
+ORP are excluded), and prefills its stored system-water volume, latest reading
+with date/stale warning, resolved correction target, preferred units, and most
+recent logged water-change volume. Replacement-water chemistry stays blank
+until the keeper supplies a measured/prepared value. Batch mode models remove,
+replace, then fully mix; automatic mode models simultaneous exchange through a
+continuously mixed system. Results show the value after one and after the
+requested number of changes, effective cumulative replacement, and the minimum
+whole-change schedule to reach/pass a target. Long schedules show the first six
+and final step without building an unbounded list. The screen never writes a
+log and labels constant volume, complete mixing, and no intervening sources or
+sinks as assumptions rather than guarantees. Calculations use canonical litres
+and linear concentration; salinity crosses the boundary as ppt even when the
+stored/display unit is SG.
+
 ### Salinity calculator (`calculator/salinity_calculator_screen.dart`)
 
-Standalone ppt ↔ SG converter, independent of stored data.
+One Standard tool with three modes. **Convert** synchronizes editable ppt, SG
+and 25 °C-calibrated glass-hydrometer density fields. Its optional measurement
+temperature follows the °C/°F preference and corrects a batch measured away
+from 25 °C using the standard seawater density equation plus nominal glass
+expansion; source tracking keeps whichever value the keeper last edited fixed
+when temperature changes. The reference card explains that European
+areometers, including ARKA and Tropic Marin models, use this density scale and
+that measuring at their 25 °C calibration point remains most accurate.
+Density is converter-only and never changes the salinity unit preference.
+**Mix new water** estimates dry commercial mix from a
+required keeper-entered/calibrated g/L factor and a desired final volume; a
+measured batch can derive the factor, and the last valid salt name/factor/
+reference salinity is saved on the active tank. **Correct this tank** prefills
+the active tank's volume, latest salinity (dated and stale-flagged), and the
+midpoint of its configured green band. High salinity produces an equal-volume
+RO/DI exchange; low salinity requires separately prepared replacement water
+above the target and reports its required salt plus the tank's missing-salt
+equivalent. All mass balance runs in ppt/litres, all fields display in the unit
+preferences, and results state the constant-volume/conserved-salt/well-mixed
+assumptions. Dry mix is never instructed into a stocked tank. A result can
+prefill the existing water-change dialog, but only that dialog's Save writes a
+log row.
+
+### Reef unit converter (`calculator/reef_unit_converter_screen.dart`)
+
+Standalone reference converter, independent of stored tank data. Each of its
+three cards exposes every supported unit as a locale-aware editable field.
+Editing any field immediately recalculates the others through the card's
+canonical unit: alkalinity (dKH/meq/L/ppm CaCO₃), temperature (°C/°F), and
+volume (L/US/Imperial gallons). The converter never reads or writes tank data.
 
 ## Internationalization
 
@@ -4625,6 +4699,9 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   `dart run tool/gen_tank_presets.dart` (writes `tank_presets.g.dart`).
 - Regenerate the RO stage defaults after editing `lib/domain/ro_defaults.yaml`:
   `dart run tool/gen_ro_defaults.dart` (writes `ro.g.dart`).
+- Regenerate the salt-mix catalogue after editing
+  `lib/domain/salt_mixes.yaml`: `dart run tool/gen_salt_mixes.dart` (validates
+  provenance and numeric/unit fields + writes `salt_mix_catalog.g.dart`).
 - Regenerate the Hanna method registry + CSV mapping + pocket-checker
   registry after editing `lib/domain/hanna_methods.yaml`:
   `dart run tool/gen_hanna_methods.dart` (validates against
@@ -4672,13 +4749,15 @@ The app is **fully localized — no user-facing string is hardcoded.** See
   `dart run tool/gen_parameters.dart`, `dart run tool/gen_supplements.dart`,
   `dart run tool/gen_micro_views.dart`, `dart run tool/gen_pro_features.dart`,
   `dart run tool/gen_tank_presets.dart`, `dart run tool/gen_ro_defaults.dart`,
+  `dart run tool/gen_salt_mixes.dart`,
   `dart run tool/gen_hanna_methods.dart` and
   `dart run tool/gen_wall_parameters.dart`
   — build_runner deletes the catalog `.g.dart` files as unclaimed outputs, so
   the catalog generators must run after it, and gen_parameters before
   gen_supplements, which imports the parameter catalog; gen_micro_views,
-  gen_pro_features, gen_tank_presets, gen_ro_defaults, gen_hanna_methods and
-  gen_wall_parameters read only the YAML sources, so their position is free),
+  gen_pro_features, gen_tank_presets, gen_ro_defaults, gen_salt_mixes,
+  gen_hanna_methods and gen_wall_parameters read only the YAML sources, so
+  their position is free),
   `flutter analyze`, and
   `flutter test --coverage` with the lcov file uploaded as an artifact. A
   second job builds a **debug** APK on JDK 21 (Temurin) to exercise the

@@ -313,6 +313,7 @@ void main() {
       WidgetTester tester,
       AppDatabase db, {
       bool active = true,
+      Duration staleAfter = kDeviceSnapshotStaleAfter,
     }) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -326,7 +327,9 @@ void main() {
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(body: DevicesBody(active: active)),
+            home: Scaffold(
+              body: DevicesBody(active: active, staleAfter: staleAfter),
+            ),
           ),
         ),
       );
@@ -407,16 +410,78 @@ void main() {
       await pumpBody(tester, db, active: false);
       expectReads(0);
 
-      // Same widget, same position, so the state (and its `_autoRead` set)
+      // Same widget, same position, so the state (and its refresh timestamps)
       // survives — exactly what switching to the tab does.
       await pumpBody(tester, db);
       expectReads(1);
 
-      // Switching away and back must not re-poll: the on-open read is once
-      // per device per session, and Refresh is what asks again.
+      // Switching away and back while the readings are fresh does not re-poll.
       await pumpBody(tester, db, active: false);
       await pumpBody(tester, db);
       expectReads(1);
+      await unmountApp(tester);
+    });
+
+    testWidgets('returning to the Devices tab refreshes stale devices', (
+      tester,
+    ) async {
+      final db = await seedFleet(pro: true);
+      addTearDown(db.close);
+      await pumpBody(tester, db, staleAfter: Duration.zero);
+      expectReads(1);
+
+      await pumpBody(tester, db, active: false, staleAfter: Duration.zero);
+      await pumpBody(tester, db, staleAfter: Duration.zero);
+
+      expectReads(2);
+      await unmountApp(tester);
+    });
+
+    testWidgets('resuming the app on Devices refreshes stale devices', (
+      tester,
+    ) async {
+      final db = await seedFleet(pro: true);
+      addTearDown(db.close);
+      await pumpBody(tester, db, staleAfter: Duration.zero);
+      expectReads(1);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump(const Duration(seconds: 1));
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await settle(tester);
+
+      expectReads(2);
+      await unmountApp(tester);
+    });
+
+    testWidgets('swiping back to a stale vendor refreshes it again', (
+      tester,
+    ) async {
+      final db = await seedFleet(pro: true);
+      addTearDown(db.close);
+      await pumpBody(tester, db, staleAfter: Duration.zero);
+      expectReads(1);
+
+      Future<void> swipe(double dx) async {
+        await tester.drag(find.byType(CustomScrollView), Offset(dx, 0));
+        await settle(tester);
+      }
+
+      // All → ReefFactory → Red Sea → Apex, then back to Red Sea. Every
+      // selected vendor is stale under the zero-duration test window, and the
+      // final step proves a vendor already refreshed on an earlier visit is
+      // reconsidered rather than treated as read for the rest of the session.
+      await swipe(-300);
+      expect(rf.reads, 2);
+      expect(rb.reads, 1);
+      expect(ap.reads, 1);
+      await swipe(-300);
+      expect(rb.reads, 2);
+      await swipe(-300);
+      expect(ap.reads, 2);
+      await swipe(300);
+      expect(rb.reads, 3);
+
       await unmountApp(tester);
     });
   });

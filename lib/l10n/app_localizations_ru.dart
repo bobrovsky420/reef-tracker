@@ -137,6 +137,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Создай свой первый аквариум, чтобы начать отслеживать параметры воды.';
 
   @override
+  String get welcomeExperimentalSubtitle =>
+      'Включает функции, которые ещё разрабатываются и могут измениться. Этот выбор можно изменить в настройках в любое время.';
+
+  @override
   String get noParamsTracked =>
       'Для этого аквариума не отслеживаются параметры.';
 
@@ -877,7 +881,173 @@ class AppLocalizationsRu extends AppLocalizations {
   String get salinityCalculator => 'Калькулятор солёности';
 
   @override
-  String get salinityCalculatorSubtitle => 'Перевод ppt ↔ плотность (SG)';
+  String get salinityCalculatorSubtitle =>
+      'Перевод ppt ⇄ SG ⇄ истинная плотность';
+
+  @override
+  String get waterChangePlannerTitle => 'Планировщик подмен воды';
+
+  @override
+  String get waterChangePlannerSubtitle =>
+      'Расчёт разовых и автоматических подмен';
+
+  @override
+  String get waterChangePlannerIntro =>
+      'Посмотри, как одна или несколько подмен воды могут изменить измеряемый параметр с учётом объёма и последнего измерения этого аквариума.';
+
+  @override
+  String get waterChangePlannerBatch => 'Разовые подмены';
+
+  @override
+  String get waterChangePlannerAutomatic => 'Автоматическая подмена';
+
+  @override
+  String get waterChangePlannerBatchHelp =>
+      'Вода удаляется, заменяется и полностью перемешивается перед следующей подменой.';
+
+  @override
+  String get waterChangePlannerAutomaticHelp =>
+      'Старая и новая вода одновременно проходят через постоянно перемешиваемый аквариум.';
+
+  @override
+  String get waterChangePlannerNoTank =>
+      'Добавь аквариум, прежде чем планировать подмену воды.';
+
+  @override
+  String get waterChangePlannerNoParameters =>
+      'Начни отслеживать растворённый параметр воды, прежде чем использовать этот планировщик.';
+
+  @override
+  String get waterChangePlannerParameter => 'Растворённый параметр';
+
+  @override
+  String waterChangePlannerTankVolume(Object unit) {
+    return 'Объём воды в системе ($unit)';
+  }
+
+  @override
+  String waterChangePlannerChangeVolume(Object unit) {
+    return 'Объём каждой подмены ($unit)';
+  }
+
+  @override
+  String waterChangePlannerCurrent(Object unit) {
+    return 'Текущее значение ($unit)';
+  }
+
+  @override
+  String waterChangePlannerReplacement(Object unit) {
+    return 'Значение новой воды ($unit)';
+  }
+
+  @override
+  String waterChangePlannerTarget(Object unit) {
+    return 'Целевое значение ($unit, необязательно)';
+  }
+
+  @override
+  String get waterChangePlannerPlannedChanges =>
+      'Количество подмен для расчёта';
+
+  @override
+  String get waterChangePlannerCalculate => 'Рассчитать прогноз';
+
+  @override
+  String get waterChangePlannerNonNegativeError =>
+      'Введи ноль или положительное число.';
+
+  @override
+  String get waterChangePlannerCountError =>
+      'Введи целое число от 1 до 10 000.';
+
+  @override
+  String get waterChangePlannerVolumeError =>
+      'Одна подмена не должна превышать объём воды в системе.';
+
+  @override
+  String waterChangePlannerReadingDate(Object date) {
+    return 'Последнее измерение от $date';
+  }
+
+  @override
+  String waterChangePlannerReadingStale(Object date) {
+    return 'Последнее измерение от $date старше 30 дней — измени его или измерь снова.';
+  }
+
+  @override
+  String get waterChangePlannerProjection => 'Прогноз';
+
+  @override
+  String get waterChangePlannerAfterOne => 'После одной подмены';
+
+  @override
+  String waterChangePlannerAfterPlanned(int count) {
+    return 'После $count подмен';
+  }
+
+  @override
+  String get waterChangePlannerEffectiveChanged =>
+      'Эффективная суммарная подмена';
+
+  @override
+  String get waterChangePlannerTargetSchedule => 'План до целевого значения';
+
+  @override
+  String get waterChangePlannerTargetOptional =>
+      'Введи целевое значение, чтобы рассчитать план.';
+
+  @override
+  String get waterChangePlannerAlreadyAtTarget =>
+      'Текущее значение уже равно целевому.';
+
+  @override
+  String get waterChangePlannerTargetUnreachable =>
+      'С этой новой водой нельзя достичь цели. Её значение должно находиться за целью в направлении нужного изменения.';
+
+  @override
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  ) {
+    return '$count подмен · всего $total · эффективно $effective';
+  }
+
+  @override
+  String waterChangePlannerScheduleOmitted(int count) {
+    return '… промежуточных подмен: $count …';
+  }
+
+  @override
+  String waterChangePlannerStep(int number) {
+    return 'Подмена $number';
+  }
+
+  @override
+  String get waterChangePlannerAssumption =>
+      'Это только оценка: предполагаются постоянный объём воды, полное перемешивание и отсутствие нового образования, потребления, дозирования, осаждения или других изменений между подменами. Измеряй после каждой подмены; рассчитанный результат не гарантирован.';
+
+  @override
+  String get reefUnitConverter => 'Конвертер единиц рифа';
+
+  @override
+  String get reefUnitConverterSubtitle => 'Щёлочность, температура и объём';
+
+  @override
+  String get reefUnitConverterIntro =>
+      'Переводи обычные рифовые единицы. Введи значение в любое поле, чтобы автоматически обновить все эквивалентные единицы.';
+
+  @override
+  String get converterSourceUnit => 'Исходная единица';
+
+  @override
+  String get converterValue => 'Значение';
+
+  @override
+  String get converterEquivalent => 'Эквивалент';
+
+  @override
+  String get alkalinity => 'Щёлочность';
 
   @override
   String get backupSection => 'Резервная копия';
@@ -1357,16 +1527,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Перевод между практической солёностью (ppt) и плотностью (SG). Вводи в любое поле.';
+      'Переводи практическую солёность (ppt), относительную плотность (SG) и показание ареометра, откалиброванного при 25 °C. Укажи температуру воды и вводи значение в любое поле.';
 
   @override
-  String get specificGravity => 'Плотность (SG)';
+  String get specificGravity => 'Относительная плотность (SG)';
+
+  @override
+  String get measurementTemperature => 'Температура измерения';
+
+  @override
+  String get densityTemperatureHelp =>
+      'Используй температуру воды в мерном цилиндре.';
+
+  @override
+  String get hydrometerDensityReading => 'Показание плотности ареометра';
+
+  @override
+  String get densityHydrometerNote =>
+      'Европейские стеклянные ареометры, в том числе модели ARKA и Tropic Marin, обычно калибруются при 25 °C. Поправка помогает измерять подготовленную морскую воду при температуре окружающей среды.';
 
   @override
   String get referencePoints => 'Опорные значения';
 
   @override
-  String get refSeawater => '• Природная морская вода ≈ 35 ppt ≈ 1,0264 SG';
+  String get refSeawater =>
+      '• Природная морская вода ≈ 35 ppt ≈ 1,0264 SG ≈ 1,0233 г/см³ при 25 °C';
 
   @override
   String get refReefTarget =>
@@ -1374,7 +1559,174 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get refFormulaNote =>
-      'SG приведён к 25 °C. Перевод — линейная аппроксимация: SG = 1 + ppt × 0,0264/35.';
+      'Вне 25 °C поправка использует стандартное уравнение плотности морской воды и номинальное расширение стекла (26 ppm/°C). Для наибольшей точности измеряй при 25 °C.';
+
+  @override
+  String get salinityToolConvert => 'Пересчёт';
+
+  @override
+  String get salinityToolMix => 'Приготовить воду';
+
+  @override
+  String get salinityToolCorrect => 'Скорректировать аквариум';
+
+  @override
+  String get saltMixIntro =>
+      'Рассчитай сухую соль для готового раствора. Используй данные с упаковки или собственный измеренный замес.';
+
+  @override
+  String get saltMixFinalVolume => 'Нужный конечный объём';
+
+  @override
+  String get saltMixTarget => 'Целевая солёность';
+
+  @override
+  String get saltMixProfileTitle => 'Твоя морская соль';
+
+  @override
+  String get saltMixProductLabel => 'Морская соль';
+
+  @override
+  String get saltMixCustomProduct => 'Своя смесь';
+
+  @override
+  String get saltMixCustomHelp =>
+      'Введи значение с этикетки или откалибруй самостоятельно измеренный замес.';
+
+  @override
+  String get saltMixCatalogManufacturer =>
+      'Начальное значение производителя. Измерь приготовленный замес, чтобы настроить его для этого аквариума.';
+
+  @override
+  String get saltMixCatalogEstimate =>
+      'Оценка производителя для исходной воды. Перед использованием откалибруй измеренный конечный объём.';
+
+  @override
+  String get saltMixMeasuredCalibration =>
+      'Используется твоя измеренная калибровка для этого аквариума.';
+
+  @override
+  String get saltMixNameOptional => 'Название соли (необязательно)';
+
+  @override
+  String get saltMixFactor => 'Сухая смесь при опорной солёности';
+
+  @override
+  String get saltMixFactorHelp =>
+      'Укажи граммы на литр готовой морской воды. Данные на упаковке для литра исходной воды — лишь оценка, пока реальный замес не откалиброван.';
+
+  @override
+  String get saltMixReferenceSalinity => 'Опорная солёность';
+
+  @override
+  String get saltMixCalibrateTitle => 'Калибровать по измеренному замесу';
+
+  @override
+  String get saltMixDryMass => 'Использовано сухой смеси';
+
+  @override
+  String get saltMixMeasuredVolume => 'Измеренный конечный объём';
+
+  @override
+  String get saltMixMeasuredSalinity => 'Измеренная солёность';
+
+  @override
+  String get saltMixUseCalibration => 'Использовать эту калибровку';
+
+  @override
+  String get saltMixCalculate => 'Рассчитать соль';
+
+  @override
+  String get salinityPlannerResult => 'Результат';
+
+  @override
+  String get saltMixDrySalt => 'Расчётная сухая смесь';
+
+  @override
+  String get saltMixResultHelp =>
+      'Начни с меньшего объёма RO/DI-воды, чем нужный конечный объём. Смешивай вне аквариума, соблюдай указания производителя по температуре, перемешиванию и аэрации, затем проверь солёность калиброванным прибором и доведи смесь солью и водой до конечного объёма.';
+
+  @override
+  String get salinityCorrectionIntro =>
+      'Рассчитай равнообъёмную подмену, которая приблизит текущую солёность аквариума к цели.';
+
+  @override
+  String get salinityCorrectionTankVolume => 'Чистый объём воды системы';
+
+  @override
+  String get salinityCorrectionCurrent => 'Текущая солёность';
+
+  @override
+  String get salinityCorrectionTarget => 'Целевая солёность';
+
+  @override
+  String salinityPlannerLatestReading(Object date) {
+    return 'Подставлено измерение от $date.';
+  }
+
+  @override
+  String get salinityCorrectionReplacement => 'Солёность подменной воды';
+
+  @override
+  String get salinityCorrectionReplacementHelp =>
+      'Она должна быть выше цели. Приготовь и измерь этот раствор отдельно.';
+
+  @override
+  String get salinityCorrectionHighMethod =>
+      'Удали рассчитанный объём аквариумной воды и замени таким же объёмом RO/DI с солёностью 0 ppt.';
+
+  @override
+  String get salinityCorrectionHighResultHelp =>
+      'Считай результат начальной оценкой. Раздели большие изменения на этапы, обеспечь циркуляцию между ними и повторно измеряй солёность после каждого этапа.';
+
+  @override
+  String get salinityCorrectionLowResultHelp =>
+      'Готовь воду для замены вне аквариума. Соблюдай указания производителя соли по температуре, перемешиванию и аэрации, проверь её калиброванным прибором, затем меняй воду поэтапно с циркуляцией и повторными измерениями.';
+
+  @override
+  String get salinityCorrectionLowMethod =>
+      'Удали рассчитанный объём аквариумной воды и замени таким же объёмом отдельно приготовленной воды с более высокой солёностью.';
+
+  @override
+  String get salinityCorrectionCalculate => 'Рассчитать коррекцию';
+
+  @override
+  String get salinityReplacementError =>
+      'Солёность подменной воды должна быть выше цели.';
+
+  @override
+  String get salinityPlannerAssumptionsTitle => 'Перед коррекцией';
+
+  @override
+  String get salinityPlannerAssumptions =>
+      'Расчёт предполагает постоянный объём аквариума, сохранение соли и полное перемешивание воды. Если испарение снизило уровень, сначала долей RO/DI до обычного уровня и измерь снова.';
+
+  @override
+  String get salinityPlannerSafety =>
+      'Никогда не добавляй сухую смесь в аквариум с животными. Большие изменения дели на этапы, обеспечивай циркуляцию и измеряй после каждого этапа. Калькулятор не задаёт универсально безопасное суточное изменение и не гарантирует конечное значение.';
+
+  @override
+  String get salinityCorrectionNoChange =>
+      'Текущая солёность уже совпадает с целью. Подмена не нужна.';
+
+  @override
+  String get salinityCorrectionExchange => 'Удалить и заменить';
+
+  @override
+  String get salinityCorrectionTankPercent => 'От воды системы';
+
+  @override
+  String get salinityCorrectionBatchSalt => 'Сухая смесь для подменной воды';
+
+  @override
+  String get salinityCorrectionExtraEquivalent =>
+      'Общий эквивалент недостающей соли';
+
+  @override
+  String get salinityCorrectionRecord => 'Записать выполненную подмену воды';
+
+  @override
+  String get salinityCorrectionLogNote => 'Коррекция солёности';
 
   @override
   String get doseCalcTitle => 'Калькулятор дозировки';
@@ -4186,6 +4538,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get wallNightToTitle => 'Затемнять до';
+
+  @override
+  String get wallDataSection => 'Собранные данные';
+
+  @override
+  String get wallClearSamplesTitle => 'Очистить собранные измерения';
+
+  @override
+  String get wallClearSamplesSubtitle =>
+      'Удалить онлайн-измерения, используемые в графиках настенного экрана';
+
+  @override
+  String get wallClearSamplesDialogTitle => 'Очистить собранные измерения?';
+
+  @override
+  String get wallClearSamplesDialogBody =>
+      'Выбери, какую часть недавней онлайн-истории сохранить. Введённые вручную измерения не удаляются.';
+
+  @override
+  String get wallClearSamplesAll => 'Удалить всё';
+
+  @override
+  String get wallKeepSamples1h => 'Сохранить данные за последний час';
+
+  @override
+  String get wallKeepSamples4h => 'Сохранить данные за последние 4 часа';
+
+  @override
+  String get wallKeepSamples12h => 'Сохранить данные за последние 12 часов';
+
+  @override
+  String get wallSamplesHistoryUpdated =>
+      'История собранных измерений обновлена';
 
   @override
   String get wallCardsSection => 'Карточки';

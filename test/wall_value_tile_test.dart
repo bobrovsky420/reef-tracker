@@ -65,4 +65,45 @@ void main() {
     expect(find.text('Heating'), findsNothing);
     expect(find.text('Cooling'), findsNothing);
   });
+
+  group('wall graph source', () {
+    final now = DateTime(2026, 8, 19, 12);
+
+    test(
+      'device cards use online samples without manual markers or fallback',
+      () {
+        final online = [(time: now, value: 25.2)];
+        final band = [(time: now, min: 25.1, max: 25.3)];
+        final manual = [(time: now, value: 24.0)];
+        final graph = buildWallGraph(
+          deviceCard: true,
+          onlineLine: online,
+          onlineBand: band,
+          manualLine: manual,
+        );
+
+        expect(graph.line, online);
+        expect(graph.band, band);
+        expect(graph.line, isNot(contains(manual.single)));
+        expect(graph.window, kWallSampleWindow);
+        expect(graph.isSampleWindow, isTrue);
+      },
+    );
+
+    test('manual-only cards keep their stored-reading graph', () {
+      final online = [(time: now, value: 25.2)];
+      final manual = [(time: now, value: 24.0)];
+      final graph = buildWallGraph(
+        deviceCard: false,
+        onlineLine: online,
+        onlineBand: const [],
+        manualLine: manual,
+      );
+
+      expect(graph.line, manual);
+      expect(graph.band, isEmpty);
+      expect(graph.window, kWallReadingsWindow);
+      expect(graph.isSampleWindow, isFalse);
+    });
+  });
 }

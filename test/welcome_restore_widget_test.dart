@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reeftracker/app/providers.dart';
 import 'package:reeftracker/data/database.dart';
+import 'package:reeftracker/data/settings.dart';
 import 'package:reeftracker/features/dashboard/dashboard_screen.dart';
 import 'package:reeftracker/l10n/app_localizations.dart';
 
@@ -67,6 +68,35 @@ void main() {
       expect(find.text('Restore from Google Drive'), findsOneWidget);
       // The Pro dialog never appears from this entry.
       expect(find.text('Pro feature'), findsNothing);
+    } finally {
+      await unmountApp(tester);
+    }
+  });
+
+  testWidgets('experimental features can be enabled from the welcome screen', (
+    tester,
+  ) async {
+    try {
+      final db = await pumpWelcome(tester);
+
+      expect(find.text('Experimental features'), findsOneWidget);
+      expect(
+        find.text(
+          'Enable features that are still being developed and may change. '
+          'You can update this choice anytime in Settings.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.getTopLeft(find.text('Experimental features')).dy,
+        greaterThan(tester.getTopLeft(find.text('Settings')).dy),
+      );
+      expect(await db.getSetting(kExperimentalEnabledKey), isNull);
+
+      await tester.tap(find.text('Experimental features'));
+      await settle(tester);
+
+      expect(await db.getSetting(kExperimentalEnabledKey), 'true');
     } finally {
       await unmountApp(tester);
     }

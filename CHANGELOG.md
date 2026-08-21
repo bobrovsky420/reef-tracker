@@ -7,7 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.1]
 
+### Added
+- A Standard water-change planner now projects a dissolved parameter after one
+  or repeated batch changes or continuous automatic exchange. It uses the
+  active aquarium's volume, latest reading, target, preferred units and last
+  logged change size, shows effective cumulative replacement and a schedule to
+  reach the target, and states its complete-mixing/no-new-production limits.
+- The salinity converter now accepts density readings from 25 °C-calibrated
+  European glass hydrometers such as ARKA and Tropic Marin alongside ppt and
+  specific gravity. An optional water temperature corrects prepared saltwater
+  measured near ambient temperature back to the 25 °C reference.
+- A Standard salt-mix and salinity-correction planner now estimates dry salt
+  for prepared water and equal-volume RO/DI or higher-salinity exchanges using
+  the active aquarium's volume, latest salinity, target range, unit choices,
+  and a reusable measured salt calibration.
+- The salt-mix planner now includes 16 popular mixes from Red Sea, Instant
+  Ocean, Brightwell, Seachem, Nyos, Aquaforest, Tropic Marin, Fauna Marin and
+  D-D. Each manufacturer value seeds only the product's first selection for an
+  aquarium; a measured batch then becomes that aquarium/product's remembered
+  value, including after switching away and back.
+- A Standard reef-unit converter in Settings → Tools for alkalinity (dKH,
+  meq/L and ppm CaCO₃), temperature (°C/°F), and volume (litres, US gallons
+  and Imperial gallons).
+- Wall display settings can now clear the tablet's collected online graph
+  history completely or retain only the latest 1, 4, or 12 hours, without
+  deleting manually entered aquarium measurements.
+
 ### Changed
+- The first-run welcome screen now offers the optional experimental-features
+  switch, off by default, and notes that the choice can be changed later in
+  Settings.
+- Connected devices now automatically refreshes the visible devices when you
+  return to the page, reopen the app on it, or revisit a brand after two
+  minutes, while avoiding extra network reads for still-fresh devices. The
+  Android resume flow was exercised with the committed fake Apex, not with
+  additional real hardware.
+- The reef-unit converter now shows every unit as an editable field on each
+  card, so entering any alkalinity, temperature, or volume value updates all
+  of its equivalents immediately without choosing a source unit first.
+- The salinity calculator's Convert, Mix new water and Correct this tank
+  options now share one segmented control, matching the dosing calculator.
+- The salinity converter subtitle now uses a plain text-style conversion arrow
+  instead of an emoji-style arrow tile on devices that rendered it that way.
+- Wall display device graphs now scale independently and contain only that
+  device's online measurements; manually entered measurements remain on their
+  own cards instead of appearing as fallback lines or hollow markers.
 - The ReefATO+ device card now always reports its leak sensor: Not connected
   when unplugged, Not enabled when switched off, Dry while standing guard, and
   translated RO/DI-water or aquarium-water warning when it detects a leak.

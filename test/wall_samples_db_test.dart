@@ -100,6 +100,35 @@ void main() {
         expect(rows.first.bucketStart, cutoff);
       },
     );
+
+    test(
+      'clear removes every collected sample but leaves manual readings',
+      () async {
+        await db.upsertDeviceSample(
+          tankId: tankId,
+          deviceIdentifier: 'apex1',
+          paramKey: 'temperature',
+          bucketStart: bucket,
+          value: 25,
+        );
+        await db.insertReading(
+          tankId: tankId,
+          paramKey: 'temperature',
+          value: 24.8,
+          takenAt: bucket,
+        );
+
+        expect(await db.clearDeviceSamples(), 1);
+        expect(
+          await db.getDeviceSamplesSince(
+            tankId,
+            bucket.subtract(const Duration(days: 1)),
+          ),
+          isEmpty,
+        );
+        expect(await db.getReadingsForTank(tankId), hasLength(1));
+      },
+    );
   });
 
   group('wall tile settings', () {

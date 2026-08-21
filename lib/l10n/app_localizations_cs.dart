@@ -135,6 +135,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Vytvoř své první akvárium a začni sledovat parametry vody.';
 
   @override
+  String get welcomeExperimentalSubtitle =>
+      'Zapne funkce, které se stále vyvíjejí a mohou se měnit. Tuto volbu lze kdykoli změnit v Nastavení.';
+
+  @override
   String get noParamsTracked =>
       'Pro toto akvárium nejsou sledovány žádné parametry.';
 
@@ -871,7 +875,169 @@ class AppLocalizationsCs extends AppLocalizations {
   String get salinityCalculator => 'Kalkulačka salinity';
 
   @override
-  String get salinityCalculatorSubtitle => 'Převod ppt ↔ hustota (SG)';
+  String get salinityCalculatorSubtitle => 'Převod ppt ⇄ SG ⇄ skutečná hustota';
+
+  @override
+  String get waterChangePlannerTitle => 'Plánovač výměny vody';
+
+  @override
+  String get waterChangePlannerSubtitle =>
+      'Projekce jednorázových i automatických výměn';
+
+  @override
+  String get waterChangePlannerIntro =>
+      'Podívej se, jak může jedna nebo více výměn vody ovlivnit naměřený parametr podle objemu tohoto akvária a posledního měření.';
+
+  @override
+  String get waterChangePlannerBatch => 'Jednorázové výměny';
+
+  @override
+  String get waterChangePlannerAutomatic => 'Automatická výměna';
+
+  @override
+  String get waterChangePlannerBatchHelp =>
+      'Voda se odebere, nahradí a před další výměnou se úplně promíchá.';
+
+  @override
+  String get waterChangePlannerAutomaticHelp =>
+      'Stará a nová voda proudí současně průběžně promíchávaným akváriem.';
+
+  @override
+  String get waterChangePlannerNoTank =>
+      'Před plánováním výměny vody přidej akvárium.';
+
+  @override
+  String get waterChangePlannerNoParameters =>
+      'Před použitím plánovače začni sledovat rozpuštěný parametr vody.';
+
+  @override
+  String get waterChangePlannerParameter => 'Rozpuštěný parametr';
+
+  @override
+  String waterChangePlannerTankVolume(Object unit) {
+    return 'Objem vody v systému ($unit)';
+  }
+
+  @override
+  String waterChangePlannerChangeVolume(Object unit) {
+    return 'Objem každé výměny ($unit)';
+  }
+
+  @override
+  String waterChangePlannerCurrent(Object unit) {
+    return 'Aktuální hodnota ($unit)';
+  }
+
+  @override
+  String waterChangePlannerReplacement(Object unit) {
+    return 'Hodnota nové vody ($unit)';
+  }
+
+  @override
+  String waterChangePlannerTarget(Object unit) {
+    return 'Cílová hodnota ($unit, volitelně)';
+  }
+
+  @override
+  String get waterChangePlannerPlannedChanges => 'Počet výměn k projekci';
+
+  @override
+  String get waterChangePlannerCalculate => 'Vypočítat projekci';
+
+  @override
+  String get waterChangePlannerNonNegativeError =>
+      'Zadej nulu nebo kladné číslo.';
+
+  @override
+  String get waterChangePlannerCountError => 'Zadej celé číslo od 1 do 10 000.';
+
+  @override
+  String get waterChangePlannerVolumeError =>
+      'Jedna výměna nesmí překročit objem vody v systému.';
+
+  @override
+  String waterChangePlannerReadingDate(Object date) {
+    return 'Poslední měření z $date';
+  }
+
+  @override
+  String waterChangePlannerReadingStale(Object date) {
+    return 'Poslední měření z $date je starší než 30 dní — uprav ho nebo změř znovu.';
+  }
+
+  @override
+  String get waterChangePlannerProjection => 'Projekce';
+
+  @override
+  String get waterChangePlannerAfterOne => 'Po jedné výměně';
+
+  @override
+  String waterChangePlannerAfterPlanned(int count) {
+    return 'Po $count výměnách';
+  }
+
+  @override
+  String get waterChangePlannerEffectiveChanged =>
+      'Efektivní kumulativní výměna';
+
+  @override
+  String get waterChangePlannerTargetSchedule => 'Plán k cíli';
+
+  @override
+  String get waterChangePlannerTargetOptional => 'Pro výpočet plánu zadej cíl.';
+
+  @override
+  String get waterChangePlannerAlreadyAtTarget =>
+      'Aktuální hodnota už odpovídá cíli.';
+
+  @override
+  String get waterChangePlannerTargetUnreachable =>
+      'S touto novou vodou nelze cíle dosáhnout. Její hodnota musí ležet za cílem ve směru požadované změny.';
+
+  @override
+  String waterChangePlannerTargetSummary(
+    int count,
+    Object total,
+    Object effective,
+  ) {
+    return '$count výměn · celkem $total · efektivně $effective';
+  }
+
+  @override
+  String waterChangePlannerScheduleOmitted(int count) {
+    return '… mezikroky: $count …';
+  }
+
+  @override
+  String waterChangePlannerStep(int number) {
+    return 'Výměna $number';
+  }
+
+  @override
+  String get waterChangePlannerAssumption =>
+      'Jde jen o odhad: předpokládá stálý objem vody, úplné promíchání a žádnou novou produkci, spotřebu, dávkování, srážení ani jinou změnu mezi výměnami. Po každé výměně změř hodnotu; vypočtený výsledek není zaručený.';
+
+  @override
+  String get reefUnitConverter => 'Převodník jednotek pro útes';
+
+  @override
+  String get reefUnitConverterSubtitle => 'Alkalinita, teplota a objem';
+
+  @override
+  String get reefUnitConverterIntro =>
+      'Převáděj běžné útesové jednotky. Zadej hodnotu do libovolného pole a všechny odpovídající jednotky se automaticky přepočítají.';
+
+  @override
+  String get converterSourceUnit => 'Zdrojová jednotka';
+
+  @override
+  String get converterValue => 'Hodnota';
+
+  @override
+  String get converterEquivalent => 'Přepočet';
+
+  @override
+  String get alkalinity => 'Alkalinita';
 
   @override
   String get backupSection => 'Záloha';
@@ -1346,16 +1512,30 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get calculatorIntro =>
-      'Převod mezi praktickou salinitou (ppt) a specifickou hustotou (SG). Piš do kteréhokoli pole.';
+      'Převod mezi praktickou salinitou (ppt), relativní hustotou (SG) a údajem z hustoměru kalibrovaného při 25 °C. Zadej teplotu vody a piš do kteréhokoli pole s hodnotou.';
 
   @override
-  String get specificGravity => 'Hustota (SG)';
+  String get specificGravity => 'Relativní hustota (SG)';
+
+  @override
+  String get measurementTemperature => 'Teplota při měření';
+
+  @override
+  String get densityTemperatureHelp => 'Použij teplotu vody v odměrném válci.';
+
+  @override
+  String get hydrometerDensityReading => 'Údaj hustoměru';
+
+  @override
+  String get densityHydrometerNote =>
+      'Evropské skleněné hustoměry (areometry), včetně modelů ARKA a Tropic Marin, jsou obvykle kalibrovány při 25 °C. Teplotní korekce pomůže u připravené slané vody měřené při okolní teplotě.';
 
   @override
   String get referencePoints => 'Referenční hodnoty';
 
   @override
-  String get refSeawater => '• Přírodní mořská voda ≈ 35 ppt ≈ 1,0264 SG';
+  String get refSeawater =>
+      '• Přírodní mořská voda ≈ 35 ppt ≈ 1,0264 SG ≈ 1,0233 g/cm³ při 25 °C';
 
   @override
   String get refReefTarget =>
@@ -1363,7 +1543,174 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get refFormulaNote =>
-      'SG je vztaženo k 25 °C. Převod je lineární aproximace: SG = 1 + ppt × 0,0264/35.';
+      'Mimo 25 °C používá korekce standardní rovnici hustoty mořské vody a jmenovitou roztažnost skla hustoměru (26 ppm/°C). Nejpřesnější je měření při 25 °C.';
+
+  @override
+  String get salinityToolConvert => 'Převod';
+
+  @override
+  String get salinityToolMix => 'Namíchat novou vodu';
+
+  @override
+  String get salinityToolCorrect => 'Upravit akvárium';
+
+  @override
+  String get saltMixIntro =>
+      'Odhadni množství suché směsi pro připravenou dávku. Použij údaj z obalu nebo vlastní změřenou dávku.';
+
+  @override
+  String get saltMixFinalVolume => 'Požadovaný konečný objem';
+
+  @override
+  String get saltMixTarget => 'Cílová salinita';
+
+  @override
+  String get saltMixProfileTitle => 'Tvoje mořská sůl';
+
+  @override
+  String get saltMixProductLabel => 'Mořská sůl';
+
+  @override
+  String get saltMixCustomProduct => 'Vlastní směs';
+
+  @override
+  String get saltMixCustomHelp =>
+      'Zadej hodnotu z etikety nebo zkalibruj vlastní změřenou dávku.';
+
+  @override
+  String get saltMixCatalogManufacturer =>
+      'Výchozí hodnota výrobce. Změř připravenou dávku a přizpůsob ji tomuto akváriu.';
+
+  @override
+  String get saltMixCatalogEstimate =>
+      'Odhad výrobce pro zdrojovou vodu. Než se na něj spolehneš, zkalibruj změřený konečný objem.';
+
+  @override
+  String get saltMixMeasuredCalibration =>
+      'Používá se tvoje změřená kalibrace pro toto akvárium.';
+
+  @override
+  String get saltMixNameOptional => 'Název soli (volitelné)';
+
+  @override
+  String get saltMixFactor => 'Suchá směs při referenční salinitě';
+
+  @override
+  String get saltMixFactorHelp =>
+      'Zadej gramy na litr konečné připravené vody. Údaj z obalu na litr vstupní vody je jen odhad, dokud nezkalibruješ skutečnou dávku.';
+
+  @override
+  String get saltMixReferenceSalinity => 'Referenční salinita';
+
+  @override
+  String get saltMixCalibrateTitle => 'Kalibrovat podle změřené dávky';
+
+  @override
+  String get saltMixDryMass => 'Použitá suchá směs';
+
+  @override
+  String get saltMixMeasuredVolume => 'Změřený konečný objem';
+
+  @override
+  String get saltMixMeasuredSalinity => 'Změřená salinita';
+
+  @override
+  String get saltMixUseCalibration => 'Použít tuto kalibraci';
+
+  @override
+  String get saltMixCalculate => 'Vypočítat směs';
+
+  @override
+  String get salinityPlannerResult => 'Výsledek';
+
+  @override
+  String get saltMixDrySalt => 'Odhad suché směsi';
+
+  @override
+  String get saltMixResultHelp =>
+      'Začni s menším množstvím RO/DI vody, než je požadovaný konečný objem. Míchej mimo akvárium, dodrž pokyny výrobce k teplotě, míchání a provzdušnění, potom ověř salinitu kalibrovaným přístrojem a uprav množství soli a vody na konečný objem.';
+
+  @override
+  String get salinityCorrectionIntro =>
+      'Odhadni výměnu stejného objemu vody, která posune salinitu akvária ze současné hodnoty k cíli.';
+
+  @override
+  String get salinityCorrectionTankVolume => 'Čistý objem vody v systému';
+
+  @override
+  String get salinityCorrectionCurrent => 'Současná salinita';
+
+  @override
+  String get salinityCorrectionTarget => 'Cílová salinita';
+
+  @override
+  String salinityPlannerLatestReading(Object date) {
+    return 'Předvyplněno podle měření z $date.';
+  }
+
+  @override
+  String get salinityCorrectionReplacement => 'Salinita náhradní dávky';
+
+  @override
+  String get salinityCorrectionReplacementHelp =>
+      'Musí být vyšší než cíl. Připrav a změř tuto dávku zvlášť.';
+
+  @override
+  String get salinityCorrectionHighMethod =>
+      'Odeber vypočtené množství vody z akvária a nahraď je stejným objemem RO/DI vody s 0 ppt.';
+
+  @override
+  String get salinityCorrectionHighResultHelp =>
+      'Ber výsledek jako počáteční odhad. Velké změny rozděl do kroků, nech mezi nimi vodu cirkulovat a po každém kroku salinitu znovu změř.';
+
+  @override
+  String get salinityCorrectionLowResultHelp =>
+      'Náhradní vodu připrav mimo akvárium. Dodrž pokyny výrobce soli k teplotě, míchání a provzdušnění, ověř ji kalibrovaným přístrojem na salinitu, potom měň vodu po krocích, nech ji cirkulovat a znovu měř.';
+
+  @override
+  String get salinityCorrectionLowMethod =>
+      'Odeber vypočtené množství vody z akvária a nahraď je stejným objemem zvlášť namíchané vody s vyšší salinitou.';
+
+  @override
+  String get salinityCorrectionCalculate => 'Vypočítat úpravu';
+
+  @override
+  String get salinityReplacementError =>
+      'Salinita náhradní vody musí být vyšší než cíl.';
+
+  @override
+  String get salinityPlannerAssumptionsTitle => 'Před úpravou';
+
+  @override
+  String get salinityPlannerAssumptions =>
+      'Odhad předpokládá stejný objem akvária, zachování soli a úplné promíchání vody. Pokud odpařování snížilo hladinu, nejdřív doplň RO/DI na běžnou úroveň a znovu změř salinitu.';
+
+  @override
+  String get salinityPlannerSafety =>
+      'Nikdy nesyp suchou směs do akvária se živočichy. Velké změny rozděl na kroky, mezi nimi nech vodu cirkulovat a po každém kroku měř. Kalkulačka neurčuje univerzálně bezpečnou denní změnu ani nezaručuje výsledek.';
+
+  @override
+  String get salinityCorrectionNoChange =>
+      'Současná salinita už odpovídá cíli. Výměna není potřeba.';
+
+  @override
+  String get salinityCorrectionExchange => 'Odebrat a nahradit';
+
+  @override
+  String get salinityCorrectionTankPercent => 'Z vody v systému';
+
+  @override
+  String get salinityCorrectionBatchSalt => 'Suchá směs pro náhradní dávku';
+
+  @override
+  String get salinityCorrectionExtraEquivalent =>
+      'Celkový ekvivalent chybějící soli';
+
+  @override
+  String get salinityCorrectionRecord => 'Zapsat dokončenou výměnu vody';
+
+  @override
+  String get salinityCorrectionLogNote => 'Úprava salinity';
 
   @override
   String get doseCalcTitle => 'Kalkulačka dávkování';
@@ -4129,6 +4476,39 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get wallNightToTitle => 'Ztmavit do';
+
+  @override
+  String get wallDataSection => 'Shromážděná data';
+
+  @override
+  String get wallClearSamplesTitle => 'Vymazat shromážděná měření';
+
+  @override
+  String get wallClearSamplesSubtitle =>
+      'Smazat online měření používaná v grafech nástěnného displeje';
+
+  @override
+  String get wallClearSamplesDialogTitle => 'Vymazat shromážděná měření?';
+
+  @override
+  String get wallClearSamplesDialogBody =>
+      'Zvol, jak velkou část nedávné online historie chceš zachovat. Ručně zadaná měření se nesmažou.';
+
+  @override
+  String get wallClearSamplesAll => 'Smazat vše';
+
+  @override
+  String get wallKeepSamples1h => 'Zachovat poslední 1 hodinu';
+
+  @override
+  String get wallKeepSamples4h => 'Zachovat poslední 4 hodiny';
+
+  @override
+  String get wallKeepSamples12h => 'Zachovat posledních 12 hodin';
+
+  @override
+  String get wallSamplesHistoryUpdated =>
+      'Historie shromážděných měření byla upravena';
 
   @override
   String get wallCardsSection => 'Karty';

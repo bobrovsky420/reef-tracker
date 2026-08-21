@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:intl/intl.dart';
 
 import 'parameter_catalog.dart';
@@ -158,12 +160,115 @@ const double sgPerPpt = 0.0264 / 35; // ≈ 0.00075428...
 double pptToSg(double ppt) => 1 + ppt * sgPerPpt;
 double sgToPpt(double sg) => (sg - 1) / sgPerPpt;
 
+/// Nominal volumetric thermal-expansion coefficient of hydrometer glass.
+/// NIST SP 250-78r1 gives 26 parts per million per degree Celsius for the
+/// temperature correction of a density hydrometer.
+const double hydrometerGlassExpansionPerC = 26e-6;
+
+/// Atmospheric-pressure density of standard seawater in g/cm³.
+///
+/// This is the UNESCO 1983 / EOS-80 equation at zero sea pressure. Its inputs
+/// are Practical Salinity and IPTS-68 temperature; over the aquarium range the
+/// ITS-90/IPTS-68 distinction is far below a hobby hydrometer's resolution.
+/// It is retained here instead of the much larger TEOS-10 Gibbs implementation
+/// because it directly inverts the practical-salinity scale used by the app.
+double seawaterDensity(double salinityPpt, double tempC) {
+  if (!salinityPpt.isFinite ||
+      !tempC.isFinite ||
+      salinityPpt < 0 ||
+      salinityPpt > 60 ||
+      tempC < -2 ||
+      tempC > 40) {
+    return double.nan;
+  }
+
+  final t2 = tempC * tempC;
+  final t3 = t2 * tempC;
+  final t4 = t3 * tempC;
+  final t5 = t4 * tempC;
+  final pureWaterKgM3 =
+      999.842594 +
+      6.793952e-2 * tempC -
+      9.095290e-3 * t2 +
+      1.001685e-4 * t3 -
+      1.120083e-6 * t4 +
+      6.536332e-9 * t5;
+  final a =
+      0.824493 -
+      4.0899e-3 * tempC +
+      7.6438e-5 * t2 -
+      8.2467e-7 * t3 +
+      5.3875e-9 * t4;
+  final b = -5.72466e-3 + 1.0227e-4 * tempC - 1.6546e-6 * t2;
+  const c = 4.8314e-4;
+  final densityKgM3 =
+      pureWaterKgM3 +
+      a * salinityPpt +
+      b * salinityPpt * math.sqrt(salinityPpt) +
+      c * salinityPpt * salinityPpt;
+  return densityKgM3 / 1000;
+}
+
+/// Inverts [seawaterDensity] for Practical Salinity by bisection.
+double? salinityFromSeawaterDensity(double density, double tempC) {
+  if (!density.isFinite || !tempC.isFinite) return null;
+  final fresh = seawaterDensity(0, tempC);
+  final brine = seawaterDensity(60, tempC);
+  if (!fresh.isFinite || density < fresh || density > brine) return null;
+
+  var low = 0.0;
+  var high = 60.0;
+  for (var i = 0; i < 60; i++) {
+    final mid = (low + high) / 2;
+    if (seawaterDensity(mid, tempC) < density) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+  return (low + high) / 2;
+}
+
+/// Expected scale reading of a 25 °C density hydrometer at [tempC].
+double hydrometerReadingForSalinity(double salinityPpt, double tempC) =>
+    seawaterDensity(salinityPpt, tempC) *
+    (1 + hydrometerGlassExpansionPerC * (tempC - 25));
+
+/// Practical Salinity inferred from a 25 °C density hydrometer reading.
+double? salinityFromHydrometerReading(double reading, double tempC) {
+  final glassFactor = 1 + hydrometerGlassExpansionPerC * (tempC - 25);
+  if (!reading.isFinite || glassFactor <= 0) return null;
+  return salinityFromSeawaterDensity(reading / glassFactor, tempC);
+}
+
 // --- Volume (canonical = litres) -------------------------------------------
 
 const double litersPerUsGallon = 3.785411784; // US liquid gallon
 
 double litersToGallons(double l) => l / litersPerUsGallon;
 double gallonsToLiters(double g) => g * litersPerUsGallon;
+
+/// One Imperial gallon in litres. Kept distinct from the US liquid gallon:
+/// both occur on reef-product labels and treating them as interchangeable
+/// silently changes a dose or water-change volume by nearly 20%.
+const double litersPerImperialGallon = 4.54609;
+
+double litersToImperialGallons(double l) => l / litersPerImperialGallon;
+double imperialGallonsToLiters(double g) => g * litersPerImperialGallon;
+
+// --- Alkalinity (canonical for converter = dKH) ----------------------------
+//
+// German degrees of carbonate hardness are the common hobby unit. The two
+// equivalents below are the conventional reef/aquarium values: 1 dKH =
+// 0.357 meq/L = 17.848 ppm (mg/L) as CaCO₃.
+
+const double meqPerDkh = 0.357;
+const double ppmCaco3PerDkh = 17.848;
+
+double dkhToMeq(double dkh) => dkh * meqPerDkh;
+double meqToDkh(double meq) => meq / meqPerDkh;
+double dkhToPpmCaco3(double dkh) => dkh * ppmCaco3PerDkh;
+double ppmCaco3ToDkh(double ppm) => ppm / ppmCaco3PerDkh;
 
 /// Converts a canonical litre value into [unit] for display.
 double volumeToDisplay(double liters, VolumeUnit unit) =>

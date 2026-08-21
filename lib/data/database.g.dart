@@ -56,6 +56,51 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _saltMixNameMeta = const VerificationMeta(
+    'saltMixName',
+  );
+  @override
+  late final GeneratedColumn<String> saltMixName = GeneratedColumn<String>(
+    'salt_mix_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _saltMixGramsPerLiterMeta =
+      const VerificationMeta('saltMixGramsPerLiter');
+  @override
+  late final GeneratedColumn<double> saltMixGramsPerLiter =
+      GeneratedColumn<double>(
+        'salt_mix_grams_per_liter',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _saltMixReferencePptMeta =
+      const VerificationMeta('saltMixReferencePpt');
+  @override
+  late final GeneratedColumn<double> saltMixReferencePpt =
+      GeneratedColumn<double>(
+        'salt_mix_reference_ppt',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _saltMixProductKeyMeta = const VerificationMeta(
+    'saltMixProductKey',
+  );
+  @override
+  late final GeneratedColumn<String> saltMixProductKey =
+      GeneratedColumn<String>(
+        'salt_mix_product_key',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _startDateMeta = const VerificationMeta(
     'startDate',
   );
@@ -123,6 +168,10 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
     name,
     setupType,
     volumeLiters,
+    saltMixName,
+    saltMixGramsPerLiter,
+    saltMixReferencePpt,
+    saltMixProductKey,
     startDate,
     notes,
     vendor,
@@ -167,6 +216,42 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
         volumeLiters.isAcceptableOrUnknown(
           data['volume_liters']!,
           _volumeLitersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('salt_mix_name')) {
+      context.handle(
+        _saltMixNameMeta,
+        saltMixName.isAcceptableOrUnknown(
+          data['salt_mix_name']!,
+          _saltMixNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('salt_mix_grams_per_liter')) {
+      context.handle(
+        _saltMixGramsPerLiterMeta,
+        saltMixGramsPerLiter.isAcceptableOrUnknown(
+          data['salt_mix_grams_per_liter']!,
+          _saltMixGramsPerLiterMeta,
+        ),
+      );
+    }
+    if (data.containsKey('salt_mix_reference_ppt')) {
+      context.handle(
+        _saltMixReferencePptMeta,
+        saltMixReferencePpt.isAcceptableOrUnknown(
+          data['salt_mix_reference_ppt']!,
+          _saltMixReferencePptMeta,
+        ),
+      );
+    }
+    if (data.containsKey('salt_mix_product_key')) {
+      context.handle(
+        _saltMixProductKeyMeta,
+        saltMixProductKey.isAcceptableOrUnknown(
+          data['salt_mix_product_key']!,
+          _saltMixProductKeyMeta,
         ),
       );
     }
@@ -231,6 +316,22 @@ class $TanksTable extends Tanks with TableInfo<$TanksTable, Tank> {
         DriftSqlType.double,
         data['${effectivePrefix}volume_liters'],
       ),
+      saltMixName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}salt_mix_name'],
+      ),
+      saltMixGramsPerLiter: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}salt_mix_grams_per_liter'],
+      ),
+      saltMixReferencePpt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}salt_mix_reference_ppt'],
+      ),
+      saltMixProductKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}salt_mix_product_key'],
+      ),
       startDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}start_date'],
@@ -272,6 +373,14 @@ class Tank extends DataClass implements Insertable<Tank> {
   final String setupType;
   final double? volumeLiters;
 
+  /// Last salt-mix calibration used by this aquarium's salinity planner.
+  /// Nullable as a group: old tanks and keepers who have not calibrated a
+  /// product simply leave all three fields empty.
+  final String? saltMixName;
+  final double? saltMixGramsPerLiter;
+  final double? saltMixReferencePpt;
+  final String? saltMixProductKey;
+
   /// When the aquarium was set up/started (optional, user-editable).
   final DateTime? startDate;
 
@@ -295,6 +404,10 @@ class Tank extends DataClass implements Insertable<Tank> {
     required this.name,
     required this.setupType,
     this.volumeLiters,
+    this.saltMixName,
+    this.saltMixGramsPerLiter,
+    this.saltMixReferencePpt,
+    this.saltMixProductKey,
     this.startDate,
     this.notes,
     this.vendor,
@@ -310,6 +423,18 @@ class Tank extends DataClass implements Insertable<Tank> {
     map['setup_type'] = Variable<String>(setupType);
     if (!nullToAbsent || volumeLiters != null) {
       map['volume_liters'] = Variable<double>(volumeLiters);
+    }
+    if (!nullToAbsent || saltMixName != null) {
+      map['salt_mix_name'] = Variable<String>(saltMixName);
+    }
+    if (!nullToAbsent || saltMixGramsPerLiter != null) {
+      map['salt_mix_grams_per_liter'] = Variable<double>(saltMixGramsPerLiter);
+    }
+    if (!nullToAbsent || saltMixReferencePpt != null) {
+      map['salt_mix_reference_ppt'] = Variable<double>(saltMixReferencePpt);
+    }
+    if (!nullToAbsent || saltMixProductKey != null) {
+      map['salt_mix_product_key'] = Variable<String>(saltMixProductKey);
     }
     if (!nullToAbsent || startDate != null) {
       map['start_date'] = Variable<DateTime>(startDate);
@@ -338,6 +463,18 @@ class Tank extends DataClass implements Insertable<Tank> {
       volumeLiters: volumeLiters == null && nullToAbsent
           ? const Value.absent()
           : Value(volumeLiters),
+      saltMixName: saltMixName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(saltMixName),
+      saltMixGramsPerLiter: saltMixGramsPerLiter == null && nullToAbsent
+          ? const Value.absent()
+          : Value(saltMixGramsPerLiter),
+      saltMixReferencePpt: saltMixReferencePpt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(saltMixReferencePpt),
+      saltMixProductKey: saltMixProductKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(saltMixProductKey),
       startDate: startDate == null && nullToAbsent
           ? const Value.absent()
           : Value(startDate),
@@ -367,6 +504,16 @@ class Tank extends DataClass implements Insertable<Tank> {
       name: serializer.fromJson<String>(json['name']),
       setupType: serializer.fromJson<String>(json['setupType']),
       volumeLiters: serializer.fromJson<double?>(json['volumeLiters']),
+      saltMixName: serializer.fromJson<String?>(json['saltMixName']),
+      saltMixGramsPerLiter: serializer.fromJson<double?>(
+        json['saltMixGramsPerLiter'],
+      ),
+      saltMixReferencePpt: serializer.fromJson<double?>(
+        json['saltMixReferencePpt'],
+      ),
+      saltMixProductKey: serializer.fromJson<String?>(
+        json['saltMixProductKey'],
+      ),
       startDate: serializer.fromJson<DateTime?>(json['startDate']),
       notes: serializer.fromJson<String?>(json['notes']),
       vendor: serializer.fromJson<String?>(json['vendor']),
@@ -383,6 +530,10 @@ class Tank extends DataClass implements Insertable<Tank> {
       'name': serializer.toJson<String>(name),
       'setupType': serializer.toJson<String>(setupType),
       'volumeLiters': serializer.toJson<double?>(volumeLiters),
+      'saltMixName': serializer.toJson<String?>(saltMixName),
+      'saltMixGramsPerLiter': serializer.toJson<double?>(saltMixGramsPerLiter),
+      'saltMixReferencePpt': serializer.toJson<double?>(saltMixReferencePpt),
+      'saltMixProductKey': serializer.toJson<String?>(saltMixProductKey),
       'startDate': serializer.toJson<DateTime?>(startDate),
       'notes': serializer.toJson<String?>(notes),
       'vendor': serializer.toJson<String?>(vendor),
@@ -397,6 +548,10 @@ class Tank extends DataClass implements Insertable<Tank> {
     String? name,
     String? setupType,
     Value<double?> volumeLiters = const Value.absent(),
+    Value<String?> saltMixName = const Value.absent(),
+    Value<double?> saltMixGramsPerLiter = const Value.absent(),
+    Value<double?> saltMixReferencePpt = const Value.absent(),
+    Value<String?> saltMixProductKey = const Value.absent(),
     Value<DateTime?> startDate = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     Value<String?> vendor = const Value.absent(),
@@ -408,6 +563,16 @@ class Tank extends DataClass implements Insertable<Tank> {
     name: name ?? this.name,
     setupType: setupType ?? this.setupType,
     volumeLiters: volumeLiters.present ? volumeLiters.value : this.volumeLiters,
+    saltMixName: saltMixName.present ? saltMixName.value : this.saltMixName,
+    saltMixGramsPerLiter: saltMixGramsPerLiter.present
+        ? saltMixGramsPerLiter.value
+        : this.saltMixGramsPerLiter,
+    saltMixReferencePpt: saltMixReferencePpt.present
+        ? saltMixReferencePpt.value
+        : this.saltMixReferencePpt,
+    saltMixProductKey: saltMixProductKey.present
+        ? saltMixProductKey.value
+        : this.saltMixProductKey,
     startDate: startDate.present ? startDate.value : this.startDate,
     notes: notes.present ? notes.value : this.notes,
     vendor: vendor.present ? vendor.value : this.vendor,
@@ -423,6 +588,18 @@ class Tank extends DataClass implements Insertable<Tank> {
       volumeLiters: data.volumeLiters.present
           ? data.volumeLiters.value
           : this.volumeLiters,
+      saltMixName: data.saltMixName.present
+          ? data.saltMixName.value
+          : this.saltMixName,
+      saltMixGramsPerLiter: data.saltMixGramsPerLiter.present
+          ? data.saltMixGramsPerLiter.value
+          : this.saltMixGramsPerLiter,
+      saltMixReferencePpt: data.saltMixReferencePpt.present
+          ? data.saltMixReferencePpt.value
+          : this.saltMixReferencePpt,
+      saltMixProductKey: data.saltMixProductKey.present
+          ? data.saltMixProductKey.value
+          : this.saltMixProductKey,
       startDate: data.startDate.present ? data.startDate.value : this.startDate,
       notes: data.notes.present ? data.notes.value : this.notes,
       vendor: data.vendor.present ? data.vendor.value : this.vendor,
@@ -439,6 +616,10 @@ class Tank extends DataClass implements Insertable<Tank> {
           ..write('name: $name, ')
           ..write('setupType: $setupType, ')
           ..write('volumeLiters: $volumeLiters, ')
+          ..write('saltMixName: $saltMixName, ')
+          ..write('saltMixGramsPerLiter: $saltMixGramsPerLiter, ')
+          ..write('saltMixReferencePpt: $saltMixReferencePpt, ')
+          ..write('saltMixProductKey: $saltMixProductKey, ')
           ..write('startDate: $startDate, ')
           ..write('notes: $notes, ')
           ..write('vendor: $vendor, ')
@@ -455,6 +636,10 @@ class Tank extends DataClass implements Insertable<Tank> {
     name,
     setupType,
     volumeLiters,
+    saltMixName,
+    saltMixGramsPerLiter,
+    saltMixReferencePpt,
+    saltMixProductKey,
     startDate,
     notes,
     vendor,
@@ -470,6 +655,10 @@ class Tank extends DataClass implements Insertable<Tank> {
           other.name == this.name &&
           other.setupType == this.setupType &&
           other.volumeLiters == this.volumeLiters &&
+          other.saltMixName == this.saltMixName &&
+          other.saltMixGramsPerLiter == this.saltMixGramsPerLiter &&
+          other.saltMixReferencePpt == this.saltMixReferencePpt &&
+          other.saltMixProductKey == this.saltMixProductKey &&
           other.startDate == this.startDate &&
           other.notes == this.notes &&
           other.vendor == this.vendor &&
@@ -483,6 +672,10 @@ class TanksCompanion extends UpdateCompanion<Tank> {
   final Value<String> name;
   final Value<String> setupType;
   final Value<double?> volumeLiters;
+  final Value<String?> saltMixName;
+  final Value<double?> saltMixGramsPerLiter;
+  final Value<double?> saltMixReferencePpt;
+  final Value<String?> saltMixProductKey;
   final Value<DateTime?> startDate;
   final Value<String?> notes;
   final Value<String?> vendor;
@@ -494,6 +687,10 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     this.name = const Value.absent(),
     this.setupType = const Value.absent(),
     this.volumeLiters = const Value.absent(),
+    this.saltMixName = const Value.absent(),
+    this.saltMixGramsPerLiter = const Value.absent(),
+    this.saltMixReferencePpt = const Value.absent(),
+    this.saltMixProductKey = const Value.absent(),
     this.startDate = const Value.absent(),
     this.notes = const Value.absent(),
     this.vendor = const Value.absent(),
@@ -506,6 +703,10 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     required String name,
     required String setupType,
     this.volumeLiters = const Value.absent(),
+    this.saltMixName = const Value.absent(),
+    this.saltMixGramsPerLiter = const Value.absent(),
+    this.saltMixReferencePpt = const Value.absent(),
+    this.saltMixProductKey = const Value.absent(),
     this.startDate = const Value.absent(),
     this.notes = const Value.absent(),
     this.vendor = const Value.absent(),
@@ -519,6 +720,10 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     Expression<String>? name,
     Expression<String>? setupType,
     Expression<double>? volumeLiters,
+    Expression<String>? saltMixName,
+    Expression<double>? saltMixGramsPerLiter,
+    Expression<double>? saltMixReferencePpt,
+    Expression<String>? saltMixProductKey,
     Expression<DateTime>? startDate,
     Expression<String>? notes,
     Expression<String>? vendor,
@@ -531,6 +736,12 @@ class TanksCompanion extends UpdateCompanion<Tank> {
       if (name != null) 'name': name,
       if (setupType != null) 'setup_type': setupType,
       if (volumeLiters != null) 'volume_liters': volumeLiters,
+      if (saltMixName != null) 'salt_mix_name': saltMixName,
+      if (saltMixGramsPerLiter != null)
+        'salt_mix_grams_per_liter': saltMixGramsPerLiter,
+      if (saltMixReferencePpt != null)
+        'salt_mix_reference_ppt': saltMixReferencePpt,
+      if (saltMixProductKey != null) 'salt_mix_product_key': saltMixProductKey,
       if (startDate != null) 'start_date': startDate,
       if (notes != null) 'notes': notes,
       if (vendor != null) 'vendor': vendor,
@@ -545,6 +756,10 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     Value<String>? name,
     Value<String>? setupType,
     Value<double?>? volumeLiters,
+    Value<String?>? saltMixName,
+    Value<double?>? saltMixGramsPerLiter,
+    Value<double?>? saltMixReferencePpt,
+    Value<String?>? saltMixProductKey,
     Value<DateTime?>? startDate,
     Value<String?>? notes,
     Value<String?>? vendor,
@@ -557,6 +772,10 @@ class TanksCompanion extends UpdateCompanion<Tank> {
       name: name ?? this.name,
       setupType: setupType ?? this.setupType,
       volumeLiters: volumeLiters ?? this.volumeLiters,
+      saltMixName: saltMixName ?? this.saltMixName,
+      saltMixGramsPerLiter: saltMixGramsPerLiter ?? this.saltMixGramsPerLiter,
+      saltMixReferencePpt: saltMixReferencePpt ?? this.saltMixReferencePpt,
+      saltMixProductKey: saltMixProductKey ?? this.saltMixProductKey,
       startDate: startDate ?? this.startDate,
       notes: notes ?? this.notes,
       vendor: vendor ?? this.vendor,
@@ -580,6 +799,22 @@ class TanksCompanion extends UpdateCompanion<Tank> {
     }
     if (volumeLiters.present) {
       map['volume_liters'] = Variable<double>(volumeLiters.value);
+    }
+    if (saltMixName.present) {
+      map['salt_mix_name'] = Variable<String>(saltMixName.value);
+    }
+    if (saltMixGramsPerLiter.present) {
+      map['salt_mix_grams_per_liter'] = Variable<double>(
+        saltMixGramsPerLiter.value,
+      );
+    }
+    if (saltMixReferencePpt.present) {
+      map['salt_mix_reference_ppt'] = Variable<double>(
+        saltMixReferencePpt.value,
+      );
+    }
+    if (saltMixProductKey.present) {
+      map['salt_mix_product_key'] = Variable<String>(saltMixProductKey.value);
     }
     if (startDate.present) {
       map['start_date'] = Variable<DateTime>(startDate.value);
@@ -609,12 +844,509 @@ class TanksCompanion extends UpdateCompanion<Tank> {
           ..write('name: $name, ')
           ..write('setupType: $setupType, ')
           ..write('volumeLiters: $volumeLiters, ')
+          ..write('saltMixName: $saltMixName, ')
+          ..write('saltMixGramsPerLiter: $saltMixGramsPerLiter, ')
+          ..write('saltMixReferencePpt: $saltMixReferencePpt, ')
+          ..write('saltMixProductKey: $saltMixProductKey, ')
           ..write('startDate: $startDate, ')
           ..write('notes: $notes, ')
           ..write('vendor: $vendor, ')
           ..write('model: $model, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SaltMixCalibrationsTable extends SaltMixCalibrations
+    with TableInfo<$SaltMixCalibrationsTable, StoredSaltMixCalibration> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SaltMixCalibrationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _tankIdMeta = const VerificationMeta('tankId');
+  @override
+  late final GeneratedColumn<int> tankId = GeneratedColumn<int>(
+    'tank_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES tanks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _productKeyMeta = const VerificationMeta(
+    'productKey',
+  );
+  @override
+  late final GeneratedColumn<String> productKey = GeneratedColumn<String>(
+    'product_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _gramsPerLiterMeta = const VerificationMeta(
+    'gramsPerLiter',
+  );
+  @override
+  late final GeneratedColumn<double> gramsPerLiter = GeneratedColumn<double>(
+    'grams_per_liter',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _referencePptMeta = const VerificationMeta(
+    'referencePpt',
+  );
+  @override
+  late final GeneratedColumn<double> referencePpt = GeneratedColumn<double>(
+    'reference_ppt',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _measuredMeta = const VerificationMeta(
+    'measured',
+  );
+  @override
+  late final GeneratedColumn<bool> measured = GeneratedColumn<bool>(
+    'measured',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("measured" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    tankId,
+    productKey,
+    displayName,
+    gramsPerLiter,
+    referencePpt,
+    measured,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'salt_mix_calibrations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StoredSaltMixCalibration> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('tank_id')) {
+      context.handle(
+        _tankIdMeta,
+        tankId.isAcceptableOrUnknown(data['tank_id']!, _tankIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tankIdMeta);
+    }
+    if (data.containsKey('product_key')) {
+      context.handle(
+        _productKeyMeta,
+        productKey.isAcceptableOrUnknown(data['product_key']!, _productKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productKeyMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('grams_per_liter')) {
+      context.handle(
+        _gramsPerLiterMeta,
+        gramsPerLiter.isAcceptableOrUnknown(
+          data['grams_per_liter']!,
+          _gramsPerLiterMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_gramsPerLiterMeta);
+    }
+    if (data.containsKey('reference_ppt')) {
+      context.handle(
+        _referencePptMeta,
+        referencePpt.isAcceptableOrUnknown(
+          data['reference_ppt']!,
+          _referencePptMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_referencePptMeta);
+    }
+    if (data.containsKey('measured')) {
+      context.handle(
+        _measuredMeta,
+        measured.isAcceptableOrUnknown(data['measured']!, _measuredMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {tankId, productKey};
+  @override
+  StoredSaltMixCalibration map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StoredSaltMixCalibration(
+      tankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tank_id'],
+      )!,
+      productKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_key'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      gramsPerLiter: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}grams_per_liter'],
+      )!,
+      referencePpt: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}reference_ppt'],
+      )!,
+      measured: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}measured'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SaltMixCalibrationsTable createAlias(String alias) {
+    return $SaltMixCalibrationsTable(attachedDatabase, alias);
+  }
+}
+
+class StoredSaltMixCalibration extends DataClass
+    implements Insertable<StoredSaltMixCalibration> {
+  final int tankId;
+  final String productKey;
+  final String displayName;
+  final double gramsPerLiter;
+  final double referencePpt;
+  final bool measured;
+  final DateTime updatedAt;
+  const StoredSaltMixCalibration({
+    required this.tankId,
+    required this.productKey,
+    required this.displayName,
+    required this.gramsPerLiter,
+    required this.referencePpt,
+    required this.measured,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['tank_id'] = Variable<int>(tankId);
+    map['product_key'] = Variable<String>(productKey);
+    map['display_name'] = Variable<String>(displayName);
+    map['grams_per_liter'] = Variable<double>(gramsPerLiter);
+    map['reference_ppt'] = Variable<double>(referencePpt);
+    map['measured'] = Variable<bool>(measured);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  SaltMixCalibrationsCompanion toCompanion(bool nullToAbsent) {
+    return SaltMixCalibrationsCompanion(
+      tankId: Value(tankId),
+      productKey: Value(productKey),
+      displayName: Value(displayName),
+      gramsPerLiter: Value(gramsPerLiter),
+      referencePpt: Value(referencePpt),
+      measured: Value(measured),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory StoredSaltMixCalibration.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StoredSaltMixCalibration(
+      tankId: serializer.fromJson<int>(json['tankId']),
+      productKey: serializer.fromJson<String>(json['productKey']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      gramsPerLiter: serializer.fromJson<double>(json['gramsPerLiter']),
+      referencePpt: serializer.fromJson<double>(json['referencePpt']),
+      measured: serializer.fromJson<bool>(json['measured']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'tankId': serializer.toJson<int>(tankId),
+      'productKey': serializer.toJson<String>(productKey),
+      'displayName': serializer.toJson<String>(displayName),
+      'gramsPerLiter': serializer.toJson<double>(gramsPerLiter),
+      'referencePpt': serializer.toJson<double>(referencePpt),
+      'measured': serializer.toJson<bool>(measured),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  StoredSaltMixCalibration copyWith({
+    int? tankId,
+    String? productKey,
+    String? displayName,
+    double? gramsPerLiter,
+    double? referencePpt,
+    bool? measured,
+    DateTime? updatedAt,
+  }) => StoredSaltMixCalibration(
+    tankId: tankId ?? this.tankId,
+    productKey: productKey ?? this.productKey,
+    displayName: displayName ?? this.displayName,
+    gramsPerLiter: gramsPerLiter ?? this.gramsPerLiter,
+    referencePpt: referencePpt ?? this.referencePpt,
+    measured: measured ?? this.measured,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  StoredSaltMixCalibration copyWithCompanion(
+    SaltMixCalibrationsCompanion data,
+  ) {
+    return StoredSaltMixCalibration(
+      tankId: data.tankId.present ? data.tankId.value : this.tankId,
+      productKey: data.productKey.present
+          ? data.productKey.value
+          : this.productKey,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      gramsPerLiter: data.gramsPerLiter.present
+          ? data.gramsPerLiter.value
+          : this.gramsPerLiter,
+      referencePpt: data.referencePpt.present
+          ? data.referencePpt.value
+          : this.referencePpt,
+      measured: data.measured.present ? data.measured.value : this.measured,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StoredSaltMixCalibration(')
+          ..write('tankId: $tankId, ')
+          ..write('productKey: $productKey, ')
+          ..write('displayName: $displayName, ')
+          ..write('gramsPerLiter: $gramsPerLiter, ')
+          ..write('referencePpt: $referencePpt, ')
+          ..write('measured: $measured, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    tankId,
+    productKey,
+    displayName,
+    gramsPerLiter,
+    referencePpt,
+    measured,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StoredSaltMixCalibration &&
+          other.tankId == this.tankId &&
+          other.productKey == this.productKey &&
+          other.displayName == this.displayName &&
+          other.gramsPerLiter == this.gramsPerLiter &&
+          other.referencePpt == this.referencePpt &&
+          other.measured == this.measured &&
+          other.updatedAt == this.updatedAt);
+}
+
+class SaltMixCalibrationsCompanion
+    extends UpdateCompanion<StoredSaltMixCalibration> {
+  final Value<int> tankId;
+  final Value<String> productKey;
+  final Value<String> displayName;
+  final Value<double> gramsPerLiter;
+  final Value<double> referencePpt;
+  final Value<bool> measured;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const SaltMixCalibrationsCompanion({
+    this.tankId = const Value.absent(),
+    this.productKey = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.gramsPerLiter = const Value.absent(),
+    this.referencePpt = const Value.absent(),
+    this.measured = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SaltMixCalibrationsCompanion.insert({
+    required int tankId,
+    required String productKey,
+    required String displayName,
+    required double gramsPerLiter,
+    required double referencePpt,
+    this.measured = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : tankId = Value(tankId),
+       productKey = Value(productKey),
+       displayName = Value(displayName),
+       gramsPerLiter = Value(gramsPerLiter),
+       referencePpt = Value(referencePpt);
+  static Insertable<StoredSaltMixCalibration> custom({
+    Expression<int>? tankId,
+    Expression<String>? productKey,
+    Expression<String>? displayName,
+    Expression<double>? gramsPerLiter,
+    Expression<double>? referencePpt,
+    Expression<bool>? measured,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (tankId != null) 'tank_id': tankId,
+      if (productKey != null) 'product_key': productKey,
+      if (displayName != null) 'display_name': displayName,
+      if (gramsPerLiter != null) 'grams_per_liter': gramsPerLiter,
+      if (referencePpt != null) 'reference_ppt': referencePpt,
+      if (measured != null) 'measured': measured,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SaltMixCalibrationsCompanion copyWith({
+    Value<int>? tankId,
+    Value<String>? productKey,
+    Value<String>? displayName,
+    Value<double>? gramsPerLiter,
+    Value<double>? referencePpt,
+    Value<bool>? measured,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return SaltMixCalibrationsCompanion(
+      tankId: tankId ?? this.tankId,
+      productKey: productKey ?? this.productKey,
+      displayName: displayName ?? this.displayName,
+      gramsPerLiter: gramsPerLiter ?? this.gramsPerLiter,
+      referencePpt: referencePpt ?? this.referencePpt,
+      measured: measured ?? this.measured,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (tankId.present) {
+      map['tank_id'] = Variable<int>(tankId.value);
+    }
+    if (productKey.present) {
+      map['product_key'] = Variable<String>(productKey.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (gramsPerLiter.present) {
+      map['grams_per_liter'] = Variable<double>(gramsPerLiter.value);
+    }
+    if (referencePpt.present) {
+      map['reference_ppt'] = Variable<double>(referencePpt.value);
+    }
+    if (measured.present) {
+      map['measured'] = Variable<bool>(measured.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SaltMixCalibrationsCompanion(')
+          ..write('tankId: $tankId, ')
+          ..write('productKey: $productKey, ')
+          ..write('displayName: $displayName, ')
+          ..write('gramsPerLiter: $gramsPerLiter, ')
+          ..write('referencePpt: $referencePpt, ')
+          ..write('measured: $measured, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -9954,6 +10686,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TanksTable tanks = $TanksTable(this);
+  late final $SaltMixCalibrationsTable saltMixCalibrations =
+      $SaltMixCalibrationsTable(this);
   late final $TrackedParametersTable trackedParameters =
       $TrackedParametersTable(this);
   late final $ParameterOverridesTable parameterOverrides =
@@ -10037,6 +10771,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     tanks,
+    saltMixCalibrations,
     trackedParameters,
     parameterOverrides,
     readings,
@@ -10071,6 +10806,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'tanks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('salt_mix_calibrations', kind: UpdateKind.delete)],
+    ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'tanks',
@@ -10185,6 +10927,10 @@ typedef $$TanksTableCreateCompanionBuilder =
       required String name,
       required String setupType,
       Value<double?> volumeLiters,
+      Value<String?> saltMixName,
+      Value<double?> saltMixGramsPerLiter,
+      Value<double?> saltMixReferencePpt,
+      Value<String?> saltMixProductKey,
       Value<DateTime?> startDate,
       Value<String?> notes,
       Value<String?> vendor,
@@ -10198,6 +10944,10 @@ typedef $$TanksTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String> setupType,
       Value<double?> volumeLiters,
+      Value<String?> saltMixName,
+      Value<double?> saltMixGramsPerLiter,
+      Value<double?> saltMixReferencePpt,
+      Value<String?> saltMixProductKey,
       Value<DateTime?> startDate,
       Value<String?> notes,
       Value<String?> vendor,
@@ -10209,6 +10959,30 @@ typedef $$TanksTableUpdateCompanionBuilder =
 final class $$TanksTableReferences
     extends BaseReferences<_$AppDatabase, $TanksTable, Tank> {
   $$TanksTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<
+    $SaltMixCalibrationsTable,
+    List<StoredSaltMixCalibration>
+  >
+  _saltMixCalibrationsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.saltMixCalibrations,
+        aliasName: 'tanks__id__salt_mix_calibrations__tank_id',
+      );
+
+  $$SaltMixCalibrationsTableProcessedTableManager get saltMixCalibrationsRefs {
+    final manager = $$SaltMixCalibrationsTableTableManager(
+      $_db,
+      $_db.saltMixCalibrations,
+    ).filter((f) => f.tankId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _saltMixCalibrationsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 
   static MultiTypedResultKey<$TrackedParametersTable, List<TrackedParameter>>
   _trackedParametersRefsTable(_$AppDatabase db) =>
@@ -10513,6 +11287,26 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get saltMixName => $composableBuilder(
+    column: $table.saltMixName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get saltMixGramsPerLiter => $composableBuilder(
+    column: $table.saltMixGramsPerLiter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get saltMixReferencePpt => $composableBuilder(
+    column: $table.saltMixReferencePpt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get saltMixProductKey => $composableBuilder(
+    column: $table.saltMixProductKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get startDate => $composableBuilder(
     column: $table.startDate,
     builder: (column) => ColumnFilters(column),
@@ -10542,6 +11336,31 @@ class $$TanksTableFilterComposer extends Composer<_$AppDatabase, $TanksTable> {
     column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> saltMixCalibrationsRefs(
+    Expression<bool> Function($$SaltMixCalibrationsTableFilterComposer f) f,
+  ) {
+    final $$SaltMixCalibrationsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.saltMixCalibrations,
+      getReferencedColumn: (t) => t.tankId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SaltMixCalibrationsTableFilterComposer(
+            $db: $db,
+            $table: $db.saltMixCalibrations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 
   Expression<bool> trackedParametersRefs(
     Expression<bool> Function($$TrackedParametersTableFilterComposer f) f,
@@ -10923,6 +11742,26 @@ class $$TanksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get saltMixName => $composableBuilder(
+    column: $table.saltMixName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get saltMixGramsPerLiter => $composableBuilder(
+    column: $table.saltMixGramsPerLiter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get saltMixReferencePpt => $composableBuilder(
+    column: $table.saltMixReferencePpt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get saltMixProductKey => $composableBuilder(
+    column: $table.saltMixProductKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get startDate => $composableBuilder(
     column: $table.startDate,
     builder: (column) => ColumnOrderings(column),
@@ -10977,6 +11816,26 @@ class $$TanksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get saltMixName => $composableBuilder(
+    column: $table.saltMixName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get saltMixGramsPerLiter => $composableBuilder(
+    column: $table.saltMixGramsPerLiter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get saltMixReferencePpt => $composableBuilder(
+    column: $table.saltMixReferencePpt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get saltMixProductKey => $composableBuilder(
+    column: $table.saltMixProductKey,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get startDate =>
       $composableBuilder(column: $table.startDate, builder: (column) => column);
 
@@ -10994,6 +11853,32 @@ class $$TanksTableAnnotationComposer
 
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  Expression<T> saltMixCalibrationsRefs<T extends Object>(
+    Expression<T> Function($$SaltMixCalibrationsTableAnnotationComposer a) f,
+  ) {
+    final $$SaltMixCalibrationsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.saltMixCalibrations,
+          getReferencedColumn: (t) => t.tankId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SaltMixCalibrationsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.saltMixCalibrations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 
   Expression<T> trackedParametersRefs<T extends Object>(
     Expression<T> Function($$TrackedParametersTableAnnotationComposer a) f,
@@ -11365,6 +12250,7 @@ class $$TanksTableTableManager
           (Tank, $$TanksTableReferences),
           Tank,
           PrefetchHooks Function({
+            bool saltMixCalibrationsRefs,
             bool trackedParametersRefs,
             bool parameterOverridesRefs,
             bool readingsRefs,
@@ -11398,6 +12284,10 @@ class $$TanksTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> setupType = const Value.absent(),
                 Value<double?> volumeLiters = const Value.absent(),
+                Value<String?> saltMixName = const Value.absent(),
+                Value<double?> saltMixGramsPerLiter = const Value.absent(),
+                Value<double?> saltMixReferencePpt = const Value.absent(),
+                Value<String?> saltMixProductKey = const Value.absent(),
                 Value<DateTime?> startDate = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String?> vendor = const Value.absent(),
@@ -11409,6 +12299,10 @@ class $$TanksTableTableManager
                 name: name,
                 setupType: setupType,
                 volumeLiters: volumeLiters,
+                saltMixName: saltMixName,
+                saltMixGramsPerLiter: saltMixGramsPerLiter,
+                saltMixReferencePpt: saltMixReferencePpt,
+                saltMixProductKey: saltMixProductKey,
                 startDate: startDate,
                 notes: notes,
                 vendor: vendor,
@@ -11422,6 +12316,10 @@ class $$TanksTableTableManager
                 required String name,
                 required String setupType,
                 Value<double?> volumeLiters = const Value.absent(),
+                Value<String?> saltMixName = const Value.absent(),
+                Value<double?> saltMixGramsPerLiter = const Value.absent(),
+                Value<double?> saltMixReferencePpt = const Value.absent(),
+                Value<String?> saltMixProductKey = const Value.absent(),
                 Value<DateTime?> startDate = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String?> vendor = const Value.absent(),
@@ -11433,6 +12331,10 @@ class $$TanksTableTableManager
                 name: name,
                 setupType: setupType,
                 volumeLiters: volumeLiters,
+                saltMixName: saltMixName,
+                saltMixGramsPerLiter: saltMixGramsPerLiter,
+                saltMixReferencePpt: saltMixReferencePpt,
+                saltMixProductKey: saltMixProductKey,
                 startDate: startDate,
                 notes: notes,
                 vendor: vendor,
@@ -11448,6 +12350,7 @@ class $$TanksTableTableManager
               .toList(),
           prefetchHooksCallback:
               ({
+                saltMixCalibrationsRefs = false,
                 trackedParametersRefs = false,
                 parameterOverridesRefs = false,
                 readingsRefs = false,
@@ -11466,6 +12369,7 @@ class $$TanksTableTableManager
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
+                    if (saltMixCalibrationsRefs) db.saltMixCalibrations,
                     if (trackedParametersRefs) db.trackedParameters,
                     if (parameterOverridesRefs) db.parameterOverrides,
                     if (readingsRefs) db.readings,
@@ -11484,6 +12388,27 @@ class $$TanksTableTableManager
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
                     return [
+                      if (saltMixCalibrationsRefs)
+                        await $_getPrefetchedData<
+                          Tank,
+                          $TanksTable,
+                          StoredSaltMixCalibration
+                        >(
+                          currentTable: table,
+                          referencedTable: $$TanksTableReferences
+                              ._saltMixCalibrationsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$TanksTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).saltMixCalibrationsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.tankId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (trackedParametersRefs)
                         await $_getPrefetchedData<
                           Tank,
@@ -11787,6 +12712,7 @@ typedef $$TanksTableProcessedTableManager =
       (Tank, $$TanksTableReferences),
       Tank,
       PrefetchHooks Function({
+        bool saltMixCalibrationsRefs,
         bool trackedParametersRefs,
         bool parameterOverridesRefs,
         bool readingsRefs,
@@ -11802,6 +12728,388 @@ typedef $$TanksTableProcessedTableManager =
         bool importSourcesRefs,
         bool devicesRefs,
       })
+    >;
+typedef $$SaltMixCalibrationsTableCreateCompanionBuilder =
+    SaltMixCalibrationsCompanion Function({
+      required int tankId,
+      required String productKey,
+      required String displayName,
+      required double gramsPerLiter,
+      required double referencePpt,
+      Value<bool> measured,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+typedef $$SaltMixCalibrationsTableUpdateCompanionBuilder =
+    SaltMixCalibrationsCompanion Function({
+      Value<int> tankId,
+      Value<String> productKey,
+      Value<String> displayName,
+      Value<double> gramsPerLiter,
+      Value<double> referencePpt,
+      Value<bool> measured,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$SaltMixCalibrationsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $SaltMixCalibrationsTable,
+          StoredSaltMixCalibration
+        > {
+  $$SaltMixCalibrationsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TanksTable _tankIdTable(_$AppDatabase db) =>
+      db.tanks.createAlias('salt_mix_calibrations__tank_id__tanks__id');
+
+  $$TanksTableProcessedTableManager get tankId {
+    final $_column = $_itemColumn<int>('tank_id')!;
+
+    final manager = $$TanksTableTableManager(
+      $_db,
+      $_db.tanks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SaltMixCalibrationsTableFilterComposer
+    extends Composer<_$AppDatabase, $SaltMixCalibrationsTable> {
+  $$SaltMixCalibrationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get productKey => $composableBuilder(
+    column: $table.productKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get gramsPerLiter => $composableBuilder(
+    column: $table.gramsPerLiter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get referencePpt => $composableBuilder(
+    column: $table.referencePpt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get measured => $composableBuilder(
+    column: $table.measured,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$TanksTableFilterComposer get tankId {
+    final $$TanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableFilterComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SaltMixCalibrationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SaltMixCalibrationsTable> {
+  $$SaltMixCalibrationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get productKey => $composableBuilder(
+    column: $table.productKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get gramsPerLiter => $composableBuilder(
+    column: $table.gramsPerLiter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get referencePpt => $composableBuilder(
+    column: $table.referencePpt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get measured => $composableBuilder(
+    column: $table.measured,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$TanksTableOrderingComposer get tankId {
+    final $$TanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SaltMixCalibrationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SaltMixCalibrationsTable> {
+  $$SaltMixCalibrationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get productKey => $composableBuilder(
+    column: $table.productKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get gramsPerLiter => $composableBuilder(
+    column: $table.gramsPerLiter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get referencePpt => $composableBuilder(
+    column: $table.referencePpt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get measured =>
+      $composableBuilder(column: $table.measured, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$TanksTableAnnotationComposer get tankId {
+    final $$TanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tankId,
+      referencedTable: $db.tanks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.tanks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SaltMixCalibrationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SaltMixCalibrationsTable,
+          StoredSaltMixCalibration,
+          $$SaltMixCalibrationsTableFilterComposer,
+          $$SaltMixCalibrationsTableOrderingComposer,
+          $$SaltMixCalibrationsTableAnnotationComposer,
+          $$SaltMixCalibrationsTableCreateCompanionBuilder,
+          $$SaltMixCalibrationsTableUpdateCompanionBuilder,
+          (StoredSaltMixCalibration, $$SaltMixCalibrationsTableReferences),
+          StoredSaltMixCalibration,
+          PrefetchHooks Function({bool tankId})
+        > {
+  $$SaltMixCalibrationsTableTableManager(
+    _$AppDatabase db,
+    $SaltMixCalibrationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SaltMixCalibrationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SaltMixCalibrationsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SaltMixCalibrationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> tankId = const Value.absent(),
+                Value<String> productKey = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<double> gramsPerLiter = const Value.absent(),
+                Value<double> referencePpt = const Value.absent(),
+                Value<bool> measured = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SaltMixCalibrationsCompanion(
+                tankId: tankId,
+                productKey: productKey,
+                displayName: displayName,
+                gramsPerLiter: gramsPerLiter,
+                referencePpt: referencePpt,
+                measured: measured,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int tankId,
+                required String productKey,
+                required String displayName,
+                required double gramsPerLiter,
+                required double referencePpt,
+                Value<bool> measured = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SaltMixCalibrationsCompanion.insert(
+                tankId: tankId,
+                productKey: productKey,
+                displayName: displayName,
+                gramsPerLiter: gramsPerLiter,
+                referencePpt: referencePpt,
+                measured: measured,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$SaltMixCalibrationsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({tankId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (tankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.tankId,
+                                referencedTable:
+                                    $$SaltMixCalibrationsTableReferences
+                                        ._tankIdTable(db),
+                                referencedColumn:
+                                    $$SaltMixCalibrationsTableReferences
+                                        ._tankIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SaltMixCalibrationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SaltMixCalibrationsTable,
+      StoredSaltMixCalibration,
+      $$SaltMixCalibrationsTableFilterComposer,
+      $$SaltMixCalibrationsTableOrderingComposer,
+      $$SaltMixCalibrationsTableAnnotationComposer,
+      $$SaltMixCalibrationsTableCreateCompanionBuilder,
+      $$SaltMixCalibrationsTableUpdateCompanionBuilder,
+      (StoredSaltMixCalibration, $$SaltMixCalibrationsTableReferences),
+      StoredSaltMixCalibration,
+      PrefetchHooks Function({bool tankId})
     >;
 typedef $$TrackedParametersTableCreateCompanionBuilder =
     TrackedParametersCompanion Function({
@@ -18441,6 +19749,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$TanksTableTableManager get tanks =>
       $$TanksTableTableManager(_db, _db.tanks);
+  $$SaltMixCalibrationsTableTableManager get saltMixCalibrations =>
+      $$SaltMixCalibrationsTableTableManager(_db, _db.saltMixCalibrations);
   $$TrackedParametersTableTableManager get trackedParameters =>
       $$TrackedParametersTableTableManager(_db, _db.trackedParameters);
   $$ParameterOverridesTableTableManager get parameterOverrides =>

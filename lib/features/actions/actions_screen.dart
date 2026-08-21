@@ -178,7 +178,7 @@ Future<void> showAddActionSheet(
   if (preset != null) {
     switch (preset) {
       case MaintenanceActionType.waterChange:
-        await _editWater(context, ref, null);
+        await showRecordWaterChangeDialog(context, ref);
       case MaintenanceActionType.carbonChange:
         await _editCarbon(context, ref, null);
       case MaintenanceActionType.equipmentCleaning:
@@ -221,13 +221,29 @@ Future<void> showAddActionSheet(
   if (kind == null || !context.mounted) return;
   switch (kind) {
     case _Kind.water:
-      await _editWater(context, ref, null);
+      await showRecordWaterChangeDialog(context, ref);
     case _Kind.carbon:
       await _editCarbon(context, ref, null);
     case _Kind.equipment:
       await _editEquipment(context, ref, null);
   }
 }
+
+/// Opens the existing water-change editor, optionally seeded by a completed
+/// calculator result. The row is still written only when the keeper presses
+/// Save in the dialog.
+Future<void> showRecordWaterChangeDialog(
+  BuildContext context,
+  WidgetRef ref, {
+  double? amountLiters,
+  String? note,
+}) => _editWater(
+  context,
+  ref,
+  null,
+  initialAmountLiters: amountLiters,
+  initialNote: note,
+);
 
 Future<void> _edit(BuildContext context, WidgetRef ref, Object record) {
   switch (record) {
@@ -245,8 +261,10 @@ Future<void> _edit(BuildContext context, WidgetRef ref, Object record) {
 Future<void> _editWater(
   BuildContext context,
   WidgetRef ref,
-  WaterChange? existing,
-) async {
+  WaterChange? existing, {
+  double? initialAmountLiters,
+  String? initialNote,
+}) async {
   final tank = ref.read(activeTankProvider);
   if (tank == null) return;
   final l = AppLocalizations.of(context);
@@ -258,10 +276,10 @@ Future<void> _editWater(
       valueLabel: l.amountLitersOptional,
       valueSuffix: unit.symbol,
       initialTime: existing?.changedAt ?? DateTime.now(),
-      initialValue: existing?.amountLiters == null
+      initialValue: (existing?.amountLiters ?? initialAmountLiters) == null
           ? ''
-          : formatVolume(existing!.amountLiters!, unit),
-      initialNote: existing?.note,
+          : formatVolume(existing?.amountLiters ?? initialAmountLiters!, unit),
+      initialNote: existing?.note ?? initialNote,
       showDelete: existing != null,
     ),
   );

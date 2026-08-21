@@ -204,6 +204,9 @@ void main() {
           expect(tank.name, 'Old reef');
           expect(tank.startDate, isNull); // added by v2, null-backfilled
           expect(tank.notes, isNull); // added by v10
+          expect(tank.saltMixName, isNull); // added by v30
+          expect(tank.saltMixGramsPerLiter, isNull);
+          expect(tank.saltMixReferencePpt, isNull);
           final reading = (await db.getAllReadings()).single;
           expect(reading.value, 8.2);
           expect(
@@ -738,6 +741,72 @@ void main() {
       isNot(contains('secret')),
       reason: 'the password column rode Auto Backup; it is gone with its data',
     );
+  });
+
+  test('upgrading from v29 adds the salt-mix calibration columns', () async {
+    final file = File('${tempDir.path}/from29-no-salt-calibration.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    final tankId = await seed.createTankWithPreset(
+      name: 'Older reef',
+      type: SetupType.mixed,
+    );
+    for (final column in const [
+      'salt_mix_name',
+      'salt_mix_grams_per_liter',
+      'salt_mix_reference_ppt',
+    ]) {
+      await seed.customStatement('ALTER TABLE tanks DROP COLUMN $column');
+    }
+    await seed.customStatement('PRAGMA user_version = 29');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final tank = await db.getTank(tankId);
+    expect(tank.saltMixName, isNull);
+    expect(tank.saltMixGramsPerLiter, isNull);
+    expect(tank.saltMixReferencePpt, isNull);
+
+    await db.updateTankSaltCalibration(
+      tankId: tankId,
+      name: 'My salt',
+      gramsPerLiter: 38.2,
+      referencePpt: 35,
+    );
+    final updated = await db.getTank(tankId);
+    expect(updated.saltMixName, 'My salt');
+    expect(updated.saltMixGramsPerLiter, 38.2);
+    expect(updated.saltMixReferencePpt, 35);
+  });
+
+  test('upgrading from v30 retains the old calibration as Custom', () async {
+    final file = File('${tempDir.path}/from30-salt-catalog.sqlite');
+    final seed = AppDatabase(NativeDatabase(file));
+    final tankId = await seed.createTankWithPreset(
+      name: 'Existing reef',
+      type: SetupType.mixed,
+    );
+    await seed.customStatement(
+      "UPDATE tanks SET salt_mix_name = 'Old measured salt', "
+      'salt_mix_grams_per_liter = 38.7, salt_mix_reference_ppt = 35 '
+      'WHERE id = $tankId',
+    );
+    await seed.customStatement('DROP TABLE salt_mix_calibrations');
+    await seed.customStatement(
+      'ALTER TABLE tanks DROP COLUMN salt_mix_product_key',
+    );
+    await seed.customStatement('PRAGMA user_version = 30');
+    await seed.close();
+
+    final db = AppDatabase(NativeDatabase(file));
+    addTearDown(db.close);
+    final tank = await db.getTank(tankId);
+    expect(tank.saltMixProductKey, 'custom');
+    final stored = await db.getSaltMixCalibrationForProduct(tankId, 'custom');
+    expect(stored?.displayName, 'Old measured salt');
+    expect(stored?.gramsPerLiter, 38.7);
+    expect(stored?.referencePpt, 35);
+    expect(stored?.measured, isTrue);
   });
 
   group('guarded migration steps are idempotent', () {

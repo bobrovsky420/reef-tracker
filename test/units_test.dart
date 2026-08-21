@@ -103,6 +103,20 @@ void main() {
       expect(sgToPpt(pptToSg(33)), closeTo(33, 1e-6));
       expect(pptToSg(sgToPpt(1.025)), closeTo(1.025, 1e-9));
     });
+
+    test('UNESCO seawater density reference and inverse round trip', () {
+      expect(seawaterDensity(35, 25), closeTo(1.023343, 1e-6));
+      expect(
+        salinityFromSeawaterDensity(seawaterDensity(33.7, 18), 18),
+        closeTo(33.7, 1e-9),
+      );
+    });
+
+    test('25 C hydrometer reading corrects glass and seawater temperature', () {
+      final readingAt20 = hydrometerReadingForSalinity(35, 20);
+      expect(readingAt20, greaterThan(hydrometerReadingForSalinity(35, 25)));
+      expect(salinityFromHydrometerReading(readingAt20, 20), closeTo(35, 1e-9));
+    });
   });
 
   group('volume conversion', () {
@@ -136,6 +150,21 @@ void main() {
       expect(VolumeUnit.fromName(null), VolumeUnit.liters);
       expect(VolumeUnit.fromName('gallons'), VolumeUnit.gallons);
       expect(VolumeUnit.fromName('bogus'), VolumeUnit.liters);
+    });
+  });
+
+  group('reef unit converter conversions', () {
+    test('alkalinity converts through dKH', () {
+      expect(dkhToMeq(8), closeTo(2.856, 1e-9));
+      expect(meqToDkh(2.856), closeTo(8, 1e-9));
+      expect(dkhToPpmCaco3(8), closeTo(142.784, 1e-9));
+      expect(ppmCaco3ToDkh(142.784), closeTo(8, 1e-9));
+    });
+
+    test('imperial gallons stay distinct from US gallons', () {
+      expect(litersToImperialGallons(4.54609), closeTo(1, 1e-9));
+      expect(imperialGallonsToLiters(1), closeTo(4.54609, 1e-9));
+      expect(litersToGallons(4.54609), isNot(closeTo(1, 1e-3)));
     });
   });
 
