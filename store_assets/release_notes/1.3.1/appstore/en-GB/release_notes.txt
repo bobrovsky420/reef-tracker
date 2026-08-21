@@ -1,0 +1,4 @@
+• Plan water changes with batch or continuous-exchange projections, including a schedule to reach your target.
+• Mix saltwater and correct salinity with 16 popular salt mixes, remembered measured calibrations and glass-hydrometer temperature correction.
+• Convert alkalinity, temperature and volume units from Settings → Tools.
+• Connected devices refresh automatically, and Wall display history can be trimmed or cleared.

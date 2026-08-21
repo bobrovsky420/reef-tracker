@@ -1,0 +1,42 @@
+<en-GB>
+• Plan water changes with batch or continuous-exchange projections, including a schedule to reach your target.
+• Mix saltwater and correct salinity with 16 popular salt mixes, remembered measured calibrations and glass-hydrometer temperature correction.
+• Convert alkalinity, temperature and volume units from Settings → Tools.
+• Connected devices refresh automatically, and Wall display history can be trimmed or cleared.
+</en-GB>
+<cs-CZ>
+• Plánuj výměny vody s projekcí jednorázové, opakované nebo průběžné výměny a rozvrhem k dosažení cíle.
+• Míchej slanou vodu a upravuj salinitu s 16 oblíbenými solemi, uloženou vlastní kalibrací a teplotní korekcí pro skleněný hustoměr.
+• Převáděj alkalinitu, teplotu a objem v Nastavení → Nástroje.
+• Připojená zařízení se obnovují automaticky; historii nástěnného displeje můžeš zkrátit nebo vymazat.
+</cs-CZ>
+<de-DE>
+• Plane Wasserwechsel mit Prognosen für einzelne, wiederholte oder kontinuierliche Wechsel samt Zeitplan bis zu deinem Zielwert.
+• Mische Salzwasser und korrigiere den Salzgehalt mit 16 beliebten Salzmischungen, gespeicherten eigenen Kalibrierungen und Temperaturkorrektur für Glashydrometer.
+• Rechne Alkalinität, Temperatur und Volumen unter Einstellungen → Werkzeuge um.
+• Verbundene Geräte aktualisieren sich automatisch; den Verlauf des Wanddisplays kannst du kürzen oder löschen.
+</de-DE>
+<ru-RU>
+• Планируй подмены воды с прогнозом разовой, повторной или непрерывной замены и графиком достижения цели.
+• Готовь солёную воду и корректируй солёность с 16 популярными смесями, сохранённой собственной калибровкой и температурной поправкой для стеклянного ареометра.
+• Пересчитывай щёлочность, температуру и объём в Настройки → Инструменты.
+• Подключённые устройства обновляются автоматически; историю настенного дисплея можно сократить или очистить.
+</ru-RU>
+<pl-PL>
+• Planuj podmiany wody z prognozą wymiany jednorazowej, powtarzanej lub ciągłej oraz harmonogramem dojścia do celu.
+• Przygotuj słoną wodę i koryguj zasolenie z 16 popularnymi solami, zapamiętaną własną kalibracją i korektą temperatury dla szklanego areometru.
+• Przeliczaj alkaliczność, temperaturę i objętość w Ustawienia → Narzędzia.
+• Podłączone urządzenia odświeżają się automatycznie; historię wyświetlacza ściennego możesz skrócić lub wyczyścić.
+</pl-PL>
+<fr-FR>
+• Planifie les changements d’eau avec projection des remplacements ponctuels, répétés ou continus et calendrier jusqu’à ta cible.
+• Prépare l’eau salée et corrige la salinité avec 16 sels populaires, tes étalonnages mémorisés et la correction de température d’un densimètre en verre.
+• Convertis alcalinité, température et volume dans Réglages → Outils.
+• Les appareils connectés s’actualisent automatiquement ; tu peux raccourcir ou effacer l’historique de l’affichage mural.
+</fr-FR>
+<it-IT>
+• Pianifica i cambi d’acqua con proiezioni per sostituzioni singole, ripetute o continue e un programma per raggiungere l’obiettivo.
+• Prepara acqua salata e correggi la salinità con 16 sali diffusi, calibrazioni misurate memorizzate e correzione della temperatura per densimetri in vetro.
+• Converti alcalinità, temperatura e volume da Impostazioni → Strumenti.
+• I dispositivi collegati si aggiornano automaticamente; puoi accorciare o cancellare la cronologia del display a parete.
+</it-IT>

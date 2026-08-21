@@ -1,0 +1,4 @@
+• Plane Wasserwechsel mit Prognosen für einzelne, wiederholte oder kontinuierliche Wechsel samt Zeitplan bis zu deinem Zielwert.
+• Mische Salzwasser und korrigiere den Salzgehalt mit 16 beliebten Salzmischungen, gespeicherten eigenen Kalibrierungen und Temperaturkorrektur für Glashydrometer.
+• Rechne Alkalinität, Temperatur und Volumen unter Einstellungen → Werkzeuge um.
+• Verbundene Geräte aktualisieren sich automatisch; den Verlauf des Wanddisplays kannst du kürzen oder löschen.

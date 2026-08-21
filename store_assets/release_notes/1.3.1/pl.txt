@@ -1,0 +1,4 @@
+• Planuj podmiany wody z prognozą wymiany jednorazowej, powtarzanej lub ciągłej oraz harmonogramem dojścia do celu.
+• Przygotuj słoną wodę i koryguj zasolenie z 16 popularnymi solami, zapamiętaną własną kalibracją i korektą temperatury dla szklanego areometru.
+• Przeliczaj alkaliczność, temperaturę i objętość w Ustawienia → Narzędzia.
+• Podłączone urządzenia odświeżają się automatycznie; historię wyświetlacza ściennego możesz skrócić lub wyczyścić.
