@@ -3042,12 +3042,17 @@ entry points for one page were four ways to say the same thing).
   one-card dashboard, and it is hidden by construction when the scope has no
   pollable device or the install is not entitled. Reads are
   sequential *within* a vendor (a meter also serves its vendor's cloud app) but
-  the vendors run concurrently. The on-open auto-read follows the same scope,
-  once per device per session — and only while the page is the tab actually on
-  screen (`DevicesBody.active`), so being a permanently-built `IndexedStack`
-  child never turns app launch into a LAN sweep. Both the refresh actions and
-  their counts cover only refreshable kinds (`deviceKindRefreshes` — the Hanna
-  checker is never polled), and Refresh all hides when nothing in view is.
+  the vendors run concurrently. The on-open auto-read follows the same scope
+  and only runs while the page is the tab actually on screen
+  (`DevicesBody.active`), so being a permanently-built `IndexedStack` child
+  never turns app launch into a LAN sweep. Each attempt is timestamped; after
+  the same two-minute stale window used by Save, the visible scope is read
+  again when the keeper returns to the tab, resumes the app on it, or switches
+  to a previously visited vendor. Failed attempts are timestamped too, so an
+  offline device is retried after the window rather than on every rebuild.
+  Both the refresh actions and their counts cover only refreshable kinds
+  (`deviceKindRefreshes` — the Hanna checker is never polled), and Refresh all
+  hides when nothing in view is.
   Save all is **hidden** — not disabled — when the selection holds no
   meter-capable device (`deviceModelSaves`): a Red Sea selection with only
   pumps/lights/ATO/filter has nothing to save, while one containing ReefControl

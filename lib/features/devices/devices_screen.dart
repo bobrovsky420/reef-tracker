@@ -263,9 +263,10 @@ class DevicesBody extends ConsumerStatefulWidget {
     this.fabStatus,
   });
 
-  /// How old a held snapshot may be before a save re-reads it (see
-  /// [kDeviceSnapshotStaleAfter]). A parameter only so that a test can set it
-  /// to zero and exercise the re-read without waiting out the real window.
+  /// How old a held snapshot may be before an automatic page refresh or a
+  /// save re-reads it (see [kDeviceSnapshotStaleAfter]). A parameter only so
+  /// that tests can exercise the stale paths without waiting out the real
+  /// window.
   final Duration staleAfter;
 
   /// Whether this body is the tab the user is actually looking at. The home
@@ -314,15 +315,17 @@ String _deviceVendorLabel(AppLocalizations l, String vendor) =>
 /// feedback rather than housekeeping.
 const Duration _kVendorSwipeScrollBack = Duration(milliseconds: 250);
 
-class DevicesBodyState extends ConsumerState<DevicesBody> {
+class DevicesBodyState extends ConsumerState<DevicesBody>
+    with WidgetsBindingObserver {
   /// One normalized live-state map, keyed by device identifier. Family-owned
   /// card sections receive typed presentation views from their descriptors.
   final Map<String, DeviceLiveState> _live = {};
 
-  /// Identifiers already auto-read this session. The on-open read covers the
-  /// current selection only; switching to a vendor not yet read pulls it then,
-  /// and switching back doesn't re-read — that is what Refresh is for.
-  final Set<String> _autoRead = {};
+  /// When each device was last asked for a refresh. Unlike [_readAt], this is
+  /// recorded for failed attempts too: a device that is off the LAN must not
+  /// be hammered again on every rebuild. It drives automatic refreshes when a
+  /// stale page is revisited, resumed, or switched back to a vendor.
+  final Map<String, DateTime> _refreshedAt = {};
 
   /// When each device's held snapshot was actually read. It dates the reading
   /// group a save writes, and decides what [_freshen] re-reads first (#76) —
@@ -365,7 +368,27 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   double _dragDx = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didUpdateWidget(covariant DevicesBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.active && widget.active) _scheduleStaleAutoRefresh();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && widget.active) {
+      _scheduleStaleAutoRefresh();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollCtrl.dispose();
     super.dispose();
   }
@@ -388,8 +411,12 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   }
 
   void _select(String? vendor) {
+    if (_vendor == vendor) return;
     setState(() => _vendor = vendor);
     unawaited(ref.read(settingsProvider).setDeviceVendorFilter(vendor));
+    // The build following this selection replaces [_scope]. Wait for it, then
+    // refresh the newly visible vendor if its last attempt has aged out.
+    _scheduleStaleAutoRefresh();
   }
 
   /// Moves the selection one chip along the vendor bar — [delta] of 1 for the
@@ -455,6 +482,57 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     proCapabilityProvider(ProCapabilityBoundary.connectedDeviceLiveIo),
   );
 
+  /// Schedules a stale check after the current change has rebuilt [_scope].
+  /// Several lifecycle/selection events may queue callbacks in one frame; the
+  /// attempt timestamps set by the first callback make the rest no-ops.
+  void _scheduleStaleAutoRefresh() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.active) _autoRefreshScope();
+    });
+  }
+
+  /// Automatically reads devices in the visible scope that have never been
+  /// attempted, plus previously attempted ones whose refresh window has
+  /// elapsed. Explicit refresh actions still read the whole scope regardless
+  /// of age.
+  void _autoRefreshScope() {
+    if (!mounted || !widget.active || !_liveIoAuthorized) return;
+    final now = DateTime.now();
+    final byVendor = <String, List<DeviceRecord>>{};
+    for (final (kind, device) in _scope.inPageOrder) {
+      if (!_kindRefreshes(kind) ||
+          (_live[device.identifier]?.loading ?? false)) {
+        continue;
+      }
+      final refreshedAt = _refreshedAt[device.identifier];
+      if (refreshedAt != null &&
+          now.difference(refreshedAt) <= widget.staleAfter) {
+        continue;
+      }
+      (byVendor[kind] ??= []).add(device);
+    }
+    if (byVendor.isEmpty) return;
+
+    // Claim every candidate before starting any I/O. This prevents another
+    // post-frame callback or rebuild from launching the same automatic read.
+    for (final devices in byVendor.values) {
+      for (final device in devices) {
+        _refreshedAt[device.identifier] = now;
+      }
+    }
+    unawaited(
+      _refreshScope(
+        DeviceScope(
+          order: [
+            for (final kind in _scope.order)
+              if (byVendor.containsKey(kind)) kind,
+          ],
+          byVendor: byVendor,
+        ),
+      ),
+    );
+  }
+
   /// Reads one registered device. Dispatch, errors and payload typing stay in
   /// the integration registry; the screen only owns lifecycle state.
   Future<void> _refreshDevice(String kind, DeviceRecord d) async {
@@ -468,6 +546,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     }
     final previous = _live[d.identifier];
     setState(() {
+      _refreshedAt[d.identifier] = DateTime.now();
       _live[d.identifier] = DeviceLiveState.loadingFrom(previous);
     });
     final result = await readRegisteredDevice(ref, d);
@@ -487,6 +566,10 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
   /// display's poll loop.
   Future<void> _refreshScope(DeviceScope scope) async {
     if (!_liveIoAuthorized) return;
+    final now = DateTime.now();
+    for (final (kind, device) in scope.inPageOrder) {
+      if (_kindRefreshes(kind)) _refreshedAt[device.identifier] = now;
+    }
     await readDeviceScope(
       scope,
       _refreshDevice,
@@ -829,10 +912,13 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     _scope = scope;
     _publishFabStatus(entitled, scope);
 
-    // The on-open read, scoped to the selection and once per device. Only for
-    // the tab actually on screen — see [DevicesBody.active]. Non-refreshable
-    // kinds (the Hanna checker) are left out rather than marked read, so the
-    // guards stay honest if one ever becomes refreshable.
+    // The first on-open read, scoped to the selection and once per device.
+    // Later automatic reads are event-driven by tab return, app resume, and
+    // vendor changes; build itself never loops merely because the timeout has
+    // elapsed. Only the tab actually on screen may read — see
+    // [DevicesBody.active]. Non-refreshable kinds (the Hanna checker) are left
+    // out rather than marked, so the guards stay honest if one becomes
+    // refreshable later.
     if (entitled && widget.active) {
       final toRead = DeviceScope(
         order: [
@@ -844,13 +930,14 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
             if (_kindRefreshes(kind))
               kind: [
                 for (final d in scope.of(kind))
-                  if (!_autoRead.contains(d.identifier)) d,
+                  if (!_refreshedAt.containsKey(d.identifier)) d,
               ],
         },
       );
       if (toRead.length > 0) {
+        final now = DateTime.now();
         for (final (_, d) in toRead.inPageOrder) {
-          _autoRead.add(d.identifier);
+          _refreshedAt[d.identifier] = now;
         }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) unawaited(_refreshScope(toRead));
@@ -1118,7 +1205,7 @@ class DevicesBodyState extends ConsumerState<DevicesBody> {
     if (!mounted) return;
     setState(() {
       _live.remove(device.identifier);
-      _autoRead.remove(device.identifier);
+      _refreshedAt.remove(device.identifier);
       _readAt.remove(device.identifier);
     });
   }

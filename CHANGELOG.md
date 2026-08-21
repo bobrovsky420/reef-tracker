@@ -34,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deleting manually entered aquarium measurements.
 
 ### Changed
+- Connected devices now automatically refreshes the visible devices when you
+  return to the page, reopen the app on it, or revisit a brand after two
+  minutes, while avoiding extra network reads for still-fresh devices. The
+  Android resume flow was exercised with the committed fake Apex, not with
+  additional real hardware.
 - The reef-unit converter now shows every unit as an editable field on each
   card, so entering any alkalinity, temperature, or volume value updates all
   of its equivalents immediately without choosing a source unit first.
