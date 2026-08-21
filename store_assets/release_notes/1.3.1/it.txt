@@ -1,0 +1,4 @@
+• Pianifica i cambi d’acqua con proiezioni per sostituzioni singole, ripetute o continue e un programma per raggiungere l’obiettivo.
+• Prepara acqua salata e correggi la salinità con 16 sali diffusi, calibrazioni misurate memorizzate e correzione della temperatura per densimetri in vetro.
+• Converti alcalinità, temperatura e volume da Impostazioni → Strumenti.
+• I dispositivi collegati si aggiornano automaticamente; puoi accorciare o cancellare la cronologia del display a parete.
