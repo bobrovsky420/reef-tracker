@@ -42,6 +42,7 @@
 
   "welcomeTitle": "Vítej v ReefTrackeru",
   "welcomeBody": "Vytvoř své první akvárium a začni sledovat parametry vody.",
+  "welcomeExperimentalSubtitle": "Zapne funkce, které se stále vyvíjejí a mohou se měnit. Tuto volbu lze kdykoli změnit v Nastavení.",
   "noParamsTracked": "Pro toto akvárium nejsou sledovány žádné parametry.",
   "noReadings": "Žádná měření",
 

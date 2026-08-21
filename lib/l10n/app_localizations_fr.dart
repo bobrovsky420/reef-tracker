@@ -137,6 +137,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Crée ton premier aquarium pour commencer à suivre les paramètres de l\'eau.';
 
   @override
+  String get welcomeExperimentalSubtitle =>
+      'Active des fonctionnalités encore en développement et susceptibles de changer. Ce choix peut être modifié à tout moment dans les paramètres.';
+
+  @override
   String get noParamsTracked => 'Aucun paramètre n\'est suivi pour ce bac.';
 
   @override

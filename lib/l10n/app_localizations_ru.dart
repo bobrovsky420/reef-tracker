@@ -137,6 +137,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Создай свой первый аквариум, чтобы начать отслеживать параметры воды.';
 
   @override
+  String get welcomeExperimentalSubtitle =>
+      'Включает функции, которые ещё разрабатываются и могут измениться. Этот выбор можно изменить в настройках в любое время.';
+
+  @override
   String get noParamsTracked =>
       'Для этого аквариума не отслеживаются параметры.';
 

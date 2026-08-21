@@ -342,6 +342,12 @@ abstract class AppLocalizations {
   /// **'Create your first aquarium to start tracking water parameters.'**
   String get welcomeBody;
 
+  /// Explanation below the experimental-features switch on the first-run welcome screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable features that are still being developed and may change. You can update this choice anytime in Settings.'**
+  String get welcomeExperimentalSubtitle;
+
   /// No description provided for @noParamsTracked.
   ///
   /// In en, this message translates to:

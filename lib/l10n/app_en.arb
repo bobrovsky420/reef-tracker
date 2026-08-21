@@ -47,6 +47,10 @@
 
   "welcomeTitle": "Welcome to ReefTracker",
   "welcomeBody": "Create your first aquarium to start tracking water parameters.",
+  "welcomeExperimentalSubtitle": "Enable features that are still being developed and may change. You can update this choice anytime in Settings.",
+  "@welcomeExperimentalSubtitle": {
+    "description": "Explanation below the experimental-features switch on the first-run welcome screen."
+  },
   "noParamsTracked": "No parameters are being tracked for this tank.",
   "noReadings": "No readings",
 

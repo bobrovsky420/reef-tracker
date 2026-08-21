@@ -137,6 +137,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Crea il tuo primo acquario per iniziare a monitorare i parametri dell\'acqua.';
 
   @override
+  String get welcomeExperimentalSubtitle =>
+      'Attiva funzionalità ancora in fase di sviluppo e soggette a modifiche. Puoi cambiare questa scelta in qualsiasi momento nelle Impostazioni.';
+
+  @override
   String get noParamsTracked => 'Nessun parametro monitorato per questa vasca.';
 
   @override

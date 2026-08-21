@@ -42,6 +42,7 @@
 
   "welcomeTitle": "Ti diamo il benvenuto in ReefTracker",
   "welcomeBody": "Crea il tuo primo acquario per iniziare a monitorare i parametri dell'acqua.",
+  "welcomeExperimentalSubtitle": "Attiva funzionalità ancora in fase di sviluppo e soggette a modifiche. Puoi cambiare questa scelta in qualsiasi momento nelle Impostazioni.",
   "noParamsTracked": "Nessun parametro monitorato per questa vasca.",
   "noReadings": "Nessuna misurazione",
 

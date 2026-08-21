@@ -1926,9 +1926,10 @@ behind a confirmation dialog**:
   not inside the tile, so switching off removes the whole card (and, in the
   grouped layout, its header); the switch
   only hides (measurements stay stored).
-- Empty states: `NoTanksView` (first-run welcome: a language selector +
-  add-aquarium prompt — lets the user pick their language before creating a tank
-  without opening Settings — plus the **ungated cloud-restore** entry (U35):
+- Empty states: `NoTanksView` (first-run welcome: a language selector and
+  add-aquarium prompt, plus a subtle `experimental_enabled` master switch
+  (off by default, immediately below the Settings button, with a note that the
+  choice remains available there) and the **ungated cloud-restore** entry (U35):
   "Restore from Google Drive" on Android (account picker first) or "Restore
   from iCloud" on iOS (no picker — iCloud availability *is* the sign-in
   state, U44); then `fetchNewestCloudBackup` →

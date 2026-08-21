@@ -137,6 +137,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Utwórz swoje pierwsze akwarium, aby rozpocząć śledzenie parametrów wody.';
 
   @override
+  String get welcomeExperimentalSubtitle =>
+      'Włącza funkcje, które są nadal rozwijane i mogą się zmieniać. Ten wybór można zmienić w dowolnym momencie w Ustawieniach.';
+
+  @override
   String get noParamsTracked =>
       'Dla tego akwarium nie są śledzone żadne parametry.';
 

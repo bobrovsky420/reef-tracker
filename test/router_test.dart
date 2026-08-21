@@ -535,7 +535,9 @@ void main() {
     // its own button that pushes `/settings` (backup restore must stay
     // reachable on a fresh install).
     expect(find.byType(NavigationBar), findsNothing);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
+    final settingsButton = find.byIcon(Icons.settings_outlined);
+    await tester.ensureVisible(settingsButton);
+    await tester.tap(settingsButton);
     await settle(tester);
     expect(find.byType(SettingsScreen), findsOneWidget);
     // The pushed route keeps a back affordance.

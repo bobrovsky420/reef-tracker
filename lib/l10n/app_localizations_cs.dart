@@ -135,6 +135,10 @@ class AppLocalizationsCs extends AppLocalizations {
       'Vytvoř své první akvárium a začni sledovat parametry vody.';
 
   @override
+  String get welcomeExperimentalSubtitle =>
+      'Zapne funkce, které se stále vyvíjejí a mohou se měnit. Tuto volbu lze kdykoli změnit v Nastavení.';
+
+  @override
   String get noParamsTracked =>
       'Pro toto akvárium nejsou sledovány žádné parametry.';
 

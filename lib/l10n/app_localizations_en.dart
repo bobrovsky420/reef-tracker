@@ -136,6 +136,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Create your first aquarium to start tracking water parameters.';
 
   @override
+  String get welcomeExperimentalSubtitle =>
+      'Enable features that are still being developed and may change. You can update this choice anytime in Settings.';
+
+  @override
   String get noParamsTracked =>
       'No parameters are being tracked for this tank.';
 

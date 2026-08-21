@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deleting manually entered aquarium measurements.
 
 ### Changed
+- The first-run welcome screen now offers the optional experimental-features
+  switch, off by default, and notes that the choice can be changed later in
+  Settings.
 - Connected devices now automatically refreshes the visible devices when you
   return to the page, reopen the app on it, or revisit a brand after two
   minutes, while avoiding extra network reads for still-fresh devices. The

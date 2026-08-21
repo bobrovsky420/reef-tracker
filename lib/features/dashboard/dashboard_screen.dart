@@ -866,9 +866,11 @@ class NoTanksView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final localeCode = ref.watch(localeCodeProvider).value ?? 'system';
+    final experimentalEnabled =
+        ref.watch(experimentalEnabledProvider).value ?? false;
     final settings = ref.read(settingsProvider);
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -937,6 +939,25 @@ class NoTanksView extends ConsumerWidget {
               onPressed: () => context.push('/settings'),
               icon: const Icon(Icons.settings_outlined, size: 18),
               label: Text(l.settings),
+            ),
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: SwitchListTile.adaptive(
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                title: Text(
+                  l.experimentalToggleTitle,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                subtitle: Text(
+                  l.welcomeExperimentalSubtitle,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                value: experimentalEnabled,
+                onChanged: settings.setExperimentalEnabled,
+              ),
             ),
           ],
         ),
