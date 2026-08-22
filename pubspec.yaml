@@ -133,7 +133,7 @@ dev_dependencies:
     sdk: flutter
   # Decodes the real checker photos in test/fixtures/hanna_photos/ for the
   # seven-segment decoder's photo regression tests (pure Dart, test-only).
-  image: ^4.3.0
+  image: ^4.9.2
   # Used by the backup/auto-backup tests to fake path_provider under
   # `flutter test`. Declared explicitly so `flutter analyze` stays clean.
   path_provider_platform_interface: ^2.1.3
