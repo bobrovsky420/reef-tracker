@@ -83,7 +83,7 @@ dependencies:
   # Deliberately held below 2.0: the 2.x line switched to a source-available
   # license that requires a PAID commercial license for for-profit use
   # (`connect(license: ...)`); 1.x is plain BSD-3.
-  flutter_blue_plus: '>=1.35.0 <2.0.0'
+  flutter_blue_plus: ^2.3.12
   # Checker camera scan (U34, experimental): live viewfinder for reading a
   # Hanna pocket-checker LCD with the on-device seven-segment decoder
   # (lib/domain/seven_segment.dart) — no ML Kit / OCR dependency. Native
